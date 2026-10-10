@@ -1,0 +1,4398 @@
+{
+  "at": "2026-10-09T23:18:23.136Z",
+  "rows": [
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-af874b0a-c53b-488e-abf5-394096f42cf1"
+      },
+      "current": true
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-59e9674d-c462-46ff-b4bf-154c168a6cff"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-afd0c17a-e077-4e8f-9c99-a330d2ac4577"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-ef0b6649-6810-4fa3-99e5-09a3a2f3a07b"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-b4b53fd2-6786-4b38-a561-e6dde1490582"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-d08cf7b8-587d-4e2b-8cc1-da873d366a97"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-8b05cd68-9264-4df7-9bef-de94eecedd28"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-d14c4e60-20e2-44a7-968b-b273c28fb30f"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-f44ec5a2-66f8-4c88-aa8c-55eb926b4ee8"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-81b103cd-16be-474f-bec7-94b492a6ffaa"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-129521c5-e6b6-4001-8f1b-cbec91607362"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-3d7508fc-e62b-432e-99d3-f325a0098b5e"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-8cfdb921-df0e-40f1-9785-2f6e1529ff10"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-054c44d1-e14d-4712-8b12-f075ba1ac164"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-e42bdc1e-0a24-48c4-8995-8b6c2b90b3a2"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-d0b7ca43-ec7b-4b6c-972b-7d42d10a4c44"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-87155110-0617-47a8-89c4-ee2eb2e902f1"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-6efa1b0f-1d0a-437a-a144-d157d905996b"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-b6ab997d-9ac4-4cf5-855b-b67c75693aa2"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-99f84242-41a4-40bc-8c9e-f30c930df9f3"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-38606504-5bde-40b5-88f4-d5521848a814"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-a33b0349-3fdd-4850-8a7b-4df021b4a75c"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-a3d9759c-0003-4760-96a4-ee086cd948d8"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-d366cd2e-05b4-4d1f-a0f8-bfc009ac7245"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-8030a52d-1862-4455-aab0-1344a8d4c8b4"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-bfe492dd-e03f-4b6b-a184-5a4b1416c57f"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-012b7a64-ad69-44b0-8842-8568ab9b887f"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-d7ce9c13-1433-4950-b244-d45c62e234e5"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-d8d97bc2-6c38-4f19-95d4-a2d7cce35ca9"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-96c4e48c-024d-442d-9d3d-f84ce992cee4"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-53f6900c-daab-4933-a521-54bd63e493ed"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-fe9deebd-b699-4bc7-841b-bfa7e7285459"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-00b89ed0-e647-4527-9aca-b2ca9eebf3b4"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-51230d26-88bf-45e5-97dc-c928ca511b3b"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-68c3ced1-c0d5-41f4-9397-bb68956f88c1"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-2b524a15-bf5a-4ec4-9e34-f038218675c8"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-47d0ec59-de69-42c3-8b90-22b866411a59"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-370dcef6-52be-4abb-8e0c-f5bc03003d75"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-19c32ff2-7b0c-4604-9981-2c37d5d9e890"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-ddb1d38d-01ab-4807-a45e-e6af455bcf30"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-521d6092-113a-44d2-867c-c56ab724593c"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-7bd212b8-09a2-4341-969c-a912b1c2d98b"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row",
+        "data-session-id": "session-e00474fb-1214-471e-83d4-cc9c7094c0e9"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-8bf66dac-b582-466e-9082-6840802693fa"
+      },
+      "current": false
+    },
+    {
+      "attrs": {
+        "class": "session-row is-unread",
+        "data-session-id": "session-4ba1a80a-414d-44e9-bd6e-ba6f119f9d38"
+      },
+      "current": false
+    }
+  ],
+  "sessions": {
+    "status": 200,
+    "body": {
+      "sessions": [
+        {
+          "sessionId": "session-00b89ed0-e647-4527-9aca-b2ca9eebf3b4",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:02:13.678Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-012b7a64-ad69-44b0-8842-8568ab9b887f",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:05:03.492Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-054c44d1-e14d-4712-8b12-f075ba1ac164",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:11:35.513Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-129521c5-e6b6-4001-8f1b-cbec91607362",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:13:16.156Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-19c32ff2-7b0c-4604-9981-2c37d5d9e890",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T22:59:31.152Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-2b524a15-bf5a-4ec4-9e34-f038218675c8",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:00:40.012Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-370dcef6-52be-4abb-8e0c-f5bc03003d75",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:00:04.349Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-38606504-5bde-40b5-88f4-d5521848a814",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:07:59.485Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-3d7508fc-e62b-432e-99d3-f325a0098b5e",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:12:36.131Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-47d0ec59-de69-42c3-8b90-22b866411a59",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:00:05.691Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-4ba1a80a-414d-44e9-bd6e-ba6f119f9d38",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T22:56:37.395Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-51230d26-88bf-45e5-97dc-c928ca511b3b",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:01:26.817Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-521d6092-113a-44d2-867c-c56ab724593c",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T22:58:40.519Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-53f6900c-daab-4933-a521-54bd63e493ed",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:02:50.301Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-59e9674d-c462-46ff-b4bf-154c168a6cff",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:17:38.110Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-68c3ced1-c0d5-41f4-9397-bb68956f88c1",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:01:15.710Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-6efa1b0f-1d0a-437a-a144-d157d905996b",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:09:28.711Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-7bd212b8-09a2-4341-969c-a912b1c2d98b",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T22:58:05.227Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-8030a52d-1862-4455-aab0-1344a8d4c8b4",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:05:41.681Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-81b103cd-16be-474f-bec7-94b492a6ffaa",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:13:43.976Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-87155110-0617-47a8-89c4-ee2eb2e902f1",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:10:04.305Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-8b05cd68-9264-4df7-9bef-de94eecedd28",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:15:31.166Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-8bf66dac-b582-466e-9082-6840802693fa",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T22:57:12.579Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-8cfdb921-df0e-40f1-9785-2f6e1529ff10",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:11:57.734Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-96c4e48c-024d-442d-9d3d-f84ce992cee4",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:03:38.288Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-99f84242-41a4-40bc-8c9e-f30c930df9f3",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:08:35.083Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-a33b0349-3fdd-4850-8a7b-4df021b4a75c",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:07:10.537Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-a3d9759c-0003-4760-96a4-ee086cd948d8",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:07:06.015Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-af874b0a-c53b-488e-abf5-394096f42cf1",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:18:02.404Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-afd0c17a-e077-4e8f-9c99-a330d2ac4577",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:17:13.842Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-b4b53fd2-6786-4b38-a561-e6dde1490582",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:16:25.121Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-b6ab997d-9ac4-4cf5-855b-b67c75693aa2",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:08:42.948Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-bfe492dd-e03f-4b6b-a184-5a4b1416c57f",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:05:38.801Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-d08cf7b8-587d-4e2b-8cc1-da873d366a97",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:16:11.197Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-d0b7ca43-ec7b-4b6c-972b-7d42d10a4c44",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:10:19.027Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-d14c4e60-20e2-44a7-968b-b273c28fb30f",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:15:04.911Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-d366cd2e-05b4-4d1f-a0f8-bfc009ac7245",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:06:30.244Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-d7ce9c13-1433-4950-b244-d45c62e234e5",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:04:15.451Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-d8d97bc2-6c38-4f19-95d4-a2d7cce35ca9",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:04:11.998Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-ddb1d38d-01ab-4807-a45e-e6af455bcf30",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T22:58:44.762Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-e00474fb-1214-471e-83d4-cc9c7094c0e9",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T22:57:24.480Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-e42bdc1e-0a24-48c4-8995-8b6c2b90b3a2",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:10:57.831Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-ef0b6649-6810-4fa3-99e5-09a3a2f3a07b",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:16:49.479Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-f44ec5a2-66f8-4c88-aa8c-55eb926b4ee8",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:14:23.975Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          },
+          "deepThinking": false,
+          "sendAvailable": true
+        },
+        {
+          "sessionId": "session-fe9deebd-b699-4bc7-841b-bfa7e7285459",
+          "hostId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "archived": false,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "title": "新对话",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:02:47.894Z",
+          "groupId": null,
+          "running": false,
+          "taskAvailable": true,
+          "deepThinking": false,
+          "sendAvailable": true
+        }
+      ],
+      "groups": [],
+      "snapshotAt": "2026-10-09T23:18:24.157Z"
+    }
+  },
+  "chats": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "chatId": "chat-fb2566ff-2f37-4cc7-a65b-79b9afdd215c",
+          "kind": "side",
+          "revision": 1,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-9dad92dc-5ab1-4c7c-8648-aee005d94033",
+          "activeSessionId": "session-9cc21ac2-a693-4b84-831f-696b8cd53caa",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:18:26.640Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-d9efeb5d-4311-4951-9f0d-f50ea7fdb900",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-b1eda3ba-549e-461a-b0bb-c34de469013b",
+          "activeSessionId": "session-af874b0a-c53b-488e-abf5-394096f42cf1",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:18:02.404Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-d3e178cb-c6fa-40ce-a8b4-e2cda1cc34ea",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-d7940b51-ec01-4a9f-80bb-6a5e4e51ac49",
+          "activeSessionId": "session-59e9674d-c462-46ff-b4bf-154c168a6cff",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:17:38.110Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-3182114d-156d-4aa4-9d6f-b8b9bb4d9bc4",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-3a16775c-2133-4703-bba0-de354fd51554",
+          "activeSessionId": "session-afd0c17a-e077-4e8f-9c99-a330d2ac4577",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:17:13.842Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-04560728-ecde-4b09-b267-4a44f91bd07c",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-088849d5-aea9-456a-837e-9ca1e5bfbdcb",
+          "activeSessionId": "session-ef0b6649-6810-4fa3-99e5-09a3a2f3a07b",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:16:49.479Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-cc05b334-0aaa-459a-9eee-48befd9c28cf",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-a6fce0d4-7b66-4b04-8c99-b50af6754b8b",
+          "activeSessionId": "session-b4b53fd2-6786-4b38-a561-e6dde1490582",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:16:25.121Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-fea39443-eaed-4af1-8ad0-2719a8b8c87d",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-d64c65bc-80b8-4dbc-8b77-e2a211acd16e",
+          "activeSessionId": "session-d08cf7b8-587d-4e2b-8cc1-da873d366a97",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:16:11.197Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-49799ba2-8400-4a19-9f19-0d67aa84e336",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-03be03f9-b496-4b48-b10d-fdcee69903b5",
+          "activeSessionId": "session-8b05cd68-9264-4df7-9bef-de94eecedd28",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:15:31.166Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-d44c840b-c368-4d60-b5ae-ceeaf561e84c",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-c67b76cc-61f5-4297-b8a4-3f433cabeac3",
+          "activeSessionId": "session-d14c4e60-20e2-44a7-968b-b273c28fb30f",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:15:04.911Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-e313f456-a038-43f1-991b-54ed74809540",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-fe49f05c-2918-4ec2-9e68-56dda9cbd515",
+          "activeSessionId": "session-f44ec5a2-66f8-4c88-aa8c-55eb926b4ee8",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:14:23.975Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-1b88a8a0-c8da-4175-8e8f-da0dcf4c8551",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-4bf5f521-b05c-4002-a9a0-60d584dde537",
+          "activeSessionId": "session-81b103cd-16be-474f-bec7-94b492a6ffaa",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:13:43.976Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-b992a8ef-d92b-40af-a5b7-1d4ee77e8c92",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-4c9ccf31-8cde-406c-9ce8-86a475bf159d",
+          "activeSessionId": "session-129521c5-e6b6-4001-8f1b-cbec91607362",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:13:16.156Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-24319194-678c-4a0b-987c-ac46887be9f3",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-dd0a6846-e19c-44e1-9253-6bc42afc158f",
+          "activeSessionId": "session-3d7508fc-e62b-432e-99d3-f325a0098b5e",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:12:36.131Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-a1787781-2ae6-4623-831d-b793deb41b7f",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-6d311ecb-88f2-4d2d-aab5-35347aac3cfe",
+          "activeSessionId": "session-8cfdb921-df0e-40f1-9785-2f6e1529ff10",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:11:57.734Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-e1f4171d-ab67-49f3-bbf7-b1d5313a0c0f",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-5bff2476-fc0f-4dab-ac71-d51ca1157e76",
+          "activeSessionId": "session-054c44d1-e14d-4712-8b12-f075ba1ac164",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:11:35.513Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-9a69b8df-9e9f-4133-b1a4-93de2ee80764",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-45e618de-1400-4c0f-bc35-7b7dc7ba96a8",
+          "activeSessionId": "session-e42bdc1e-0a24-48c4-8995-8b6c2b90b3a2",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:10:57.831Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-b2b95796-5ff2-497b-a859-44199d57a735",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-67d67f33-b102-4e9a-ba01-e2436199afc6",
+          "activeSessionId": "session-d0b7ca43-ec7b-4b6c-972b-7d42d10a4c44",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:10:19.027Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-d982e009-ee2d-4587-be78-63b06be143ec",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-3c6ed960-243d-4404-97fe-21e2635728eb",
+          "activeSessionId": "session-87155110-0617-47a8-89c4-ee2eb2e902f1",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:10:04.305Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-661bc1ca-c393-4c68-8549-59bd07862f98",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-7b13d949-5f18-486f-9782-23e006d6c3f2",
+          "activeSessionId": "session-6efa1b0f-1d0a-437a-a144-d157d905996b",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:09:28.711Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-1e780fe6-9c23-45de-9551-1d84e4d8d639",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-5b46860a-5f8f-4ce0-a860-13920d5e8762",
+          "activeSessionId": "session-b6ab997d-9ac4-4cf5-855b-b67c75693aa2",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:08:42.948Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-a7732452-80af-4a04-b39e-f928b569ba3a",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-ffce676e-e250-4219-bb0c-ba0596b25c22",
+          "activeSessionId": "session-99f84242-41a4-40bc-8c9e-f30c930df9f3",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:08:35.083Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-ba3eadb0-b9bd-4cca-bc67-2a487c745e07",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-788e9ecb-9ee8-4fce-8fbb-dbb28c44d5bd",
+          "activeSessionId": "session-38606504-5bde-40b5-88f4-d5521848a814",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:07:59.485Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-56583f99-bef8-47d6-b729-e94b3aefaf90",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-d4e670b1-60ff-4fa7-b27a-f0564c51a427",
+          "activeSessionId": "session-a33b0349-3fdd-4850-8a7b-4df021b4a75c",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:07:10.537Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-7c8a2ef0-da9b-4d6d-a54b-106e10019381",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-12de59a6-b3fd-4c8f-a42d-bb40d6073f12",
+          "activeSessionId": "session-a3d9759c-0003-4760-96a4-ee086cd948d8",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:07:06.015Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-de6adc59-8105-43c0-b4aa-e9bbdf43e57b",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-00e734ad-de5e-4cb4-a11e-4d42fb47f8db",
+          "activeSessionId": "session-d366cd2e-05b4-4d1f-a0f8-bfc009ac7245",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:06:30.244Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-be31ad63-9740-4dc1-98b8-524499ea62e2",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-6a1c4fa7-a39a-4814-aac4-4e6be3d3cc0d",
+          "activeSessionId": "session-8030a52d-1862-4455-aab0-1344a8d4c8b4",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:05:41.681Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-d11ef946-5f4f-4d30-b0a8-95ebeeb1dd8f",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-69c14868-103d-4107-9147-9d87af496e1c",
+          "activeSessionId": "session-bfe492dd-e03f-4b6b-a184-5a4b1416c57f",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:05:38.801Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-55e3c3ad-b1e8-4485-8219-d019de3997cf",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-e9d1a6d6-9b73-41a7-8483-5c049d7842ab",
+          "activeSessionId": "session-012b7a64-ad69-44b0-8842-8568ab9b887f",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:05:03.492Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-046fa019-ba6c-4a8f-af6a-15cc5b720e15",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-2d5f1925-1bc9-486e-8fbc-df28e2990824",
+          "activeSessionId": "session-d7ce9c13-1433-4950-b244-d45c62e234e5",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:04:15.451Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-bcac9504-4d75-4858-baec-aba08b0b67ab",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-58c4a42f-5f35-4ea0-94f8-8a20bebab8fc",
+          "activeSessionId": "session-d8d97bc2-6c38-4f19-95d4-a2d7cce35ca9",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:04:11.998Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-0a1c5475-7afa-490c-ab9c-35e6ef7cb172",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-1e590821-dda4-493a-83d7-33a4f3a13d58",
+          "activeSessionId": "session-96c4e48c-024d-442d-9d3d-f84ce992cee4",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:03:38.288Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-de2cb009-88ab-43e1-bfdd-f57cf94bfc1f",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-b79b7b20-7f76-4e65-827f-b966c4014180",
+          "activeSessionId": "session-53f6900c-daab-4933-a521-54bd63e493ed",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:02:50.301Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-d64ba30c-a886-407d-8091-c8f9b5f3f7ac",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-132f5f0c-1914-41eb-a3a0-9c7541df8646",
+          "activeSessionId": "session-fe9deebd-b699-4bc7-841b-bfa7e7285459",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:02:47.894Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-bad515f5-f39e-4958-a015-04152b8fe977",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-5e9fed75-e171-4ba1-8a9e-31975304b30c",
+          "activeSessionId": "session-00b89ed0-e647-4527-9aca-b2ca9eebf3b4",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:02:13.678Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-9d6282f1-a71a-42eb-b6f9-adc15ca96f14",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-6ddd78ab-d860-4b37-b714-e4ddccf2b5dc",
+          "activeSessionId": "session-51230d26-88bf-45e5-97dc-c928ca511b3b",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:01:26.817Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-9534f1eb-fb34-4c4d-896d-51324cab8dee",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-eea9184b-dd2f-4a40-9cab-1871d7ca5938",
+          "activeSessionId": "session-68c3ced1-c0d5-41f4-9397-bb68956f88c1",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:01:15.710Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-1dd7c095-b117-462e-b334-f3f598b5fd94",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-f2b5b802-8891-47be-86eb-41c123c9b5df",
+          "activeSessionId": "session-2b524a15-bf5a-4ec4-9e34-f038218675c8",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T23:00:40.012Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-d0a6fa30-8a7f-4314-9545-3618a488f656",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-67d24c9e-01cc-4332-a592-73b39b56d256",
+          "activeSessionId": "session-47d0ec59-de69-42c3-8b90-22b866411a59",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:00:05.691Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-2c34beb7-ef7f-48e2-a67b-91126f497250",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-4bd0c787-fd3d-4bae-b6d6-7487d0c68f30",
+          "activeSessionId": "session-370dcef6-52be-4abb-8e0c-f5bc03003d75",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T23:00:04.349Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-938b52ab-1034-404c-bdce-cb4ff0af1218",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-fae0b34c-05cf-4da2-9577-8d0a750cb5fb",
+          "activeSessionId": "session-19c32ff2-7b0c-4604-9981-2c37d5d9e890",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T22:59:31.152Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-3bb334e6-50a9-4e3a-8cf3-a363c1e884dc",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-c18524e5-c9b9-44c1-bb92-8766e5c57ca9",
+          "activeSessionId": "session-ddb1d38d-01ab-4807-a45e-e6af455bcf30",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T22:58:44.762Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-f196ec50-2424-4933-8647-312fa6844280",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-24e506a6-d51a-4943-b71e-ed0311dac2e9",
+          "activeSessionId": "session-521d6092-113a-44d2-867c-c56ab724593c",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T22:58:40.519Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-da9b2479-e5f0-44a3-aafe-8c103794bbd8",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-dcd50523-d97e-4487-8f32-0d143ee839d7",
+          "activeSessionId": "session-7bd212b8-09a2-4341-969c-a912b1c2d98b",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T22:58:05.227Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-d636cad3-be10-45cd-b032-6ceb7051be0f",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-aeb751e8-6dcc-4b37-b2bb-b2fa89784864",
+          "activeSessionId": "session-e00474fb-1214-471e-83d4-cc9c7094c0e9",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": false,
+          "updatedAt": "2026-10-09T22:57:24.480Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true
+        },
+        {
+          "chatId": "chat-d139038f-14df-4138-8554-c09b703c7d5c",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-54c775e3-c7d6-49be-9efd-6ec04f2fd917",
+          "activeSessionId": "session-8bf66dac-b582-466e-9082-6840802693fa",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T22:57:12.579Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        },
+        {
+          "chatId": "chat-a2908c9b-0118-415b-9d19-6997ecdc277a",
+          "kind": "side",
+          "revision": 2,
+          "contentRevision": 1,
+          "activeSegmentId": "segment-6a1d544b-a39e-41b8-854c-0fee134293c3",
+          "activeSessionId": "session-4ba1a80a-414d-44e9-bd6e-ba6f119f9d38",
+          "originRefs": [],
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          },
+          "deepThinking": false,
+          "timeZone": "Asia/Shanghai",
+          "temporary": false,
+          "hasTemporaryContent": false,
+          "memoryMode": "on",
+          "recallEnabled": true,
+          "autoDeleteDays": 30,
+          "expiresAt": null,
+          "parent": {
+            "kind": "main",
+            "id": "chat-ec0e625a-6fd8-4afb-9e2a-0813a5925f26"
+          },
+          "pinned": false,
+          "unread": true,
+          "updatedAt": "2026-10-09T22:56:37.395Z",
+          "groupId": null,
+          "title": "新对话",
+          "archived": false,
+          "projectId": null,
+          "modelProfileId": "private-model-eb5728d0540f6780710f6dd157509bfaed969057",
+          "running": false,
+          "sendAvailable": true,
+          "taskAvailable": true,
+          "contextUsage": {
+            "usedTokens": 64164,
+            "contextWindow": 131072
+          }
+        }
+      ],
+      "nextCursor": null,
+      "hasMore": false,
+      "groups": [],
+      "indexState": "ready"
+    }
+  },
+  "commands": {
+    "status": 200,
+    "body": {
+      "commands": [
+        {
+          "commandId": "cmd-42fb9861-4e77-45f9-8bec-0a08ed7b2e20",
+          "requestId": "2ea1fc3c-f54b-49b2-aee9-33ae453f489f",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:18:26.564Z",
+          "updatedAt": "2026-10-09T23:18:26.640Z",
+          "sessionId": "session-9cc21ac2-a693-4b84-831f-696b8cd53caa",
+          "chatId": "chat-fb2566ff-2f37-4cc7-a65b-79b9afdd215c",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-b60852ed-1741-4262-9fde-afd0fd835c10",
+          "requestId": "6d91bf3f-7b9d-4f37-9722-e2235b038a85",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:18:02.311Z",
+          "updatedAt": "2026-10-09T23:18:02.404Z",
+          "sessionId": "session-af874b0a-c53b-488e-abf5-394096f42cf1",
+          "chatId": "chat-d9efeb5d-4311-4951-9f0d-f50ea7fdb900",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-51508083-a09e-4d97-bb16-7043340dcfb3",
+          "requestId": "d963f14f-c597-4909-a668-580403b99964",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:17:38.030Z",
+          "updatedAt": "2026-10-09T23:17:38.111Z",
+          "sessionId": "session-59e9674d-c462-46ff-b4bf-154c168a6cff",
+          "chatId": "chat-d3e178cb-c6fa-40ce-a8b4-e2cda1cc34ea",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-46bd19db-9e66-49b4-b7dc-251aac06de62",
+          "requestId": "00aea4e6-9146-4ecc-968f-8dbb5402f878",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:17:13.751Z",
+          "updatedAt": "2026-10-09T23:17:13.842Z",
+          "sessionId": "session-afd0c17a-e077-4e8f-9c99-a330d2ac4577",
+          "chatId": "chat-3182114d-156d-4aa4-9d6f-b8b9bb4d9bc4",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-febfd207-b448-4dcb-ac99-0e428e0fca0f",
+          "requestId": "cb5a6889-6f5e-448c-80f6-f7b16e0bb7fe",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:16:49.315Z",
+          "updatedAt": "2026-10-09T23:16:49.479Z",
+          "sessionId": "session-ef0b6649-6810-4fa3-99e5-09a3a2f3a07b",
+          "chatId": "chat-04560728-ecde-4b09-b267-4a44f91bd07c",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-d6e279c1-f6e9-414c-9fb9-4859f48d0662",
+          "requestId": "94610585-e6ab-45ac-ac67-ca74870df742",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:16:25.022Z",
+          "updatedAt": "2026-10-09T23:16:25.121Z",
+          "sessionId": "session-b4b53fd2-6786-4b38-a561-e6dde1490582",
+          "chatId": "chat-cc05b334-0aaa-459a-9eee-48befd9c28cf",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-633cb066-0d46-4b70-8c93-eeb16d63c242",
+          "requestId": "e8eb2b92-4817-41ba-808c-06b233776ba4",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:15:53.119Z",
+          "updatedAt": "2026-10-09T23:15:53.326Z",
+          "sessionId": "session-d08cf7b8-587d-4e2b-8cc1-da873d366a97",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_40 合成循环消息",
+          "receiptId": "7b9fb573-3217-4fa2-8d51-b603a2d71900"
+        },
+        {
+          "commandId": "cmd-e272c048-ac44-4d3c-81d5-071a981c6799",
+          "requestId": "cc507bf2-0271-4469-8c07-7ddbfd776fd8",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:15:43.016Z",
+          "updatedAt": "2026-10-09T23:15:43.083Z",
+          "sessionId": "session-d08cf7b8-587d-4e2b-8cc1-da873d366a97",
+          "chatId": "chat-fea39443-eaed-4af1-8ad0-2719a8b8c87d",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-d8be3efc-f6a1-4364-93e4-0bb9b740c682",
+          "requestId": "9febdbd7-ce60-4afa-920a-740c36899b73",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:15:29.149Z",
+          "updatedAt": "2026-10-09T23:15:29.391Z",
+          "sessionId": "session-8b05cd68-9264-4df7-9bef-de94eecedd28",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_39 合成循环消息",
+          "receiptId": "4a447d56-76f8-442d-a4e8-b088ba537a94"
+        },
+        {
+          "commandId": "cmd-f1831d9e-6452-414c-8e81-1beace3b84ec",
+          "requestId": "bbd8e754-4901-4ba7-8e87-a0a50df1a2a4",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:15:18.556Z",
+          "updatedAt": "2026-10-09T23:15:18.626Z",
+          "sessionId": "session-8b05cd68-9264-4df7-9bef-de94eecedd28",
+          "chatId": "chat-49799ba2-8400-4a19-9f19-0d67aa84e336",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-1c9e5f3c-0401-4afc-9ebb-741e8aa09c04",
+          "requestId": "56585327-2071-41c4-b90d-76dfd8e56b85",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:14:46.719Z",
+          "updatedAt": "2026-10-09T23:14:46.990Z",
+          "sessionId": "session-d14c4e60-20e2-44a7-968b-b273c28fb30f",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_38 合成循环消息",
+          "receiptId": "e5f1d8fc-0a5e-4ce2-a1c6-51f28fe62e30"
+        },
+        {
+          "commandId": "cmd-d45e97dd-e1a2-49b1-9f29-3e586b685cb3",
+          "requestId": "7b0bb678-1a64-4711-aa97-8ad992d89d7f",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:14:37.711Z",
+          "updatedAt": "2026-10-09T23:14:37.776Z",
+          "sessionId": "session-d14c4e60-20e2-44a7-968b-b273c28fb30f",
+          "chatId": "chat-d44c840b-c368-4d60-b5ae-ceeaf561e84c",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-941406ea-32a9-49d3-8628-57fa4cbd4bb5",
+          "requestId": "deab8e44-c782-4ae3-9367-a5b7d565da85",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:14:05.875Z",
+          "updatedAt": "2026-10-09T23:14:06.081Z",
+          "sessionId": "session-f44ec5a2-66f8-4c88-aa8c-55eb926b4ee8",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_37 合成循环消息",
+          "receiptId": "d276aa56-3a24-4526-8515-9ffb261195ef"
+        },
+        {
+          "commandId": "cmd-932ad436-1d0b-4313-9ffc-2a03c22f9da9",
+          "requestId": "bc649e8e-1460-443b-9a47-8124a9b28831",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:13:55.825Z",
+          "updatedAt": "2026-10-09T23:13:55.910Z",
+          "sessionId": "session-f44ec5a2-66f8-4c88-aa8c-55eb926b4ee8",
+          "chatId": "chat-e313f456-a038-43f1-991b-54ed74809540",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-a7bc39f4-8d05-4a0a-906f-7c6a50761290",
+          "requestId": "8d788d9d-ce7c-4f62-aca0-7b34e1b20dbe",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:13:41.955Z",
+          "updatedAt": "2026-10-09T23:13:42.175Z",
+          "sessionId": "session-81b103cd-16be-474f-bec7-94b492a6ffaa",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_36 合成循环消息",
+          "receiptId": "5431efce-efc4-42fa-9b28-2cfa4a7acc0b"
+        },
+        {
+          "commandId": "cmd-29c764ca-88ac-4fa8-884e-6cdf6714a25c",
+          "requestId": "ec815b87-6e1a-420d-89a8-e71e18c6e7f6",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:13:29.842Z",
+          "updatedAt": "2026-10-09T23:13:29.935Z",
+          "sessionId": "session-81b103cd-16be-474f-bec7-94b492a6ffaa",
+          "chatId": "chat-1b88a8a0-c8da-4175-8e8f-da0dcf4c8551",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-52572764-c90c-4554-98ac-4760ad841029",
+          "requestId": "28946708-2a8e-4959-90a2-0005145acfe9",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:12:57.992Z",
+          "updatedAt": "2026-10-09T23:12:58.255Z",
+          "sessionId": "session-129521c5-e6b6-4001-8f1b-cbec91607362",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_35 合成循环消息",
+          "receiptId": "9330ff4d-2222-4627-8cf9-2a60488cc760"
+        },
+        {
+          "commandId": "cmd-46e10e66-7c48-40a9-9189-6d20c016aee3",
+          "requestId": "77c14412-c46e-4ee7-8797-ce71018acd56",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:12:49.957Z",
+          "updatedAt": "2026-10-09T23:12:50.044Z",
+          "sessionId": "session-129521c5-e6b6-4001-8f1b-cbec91607362",
+          "chatId": "chat-b992a8ef-d92b-40af-a5b7-1d4ee77e8c92",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-089c4602-057b-4d00-97b7-4c5a3baf8fab",
+          "requestId": "7ad86f6d-1c62-4b4e-9765-edb196ac97c2",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:12:18.123Z",
+          "updatedAt": "2026-10-09T23:12:18.344Z",
+          "sessionId": "session-3d7508fc-e62b-432e-99d3-f325a0098b5e",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_34 合成循环消息",
+          "receiptId": "2299550b-c98e-4fb6-87b8-4bf0f25966e8"
+        },
+        {
+          "commandId": "cmd-a83b99df-bfbc-4646-b270-e5cace5a3940",
+          "requestId": "d47b91d9-af20-4f65-a711-21a11f5e0f4a",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:12:09.636Z",
+          "updatedAt": "2026-10-09T23:12:09.697Z",
+          "sessionId": "session-3d7508fc-e62b-432e-99d3-f325a0098b5e",
+          "chatId": "chat-24319194-678c-4a0b-987c-ac46887be9f3",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-d104ec74-63fd-41f4-a92f-61255f234136",
+          "requestId": "36be1a72-0c27-4240-988f-41fffde58e0b",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:11:55.782Z",
+          "updatedAt": "2026-10-09T23:11:55.987Z",
+          "sessionId": "session-8cfdb921-df0e-40f1-9785-2f6e1529ff10",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_33 合成循环消息",
+          "receiptId": "d5c51490-6ccf-4cdd-b809-acdb5d1943d2"
+        },
+        {
+          "commandId": "cmd-16774238-540d-465b-8a2b-98cf59612d03",
+          "requestId": "8791bf56-141d-44af-8c9f-f66a2b528838",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:11:49.339Z",
+          "updatedAt": "2026-10-09T23:11:49.402Z",
+          "sessionId": "session-8cfdb921-df0e-40f1-9785-2f6e1529ff10",
+          "chatId": "chat-a1787781-2ae6-4623-831d-b793deb41b7f",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-9171cff3-698f-4e49-a9b6-8ebc129cdffa",
+          "requestId": "ebe67ce3-c16d-48c8-b3ce-f4289ea82e25",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:11:17.493Z",
+          "updatedAt": "2026-10-09T23:11:17.716Z",
+          "sessionId": "session-054c44d1-e14d-4712-8b12-f075ba1ac164",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_32 合成循环消息",
+          "receiptId": "6ec3ca2c-85bd-4bf9-b1e0-9978fda4689a"
+        },
+        {
+          "commandId": "cmd-fb9cb696-273b-4807-b339-4ebfeeb14871",
+          "requestId": "79575bff-6ab6-4fed-9dcd-148cb61e56fc",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:11:08.995Z",
+          "updatedAt": "2026-10-09T23:11:09.062Z",
+          "sessionId": "session-054c44d1-e14d-4712-8b12-f075ba1ac164",
+          "chatId": "chat-e1f4171d-ab67-49f3-bbf7-b1d5313a0c0f",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-7b7d02fa-f403-450c-b400-5fdcac1cb193",
+          "requestId": "509183a8-baa0-466c-88ff-3d4c3d7364a9",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:10:37.152Z",
+          "updatedAt": "2026-10-09T23:10:37.367Z",
+          "sessionId": "session-e42bdc1e-0a24-48c4-8995-8b6c2b90b3a2",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_31 合成循环消息",
+          "receiptId": "4474b5fd-d2f9-41cd-aa94-122f651ef8ca"
+        },
+        {
+          "commandId": "cmd-93e130ef-47df-44fd-901b-6f2c97df21f2",
+          "requestId": "03f656d6-250d-4daf-8c2b-76d0d6155a45",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:10:32.703Z",
+          "updatedAt": "2026-10-09T23:10:32.786Z",
+          "sessionId": "session-e42bdc1e-0a24-48c4-8995-8b6c2b90b3a2",
+          "chatId": "chat-9a69b8df-9e9f-4133-b1a4-93de2ee80764",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-4e5c54b9-460d-46d7-8026-9b5581a670f5",
+          "requestId": "2cccf12d-1975-4372-8f62-6dcd5af7c62b",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:10:18.347Z",
+          "updatedAt": "2026-10-09T23:10:18.957Z",
+          "sessionId": "session-d0b7ca43-ec7b-4b6c-972b-7d42d10a4c44",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_30 合成循环消息",
+          "receiptId": "a8e2aa13-0e10-4561-bc7f-9f86c76d0f07"
+        },
+        {
+          "commandId": "cmd-779df866-81ba-4c02-9405-4aad4562a64c",
+          "requestId": "cb85e74d-a89d-406c-a321-825ca5cb8342",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:10:10.172Z",
+          "updatedAt": "2026-10-09T23:10:10.239Z",
+          "sessionId": "session-d0b7ca43-ec7b-4b6c-972b-7d42d10a4c44",
+          "chatId": "chat-b2b95796-5ff2-497b-a859-44199d57a735",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-19f8f94f-799d-4645-b4df-936547801b95",
+          "requestId": "ba9ffcd9-b44c-4302-9d7c-a06cf09c24b6",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:09:38.329Z",
+          "updatedAt": "2026-10-09T23:09:38.537Z",
+          "sessionId": "session-87155110-0617-47a8-89c4-ee2eb2e902f1",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_29 合成循环消息",
+          "receiptId": "2c75f1bc-8f03-4182-806f-24751ee2d959"
+        },
+        {
+          "commandId": "cmd-61ea54db-4640-4ee2-83c8-4b4f02a48646",
+          "requestId": "45ac7cac-5a5b-475f-ae9f-4979fdd73c44",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:09:32.907Z",
+          "updatedAt": "2026-10-09T23:09:32.972Z",
+          "sessionId": "session-87155110-0617-47a8-89c4-ee2eb2e902f1",
+          "chatId": "chat-d982e009-ee2d-4587-be78-63b06be143ec",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-e83c0be5-44fc-43d0-98ff-670430c93b90",
+          "requestId": "858ed2c0-9aa2-4787-8786-dfe11de45bcb",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:09:01.063Z",
+          "updatedAt": "2026-10-09T23:09:01.300Z",
+          "sessionId": "session-6efa1b0f-1d0a-437a-a144-d157d905996b",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_28 合成循环消息",
+          "receiptId": "94141d28-09a4-4c27-a178-6025f69c2322"
+        },
+        {
+          "commandId": "cmd-292d9355-1566-48e3-807f-659b24c6c421",
+          "requestId": "5f453afa-fcbb-45cc-b2db-88fb4a6f2dca",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:08:56.594Z",
+          "updatedAt": "2026-10-09T23:08:56.718Z",
+          "sessionId": "session-6efa1b0f-1d0a-437a-a144-d157d905996b",
+          "chatId": "chat-661bc1ca-c393-4c68-8549-59bd07862f98",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-daaa533c-ac67-4b9b-8cdb-72d25cf400ab",
+          "requestId": "c88f9135-1ee5-4373-9f5e-626178209f29",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:08:42.683Z",
+          "updatedAt": "2026-10-09T23:08:42.914Z",
+          "sessionId": "session-b6ab997d-9ac4-4cf5-855b-b67c75693aa2",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_27 合成循环消息",
+          "receiptId": "858c605b-2d7f-4428-b46e-4a5585928b63"
+        },
+        {
+          "commandId": "cmd-d5c85bbe-869d-4b62-9aba-4726a44ab82c",
+          "requestId": "3d37f9bb-7f5d-4e35-8de0-e6b55352ed30",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:08:37.253Z",
+          "updatedAt": "2026-10-09T23:08:37.327Z",
+          "sessionId": "session-b6ab997d-9ac4-4cf5-855b-b67c75693aa2",
+          "chatId": "chat-1e780fe6-9c23-45de-9551-1d84e4d8d639",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-3ea3f3fd-b156-4a04-ac65-79776e8d050f",
+          "requestId": "ceb9278d-d84e-40a1-b69d-b48ab1de7feb",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:08:05.404Z",
+          "updatedAt": "2026-10-09T23:08:05.567Z",
+          "sessionId": "session-99f84242-41a4-40bc-8c9e-f30c930df9f3",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_26 合成循环消息",
+          "receiptId": "d65200d3-b23f-46d3-9b75-89cb9d63e68d"
+        },
+        {
+          "commandId": "cmd-c85216b6-61f3-4f05-aab0-7696931af7ee",
+          "requestId": "9b06b9fa-9778-42ff-a841-42cfd6c36879",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:08:01.006Z",
+          "updatedAt": "2026-10-09T23:08:01.067Z",
+          "sessionId": "session-99f84242-41a4-40bc-8c9e-f30c930df9f3",
+          "chatId": "chat-a7732452-80af-4a04-b39e-f928b569ba3a",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-826bfe2b-b99b-442c-a99b-1a24bab37acf",
+          "requestId": "afcd4c70-1c13-4c44-9a8e-8eb754ec1f12",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:07:29.142Z",
+          "updatedAt": "2026-10-09T23:07:29.305Z",
+          "sessionId": "session-38606504-5bde-40b5-88f4-d5521848a814",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_25 合成循环消息",
+          "receiptId": "a19081df-500a-4703-8ac3-09b6bd1c18d1"
+        },
+        {
+          "commandId": "cmd-fca74be9-7403-4604-83a4-e773e9220514",
+          "requestId": "6e759e65-eb00-4b27-8420-70aac5377bcb",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:07:24.229Z",
+          "updatedAt": "2026-10-09T23:07:24.280Z",
+          "sessionId": "session-38606504-5bde-40b5-88f4-d5521848a814",
+          "chatId": "chat-ba3eadb0-b9bd-4cca-bc67-2a487c745e07",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-2aac2605-6b82-451e-b12f-6bb41ac3bd02",
+          "requestId": "68c36222-df8c-4291-9f6b-ed17c8f2d9bd",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:07:10.334Z",
+          "updatedAt": "2026-10-09T23:07:10.510Z",
+          "sessionId": "session-a33b0349-3fdd-4850-8a7b-4df021b4a75c",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_24 合成循环消息",
+          "receiptId": "9ca96f74-07f9-4529-818a-aed15f11dfbf"
+        },
+        {
+          "commandId": "cmd-77c93449-16a8-4df7-9e72-2e91122c0616",
+          "requestId": "c385f3d7-9db7-4fa4-aab8-77fd01b6704c",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:07:05.923Z",
+          "updatedAt": "2026-10-09T23:07:05.987Z",
+          "sessionId": "session-a33b0349-3fdd-4850-8a7b-4df021b4a75c",
+          "chatId": "chat-56583f99-bef8-47d6-b729-e94b3aefaf90",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-d2599780-74ea-40a6-8579-6feefd941f01",
+          "requestId": "170e1526-6ee6-4b01-bdb4-cbae31cf2d6e",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:06:34.575Z",
+          "updatedAt": "2026-10-09T23:06:34.734Z",
+          "sessionId": "session-a3d9759c-0003-4760-96a4-ee086cd948d8",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_23 合成循环消息",
+          "receiptId": "860b0763-0941-4029-bf3a-9f4707681e42"
+        },
+        {
+          "commandId": "cmd-edc761b0-3180-448a-9de6-da12279ed4ba",
+          "requestId": "ad6ed1b2-6d27-49ab-8551-6bed6b8ebd64",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:06:30.149Z",
+          "updatedAt": "2026-10-09T23:06:30.206Z",
+          "sessionId": "session-a3d9759c-0003-4760-96a4-ee086cd948d8",
+          "chatId": "chat-7c8a2ef0-da9b-4d6d-a54b-106e10019381",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-67b41483-cf7c-440e-924a-f8c129d5ca7b",
+          "requestId": "0722f5ef-bcb6-4ce1-bebd-8d72f3cf28bb",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:05:58.815Z",
+          "updatedAt": "2026-10-09T23:05:58.983Z",
+          "sessionId": "session-d366cd2e-05b4-4d1f-a0f8-bfc009ac7245",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_22 合成循环消息",
+          "receiptId": "a4b91a96-450a-4598-b8b5-9c49a901045a"
+        },
+        {
+          "commandId": "cmd-5123220d-fba5-4030-b42a-4ac42daf9f7e",
+          "requestId": "6ccf6f41-f520-42b1-958c-662caf95268f",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:05:54.893Z",
+          "updatedAt": "2026-10-09T23:05:54.966Z",
+          "sessionId": "session-d366cd2e-05b4-4d1f-a0f8-bfc009ac7245",
+          "chatId": "chat-de6adc59-8105-43c0-b4aa-e9bbdf43e57b",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-55a7b261-c6bf-487f-b81e-d9989d917181",
+          "requestId": "07834fd9-f51b-48a8-8bbc-94cf765333dd",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:05:41.542Z",
+          "updatedAt": "2026-10-09T23:05:41.664Z",
+          "sessionId": "session-8030a52d-1862-4455-aab0-1344a8d4c8b4",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_21 合成循环消息",
+          "receiptId": "3b8ab6f1-3744-4a6e-9900-c2a7d9da3d61"
+        },
+        {
+          "commandId": "cmd-3749771f-16dd-4c4a-b083-61dafc34ce85",
+          "requestId": "01143d22-2cb9-450b-82aa-44b0e2ceec8a",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:05:38.681Z",
+          "updatedAt": "2026-10-09T23:05:38.751Z",
+          "sessionId": "session-8030a52d-1862-4455-aab0-1344a8d4c8b4",
+          "chatId": "chat-be31ad63-9740-4dc1-98b8-524499ea62e2",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-665aba3a-1766-42cf-8bd1-db7e55fbdad6",
+          "requestId": "7e357ab4-b5db-47db-8140-369c8039731e",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:05:06.762Z",
+          "updatedAt": "2026-10-09T23:05:06.914Z",
+          "sessionId": "session-bfe492dd-e03f-4b6b-a184-5a4b1416c57f",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_20 合成循环消息",
+          "receiptId": "d61a4b3c-bf85-4a5e-ab3b-79565b5e9f97"
+        },
+        {
+          "commandId": "cmd-6593a97f-baa3-4236-b4cb-f8a776b9d59a",
+          "requestId": "20b359fb-821a-4d9f-a833-311f3cea5d36",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:05:03.390Z",
+          "updatedAt": "2026-10-09T23:05:03.453Z",
+          "sessionId": "session-bfe492dd-e03f-4b6b-a184-5a4b1416c57f",
+          "chatId": "chat-d11ef946-5f4f-4d30-b0a8-95ebeeb1dd8f",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-a7cc260f-a682-48cb-9465-0927b05039a7",
+          "requestId": "e12c6205-6ff3-4d1c-90bc-8bc2ae5f1bec",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:04:31.520Z",
+          "updatedAt": "2026-10-09T23:04:31.698Z",
+          "sessionId": "session-012b7a64-ad69-44b0-8842-8568ab9b887f",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_19 合成循环消息",
+          "receiptId": "781132fa-927d-4060-93c6-938fb26ce9f6"
+        },
+        {
+          "commandId": "cmd-194148f6-5ab6-4653-a3f2-5369ff76846d",
+          "requestId": "5e37943f-a70e-40d0-ade0-73af586918a7",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:04:28.651Z",
+          "updatedAt": "2026-10-09T23:04:28.704Z",
+          "sessionId": "session-012b7a64-ad69-44b0-8842-8568ab9b887f",
+          "chatId": "chat-55e3c3ad-b1e8-4485-8219-d019de3997cf",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-a1a9f94f-9c37-4cbc-9d29-6113ebd80564",
+          "requestId": "f791d44e-54a8-4a50-bab5-4182a8899552",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:04:15.291Z",
+          "updatedAt": "2026-10-09T23:04:15.432Z",
+          "sessionId": "session-d7ce9c13-1433-4950-b244-d45c62e234e5",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_18 合成循环消息",
+          "receiptId": "4c179bb7-0bec-4496-94c2-dc13a9534522"
+        },
+        {
+          "commandId": "cmd-0df77c6e-bd85-48db-ac01-cfb39d7c4fc1",
+          "requestId": "275fe330-d56e-414a-a802-758e7844308c",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:04:11.900Z",
+          "updatedAt": "2026-10-09T23:04:11.962Z",
+          "sessionId": "session-d7ce9c13-1433-4950-b244-d45c62e234e5",
+          "chatId": "chat-046fa019-ba6c-4a8f-af6a-15cc5b720e15",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-989d7e86-8dfc-4bd1-a391-457e286f0704",
+          "requestId": "e396ac7c-528e-4c6d-ba8b-b30b1f102801",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:03:40.542Z",
+          "updatedAt": "2026-10-09T23:03:40.690Z",
+          "sessionId": "session-d8d97bc2-6c38-4f19-95d4-a2d7cce35ca9",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_17 合成循环消息",
+          "receiptId": "7211d3ba-e594-4521-838c-c9922cb66b37"
+        },
+        {
+          "commandId": "cmd-0defa9aa-e787-43bb-8b38-f7105193f2c1",
+          "requestId": "bf56c62a-453a-4ecd-847d-a018a30705d5",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:03:38.206Z",
+          "updatedAt": "2026-10-09T23:03:38.259Z",
+          "sessionId": "session-d8d97bc2-6c38-4f19-95d4-a2d7cce35ca9",
+          "chatId": "chat-bcac9504-4d75-4858-baec-aba08b0b67ab",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-ce449f79-fa74-45bd-9952-c5b7b961b952",
+          "requestId": "b194027b-0805-40ca-929c-24392dfa4740",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:03:06.371Z",
+          "updatedAt": "2026-10-09T23:03:06.538Z",
+          "sessionId": "session-96c4e48c-024d-442d-9d3d-f84ce992cee4",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_16 合成循环消息",
+          "receiptId": "7b677069-f190-4e27-9e3e-d61223f4077f"
+        },
+        {
+          "commandId": "cmd-ef5a461d-a376-48d5-bc08-a9910efefe13",
+          "requestId": "c2c42b14-6c79-4629-8d42-ae3c58d4c757",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:03:04.035Z",
+          "updatedAt": "2026-10-09T23:03:04.080Z",
+          "sessionId": "session-96c4e48c-024d-442d-9d3d-f84ce992cee4",
+          "chatId": "chat-0a1c5475-7afa-490c-ab9c-35e6ef7cb172",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-2aae6028-454b-44a4-a0b2-48f9385ea069",
+          "requestId": "43754314-bfb7-4674-ae32-76dea21af6ce",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:02:50.162Z",
+          "updatedAt": "2026-10-09T23:02:50.282Z",
+          "sessionId": "session-53f6900c-daab-4933-a521-54bd63e493ed",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_15 合成循环消息",
+          "receiptId": "0eee982f-dc58-4dae-8304-06eb5decdf54"
+        },
+        {
+          "commandId": "cmd-8a8ecc5e-26c6-4e03-8c9b-30b68620b876",
+          "requestId": "c7ca18d9-d99f-44a0-ae79-df157c776d0f",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:02:47.817Z",
+          "updatedAt": "2026-10-09T23:02:47.873Z",
+          "sessionId": "session-53f6900c-daab-4933-a521-54bd63e493ed",
+          "chatId": "chat-de2cb009-88ab-43e1-bfdd-f57cf94bfc1f",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-c8175437-23e1-4e58-b24d-9310a67956a0",
+          "requestId": "5c5b8c6b-8510-47f3-ae0a-ded98bcca256",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:02:15.950Z",
+          "updatedAt": "2026-10-09T23:02:16.069Z",
+          "sessionId": "session-fe9deebd-b699-4bc7-841b-bfa7e7285459",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_14 合成循环消息",
+          "receiptId": "dc1dde5a-144e-4664-abd1-0a0c68ee8070"
+        },
+        {
+          "commandId": "cmd-14ac7efe-4877-4b33-83e1-de74267f3d2e",
+          "requestId": "7324ca56-5dd4-41e9-9cc8-cf93f2b54c0c",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:02:13.605Z",
+          "updatedAt": "2026-10-09T23:02:13.663Z",
+          "sessionId": "session-fe9deebd-b699-4bc7-841b-bfa7e7285459",
+          "chatId": "chat-d64ba30c-a886-407d-8091-c8f9b5f3f7ac",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-539eee09-e6aa-49cb-8bfd-1019596540d2",
+          "requestId": "8c4ddde1-e6fb-4764-8483-b374d9ff8c66",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:01:42.378Z",
+          "updatedAt": "2026-10-09T23:01:42.487Z",
+          "sessionId": "session-00b89ed0-e647-4527-9aca-b2ca9eebf3b4",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_13 合成循环消息",
+          "receiptId": "e5cb18d7-86ff-4323-bd78-ff04cac3273b"
+        },
+        {
+          "commandId": "cmd-babf4c8b-b2fd-4ba5-8eee-b5602439db01",
+          "requestId": "31efb870-2262-4328-a2a9-4048595d47e5",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:01:40.570Z",
+          "updatedAt": "2026-10-09T23:01:40.617Z",
+          "sessionId": "session-00b89ed0-e647-4527-9aca-b2ca9eebf3b4",
+          "chatId": "chat-bad515f5-f39e-4958-a015-04152b8fe977",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-d4d7e0a1-2c14-4562-a892-aa6c55fde78a",
+          "requestId": "d6f2bd28-bb21-4cbf-954a-09d5035de16b",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:01:26.696Z",
+          "updatedAt": "2026-10-09T23:01:26.801Z",
+          "sessionId": "session-51230d26-88bf-45e5-97dc-c928ca511b3b",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_12 合成循环消息",
+          "receiptId": "3088f464-f632-407f-803a-0e468909fac8"
+        },
+        {
+          "commandId": "cmd-31a8d54c-1a81-48a1-8eec-09d178eade80",
+          "requestId": "eb0eb5d6-e156-4cc2-a8dd-d90eb14f4cb1",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:01:24.861Z",
+          "updatedAt": "2026-10-09T23:01:24.907Z",
+          "sessionId": "session-51230d26-88bf-45e5-97dc-c928ca511b3b",
+          "chatId": "chat-9d6282f1-a71a-42eb-b6f9-adc15ca96f14",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-bca7c7f6-ed0b-4125-9f87-eed0dcfc8e26",
+          "requestId": "76655838-44f6-4287-9a1d-4076c095c2da",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:00:53.532Z",
+          "updatedAt": "2026-10-09T23:00:53.639Z",
+          "sessionId": "session-68c3ced1-c0d5-41f4-9397-bb68956f88c1",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_11 合成循环消息",
+          "receiptId": "99832c79-6d56-4225-b67b-dd7f88e2cea0"
+        },
+        {
+          "commandId": "cmd-dee5d967-b173-4721-b6ef-f3cbde301c48",
+          "requestId": "fdecfbe4-48ab-441a-accc-413ddabb6186",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:00:52.216Z",
+          "updatedAt": "2026-10-09T23:00:52.267Z",
+          "sessionId": "session-68c3ced1-c0d5-41f4-9397-bb68956f88c1",
+          "chatId": "chat-9534f1eb-fb34-4c4d-896d-51324cab8dee",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-b464c4ce-6e77-4476-bc90-e7d2d4a1724d",
+          "requestId": "79939feb-073b-4401-9829-38cacea2d510",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:00:20.794Z",
+          "updatedAt": "2026-10-09T23:00:20.883Z",
+          "sessionId": "session-2b524a15-bf5a-4ec4-9e34-f038218675c8",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_10 合成循环消息",
+          "receiptId": "7ad481bd-7336-4ed4-b931-87cfbd307dd9"
+        },
+        {
+          "commandId": "cmd-9fa2067c-ee4a-41ef-8de2-193267fa7e72",
+          "requestId": "543a038a-9cd0-4dc4-8645-d3dfcd84f6e7",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:00:18.956Z",
+          "updatedAt": "2026-10-09T23:00:19.023Z",
+          "sessionId": "session-2b524a15-bf5a-4ec4-9e34-f038218675c8",
+          "chatId": "chat-1dd7c095-b117-462e-b334-f3f598b5fd94",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-76936d43-b4c6-490c-aca5-91ba37d756a1",
+          "requestId": "8dda44ae-78b3-4492-9b64-f56a5766e91e",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:00:05.592Z",
+          "updatedAt": "2026-10-09T23:00:05.675Z",
+          "sessionId": "session-47d0ec59-de69-42c3-8b90-22b866411a59",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_9 合成循环消息",
+          "receiptId": "4d109047-d365-4190-9cb8-0a91c1c69339"
+        },
+        {
+          "commandId": "cmd-4a9dc2e4-50e6-41f4-97d6-3777d380928b",
+          "requestId": "689cc59f-722c-4584-9c6e-69fb4ebe3115",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T23:00:04.297Z",
+          "updatedAt": "2026-10-09T23:00:04.349Z",
+          "sessionId": "session-47d0ec59-de69-42c3-8b90-22b866411a59",
+          "chatId": "chat-d0a6fa30-8a7f-4314-9545-3618a488f656",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-f21bd88c-eeea-4dd1-ba98-5e72c1da9680",
+          "requestId": "86ae8a78-81b4-45a3-875a-45500a352357",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:59:32.426Z",
+          "updatedAt": "2026-10-09T22:59:32.531Z",
+          "sessionId": "session-370dcef6-52be-4abb-8e0c-f5bc03003d75",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_8 合成循环消息",
+          "receiptId": "b084feee-feea-4a49-a112-d8bf9e04df74"
+        },
+        {
+          "commandId": "cmd-f7d51433-103f-41ef-947b-70be05b6a73e",
+          "requestId": "7e855fb1-21c9-40d6-8856-3d3f8a1d2795",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:59:31.120Z",
+          "updatedAt": "2026-10-09T22:59:31.179Z",
+          "sessionId": "session-370dcef6-52be-4abb-8e0c-f5bc03003d75",
+          "chatId": "chat-2c34beb7-ef7f-48e2-a67b-91126f497250",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-8604d9c3-1061-473a-a313-e94862e45865",
+          "requestId": "04b6b5dd-37ca-4f0a-aa65-5e0d14de2df8",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:58:59.873Z",
+          "updatedAt": "2026-10-09T22:58:59.962Z",
+          "sessionId": "session-19c32ff2-7b0c-4604-9981-2c37d5d9e890",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_7 合成循环消息",
+          "receiptId": "8abf91ff-f9bf-4aeb-9c10-a55a5ca8e5df"
+        },
+        {
+          "commandId": "cmd-01c61f27-08ee-4253-9877-5424614a4719",
+          "requestId": "ee9a2973-e99f-4954-becd-18d2464cdd25",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:58:58.581Z",
+          "updatedAt": "2026-10-09T22:58:58.622Z",
+          "sessionId": "session-19c32ff2-7b0c-4604-9981-2c37d5d9e890",
+          "chatId": "chat-938b52ab-1034-404c-bdce-cb4ff0af1218",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-c3be833f-65af-4127-9e26-7de31b58244b",
+          "requestId": "6d025419-ffe8-4d14-bffa-0dee9c0b8c44",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:58:44.681Z",
+          "updatedAt": "2026-10-09T22:58:44.747Z",
+          "sessionId": "session-ddb1d38d-01ab-4807-a45e-e6af455bcf30",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_6 合成循环消息",
+          "receiptId": "aaac5411-6866-44f5-8698-29999e737b1f"
+        },
+        {
+          "commandId": "cmd-cd5c2a93-38e9-4fee-a780-2053f15acf9d",
+          "requestId": "fc89af40-78fe-4921-9613-fdcaeb0be423",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:58:43.384Z",
+          "updatedAt": "2026-10-09T22:58:43.425Z",
+          "sessionId": "session-ddb1d38d-01ab-4807-a45e-e6af455bcf30",
+          "chatId": "chat-3bb334e6-50a9-4e3a-8cf3-a363c1e884dc",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-d5d0bd55-ecd6-4eba-b4ff-ec6ffe4bef28",
+          "requestId": "0d37ba83-4bc4-484c-b053-c926250092fe",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:58:12.061Z",
+          "updatedAt": "2026-10-09T22:58:12.148Z",
+          "sessionId": "session-521d6092-113a-44d2-867c-c56ab724593c",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_5 合成循环消息",
+          "receiptId": "00a46dae-bdd8-46ba-86a3-f929fc84b001"
+        },
+        {
+          "commandId": "cmd-c19211b5-3353-42ce-936f-da054b806de3",
+          "requestId": "8783ffc3-221e-43b4-94ff-6291ca353495",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:58:10.806Z",
+          "updatedAt": "2026-10-09T22:58:10.855Z",
+          "sessionId": "session-521d6092-113a-44d2-867c-c56ab724593c",
+          "chatId": "chat-f196ec50-2424-4933-8647-312fa6844280",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-691a077b-a491-4365-ade6-6ee925c206fe",
+          "requestId": "7f745df8-7505-4693-8d87-4a3867a7feed",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:57:38.975Z",
+          "updatedAt": "2026-10-09T22:57:39.048Z",
+          "sessionId": "session-7bd212b8-09a2-4341-969c-a912b1c2d98b",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_4 合成循环消息",
+          "receiptId": "756725cd-fa93-47db-a341-0c0c648ea61a"
+        },
+        {
+          "commandId": "cmd-042161be-66c4-45fe-8b16-5aa50c7e2988",
+          "requestId": "f0a1477f-fc10-4ef6-8720-b80382d4f88e",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:57:37.712Z",
+          "updatedAt": "2026-10-09T22:57:37.786Z",
+          "sessionId": "session-7bd212b8-09a2-4341-969c-a912b1c2d98b",
+          "chatId": "chat-da9b2479-e5f0-44a3-aafe-8c103794bbd8",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-352e2bbb-17ea-405c-9c68-0f93c5e2dffb",
+          "requestId": "adcd886e-3597-4622-adc4-18f456ad301a",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:57:24.401Z",
+          "updatedAt": "2026-10-09T22:57:24.466Z",
+          "sessionId": "session-e00474fb-1214-471e-83d4-cc9c7094c0e9",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_3 合成循环消息",
+          "receiptId": "7b0db853-3912-416a-8133-077ece559d76"
+        },
+        {
+          "commandId": "cmd-edb9a095-98c3-4fd9-8310-0409790ad95d",
+          "requestId": "acdb3a58-0951-4e7c-a502-750881c90604",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:57:23.644Z",
+          "updatedAt": "2026-10-09T22:57:23.684Z",
+          "sessionId": "session-e00474fb-1214-471e-83d4-cc9c7094c0e9",
+          "chatId": "chat-d636cad3-be10-45cd-b032-6ceb7051be0f",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-dd5d84cf-8613-461d-ac70-bc8e7e297934",
+          "requestId": "2f772665-f7de-4b3d-81d5-03a06cf21d0f",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:56:52.354Z",
+          "updatedAt": "2026-10-09T22:56:52.420Z",
+          "sessionId": "session-8bf66dac-b582-466e-9082-6840802693fa",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_2 合成循环消息",
+          "receiptId": "93a73980-c831-476f-ad69-444962fb8dba"
+        },
+        {
+          "commandId": "cmd-96bba631-0020-4b7c-b009-f1b9d3acca48",
+          "requestId": "c0f122df-ffa0-4eea-b748-5031bcc911de",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:56:51.592Z",
+          "updatedAt": "2026-10-09T22:56:51.648Z",
+          "sessionId": "session-8bf66dac-b582-466e-9082-6840802693fa",
+          "chatId": "chat-d139038f-14df-4138-8554-c09b703c7d5c",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        },
+        {
+          "commandId": "cmd-cc29e8ca-4456-4db0-ab2d-5fcdc4b89fce",
+          "requestId": "9ba97106-fefd-41d8-b71c-cc7c094fb593",
+          "kind": "session.message",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:56:19.696Z",
+          "updatedAt": "2026-10-09T22:56:19.761Z",
+          "sessionId": "session-4ba1a80a-414d-44e9-bd6e-ba6f119f9d38",
+          "intent": "queue",
+          "taskLabel": "QA1_SYNTHETIC_BODY_1 合成循环消息",
+          "receiptId": "eeafbc6e-8658-4ec2-b839-13b143652941"
+        },
+        {
+          "commandId": "cmd-3d56bbb8-6849-484d-90d5-c7de08806b0c",
+          "requestId": "c853e517-4763-46c7-a496-5b571cc65e18",
+          "kind": "session.side.create",
+          "targetDeviceId": "host-056f8120-42b5-43b9-8ebf-3bda15987a11",
+          "state": "accepted_by_dsh",
+          "createdAt": "2026-10-09T22:56:18.915Z",
+          "updatedAt": "2026-10-09T22:56:19.057Z",
+          "sessionId": "session-4ba1a80a-414d-44e9-bd6e-ba6f119f9d38",
+          "chatId": "chat-a2908c9b-0118-415b-9d19-6997ecdc277a",
+          "contextTransfer": {
+            "state": "references_only",
+            "sourceRefs": [],
+            "truncated": false
+          }
+        }
+      ],
+      "nextBefore": null,
+      "hasMore": false
+    }
+  },
+  "messageDisabled": false,
+  "title": "新对话"
+}

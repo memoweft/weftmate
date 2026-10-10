@@ -1,0 +1,6 @@
+{
+  "phoneWeb": true,
+  "androidPackage": true,
+  "nativeBridge": "synthetic transport to real isolated host",
+  "errors": []
+}

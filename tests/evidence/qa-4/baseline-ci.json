@@ -1,0 +1,14 @@
+{
+  "revision": "b64378a9d46b85d24c4f8ae8c9853006ae7784c9",
+  "run": "https://github.com/memoweft/weftmate/actions/runs/38001703987",
+  "failedJob": "https://github.com/memoweft/weftmate/actions/runs/38001703987/job/114061181494",
+  "test": "tests/personal-desktop-ui.test.ts:44",
+  "failure": "question-bar remains visible after answer; tests/integration/desktop-ui-interactions.mjs:68; 25000ms timeout",
+  "observedCore": "success",
+  "windows": "in_progress",
+  "localExactRegression": {
+    "passed": true,
+    "durationMs": 182854.1847,
+    "log": "logs/baseline-question-regression.log"
+  }
+}
