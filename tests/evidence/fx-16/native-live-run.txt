@@ -1,0 +1,23 @@
+electron.launch: Timeout 90000ms exceeded.
+Call log:
+  - <launching> "D:\AIProjects\WeftMate\Worktrees\w2\node_modules\electron\dist\electron.exe" "--inspect=0" "--remote-debugging-port=0" "D:\AIProjects\WeftMate\Worktrees\w2\tests\evidence\fx-16\runners\native-live-bootstrap.mjs" "--user-data-dir=C:\Temp\weftmate-fx16-native-live-IJk4fP\profile" "--personal-host" "--access-port=0"
+  - <launched> pid=24332
+  - [pid=24332][out]
+  - [pid=24332][err] Debugger listening on ws://127.0.0.1:53599/4409244d-657a-4168-8cb3-786393ef6450
+  - [pid=24332][err] For help, see: https://nodejs.org/learn/getting-started/debugging
+  - <ws connecting> ws://127.0.0.1:53599/4409244d-657a-4168-8cb3-786393ef6450
+  - <ws connected> ws://127.0.0.1:53599/4409244d-657a-4168-8cb3-786393ef6450
+  - [pid=24332][err] Debugger attached.
+  - [pid=24332][err] App threw an error during load
+  - [pid=24332][err] SyntaxError: missing ) after argument list
+  - [pid=24332][err]     at compileSourceTextModule (node:internal/modules/esm/utils:320:16)
+  - [pid=24332][err]     at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:89:18)
+  - [pid=24332][err]     at #translate (node:internal/modules/esm/loader:438:20)
+  - [pid=24332][err]     at afterLoad (node:internal/modules/esm/loader:506:29)
+  - [pid=24332][err]     at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:511:12)
+  - [pid=24332][err]     at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:564:36)
+  - [pid=24332][err]     at afterResolve (node:internal/modules/esm/loader:611:52)
+  - [pid=24332][err]     at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:617:12)
+  - [pid=24332][err]     at node:internal/modules/esm/loader:636:32
+  - [pid=24332][err]     at TracingChannel.tracePromise (node:diagnostics_channel:362:14)
+

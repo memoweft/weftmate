@@ -1,0 +1,33 @@
+✔ offline cached phone binding keeps its read context and resource cache without enabling sends (31.3088ms)
+✔ late offline-resource reply stays out after a conversation switch (3.4391ms)
+✔ late offline-resource reply stays out after a owner switch (3.0144ms)
+✔ FX-10 describing many requested sessions uses one native list and preserves individual descriptor facts (3.8428ms)
+✔ durable history pagination keeps sparse DSH seq and excludes tools, injected context, paths and secrets (2.4659ms)
+✔ many hidden deltas advance the scanned watermark without delaying an aborted turn (1.6888ms)
+✔ 2400+ event session opens the recent tail without inspecting its beginning and pages older/incremental (5.2421ms)
+✔ old explicit afterSeq=-1 reads every page forwards, keeping sparse hidden seq watermarks (8.4289ms)
+✔ byte paging truncates a huge event and returns all 200 large messages without a failed page (12.4829ms)
+✔ native lifecycle, interactions, artifact results and reserved queue projection share distinct seq (2.4619ms)
+✔ empty/hidden histories advance correctly and zero beforeSeq is an empty older page (0.2372ms)
+✔ host callbacks preflight selected model and ownership before dispatch; create binds then selects (1.5535ms)
+✔ configured chat and restricted desktop capability stay separate from real tool verification (0.6381ms)
+✔ document artifact preflight permits only the original owner and restricted session (0.4244ms)
+✔ parallel tool completion metadata visits source ranges once across 3000-event pagination (44.1711ms)
+✔ incremental cursor waits for a pending native step end, then publishes the correct terminal without skipping seq (0.5192ms)
+✔ an intermediate model step end does not end its task and only new raw events update the lifecycle cut (0.4301ms)
+✔ isolated synthetic memory HTTP contract keeps owners, cursors and receipts separate (5939.9517ms)
+✔ memory page keeps scripts external and uses only the candidate static publisher (3.2293ms)
+✔ memory view preserves chat draft and discards a successful response for another cookie owner (496.0627ms)
+✔ activity uses stable native identities, redacts temporary task/approval/question content before persistence and prevents erasure replay (5.1223ms)
+✔ approval status updates keep one activity, native response identity and increment attention without preserving forgotten body (0.7508ms)
+✔ native terminal task waits for background effects and shares the IA-3 result activity identity (0.694ms)
+✔ activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes (4186.2902ms)
+✔ MEM-D formation pending does not masquerade as pause; model unavailability creates one event per real transition (3250.861ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11656.0956

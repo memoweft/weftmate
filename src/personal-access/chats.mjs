@@ -13,7 +13,7 @@ export function createChatOperations(context) {
     if (!validId(chatId) || !chat) throw failure('CHAT_UNAVAILABLE', 404);
     return chat;
   }
-  async function view(ownerId, chatId) {
+  async function view(ownerId, chatId, snapshot) {
     const chat = requireChat(ownerId, chatId), account = context.accountState(ownerId), identity = account.chatIdentity;
     const segment = identity.segments[chat.activeSegmentId], session = account.sessions[segment?.sessionId];
     const base = { chatId, kind: chat.kind, revision: chat.revision, contentRevision: chat.contentRevision,
@@ -29,8 +29,8 @@ export function createChatOperations(context) {
       taskAvailable: false };
     let described, summary;
     try {
-      described = await context.callBackend(() => context.backend.describeSession(segment.sessionId, ownerId));
-      if (!described) throw failure('SESSION_UNAVAILABLE', 404);
+      described = (snapshot ?? await context.sessionOperations.describe(ownerId,[segment.sessionId])).get(segment.sessionId);
+      if (!described || described.unavailable) throw failure('SESSION_UNAVAILABLE', 404);
       summary = await context.sessionOperations.summary(ownerId, segment.sessionId);
     } catch { return { ...base, title: session.title ?? '', pinned: chat.kind === 'main' || session.pinned === true,
       archived: session.archived === true, unread: session.unread === true, groupId: session.groupId ?? null,
@@ -115,16 +115,18 @@ export function createChatOperations(context) {
       } else {
         const candidates = Object.values(account.chatIdentity.chats).filter(chat => chat.kind === 'side');
         const rows = [];
+        const activityBySession = new Map();
+        for (const command of Object.values(account.commands)) if (command.sessionId && command.updatedAt > (activityBySession.get(command.sessionId) ?? '')) activityBySession.set(command.sessionId,command.updatedAt);
+        const searchSnapshot = q ? await context.sessionOperations.describe(ownerId,candidates.map(chat => account.chatIdentity.segments[chat.activeSegmentId].sessionId)) : null;
         for (const chat of candidates) {
           const segment = account.chatIdentity.segments[chat.activeSegmentId], session = account.sessions[segment.sessionId];
           if (archived !== 'all' && (session.archived === true) !== (archived === 'true') ||
               parentKind && parentKind !== (session.projectId ? 'project' : 'main') ||
               parentId && parentId !== (session.projectId ?? account.chatIdentity.mainChatId)) continue;
           // Titles remain native; only title search needs description of every candidate.
-          const title = q ? session.title ?? (await view(ownerId, chat.chatId)).title : '';
+          const title = q ? session.title ?? searchSnapshot.get(segment.sessionId)?.title ?? '' : '';
           if (q && !title.toLocaleLowerCase().includes(q.toLocaleLowerCase())) continue;
-          const activity = Object.values(account.commands).filter(command => command.sessionId === segment.sessionId)
-            .reduce((latest, command) => command.updatedAt > latest ? command.updatedAt : latest, chat.createdAt);
+          const activity = [activityBySession.get(segment.sessionId),context.sessionOperations.activityTime(ownerId,segment.sessionId),chat.createdAt].filter(Boolean).sort().at(-1);
           rows.push({ id: chat.chatId, pinned: session.pinned === true, activity });
         }
         rows.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.activity.localeCompare(a.activity) || a.id.localeCompare(b.id));
@@ -132,8 +134,9 @@ export function createChatOperations(context) {
       }
       const selected = ids.slice(0, Number(limit)), remaining = ids.slice(Number(limit));
       const items = [];
-      for (const chatId of selected) if (context.accountState(ownerId).chatIdentity.chats[chatId]) items.push(await view(ownerId, chatId));
-      const nextCursor = remaining.length ? `chat-page-${randomUUID()}` : null;
+      const snapshot = await context.sessionOperations.describe(ownerId, selected.map(id => account.chatIdentity.segments[account.chatIdentity.chats[id]?.activeSegmentId]?.sessionId).filter(Boolean));
+      for (const chatId of selected) if (context.accountState(ownerId).chatIdentity.chats[chatId]) items.push(await view(ownerId, chatId,snapshot));
+      const nextCursor = remaining.length ? `chat-page-${digest(JSON.stringify({ownerId,filter,ids:remaining}))}` : null;
       if (nextCursor) pages.set(nextCursor, { ownerId, filter, ids: remaining });
       return { items, nextCursor, hasMore: remaining.length > 0,
         groups: Object.values(account.sessionGroups ?? {}), indexState: 'ready' };

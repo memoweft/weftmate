@@ -16,6 +16,12 @@ class BusinessRouteUnitTest {
             "/personal/v1/goals/session-one", "/personal/v1/goals/session-one/clear", "/personal/v1/goals/session%2Fone/archive"))
             assertFalse(path, validBusinessPath(path))
     }
+    @Test fun sessionPagingAndEncodedSearchUseTheExistingBusinessTransport() {
+        assertTrue(validBusinessPath("/personal/v1/sessions?archived=all&limit=100&cursor=session-next&q=%E7%BA%B8"))
+        assertTrue(validBusinessPath("/personal/v1/sessions?q=" + "%E7%BA%B8".repeat(256)))
+        assertFalse(validBusinessPath("/personal/v1/sessions/session-next"))
+        assertFalse(validBusinessPath("/personal/v1/sessions?q=<script>"))
+    }
     @Test fun libraryOnlyReadsIndexedOutputRoutes() {
         assertTrue(validBusinessPath("/personal/v1/library?type=image&search=%E5%9B%BE&cursor=" + "a".repeat(800)))
         assertTrue(validBusinessPath("/personal/v1/library/artifact-one"))

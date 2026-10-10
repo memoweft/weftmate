@@ -5,6 +5,22 @@ import { failure, plainObject, validId } from './common.mjs';
 import { createMessageBranches } from './message-branches.mjs';
 
 export function createSessionMetadata(context) {
+  const index = new Map(), initializing = new Map(), descriptions = new Map();
+  const key = (ownerId, sessionId) => `${ownerId}|${sessionId}`;
+  function observe(ownerId, sessionId, events) {
+    if (context.closing) return;
+    let metadata;
+    try { metadata = context.accountState(ownerId).sessions[sessionId]; } catch { return; }
+    if (!metadata) return;
+    const row = index.get(key(ownerId, sessionId)) ?? { latestMessageSeq: -1, updatedAt: null };
+    for (const event of events) {
+      if (!event || typeof event !== 'object') continue;
+      if (metadata.forgottenSeqs?.includes(event.seq)) continue;
+      if (event.type === 'assistant.message' && Number.isSafeInteger(event.seq)) row.latestMessageSeq = Math.max(row.latestMessageSeq, event.seq);
+      if (Number.isFinite(Date.parse(event.at)) && (!row.updatedAt || event.at > row.updatedAt)) row.updatedAt = event.at;
+    }
+    index.set(key(ownerId, sessionId), row);
+  }
   const requireSession = (ownerId, sessionId) => {
     const sessions = context.accountState(ownerId).sessions;
     if (!Object.hasOwn(sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
@@ -17,6 +33,34 @@ export function createSessionMetadata(context) {
     return value.trim();
   };
   return {
+    observe,
+    // One startup pass, outside list requests. Native history observations then
+    // maintain the index; metadata is always overlaid from the current account.
+    initialize(ownerId) {
+      if (initializing.has(ownerId)) return initializing.get(ownerId);
+      const work = (async () => {
+        for (const sessionId of Object.keys(context.accountState(ownerId).sessions)) {
+          if (context.closing) break;
+          if (index.has(key(ownerId, sessionId))) continue;
+          try { const history = await context.callBackend(() => context.backend.readEvents({ownerId, sessionId, limit:200})); observe(ownerId, sessionId, history.events ?? []); }
+          catch { /* The selected history read can repair an unavailable startup entry. */ }
+        }
+      })();
+      initializing.set(ownerId, work); return work;
+    },
+    invalidate(ownerId, sessionId) { index.delete(key(ownerId, sessionId)); descriptions.delete(ownerId); },
+    activityTime(ownerId, sessionId) { return index.get(key(ownerId,sessionId))?.updatedAt ?? context.accountState(ownerId).sessions[sessionId]?.attachedAt ?? ''; },
+    async describe(ownerId, sessionIds) {
+      const prior = descriptions.get(ownerId), now = Date.now();
+      if (prior && now - prior.at < 250 && sessionIds.every(id => prior.ids.has(id))) return prior.promise;
+      const ids = new Set(Object.keys(context.accountState(ownerId).sessions));
+      const promise = context.callBackend(async () => typeof context.backend.describeSessions === 'function'
+        ? context.backend.describeSessions([...ids], ownerId)
+        : Promise.all(sessionIds.map(async id => { try { return await context.backend.describeSession(id, ownerId); } catch { return {sessionId:id,unavailable:true}; } })))
+        .then(rows => new Map(rows.map(row => [row.sessionId,row])));
+      descriptions.set(ownerId, {at:now,ids:typeof context.backend.describeSessions === 'function' ? ids : new Set(sessionIds),promise});
+      try { return await promise; } catch (error) { descriptions.delete(ownerId); throw error; }
+    },
     messageBranches: createMessageBranches(context),
     async metadata(ownerId, sessionId, patch) {
       protectMainSession(context.accountState(ownerId), sessionId);
@@ -111,9 +155,9 @@ export function createSessionMetadata(context) {
     },
     async summary(ownerId, sessionId) {
       const metadata = requireSession(ownerId, sessionId);
-      const history = await context.callBackend(() => context.backend.readEvents({ ownerId, sessionId, limit: 200 }));
-      const latestMessageSeq = Math.max(-1, ...(history.events ?? []).filter(event => event.type === 'assistant.message').map(event => event.seq));
-      const activityTimes = [metadata.attachedAt, ...(history.events ?? []).map(event => event.at)].map(value => Date.parse(value)).filter(Number.isFinite);
+      const row = index.get(key(ownerId, sessionId));
+      const latestMessageSeq = row?.latestMessageSeq ?? -1;
+      const activityTimes = [metadata.attachedAt, row?.updatedAt].map(value => Date.parse(value)).filter(Number.isFinite);
       return { ...memorySettings(metadata), pinned: metadata.pinned === true, unread: metadata.unread === true || latestMessageSeq > (metadata.readMessageSeq ?? -1),
         ...(activityTimes.length ? { updatedAt: new Date(Math.max(...activityTimes)).toISOString() } : {}),
         groupId: metadata.groupId ?? null, ...(metadata.title ? { title: metadata.title } : {}),

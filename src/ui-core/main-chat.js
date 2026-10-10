@@ -6,6 +6,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         'sendDraft', 'optimisticMessages', 'observeOptimistic', 'composerState', 'attachmentDraftKey', 'loadConversationResources', 'clearSession'].map(key => [key, core[key]]));
     const historyWindow = globalThis.WeftUiCore.ChatWindow.create();
     const pending = new Map(), drafts = new Map();
+    let selectionGeneration = 0;
     core.state.chatWindow = historyWindow.state;
     const supports = name => core.state.personalCapabilities?.[name] === 1;
     const inMain = () => !!core.state.mainChat && core.state.selectedChatId === core.state.mainChat.chatId && core.state.activeChatSource === 'desktop';
@@ -55,25 +56,50 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         installMain(main.chat);
         // Readable/input-ready main tail is independent of the complete sidebar.
         if (!core.state.selectedChatId && !core.state.selectedSessionId && !core.state.newConversation) await selectMainChat();
-        const [sessions, chats] = await Promise.all([core.accessApi('/sessions?archived=all'), core.accessApi('/chats?archived=all')]);
+        const listGeneration = core.state.sessionListGeneration || 0;
+        const params = new URLSearchParams({archived:'all',limit:100,...(core.state.sessionListQuery ? {q:core.state.sessionListQuery} : {})});
+        const sessionParams = new URLSearchParams(params), chatParams = new URLSearchParams(params);
+        if (core.state.sessionListCursor) sessionParams.set('cursor',core.state.sessionListCursor);
+        if (core.state.chatListCursor) chatParams.set('cursor',core.state.chatListCursor);
+        let sessions, chats;
+        try { [sessions, chats] = await Promise.all([core.accessApi('/sessions?'+sessionParams), core.accessApi('/chats?'+chatParams)]); }
+        catch(error) {
+            if (identity === core.state.identityGeneration && listGeneration === (core.state.sessionListGeneration || 0) && error.code === 'CURSOR_RESET_REQUIRED') {
+                core.state.sessionListCursor=null;core.state.chatListCursor=null;return refreshSessions();
+            }
+            throw error;
+        }
+        if (listGeneration !== (core.state.sessionListGeneration || 0)) return;
         if (identity !== core.state.identityGeneration) return;
         core.state.chats = chats.items || [];
-        let next = chats;
-        while (next.hasMore && identity === core.state.identityGeneration) {
-            next = await core.accessApi('/chats?' + new URLSearchParams({ archived: 'all', cursor: next.nextCursor }));
-            core.state.chats.push(...next.items);
-        }
+        core.state.sessionListNextCursor = sessions.nextCursor;
+        core.state.chatListNextCursor = chats.nextCursor;
         // Keep the native snapshot clock when projecting logical chats. The
         // composer compares newer native turn events against this clock so a
         // sidebar poll is not a prerequisite for showing the stop button.
         core.state.sessionSnapshotAt = sessions.snapshotAt ?? null;
-        core.state.sessions = (sessions.sessions || []).map(row => ({ ...row, ...core.state.chats.find(chat => chat.kind === 'side' && chat.activeSessionId === row.sessionId) }));
+        const bySession = new Map(core.state.chats.map(chat => [chat.activeSessionId, chat]));
+        const selected = core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId);
+        core.state.sessions = (sessions.sessions || []).map(row => ({ ...row, ...bySession.get(row.sessionId) }));
+        if (selected && !core.state.sessions.some(row => row.sessionId === selected.sessionId)) core.state.sessions.push(selected);
         core.state.sessionGroups = sessions.groups || []; installMain(main.chat);
         await core.refreshSessionProjects(); effects.renderSessions(); effects.paintSelectedSession(core.state.selectedSessionId); notify();
     }
+    async function pageSessions(older = true) {
+        core.state.sessionListGeneration = (core.state.sessionListGeneration || 0) + 1;
+        core.state.sessionListCursor = older ? core.state.sessionListNextCursor : null;
+        core.state.chatListCursor = older ? core.state.chatListNextCursor : null;
+        await refreshSessions();
+    }
+    async function searchSessions(query) {
+        core.state.sessionListQuery = query.trim();
+        await pageSessions(false);
+    }
+    function cancelSessionSelection() { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;effects.updateAvailability(); }
     async function selectMainChat(anchor) {
         if (!supports('chats') || !core.state.mainChat) return;
-        drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
+        if (!core.state.sessionSelecting && !core.state.sideCreating) drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
+        selectionGeneration++; core.state.sessionSelecting = false;core.state.sideCreating=null;
         core.cancelAttachmentUpload(); core.state.activeChatSource = 'desktop'; core.state.selectedPhoneConversationId = null;
         core.state.selectedChatId = core.state.mainChat.chatId; core.state.selectedSessionId = core.state.mainChat.activeSessionId;
         if (core.state.mainChat.modelProfileId) { core.state.modelProfileId = core.state.mainChat.modelProfileId; effects.paintModels(); }
@@ -88,15 +114,29 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         void Promise.all([core.refreshConversationTasks(), core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
         if (core.state.selectedSessionId) void core.refreshApprovalMode(core.state.selectedSessionId);
     }
-    async function selectSession(id) {
+    async function selectSession(id, {empty = false, creating = false} = {}) {
         if (core.state.mainChat?.activeSessionId === id) return selectMainChat();
-        drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
+        if (!core.state.sessionSelecting && !core.state.sideCreating) drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
+        if(!creating)core.state.sideCreating=null;
+        const generation = ++selectionGeneration, identity = core.state.identityGeneration;
+        core.state.sessionSelecting = true; core.cancelAttachmentUpload(); notify();
         core.state.selectedChatId = null; clearLogical();
-        if (environment.mobileState) await effects.selectNativeSideSession(id);
-        else await legacy.selectSession(id, true);
-        const chat = core.state.chats?.find(row => row.activeSessionId === id);
-        core.state.selectedChatId = chat?.chatId || null;
-        effects.restoreMainChatDraft?.(drafts.get(chat?.chatId || id) || ''); effects.renderChatOrigin?.(chat); notify();
+        try {
+            if (supports('chats') && !core.state.chats?.some(row => row.activeSessionId === id)) {
+                const resolved = await core.accessApi(`/sessions/${encodeURIComponent(id)}/chat`);
+                const chat = (await core.readChat(resolved.chatId)).chat;
+                if (generation !== selectionGeneration || identity !== core.state.identityGeneration) return;
+                core.state.chats.push(chat);
+            }
+            if (environment.mobileState) await effects.selectNativeSideSession(id, empty, () => generation === selectionGeneration && identity === core.state.identityGeneration);
+            else await legacy.selectSession(id, true, !empty);
+            if (generation !== selectionGeneration || identity !== core.state.identityGeneration) return;
+            const chat = core.state.chats?.find(row => row.activeSessionId === id);
+            core.state.selectedChatId = chat?.chatId || null;
+            effects.restoreMainChatDraft?.(drafts.get(chat?.chatId || id) || ''); effects.renderChatOrigin?.(chat);
+        } finally {
+            if (generation === selectionGeneration && identity === core.state.identityGeneration) { core.state.sessionSelecting = false; notify(); }
+        }
     }
     async function readPage(params, direction) {
         const token = scope(), generation = historyWindow.state.generation;
@@ -197,10 +237,13 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const token = scope(), source = core.state.chats?.find(chat => chat.chatId === core.state.selectedChatId);
         const sourceDraftId = core.state.selectedChatId || core.state.selectedSessionId, sourceAttachmentKey = core.attachmentDraftKey();
         const draft = effects.readMessageDraft(), files = [...core.currentAttachmentDrafts()];
+        drafts.set(sourceDraftId,draft);
         core.sideCreateIntent ||= { requestId: environment.crypto.randomUUID(), kind: 'session.side.create', targetDeviceId: core.state.hostId,
             parent: source?.projectId ? { kind: 'project', id: source.projectId } : { kind: 'main', id: core.state.mainChat.chatId },
             modelProfileId: core.state.modelProfileId, ...fields };
         const intent = core.sideCreateIntent;
+        const creating=core.state.sideCreating ||= {requestId:intent.requestId,identity:core.state.identityGeneration};notify();
+        try {
         core.rememberMarker({requestId:intent.requestId,kind:'session.side.create'});
         core.operation('正在创建旁聊。',true,intent.requestId);
         let command;
@@ -221,13 +264,29 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (['rejected','failed'].includes(command?.state)) {core.sideCreateIntent=null;core.forgetMarker(intent.requestId);core.operation('旁聊未创建，请重试。');}
             throw { code: command?.errorCode || 'NETWORK' };
         }
+        if (token !== scope()) return;
         core.updateFromCommand(command);
-        core.sideCreateIntent = null; await refreshSessions(); if (token !== scope()) return;
-        await selectSession(command.sessionId); effects.restoreMainChatDraft?.(draft);
-        if (files.length && environment.mobileState) await effects.transferNativeAttachments(sourceAttachmentKey, core.attachmentDraftKey(), files);
-        else if (files.length) core.state.attachmentDrafts.set(core.attachmentDraftKey(), files);
-        drafts.set(sourceDraftId,'');if(sourceAttachmentKey)core.state.attachmentDrafts.delete(sourceAttachmentKey);
-        effects.renderAttachmentDrafts(); effects.renderChatOrigin?.((await core.readChat(command.chatId)).chat);
+        core.sideCreateIntent = null;
+        if (token !== scope()) return;
+        // Read just the accepted entity; the sidebar poll is independent of input readiness.
+        const created = (await core.readChat(command.chatId)).chat;
+        if (token !== scope()) return;
+        core.state.chats = [created, ...core.state.chats.filter(row => row.chatId !== created.chatId)].slice(0,100);
+        core.state.sessions = [{ ...created, sessionId: command.sessionId }, ...core.state.sessions.filter(row => row.sessionId !== command.sessionId && row.kind !== 'main')].slice(0,100);
+        installMain(core.state.mainChat);
+        const identity = core.state.identityGeneration;
+        await selectSession(command.sessionId, {empty:!created.originRefs?.length,creating:true});
+        if (identity !== core.state.identityGeneration || core.state.selectedSessionId !== command.sessionId) return;
+        const selectedScope=scope();core.state.sessionSelecting=true;notify();
+        try {
+            effects.restoreMainChatDraft?.(draft);
+            if (files.length && environment.mobileState) await effects.transferNativeAttachments(sourceAttachmentKey, core.attachmentDraftKey(), files);
+            else if (files.length) core.state.attachmentDrafts.set(core.attachmentDraftKey(), files);
+            if (selectedScope !== scope()) return;
+            drafts.set(sourceDraftId,'');if(sourceAttachmentKey)core.state.attachmentDrafts.delete(sourceAttachmentKey);
+            effects.renderAttachmentDrafts(); effects.renderChatOrigin?.(created);
+        } finally { if(selectedScope===scope()){core.state.sessionSelecting=false;notify();} }
+        } finally {if(core.state.sideCreating===creating){core.state.sideCreating=null;notify();}}
     }
     async function checkMainRequest(row) {
         const token = core.state.identityGeneration;
@@ -248,6 +307,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         notify();
     }
     async function sendDraft(text = effects.readMessageDraft(), intent) {
+        if (core.state.sessionSelecting || core.state.sideCreating) return;
         if (!inMain()) return legacy.sendDraft(text, intent, true);
         if (!supports('chatSend') || core.state.submitting || core.state.unresolvedSubmission || !core.state.modelProfileId || (!text.trim() && !core.currentAttachmentDrafts().length)) return;
         const attachments = core.currentAttachmentDrafts();
@@ -275,12 +335,13 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     }
     function composerState(text) {
         const view = legacy.composerState(text, true);
+        if (core.state.sessionSelecting || core.state.sideCreating) return { ...view, messageDisabled: true, sendDisabled: true, attachmentsDisabled: true, voiceDisabled: true, hint: core.state.sideCreating?'正在创建旁聊…':'正在打开对话…' };
         if (!inMain()) return view;
         const available = supports('chatSend') && core.state.mainChat.sendAvailable && core.state.models.some(model => model.id === core.state.modelProfileId);
         return { ...view, messageDisabled: !available || !!core.state.attachmentUpload, attachmentsDisabled: !available || !!core.state.attachmentUpload || core.state.submitting,
             modelDisabled: view.modelDisabled || !!core.state.mainChat.activeSessionId,
             sendDisabled: !available || core.state.submitting || core.state.unresolvedSubmission || (!text.trim() && !core.currentAttachmentDrafts().length),
-            hint: core.state.mainChat.contextOrganizing ? '正在整理上下文，消息将继续排队。' : !supports('chatSend') ? '请更新电脑程序以发送主对话消息。' : !core.state.modelProfileId ? '选择模型后开始聊天。' : '' };
+            hint: core.executionAccountHint?.() || (core.state.mainChat.contextOrganizing ? '正在整理上下文，消息将继续排队。' : !supports('chatSend') ? '请更新电脑程序以发送主对话消息。' : !core.state.modelProfileId ? '选择模型后开始聊天。' : '') };
     }
     async function loadConversationResources() {
         if (!inMain()) return legacy.loadConversationResources(true);
@@ -301,7 +362,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         } while (cursor);
         return { outputs: core.deduplicateOutputs([...outputs.values()]), sources: [...sources.values()] };
     }
-    return { supportsChat: supports, inMainChat: inMain, refreshLogicalSessions: refreshSessions, selectLogicalSession: selectSession, selectMainChat, refreshLogicalHistory: refreshHistory, loadOlderLogicalHistory: loadOlderHistory, jumpChatDate, searchMainChat, moveSearchHit,
+    return { cancelSessionSelection, pageSessions, searchSessions, supportsChat: supports, inMainChat: inMain, refreshLogicalSessions: refreshSessions, selectLogicalSession: selectSession, selectMainChat, refreshLogicalHistory: refreshHistory, loadOlderLogicalHistory: loadOlderHistory, jumpChatDate, searchMainChat, moveSearchHit,
         mainChatDays: () => historyWindow.days(), expandChatDay: date => { historyWindow.state.expanded.add(date); notify(); }, openSideChat,
         startChatConversation: () => supports('sideChats') && core.state.mainChat ? openSideChat({ entry: 'composer' }).catch(error => effects.toast(core.failureMessage(error))) : (core.state.selectedChatId = null, legacy.startNewConversation(true)),
         sendMainDraft: sendDraft, observeMainOptimistic: observeOptimistic, mainComposerState: composerState, loadMainResources: loadConversationResources,
@@ -312,6 +373,6 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             pending.set(row.requestId,{...row,ownerId:core.state.ownerId,text:row.text||'',status:row.state==='accepted'?'accepted':'failed',receiptId:row.command?.receiptId});
         } observeOptimistic(historyWindow.ordered());notify(); },
         mainAttachmentDraftKey: id => inMain() ? `${core.state.ownerId}|${core.state.mainChat.chatId}` : legacy.attachmentDraftKey(id, true),
-        resetLogicalSession: () => { historyWindow.reset();core.resourceCache=null;effects.resetMainChatView?.(); pending.clear(); drafts.clear(); core.state.mainChat = null; core.state.selectedChatId = null; core.state.chats = []; }
+        resetLogicalSession: () => { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;core.state.sessionListCursor=null;core.state.chatListCursor=null;core.state.sessionListQuery='';core.state.sessionListGeneration=(core.state.sessionListGeneration||0)+1;historyWindow.reset();core.resourceCache=null;effects.resetMainChatView?.(); pending.clear(); drafts.clear(); core.state.mainChat = null; core.state.selectedChatId = null; core.state.chats = []; }
     };
 };

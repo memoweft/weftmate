@@ -1,0 +1,37 @@
+✔ mobile generated assets match every canonical ui-core file byte for byte (179.6574ms)
+✔ check refuses changed, missing and unlisted copies; rebuild follows the source and removes stale files (357.5235ms)
+✔ mobile check validates nested component syntax as well as generated source parity (3700.9515ms)
+✔ published mobile bundle includes the verified shared assets at their ui-core paths (4444.4396ms)
+✔ publish command refuses stale generated assets before creating a release (5874.8404ms)
+✔ two devices share an owner, concurrent duplicate request runs once, conflict and authentication stay bounded (3090.2837ms)
+✔ session ownership, target, strict fields and event cursor (2743.6823ms)
+✔ restart marks dispatching uncertain without replay; pending resumes; corrupt store refuses startup (3010.5538ms)
+✔ occupied port fails and leaves existing listener usable (5481.667ms)
+✔ store write failure refuses acceptance before backend side effects (1942.0695ms)
+✔ revocation while preflight waits rejects an unissued command (1957.4943ms)
+✔ lost message receipt remains uncertain and is never replayed on restart (1792.77ms)
+✔ close prevents a blocked dispatch from writing or invoking the old backend after same-root restart (4839.5816ms)
+✔ close during a blocked acceptance preflight cannot persist the request (4752.3242ms)
+✔ valid JSON with tampered payload, missing source device or duplicate request ID fails closed (1741.3985ms)
+✔ event cursor advances across fully filtered and trailing hidden history (1868.8461ms)
+✔ history byte paging preserves the public response boundary without failing a large page (1919.5146ms)
+✔ backend errors and malformed event data never expose arbitrary codes or content (2074.3993ms)
+✔ full command ledger or unreconciled text budget rejects new work before persistence or dispatch (3389.3962ms)
+✔ UPD-2 status exposes authenticated read-only layer versions without source paths or install actions (2043.5898ms)
+✔ UPD-2 standalone host reports unavailable UI and mobile versions without inventing them (1943.2015ms)
+✔ two accounts have independent devices, command IDs, sync events and shared-model access (11531.5525ms)
+✔ unknown usernames and another account password failures cannot lock the original owner (9072.6933ms)
+✔ v2 owner, live cookie, nine commands and sync directory survive one v3 migration (8116.726ms)
+✔ public registration never claims unconfigured v2 owner data; trusted setup can claim it later (5980.3747ms)
+✔ concurrent accounts keep owner, text and duplicate request namespace through delayed dispatch (7885.3516ms)
+✔ a persisted shared ID stops being shared when its current host profile drifts to private cloud (3836.6562ms)
+✔ account UI serves only its fixed public GET assets with restrictive headers (10.1893ms)
+✔ public account shell keeps secrets out of markup and code-generated HTML (15.7673ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46760.4974
