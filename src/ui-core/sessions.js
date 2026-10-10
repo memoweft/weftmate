@@ -153,13 +153,24 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         const id = folderPreference().selected;
         return core.state.projects?.find(project => project.projectId === id && !project.revoked) || null;
     }
+    const folderMutationScope = () => ({ownerId:core.state.ownerId,identity:core.state.identityGeneration,
+        sessionId:core.state.selectedSessionId,draftId:core.state.newConversationId,chatId:core.state.selectedChatId});
+    const folderMutationCurrent = operation => operation && operation.ownerId===core.state.ownerId && operation.identity===core.state.identityGeneration &&
+        operation.sessionId===core.state.selectedSessionId && operation.draftId===core.state.newConversationId && operation.chatId===core.state.selectedChatId;
+    function folderMutationPending() {return !!(folderMutationCurrent(core.state.folderChanging)||folderMutationCurrent(core.state.folderRegistering));}
+    async function registerFolderChoice(create, fields) {
+        const operation=folderMutationScope();core.state.folderRegistering=operation;effects.updateAvailability();
+        try {const result=await create(fields);if(!folderMutationCurrent(operation))return null;
+            await core.refreshSessionProjects();return folderMutationCurrent(operation)?result:null;
+        } finally {if(core.state.folderRegistering===operation)core.state.folderRegistering=null;if(operation.identity===core.state.identityGeneration)effects.updateAvailability();}
+    }
     function folderChoiceBusy() {
-        return !!(core.state.submitting || core.state.unresolvedSubmission || core.state.sessionSelecting || core.state.attachmentUpload || core.state.sideCreating || core.state.folderChanging || core.state.turnStatus === 'running' || core.state.sessions.find(row=>row.sessionId===core.state.selectedSessionId)?.running);
+        return !!(core.state.submitting || core.state.unresolvedSubmission || core.state.sessionSelecting || core.state.attachmentUpload || core.state.sideCreating || folderMutationPending() || core.state.turnStatus === 'running' || core.state.sessions.find(row=>row.sessionId===core.state.selectedSessionId)?.running);
     }
     async function chooseFolderProject(project) {
         if (folderChoiceBusy()) throw {code:'SESSION_BUSY'};
         const identity = core.state.identityGeneration;
-        core.state.folderChanging = true; effects.updateAvailability();
+        const operation=folderMutationScope();core.state.folderChanging=operation;effects.updateAvailability();
         try {
             if (core.isMainChat?.() || core.inMainChat?.()) {
                 if (project) await core.openSideChat({entry:'composer',parent:{kind:'project',id:project.projectId}});
@@ -170,7 +181,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             }
             if (identity !== core.state.identityGeneration) return;
             rememberFolder(project?.projectId || null);
-        } finally { if (identity === core.state.identityGeneration) {core.state.folderChanging=false;effects.updateAvailability();} }
+        } finally {if(core.state.folderChanging===operation)core.state.folderChanging=null;if(identity===core.state.identityGeneration)effects.updateAvailability();}
     }
     async function updateSession(sessionId, patch) {
         const identity = core.state.identityGeneration;
@@ -231,7 +242,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return result;
     }
-    return { partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
+    return { folderMutationPending, registerFolderChoice, partitionFolderDrop, folderPreference, rememberFolder, dismissFolderHint, currentFolderProject, defaultFolderProject, folderChoiceBusy, chooseFolderProject, createTemporaryConversation, projectExpanded, setProjectExpanded, projectConversations, sessionHoverDetails, refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
 };
 globalThis.WeftUiCore.sessionMenuItems = session => [
     {id:'pin',label:session.pinned?'取消置顶':'置顶',key:'P'},

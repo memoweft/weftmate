@@ -353,13 +353,14 @@ async function removeAttachment(attachmentId){if(state.busy||state.transitionPen
 
 function placeModelMenu(){globalThis.WeftPopover.position($('model-popover'),$('model-button'))}
 
+const coreFolderPending=()=>uiCore.folderMutationPending?.()===true;
 let mobileFolderChoice;
 function updateComposer(){uiCore.syncMobileIdentity();
   if(globalThis.WeftFolderChoice && $('composer-dock')){mobileFolderChoice ||= WeftFolderChoice.create(uiCore,{form:$('draft').closest('.composer')||$('draft').parentElement,tools:$('plus-button').parentElement,toast,mobile:true});mobileFolderChoice.paint();}mobileMessageActions?.refresh();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
   renderQueuedTasks();
   const button=$('send-button'), stop=view.sendHidden;
   globalThis.WeftMobileMotion?.changed(button,String(stop),'160ms');
-  button.hidden=false;button.disabled=stop?!!state.sharedStopping||state.transitionPending:!view.ready;
+  button.hidden=false;button.disabled=stop?!!state.sharedStopping||state.transitionPending:coreFolderPending()||!view.ready;
   button.classList.toggle('ready',stop||view.ready);button.classList.toggle('is-stop',stop);button.dataset.action=stop?'stop':'send';
   button.setAttribute('aria-label',stop?'停止回复':'发送');button.replaceChildren(el('span',`icon icon-${stop?'stop':'send'}`));
   $('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
