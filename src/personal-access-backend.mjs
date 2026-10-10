@@ -3,7 +3,7 @@ import { checkModelConnection, canonicalProviderModelId } from './model-connecti
 import { discoverOpenAICompatibleModels, openAICompatibleEndpoint } from './openai-compatible-client.ts'
 import { modelTierFor } from './model-tier.ts'
 import { modelRouteFingerprint } from './model-route-fingerprint.mjs'
-import { reasoningCapability } from './model-reasoning.mjs'
+import { reasoningCapability, modelReasoning } from './model-reasoning.mjs'
 import path from 'node:path'
 import { mkdir, rm, cp, access } from 'node:fs/promises'
 import { sessionWorkspace } from './personal-access/session-workspace.mjs'
@@ -12,7 +12,7 @@ const fail = (code) => { const error = new Error(code); error.code = code; throw
 
 export function createPersonalAccessBackend({ currentOrigin, referenceScan, profiles, hasCredential,
   routeForProfile, listSessions, resolveSession, ensureKnownSession, gateway, queue, bindSession,
-  credentialForProfile = null, modelFetch = fetch, processingStatus = async () => null,
+  credentialForProfile = null, modelFetch = async (url, { onStart, priority, ...options }) => { await onStart?.(); return fetch(url, options); }, processingStatus = async () => null,
   prepareModelReasoning = null,
   reasoningSettings = null,
   sessionProfileId = null,
@@ -134,7 +134,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (!apiKey) fail('MODEL_UNAVAILABLE')
       return checkModelConnection({ baseUrl: profile.baseUrl, modelId: profile.model, apiKey, fetchImpl: modelFetch })
     },
-    async modelCompletion({ profileId, body, signal, ownerId }) {
+    async modelCompletion({ profileId, body, signal, ownerId, priority, onStart }) {
       requireModelAllowed(ownerId, profileId, 'new')
       const profile = modelProfile(profileId)
       if (body.model !== profile.model || typeof credentialForProfile !== 'function') fail('MODEL_UNAVAILABLE')
@@ -143,9 +143,10 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       requireModelAllowed(ownerId, profileId, 'new')
       return modelFetch(openAICompatibleEndpoint(profile.baseUrl, 'chat/completions'), {
         method: 'POST', redirect: 'error', signal,
+        ...(priority ? { priority } : {}), ...(onStart ? { onStart } : {}),
         headers: { 'content-type': 'application/json', accept: body.stream ? 'text/event-stream' : 'application/json',
           authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ ...body, model: canonicalProviderModelId(profile.baseUrl, body.model) }),
+        body: JSON.stringify({ ...body, ...(priority === 'suggestion' ? suggestionReasoning(profile) : {}), model: canonicalProviderModelId(profile.baseUrl, body.model) }),
       })
     },
     async preflight(command) {
@@ -492,4 +493,12 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       return Promise.all(listed.items.filter(item => requested.has(item.sessionId)).map(item => describeItem(item, listed, bindings)))
     },
   }
+}
+
+/** Speculation uses the existing provider declaration at its lightest supported mode. */
+export function suggestionReasoning(profile) {
+  const format = modelReasoning(profile)?.compat?.thinkingFormat;
+  return format === 'deepseek' ? { thinking: { type: 'disabled' } }
+    : format === 'qwen' ? { enable_thinking: false }
+    : format === 'openai' ? { reasoning_effort: 'low' } : {};
 }

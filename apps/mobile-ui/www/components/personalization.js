@@ -54,6 +54,7 @@ globalThis.WeftPersonalizationView = (core, target, category) => {
         actions.append(extract, clear); form.append(actions);
         const save = node('button', 'button primary', '保存个性化'); save.type = 'submit'; form.append(save);
     } else {
+        toggle('nextSuggestionsEnabled', '下一步建议', '回复结束后给出相关短句，输入时补全后半句。点选或接受只填入输入框，由你决定是否发送。');
         toggle('webSearch', '网页搜索', '允许助手根据问题搜索和读取网页。关闭后，需要最新资料时会说明无法查证。');
         toggle('researchSelfCheck', '成文前核对事实', '查资料成文时，用已读取的原文核对关键结论、适用范围和数字。关闭后仍保留出处与未确认说明。');
         select('verbosity', '回答详细程度', '作为默认偏好，你仍可在对话中要求更短或更详细。', [['short', '简短'], ['medium', '适中'], ['thorough', '详尽']]);

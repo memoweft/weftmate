@@ -41,7 +41,7 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     if (!source.equals(generated)) problems.push(`differs ${name}`);
   }
   if (sourceDir === uiCoreSourceDir && targetDir === mobileUiCoreDir) {
-    for (const name of ['components/offline.js', 'offline.css', 'components/notifications.js', 'components/personalization.js', 'personalization.css', 'components/activity-view.js', 'activity.css', 'components/goals-view.js', 'goals.css', 'components/library-view.js', 'library.css', 'popovers.js', 'message-actions.js', 'message-actions.css', 'controls.css', 'icons.js']) {
+    for (const name of ['components/offline.js', 'offline.css', 'components/notifications.js', 'components/personalization.js', 'personalization.css', 'components/activity-view.js', 'activity.css', 'components/goals-view.js', 'goals.css', 'components/library-view.js', 'library.css', 'popovers.js', 'message-actions.js', 'message-actions.css', 'controls.css', 'icons.js', 'next-suggestions.js', 'next-suggestions.css']) {
       const source = await readFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url));
       const generated = await readFile(path.join(mobileWwwDir, name));
       if (!source.equals(generated)) problems.push(`differs ${name}`);
@@ -70,7 +70,7 @@ export async function buildUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     await copyFile(new URL('../../../src/personal-access-ui/components/schedules.js', import.meta.url), path.join(mobileWwwDir, 'components/schedules-view.js'));
     await copyFile(new URL('../../../src/personal-access-ui/components/settings-controls.js', import.meta.url), path.join(mobileWwwDir, 'components/settings-controls.js'));
     await copyFile(new URL('../../../src/personal-access-ui/usage.css', import.meta.url), path.join(mobileWwwDir, 'usage.css'));
-    for (const name of ['composer-subtasks.js','composer-extras.css']) await copyFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url), path.join(mobileWwwDir,name));
+    for (const name of ['composer-subtasks.js','composer-extras.css','next-suggestions.js','next-suggestions.css']) await copyFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url), path.join(mobileWwwDir,name));
     await copyFile(new URL('../../../src/personal-access-ui/popovers.js', import.meta.url), path.join(mobileWwwDir, 'popovers.js'));
     await copyFile(new URL('../../../src/personal-access-ui/conversation-scroll.js', import.meta.url), path.join(mobileWwwDir, 'conversation-scroll.js'));
     await mkdir(path.join(mobileWwwDir, 'legal'), { recursive: true });
