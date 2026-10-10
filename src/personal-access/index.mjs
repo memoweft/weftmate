@@ -47,6 +47,7 @@ import { createHostCloudIdentity } from '../personal-cloud/index.mjs';
 import { createHostRelay } from '../personal-relay/index.mjs';
 import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
 import { createUsageStore } from './usage.mjs';
+import { createNextSuggestions } from './next-suggestions.mjs';
 import { createScheduleOperations } from './schedules.mjs';
 import { createGoalOperations } from './goals.mjs';
 import { createOfflineService } from '../personal-offline/index.mjs';
@@ -142,6 +143,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     backupOwner: ownerId => hostOwner(ownerId) || hostCloudIdentity?.isInstallationOwner(ownerId) === true,
     restoredCloudOwner: (issuer, sub) => Array.isArray(restoredCloudOwners) ? restoredCloudOwners.find(row => row.issuer === issuer && row.sub === sub && rootState.accounts[row.ownerId])?.ownerId : undefined,
     get usage() { return usage; },
+    get nextSuggestions() { return nextSuggestions; },
     get scheduleOperations() { return scheduleOperations; },
     get goalOperations() { return goalOperations; },
     get root() { return root; },
@@ -329,6 +331,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     checkedBrowserSession, browserToolSource,
   } = workspaces;
   const commands = createCommandOperations(context);
+  const nextSuggestions = createNextSuggestions(context);
   const { requestIdUsed, dispatch, schedule } = commands;
   const accountModels = createAccountModelOperations(context);
   const {
@@ -591,6 +594,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       throw error;
     }
     rootState = next;
+    for (const ownerId of Object.keys(rootState.accounts)) nextSuggestions.reconcile(ownerId);
     hostCloudIdentity?.closeInvalidResponses();
     return value;
   }
@@ -828,6 +832,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        nextSuggestions.close();
         await memoryIngestion.close();
         await temporaryChats.close();
         await activity.close();
