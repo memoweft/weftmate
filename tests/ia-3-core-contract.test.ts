@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { desktopScript, desktopScriptPaths } from './helpers/desktop-ui-source.mjs';
-const source=desktopScriptPaths().filter(path=>path.startsWith('ui-core/')).map(desktopScript).join('\n;\n');
+import { uiCoreAssets } from '../src/ui-core/manifest.mjs';
+const source=desktopScriptPaths().filter(path=>uiCoreAssets.some(name=>path===`ui-core/${name}`)).map(desktopScript).join('\n;\n');
 function setup(read: (path:string,options:any)=>any) {
   const requests:any[]=[],values=new Map(),draft={text:'合成草稿'};
   const effects=new Proxy({}, {get:(_,name)=> (...args:any[])=>name==='readMessageDraft'?draft.text:name==='clearMessageDraft'?(draft.text=''):undefined});

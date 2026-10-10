@@ -137,6 +137,8 @@ try{
  await home();
  await measure('drawer-open-close',async()=>{await button('打开导航').click();await page.waitForTimeout(250);await button('关闭导航').click()});
  await report();
+ // The production model gate correctly blocks an unconfigured fixture. Supply a synthetic host model for this editable-draft scenario.
+ await page.evaluate(()=>{uiCore.state.models=[{id:'motion-model',displayName:'合成动效模型',configured:true,available:true}];uiCore.state.modelsKnown=true;updateComposer()});
  await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('动效期间保留的合成草稿');
  const beforeScroll=await page.evaluate(()=>({top:$('chat-scroll').scrollTop,height:$('chat-scroll').scrollHeight}));
  await button('输出与来源').click();await settle();await button('返回对话').click();await settle();

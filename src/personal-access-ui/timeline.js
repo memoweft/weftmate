@@ -21,7 +21,8 @@
       (event.type.startsWith('step.') || event.type === 'assistant.message' && event.data?.text))
     if (waiting) put('waiting', Math.max(started.seq, ...ordered.filter(event => event.type === 'user.message' && event.seq > started.seq).map(event => event.seq)) + 0.1, row => {
       row.classList.add('inline-waiting'); row.setAttribute('role', 'status')
-      if (row.textContent !== options.waiting) row.replaceChildren(node('span', 'inline-progress-text is-running', options.waiting))
+      let text=row.querySelector('.inline-progress-text'); if(!text){text=node('span','inline-progress-text is-running');row.replaceChildren(text)}
+      if(globalThis.WeftReplyMotion) WeftReplyMotion.status(text,options.waiting,true); else text.textContent=options.waiting
     })
     for (const block of groups) put(`steps-${block.seq}`, block.seq, row => {
       const expandedForObjects = row.querySelector('details')?.open === true
@@ -60,7 +61,7 @@
       if (row.dataset.signature === signature) {
         // A stage/timer update must not detach a focused or scrolling summary.
         const text = previous?.querySelector('.inline-progress-text')
-        if (text && text.textContent !== view.text) text.textContent = view.text
+        if (text) {if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,view.text,running,block.steps.length <= (globalThis.WeftMotion?.listLimit || 20));else if(text.textContent!==view.text)text.textContent=view.text}
         text?.classList.toggle('is-running', running)
         previous?.querySelector('summary')?.setAttribute('aria-label', `${view.text}，${previous.open ? '已展开' : '已收起'}`)
         return
@@ -77,7 +78,7 @@
       const summary = details.querySelector('summary') || node('summary', 'inline-progress-summary')
       summary.setAttribute('role', 'button')
       const text = summary.querySelector('.inline-progress-text') || node('span', 'inline-progress-text')
-      text.textContent = view.text
+      if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,view.text,running,block.steps.length <= (globalThis.WeftMotion?.listLimit || 20));else text.textContent = view.text
       text.classList.toggle('is-running', running)
       text.setAttribute('aria-live', 'polite')
       if (!text.parentNode) summary.append(text)
@@ -86,7 +87,7 @@
         if (window.WeftIcons) arrow.append(window.WeftIcons.create('chevron', 16))
         summary.append(arrow)
       }
-      const accessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${text.textContent}，${details.open ? '已展开' : '已收起'}`) }
+      const accessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${view.text}，${details.open ? '已展开' : '已收起'}`) }
       if (!previous) details.addEventListener('toggle', () => { accessibility(); if (details.open && details.isConnected) renderCurrent() }); accessibility()
       const records = details.querySelector('.execution-records') || node('div', 'execution-records')
       if (!summary.parentNode) details.append(summary)

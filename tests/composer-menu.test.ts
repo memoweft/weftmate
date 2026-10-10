@@ -8,9 +8,11 @@ import { modelReasoning } from '../src/model-reasoning.mjs';
 import { createPersonalAccessBackend } from '../src/personal-access-backend.mjs';
 import { projectHistoryEvent } from '../src/runtime/dsh-adapter/sessions.mjs';
 import { startTimelineCandidate } from './integration/timeline-ui-candidate.mjs';
+import { uiCoreAssets } from '../src/ui-core/manifest.mjs';
 function coreFixture(fetchImpl=async()=>({ok:true,status:200,json:async()=>({enabled:true})})) {
  const context:any={URL,URLSearchParams,Intl,TextEncoder,Blob,AbortSignal,DOMException,setTimeout,clearTimeout,setInterval,clearInterval};
- runInNewContext(desktopScriptPaths().filter(path=>path.startsWith('ui-core/')).map(desktopScript).join('\n;\n'),context);
+ // Feature tests run the canonical DOM-free factories, not browser presentation assets.
+ runInNewContext(desktopScriptPaths().filter(path=>uiCoreAssets.some(name=>path===`ui-core/${name}`)).map(desktopScript).join('\n;\n'),context);
  const effects=new Proxy({}, {get:()=>()=>{}}),core=context.WeftUiCore.create({effects,fetch:fetchImpl,storage:{getItem:()=>null,setItem:()=>{}},crypto:{randomUUID:()=>crypto.randomUUID()}});
  Object.assign(core.state,{ownerId:'synthetic-owner',identityGeneration:1,csrfToken:'synthetic-csrf',device:{id:'synthetic-device'},currentView:'assistant',activeChatSource:'desktop',selectedSessionId:'session-a',models:[{id:'model-a',deepThinking:{supported:true}}],modelProfileId:'model-a',sessions:[{sessionId:'session-a',modelProfileId:'model-a'},{sessionId:'session-b',modelProfileId:'model-a'}]});
  return {api:context.WeftUiCore,core};
