@@ -1,7 +1,7 @@
 /** CI-R1: synthetic phone over the actual 443 content relay. No daily data or model keys. */
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { chromium } from 'playwright';
@@ -155,6 +155,8 @@ test('Relay phone first input and file task', {
         await approve.click(); approvedIds.add(pending.approvalId); report.approvals.push({ approvalId: pending.approvalId, toolName: pending.toolName });
       }
       const events = (await phoneApi(`/sessions/${created.sessionId}/events?limit=100`)).data.events;
+      const terminal = events.find(e => e.type === 'turn.ended');
+      if (terminal && terminal.data?.reason !== 'completed') throw new Error('native task failed: ' + JSON.stringify(events));
       return events.some(e => e.type === 'turn.ended' && e.data?.reason === 'completed');
     }, 'file task did not complete', 90_000);
     assert.ok(approvedIds.size >= 2, 'phone must approve at least twice');
@@ -164,7 +166,7 @@ test('Relay phone first input and file task', {
     const preview = (await phoneApi(`/library/${item.id}/preview`)).data;
     assert.ok(JSON.stringify(preview).includes(runtime.content.trim()), 'relay library preview does not match disk readback');
     const taskRequests = runtime.requests.filter(r => scenarioUserText(r.messages).startsWith('CI_R1_FILE_TASK'));
-    assert.equal(taskRequests.length, 4, 'read/write/readback/finish must run once each');
+    assert.equal(taskRequests.length, 5, 'load/read/write/readback/finish must run once each');
     assert.ok(taskRequests.at(-1).messages.filter(m => m.role === 'tool').some(m => JSON.stringify(m.content).includes(runtime.content.trim())), 'model did not read the native file result');
     assert.deepEqual(routeViolations, []); assert.deepEqual(pageErrors, []);
     assert.ok(report.requests.length > 0); assert.ok(report.requests.every(r => r.origin === base && r.port === '443'));
@@ -182,5 +184,6 @@ test('Relay phone first input and file task', {
     await writeFile(join(evidence, 'proxy.log'), infra?.logs() ?? 'infrastructure startup failed');
     await writeFile(join(evidence, 'runtime.log'), runtimeLogs.join('\n'));
     await browser?.close(); await host?.close(); await runtime?.close();
+    await infra?.close();
   }
 });

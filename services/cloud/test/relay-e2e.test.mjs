@@ -1,16 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdir, readFile, writeFile, realpath, rm } from 'node:fs/promises';
-import { createServer as tcpServer } from 'node:net';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createServer as httpsServer, request as httpsRequest } from 'node:https';
-import { request as httpRequest } from 'node:http';
 import { checkServerIdentity } from 'node:tls';
 import { createHash, createPrivateKey, randomUUID, generateKeyPairSync } from 'node:crypto';
-import { spawn, execFile } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { once } from 'node:events';
 import path from 'node:path';
-import { fixture, P, generateKeyPair, exportJWK, SignJWT } from './identity-helpers.mjs';
+import { P, generateKeyPair, exportJWK, SignJWT } from './identity-helpers.mjs';
 import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
 import { publishMobileUi } from '../../../src/personal-access/mobile-ui-release.mjs';
 import { keyId } from '../../../src/personal-update/manifest.mjs';
@@ -22,7 +20,7 @@ import { relayFixture, freePort, waitFor, processChild } from './relay-fixture.m
 const run = promisify(execFile);
 test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth, SSE, history, attachments, reconnect, pin and revoke',
   { skip: !enabled && 'Run with WEFTMATE_RELAY_E2E=true and official frp + HAProxy paths', timeout: 120_000 }, async t => {
-    const { f, root, infra, frontPort, ports, frpDir, procs, frps } = await relayFixture(t);
+    const { f, root, infra, frontPort, frpDir, procs, frps, close } = await relayFixture(t);
     const updatePair = generateKeyPairSync('ed25519');
     const updatePrivateKey = updatePair.privateKey.export({ type: 'pkcs8', format: 'pem' });
     const updatePublicKey = updatePair.publicKey.export({ type: 'spki', format: 'pem' });
@@ -185,5 +183,6 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       stream?.req.destroy(); await host?.close();
       for(const socket of fakeSockets)socket.destroy();
       if(fakeTls)await new Promise(r=>{fakeTls.close(r);fakeTls.closeAllConnections()});
+      await close();
     }
   });

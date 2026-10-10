@@ -40,11 +40,13 @@ export async function relayFixture(t) {
     const frpDir = process.env.WEFTMATE_FRP_DIR, haproxy = process.env.WEFTMATE_HAPROXY ?? 'haproxy';
     assert.ok(frpDir, 'official frp directory must be supplied');
     const procs = []; let apiTls;
-    t.after(async () => {
+    let closing;
+    const close = () => closing ??= (async () => {
       for (const proc of procs.reverse()) await proc.close();
       if (apiTls) await new Promise(r => { apiTls.close(r); apiTls.closeAllConnections(); });
       await f.identity.relay.close();
-    });
+    })();
+    t.after(close);
       await writeFile(path.join(infra,'transport.cnf'),'[req]\nprompt=no\ndistinguished_name=dn\nx509_extensions=ext\n[dn]\nCN=relay.example.com\n[ext]\nsubjectAltName=DNS:relay.example.com,DNS:api.example.com\nbasicConstraints=critical,CA:TRUE\n');
       await run('openssl', ['req','-x509','-newkey','rsa:2048','-nodes','-keyout',path.join(infra,'key.pem'),
         '-out',path.join(infra,'cert.pem'),'-days','2','-config',path.join(infra,'transport.cnf')]);
@@ -67,5 +69,5 @@ export async function relayFixture(t) {
       await pause(300); assert.equal(front.child.exitCode,null,front.logs());
       const controlHealth = await run('curl',['--silent','--show-error','--fail','--cacert',path.join(infra,'cert.pem'),'--noproxy','*','--resolve',`api.example.com:${frontPort}:127.0.0.1`,`https://api.example.com:${frontPort}/healthz`]);
       assert.equal(JSON.parse(controlHealth.stdout).status,'ok');
-    return { f, root, infra, frontPort, ports, frpDir, procs, frps, logs: () => procs.map(p => p.logs()).join('\n') };
+    return { f, root, infra, frontPort, ports, frpDir, procs, frps, close, logs: () => procs.map(p => p.logs()).join('\n') };
 }
