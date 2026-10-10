@@ -9,7 +9,7 @@ const forbidden=['A16_SYNTHETIC_PRIVATE_BODY_NEVER_DISPLAY','A16_SYNTHETIC_SECRE
 const scans=forbidden.map(marker=>({marker,hits:frames.frames.filter(f=>f.text.includes(marker)).length}));
 if(scans.some(x=>x.hits))throw Error('Hidden fixture body or key appeared in native text');
 const screenshots=[],surfaces=[];
-const scenes=['first-screen','expanded-day','native-date-picker','date-located','search-first','search-next','side-source','returned-source','result-opened','sent','approval','temporary','temporary-menu','temporary-expiry'];
+const scenes=['first-screen','expanded-day','native-date-picker','date-located','search-first','search-next','side-source','returned-source','result-opened','sent','approval','temporary','temporary-menu','temporary-expiry','composer-menu','user-message-menu','assistant-message-menu','export-preview','resources'];
 for(const surface of ['mac-light','mac-dark','iphone-light','iphone-dark']){
  const validation=JSON.parse(await readFile(join(base,surface,'validation.json'),'utf8'));
  if(!validation.passed||!validation.realPersonalHTTPHost||!validation.syntheticOnly)throw Error('Native flow not passed '+surface);
@@ -27,6 +27,10 @@ for(const surface of ['mac-light','mac-dark','iphone-light','iphone-dark']){
   screenshots.push({file:surface+'/'+name,sha256:hash(b),width:b.readUInt32BE(16),height:b.readUInt32BE(20)});
  }
 }
+const launches=JSON.parse(await readFile(join(base,'mac-launches.json'),'utf8'));
+if(!launches.passed||launches.launches.length!==20||launches.launches.some(x=>x.exitCode!==0||!x.ownWindowPNG))throw Error('Twenty final Mac launches missing');
+const crashes=JSON.parse(await readFile(join(base,'crash-check.json'),'utf8'));
+if(crashes.resumeNewCount!==0||crashes.finalBuildNewCount!==0)throw Error('New WeftMate crash report');
 const watch=JSON.parse(await readFile(join(base,'watch/xctest-summary.json'),'utf8'));
 if(watch.passedTests!==1||watch.failedTests!==0||watch.skippedTests!==0)throw Error('Paired Watch test missing');
 const watchText=frames.frames.filter(f=>f.surface==='watch');
@@ -36,7 +40,8 @@ const files=[];
 for(const dir of ['apps/apple/UI','apps/apple/Packages/WeftMateCore/Sources/WeftMateCore'])for(const name of await readdir(join(root,dir)))if(name.endsWith('.swift'))files.push(join(root,dir,name));
 const sources=createHash('sha256');for(const file of files.sort()){sources.update(relative(root,file));sources.update(await readFile(file));}
 const binaries={};for(const [name,path]of Object.entries({mac:'Debug/WeftMateMac.app/Contents/MacOS/WeftMateMac.debug.dylib',iphone:'Debug-iphonesimulator/WeftMatePhone.app/WeftMatePhone.debug.dylib',watch:'Debug-watchsimulator/WeftMateWatch.app/WeftMateWatch.debug.dylib'}))binaries[name]=hash(await readFile(join(root,'apps/apple/Build/A16/Build/Products',path)));
-await writeFile(join(base,'validation.json'),JSON.stringify({generatedAt:new Date().toISOString(),syntheticOnly:true,sourcesSHA256:sources.digest('hex'),binarySHA256:binaries,swift:{a16:16,taskReadStopAndDirectory:44,failed:0},statePrograms:{passed:2},surfaces,watch:{passed:1,failed:0},uiCopy:copy,hiddenBodyAndKeyScan:scans,boundaries:{realPersonalHTTPHost:true,compiledDSH:false,realModel:false,realDevice:false,macXCUITest:false,macOwnNativeAX:true,globalPermissionsRequested:false,productionDeployment:false},resources:{xcodeJobs:2,xcodebuildSerial:true,simulatorsAtOnce:1,pairedWatchException:true}},null,2)+'\n');
+if(launches.binarySHA256!==binaries.mac)throw Error('Launch evidence not from final Mac binary');
+await writeFile(join(base,'validation.json'),JSON.stringify({generatedAt:new Date().toISOString(),syntheticOnly:true,sourcesSHA256:sources.digest('hex'),binarySHA256:binaries,swift:{a16:17,taskReadStopAndDirectory:44,failed:0},statePrograms:{passed:2},surfaces,watch:{passed:1,failed:0},uiCopy:copy,hiddenBodyAndKeyScan:scans,boundaries:{realPersonalHTTPHost:true,compiledDSH:false,realModel:false,realDevice:false,macXCUITest:false,macOwnNativeAX:true,globalPermissionsRequested:false,productionDeployment:false},resources:{xcodeJobs:2,xcodebuildSerial:true,simulatorsAtOnce:1,pairedWatchException:true}},null,2)+'\n');
 await writeFile(join(base,'screenshots.json'),JSON.stringify({originalUnmodifiedPNGs:true,screenshots},null,2)+'\n');
 await writeFile(join(base,'privacy-scan.json'),JSON.stringify({syntheticOnly:true,source:'Native accessibility names/values captured with original PNGs',frames:frames.frames.length,scans,watchBodyHits:0},null,2)+'\n');
 console.log('PASS A16 native evidence: '+screenshots.length+' original PNGs; display-link frames, process memory, native receipts and hidden text/key scans verified.');

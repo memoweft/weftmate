@@ -7,9 +7,12 @@ ROOT=Path(__file__).resolve().parents[3]
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--platform',choices=['mac','iphone'],required=True);p.add_argument('--theme',choices=['light','dark'],required=True)
 p.add_argument('--app',type=Path);p.add_argument('--capture',type=Path);p.add_argument('--native-own-ax',action='store_true')
+p.add_argument('--test',default=None)
 p.add_argument('--xctestrun',type=Path);p.add_argument('--simulator');p.add_argument('--result',type=Path,required=True)
 p.add_argument('--evidence',type=Path,default=ROOT/'apps/apple/Tests/Evidence/A16');a=p.parse_args()
 dest=a.evidence/(a.platform+'-'+a.theme);dest.mkdir(parents=True,exist_ok=True)
+(dest/'validation.json').unlink(missing_ok=True)
+if a.native_own_ax:(dest/'native-report.json').unlink(missing_ok=True)
 fixture=subprocess.Popen(['node','apps/apple/Tests/a16_fixture.mjs'],cwd=ROOT,stdout=subprocess.PIPE,stderr=open('/private/tmp/a16-fixture-'+a.platform+'-'+a.theme+'.log','w'),text=True,env=os.environ|{'TMPDIR':'/private/tmp'},start_new_session=True)
 meta=None;child=None
 try:
@@ -45,7 +48,7 @@ try:
     subprocess.run(['xcrun','simctl','bootstatus',a.simulator,'-b'],check=True,stdout=subprocess.DEVNULL)
     destination='platform=iOS Simulator,id='+a.simulator
    target='WeftMateMacUITests'if a.platform=='mac'else'WeftMatePhoneUITests'
-   child=subprocess.Popen(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',f.name,'-destination',destination,'-jobs','2','-parallel-testing-enabled','NO','-only-testing:'+target+'/A16ChatUITests/test'+a.theme.title()+'MainChat','-resultBundlePath',str(a.result)],start_new_session=True)
+   child=subprocess.Popen(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',f.name,'-destination',destination,'-jobs','2','-parallel-testing-enabled','NO','-only-testing:'+target+'/A16ChatUITests/'+(a.test or ('test'+a.theme.title()+'MainChat')),'-resultBundlePath',str(a.result)],start_new_session=True)
    status=child.wait(timeout=600)
   with tempfile.TemporaryDirectory()as exported:
    subprocess.run(['xcrun','xcresulttool','export','attachments','--path',str(a.result),'--output-path',exported],check=True,stdout=subprocess.DEVNULL)

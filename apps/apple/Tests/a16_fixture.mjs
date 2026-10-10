@@ -34,7 +34,7 @@ native.events=history;for(const e of currentEvents)native.events.push({...e,seq:
 await runtime.a8('tools',native);await runtime.a8('approvals',native);
 const sides=[];
 for(const state of ['completed','error','aborted']){
- const c=await settle((await api('/commands',{requestId:'a16-side-'+state,kind:'session.side.create',targetDeviceId:started.hostId,parent:{kind:'main',id:main.chatId},modelProfileId:'mimo',title:'合成旁聊 '+state,entry:'composer'})).command);
+ const c=await settle((await api('/commands',{requestId:'a16-side-'+state,kind:'session.side.create',targetDeviceId:started.hostId,parent:{kind:'main',id:main.chatId},modelProfileId:'mimo',title:'合成旁聊 · '+({completed:'成功',error:'失败',aborted:'已停止'}[state]),entry:'composer'})).command);
  const sent=await settle((await api('/commands',{requestId:'a16-result-'+state,kind:'session.message',targetDeviceId:started.hostId,sessionId:c.sessionId,text:'A8_WAIT 合成旁聊任务 '+state})).command);
  const s=runtime.sessions.get(c.sessionId);await runtime.a8('tools',s);runtime.finish(s,state);s.a16Ending=state;
  if(state==='error'){const answer=s.events.findLast(x=>x.type==='assistant/message');answer.data.content=[{type:'text',text:'合成检查失败，请检查输入文件。'}];}
@@ -49,7 +49,8 @@ if(resultRows.map(x=>x.data.state).sort().join(',')!=='completed,failed,stopped'
 const resultIDs=resultRows.map(x=>x.eventId);
 const oldDay=tail.items.find(x=>x.at && x.at.slice(0,10)!==new Date().toISOString().slice(0,10))?.at.slice(0,10);
 let search=await api('/chats/'+main.chatId+'/search?q='+encodeURIComponent('A16查找纸船')+'&limit=100');
-const ready={seedTemporarySessionID:seedTemporary.sessionId,host:started.origin,mainChatID:main.chatId,sessionID:mainCommand.sessionId,oldDay,searchDay:new Date(now-500*1800000).toISOString().slice(0,10),searchEventID:search.hits[0]?.eventId,resultIDs,sides,historyCount:10000};
+const assistantSearch=await api('/chats/'+main.chatId+'/search?q='+encodeURIComponent('合成记录 9501')+'&limit=100');
+const ready={secondSearchEventID:search.hits[1]?.eventId,assistantEventID:assistantSearch.hits[0]?.eventId,seedTemporarySessionID:seedTemporary.sessionId,host:started.origin,mainChatID:main.chatId,sessionID:mainCommand.sessionId,oldDay,searchDay:new Date(now-500*1800000).toISOString().slice(0,10),searchEventID:search.hits[0]?.eventId,resultIDs,sides,historyCount:10000};
 const metrics=[];let measurementActive=false;
 const driver=createServer(async(req,res)=>{try{
  const path=new URL(req.url,'http://localhost').pathname;

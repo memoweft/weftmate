@@ -109,6 +109,9 @@ private actor A16HTTP: HTTPTransport {
     var posted: Data?
     var posts = 0
     var temporary = false
+    var wrongBranch = false
+    func mismatchBranch() { wrongBranch = true }
+    func body() -> Data? { posted }
     func count() -> Int { posts }
     func send(_ request: URLRequest) async throws -> HTTPResponse {
         let auth: [String: Any] = ["account": ["ownerId": "owner-a", "username": "tester", "displayName": "Synthetic"], "device": ["id": "device-a", "name": "Fixture"], "csrfToken": String(repeating: "b", count: 43)]
@@ -116,6 +119,10 @@ private actor A16HTTP: HTTPTransport {
         var object = auth, headers: [String: String] = [:]
         if path.hasSuffix("/auth/login") { headers["set-cookie"] = "wm_personal_session=" + String(repeating: "a", count: 43) }
         else if path.hasSuffix("/status") { object = ["ownerId": "owner-a", "hostId": "host-a"] }
+        else if path.hasSuffix("/message-branches") {
+            posted = request.httpBody
+            object = ["sessionId":"session-branch", "sendRequestId":"send-branch", "sourceSessionId":wrongBranch ? "other-session" : "session-a", "sourceSeq":17, "action":"regenerate", "text":"Synthetic original input"]
+        }
         else if path.contains("/commands/by-request/") {
             if posted == nil { return .init(status: 404, body: Data("{\"error\":{\"code\":\"NOT_FOUND\"}}".utf8)) }
             let body = try JSONDecoder().decode(JSONValue.self, from: posted!)
@@ -151,4 +158,16 @@ private actor A16HTTP: HTTPTransport {
     let data = Data("{\"events\":[],\"nextSeq\":1,\"hasMore\":false,\"cacheAllowed\":false}".utf8)
     #expect(try TimelinePage.decode(data).cacheAllowed == false)
     #expect(try SharedHistoryPage.decode(data,sessionID:"session-a",afterSeq:1).cacheAllowed == false)
+}
+
+@Test func a16RegenerationChecksOriginalAnchorAndReturnsHostSendIdentity() async throws {
+    let http = A16HTTP(), client = PersonalClient(credentialStore:A16Credentials(),transport:http)
+    _ = try await client.login(server:.init(input:"https://a16-branch.unit.example"),username:"tester",password:"synthetic-test-only",deviceName:"Fixture")
+    let reply = try await client.regenerateMessageBranch(sessionID:"session-a",sequence:17,requestID:"branch-request")
+    #expect(reply["sendRequestId"]?.string == "send-branch")
+    let body = try JSONDecoder().decode(JSONValue.self, from: await http.body()!)
+    #expect(body["action"]?.string == "regenerate"); #expect(body["seq"]?.int == 17)
+    #expect(body["requestId"]?.string == "branch-request")
+    await http.mismatchBranch()
+    await #expect(throws: APIFailure.identityMismatch) { try await client.regenerateMessageBranch(sessionID:"session-a",sequence:17,requestID:"branch-request") }
 }

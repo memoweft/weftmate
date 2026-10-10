@@ -21,14 +21,15 @@ struct MainChatResourcesView: View {
                 } else if let use {
                     ScrollView {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
-                            Button("返回来源") { clear() }
+                            Button("返回来源") { clear() }.buttonStyle(OutlineActionStyle())
                             if loading { ProgressView() }
                             if let detail { Text(ToolStepDetail(raw: detail.text).readableText).font(AppleTokens.Fonts.callout).textSelection(.enabled) }
                             if let error { Text(error).foregroundStyle(Weave.danger) }
                         }.padding(AppleTokens.Space.p16)
                     }.task(id: use.id) { await loadUse(use) }
                 } else {
-                    List {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                         Section("输出内容") {
                             if outputs.isEmpty { Text("还没有输出内容").foregroundStyle(Weave.muted) }
                             ForEach(outputs.indices, id: \.self) { i in
@@ -47,6 +48,7 @@ struct MainChatResourcesView: View {
                                 }
                             }
                         }
+                        }.padding(AppleTokens.Space.p16).frame(maxWidth: .infinity, alignment: .leading).buttonStyle(OutlineActionStyle())
                     }
                 }
             }.navigationTitle("输出与来源").toolbar { Button("完成") { model.resourceVisible = false } }
