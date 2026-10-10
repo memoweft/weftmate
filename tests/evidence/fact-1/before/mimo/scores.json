@@ -1,0 +1,595 @@
+{
+  "method": "MiMo rubric judge; overlapping dimensions counted independently, repeated same claim deduplicated; omissions separate",
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w7\\tests\\evidence\\fact-1\\before\\mimo\\results.json",
+  "judgements": [
+    {
+      "id": "node24-0",
+      "documentSha256": "4378819c0f08a4df1fb8812efcb7d57b595ce249e4b74806c80bc816de6c1b78",
+      "durationMs": 41719,
+      "usage": {
+        "completion_tokens": 2367,
+        "prompt_tokens": 1595,
+        "total_tokens": 3962,
+        "completion_tokens_details": {
+          "reasoning_tokens": 1937
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [
+          {
+            "claim": "是否依赖 Windows 上的 MSVC 原生编译流程（24 需改用 ClangCL）.",
+            "reason": "官方判据限定 ClangCL 要求仅针对 Windows 上编译 Node.js 本体；该条把要求扩展到原生模块（扩展）编译流程，等于断言所有原生扩展必须改用 ClangCL。正文“若自行编译原生模块/Node 本体，则需要留意工具链”亦把原生模块与 Node 本体并列，属同一错误，合计一条。"
+          }
+        ],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [
+          "NODE_MODULE_VERSION：24.0.0 为 137（全文未提及任何模块 ABI 版本号，而题目明确要求）",
+          "未区分使用 Node-API 稳定 ABI 的扩展与直接依赖 V8/Node C++ API 的扩展（原生扩展兼容性章节整体缺失）",
+          "未说明 Node-API 兼容的前提条件：所用 Node-API 版本需被目标运行时支持，且外部依赖本身兼容",
+          "未引用官方 N-API ABI 稳定性说明来源（https://nodejs.org/api/n-api.html#implications-of-abi-stability）"
+        ],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": false,
+          "claimMapping": false,
+          "issues": [
+            "缺少真实访问时间",
+            "缺少逐字短片段引用",
+            "正文关键断言无编号与文末出处的映射",
+            "未提供官方判据指定的 N-API ABI 稳定性来源链接（historical 样本，原始工具输出缺失不作为无依据证据）",
+            "24.0.0 链接写作 https://nodejs.org/blog/release/v24.0.0，与判据给定的 /en/blog/ 形式不一致（可访问，仅记为形式差异）"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "node24-1",
+      "documentSha256": "59babf356e9f52e53468b6ae1a538ed47a4f49137631cf2a74ad01e0510d8a82",
+      "durationMs": 34351,
+      "usage": {
+        "completion_tokens": 2563,
+        "prompt_tokens": 14225,
+        "total_tokens": 16788,
+        "completion_tokens_details": {
+          "reasoning_tokens": 2173
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [
+          {
+            "claim": "如果你维护自定义的 Node.js 构建脚本、CI 流水线或依赖 MSVC 构建工具链的项目，升级到 24.x 需要切换到 ClangCL 工具链",
+            "reason": "官方原文仅为 \"ClangCL is now required to compile Node.js on Windows\"，即要求限于在 Windows 上编译 Node.js 本体；该句把要求外推到\"依赖 MSVC 构建工具链的项目\"整体，已取回的 24.0.0 公告无此依据。"
+          }
+        ],
+        "scope": [
+          {
+            "claim": "这是对 Windows 上需要**编译 Node.js 本身或依赖其构建环境**的开发者影响最直接的变化。",
+            "reason": "官方判据中 ClangCL 要求明确限于编译 Node.js 本体（\"compile Node.js on Windows\"），文档额外加入\"或依赖其构建环境\"，扩大了适用范围，且未给出依据。"
+          }
+        ],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [
+          "24.0.0 的 NODE_MODULE_VERSION 为 137（文档声明数值未确认、未标注）",
+          "Node-API 跨大版本兼容的前提条件：扩展所用 Node-API 版本须被目标运行时支持，且扩展的外部依赖（any external libraries used from the addon）自身兼容——文档仅列出 V8/node.h/uv.h 例外，未说明这两项前提"
+        ],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": true,
+          "claimMapping": false,
+          "issues": [
+            "未提供各来源的真实访问时间",
+            "正文关键断言与文末编号来源列表之间没有编号映射（仅有段落级内联链接）"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "node-dep0190-1",
+      "documentSha256": "d73a65eab9c697891e8978e4d3da31c9bcbf61702ff5d958d74543804939808d",
+      "durationMs": 59849,
+      "usage": {
+        "completion_tokens": 2965,
+        "prompt_tokens": 73276,
+        "total_tokens": 76241,
+        "completion_tokens_details": {
+          "reasoning_tokens": 2403
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [
+          {
+            "claim": "触发条件（唯一）：调用 `child_process.execFile()` 或 `child_process.spawn()`，且 options 中带有 `shell: true`，并且还传入了 `args` 数组。",
+            "reason": "已取回的最新 v24.x 官方弃用文档（v24.21.0）中 DEP0190 原文为 \"with the option { shell: true } or { shell: '/path/to/shell' }\"，即除 `shell: true` 外还包含指定 shell 路径的情形；文档自称触发条件为“唯一”且仅为 `shell: true`，与其引用的该来源页不符（建议 2 中“去掉 `shell: true` 即不受影响”的暗示同样过窄）。"
+          },
+          {
+            "claim": "加载自 `node_modules` 的代码默认**不会**触发警告，除非使用 `--pending-deprecation`（或环境变量 `NODE_PENDING_DEPRECATION=1`）；",
+            "reason": "与已取回的官方弃用文档总则相矛盾：官方原文明确 \"A runtime deprecation for all code is similar to the runtime deprecation for non-node_modules code, except that it also emits a warning for code loaded from node_modules.\" Runtime（all code）弃用对 node_modules 内代码默认同样发出警告；文档描述的“仅非 node_modules 代码警告、node_modules 需 --pending-deprecation”是 Application 类型的行为。其前一条“（且调用方代码不从 `node_modules` 加载）时……”重复同一错误，合并为一条。"
+          }
+        ],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": false,
+          "claimMapping": false,
+          "issues": [
+            "来源列表缺少真实访问时间。",
+            "来源列表（文末）缺少逐字短片段；正文虽引用了一句 DEP0190 原文，但引用块未与文末来源条目对应，发布博客条目（如 \"Deprecation of passing args to spawn and execFile in child_process (#57199)\"）与 YAML 历史（v24.0.0 Runtime / v23.11.0、v22.15.0 Documentation-only）无逐字引用。",
+            "正文关键断言无编号映射：未对触发条件、弃用阶段、原因、发布说明、警告行为等断言编号并映射到具体来源条目。"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "python312-1",
+      "documentSha256": "e6308f6e2c8ffdcb99359894e1acf54f71e19b061510f5feb5a71b5ecfa975c1",
+      "durationMs": 17710,
+      "usage": {
+        "completion_tokens": 1448,
+        "prompt_tokens": 12429,
+        "total_tokens": 13877,
+        "completion_tokens_details": {
+          "reasoning_tokens": 1291
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [
+          "出处缺少真实访问时间",
+          "正文关键断言缺少编号映射（引用未以编号对应到断言）"
+        ],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": true,
+          "claimMapping": false,
+          "issues": [
+            "文末列出标题与链接，但全文未给出任何真实访问时间",
+            "关键断言（发布日期、PEP 632/gh-95299 原文、PEP 684/703 范围等）以引文形式出现，但未建立编号映射体系"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "typescript50-1",
+      "documentSha256": "4b0f1064166bcefbf40fe16cf29abe2eb32bbaced258afa9bcbceaf74d09b807",
+      "durationMs": 45852,
+      "usage": {
+        "completion_tokens": 3401,
+        "prompt_tokens": 35339,
+        "total_tokens": 38740,
+        "completion_tokens_details": {
+          "reasoning_tokens": 3168
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [
+          {
+            "claim": "旧实现支持构造函数参数装饰器（手册中有 \"More Accurate Type-Checking for Parameter Decorators in Constructors Under --experimentalDecorators\" 专节）。",
+            "reason": "该专节标题出现在 TypeScript 5.0 Release Notes 的 Breaking Changes 部分（已取回原文的页面大纲中可见），并不在所引用的 Handbook《Decorators》页面（其大纲为 Introduction/Parameter Decorators/Metadata 等）；将出处归属于\"手册\"与实际取回原文不符。"
+          }
+        ],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": true,
+          "claimMapping": false,
+          "issues": [
+            "来源列表只有标题与链接，未给出任何真实访问时间。",
+            "正文虽有多处逐字英文引文，但来源清单中没有与各断言对应的编号映射（正文按 1–4 节组织，未把关键断言编号对应到具体出处）。"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "react19-1",
+      "documentSha256": "fce18d4ec68a343987fa290187270c4091746b75d759702f386a6137659e35bf",
+      "durationMs": 7189,
+      "usage": {
+        "completion_tokens": 238,
+        "prompt_tokens": 63634,
+        "total_tokens": 63872,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [
+          {
+            "claim": "类组件中也不使用 `forwardRef`，而是通过 `this.props.ref`/回调 ref 的传统方式配合实例引用。",
+            "reason": "已取回原文明确说明 refs passed to classes are not passed as props since they reference the component instance，即类组件的 ref 不作为 prop 传递；文档却称通过 this.props.ref，与原文矛盾且无判据支持。"
+          }
+        ],
+        "scope": [
+          {
+            "claim": "类组件中也不使用 `forwardRef`，而是通过 `this.props.ref`/回调 ref 的传统方式配合实例引用。",
+            "reason": "主语/适用范围错：官方原文指出类组件的 ref 不作为 prop 传递（引用组件实例），文档却描述为 this.props.ref。"
+          }
+        ],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": false,
+          "claimMapping": false,
+          "issues": [
+            "来源列表只有标题与链接，缺少真实访问时间、逐字短片段，正文关键断言也没有编号映射到引用。"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "http-redirects-1",
+      "documentSha256": "9ae3a0b2cdb2d0e132170ed372033a899e1c25c92a1a8ebaf533af988313330c",
+      "durationMs": 11195,
+      "usage": {
+        "completion_tokens": 713,
+        "prompt_tokens": 63610,
+        "total_tokens": 64323,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [
+          {
+            "claim": "HTTP/1.0 中 301、302 原本定义为保留方法，303 才是\"改为 GET\"的重定向；早期用户代理对\"POST 重定向按 POST 还是按 GET\"实践分裂，最终主流实践收敛为改成 GET，307/308 后来加入以无歧义地表示保留方法，而 301、302 被调整为\"允许\"把 POST 重定向为 GET",
+            "reason": "文档声称这是 §15.4 注记说明的历史背景，但已取回的工具输出中从未出现 §15.4 正文或该历史注记的原文（所有抓取均停留在目录/前几节），此段具体历史叙述无已取回原文支持。"
+          },
+          {
+            "claim": "303 是唯一以\"改为 GET（HEAD 仍为 HEAD）\"为核心语义的常用转换型重定向",
+            "reason": "\"唯一\"这一排他性断言在已取回原文中无依据；且 300 Multiple Choices 同属可转换类重定向，未见原文支持该唯一性表述。"
+          }
+        ],
+        "scope": [
+          {
+            "claim": "307 规定 \"the user agent MUST NOT change the request method if it performs an automatic redirection to that URI\"；308 没有 301/302 的改 GET 注记，同属保留方法族。两者均要求连同请求体一起原样重发",
+            "reason": "RFC 9110 §15.4.8/15.4.9 的 MUST NOT 条款针对\"改变请求方法\"，并未规定\"连同请求体一起原样重发\"；将请求体原样重发归为规范要求超出了该条款的适用范围。"
+          }
+        ],
+        "number": [],
+        "uncertainty": {
+          "appropriate": false,
+          "issues": [
+            {
+              "claim": "该节没有出现字面上的 MUST",
+              "reason": "文档以肯定语气断言 §15.4/303 相关节没有 MUST，但已取回的工具输出从未包含 §15.4 或 §15.4.4 正文，无法核验该否定性断言；既未取得依据也未声明未确认，属不当的确定性表述。"
+            },
+            {
+              "claim": "规范未给出 301/302 那种改 GET 的注记（308 行）",
+              "reason": "同上，308 小节正文未在已取回输出中出现，该否定性断言无已取回原文支持且未标注未确认。"
+            }
+          ]
+        },
+        "missing": [
+          "缺少访问时间（来源列表无真实访问时间）",
+          "缺少逐字短片段引用（正文虽有英文引句，但来源区未附带可核验的逐字短片段+出处标注）",
+          "正文关键断言缺少编号映射到来源条目的标注"
+        ],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": false,
+          "claimMapping": false,
+          "issues": [
+            "来源列表有标题与链接，但无访问时间",
+            "无独立的逐字短片段引用区（正文引句未与来源条目编号映射）",
+            "正文要点/结论未编号映射到来源"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "node24-2",
+      "documentSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "durationMs": 2502,
+      "usage": {
+        "completion_tokens": 188,
+        "prompt_tokens": 12912,
+        "total_tokens": 13100,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [
+          "文档内容为空，未包含任何必含要点：ClangCL 要求仅限于 Windows 编译 Node.js 本体、区分 Node-API 稳定 ABI 扩展与直接依赖 V8/Node C++ API 的扩展（含 Node-API 兼容前提条件）、24.0.0 的 NODE_MODULE_VERSION 为 137",
+          "缺少文末出处（标题+链接+真实访问时间+逐字短片段）",
+          "缺少正文关键断言的编号映射",
+          "缺少自检可见（selfCheck）说明"
+        ],
+        "citations": {
+          "titlesAndLinks": false,
+          "accessTimes": false,
+          "verbatimExcerpts": false,
+          "claimMapping": false,
+          "issues": [
+            "文档为空，无任何引用信息"
+          ]
+        },
+        "selfCheckVisible": false
+      }
+    },
+    {
+      "id": "node-dep0190-2",
+      "documentSha256": "b3690eb7407b9a5f11f3a43ceea3a1f3bf2b1d68aaef5bb0c86602f5a5788e5a",
+      "durationMs": 6128,
+      "usage": {
+        "completion_tokens": 298,
+        "prompt_tokens": 46088,
+        "total_tokens": 46386,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [
+          {
+            "claim": "（含各自的同步变体等走同一实现的接口）",
+            "reason": "DEP0190 原文仅写明 child_process.execFile 或 child_process.spawn，未提及 spawnSync/execFileSync 等同步变体是否同样触发该弃用；已取回的原文无此依据。"
+          },
+          {
+            "claim": "可用 `--pending-deprecation` 提前观察",
+            "reason": "DEP0190 条目类型仅为 'Type: Runtime'，未标注 supports --pending-deprecation（对比其他条目会显式标注），已取回原文无此依据。"
+          }
+        ],
+        "scope": [
+          {
+            "claim": "（含各自的同步变体等走同一实现的接口）",
+            "reason": "将适用范围扩展到同步变体，超出 DEP0190 原文明确列出的 execFile/spawn 范围。"
+          }
+        ],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": false,
+          "claimMapping": false,
+          "issues": [
+            "来源仅列出标题与链接，缺少真实访问时间",
+            "缺少逐字短片段引用",
+            "正文关键断言（触发条件、Runtime 类型、24.0.0 引入、PR #57199 等）没有编号映射到来源"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "python312-2",
+      "documentSha256": "dce71bba36a40d053f0c41b931b4ce4c117544624f63d0d80a9920ac32a115ec",
+      "durationMs": 7777,
+      "usage": {
+        "completion_tokens": 652,
+        "prompt_tokens": 8278,
+        "total_tokens": 8930,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [
+          {
+            "claim": "官方 What's New 的“重要弃用/移除”列出 **PEP 632：移除 distutils**，并说明“setuptools 继续提供 distutils，如果你在 Python 3.12 及更高版本仍需要它”。",
+            "reason": "已取回的 What's New 原文为“The third-party Setuptools package continues to provide distutils, if you still require it in Python 3.12 and beyond.”，文档的中文转述与原文一致，但文档未给出该句的逐字短片段，仅给出链接；不过该断言本身有原文支持，不计 unsupported。"
+          },
+          {
+            "claim": "PEP 632 的迁移背景：distutils 长期推荐使用 setuptools；setuptools 已内置完整 distutils 副本，不再依赖标准库。",
+            "reason": "PEP 632 原文（Abstract/Motivation）确有“The distutils module has for a long time recommended using the setuptools package instead. Setuptools has recently integrated a complete copy of distutils and is no longer dependent on the standard library.”，断言有依据，不计。"
+          },
+          {
+            "claim": "官方 venv 文档同时说明：venv 是“轻量、隔离、可随时删除重建”的环境，包安装由激活后的 pip 写入该环境",
+            "reason": "venv 文档原文为“supports creating lightweight ‘virtual environments’, each with their own independent set of Python packages”“Considered as disposable – it should be simple to delete and recreate it from scratch”“common installation tools such as pip will install Python packages into a virtual environment”，断言有依据，不计。"
+          },
+          {
+            "claim": "PEP 684 还指出：为实现这一目标，受 GIL 保护的运行时状态必须先迁入每个解释器；同时仍有一些进程级资源（内存、文件描述符、环境变量）被共享，官方“没有计划改变”这一点。",
+            "reason": "PEP 684 原文“The GIL protects concurrent access to most of CPython's runtime state. So all that GIL-protected global state must move to each interpreter before the GIL can.”以及“some process-global resources (e.g. memory, file descriptors, environment variables) are shared. There are no plans to change this.”均支持该断言，不计。"
+          }
+        ],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [
+          "文末来源缺少真实访问时间（access time）",
+          "文末来源缺少逐字短片段（verbatim excerpt），仅有链接与标题",
+          "正文关键断言未见编号映射（claim mapping）到文末来源"
+        ],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": false,
+          "claimMapping": false,
+          "issues": [
+            "文末各来源条目只有标题+链接，没有真实访问时间",
+            "文末各来源条目没有逐字短片段",
+            "正文断言与文末来源之间没有编号映射"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "typescript50-2",
+      "documentSha256": "6c4f324c84cd23067d7de5eace0a7b13cc444f62ddb33796f7d89a02177d71a1",
+      "durationMs": 7818,
+      "usage": {
+        "completion_tokens": 343,
+        "prompt_tokens": 32543,
+        "total_tokens": 32886,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [
+          {
+            "claim": "类内部按\"参数装饰器 → 方法/访问器/属性装饰器（先实例成员、后静态成员）→ 构造函数参数装饰器 → 类装饰器\"的顺序应用",
+            "reason": "该顺序描述的是 legacy 装饰器的求值顺序，已取回的 Handbook 原文确实列出此顺序，但文档未明确标注这是旧实现的顺序，且新装饰器的求值顺序在已取回原文中未见对应描述；作为对\"旧装饰器\"段落的陈述可由 Handbook 支持，但文档将其与新旧对比并列时未区分来源，属轻微归属不清。"
+          },
+          {
+            "claim": "新提案允许把装饰器放在 `export`/`export default` 之前**或之后**（但不能混用两种位置），这也是旧实现没有的语法差异",
+            "reason": "前半句（可放 export 前后、不能混用）有已取回原文支持；但\"这也是旧实现没有的语法差异\"这一断言在已取回原文中没有依据，原文只说明新提案提供该选项，未断言旧实现没有此语法。"
+          }
+        ],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": true,
+          "claimMapping": false,
+          "issues": [
+            "文末来源列表缺少真实访问时间",
+            "正文关键断言（如第1、2、4节的多条陈述）没有编号映射到来源"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "react19-2",
+      "documentSha256": "31fb588a37aa0ae95a77b03b64158e389575a584393f423d050aed01e1197812",
+      "durationMs": 3269,
+      "usage": {
+        "completion_tokens": 79,
+        "prompt_tokens": 56765,
+        "total_tokens": 56844,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "judgement": {
+        "unsupported": [],
+        "scope": [],
+        "number": [],
+        "uncertainty": {
+          "appropriate": true,
+          "issues": []
+        },
+        "missing": [],
+        "citations": {
+          "titlesAndLinks": true,
+          "accessTimes": false,
+          "verbatimExcerpts": true,
+          "claimMapping": false,
+          "issues": [
+            "缺少真实访问时间",
+            "正文关键断言未编号映射到文末引用"
+          ]
+        },
+        "selfCheckVisible": true
+      }
+    },
+    {
+      "id": "node24-2",
+      "documentSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "notScorable": true,
+      "reason": "No final document; factual error counts are unknown, not zero",
+      "taskStatus": "failed"
+    },
+    {
+      "id": "http-redirects-2",
+      "documentSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "notScorable": true,
+      "reason": "No final document; factual error counts are unknown, not zero",
+      "taskStatus": "failed"
+    }
+  ]
+}

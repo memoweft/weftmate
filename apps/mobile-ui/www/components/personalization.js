@@ -55,6 +55,7 @@ globalThis.WeftPersonalizationView = (core, target, category) => {
         const save = node('button', 'button primary', '保存个性化'); save.type = 'submit'; form.append(save);
     } else {
         toggle('webSearch', '网页搜索', '允许助手根据问题搜索和读取网页。关闭后，需要最新资料时会说明无法查证。');
+        toggle('researchSelfCheck', '成文前核对事实', '查资料成文时，用已读取的原文核对关键结论、适用范围和数字。关闭后仍保留出处与未确认说明。');
         select('verbosity', '回答详细程度', '作为默认偏好，你仍可在对话中要求更短或更详细。', [['short', '简短'], ['medium', '适中'], ['thorough', '详尽']]);
         select('thinkingDisplay', '显示思考过程', '仅对提供思考内容的模型生效，不改变模型的思考能力。', [['collapsed', '折叠'], ['expanded', '展开'], ['hidden', '不显示']]);
         toggle('defaultDeepThinking', '新对话默认深入思考', '只用于支持深入思考的模型；不支持的模型会按普通方式回答。已有对话可在输入区单独设置。');

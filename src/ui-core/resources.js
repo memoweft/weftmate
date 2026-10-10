@@ -1,6 +1,36 @@
 /* Shared resources state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
     const messageBodies = new Map();
+    function capturedSourceText(raw) {
+        const parse = value => { try { return JSON.parse(value); } catch { return null; } };
+        const collect = value => typeof value === 'string' ? [value] : Array.isArray(value) ? value.flatMap(collect)
+            : value?.type === 'text' ? [value.text || ''] : value?.content ? collect(value.content) : [];
+        const data = parse(raw), outputs = collect(data?.output);
+        return outputs.map(text => {
+            const source = parse(text);
+            if (!source?.url || typeof source.text !== 'string') {
+                const capture = text.match(/^Fetched[^\n]*\n\nTitle: ([^\n]+)\nURL: ([^\n]+)\nAccessed: ([^\n]+)\n([\s\S]*)$/);
+                if (!capture) return text;
+                const body = capture[4].replace(/\n\n(?:\[Partial page: segment |Captured source: |\(Content truncated\.)[\s\S]*$/, '')
+                    .replace(/^\[Captured requested section #([^\n]*); this is not the entire page\.\]\n/, '所读章节：#$1\n\n');
+                return `访问时间：${capture[3]}\n\n${body}${body !== capture[4] ? '\n\n[仅显示已读取的部分原文]' : ''}`;
+            }
+            return [source.title, source.url, source.capturedAt ? `访问时间：${source.capturedAt}` : '',
+                source.query ? `原文片段 · ${source.query}` : '', source.text,
+                source.captureTruncated || source.previewTruncated || source.truncated ? '[仅显示已读取的部分原文]' : ''].filter(Boolean).join('\n\n');
+        }).join('\n\n') || raw;
+    }
+    async function capturedSourceForUrl(url) {
+        const normalize = value => { try { const u = new URL(value); u.hash = ''; return u.href; } catch { return ''; } };
+        const key = normalize(url); if (!key) return null;
+        const resources = await core.loadConversationResources();
+        const candidates = resources.sources.filter(item => item.kind === 'webpage' && normalize(item.url) === key);
+        const exact = candidates.filter(item => item.url === url);
+        const matches = exact.length ? exact : candidates;
+        if (!matches.length) return null;
+        return { ...matches[0], uses: [...new Map(matches.flatMap(item => item.uses).map(use => [use.path, use])).values()]
+            .sort((a, b) => Number(b.summary.startsWith('原文片段')) - Number(a.summary.startsWith('原文片段'))) };
+    }
     function deduplicateOutputs(artifacts) {
         const groups = new Map(), seen = new Set();
         for (const artifact of artifacts) {
@@ -219,7 +249,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             effects.updateAvailability();
         }
     }
-    return { deduplicateOutputs, timelineEventsForContext, loadConversationResources, refreshTasks, updateFromCommand, lookupRequest, restoreRequests, submitCommand,
+    return { capturedSourceText, capturedSourceForUrl, deduplicateOutputs, timelineEventsForContext, loadConversationResources, refreshTasks, updateFromCommand, lookupRequest, restoreRequests, submitCommand,
         originalMessageBody: requestId => messageBodies.get(`${core.state.ownerId}:${requestId}`),
         resetMessageBodies: () => messageBodies.clear(),
         replayOriginalMessage: async requestId => {

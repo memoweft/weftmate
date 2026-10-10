@@ -645,8 +645,16 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           const session = next.sessions[sessionId];
           if (session) session.forgottenSeqs = [...new Set([...(session.forgottenSeqs ?? []), ...cleaned.forgottenSeqs])];
         }));
+        // The activity watermark may already be past all retained messages.
+        // Rebuild this invalidated summary now, outside the list request path.
+        if (accountState(ownerId).sessions[sessionId])
+          await callBackend(() => backend.readEvents({ ownerId, sessionId, limit: 200 }));
       }
       if (deleteConversationSnippets && sourceTexts.length) await serial(() => mutate(ownerId, next => {
+        for (const session of Object.values(next.sessions)) {
+          if (typeof session.title === 'string') for (const source of sourceTexts.filter(Boolean))
+            session.title = session.title.replaceAll(source, '[已遗忘的原话]');
+        }
         for (const command of Object.values(next.commands)) {
           if (typeof command.payload?.text === 'string') {
             let text = command.payload.text;
