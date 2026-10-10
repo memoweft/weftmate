@@ -1,0 +1,42 @@
+✔ M3-1 all six states and independent failures distinguish model, permission and replica errors (16.8338ms)
+✔ M3-1 burst requests count once; only three spaced failures plus independent probe confirm offline (2.3661ms)
+✔ M3-1 a reachable relay returning host-listener 503 needs repeated independent status probes; a model 503 stays online (2.7503ms)
+✔ M3-1 synthetic clock drives exponential backoff, background cap and immediate foreground/network retries (2.0808ms)
+✔ M3-1 late probe from an old account cannot replace the new account connection (1.5845ms)
+✔ M3-1 signing into a new account during an old probe starts a fresh probe after discarding the old one (1.8087ms)
+✔ M3-1 lost accepted response reconciles original ID without another generation (3.7094ms)
+✔ M3-1 unaccepted and duplicate concurrent retry preserve exact original message and attachment body (3.7478ms)
+✔ M3-1 cursor replay deduplicates chunks/tools/approvals and 409 resets from the existing tail flow (5.4863ms)
+✔ M3-1 real status and sync distinguish model outage, runtime restart and revoked login across host boots (1726.5623ms)
+✔ M3-1 native adoption finishes before shared acceptance can launch authenticated device reads (2.5989ms)
+✔ M3-1 native cached offline reads cannot reset independent reconnect failures or claim online (1.164ms)
+✔ M3-1 native local activity facts are not connectivity proof and a new failure advances the pending status probe (1.3838ms)
+✔ M3-1 disconnected progress stops model elapsed time and resumes only online (1.3834ms)
+✖ M3-1 Android message-level status check reconciles the original pending request without sending (16.3238ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 14
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2042.6805
+
+✖ failing tests:
+
+test at tests\m3-1-presence.test.ts:127:1
+✖ M3-1 Android message-level status check reconciles the original pending request without sending (16.3238ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(notices.some(text=>text.includes('电脑仍未确认这条请求')))
+  
+      at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w3/tests/m3-1-presence.test.ts:134:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

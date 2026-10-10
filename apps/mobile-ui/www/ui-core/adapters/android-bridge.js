@@ -100,6 +100,11 @@
     return { call, receive, fetch, account, nextRequestId: (prefix = 'ui') => `${prefix}-${Date.now().toString(36)}-${(++sequence).toString(36)}-${Math.random().toString(36).slice(2, 10)}` };
   }
   globalThis.WeftUiCore.createAndroidBridge = createAndroidBridge;
+  globalThis.WeftUiCore.adoptMobileHostSession = async (call, accept, payload) => {
+    const account = await call('cloud.adopt');
+    accept(payload);
+    return account;
+  };
   // App account transport shares the account core; only the platform owns secrets.
   globalThis.WeftUiCore.createMobileCloudTransport = ({ bridge, native, hostOrigin }) => {
     const request = async (url, options = {}) => {
