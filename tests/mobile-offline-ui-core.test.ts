@@ -44,12 +44,12 @@ test('offline cached phone binding keeps its read context and resource cache wit
 })
 
 test('UX-6 mobile memory search binds opaque device scope to the raw host owner, refuses mixed owners and late account reads',async()=>{
-  let wrong=false,release:any;const f=fixture(async(path:string)=>{
-    if(path.endsWith('/status'))return response({ownerId:'raw-account-a',state:'ready',worldRevision:2,capabilities:{list:true}});
+  let wrong=false,release:any,recovering=false;const f=fixture(async(path:string)=>{
+    if(path.endsWith('/status'))return response({ownerId:'raw-account-a',state:recovering?'recovering':'ready',worldRevision:2,capabilities:{list:true}});
     if(release==='wait')await new Promise(done=>release=done);
     return response({ownerId:wrong?'raw-account-b':'raw-account-a',worldRevision:2,items:[{id:'memory-a',text:'合成偏好'}]});
   },{nativeCall:async()=>({owner:'owner-a',connectionVerified:true})});
-  assert.equal((await f.core.mobile.searchMemoryPage('偏好')).items[0].id,'memory-a');assert.equal(f.core.state.ownerId,'owner-a');
+  assert.equal((await f.core.mobile.searchMemoryPage('偏好')).items[0].id,'memory-a');assert.equal(f.core.state.ownerId,'owner-a');recovering=true;assert.equal((await f.core.mobile.searchMemoryPage('偏好')).items[0].id,'memory-a');
   wrong=true;await assert.rejects(()=>f.core.mobile.searchMemoryPage('偏好'),{code:'MEMORY_OWNER_MISMATCH'});wrong=false;
   release='wait';const pending=f.core.mobile.searchMemoryPage('偏好');while(typeof release!=='function')await new Promise(done=>setTimeout(done,1));f.state.owner='owner-b';f.state.authEpoch++;release();await assert.rejects(()=>pending,{code:'STALE_CONTEXT'});
 })

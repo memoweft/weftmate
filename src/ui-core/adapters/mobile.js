@@ -389,7 +389,7 @@ function memoryItemsPath(kind,query,after){try{const params=[`kind=${memoryPathE
     const path=`/personal/v1/memory/items?${params.join('&')}`;return path.length<=512?path:null}catch{return null}}
 
 function memoryListAllowed(memory=state.memory){return !!memory?.boundOwnerId&&memory.boundScope===memory.scope&&memory.capabilities.list===true&&
-  ['ready','degraded'].includes(memory.statusState)}
+  ['ready','recovering','degraded'].includes(memory.statusState)}
 
 // Search stays in chat. Reuse the memory page's verified native scope and raw
 // host-owner binding, without changing its form or treating scope as owner ID.
@@ -400,7 +400,7 @@ async function searchMemoryPage(query,after){
     const profile=await effects.nativeCall('auth.me');if(!current())throw reject('STALE_CONTEXT');
     if(profile?.connectionVerified!==true||profile.owner!==scope)throw reject('MEMORY_OWNER_MISMATCH');
     const status=await business({path:'/personal/v1/memory/status'});if(!current())throw reject('STALE_CONTEXT');
-    if(!['ready','degraded'].includes(status.state)||status.capabilities?.list!==true)throw reject(status.state==='disabled'?'MEMORY_DISABLED':'MEMORY_UNAVAILABLE');
+    if(!['ready','recovering','degraded'].includes(status.state)||status.capabilities?.list!==true)throw reject(status.state==='disabled'?'MEMORY_DISABLED':'MEMORY_UNAVAILABLE');
     if(typeof status.ownerId!=='string'||!status.ownerId||!Number.isSafeInteger(status.worldRevision))throw reject('MEMORY_RESPONSE_INVALID');
     const params=new URLSearchParams({kind:'all',limit:'50',...(query?{query}:{}),...(after?{after}:{})});
     const page=await business({path:`/personal/v1/memory/items?${params}`});if(!current())throw reject('STALE_CONTEXT');
@@ -426,11 +426,11 @@ async function loadMemorySnapshot(target,token){try{
       memoryFail(token,new Error(profile?.connectionVerified===false?'MEMORY_CONNECTION_UNVERIFIED':'MEMORY_OWNER_MISMATCH'),target);return}
     const statusResult=await business({path:'/personal/v1/memory/status',method:'GET'});
     if(!memoryCurrent(token))return;
-    const canList=statusResult&&['ready','degraded'].includes(statusResult.state)&&statusResult.capabilities?.list===true;
+    const canList=statusResult&&['ready','recovering','degraded'].includes(statusResult.state)&&statusResult.capabilities?.list===true;
     if(typeof statusResult?.ownerId!=='string'||!statusResult.ownerId||!Object.hasOwn(statusResult,'worldRevision')||
       !(statusResult.worldRevision===null||Number.isSafeInteger(statusResult.worldRevision))||
       (canList&&!Number.isSafeInteger(statusResult.worldRevision))||
-      !['ready','degraded','disabled','unavailable'].includes(statusResult.state)||!statusResult.capabilities||typeof statusResult.capabilities!=='object'){
+      !['ready','recovering','degraded','disabled','unavailable'].includes(statusResult.state)||!statusResult.capabilities||typeof statusResult.capabilities!=='object'){
       throw new Error('MEMORY_INVALID_RESPONSE')}
   const memory=state.memory;memory.healthStatus=statusResult;memory.boundOwnerId=statusResult.ownerId;memory.boundScope=token.scope;
     memory.statusWorldRevision=statusResult.worldRevision;memory.worldRevision=null;memory.statusState=statusResult.state;memory.reasonCode=statusResult.reasonCode||'';

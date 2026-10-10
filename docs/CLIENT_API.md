@@ -1265,6 +1265,8 @@ Apple（苹果端）交接：iPhone / Mac 订阅同一动态增量和宿主决�
 
 ## 11. 记忆摄取健康与历史补整理（MEM-D）
 
+FX-18：`GET /memory/status` 和 `GET /system.memory` 增加可选 `recoveringFormationCount`；`state` 增加 `recovering`（继续整理中），对应 `reasonCode=MEMORY_FORMATION_RECOVERING`。只在确实回收了上次中断的作业、模型可用且没有其他失败时使用；已有列表、来源及注入能力仍按 `capabilities` 判断。完成后计数归零并恢复 `ready`，真实失败仍为 `degraded`。设置与动态显示“正在继续整理上次没做完的记忆”；动态使用既有 `memory.report` 类型；这是无需用户处理的信息（待办状态为 `completed`），整理完成时更新同一条动态的文案。无新增路由或权限，Apple 客户端需识别新增状态。
+
 `GET /memory/status` 保留既有字段，新增可选 `pendingFormationCount`、`failedFormationCount`、`captureError` 和 `backfill`。`pendingBoundaryCount` 是宿主 outbox（持久待提交队列）条数，模型不可用时仍返回已知数量。`pendingFormationCount` 是 Core（记忆核心）已接受、尚在形成的作业数；两者不能混为已形成条数。`state=degraded` 也可表示正在整理，已有可用记忆继续沿 `capabilities.inject` 与原目的地权限使用。`reasonCode` 新增 `MEMORY_MODEL_WAITING`（切换中，等待原模型服务）、`MEMORY_FORMATION_PENDING`、`MEMORY_FORMATION_FAILED`；保留 `MEMORY_BUSY`、`MEMORY_MODEL_UNAVAILABLE` 与来源阻断原因。`GET /system.memory` 同步提供 `reasonCode,pendingBoundaryCount,pendingFormationCount,failedFormationCount`，供设置健康项显示。客户端必须区分正常、补交／形成中和暂停，不能把503当作空记忆。
 
 | 接口 | 请求与结果 |

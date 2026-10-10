@@ -84,3 +84,18 @@ test('MEM-D formation pending does not masquerade as pause; model unavailability
   status={state:'degraded',reasonCode:'MEMORY_FORMATION_PENDING'};await f.request('/activity');
   status={state:'unavailable',reasonCode:'MEMORY_MODEL_UNAVAILABLE'};assert.equal((await f.request('/activity?type=memory')).items.length,2);
 });
+
+
+test('FX-18 recovered memory appears as one quiet progress event and completes without a pause',async t=>{
+  let status:any={state:'recovering',reasonCode:'MEMORY_FORMATION_RECOVERING'};
+  const memoryManager={enabled:false,peek:()=>status.state,status:async()=>status,query:async()=>({}),submitCommand:async()=>({}),receiptByRequest:async()=>({}),retryCleanupByRequest:async()=>({})};
+  const f=await startTimelineCandidate({interactive:true,historyCount:0,memoryManager});t.after(()=>f.close());
+  const rows=(await f.request('/activity?type=memory')).items;
+  assert.equal(rows.length,1);assert.equal(rows[0].title,'正在继续整理上次没做完的记忆');
+  assert.equal(rows[0].state,'completed');assert.equal(rows[0].notification.level,'silent');
+  assert.equal((await f.request('/activity?type=memory')).items.length,1);
+  status={state:'ready'};
+  const complete=(await f.request('/activity?type=memory')).items;
+  assert.equal(complete.length,1);assert.equal(complete[0].id,rows[0].id);
+  assert.equal(complete[0].title,'上次没做完的记忆已整理完成');assert.equal(complete[0].state,'completed');
+});
