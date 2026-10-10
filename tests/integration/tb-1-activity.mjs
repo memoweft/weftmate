@@ -14,7 +14,7 @@ const memoryManager={enabled:true,peek:()=> 'ready',status:async()=>({state:'rea
   receiptByRequest:async()=>{throw Object.assign(new Error('command_receipt_not_found'),{code:'command_receipt_not_found'});},
   retryCleanupByRequest:async()=>({result_state:'applied',storage_cleanup:{state:'complete'}}),
   eraseConversationContext:async()=>({result_state:'applied',storage_cleanup:{state:'complete'},erased_evidence_count:0})};
-const fixture=await startTimelineCandidate({interactive:true,historyCount:0,memoryManager});
+const fixture=await startTimelineCandidate({logicalMobile:true,interactive:true,historyCount:0,memoryManager});
 const profile=await mkdtemp(join(tmpdir(),'weftmate-tb-1-desktop-'));
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
 Object.assign(env,{REVIEW_PROFILE:profile,REVIEW_THEME:'light',REVIEW_ORIGIN:fixture.origin});
@@ -60,17 +60,17 @@ try{
   const store=JSON.parse(await readFile(join(fixture.root,'store.json'),'utf8'));assert.equal(JSON.stringify(Object.values(store.accounts).map(row=>row.activity)).includes('TB1-TEMPORARY-SECRET-42'),false);
   await restarted.screenshot({path:join(out,'desktop-temporary.png')});report.checks.push('temporary-window-and-persisted-feed-redacted');
   browser=await chromium.launch({channel:'msedge',headless:true});const phone=await browser.newPage({viewport:{width:390,height:844}});
-  await phone.goto(fixture.mobileUrl);await phone.getByRole('button',{name:'打开导航',exact:true}).click();
-  await phone.getByRole('button',{name:'动态',exact:true}).click();await phone.getByRole('heading',{name:'动态',exact:true}).waitFor();await phone.getByText('记忆已暂停',{exact:true}).waitFor();
+  await phone.goto(fixture.mobileUrl);
+  await phone.getByRole('tab',{name:/^动态(?:，|$)/}).click();await phone.getByRole('heading',{name:'动态',exact:true}).waitFor();await phone.getByText('记忆已暂停',{exact:true}).waitFor();
   assert.ok(await phone.locator('#page-content').evaluate(el=>el.scrollWidth<=el.clientWidth));await phone.screenshot({path:join(out,'mobile-light.png')});
   await phone.evaluate(()=>document.documentElement.dataset.theme='dark');await phone.screenshot({path:join(out,'mobile-dark.png')});report.checks.push('mobile-390x844');
-  mobileFixture=await startTimelineCandidate({interactive:true,historyCount:0});
+  mobileFixture=await startTimelineCandidate({logicalMobile:true,interactive:true,historyCount:0});
   const decisions=await browser.newPage({viewport:{width:390,height:844}});decisions.setDefaultTimeout(15000);
-  await decisions.goto(mobileFixture.mobileUrl);await decisions.waitForFunction(()=>state.booted&&state.loggedIn);await decisions.getByRole('button',{name:'打开导航',exact:true}).click();await decisions.getByRole('button',{name:'动态',exact:true}).click();
-  await decisions.getByRole('button',{name:'批准',exact:true}).click();
+  await decisions.goto(mobileFixture.mobileUrl);await decisions.waitForFunction(()=>state.booted&&state.loggedIn);await decisions.getByRole('tab',{name:/^动态(?:，|$)/}).click();
+  await decisions.getByRole('button',{name:'更多操作 需要审批',exact:true}).click();await decisions.getByRole('menuitem',{name:'批准',exact:true}).click();
   await wait(async()=>!(await mobileFixture.request('/activity?filter=actionable')).items.some(row=>row.type==='approval.pending'));
   await decisions.getByRole('heading',{name:'动态',exact:true}).waitFor();report.checks.push('mobile-direct-approval-native-receipt');
-  await decisions.getByRole('button',{name:'回答',exact:true}).click();
+  await decisions.getByRole('button',{name:'打开动态 需要回答',exact:true}).click();
   await decisions.getByRole('region',{name:'待回答问题'}).getByRole('radio',{name:'简要报告',exact:true}).click();
   await decisions.getByRole('region',{name:'待回答问题'}).getByRole('button',{name:/提交|回答/}).click();
   await wait(async()=>!(await mobileFixture.request('/activity?filter=actionable')).items.some(row=>row.type==='question.pending'));report.checks.push('mobile-original-question-receipt');

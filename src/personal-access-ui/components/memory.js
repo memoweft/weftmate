@@ -8,26 +8,20 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             node.setAttribute('role', 'status'); node.setAttribute('aria-live', 'polite');
             ui.byId('connection-banner').after(node);
         }
-        const unresolved = new Set((status?.formationIssues ?? []).map(issue => issue.jobId));
-        for (const old of document.querySelectorAll('[data-formation-notice]')) if (!unresolved.has(old.dataset.formationNotice)) old.remove();
-        for (const issue of status?.formationIssues ?? []) {
-            const row = [...document.querySelectorAll('.message.user')].find(row => row.dataset.memorySession === issue.sessionId && row.textContent.includes(issue.text));
-            if (!row) continue;
-            let target = row;
-            for (let next = row.nextElementSibling; next && !next.classList.contains('user'); next = next.nextElementSibling) {
-                if (next.classList.contains('assistant')) { target = next; break; }
-            }
-            if ([...target.querySelectorAll('[data-formation-notice]')].some(node => node.dataset.formationNotice === issue.jobId)) continue;
-            const hint = ui.element('p', 'muted', issue.intent === 'correction' ? '这条纠正没有生效。' : '这条记忆尚未形成。');
-            hint.dataset.formationNotice = issue.jobId; hint.setAttribute('role', 'status');
-            const action = ui.element('button', 'button secondary small', '查看原话与重试'); action.type = 'button';
-            action.addEventListener('click', () => ui.byId('rail-memory').click()); hint.append(action); target.append(hint);
+        const issues=status?.formationIssues??[];
+        for(const old of document.querySelectorAll('[data-formation-notice]'))if(!issues.some(issue=>issue.jobId===old.dataset.formationNotice))old.remove();
+        for(const issue of issues){const row=[...document.querySelectorAll('.message.user')].find(row=>row.dataset.memorySession===issue.sessionId&&row.textContent.includes(issue.text));if(!row)continue;
+          let target=row;for(let next=row.nextElementSibling;next&&!next.classList.contains('user');next=next.nextElementSibling)if(next.classList.contains('assistant')){target=next;break;}
+          if(target.querySelector(`[data-formation-notice="${CSS.escape(issue.jobId)}"]`))continue;
+          const hint=ui.element('div','memory-issue-bar');hint.dataset.formationNotice=issue.jobId;hint.setAttribute('role','status');hint.append(WeftIcons.create('warn',16),ui.element('span','',issue.intent==='correction'?'这条纠正没有生效':'这条记忆尚未形成'));
+          const action=ui.element('button','message-action','查看');action.type='button';action.onclick=()=>core.openMemory();hint.append(action);target.append(hint);
+
         }
         node.hidden = status?.state !== 'unavailable';
         node.textContent = node.hidden ? '' : '记忆暂时不可用，普通对话已保存，恢复后会自动补交。';
     }
     async function exportMemories(format) {
-        const button = ui.byId(`memory-export-${format}`); button.disabled = true;
+        const button = ui.byId(`memory-export-${format}`); if(button) button.disabled = true;
         try {
             const identity = core.memoryIdentity();
             if (globalThis.weftmateDesktop?.exportMemories) {
@@ -44,7 +38,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             memoryStatus('我的记忆已导出，包含来源摘要。');
             if (core.state.currentView !== 'memory') ui.toast('我的记忆已导出，包含来源摘要。');
         } catch (error) { memoryStatus(core.memoryFailure(error), true); if (core.state.currentView !== 'memory') ui.toast(core.memoryFailure(error)); }
-        finally { button.disabled = false; }
+        finally { if(button) button.disabled = false; }
     }
     function memoryStatus(message, error = false) {
         const node = ui.byId('memory-status');
@@ -91,8 +85,8 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
                 button.addEventListener('click', () => { void core.openMemoryDetail(item.kind, item.id); });
             row.append(button);
             const ids = item.sourceConversationIds ?? (item.sourceSessionId ? [item.sourceSessionId] : []);
-            for (const id of ids) { const source = ui.element('button','memory-source-link','来源对话'); source.type='button'; source.setAttribute('aria-label',`查看来源对话：${item.text}`); source.addEventListener('click',async()=>{ui.hideSettingsDialog();try { await core.selectSession(id); } catch(error) { ui.toast(core.failureMessage(error)); }}); row.append(source); }
-            if (!ids.length) { const source=ui.element('button','memory-source-link',item.sourceCount ? '查看来源 · 对话未定位' : '查看来源'); source.type='button'; source.addEventListener('click',()=>{void core.openMemoryDetail(item.kind,item.id)});row.append(source); }
+            for (const id of ids) { const source = ui.element('button','memory-source-link','来源对话'); source.type='button'; source.setAttribute('aria-label',`查看来源对话：${item.text}`); source.addEventListener('click',async()=>{ui.hideSettingsDialog();try { await core.selectSession(id); } catch(error) { ui.toast(core.failureMessage(error)); }}); source.prepend(WeftIcons.create('chat',16));row.append(source); }
+            if (!ids.length) { const source=ui.element('button','memory-source-link',item.sourceCount ? '查看来源 · 对话未定位' : '查看来源'); source.type='button'; source.addEventListener('click',()=>{void core.openMemoryDetail(item.kind,item.id)});source.prepend(WeftIcons.create('chat',16));row.append(source); }
             list.append(row);
         }
         ui.byId('memory-more').hidden = !core.memory.hasMore;
@@ -257,9 +251,6 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         section.setAttribute('aria-label', '记忆健康与过去的对话');
         const health = ui.element('div', 'memory-health', '正在检查记忆健康…'); health.id = 'memory-health'; health.setAttribute('role', 'status');
         const progress = ui.element('p', 'muted'); progress.setAttribute('role', 'status');
-        const issues = ui.element('div', 'memory-formation-issues');
-        const retryIds = new Map();
-        let issueSignature = null;
         const explanation = ui.element('p', 'muted');
         const actions = ui.element('div', 'form-actions');
         const preview = ui.element('button', 'button secondary small', '整理过去的对话'); preview.type = 'button';
@@ -270,35 +261,15 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         const cancelPreview=ui.element('button','button secondary small','取消'); cancelPreview.type='button';
         card.append(ui.element('h3','','整理过去的对话'),explanation,confirm,cancelPreview);
         let prepared = null, identity = null, job = null, busy = false;
-        resetIngestion = () => { prepared = null; identity = null; job = null; issues.replaceChildren(); issueSignature = null; retryIds.clear(); explanation.textContent = ''; progress.textContent = ''; card.hidden=true; preview.hidden=false; confirm.hidden = pause.hidden = cancel.hidden = true; health.textContent = '正在检查记忆健康…'; };
+        resetIngestion = () => { prepared = null; identity = null; job = null; delete health.dataset.signature; explanation.textContent = ''; progress.textContent = ''; card.hidden=true; preview.hidden=false; confirm.hidden = pause.hidden = cancel.hidden = true; health.textContent = '正在检查记忆健康…'; };
         ui.paintMemoryHealth = status => {
-            const text=core.memoryHealthText(status), healthy=text==='记忆正常';
-            const count=status?.formedMemoryCount ?? core.memory.totalCount;
-            const queue=(status?.pendingBoundaryCount ?? 0)+(status?.pendingFormationCount ?? 0);
-            health.classList.toggle('is-healthy',healthy); health.classList.toggle('is-warning',!!status&&!healthy);
-            health.replaceChildren(ui.element('span','',healthy?`记忆正常 · ${Number.isSafeInteger(count)?`已形成 ${count} 条`:'正在读取数量'} · 队列 0`:`${text} · 积压 ${queue} 条`));
-            if (!healthy && status) { const view=ui.element('details','memory-health-detail'), summary=ui.element('summary','','查看'); view.append(summary,ui.element('p','',`${text}。已提交待形成 ${status.pendingFormationCount ?? 0} 条，整理失败 ${status.failedFormationCount ?? 0} 条。检查设置里的模型，恢复后会自动继续。`));health.append(view); }
+            WeftPopover.memoryHealth(health,status,{text:core.memoryHealthText(status),count:status?.formedMemoryCount??core.memory.totalCount,
+              onSource:async id=>{ui.hideSettingsDialog();await core.selectSession(id)},
+              onRetry:async(issue,requestId)=>{const token=core.memoryIdentity();await core.memoryRequest(`/formation/${encodeURIComponent(issue.jobId)}/retry`,{method:'POST',body:{requestId}});if(core.memoryIdentityCurrent(token))await refresh();}});
+
         };
         function paint(status) {
             ui.paintMemoryHealth(status);
-            const signature = JSON.stringify(status?.formationIssues ?? []);
-            if (signature !== issueSignature) {
-            issueSignature = signature; issues.replaceChildren();
-            for (const issue of status?.formationIssues ?? []) {
-                const detail = ui.element('details');
-                detail.append(ui.element('summary', '', issue.intent === 'correction' ? '有 1 条纠正没有生效' : '有 1 条记忆没有形成'));
-                detail.append(ui.element('p', '', issue.text));
-                const retry = ui.element('button', 'button secondary small', '重试形成'); retry.type = 'button';
-                retry.addEventListener('click', async () => {
-                    const token = core.memoryIdentity(); retry.disabled = true;
-                    if (!retryIds.has(issue.jobId)) retryIds.set(issue.jobId, crypto.randomUUID());
-                    try { await core.memoryRequest(`/formation/${encodeURIComponent(issue.jobId)}/retry`, {method:'POST', body:{requestId:retryIds.get(issue.jobId)}});
-                        if (core.memoryIdentityCurrent(token)) { progress.textContent = '已提交重试，正在整理。'; await refresh(); }
-                    } catch { if (core.memoryIdentityCurrent(token)) { progress.textContent = '重试未确认，请再次重试。'; retry.disabled = false; } }
-                });
-                detail.append(retry); issues.append(detail);
-            }
-            }
             job = status?.backfill;
             const active = job && ['running', 'paused'].includes(job.state);
             preview.disabled = busy || !!active; preview.hidden=!!active || !card.hidden;
@@ -310,7 +281,9 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             if (core.state.currentView !== 'memory' || busy) return;
             const token = core.memoryIdentity();
             try { const status = await core.memoryRequest('/status'); if (!core.memoryViewCurrent(token)) return;
+                const changed = Number.isInteger(core.memory.status?.worldRevision) && core.memory.status.worldRevision !== status.worldRevision;
                 core.memory.status = status; paint(status);
+                if (changed && !core.memory.loading) void core.loadMemoryPage();
             } catch { if (core.memoryViewCurrent(token)) health.textContent = '记忆状态暂时无法读取，请刷新重试。'; }
         }
         preview.addEventListener('click', async () => {
@@ -334,13 +307,17 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         pause.addEventListener('click', () => { if(job) void change({action:job.state==='paused'?'resume':'pause',jobId:job.id}); });
         cancel.addEventListener('click', () => { if(job) void change({action:'cancel',jobId:job.id}); });
         cancelPreview.addEventListener('click',()=>{prepared=null;card.hidden=true;preview.hidden=false;explanation.textContent='';preview.focus();});
-        actions.append(preview, pause, cancel); section.append(health, issues, actions, card, progress);
+        actions.append(preview, pause, cancel); section.append(health, actions, card, progress);
         ui.byId('memory-search-form').before(section);
         setInterval(() => { void refresh(); }, 3000);
         ui.byId('memory-refresh').addEventListener('click', () => { void refresh(); });
     }
     function mountMemory() {
         mountIngestion();
+        const refreshButton = ui.byId('memory-refresh'); refreshButton.className = 'icon-button';
+        refreshButton.replaceChildren(WeftIcons.create('sync', 18)); refreshButton.setAttribute('aria-label', '刷新记忆'); refreshButton.title = '刷新记忆';
+        const searchButton = ui.byId('memory-search-form').querySelector('button[type=submit]');
+        if (searchButton) { searchButton.className = 'icon-button memory-search-submit'; searchButton.replaceChildren(WeftIcons.create('search', 18)); searchButton.setAttribute('aria-label', '搜索记忆'); ui.byId('memory-query').parentElement.append(searchButton); }
         const select=ui.byId('memory-kind'); select.prepend(new Option('全部','all')); select.value='all'; select.parentElement.hidden=true;
         const filters=ui.element('div','memory-type-filters');filters.setAttribute('role','group');filters.setAttribute('aria-label','记忆类型');
         for (const [kind,name] of [['all','全部'],...Object.entries(core.memoryKinds)]) { const button=ui.element('button','memory-type-filter',name); button.type='button';button.dataset.kind=kind;button.addEventListener('click',()=>{select.value=kind;select.dispatchEvent(new Event('change'));ui.syncMemoryFilters();});filters.append(button); }
@@ -364,14 +341,9 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             if ((core.memoryKinds[core.memory.kind] || core.memory.kind==='all') && core.memory.query.length <= 120)
                 void core.loadMemoryPage();
         });
-        const exports = ui.element('div', 'form-actions');
-        for (const format of ['json', 'markdown']) {
-            const button = ui.element('button', 'button secondary small', `导出我的记忆 · ${format === 'json' ? 'JSON' : 'Markdown'}`);
-            button.type = 'button'; button.id = `memory-export-${format}`;
-            button.addEventListener('click', () => { void exportMemories(format); });
-            exports.append(button);
-        }
-        ui.byId('memory-search-form').before(exports);
+        const exportTrigger=ui.element('button','button secondary small');exportTrigger.type='button';exportTrigger.setAttribute('aria-label','更多记忆操作');exportTrigger.append(WeftIcons.create('more',20));
+        exportTrigger.addEventListener('click',()=>WeftPopover.openMenu(exportTrigger,['json','markdown'].map(format=>({name:`导出我的记忆 · ${format==='json'?'JSON':'Markdown'}`,icon:'download',action:()=>exportMemories(format)}))));
+        ui.byId('memory-refresh').after(exportTrigger);
         ui.byId('memory-refresh').addEventListener('click', () => { void core.openMemory(); });
         ui.byId('memory-more').addEventListener('click', () => { void core.loadMemoryPage({ more: true }); });
         ui.byId('memory-receipt-check').addEventListener('click', ui.handleMemoryReceiptAction);

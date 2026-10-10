@@ -1,5 +1,5 @@
 /* Shared presentation for desktop and the mobile web shell. */
-globalThis.WeftActivityView={mount({target,core,timeZone=()=>core.activity.timeZone}){
+globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.activity.timeZone}){
     const node=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls||'';if(text!==undefined)el.textContent=text;return el;};
     const button=(text,action)=>{const el=node('button','button quiet small',text);el.type='button';el.onclick=()=>Promise.resolve(action()).catch(error=>{notice.textContent=core.failureMessage(error);});return el;};
     target.classList.add('activity-page');
@@ -17,7 +17,9 @@ globalThis.WeftActivityView={mount({target,core,timeZone=()=>core.activity.timeZ
         for(const el of filters.children){el.setAttribute('aria-current',el.dataset.filter===model.filter?'true':'false');el.disabled=model.loading;}
         notice.textContent=model.error|| (model.loading?'正在读取动态…':`${model.unreadCount} 条未读${model.actionableCount?` · ${model.actionableCount} 项待处理`:''}`);
         more.hidden=!model.nextCursor;more.disabled=model.loading;
-        if(!model.items.length){mounted.clear();list.replaceChildren(node('p','activity-empty',model.loading?'正在读取…':model.error?'读取失败，点击筛选重新读取。':model.filter==='all'?'还没有动态。提醒触发、任务完成或需要你回答时，会出现在这里。':'这里暂时没有相关动态。'));return;}
+        if(!model.items.length){mounted.clear();const empty=node('div',model.loading&&mobile?'library-skeleton':'activity-empty');if(mobile){empty.append(WeftIcons.create(model.error?'warn':'bell',24));if(model.loading){empty.setAttribute('role','status');empty.setAttribute('aria-label','正在读取动态');for(let i=0;i<4;i++)empty.append(node('div','library-skeleton-row'));}}
+            empty.append(node('p','',model.loading?'正在读取…':model.error?model.error:model.filter==='all'?'还没有动态。设一个提醒，或让助手做件事。':'这里暂时没有相关动态。'));
+            if(mobile&&model.error)empty.append(button('重试',()=>core.readActivity()));list.replaceChildren(empty);return;}
         const days=new Map(),formatter=new Intl.DateTimeFormat('zh-CN',{timeZone:timeZone(),year:'numeric',month:'long',day:'numeric'}),clock=new Intl.DateTimeFormat('zh-CN',{timeZone:timeZone(),hour:'2-digit',minute:'2-digit',hour12:false});
         const active=document.activeElement,focusedId=active?.closest('[data-activity-id]')?.dataset.activityId,focusedText=active?.textContent;
         for(const item of model.items){const date=formatter.format(new Date(item.at));if(!days.has(date)){const section=node('section','activity-day');section.append(node('h2','',date));days.set(date,section);}
@@ -31,10 +33,18 @@ globalThis.WeftActivityView={mount({target,core,timeZone=()=>core.activity.timeZ
                 }
                 for(const action of item.actions.filter(a=>a.kind!=='respond_approval'))actions.append(button(action.label,()=>core.activityAction(item,action)));
                 if(!item.read)actions.append(button('标为已读',()=>core.markActivityRead(item)));
-                for(const el of actions.children)el.disabled=model.busy.has(item.id);
                 const status=node('span','activity-state',item.state==='pending'?'待处理':item.state==='unavailable'?'已失效':item.type.startsWith('approval.')||item.type.startsWith('question.')?'已完成':'');
                 const reason=node('small','muted',({dnd:'因勿扰未提醒',daily_limit:'已达每日主动提醒上限',type_disabled:'已设为只进动态'})[item.notification?.reason]||'');
-                row.replaceChildren(heading,summary,reason,status,actions);row.setAttribute('aria-label',`${item.read?'':'未读，'}${item.title}`);
+                if(mobile){
+                    const entries=[...actions.children].map(control=>({name:control.textContent,danger:control.textContent==='拒绝',action:()=>control.click(),disabled:model.busy.has(item.id)}));
+                    const primary=item.actions.find(action=>['open_chat','answer_question','view_memory','view_settings'].includes(action.kind));
+                    const content=button('',()=>primary?core.activityAction(item,primary):core.markActivityRead(item));content.className='activity-row-open';content.setAttribute('aria-label',`打开动态 ${item.title}`);content.append(heading,summary,reason,status);
+                    if(!primary&&item.read)content.disabled=true;
+                    const more=button('',()=>{});more.className='library-icon';more.setAttribute('aria-label',`更多操作 ${item.title}`);more.append(WeftIcons.create('more',16));more.onclick=()=>WeftPopover.menu(more,entries,error=>{notice.textContent=core.failureMessage(error);});more.disabled=!entries.length||model.busy.has(item.id);more.setAttribute('aria-haspopup','menu');
+                    row.replaceChildren(content,more);row.setAttribute('aria-label',`${item.read?'':'未读，'}${item.title}`);
+                }
+                for(const el of actions.children)el.disabled=model.busy.has(item.id);
+                if(!mobile){row.replaceChildren(heading,summary,reason,status,actions);row.setAttribute('aria-label',`${item.read?'':'未读，'}${item.title}`);}
             }
             days.get(date).append(row);
         }

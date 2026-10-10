@@ -1,0 +1,15 @@
+{
+  "platform": "mobile-web",
+  "scene": "question",
+  "theme": "dark",
+  "file": "review-mobile-web-question-dark.png",
+  "commit": "93b5ed832a823de7ea38aa8d8fb3a6a13cfe3426",
+  "generatedAt": "2026-10-10T04:51:01.344Z",
+  "synthetic": true,
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "source": "Chromium + FE-1b isolated host",
+  "text": "新对话\n本对话用量\n输出与来源\n隔\nWeftMate\n新对话\n临时对话\n最近对话\nWeftMate\n旁聊\n未分组\n新对话\n电脑执行\n项目\n\n项目暂时无法读取，重新连接后再试。\n\n功能\n记忆\n能力与扩展\n项目与成果\n设备\n通知\n设置\n隔\n隔离测试账号\n个人资料与设置\n读取项目资料，运行测试，并保存一份进度报告。\n\n我会先读取资料并运行测试，再整理 项目进度报告。\n\n覆盖现有报告前，需要你批准。\n\n正在处理…\n\n读取了 3 个文件、已运行 1 个命令\n正在运行命令 node scripts/report.mjs…\n项目进度报告.md\n已读回核验\n\n文件 · 68 B\n\n打开成果下载\n报告要采用哪种格式？\n简要报告\n完整记录\n其他…\n提交回答\n自动\n当前模型"
+}

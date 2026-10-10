@@ -34,7 +34,7 @@ public struct TaskStopIntent: Codable, Equatable, Sendable {
     func validate(snapshot: TaskSnapshot, phase: MatchPhase) throws {
         guard snapshot.scope.server == server, snapshot.scope.ownerId == ownerId, snapshot.scope.hostId == hostId,
               snapshot.taskId == rootCommandId, snapshot.source.commandId == rootCommandId,
-              snapshot.source.kind == .message, snapshot.sessionId == sessionId, snapshot.source.sessionId == sessionId else {
+              [.message, .chatMessage].contains(snapshot.source.kind), snapshot.sessionId == sessionId, snapshot.source.sessionId == sessionId else {
             throw APIFailure.identityMismatch
         }
         if phase == .preflight || sourceReceiptId != nil {

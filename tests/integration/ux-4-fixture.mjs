@@ -35,6 +35,7 @@ export async function startFixture({ phone = false, longReply = false } = {}) {
   const source=(await command({requestId:'create',kind:'session.create',modelProfileId:'synthetic'})).sessionId;
   await command({requestId:'message',kind:'session.message',sessionId:source,text:'请给出一条合成答复。',mode:'queue'});
   const bridge=async(method,params)=>{
+    if(method==='host.status')return request('/status');
     if(['app.ready','app.activity','events.subscribe','cloud.callback'].includes(method))return {};
     if(method==='app.bootstrap')return {loggedIn:true,username:credentials.username,owner:auth.account.ownerId,busy:false,model:{source:'host',displayName:'合成模型'}};
     if(method==='auth.me')return {device:auth.device,deviceId:auth.device.id,displayName:'合成账号',owner:auth.account.ownerId,connectionVerified:true};

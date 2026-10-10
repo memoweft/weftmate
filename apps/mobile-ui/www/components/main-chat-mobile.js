@@ -49,7 +49,7 @@
   Object.assign(mobileEffects,presentation,{
     renderMainChat(){if(!state.logicalChats)return;if(main()){state.sharedSessionId=uiCore.state.selectedSessionId;state.sharedRunning=!!uiCore.state.mainChat.running;ensureList();}presentation.renderMainChat();if(main()&&state.scrollPinned&&!uiCore.state.chatWindow.hasNewer)scrollBottom();},
     paintSelectedSession:id=>presentation.paintSelectedSession(id),
-    showConversation:()=>{if(main())ensureList();page('chat');scheduleSharedPoll();},closeRail:closeDrawer,
+    showConversation:()=>{if(main())ensureList();if(['activity','goals','library'].includes(state.page)&&!state.tabSource&&!state.selectingMainTab)return;page('chat');scheduleSharedPoll();},closeRail:closeDrawer,
     paintModels:()=>updateComposer(),paintDesktopComposer:()=>{},paintSessionApprovalMode:()=>updateApprovalModeButton(),
     removeResourcePreview:()=>closeResourcePage({restoreFocus:false}),closeResourcePreview:()=>closeResourcePage({restoreFocus:false}),
     closePhoneImagePreview:()=>closeImagePreview({restoreFocus:false}),
@@ -102,7 +102,7 @@
     const attachments=currentAttachments().length;state.sharedRunning=running;
     const hasDraft=!!text.trim()||attachments>0;
     try{const key=sharedDraftKey(uiCore.state.selectedChatId);if(text)localStorage.setItem(key,text);else localStorage.removeItem(key);}catch{}
-    return {ready:available&&modelReady&&hasDraft&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
+    return {host:true,ready:available&&modelReady&&hasDraft&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
       draftDisabled:!available,placeholder:running?WeftUiCore.runningPlaceholder(uiCore.composerInputMode(state.sharedSessionId)):'和 WeftMate 聊聊…',
       modelName:uiCore.state.mainChat.modelDisplayName||uiCore.state.models.find(row=>row.id===uiCore.state.modelProfileId)?.name||'选择模型',
       modelLabel:'当前模型',modelDisabled:!!state.sharedSessionId,attachmentsDisabled:!available||!!state.attachmentPick||uiCore.state.submitting,
@@ -115,7 +115,8 @@
   send=function(options={}){return main()?uiCore.sendMainDraft($('draft').value,options.intent):state.logicalChats&&!window.weftNative?uiCore.sendDraft($('draft').value,options.intent):oldSend(options);};
   selectSharedSession=function(id){return state.logicalChats?uiCore.selectLogicalSession(id):nativeSides(id);};
   updatePageHeader=function(){oldHeader();if(state.logicalChats&&state.page==='chat'){$('menu-button').hidden=false;$('page-back').hidden=main();}
-    if(main()){$('header-title').textContent='WeftMate';$('header-subtitle').textContent='主对话';}};
+    if(main()&&state.page==='chat'){$('header-title').textContent='WeftMate';$('header-subtitle').textContent='主对话';$('page-back').hidden=!state.tabSource;}
+    if(state.page==='chat'&&!main())$('menu-button').hidden=true;syncMobileTabs();};
   refreshAttachmentDrafts=async function(...args){if(state.logicalChats&&!window.weftNative){renderAttachmentDrafts();updateComposer();return true;}return oldDrafts(...args);};
   removeAttachment=async function(id){if(state.logicalChats&&!window.weftNative)return uiCore.removeAttachmentDraft(id);return oldRemove(id);};
   selectConversation=function(id){if(state.logicalChats&&id===null)return uiCore.openSideChat({entry:'composer'}).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
@@ -127,17 +128,19 @@
     const list=$('model-options');list.replaceChildren();await uiCore.refreshThinkingModels();
     for(const model of uiCore.state.models){const option=el('button','model-option',model.name||model.displayName||model.id);option.type='button';option.setAttribute('role','option');option.setAttribute('aria-selected',String(model.id===uiCore.state.modelProfileId));option.onclick=()=>{uiCore.selectModelProfile(model.id);closeModelMenu();};list.append(option);}placeModelMenu();};
   presentation.mountMainChat();
+  mountMobileTabs();
   $('open-side-chat').hidden=true;
   const sideHeading=$('drawer').querySelector('.rail-side-heading');if(sideHeading)sideHeading.hidden=true;
   const oldRenderMain=mobileEffects.renderMainChat;
-  mobileEffects.renderMainChat=()=>{oldRenderMain();$('open-side-chat').hidden=!state.logicalChats;if(sideHeading)sideHeading.hidden=!state.logicalChats;};
+  mobileEffects.renderMainChat=()=>{oldRenderMain();$('open-side-chat').hidden=!state.logicalChats;if(sideHeading)sideHeading.hidden=!state.logicalChats;syncMobileTabs();};
   // Touch selection exposes a single row's existing actions. Scrolling cancels a long press.
   let timer,pointerStart,longPressedRow;
-  transcript.addEventListener('pointerdown',event=>{const row=event.target.closest('.logical-message,.main-chat-row.message');if(!row||event.target.closest('button,a,summary'))return;
+  transcript.addEventListener('pointerdown',event=>{const row=event.target.closest('.logical-message,.main-chat-row.message');if(!row||row.classList.contains('user')||event.target.closest('button,a,summary'))return;
     pointerStart={x:event.clientX,y:event.clientY};longPressedRow=null;timer=setTimeout(()=>{longPressedRow=row;row.classList.add('actions-visible');const menu=row.querySelector('.chat-message-menu');if(menu)menu.open=true;row.querySelector('summary')?.focus({preventScroll:true});},500);});
   transcript.addEventListener('pointermove',event=>{if(pointerStart&&Math.hypot(event.clientX-pointerStart.x,event.clientY-pointerStart.y)>10)clearTimeout(timer);});
   for(const name of ['pointerup','pointercancel'])transcript.addEventListener(name,()=>clearTimeout(timer));
   transcript.addEventListener('click',event=>{if(event.target.closest('button,a,summary,details'))return;const row=event.target.closest('.main-chat-row.message');
+    if(row?.classList.contains('user'))return;
     if(longPressedRow===row){longPressedRow=null;return;}
     for(const active of transcript.querySelectorAll('.actions-visible'))if(active!==row)active.classList.remove('actions-visible');row?.classList.toggle('actions-visible');});
   transcript.addEventListener('contextmenu',event=>{const row=event.target.closest('.main-chat-row.message'),menu=row?.querySelector('.chat-message-menu');if(!menu)return;
