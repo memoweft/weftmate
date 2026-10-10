@@ -23,6 +23,7 @@ export async function startTimelineCandidate(options = {}) {
   const call = (name, id, args) => append('tool/call', { turn: 1, callId: id, name, arguments: JSON.stringify(args) })
   const result = (id, text, isError = false) => append('tool/result', { turn: 1, message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError, content: [{ type: 'text', text }] }] } })
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
+  const notificationRows = [];
   const scheduleRows = [{id:'ui4-schedule',text:'提交合成报告',state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:'2026-10-09T01:00:00Z'}];
   const goalRows = new Map();
   if(options.goals){scheduleRows[0]={...scheduleRows[0],createdAt:new Date().toISOString(),revision:1,kind:'reminder',repeat:{kind:'daily',time:'09:00:00'}};}
@@ -43,6 +44,7 @@ export async function startTimelineCandidate(options = {}) {
       if(action==='delete')scheduleRows.splice(scheduleRows.indexOf(row),1);else row.state=action==='pause'?'paused':action==='resume'?'scheduled':'completed';
       return {ok:true};
     }} : {}),
+    ...(options.s3a ? { schedules: async ({action}) => ({items: action==='notifications'?notificationRows:[]}) } : {}),
     ...(options.goals?{goals:async({sessionId:id,action,objective,ref})=>{
       if(action==='list')return {goal:goalRows.get(id)??null};
       if(action==='erase'||action==='forget'||action==='archive'){goalRows.delete(id);return {archived:true};}
@@ -194,6 +196,7 @@ export async function startTimelineCandidate(options = {}) {
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
   return { root, origin,
+    deliverReminder: text => notificationRows.push({id:randomUUID(),messageId:randomUUID(),text,kind:"reminder",createdAt:new Date().toISOString()}),
     recordActivity: input => service.recordActivity(auth.account.ownerId,input),
     relayNextMain: () => {relayPending=true;running=false;if(dailySessions.has(sessionId))dailySessions.get(sessionId).running=false;},
     seedMainHistory: (id, count = 10000, {offset=0,total=count,mixed=false} = {}) => {
