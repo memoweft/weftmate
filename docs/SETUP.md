@@ -146,7 +146,7 @@ ssh weftmate-cloud '/root/weftmate-deploy/rollback.sh'
 
 使用真实云身份 / PKCE（证明密钥授权）/ DPoP（持有密钥证明）、已有设备批准、HAProxy（传输代理）/ frp（隧道）与宿主 TLS（加密传输）。Chromium（浏览器引擎）以 390×844 手机视口访问实际中继域名的 443。历史响应延迟 2 秒，交替切换两段会话 10 次；验证加载禁用、解锁后首次输入逐字保留、一次发送 / 一次模型回合。文件任务使用无真实密钥的合成 HTTP（网络协议）模型，调用原生加载工具 / 读 / 写 / 读回；手机至少两次审批，核对磁盘、模型读回与经中继查询的成果库及预览。
 
-合成项目是 Linux 临时目录；Windows 文件夹登记依赖 Windows 卷 / 文件身份，不在此 Linux 传输场景里伪造登记。桌面批准与云身份准备由既有身份测试助手执行；手机的宿主身份交换、界面、发送、审批和成果查询均走真实中继。浏览器路由在发出前拒绝其他域名 / 协议 / 端口，报告保存全部请求的域名 / 端口 / 路径，不保存 Cookie（会话凭据）、令牌或请求头。
+合成项目是 Linux 临时目录；Windows 文件夹登记依赖 Windows 卷 / 文件身份，不在此 Linux 传输场景里伪造登记。桌面批准与云身份准备由既有身份测试助手执行；登录准备结束后，测试捕获未改动的 UI core（界面功能核心），仅用真实 `/auth/me` 回执调用原有 `acceptSession` / `enterAssistant` 进入界面，不测试邮箱登录表单。手机的宿主身份交换、界面、发送、审批和成果查询均走真实中继。浏览器路由在发出前拒绝其他域名 / 协议 / 端口，报告保存全部请求的域名 / 端口 / 路径，不保存 Cookie（会话凭据）、令牌或请求头。
 
 手动运行须用 Linux、Node 24、openssl、curl、HAProxy 和 Playwright（浏览器自动化）Chromium；不需 WSL（Windows 的 Linux 子系统）、真实账号或模型密钥：
 
@@ -173,3 +173,6 @@ node --test services/cloud/test/relay-phone.test.mjs
 ```
 
 443 须空闲；其他服务全部使用随机回环端口。所有账号、目录、文件、模型响应及临时证书均为合成数据。运行器关闭自己创建的浏览器、宿主、DSH 与代理。成功与失败均生成 `report.json`、手机截图、路径级请求 / 响应记录、`proxy.log` 与 `runtime.log`；Actions 始终上传 `relay-phone-diagnostics`，保存 7 天，不上传私钥、身份数据库或配置。产品断言失败不会因重试而被隐藏。
+
+
+本包验收记录：恢复后 [完整通过运行](https://github.com/memoweft/weftmate/actions/runs/38046202682) 的场景 85.196 秒、独立 job 2 分 45 秒；[故意失败运行](https://github.com/memoweft/weftmate/actions/runs/38045983528) 临时仅在测试宿主给出的真实界面脚本里取消加载禁用，首个切换即命中 `history loading must disable first input`，随后另一个提交恢复。最终运行器没有故障开关或断言放宽。后台离线副本未配置云离线模型 / 完整浏览器云凭据，在此夹具中有 409 和授权提示；不把它或 Windows 文件夹登记当作该场景已覆盖的功能。
