@@ -17,7 +17,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             default: return context === 'network' ? '暂时无法连接宿主，请稍后重试。' : '操作未完成，请重试。';
         }
     }
-    async function requestJson(url, { method = 'GET', body, protectedWrite = false, timeoutMs = 15000 } = {}) {
+    async function requestJson(url, { method = 'GET', body, protectedWrite = false, timeoutMs = 15000, signal } = {}) {
         const headers = {};
         if (body !== undefined)
             headers['content-type'] = 'application/json';
@@ -30,11 +30,12 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         try {
             response = await environment.fetch(url, {
                 method, headers, credentials: 'same-origin', cache: 'no-store',
-                signal: AbortSignal.timeout(timeoutMs),
+                signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
                 ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
             });
         }
         catch {
+            if (signal?.aborted) throw { code: 'ABORTED' };
             throw { code: 'NETWORK' };
         }
         const payload = await response.json().catch(() => ({}));
@@ -151,6 +152,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
                 core.operation('正在核对上次请求。');
         }
         core.state.hostId = payload.hostId;
+        core.state.hostName = payload.hostName;
         core.state.personalCapabilities = payload.personalCapabilities ?? {};
         core.state.capabilities = payload.backend?.capabilities ?? null;
         core.state.executionAccount = payload.executionAccount;

@@ -2,7 +2,7 @@
 import { copyFile, mkdir, readFile, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { uiCoreAssets } from '../../../src/ui-core/manifest.mjs';
+import { uiCoreBrowserAssets as uiCoreAssets } from '../../../src/ui-core/manifest.mjs';
 
 export const uiCoreSourceDir = fileURLToPath(new URL('../../../src/ui-core/', import.meta.url));
 export const mobileWwwDir = fileURLToPath(new URL('../www/', import.meta.url));
@@ -41,7 +41,13 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     if (!source.equals(generated)) problems.push(`differs ${name}`);
   }
   if (sourceDir === uiCoreSourceDir && targetDir === mobileUiCoreDir) {
-    for (const name of ['components/offline.js', 'offline.css', 'components/notifications.js', 'components/personalization.js', 'personalization.css', 'components/activity-view.js', 'activity.css', 'components/goals-view.js', 'goals.css', 'components/library-view.js', 'library.css', 'popovers.js', 'message-actions.js', 'message-actions.css', 'controls.css', 'icons.js']) {
+    const rendering = JSON.parse(await readFile(new URL('../../../src/personal-access-ui/render-assets.json', import.meta.url), 'utf8'));
+    for(const name of rendering){
+      const source=await readFile(new URL(`../../../src/personal-access-ui/${name}`,import.meta.url));
+      const generated=await readFile(path.join(mobileWwwDir,name));
+      if(!source.equals(generated))problems.push(`differs ${name}`);
+    }
+    for (const name of ['folder-choice.js','folder-choice.css','components/offline.js', 'offline.css', 'components/notifications.js', 'components/personalization.js', 'personalization.css', 'components/activity-view.js', 'activity.css', 'components/goals-view.js', 'goals.css', 'components/library-view.js', 'library.css', 'popovers.js', 'message-actions.js', 'message-actions.css', 'controls.css', 'icons.js', 'rendering.css', 'katex.css', 'next-suggestions.js', 'next-suggestions.css']) {
       const source = await readFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url));
       const generated = await readFile(path.join(mobileWwwDir, name));
       if (!source.equals(generated)) problems.push(`differs ${name}`);
@@ -63,14 +69,16 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
 
 export async function buildUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir = mobileUiCoreDir } = {}) {
   if (sourceDir === uiCoreSourceDir && targetDir === mobileUiCoreDir) {
+    const rendering = JSON.parse(await readFile(new URL('../../../src/personal-access-ui/render-assets.json', import.meta.url), 'utf8'));
+    for(const name of rendering){await mkdir(path.dirname(path.join(mobileWwwDir,name)),{recursive:true});await copyFile(new URL(`../../../src/personal-access-ui/${name}`,import.meta.url),path.join(mobileWwwDir,name));}
     await copyFile(new URL('../../../src/personal-access-ui/components/main-chat.js', import.meta.url), path.join(mobileWwwDir, 'components/main-chat.js'));
     await copyFile(new URL('../../../src/personal-access-ui/components/question-bar.js', import.meta.url), path.join(mobileWwwDir, 'components/question-bar.js'));
-    for (const name of ['components/offline.js', 'offline.css', 'components/notifications.js', 'components/personalization.js', 'personalization.css', 'components/activity-view.js', 'activity.css', 'components/goals-view.js', 'goals.css', 'components/library-view.js', 'library.css', 'popovers.js', 'message-actions.js', 'message-actions.css', 'controls.css', 'icons.js']) await copyFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url), path.join(mobileWwwDir, name));
+    for (const name of ['folder-choice.js','folder-choice.css','components/offline.js', 'offline.css', 'components/notifications.js', 'components/personalization.js', 'personalization.css', 'components/activity-view.js', 'activity.css', 'components/goals-view.js', 'goals.css', 'components/library-view.js', 'library.css', 'popovers.js', 'message-actions.js', 'message-actions.css', 'controls.css', 'icons.js', 'rendering.css', 'katex.css']) await copyFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url), path.join(mobileWwwDir, name));
     await copyFile(new URL('../../../src/personal-access-ui/components/usage.js', import.meta.url), path.join(mobileWwwDir, 'components/usage-view.js'));
     await copyFile(new URL('../../../src/personal-access-ui/components/schedules.js', import.meta.url), path.join(mobileWwwDir, 'components/schedules-view.js'));
     await copyFile(new URL('../../../src/personal-access-ui/components/settings-controls.js', import.meta.url), path.join(mobileWwwDir, 'components/settings-controls.js'));
     await copyFile(new URL('../../../src/personal-access-ui/usage.css', import.meta.url), path.join(mobileWwwDir, 'usage.css'));
-    for (const name of ['composer-subtasks.js','composer-extras.css']) await copyFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url), path.join(mobileWwwDir,name));
+    for (const name of ['composer-subtasks.js','composer-extras.css','next-suggestions.js','next-suggestions.css']) await copyFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url), path.join(mobileWwwDir,name));
     await copyFile(new URL('../../../src/personal-access-ui/popovers.js', import.meta.url), path.join(mobileWwwDir, 'popovers.js'));
     await copyFile(new URL('../../../src/personal-access-ui/conversation-scroll.js', import.meta.url), path.join(mobileWwwDir, 'conversation-scroll.js'));
     await mkdir(path.join(mobileWwwDir, 'legal'), { recursive: true });

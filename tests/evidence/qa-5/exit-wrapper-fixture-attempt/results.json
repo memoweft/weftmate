@@ -1,0 +1,376 @@
+{
+  "startedAt": "2026-10-10T06:18:18.102Z",
+  "realElectron": true,
+  "realCore": true,
+  "syntheticModel": true,
+  "rows": [
+    {
+      "state": "idle",
+      "method": "tray",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:18:18.102Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-10T06:18:20.379Z",
+          "data": {
+            "text": "我偏好第1种合成茶用白色杯子。",
+            "receiptId": "4c4c9ae2-76f5-4ae2-8382-fd6296c96a1c"
+          }
+        },
+        {
+          "seq": 22,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:18:20.633Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 24,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:18:20.651Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-131411cc-fbb1-4194-82f0-c9ab042a0cf9",
+      "mainPid": 34720,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-dc8ee562-0d04-496e-bd4e-4d6196fbe264",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 1,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "tray",
+      "attempt": 2,
+      "startedAt": "2026-10-10T06:18:49.784Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:18:50.491Z",
+          "data": {
+            "text": "我偏好第2种合成茶用白色杯子。",
+            "receiptId": "e14bc1ad-1b9c-4b11-883a-5df2517a0c0b"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:18:50.633Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-a041b549463607208187de6d64818552b293ed64cc40766f112261dff0b4ca5a",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:18:50.634Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-ff2de6a6-d708-45ff-9938-6375a0f9a6c4",
+      "mainPid": 53788,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-dc8ee562-0d04-496e-bd4e-4d6196fbe264",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 2,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "tray",
+      "attempt": 3,
+      "startedAt": "2026-10-10T06:19:32.638Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:19:33.160Z",
+          "data": {
+            "text": "我偏好第3种合成茶用白色杯子。",
+            "receiptId": "f980663c-5588-405f-8088-8db045f50011"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:19:33.341Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-a041b549463607208187de6d64818552b293ed64cc40766f112261dff0b4ca5a",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-f99645053d356add2dffb918c87a940abdca83578c9e40aa19c2597890883848",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:19:33.343Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-4e99d9cd-78b0-40e8-8046-f62f83b9b56c",
+      "mainPid": 56232,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "completedRetained": true,
+      "health": {
+        "ownerId": "owner-dc8ee562-0d04-496e-bd4e-4d6196fbe264",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 3,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "idle",
+      "method": "task-manager-force",
+      "attempt": 1,
+      "startedAt": "2026-10-10T06:20:21.344Z",
+      "completedEventCount": 3,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T06:20:21.846Z",
+          "data": {
+            "text": "我偏好第4种合成茶用白色杯子。",
+            "receiptId": "86f15225-7800-4ef0-8056-d40efa6291be"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T06:20:22.012Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-a041b549463607208187de6d64818552b293ed64cc40766f112261dff0b4ca5a",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-bb9352a1b5de2fa2b0d17a5792cfffa7452a1e006d95b7bdd778709a78fee683",
+                "kind": "cognition",
+                "summary": "用户偏好第3种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-f99645053d356add2dffb918c87a940abdca83578c9e40aa19c2597890883848",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T06:20:22.015Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "sessionId": "session-e9a9bf33-f0f6-450d-b1a6-8ffd35aed3ea",
+      "mainPid": 43564,
+      "forceAccepted": true,
+      "residualProcesses": [
+        {
+          "ProcessId": 58944,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791613200849)/"
+        },
+        {
+          "ProcessId": 62000,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791613201212)/"
+        },
+        {
+          "ProcessId": 34804,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791613201213)/"
+        },
+        {
+          "ProcessId": 62324,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791613203379)/"
+        },
+        {
+          "ProcessId": 56432,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791613210477)/"
+        }
+      ],
+      "tmpAfterExit": [],
+      "error": "electron.launch: WebSocket error: read ECONNRESET\nCall log:\n\u001b[2m  - <launching> \"D:\\AIProjects\\WeftMate\\Worktrees\\w5\\node_modules\\electron\\dist\\electron.exe\" \"--inspect=0\" \"--remote-debugging-port=0\" \"D:\\AIProjects\\WeftMate\\Worktrees\\w5\\tests\\integration\\m2-exit-bootstrap.mjs\" \"--user-data-dir=C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa5-exit-matrix-GZ7p8s\\profile\" \"--personal-host\" \"--access-port=0\" \"--personal-memory-config=C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa5-exit-matrix-GZ7p8s\\memory.json\"\u001b[22m\n\u001b[2m  - <launched> pid=59852\u001b[22m\n\u001b[2m  - [pid=59852][out]\u001b[22m\n\u001b[2m  - [pid=59852][err] Debugger listening on ws://127.0.0.1:56970/90243d18-0a99-4596-a732-55ce7b486a65\u001b[22m\n\u001b[2m  - [pid=59852][err] For help, see: https://nodejs.org/learn/getting-started/debugging\u001b[22m\n\u001b[2m  - <ws connecting> ws://127.0.0.1:56970/90243d18-0a99-4596-a732-55ce7b486a65\u001b[22m\n\u001b[2m  - <ws connected> ws://127.0.0.1:56970/90243d18-0a99-4596-a732-55ce7b486a65\u001b[22m\n\u001b[2m  - [pid=59852][err] Debugger attached.\u001b[22m\n\u001b[2m  - [pid=59852][err]\u001b[22m\n\u001b[2m  - [pid=59852][err] DevTools listening on ws://127.0.0.1:56972/devtools/browser/6801c28b-1c54-4813-b610-c1ce03e307b3\u001b[22m\n\u001b[2m  - <ws connecting> ws://127.0.0.1:56972/devtools/browser/6801c28b-1c54-4813-b610-c1ce03e307b3\u001b[22m\n\u001b[2m  - <ws disconnected> ws://127.0.0.1:56970/90243d18-0a99-4596-a732-55ce7b486a65 code=1005 reason=\u001b[22m\n\u001b[2m  - <ws error> ws://127.0.0.1:56972/devtools/browser/6801c28b-1c54-4813-b610-c1ce03e307b3 error read ECONNRESET\u001b[22m\n\u001b[2m  - <ws connect error> ws://127.0.0.1:56972/devtools/browser/6801c28b-1c54-4813-b610-c1ce03e307b3 read ECONNRESET\u001b[22m\n\u001b[2m  - <ws disconnected> ws://127.0.0.1:56972/devtools/browser/6801c28b-1c54-4813-b610-c1ce03e307b3 code=1006 reason=\u001b[22m\n\u001b[2m  - [pid=59852] <kill>\u001b[22m\n\u001b[2m  - [pid=59852] <will force kill>\u001b[22m\n\u001b[2m  - [pid=59852] <process did exit: exitCode=0, signal=null>\u001b[22m\n\u001b[2m  - [pid=59852] starting temporary directories cleanup\u001b[22m\n\u001b[2m  - [pid=59852] finished temporary directories cleanup\u001b[22m\n\n    at async h.launch (D:\\AIProjects\\WeftMate\\Worktrees\\w5\\tests\\evidence\\qa-5\\runners\\harness.mjs:44:9)\n    at async file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-5/runners/exit-matrix.mjs:34:4",
+      "passed": false,
+      "assistedCleanup": [
+        {
+          "ProcessId": 58944,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791613200849)/"
+        },
+        {
+          "ProcessId": 62000,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791613201212)/"
+        },
+        {
+          "ProcessId": 34804,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791613201213)/"
+        },
+        {
+          "ProcessId": 62324,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791613203379)/"
+        },
+        {
+          "ProcessId": 56432,
+          "Name": "electron.exe",
+          "CreationDate": "/Date(1791613210477)/"
+        }
+      ],
+      "completedRetainedAfterAssistedCleanup": true,
+      "healthAfterAssistedCleanup": {
+        "ownerId": "owner-dc8ee562-0d04-496e-bd4e-4d6196fbe264",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 4,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      }
+    },
+    {
+      "state": "idle",
+      "method": "task-manager-force",
+      "attempt": 2,
+      "startedAt": "2026-10-10T06:20:39.339Z"
+    }
+  ]
+}

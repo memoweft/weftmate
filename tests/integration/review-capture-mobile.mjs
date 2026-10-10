@@ -3,9 +3,11 @@ import { createServer } from 'node:http';
 import { readFile, rm } from 'node:fs/promises';
 import { resolve, extname, join, sep } from 'node:path';
 import { startFe1bFixture } from './fe-1b-fixture.mjs';
+import {startRenderingCandidate} from './ux-5-fixture.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { startMainChatCandidate } from './main-chat-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
+import { mockUx7Requests, prepareUx7Suggestions } from './ux-7-scenes.mjs';
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 import { startAndroid } from '../../scripts/nightly/android.mjs';
@@ -38,7 +40,7 @@ try {
     const fixture = await startFe1bFixture();
     const candidate = await startTimelineCandidate({daily:true,logicalMobile:true,goals:true, historyCount: 0, interactive: true });
     const context = android ? android.page.context() : await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, colorScheme: theme });
-    const page = android?.page || await context.newPage(), errors = [];let mainFixture;
+    const page = android?.page || await context.newPage(), errors = [];let mainFixture,suggestionFixture,renderingFixture;
     try {
       const bridge = mobileBridge(fixture, theme);
       currentBridge = bridge;
@@ -83,7 +85,7 @@ try {
         usage: async () => { await settings(); await button(/^用量 /).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
         'session-menu': async () => { await home();await button('打开导航').click();const row=page.getByRole('navigation',{name:'主导航',exact:true}).getByRole('button',{name:'整理项目进展',exact:true});await row.dispatchEvent('pointerdown',{pointerType:'touch'});await page.getByRole('dialog',{name:'对话操作',exact:true}).waitFor();await row.dispatchEvent('pointerup',{pointerType:'touch'});await button('更多').click();await page.getByRole('dialog',{name:'对话操作',exact:true}).getByRole('button',{name:'删除',exact:true}).waitFor(); },
       };
-      for (const scene of catalog.scenes.filter(row => !['login', 'question','main-chat','activity','goals','library'].includes(row.id) && (!onlyScene || row.id === onlyScene))) await shot(scene.id, preparations[scene.id]);
+      for (const scene of catalog.scenes.filter(row => !['login', 'question','main-chat','activity','goals','library','rendering','next-suggestions'].includes(row.id) && (!onlyScene || row.id === onlyScene))) await shot(scene.id, preparations[scene.id]);
       // FE-1a's real question projection supplies the missing FE-1b question fixture.
       const questionPage = android?.page || await context.newPage(); questionPage.setDefaultTimeout(30000);
       if (android) await questionPage.unrouteAll({ behavior: 'ignoreErrors' });
@@ -92,6 +94,7 @@ try {
         if (body.method === 'settings.appearance') return route.fulfill({ json: { result: { value: theme } } });
         await route.continue();
       });
+      await shot('rendering',async()=>{const rendered=renderingFixture=await startRenderingCandidate();{await questionPage.goto(rendered.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.evaluate(()=>listSharedSessions());await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();await questionPage.getByRole('button',{name:'渲染样张',exact:true}).click();await questionPage.getByRole('heading',{name:'公式与图表',exact:true}).scrollIntoViewIfNeeded();await questionPage.locator('.render-diagram img').waitFor();}},questionPage);
       await shot('library', async () => { await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^成果库(?:，|$)/}).click();await questionPage.getByRole('button',{name:'预览 项目进度报告.md',exact:true}).waitFor(); },questionPage);
       await shot('goals', async () => {
         await questionPage.goto(candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^目标(?:，|$)/}).click();await questionPage.getByRole('heading',{name:'目标',exact:true}).waitFor();await questionPage.getByRole('article',{name:'提交合成报告',exact:true}).waitFor();
@@ -112,6 +115,7 @@ try {
         await questionPage.getByRole('region',{name:'待回答问题'}).waitFor();
         await questionPage.getByRole('radio',{name:'简要报告',exact:true}).waitFor();
       }, questionPage);
+      await shot('next-suggestions', async () => { suggestionFixture=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await suggestionFixture.complete();if(android)await android.reverse(new URL(suggestionFixture.mobileUrl).port);await mockUx7Requests(questionPage); await questionPage.goto(suggestionFixture.mobileUrl); await questionPage.waitForFunction(()=>state.booted); await questionPage.evaluate(async id=>{await selectSharedSession(id);closeDrawer()},suggestionFixture.sessionId); await prepareUx7Suggestions(questionPage); }, questionPage);
       const mainPage=android?.page || await context.newPage();
       await shot('main-chat',async()=>{
         mainFixture=await startMainChatCandidate(300,{logicalMobile:true});if(android)await android.reverse(new URL(mainFixture.mobileUrl).port);await mainPage.goto(mainFixture.mobileUrl);
@@ -121,6 +125,6 @@ try {
       },mainPage);
       if (errors.length) throw Error('Mobile renderer failed');
       console.log(`Mobile ${theme}: scene outcomes recorded.`);
-    } finally { if (!android) await context.close(); await fixture.close(); await candidate.close();await mainFixture?.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true}); }
+    } finally { if (!android) await context.close(); await fixture.close(); await candidate.close();await mainFixture?.close();await suggestionFixture?.close();await renderingFixture?.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});if(suggestionFixture)await rm(suggestionFixture.root,{recursive:true,force:true}); }
   }
 } finally { if (android) await android.close(); else await browser.close(); server.closeAllConnections(); await new Promise(done => server.close(done)); }
