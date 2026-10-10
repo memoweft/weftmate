@@ -51,14 +51,14 @@ globalThis.WeftGoalsView={mount({target,core,openSource}){
     }
     const newSchedule=button('新建定时任务',()=>showForm('schedule')),newGoal=button('新建长期目标',()=>showForm('goal'));sections.schedules.header.append(newSchedule);sections.goals.header.append(newGoal);
     const open=row=>openSource(row.source??{sessionId:row.sessionId});
-    function taskRow(row){const item=el('article','goals-row');item.setAttribute('aria-label',row.title);item.append(el('h3','',row.title),el('p','goals-meta',`${row.conversationTitle} · ${stateNames[row.status]??'处理中'} · ${row.startedAt?'已运行':'已等待'} ${Math.floor(row.elapsedSeconds/60)} 分 ${row.elapsedSeconds%60} 秒`),el('p','',row.step));
+    function taskRow(row){const item=el('article','goals-row');item.setAttribute('aria-label',row.title);item.dataset.goalKey=row.taskId;item.append(el('h3','',row.title),el('p','goals-meta',`${row.conversationTitle} · ${stateNames[row.status]??'处理中'} · ${row.startedAt?'已运行':'已等待'} ${Math.floor(row.elapsedSeconds/60)} 分 ${row.elapsedSeconds%60} 秒`),el('p','',row.step));
         const actions=el('div','goals-actions');actions.append(button('打开对话与步骤',()=>open(row)));if(row.canStop){const stop=button('停止',()=>core.stopOverviewTask(row));stop.disabled=core.goalsPage.busy.has(row.taskId);actions.append(stop);}item.append(actions);return item;}
     function render(){
         const model=core.goalsPage;newSchedule.disabled=model.loading||core.state.personalCapabilities?.scheduleEditing!==1;newGoal.disabled=model.loading||core.state.personalCapabilities?.goals!==1;const next=JSON.stringify([model.loading,model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy]]);if(signature===next)return;signature=next;
-        const focused=document.activeElement,focusedLabel=focused?.textContent,focusedRow=focused?.closest('article')?.getAttribute('aria-label');
+        const focused=document.activeElement,focusedLabel=focused?.textContent,focusedRow=focused?.closest('article')?.dataset.goalKey;
         for(const [key,{list}]of Object.entries(sections)){list.replaceChildren();if(model.errors[key]){const error=el('p','muted',model.errors[key]);error.setAttribute('role','alert');list.append(error);continue;}
             const rows=key==='tasks'?model.tasks:model[key];if(!rows.length)list.append(el('p','goals-empty',model.loading?'正在读取…':{tasks:'现在没有进行中的任务。',schedules:'还没有安排。可在这里新建，也可以在对话里说“每天早上 8 点提醒我喝水”。',goals:'还没有长期目标。把想持续推进的事关联到一个对话。'}[key]));
-            for(const row of rows){if(key==='tasks'){list.append(taskRow(row));continue;}const item=el('article','goals-row'),actions=el('div','goals-actions');item.setAttribute('aria-label',row.title??row.text);item.append(el('h3','',row.title??row.text));
+            for(const row of rows){if(key==='tasks'){list.append(taskRow(row));continue;}const item=el('article','goals-row'),actions=el('div','goals-actions');item.setAttribute('aria-label',row.title??row.text);item.dataset.goalKey=`${row.sessionId??row.source?.sessionId}/${row.id}`;item.append(el('h3','',row.title??row.text));
                 if(key==='schedules'){item.append(el('p','goals-meta',core.scheduleDescription(row)),el('p','muted',row.lastRunAt?`上次 ${new Date(row.lastRunAt).toLocaleString('zh-CN',{timeZone:row.timeZone})} · ${{delivered:'提醒已送达',queued:'等待执行',completed:'已完成',failed:'失败',stopped:'已停止'}[row.lastResult?.state]??'打开对话查看结果'}`:'尚未运行'));
                     actions.append(button(row.temporary?'在对话里编辑':'编辑',()=>row.temporary?open(row):showForm('schedule',row)));if(row.state!=='completed')actions.append(button(row.state==='paused'?'恢复':'暂停',async()=>{await core.manageSchedule(row,row.state==='paused'?'resume':'pause');await core.readGoals();}));
                     actions.append(button('立即运行',async()=>{await core.manageSchedule(row,'run');await core.readGoals();}),button('删除',()=>confirmDelete('删除这个定时任务？',async()=>{await core.manageSchedule(row,'delete');await core.readGoals();})));
@@ -67,7 +67,7 @@ globalThis.WeftGoalsView={mount({target,core,openSource}){
             }
         }
         recentList.replaceChildren(...model.recent.map(taskRow));if(!model.recent.length)recentList.append(el('p','goals-empty','最近 7 天还没有完成的任务。'));
-        if(focusedRow){const article=[...target.querySelectorAll('article')].find(n=>n.getAttribute('aria-label')===focusedRow);[...article?.querySelectorAll('button')??[]].find(n=>n.textContent===focusedLabel)?.focus();}
+        if(focusedRow){const article=[...target.querySelectorAll('article')].find(n=>n.dataset.goalKey===focusedRow);[...article?.querySelectorAll('button')??[]].find(n=>n.textContent===focusedLabel)?.focus();}
     }
     return {render,reset(){form?.remove();form=null;signature='';notice.textContent='';render();},focus:()=>title.focus()};
 }};

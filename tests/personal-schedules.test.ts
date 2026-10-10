@@ -14,6 +14,7 @@ import { createNativeScheduleManager, scheduleSourceReceipt } from '../src/perso
 import { nextCalendarInput, scheduleContent } from '../src/personal-access/schedules-calendar.mjs';
 import { createScheduleOperations } from '../src/personal-access/schedules.mjs';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
+import { scheduledCommandSource } from '../src/personal-access/schedules-authorization.mjs';
 
 test('schedule creation binds the latest claimed steer without changing file-tool authorization', () => {
   const exec = { callId: 'schedule-call', agent: { session: { events: [
@@ -164,6 +165,15 @@ test('scheduled command inherits conversation owner, source authorization and cu
   assert.equal(account.commands[one.commandId].sourceAuthEpoch, 7);
   assert.equal(account.commands[one.commandId].payload.mode, 'queue');
   await assert.rejects(ops.handleRuntime({ ...input, sessionId: 'other' }), { code: 'SESSION_UNAVAILABLE' });
+  account.devices = { 'device-a': { authEpoch:7 } };
+  account.scheduleAuthorizations = { 'ui-main': {sessionId:'session-a',chatId:'chat-main',sourceDeviceId:'device-a',sourceAuthEpoch:7} };
+  const main = await ops.handleRuntime({...input,sourceReceiptId:'ui-main',deliveryId:'main-ui'});
+  const mainCommand = account.commands[main.commandId];assert.equal(mainCommand.kind,'chat.message');assert.equal(mainCommand.payload.chatId,'chat-main');
+  assert.equal(scheduledCommandSource(account,mainCommand),true);
+  assert.equal(scheduledCommandSource(account,{...mainCommand,kind:'session.message',sessionId:'next-main-segment'}),true,'a UI main schedule follows its logical main across native segment relay');
+  account.sessions['session-a'].projectId='project-p1';account.projects={'project-p1':{projectId:'project-p1',revision:3}};
+  const projectRun=await ops.handleRuntime({...input,deliveryId:'project-current'});
+  assert.equal(account.commands[projectRun.commandId].payload.projectId,'project-p1');assert.equal(account.commands[projectRun.commandId].payload.projectRevision,3);
 });
 
 test('authenticated schedule/notification contract enforces ownership, CSRF and exact actions', async t => {
