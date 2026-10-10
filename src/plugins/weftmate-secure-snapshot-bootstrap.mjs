@@ -123,6 +123,14 @@ const bootSnapshot = async (entries) => {
 process.on('message', (frame) => {
   if (typeof frame !== 'object' || frame === null || Array.isArray(frame)) fail('invalid snapshot frame')
   const value = frame
+  if (value.protocol === 'weftmate.runtime-shutdown.v1' && value.action === 'dispose') {
+    // Keep the IPC carrier alive until the parent has collected the complete
+    // process tree. Native disposal first drains the DSH persistence queues.
+    void shutdown?.(0).then(() => {
+      if (process.connected) process.send?.({ protocol: 'weftmate.runtime-shutdown.v1', action: 'disposed' })
+    })
+    return
+  }
   // The official credentials provider shares this Node IPC channel. Its
   // parent responses are intentionally ignored here; only our own protocol is
   // a bootstrap frame, and exactly one such frame is accepted.
