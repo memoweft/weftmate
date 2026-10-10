@@ -94,6 +94,7 @@ function startMobileConnection() {
     await globalThis.WeftMobileCloud.core?.offlineConnectionRestored?.();
   });
 }
+let mobileNextSuggestions = null;
 const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore, draft:()=>$('draft'),
   selectSession:async id=>{await listSharedSessions();await selectSharedSession(id)},
   copy: text=>call('clipboard.copy',{text}), save:async(blob,name)=>{
@@ -690,7 +691,7 @@ const approvalRequestPattern=/^[A-Za-z0-9_.:-]{1,128}$/;
 
 
 
-function handleBack(){if(document.querySelector('.session-menu[role=menu]')){WeftPopover.closeMenu();return;}if(mobileMessageActions?.dismiss())return;if(!$('resource-page').hidden){closeResourcePage();return}
+function handleBack(){if(globalThis.WeftContent?.isGalleryOpen()){closeImagePreview();return;}if(document.querySelector('.session-menu[role=menu]')){WeftPopover.closeMenu();return;}if(mobileMessageActions?.dismiss())return;if(!$('resource-page').hidden){closeResourcePage();return}
   if(!$('image-preview').hidden){closeImagePreview();return}
   if(approvalModeState.confirmation){closeApprovalRisk();return}if(approvalModeState.menu){closeApprovalModeMenu({restoreFocus:true});return}
   if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}if(state.attachmentPick){cancelAttachmentPick({announce:true});return}if(state.menu){closeModelMenu();$('model-button').focus();return}
@@ -706,9 +707,17 @@ function handleBack(){if(document.querySelector('.session-menu[role=menu]')){Wef
 document.addEventListener('DOMContentLoaded',()=>{
   globalThis.WeftPresenceView.mount({core:uiCore,badgeTarget:document.querySelector('.topbar .brand'),composerTarget:$('composer-dock'),toast,
     openLogin:()=>globalThis.WeftMobileCloud.core?.startCloudJourney(),openDevices:()=>page('devices')});
+  uiCore.observeConnection(value=>{
+    if(value.kind!=='online')for(const notice of document.querySelectorAll('.chat-read-notice'))notice.hidden=true;
+    if(state.page==='chat'&&state.chatSource==='host'){
+      if(state.logicalChats)renderOptimisticMessages();else renderSharedConversation();
+    }
+  });
   window.addEventListener('online',()=>uiCore.connectionNetwork(true));
   window.addEventListener('offline',()=>uiCore.connectionNetwork(false));
   document.addEventListener('visibilitychange',()=>uiCore.connectionVisibility(document.visibilityState==='hidden'));
+  mobileNextSuggestions = globalThis.WeftNextSuggestionsView?.mount(uiCore, { field:$('draft'), area:$('composer-dock'),
+    card:$('draft').parentElement, mobile:true, repaint:() => updateComposer() });
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
   $('page-back').addEventListener('click',()=>{if(state.page==='chat'&&!state.logicalChats&&!state.tabSource)page('home');else handleBack()});
   $('header-profile').addEventListener('click',()=>page('settings'));

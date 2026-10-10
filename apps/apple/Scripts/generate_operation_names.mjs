@@ -6,4 +6,4 @@ const table=name=>Object.fromEntries([...source.match(new RegExp(`const ${name} 
 const swift=table=>Object.entries(table).map(([key,value])=>`        ${JSON.stringify(key)}: ${JSON.stringify(value)},`).join('\n');
 const output=`// Generated from src/ui-core/timeline-model.js. Run Scripts/generate_operation_names.mjs.\nimport Foundation\n\npublic enum OperationNames {\n    public static let tools: [String: String] = [\n${swift(table('toolLabels'))}\n    ]\n    public static let fields: [String: String] = [\n${swift(table('fieldLabels'))}\n    ]\n}\n`;
 const path=resolve(root,'apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/OperationNames.swift');
-if(process.argv.includes('--check')) {if(readFileSync(path,'utf8').replaceAll('\r\n','\n')!==output)throw Error('Apple operation names differ from ui-core');console.log('Apple operation names match ui-core');}else writeFileSync(path,output);
+if(process.argv.includes('--check')) {if(readFileSync(path,'utf8').replace(/\r\n/g,'\n')!==output)throw Error('Apple operation names differ from ui-core');console.log('Apple operation names match ui-core');}else writeFileSync(path,output);

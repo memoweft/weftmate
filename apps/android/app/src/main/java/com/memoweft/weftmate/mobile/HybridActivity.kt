@@ -274,7 +274,7 @@ class HybridActivity : Activity() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 if (closed.get()) return true
                 if (request.url.toString().startsWith("$origin/ui/")) return false
-                if (request.isForMainFrame && request.url.scheme == "https") {
+                if (request.isForMainFrame && request.url.scheme in setOf("https", "http")) {
                     startActivity(Intent(Intent.ACTION_VIEW, request.url))
                 }
                 return true

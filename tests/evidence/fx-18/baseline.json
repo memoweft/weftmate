@@ -1,0 +1,6 @@
+{
+  "weftmate": "e85b71228ff4646e41e4f9740fc55fb0b4878c52",
+  "core": "68d511fa8f1e17467b3f379246af5f585486f24f",
+  "dependencies": "npm ci completed in root and apps/mobile-ui before testing",
+  "scope": "Synthetic accounts, random ports, isolated profiles; no real model requests or daily data access"
+}

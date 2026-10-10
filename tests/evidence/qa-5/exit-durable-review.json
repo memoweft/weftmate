@@ -1,0 +1,94 @@
+{
+  "memory": [
+    {
+      "run": "exit-formation-tray",
+      "jobStates": {
+        "applied": 6
+      },
+      "evidenceCount": 6,
+      "latestCompletedUserTextsPreserved": 3
+    },
+    {
+      "run": "exit-formation-task-manager-force",
+      "jobStates": {
+        "applied": 6
+      },
+      "evidenceCount": 6,
+      "latestCompletedUserTextsPreserved": 3
+    },
+    {
+      "run": "exit-formation-logout-taskkill",
+      "jobStates": {
+        "applied": 6
+      },
+      "evidenceCount": 6,
+      "latestCompletedUserTextsPreserved": 3
+    }
+  ],
+  "streamingMessages": [
+    {
+      "method": "tray",
+      "attempt": 1,
+      "sessionId": "session-147c29d6-83a5-4fe9-bdd9-4d14dfe51b07",
+      "artifactCount": 1,
+      "acceptedStreamingUserTextPreserved": true
+    },
+    {
+      "method": "tray",
+      "attempt": 2,
+      "sessionId": "session-50e59a44-c8dc-4775-8311-9a5ad0427e1d",
+      "artifactCount": 1,
+      "acceptedStreamingUserTextPreserved": true
+    },
+    {
+      "method": "tray",
+      "attempt": 3,
+      "sessionId": "session-b6a2303f-7ed8-4c25-a6a3-66b4de5ea56d",
+      "artifactCount": 1,
+      "acceptedStreamingUserTextPreserved": true
+    },
+    {
+      "method": "task-manager-force",
+      "attempt": 1,
+      "sessionId": "session-89d6e02f-dc97-408a-aa8c-8e2db5ed959f",
+      "artifactCount": 1,
+      "acceptedStreamingUserTextPreserved": true
+    },
+    {
+      "method": "task-manager-force",
+      "attempt": 2,
+      "sessionId": "session-a4db6c6c-923c-49b5-86f7-13f65015367a",
+      "artifactCount": 1,
+      "acceptedStreamingUserTextPreserved": true
+    },
+    {
+      "method": "task-manager-force",
+      "attempt": 3,
+      "sessionId": "session-a416c7ce-e459-40c6-9153-864877e863ed",
+      "artifactCount": 1,
+      "acceptedStreamingUserTextPreserved": true
+    },
+    {
+      "method": "logout-taskkill",
+      "attempt": 1,
+      "sessionId": "session-b4e74c55-0ff3-43b5-b064-4bab5c75a0c0",
+      "artifactCount": 1,
+      "acceptedStreamingUserTextPreserved": true
+    },
+    {
+      "method": "logout-taskkill",
+      "attempt": 2,
+      "sessionId": "session-4cb5d276-c1b9-44c3-8532-58401e73abf5",
+      "artifactCount": 1,
+      "acceptedStreamingUserTextPreserved": true
+    },
+    {
+      "method": "logout-taskkill",
+      "attempt": 3,
+      "sessionId": "session-6adc7cc2-7834-47ea-8878-0814c2038a16",
+      "artifactCount": 1,
+      "acceptedStreamingUserTextPreserved": true
+    }
+  ],
+  "passed": true
+}

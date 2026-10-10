@@ -32,7 +32,8 @@
       // The conversation's scroll area owns this content. It is never a fixed
       // overlay above approvals, settings, project dialogs or device actions.
       (document.getElementById?.('chat-scroll') || document.body).append(section);
-      document.body.append(launcher, notice);
+      document.body.append(launcher);
+      (document.getElementById?.('chat-scroll') || document.body).append(notice);
       function paint() {
         const view = engine?.view();
         if (core.connectionView) offline = core.connectionView().kind === 'host_offline';
@@ -41,7 +42,7 @@
         // Polling updates availability, never navigation. Only the user's launcher
         // action opens this page, so pending approvals and settings stay usable.
         section.hidden = !(view && showHistory);
-        notice.textContent = error; notice.hidden = !error || showHistory;
+        notice.textContent = error; notice.hidden = !error || showHistory || !!core.connectionView && core.connectionView().kind !== 'online';
         title.textContent = offline ? '离线模式' : '离线对话';
         mode.textContent = offline ? explanation : view?.turns.length ? '电脑已上线，正在同步离线对话' : '已同步';
         label.firstChild.textContent = offline ? explanation : '这段对话已同步，可返回电脑对话继续';
@@ -63,8 +64,8 @@
         const rows = [...(recent?.messages || conversation?.context || []), ...(conversation?.turns || []).flatMap(t => t.messages)];
         for (const message of rows) {
           const row = element('article', '', `offline-message ${message.role}`);
-          const body = element('div', message.text, 'offline-message-body');
-          if (message.role === 'assistant' && globalThis.WeftFormat?.render) body.innerHTML = globalThis.WeftFormat.render(message.text);
+          const body = globalThis.WeftContent ? WeftContent.create(message.text, 'offline-message-body markdown-body') : element('div', message.text, 'offline-message-body');
+          if (!globalThis.WeftContent && message.role === 'assistant' && globalThis.WeftFormat?.render) body.innerHTML = globalThis.WeftFormat.render(message.text);
           row.append(element('span', message.role === 'user' ? '我' : 'WeftMate'), body); messages.append(row);
         }
       }

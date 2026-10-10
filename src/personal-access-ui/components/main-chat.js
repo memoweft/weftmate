@@ -106,11 +106,11 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             }
             highlight(row);
         } else if (spec.kind === 'waiting') {
-            row.classList.add('inline-waiting'); row.setAttribute('role','status'); row.replaceChildren(ui.element('span','inline-progress-text is-running',spec.text));
+            row.classList.add('inline-waiting'); row.setAttribute('role','status'); row.replaceChildren(ui.element('span',core.state.online ? 'inline-progress-text is-running' : 'inline-progress-text',spec.text));
         } else if (spec.kind === 'optimistic') {
-            row.classList.add('message', 'user'); row.replaceChildren(ui.element('span', 'message-text', spec.event.text || (spec.event.files || []).join('、') || '附件'), ui.element('small', 'message-task-label', spec.event.status === 'undelivered' ? '未送达' : ['failed','confirming'].includes(spec.event.status) ? '待确认，草稿已保留' : spec.event.status === 'accepted' ? '已发送' : '发送中'));
+            row.classList.add('message', 'user'); row.replaceChildren(ui.element('span', 'message-text', spec.event.text || (spec.event.files || []).join('、') || '附件'), ui.element('small', 'message-task-label', spec.event.status === 'undelivered' ? '未送达' : ['failed','confirming'].includes(spec.event.status) ? '发送结果待核对，草稿已保留' : spec.event.status === 'accepted' ? '已发送' : '发送中'));
             if (['failed','confirming','undelivered'].includes(spec.event.status)) {
-                const retry = button(spec.event.status === 'undelivered' ? '未送达，重试' : '核对原请求', '核对原请求', () => core.retryMainRequest(spec.event.requestId));
+                const retry = button(spec.event.status === 'undelivered' ? '重试发送' : '检查状态', '检查状态', () => core.retryMainRequest(spec.event.requestId));
                 retry.disabled = !!spec.event.retrying || !core.state.online;row.append(retry);
             }
         } else {

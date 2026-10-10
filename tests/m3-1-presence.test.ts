@@ -16,7 +16,7 @@ function clock() {
 }
 function fixture(extra:any={}) {
   const c=clock(),requests:any[]=[],values=new Map();let transport:any=()=>({ok:true,status:200,json:async()=>({presence:{runtime:'ready'},ownerId:'owner',hostId:'host'})});
-  const context:any={AbortSignal,URL,URLSearchParams,TextEncoder,Blob,Intl,setTimeout,clearTimeout,setInterval,clearInterval};runInNewContext(source,context);
+  const context:any={AbortSignal,URL,URLSearchParams,TextEncoder,Blob,Intl,setTimeout,clearTimeout,setInterval,clearInterval};runInNewContext(source+(extra.mobileState?'\n;'+readFileSync(new URL('../src/ui-core/adapters/mobile.js',import.meta.url),'utf8'):''),context);
   const effects=new Proxy({readMessageDraft:()=> '合成原文'},{get:(o:any,k)=>o[k]||(()=>{})});
   const core=context.WeftUiCore.create({effects,clock:c,now:c.now,random:()=>1,fetch:async(path:any,options:any)=>{requests.push({path,options});return transport(path,options);},crypto:{randomUUID:()=> 'request-original'},storage:{getItem:(k:any)=>values.get(k)||null,setItem:(k:any,v:any)=>values.set(k,v),removeItem:(k:any)=>values.delete(k)},...extra});
   Object.assign(core.state,{identityGeneration:1,ownerId:'owner',account:{ownerId:'owner'},csrfToken:'synthetic',hostId:'host',online:true,selectedSessionId:'session',selectedChatId:'chat',activeChatSource:'desktop',personalCapabilities:{chatSend:1},modelProfileId:'model',models:[{id:'model'}],mainChat:{chatId:'chat',activeSessionId:'session',sendAvailable:true}});
@@ -108,4 +108,29 @@ test('M3-1 native cached offline reads cannot reset independent reconnect failur
 test('M3-1 native local activity facts are not connectivity proof and a new failure advances the pending status probe',async()=>{
   const f=fixture({nativeMobile:true});f.core.startConnection(async()=>{});await f.core.retryConnection();assert.equal(f.c.next(),15000);f.core.connectionFailed({code:'NETWORK'});assert.equal(f.c.next(),1000);
   f.setTransport(()=>({ok:true,status:200,json:async()=>({commands:[]})}));await f.core.accessApi('/commands');assert.equal(f.core.connectionView().kind,'connecting');f.core.stopConnection();
+});
+
+test('M3-1 disconnected progress stops model elapsed time and resumes only online',()=>{
+  const f=fixture();f.core.presence.success();
+  const events=[{seq:1,type:'turn.started',at:'2026-10-10T00:00:00Z'}];
+  assert.match(f.core.processingStageLabel({phase:'loading'},events,Date.parse('2026-10-10T00:00:09Z')),/9 秒/);
+  for(const kind of ['connecting','host_offline','network_unavailable','login_required','approval_required']){
+    f.core.presence.authorization(kind);
+    const a=f.core.processingStageLabel({phase:'loading'},events,Date.parse('2026-10-10T00:00:09Z'));
+    const b=f.core.processingStageLabel({phase:'loading'},events,Date.parse('2026-10-10T00:00:30Z'));
+    assert.equal(a,b);assert.match(a,/等待接续/);assert.doesNotMatch(a,/秒|加载模型/);
+    assert.match(f.core.processingLabel({phase:'reasoning'}),/等待接续/);
+  }
+  f.core.presence.success();assert.match(f.core.processingStageLabel({phase:'loading'},events,Date.parse('2026-10-10T00:00:30Z')),/30 秒/);
+});
+
+test('M3-1 Android message-level status check reconciles the original pending request without sending',async()=>{
+  const calls:string[]=[],notices:string[]=[],pending={requestId:'original-native-request',state:'uncertain',text:'原草稿'};
+  const state:any={page:'chat',owner:'owner',loggedIn:true,authEpoch:1,sharedGeneration:1,chatSource:'host',sharedSessionId:'session',sharedSessions:[],sharedEvents:[],sharedPending:pending};
+  const effects=new Proxy({status:(text:string)=>notices.push(text),safeError:()=> 'CHECK_FAILED',nativeCall:async(method:string)=>{
+    calls.push(method);return {source:'host',commands:[{kind:'session.message',sessionId:'session',requestId:pending.requestId,state:'uncertain'}]};
+  }},{get:(o:any,k)=>o[k]||(()=>{})});
+  const f=fixture({mobileState:state,effects});await f.core.mobile.checkSharedPending();
+  assert.ok(notices.some(text=>text.includes('电脑仍未确认这条请求')));assert.ok(!notices.includes('CHECK_FAILED'));
+  assert.equal(state.sharedPending.requestId,pending.requestId);assert.ok(calls.includes('shared.outbox.reconcile'));assert.ok(!calls.includes('shared.send'));
 });

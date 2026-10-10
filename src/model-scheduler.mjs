@@ -7,6 +7,8 @@ import { pipeline } from 'node:stream/promises';
 import { openAICompatibleEndpoint } from './openai-compatible-client.ts';
 import { usageResponse } from './personal-access/usage-response.mjs';
 
+const suggestionBusy = () => Object.assign(new Error('MODEL_SUGGESTION_BUSY'), { code: 'MODEL_SUGGESTION_BUSY' });
+
 /** One inference slot, with foreground FIFO and native DSH turn-wide idle checks. */
 export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 } = {}) {
   const pending = [];
@@ -40,6 +42,28 @@ export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 }
     acquire(priority, signal, onQueued = null, onPreempt = null) {
       if (closed) return Promise.reject(new Error('MODEL_QUEUE_CLOSED'));
       signal?.throwIfAborted();
+      if (priority === 'suggestion') {
+        // Reserve synchronously before the native idle probe: two simultaneous
+        // suggestions must never both observe an empty slot and enter inference.
+        if (active || pending.length || draining) return Promise.reject(suggestionBusy());
+        const item = { priority, signal, onPreempt, abort: null };
+        active = item;
+        const release = () => {
+          signal?.removeEventListener('abort', item.abort);
+          if (active !== item) return;
+          active = null; notify(); void drain();
+        };
+        item.abort = release;
+        signal?.addEventListener('abort', item.abort, { once: true });
+        return (async () => {
+          try {
+            if (!await isIdle()) throw suggestionBusy();
+            signal?.throwIfAborted();
+            if (closed || active !== item || pending.length) throw suggestionBusy();
+            return release;
+          } catch (error) { release(); throw error; }
+        })();
+      }
       return new Promise((resolve, reject) => {
         const item = { priority, signal, resolve, reject, abort: null, onQueued, onPreempt };
         item.abort = () => {
@@ -49,7 +73,7 @@ export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 }
         };
         signal?.addEventListener('abort', item.abort, { once: true });
         pending.push(item); notify();
-        if (priority === 'foreground' && active?.priority === 'background') active.onPreempt?.();
+        if (priority === 'foreground' && ['background', 'suggestion'].includes(active?.priority)) active.onPreempt?.();
         void drain();
       });
     },
@@ -87,11 +111,11 @@ export async function runPreemptibleFormation(queue, signal, work,
 
 /** Private loopback bridge shared by native DSH streams and MemoWeft workers. */
 export async function createModelScheduler({ isIdle, profileFor, backgroundRoute, credentialFor, fetchImpl = fetch,
-  beginUsage = null, finishUsage = null, backgroundReady = null, onEvent = () => {},
+  beginUsage = null, finishUsage = null, backgroundReady = null, suggestionReady = null, onEvent = () => {},
   heartbeatMs = 15_000, memoryProfileFor = null }) {
   const queues = new Map();
   const progress = new Map();
-  async function queueFor(destination) {
+  async function queueFor(destination, signal = null) {
     const profile = profileFor(destination.profileId ?? destination.baseUrl);
     const baseUrl = profile?.baseUrl ?? destination.baseUrl;
     if (!baseUrl) return null;
@@ -102,7 +126,8 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
     let slots;
     try {
       const key = profile && credentialFor(profile);
-      const response = await fetchImpl(endpoint, { signal: AbortSignal.timeout(2000),
+      const timeout = AbortSignal.timeout(2000);
+      const response = await fetchImpl(endpoint, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
         headers: key ? { authorization: `Bearer ${key}` } : {} });
       if (response.ok) slots = (await response.json()).total_slots;
     } catch { /* Unknown capacity does not establish a single-slot service. */ }
@@ -143,6 +168,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
     return memoryTokens.get(ownerId);
   };
   const controllers = new Set();
+  const suggestionLeases = new Set();
   const server = createServer(async (request, response) => {
     const controller = new AbortController(); controllers.add(controller);
     response.once('close', () => { controller.abort(); controllers.delete(controller); });
@@ -175,7 +201,8 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
         response.setHeader('content-type', 'application/json'); response.end(JSON.stringify(value)); return;
       }
       if (route === '/lease' && request.method === 'POST') {
-        const priority = url.searchParams.get('priority') === 'background' ? 'background' : 'foreground';
+        const requestedPriority = url.searchParams.get('priority');
+        const priority = ['background', 'suggestion'].includes(requestedPriority) ? requestedPriority : 'foreground';
         const sessionId = url.searchParams.get('sessionId');
         const state = { phase: 'waiting', profileId: url.searchParams.get('profileId') };
         metadata = { profileId: state.profileId, sessionId, priority };
@@ -184,15 +211,39 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
           progress.set(sessionId, state);
           response.once('close', () => { if (progress.get(sessionId) === state) progress.delete(sessionId); });
         }
-        const selectedQueue = await queueFor({ profileId: url.searchParams.get('profileId'), baseUrl: url.searchParams.get('baseUrl') });
         const destinationProfile = profileFor(url.searchParams.get('profileId') ?? url.searchParams.get('baseUrl'));
-        if (priority === 'background' && destinationProfile) {
+        const destinationUrl = (destinationProfile?.baseUrl ?? url.searchParams.get('baseUrl'))?.replace(/\/+$/, '');
+        if (priority === 'foreground') {
+          for (const lease of suggestionLeases) if (lease.destinationUrl === destinationUrl) lease.preempt();
+        }
+        let preemptSuggestion = null;
+        const readyForSuggestion = suggestionReady ?? backgroundReady;
+        if (priority === 'suggestion') {
+          preemptSuggestion = () => { controller.abort(suggestionBusy()); response.destroy(); };
+          // Track the readiness probe as well as the granted socket so a new
+          // foreground request cannot race model switching or the idle check.
+          const lease = { destinationUrl, preempt: preemptSuggestion };
+          suggestionLeases.add(lease);
+          response.once('close', () => suggestionLeases.delete(lease));
+          if (destinationProfile && readyForSuggestion && !await readyForSuggestion(destinationProfile, { signal: controller.signal })) throw suggestionBusy();
+        }
+        const selectedQueue = await queueFor({ profileId: url.searchParams.get('profileId'), baseUrl: url.searchParams.get('baseUrl') }, controller.signal);
+        if (priority === 'suggestion') {
+          controller.signal.throwIfAborted();
+          if (selectedQueue) release = await selectedQueue.acquire('suggestion', controller.signal, null, preemptSuggestion);
+          else if (isIdle && !await isIdle()) throw suggestionBusy();
+          // No retry or model switch after an idle slot was acquired.
+          if (destinationProfile && readyForSuggestion && !await readyForSuggestion(destinationProfile, { signal: controller.signal })) {
+            release?.(); throw suggestionBusy();
+          }
+          controller.signal.throwIfAborted();
+        } else if (priority === 'background' && destinationProfile) {
           release = await acquireBackground(destinationProfile, selectedQueue, controller.signal);
         } else release = await selectedQueue?.acquire(priority, controller.signal, ahead => {
           onEvent('model.queued', { ...metadata, ahead });
           state.phase = 'queued'; state.ahead = ahead;
         });
-        if (!selectedQueue && !(priority === 'foreground' && sessionId)) { response.writeHead(204).end(); return; }
+        if (!selectedQueue && priority !== 'suggestion' && !(priority === 'foreground' && sessionId)) { response.writeHead(204).end(); return; }
         state.phase = 'waiting'; delete state.ahead;
         if (release) response.once('close', release);
         response.writeHead(200, { 'content-type': 'text/plain' }); response.write('granted\n');
@@ -281,13 +332,14 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       if (upstream.body) await pipeline(Readable.fromWeb(upstream.body), response);
       else response.end();
     } catch (error) {
-      onEvent('model.failure', { ...metadata, code: error?.code === 'USAGE_LIMIT_REACHED' ? error.code : 'MODEL_QUEUE_UNAVAILABLE' });
-      if (!response.headersSent) { response.writeHead(error.code === 'USAGE_LIMIT_REACHED' ? 402 : 503, { 'content-type': 'application/json' });
-        response.end(JSON.stringify({ code: error.code === 'USAGE_LIMIT_REACHED' ? error.code : 'MODEL_QUEUE_UNAVAILABLE' })); }
+      const code = ['USAGE_LIMIT_REACHED', 'MODEL_SUGGESTION_BUSY'].includes(error?.code) ? error.code : 'MODEL_QUEUE_UNAVAILABLE';
+      onEvent('model.failure', { ...metadata, code });
+      if (!response.headersSent) { response.writeHead(code === 'USAGE_LIMIT_REACHED' ? 402 : code === 'MODEL_SUGGESTION_BUSY' ? 409 : 503, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ code })); }
       else response.end();
     } finally {
       // A native lease remains open until its owner closes the response body.
-      if (!request.url.includes('/lease?')) release?.();
+      if (!request.url.includes('/lease?') || !response.headersSent || response.statusCode !== 200) release?.();
     }
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));

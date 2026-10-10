@@ -32,6 +32,8 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
             head.append(picker, shift('上一年', -1), shift('下一年', 1), refresh); target.append(head); globalThis.WeftSettingsControls?.select(picker);
             target.append(node('p', `${month ? '所选月份' : '本月合计'} ${core.usageMoney(summary.total.cost)} · ${summary.total.requests} 次请求`, 'usage-total'));
             target.append(node('p', `输入 ${summary.total.inputTokens.toLocaleString()}（含缓存 ${summary.total.cachedInputTokens.toLocaleString()}） · 输出 ${summary.total.outputTokens.toLocaleString()}`, 'usage-tokens'));
+            const suggestions = summary.categories?.find(row => row.category === 'next-suggestions');
+            if (suggestions) target.append(node('p', `其中下一步建议 ${core.usageMoney(suggestions.cost)} · ${suggestions.requests} 次 · 输入 ${suggestions.inputTokens.toLocaleString()} · 输出 ${suggestions.outputTokens.toLocaleString()}`, 'usage-tokens usage-suggestions'));
             target.append(node('p', `按 ${timeZoneLabel} 统计，金额按请求时单价计算，供参考，以服务商账单为准。`, 'muted'));
             if (summary.total.unknownRequests || summary.total.unpricedRequests) target.append(node('p', `${summary.total.unknownRequests} 次用量未知；${summary.total.unpricedRequests} 次费用未知，未计入金额。`, 'muted'));
             const notice = node('p', value.notice || (summary.budget.effectiveLimit === null ? '未设置月度上限。' : `本月有效上限 ${core.usageMoney(summary.budget.effectiveLimit)}。`), 'usage-notice');

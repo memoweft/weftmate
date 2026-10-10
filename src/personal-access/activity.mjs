@@ -91,6 +91,15 @@ export function createActivity(context) {
                 summary:'这条记录已重新处理或撤回，请查看记忆中的最新状态。',state:'completed',level:'silent',
                 actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});
           }
+          const recoveryKey='memory-recovery';
+          if(memory.state==='recovering') putActivity(next,recoveryKey,{
+            at:new Date(context.timestamp()).toISOString(),type:'memory.report',title:'正在继续整理上次没做完的记忆',
+            summary:'原话已保存，整理完成后会自动恢复正常。',level:'silent',state:'completed',
+            actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});
+          else if(memory.state==='ready'&&Object.values(state.items).some(row=>row.type==='memory.report'&&row.title==='正在继续整理上次没做完的记忆')) putActivity(next,recoveryKey,{
+            at:new Date(context.timestamp()).toISOString(),type:'memory.report',title:'上次没做完的记忆已整理完成',
+            summary:'记忆已恢复正常。',level:'silent',state:'completed',
+            actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});
           const paused=['paused','unavailable','failed'].includes(memory.state)||memory.reasonCode==='MEMORY_MODEL_UNAVAILABLE';
           const healthKey=backfillPaused?`backfill:${job.id}:paused`:paused?`paused:${memory.reasonCode??memory.state}`:`available:${memory.state}`;
           if(state.memoryState!==healthKey&&(paused||backfillPaused)){state.memoryTransition=(state.memoryTransition??0)+1;putActivity(next,`memory-paused:${state.memoryTransition}`,{

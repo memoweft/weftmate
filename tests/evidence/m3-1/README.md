@@ -26,23 +26,35 @@
 
 前台失败基础1秒，指数上限30秒；后台基础15秒，上限120秒，0.8–1.0倍抖动。在线独立探测前台15秒、后台60秒；切到后台先降为60秒检查，后续沿当前尝试级数退避。前台／网络恢复／手动重试立即探测。安卓`/status`连接与读取各5秒；网页／Electron独立请求预算5秒。后台系统挂起时由既有S3a接续，不宣称严格按秒唤醒。
 
-## 界面证据与第8条清单
+## M3-1b 前端返工证据
 
-`states/verification.json` 与48张图片：真实Electron窗口1200／480px、手机网页390×844／360×780，六态浅深各一份。它们用真实组件与共享判定器投影状态，用于验证布局；真实网络／宿主故障另见上表。`relay-reviewed/`保留审批断网、离线打开和真实网络断开截图。新增恢复提示参与输入区布局，3秒后消失，不覆盖标题与操作。
+`rework/states/`：真实 Electron（桌面程序框架）1200／480、手机网页390×844／360×780，六态浅深48张；另有发送待确认＋离线、审批优先、提问优先浅深24张。`rework/android-package/`：实际安卓界面包在 Chromium（浏览器内核）中运行，390／360两尺寸，连接中／离线浅深8张，另补恢复统一轻提示浅深4张。状态投影仅用于界面验收，不冒充真实网络故障；实际故障与回执链路仍以上一节真实中继证据为准。
 
-- [x] 未增加原生缩放把手、下拉、日期或`details`三角；沿用统一控件。
-- [x] 重试／登录／设备／离线入口使用次级按钮，有悬停、按下、焦点与禁用态。
-- [x] 状态点使用已有标题状态位，提示位于输入区，与审批位置同属正常布局。
-- [x] 48组几何检查无横向溢出，提示不压输入框；新间距、字号、圆角都来自设计令牌。
-- [x] 六种状态、正在核对／未送达／已受理、模型／运行时不可用都有明确文案与动作。
-- [x] 1200／480、360×780／390×844浅深实拍；状态组件检测0项，浅深颜色沿用现有令牌。
-- [x] 本包状态位、按钮密度与输入区排列对照已通过的UX-P3／UX-P2证据；本工作树及主仓指定位置未找到`ref-products/`，未虚构该目录审查。
-- [x] 无新增弹层／菜单／对话框；离线页实际打开、审批条打开态已截图。
-- [x] 新状态区域没有裁切、重叠或遮挡；旧失败步骤展开的原始日志保留，不能将其当作已成功执行。
+| 返工项 | 返工前（浅／深） | 返工后（浅／深） |
+|---|---|---|
+| 安卓提示叠加、发送核对重复 | `android-isolated/android-native-host-offline-light.png`／`android-native-host-offline-dark.png` | `rework/android-package/android-package-390-light-host_offline.png`／`android-package-390-dark-host_offline.png` |
+| 桌面厚连接卡片与离线读秒 | `states/electron-1200-light-host_offline.png`／`electron-1200-dark-host_offline.png` | `rework/states/electron-1200-light-host_offline.png`／`electron-1200-dark-host_offline.png` |
+| 手机连接条过重 | `states/phone-web-390-light-connecting.png`／`phone-web-390-dark-connecting.png` | `rework/states/phone-web-390-light-connecting.png`／`phone-web-390-dark-connecting.png` |
+| 桌面发送仅原消息核对 | 原叠加见上述安卓截图；桌面原发送状态无截图，不虚构前图 | `rework/states/electron-1200-light-unconfirmed-offline.png`／`electron-1200-dark-unconfirmed-offline.png` |
+| 读取／同步失败并入连接状态 | `android-isolated/android-native-host-offline-light.png`／`android-native-host-offline-dark.png` | `rework/android-package/android-package-360-light-connecting.png`／`android-package-360-dark-connecting.png` |
+| 审批、提问压住连接条 | UX-7 主线已提供机制 | `rework/states/*-light-approval-priority.png`／`*-dark-approval-priority.png`、`*-light-question-priority.png`／`*-dark-question-priority.png` |
 
-第8a：没有新增独立列表页面或筛选工具。页面顶栏／底部选项卡沿主线；重连自动刷新，不增加大刷新按钮；恢复文案为临时轻提示。
+- [x] 1：沿用统一输入、按钮及现有控件，无新增原生控件残留。
+- [x] 2：重试、离线入口与消息核对采用次级按钮；悬停、按下、键盘焦点、禁用四态齐全，手机触控至少40px。
+- [x] 3：连接条由 UX-7 收入唯一上方条位，优先级审批 > 提问 > 连接 > 子任务 > 建议；恢复采用现有应用轻提示。
+- [x] 4：固定40／44px，说明最多两行，条位／输入区无压线，无横向溢出；长说明在标题状态悬停提示。
+- [x] 5：六态与原消息待确认／未送达／已接受分开呈现；断线进展等待接续并停表。
+- [x] 6：1200／480、360×780／390×844浅深均有截图，颜色和尺寸沿用令牌。
+- [x] 7：对照本仓库 UX-7 与已通过的现有输入区。未找到 `ref-products/`，不虚构外部参照审查。
+- [x] 8：没有新增菜单、弹层或对话框；长说明采用原生悬停文本，不另加浮层。审批／提问与连接同时存在的优先级投影已截图。
+- [x] 9：本次界面包、网页与真实 Electron 的可见区域已检查；早期截图保留为失败对照。
+- [ ] 10：本次安卓原生整屏复拍待补。MuMu（安卓模拟器）上有 AND-1 的 `com.memoweft.weftmate.mobile.and1.test`／`and1`，按任务指示只拍实际界面包，未关闭模拟器、未卸载别人的包。系统状态栏问题交 AND-1；没有给 Chromium 图片伪造系统栏。旧安卓整屏证据保留，不能代表返工后原生复验。
+
+第8a：未增加独立页面、刷新入口或筛选；离线页和原会话流程沿现有实现。状态恢复不再添加输入区第二行轻提示。
 
 ## 验证记录
+
+本轮相关回归140项／0失败，`rework-targeted.txt`；`rework-typecheck.txt`类型检查通过。`rework-required-unit-tests-first.txt`保留合main后首轮1333通过／2失败：在线进展与计时夹具缺少在线连接状态，补齐后原断言保留。最终完整复跑以 `rework-required-unit-tests.txt` 的汇总为准。
 
 `checks/`保存完整必过单测、相关回归、类型检查、固定vendor（运行时依赖）核对与界面检测；本地使用与CI（持续集成）相同的`node .github/scripts/ci-unit-tests.mjs required`命令。首轮失败记录保留，补齐已有夹具与缺失依赖，保留原保护点，没有删除用例／新增skip（跳过）／放宽断言。
 
@@ -61,6 +73,6 @@
 3. 保留会话／逻辑对话游标，按原生seq（序号）／逻辑eventId（事件编号）去重；409走原重置，重读工具、审批与问题当前状态。
 4. 未确认消息显示待确认，按原requestId查回执；404后才明确重试，复用原文字、模型、附件与编号，已受理不重发。
 5. 标题小点与输入区提示使用原生布局，不弹窗；恢复轻提示不遮控件，电脑离线接A14的离线模式。
-6. 无新增业务路由。Apple原生实现未在Windows改写；只修正已有操作名生成检查对CRLF（Windows换行）的兼容。
+6. 无新增业务路由。Apple原生实现未在Windows改写；已有操作名生成检查的CRLF（Windows换行）兼容已与main合并保持一致，本次无额外Apple代码差异。
 
 需要新安卓壳版本：网络异常分类、5秒状态探测，以及合入FX-16的分页查询支持。版本／界面包默认最低版本保持主线值，由Claude合并发布时统一递增。

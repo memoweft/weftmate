@@ -1,0 +1,146 @@
+{
+  "checks": [
+    {
+      "surface": "desktop",
+      "nativeSystemBrowserDispatch": true,
+      "actualBrowserLaunchIntercepted": true
+    },
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "desktop",
+      "errors": 0
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "light",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "dark",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "mobile-web",
+      "errors": 0
+    },
+    {
+      "surface": "android-ui",
+      "nativePngSave": true
+    },
+    {
+      "surface": "android-ui",
+      "theme": "light",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "android-ui",
+      "nativePngSave": true
+    },
+    {
+      "surface": "android-ui",
+      "theme": "dark",
+      "markdown": true,
+      "userMarkdown": true,
+      "code": true,
+      "table": true,
+      "math": true,
+      "mermaid": true,
+      "gallery": true,
+      "files": true,
+      "officeFallback": true
+    },
+    {
+      "surface": "android-ui",
+      "errors": 0
+    }
+  ],
+  "errors": [],
+  "performance": [
+    {
+      "surface": "desktop",
+      "characters": 15480,
+      "codeBlocks": 20,
+      "tables": 5,
+      "initialMs": 19.099999994039536,
+      "updateMeanMs": 7.574999998509884,
+      "updateMaxMs": 10.099999994039536,
+      "heapBefore": 36092280,
+      "heapAfter": 32303124,
+      "stableCodeNode": true
+    },
+    {
+      "surface": "mobile-web",
+      "characters": 15480,
+      "codeBlocks": 20,
+      "tables": 5,
+      "initialMs": 14.400000005960464,
+      "updateMeanMs": 6.25,
+      "updateMaxMs": 7.200000017881393,
+      "heapBefore": 25947765,
+      "heapAfter": 29586693,
+      "stableCodeNode": true
+    },
+    {
+      "surface": "android-ui",
+      "characters": 15480,
+      "codeBlocks": 20,
+      "tables": 5,
+      "initialMs": 16.400000005960464,
+      "updateMeanMs": 7.344999998807907,
+      "updateMaxMs": 11.400000005960464,
+      "heapBefore": 25576203,
+      "heapAfter": 24775321,
+      "stableCodeNode": true
+    }
+  ]
+}
