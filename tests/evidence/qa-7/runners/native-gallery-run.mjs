@@ -1,0 +1,1 @@
+import {run} from './android-gallery.mjs';import {writeFileSync} from 'node:fs';const r=await run();writeFileSync('tests/evidence/qa-7/android-gallery/results.json',JSON.stringify(r,null,2));console.log(JSON.stringify(r));

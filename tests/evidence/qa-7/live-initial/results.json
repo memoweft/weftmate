@@ -1,0 +1,12 @@
+{
+  "baseline": "2a075c13",
+  "startedAt": "2026-10-10T16:22:05.024Z",
+  "checks": [],
+  "installerSha256": "bef226273008493998644469e5f9acbbc18e260f9d47bc9a7b3ef993ab322b62",
+  "installMs": 118628,
+  "fatal": "electronApplication.firstWindow: Target page, context or browser has been closed\n    at h.launch (D:\\AIProjects\\WeftMate\\Worktrees\\w5\\tests\\evidence\\qa-7\\runners\\harness.mjs:53:22)\n    at async harness (D:\\AIProjects\\WeftMate\\Worktrees\\w5\\tests\\evidence\\qa-7\\runners\\harness.mjs:58:2)\n    at async file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/evidence/qa-7/runners/live.mjs:16:3",
+  "installedSmoke": true,
+  "upgrade": true,
+  "uninstalled": true,
+  "finishedAt": "2026-10-10T16:25:24.944Z"
+}
