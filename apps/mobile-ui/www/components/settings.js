@@ -338,7 +338,7 @@ function connectPage(target){globalThis.WeftCloudMobile?.mount(target,{call,logg
      row('退出登录','本机对话保留；当前设备的服务器会话将撤销',async()=>{try{await call('auth.logout');state.authEpoch++;state.accountModelCredentialConflict=null;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.handoffModelLastCheck=0;clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.loggedIn=false;state.connection='local';state.username='';state.owner='';state.profile=null;state.model=null;state.conversationId=null;
        resetMemoryForAuthBoundary('已退出电脑账户；记忆内容已清除。');
       state.backgroundSync='not_scheduled';
-      $('model-label').textContent='选择模型';try{applyTheme((await uiCore.mobileAppearance()).value)}catch{applyTheme('system')}
+      $('model-label').textContent='选择模型';try{applyAppearancePreference(await uiCore.mobileAppearance())}catch{applyTheme('system')}
       showProfile({displayName:'未登录'});page('connect');await listConversations();loadDraft()}catch(e){toast(safeError(e),true)}})]));return}
   const origin=field('个人服务地址','url','https://home.weftmate.com:8443');const user=field('账户名（3–64个字符）','text');
   const password=field('密码（注册时15–128个字符）','password');
@@ -359,7 +359,7 @@ function connectPage(target){globalThis.WeftCloudMobile?.mount(target,{call,logg
       const current=await call('app.bootstrap');state.model=current.model?.source?current.model:null;
       state.backgroundSync=account.backgroundSync||current.backgroundSync||'unknown';
       $('model-label').textContent=state.model?.displayName||'选择模型';
-      try{applyTheme((await uiCore.mobileAppearance()).value)}catch{applyTheme('system')}
+      try{applyAppearancePreference(await uiCore.mobileAppearance())}catch{applyTheme('system')}
       showProfile(account);
       page('connect');await listConversations();loadDraft();
       await call('app.ready',{owner:state.owner,hasDraft:hasAnyDraft()});
@@ -498,7 +498,7 @@ function deviceDetails(device){const target=$('page-content');clear(target);targ
       action('确认移除',async()=>{try{const result=await call('auth.revokeDevice',{deviceId:device.id});if(!result.loggedIn){state.authEpoch++;state.accountModelCredentialConflict=null;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.handoffModelLastCheck=0;clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.loggedIn=false;state.connection='local';state.username='';state.owner='';state.conversationId=null;
         state.profile=null;state.model=null;state.backgroundSync='not_scheduled';
         $('model-label').textContent='选择模型';showProfile({displayName:'未登录'});
-        try{applyTheme((await uiCore.mobileAppearance()).value)}catch{applyTheme('system')}
+        try{applyAppearancePreference(await uiCore.mobileAppearance())}catch{applyTheme('system')}
         page('connect');await listConversations()}else page('devices');toast('设备已移除')}
         catch(e){toast(safeError(e),true)}}));box.after(warning,confirmActions)
   },false));box.querySelector('.group-body').append(controls);target.append(box);
@@ -586,7 +586,7 @@ function appearancePage(target){target.append(heading('外观','保存到这台�
   const select=el('select');select.setAttribute('aria-label','颜色模式');
   for(const [value,label] of [['light','浅色'],['dark','深色'],['system','跟随系统']]){const option=el('option','',label);option.value=value;select.append(option)}
   select.value=state.appearance;line.append(select);const segments=WeftSettingsControls.segmented(select);
-  select.addEventListener('change',async()=>{try{const saved=await uiCore.mobileAppearance(select.value);applyTheme(saved.value);page('appearance')}catch(e){toast(safeError(e),true)}});
+  select.addEventListener('change',async()=>{try{const saved=await uiCore.mobileAppearance(select.value);applyAppearancePreference(saved);page('appearance')}catch(e){toast(safeError(e),true)}});
   line.append(copy,segments);target.append(line);
 }
 
