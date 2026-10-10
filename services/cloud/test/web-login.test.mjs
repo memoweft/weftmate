@@ -98,15 +98,13 @@ test('D29 real browser: in-app login → device approval → remembered session 
     assert.equal(page.url(), origin + '/personal/v1/ui/');
   }
   async function openSettings(page) {
-    const shortcut = button(page, '账户'), settings = button(page, '设置');
-    if (await shortcut.isVisible()) await shortcut.click();
-    else {
-      if (!(await settings.isVisible())) {
-        if (!(await button(page, '账户菜单').isVisible())) await button(page, '切换会话侧栏').click();
-        await button(page, '账户菜单').click();
-      }
-      await settings.click();
-    }
+    // This fixture serves the current host: wait for its workspace before using
+    // the account menu. The transient legacy rail disappears when status arrives.
+    const menu = button(page, '账户菜单'), sidebar = button(page, '切换会话侧栏');
+    await sidebar.waitFor({ state: 'visible' });
+    if (!(await menu.isVisible())) await sidebar.click();
+    await menu.click();
+    await button(page, '设置').click();
     const picker = page.getByRole('combobox', { name: '设置分类', exact: true });
     if (await picker.isVisible()) { await picker.click(); await page.getByRole('option', { name: '设置 · 设备', exact: true }).click(); }
     else await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '设备', exact: true }).click();
