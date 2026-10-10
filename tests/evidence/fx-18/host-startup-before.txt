@@ -1,0 +1,28 @@
+✖ FX-18 shutdown resumes a real Core job without expiry or duplicates (12979.7098ms)
+✖ FX-18 forced resumes a real Core job without expiry or duplicates (12659.6822ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25829.145
+
+✖ failing tests:
+
+test at tests\personal-memory-fx18.integration.test.ts:44:44
+✖ FX-18 shutdown resumes a real Core job without expiry or duplicates (12979.7098ms)
+  Error: FX18_WAIT_TIMEOUT
+      at wait (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/personal-memory-fx18.integration.test.ts:72:11)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/personal-memory-fx18.integration.test.ts:83:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at tests\personal-memory-fx18.integration.test.ts:44:44
+✖ FX-18 forced resumes a real Core job without expiry or duplicates (12659.6822ms)
+  Error: FX18_WAIT_TIMEOUT
+      at wait (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/personal-memory-fx18.integration.test.ts:72:11)
+      at async TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w5/tests/personal-memory-fx18.integration.test.ts:83:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
