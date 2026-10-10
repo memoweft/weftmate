@@ -88,6 +88,17 @@ import WeftMateCore
         try await Task.sleep(for: .milliseconds(300))
 
     }
+    private static func nativeClick(_ id: String) async throws {
+        let node = try await A10MacReview.wait(id), selector = NSSelectorFromString("accessibilityFrame")
+        typealias Frame = @convention(c) (AnyObject, Selector) -> CGRect
+        guard node.responds(to: selector), let window = NSApplication.shared.windows.first(where: { $0.isVisible && A10MacReview.find(id, in: $0) != nil }) else { throw Failure(step: "Native click frame: " + id) }
+        let rect = unsafeBitCast(node.method(for: selector), to: Frame.self)(node, selector)
+        let point = window.convertPoint(fromScreen: CGPoint(x: rect.midX, y: rect.midY))
+        guard let down = NSEvent.mouseEvent(with: .leftMouseDown, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1),
+              let up = NSEvent.mouseEvent(with: .leftMouseUp, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 0) else { throw Failure(step: "Native mouse event") }
+        NSApplication.shared.postEvent(up, atStart: false); window.sendEvent(down)
+        try await Task.sleep(for: .milliseconds(400))
+    }
     private static func choose(_ observer: A16MenuObserver,id: String,title: String) async throws {
         observer.menu=nil; try await press(id)
         try await until("Native menu missing " + title) { observer.menu?.items.contains { $0.title == title } == true }
@@ -150,12 +161,12 @@ import WeftMateCore
             window.setContentSize(NSSize(width: 480, height: 720))
             try await capture("narrow-window")
             let toggle = try await A10MacReview.wait("macSidebarToggle")
-            try A10MacReview.pressNode(toggle, id: "macSidebarToggle")
+            try await nativeClick("macSidebarToggle")
             let valueSelector = NSSelectorFromString("accessibilityValue")
             if toggle.responds(to: valueSelector) { FileHandle.standardOutput.write(Data(("A16_STEP:sidebar-value=" + String(describing: toggle.perform(valueSelector)?.takeUnretainedValue()) + "\n").utf8)) }
             _ = try await A10MacReview.wait("compactSidebar")
             try await capture("narrow-sidebar")
-            try A10MacReview.pressNode(toggle, id: "macSidebarToggle")
+            try await nativeClick("macSidebarToggle")
             try await until("Compact sidebar dismissed") { A10MacReview.control("compactSidebar") == nil }
             window.setFrame(original, display: true)
         }

@@ -412,7 +412,15 @@ struct PhoneWorkspace: View {
                 } else { sideList }
             }
                 .navigationDestination(for: String.self) { id in
-                    if id == "a16-side-list" { sideList }
+                    if id == "a16-side-list" {
+                        sideList.toolbar {
+                            ToolbarItem(placement: .primaryAction) { PhoneAccountMenu(model: model) }
+                            ToolbarItem(placement: .primaryAction) {
+                                Button { Task { await model.refresh() } } label: { WeftLabel("刷新会话", icon: "sync") }
+                                    .disabled(model.refreshing)
+                            }
+                        }
+                    }
                     else if let conversation = model.conversations.first(where: { $0.id == id }) {
                         if conversation.isMainChat { MainChatView(app: model) } else {
                         ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(conversation.chatContentRevision ?? 0))
