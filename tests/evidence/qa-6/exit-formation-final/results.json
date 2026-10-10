@@ -1,0 +1,1575 @@
+{
+  "startedAt": "2026-10-10T12:56:14.335Z",
+  "realElectron": true,
+  "realCore": true,
+  "syntheticModel": true,
+  "rows": [
+    {
+      "state": "formation",
+      "method": "tray",
+      "attempt": 1,
+      "startedAt": "2026-10-10T12:56:14.335Z",
+      "completedEventCount": 6,
+      "completedEvents": [
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-10T12:56:16.033Z",
+          "data": {
+            "text": "我偏好第1种合成茶用白色杯子。",
+            "receiptId": "7fec4b99-e4b5-41ac-9387-b9860e5e95e8"
+          }
+        },
+        {
+          "seq": 22,
+          "type": "assistant.message",
+          "at": "2026-10-10T12:56:16.177Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 24,
+          "type": "turn.ended",
+          "at": "2026-10-10T12:56:16.179Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        },
+        {
+          "seq": 31,
+          "type": "user.message",
+          "at": "2026-10-10T12:56:17.478Z",
+          "data": {
+            "text": "我偏好第1种合成茶加两片柠檬。",
+            "receiptId": "e4203318-4e1e-4e8e-9d4a-73dec25bdce9"
+          }
+        },
+        {
+          "seq": 39,
+          "type": "assistant.message",
+          "at": "2026-10-10T12:56:17.516Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-9cb2cf74137a2d8d7eaad57fb44f82815a89314b5e9e2d3351aee89ec3754121",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 41,
+          "type": "turn.ended",
+          "at": "2026-10-10T12:56:17.517Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "sessionId": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+      "pendingBefore": {
+        "ownerId": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "state": "degraded",
+        "version": "2.0.0",
+        "worldRevision": 1,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "recoveringFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_PENDING",
+        "backfill": null,
+        "captureError": null
+      },
+      "mainPid": 37140,
+      "launcherPid": 10484,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "restartAt": "2026-10-10T12:56:21.976Z",
+      "credentialsRestoredAt": "2026-10-10T12:56:22.290Z",
+      "coreStartedAt": null,
+      "completedRetained": true,
+      "healthImmediatelyAfterRestart": {
+        "ownerId": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "state": "recovering",
+        "version": "2.0.0",
+        "worldRevision": 1,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "recoveringFormationCount": 1,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_RECOVERING",
+        "backfill": null,
+        "captureError": null
+      },
+      "health": {
+        "ownerId": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 2,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "recoveringFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "healthRecoveryMs": 312,
+      "restartToHealthyMs": 6895,
+      "restartToProcessingMs": 6624,
+      "jobs": {
+        "schema_version": 1,
+        "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "world_revision": 2,
+        "jobs": [
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 2,
+            "job_id": "memory-world-job-a2ab123ed69d538df836f5c33b91870d94bd8b2ae8fd54e068e2bcfbc9d6c8cf",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:e46cb9d9d80eec3021abbfe577e60060:4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "result_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "e4ca3393-77e3-42fa-9324-4f30145178ec"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:16.704Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:e46cb9d9d80eec3021abbfe577e60060:4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "ad5c2ad2f9558bfb8e3e18327a6d07c55bfbd005587a2888adf568af868e12d0",
+                "formal_target_hash": "af59f37451a003336f2a3ef82b6fda871a4506f9ba7bdebe19e166bc08d354c8",
+                "job_id": "memory-world-job-a2ab123ed69d538df836f5c33b91870d94bd8b2ae8fd54e068e2bcfbc9d6c8cf",
+                "job_state": "pending",
+                "payload_hash": "4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:16.704Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 1,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:e46cb9d9d80eec3021abbfe577e60060:4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-9cb2cf74137a2d8d7eaad57fb44f82815a89314b5e9e2d3351aee89ec3754121",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 1
+              },
+              "content_available": true,
+              "result_hash": "56499670a68d196088a9b05ccd45f8b1da92b9027ab572548798dd4de44cfad8",
+              "completed_at": "2026-10-10T12:56:16.909Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:1a2dd9d9b43bcd803e69ea79b4a6944449ca5e85cfdd109bd8cb3222a3373411",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "55da0d97e51008a3bf36ffb09b0b3592ae586eaa658b62a986a394de6913e3bd"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          },
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 2,
+            "job_id": "memory-world-job-5d57d46edf95f7ee25dd6e60378310bb309d5937fd37117878b75ea353548a22",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:9d4a40b8b951034827b08da0641795ab:30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "result_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "143b2d06-feff-404b-8a18-560cad83604a"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:18.010Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:9d4a40b8b951034827b08da0641795ab:30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "7293493687ddf95bf14765e0a136a69f7d798c200afeccf189ffe7d78de564c9",
+                "formal_target_hash": "af59f37451a003336f2a3ef82b6fda871a4506f9ba7bdebe19e166bc08d354c8",
+                "job_id": "memory-world-job-5d57d46edf95f7ee25dd6e60378310bb309d5937fd37117878b75ea353548a22",
+                "job_state": "pending",
+                "payload_hash": "30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:18.010Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 2,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:9d4a40b8b951034827b08da0641795ab:30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-e6822e2663a6efcf433abc365819e8939ebd5b4e0140d4205a9e47f571068037",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 2
+              },
+              "content_available": true,
+              "result_hash": "d47ca1507678dd6f49fdd2844894ff57d200918a91a76c1cf812991b2ced88d2",
+              "completed_at": "2026-10-10T12:56:28.633Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:e37ead61c60483059e4b9236d2f8c3b17fda84d766f9cc9608c6dbe923f3319c",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "1c34389f6c0a0223674a58e7e29f87b447f195de5015a97031adefd666ac3d23"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          }
+        ],
+        "formation_requests": []
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "formation",
+      "method": "task-manager-force",
+      "attempt": 1,
+      "startedAt": "2026-10-10T12:56:28.976Z",
+      "completedEventCount": 6,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T12:56:29.430Z",
+          "data": {
+            "text": "我偏好第2种合成茶用白色杯子。",
+            "receiptId": "2e200fd5-8e8b-46b6-a58a-17fa9ca3bca6"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T12:56:29.534Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-9cb2cf74137a2d8d7eaad57fb44f82815a89314b5e9e2d3351aee89ec3754121",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-e6822e2663a6efcf433abc365819e8939ebd5b4e0140d4205a9e47f571068037",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶加两片柠檬。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T12:56:29.536Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        },
+        {
+          "seq": 32,
+          "type": "user.message",
+          "at": "2026-10-10T12:56:30.737Z",
+          "data": {
+            "text": "我偏好第2种合成茶加两片柠檬。",
+            "receiptId": "b07657d0-dbcc-44ce-b1e2-1087673bb179"
+          }
+        },
+        {
+          "seq": 40,
+          "type": "assistant.message",
+          "at": "2026-10-10T12:56:30.777Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-e6822e2663a6efcf433abc365819e8939ebd5b4e0140d4205a9e47f571068037",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶加两片柠檬。"
+              },
+              {
+                "id": "cognition-014d02ca7056e7002df3d04f26c799018368c907ab2b6299e15261d50388593a",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-9cb2cf74137a2d8d7eaad57fb44f82815a89314b5e9e2d3351aee89ec3754121",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 42,
+          "type": "turn.ended",
+          "at": "2026-10-10T12:56:30.778Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "sessionId": "session-3c97606d-beca-4a16-b226-2edf65b00389",
+      "pendingBefore": {
+        "ownerId": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "state": "degraded",
+        "version": "2.0.0",
+        "worldRevision": 3,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": false,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 1,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "recoveringFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_BOUNDARY_PENDING",
+        "backfill": null,
+        "captureError": null
+      },
+      "mainPid": 56060,
+      "launcherPid": 57332,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "restartAt": "2026-10-10T12:56:34.269Z",
+      "credentialsRestoredAt": "2026-10-10T12:56:34.543Z",
+      "coreStartedAt": null,
+      "completedRetained": true,
+      "healthImmediatelyAfterRestart": {
+        "ownerId": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "state": "recovering",
+        "version": "2.0.0",
+        "worldRevision": 3,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "recoveringFormationCount": 1,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_RECOVERING",
+        "backfill": null,
+        "captureError": null
+      },
+      "health": {
+        "ownerId": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 4,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "recoveringFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "healthRecoveryMs": 292,
+      "restartToHealthyMs": 5980,
+      "restartToProcessingMs": 5722,
+      "jobs": {
+        "schema_version": 1,
+        "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "world_revision": 4,
+        "jobs": [
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 4,
+            "job_id": "memory-world-job-a2ab123ed69d538df836f5c33b91870d94bd8b2ae8fd54e068e2bcfbc9d6c8cf",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:e46cb9d9d80eec3021abbfe577e60060:4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "result_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "e4ca3393-77e3-42fa-9324-4f30145178ec"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:16.704Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:e46cb9d9d80eec3021abbfe577e60060:4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "ad5c2ad2f9558bfb8e3e18327a6d07c55bfbd005587a2888adf568af868e12d0",
+                "formal_target_hash": "af59f37451a003336f2a3ef82b6fda871a4506f9ba7bdebe19e166bc08d354c8",
+                "job_id": "memory-world-job-a2ab123ed69d538df836f5c33b91870d94bd8b2ae8fd54e068e2bcfbc9d6c8cf",
+                "job_state": "pending",
+                "payload_hash": "4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:16.704Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 1,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:e46cb9d9d80eec3021abbfe577e60060:4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-9cb2cf74137a2d8d7eaad57fb44f82815a89314b5e9e2d3351aee89ec3754121",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 1
+              },
+              "content_available": true,
+              "result_hash": "56499670a68d196088a9b05ccd45f8b1da92b9027ab572548798dd4de44cfad8",
+              "completed_at": "2026-10-10T12:56:16.909Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:1a2dd9d9b43bcd803e69ea79b4a6944449ca5e85cfdd109bd8cb3222a3373411",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "55da0d97e51008a3bf36ffb09b0b3592ae586eaa658b62a986a394de6913e3bd"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          },
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 4,
+            "job_id": "memory-world-job-5d57d46edf95f7ee25dd6e60378310bb309d5937fd37117878b75ea353548a22",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:9d4a40b8b951034827b08da0641795ab:30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "result_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "143b2d06-feff-404b-8a18-560cad83604a"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:18.010Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:9d4a40b8b951034827b08da0641795ab:30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "7293493687ddf95bf14765e0a136a69f7d798c200afeccf189ffe7d78de564c9",
+                "formal_target_hash": "af59f37451a003336f2a3ef82b6fda871a4506f9ba7bdebe19e166bc08d354c8",
+                "job_id": "memory-world-job-5d57d46edf95f7ee25dd6e60378310bb309d5937fd37117878b75ea353548a22",
+                "job_state": "pending",
+                "payload_hash": "30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:18.010Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 2,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:9d4a40b8b951034827b08da0641795ab:30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-e6822e2663a6efcf433abc365819e8939ebd5b4e0140d4205a9e47f571068037",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 2
+              },
+              "content_available": true,
+              "result_hash": "d47ca1507678dd6f49fdd2844894ff57d200918a91a76c1cf812991b2ced88d2",
+              "completed_at": "2026-10-10T12:56:28.633Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:e37ead61c60483059e4b9236d2f8c3b17fda84d766f9cc9608c6dbe923f3319c",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "1c34389f6c0a0223674a58e7e29f87b447f195de5015a97031adefd666ac3d23"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          },
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 4,
+            "job_id": "memory-world-job-9dcab765acee318f4151b06a30a56cd492426b96e67fc62b2b43d5f4302ad184",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:2ebe101ee36ee8991dfede25ce2193d0:a85f428e462999c1bc8152fb172433b33420058d7cadd9aefc6481c75998a574",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-3c97606d-beca-4a16-b226-2edf65b00389",
+              "result_session_id": "session-3c97606d-beca-4a16-b226-2edf65b00389",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "94045420-213a-44cf-8030-1bb6fe956e97"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:30.093Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:2ebe101ee36ee8991dfede25ce2193d0:a85f428e462999c1bc8152fb172433b33420058d7cadd9aefc6481c75998a574",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "536bbf34fab976a839f80ef27e9b7d416bc34e16687438baee9fee9299b33efc",
+                "formal_target_hash": "334dd3764e07022a6f22b5ecdb453a5d897e2a55bb74910a7843eca586a29988",
+                "job_id": "memory-world-job-9dcab765acee318f4151b06a30a56cd492426b96e67fc62b2b43d5f4302ad184",
+                "job_state": "pending",
+                "payload_hash": "a85f428e462999c1bc8152fb172433b33420058d7cadd9aefc6481c75998a574",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:30.093Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 3,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:2ebe101ee36ee8991dfede25ce2193d0:a85f428e462999c1bc8152fb172433b33420058d7cadd9aefc6481c75998a574",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-014d02ca7056e7002df3d04f26c799018368c907ab2b6299e15261d50388593a",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 3
+              },
+              "content_available": true,
+              "result_hash": "fb39aa15d4d53e36a8a4a5cd382cc26bc34e5e37245c7d5b1f4577bf45dd4b28",
+              "completed_at": "2026-10-10T12:56:30.188Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:5f0f711b44ecacab8dd0509a3e067f588db0b9139789cffd136640aaa765a3a9",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "b6b5a3762aec4dce7539fed36d824409384db8d596855a6d33378171527f786c"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          },
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 4,
+            "job_id": "memory-world-job-3841788ccc06a48b784ef4870e4dc143931d3677396b26569c56b7d78f2222a0",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:3a22a6016d377a40e121bbe1f9358c1e:37af9ca17f786e6a62d428e7dde8c3d41d75b54fe43862be199659fd5701ece9",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-3c97606d-beca-4a16-b226-2edf65b00389",
+              "result_session_id": "session-3c97606d-beca-4a16-b226-2edf65b00389",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "f8f3efcd-3c56-455c-93ea-af3ea2766d54"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:31.242Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:3a22a6016d377a40e121bbe1f9358c1e:37af9ca17f786e6a62d428e7dde8c3d41d75b54fe43862be199659fd5701ece9",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "3751dfc22d6c9d648178f12c82373f5425b5b81ffe0f87139db100997cdd70bf",
+                "formal_target_hash": "334dd3764e07022a6f22b5ecdb453a5d897e2a55bb74910a7843eca586a29988",
+                "job_id": "memory-world-job-3841788ccc06a48b784ef4870e4dc143931d3677396b26569c56b7d78f2222a0",
+                "job_state": "pending",
+                "payload_hash": "37af9ca17f786e6a62d428e7dde8c3d41d75b54fe43862be199659fd5701ece9",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:31.242Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 4,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:3a22a6016d377a40e121bbe1f9358c1e:37af9ca17f786e6a62d428e7dde8c3d41d75b54fe43862be199659fd5701ece9",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-13a3e7572cf5cfa2e6a80eb39a4f2990385265d3567ea1956a9020d52906437d",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 4
+              },
+              "content_available": true,
+              "result_hash": "25f818530b4b0ca9ac2d044b8b9e891ed4a618fb59e7dcaa06644fdfb577bbd4",
+              "completed_at": "2026-10-10T12:56:40.024Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:1efd48ef1acf6255f37197250d8b9751bb4cf065012d4972606d341063afdb5c",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "5f752a54cf7a5771402b2c2770c563d75a52a7fadfc982ce4223bef3d5e6d795"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          }
+        ],
+        "formation_requests": []
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    },
+    {
+      "state": "formation",
+      "method": "logout-taskkill",
+      "attempt": 1,
+      "startedAt": "2026-10-10T12:56:40.330Z",
+      "completedEventCount": 6,
+      "completedEvents": [
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-10T12:56:40.752Z",
+          "data": {
+            "text": "我偏好第3种合成茶用白色杯子。",
+            "receiptId": "a5d90099-64ad-4b53-8448-66611b74c63a"
+          }
+        },
+        {
+          "seq": 23,
+          "type": "assistant.message",
+          "at": "2026-10-10T12:56:40.880Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-014d02ca7056e7002df3d04f26c799018368c907ab2b6299e15261d50388593a",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-9cb2cf74137a2d8d7eaad57fb44f82815a89314b5e9e2d3351aee89ec3754121",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-13a3e7572cf5cfa2e6a80eb39a4f2990385265d3567ea1956a9020d52906437d",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶加两片柠檬。"
+              },
+              {
+                "id": "cognition-e6822e2663a6efcf433abc365819e8939ebd5b4e0140d4205a9e47f571068037",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶加两片柠檬。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 25,
+          "type": "turn.ended",
+          "at": "2026-10-10T12:56:40.882Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        },
+        {
+          "seq": 32,
+          "type": "user.message",
+          "at": "2026-10-10T12:56:42.151Z",
+          "data": {
+            "text": "我偏好第3种合成茶加两片柠檬。",
+            "receiptId": "2f117ed9-2583-400f-8c00-844661916471"
+          }
+        },
+        {
+          "seq": 40,
+          "type": "assistant.message",
+          "at": "2026-10-10T12:56:42.203Z",
+          "data": {
+            "text": "收到这条合成偏好，稍后整理进记忆。",
+            "memoryUsed": [
+              {
+                "id": "cognition-13a3e7572cf5cfa2e6a80eb39a4f2990385265d3567ea1956a9020d52906437d",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶加两片柠檬。"
+              },
+              {
+                "id": "cognition-e6822e2663a6efcf433abc365819e8939ebd5b4e0140d4205a9e47f571068037",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶加两片柠檬。"
+              },
+              {
+                "id": "cognition-ad9648606ca1960555e1b5d0a0fbcd6b2f3cf781207b659f78d4aa41a41007b2",
+                "kind": "cognition",
+                "summary": "用户偏好第3种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-014d02ca7056e7002df3d04f26c799018368c907ab2b6299e15261d50388593a",
+                "kind": "cognition",
+                "summary": "用户偏好第2种合成茶用白色杯子。"
+              },
+              {
+                "id": "cognition-9cb2cf74137a2d8d7eaad57fb44f82815a89314b5e9e2d3351aee89ec3754121",
+                "kind": "cognition",
+                "summary": "用户偏好第1种合成茶用白色杯子。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 42,
+          "type": "turn.ended",
+          "at": "2026-10-10T12:56:42.204Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "sessionId": "session-cf4289c2-3e2c-49c8-9350-d1599f6a33f7",
+      "pendingBefore": {
+        "ownerId": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "state": "degraded",
+        "version": "2.0.0",
+        "worldRevision": 5,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "recoveringFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_PENDING",
+        "backfill": null,
+        "captureError": null
+      },
+      "mainPid": 31648,
+      "launcherPid": 60060,
+      "nonForceAccepted": true,
+      "forceAccepted": true,
+      "residualProcesses": [],
+      "tmpAfterExit": [],
+      "restartAt": "2026-10-10T12:56:47.743Z",
+      "credentialsRestoredAt": "2026-10-10T12:56:48.017Z",
+      "coreStartedAt": null,
+      "completedRetained": true,
+      "healthImmediatelyAfterRestart": {
+        "ownerId": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "state": "recovering",
+        "version": "2.0.0",
+        "worldRevision": 5,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 1,
+        "recoveringFormationCount": 1,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "reasonCode": "MEMORY_FORMATION_RECOVERING",
+        "backfill": null,
+        "captureError": null
+      },
+      "health": {
+        "ownerId": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "state": "ready",
+        "version": "2.0.0",
+        "worldRevision": 6,
+        "capabilities": {
+          "list": true,
+          "source": true,
+          "inject": true,
+          "correct": true,
+          "mute": true,
+          "deleteEvidence": true,
+          "deleteWorldItem": true
+        },
+        "pendingBoundaryCount": 0,
+        "blockedBoundaryCount": 0,
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null,
+        "pendingFormationCount": 0,
+        "recoveringFormationCount": 0,
+        "failedFormationCount": 0,
+        "failedCorrectionCount": 0,
+        "formationIssues": [],
+        "backfill": null,
+        "captureError": null
+      },
+      "healthRecoveryMs": 298,
+      "restartToHealthyMs": 7043,
+      "restartToProcessingMs": 6786,
+      "jobs": {
+        "schema_version": 1,
+        "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+        "world_revision": 6,
+        "jobs": [
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 6,
+            "job_id": "memory-world-job-a2ab123ed69d538df836f5c33b91870d94bd8b2ae8fd54e068e2bcfbc9d6c8cf",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:e46cb9d9d80eec3021abbfe577e60060:4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "result_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "e4ca3393-77e3-42fa-9324-4f30145178ec"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:16.704Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:e46cb9d9d80eec3021abbfe577e60060:4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "ad5c2ad2f9558bfb8e3e18327a6d07c55bfbd005587a2888adf568af868e12d0",
+                "formal_target_hash": "af59f37451a003336f2a3ef82b6fda871a4506f9ba7bdebe19e166bc08d354c8",
+                "job_id": "memory-world-job-a2ab123ed69d538df836f5c33b91870d94bd8b2ae8fd54e068e2bcfbc9d6c8cf",
+                "job_state": "pending",
+                "payload_hash": "4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:16.704Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 1,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:e46cb9d9d80eec3021abbfe577e60060:4c206ddc9cbdd35d40150e61abc8362840c8231ceb41c6835cc39ecbbdc296e3",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-9cb2cf74137a2d8d7eaad57fb44f82815a89314b5e9e2d3351aee89ec3754121",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 1
+              },
+              "content_available": true,
+              "result_hash": "56499670a68d196088a9b05ccd45f8b1da92b9027ab572548798dd4de44cfad8",
+              "completed_at": "2026-10-10T12:56:16.909Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:1a2dd9d9b43bcd803e69ea79b4a6944449ca5e85cfdd109bd8cb3222a3373411",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "55da0d97e51008a3bf36ffb09b0b3592ae586eaa658b62a986a394de6913e3bd"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          },
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 6,
+            "job_id": "memory-world-job-5d57d46edf95f7ee25dd6e60378310bb309d5937fd37117878b75ea353548a22",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:9d4a40b8b951034827b08da0641795ab:30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "result_session_id": "session-59ae368d-e42d-40ba-b657-ad0001fcbc3b",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "143b2d06-feff-404b-8a18-560cad83604a"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:18.010Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:9d4a40b8b951034827b08da0641795ab:30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "7293493687ddf95bf14765e0a136a69f7d798c200afeccf189ffe7d78de564c9",
+                "formal_target_hash": "af59f37451a003336f2a3ef82b6fda871a4506f9ba7bdebe19e166bc08d354c8",
+                "job_id": "memory-world-job-5d57d46edf95f7ee25dd6e60378310bb309d5937fd37117878b75ea353548a22",
+                "job_state": "pending",
+                "payload_hash": "30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:18.010Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 2,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:9d4a40b8b951034827b08da0641795ab:30275a90701321c5f397bb1e893ac3ecfa3d63ce1eeda645025d79f108d7d432",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-e6822e2663a6efcf433abc365819e8939ebd5b4e0140d4205a9e47f571068037",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 2
+              },
+              "content_available": true,
+              "result_hash": "d47ca1507678dd6f49fdd2844894ff57d200918a91a76c1cf812991b2ced88d2",
+              "completed_at": "2026-10-10T12:56:28.633Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:e37ead61c60483059e4b9236d2f8c3b17fda84d766f9cc9608c6dbe923f3319c",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "1c34389f6c0a0223674a58e7e29f87b447f195de5015a97031adefd666ac3d23"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          },
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 6,
+            "job_id": "memory-world-job-9dcab765acee318f4151b06a30a56cd492426b96e67fc62b2b43d5f4302ad184",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:2ebe101ee36ee8991dfede25ce2193d0:a85f428e462999c1bc8152fb172433b33420058d7cadd9aefc6481c75998a574",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-3c97606d-beca-4a16-b226-2edf65b00389",
+              "result_session_id": "session-3c97606d-beca-4a16-b226-2edf65b00389",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "94045420-213a-44cf-8030-1bb6fe956e97"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:30.093Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:2ebe101ee36ee8991dfede25ce2193d0:a85f428e462999c1bc8152fb172433b33420058d7cadd9aefc6481c75998a574",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "536bbf34fab976a839f80ef27e9b7d416bc34e16687438baee9fee9299b33efc",
+                "formal_target_hash": "334dd3764e07022a6f22b5ecdb453a5d897e2a55bb74910a7843eca586a29988",
+                "job_id": "memory-world-job-9dcab765acee318f4151b06a30a56cd492426b96e67fc62b2b43d5f4302ad184",
+                "job_state": "pending",
+                "payload_hash": "a85f428e462999c1bc8152fb172433b33420058d7cadd9aefc6481c75998a574",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:30.093Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 3,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:2ebe101ee36ee8991dfede25ce2193d0:a85f428e462999c1bc8152fb172433b33420058d7cadd9aefc6481c75998a574",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-014d02ca7056e7002df3d04f26c799018368c907ab2b6299e15261d50388593a",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 3
+              },
+              "content_available": true,
+              "result_hash": "fb39aa15d4d53e36a8a4a5cd382cc26bc34e5e37245c7d5b1f4577bf45dd4b28",
+              "completed_at": "2026-10-10T12:56:30.188Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:5f0f711b44ecacab8dd0509a3e067f588db0b9139789cffd136640aaa765a3a9",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "b6b5a3762aec4dce7539fed36d824409384db8d596855a6d33378171527f786c"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          },
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 6,
+            "job_id": "memory-world-job-3841788ccc06a48b784ef4870e4dc143931d3677396b26569c56b7d78f2222a0",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:3a22a6016d377a40e121bbe1f9358c1e:37af9ca17f786e6a62d428e7dde8c3d41d75b54fe43862be199659fd5701ece9",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-3c97606d-beca-4a16-b226-2edf65b00389",
+              "result_session_id": "session-3c97606d-beca-4a16-b226-2edf65b00389",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "f8f3efcd-3c56-455c-93ea-af3ea2766d54"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:31.242Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:3a22a6016d377a40e121bbe1f9358c1e:37af9ca17f786e6a62d428e7dde8c3d41d75b54fe43862be199659fd5701ece9",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "3751dfc22d6c9d648178f12c82373f5425b5b81ffe0f87139db100997cdd70bf",
+                "formal_target_hash": "334dd3764e07022a6f22b5ecdb453a5d897e2a55bb74910a7843eca586a29988",
+                "job_id": "memory-world-job-3841788ccc06a48b784ef4870e4dc143931d3677396b26569c56b7d78f2222a0",
+                "job_state": "pending",
+                "payload_hash": "37af9ca17f786e6a62d428e7dde8c3d41d75b54fe43862be199659fd5701ece9",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:31.242Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 4,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:3a22a6016d377a40e121bbe1f9358c1e:37af9ca17f786e6a62d428e7dde8c3d41d75b54fe43862be199659fd5701ece9",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-13a3e7572cf5cfa2e6a80eb39a4f2990385265d3567ea1956a9020d52906437d",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 4
+              },
+              "content_available": true,
+              "result_hash": "25f818530b4b0ca9ac2d044b8b9e891ed4a618fb59e7dcaa06644fdfb577bbd4",
+              "completed_at": "2026-10-10T12:56:40.024Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:1efd48ef1acf6255f37197250d8b9751bb4cf065012d4972606d341063afdb5c",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "5f752a54cf7a5771402b2c2770c563d75a52a7fadfc982ce4223bef3d5e6d795"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          },
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 6,
+            "job_id": "memory-world-job-d7a67a8629f244d9a6b7034e47d691c99825cab6eae767ab6f0e3c56fe6c8794",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:2c89d41fe7e477e91e6ac1d4a814f630:576d8aab70f0605a06a11f443fa524ddef97bb6f1ca6283320dfc90f4c2de4b3",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-cf4289c2-3e2c-49c8-9350-d1599f6a33f7",
+              "result_session_id": "session-cf4289c2-3e2c-49c8-9350-d1599f6a33f7",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "6a1f04dc-5e3f-41fd-86bd-080402eb9273"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:41.489Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:2c89d41fe7e477e91e6ac1d4a814f630:576d8aab70f0605a06a11f443fa524ddef97bb6f1ca6283320dfc90f4c2de4b3",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "4527cd05c2e8fafb12f1c8ab4fd44a54c4fa481adc68d6bf8aa888d3ba28f146",
+                "formal_target_hash": "1a715496fdcee8b447d3ad1720ade660a1bf884bde74a6c666ed03dc5a5b2887",
+                "job_id": "memory-world-job-d7a67a8629f244d9a6b7034e47d691c99825cab6eae767ab6f0e3c56fe6c8794",
+                "job_state": "pending",
+                "payload_hash": "576d8aab70f0605a06a11f443fa524ddef97bb6f1ca6283320dfc90f4c2de4b3",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:41.489Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 5,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:2c89d41fe7e477e91e6ac1d4a814f630:576d8aab70f0605a06a11f443fa524ddef97bb6f1ca6283320dfc90f4c2de4b3",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-ad9648606ca1960555e1b5d0a0fbcd6b2f3cf781207b659f78d4aa41a41007b2",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 5
+              },
+              "content_available": true,
+              "result_hash": "ea38d61fe5f3605cf496dacc5058dee206de4c9dc8666e84cdc09e2599a40ffc",
+              "completed_at": "2026-10-10T12:56:41.588Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:1362d55b023694a4b0e590929a4e73b73662d9ef129964171f6dfccf932d13ec",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "a5aea11186838a823c38df078181b3a4da61815c675d6c7034eee6094cad1740"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          },
+          {
+            "schema_version": 1,
+            "subject_id": "owner-e960081a-1aec-48bc-a165-395988c26fd3",
+            "world_revision": 6,
+            "job_id": "memory-world-job-0ec8aa9120d17dee7a75299ead63501f86f15dea741501e8c7083d2cddc2c49a",
+            "job_schema_version": 1,
+            "acceptance": {
+              "boundary_event_id": "weftmate-turn-boundary-v1:7acb6625e368b5227e7c7c746f75005d:a934f18d222a875bbd291ad0a4b0d6b0536201228b582be0bcadad029f7be993",
+              "boundary_schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-cf4289c2-3e2c-49c8-9350-d1599f6a33f7",
+              "result_session_id": "session-cf4289c2-3e2c-49c8-9350-d1599f6a33f7",
+              "boundary_mode": "in_place",
+              "host_id": "weftmate:dsh",
+              "evidence_ids": [
+                "92a33bd9-3513-4e26-b8b8-0cc1d750c5c4"
+              ],
+              "delivery_receipt": {
+                "accepted_at": "2026-10-10T12:56:42.680Z",
+                "eligible": 1,
+                "event_id": "weftmate-turn-boundary-v1:7acb6625e368b5227e7c7c746f75005d:a934f18d222a875bbd291ad0a4b0d6b0536201228b582be0bcadad029f7be993",
+                "evidence_count": 1,
+                "evidence_manifest_hash": "3ba0e12c403c0807b0f17bd2fea5ed905b9ffbde185be3ab2c971a86bbbb6c8c",
+                "formal_target_hash": "1a715496fdcee8b447d3ad1720ade660a1bf884bde74a6c666ed03dc5a5b2887",
+                "job_id": "memory-world-job-0ec8aa9120d17dee7a75299ead63501f86f15dea741501e8c7083d2cddc2c49a",
+                "job_state": "pending",
+                "payload_hash": "a934f18d222a875bbd291ad0a4b0d6b0536201228b582be0bcadad029f7be993",
+                "reason": null,
+                "schema_version": 1,
+                "skipped": 0,
+                "stored": 1
+              },
+              "created_at": "2026-10-10T12:56:42.680Z"
+            },
+            "worker": {
+              "state": "applied",
+              "attempts": 1,
+              "next_attempt_at": null,
+              "last_error_type": null
+            },
+            "core_terminal": {
+              "terminal_state": "applied",
+              "terminal_detail": null,
+              "world_revision": 6,
+              "world_result": {
+                "boundary_event_id": "weftmate-turn-boundary-v1:7acb6625e368b5227e7c7c746f75005d:a934f18d222a875bbd291ad0a4b0d6b0536201228b582be0bcadad029f7be993",
+                "cognitions": [
+                  {
+                    "action": "form",
+                    "cognition_id": "cognition-ac3dea2d44741351de300514b835b8bfa505505307c15717c7b441b58bc4eeee",
+                    "confidence": 600,
+                    "cred_status": "limited",
+                    "evidence_count": 1,
+                    "formed_by": "stated",
+                    "statement_kind": "preference"
+                  }
+                ],
+                "schema_version": 8,
+                "state": "applied",
+                "world_revision": 6
+              },
+              "content_available": true,
+              "result_hash": "88bbe684b8d6d0eaac7ea16bb882e2873020a3c55c830b984fd64ba72e8595f8",
+              "completed_at": "2026-10-10T12:56:54.565Z"
+            },
+            "delivery": {
+              "available": true,
+              "outcome_id": "terminal-outcome:v1:8e76cb8086020d51b0f4c76023887974c0230c460d643da8d56d9eb7814b4248",
+              "outcome_schema_version": 1,
+              "delivery_state": "pending",
+              "attempts": 0,
+              "next_attempt_at": null,
+              "delivered_at": null,
+              "last_error": null,
+              "result_hash": "d521ef84cf9e1649955da7a9bb6f73c8e44eadba4abdd22e452f1e23dfa4f34b"
+            },
+            "host_event": {
+              "available": false,
+              "scope": "hermes_state",
+              "reason": "not_stored_in_core_database"
+            }
+          }
+        ],
+        "formation_requests": []
+      },
+      "sessionRetained": true,
+      "tmpAfterRecovery": [],
+      "passed": true
+    }
+  ],
+  "finishedAt": "2026-10-10T12:56:55.380Z",
+  "passed": true
+}

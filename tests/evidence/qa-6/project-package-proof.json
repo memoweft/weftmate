@@ -1,0 +1,13 @@
+{
+  "baseline": "480d65e4",
+  "syntheticFolder": true,
+  "scriptInsideAsar": true,
+  "scriptIsOrdinaryOsFile": false,
+  "sameFolderSourceInspectionPassed": true,
+  "externalPowerShellExit": 4294770688,
+  "externalPowerShellStderr": "The argument 'C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-qa6-supplement-installed-hwM4UM\\Programs\\resources\\app.asar\\src\\personal-projects\\reader.ps1' to the -File parameter does not exist. Provide the path to an existing '.ps1' file as an argument to the -File parameter.\r\n",
+  "nativeCreateRetry": {
+    "ok": false,
+    "error": "Error invoking remote method 'wm:desktop:project-create': Error: PROJECT_FILE_UNAVAILABLE"
+  }
+}

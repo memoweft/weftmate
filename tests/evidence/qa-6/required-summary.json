@@ -1,0 +1,12 @@
+{
+  "tests": 1407,
+  "suites": 68,
+  "pass": 1393,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 14,
+  "todo": 0,
+  "duration_ms": 930665.211,
+  "command": "node .github/scripts/ci-unit-tests.mjs required",
+  "exitCode": 0
+}

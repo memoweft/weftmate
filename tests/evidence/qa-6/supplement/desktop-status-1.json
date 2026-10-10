@@ -1,0 +1,81 @@
+{
+  "sessions": [
+    {
+      "sessionId": "session-ba53e8aa-eb09-4c3a-9628-14e3ef92480f",
+      "hostId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+      "archived": false,
+      "modelProfileId": "private-model-cd4a88387fb98240ec4a89a75c534281a51cfa35",
+      "title": "请读取项目中的source.txt，把原",
+      "temporary": false,
+      "hasTemporaryContent": false,
+      "memoryMode": "on",
+      "recallEnabled": true,
+      "autoDeleteDays": 30,
+      "expiresAt": null,
+      "pinned": false,
+      "unread": true,
+      "attention": "approval",
+      "lastOutcome": null,
+      "updatedAt": "2026-10-10T13:32:40.847Z",
+      "groupId": null,
+      "running": true,
+      "taskAvailable": true,
+      "contextUsage": {
+        "usedTokens": 3123,
+        "contextWindow": 131072
+      },
+      "deepThinking": false,
+      "sendAvailable": true
+    },
+    {
+      "sessionId": "session-ffa4f449-43da-461b-b3c4-d906685c0250",
+      "hostId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+      "archived": false,
+      "modelProfileId": "private-model-cd4a88387fb98240ec4a89a75c534281a51cfa35",
+      "title": "新对话",
+      "temporary": false,
+      "hasTemporaryContent": false,
+      "memoryMode": "on",
+      "recallEnabled": true,
+      "autoDeleteDays": 30,
+      "expiresAt": null,
+      "pinned": false,
+      "unread": false,
+      "attention": null,
+      "lastOutcome": null,
+      "updatedAt": "2026-10-10T13:32:32.947Z",
+      "groupId": null,
+      "running": false,
+      "taskAvailable": true,
+      "deepThinking": false,
+      "sendAvailable": true
+    }
+  ],
+  "groups": [],
+  "snapshotAt": "2026-10-10T13:32:41.091Z",
+  "statusSummary": {
+    "main": {
+      "attention": "approval",
+      "running": true,
+      "unread": true,
+      "lastOutcome": null
+    },
+    "all": {
+      "attention": "approval",
+      "running": true,
+      "unread": true,
+      "lastOutcome": null
+    },
+    "projects": {},
+    "groups": {
+      "ungrouped": {
+        "attention": "approval",
+        "running": true,
+        "unread": true,
+        "lastOutcome": null
+      }
+    }
+  },
+  "hasMore": false,
+  "nextCursor": null
+}

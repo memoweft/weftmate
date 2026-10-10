@@ -1,0 +1,19 @@
+{
+  "afterAppClosed": true,
+  "copy": "synthetic smoke data only",
+  "memory": [
+    {
+      "jobStates": {
+        "applied": 2,
+        "no_change": 22,
+        "pending": 37,
+        "retry": 1
+      },
+      "evidenceCount": 62,
+      "cognitionCount": 2
+    }
+  ],
+  "earlierPendingFormation": 56,
+  "initialCause": "synthetic pending approval retained by reload fixture; loopback MiMo proxy classified as a local single-slot route",
+  "finalHealthWaitTimedOut": true
+}

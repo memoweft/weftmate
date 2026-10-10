@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-10T13:38:44.624Z",
+  "reason": "Stop over-constrained 60 rows x 15 characters probe after MiMo reasoning exceeded three minutes; not a product motion verdict",
+  "status": 202,
+  "body": {
+    "command": {
+      "commandId": "cmd-3da9970a-6daf-43ac-bbb1-5545ba12fc19",
+      "requestId": "707f0002-ee6c-49cc-a428-3ee22ad8b290",
+      "kind": "session.cancel",
+      "targetDeviceId": "host-47f2cf3c-57bb-484c-a58e-9635dcee9143",
+      "state": "pending",
+      "createdAt": "2026-10-10T13:38:44.610Z",
+      "updatedAt": "2026-10-10T13:38:44.610Z",
+      "sessionId": "session-ffa4f449-43da-461b-b3c4-d906685c0250"
+    }
+  }
+}

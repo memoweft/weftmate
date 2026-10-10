@@ -1,0 +1,7 @@
+{
+  "revision": "f787c3c1b1215b969a4db8e143b18da0b2421d5a",
+  "verifiedTrackedFiles": 512,
+  "archiveCrlfFilesRestoredToExactBlob": 488,
+  "mismatched": [],
+  "dependencies": "existing node_modules and verified vendor junctions"
+}

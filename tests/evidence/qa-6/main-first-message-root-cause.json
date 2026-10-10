@@ -1,0 +1,20 @@
+{
+  "baseline": "480d65e4",
+  "reproducedFreshInstalledAccounts": 2,
+  "commandKind": "chat.message",
+  "result": "rejected",
+  "errorCode": "BACKEND_UNAVAILABLE",
+  "modelCallsBeforeFirstRejection": 0,
+  "nativeProbe": {
+    "path": "/weftmate/api/v1/sessions/session-00000000-0000-4000-8000-000000000006",
+    "status": 404,
+    "errorCode": "session-not-found"
+  },
+  "callChain": [
+    "src/personal-access/main-chat.mjs: backend.createSession with workspaceChatId",
+    "src/personal-access-backend.mjs: existence GET before creation; only session-not-found / SESSION_UNAVAILABLE treated as absent",
+    "src/main.mjs: stageOneGateway wraps native 404 as BACKEND_UNAVAILABLE with nativeCode=session-not-found",
+    "existence check rethrows; first main message is rejected before POST /sessions"
+  ],
+  "productCodeModified": false
+}
