@@ -213,8 +213,10 @@ test('memory view preserves chat draft and discards a successful response for an
     setAttribute(name: string, value: string) { this.attributes.set(name, value) }
     getAttribute(name: string) { return this.attributes.get(name) ?? null }
     removeAttribute() {}
-    querySelectorAll() { return [] }
-    querySelector() { return null }
+    get firstElementChild() { return this.children[0] || null }
+    querySelectorAll(selector: string): Node[] { const all = this.children.flatMap(child => [child, ...child.querySelectorAll('*')]); return selector === '*' ? all : all.filter(child => selector.startsWith('#') ? child.id === selector.slice(1) : child.tagName === selector.toUpperCase()) }
+    querySelector(selector: string) { return this.querySelectorAll(selector)[0] || null }
+    closest(selector: string): Node | null { for(let parent: Node | null = this; parent; parent = parent.parentNode) if(selector.startsWith('#') ? parent.id === selector.slice(1) : parent.tagName === selector.toUpperCase()) return parent; return null }
     focus() {}
     showModal() { this.open = true }
     close() { this.open = false }

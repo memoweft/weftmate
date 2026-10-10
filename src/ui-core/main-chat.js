@@ -364,7 +364,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     }
     return { cancelSessionSelection, pageSessions, searchSessions, supportsChat: supports, inMainChat: inMain, refreshLogicalSessions: refreshSessions, selectLogicalSession: selectSession, selectMainChat, refreshLogicalHistory: refreshHistory, loadOlderLogicalHistory: loadOlderHistory, jumpChatDate, searchMainChat, moveSearchHit,
         mainChatDays: () => historyWindow.days(), expandChatDay: date => { historyWindow.state.expanded.add(date); notify(); }, openSideChat,
-        startChatConversation: () => supports('sideChats') && core.state.mainChat ? openSideChat({ entry: 'composer' }).catch(error => effects.toast(core.failureMessage(error))) : (core.state.selectedChatId = null, legacy.startNewConversation(true)),
+        startChatConversation: () => supports('sideChats') && core.state.mainChat ? openSideChat({ entry: 'composer', ...((core.currentFolderProject?.() || core.defaultFolderProject?.()) ? {parent:{kind:'project',id:(core.currentFolderProject?.() || core.defaultFolderProject()).projectId}} : {}) }).catch(error => effects.toast(core.failureMessage(error))) : (core.state.selectedChatId = null, legacy.startNewConversation(true)),
         sendMainDraft: sendDraft, observeMainOptimistic: observeOptimistic, mainComposerState: composerState, loadMainResources: loadConversationResources,
         mainOptimisticMessages: () => inMain() ? [...pending.values()].filter(row => row.ownerId === core.state.ownerId && row.chatId === core.state.selectedChatId) : legacy.optimisticMessages(true),
         retryMainRequest: async requestId => { const row = pending.get(requestId); if (row) await checkMainRequest(row); },

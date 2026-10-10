@@ -124,7 +124,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     const exact = ['chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].every(key => status.personalCapabilities?.[key] === 1);
     core.state.personalCapabilities = status.personalCapabilities || {};
     core.state.executionAccount = status.executionAccount;core.state.executionAccountName = status.executionAccountName;
-    core.state.hostId = status.hostId;
+    core.state.hostId = status.hostId;core.state.hostName = status.hostName;
     core.state.capabilities = status.backend?.capabilities || null;
     if (environment.logicalChats && exact) {
       state.logicalChats = true; state.sharedHostAvailable = true; core.state.online = true;

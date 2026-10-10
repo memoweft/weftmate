@@ -1,5 +1,6 @@
 /* Desktop composer component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.composer = (core, ui) => {
+    let folderChoice;
     function closeComposerMenu(focus = false) {
         ui.byId('composer-menu').hidden = true;
         ui.byId('attachment-add').setAttribute('aria-expanded', 'false');
@@ -40,6 +41,9 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
             item('照片', 'image', () => pick('composer-photos'));
         }
         item(phone ? '文件' : '添加文件', 'attach', () => pick('message-attachments'));
+        const folderItem=item(native ? '选择文件夹' : '选择电脑上的文件夹', 'folder', () => {closeComposerMenu(true);native ? folderChoice.pick() : folderChoice.open(ui.byId('attachment-add'));});
+        folderItem.disabled=core.state.online===false||core.folderChoiceBusy?.();
+        if(core.state.online===false)folderItem.title='电脑离线，连接后再选择文件夹';
         if (core.supportsChat('sideChats')) item('开旁聊', 'compose', () => { closeComposerMenu(true); void core.openSideChat({ entry: 'composer' }).catch(error => ui.toast(core.failureMessage(error))); });
         if (native?.captureRegion) item('截图', 'camera', () => nativeImage(() => native.captureRegion()));
         if (native?.clipboardImage) item('粘贴剪贴板图片', 'image', () => nativeImage(() => native.clipboardImage()));
@@ -62,6 +66,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         menu.querySelector('button')?.focus();
     }
     function paintComposerExtras(value) {
+        folderChoice?.paint();
         const thinking = core.thinkingView();
         ui.byId('thinking-badge').hidden = !thinking.supported || !thinking.enabled;
         if (value.attachmentsDisabled) closeComposerMenu();
@@ -97,6 +102,8 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         ui.byId('message-text').placeholder = '向 WeftMate 说说你的目标';
     }
     function mountComposer() {
+        folderChoice=globalThis.WeftFolderChoice.create(core,{form:ui.byId('message-form'),tools:ui.byId('attachment-add').parentElement,toast:ui.toast,readDraft:ui.readMessageDraft});
+        ui.paintFolderChoice=folderChoice.paint;
         ui.byId('attachment-add').addEventListener('click', openComposerMenu);
         const menu = ui.byId('composer-menu');
         menu.addEventListener('keydown', event => {

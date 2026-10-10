@@ -102,6 +102,7 @@ test('publish command refuses stale generated assets before creating a release',
     'src/personal-access-ui/message-actions.js', 'src/personal-access-ui/message-actions.css', 'apps/mobile-ui/www/message-actions.js', 'apps/mobile-ui/www/message-actions.css',
     'src/personal-access-ui/icons.js', 'apps/mobile-ui/www/icons.js',
     'src/personal-access-ui/controls.css', 'apps/mobile-ui/www/controls.css',
+    'src/personal-access-ui/folder-choice.js','src/personal-access-ui/folder-choice.css','apps/mobile-ui/www/folder-choice.js','apps/mobile-ui/www/folder-choice.css',
     'docs/legal/terms-zh.md', 'docs/legal/privacy-zh.md', 'apps/mobile-ui/www/legal/terms-zh.txt', 'apps/mobile-ui/www/legal/privacy-zh.txt']) {
     const destination = path.join(isolatedRepository, name)
     await mkdir(path.dirname(destination), { recursive: true })
