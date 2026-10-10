@@ -93,6 +93,8 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 menu.append(summary, button('从这里开旁聊', '从这里开旁聊', () => showSidePanel(spec.event))); (row.querySelector('.message-actions') || row).append(menu);
                 }
             }
+            globalThis.WeftReplyMotion?.indicator(row.querySelector('.message-text'),!complete && spec.event.type==='assistant.message');
+            if(complete)globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-actions'),'arrival');
             highlight(row);
         } else if (spec.kind === 'result') {
             const result = spec.event.data, state = { completed: '成功', failed: '失败', stopped: '停止' }[result.state] || '待核对';
@@ -106,9 +108,10 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             }
             highlight(row);
         } else if (spec.kind === 'waiting') {
-            row.classList.add('inline-waiting'); row.setAttribute('role','status'); row.replaceChildren(ui.element('span','inline-progress-text is-running',spec.text));
+            row.classList.add('inline-waiting'); row.setAttribute('role','status'); const text=row.querySelector('.inline-progress-text')||ui.element('span','inline-progress-text is-running');if(!text.parentNode)row.replaceChildren(text);if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,spec.text,true);else text.textContent=spec.text;
         } else if (spec.kind === 'optimistic') {
             row.classList.add('message', 'user'); row.replaceChildren(ui.element('span', 'message-text', spec.event.text || (spec.event.files || []).join('、') || '附件'), ui.element('small', 'message-task-label', spec.event.status === 'failed' ? '发送未确认，草稿已保留' : spec.event.status === 'accepted' ? '已发送' : '排队中'));
+            if(!row.dataset.motionSent){row.dataset.motionSent='true';requestAnimationFrame(()=>globalThis.WeftReplyMotion?.reveal(row,'send'));}
             if (spec.event.status === 'failed') row.append(button('核对原请求', '核对原请求', () => core.retryMainRequest(spec.event.requestId)));
         } else {
             const nested = row.querySelector('ol') || ui.element('ol', 'chat-progress'); if (!nested.parentNode) row.replaceChildren(nested);

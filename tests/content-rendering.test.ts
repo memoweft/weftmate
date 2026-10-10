@@ -31,6 +31,17 @@ test('shared offline content: parsing, injection set, streaming, controls and fa
     const result=await page.evaluate(()=>{const rows=[['a','b'],['x|y','say "hi",\nnext']];return {md:WeftContent.tableCopy(rows),csv:WeftContent.tableCopy(rows,'csv')};});
     assert.equal(result.md,'| a | b |\n| --- | --- |\n| x\\|y | say "hi",<br>next |');assert.equal(result.csv,'"a","b"\r\n"x|y","say ""hi"",\nnext"');
   });
+  await t.test('plain streaming tails retain completed blocks and Markdown transitions still reparse references, lists and fences',async()=>{
+    const result=await page.evaluate(()=>{
+      const prefix='```python\nprint(1)\n```\n\n',body=WeftContent.create(prefix+'第一段');document.body.append(body);const code=body.querySelector('.render-code');
+      WeftContent.update(body,prefix+'第一段正在扩展');const plain=body.lastElementChild.textContent,stable=code===body.querySelector('.render-code');
+      WeftContent.update(body,prefix+'- 列表项目');const list=body.lastElementChild.tagName;
+      WeftContent.update(body,prefix+'```js\nlet a=1');const fenced=body.querySelectorAll('.render-code').length;
+      const refs=WeftContent.create('[示例][ref]\n\n尾部');document.body.append(refs);WeftContent.update(refs,'[示例][ref]\n\n尾部\n\n[ref]: https://example.com');
+      return {plain,stable,list,fenced,reference:refs.querySelector('a')?.href};
+    });
+    assert.equal(result.plain,'第一段正在扩展');assert.equal(result.stable,true);assert.equal(result.list,'UL');assert.equal(result.fenced,2);assert.equal(result.reference,'https://example.com/');
+  });
   await t.test('math renders offline and failure returns exact delimited source',async()=>{
     const result=await page.evaluate(()=>({good:WeftFormat.render('$x^2$\n\n$$\\frac{1}{2}$$'),root:WeftFormat.render('$\\sqrt{x}$'),bad:WeftFormat.render('$\\unknown{a}$')}));
     assert.match(result.good,/katex/);assert.match(result.good,/math-block/);assert.match(result.bad,/math-fallback/);assert.match(result.bad,/\$\\unknown\{a\}\$/);

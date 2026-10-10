@@ -3,7 +3,7 @@
   const preference = matchMedia('(prefers-reduced-motion: reduce)');
   const active = new Set(), owners = new WeakMap();
   let nativeReduced = globalThis.weftReducedMotion === true;
-  const reduced = () => preference.matches || nativeReduced;
+  const reduced = () => globalThis.WeftReplyMotion?.reduced ?? (preference.matches || nativeReduced);
   const css = () => getComputedStyle(document.documentElement);
   function milliseconds(name) {
     const value = css().getPropertyValue(`--wm-duration-${name}`).trim();
@@ -12,7 +12,7 @@
   function play(element, frames, name = 'fast', index = 0, cleanup) {
     if (!element) { cleanup?.(); return; }
     owners.get(element)?.cancel();
-    if (reduced() || !element.isConnected || !element.animate) { cleanup?.(); return; }
+    if (reduced() || (globalThis.WeftReplyMotion?.paused ?? document.hidden) || !element.isConnected || !element.animate) { cleanup?.(); return; }
     const animation = element.animate(frames, { duration: milliseconds(name),
       easing: css().getPropertyValue('--wm-easing-desktop').trim(), fill: 'backwards',
       delay: Math.min(index * milliseconds('stagger'), milliseconds('staggerLimit')) });
@@ -76,6 +76,7 @@
   addEventListener('weft-motion-preference', event => {
     nativeReduced = event.detail?.reducedMotion === true; syncPreference();
   });
+  addEventListener('weft-reply-motion-change', () => { syncPreference(); if(!reduced())for(const animation of active) {if((globalThis.WeftReplyMotion?.paused ?? document.hidden))animation.pause();else animation.play();} });
   syncPreference();
   globalThis.WeftMobileMotion = { play, reveal, push, snapshot, dismiss, hide, changed, details, reduced, milliseconds };
 })();

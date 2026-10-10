@@ -588,6 +588,7 @@ function appearancePage(target){target.append(heading('外观','保存到这台�
   select.value=state.appearance;line.append(select);const segments=WeftSettingsControls.segmented(select);
   select.addEventListener('change',async()=>{try{const saved=await uiCore.mobileAppearance(select.value);applyTheme(saved.value);page('appearance')}catch(e){toast(safeError(e),true)}});
   line.append(copy,segments);target.append(line);
+  if (globalThis.WeftReplyMotion) {const control=WeftReplyMotion.preferenceControl();target.append(WeftSettingsControls.row('减少动态效果','跟随系统偏好；开启后所有状态与回复动效停止。',control));WeftSettingsControls.select(control);}
 }
 
 async function updatesPage(target){target.append(heading('界面更新','常规界面可从个人服务端更新；新增原生能力仍需更新应用。'));
