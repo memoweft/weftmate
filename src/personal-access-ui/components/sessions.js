@@ -420,6 +420,10 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             row.append(button);
             list.append(row);
         }
+        if (core.state.sessionListNextCursor || core.state.sessionListCursor) {
+            const row = ui.element('li'), more = ui.element('button','',core.state.sessionListNextCursor ? '更早的对话' : '最近对话');
+            more.type='button';more.onclick=()=>core.pageSessions(!!core.state.sessionListNextCursor).catch(error=>ui.byId('sessions-status').textContent=core.failureMessage(error));row.append(more);list.append(row);
+        }
         const projectMatches = renderSidebarProjects(list, query);
         if (focusId) {
             const replacement = [...list.querySelectorAll('.session-row')].find(row => row.dataset.sessionId === focusId);
@@ -430,6 +434,8 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         else globalThis.WeftMotion?.cancel(list);
     }
     function mountSessions() {
+        let searchTimer;
+        ui.byId('session-search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>core.searchSessions?.(ui.byId('session-search').value).catch(error=>ui.byId('sessions-status').textContent=core.failureMessage(error)),200);});
         ui.byId('load-older').addEventListener('click', () => { void core.loadOlderHistory(); });
         const create=ui.byId('new-session'),temporary=ui.byId('new-temporary-session'),group=ui.element('div','rail-new-group');create.before(group);group.append(create);
         const toggle=ui.element('button','rail-new-dropdown');toggle.type='button';toggle.setAttribute('aria-label','选择新对话类型');toggle.setAttribute('aria-haspopup','menu');toggle.setAttribute('aria-expanded','false');toggle.append(WeftIcons.create('chevron',16));group.append(toggle);

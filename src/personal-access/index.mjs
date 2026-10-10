@@ -202,6 +202,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get hashWork() { return hashWork; },
     set hashQueue(value) { hashQueue = value; },
     get hostOwner() { return hostOwner; },
+    executionAccountName: () => {
+      const name = rootState.accounts[executionOwnerId()]?.account?.displayName;
+      return typeof name === 'string' && !name.includes('@') ? name : '原账号';
+    },
     get interactionRequestIdUsed() { return interactionRequestIdUsed; },
     get json() { return json; },
     get localTurnState() { return localTurnState; },
@@ -274,6 +278,16 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get verifyToolResult() { return verifyToolResult; },
   };
   const sessions = createSessionOperations(context);
+  const nativeBackend = backend;
+  const observeNativeEvents = async input => {
+    const page = await nativeBackend.readEvents(input);
+    if (input.ownerId && Array.isArray(page?.events)) sessions.observe(input.ownerId,input.sessionId,page.events);
+    return page;
+  };
+  backend = new Proxy(nativeBackend,{get(target,name) {
+    if(name==='readEvents')return observeNativeEvents;
+    const value=Reflect.get(target,name,target);return typeof value==='function'?value.bind(target):value;
+  }});
   const chats = createChatOperations(context);
   const chatTimeline = createChatTimeline(context);
   const sideChats = createSideChats(context);
@@ -626,12 +640,21 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets,
           ...(schedulesErased?.removedNativeIds?.length ? { scheduleIds: schedulesErased.removedNativeIds } : {}),
           ...(goalErased?.clearedGoalIds?.length ? { goalIds: goalErased.clearedGoalIds } : {}) }));
+        sessions.invalidate(ownerId,sessionId);
         if (cleaned?.forgottenSeqs?.length) await serial(() => mutate(ownerId, next => {
           const session = next.sessions[sessionId];
           if (session) session.forgottenSeqs = [...new Set([...(session.forgottenSeqs ?? []), ...cleaned.forgottenSeqs])];
         }));
+        // The activity watermark may already be past all retained messages.
+        // Rebuild this invalidated summary now, outside the list request path.
+        if (accountState(ownerId).sessions[sessionId])
+          await callBackend(() => backend.readEvents({ ownerId, sessionId, limit: 200 }));
       }
       if (deleteConversationSnippets && sourceTexts.length) await serial(() => mutate(ownerId, next => {
+        for (const session of Object.values(next.sessions)) {
+          if (typeof session.title === 'string') for (const source of sourceTexts.filter(Boolean))
+            session.title = session.title.replaceAll(source, '[已遗忘的原话]');
+        }
         for (const command of Object.values(next.commands)) {
           if (typeof command.payload?.text === 'string') {
             let text = command.payload.text;
@@ -689,6 +712,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       temporaryChats.start();
       await memoryIngestion.start();
       activity.start();
+      for (const ownerId of Object.keys(rootState.accounts)) void sessions.initialize(ownerId);
       hostCloudIdentity?.start();
       hostRelay?.start(origin);
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
