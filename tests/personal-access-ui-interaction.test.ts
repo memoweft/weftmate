@@ -108,6 +108,7 @@ class Element {
   open = false
   parentNode: Element | null = null
   get parentElement() { return this.parentNode }
+  get firstElementChild() { return this.children[0] || null }
   get nextSibling() { return this.parentNode?.children[this.parentNode.children.indexOf(this) + 1] ?? null }
   insertBefore(child: Element, next: Element | null) {
     child.remove()
@@ -126,6 +127,9 @@ class Element {
 }
 
 function matchesTestSelector(node: Element, selector: string) {
+  if(selector.split(',').length>1)return selector.split(',').some(part=>matchesTestSelector(node,part.trim()));
+  if(/^#[A-Za-z][\w-]*$/.test(selector))return node.id===selector.slice(1);
+  if(/^[a-z]+$/.test(selector))return node.tagName===selector.toUpperCase();
   if (selector === 'dialog[open]') return node.tagName === 'DIALOG' && node.open
   if (/^(button|form|pre|a|textarea)$/.test(selector)) return node.tagName === selector.toUpperCase()
   if (selector.startsWith('.')) return node.className.split(' ').includes(selector.slice(1))

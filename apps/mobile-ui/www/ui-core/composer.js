@@ -81,6 +81,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         }
         core.state.newConversation = true;
         core.state.newConversationTemporary = temporary;
+        core.state.newConversationProjectId = core.defaultFolderProject?.()?.projectId || null;
         core.state.newConversationId = environment.crypto.randomUUID();
         core.state.newConversationApprovalMode = null;
         core.state.newConversationThinking = core.state.personalization?.defaultDeepThinking === true;
@@ -114,6 +115,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             if (!current()) return;
             if (!created?.sessionId || created.state !== 'accepted_by_dsh') { row.status = created && ['pending','dispatching'].includes(created.state) ? 'sending' : 'failed'; effects.renderOptimisticMessages?.(); return; }
             row.sessionId = created.sessionId;
+            if (row.projectId) await core.updateSession(row.sessionId, {projectId:row.projectId});
             if (row.attachments) {
                 const oldKey = `${row.ownerId}|new`;
                 const drafts = core.state.attachmentDrafts.get(oldKey);
@@ -264,6 +266,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             return;
         const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration,
             sessionId: core.state.selectedSessionId, modelProfileId: core.state.modelProfileId,
+            projectId: core.state.newConversationProjectId,
             draftId: core.state.newConversationId,
             temporary: core.state.newConversation && core.state.newConversationTemporary === true,
             requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), createRequestId: environment.crypto.randomUUID(),

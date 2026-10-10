@@ -183,12 +183,13 @@ describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
       WEFTMATE_TEST_ROOT_PID: rootPidFile,
     })
     const start = web.start()
+    const rejectedStart = assert.rejects(start, /DshWebRuntime is closed/)
     const rootPid = Number(await waitForFile(rootPidFile))
     const closeA = web.close()
     const closeB = web.close()
     assert.strictEqual(closeA, closeB)
     await closeA
-    await assert.rejects(start, /DshWebRuntime is closed/)
+    await rejectedStart
     assert.equal(web.isRunning(), false)
     assert.equal(isAlive(rootPid), false)
   })

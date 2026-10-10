@@ -271,6 +271,8 @@ async function openAttachmentMenu(){if(state.chatSource==='host'&&!selectedShare
   closeApprovalModeMenu();
   if(state.attachmentPick)return;if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}
   closeModelMenu();state.attachmentMenu=true;const popup=$('attachment-popover');popup.hidden=false;
+  if(!$('pick-folder')){const folder=el('button');folder.id='pick-folder';folder.type='button';folder.setAttribute('role','menuitem');folder.append(WeftIcons.create('folder',20),document.createTextNode('选择电脑上的文件夹'));folder.onclick=()=>{closeAttachmentMenu({restoreFocus:true});mobileFolderChoice.open($('plus-button'));};$('pick-file').after(folder);}
+  $('pick-folder').disabled=state.hostAvailable===false||uiCore.state.online===false; $('pick-folder').title=$('pick-folder').disabled?'电脑离线，连接后再选择文件夹':'';
   $('pick-file').hidden=false;$('attachment-note').hidden=state.chatSource!=='host';
   $('plus-button').setAttribute('aria-expanded','true');requestAnimationFrame(()=>popup.classList.add('open'));placeAttachmentMenu();$('pick-camera').focus();
   const owner=state.owner,epoch=state.authEpoch,sessionId=state.sharedSessionId;
@@ -351,7 +353,9 @@ async function removeAttachment(attachmentId){if(state.busy||state.transitionPen
 
 function placeModelMenu(){globalThis.WeftPopover.position($('model-popover'),$('model-button'))}
 
-function updateComposer(){uiCore.syncMobileIdentity();mobileMessageActions?.refresh();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
+let mobileFolderChoice;
+function updateComposer(){uiCore.syncMobileIdentity();
+  if(globalThis.WeftFolderChoice && $('composer-dock')){mobileFolderChoice ||= WeftFolderChoice.create(uiCore,{form:$('draft').closest('.composer')||$('draft').parentElement,tools:$('plus-button').parentElement,toast,mobile:true});mobileFolderChoice.paint();}mobileMessageActions?.refresh();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
   renderQueuedTasks();
   const button=$('send-button'), stop=view.sendHidden;
   globalThis.WeftMobileMotion?.changed(button,String(stop),'160ms');

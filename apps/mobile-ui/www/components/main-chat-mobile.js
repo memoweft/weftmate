@@ -122,7 +122,7 @@
     if(state.page==='chat'&&!main())$('menu-button').hidden=true;syncMobileTabs();};
   refreshAttachmentDrafts=async function(...args){if(state.logicalChats&&!window.weftNative){renderAttachmentDrafts();updateComposer();return true;}return oldDrafts(...args);};
   removeAttachment=async function(id){if(state.logicalChats&&!window.weftNative)return uiCore.removeAttachmentDraft(id);return oldRemove(id);};
-  selectConversation=function(id){if(state.logicalChats&&id===null)return uiCore.openSideChat({entry:'composer'}).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
+  selectConversation=function(id){if(state.logicalChats&&id===null)return Promise.resolve(uiCore.startChatConversation()).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
   pickAttachment=async function(kind){if(!state.logicalChats||window.weftNative)return oldPick(kind);
     closeAttachmentMenu();const input=el('input');input.type='file';input.multiple=true;input.accept=kind==='file'?'': 'image/*';if(kind==='camera')input.setAttribute('capture','environment');
     input.addEventListener('change',async()=>{await uiCore.addAttachmentFiles([...input.files]);input.remove();renderAttachmentDrafts();updateComposer();});input.addEventListener('cancel',()=>input.remove());input.hidden=true;document.body.append(input);input.click();};
