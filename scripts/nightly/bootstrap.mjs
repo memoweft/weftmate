@@ -46,7 +46,7 @@ export async function bootstrap(args, { execute: injectedExecute } = {}) {
   });
   try {
     await mkdir(join(out,'logs'), { recursive: true }); await mkdir(join(out,'gallery'));
-    console.log(`Nightly ${runId}; reports: ${out}`);
+    console.log(`Nightly ${runId}; reports: ${out.replace(/[A-Z]:[\\/]Users[\\/][^\\/]+/gi, 'C:/Users/<user>')}`);
     context.bootstrapCommit = (await execute('git',['rev-parse','HEAD'],{cwd:repository,name:'bootstrap-commit'})).output.trim();
     await execute('git',['fetch','origin','main'],{cwd:repository,name:'fetch'});
     context.sourceCommit = (await execute('git',['rev-parse',args.includes('--candidate')?'HEAD':'origin/main'],{cwd:repository,name:'source-commit'})).output.trim();
