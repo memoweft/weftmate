@@ -51,12 +51,13 @@ jobs:
             .local/relay-dsh/native/landlock-run/lib
             .local/relay-dsh/native/landlock-run/packages/*/lib
           key: relay-phone-dsh-linux-node24-${{ env.DSH_PIN }}-v3
+      - name: Link pinned DSH workspace dependencies
+        working-directory: .local/relay-dsh
+        run: pnpm install --frozen-lockfile
       - name: Build pinned native tools (no model keys)
         if: steps.dsh-cache.outputs.cache-hit != 'true'
         working-directory: .local/relay-dsh
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm run build
+        run: pnpm run build
       - name: Save compiled fixture before scenario assertions
         timeout-minutes: 2
         continue-on-error: true
