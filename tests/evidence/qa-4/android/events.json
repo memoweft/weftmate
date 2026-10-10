@@ -1,0 +1,166 @@
+[
+  {
+    "seq": 5,
+    "type": "task.queued",
+    "data": {
+      "taskId": "cmd-8290c08f-1313-40a6-93ea-4e180400b071",
+      "receiptId": "c5c6d80c-6acf-460c-aa94-5567ccf6201a",
+      "text": "请在电脑上创建 C:/Temp/fx9-phone-7a7b1d3a-ca3f-4de2-b47e-08c7a7b9f87c.txt，内容只写 FX9_PHONE_EXECUTED。只操作这个测试文件，并读回核验内容。完成后告诉我。",
+      "commandId": "cmd-8290c08f-1313-40a6-93ea-4e180400b071",
+      "requestId": "ui-mv1mb7va-1-kk19tb1d"
+    }
+  },
+  {
+    "seq": 6,
+    "type": "turn.started",
+    "data": {
+      "turn": 1
+    }
+  },
+  {
+    "seq": 8,
+    "type": "task.started",
+    "data": {
+      "taskId": "cmd-8290c08f-1313-40a6-93ea-4e180400b071",
+      "turn": 1,
+      "receiptId": "c5c6d80c-6acf-460c-aa94-5567ccf6201a",
+      "commandId": "cmd-8290c08f-1313-40a6-93ea-4e180400b071",
+      "requestId": "ui-mv1mb7va-1-kk19tb1d",
+      "turnTaskId": "turn-1"
+    }
+  },
+  {
+    "seq": 9,
+    "type": "user.message",
+    "data": {
+      "text": "请在电脑上创建 C:/Temp/fx9-phone-7a7b1d3a-ca3f-4de2-b47e-08c7a7b9f87c.txt，内容只写 FX9_PHONE_EXECUTED。只操作这个测试文件，并读回核验内容。完成后告诉我。",
+      "receiptId": "c5c6d80c-6acf-460c-aa94-5567ccf6201a"
+    }
+  },
+  {
+    "seq": 25,
+    "type": "step.started",
+    "data": {
+      "taskId": "turn-1",
+      "stepId": "call_74f4b577036443ecafa18a7f",
+      "callId": "call_74f4b577036443ecafa18a7f",
+      "toolName": "load_tools",
+      "summary": "准备可用工具",
+      "groupHint": "load_tools",
+      "detailRef": {
+        "seq": 25
+      },
+      "turn": 1,
+      "state": "running"
+    }
+  },
+  {
+    "seq": 26,
+    "type": "step.completed",
+    "data": {
+      "taskId": "turn-1",
+      "stepId": "call_74f4b577036443ecafa18a7f",
+      "callId": "call_74f4b577036443ecafa18a7f",
+      "toolName": "load_tools",
+      "summary": "准备可用工具",
+      "groupHint": "load_tools",
+      "detailRef": {
+        "seq": 26
+      },
+      "turn": 1,
+      "state": "completed"
+    }
+  },
+  {
+    "seq": 98,
+    "type": "step.started",
+    "data": {
+      "taskId": "turn-1",
+      "stepId": "call_620d201b7dd5441c96aebf2f",
+      "callId": "call_620d201b7dd5441c96aebf2f",
+      "toolName": "pwsh",
+      "summary": "运行命令 $p = 'C:/Temp/fx9-phone-7a7b1d3a-ca3f-4de2-b47e-08c7a7b9f87c.txt'; New-Item -ItemType Directory -Pat",
+      "groupHint": "pwsh",
+      "detailRef": {
+        "seq": 98
+      },
+      "turn": 1,
+      "state": "running"
+    }
+  },
+  {
+    "seq": 99,
+    "type": "approval.requested",
+    "data": {
+      "taskId": "turn-1",
+      "approvalId": "7730fdde-508c-450c-bbb2-9dd72cc4d99c",
+      "stepId": "call_620d201b7dd5441c96aebf2f",
+      "toolName": "pwsh",
+      "turn": 1,
+      "summary": "[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：pwsh\n{\"command\":\"$p = 'C:/Temp/fx9-phone-7a7b1d3a-ca3f-4de2-b47e-08c7a7b9f87c.txt'; New-Item -ItemType Directory -Path (Split-Path $p) -Force | Out-Null; Set-Content -LiteralPath $p -Value 'FX9_PHONE_EXECUTED' -NoNewline -Encoding utf8; $back = Get-Content -LiteralPath $p -Raw; Write-Output \\\"READBACK=[$back]\\\"; $bytes = [System.IO.File]::ReadAllBytes($p); Write-Output (\\\"BYTES=\\\" + (($bytes | ForEach-Object { $_.ToString('X2') }) -join ' '))\",\"description\":\"Create test file and read back content\"}",
+      "detailRef": {
+        "seq": 99
+      }
+    }
+  },
+  {
+    "seq": 100,
+    "type": "approval.resolved",
+    "data": {
+      "taskId": "turn-1",
+      "approvalId": "7730fdde-508c-450c-bbb2-9dd72cc4d99c",
+      "turn": 1,
+      "summary": "执行审批",
+      "outcome": "allowed-once",
+      "detailRef": {
+        "seq": 100
+      }
+    }
+  },
+  {
+    "seq": 101,
+    "type": "step.completed",
+    "data": {
+      "taskId": "turn-1",
+      "stepId": "call_620d201b7dd5441c96aebf2f",
+      "callId": "call_620d201b7dd5441c96aebf2f",
+      "toolName": "pwsh",
+      "summary": "运行命令 $p = 'C:/Temp/fx9-phone-7a7b1d3a-ca3f-4de2-b47e-08c7a7b9f87c.txt'; New-Item -ItemType Directory -Pat",
+      "groupHint": "pwsh",
+      "detailRef": {
+        "seq": 101
+      },
+      "turn": 1,
+      "state": "completed"
+    }
+  },
+  {
+    "seq": 135,
+    "type": "assistant.message",
+    "data": {
+      "text": "已完成。\n\n- 已创建 `C:/Temp/fx9-phone-7a7b1d3a-ca3f-4de2-b47e-08c7a7b9f87c.txt`（仅操作了这个测试文件）。\n- 读回核验：内容为 `FX9_PHONE_EXECUTED`，字节为纯 ASCII（46 58 39 5F 50 48 4F 4E 45 5F 45 58 45 43 55 54 45 44），无 BOM、无换行，与要求完全一致。"
+    }
+  },
+  {
+    "seq": 136,
+    "type": "task.ended",
+    "data": {
+      "taskId": "cmd-8290c08f-1313-40a6-93ea-4e180400b071",
+      "turn": 1,
+      "reason": "completed",
+      "nativeTurnEndSeq": 137,
+      "receiptId": "c5c6d80c-6acf-460c-aa94-5567ccf6201a",
+      "commandId": "cmd-8290c08f-1313-40a6-93ea-4e180400b071",
+      "requestId": "ui-mv1mb7va-1-kk19tb1d",
+      "turnTaskId": "turn-1"
+    }
+  },
+  {
+    "seq": 137,
+    "type": "turn.ended",
+    "data": {
+      "reason": "completed",
+      "turn": 1
+    }
+  }
+]

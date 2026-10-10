@@ -1,0 +1,14 @@
+{
+  "rawRunnerReportPreserved": true,
+  "rawStatus": "passed",
+  "adjudicatedStatus": "failed",
+  "actualMessage": "统计失败，请检查连接后重试。",
+  "desktopPreviewHttp": 200,
+  "desktopPreviewTurnCount": 0,
+  "falsePositiveCause": "Broad /没有可/ pattern matched the unrelated empty-memory list message, not backfill success.",
+  "nativeHealthPassed": true,
+  "nativeBackfillPreviewPassed": false,
+  "screenshot": "android-memory-backfill-preview-dark.png",
+  "javascriptScopeProof": "javascript-scope.json",
+  "rootCause": "memoryIngestionPanel calls undefined global business; native business route itself is allowed"
+}

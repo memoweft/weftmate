@@ -1,0 +1,14 @@
+{
+  "explicitStopReason": "Only replaced the QA-4 waiting batch dispatcher; all product runners close their own children",
+  "temporarySigningRootsRemaining": 0,
+  "backupCopiesRemaining": 0,
+  "androidMappingsRemoved": true,
+  "appleSimulatorStarted": false,
+  "checkedAt": "2026-10-10T08:39:08.6232092+08:00",
+  "explicitlyStoppedOwnProcesses": 1,
+  "remainingMatchedProductProcesses": 0,
+  "androidTestPackageRemoved": true,
+  "ownMuMuShutdown": true,
+  "ownLanLockRemaining": false,
+  "syntheticDirectoryBatchDeletionRejected": true
+}

@@ -1,0 +1,7 @@
+{
+  "a16Done": false,
+  "reason": "A16 not done before other acceptance work completed; did not wait or start Apple simulators",
+  "iphoneSmokeRun": false,
+  "macMotionRun": false,
+  "checkedAt": "2026-10-10T08:29:57.5526347+08:00"
+}

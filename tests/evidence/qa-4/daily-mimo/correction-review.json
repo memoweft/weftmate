@@ -1,0 +1,54 @@
+{
+  "evidenceDelivered": true,
+  "correctionJobState": "no_change",
+  "firstCompilerError": "topic_name_not_in_span",
+  "finalCompilerError": "duplicate_cognition_in_batch",
+  "oldCurrentItems": [
+    {
+      "id": "cognition-4b9c7cca4f548223ec445d8dc8231f2bf48947a381e35dc5b47c7edebf4c10c8",
+      "kind": "cognition",
+      "text": "用户喝第903种花茶时偏好加一小撮肉桂粉。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T23:32:33.788Z",
+      "updatedAt": "2026-10-09T23:32:33.788Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-e67b5eb9d1e8106c1d9f18c55156a49294189361eb4d2d3c1f5848d85515c673",
+      "kind": "cognition",
+      "text": "用户好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T23:32:40.254Z",
+      "updatedAt": "2026-10-09T23:32:40.254Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 2
+    }
+  ],
+  "newLemonFormalItems": [],
+  "followupReply": "按你最后确认的偏好：第903种花茶加一片柠檬（不再加肉桂粉）。",
+  "followupMemoryUsed": [
+    {
+      "id": "cognition-4b9c7cca4f548223ec445d8dc8231f2bf48947a381e35dc5b47c7edebf4c10c8",
+      "kind": "cognition",
+      "summary": "用户喝第903种花茶时偏好加一小撮肉桂粉。"
+    },
+    {
+      "id": "cognition-e67b5eb9d1e8106c1d9f18c55156a49294189361eb4d2d3c1f5848d85515c673",
+      "kind": "cognition",
+      "summary": "用户好，以后我喝第903种花茶时，就提醒我加一小撮肉桂粉。\n确认依据中的助手原话：好的——以后当你提到要喝第903种花茶时，我提醒你加一小撮肉桂粉，可以吗？确认后我会记住这个偏好。"
+    }
+  ],
+  "healthyWithNoQueues": true,
+  "originalScreenshotIsReopenedHistory": true
+}

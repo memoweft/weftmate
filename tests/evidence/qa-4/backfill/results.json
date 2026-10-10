@@ -1,0 +1,1046 @@
+{
+  "revision": "b64378a9d46b85d24c4f8ae8c9853006ae7784c9",
+  "model": "synthetic",
+  "startedAt": "2026-10-09T23:30:28.482Z",
+  "turns": [
+    {
+      "id": "memd-0",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 1996,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-6b37cc5e-534c-41d6-adb2-9a2f7d6bb656",
+          "modelProfileId": "private-model-083eea8a0a233b948600f3381fc73b51e46deaaf",
+          "commandId": "cmd-62f9b3f2-82d1-4125-99e9-abfe6e8372ee",
+          "startedAt": "2026-10-09T23:30:41.426Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T23:30:41.481Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T23:30:41.482Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T23:30:42.577Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T23:30:42.577Z"
+            },
+            {
+              "seq": 22,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:30:42.711Z"
+            },
+            {
+              "seq": 23,
+              "type": "task.ended",
+              "at": "2026-10-09T23:30:42.711Z"
+            },
+            {
+              "seq": 24,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:30:42.712Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 1322,
+          "endedAt": "2026-10-09T23:30:42.748Z"
+        },
+        {
+          "sessionId": "session-6b37cc5e-534c-41d6-adb2-9a2f7d6bb656",
+          "modelProfileId": "private-model-083eea8a0a233b948600f3381fc73b51e46deaaf",
+          "commandId": "cmd-25d4a3a7-7648-4e58-a408-c51c32a31f0f",
+          "startedAt": "2026-10-09T23:30:42.785Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 26,
+              "type": "task.queued",
+              "at": "2026-10-09T23:30:42.834Z"
+            },
+            {
+              "seq": 27,
+              "type": "turn.started",
+              "at": "2026-10-09T23:30:42.834Z"
+            },
+            {
+              "seq": 29,
+              "type": "task.started",
+              "at": "2026-10-09T23:30:42.869Z"
+            },
+            {
+              "seq": 30,
+              "type": "user.message",
+              "at": "2026-10-09T23:30:42.869Z"
+            },
+            {
+              "seq": 38,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:30:42.916Z"
+            },
+            {
+              "seq": 39,
+              "type": "task.ended",
+              "at": "2026-10-09T23:30:42.917Z"
+            },
+            {
+              "seq": 40,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:30:42.918Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 270,
+          "endedAt": "2026-10-09T23:30:43.055Z"
+        }
+      ],
+      "replySummary": "收到，我理解了。",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "[user-home]\\AppData\\Local\\Temp\\weftmate-eval-memd-0-KWeqIh"
+    },
+    {
+      "id": "memd-1",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 2240,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-ae2eb91c-0c7b-44d5-b344-98231fb6754f",
+          "modelProfileId": "private-model-2dd9809e2d0741608308b232d4811a2c13b4f93b",
+          "commandId": "cmd-47b1c4c3-feeb-428a-a284-d567060e11ea",
+          "startedAt": "2026-10-09T23:30:45.800Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T23:30:45.849Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T23:30:45.849Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T23:30:45.885Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T23:30:45.886Z"
+            },
+            {
+              "seq": 22,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:30:47.144Z"
+            },
+            {
+              "seq": 23,
+              "type": "task.ended",
+              "at": "2026-10-09T23:30:47.144Z"
+            },
+            {
+              "seq": 24,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:30:47.145Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 1582,
+          "endedAt": "2026-10-09T23:30:47.382Z"
+        },
+        {
+          "sessionId": "session-ae2eb91c-0c7b-44d5-b344-98231fb6754f",
+          "modelProfileId": "private-model-2dd9809e2d0741608308b232d4811a2c13b4f93b",
+          "commandId": "cmd-8c3683b5-c405-49bc-b47b-8b851d54729c",
+          "startedAt": "2026-10-09T23:30:47.413Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 25,
+              "type": "task.queued",
+              "at": "2026-10-09T23:30:47.462Z"
+            },
+            {
+              "seq": 26,
+              "type": "turn.started",
+              "at": "2026-10-09T23:30:47.462Z"
+            },
+            {
+              "seq": 28,
+              "type": "task.started",
+              "at": "2026-10-09T23:30:47.494Z"
+            },
+            {
+              "seq": 29,
+              "type": "user.message",
+              "at": "2026-10-09T23:30:47.494Z"
+            },
+            {
+              "seq": 37,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:30:47.539Z"
+            },
+            {
+              "seq": 38,
+              "type": "task.ended",
+              "at": "2026-10-09T23:30:47.539Z"
+            },
+            {
+              "seq": 39,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:30:47.540Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 274,
+          "endedAt": "2026-10-09T23:30:47.687Z"
+        }
+      ],
+      "replySummary": "收到，我理解了。",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "[user-home]\\AppData\\Local\\Temp\\weftmate-eval-memd-1-jzxa98"
+    },
+    {
+      "id": "memd-2",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 2032,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-33124ae3-3c80-456c-8716-175e6cf5fd3c",
+          "modelProfileId": "private-model-083eea8a0a233b948600f3381fc73b51e46deaaf",
+          "commandId": "cmd-3cc97ddd-e406-41dd-acfc-cab620b81b06",
+          "startedAt": "2026-10-09T23:30:50.356Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T23:30:50.408Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T23:30:50.408Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T23:30:50.442Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T23:30:50.443Z"
+            },
+            {
+              "seq": 22,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:30:51.695Z"
+            },
+            {
+              "seq": 23,
+              "type": "task.ended",
+              "at": "2026-10-09T23:30:51.695Z"
+            },
+            {
+              "seq": 24,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:30:51.696Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 1354,
+          "endedAt": "2026-10-09T23:30:51.710Z"
+        },
+        {
+          "sessionId": "session-33124ae3-3c80-456c-8716-175e6cf5fd3c",
+          "modelProfileId": "private-model-083eea8a0a233b948600f3381fc73b51e46deaaf",
+          "commandId": "cmd-c46c01e7-1fc3-4c77-b4a3-18233a2571e5",
+          "startedAt": "2026-10-09T23:30:51.742Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 25,
+              "type": "task.queued",
+              "at": "2026-10-09T23:30:51.804Z"
+            },
+            {
+              "seq": 26,
+              "type": "turn.started",
+              "at": "2026-10-09T23:30:51.804Z"
+            },
+            {
+              "seq": 28,
+              "type": "task.started",
+              "at": "2026-10-09T23:30:51.836Z"
+            },
+            {
+              "seq": 29,
+              "type": "user.message",
+              "at": "2026-10-09T23:30:51.836Z"
+            },
+            {
+              "seq": 37,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:30:51.884Z"
+            },
+            {
+              "seq": 38,
+              "type": "task.ended",
+              "at": "2026-10-09T23:30:51.884Z"
+            },
+            {
+              "seq": 39,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:30:51.885Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 280,
+          "endedAt": "2026-10-09T23:30:52.022Z"
+        }
+      ],
+      "replySummary": "收到，我理解了。",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "[user-home]\\AppData\\Local\\Temp\\weftmate-eval-memd-2-CNmaQC"
+    }
+  ],
+  "requests": [
+    {
+      "id": 1,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:42.686Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 2,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:42.749Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 3,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:42.901Z",
+      "formation": false,
+      "recallContainsPriorPreference": true,
+      "status": 200
+    },
+    {
+      "id": 4,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:30:45.930Z",
+      "switch": true,
+      "switchDelayMs": 1200,
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 5,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:30:47.523Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 6,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T23:30:47.936Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 7,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:50.478Z",
+      "switch": true,
+      "switchDelayMs": 1200,
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 8,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:51.869Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 9,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:52.488Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 10,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:54.469Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 11,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:54.607Z",
+      "formation": false,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 12,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:30:55.738Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 503
+    },
+    {
+      "id": 13,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:31:00.828Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 14,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:31:01.434Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 15,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:31:02.632Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 16,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:31:03.992Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 17,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:31:05.960Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    },
+    {
+      "id": 18,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T23:31:07.986Z",
+      "formation": true,
+      "recallContainsPriorPreference": false,
+      "status": 200
+    }
+  ],
+  "snapshots": [
+    {
+      "label": "before",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-deda932b-22d8-4287-8195-3c093d2626d0",
+          "state": "unavailable",
+          "worldRevision": null,
+          "capabilities": {
+            "list": false,
+            "source": false,
+            "inject": false,
+            "correct": false,
+            "mute": false,
+            "deleteEvidence": false,
+            "deleteWorldItem": false
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": "MEMORY_MODEL_UNAVAILABLE",
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": null,
+      "ipc": {
+        "recallAttempts": 0,
+        "recallRequests": 0,
+        "recallWithContext": 0,
+        "recallReplies": 0,
+        "ingestRequests": 0,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-0",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-deda932b-22d8-4287-8195-3c093d2626d0",
+          "state": "ready",
+          "version": "2.0.0",
+          "worldRevision": 0,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": null,
+      "ipc": {
+        "recallAttempts": 2,
+        "recallRequests": 2,
+        "recallWithContext": 0,
+        "recallReplies": 2,
+        "ingestRequests": 0,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-1",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-deda932b-22d8-4287-8195-3c093d2626d0",
+          "state": "ready",
+          "version": "2.0.0",
+          "worldRevision": 0,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": null,
+      "ipc": {
+        "recallAttempts": 4,
+        "recallRequests": 4,
+        "recallWithContext": 0,
+        "recallReplies": 4,
+        "ingestRequests": 0,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-2",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-deda932b-22d8-4287-8195-3c093d2626d0",
+          "state": "ready",
+          "version": "2.0.0",
+          "worldRevision": 0,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": null,
+      "ipc": {
+        "recallAttempts": 6,
+        "recallRequests": 6,
+        "recallWithContext": 0,
+        "recallReplies": 6,
+        "ingestRequests": 0,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "final",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-deda932b-22d8-4287-8195-3c093d2626d0",
+          "state": "ready",
+          "version": "2.0.0",
+          "worldRevision": 6,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "backfill": {
+            "id": "cbebe780-f036-4ace-ac5a-7d26031fb02c",
+            "state": "completed",
+            "totalTurns": 5,
+            "submittedTurns": 5,
+            "skippedTurns": 0,
+            "lastError": null,
+            "createdAt": "2026-10-09T23:31:00.802Z"
+          },
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-deda932b-22d8-4287-8195-3c093d2626d0",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 7,
+        "recallRequests": 7,
+        "recallWithContext": 0,
+        "recallReplies": 7,
+        "ingestRequests": 0,
+        "rejectedBindings": 0
+      }
+    }
+  ],
+  "compressedDays": 3,
+  "scenarioBoundaries": [
+    {
+      "group": 0,
+      "day": 1,
+      "model": "daily-local"
+    },
+    {
+      "group": 1,
+      "day": 1,
+      "model": "daily-second"
+    },
+    {
+      "group": 2,
+      "day": 1,
+      "model": "daily-local"
+    }
+  ],
+  "ordinaryTexts": [
+    "我喝第1种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+    "我写周报时偏好先列本周完成的事情。请简短回复收到，不调用工具。",
+    "我安排上午工作时偏好先做需要专注的任务。请简短回复收到，不调用工具。",
+    "我阅读长文时偏好分成不超过五个小节。请简短回复收到，不调用工具。",
+    "我周末散步时偏好河边路线。请简短回复收到，不调用工具。",
+    "我喝咖啡时偏好不加糖。请简短回复收到，不调用工具。"
+  ],
+  "backfill": {
+    "preview": {
+      "ownerId": "owner-deda932b-22d8-4287-8195-3c093d2626d0",
+      "previewId": "04ea871ceb10c1b127d0ea40eaab3352835dec7353a3d78c6a425d487b1d0d3e",
+      "sessionCount": 3,
+      "turnCount": 6,
+      "estimatedUsage": {
+        "inputTokens": 36344,
+        "outputTokens": 6000,
+        "approximate": true
+      },
+      "job": null
+    },
+    "temporary": "session-d041861c-c484-447b-9077-950aa99816ab",
+    "pauseAndCancel": true,
+    "after": {
+      "status": 200,
+      "body": {
+        "ownerId": "owner-deda932b-22d8-4287-8195-3c093d2626d0",
+        "previewId": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "sessionCount": 0,
+        "turnCount": 0,
+        "estimatedUsage": {
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "approximate": true
+        },
+        "job": {
+          "id": "cbebe780-f036-4ace-ac5a-7d26031fb02c",
+          "state": "completed",
+          "totalTurns": 5,
+          "submittedTurns": 5,
+          "skippedTurns": 0,
+          "lastError": null,
+          "createdAt": "2026-10-09T23:31:00.802Z"
+        }
+      }
+    }
+  },
+  "allTurnsCompleted": true,
+  "failedScenarioChecks": [],
+  "formalItems": [
+    {
+      "id": "cognition-9bd19622d699d8a890f4b72c53e2cdaaa1a866c91b1bf2e7c1b0579d5194b0ef",
+      "kind": "cognition",
+      "text": "用户喝第1种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T23:31:00.854Z",
+      "updatedAt": "2026-10-09T23:31:00.854Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-d2bcc9d2a751a349440074f79bb6b1a03de3b71c50fe38eab3f54d0a11705105",
+      "kind": "cognition",
+      "text": "用户写周报时偏好先列本周完成的事情。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T23:31:01.458Z",
+      "updatedAt": "2026-10-09T23:31:01.458Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-785018f3c7724b123e5deaa736e598b005275254161ab3792edd6cb7b6be6eef",
+      "kind": "cognition",
+      "text": "用户安排上午工作时偏好先做需要专注的任务。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T23:31:02.652Z",
+      "updatedAt": "2026-10-09T23:31:02.652Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-affcbd4f7002dd1954d6e59735182b145dc2e1aac7c6f2354e62a88efbba41f9",
+      "kind": "cognition",
+      "text": "用户阅读长文时偏好分成不超过五个小节。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T23:31:04.014Z",
+      "updatedAt": "2026-10-09T23:31:04.014Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-c4224c3a5f855e19d75c1c969c045d56e4b267b1c3ad9d1e57ff07f22cb47981",
+      "kind": "cognition",
+      "text": "用户周末散步时偏好河边路线。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T23:31:05.979Z",
+      "updatedAt": "2026-10-09T23:31:05.979Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-1708408ca798c8eb040009447c7c8898bc24fd4c820f1a2bbb4e8404982a878a",
+      "kind": "cognition",
+      "text": "用户喝咖啡时偏好不加糖。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T23:31:08.009Z",
+      "updatedAt": "2026-10-09T23:31:08.009Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    }
+  ],
+  "allSources": [
+    {
+      "id": "cognition-9bd19622d699d8a890f4b72c53e2cdaaa1a866c91b1bf2e7c1b0579d5194b0ef",
+      "sources": [
+        {
+          "evidenceId": "e61789e7-7452-43d3-a46f-734025178e54",
+          "relation": "support",
+          "currentnessState": "current",
+          "permissions": {
+            "allowLocalRead": true,
+            "allowCloudRead": true,
+            "allowInference": true
+          },
+          "contentAvailable": true,
+          "summary": "我喝第1种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+          "rawContent": "我喝第1种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+          "rawContentTruncated": false,
+          "recordedAt": "2026-10-09T23:30:55.570Z"
+        }
+      ]
+    },
+    {
+      "id": "cognition-d2bcc9d2a751a349440074f79bb6b1a03de3b71c50fe38eab3f54d0a11705105",
+      "sources": [
+        {
+          "evidenceId": "413af37b-6dcc-4bb8-aa88-a2d84bfb6f59",
+          "relation": "support",
+          "currentnessState": "current",
+          "permissions": {
+            "allowLocalRead": true,
+            "allowCloudRead": true,
+            "allowInference": true
+          },
+          "contentAvailable": true,
+          "summary": "我写周报时偏好先列本周完成的事情。请简短回复收到，不调用工具。",
+          "rawContent": "我写周报时偏好先列本周完成的事情。请简短回复收到，不调用工具。",
+          "rawContentTruncated": false,
+          "recordedAt": "2026-10-09T23:31:01.365Z"
+        }
+      ]
+    },
+    {
+      "id": "cognition-785018f3c7724b123e5deaa736e598b005275254161ab3792edd6cb7b6be6eef",
+      "sources": [
+        {
+          "evidenceId": "a2bef00f-3f93-4f24-8012-67a560dfff17",
+          "relation": "support",
+          "currentnessState": "current",
+          "permissions": {
+            "allowLocalRead": true,
+            "allowCloudRead": true,
+            "allowInference": true
+          },
+          "contentAvailable": true,
+          "summary": "我安排上午工作时偏好先做需要专注的任务。请简短回复收到，不调用工具。",
+          "rawContent": "我安排上午工作时偏好先做需要专注的任务。请简短回复收到，不调用工具。",
+          "rawContentTruncated": false,
+          "recordedAt": "2026-10-09T23:31:02.550Z"
+        }
+      ]
+    },
+    {
+      "id": "cognition-affcbd4f7002dd1954d6e59735182b145dc2e1aac7c6f2354e62a88efbba41f9",
+      "sources": [
+        {
+          "evidenceId": "660ad074-c415-433f-93e1-b37e381847fe",
+          "relation": "support",
+          "currentnessState": "current",
+          "permissions": {
+            "allowLocalRead": true,
+            "allowCloudRead": true,
+            "allowInference": true
+          },
+          "contentAvailable": true,
+          "summary": "我阅读长文时偏好分成不超过五个小节。请简短回复收到，不调用工具。",
+          "rawContent": "我阅读长文时偏好分成不超过五个小节。请简短回复收到，不调用工具。",
+          "rawContentTruncated": false,
+          "recordedAt": "2026-10-09T23:31:03.920Z"
+        }
+      ]
+    },
+    {
+      "id": "cognition-c4224c3a5f855e19d75c1c969c045d56e4b267b1c3ad9d1e57ff07f22cb47981",
+      "sources": [
+        {
+          "evidenceId": "9e43cf73-7439-4bf7-8236-2631363c0154",
+          "relation": "support",
+          "currentnessState": "current",
+          "permissions": {
+            "allowLocalRead": true,
+            "allowCloudRead": true,
+            "allowInference": true
+          },
+          "contentAvailable": true,
+          "summary": "我周末散步时偏好河边路线。请简短回复收到，不调用工具。",
+          "rawContent": "我周末散步时偏好河边路线。请简短回复收到，不调用工具。",
+          "rawContentTruncated": false,
+          "recordedAt": "2026-10-09T23:31:05.888Z"
+        }
+      ]
+    },
+    {
+      "id": "cognition-1708408ca798c8eb040009447c7c8898bc24fd4c820f1a2bbb4e8404982a878a",
+      "sources": [
+        {
+          "evidenceId": "b4b0a1de-da97-4596-874c-ed34051e8366",
+          "relation": "support",
+          "currentnessState": "current",
+          "permissions": {
+            "allowLocalRead": true,
+            "allowCloudRead": true,
+            "allowInference": true
+          },
+          "contentAvailable": true,
+          "summary": "我喝咖啡时偏好不加糖。请简短回复收到，不调用工具。",
+          "rawContent": "我喝咖啡时偏好不加糖。请简短回复收到，不调用工具。",
+          "rawContentTruncated": false,
+          "recordedAt": "2026-10-09T23:31:07.916Z"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "evidenceId": "e61789e7-7452-43d3-a46f-734025178e54",
+      "relation": "support",
+      "currentnessState": "current",
+      "permissions": {
+        "allowLocalRead": true,
+        "allowCloudRead": true,
+        "allowInference": true
+      },
+      "contentAvailable": true,
+      "summary": "我喝第1种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "rawContent": "我喝第1种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "rawContentTruncated": false,
+      "recordedAt": "2026-10-09T23:30:55.570Z"
+    }
+  ],
+  "delivery": {
+    "expectedOrdinary": 6,
+    "delivered": 6,
+    "missing": 0,
+    "temporaryEvidence": 0,
+    "temporaryContext": 0,
+    "temporaryFormal": 0
+  },
+  "storage": {
+    "evidence": 6,
+    "interaction_context": 6,
+    "memory_world_job": 6,
+    "cognition": 6
+  },
+  "temporaryEvidenceCount": 0
+}
