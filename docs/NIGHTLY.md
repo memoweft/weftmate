@@ -53,3 +53,8 @@ pwsh -NoProfile -File scripts/nightly/unregister-task.ps1
 ```
 
 任务名「WeftMate Nightly Regression」，当前用户、每天03:00、仅交流电、不提权、交互登录运行。Mac 没有单独定时任务。用户未登录或图形桌面不可用时，计划任务不会获得可实拍的交互环境；检查任务历史与最新报告时间。`unregister-task.ps1` 只删除此任务，不删除报告或回归工作树。
+
+## 顺手清理测试临时目录
+
+每晚收尾时运行 `scripts/nightly/prune-temp.ps1 -Hours 48 -Apply`（本人 2026-10-10 同意）：删除系统临时目录、`C:\Temp` 与 `C:\` 根下名字为 `weftmate-*`、创建和最后修改都早于 48 小时、没有被任何运行中进程的命令行引用、也不是已登记 git 工作树的目录。目录连接点只删除链接本身，不进入其目标。结果写入报告状态的 `cleanup.staleTemp`（找到 / 删除 / 保留各多少）。不带 `-Apply` 只预览；想停用就从 `run.mjs` 去掉这一步或把任务停掉。
+

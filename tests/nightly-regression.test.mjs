@@ -123,3 +123,37 @@ test('synthetic artifact write is observed before exposing its task approval', a
     }
   } finally { await fixture.close(); await rm(fixture.root, { recursive: true, force: true }); }
 });
+
+test('temp pruning removes only stale unused weftmate-* directories and never follows a junction', { skip: process.platform !== 'win32' }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'nightly-prune-root-'));
+  const outside = await mkdtemp(join(tmpdir(), 'nightly-prune-outside-'));
+  const script = join(process.cwd(), 'scripts/nightly/prune-temp.ps1');
+  const ps = (command, options = {}) => execFileSync('pwsh', ['-NoProfile', '-Command', command], { encoding: 'utf8', ...options });
+  let holder;
+  try {
+    await writeFile(join(outside, 'keep.txt'), 'outside data');
+    for (const name of ['weftmate-old', 'weftmate-recent', 'weftmate-in-use', 'other-old']) {
+      await mkdir(join(root, name, 'nested'), { recursive: true }); await writeFile(join(root, name, 'nested', 'file.txt'), name);
+    }
+    // A junction inside a stale directory must be unlinked, not traversed.
+    ps(`New-Item -ItemType Junction -Path '${join(root, 'weftmate-old', 'link')}' -Target '${outside}' | Out-Null`);
+    const old = "(Get-Date).AddDays(-3)";
+    for (const name of ['weftmate-old', 'weftmate-in-use', 'other-old'])
+      ps(`$d = Get-Item -LiteralPath '${join(root, name)}'; $d.CreationTime = ${old}; $d.LastWriteTime = ${old}`);
+    const { spawn } = await import('node:child_process');
+    holder = spawn('pwsh', ['-NoProfile', '-Command', `Start-Sleep 60 # ${join(root, 'weftmate-in-use')}`], { stdio: 'ignore' });
+    await new Promise(done => setTimeout(done, 1500));
+    const run = extra => JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', script, '-Hours', '48', '-Roots', root, ...extra], { encoding: 'utf8' }).trim().split(/\r?\n/).pop());
+    const preview = run([]);
+    assert.deepEqual([preview.applied, preview.found, preview.selected, preview.deleted, preview.keptRecent, preview.keptInUse], [false, 3, 1, 0, 1, 1]);
+    await access(join(root, 'weftmate-old'));
+    const applied = run(['-Apply']);
+    assert.deepEqual([applied.applied, applied.selected, applied.deleted, applied.failed], [true, 1, 1, 0]);
+    await assert.rejects(access(join(root, 'weftmate-old')));
+    for (const kept of ['weftmate-recent', 'weftmate-in-use', 'other-old']) await access(join(root, kept, 'nested', 'file.txt'));
+    assert.equal(await readFile(join(outside, 'keep.txt'), 'utf8'), 'outside data');
+  } finally {
+    holder?.kill();
+    await rm(root, { recursive: true, force: true }); await rm(outside, { recursive: true, force: true });
+  }
+});
