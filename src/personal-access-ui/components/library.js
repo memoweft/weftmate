@@ -15,7 +15,7 @@ globalThis.WeftUiComponents.factories.library=(core,ui)=>{
         entry=ui.element('button','rail-link library-entry');entry.type='button';entry.dataset.fixedPage='library';entry.append(WeftIcons.create('folder',16),ui.element('span','','成果库'));entry.onclick=()=>{document.dispatchEvent(new CustomEvent('weftmate:fixed-page',{detail:'library'}));void open();};nav.append(entry);
         panel=ui.element('section','library-surface');panel.hidden=true;panel.setAttribute('aria-label','成果库');ui.byId('conversation-pane').after(panel);
         view=WeftLibraryView.mount({target:panel,core,desktop:!!globalThis.weftmateDesktop,openPreview:(item,trigger)=>WeftDesktop.openPreview(item.fileName,trigger,`library:${item.id}`).content,copyPath:text=>navigator.clipboard.writeText(text),notice:ui.toast});
-    },openLibrary:open,renderLibrary(){if(opened)view?.render();},clearLibraryPreview(){WeftDesktop?.closePreview();},
+    },openLibrary:open,openLibraryItem:(item)=>view.preview(item,document.activeElement),renderLibrary(){if(opened)view?.render();},clearLibraryPreview(){WeftDesktop?.closePreview();},
     async openLibrarySource(source){close();WeftDesktop.closePreview();await ui.openActivitySource(source,'open_chat');
         await Promise.all([core.refreshConversationTasks(),core.refreshConversationApprovals(),core.refreshConversationQuestions()]);
         sourceAnchor=source;focusSource();},

@@ -99,7 +99,7 @@
 | DELETE `/auth/devices/{deviceId}` | 无；客户端可发 `{}`；撤销当前设备会清 Cookie | 200 `{"revoked":true}` | 404 `NOT_FOUND` | 桌、手、安 |
 | GET `/status` | 无 | 200 `{"ownerId":"owner-…","hostId":"host-…","sync":{"available":true},"downloads":{"android":true},"backend":{"runtime":"ready","referenceScan":"ready","capabilities":{"chat":{"available":true}},"modules":{"memory":"connected"}}}` | 后端错误 | 桌、手、安、苹 |
 
-`backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。FX-16 增加可选 `executionAccountName:string|null`：非执行账号只收到执行账号昵称；昵称为邮箱时返回「原账号」，不返回登录邮箱、身份或凭据。
+`backend.capabilities` 还含 `desktopOpenApp,naturalLanguageDesktop`；`modules` 含 `memory,mods,tasks,notifications,workspaces,capabilities`。这些是能力/状态字段，不代表存在同名 HTTP 路由。UX-9 增加可选 `hostName:string`，用于已授权客户端显示执行电脑名称；旧宿主缺失时显示「电脑」。FX-9 增加可选 `executionAccount:boolean`，表示当前账号是否为这台电脑的执行账号；`false` 时仅可聊天，界面须说明不能操作电脑或读取原账号资料。旧宿主缺字段时按既有能力投影处理。FX-16 增加可选 `executionAccountName:string|null`：非执行账号只收到执行账号昵称；昵称为邮箱时返回「原账号」，不返回登录邮箱、身份或凭据。
 
 #### M3-1 连接状态与接回
 
@@ -352,7 +352,7 @@ MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 
 | GET `/workspaces/browser` | 无 | 200 `{"available":true,"hostId":"host-…","workspaceKind":"browser"}`；可有 `reasonCode` | — | 桌、手、安 |
 | POST `/workspaces/browser/sessions` | `requestId,modelProfileId`；宿主所有者 | 202 `{"command":Command}` | 503 `BROWSER_UNAVAILABLE / BROWSER_CLEANUP_FAILED`；422 `MODEL_UNAVAILABLE` | 桌、手、安 |
 
-D37 项目实体公开字段为 `projectId,name,instructions,permission,revision,revoked,createdAt,revokedAt?`。`rootPath`、目录身份与内部密钥仅保存在电脑；项目、会话与手机列表均不回传目录路径。新界面创建显式传 `permission:"write"`；旧 POST 省略权限保持只读。
+D37 项目实体公开字段为 `projectId,name,instructions,permission,revision,revoked,createdAt,revokedAt?`。`rootPath`、目录身份与内部密钥仅保存在电脑；项目、会话与手机列表不回传完整目录路径。UX-9 项目公开对象增加 `pathHint:string`（路径末两级，以 ` / ` 分隔），用于选择电脑文件夹；它不是可访问路径。Windows 原生选择桥在本机可信上下文中可取得完整路径、匹配已有项目、显示文件夹及创建项目；原生创建仍调用现有 POST，并只接受系统选择框或真实拖放得到且绑定当前账号的路径。网页发送任意 `rootPath` 返回 403 `PROJECT_NATIVE_SELECTION_REQUIRED`。既有受信任 API / Mac 宿主调用保持兼容。输入区确认卡显式默认 `permission:"read-only"`；原项目编辑界面仍可显式选择权限，旧 POST 省略权限保持只读。
 
 | 路由 | 请求 | 响应 / 行为 | 错误 | 客户端 |
 |---|---|---|---|---|
@@ -1069,6 +1069,10 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 新版产生数据后不能用旧副本覆盖正在使用的数据目录。需要宿主降级时先停写、保留新版完整快照，再把旧完整快照恢复至独立目录；只运行一份任务。单独的接入存储副本不能代替 DSH、记忆及成果完整备份。已经发生的遗忘 / 撤权必须按原清理水位前向恢复，不从备份自动重新摄取。本步不提供主对话区间归档或清空；D42-A 的全部历史保留政策不变。
 
 ### 9.3 跨段历史、日期与搜索（IA-2.2 正式）
+
+UX-6 / D53：既有 `GET /chats` 支持 `scope=search`，用于当前账户统一搜索面板的对话类型。此模式仅接受 `scope,q?,limit?,cursor?`（`q` 去首尾空格、最多120字符；`limit` 默认50、1–200）。省略或空 `q` 返回最近对话；有输入时合并主对话与旁聊标题命中、正文命中，返回 `{items,total,hasMore,nextCursor,indexState}`。每项保留原 Chat（逻辑对话）字段，增加 `match:title|content`；正文项另含 `eventId,sourceRef,at,snippet,highlights`，使用9.3原索引和来源身份，打开仍走原对话定位。排序为标题命中优先、置顶、活动时间倒序、稳定标识；单个消息为单项，标题项和正文项可共存。`total` 是此搜索快照的命中项数；`indexState=building` 表示较早内容仍按9.3补索引，客户端显示更新结果入口，不把局部结果称为完整历史。
+
+此模式排除临时及混合临时来源（MEM-2），不从已删除对话重建索引；D33删除的原话、记忆与派生内容不返回。按D33明确保留的原聊天文字仍遵守原历史边界。游标只在内存保存，绑定账户、关键词、页长及对话／删除代次；内容删除、遗忘、隐私模式或元数据修订使旧页409 `CURSOR_RESET_REQUIRED`，读取期间清理同样拒绝旧结果。不会把正文写入另一套索引或客户端持久存储。其余类型复用 `/projects`、`/library?search`、`/schedules`、`/memory/items?kind=all&query`；手机与安卓仍走已有业务路径白名单，无新增路由、权限或壳能力。
 
 能力增加 `chatTimeline:1,chatSearch:1`。路径均以 `/personal/v1` 为前缀，读取沿用 `sessions:read`，只读当前账户自己的逻辑对话。主对话尚无段时正常返回空页；不创建执行段，不执行模型。ui-core（共用功能层）的 `readChatEvents/readChatChanges/readChatDates/locateChatDate/searchChat` 提供同一路径。
 

@@ -105,7 +105,7 @@
     const attachments=currentAttachments().length;state.sharedRunning=running;
     const hasDraft=!!text.trim()||attachments>0;
     try{const key=sharedDraftKey(uiCore.state.selectedChatId);if(text)localStorage.setItem(key,text);else localStorage.removeItem(key);}catch{}
-    return {host:true,processingHint:uiCore.executionAccountHint(),ready:available&&modelReady&&hasDraft&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
+    return {host:true,processingHint:uiCore.executionAccountHint(),ready:available&&modelReady&&hasDraft&&!uiCore.folderMutationPending?.()&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
       draftDisabled:!available,placeholder:running?WeftUiCore.runningPlaceholder(uiCore.composerInputMode(state.sharedSessionId)):'和 WeftMate 聊聊…',
       modelName:uiCore.state.mainChat.modelDisplayName||uiCore.state.models.find(row=>row.id===uiCore.state.modelProfileId)?.name||'选择模型',
       modelLabel:'当前模型',modelDisabled:!!state.sharedSessionId,attachmentsDisabled:!available||!!state.attachmentPick||uiCore.state.submitting,
@@ -122,7 +122,7 @@
     if(state.page==='chat'&&!main())$('menu-button').hidden=true;syncMobileTabs();};
   refreshAttachmentDrafts=async function(...args){if(state.logicalChats&&!window.weftNative){renderAttachmentDrafts();updateComposer();return true;}return oldDrafts(...args);};
   removeAttachment=async function(id){if(state.logicalChats&&!window.weftNative)return uiCore.removeAttachmentDraft(id);return oldRemove(id);};
-  selectConversation=function(id){if(state.logicalChats&&id===null)return uiCore.openSideChat({entry:'composer'}).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
+  selectConversation=function(id){if(state.logicalChats&&id===null)return Promise.resolve(uiCore.startChatConversation()).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
   pickAttachment=async function(kind){if(!state.logicalChats||window.weftNative)return oldPick(kind);
     closeAttachmentMenu();const input=el('input');input.type='file';input.multiple=true;input.accept=kind==='file'?'': 'image/*';if(kind==='camera')input.setAttribute('capture','environment');
     input.addEventListener('change',async()=>{await uiCore.addAttachmentFiles([...input.files]);input.remove();renderAttachmentDrafts();updateComposer();});input.addEventListener('cancel',()=>input.remove());input.hidden=true;document.body.append(input);input.click();};
@@ -134,8 +134,7 @@
   mountMobileTabs();
   $('open-side-chat').hidden=true;
   const sideHeading=$('drawer').querySelector('.rail-side-heading');if(sideHeading)sideHeading.hidden=true;
-  let searchTimer;
-  $('conversation-search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{if(state.logicalChats)void uiCore.searchSessions($('conversation-search').value).catch(error=>toast(uiCore.failureMessage(error)));},200);});
+
   const oldRenderMain=mobileEffects.renderMainChat;
   mobileEffects.renderMainChat=()=>{oldRenderMain();$('open-side-chat').hidden=!state.logicalChats;if(sideHeading)sideHeading.hidden=!state.logicalChats;syncMobileTabs();};
   // Touch selection exposes a single row's existing actions. Scrolling cancels a long press.

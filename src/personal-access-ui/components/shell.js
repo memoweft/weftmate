@@ -287,7 +287,6 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('account-menu-name').textContent = '';
         ui.byId('account-menu-email').textContent = '';
         ui.byId('account-menu-usage').textContent = '';
-        ui.byId('session-search').value = '';
         ui.byId('device-list').replaceChildren();
         if (ui.byId('password-dialog').open)
             ui.byId('password-dialog').close();
@@ -375,7 +374,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('rail-account').addEventListener('click', core.openAccount);
         ui.byId('show-account').addEventListener('click', core.openAccount);
         ui.byId('rail-open').addEventListener('click', () => {
-            if (window.WeftDesktop && !window.matchMedia?.('(max-width: 640px)').matches) {
+            if (window.WeftDesktop) {
                 window.WeftDesktop.toggleRail();
                 return;
             }
@@ -388,10 +387,10 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             if (!ui.conversationScroll?.pinned && ui.byId('chat-scroll').scrollTop < 40)
                 void core.loadOlderHistory();
         });
-        ui.byId('rail-close').addEventListener('click', () => { ui.closeRail(); window.WeftDesktop?.toggleRail(true); });
+
         ui.byId('rail-backdrop').addEventListener('click', ui.closeRail);
         window.WeftDesktop?.init({ renderSessions: ui.renderSessions, openAccount: core.openAccount, sendDraft: core.sendDraft, addFiles: core.addAttachmentFiles,
-            stop: core.stopCurrentTurn, isAssistant: () => core.state.currentView === 'assistant', resources: core.loadConversationResources, openResource: ui.openConversationResource });
+            stop: core.stopCurrentTurn, isAssistant: () => core.state.currentView === 'assistant', openSearch: () => ui.openSearch?.(), resources: core.loadConversationResources, openResource: ui.openConversationResource });
         if (window.WeftDesktop)
             setInterval(() => {
                 if (core.state.currentView === 'assistant' && core.state.turnStatus === 'running')

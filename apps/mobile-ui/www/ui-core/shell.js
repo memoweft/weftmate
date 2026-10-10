@@ -156,6 +156,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
                 core.operation('正在核对上次请求。');
         }
         core.state.hostId = payload.hostId;
+        core.state.hostName = payload.hostName;
         core.state.personalCapabilities = payload.personalCapabilities ?? {};
         core.state.capabilities = payload.backend?.capabilities ?? null;
         core.state.executionAccount = payload.executionAccount;
