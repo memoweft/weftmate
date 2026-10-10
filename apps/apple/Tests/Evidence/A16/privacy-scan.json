@@ -1,0 +1,16 @@
+{
+  "syntheticOnly": true,
+  "source": "Native accessibility names/values captured with original PNGs",
+  "frames": 91,
+  "scans": [
+    {
+      "marker": "A16_SYNTHETIC_PRIVATE_BODY_NEVER_DISPLAY",
+      "hits": 0
+    },
+    {
+      "marker": "A16_SYNTHETIC_SECRET_NEVER_DISPLAY",
+      "hits": 0
+    }
+  ],
+  "watchBodyHits": 0
+}

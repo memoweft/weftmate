@@ -1,0 +1,22 @@
+{
+  "source": "Actual native app and paired simulators, synthetic only",
+  "applicationControlsUseTokens": true,
+  "noPersistentProcessedUserEditEntry": true,
+  "userActionsOutsideBubbleOnMac": true,
+  "sideChatInMenus": true,
+  "temporaryTogglesAndRadioStateVerified": true,
+  "macMinimumWindowWidthPoints": 780,
+  "iphoneModel": "iPhone 16e",
+  "applicationMenuAndPopoverScreenshots": true,
+  "systemSavePanelMacContentScreenshot": false,
+  "iphoneSystemSavePanelOpened": true,
+  "iphoneSystemCancelVerified": false,
+  "realExportFileWriteVerified": false,
+  "systemPermissionsChanged": false,
+  "notes": [
+    "Mac system save-service content is outside the own-window AX/capture boundary; its blank outer-window capture is retained as a failed attempt, not visual proof.",
+    "iPhone system save panel is captured then the same isolated app is restarted; all subsequent business assertions and 24 scroll gestures remain. Restart is not presented as a verified Cancel action.",
+    "Later main-plan D49 details (keyboard focus, account-zone today formatting, phone tap timestamp and user-message quote) are not claimed by this assigned-scope validation."
+  ],
+  "laterD49DetailsVerified": false
+}

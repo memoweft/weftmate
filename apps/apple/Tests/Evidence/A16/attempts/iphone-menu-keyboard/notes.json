@@ -1,0 +1,5 @@
+{
+  "passed": false,
+  "failure": "Menu remained visible after selecting the temporary action with the composer keyboard present. Added a unique action identifier, fixed native menu ordering and ended composer focus after send.",
+  "syntheticOnly": true
+}
