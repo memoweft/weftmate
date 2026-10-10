@@ -1245,7 +1245,7 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 
 PUT（登记 / 轮换）严格载荷为 `{platform:"android"|"ios"|"macos"|"watchos"|"windows",provider:string,token:string|null}`。`provider` 是小写登记名，`none` 时 `token` 必须为 null，其他提供方必须有非空令牌。响应 `{deviceId,registered,platform,provider,tokenPresent,configured,accepted,reason}` 不回显令牌；DELETE（撤销）移除登记。当前统一使用 `NoopPushProvider`，明确返回 `configured:false,accepted:false,reason:"PUSH_NOT_CONFIGURED"`，登记成功不等于推送可用。撤销设备删除宿主登记；云 schema（存储结构）8 的 `push_registrations` 对账户 / 设备外键级联删除，注销账号沿原事务删除，不保留令牌。
 
-共享 `src/push/provider.mjs` 的 `PushProvider` 定义 `id`、`register(registration)`、`revoke(registration)`、`send(registration,payload)`。宿主可信接缝 `service.pushActivity(ownerId,eventId)` 只为仍需通知且未读的真实动态选择有效设备；云端 `cloudPush.send(accountId,payload)` 是内部接缝，没有匿名派发接口。以后接 FCM（Firebase 云消息）或厂商推送，需实现这四项、提供方配置 / 凭据、令牌失效反馈与轮换、认证宿主到云的派发接线；现实现不访问外部推送网络，也未引入 Google Play 服务依赖。
+宿主 `src/push/provider.mjs` 与独立云发布包 `services/cloud/src/push-provider.mjs` 的同契约 `PushProvider` 定义 `id`、`register(registration)`、`revoke(registration)`、`send(registration,payload)`。宿主可信接缝 `service.pushActivity(ownerId,eventId)` 只为仍需通知且未读的真实动态选择有效设备；云端 `cloudPush.send(accountId,payload)` 是内部接缝，没有匿名派发接口。以后接 FCM（Firebase 云消息）或厂商推送，需实现这四项、提供方配置 / 凭据、令牌失效反馈与轮换、认证宿主到云的派发接线；现实现不访问外部推送网络，也未引入 Google Play 服务依赖。
 
 提供方 `send` 的载荷只允许 `{eventId,type}`，不带标题、正文、摘要、会话片段、通知声音决定或审批参数。设备被唤醒后经已认证 / 固定证书的原同步通道读取 9.8 的当前动态和 9.8.1 的宿主决定；这是不让云与提供方看到内容的边界。网络回执 `accepted` 仅代表提供方受理，不能冒充设备显示或用户已读。
 

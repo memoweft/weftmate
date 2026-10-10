@@ -1,4 +1,4 @@
-import { noPush, pushRegistration, pushPayload } from '../../../src/push/provider.mjs';
+import { noPush, pushRegistration, pushPayload } from './push-provider.mjs';
 import { CloudError } from './security.mjs';
 export function cloudPush(database, now = Date.now) {
   return {
