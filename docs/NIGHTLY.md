@@ -1,0 +1,53 @@
+# 五端夜间回归（R0-3）
+
+Windows 主控每轮刷新专用 Git worktree（独立工作树）到 `origin/main`，构建后依次拍摄真实 Electron（桌面程序框架）、390×844 手机网页、Mac 原生窗口、iPhone、配对 Apple Watch 和 MuMu（安卓模拟器）。全部使用合成账号、合成模型目录与执行夹具、随机端口和临时数据；不连接真实模型，不访问日用宿主。审稿场景与浅深主题沿用 `scripts/review-gallery/scenes.json`，不使用仓库历史截图补位。
+
+## 手动运行
+
+在交互登录的 Windows 桌面，用 PowerShell（命令行工具）7：
+
+```powershell
+pwsh -NoProfile -File scripts/nightly/run-nightly.ps1
+# 可配置整晚时限（默认90分钟）、像素差异阈值（默认8%）
+pwsh -NoProfile -File scripts/nightly/run-nightly.ps1 -MaxMinutes 90 -DiffThreshold 0.08
+# 合并前验证本包：两台电脑都构建同一当前提交
+pwsh -NoProfile -File scripts/nightly/run-nightly.ps1 -Candidate
+```
+
+Windows 专用目录为 `D:\AIProjects\WeftMate\Worktrees\nightly`，Mac 为 `~/Desktop/WeftMate/weftmate-nightly`。不使用 `Repository` 或 `weftmate-h3`，不重置有未提交修改的回归工作树。候选模式通过临时 Git bundle（代码传输包）传输已提交代码；默认模式只获取主干。依赖安装与类型检查在专用目录内执行。Android 原生壳使用 `-PweftmateApplicationId=com.memoweft.weftmate.mobile.nightly`，不改版本号。
+
+依赖：Node 24、Git、PowerShell 7、Windows OpenSSH（安全远程连接工具）、配置好的 `ssh mac`、Mac Xcode（Apple 开发工具）及现有 iOS/watchOS 运行时、MuMu Android 15。Android 使用 `docs/SETUP.md` 已有 JDK（Java 开发工具）／Gradle（安卓构建工具）／SDK（开发工具包）激活脚本；不重建工具链。首次运行会安装本工作树的 npm（Node 依赖管理工具）依赖与 Chromium（浏览器引擎）。Mac 需要已有登录图形会话；不能在未登录桌面时声称实拍成功。
+
+`-SkipApple`／`-SkipAndroid` 可用于只验证 Windows／网页；跳过也会产生缺图报警，不作为五端通过。运行日志保存在本轮 `logs/`。
+
+## 报告与报警
+
+报告根目录为 `D:\AIProjects\WeftMate\Runtime\Nightly\<本地日期>\`，不进入仓库。当天 `nightly-report.md` 指向最新审稿页；`latest.json` 指向最新批次。每次运行保存在独立批次目录，含 `gallery/index.html`、`gallery/manifest.json`、`nightly-report.md`、`nightly-status.json`、设备清理与通知回执。审稿页格式与 CI（持续集成）一致，每格标明拍摄时间、代码提交和来源。只保留今天及之前13天的日期目录，非日期目录不清理。
+
+任一适用格缺图、拍摄时间超过24小时／明显在未来、提交不一致、场景或构建失败、设备被占用、像素比较失败，均报警。Windows 桌面发一条汇总通知；退出码 `0` 表示本轮无报警，`1` 表示报警／失败，`2` 表示另一个夜间批次持有锁。通知的 `supported` 只证明系统接口可用，不证明本人已经看到通知。
+
+像素比较使用上一次本地批次的同端／同场景／同主题原图。PNG（图片格式）解码后，任一 RGBA（红绿蓝与透明度）通道变化超过24的像素计为变化；变化比例大于阈值报警，尺寸变化为100%。报告按比例列出最大十格。首次运行没有基线，会明确说明；不会把没有基线称为没有差异。视觉变化报警用于审稿，不能自动判定产品错误。清单明确的「此端尚无」不算缺图，不伪造该端画面。
+
+## 互斥、停止与清理
+
+夜间批次原子获取报告根目录的 `nightly.lock`，同机重入立即退出。设备运行前检查 Orchestrator（工作包编排目录）的 `lan.lock`、原子 `mumu.lock`，Mac 检查 `~/.weftmate-orchestrator/a16.done`、已启动模拟器与原子目录锁 `nightly.lock`。锁或已有模拟器存在时写「被占用，未拍」，保留他人的资源，不等待、不抢占、不删除开发锁。检查 MuMu 已装的 WeftMate 测试应用；已启动的 MuMu 一律视为他人资源。
+
+Mac 使用 A10／A15 App 自有 AX（辅助功能控件树）运行器，不依赖失败的 Mac XCUITest（Apple 原生界面测试）自动化初始化；iPhone 和 Watch 使用 XCUITest。编译 `-jobs 2`，关闭并行测试。iPhone 独立阶段只启动一台；Watch 阶段仅启动本次创建的配对手机和手表，这是 WatchConnectivity（手机手表通信）的必要伴随设备。用完关闭并删除本次创建的设备；只有所有启动设备均属于本轮时才允许 `shutdown all`。
+
+手动运行按 `Ctrl+C` 停止。控制端默认90分钟总时限，Mac 同时设置本机截止时间，SSH（安全远程连接）中断也会执行清理。所有结束路径汇总报告；Windows 进程兜底清理同时核对创建时间、可执行文件与命令行中的本包目录，并重读进程身份避免进程编号复用。MuMu 只在本轮从关闭状态启动后才关闭；仅卸载本轮装入的独立包，撤销本轮端口映射，不停止后台服务。
+
+异常断电后先查看 `nightly.lock` 的运行身份及报告，确认原进程已结束再手动删除该夜间锁。脚本不自动抢遗留锁。不要删除 `lan.lock` 或其他开发包的锁。
+
+## 定时注册与停用
+
+本包只提供脚本，**不执行注册**。Claude 征得本人同意后，在将保留的主干脚本目录执行：
+
+```powershell
+pwsh -NoProfile -File scripts/nightly/register-task.ps1
+# 只查看计划操作，不注册
+pwsh -NoProfile -File scripts/nightly/register-task.ps1 -WhatIf
+# 停用持久定时配置
+pwsh -NoProfile -File scripts/nightly/unregister-task.ps1
+```
+
+任务名「WeftMate Nightly Regression」，当前用户、每天03:00、仅交流电、不提权、交互登录运行。Mac 没有单独定时任务。用户未登录或图形桌面不可用时，计划任务不会获得可实拍的交互环境；检查任务历史与最新报告时间。`unregister-task.ps1` 只删除此任务，不删除报告或回归工作树。
