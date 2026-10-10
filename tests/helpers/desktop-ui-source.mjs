@@ -12,10 +12,9 @@ export function desktopScript(path) {
 }
 // This feature harness has no layout engine. The real Electron UI-4 suite owns modal/navigation behavior;
 // model configuration still invokes the same core action here, preserving every feature assertion.
-// TB-3's page/navigation is exercised by tb-3-library.mjs in real Electron.
-// TB-1's page/navigation is exercised by tb-1-activity.mjs in real Electron.
+// TB-1 / TB-2 navigation is exercised by tb-1-activity.mjs / tb-2-goals.mjs in real Electron.
 export function desktopFeatureSource() {
-  return 'globalThis.WeftUiLayout = { mountUsage() {}, mountBackup() {}, mountSchedules() {} };\n' + desktopScriptPaths().filter(path => path.startsWith('ui-core/') || path.startsWith('components/') && !['components/markup.js', 'components/settings-navigation.js', 'components/main-chat.js', 'components/activity.js', 'components/activity-view.js', 'components/library.js', 'components/library-view.js'].includes(path) || path === 'conversation-scroll.js' || path === 'cloud-ui.js' || path === 'app.js').map(path => desktopScript(path).replace(', "mountSettingsNavigation"', '').replace(', "mountMainChat"', '').replace(', "mountActivity"', '').replace(', "mountLibrary"', '').replace('ui.openSettings("models")', 'core.openAccount()')).join('\n;\n');
+  return 'globalThis.WeftUiLayout = { mountUsage() {}, mountBackup() {}, mountSchedules() {} };\n' + desktopScriptPaths().filter(path => path.startsWith('ui-core/') || path.startsWith('components/') && !['components/markup.js', 'components/settings-navigation.js', 'components/main-chat.js', 'components/activity.js', 'components/activity-view.js', 'components/goals.js', 'components/goals-view.js', 'components/library.js', 'components/library-view.js'].includes(path) || path === 'conversation-scroll.js' || path === 'cloud-ui.js' || path === 'app.js').map(path => desktopScript(path).replace(', "mountSettingsNavigation"', '').replace(', "mountMainChat"', '').replace(', "mountActivity"', '').replace(', "mountGoals"', '').replace(', "mountLibrary"', '').replace('ui.openSettings("models")', 'core.openAccount()')).join('\n;\n');
 }
 export function desktopHtml() {
   const context = { document: { body: { innerHTML: '' } } };
