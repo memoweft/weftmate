@@ -1,5 +1,7 @@
 name: FX-22 Windows temp diagnosis
-on: workflow_dispatch
+on:
+  pull_request:
+    paths: ['.github/workflows/fx22-diagnostics.yml']
 jobs:
   paths:
     runs-on: windows-latest
