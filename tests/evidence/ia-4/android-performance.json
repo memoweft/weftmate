@@ -1,0 +1,20 @@
+{
+  "durationMs": 60007.60000000009,
+  "frames": 9765,
+  "p95Ms": 5.556000000011409,
+  "maxMs": 183.33299999999872,
+  "maxRows": 41,
+  "longTasks": [
+    84,
+    64
+  ],
+  "cacheEvents": 1000,
+  "viewport": {
+    "width": 565,
+    "height": 980,
+    "dpr": 1.274999976158142
+  },
+  "streamedUpdates": 75,
+  "appPssKiB": 119837,
+  "heapBytes": 8179088
+}

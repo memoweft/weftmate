@@ -1,0 +1,68 @@
+{
+  "realAndroid": true,
+  "synthetic": true,
+  "packageName": "com.memoweft.weftmate.mobile.ia4qa",
+  "checks": [
+    "real-native-status-main",
+    "native-calendar",
+    "search-navigation",
+    "fold-expand",
+    "side-create-source-return",
+    "themes",
+    "native-chat-message",
+    "immediate-optimistic",
+    "progress-approval-original-identity",
+    "question-original-identity",
+    "native-stop",
+    "native-long-press-side-menu",
+    "native-soft-keyboard-visible-composer",
+    "font130"
+  ],
+  "performance": {
+    "durationMs": 60007.60000000009,
+    "frames": 9765,
+    "p95Ms": 5.556000000011409,
+    "maxMs": 183.33299999999872,
+    "maxRows": 41,
+    "longTasks": [
+      84,
+      64
+    ],
+    "cacheEvents": 1000,
+    "viewport": {
+      "width": 565,
+      "height": 980,
+      "dpr": 1.274999976158142
+    },
+    "streamedUpdates": 75,
+    "appPssKiB": 119837,
+    "heapBytes": 8179088
+  },
+  "keyboard": {
+    "shown": true,
+    "geometry": {
+      "height": 726,
+      "visual": 726.2745361328125,
+      "draft": {
+        "x": 20.772058486938477,
+        "y": 587.3529663085938,
+        "width": 523.9461059570312,
+        "height": 66.15196228027344,
+        "top": 587.3529663085938,
+        "right": 544.7181644439697,
+        "bottom": 653.5049285888672,
+        "left": 20.772058486938477
+      },
+      "dock": {
+        "x": 0,
+        "y": 571.5808715820312,
+        "width": 565.490234375,
+        "height": 154.69363403320312,
+        "top": 571.5808715820312,
+        "right": 565.490234375,
+        "bottom": 726.2745056152344,
+        "left": 0
+      }
+    }
+  }
+}

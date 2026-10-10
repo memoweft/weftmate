@@ -1,0 +1,217 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T23:40:30.532Z",
+  "host": "http://127.0.0.1:53780",
+  "model": "mimo",
+  "results": [
+    {
+      "id": "action-02-web-document",
+      "category": "action",
+      "title": "查网页并保存说明",
+      "status": "passed",
+      "durationMs": 62517,
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "node24说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "node24说明.md",
+          "text": "https://nodejs.org/",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "说明|保存|写好",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-7c6074c8-9e62-4abe-8cb8-a0cdca3c415f",
+          "modelProfileId": "private-model-94b530f74e5248648bb77b20a3851ec007ad343e",
+          "commandId": "cmd-0e771dcd-43b2-4a25-8824-2da232364faf",
+          "startedAt": "2026-10-09T23:40:31.739Z",
+          "reply": "我先抓取 Node.js 官方的 22 与 24 版本说明，对比初始大版本的要点，再写成中文短文存到指定路径。\nv22 的官方公告已拿到；v24 页面一次抓取失败，我再用另一官方链接补取。\n需要补齐 v24 的“弃用与移除”部分，我用官方发布页的后续段落读取，再落文件。\n主干信息已足够：官方 24.0.0 发布说明列出 V8、npm、AsyncContextFrame、权限模型、Windows 构建链等变化；v22 官方公告列出 require(esm)、WebSocket、watch 稳定化等。现在写入指定 Markdown 文件并回读确认。\n已写入并回读确认：`node24说明.md`，内容来自 Node.js 官方的 [v22 发布公告](https://nodejs.org/en/blog/announcements/v22-release-announce) 与 [v24.0.0 发布说明](https://nodejs.org/blog/release/v24.0.0)。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T23:40:31.795Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T23:40:31.796Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T23:40:31.854Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T23:40:31.855Z"
+            },
+            {
+              "seq": 27,
+              "type": "step.started",
+              "at": "2026-10-09T23:40:36.463Z"
+            },
+            {
+              "seq": 28,
+              "type": "step.completed",
+              "at": "2026-10-09T23:40:36.471Z"
+            },
+            {
+              "seq": 79,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:40:41.719Z"
+            },
+            {
+              "seq": 80,
+              "type": "step.started",
+              "at": "2026-10-09T23:40:41.720Z"
+            },
+            {
+              "seq": 81,
+              "type": "step.started",
+              "at": "2026-10-09T23:40:41.731Z"
+            },
+            {
+              "seq": 82,
+              "type": "step.completed",
+              "at": "2026-10-09T23:40:45.565Z"
+            },
+            {
+              "seq": 83,
+              "type": "step.completed",
+              "at": "2026-10-09T23:40:46.189Z"
+            },
+            {
+              "seq": 127,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:40:48.892Z"
+            },
+            {
+              "seq": 128,
+              "type": "step.started",
+              "at": "2026-10-09T23:40:48.892Z"
+            },
+            {
+              "seq": 129,
+              "type": "step.started",
+              "at": "2026-10-09T23:40:48.901Z"
+            },
+            {
+              "seq": 130,
+              "type": "step.completed",
+              "at": "2026-10-09T23:40:53.241Z"
+            },
+            {
+              "seq": 131,
+              "type": "step.completed",
+              "at": "2026-10-09T23:40:53.242Z"
+            },
+            {
+              "seq": 175,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:40:59.388Z"
+            },
+            {
+              "seq": 176,
+              "type": "step.started",
+              "at": "2026-10-09T23:40:59.388Z"
+            },
+            {
+              "seq": 177,
+              "type": "step.started",
+              "at": "2026-10-09T23:40:59.397Z"
+            },
+            {
+              "seq": 178,
+              "type": "step.completed",
+              "at": "2026-10-09T23:41:03.248Z"
+            },
+            {
+              "seq": 179,
+              "type": "step.completed",
+              "at": "2026-10-09T23:41:03.249Z"
+            },
+            {
+              "seq": 511,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:41:24.558Z"
+            },
+            {
+              "seq": 512,
+              "type": "step.started",
+              "at": "2026-10-09T23:41:24.558Z"
+            },
+            {
+              "seq": 513,
+              "type": "artifact.created",
+              "at": "2026-10-09T23:41:26.316Z"
+            },
+            {
+              "seq": 532,
+              "type": "step.started",
+              "at": "2026-10-09T23:41:29.645Z"
+            },
+            {
+              "seq": 533,
+              "type": "step.completed",
+              "at": "2026-10-09T23:41:29.715Z"
+            },
+            {
+              "seq": 559,
+              "type": "assistant.message",
+              "at": "2026-10-09T23:41:33.760Z"
+            },
+            {
+              "seq": 560,
+              "type": "task.ended",
+              "at": "2026-10-09T23:41:33.760Z"
+            },
+            {
+              "seq": 561,
+              "type": "turn.ended",
+              "at": "2026-10-09T23:41:33.761Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 62167,
+          "endedAt": "2026-10-09T23:41:33.906Z"
+        }
+      ],
+      "replySummary": "我先抓取 Node.js 官方的 22 与 24 版本说明，对比初始大版本的要点，再写成中文短文存到指定路径。\nv22 的官方公告已拿到；v24 页面一次抓取失败，我再用另一官方链接补取。\n需要补齐 v24 的“弃用与移除”部分，我用官方发布页的后续段落读取，再落文件。\n主干信息已足够：官方 24.0.0 发布说明列出 V8、npm、AsyncContextFrame、权限模型、Windows 构建链等变化；v22 官方公告列出 require(esm)、WebSocket、watch 稳定化等。现在写入指定 Markdown 文件并回读确认。\n已写入并回读确认：`node24说明.md`，内容来自 Node.js 官方的 [v22 发布公告](https://nodejs.org/en/blog/announcements/v22-release-announce) 与 [v24.0.0 发布说明](https://nodejs.org/blog/release/v24.0.0)。",
+      "notes": "需要联网；文件检查只确认保存和官方来源链接，具体事实准确性由 Windows 人工抽查，judge 为可选补充。本地 Qwen 27B 首轮 240 秒到期时仍在正常检索官方迁移指南，调整为 600 秒以覆盖检索、写入和核验。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-02-web-document-6hS9TR"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 1,
+    "passRate": 1,
+    "coverage": 1
+  }
+}
