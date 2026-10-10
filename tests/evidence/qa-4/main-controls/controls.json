@@ -1,0 +1,10 @@
+{
+  "realElectron": true,
+  "synthetic": true,
+  "keyboardSearch": true,
+  "focusReturns": true,
+  "mainApproval": true,
+  "mainQuestion": true,
+  "stopSameButton": true,
+  "errors": []
+}

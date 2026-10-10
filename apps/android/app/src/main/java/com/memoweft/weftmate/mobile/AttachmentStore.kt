@@ -276,7 +276,7 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
 
     @Synchronized fun removeDraft(owner: String, conversationId: String?, id: String, store: LocalStore) {
         val row = load(id)?.takeIf { it.owner == owner && !it.used &&
-            (if (conversationId == null) !it.conversationId.startsWith("session-")
+            (if (conversationId == null) !it.conversationId.startsWith("session-") && !it.conversationId.startsWith("chat-")
                 else it.conversationId == conversationId) }
             ?: throw ApiFailure(404, "ATTACHMENT_UNAVAILABLE")
         if (store.sharedAttachmentPending(owner, row.conversationId, id))
@@ -284,8 +284,16 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
         remove(owner, id)
     }
 
+    @Synchronized fun moveDraft(owner: String, from: String, to: String, ids: List<String>) {
+        val rows = get(owner, from, ids)
+        if (rows.any { it.used || it.attemptTurnId != null }) throw ApiFailure(409, "ATTACHMENT_IN_USE")
+        val edit = index.edit()
+        rows.forEach { edit.putString(it.id, encode(it.copy(conversationId = to), to).toString()) }
+        if (!edit.commit()) throw ApiFailure(500, "ATTACHMENT_STORAGE_ERROR")
+    }
+
     @Synchronized fun bindSharedAttempt(owner: String, sessionId: String, ids: List<String>, requestId: String) {
-        if (!sessionId.matches(Regex("session-[0-9a-f-]{36}")) ||
+        if (!sessionId.matches(Regex("(session|chat)-[0-9a-f-]{36}")) ||
             !requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}"))) throw ApiFailure(400, "ATTACHMENT_INVALID")
         val rows = get(owner, sessionId, ids)
         if (rows.any { it.attemptTurnId != null && it.attemptTurnId != requestId })

@@ -3,7 +3,8 @@
     const formatters = new Map();
     const day = (at, timeZone = 'UTC') => {
         if (!formatters.has(timeZone)) formatters.set(timeZone, new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }));
-        return formatters.get(timeZone).format(new Date(at));
+        const parts = Object.fromEntries(formatters.get(timeZone).formatToParts(new Date(at)).map(part => [part.type, part.value]));
+        return `${parts.year}-${parts.month}-${parts.day}`;
     };
     const label = (date, timeZone, now = Date.now()) => {
         const today = day(now, timeZone);

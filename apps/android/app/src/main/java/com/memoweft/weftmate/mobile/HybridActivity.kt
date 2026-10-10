@@ -233,6 +233,7 @@ class HybridActivity : Activity() {
             .build()
         web.settings.apply {
             javaScriptEnabled = true
+            textZoom = (resources.configuration.fontScale * 100).toInt()
             domStorageEnabled = true
             allowFileAccess = false
             allowContentAccess = false
@@ -957,10 +958,10 @@ class HybridActivity : Activity() {
                 (0 until array.length()).map { array.getString(it) }
             } ?: emptyList()
             val epoch = accountEpoch.get()
-            sharedChat.submit(host, params.getString("sessionId"), params.getString("text"),
-                "session.message", params.optString("requestId").takeIf { it.isNotBlank() }, attachmentIds,
+            sharedChat.submit(host, params.optString("chatId").takeIf { it.isNotBlank() } ?: params.getString("sessionId"), params.getString("text"),
+                if (params.has("chatId")) "chat.message" else "session.message", params.optString("requestId").takeIf { it.isNotBlank() }, attachmentIds,
                 sourceSyncEventId = params.optString("sourceSyncEventId").takeIf { it.isNotBlank() },
-                intent = params.optString("intent", "queue"), current = {
+                intent = params.optString("intent", "queue"), modelProfileId = params.optString("modelProfileId").takeIf { it.isNotBlank() }, current = {
                 !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() &&
                     owner(secrets.host()) == owner(host)
             })
@@ -1136,6 +1137,15 @@ class HybridActivity : Activity() {
                 throw ApiFailure(404, "SESSION_UNAVAILABLE")
             attachments.removeDraft(scope, conversationId, params.getString("attachmentId"), store)
             JSONObject().put("removed", true)
+        }
+        "attachments.move" -> {
+            val host = requireHost()
+            val from = params.getString("fromConversationId")
+            val to = params.getString("conversationId")
+            if (!attachmentScopeAllowed(host, from) || !attachmentScopeAllowed(host, to)) throw ApiFailure(404, "SESSION_UNAVAILABLE")
+            val ids = params.getJSONArray("attachmentIds")
+            attachments.moveDraft(owner(host)!!, from, to, (0 until ids.length()).map { ids.getString(it) })
+            JSONObject().put("moved", true)
         }
         "attachments.list" -> {
             val host = requireHost()
@@ -1612,6 +1622,7 @@ class HybridActivity : Activity() {
             requireHost()
             JSONObject().put("backgroundSync", SyncJobService.status(this))
         }
+        "host.status" -> api.status(requireHost())
         "host.business" -> {
             if (params.getString("path").substringBefore('?').endsWith("/resources"))
                 require(params.optString("method", "GET") == "GET")
@@ -1726,6 +1737,8 @@ class HybridActivity : Activity() {
     private fun attachmentScopeAllowed(host: HostIdentity, conversationId: String): Boolean {
         val scope = owner(host) ?: return false
         if (store.listConversations(scope).any { it.id == conversationId }) return true
+        if (conversationId.matches(Regex("chat-[0-9a-f-]{36}")))
+            return api.business(host, "/personal/v1/chats/$conversationId", "GET", null).getJSONObject("chat").optBoolean("sendAvailable")
         if (!conversationId.matches(Regex("session-[0-9a-f-]{36}"))) return false
         var shared = store.sharedSession(scope, host.hostId, conversationId)
         if (shared == null) {
@@ -2044,6 +2057,7 @@ class HybridActivity : Activity() {
         super.onConfigurationChanged(newConfig)
         if (closed.get()) return
         applySystemBars()
+        web.settings.textZoom = (newConfig.fontScale * 100).toInt()
         web.requestLayout()
         emit("theme.system", JSONObject().put("dark",
             (newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES))

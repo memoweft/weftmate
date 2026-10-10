@@ -4,7 +4,7 @@ import { digest, failure } from './common.mjs';
 import { chatForSession } from './chat-identity.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 
-export const ACTIVITY_TYPES = ['reminder.triggered','task.completed','task.failed','task.stopped','approval.pending','question.pending','memory.paused','memory.submission.completed','memory.report','system.update.available','system.reconnected'];
+export const ACTIVITY_TYPES = ['reminder.triggered','task.completed','task.failed','task.stopped','approval.pending','question.pending','memory.paused','memory.submission.completed','memory.report','system.update.available','system.reconnected','system.dnd.summary','system.notification.test','companion.greeting'];
 const short = value => Array.from(String(value ?? '').replace(/\s+/g, ' ').trim()).slice(0,160).join('');
 export function activityState(account) {
   return account.activity ??= { version:1, secret:randomBytes(32).toString('hex'), sequence:0, generation:0, items:{}, changes:[], sources:{}, operations:{},suppressed:{} };
@@ -40,11 +40,14 @@ export function putActivity(account, key, input) {
   if(input.source?.sessionId&&state.erasedBefore?.[input.source.sessionId]&&input.at<=state.erasedBefore[input.source.sessionId])return null;
   const privateSource=input.source?.sessionId && hasPrivateContent(account.sessions[input.source.sessionId]);
   const row={ id, at:previous?.at ?? input.at, type:input.type, title:short(input.title), summary:short(input.summary), source:input.source ?? {},
-    actions:input.actions ?? [], state:input.state ?? 'completed', notification:{level:input.level ?? 'normal',type:input.type},
+    actions:input.actions ?? [], state:input.state ?? 'completed', notification:{level:input.level ?? 'normal',type:input.type,initiatedBy:input.initiatedBy ?? previous?.notification.initiatedBy ?? (['memory','system','companion'].includes(input.type.split('.')[0])?'assistant':'user'),...(input.test?{test:true}:{})},
     ...(privateSource ? {temporary:true}: {}) };
   if (privateSource) { row.title=input.type.startsWith('task.') ? '临时对话中的任务' : input.type==='approval.pending' ? '临时对话需要审批' : input.type==='question.pending' ? '临时对话需要回答' : '临时对话动态';
     row.summary=input.type==='task.completed' ? '临时对话中的任务已完成' : input.type==='task.failed' ? '临时对话中的任务失败' : input.type==='task.stopped' ? '临时对话中的任务已停止' : '打开临时对话查看。'; }
-  if (previous && isDeepStrictEqual(row,Object.fromEntries(Object.keys(row).map(k=>[k,previous[k]])))) return previous;
+  if (previous && isDeepStrictEqual({...row,notification:undefined},Object.fromEntries(Object.keys(row).map(k=>[k,k==='notification'?undefined:previous[k]]))) && row.notification.level===previous.notification.level && row.notification.initiatedBy===previous.notification.initiatedBy) return previous;
+  // Keep the original decision for content edits; resolving a pending item is silent.
+  if(previous && Object.hasOwn(previous.notification,'notify')) row.notification={...previous.notification,...row.notification,
+    ...(row.notification.level==='silent'?{notify:false,sound:false,decision:'activity',reason:'silent'}:{})};
   const seq=++state.sequence;
   state.items[id]={...row, revision:(previous?.revision??0)+1,attentionRevision:seq,createdSequence:previous?.createdSequence??seq,read:false};
   state.changes.push({seq,id}); return state.items[id];

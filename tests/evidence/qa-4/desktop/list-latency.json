@@ -1,0 +1,26 @@
+{
+  "/personal/v1/sessions": {
+    "first20": {
+      "count": 20,
+      "medianMs": 26.7845,
+      "maxMs": 74.518
+    },
+    "last20": {
+      "count": 20,
+      "medianMs": 7166.1125,
+      "maxMs": 8913.913
+    }
+  },
+  "/personal/v1/chats": {
+    "first20": {
+      "count": 20,
+      "medianMs": 34.117999999999995,
+      "maxMs": 93.361
+    },
+    "last20": {
+      "count": 20,
+      "medianMs": 7489.5695,
+      "maxMs": 9555.234
+    }
+  }
+}
