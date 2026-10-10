@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('weftmateDesktop', {
   platform: process.platform,
@@ -13,6 +13,11 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   openNotificationSettings: () => ipcRenderer.invoke('wm:desktop:notification-settings'),
   settings: () => ipcRenderer.invoke('wm:desktop:settings'),
   pickProjectFolder: () => ipcRenderer.invoke('wm:desktop:project-folder'),
+  inspectProjectFolder: path => ipcRenderer.invoke('wm:desktop:project-choice', path),
+  createFolderProject: fields => ipcRenderer.invoke('wm:desktop:project-create', fields),
+  projectFolderInfo: id => ipcRenderer.invoke('wm:desktop:project-info', id),
+  showProjectFolder: id => ipcRenderer.invoke('wm:desktop:project-show', id),
+  droppedProjectFolder: file => { const path = webUtils.getPathForFile(file); return path ? ipcRenderer.invoke('wm:desktop:project-drop', path) : Promise.resolve(null); },
   identity: () => ipcRenderer.invoke('wm:desktop:identity'),
   credentials: (key, value, remove) => ipcRenderer.invoke('wm:desktop:credentials', key, value, remove),
   cloudKey: (scope) => ipcRenderer.invoke('wm:desktop:key', scope),
@@ -33,5 +38,10 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
     const listener = (_event, sessionId) => callback(sessionId);
     ipcRenderer.on('wm:desktop:conversation', listener);
     return () => ipcRenderer.removeListener('wm:desktop:conversation', listener);
+  },
+  onVisibility: (callback) => {
+    const listener = (_event, hidden) => callback(hidden === true);
+    ipcRenderer.on('wm:desktop:visibility', listener);
+    return () => ipcRenderer.removeListener('wm:desktop:visibility', listener);
   },
 });

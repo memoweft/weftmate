@@ -69,7 +69,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
       if(id==='live-progress')return nodes.get('chat-content')?.children.find(child=>child.id==='live-progress')||null;
       if(!htmlIds.has(id)){const find=node=>node.id===id?node:node.children.map(child=>child instanceof Node?find(child):null).find(Boolean);return [...nodes.values()].map(find).find(Boolean)||null;}
       if(!nodes.has(id)){const node=new Node(id);
-        if(['approval-bar','question-bar','toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node)}return nodes.get(id)},
+        if(['approval-bar','question-bar','toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node);if(['pick-camera','pick-image','pick-file','pick-thinking'].includes(id))document.getElementById('attachment-popover').append(node)}return nodes.get(id)},
     createElement:tagName=>{const node=new Node();node.tagName=tagName;if(tagName==='dialog')dialogs.push(node);return node},createTextNode:value=>new TextNode(value),
     addEventListener:(event,handler)=>{if(event==='DOMContentLoaded')domReady=handler},
     querySelectorAll:()=>[],querySelector:selector=>selector==='.session-menu[role=menu]'?document.body.children.find(node=>node.className==='session-menu'&&node.attrs?.role==='menu')||null:new Node()};
@@ -94,7 +94,10 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});return id},clearTimeout:id=>timers.delete(id),
     requestAnimationFrame:fn=>{if(queueFrames){frames.push(fn);return frames.length}fn(now);return 0},ResizeObserver,console});
   Object.defineProperty(context,'WeftFormat',{get:()=>window.WeftFormat,set:value=>{window.WeftFormat=value},configurable:true});
+  // The drawer markup owns the new-chat group; the main-chat entry mounts in front of it.
+  const drawerNew=new Node();drawerNew.className='drawer-new-group';document.getElementById('drawer').append(drawerNew);
   vm.runInContext(source,context);
+  const drawerBrand=new Node();drawerBrand.className='drawer-brand';document.getElementById('drawer').append(drawerBrand);
   const run=code=>vm.runInContext(code,context);
   const node=id=>document.getElementById(id);
   const flush=async()=>{for(let index=0;index<12;index++)await Promise.resolve()};
@@ -1337,7 +1340,7 @@ test('terminal-output-limit mobile history requires the normalized pair and pres
   ];
   for(const item of cases){const h=harness();prepareSyntheticTaskChat(h);
     h.run(`state.sharedEvents=[{seq:1,type:'turn.ended',data:${JSON.stringify(item.data)}}];renderSharedConversation()`);
-    const text=h.node('chat-content').children.find(node=>node.className==='shared-turn-state')?.textContent||'';
+    const text=h.node('chat-content').children.find(node=>node.className.split(' ').includes('shared-turn-state'))?.textContent||'';
     assert.equal(text,item.text,JSON.stringify(item.data));
   }
 });
@@ -1359,11 +1362,11 @@ test('terminal-output-limit mobile keeps an old pure-reply card bound to its sou
     {seq:3,type:'turn.started',data:{turn:3}});renderSharedConversation()`);
   card=h.node('chat-content').children.find(node=>node.dataset.conversationTask===fixture.task.taskId);
   assert.match(allText(card),/因输出限制结束，尚未确认完整交付/);
-  assert.equal(h.node('chat-content').children.find(node=>node.className==='shared-turn-state').textContent,'正在处理…');
+  assert.equal(h.node('chat-content').children.find(node=>node.className.split(' ').includes('shared-turn-state')).textContent,'正在处理…');
   h.run("state.sharedSessions[0].running=false;state.sharedEvents.push({seq:4,type:'turn.ended',data:{reason:'completed',turn:3}});renderSharedConversation()");
-  assert.equal(h.node('chat-content').children.some(node=>node.className==='shared-turn-state'),false);
+  assert.equal(h.node('chat-content').children.some(node=>node.className.split(' ').includes('shared-turn-state')),false);
   h.run("state.sharedEvents.push({seq:5,type:'turn.ended',data:{reason:'error',turn:4}});renderSharedConversation()");
-  assert.equal(h.node('chat-content').children.find(node=>node.className==='shared-turn-state').textContent,'电脑回合未完成');
+  assert.equal(h.node('chat-content').children.find(node=>node.className.split(' ').includes('shared-turn-state')).textContent,'电脑回合未完成');
   card=h.node('chat-content').children.find(node=>node.dataset.conversationTask===fixture.task.taskId);
   assert.match(allText(card),/因输出限制结束，尚未确认完整交付/);
   assert.equal(JSON.stringify(fixture.task),initial,'display keeps the old source, turn and terminalAt evidence intact');

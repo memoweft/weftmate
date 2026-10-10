@@ -9,11 +9,13 @@ function blendDesktopColor(base, scrim) {
 (() => {
   const native = window.weftmateDesktop;
   if (!native) return;
+  native.onVisibility?.(hidden => globalThis.WeftReplyMotion?.setVisibility(hidden));
   document.documentElement.classList.add('weftmate-desktop');
   document.documentElement.dataset.nativePlatform = native.platform;
   const bar = document.createElement('div');
-  bar.className = 'desktop-titlebar'; bar.textContent = 'WeftMate'; bar.setAttribute('aria-hidden', 'true');
+  bar.className = 'desktop-titlebar'; bar.textContent = 'WeftMate';
   const mark = document.createElement('span'); mark.className = 'wm-brand'; bar.prepend(mark);
+  const toggle = document.getElementById('rail-open'); toggle.classList.add('titlebar-rail-toggle'); toggle.title = '切换会话侧栏 · Ctrl B'; toggle.setAttribute('aria-label', '切换会话侧栏'); bar.append(toggle);
   document.body.prepend(bar);
   let modals = [], lastPalette = '';
   const updateTheme = () => {
@@ -41,6 +43,12 @@ function blendDesktopColor(base, scrim) {
     // Track modal opening order rather than DOM order, including dynamically
     // created confirmations, Esc/form closes, removal and close/reopen cycles.
     new MutationObserver(records => {
+      const affectsModal = record => record.type === 'attributes'
+        ? record.target.matches('dialog') || modals.some(dialog => record.target.contains(dialog))
+        : [...record.addedNodes, ...record.removedNodes].some(node => node.nodeType === 1 && (node.matches('dialog') || node.querySelector('dialog')));
+      // Message fragments and streaming indicators do not alter the native scrim.
+      // Reading titlebar/backdrop styles for them would flush every streamed frame.
+      if (!records.some(affectsModal)) return;
       for (const record of records) {
         if (record.type === 'attributes' && record.attributeName === 'open' && record.oldValue === null) {
           modals = modals.filter(dialog => dialog !== record.target);

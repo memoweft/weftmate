@@ -27,7 +27,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
     function scrollToLatest() {
         ui.conversationScroll?.latest();
     }
-    function followConversationBottom() { ui.conversationScroll?.follow(); }
+    function followConversationBottom() { ui.conversationScroll?.follow(true); }
     function mountConversationScroll() {
         const box = ui.byId('chat-scroll'), list = ui.byId('transcript');
         ui.conversationScroll = globalThis.WeftConversationScroll(box, list, ui.byId('jump-latest'));
@@ -56,6 +56,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 retry.addEventListener('click', () => core.retryOptimistic(row.requestId)); node.append(retry);
             }
         }
+        for (const node of list.querySelectorAll('[data-optimistic]')) if (!node.dataset.motionSent) {node.dataset.motionSent='true';globalThis.WeftReplyMotion?.reveal(node,'send');}
         ui.byId('chat-intro').hidden = rows.length > 0 || list.children.length > 0;
     }
     function paintHistoryMessages(events, targetList = null) {
@@ -145,7 +146,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             }
             ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
             if (incremental && events.length <= 20 && event.type === 'assistant.message') {
-                globalThis.WeftMotion?.reveal(row.querySelector('.message-text'), '160ms');
+                globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-text'),'arrival');
+                globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-actions'),'arrival');
                 globalThis.WeftMotion?.reveal(row.querySelector('.reply-memory'), '160ms');
             }
         }
@@ -237,12 +239,16 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         const value = core.turnStatusViewModel();
         if (!value)
             return;
+        const list=ui.byId('transcript');const lastUser=[...list.querySelectorAll('.message.user')].at(-1);const lastAssistant=[...list.querySelectorAll('.message.assistant')].at(-1);
+        const live=lastAssistant && (!lastUser || Number(lastAssistant.dataset.seq)>Number(lastUser.dataset.seq)) ? lastAssistant.querySelector('.message-text') : null;
+        for(const body of list.querySelectorAll('.reply-streaming')) if(body!==live || !value.isRunning)globalThis.WeftReplyMotion?.indicator(body,false);
+        if(live)globalThis.WeftReplyMotion?.indicator(live,value.isRunning);
         const status = ui.byId('timeline-status');
         status.hidden = value.isRunning || !value.message;
         status.textContent = value.isRunning ? '' : value.message;
         if (value.isRunning) {
             const waiting = ui.byId('transcript').querySelector('.inline-waiting .inline-progress-text');
-            if (waiting) waiting.textContent = core.processingStageLabel(core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.processing);
+            if (waiting) {const label=core.processingStageLabel(core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.processing);if(globalThis.WeftReplyMotion)WeftReplyMotion.status(waiting,label,true);else waiting.textContent=label;}
         }
     }
     function renderOlderControl() {

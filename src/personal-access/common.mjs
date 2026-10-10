@@ -92,6 +92,7 @@ export function publicProject(project) {
   return { projectId: project.projectId, name: project.name, revision: project.revision,
     instructions: project.instructions ?? '', permission: project.permission ?? 'read-only',
     revoked: project.revoked, createdAt: project.createdAt,
+    pathHint: (project.rootPath || '').replace(/[\\/]+$/, '').split(/[\\/]/).filter(Boolean).slice(-2).join(' / '),
     ...(project.revokedAt ? { revokedAt: project.revokedAt } : {}) };
 }
 
