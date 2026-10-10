@@ -32,7 +32,7 @@ Windows 专用目录为 `D:\AIProjects\WeftMate\Worktrees\nightly`，Mac 为 `~/
 
 ## 互斥、停止与清理
 
-夜间批次原子获取报告根目录的 `nightly.lock`，同机重入立即退出。设备运行前检查 Orchestrator（工作包编排目录）的 `lan.lock`、原子 `mumu.lock`，Mac 检查 `~/.weftmate-orchestrator/a16.done`、已启动模拟器与原子目录锁 `nightly.lock`。锁或已有模拟器存在时写「被占用，未拍」，保留他人的资源，不等待、不抢占、不删除开发锁。检查 MuMu 已装的 WeftMate 测试应用；已启动的 MuMu 一律视为他人资源。
+夜间批次原子获取报告根目录的 `nightly.lock`，同机重入立即退出。设备运行前检查 Orchestrator（工作包编排目录）的 `lan.lock`、原子 `mumu.lock`，Mac 检查是否有开发包在用（正在运行的 `codex -m` 进程或 `xcodebuild`）、已启动模拟器与原子目录锁 `nightly.lock`。锁或已有模拟器存在时写「被占用，未拍」，保留他人的资源，不等待、不抢占、不删除开发锁。检查 MuMu 已装的 WeftMate 测试应用；已启动的 MuMu 一律视为他人资源。
 
 Mac 使用 A10／A15 App 自有 AX（辅助功能控件树）运行器，不依赖失败的 Mac XCUITest（Apple 原生界面测试）自动化初始化；iPhone 和 Watch 使用 XCUITest。编译 `-jobs 2`，关闭并行测试。iPhone 独立阶段只启动一台；Watch 阶段仅启动本次创建的配对手机和手表，这是 WatchConnectivity（手机手表通信）的必要伴随设备。用完关闭并删除本次创建的设备；只有所有启动设备均属于本轮时才允许 `shutdown all`。
 

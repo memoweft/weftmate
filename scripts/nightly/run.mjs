@@ -103,7 +103,7 @@ try {
     await phase('apple', ['mac', 'iphone', 'watch'], async () => {
       if (process.argv.includes('--skip-apple')) return skip('主动跳过，未拍');
       if (await isLocked('lan.lock')) return skip('被占用，未拍（LAN 锁）');
-      const check = await run('ssh', ['-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', mac, 'test -f ~/.weftmate-orchestrator/a16.done && test ! -d ~/.weftmate-orchestrator/nightly.lock && test -z "$(xcrun simctl list devices booted | grep Booted)"'], { name: 'apple-idle', allowFailure: true, limit: 20000 });
+      const check = await run('ssh', ['-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', mac, '! pgrep -f "codex -m" >/dev/null && ! pgrep -x xcodebuild >/dev/null && test ! -d ~/.weftmate-orchestrator/nightly.lock && test -z "$(xcrun simctl list devices booted | grep Booted)"'], { name: 'apple-idle', allowFailure: true, limit: 20000 });
       if (check.code !== 0) return skip('被占用，未拍（A16 未完成、模拟器已启动或 Mac 不可达）');
       const bundle = join(temp, 'candidate.bundle');
       if (process.argv.includes('--candidate')) await run('git', ['bundle', 'create', bundle, 'HEAD'], { cwd: repository, name: 'candidate-bundle' });
