@@ -163,8 +163,11 @@ def main():
         signal.signal(signum, alarm)
     signal.alarm(max(1, args.seconds))
     try:
-        if not (control / 'a16.done').exists() or booted():
-            status.update(status='skipped', reason='被占用，未拍（A16 或 Apple 模拟器）')
+        # A development package is using the Mac when a Codex session or a build is running.
+        developing = any(subprocess.run(['pgrep', *flags, name], capture_output=True).returncode == 0
+                         for flags, name in ((['-f'], 'codex -m'), (['-x'], 'xcodebuild')))
+        if developing or booted():
+            status.update(status='skipped', reason='被占用，未拍（开发包或 Apple 模拟器）')
             return
         try:
             lock.mkdir()
