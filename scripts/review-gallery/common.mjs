@@ -17,7 +17,7 @@ export function captureSummary(records) {
 }
 // Recover only scene navigation errors. Capture, privacy, provenance and process
 // failures remain fatal, with no DOM/credential-bearing diagnostics in public output.
-export async function runScene({ page, out, platform, scene, theme, prepare, application }) {
+export async function runScene({ page, out, platform, scene, theme, prepare, application, screenshot }) {
   const file = `review-${platform}-${scene}-${theme}.png`;
   await mkdir(out, { recursive: true });
   await rm(join(out, file), { force: true });
@@ -32,9 +32,9 @@ export async function runScene({ page, out, platform, scene, theme, prepare, app
     console.log(`${platform}/${scene}/${theme}: 截图失败：${reason}`);
     return record;
   }
-  return capture(page, out, platform, scene, theme, application);
+  return capture(page, out, platform, scene, theme, application, screenshot);
 }
-export async function capture(page, out, platform, scene, theme, application) {
+export async function capture(page, out, platform, scene, theme, application, screenshot) {
   await page.evaluate(() => document.fonts.ready);
   await delay(350);
   await page.mouse.move(0, 0);
@@ -45,7 +45,8 @@ export async function capture(page, out, platform, scene, theme, application) {
   if (passwords) throw Error('Clear password inputs before capture');
   await mkdir(out, { recursive: true });
   const file = `review-${platform}-${scene}-${theme}.png`;
-  if (application) {
+  if (screenshot) await writeFile(join(out, file), await screenshot());
+  else if (application) {
     await application.evaluate(({ BrowserWindow }) => {
       const window = BrowserWindow.getAllWindows()[0]; window.show(); window.focus();
     });
@@ -57,7 +58,7 @@ export async function capture(page, out, platform, scene, theme, application) {
     await writeFile(join(out, file), Buffer.from(png, 'base64'));
   } else await page.screenshot({ path: join(out, file), animations: 'disabled' });
   const record = { platform, scene, theme, file, commit: commit(), generatedAt: new Date().toISOString(), synthetic: true,
-    viewport: await page.evaluate(() => ({ width: innerWidth, height: innerHeight })), source: platform === 'windows' ? 'production createPersonalDesktop + FE-1a isolated host' : 'Chromium + FE-1b isolated host', text };
+    viewport: await page.evaluate(() => ({ width: innerWidth, height: innerHeight })), source: platform === 'windows' ? 'production createPersonalDesktop + FE-1a isolated host' : platform === 'android' ? 'MuMu HybridActivity + synthetic bridge + adb screencap' : 'Chromium + FE-1b isolated host', text };
   await writeFile(join(out, file.replace(/\.png$/, '.json')), JSON.stringify(record, null, 2) + '\n');
   return record;
 }
