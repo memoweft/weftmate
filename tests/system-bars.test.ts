@@ -31,7 +31,7 @@ test('Android bar colours are generated from mobile surface tokens, not manually
 
 test('anchored menus avoid cutout, status/caption and gesture insets', () => {
   const context: any = { window: { innerWidth: 390, innerHeight: 844 },
-    document: { documentElement: { dataset: {} }, querySelector: () => ({}) },
+    document: { documentElement: { dataset: {} }, querySelector: () => ({}), addEventListener() {} },
     getComputedStyle: () => ({ paddingTop: '60px', paddingRight: '20px', paddingBottom: '34px', paddingLeft: '40px' }) };
   vm.runInNewContext(readFileSync('src/personal-access-ui/popovers.js', 'utf8'), context);
   const menu = { hidden: false, style: {}, dataset: {}, offsetWidth: 100, offsetHeight: 100, scrollHeight: 100 };
