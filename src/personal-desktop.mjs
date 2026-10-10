@@ -5,13 +5,15 @@ import packageInfo from '../package.json' with { type: 'json' };
 import { quoteWindowsLoginArgs, loginItemEnabled } from './desktop-autostart.mjs';
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
 import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage, dialog, clipboard } from 'electron';
+import { folderWarning } from './personal-projects/folder-choice.mjs';
+import { stat, realpath } from 'node:fs/promises';
 import { hostname } from 'node:os';
 import { createHash, X509Certificate } from 'node:crypto';
 import { desktopAuthStorage } from './personal-desktop-auth.mjs';
 import { readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createLatestFileWriter } from './latest-file-writer.mjs';
-import { join } from 'node:path';
+import { join, basename } from 'node:path';
 import { validArtifactFileName } from './personal-artifacts/index.mjs';
 import { windowIcon, notificationIcon } from './app-icons.mjs';
 import { nativeEventNotification } from './personal-access/notification-content.mjs';
@@ -108,11 +110,52 @@ export function createPersonalDesktop({ libraryDesktopToken = null, origin, setu
     return image.isEmpty() ? null : {name:'剪贴板图片.png',contentType:'image/png',dataUrl:image.toDataURL()};
   });
   handle('wm:desktop:capture-region', async () => { await jsonLocal('/auth/me'); return captureScreenRegion(win); });
+  const selectedFolders = new Map();
   handle('wm:desktop:project-folder', async () => {
-    await jsonLocal('/auth/me');
+    const initialAuth = await jsonLocal('/auth/me'), initialOwner = initialAuth.ownerId || initialAuth.account?.ownerId;
     if (contentOrigin !== origin) throw new Error('Desktop project registration unavailable');
     const selection = await dialog.showOpenDialog(win, { title: '选择项目文件夹', properties: ['openDirectory'] });
-    return selection.canceled ? null : selection.filePaths[0] ?? null;
+    const rootPath = selection.canceled ? null : selection.filePaths[0] ?? null;
+    if (rootPath) { const auth = await jsonLocal('/auth/me'), owner = auth.ownerId || auth.account?.ownerId;
+      if (owner !== initialOwner) throw new Error('PROJECT_NATIVE_SELECTION_REQUIRED');
+      selectedFolders.set(rootPath, owner); }
+    return rootPath;
+  });
+  const nativeProjects = async () => {
+    if (contentOrigin !== origin) throw new Error('Desktop project registration unavailable');
+    const response = await fetchLocal('/projects', {headers:{'x-weftmate-desktop':libraryDesktopToken}});
+    if (!response.ok) throw new Error('PROJECT_UNAVAILABLE');
+    return (await response.json()).projects;
+  };
+  handle('wm:desktop:project-choice', async rootPath => {
+    const auth = await jsonLocal('/auth/me'), owner = auth.ownerId || auth.account?.ownerId;
+    if (contentOrigin !== origin || selectedFolders.get(rootPath) !== owner || !selectedFolders.has(rootPath)) throw new Error('PROJECT_NATIVE_SELECTION_REQUIRED');
+    const resolved = await realpath(rootPath);
+    if (!(await stat(resolved)).isDirectory()) throw new Error('PROJECT_UNSAFE_PATH');
+    selectedFolders.set(resolved, owner);
+    const projects = await nativeProjects();
+    return {rootPath:resolved,name:basename(resolved),warning:folderWarning(resolved),
+      project:projects.find(project => project.rootPath?.toLowerCase() === resolved.toLowerCase()) || null};
+  });
+  handle('wm:desktop:project-create', async fields => {
+    const auth = await jsonLocal('/auth/me'), owner = auth.ownerId || auth.account?.ownerId;
+    if (contentOrigin !== origin || !selectedFolders.has(fields?.rootPath) || selectedFolders.get(fields.rootPath) !== owner) throw new Error('PROJECT_NATIVE_SELECTION_REQUIRED');
+    const response = await fetchLocal('/projects', {method:'POST',headers:{'content-type':'application/json',origin:contentOrigin,
+      'x-weftmate-csrf':auth.csrfToken,'x-weftmate-desktop':libraryDesktopToken},body:JSON.stringify(fields)});
+    const result = await response.json(); if (!response.ok) throw new Error(result.error?.code || result.code || 'PROJECT_UNAVAILABLE');
+    return result;
+  });
+  handle('wm:desktop:project-info', async projectId => (await nativeProjects()).find(row => row.projectId === projectId) || null);
+  handle('wm:desktop:project-show', async projectId => {
+    const project = (await nativeProjects()).find(row => row.projectId === projectId && !row.revoked);
+    if (!project) throw new Error('PROJECT_UNAVAILABLE');
+    const error = await shell.openPath(project.rootPath); if (error) throw new Error('PROJECT_UNAVAILABLE');
+  });
+  // Electron supplies this path from an actual dropped File, never from a text field.
+  handle('wm:desktop:project-drop', async rootPath => {
+    const auth = await jsonLocal('/auth/me');
+    if (contentOrigin !== origin || typeof rootPath !== 'string' || !(await stat(rootPath)).isDirectory()) return null;
+    selectedFolders.set(rootPath, auth.ownerId || auth.account?.ownerId); return rootPath;
   });
   const authStore = desktopAuthStorage(join(app.getPath('userData'), 'desktop-auth.enc'), safeStorage);
   handle('wm:desktop:identity', () => ({ deviceName: hostname(), localOrigin: origin,
@@ -371,7 +414,7 @@ export function createPersonalDesktop({ libraryDesktopToken = null, origin, setu
     nativeTheme.removeListener('updated', updatePalette);
     ipcMain.removeHandler('wm:desktop:conversation-export');
     for (const request of networkRequests.values()) request.abort();
-    for (const channel of ['wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
+    for (const channel of ['wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-choice', 'wm:desktop:project-create', 'wm:desktop:project-info', 'wm:desktop:project-show', 'wm:desktop:project-drop', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     await save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
   } };
 }
