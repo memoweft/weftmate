@@ -1,3 +1,6 @@
+#Requires -Version 7.0
+# Deletion relies on PowerShell 7 removing junctions as links. Windows PowerShell 5.1 may descend into
+# a junction target with Remove-Item -Recurse, so this script refuses to run there.
 [CmdletBinding()]
 param(
     [ValidateRange(1, 8760)][int]$Hours = 48,
@@ -23,18 +26,29 @@ foreach ($root in $Roots) {
         $total++
         if ($worktrees | Where-Object { $_ -ieq $dir.FullName }) { $worktree++; continue }
         if ($dir.CreationTime -ge $cutoff -or $dir.LastWriteTime -ge $cutoff) { $recent++; continue }
-        $forward = $dir.FullName -replace '\\', '/'
-        if ($commandLines.IndexOf($dir.FullName, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or
-            $commandLines.IndexOf($forward, [StringComparison]::OrdinalIgnoreCase) -ge 0) { $inUse++; continue }
-        $selected += $dir
+        # PowerShell expands Windows 8.3 components during enumeration, while
+        # a process can still name this directory through the supplied TEMP root.
+        $references = @($dir.FullName, (Join-Path $root $dir.Name))
+        $used = $false
+        foreach ($reference in $references) {
+            $forward = $reference -replace '\\', '/'
+            if ($commandLines.IndexOf($reference, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or
+                $commandLines.IndexOf($forward, [StringComparison]::OrdinalIgnoreCase) -ge 0) { $used = $true; break }
+        }
+        if ($used) { $inUse++; continue }
+        $selected += @{ directory = $dir; root = [IO.Path]::GetFullPath((Get-Item -LiteralPath $root).FullName) }
     }
 }
 $deleted = 0; $failed = 0
 if ($Apply) {
-    foreach ($dir in $selected) {
-        # rd /s removes junctions as links and never descends into their targets.
-        cmd /c "rd /s /q `"\\?\$($dir.FullName)`"" 2>$null | Out-Null
-        if (Test-Path -LiteralPath $dir.FullName) { $failed++ } else { $deleted++ }
+    foreach ($entry in $selected) {
+        $target = [IO.Path]::GetFullPath($entry.directory.FullName)
+        # Keep discovery, boundary verification and deletion in PowerShell.
+        # PowerShell 7 removes junctions as links rather than traversing them.
+        if ([IO.Path]::GetDirectoryName($target).TrimEnd('\') -ine $entry.root.TrimEnd('\') -or
+            [IO.Path]::GetFileName($target) -notlike 'weftmate-*') { $failed++; continue }
+        Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
+        if (Test-Path -LiteralPath $target) { $failed++ } else { $deleted++ }
     }
 }
 @{ hours = $Hours; applied = [bool]$Apply; found = $total; selected = $selected.Count; deleted = $deleted; failed = $failed

@@ -425,5 +425,5 @@
   ],
   "synthetic": true,
   "coreCommit": "a9b115f",
-  "failure": "Error: ENOENT: no such file or directory, scandir 'C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mem2-real-RpPce9\\profile\\accounts\\owner-1e75c79b-0e3a-4e21-a9e0-43d6353de9cc\\memory-home'"
+  "failure": "Error: ENOENT: no such file or directory, scandir 'C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-mem2-real-RpPce9\\profile\\accounts\\owner-1e75c79b-0e3a-4e21-a9e0-43d6353de9cc\\memory-home'"
 }

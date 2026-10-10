@@ -94,7 +94,7 @@
       },
       "ownerId": "owner-ea6919f2-358e-44c2-9c0d-f9355a792db6",
       "deviceCount": 2,
-      "hostName": "DESKTOP-MG2ORKA",
+      "hostName": "<host>",
       "presence": {
         "host": "online",
         "bootId": "9230fee1-813c-4897-b26a-47bb9948b359",

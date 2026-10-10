@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** D53: production Electron and shipped mobile assets, isolated real host APIs. */
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
@@ -10,6 +12,7 @@ import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/ux-6');await mkdir(out,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms)),report={checks:[],screenshots:[],errors:[],modelRequests:0};let f,app,browser,profile;
 const b=(page,name)=>page.getByRole('button',{name,exact:true}).filter({visible:true});
 async function shot(page,surface,theme,scene){await wait(180);const file=`${surface}-${theme}-${scene}.png`;await page.screenshot({path:join(out,file)});report.screenshots.push(file);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,file);

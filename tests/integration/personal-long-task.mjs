@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** M1-3: real Electron + personal/v1 + native DSH, keys only in memory. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -62,6 +64,7 @@ export function apply(ctx) {
 writeFileSync(join(profile, 'dsh-home', 'profiles', 'weftmate', 'cordis.patch.yml'), PROFILE_PATCH_TEMPLATE + '\n- insert:\n    - id: long-task-observer\n      name: ./plugins/long-task-observer.mjs\n');
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || ['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY', 'MODEL_SWITCH_UNIFIED_KEY'].includes(name)) delete env[name];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
 let app, page, lanBridge, output = '';
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));

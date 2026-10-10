@@ -7,7 +7,7 @@ import { quoteWindowsLoginArgs, loginItemEnabled } from './desktop-autostart.mjs
 import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage, dialog, clipboard } from 'electron';
 import { folderWarning } from './personal-projects/folder-choice.mjs';
 import { stat, realpath } from 'node:fs/promises';
-import { hostname } from 'node:os';
+import { hostName } from './host-name.mjs';
 import { createHash, X509Certificate } from 'node:crypto';
 import { desktopAuthStorage } from './personal-desktop-auth.mjs';
 import { readFileSync } from 'node:fs';
@@ -179,7 +179,7 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
     selectedFolders.set(rootPath, auth.ownerId || auth.account?.ownerId); return rootPath;
   });
   const authStore = desktopAuthStorage(join(app.getPath('userData'), 'desktop-auth.enc'), safeStorage);
-  handle('wm:desktop:identity', () => ({ deviceName: hostname(), localOrigin: origin,
+  handle('wm:desktop:identity', () => ({ deviceName: hostName(), localOrigin: origin,
     clientId: process.env.WEFTMATE_CLOUD_DESKTOP_CLIENT_ID || process.env.WEFTMATE_CLOUD_WEB_CLIENT_ID,
     redirectUri: process.env.WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI }));
   handle('wm:desktop:credentials', (key, value, remove) => authStore.credentials(key, value, remove));

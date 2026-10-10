@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 // Inspect a FACT-1 isolated host while its independent model tasks continue.
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
@@ -12,6 +14,7 @@ const c=JSON.parse(readFileSync(join(batch.root,'eval/credentials.json'),'utf8')
 const profile=join('C:/Temp','weftmate-fact1-ui-'+randomUUID());mkdirSync(profile,{recursive:true});
 const evidence=resolve('tests/evidence/fact-1/ui');mkdirSync(evidence,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app,page;
 try {
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),

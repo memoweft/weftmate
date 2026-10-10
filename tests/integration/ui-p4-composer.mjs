@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real production Electron shell + isolated personal host; synthetic data only. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -12,6 +14,7 @@ const root = resolve(import.meta.dirname, '../..'), evidence = join(root, 'tests
 mkdirSync(evidence, {recursive:true});
 const env = {...process.env};
 for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(key) || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const report = {syntheticOnly:true, before, checks:[]};
 const errors=[];
 const gap = page=>page.evaluate(()=>{const b=document.getElementById('chat-scroll');return b.scrollHeight-b.clientHeight-b.scrollTop});

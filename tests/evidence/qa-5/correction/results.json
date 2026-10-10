@@ -169,7 +169,7 @@
       ],
       "replySummary": "收到，已纠正：以后你喝第 903 种花茶时，我会提醒加一片柠檬，不再加肉桂粉。我记下了，稍后整理进记忆，采用最新理解为准。",
       "notes": "QA4-01 actual user wording",
-      "scratchDir": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-eval-fx17-flower-tea-4qXJJr"
+      "scratchDir": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-eval-fx17-flower-tea-4qXJJr"
     },
     {
       "id": "fx17-unrelated-window",
@@ -1887,7 +1887,7 @@
       ],
       "replySummary": "35",
       "notes": "Ordinary unrelated turns, no memory setup",
-      "scratchDir": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-eval-fx17-unrelated-window-4NOMn0"
+      "scratchDir": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-eval-fx17-unrelated-window-4NOMn0"
     },
     {
       "id": "fx17-restarted-lan",
@@ -1970,7 +1970,7 @@
       ],
       "replySummary": "第903种花茶不要加肉桂粉，改为加一片柠檬。",
       "notes": "After 34 unrelated turns and restart, another model",
-      "scratchDir": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-eval-fx17-restarted-lan-w2JbpP"
+      "scratchDir": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-eval-fx17-restarted-lan-w2JbpP"
     }
   ],
   "requests": [

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Managed loopback fixture for the personal App; never uses a real model or user profile. */
 import { cpSync, existsSync, mkdirSync, openSync, closeSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname, resolve, isAbsolute, basename } from 'node:path';

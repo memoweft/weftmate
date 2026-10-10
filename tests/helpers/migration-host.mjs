@@ -46,7 +46,9 @@ export async function migrationHost({ executable, source = resolve(process.env.F
     const env = {...process.env};
     for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key];
     env.WEFTMATE_MEMOWEFT_ENABLED = '0';
-    h.app = await _electron.launch({executablePath:h.executable || createRequire(import.meta.url)('electron'),args:h.executable?[`--desktop-config=${config}`]:[h.source,`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],cwd:h.source,env,timeout:90000});
+    env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
+    const passwordStore = process.platform === 'linux' ? ['--password-store=gnome-libsecret'] : [];
+    h.app = await _electron.launch({executablePath:h.executable || createRequire(import.meta.url)('electron'),args:h.executable?[...passwordStore,`--desktop-config=${config}`]:[h.source,...passwordStore,`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],cwd:h.source,env,timeout:90000});
     h.stderr = []; h.app.process().stderr?.on('data', chunk => { h.stderr.push(String(chunk)); if (h.stderr.length > 200) h.stderr.shift(); });
     h.page = await h.app.firstWindow(); h.page.setDefaultTimeout(15000);
     await h.page.waitForURL('**/personal/v1/ui*');

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Formal baseline on real Electron/DSH, fresh account/Core per model. Keys stay in memory. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -77,6 +79,7 @@ writeFileSync(memoryConfig, JSON.stringify({ python: 'D:/AIProjects/MemoWeft/Cor
   pythonPath: coreSource, baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', authRef: 'baseline-pending' }));
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || name === 'ELECTRON_RUN_AS_NODE' || name === 'MIMO_API_KEY' || name === 'MODEL_SWITCH_UNIFIED_KEY') delete env[name];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
 if (memoryTrace) env.WEFTMATE_BASELINE_MEMORY_TRACE = join(root, 'memory-requests.jsonl');
 const formationWaitIndex = process.argv.indexOf('--formation-wait-ms');

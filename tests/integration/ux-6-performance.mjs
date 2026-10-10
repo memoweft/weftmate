@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** 500 synthetic native sessions, real isolated authenticated HTTP host. No model. */
 import assert from 'node:assert/strict';
 import {mkdtemp,rm,mkdir,writeFile} from 'node:fs/promises';
@@ -29,6 +31,7 @@ try{
   const setup=await fetch(origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({...credentials,grant:grant.grant})});assert.equal(setup.status,201);
   const auth=await setup.json(),cookie=setup.headers.get('set-cookie').split(';')[0];await fetch(origin+'/personal/v1/onboarding',{method:'PATCH',headers:{origin,cookie,'content-type':'application/json','x-weftmate-csrf':auth.csrfToken},body:JSON.stringify({step:'first',completed:true})});
   profile=await mkdtemp(join(tmpdir(),'weftmate-ux6-perf-electron-'));const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
+  env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:origin,REVIEW_THEME:'light'}});
   const page=await app.firstWindow();page.setDefaultTimeout(20000);await localUiSession(page,credentials,undefined,{mainChat:true});await page.getByRole('button',{name:'搜索',exact:true}).waitFor();await page.waitForTimeout(300);
   const uiEmpty=[],uiQuery=[];for(let index=0;index<10;index++){

@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Remaining task/overlay states on production Electron and the phone bundle. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -10,6 +12,7 @@ import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/ux-p2');await mkdir(out,{recursive:true});
 const env={...process.env};for(const k of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(k)||k==='ELECTRON_RUN_AS_NODE')delete env[k];
+env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const rows=[],errors=[];let app,browser,f,profile;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const b=(page,name)=>page.getByRole('button',{name,exact:true}).filter({visible:true});

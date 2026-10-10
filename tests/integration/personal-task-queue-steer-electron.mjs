@@ -1,3 +1,5 @@
+// Synthetic acceptance must never publish the local computer identity.
+process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Isolated real host + pinned DSH queue, steer, cancel and stop acceptance. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';

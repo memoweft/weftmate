@@ -1,7 +1,7 @@
 {
   "model": "synthetic",
   "single": false,
-  "root": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-EPW7CX",
+  "root": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-mf1-EPW7CX",
   "core": "D:\\AIProjects\\MemoWeft\\Worktrees\\mf-1-memory-freshness\\py\\src",
   "events": [
     {
@@ -75,7 +75,7 @@
       "durationMs": 69,
       "result": {
         "runtime": {
-          "db_path": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-EPW7CX\\accounts\\owner-25788cd9-2a17-4993-9ed8-fa13ffa4711c\\memory-home\\memoweft\\memoweft.sqlite3",
+          "db_path": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-mf1-EPW7CX\\accounts\\owner-25788cd9-2a17-4993-9ed8-fa13ffa4711c\\memory-home\\memoweft\\memoweft.sqlite3",
           "subject_id": "owner-25788cd9-2a17-4993-9ed8-fa13ffa4711c",
           "host_id": "weftmate:dsh",
           "session_id": "weftmate-personal-host",
@@ -227,7 +227,7 @@
         "protocol_version": 2,
         "runtime": {
           "enabled": true,
-          "db_path": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-EPW7CX\\accounts\\owner-25788cd9-2a17-4993-9ed8-fa13ffa4711c\\memory-home\\memoweft\\memoweft.sqlite3",
+          "db_path": "C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-mf1-EPW7CX\\accounts\\owner-25788cd9-2a17-4993-9ed8-fa13ffa4711c\\memory-home\\memoweft\\memoweft.sqlite3",
           "subject_id": "owner-25788cd9-2a17-4993-9ed8-fa13ffa4711c",
           "host_id": "weftmate:dsh",
           "last_recall_count": 0,

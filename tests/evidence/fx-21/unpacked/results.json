@@ -162,7 +162,7 @@
           "content": "{\"loaded\":[\"read\",\"write\"]}"
         },
         {
-          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-CfRKQo\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+          "content": "<path>C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-fx21-CfRKQo\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
         }
       ]
     },
@@ -173,10 +173,10 @@
           "content": "{\"loaded\":[\"read\",\"write\"]}"
         },
         {
-          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-CfRKQo\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+          "content": "<path>C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-fx21-CfRKQo\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
         },
         {
-          "content": "<path>C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-fx21-CfRKQo\\synthetic-project\\approved.md</path>\n<type>file</type>\n<content>\nCreated file\n</content>{\"artifact\":{\"taskId\":\"cmd-707711cc-06c6-45e8-a0da-aab269c024b4\",\"artifactId\":\"artifact-9743ee8b-0e47-4634-b2e0-771022d91e0b\",\"fileName\":\"approved.md\",\"contentType\":\"text/plain; charset=utf-8\",\"size\":28,\"sha256\":\"ca1e3c188b81dba2447c0d51777b8ba76a6387668ed78fac6ab2b2cfdb18de43\",\"state\":\"observed\"},\"createdFilePath\":\"C:\\\\Users\\\\yun\\\\AppData\\\\Local\\\\Temp\\\\weftmate-fx21-CfRKQo\\\\synthetic-project\\\\approved.md\"}"
+          "content": "<path>C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-fx21-CfRKQo\\synthetic-project\\approved.md</path>\n<type>file</type>\n<content>\nCreated file\n</content>{\"artifact\":{\"taskId\":\"cmd-707711cc-06c6-45e8-a0da-aab269c024b4\",\"artifactId\":\"artifact-9743ee8b-0e47-4634-b2e0-771022d91e0b\",\"fileName\":\"approved.md\",\"contentType\":\"text/plain; charset=utf-8\",\"size\":28,\"sha256\":\"ca1e3c188b81dba2447c0d51777b8ba76a6387668ed78fac6ab2b2cfdb18de43\",\"state\":\"observed\"},\"createdFilePath\":\"C:\\Users\\<user>\\\\AppData\\\\Local\\\\Temp\\\\weftmate-fx21-CfRKQo\\\\synthetic-project\\\\approved.md\"}"
         }
       ]
     },

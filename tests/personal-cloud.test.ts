@@ -19,6 +19,7 @@ async function fixture(t: any, { fresh = false } = {}) {
   const jwk = { ...await exportJWK(signing.publicKey), kid: 'test-cloud-key', alg: 'RS256', use: 'sig' }
   const claims = new Map<string, any>()
   let interrupted = false
+  let revocationResponse: (() => Promise<{ events: any[], watermark: number, status?: number }>) | undefined
   let cloudOrigin: string, issuer: string, cloudBase: string
   const cloud = createServer(async (req, res) => {
     if (req.url?.endsWith('/jwks')) { res.end(JSON.stringify({ keys: [jwk] })); return }
@@ -35,7 +36,9 @@ async function fixture(t: any, { fresh = false } = {}) {
       res.end('{"confirmed":true}'); return
     }
     if (req.url?.endsWith('/hosts/revocations')) {
-      const eventToken = await new SignJWT({ events: [], watermark: 0 })
+      const response = revocationResponse ? await revocationResponse() : { events: [], watermark: 0 };
+      if (response.status && response.status >= 400) { res.writeHead(response.status); res.end('{}'); return }
+      const eventToken = await new SignJWT({ events: response.events, watermark: response.watermark })
         .setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: jwk.kid })
         .setIssuer(issuer).setAudience(`${cloudBase}/hosts/${hostId}`).setIssuedAt().setExpirationTime('300s').sign(signing.privateKey)
       res.end(JSON.stringify({ eventToken })); return
@@ -130,6 +133,7 @@ async function fixture(t: any, { fresh = false } = {}) {
     },
     get origin() { return origin }, get hostId() { return hostId }, get service() { return service },
     interrupt: () => { interrupted = true }, claims,
+    onRevocations: (handler: typeof revocationResponse) => { revocationResponse = handler },
     advance: (ms: number) => { timeOffset += ms },
     restart: async () => { await service.close(); await start() },
     offline: async () => { await new Promise<void>(resolve => { cloud.close(resolve); cloud.closeAllConnections() }) },
@@ -345,6 +349,38 @@ test('local device revoke closes active responses; signed cloud epoch/device rev
 })
 
 
+async function assertFreshOverlappingRevocation(t: any, oldStatus = 200) {
+  const f = await fixture(t);
+  await f.bind();
+  const key = await generateKeyPair('ES256'), token = await f.access('cloud-a', 'phone', key);
+  const pending = (await f.exchange(token, key)).result;
+  await f.requests('POST', `/cloud/devices/${pending.requestId}/decision`, { decision: 'allow' }, f.a);
+  const session = (await f.exchange(token, key)).result;
+  assert.equal(session.status, 200);
+  await f.service.syncCloudRevocations();
+  let entered!: () => void, release!: () => void, calls = 0;
+  const started = new Promise<void>(resolve => { entered = resolve });
+  const released = new Promise<void>(resolve => { release = resolve });
+  f.onRevocations(async () => {
+    if (++calls === 1) { entered(); await released; return { events: [], watermark: 0, status: oldStatus }; }
+    return { events: [{ seq: 1, kind: 'epoch', sub: 'cloud-a', epoch: 1 }], watermark: 1 };
+  });
+  const older = f.service.syncCloudRevocations();
+  const priorResult = older.then(() => null, (error: any) => error);
+  await started;
+  const newer = f.service.syncCloudRevocations();
+  release();
+  const [priorError] = await Promise.all([priorResult, newer]);
+  if (oldStatus >= 400) assert.equal(priorError.code, 'CLOUD_UNAVAILABLE');
+  else assert.equal(priorError, null);
+  assert.equal(calls, 2);
+  assert.equal((await f.requests('GET', '/sessions', undefined, session)).status, 401);
+  assert.equal((await f.requests('GET', '/auth/me', undefined, f.a)).status, 200);
+}
+
+test('a revocation sync requested during an older response fetches the new epoch before returning', { timeout: 30_000 }, t => assertFreshOverlappingRevocation(t));
+test('a new revocation sync reads fresh membership even if the older sync failed', { timeout: 30_000 }, t => assertFreshOverlappingRevocation(t, 503));
+
 test('cloud initialization backs up legacy v1 before existing migration and preserves old host/owner IDs and legal Bearer access', async t => {
   const f = await fixture(t)
   const root = join(f.root, 'legacy-fixture')
@@ -438,7 +474,7 @@ for (const scenario of ['ordinary', 'project', 'phone'] as const) {
   // The current project-folder reader is a Windows native capability, like the
   // existing project service tests; ordinary/phone source receipts are portable.
   test(`FX-11 first native write registers a cloud owner's artifact in ${scenario} conversation`,
-    {skip:scenario === 'project' && process.platform !== 'win32'}, async t => {
+    {skip:scenario === 'project' && process.platform !== 'win32', timeout: 60_000}, async t => {
     const f = await fixture(t, { fresh: true })
     const key = await generateKeyPair('ES256')
     const token = await f.access('fx11-owner', 'fx11-desktop', key, {scope:'cloud:account'}, f.issuer.slice(0,-5))
@@ -469,7 +505,9 @@ for (const scenario of ['ordinary', 'project', 'phone'] as const) {
     }
     assert.equal(created.status, 202, JSON.stringify(created))
     const settled = async (id: string) => {
-      for (let i=0;i<100;i++) {
+      // Cold Windows ACL/project setup is real I/O, not a one-second promise.
+      // Wait for the authoritative receipt; the test's signal bounds the wait.
+      while (!t.signal.aborted) {
         const result = await f.requests('GET', `/commands/${id}`, undefined, caller)
         if (result.command.state === 'accepted_by_dsh') return result.command
         assert.ok(['pending','dispatching'].includes(result.command.state), JSON.stringify(result))
