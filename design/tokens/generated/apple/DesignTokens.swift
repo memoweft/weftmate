@@ -172,7 +172,12 @@ public enum WeftDesignTokens {
         "--danger": "#bf374d",
         "--danger-soft": "#fff0f2",
         "--search-highlight-bg": "#fff1a8",
-        "--search-highlight-ink": "#302507"
+        "--search-highlight-ink": "#302507",
+        "--syntax-keyword": "#31579b",
+        "--syntax-string": "#206449",
+        "--syntax-comment": "#63695e",
+        "--syntax-number": "#8a3972",
+        "--syntax-title": "#795615"
     ]
     public static let desktopDark: [String: String] = [
         "--canvas": "#20211f",
@@ -190,49 +195,84 @@ public enum WeftDesignTokens {
         "--success": "#a7e7cf",
         "--success-soft": "#253c32",
         "--search-highlight-bg": "#66521c",
-        "--search-highlight-ink": "#ffffff"
+        "--search-highlight-ink": "#ffffff",
+        "--syntax-keyword": "#B9D2FF",
+        "--syntax-string": "#A7E7CF",
+        "--syntax-comment": "#a0a397",
+        "--syntax-number": "#eab9dd",
+        "--syntax-title": "#ead598"
     ]
     public static let desktopLightblue: [String: String] = [
         "--accent": "#365eab",
         "--accent-hover": "#284b91",
         "--accent-soft": "#e9eff9",
         "--search-highlight-bg": "#fff1a8",
-        "--search-highlight-ink": "#302507"
+        "--search-highlight-ink": "#302507",
+        "--syntax-keyword": "#31579b",
+        "--syntax-string": "#206449",
+        "--syntax-comment": "#63695e",
+        "--syntax-number": "#8a3972",
+        "--syntax-title": "#795615"
     ]
     public static let desktopLightgreen: [String: String] = [
         "--accent": "#32654f",
         "--accent-hover": "#254d3c",
         "--accent-soft": "#e8f0e9",
         "--search-highlight-bg": "#fff1a8",
-        "--search-highlight-ink": "#302507"
+        "--search-highlight-ink": "#302507",
+        "--syntax-keyword": "#31579b",
+        "--syntax-string": "#206449",
+        "--syntax-comment": "#63695e",
+        "--syntax-number": "#8a3972",
+        "--syntax-title": "#795615"
     ]
     public static let desktopLightpurple: [String: String] = [
         "--accent": "#765299",
         "--accent-hover": "#60417e",
         "--accent-soft": "#f0eaf5",
         "--search-highlight-bg": "#fff1a8",
-        "--search-highlight-ink": "#302507"
+        "--search-highlight-ink": "#302507",
+        "--syntax-keyword": "#31579b",
+        "--syntax-string": "#206449",
+        "--syntax-comment": "#63695e",
+        "--syntax-number": "#8a3972",
+        "--syntax-title": "#795615"
     ]
     public static let desktopDarkblue: [String: String] = [
         "--accent": "#a4bff3",
         "--accent-hover": "#c0d2f7",
         "--accent-soft": "#2b3b53",
         "--search-highlight-bg": "#66521c",
-        "--search-highlight-ink": "#ffffff"
+        "--search-highlight-ink": "#ffffff",
+        "--syntax-keyword": "#B9D2FF",
+        "--syntax-string": "#A7E7CF",
+        "--syntax-comment": "#a0a397",
+        "--syntax-number": "#eab9dd",
+        "--syntax-title": "#ead598"
     ]
     public static let desktopDarkgreen: [String: String] = [
         "--accent": "#a0c8ad",
         "--accent-hover": "#bddbc5",
         "--accent-soft": "#2d3e32",
         "--search-highlight-bg": "#66521c",
-        "--search-highlight-ink": "#ffffff"
+        "--search-highlight-ink": "#ffffff",
+        "--syntax-keyword": "#B9D2FF",
+        "--syntax-string": "#A7E7CF",
+        "--syntax-comment": "#a0a397",
+        "--syntax-number": "#eab9dd",
+        "--syntax-title": "#ead598"
     ]
     public static let desktopDarkpurple: [String: String] = [
         "--accent": "#cbb3e6",
         "--accent-hover": "#decbf2",
         "--accent-soft": "#3b314a",
         "--search-highlight-bg": "#66521c",
-        "--search-highlight-ink": "#ffffff"
+        "--search-highlight-ink": "#ffffff",
+        "--syntax-keyword": "#B9D2FF",
+        "--syntax-string": "#A7E7CF",
+        "--syntax-comment": "#a0a397",
+        "--syntax-number": "#eab9dd",
+        "--syntax-title": "#ead598"
     ]
     public static let mobileLight: [String: String] = [
         "--accent": "#30332d",
@@ -246,13 +286,23 @@ public enum WeftDesignTokens {
         "--line": "#deded7",
         "--danger": "#ab3d3d",
         "--search-highlight-bg": "#fff1a8",
-        "--search-highlight-ink": "#302507"
+        "--search-highlight-ink": "#302507",
+        "--syntax-keyword": "#31579b",
+        "--syntax-string": "#206449",
+        "--syntax-comment": "#63695e",
+        "--syntax-number": "#8a3972",
+        "--syntax-title": "#795615"
     ]
     public static let mobileDark: [String: String] = [
         "--success": "#a7e7cf",
         "--success-soft": "#253c32",
         "--search-highlight-bg": "#66521c",
-        "--search-highlight-ink": "#ffffff"
+        "--search-highlight-ink": "#ffffff",
+        "--syntax-keyword": "#B9D2FF",
+        "--syntax-string": "#A7E7CF",
+        "--syntax-comment": "#a0a397",
+        "--syntax-number": "#eab9dd",
+        "--syntax-title": "#ead598"
     ]
 }
 

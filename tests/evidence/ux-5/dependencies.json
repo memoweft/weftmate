@@ -1,0 +1,124 @@
+{
+  "directDependencies": {
+    "@mermaid-js/tiny": "12.1.0",
+    "dompurify": "3.4.16",
+    "esbuild": "^0.28.2",
+    "fake-indexeddb": "6.2.4",
+    "highlight.js": "11.11.1",
+    "html-to-image": "1.11.13",
+    "jsqr": "1.4.0",
+    "katex": "0.19.0",
+    "markdown-it": "14.3.2",
+    "markdown-it-footnote": "4.0.0",
+    "playwright": "1.58.2",
+    "qrcode": "1.5.4"
+  },
+  "parserBeforeBytes": 332288,
+  "parserAfterBytes": 640095,
+  "parserIncreaseBytes": 307807,
+  "lazyMermaidBytes": 2811019,
+  "assetsBytes": 3137092,
+  "assetsGzipBytes": 1025398,
+  "assets": {
+    "rendering.css": {
+      "bytes": 10723,
+      "gzipBytes": 2626
+    },
+    "katex.css": {
+      "bytes": 22939,
+      "gzipBytes": 3388
+    },
+    "render-themes.css": {
+      "bytes": 1520,
+      "gzipBytes": 601
+    },
+    "render-vendor/fonts/KaTeX_AMS-Regular.woff2": {
+      "bytes": 28076,
+      "gzipBytes": 28104
+    },
+    "render-vendor/fonts/KaTeX_Caligraphic-Bold.woff2": {
+      "bytes": 6912,
+      "gzipBytes": 6935
+    },
+    "render-vendor/fonts/KaTeX_Caligraphic-Regular.woff2": {
+      "bytes": 6908,
+      "gzipBytes": 6931
+    },
+    "render-vendor/fonts/KaTeX_Fraktur-Bold.woff2": {
+      "bytes": 11348,
+      "gzipBytes": 11371
+    },
+    "render-vendor/fonts/KaTeX_Fraktur-Regular.woff2": {
+      "bytes": 11316,
+      "gzipBytes": 11339
+    },
+    "render-vendor/fonts/KaTeX_Main-Bold.woff2": {
+      "bytes": 25324,
+      "gzipBytes": 25352
+    },
+    "render-vendor/fonts/KaTeX_Main-BoldItalic.woff2": {
+      "bytes": 16780,
+      "gzipBytes": 16808
+    },
+    "render-vendor/fonts/KaTeX_Main-Italic.woff2": {
+      "bytes": 16988,
+      "gzipBytes": 17016
+    },
+    "render-vendor/fonts/KaTeX_Main-Regular.woff2": {
+      "bytes": 26272,
+      "gzipBytes": 26300
+    },
+    "render-vendor/fonts/KaTeX_Math-BoldItalic.woff2": {
+      "bytes": 16400,
+      "gzipBytes": 16423
+    },
+    "render-vendor/fonts/KaTeX_Math-Italic.woff2": {
+      "bytes": 16440,
+      "gzipBytes": 16465
+    },
+    "render-vendor/fonts/KaTeX_SansSerif-Bold.woff2": {
+      "bytes": 12216,
+      "gzipBytes": 12239
+    },
+    "render-vendor/fonts/KaTeX_SansSerif-Italic.woff2": {
+      "bytes": 12028,
+      "gzipBytes": 12051
+    },
+    "render-vendor/fonts/KaTeX_SansSerif-Regular.woff2": {
+      "bytes": 10344,
+      "gzipBytes": 10367
+    },
+    "render-vendor/fonts/KaTeX_Script-Regular.woff2": {
+      "bytes": 9644,
+      "gzipBytes": 9667
+    },
+    "render-vendor/fonts/KaTeX_Size1-Regular.woff2": {
+      "bytes": 5468,
+      "gzipBytes": 5491
+    },
+    "render-vendor/fonts/KaTeX_Size2-Regular.woff2": {
+      "bytes": 5208,
+      "gzipBytes": 5231
+    },
+    "render-vendor/fonts/KaTeX_Size3-Regular.woff2": {
+      "bytes": 3624,
+      "gzipBytes": 3647
+    },
+    "render-vendor/fonts/KaTeX_Size4-Regular.woff2": {
+      "bytes": 4928,
+      "gzipBytes": 4951
+    },
+    "render-vendor/fonts/KaTeX_Typewriter-Regular.woff2": {
+      "bytes": 13568,
+      "gzipBytes": 13591
+    },
+    "render-vendor/mermaid.js": {
+      "bytes": 31099,
+      "gzipBytes": 12152
+    },
+    "render-vendor/mermaid.tiny.js": {
+      "bytes": 2811019,
+      "gzipBytes": 746352
+    }
+  }
+}
