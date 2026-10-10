@@ -1,0 +1,13 @@
+{
+  "cycles": 65,
+  "passed": 65,
+  "timeouts": 0,
+  "elapsedMs": 1848882,
+  "eventLoopP99Ms": 22.642687,
+  "rssStartMiB": 186.17578125,
+  "rssEndMiB": 249.5703125,
+  "rssPeakMiB": 267.53515625,
+  "heapEndMiB": 40.601600646972656,
+  "scope": "real Electron main / fixed DSH / synthetic single-slot provider; native index implementation. 500/2000 budgets measured independently with native-live runner.",
+  "cleaned": true
+}

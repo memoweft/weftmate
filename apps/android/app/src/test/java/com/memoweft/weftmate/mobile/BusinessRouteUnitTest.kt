@@ -5,6 +5,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun sessionPagingAndEncodedSearchUseTheExistingBusinessTransport() {
+        assertTrue(validBusinessPath("/personal/v1/sessions?archived=all&limit=100&cursor=session-next&q=%E7%BA%B8"))
+        assertTrue(validBusinessPath("/personal/v1/sessions?q=" + "%E7%BA%B8".repeat(256)))
+        assertFalse(validBusinessPath("/personal/v1/sessions/session-next"))
+        assertFalse(validBusinessPath("/personal/v1/sessions?q=<script>"))
+    }
     @Test fun goalsPageSchedulesAndLongTermGoalsUseExactAccountRoutes() {
         for (path in listOf("/personal/v1/schedules", "/personal/v1/schedules/session-one/schedule-1",
             "/personal/v1/schedules/session-one/schedule-1/pause", "/personal/v1/schedules/session-one/schedule-1/resume",

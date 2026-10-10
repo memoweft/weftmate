@@ -43,6 +43,10 @@
       if ((row = match(/^\/personal\/v1\/projects\/([^/]+)\/sessions$/)) && method === 'POST') return call('shared.projects.createSession', { projectId: decodeURIComponent(row[1]), ...body });
       if (pathname === '/personal/v1/sessions/temporary' && method === 'POST') return call('host.business', {path:pathname,method,body});
       if (pathname === '/personal/v1/sessions') {
+        if (['limit','cursor','q'].some(key => query.has(key))) {
+          const result = await call('host.business', {path:pathname + url.search,method});
+          return {...result,source:'host',hostAvailable:true};
+        }
         const result = await call('shared.sessions.list');
         if (result.source !== 'host' || !Array.isArray(result.sessions)) throw new Error('OPERATION_FAILED');
         return result;

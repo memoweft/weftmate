@@ -82,7 +82,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }catch{if(current())effects.historyNotice('默认审批模式暂时无法读取，仍可在菜单里选择。');}
         finally{if(current()){core.state.approvalModeLoading=false;effects.setApprovalModeBusy(false);}}
     }
-    async function selectSession(sessionId, legacy = false) {
+    async function selectSession(sessionId, legacy = false, initialHistory = true) {
         if (!legacy && core.selectLogicalSession) return core.selectLogicalSession(sessionId);
         if (!core.sessionIdPattern.test(sessionId))
             return;
@@ -124,7 +124,13 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }
         effects.removeResourcePreview();
         effects.scrollToLatest();
-        await core.refreshHistory(true);
+        if (initialHistory) await core.refreshHistory(true);
+        else {
+            core.state.historyGeneration++; core.state.afterSeq = -1; core.state.historyHasMore = false;
+            core.state.seenSeq.clear(); core.state.historyEvents.clear(); core.state.nextBeforeSeq = null;
+            core.state.hasOlder = false; core.state.olderLoading = false; effects.clearHistoryView();
+            void core.refreshHistory(false);
+        }
         effects.followConversationBottom?.();
         void core.refreshConversationTasks();
         effects.updateAvailability();

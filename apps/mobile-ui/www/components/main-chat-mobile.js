@@ -31,7 +31,7 @@
       }
       appendSharedFiles(node,event,event.sourceRef?.sessionId);target.append(node);
     }},
-    renderSessions:()=>{ state.sharedSessions=uiCore.state.sessions.filter(row=>row.kind!=='main').map(row=>({...row,source:'host'}));renderConversationList(); },
+    renderSessions:()=>{ state.sharedSessions=uiCore.state.sessions.filter(row=>row.kind!=='main').map(row=>({...row,source:'host'}));renderConversationList(); if(uiCore.state.sessionListNextCursor||uiCore.state.sessionListCursor){const more=el('button','quiet',uiCore.state.sessionListNextCursor?'更早的对话':'最近对话');more.type='button';more.onclick=()=>uiCore.pageSessions(!!uiCore.state.sessionListNextCursor).catch(error=>toast(uiCore.failureMessage(error)));$('conversation-list').append(more);} },
     paintSelectedSession:id=>{
       state.chatSource='host';state.conversationId=null;state.sharedSessionId=id;state.sharedGeneration++;
       state.sharedRunning=!!uiCore.state.sessions.find(row=>row.sessionId===id)?.running;
@@ -62,15 +62,18 @@
     restoreMainNativeRequests:async()=>{if(window.weftNative){const rows=await call('shared.outbox.list');uiCore.restoreMainRequests(rows.commands||[]);}await uiCore.restoreRequests();},
     loadAttachmentHasher:async()=>({hashBlobSha256:async blob=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',await blob.arrayBuffer()))].map(value=>value.toString(16).padStart(2,'0')).join('')}),
     closeApprovalMenu:closeApprovalModeMenu,renderApprovalMode:updateApprovalModeButton,approvalModeReadFailed:()=>status('审批模式暂时无法读取'),
-    selectNativeSideSession:async id=>{
+    selectNativeSideSession:async (id, empty, current)=>{
       uiCore.state.selectedSessionId=id;uiCore.state.activeChatSource='desktop';
       if(!state.sharedSessions.some(row=>row.sessionId===id))await uiCore.refreshLogicalSessions();
-      nativeSides(id);await uiCore.loadMobileHistory();
+      if (!current()) return;
+      nativeSides(id);if(!empty)await uiCore.loadMobileHistory();
     },
     transferNativeAttachments:async(from,to,files)=>{
       if(!window.weftNative){uiCore.state.attachmentDrafts.set(to,files);return;}
       const fromId=from.split('|').at(-1),toId=to.split('|').at(-1);
+      const owner=state.owner,epoch=state.authEpoch;
       await call('attachments.move',{fromConversationId:fromId,conversationId:toId,attachmentIds:files.map(row=>row.attachmentId)});
+      if(owner!==state.owner||epoch!==state.authEpoch)return;
       attachmentDrafts.set(attachmentKey(toId),files);attachmentDrafts.delete(attachmentKey(fromId));await refreshAttachmentDrafts();
     },
     sendMainNativeMessage:async fields=>{
@@ -97,12 +100,12 @@
   const nativeComposer=uiCore.mobile.composerState;
   uiCore.mobile.composerState=text=>{
     if(!main())return nativeComposer(text);
-    const running=!!uiCore.state.mainChat.running,available=state.loggedIn&&state.sharedHostAvailable&&uiCore.state.mainChat.sendAvailable;
+    const running=!!uiCore.state.mainChat.running,available=!uiCore.state.sessionSelecting&&!uiCore.state.sideCreating&&state.loggedIn&&state.sharedHostAvailable&&uiCore.state.mainChat.sendAvailable;
     const modelReady=uiCore.state.models.some(model=>model.id===uiCore.state.modelProfileId);
     const attachments=currentAttachments().length;state.sharedRunning=running;
     const hasDraft=!!text.trim()||attachments>0;
     try{const key=sharedDraftKey(uiCore.state.selectedChatId);if(text)localStorage.setItem(key,text);else localStorage.removeItem(key);}catch{}
-    return {host:true,ready:available&&modelReady&&hasDraft&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
+    return {host:true,processingHint:uiCore.executionAccountHint(),ready:available&&modelReady&&hasDraft&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
       draftDisabled:!available,placeholder:running?WeftUiCore.runningPlaceholder(uiCore.composerInputMode(state.sharedSessionId)):'和 WeftMate 聊聊…',
       modelName:uiCore.state.mainChat.modelDisplayName||uiCore.state.models.find(row=>row.id===uiCore.state.modelProfileId)?.name||'选择模型',
       modelLabel:'当前模型',modelDisabled:!!state.sharedSessionId,attachmentsDisabled:!available||!!state.attachmentPick||uiCore.state.submitting,
@@ -131,6 +134,8 @@
   mountMobileTabs();
   $('open-side-chat').hidden=true;
   const sideHeading=$('drawer').querySelector('.rail-side-heading');if(sideHeading)sideHeading.hidden=true;
+  let searchTimer;
+  $('conversation-search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{if(state.logicalChats)void uiCore.searchSessions($('conversation-search').value).catch(error=>toast(uiCore.failureMessage(error)));},200);});
   const oldRenderMain=mobileEffects.renderMainChat;
   mobileEffects.renderMainChat=()=>{oldRenderMain();$('open-side-chat').hidden=!state.logicalChats;if(sideHeading)sideHeading.hidden=!state.logicalChats;syncMobileTabs();};
   // Touch selection exposes a single row's existing actions. Scrolling cancels a long press.

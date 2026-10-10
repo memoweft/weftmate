@@ -785,6 +785,7 @@ export function createHttpHandler(context) {
           ...context.service.status(ownerId),
           personalCapabilities: { library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
           executionAccount: context.hostOwner(ownerId),
+          executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true,
             failedCorrectionCount: memoryStatus.failedCorrectionCount ?? 0, formationIssues: memoryStatus.formationIssues ?? [] },
@@ -1260,26 +1261,34 @@ export function createHttpHandler(context) {
         if (context.chats.requireChat(ownerId, chatId).kind === 'main') throw failure('MAIN_CHAT_PROTECTED', 409);
       }
       if (request.method === 'GET' && pathname === '/personal/v1/sessions') {
-        if ([...url.searchParams.keys()].some(key => key !== 'archived') ||
+        if ([...url.searchParams.keys()].some(key => !['archived','limit','cursor','q'].includes(key) || url.searchParams.getAll(key).length !== 1) ||
             url.searchParams.getAll('archived').length > 1 ||
             url.searchParams.has('archived') && !['true', 'false', 'all'].includes(url.searchParams.get('archived')))
           throw failure('INVALID_REQUEST');
         const archived = url.searchParams.get('archived') ?? 'false';
+        // Existing native clients enumerate the full in-memory snapshot. New
+        // clients explicitly request bounded pages without hiding older chats.
+        const limit = url.searchParams.has('limit') ? Number(url.searchParams.get('limit')) : Math.max(1,Object.keys(state.sessions).length), cursor = url.searchParams.get('cursor');
+        const q = url.searchParams.get('q') ?? '';
+        if (!Number.isInteger(limit) || limit < 1 || url.searchParams.has('limit') && limit > 200 || q.length > 256 || cursor && !validId(cursor)) throw failure('INVALID_REQUEST');
+        const searchDescriptions = q ? await context.sessionOperations.describe(ownerId,Object.keys(state.sessions)) : null;
+        const normalizedQuery = q.normalize('NFKC').toLocaleLowerCase();
         const snapshotAt = new Date(context.timestamp()).toISOString();
         const sessions = [];
+        const ids = Object.keys(state.sessions).filter(id => chatForSession(state,id)?.kind !== 'main' &&
+          (archived === 'all' || (state.sessions[id].archived === true) === (archived === 'true')) &&
+          (!q || (state.sessions[id].title ?? searchDescriptions.get(id)?.title ?? '').normalize('NFKC').toLocaleLowerCase().includes(normalizedQuery)))
+          .sort((a,b) => Number(state.sessions[b].pinned === true) - Number(state.sessions[a].pinned === true) ||
+            context.sessionOperations.activityTime(ownerId,b).localeCompare(context.sessionOperations.activityTime(ownerId,a)) || a.localeCompare(b));
+        const offset = cursor ? ids.indexOf(cursor) + 1 : 0;
+        if (cursor && offset === 0) throw failure('CURSOR_RESET_REQUIRED',409);
+        const selectedIds = ids.slice(offset, offset + limit);
         let descriptions;
-        if (typeof context.backend.describeSessions === 'function') {
-          try { descriptions = new Map((await context.callBackend(() => context.backend.describeSessions(Object.keys(state.sessions), ownerId)))
-            .map(item => [item.sessionId, item])); }
-          catch { /* Preserve the existing individual unavailable-session projection. */ }
-        }
-        for (const sessionId of Object.keys(state.sessions).sort()) {
-          if (chatForSession(state, sessionId)?.kind === 'main') continue;
-          if (archived !== 'all' && (state.sessions[sessionId].archived === true) !== (archived === 'true')) continue;
+        try { descriptions = await context.sessionOperations.describe(ownerId,selectedIds); } catch { descriptions = new Map(); }
+        for (const sessionId of selectedIds) {
           try {
-            const described = descriptions ? descriptions.get(sessionId)
-              : await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
-            if (!described) throw failure('SESSION_UNAVAILABLE');
+            const described = descriptions.get(sessionId);
+            if (!described || described.unavailable) throw failure('SESSION_UNAVAILABLE');
             if (described?.sessionId === sessionId) sessions.push({
               sessionId,
               hostId: state.hostId,
@@ -1321,7 +1330,9 @@ export function createHttpHandler(context) {
           } catch { sessions.push({ sessionId, title: '', running: false, sendAvailable: false, unavailable: true }); }
         }
         sessions.sort((a, b) => Number(b.pinned) - Number(a.pinned));
-        return context.json(response, 200, { sessions, groups: Object.values(state.sessionGroups ?? {}), snapshotAt });
+        const hasMore = offset + limit < ids.length;
+        return context.json(response, 200, { sessions, groups: Object.values(state.sessionGroups ?? {}), snapshotAt,
+          hasMore, nextCursor: hasMore ? selectedIds.at(-1) : null });
       }
       const groupMatch = /^\/personal\/v1\/session-groups(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
       if (groupMatch && (request.method === 'GET' && !groupMatch[1] || request.method === 'POST' && !groupMatch[1] || ['PATCH', 'DELETE'].includes(request.method) && groupMatch[1])) {

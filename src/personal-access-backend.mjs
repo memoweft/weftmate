@@ -15,6 +15,8 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
   credentialForProfile = null, modelFetch = fetch, processingStatus = async () => null,
   prepareModelReasoning = null,
   reasoningSettings = null,
+  sessionProfileId = null,
+  sessionProfileIds = null,
   hostOwnerId = () => null, getRuntimeId = () => null,
   ownerForSession = () => null,
   modelAllowed = () => true,
@@ -65,10 +67,12 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     try { return await resolveSession(id) }
     catch { fail('SESSION_UNAVAILABLE') }
   }
-  const describeItem = async (item, sessionSnapshot) => {
+  const describeItem = async (item, sessionSnapshot, bindings) => {
     const sessionId = item.sessionId
     let modelProfileId = null
-    try { modelProfileId = (await resolveSession(sessionId, sessionSnapshot))?.profile?.id ?? null } catch { /* History may remain readable. */ }
+    // Sidebar projection uses the durable binding. Sending still resolves and
+    // verifies the native route in requireSession/ensureKnownSession.
+    try { modelProfileId = bindings ? bindings[sessionId] ?? null : sessionProfileId ? sessionProfileId(sessionId) : (await resolveSession(sessionId, sessionSnapshot))?.profile?.id ?? null } catch { /* History may remain readable. */ }
     return { sessionId, title: typeof item.title === 'string' ? item.title : '新对话',
       running: item.running === true, agentPreset: item.agentPreset ?? null,
       modelProfileId, ...(item.contextUsage ? {contextUsage: item.contextUsage} : {}),
@@ -484,7 +488,8 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     async describeSessions(sessionIds) {
       requireRuntime()
       const listed = await listSessions(), requested = new Set(sessionIds)
-      return Promise.all(listed.items.filter(item => requested.has(item.sessionId)).map(item => describeItem(item, listed)))
+      const bindings = sessionProfileIds?.();
+      return Promise.all(listed.items.filter(item => requested.has(item.sessionId)).map(item => describeItem(item, listed, bindings)))
     },
   }
 }

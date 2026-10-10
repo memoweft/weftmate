@@ -1,0 +1,8 @@
+{
+  "startedAt": "2026-10-10T04:42:54.0100000Z",
+  "matchedRemaining": 0,
+  "forciblyStopped": 0,
+  "checkedAt": "2026-10-10T04:50:18.7452432Z",
+  "rule": "Creation time + executable path + package worktree/temp path, no parent PID matching",
+  "normalCleanup": "All four native/draft/account verification invocations closed their own apps, browsers and isolated hosts; no matching live process remains"
+}

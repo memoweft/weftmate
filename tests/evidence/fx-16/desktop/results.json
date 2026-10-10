@@ -1,0 +1,784 @@
+{
+  "runnerPid": 15608,
+  "startedAt": "2026-10-10T01:26:28.021Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "stability-cycle-1",
+      "status": "passed",
+      "durationMs": 26532,
+      "immediateMs": 4.5,
+      "stopMs": 237
+    },
+    {
+      "name": "stability-cycle-2",
+      "status": "passed",
+      "durationMs": 20000,
+      "immediateMs": 3.4000000059604645,
+      "stopMs": 255
+    },
+    {
+      "name": "stability-cycle-3",
+      "status": "passed",
+      "durationMs": 2055,
+      "immediateMs": 3.2999999821186066,
+      "stopMs": 247
+    },
+    {
+      "name": "stability-cycle-4",
+      "status": "passed",
+      "durationMs": 20541,
+      "immediateMs": 2.300000011920929,
+      "stopMs": 829
+    },
+    {
+      "name": "stability-cycle-5",
+      "status": "passed",
+      "durationMs": 20547,
+      "immediateMs": 2.7000000178813934,
+      "stopMs": 842
+    },
+    {
+      "name": "stability-cycle-6",
+      "status": "passed",
+      "durationMs": 2663,
+      "immediateMs": 2.699999988079071,
+      "stopMs": 876
+    },
+    {
+      "name": "stability-cycle-7",
+      "status": "passed",
+      "durationMs": 20678,
+      "immediateMs": 3,
+      "stopMs": 884
+    },
+    {
+      "name": "stability-cycle-8",
+      "status": "passed",
+      "durationMs": 20611,
+      "immediateMs": 2.2999999821186066,
+      "stopMs": 847
+    },
+    {
+      "name": "stability-cycle-9",
+      "status": "passed",
+      "durationMs": 2054,
+      "immediateMs": 2.5,
+      "stopMs": 334
+    },
+    {
+      "name": "stability-cycle-10",
+      "status": "passed",
+      "durationMs": 23746,
+      "immediateMs": 3.2999999821186066,
+      "stopMs": 887
+    },
+    {
+      "name": "stability-cycle-11",
+      "status": "passed",
+      "durationMs": 24848,
+      "immediateMs": 2.7000000178813934,
+      "stopMs": 2522
+    },
+    {
+      "name": "stability-cycle-12",
+      "status": "passed",
+      "durationMs": 9319,
+      "immediateMs": 3.800000011920929,
+      "stopMs": 4141
+    },
+    {
+      "name": "stability-cycle-13",
+      "status": "passed",
+      "durationMs": 24846,
+      "immediateMs": 3.5999999940395355,
+      "stopMs": 2513
+    },
+    {
+      "name": "stability-cycle-14",
+      "status": "passed",
+      "durationMs": 23095,
+      "immediateMs": 2.800000011920929,
+      "stopMs": 2053
+    },
+    {
+      "name": "stability-cycle-15",
+      "status": "passed",
+      "durationMs": 8272,
+      "immediateMs": 3.300000011920929,
+      "stopMs": 3034
+    },
+    {
+      "name": "stability-cycle-16",
+      "status": "passed",
+      "durationMs": 23865,
+      "immediateMs": 3.4000000059604645,
+      "stopMs": 2068
+    },
+    {
+      "name": "stability-cycle-17",
+      "status": "passed",
+      "durationMs": 25863,
+      "immediateMs": 3.4000000059604645,
+      "stopMs": 2533
+    },
+    {
+      "name": "stability-cycle-18",
+      "status": "passed",
+      "durationMs": 9241,
+      "immediateMs": 2.699999988079071,
+      "stopMs": 4111
+    },
+    {
+      "name": "stability-cycle-19",
+      "status": "passed",
+      "durationMs": 24845,
+      "immediateMs": 2.300000011920929,
+      "stopMs": 2520
+    },
+    {
+      "name": "stability-cycle-20",
+      "status": "passed",
+      "durationMs": 28798,
+      "immediateMs": 3.800000011920929,
+      "stopMs": 3060
+    },
+    {
+      "name": "stability-cycle-21",
+      "status": "passed",
+      "durationMs": 11097,
+      "immediateMs": 7.800000011920929,
+      "stopMs": 4098
+    },
+    {
+      "name": "stability-cycle-22",
+      "status": "passed",
+      "durationMs": 25911,
+      "immediateMs": 3,
+      "stopMs": 2551
+    },
+    {
+      "name": "stability-cycle-23",
+      "status": "passed",
+      "durationMs": 25383,
+      "immediateMs": 3,
+      "stopMs": 3642
+    },
+    {
+      "name": "stability-cycle-24",
+      "status": "passed",
+      "durationMs": 8308,
+      "immediateMs": 3.4000000059604645,
+      "stopMs": 3083
+    },
+    {
+      "name": "stability-cycle-25",
+      "status": "passed",
+      "durationMs": 24009,
+      "immediateMs": 2.699999988079071,
+      "stopMs": 2535
+    },
+    {
+      "name": "stability-cycle-26",
+      "status": "passed",
+      "durationMs": 25633,
+      "immediateMs": 3,
+      "stopMs": 3622
+    },
+    {
+      "name": "stability-cycle-27",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-28",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-29",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-30",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-31",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-32",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-33",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-34",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-35",
+      "status": "failed",
+      "durationMs": 3,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-36",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-37",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-38",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-39",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-40",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-41",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-42",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-43",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-44",
+      "status": "failed",
+      "durationMs": 2,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-45",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-46",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-47",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-48",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-49",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-50",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-51",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-52",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-53",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-54",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-55",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-56",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-57",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-58",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-59",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-60",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-61",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-62",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-63",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-64",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-65",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-66",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-67",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-68",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-69",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-70",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-71",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-72",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-73",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-74",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-75",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-76",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-77",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-78",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-79",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-80",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-81",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-82",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-83",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-84",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-85",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-86",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-87",
+      "status": "failed",
+      "durationMs": 2,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-88",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-89",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-90",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-91",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-92",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-93",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-94",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-95",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-96",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-97",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-98",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-99",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-100",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-101",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-102",
+      "status": "failed",
+      "durationMs": 2,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-103",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-104",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-105",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-106",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-107",
+      "status": "failed",
+      "durationMs": 2,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-108",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-109",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    },
+    {
+      "name": "stability-cycle-110",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "keyboard.press: Target page, context or browser has been closed",
+      "screenshot": null
+    }
+  ],
+  "errors": [],
+  "requestCount": 4211,
+  "fatal": "electronApplication.evaluate: Target page, context or browser has been closed",
+  "cleaned": true,
+  "root": "removed isolated FX14 profile"
+}
