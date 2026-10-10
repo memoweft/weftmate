@@ -14,17 +14,18 @@ import android.widget.TextView
 
 /** Native compatibility palette generated from design/tokens/tokens.json. */
 object Weave {
-    const val accent = DesignTokens.nativeAccent
-    const val ink = DesignTokens.nativeInk
-    const val secondary = DesignTokens.nativeSecondary
-    const val muted = DesignTokens.nativeMuted
-    const val canvas = DesignTokens.nativeCanvas
-    const val surface = DesignTokens.nativeSurface
-    const val soft = DesignTokens.nativeSoft
-    const val accentSoft = DesignTokens.nativeAccentSoft
-    const val line = DesignTokens.nativeLine
+    var dark = false
+    val accent get() = if (dark) DesignTokens.nativeDarkAccent else DesignTokens.nativeAccent
+    val ink get() = if (dark) DesignTokens.nativeDarkInk else DesignTokens.nativeInk
+    val secondary get() = if (dark) DesignTokens.nativeDarkSecondary else DesignTokens.nativeSecondary
+    val muted get() = if (dark) DesignTokens.nativeDarkMuted else DesignTokens.nativeMuted
+    val canvas get() = if (dark) DesignTokens.nativeDarkCanvas else DesignTokens.nativeCanvas
+    val surface get() = if (dark) DesignTokens.nativeWebSurfaceDark else DesignTokens.nativeWebSurfaceLight
+    val soft get() = if (dark) DesignTokens.nativeDarkSoft else DesignTokens.nativeSoft
+    val accentSoft get() = if (dark) DesignTokens.nativeDarkAccentSoft else DesignTokens.nativeAccentSoft
+    val line get() = if (dark) DesignTokens.nativeDarkLine else DesignTokens.nativeLine
     const val lineStrong = DesignTokens.nativeLineStrong
-    const val danger = DesignTokens.nativeDanger
+    val danger get() = if (dark) DesignTokens.nativeDarkDanger else DesignTokens.nativeDanger
     const val overlay = DesignTokens.nativeOverlay
 
     fun dp(context: Context, value: Int): Int = (context.resources.displayMetrics.density * value).toInt()

@@ -1,0 +1,21 @@
+{
+  "native": {
+    "value": "system",
+    "systemDark": false
+  },
+  "snapshot": {
+    "theme": "dark",
+    "surface": " #262723",
+    "dpr": 1.274999976158142,
+    "topbar": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    }
+  }
+}

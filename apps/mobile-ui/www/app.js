@@ -494,7 +494,7 @@ function processEvent(message){const {event,data}=message;if(state.page==='goals
   if(event==='notifications.permission'&&state.page==='notifications')page('notifications');
   if(event==='theme.system')state.nativeSystemDark=!!data.dark;
   if(event==='theme.system'&&state.appearance==='system'){
-    document.documentElement.dataset.theme=data.dark?'dark':'light';document.documentElement.style.colorScheme=data.dark?'dark':'light';
+    applyTheme('system');
   }
   if(event==='navigation.conversation'&&data.conversationId)selectConversation(data.conversationId);
   if(event==='notification.otherAccount')toast('这条提醒属于另一账户，请切回对应账户查看');

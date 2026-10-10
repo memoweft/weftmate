@@ -19,7 +19,7 @@ globalThis.WeftUiCore.releaseNotes = [
       "记忆整理遇到中断时可以继续恢复，减少漏掉内容或重复整理的情况。"
     ],
     "audience": "mobile",
-    "version": "0.8.24"
+    "version": "0.8.25"
   },
   {
     "date": "2026-10-10",
