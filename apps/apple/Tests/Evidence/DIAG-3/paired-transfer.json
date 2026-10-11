@@ -1,0 +1,9 @@
+{
+  "method": "Existing iPhone/Watch pair, both native apps, synthetic in-memory host; inspect phone local Watch inbox only. No pairing or system-settings changes.",
+  "passed": true,
+  "receivedRecords": 2,
+  "events": [
+    "app.start",
+    "app.state"
+  ]
+}

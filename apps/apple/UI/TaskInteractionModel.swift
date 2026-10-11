@@ -231,7 +231,7 @@ private struct SavedTaskResponse: Codable {
             let intent = try ApprovalDecisionIntent(scope: scope, approval: approval, outcome: outcome, requestID: UUID().uuidString, decisionScope: decisionScope)
             try save(SavedTaskResponse(approval: intent, question: nil))
             await submit(key)
-        } catch { errors[key] = message(error) }
+        } catch { RunLogRuntime.shared.failure(.approvalFailure, error: error, phase: "approval"); errors[key] = message(error) }
     }
     func answer(_ batch: SessionQuestionBatch, answers: [QuestionAnswerItem]) async {
         let key = "question:" + batch.id
@@ -240,7 +240,7 @@ private struct SavedTaskResponse: Codable {
             let intent = try QuestionAnswerIntent(scope: scope, question: batch, answers: answers, requestID: UUID().uuidString)
             try save(SavedTaskResponse(approval: nil, question: intent))
             await submit(key)
-        } catch { errors[key] = message(error) }
+        } catch { RunLogRuntime.shared.failure(.approvalFailure, error: error, phase: "approval"); errors[key] = message(error) }
     }
     /// A lost response is first read back. Only an explicit retry can reuse the same persisted payload.
     func continueOriginal(_ key: String) async {
@@ -275,6 +275,7 @@ private struct SavedTaskResponse: Codable {
             notices[key] = record.approval != nil ? "决定已登记，等待执行端确认。" : "回答已登记，等待原生接收确认。"
             await refreshCurrent()
         } catch {
+            RunLogRuntime.shared.failure(.approvalFailure, error: error, phase: "approval")
             guard isCurrent, token == generation else { return }
             notices[key] = "提交结果待核对，原请求已保留。"; errors[key] = message(error)
             await refreshCurrent()
@@ -331,7 +332,7 @@ private struct SavedTaskResponse: Codable {
             let key = "question:" + row.id
             if var record = response(key), !record.registered, let intent = record.question, row.registers(intent) {
                 record.registered = true
-                do { try save(record) } catch { errors[key] = message(error) }
+                do { try save(record) } catch { RunLogRuntime.shared.failure(.approvalFailure, error: error, phase: "approval"); errors[key] = message(error) }
             }
             if row.status == .unavailable || row.outcome == .cancelled { notices[key] = "这个问题当前已失效，未取消其他任务。" }
             else if let request = response(key)?.requestId, row.acceptedAnswer(requestID: request) { notices[key] = "执行端已接收这次回答。" }

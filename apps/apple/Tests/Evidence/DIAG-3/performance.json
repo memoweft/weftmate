@@ -1,0 +1,59 @@
+{
+  "method": "Same final Debug app; double-gated synthetic About harness, five isolated launches with logging disabled and enabled. Readiness is own AX openRunLog availability; termination is native applicationShouldTerminate. This isolates logging overhead, not a pre-change binary benchmark.",
+  "runs": {
+    "without_logging": [
+      {
+        "launchToAboutReadyMs": 2680.194,
+        "quitAfterReadyMs": 371.555,
+        "exitCode": 0
+      },
+      {
+        "launchToAboutReadyMs": 2302.476,
+        "quitAfterReadyMs": 406.492,
+        "exitCode": 0
+      },
+      {
+        "launchToAboutReadyMs": 1840.517,
+        "quitAfterReadyMs": 390.99,
+        "exitCode": 0
+      },
+      {
+        "launchToAboutReadyMs": 2704.734,
+        "quitAfterReadyMs": 433.001,
+        "exitCode": 0
+      },
+      {
+        "launchToAboutReadyMs": 2464.273,
+        "quitAfterReadyMs": 395.614,
+        "exitCode": 0
+      }
+    ],
+    "with_logging": [
+      {
+        "launchToAboutReadyMs": 1690.906,
+        "quitAfterReadyMs": 382.186,
+        "exitCode": 0
+      },
+      {
+        "launchToAboutReadyMs": 1536.911,
+        "quitAfterReadyMs": 376.007,
+        "exitCode": 0
+      },
+      {
+        "launchToAboutReadyMs": 2162.949,
+        "quitAfterReadyMs": 363.133,
+        "exitCode": 0
+      },
+      {
+        "launchToAboutReadyMs": 1863.259,
+        "quitAfterReadyMs": 67.576,
+        "exitCode": 0
+      },
+      {
+        "launchToAboutReadyMs": 1725.174,
+        "quitAfterReadyMs": 77.702,
+        "exitCode": 0
+      }
+    ]
+  }
+}

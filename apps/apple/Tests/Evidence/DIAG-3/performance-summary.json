@@ -1,0 +1,23 @@
+{
+  "macControl": {
+    "without_logging": {
+      "launchMedianMs": 2464.273,
+      "quitMedianMs": 395.614
+    },
+    "with_logging": {
+      "launchMedianMs": 1725.174,
+      "quitMedianMs": 363.133
+    }
+  },
+  "iphoneXCTestControl": {
+    "False": {
+      "launchMedianMs": 6069.139,
+      "forcedTerminateMedianMs": 1069.33
+    },
+    "True": {
+      "launchMedianMs": 5974.836,
+      "forcedTerminateMedianMs": 1063.302
+    }
+  },
+  "interpretation": "No slowdown observed in same-binary controls; sequential order/cache and automation overhead prevent a claim of speedup or pure first-frame latency. No real-device timing claim."
+}

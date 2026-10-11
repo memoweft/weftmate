@@ -17,10 +17,15 @@ struct WeftMateRootView: View {
     @Environment(\.openWindow) private var openWindow
     #endif
     @ObservedObject var model: AppleAppModel
+    @ObservedObject private var runLog = RunLogRuntime.shared
+    @State private var runLogOpen = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
+            if runLog.notify {
+                Button { runLogOpen = true; runLog.notify = false } label: { InlineNotice(message: "上次没有正常结束，已留下运行记录。点击查看。", isError: true) }.buttonStyle(.plain).padding(AppleTokens.Space.p8).accessibilityIdentifier("previousRunNotice")
+            }
             if model.developmentRouteEnabled {
                 WeftLabel("局域网开发联调", icon: "cloud", size: 16)
                     .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.secondary)
@@ -44,6 +49,13 @@ struct WeftMateRootView: View {
         #if os(iOS)
         .overlay(alignment: .bottom) { ArchiveUndoBar(app: model) }
         #endif
+        .onChange(of: model.session?.verification) { _, _ in runLog.connection(model.offline.hostOffline ? "offline" : model.session == nil ? "login_required" : "online") }
+        .onReceive(model.offline.$hostOffline) { offline in runLog.connection(offline ? "offline" : model.session == nil ? "login_required" : "online") }
+        #if os(iOS)
+            .fullScreenCover(isPresented: $runLogOpen) { RunLogView(onClose: { runLogOpen = false }) }
+            #else
+            .sheet(isPresented: $runLogOpen) { RunLogView(onClose: { runLogOpen = false }) }
+            #endif
         .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
         .sheet(item: Binding(get: { model.deletionInSettings ? nil : model.deletionCandidate }, set: { model.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: model) }
         #if os(iOS)
@@ -107,6 +119,11 @@ struct WeftMateRootView: View {
             }
             #endif
             await model.start()
+            #if DEBUG && os(macOS)
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--diag3-native-review") {
+                await DIAG3MacReview.run(); return
+            }
+            #endif
             #if DEBUG && os(macOS)
             if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--lg2-capture") {
                 NSApplication.shared.accessibilitySetValue(true, forAttribute: NSAccessibility.Attribute(rawValue: "AXEnhancedUserInterface"))

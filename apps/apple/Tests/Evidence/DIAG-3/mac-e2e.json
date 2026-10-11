@@ -1,0 +1,79 @@
+{
+  "checks": [
+    {
+      "case": "mac-empty-light",
+      "exitCode": -9,
+      "forced": true,
+      "captures": [
+        "mac-empty-light-diag3-records.png"
+      ],
+      "abnormalCount": 0
+    },
+    {
+      "case": "mac-records-light",
+      "exitCode": 0,
+      "forced": false,
+      "captures": [
+        "mac-records-light-diag3-banner.png",
+        "mac-records-light-diag3-records.png"
+      ],
+      "abnormalCount": 1
+    },
+    {
+      "case": "mac-normal-light",
+      "exitCode": 0,
+      "forced": false,
+      "captures": [
+        "mac-normal-light-diag3-records.png"
+      ],
+      "abnormalCount": 1
+    },
+    {
+      "case": "mac-read-failure-light",
+      "exitCode": 0,
+      "forced": false,
+      "captures": [
+        "mac-read-failure-light-diag3-records.png"
+      ],
+      "abnormalCount": 0
+    },
+    {
+      "case": "mac-empty-dark",
+      "exitCode": -9,
+      "forced": true,
+      "captures": [
+        "mac-empty-dark-diag3-records.png"
+      ],
+      "abnormalCount": 0
+    },
+    {
+      "case": "mac-records-dark",
+      "exitCode": 0,
+      "forced": false,
+      "captures": [
+        "mac-records-dark-diag3-banner.png",
+        "mac-records-dark-diag3-records.png"
+      ],
+      "abnormalCount": 1
+    },
+    {
+      "case": "mac-normal-dark",
+      "exitCode": 0,
+      "forced": false,
+      "captures": [
+        "mac-normal-dark-diag3-records.png"
+      ],
+      "abnormalCount": 1
+    },
+    {
+      "case": "mac-read-failure-dark",
+      "exitCode": 0,
+      "forced": false,
+      "captures": [
+        "mac-read-failure-dark-diag3-records.png"
+      ],
+      "abnormalCount": 0
+    }
+  ],
+  "method": "Actual app processes, kill -9 first process, restart same namespace; native applicationShouldTerminate then restart; own in-app AX and own-window screenshot capture. No external automation or system settings."
+}

@@ -1,0 +1,7 @@
+{
+  "remainingOwnProcesses": [],
+  "simulatorsShutdown": true,
+  "activeCleanupAtFinal": 0,
+  "developmentInterruptedXcodebuild": 1,
+  "notes": "Only task-owned app PIDs / DIAG3 builds were targeted during failed attempts. Native runners ended their own processes. Existing crash dialogs and reports preserved. Final remaining own processes must be zero."
+}

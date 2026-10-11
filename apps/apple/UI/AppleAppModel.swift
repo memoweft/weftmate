@@ -55,6 +55,7 @@ extension AppleAppModel {
             publishAdoption(record, note: "已保存明确选择的模型和原采用请求。", accountEpoch: accountEpoch)
             await runAdoption(record, allowSubmission: true, conversation: conversation, accountEpoch: accountEpoch)
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             guard accountEpoch == epoch else { return }
             adoptionError = (error as? LocalizedError)?.errorDescription ?? "采用准备未完成，原记录和草稿保留。"
         }
@@ -111,6 +112,7 @@ extension AppleAppModel {
                     }
                 }
             } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
                 var saved = (try? await local.operation(for: record.intent)) ?? record
                 if case APIFailure.server(409, let code) = error,
                    ["CONVERSATION_SYNC_CHANGED", "LOCAL_TURN_UNCONFIRMED"].contains(code), saved.knownCommandId == nil {
@@ -189,6 +191,7 @@ extension AppleAppModel {
                     try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: changed))
                 }
             } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
                 guard self.epoch == accountEpoch, !Task.isCancelled else { return }
                 self.publishAdoption(current, note: "连接中断，采用核对已暂停；原请求保留。", accountEpoch: accountEpoch)
             }
@@ -338,6 +341,7 @@ extension AppleAppModel {
                                     modelName: model.name)
             continuationNotices[key] = nil
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             guard accountEpoch == epoch else { return }
             continuationNotices[key] = friendly(error)
         }
@@ -367,6 +371,7 @@ extension AppleAppModel {
             attachmentDrafts[key, default: []].append(contentsOf: prepared)
             attachmentAttempts[key] = nil; continuationNotices[key] = nil
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             guard accountEpoch == epoch else { return }
             continuationNotices[key] = (error as? LocalizedError)?.errorDescription ?? "文件未添加，请重新选择。"
         }
@@ -465,6 +470,7 @@ extension AppleAppModel {
             preparingMessages[key] = nil
             await runCommand(record, allowSubmission: true, conversation: conversation, accountEpoch: accountEpoch)
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             guard accountEpoch == epoch else { return }
             continuationNotices[key] = (error as? LocalizedError)?.errorDescription ?? "发送准备未完成，草稿保留。"
         }
@@ -520,6 +526,7 @@ extension AppleAppModel {
                     }
                 }
             } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
                 // The SDK deliberately does not expose a guessed submission stage. A lost reply remains uncertain.
                 var saved = (try? await local.command(for: record.intent)) ?? record
                 if saved.state == .queued || saved.state == .uncertain {
@@ -566,6 +573,7 @@ extension AppleAppModel {
             guard accountEpoch == epoch, cleared, drafts[key] == text else { return }
             drafts[key] = nil; pendingDrafts[key] = nil; draftRevisions[key] = UUID(); draftSaveStates[key] = nil
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             guard accountEpoch == epoch else { return }
             draftError = "请求已受理，但本机草稿清理未完成。原请求和草稿均保留。"
         }
@@ -655,6 +663,7 @@ extension AppleAppModel {
                                     conversationKey: Self.draftKey(for: conversation), hostId: record.intent.hostId,
                                     sessionId: sessionID, messages: snapshot, observedThroughSeq: tracker.nextSeq)
                             } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
                                 if self.epoch == accountEpoch { self.cacheError = "当前记录已读取，但本机历史缓存尚未更新。" }
                             }
                         }
@@ -665,6 +674,7 @@ extension AppleAppModel {
                     }
                 }
             } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
                 guard self.epoch == accountEpoch, !Task.isCancelled else { return }
                 let prior = self.commandPresentations[id]
                 self.commandPresentations[id] = .init(record: prior?.record ?? record, receipt: prior?.receipt ?? receipt,
@@ -920,6 +930,7 @@ final class AppleAppModel: ObservableObject {
             }
             throw APIFailure.transport(.timeout)
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             if token == epoch { projectError = (projectCreatedSessionID == nil ? "新建结果尚未确认。再次点新建会先核对原请求。" : "对话已创建，深入思考尚未确认。请重试保存后开始聊天。") + ProjectPresentation.error(error) }
         }
     }
@@ -1068,6 +1079,7 @@ final class AppleAppModel: ObservableObject {
             deletionCandidate = nil
             await refresh()
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             guard actionEpoch == epoch else { return }
             if case APIFailure.server(409, "SESSION_BUSY") = error { lifecycleError = "任务停止尚未确认，请稍后重试删除。" }
             else if forget { conversationForget.preview = nil; lifecycleError = "遗忘范围已变化或删除未完成，请重新读取后确认。" }
@@ -1103,6 +1115,7 @@ final class AppleAppModel: ObservableObject {
                 if edit { setDraft(task.text, for: conversation, accountEpoch: actionEpoch) }
             } else { queueNotice = "取消尚未确认，请检查状态后重试。" }
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             guard actionEpoch == epoch else { return }
             if case APIFailure.server(409, _) = error { queueNotice = "已经开始，可以用停止" }
             else { queueNotice = "取消未确认，请重试。" }
@@ -1219,6 +1232,7 @@ final class AppleAppModel: ObservableObject {
             publish(record, note: "已保存原请求，正在核对服务端。", accountEpoch: token)
             await runCommand(record, allowSubmission: true, conversation: row, accountEpoch: token)
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             if token == epoch { continuationNotices[Self.draftKey(for: conversation)] = "重新生成尚未完成，原请求已保留，请重试。" }
         }
     }
@@ -1317,6 +1331,7 @@ final class AppleAppModel: ObservableObject {
                     transport = try URLSessionTransport(developmentProxyPort: port)
                     routeEnabled = true
                 } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
                     configurationError = "局域网开发联调参数无效，请检查启动参数。"
                 }
             } else {
@@ -1360,6 +1375,7 @@ final class AppleAppModel: ObservableObject {
             commandStore = local
             draftPersistence = LocalAppleDraftPersistence(store: local)
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             commandStore = nil
             draftPersistence = nil
             initialDraftError = "无法打开本机草稿存储。原有文件保留，暂时不能编辑或发送。"
@@ -1369,6 +1385,7 @@ final class AppleAppModel: ObservableObject {
             if uiTesting && localDirectory == nil { throw LocalEndpointOperationFailure.storageUnavailable }
             endpointStore = try LocalEndpointOperationStore(directory: localDirectory)
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             endpointStore = nil
             initialAdoptionError = "本机采用记录未能打开，原文件保留，暂时不能接通新会话。"
         }
@@ -1479,6 +1496,7 @@ final class AppleAppModel: ObservableObject {
                 await refresh()
             }
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             // A valid stored account can survive a temporary network outage.
             session = await client.currentSession()
             if session != nil {
@@ -1523,6 +1541,7 @@ final class AppleAppModel: ObservableObject {
             await loadScopedDrafts(result)
             await refresh()
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             guard actionEpoch == epoch else { return }
             authError = friendly(error)
         }
@@ -1555,6 +1574,7 @@ final class AppleAppModel: ObservableObject {
                 session = verified
                 verificationPending = false
             } catch {
+            RunLogRuntime.shared.failure(.syncFailure, error: error, phase: "sync")
                 guard actionEpoch == epoch else { return }
                 if await expireSessionIfNeeded(error) { return }
                 conversationsError = friendly(error)
@@ -1605,6 +1625,7 @@ final class AppleAppModel: ObservableObject {
                 catch { if actionEpoch == epoch { cacheError = "列表已读取，但本机缓存尚未更新。" } }
             }
         } catch {
+            RunLogRuntime.shared.failure(.syncFailure, error: error, phase: "sync")
             guard actionEpoch == epoch else { return }
             if await expireSessionIfNeeded(error) { return }
             conversationsError = friendly(error)
@@ -1619,6 +1640,7 @@ final class AppleAppModel: ObservableObject {
             guard actionEpoch == epoch else { return }
             devices = result
         } catch {
+            RunLogRuntime.shared.failure(.syncFailure, error: error, phase: "sync")
             guard actionEpoch == epoch else { return }
             if await expireSessionIfNeeded(error) { return }
             devicesError = friendly(error)
@@ -1656,6 +1678,7 @@ final class AppleAppModel: ObservableObject {
                     historyCachedAt = cached.cachedAt
                 }
             } catch {
+            RunLogRuntime.shared.failure(.syncFailure, error: error, phase: "sync")
                 guard actionEpoch == epoch, historyRequest == request else { return }
                 cacheError = "本机历史缓存未能读取，原文件保留。"
             }
@@ -1680,6 +1703,7 @@ final class AppleAppModel: ObservableObject {
             historyCachedAt = nil
             historyBusy = false
         } catch {
+            RunLogRuntime.shared.failure(.syncFailure, error: error, phase: "sync")
             guard actionEpoch == epoch, historyRequest == request else { return }
             historyBusy = false
             if await expireSessionIfNeeded(error) { return }
@@ -1775,6 +1799,7 @@ final class AppleAppModel: ObservableObject {
                 }
                 if !page.hasMore { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty || self.conversations.first(where: { $0.id == conversation.id })?.running == true)) }
             } catch {
+            RunLogRuntime.shared.failure(.syncFailure, error: error, phase: "sync")
                 if error is CancellationError { return }
                 guard actionEpoch == epoch, request == historyRequest else { return }
                 if await expireSessionIfNeeded(error) { return }
@@ -1848,6 +1873,7 @@ final class AppleAppModel: ObservableObject {
                 approvals: watchApprovals, completedTaskIDs: completed)
             watchBridge.publish(snapshot); return try JSONEncoder().encode(snapshot)
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             guard actionEpoch == epoch else { return nil }
             let snapshot = WatchTimelineProjection.connectionFailure(error, accountKey: session.account.ownerId)
             watchBridge.publish(snapshot)
@@ -1873,7 +1899,9 @@ final class AppleAppModel: ObservableObject {
         else { await responder.decide(approval, outcome: value, decisionScope: value == .allowedOnce ? .once : nil) }
         guard actionEpoch == epoch else { return false }
         _ = await watchSnapshotBytes()
-        return responder.errors[key] == nil && responder.isRegistered(key)
+        let success = responder.errors[key] == nil && responder.isRegistered(key)
+        if !success { RunLogRuntime.shared.record(.approvalFailure, ["phase": "approval", "code": "UNCONFIRMED"]) }
+        return success
     }
     #endif
 
@@ -1995,6 +2023,7 @@ final class AppleAppModel: ObservableObject {
                         self.draftSaveStates[key] = .saved
                     }
                 } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
                     guard self.epoch == actionEpoch, !Task.isCancelled else { return }
                     self.draftSaveStates[key] = .failed
                     self.draftError = "草稿尚未保存，当前文字仍在这里。请恢复本机存储后重试。"
@@ -2026,6 +2055,7 @@ final class AppleAppModel: ObservableObject {
                     draftSaveStates[key] = .saved
                 }
             } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
                 guard actionEpoch == epoch else { return false }
                 draftSaveStates[key] = .failed
                 draftError = "草稿未能保存，本次操作尚未完成。当前文字和原有保存版本都保留。"
@@ -2082,6 +2112,7 @@ final class AppleAppModel: ObservableObject {
                 })
             }
         } catch {
+            RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             guard actionEpoch == epoch else { return }
             draftError = "本机草稿未能读取。原有文件保留，暂时不能编辑或发送。"
         }

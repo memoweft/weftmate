@@ -15,6 +15,16 @@ final class PhoneWatchTimelineBridge: NSObject, WCSessionDelegate, @unchecked Se
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
     nonisolated func sessionDidDeactivate(_ session: WCSession) { session.activate() }
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
+        if message["action"] as? String == "run_log", let data = message["runLog"] as? Data {
+            let reply = WatchReply(replyHandler)
+            Task { @MainActor in
+                await RunLogRuntime.shared.ready()
+                let accepted = await RunLogRuntime.shared.store.receiveWatch(data)
+                await RunLogRuntime.shared.reload()
+                reply.call(["accepted": accepted])
+            }
+            return
+        }
         let action = message["action"] as? String, sessionID = message["sessionID"] as? String,
             approvalID = message["approvalID"] as? String, outcome = message["outcome"] as? String
         let reply = WatchReply(replyHandler)
