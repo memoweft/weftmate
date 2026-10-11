@@ -1,6 +1,7 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile, rm } from 'node:fs/promises';
+
 import { join,resolve } from 'node:path';
 import { monitorEventLoopDelay } from 'node:perf_hooks';
 import { scanStatistics } from '../../src/personal-data/statistics.mjs';

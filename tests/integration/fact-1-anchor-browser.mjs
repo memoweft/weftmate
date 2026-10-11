@@ -1,7 +1,8 @@
+import { managedMkdtempSync as mkdtempSync } from '../helpers/managed-temp.mjs';
 // Run under Electron; exercises the actual public-page reader without any model.
 import assert from 'node:assert/strict';
 import { app, BrowserWindow, session } from 'electron';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createPersonalBrowserReader } from '../../src/personal-browser/index.mjs';
 const root=mkdtempSync('C:/Temp/weftmate-fact1-anchor-');

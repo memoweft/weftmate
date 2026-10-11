@@ -1,8 +1,9 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Isolated real Electron/DSH/account/Core startup, without inference or real user data. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+
 import { dirname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 

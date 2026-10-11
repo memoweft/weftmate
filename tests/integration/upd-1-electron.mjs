@@ -1,3 +1,4 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real product entry + real DSH; synthetic held SSE model, local signed update source. */
@@ -6,9 +7,9 @@ import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { generateKeyPairSync, createPublicKey, randomUUID } from 'node:crypto';
-import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { tmpdir } from 'node:os';
+
 import { keyId } from '../../src/personal-update/manifest.mjs';
 import { packageRelease } from '../../scripts/release/package.mjs';
 import { personalAccessUiResources } from '../../src/personal-access-ui/index.mjs';

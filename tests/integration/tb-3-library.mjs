@@ -1,11 +1,12 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
-import { mkdtemp,mkdir,writeFile,readFile,rename,rm,copyFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, rename, rm, copyFile } from 'node:fs/promises';
 import { deflateSync } from 'node:zlib';
-import { tmpdir } from 'node:os';
+
 import { join,resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';

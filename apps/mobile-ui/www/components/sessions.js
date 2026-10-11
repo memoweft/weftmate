@@ -362,6 +362,7 @@ function toolLabel(name){return uiCore.toolLabel(name)}
 
 function applyTheme(value){state.appearance=value;const systemDark=window.weftNative&&typeof state.nativeSystemDark==='boolean'?state.nativeSystemDark:systemThemeMedia.matches;const dark=value==='dark'||value==='system'&&systemDark;
   document.documentElement.dataset.theme=dark?'dark':'light';document.documentElement.style.colorScheme=dark?'dark':'light';
+  globalThis.WeftAppearanceControls.apply(mobileAppearanceStore.value,dark?'dark':'light');
   if(globalThis.WeftSystemBars)WeftSystemBars.sync();else syncNativeSystemBars(dark)}
 function syncNativeSystemBars(dark){if(window.weftNative&&typeof window.weftNative.onmessage==='function')void call('settings.appearance',{effectiveDark:dark,renderedAppearance:state.appearance||'system'}).catch(()=>{});}
 globalThis.weftSyncSystemBars=syncNativeSystemBars;
