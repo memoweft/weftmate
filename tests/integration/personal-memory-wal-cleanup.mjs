@@ -1,11 +1,12 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Authenticated retry of an actual Core WAL cleanup, with one synthetic reader lock. */
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { existsSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, realpathSync, rmSync } from 'node:fs';
+
 import { join, sep } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { createPersonalMemoryManager } from '../../src/personal-memory/index.mjs';

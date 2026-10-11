@@ -90,11 +90,9 @@ jobs:
           sudo chown root:root node_modules/electron/dist/chrome-sandbox
           sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
 
-      # CI-1: vendor:dsh consumes an already built external checkout; it does
-      # not fetch/build DSH. The pin repo is reachable but has no lib/dist
-      # artifacts, and the daily checkout also carries local modifications.
-      # Keep these release gates visible as skipped, never claim them verified.
-      # Restore them when a reproducible prebuilt pin artifact is available.
+      # The separate pinned-vendor and Windows package jobs build and verify
+      # the runtime automatically with carried patches. This ordinary unit job
+      # intentionally has no DSH runtime; the full contract gate remains separate.
       - name: Vendor DSH runtime
         if: ${{ false }}
         run: npm run vendor:dsh

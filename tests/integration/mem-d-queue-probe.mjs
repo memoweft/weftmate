@@ -1,5 +1,6 @@
-import { mkdtemp, readFile, mkdir, writeFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
+import { readFile, mkdir, writeFile, rm } from 'node:fs/promises';
+
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 const repo=resolve(process.argv[2]??'.'), output=resolve(process.argv[3]??'tests/evidence/mem-d/queue-before-main.json');

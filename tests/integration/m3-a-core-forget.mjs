@@ -1,8 +1,9 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Verify FG-1/FG-2 on an isolated copy of an M3-A acceptance World, with no paid model. */
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, copyFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, copyFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { tmpdir } from 'node:os';
+
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createPersonalMemoryManager } from '../../src/personal-memory/index.mjs';

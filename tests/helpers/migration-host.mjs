@@ -1,10 +1,11 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from './managed-temp.mjs';
 /** Real main.mjs + pinned DSH, synthetic provider and isolated local identity. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, rmSync, realpathSync } from 'node:fs';
+
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';

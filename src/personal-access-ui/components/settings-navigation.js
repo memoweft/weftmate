@@ -104,7 +104,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const move = (id, element) => { if (element) panels.get(id).append(element); };
         move('approvals', ui.byId('approval-settings-heading').closest('section'));
         move('appearance', ui.byId('appearance-heading').closest('section'));
-        if (globalThis.WeftReplyMotion) { const control=WeftReplyMotion.preferenceControl(); panels.get('appearance').append(WeftSettingsControls.row('减少动态效果', '跟随系统偏好；开启后所有状态与回复动效停止。', control)); WeftSettingsControls.select(control); }
+
         move('account', ui.byId('account-heading').closest('section'));
         move('account', ui.byId('cloud-account'));
         move('devices', ui.byId('devices-heading').closest('section'));
@@ -159,13 +159,8 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             panels.get('general').append(globalThis.WeftSettingsControls.row('运行日志', '保留最近 7 天的运行状态，不记录对话、记忆内容或密钥。', logs));
         }
         description('general', '语言', '当前界面使用简体中文。', '简体中文');
-        const descriptions = { theme: '选择适合当前环境的颜色模式。', accent: '用于按钮、选中状态和交互提示。', fontSize: '调整阅读与输入的文字大小。' };
-        for (const [key, help] of Object.entries(descriptions)) {
-            const control = ui.byId('appearance-' + key), label = control.closest('label'), name = label.childNodes[0].textContent;
-            control.setAttribute('aria-label', name); control.remove(); label.remove();
-            const row = globalThis.WeftSettingsControls.row(name, help, control); panels.get('appearance').append(row);
-            if (key === 'theme') { const segmented = globalThis.WeftSettingsControls.segmented(control); row.append(segmented); }
-        }
+        panels.get('appearance').replaceChildren(node('p', 'muted', '保存到这台设备。'));
+        WeftAppearanceControls.mount(panels.get('appearance'), { get: WeftDesktop.getAppearance, set: WeftDesktop.setAppearance, toast: ui.toast });
         move('memory', ui.byId('memory-view'));
 
         const updates = node('section', 'settings-updates'); updates.id = 'settings-updates'; panels.get('about').append(updates);

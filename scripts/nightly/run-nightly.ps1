@@ -11,6 +11,7 @@ param(
     [switch]$SkipApple,
     [switch]$SkipAndroid,
     [switch]$DevicesOnly,
+    [string]$Phases,
     [string]$Scene
 )
 $ErrorActionPreference = 'Stop'
@@ -22,6 +23,7 @@ if ($Candidate) { $arguments += '--candidate' }
 if ($SkipApple) { $arguments += '--skip-apple' }
 if ($SkipAndroid) { $arguments += '--skip-android' }
 if ($DevicesOnly) { $arguments += '--devices-only' }
+if ($Phases) { $arguments += @('--phases', $Phases) }
 if ($Scene) { $arguments += @('--scene', $Scene) }
 # Stable Node bootstrap owns the global lock; tested engine owns deadline, phases and cleanup.
 & node @arguments

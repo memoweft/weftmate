@@ -15,6 +15,7 @@ import { writeFile, copyFile } from 'node:fs/promises'
 import { rootCertificates } from 'node:tls'
 import { downloadFrp } from './download-frp.mjs'
 import { stageRuntimeEntry } from './windows-package-policy.mjs'
+import { assertRuntimeIdentity } from './dsh-runtime-identity.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, '..')
@@ -58,6 +59,7 @@ if (stageRoot === repoRoot || !isInside(dirname(stageRoot), stageRoot) || !isIns
   process.exit(1)
 }
 
+await assertRuntimeIdentity(runtime, repoRoot)
 await assertNoReparsePoints(runtime)
 await mkdir(stageRoot, { recursive: true })
 // Delete only the exact runtime child below the already validated stage root.

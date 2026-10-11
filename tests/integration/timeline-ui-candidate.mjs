@@ -1,9 +1,10 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Isolated personal host + synthetic DSH log. No model or daily data is used. */
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
 import { createServer } from 'node:http'
-import { mkdtempSync, readFileSync, readdirSync, realpathSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { readFileSync, readdirSync, realpathSync } from 'node:fs'
+
 import { join } from 'node:path'
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs'
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs'
