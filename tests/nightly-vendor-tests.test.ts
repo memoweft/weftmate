@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { managedMkdtemp } from './helpers/managed-temp.mjs'
 import { join } from 'node:path'
 import test from 'node:test'
 import { runVendorTests, pinnedBuild } from '../scripts/nightly/vendor-tests.mjs'
@@ -10,7 +10,7 @@ import { runtimeIdentity, assertRuntimeIdentity } from '../scripts/dsh-runtime-i
 import { preparePatchedCheckout } from '../scripts/vendor-dsh.mjs'
 
 test('nightly vendor step records passes and failures and makes failed assertions red in the actual report', async () => {
-  const out = await mkdtemp(join(tmpdir(), 'weftmate-nightly-vendor-'))
+  const out = await managedMkdtemp('weftmate-nightly-vendor-')
   try {
     const worktree = join(out, 'synthetic-worktree')
     const bin = join(worktree, 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh/lib')
@@ -48,7 +48,7 @@ test('nightly vendor step records passes and failures and makes failed assertion
 })
 
 test('runtime identity covers sorted patch names and all bytes; legacy, changed pin and changed patch are stale', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'weftmate-nightly-identity-'))
+  const root = await managedMkdtemp('weftmate-nightly-identity-')
   try {
     const runtime = join(root, 'vendor/dsh-runtime')
     await mkdir(join(root, 'tests/contract'), { recursive: true })
@@ -76,7 +76,7 @@ test('runtime identity covers sorted patch names and all bytes; legacy, changed 
 })
 
 test('nightly rebuilds a present but stale runtime before running vendor tests', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'weftmate-nightly-stale-'))
+  const root = await managedMkdtemp('weftmate-nightly-stale-')
   try {
     const pin = { commit: 'c'.repeat(40), packageVersion: '1' }
     const runtime = join(root, 'vendor/dsh-runtime')
@@ -101,7 +101,7 @@ test('nightly rebuilds a present but stale runtime before running vendor tests',
 })
 
 test('patch build uses an independent LF clone and does not modify source branch, files or config', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'weftmate-nightly-patched-clone-'))
+  const root = await managedMkdtemp('weftmate-nightly-patched-clone-')
   try {
     const source = join(root, 'source'), checkout = join(root, 'clone'), project = join(root, 'project')
     await mkdir(source); await mkdir(join(project, 'patches/dsh'), { recursive: true })
@@ -122,7 +122,7 @@ test('patch build uses an independent LF clone and does not modify source branch
 })
 
 test('nightly finds a compiled pinned linked checkout without resetting the shared checkout', async () => {
-  const root=await mkdtemp(join(tmpdir(),'weftmate-nightly-pinned-'))
+  const root=await managedMkdtemp('weftmate-nightly-pinned-')
   try {
     const shared=join(root,'shared'), pinned=join(root,'pinned'), candidate=join(root,'candidate')
     await mkdir(shared); await mkdir(join(candidate,'tests/contract'),{recursive:true})
