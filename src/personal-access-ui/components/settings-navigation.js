@@ -126,7 +126,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const currentModel = node('p', 'model-current'); currentModel.id = 'background-current-model';
         backgroundRow.firstElementChild.append(currentModel); panels.get('models').append(backgroundRow);
         move('models', ui.byId('background-model-notice'));
-        move(globalThis.weftmateDesktop ? 'system' : 'general', system); move('models', ui.byId('account-model-section'));
+        move('system', system); move('models', ui.byId('account-model-section'));
         const form = ui.byId('account-model-form'), editor = node('dialog', 'dialog model-editor-dialog');
         editor.id = 'account-model-dialog'; editor.setAttribute('aria-labelledby', 'model-editor-title');
         const editorHead = node('div', 'dialog-head'), editorTitle = node('h2', '', '添加模型'); editorTitle.id = 'model-editor-title';
@@ -183,6 +183,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         for (const original of originals) if (original.parentNode === account) original.hidden = true;
         account.append(content); main.append(head, strip, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
         registry = globalThis.WeftUiCore.settingsRegistry({
+            system: () => { void core.refreshSystem(); },
             data: ({target}) => globalThis.WeftDataView(core,target,{toast:ui.toast}),
             notifications: () => globalThis.WeftNotificationsView(core, panels.get('notifications'), {toast:ui.toast}),
             personalization: () => globalThis.WeftPersonalizationView(core, panels.get('personalization'), 'personalization', {toast:ui.toast}),
