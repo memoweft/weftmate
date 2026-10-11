@@ -113,6 +113,7 @@ struct CloudAccountHome: View {
                 #endif
                 if let error = cloud.error { InlineNotice(message: error, isError: true) }
             }.padding(AppleTokens.Space.p24).frame(maxWidth: 468).frame(maxWidth: .infinity, maxHeight: .infinity)
+                .safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) }
                 .background(Weave.canvas).navigationTitle("WeftMate")
         }
     }
