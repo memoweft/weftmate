@@ -1,20 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { superviseExit } from './integration/bl29-rework/exit-supervisor.mjs';
 
-test('BL-29b M5 real tray/update shutdown and both runtime orders drain protocol waits', {timeout:120000}, () => {
-  const root = mkdtempSync(join(tmpdir(), 'bl29-runtime-close-'));
-  try {
-    const env = {...process.env, BL29_EVIDENCE_DIR:root, WEFTMATE_TEST_HOST_NAME:'synthetic-host'};
-    delete env.ELECTRON_RUN_AS_NODE;
-    const run = spawnSync(process.execPath, ['tests/integration/bl29-rework/probe-exit.mjs','--head-only'], {
-      env, windowsHide:true, encoding:'utf8',timeout:110000,maxBuffer:8*1024*1024,
-    });
-    assert.equal(run.status, 0, [run.error?.message,run.stderr,run.stdout].filter(Boolean).join('\n'));
-    const rows = JSON.parse(readFileSync(join(root, 'exit.json'), 'utf8'));
+test('BL-29b M5 real tray/update shutdown and both runtime orders drain protocol waits', {timeout:120000}, async t => {
+    const run = await superviseExit();
+    assert.equal(run.status, 0, JSON.stringify(run));
+    const rows = run.rows;
     assert.equal(rows.length, 5);
     for (const row of rows) {
       assert.equal(row.error, undefined, JSON.stringify(row));
@@ -26,5 +17,26 @@ test('BL-29b M5 real tray/update shutdown and both runtime orders drain protocol
         assert.ok(row.pendingWaitRequests>0, 'host UI really held a reply wait');
       }
     }
-  } finally {rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});}
+    assert.equal(run.remaining,0);assert.equal(run.rootRemoved,true);
+    assert.equal(run.registeredProcesses.length,5,'each launch records PID, executable, creation time and owned profile');
+    for(const row of run.registeredProcesses){assert.ok(row.pid>0);assert.ok(row.createdAt);assert.ok(row.executable);assert.ok(row.profile.startsWith('%TEMP%/weftmate-'));}
+    t.diagnostic(JSON.stringify({kind:'exit-five',rows:run.rows,registeredProcesses:run.registeredProcesses,cleanup:run.cleanup,remaining:run.remaining}));
+});
+
+test('BL-29c N5 parent cleans the whole owned Electron set when the driver is terminated after first window', {timeout:60000}, async t => {
+  const run = await superviseExit({args:['--head-only','--methods=tray-exit'],abortAtStage:'first-window',timeout:45000});
+  assert.notEqual(run.status,0,JSON.stringify(run));
+  assert.equal(run.lastStage.stage,'first-window');
+  assert.ok(run.cleanup.killed.length>0,'forced termination leaves real Electron children for parent cleanup');
+  assert.equal(run.remaining,0);assert.equal(run.rootRemoved,true);
+  assert.ok(run.resources.memory);assert.ok(run.resources.tcp);
+  if(process.platform==='win32')assert.ok(run.resources.memory.committedBytes>0&&run.resources.memory.limitBytes>run.resources.memory.committedBytes);
+  t.diagnostic(JSON.stringify({kind:'exit-driver-killed',status:run.status,hex:run.hex,signal:run.signal,lastStage:run.lastStage,resources:run.resources,cleanup:run.cleanup,remaining:run.remaining}));
+});
+
+test('BL-29c N5 parent deadline cleans owned children without retrying or changing product limits', {timeout:60000}, async t => {
+  const run=await superviseExit({args:['--head-only','--methods=tray-exit'],abortAtStage:'first-window',timeoutAfterStage:20,timeout:45000});
+  assert.equal(run.timedOut,true);assert.notEqual(run.status,0);
+  assert.ok(run.cleanup.killed.length>0);assert.equal(run.remaining,0);assert.equal(run.rootRemoved,true);
+  t.diagnostic(JSON.stringify({kind:'exit-driver-timeout',status:run.status,hex:run.hex,signal:run.signal,lastStage:run.lastStage,resources:run.resources,cleanup:run.cleanup,remaining:run.remaining}));
 });

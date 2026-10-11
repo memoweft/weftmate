@@ -1,7 +1,7 @@
 import { outputPath } from './evidence.mjs';
 import {_electron,chromium} from 'playwright';import {createRequire} from 'node:module';import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';import {join,resolve} from 'node:path';import {tmpdir} from 'node:os';import {pathToFileURL} from 'node:url';import {randomUUID} from 'node:crypto';
 import {startTimelineCandidate} from './fixture.mjs';import {localUiSession} from '../../helpers/local-ui-session.mjs';
-const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate({daily:true,inlineProgress:true,logicalMobile:true,sidebar:true,historyCount:0,baseTime:Date.now()});let app,browser;const report={rows:[],errors:[]};const profile=mkdtempSync(join(tmpdir(),'rev-bl29-latency-'));
+const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate({daily:true,inlineProgress:true,logicalMobile:true,sidebar:true,historyCount:0,baseTime:Date.now()});let app,browser;const report={rows:[],errors:[]};const profile=mkdtempSync(join(tmpdir(),'weftmate-bl29-latency-'));
 try{
  const main=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
  const send=async text=>{const c=await f.request('/commands',{requestId:randomUUID(),kind:'chat.message',chatId:main.chatId,modelProfileId:'local',targetDeviceId:host,text});for(let i=0;i<100;i++){if((await f.request('/commands/'+c.command.commandId)).command.state==='accepted_by_dsh')return;await pause(10);}};

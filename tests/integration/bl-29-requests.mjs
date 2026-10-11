@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
+import { startTimelineCandidate } from './bl29-rework/fixture.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const stage = process.argv.includes('--before') ? 'before' : 'after';
@@ -18,7 +18,7 @@ const out = resolve(process.env.WEFTMATE_BL29_EVIDENCE_DIR || 'tests/evidence/bl
 const pause = ms => new Promise(done=>setTimeout(done,ms));
 const f = await startTimelineCandidate({interactive:true,daily:true,logicalMobile:logical,inlineProgress:true,sidebar:true,composerMenu:true,historyCount:0,baseTime:Date.now()});
 const profile = mkdtempSync(join(tmpdir(),'weftmate-bl29-'));
-let app, browser, timer;
+let app, browser, timer, mobile;
 const report = {synthetic:true,realModelRequests:0,stage,logical,baseline,surfaces:[],checks:[]};
 const source=path=>stage==='before'?execFileSync('git',['show',baseline+':'+path],{encoding:'utf8'}):readFileSync(path,'utf8');
 function instrument() {
@@ -51,7 +51,7 @@ try {
   console.log('desktop logged in');
   await desktop.waitForFunction(()=>globalThis.__streamCore?.state.mainChat&&!__streamCore.state.refreshing&&!__streamCore.state.sessionSelecting);
   await desktop.evaluate(id=>__streamCore.selectSession(id),f.sessionId);
-  browser=await chromium.launch({headless:true});const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  browser=await chromium.launch({headless:true});mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   if(stage==='before')await mobile.route('**/*.js',route=>{const path=new URL(route.request().url()).pathname.slice(1);if(path==='bridge.js')return route.continue();return route.fulfill({contentType:'text/javascript',body:source('apps/mobile-ui/www/'+path)});});
   await mobile.goto(f.mobileUrl);await mobile.waitForFunction(()=>state.booted&&state.loggedIn);await mobile.evaluate(id=>selectSharedSession(id),f.sessionId);
   const pages=[['electron',desktop],['mobile',mobile]];
@@ -77,6 +77,13 @@ try {
     const at=Date.now();await send('另一台设备的新消息','bl29-other-message');
     for(const [surface,p] of pages){await p.getByText('另一台设备的新消息',{exact:true}).first().waitFor({state:'visible',timeout:6000});report.checks.push({name:'other-device-message',surface,ms:Date.now()-at});}
     await pause(300);
+    if (process.argv.includes('--approval-commit-delay')) {
+      const track=f.debug.service.trackToolApproval;
+      f.debug.service.trackToolApproval=async input=>{
+        if(input.action==='register_approval')await pause(500);
+        return track(input);
+      };
+    }
     let start=Date.now();const approval=await f.progress.approve('bl29-approval','Write-Output synthetic');
     await mobile.locator('#approval-bar').getByRole('button',{name:'批准',exact:true}).waitFor({state:'visible',timeout:2000});
     report.checks.push({name:'approval-visible',surface:'mobile',ms:Date.now()-start});start=Date.now();
@@ -137,5 +144,7 @@ try {
     assert.ok(row.windows.find(w=>w.name==='background').total<=3,row.surface+' background 30s budget');
     if(row.surface==='electron')assert.ok(row.windows.find(w=>w.name==='electron-minimized').total<=3,'native minimized 30s budget');
   }
-} catch(error){report.failure=error.message;report.desktopDebug=await (await app?.firstWindow())?.evaluate(()=>({text:document.body.innerText,core:!!globalThis.__streamCore,state:globalThis.__streamCore?{view:__streamCore.state.currentView,main:__streamCore.state.mainChat,refreshing:__streamCore.state.refreshing}:null})).catch(()=>null);throw error;}
+} catch(error){report.failure=error.message;report.desktopDebug=await (await app?.firstWindow())?.evaluate(()=>({text:document.body.innerText,core:!!globalThis.__streamCore,state:globalThis.__streamCore?{view:__streamCore.state.currentView,main:__streamCore.state.mainChat,refreshing:__streamCore.state.refreshing}:null})).catch(()=>null);
+  report.mobileDebug=await mobile?.evaluate(()=>({text:document.body.innerText,sharedSessionId:state.sharedSessionId,selectedChatId:uiCore.state.selectedChatId,main:uiCore.state.mainChat,context:uiCore.conversationTaskContext(),facts:uiCore.state.historyReadResult})).catch(()=>null);
+  report.currentApprovals=await f.request(`/sessions/${f.sessionId}/approvals?limit=100`).catch(()=>null);throw error;}
 finally{clearInterval(timer);writeFileSync(join(out,reportName+'.json'),JSON.stringify(report,null,2)+'\n');await browser?.close();await app?.close();await f.close();rmSync(profile,{recursive:true,force:true});rmSync(f.root,{recursive:true,force:true});}

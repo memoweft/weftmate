@@ -1,7 +1,7 @@
 import { outputPath } from './evidence.mjs';
 import {_electron} from 'playwright';import {createRequire} from 'node:module';import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';import {join,resolve} from 'node:path';import {tmpdir} from 'node:os';import {pathToFileURL} from 'node:url';
 import {startTimelineCandidate} from './fixture.mjs';import {localUiSession} from '../../helpers/local-ui-session.mjs';
-const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate({daily:true,inlineProgress:true,sidebar:true,historyCount:0,baseTime:Date.now()}),profile=mkdtempSync(join(tmpdir(),'rev-bl29-errors-')),report=[];let app;
+const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate({daily:true,inlineProgress:true,sidebar:true,historyCount:0,baseTime:Date.now()}),profile=mkdtempSync(join(tmpdir(),'weftmate-bl29-errors-')),report=[];let app;
 try{
  const entry=join(profile,'entry.cjs');writeFileSync(entry,`const {app}=require('electron');app.setPath('userData',${JSON.stringify(profile)});app.whenReady().then(async()=>{const {createPersonalDesktop}=await import(${JSON.stringify(pathToFileURL(resolve('src/personal-desktop.mjs')).href)});let quitting=false;app.on('before-quit',()=>quitting=true);const d=createPersonalDesktop({origin:${JSON.stringify(f.origin)},isQuitting:()=>quitting});await d.ready;});`);const env={...process.env,WEFTMATE_TEST_HOST_NAME:'synthetic-host'};delete env.ELECTRON_RUN_AS_NODE;
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:[entry],env});const p=await app.firstWindow();let failure=null,count=0,recovering=false,healthyAt;

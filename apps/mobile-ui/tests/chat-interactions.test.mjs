@@ -9,7 +9,7 @@ const styles=readFileSync(new URL('../www/styles.css',import.meta.url),'utf8');
 const htmlIds=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
 
 function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFrames=false,frameMs=1000/60,virtualClock=false,businessReply}={}){
-  const intervals=new Map();const timers=new Map();let nextTimer=0,nextInterval=0,now=0;
+  const intervals=new Map();const timers=new Map();const scheduledPolls=[];let nextTimer=0,nextInterval=0,now=0;
   const nodes=new Map();
   let domReady;
   class TextNode{
@@ -98,7 +98,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     Date:virtualClock?class extends Date{static now(){return now}}:Date,
     // Page refresh intervals are tracked separately from the controlled send/retry clock.
     setInterval:(fn,delay)=>{const id=`interval-${++nextInterval}`;intervals.set(id,{fn,delay});return id},clearInterval:id=>intervals.delete(id),
-    setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});return id},clearTimeout:id=>timers.delete(id),
+    setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});if(String(fn).includes('loadSharedHistory'))scheduledPolls.push({delay,at:now});return id},clearTimeout:id=>timers.delete(id),
     requestAnimationFrame:fn=>{if(queueFrames){frames.push(fn);return frames.length}fn(now);return 0},ResizeObserver,console});
   Object.defineProperty(context,'WeftFormat',{get:()=>window.WeftFormat,set:value=>{window.WeftFormat=value},configurable:true});
   // The drawer markup owns the new-chat group; the main-chat entry mounts in front of it.
@@ -118,7 +118,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const previewNote=()=>gallery()?.querySelector('.render-gallery-note')||node('image-preview-note');
   const previewTitle=()=>gallery()?.querySelector('h2')||node('image-preview-name');
   const previewVisible=()=>!!gallery()?.open;
-  return {run,node,gallery,previewImage,previewNote,previewTitle,previewVisible,timers,intervals,now:()=>now,bridge,flush,reply,advance,frames,flushFrame,document,storage:saved,domReady:()=>domReady(),observed:()=>observed};
+  return {run,node,gallery,previewImage,previewNote,previewTitle,previewVisible,timers,scheduledPolls,intervals,now:()=>now,bridge,flush,reply,advance,frames,flushFrame,document,storage:saved,domReady:()=>domReady(),observed:()=>observed};
 }
 
 test('BL-29 synthetic 30-second request budgets include every bridge method in foreground idle and hidden',async()=>{
@@ -173,6 +173,10 @@ test('BL-29b full empty logical main with replyWait counts every bridge call and
       }
     }});
     h.document.visibilityState = 'visible';
+    // Observe the real scheduling callback independently of network calls.
+    // The read gate can hide an empty zero-delay timer loop from request budgets.
+    h.run(`globalThis.__pollRuns=0;const originalLoadSharedHistory=loadSharedHistory;
+      loadSharedHistory=async function(...args){__pollRuns++;return originalLoadSharedHistory(...args);};`);
     h.run('window.weftNative.onmessage=event=>androidBridge.receive(event)');
     h.run(`Object.assign(state,{loggedIn:true,owner:'A',deviceId:'device',authEpoch:1,page:'chat',chatSource:'host',logicalChats:true,sharedHostAvailable:true});uiCore.syncMobileIdentity();uiCore.state.personalCapabilities=${JSON.stringify(capabilities)};uiCore.state.mainChat=${JSON.stringify(chat)};uiCore.state.selectedChatId='chat-main';uiCore.state.chatWindow.syncCursor='sync';uiCore.state.chatWindow.contentRevision=1;uiCore.presence.success();startMobileConnection();mountMobileTabs();scheduleSharedPoll();`);
     const advance = async ms => {
@@ -186,10 +190,15 @@ test('BL-29b full empty logical main with replyWait counts every bridge call and
       }
     };
     await advance(6500);
-    const before = h.bridge.length, beforeChanges = changes, beforeTails = tails;
+    const before = h.bridge.length, beforeChanges = changes, beforeTails = tails, beforePollRuns = h.run('__pollRuns');
     await advance(30000);
     assert.ok(changes>0, `replyWait production changes path actually ran: ${fault} ${h.run("JSON.stringify({source:state.chatSource,main:uiCore.inMainChat(),result:uiCore.state.historyReadResult,error:uiCore.state.historyReadResult?.error?.stack,online:uiCore.state.online,csrf:uiCore.state.csrfToken,cursor:uiCore.state.chatWindow.syncCursor})")}`);
     assert.ok(changes-beforeChanges<=20, `${fault}: ${changes-beforeChanges} changes / 30s`);
+    assert.ok(h.run('__pollRuns')-beforePollRuns<=25, `${fault}: scheduler ${h.run('__pollRuns')-beforePollRuns} executions / 30s`);
+    if (fault && !['NOT_FOUND','UNAUTHORIZED'].includes(fault)) {
+      assert.ok(h.scheduledPolls.length>0, `${fault}: production scheduler actually scheduled a timer`);
+      for (const timer of h.scheduledPolls) assert.ok(timer.delay>0 && timer.delay<=1750, `${fault}: failure timer must delay within recovery cap: ${timer.delay}`);
+    }
     if (fault==='CURSOR_RESET_REQUIRED') assert.ok(tails-beforeTails<=1, 'continuous 409 rebuilds at most one tail');
     if (!fault || ['BACKEND_UNAVAILABLE','HTTP_502','HTTP_504','CURSOR_RESET_REQUIRED'].includes(fault))
       assert.ok(h.bridge.length-before<=60, `${fault || 'healthy'} full empty main idle: ${h.bridge.length-before} calls / 30s`);

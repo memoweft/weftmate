@@ -816,13 +816,8 @@ export function createHttpHandler(context) {
       }
       if (request.method === 'GET' && pathname === '/personal/v1/models') {
         if (url.search) throw failure('INVALID_REQUEST');
-        return context.json(response, 200, { models: modelProjection(await context.callBackend(() => context.backend.listModels({ ownerId })))
-          .filter((item) => context.modelSelectable(ownerId, item.id))
-          .map((item) => {
-            const owned = item.id.startsWith('private-model-') ? context.accountModelForProfile(ownerId, item.id) : null;
-            return owned ? { ...item, name: owned.name, accountModelId: owned.accountModelId,
-              revision: owned.revision } : item;
-          }) });
+        return context.json(response, 200, { models: context.visibleModels(ownerId,
+          await context.callBackend(() => context.backend.listModels({ ownerId }))) });
       }
       if (pathname === '/personal/v1/account/models' && request.method === 'GET') {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -1243,7 +1238,7 @@ export function createHttpHandler(context) {
         try {
           if (response.destroyed) return;
           if (context.closing) throw failure('SERVICE_CLOSING', 503);
-          const revision = context.accountRevision;
+          const revision = context.accountRevisionFor(ownerId);
           const chatId = chatTimelineMatch[1], action = chatTimelineMatch[2];
           if (chatId === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
           // Query the response snapshot before deciding whether it can wait.
@@ -1265,11 +1260,17 @@ export function createHttpHandler(context) {
             if (chatId === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
             result = await context.chatTimeline.query(ownerId, chatId, action, url.searchParams);
           } else if (accountChanged) waitOutcome = 'changed';
-          const accountChanges = ['events', 'changes'].includes(action) ? await context.accountChanges(ownerId) : undefined;
+          const accountChanges = ['events', 'changes'].includes(action) ? await context.accountChanges(ownerId, controller.signal) : undefined;
           if (response.destroyed) return;
           if (context.closing) throw failure('SERVICE_CLOSING', 503);
           const current = context.authenticate(request, 'sessions:read');
           if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+          // The catalog can finish after erasure/deletion. Validate the final
+          // body generation synchronously, with no asynchronous work afterward.
+          if (context.accountState(ownerId).memoryCleanupPending) throw failure('SESSION_BUSY', 409);
+          const chat = context.chats.requireChat(ownerId, chatId);
+          if (result.contentRevision !== undefined && chat.contentRevision !== result.contentRevision)
+            throw failure('CURSOR_RESET_REQUIRED', 409);
           return context.json(response, 200, { ...result, ...(accountChanges ? { accountChanges } : {}),
             ...(waitText !== null ? { waitOutcome } : {}) });
         } finally {

@@ -33,6 +33,12 @@
             delay(background = false, options = {}) {
                 const cap = options.cap ?? (background ? 120000 : 30000), base = options.base ?? (background ? 15000 : 1000);
                 const delay = Math.min(cap, base * 2 ** Math.min(value.attempt++, 10));
+                if (options.floor !== undefined) {
+                    // Jitter above the read-rate floor, including the first
+                    // attempt; clipping downward jitter synchronized readers.
+                    const floor = Math.min(cap, options.floor), upper = Math.min(cap, Math.max(floor, delay * 1.2));
+                    return Math.round(floor + random() * (upper - floor));
+                }
                 return Math.max(options.floor ?? 0, Math.round(delay * (0.8 + random() * 0.2))); // Bounded jitter; never exceeds the cap.
             },
         };

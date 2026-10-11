@@ -7,7 +7,7 @@ import {nativeTimelineLog} from '../../../src/runtime/dsh-adapter/timeline.mjs';
 import {createGatewayV1} from '../../../src/runtime/gateway/routes/v1.mjs';
 const pause=ms=>new Promise(r=>setTimeout(r,ms)),report=[];
 for(const mode of ['gateway-close','cordis-dispose','uncached-dispose']){
- const root=mkdtempSync(join(tmpdir(),'rev-bl29-gateway-')),effects=[];
+ const root=mkdtempSync(join(tmpdir(),'weftmate-bl29-gateway-')),effects=[];
  const session={id:'s',header:{agentPreset:'personal-remote'},events:[]};
  const read=nativeTimelineLog({on(){},get:key=>key==='sessions'?new Map([['s',session]]):key==='sessionPersistence'?{config:{root:join(root,'sessions')},listSnapshots:()=>[]}:undefined,effect:fn=>effects.push(fn())},{cache:mode!=='uncached-dispose'});
  const ok=value=>({result:{ok:true,value}}),client={sessions:{list:async()=>ok({items:[{sessionId:'s'}]})},events:{},workspace:{},llm:{},settings:{}};

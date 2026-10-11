@@ -44,7 +44,7 @@ try{
  report.logoutAfterQuery={gateStarted,logout:logout.status,response:r.status,body:await r.json()};f.debug.backend.readEvents=originalRead;
 }finally{await f.close();rmSync(f.root,{recursive:true,force:true});}
 // Invoke precisely the cleanup registered with Cordis, rather than the unused read.close method.
-const temp=mkdtempSync(join(tmpdir(),'rev-bl29-log-')),effects=[],listeners=new Map();
+const temp=mkdtempSync(join(tmpdir(),'weftmate-bl29-log-')),effects=[],listeners=new Map();
 const native={id:'synthetic-session',header:{},events:[]};
 const ctx={on:(key,fn)=>listeners.set(key,fn),get:key=>key==='sessions'?new Map([[native.id,native]]):key==='sessionPersistence'?{config:{root:join(temp,'sessions')},listSnapshots:()=>[]}:undefined,effect:fn=>effects.push(fn())};
 const read=nativeTimelineLog(ctx);const controller=new AbortController();let settled=false;

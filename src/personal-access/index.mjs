@@ -20,7 +20,7 @@ import {
   VERSION
 } from './constants.mjs';
 import { durableWrite, validateSingleStore, validateStore, validSharedProfile } from './store.mjs';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomBytes, createHmac } from 'node:crypto';
 import { createPersonalArtifactStore } from '../personal-artifacts/index.mjs';
 import { invalidateToolApproval, invalidateUserQuestion } from './interaction-policy.mjs';
 import { createPersonalSyncStore } from '../personal-sync/index.mjs';
@@ -130,49 +130,95 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const accountWaiters = new Set();
   const closingController = new AbortController();
   const configCatalogs = new Map();
+  const accountRevisions = new Map();
+  const accountSnapshots = new Map();
+  const changeKey = randomBytes(32);
   let accountRevision = 0;
-  function publishAccountChange() {
+  const revisionFor = ownerId => accountRevisions.get(ownerId) ?? 0;
+  const changeDigest = (ownerId, field, value) => createHmac('sha256', changeKey)
+    .update(JSON.stringify([ownerId, field, value])).digest('hex');
+  function publishAccountChange(previousRoot) {
     accountRevision++;
-    for (const wake of [...accountWaiters]) wake();
+    const sharedChanged = !isDeepStrictEqual(previousRoot.sharedModelProfiles, rootState.sharedModelProfiles) ||
+      (previousRoot.executionOwnerId ?? previousRoot.legacyOwnerId) !== (rootState.executionOwnerId ?? rootState.legacyOwnerId);
+    const changedOwners = new Set([...Object.keys(previousRoot.accounts), ...Object.keys(rootState.accounts)]
+      .filter(ownerId => sharedChanged || !isDeepStrictEqual(previousRoot.accounts[ownerId], rootState.accounts[ownerId])));
+    for (const ownerId of changedOwners) {
+      accountRevisions.set(ownerId, revisionFor(ownerId) + 1);
+      accountSnapshots.delete(ownerId);
+    }
+    for (const wake of [...accountWaiters]) if (changedOwners.has(wake.ownerId)) wake();
   }
-  async function accountChanges(ownerId) {
-    // Cache the native catalog per committed revision, including changes made
-    // outside account model settings. This is a read, never a model request.
+  async function accountChanges(ownerId, signal) {
+    // Capture the account and revision before starting the catalog read. Never
+    // label its result with a commit that happened while that read was pending.
+    const revision = revisionFor(ownerId), root = rootState, account = accountState(ownerId);
+    let snapshot = accountSnapshots.get(ownerId);
+    if (!snapshot || snapshot.revision !== revision) {
+      snapshot = Object.freeze({ revision,
+        modelSettings: changeDigest(ownerId, 'modelSettings', [account.defaultModelProfileId, account.backgroundModelProfileId]),
+        personalization: changeDigest(ownerId, 'personalization', account.personalization ?? {}),
+        sessions: changeDigest(ownerId, 'sessions', [account.sessions, account.chatIdentity, account.projects]) });
+      accountSnapshots.set(ownerId, snapshot);
+    }
     let catalog = configCatalogs.get(ownerId);
-    if (!catalog || catalog.revision !== accountRevision) {
-      const revision = accountRevision;
-      const promise = context.callBackend(() => backend.listModels({ ownerId })).then(models =>
-        digest(JSON.stringify(models.map(({ id, name, model, configured, deepThinking }) =>
-          ({ id, name, model, configured, deepThinking })))));
+    if (!catalog || catalog.revision !== revision) {
+      // This shared read owns its deadline and service-close cancellation.
+      // Disconnecting one reader must not cancel another reader's catalog.
+      const promise = new Promise(resolve => {
+        let timer, settled = false;
+        const finish = models => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          closingController.signal.removeEventListener('abort', abort);
+          resolve(models);
+        };
+        const abort = () => finish(undefined);
+        closingController.signal.addEventListener('abort', abort, { once: true });
+        timer = setTimeout(abort, DISPATCH_TIMEOUT_MS);
+        Promise.resolve().then(() => { requireOpen(); return backend.listModels({ ownerId }); })
+          .then(models => { if (!settled) finish(changeDigest(ownerId, 'models', visibleModels(ownerId, models, account, root))); })
+          .catch(abort);
+        if (closingController.signal.aborted) abort();
+      });
       catalog = { revision, promise };
       configCatalogs.set(ownerId, catalog);
-      promise.catch(() => { if (configCatalogs.get(ownerId) === catalog) configCatalogs.delete(ownerId); });
+      const owned = catalog;
+      promise.then(models => { if (models === undefined && configCatalogs.get(ownerId) === owned) configCatalogs.delete(ownerId); });
     }
-    const models = await catalog.promise;
-    const account = accountState(ownerId);
-    return { revision: accountRevision, models,
-      modelSettings: digest(JSON.stringify([account.defaultModelProfileId, account.backgroundModelProfileId])),
-      personalization: digest(JSON.stringify(account.personalization ?? {})),
-      sessions: digest(JSON.stringify([account.sessions, account.chatIdentity, account.projects])) };
+    // Each HTTP reader races the shared read against its own cancellation.
+    let abort;
+    try {
+      const cancelled = new Promise(resolve => {
+        abort = () => resolve(undefined);
+        signal?.addEventListener('abort', abort, { once: true });
+        if (signal?.aborted) abort();
+      });
+      const models = await Promise.race([catalog.promise, cancelled]);
+      return { ...snapshot, ...(models !== undefined ? { models } : {}) };
+    } finally { signal?.removeEventListener('abort', abort); }
   }
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
     get accountRevision() { return accountRevision; },
+    accountRevisionFor: revisionFor,
     closingSignal: closingController.signal,
     accountChanges,
-    waitAccountChange(revision, signal) {
-      if (revision !== accountRevision || signal.aborted || closingController.signal.aborted) return Promise.resolve();
+    waitAccountChange(revision, signal, ownerId) {
+      if (revision !== revisionFor(ownerId) || signal.aborted || closingController.signal.aborted) return Promise.resolve();
       return new Promise(resolve => {
         const wake = () => {
           accountWaiters.delete(wake);
           signal.removeEventListener('abort', wake);
           resolve();
         };
+        wake.ownerId = ownerId;
         accountWaiters.add(wake);
         signal.addEventListener('abort', wake, { once: true });
         // Registration and this recheck run in the same JavaScript turn.
-        if (revision !== accountRevision || signal.aborted) wake();
+        if (revision !== revisionFor(ownerId) || signal.aborted) wake();
       });
     },
     get dataControls() { return dataControls; },
@@ -272,6 +318,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get mobileUi() { return mobileUi; },
     get modelOperationResponse() { return modelOperationResponse; },
     get modelSelectable() { return modelSelectable; },
+    get visibleModels() { return visibleModels; },
     get modelVisible() { return modelVisible; },
     get mutate() { return mutate; },
     get mutateRoot() { return mutateRoot; },
@@ -388,7 +435,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const { requestIdUsed, dispatch, schedule } = commands;
   const accountModels = createAccountModelOperations(context);
   const {
-    accountModelForProfile, modelVisible, modelSelectable, messageModelUsable, accountModelView,
+    accountModelForProfile, modelVisible, modelSelectable, visibleModels, messageModelUsable, accountModelView,
     modelOperationResponse, completeModelOperation, reconcileModelOperation, driveModelOperation,
     scheduleModelOperation,
   } = accountModels;
@@ -647,8 +694,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       if (!['SERVICE_CLOSING', 'TOOL_SOURCE_UNAVAILABLE', 'APPROVAL_NOT_PENDING', 'QUESTION_NOT_PENDING'].includes(error?.code)) storageFault = true;
       throw error;
     }
+    const previousRoot = rootState;
     rootState = next;
-    publishAccountChange();
+    publishAccountChange(previousRoot);
     for (const ownerId of Object.keys(rootState.accounts)) {
       const previous = beforeDataAccounts?.[ownerId];
       if (['sessions','commands','projects','personalization','defaultApprovalMode','notificationSettings','account'].some(key=>!isDeepStrictEqual(previous?.[key],rootState.accounts[ownerId][key]))) dataControls?.invalidate(ownerId);
@@ -920,8 +968,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           if (changed) {
             validateStore(next);
             await durableWrite(storeFile, next);
+            const previousRoot = rootState;
             rootState = next;
-            publishAccountChange();
+            publishAccountChange(previousRoot);
           }
         });
         const current = server;
