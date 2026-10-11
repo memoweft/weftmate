@@ -53,5 +53,6 @@
     }
   ],
   "passed": true,
-  "note": "DIAG-3b changes only UI and UI harness/evidence; approved log behavior, assertions, field table and capacity constants remain unchanged."
+  "note": "DIAG-3b changes only UI and UI harness/evidence; approved log behavior, assertions, field table and capacity constants remain unchanged.",
+  "verifiedAfterMainMerge": true
 }

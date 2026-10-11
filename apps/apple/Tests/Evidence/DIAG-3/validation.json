@@ -136,5 +136,31 @@
     "acceptedAllScreenshotRequirements": false
   },
   "singleSimulatorRequirementFullyMet": false,
-  "fullyAccepted": false
+  "fullyAccepted": false,
+  "postMerge": {
+    "main": "1491fe5a8",
+    "swiftPackage": {
+      "total": 431,
+      "passedCount": 429,
+      "failed": 0,
+      "skipped": 2
+    },
+    "iphoneXcodeUI": {
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "macBuildForTesting": true,
+    "watchBuildForTesting": true,
+    "nodeStatic": {
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    "callbackSites": 56,
+    "callbackFailures": 0,
+    "publicHygieneHits": 0
+  }
 }
