@@ -1,0 +1,93 @@
+{
+  "realInstalledApp": true,
+  "syntheticAccount": true,
+  "realModelRequests": 0,
+  "checks": [
+    "per-user-installer-default-file-and-folder-verbs",
+    "running-instance-files-preserve-draft-focus-and-one-window",
+    "running-instance-folder-default-project-new-conversation",
+    "cold-single",
+    "cold-multiple",
+    "cold-folder",
+    "settings-switch-roundtrip-real-registry",
+    "native-notification-allow-with-real-approval-receipt",
+    "native-notification-deny-with-real-approval-receipt",
+    "native-notification-high-with-real-approval-receipt"
+  ],
+  "launches": [],
+  "notifications": [
+    {
+      "kind": "allow",
+      "title": "需要你批准",
+      "body": "想要运行一条命令",
+      "actions": [
+        "允许",
+        "拒绝"
+      ],
+      "riskCategories": [
+        "execute"
+      ],
+      "nativeShown": true,
+      "nativeCapture": {
+        "reason": "Synthetic toast is not currently visible under the current Windows notification settings.",
+        "captured": false,
+        "matchingBodies": 0
+      }
+    },
+    {
+      "kind": "deny",
+      "title": "需要你批准",
+      "body": "想要运行一条命令",
+      "actions": [
+        "允许",
+        "拒绝"
+      ],
+      "riskCategories": [
+        "execute"
+      ],
+      "nativeShown": true,
+      "nativeCapture": {
+        "reason": "Synthetic toast is not currently visible under the current Windows notification settings.",
+        "captured": false,
+        "matchingBodies": 0
+      }
+    },
+    {
+      "kind": "high",
+      "title": "需要你批准",
+      "body": "想要删除文件",
+      "actions": [
+        "查看"
+      ],
+      "riskCategories": [
+        "delete",
+        "execute"
+      ],
+      "nativeShown": true,
+      "nativeCapture": {
+        "reason": "Synthetic toast is not currently visible under the current Windows notification settings.",
+        "captured": false,
+        "matchingBodies": 0
+      }
+    }
+  ],
+  "cleanup": {
+    "electron": {
+      "available": true,
+      "failed": 0,
+      "cleaned": 0,
+      "preservationError": false,
+      "stillRunning": false
+    },
+    "menuRemoved": true,
+    "startupRemoved": true,
+    "runner": {
+      "available": true,
+      "failed": 0,
+      "cleaned": 0,
+      "preservationError": false,
+      "stillRunning": false
+    }
+  },
+  "passed": true
+}

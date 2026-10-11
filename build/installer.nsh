@@ -1,6 +1,10 @@
 !include nsDialogs.nsh
 !include LogicLib.nsh
 !include MUI2.nsh
+!include "${BUILD_RESOURCES_DIR}\windows-send-to.nsh"
+!macro customInstall
+  !insertmacro WeftSendToInstall
+!macroend
 !ifdef BUILD_UNINSTALLER
 Var WeftDeleteData
 Var WeftDeleteCheck
@@ -47,6 +51,9 @@ FunctionEnd
 !endif
 
 !macro customUnInstall
+  ${IfNot} ${isUpdated}
+    !insertmacro WeftSendToUninstall
+  ${EndIf}
   StrCpy $1 ""
   ${If} $WeftDeleteData == ${BST_CHECKED}
   ${AndIfNot} ${Silent}
