@@ -116,8 +116,10 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
           headers: { authorization: `Basic ${Buffer.from(`relay:${adminPassword}`).toString('base64')}` },
           signal: AbortSignal.timeout(1500), redirect: 'error' });
         const status = await result.json();
+        const previousState = state;
         state = result.ok && status.https?.some(p => p.status === 'running') ? 'online' : 'offline';
         failure = state === 'online' ? null : 'RELAY_UNAVAILABLE';
+        if (state === 'online' && previousState !== 'online') options.onRecovery?.('relay');
       } catch (error) { options.diagnostic?.(error); state = closed ? 'stopped' : 'offline'; failure = 'RELAY_UNAVAILABLE'; }
     })().finally(() => { polling = null; });
     return polling;
@@ -130,9 +132,16 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
       const next = await identity.relayRequest('/hosts/relay/rotate', { requestId });
       await launch(next); return this.status();
     },
+    async reconnect() {
+      await polling;
+      await stopChild();
+      await tick();
+      return this.status();
+    },
     async reloadCertificate() {
-      await adapter?.reload();
+      await certificates?.retry();
       await certificates?.refresh();
+      await adapter?.reload();
       if (adapter) certificateExpiresAt = certificateInfo(await readFile(activeCertFile),
         { domain: new URL(publicOrigin).hostname, spki: identity.tls().spki }).certificateExpiresAt;
     },
