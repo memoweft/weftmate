@@ -16,6 +16,8 @@ def main():
     parser.add_argument('--phone-native', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--comparator', required=True, type=Path)
+    parser.add_argument('--home-indicator-present', action='store_true',
+                        help='Set only after verifying the native bottom indicator in every iPhone capture.')
     args = parser.parse_args()
     pending = {}
     manifest = json.loads((args.phone_attachments / 'manifest.json').read_text())
@@ -60,8 +62,11 @@ def main():
         width, height = struct.unpack('>II', data[16:24])
         captures.append({'name': path.name, 'width': width, 'height': height,
                          'theme': 'dark' if 'dark' in path.name else 'light',
-                         'source': 'native side-by-side without resizing' if 'about-and-run-log' in path.name else 'simctl whole-screen display at matching XCTest checkpoint' if path.name.startswith('iphone') else 'app-owned native Settings window including titlebar and open sheet panels'})
-    result = {'package': 'DIAG-3b', 'captures': captures, 'iphoneFullScreen': True, 'iphoneSystemStatusAndHomeIndicator': True,
+                         'source': 'native side-by-side without resizing' if 'about-and-run-log' in path.name else 'simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest' if path.name.startswith('iphone') else 'app-owned native Settings window including titlebar and open sheet panels'})
+    result = {'package': 'DIAG-3b', 'captures': captures, 'iphoneFullScreen': True,
+              'iphoneSystemStatusBar': True, 'iphoneSystemHomeIndicator': args.home_indicator_present,
+              'iphoneSystemStatusAndHomeIndicator': args.home_indicator_present,
+              'homeIndicatorLimitation': None if args.home_indicator_present else 'The simulator omitted the bottom indicator even outside XCTest. Full native PNGs are preserved; no indicator was drawn or overlaid. This acceptance item remains incomplete.',
               'macOwnWindowsWithTitlebar': True, 'themes': ['light', 'dark'],
               'states': ['empty', 'records', 'normal', 'read_failure', 'previous_unclean_notice',
                          'summary_preview_open', 'file_preview_open', 'system_share_open', 'detail_open', 'watch_records'],
