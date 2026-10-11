@@ -1,0 +1,38 @@
+[
+  {
+    "kind": "close",
+    "ms": 3,
+    "result": {
+      "status": 503,
+      "body": {
+        "error": {
+          "code": "SERVICE_CLOSING"
+        }
+      }
+    }
+  },
+  {
+    "kind": "close-after-wake",
+    "ms": 1,
+    "result": {
+      "status": 503,
+      "body": {
+        "error": {
+          "code": "SERVICE_CLOSING"
+        }
+      }
+    }
+  },
+  {
+    "kind": "logout",
+    "ms": 11,
+    "result": {
+      "status": 401,
+      "body": {
+        "error": {
+          "code": "UNAUTHORIZED"
+        }
+      }
+    }
+  }
+]

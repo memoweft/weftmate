@@ -1,0 +1,249 @@
+{
+  "errors": [],
+  "cases": [
+    {
+      "client": "new",
+      "code": "NOT_FOUND",
+      "ms": 3001,
+      "requests": 1,
+      "rps": 0.33322225924691773,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": []
+    },
+    {
+      "client": "new",
+      "code": "CHAT_ARCHIVED",
+      "ms": 3001,
+      "requests": 1,
+      "rps": 0.33322225924691773,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [],
+      "recoveredWaitMs": 3
+    },
+    {
+      "client": "new",
+      "code": "BACKEND_UNAVAILABLE",
+      "ms": 3000,
+      "requests": 1,
+      "rps": 0.3333333333333333,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [],
+      "recoveredWaitMs": 3
+    },
+    {
+      "client": "new",
+      "code": "CURSOR_RESET_REQUIRED",
+      "ms": 3000,
+      "requests": 1,
+      "rps": 0.3333333333333333,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [],
+      "recoveredWaitMs": 12
+    },
+    {
+      "client": "new",
+      "code": "UNAUTHORIZED",
+      "ms": 2999,
+      "requests": 1,
+      "rps": 0.33344448149383127,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": []
+    },
+    {
+      "client": "new",
+      "code": "NETWORK",
+      "ms": 3001,
+      "requests": 1,
+      "rps": 0.33322225924691773,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [],
+      "recoveredWaitMs": 9
+    },
+    {
+      "client": "new",
+      "code": "HTTP_502",
+      "ms": 3002,
+      "requests": 1,
+      "rps": 0.33311125916055967,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [],
+      "recoveredWaitMs": 3
+    },
+    {
+      "client": "new",
+      "code": "HTTP_504",
+      "ms": 3001,
+      "requests": 1,
+      "rps": 0.33322225924691773,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [],
+      "recoveredWaitMs": 4
+    },
+    {
+      "client": "old",
+      "code": "NOT_FOUND",
+      "ms": 3002,
+      "requests": 2,
+      "rps": 0.6662225183211193
+    },
+    {
+      "client": "old",
+      "code": "CHAT_ARCHIVED",
+      "ms": 3002,
+      "requests": 2,
+      "rps": 0.6662225183211193
+    },
+    {
+      "client": "old",
+      "code": "BACKEND_UNAVAILABLE",
+      "ms": 3001,
+      "requests": 2,
+      "rps": 0.6664445184938355
+    },
+    {
+      "client": "old",
+      "code": "CURSOR_RESET_REQUIRED",
+      "ms": 3002,
+      "requests": 2,
+      "rps": 0.6662225183211193
+    },
+    {
+      "client": "old",
+      "code": "UNAUTHORIZED",
+      "ms": 3001,
+      "requests": 1,
+      "rps": 0.33322225924691773
+    },
+    {
+      "client": "old",
+      "code": "NETWORK",
+      "ms": 3002,
+      "requests": 3,
+      "rps": 0.999333777481679
+    },
+    {
+      "client": "old",
+      "code": "HTTP_502",
+      "ms": 3001,
+      "requests": 2,
+      "rps": 0.6664445184938355
+    },
+    {
+      "client": "old",
+      "code": "HTTP_504",
+      "ms": 3003,
+      "requests": 2,
+      "rps": 0.666000666000666
+    }
+  ],
+  "initial": {
+    "main": true,
+    "wait": true,
+    "caps": {
+      "replyWait": 1,
+      "replyStreaming": 1,
+      "sessionStatus": 1,
+      "nextSuggestions": 0,
+      "library": 1,
+      "libraryPreview": 1,
+      "libraryDesktopActions": 0,
+      "taskOverview": 1,
+      "scheduleEditing": 0,
+      "goals": 0,
+      "activity": 1,
+      "activityChanges": 1,
+      "activityRead": 1,
+      "activityNotification": 1,
+      "notificationSettings": 1,
+      "pushRegistration": 1,
+      "temporaryChats": 1,
+      "chats": 1,
+      "chatTimeline": 1,
+      "chatSearch": 1,
+      "sideChats": 1,
+      "creationReceipt": 1,
+      "chatSend": 1,
+      "chatLifecycle": 1,
+      "chatResources": 1
+    },
+    "loading": false
+  },
+  "idleMethods": {
+    "app.activity ": 1,
+    "host.business /personal/v1/chats/chat-347ff1db-7cc7-4a52-b6de-dc3bd812881d/changes?cursor=WyJvd25lci1jZDk3MGZiYS05YzI2LTQ3YjUtYjNhNy0yZGVhNjkzYTVmZWEiLCJjaGF0LTM0N2ZmMWRiLTdjYzctNGE1Mi1iNmRlLWRjM2JkODEyODgxZCIsImUzNWU5ZWEzNTlhNTJiNTIwMjQ3ZGU0MDUxMTg0YmM3Iiwic3luYyIsNSwiIl0.RQmWWZkjXCB9JQIR6y9DBMxmQkqRnjWqndhGmye9F2Y&limit=200&accountRevision=18&waitMs=15000&liveRevision=0": 2,
+    "host.business /personal/v1/chats/main": 6,
+    "host.business /personal/v1/sessions?archived=all&limit=100": 6,
+    "host.business /personal/v1/chats?archived=all&limit=100": 6,
+    "shared.projects.list ": 6,
+    "shared.outbox.list ": 6,
+    "host.business /personal/v1/activity/unread": 6,
+    "host.status ": 2,
+    "cloud.pending ": 2,
+    "updates.status ": 1
+  },
+  "background10s": [],
+  "config": [
+    {
+      "version": "main",
+      "reads": [
+        "/personal/v1/settings/personalization",
+        "/personal/v1/models",
+        "/personal/v1/settings/models"
+      ],
+      "state": {
+        "models": [
+          "local",
+          "added-model"
+        ],
+        "suggestions": false
+      }
+    },
+    {
+      "version": "head",
+      "reads": [
+        "/personal/v1/models",
+        "/personal/v1/settings/personalization",
+        "/personal/v1/settings/models"
+      ],
+      "state": {
+        "models": [
+          "local",
+          "added-model"
+        ],
+        "suggestions": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,898 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "stage": "before",
+  "surfaces": [
+    {
+      "surface": "electron",
+      "windows": [
+        {
+          "name": "foreground-idle",
+          "seconds": 61.004,
+          "visibility": "visible",
+          "total": 224,
+          "perSecond": 3.6718903678447314,
+          "groups": [
+            {
+              "route": "/personal/v1/sessions/session-:id/events",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/messages.js:110:45) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:143:25) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:191:38) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:80:64) ← at Object.refreshLiveConversation (/personal/v1/ui/ui-core/shell.js:203:37) ← at /personal/v1/ui/components/shell.js:248:52",
+              "count": 56,
+              "perMinute": 55.07835551767097
+            },
+            {
+              "route": "/personal/v1/status",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshStatus (/personal/v1/ui/ui-core/shell.js:141:34) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:213:24) ← at /personal/v1/ui/components/shell.js:241:27",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/settings/personalization",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.loadPersonalization (/personal/v1/ui/ui-core/settings.js:24:34) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:214:52)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/activity/unread",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshActivity (/personal/v1/ui/ui-core/activity.js:27:36) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:215:41)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/models",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshModels (/personal/v1/ui/ui-core/shell.js:173:36) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:216:24)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/settings/models",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshModels (/personal/v1/ui/ui-core/shell.js:177:42) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:216:13)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/commands",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshTasks (/personal/v1/ui/ui-core/resources.js:108:40) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:219:24)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/chats/main",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readMainChat (/personal/v1/ui/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:66:33) ← at Object.refreshSessions (/personal/v1/ui/ui-core/sessions.js:36:65) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:24)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/sessions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:77:59) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/chats",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:77:103) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/projects",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessionProjects (/personal/v1/ui/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:99:20) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/sessions/session-:id/events",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/messages.js:110:45) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:143:25) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:191:38) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:80:64) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:223:39)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/usage",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshUsageBudget (/personal/v1/ui/ui-core/usage.js:59:40) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:224:43)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/sync/events",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPhoneEvents (/personal/v1/ui/ui-core/client.js:67:43) ← at Object.refreshPhoneRecords (/personal/v1/ui/ui-core/phone.js:428:41) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:226:28)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/sessions/session-:id/approvals",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/approvals.js:240:45) ← at Object.refreshConversationApprovals (/personal/v1/ui/ui-core/approvals.js:284:25) ← at run (/personal/v1/ui/ui-core/tasks.js:187:37) ← at Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:237:25) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:39)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/sessions/session-:id/questions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/questions.js:115:45) ← at Object.refreshConversationQuestions (/personal/v1/ui/ui-core/questions.js:158:25) ← at run (/personal/v1/ui/ui-core/tasks.js:188:22) ← at Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:237:25) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:39)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/tasks/cmd-:id",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at worker (/personal/v1/ui/ui-core/tasks.js:212:52) ← at run (/personal/v1/ui/ui-core/tasks.js:235:32) ← at async Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:240:13) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:28)",
+              "count": 10,
+              "perMinute": 9.83542062815553
+            },
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 4,
+              "perMinute": 3.9341682512622125
+            },
+            {
+              "route": "/personal/v1/status",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at /personal/v1/ui/ui-core/presence.js:65:41 ← at retryConnection (/personal/v1/ui/ui-core/presence.js:91:15) ← at /personal/v1/ui/ui-core/presence.js:55:113",
+              "count": 4,
+              "perMinute": 3.9341682512622125
+            }
+          ]
+        },
+        {
+          "name": "streaming",
+          "seconds": 30.001,
+          "visibility": "visible",
+          "total": 209,
+          "perSecond": 6.966434452184927,
+          "groups": [
+            {
+              "route": "/personal/v1/sessions/session-:id/events",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/messages.js:110:45) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:143:25) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:191:38) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:80:64) ← at Object.refreshLiveConversation (/personal/v1/ui/ui-core/shell.js:203:37) ← at /personal/v1/ui/components/shell.js:248:52",
+              "count": 120,
+              "perMinute": 239.99200026665775
+            },
+            {
+              "route": "/personal/v1/status",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshStatus (/personal/v1/ui/ui-core/shell.js:141:34) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:213:24) ← at /personal/v1/ui/components/shell.js:241:27",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/settings/personalization",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.loadPersonalization (/personal/v1/ui/ui-core/settings.js:24:34) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:214:52)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/activity/unread",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshActivity (/personal/v1/ui/ui-core/activity.js:27:36) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:215:41)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/models",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshModels (/personal/v1/ui/ui-core/shell.js:173:36) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:216:24)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/settings/models",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshModels (/personal/v1/ui/ui-core/shell.js:177:42) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:216:13)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/commands",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshTasks (/personal/v1/ui/ui-core/resources.js:108:40) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:219:24)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/chats/main",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readMainChat (/personal/v1/ui/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:66:33) ← at Object.refreshSessions (/personal/v1/ui/ui-core/sessions.js:36:65) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:24)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/sessions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:77:59) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/chats",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:77:103) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/projects",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessionProjects (/personal/v1/ui/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:99:20) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/sessions/session-:id/events",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/messages.js:110:45) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:143:25) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:191:38) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:80:64) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:223:39)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/usage",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshUsageBudget (/personal/v1/ui/ui-core/usage.js:59:40) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:224:43)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/sync/events",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPhoneEvents (/personal/v1/ui/ui-core/client.js:67:43) ← at Object.refreshPhoneRecords (/personal/v1/ui/ui-core/phone.js:428:41) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:226:28)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/sessions/session-:id/approvals",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/approvals.js:240:45) ← at Object.refreshConversationApprovals (/personal/v1/ui/ui-core/approvals.js:284:25) ← at run (/personal/v1/ui/ui-core/tasks.js:187:37) ← at Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:237:25) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:39)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/sessions/session-:id/questions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/questions.js:115:45) ← at Object.refreshConversationQuestions (/personal/v1/ui/ui-core/questions.js:158:25) ← at run (/personal/v1/ui/ui-core/tasks.js:188:22) ← at Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:237:25) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:39)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/tasks/cmd-:id",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at worker (/personal/v1/ui/ui-core/tasks.js:212:52) ← at run (/personal/v1/ui/ui-core/tasks.js:235:32) ← at async Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:240:13) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:28)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/tasks/cmd-:id",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at worker (/personal/v1/ui/ui-core/tasks.js:212:52) ← at run (/personal/v1/ui/ui-core/tasks.js:235:42) ← at async Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:240:13) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:28)",
+              "count": 5,
+              "perMinute": 9.999666677777407
+            },
+            {
+              "route": "/personal/v1/status",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at /personal/v1/ui/ui-core/presence.js:65:41 ← at retryConnection (/personal/v1/ui/ui-core/presence.js:91:15) ← at /personal/v1/ui/ui-core/presence.js:55:113",
+              "count": 2,
+              "perMinute": 3.999866671110963
+            },
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 2,
+              "perMinute": 3.999866671110963
+            }
+          ]
+        },
+        {
+          "name": "background",
+          "seconds": 30.003,
+          "visibility": "hidden",
+          "total": 0,
+          "perSecond": 0,
+          "groups": []
+        },
+        {
+          "name": "settings",
+          "seconds": 30.002,
+          "visibility": "visible",
+          "total": 2,
+          "perSecond": 0.06666222251849876,
+          "groups": [
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 2,
+              "perMinute": 3.999733351109926
+            }
+          ]
+        },
+        {
+          "name": "activity",
+          "seconds": 12.001,
+          "visibility": "visible",
+          "total": 1,
+          "perSecond": 0.08332638946754438,
+          "groups": [
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 1,
+              "perMinute": 4.9995833680526625
+            }
+          ]
+        },
+        {
+          "name": "goals",
+          "seconds": 12.002,
+          "visibility": "visible",
+          "total": 5,
+          "perSecond": 0.4165972337943676,
+          "groups": [
+            {
+              "route": "/personal/v1/tasks",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at /personal/v1/ui/ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /personal/v1/ui/ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/sessions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at /personal/v1/ui/ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /personal/v1/ui/ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 1,
+              "perMinute": 4.99916680553241
+            }
+          ]
+        },
+        {
+          "name": "library",
+          "seconds": 12.002,
+          "visibility": "visible",
+          "total": 52,
+          "perSecond": 4.3326112314614225,
+          "groups": [
+            {
+              "route": "/personal/v1/sessions/session-:id/events",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/messages.js:110:45) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:143:25) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:191:38) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:80:64) ← at Object.refreshLiveConversation (/personal/v1/ui/ui-core/shell.js:203:37) ← at /personal/v1/ui/components/shell.js:248:52",
+              "count": 11,
+              "perMinute": 54.990834860856516
+            },
+            {
+              "route": "/personal/v1/tasks",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at /personal/v1/ui/ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /personal/v1/ui/ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/sessions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at /personal/v1/ui/ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /personal/v1/ui/ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/library",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at /personal/v1/ui/ui-core/library.js:17:57 ← at Object.readLibrary (/personal/v1/ui/ui-core/library.js:20:147) ← at /personal/v1/ui/components/library-view.js:74:126",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/status",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshStatus (/personal/v1/ui/ui-core/shell.js:141:34) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:213:24) ← at /personal/v1/ui/components/shell.js:241:27",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/settings/personalization",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.loadPersonalization (/personal/v1/ui/ui-core/settings.js:24:34) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:214:52)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/activity/unread",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshActivity (/personal/v1/ui/ui-core/activity.js:27:36) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:215:41)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/models",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshModels (/personal/v1/ui/ui-core/shell.js:173:36) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:216:24)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/settings/models",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshModels (/personal/v1/ui/ui-core/shell.js:177:42) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:216:13)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/commands",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshTasks (/personal/v1/ui/ui-core/resources.js:108:40) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:219:24)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/chats/main",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readMainChat (/personal/v1/ui/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:66:33) ← at Object.refreshSessions (/personal/v1/ui/ui-core/sessions.js:36:65) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:24)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/sessions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:77:59) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/chats",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:77:103) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/projects",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessionProjects (/personal/v1/ui/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:99:20) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/sessions/session-:id/events",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/messages.js:110:45) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:143:25) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:191:38) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:80:64) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:223:39)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/usage",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshUsageBudget (/personal/v1/ui/ui-core/usage.js:59:40) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:224:43)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/sync/events",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPhoneEvents (/personal/v1/ui/ui-core/client.js:67:43) ← at Object.refreshPhoneRecords (/personal/v1/ui/ui-core/phone.js:428:41) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:226:28)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/sessions/session-:id/approvals",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/approvals.js:240:45) ← at Object.refreshConversationApprovals (/personal/v1/ui/ui-core/approvals.js:284:25) ← at run (/personal/v1/ui/ui-core/tasks.js:187:37) ← at Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:237:25) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:39)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/sessions/session-:id/questions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/questions.js:115:45) ← at Object.refreshConversationQuestions (/personal/v1/ui/ui-core/questions.js:158:25) ← at run (/personal/v1/ui/ui-core/tasks.js:188:22) ← at Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:237:25) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:39)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/tasks/cmd-:id",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at worker (/personal/v1/ui/ui-core/tasks.js:212:52) ← at run (/personal/v1/ui/ui-core/tasks.js:235:32) ← at async Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:240:13) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:28)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/tasks/cmd-:id",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at worker (/personal/v1/ui/ui-core/tasks.js:212:52) ← at run (/personal/v1/ui/ui-core/tasks.js:235:42) ← at async Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:240:13) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:28)",
+              "count": 2,
+              "perMinute": 9.99833361106482
+            },
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 1,
+              "perMinute": 4.99916680553241
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "surface": "mobile",
+      "windows": [
+        {
+          "name": "foreground-idle",
+          "seconds": 61.021,
+          "visibility": "visible",
+          "total": 842,
+          "perSecond": 13.798528375477295,
+          "groups": [
+            {
+              "route": "shared.sessions.events",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:58:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at run (/ui-core/messages.js:110:45) ← at Object.refreshHistory (/ui-core/messages.js:143:25) ← at Object.refreshHistory [as refreshLogicalHistory] (/ui-core/main-chat.js:191:38) ← at Object.refreshHistory (/ui-core/messages.js:80:64) ← at Object.loadMobileHistory (/ui-core/adapters/mobile-host.js:60:16) ← at loadSharedHistory (/components/sessions.js:235:44) ← at loadSharedHistory (/components/main-chat-mobile.js:116:77) ← at /components/sessions.js:113:11",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at Object.connectionSucceeded (/ui-core/presence.js:103:155) ← at Object.setOnline (/ui-core/shell.js:104:30) ← at Object.accessApi (/ui-core/shell.js:52:22) ← at async run (/ui-core/messages.js:110:34) ← at async Object.refreshHistory (/ui-core/messages.js:146:13) ← at async Object.loadMobileHistory (/ui-core/adapters/mobile-host.js:60:5) ← at async /components/sessions.js:113:5",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "shared.approvals.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:67:16) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at run (/ui-core/approvals.js:240:45) ← at refreshConversationApprovals (/ui-core/approvals.js:284:25) ← at refreshShared (/ui-core/adapters/mobile-decisions.js:166:78) ← at refresh (/ui-core/adapters/mobile-decisions.js:199:30) ← at run (/ui-core/adapters/mobile-decisions.js:219:48) ← at Object.refreshTasks (/ui-core/adapters/mobile-decisions.js:244:25) ← at refreshConversationTasks (/components/decisions.js:38:73) ← at Object.refreshConversationTasks (/app.js:69:79) ← at Object.loadMobileHistory (/ui-core/adapters/mobile-host.js:67:54) ← at async /components/sessions.js:113:5",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "shared.questions.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:67:16) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at run (/ui-core/questions.js:115:45) ← at refreshConversationQuestions (/ui-core/questions.js:158:25) ← at refreshShared (/ui-core/adapters/mobile-decisions.js:166:78) ← at refresh (/ui-core/adapters/mobile-decisions.js:199:30) ← at run (/ui-core/adapters/mobile-decisions.js:219:64) ← at Object.refreshTasks (/ui-core/adapters/mobile-decisions.js:244:25) ← at refreshConversationTasks (/components/decisions.js:38:73) ← at Object.refreshConversationTasks (/app.js:69:79) ← at Object.loadMobileHistory (/ui-core/adapters/mobile-host.js:67:54) ← at async /components/sessions.js:113:5",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "activity.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:73:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at run (/ui-core/adapters/mobile-decisions.js:221:44) ← at Object.refreshTasks (/ui-core/adapters/mobile-decisions.js:244:25) ← at refreshConversationTasks (/components/decisions.js:38:73) ← at Object.refreshConversationTasks (/app.js:69:79) ← at Object.loadMobileHistory (/ui-core/adapters/mobile-host.js:67:54) ← at async /components/sessions.js:113:5",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "host.business /personal/v1/settings/personalization",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.loadPersonalization (/ui-core/settings.js:24:34) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:123:13) ← at listSharedSessions (/components/sessions.js:471:73) ← at /components/sessions.js:113:60",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:31:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:125:31) ← at listSharedSessions (/components/sessions.js:471:73) ← at /components/sessions.js:113:60",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "shared.tasks.detail",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:79:69) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at worker (/ui-core/tasks.js:212:52) ← at run (/ui-core/tasks.js:235:32) ← at async Object.refreshConversationTasks [as tasks] (/ui-core/tasks.js:240:13) ← at async run (/ui-core/adapters/mobile-decisions.js:228:23) ← at async Object.refreshTasks (/ui-core/adapters/mobile-decisions.js:245:15)",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at Object.connectionSucceeded (/ui-core/presence.js:103:155) ← at Object.setOnline (/ui-core/shell.js:104:30) ← at Object.accessApi (/ui-core/shell.js:52:22) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:125:20)",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "host.business /personal/v1/memory/status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at refreshMobileMemoryAvailability (/ui-core/adapters/mobile-host.js:115:37) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:145:8)",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "shared.sessions.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:50:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:149:31)",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at Object.connectionSucceeded (/ui-core/presence.js:103:155) ← at Object.setOnline (/ui-core/shell.js:104:30) ← at Object.accessApi (/ui-core/shell.js:52:22) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:149:20)",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "shared.projects.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:42:76) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshSessionProjects (/ui-core/sessions.js:68:40) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:152:15)",
+              "count": 60,
+              "perMinute": 58.99608331557988
+            },
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:264:103) ← at /app.js:265:73",
+              "count": 10,
+              "perMinute": 9.832680552596646
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at Object.renderActivityBadge (/app.js:43:27) ← at Object.refreshActivity (/ui-core/activity.js:28:69) ← at async refresh (/app.js:264:90)",
+              "count": 10,
+              "perMinute": 9.832680552596646
+            },
+            {
+              "route": "host.business /personal/v1/tasks",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /ui-core/goals.js:12:27",
+              "count": 10,
+              "perMinute": 9.832680552596646
+            },
+            {
+              "route": "shared.sessions.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:50:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27",
+              "count": 10,
+              "perMinute": 9.832680552596646
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at Object.connectionSucceeded (/ui-core/presence.js:103:155) ← at Object.setOnline (/ui-core/shell.js:104:30) ← at Object.accessApi (/ui-core/shell.js:52:22) ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27 ← at async refresh (/app.js:264:175)",
+              "count": 10,
+              "perMinute": 9.832680552596646
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:31:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:91:15) ← at /ui-core/presence.js:55:113",
+              "count": 4,
+              "perMinute": 3.9330722210386586
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at /ui-core/presence.js:69:27",
+              "count": 4,
+              "perMinute": 3.9330722210386586
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 4,
+              "perMinute": 3.9330722210386586
+            }
+          ]
+        },
+        {
+          "name": "streaming",
+          "seconds": 30.032,
+          "visibility": "visible",
+          "total": 721,
+          "perSecond": 24.007725093233883,
+          "groups": [
+            {
+              "route": "shared.sessions.events",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:58:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at run (/ui-core/messages.js:110:45) ← at Object.refreshHistory (/ui-core/messages.js:143:25) ← at Object.refreshHistory [as refreshLogicalHistory] (/ui-core/main-chat.js:191:38) ← at Object.refreshHistory (/ui-core/messages.js:80:64) ← at Object.loadMobileHistory (/ui-core/adapters/mobile-host.js:60:16) ← at loadSharedHistory (/components/sessions.js:235:44) ← at loadSharedHistory (/components/main-chat-mobile.js:116:77) ← at /components/sessions.js:113:11",
+              "count": 115,
+              "perMinute": 229.75492807671816
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at Object.connectionSucceeded (/ui-core/presence.js:103:155) ← at Object.setOnline (/ui-core/shell.js:104:30) ← at Object.accessApi (/ui-core/shell.js:52:22) ← at async run (/ui-core/messages.js:110:34) ← at async Object.refreshHistory (/ui-core/messages.js:146:13) ← at async Object.loadMobileHistory (/ui-core/adapters/mobile-host.js:60:5) ← at async /components/sessions.js:113:5",
+              "count": 115,
+              "perMinute": 229.75492807671816
+            },
+            {
+              "route": "shared.approvals.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:67:16) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at run (/ui-core/approvals.js:240:45) ← at refreshConversationApprovals (/ui-core/approvals.js:284:25) ← at refreshShared (/ui-core/adapters/mobile-decisions.js:166:78) ← at refresh (/ui-core/adapters/mobile-decisions.js:199:30) ← at run (/ui-core/adapters/mobile-decisions.js:219:48) ← at Object.refreshTasks (/ui-core/adapters/mobile-decisions.js:244:25) ← at refreshConversationTasks (/components/decisions.js:38:73) ← at Object.refreshConversationTasks (/app.js:69:79) ← at Object.loadMobileHistory (/ui-core/adapters/mobile-host.js:67:54) ← at async /components/sessions.js:113:5",
+              "count": 115,
+              "perMinute": 229.75492807671816
+            },
+            {
+              "route": "shared.questions.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:67:16) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at run (/ui-core/questions.js:115:45) ← at refreshConversationQuestions (/ui-core/questions.js:158:25) ← at refreshShared (/ui-core/adapters/mobile-decisions.js:166:78) ← at refresh (/ui-core/adapters/mobile-decisions.js:199:30) ← at run (/ui-core/adapters/mobile-decisions.js:219:64) ← at Object.refreshTasks (/ui-core/adapters/mobile-decisions.js:244:25) ← at refreshConversationTasks (/components/decisions.js:38:73) ← at Object.refreshConversationTasks (/app.js:69:79) ← at Object.loadMobileHistory (/ui-core/adapters/mobile-host.js:67:54) ← at async /components/sessions.js:113:5",
+              "count": 115,
+              "perMinute": 229.75492807671816
+            },
+            {
+              "route": "activity.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:73:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at run (/ui-core/adapters/mobile-decisions.js:221:44) ← at Object.refreshTasks (/ui-core/adapters/mobile-decisions.js:244:25) ← at refreshConversationTasks (/components/decisions.js:38:73) ← at Object.refreshConversationTasks (/app.js:69:79) ← at Object.loadMobileHistory (/ui-core/adapters/mobile-host.js:67:54) ← at async /components/sessions.js:113:5",
+              "count": 115,
+              "perMinute": 229.75492807671816
+            },
+            {
+              "route": "shared.tasks.detail",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:79:69) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at worker (/ui-core/tasks.js:212:52) ← at run (/ui-core/tasks.js:235:32) ← at async Object.refreshConversationTasks [as tasks] (/ui-core/tasks.js:240:13) ← at async run (/ui-core/adapters/mobile-decisions.js:228:23) ← at async Object.refreshTasks (/ui-core/adapters/mobile-decisions.js:245:15)",
+              "count": 115,
+              "perMinute": 229.75492807671816
+            },
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:264:103) ← at /app.js:265:73",
+              "count": 5,
+              "perMinute": 9.989344698987747
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at Object.renderActivityBadge (/app.js:43:27) ← at Object.refreshActivity (/ui-core/activity.js:28:69) ← at async refresh (/app.js:264:90)",
+              "count": 5,
+              "perMinute": 9.989344698987747
+            },
+            {
+              "route": "host.business /personal/v1/tasks",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /ui-core/goals.js:12:27",
+              "count": 5,
+              "perMinute": 9.989344698987747
+            },
+            {
+              "route": "shared.sessions.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:50:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27",
+              "count": 5,
+              "perMinute": 9.989344698987747
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at Object.connectionSucceeded (/ui-core/presence.js:103:155) ← at Object.setOnline (/ui-core/shell.js:104:30) ← at Object.accessApi (/ui-core/shell.js:52:22) ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27 ← at async refresh (/app.js:264:175)",
+              "count": 5,
+              "perMinute": 9.989344698987747
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 2,
+              "perMinute": 3.995737879595098
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:31:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:91:15) ← at /ui-core/presence.js:55:113",
+              "count": 2,
+              "perMinute": 3.995737879595098
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at /ui-core/presence.js:69:27",
+              "count": 2,
+              "perMinute": 3.995737879595098
+            }
+          ]
+        },
+        {
+          "name": "background",
+          "seconds": 30.028,
+          "visibility": "hidden",
+          "total": 0,
+          "perSecond": 0,
+          "groups": []
+        },
+        {
+          "name": "settings",
+          "seconds": 30.032,
+          "visibility": "visible",
+          "total": 19,
+          "perSecond": 0.6326584976025573,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:264:103) ← at /app.js:265:73",
+              "count": 5,
+              "perMinute": 9.989344698987747
+            },
+            {
+              "route": "host.business /personal/v1/tasks",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /ui-core/goals.js:12:27",
+              "count": 5,
+              "perMinute": 9.989344698987747
+            },
+            {
+              "route": "shared.sessions.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:50:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27",
+              "count": 5,
+              "perMinute": 9.989344698987747
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 2,
+              "perMinute": 3.995737879595098
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:31:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:91:15) ← at /ui-core/presence.js:55:113",
+              "count": 2,
+              "perMinute": 3.995737879595098
+            }
+          ]
+        },
+        {
+          "name": "activity",
+          "seconds": 12.026,
+          "visibility": "visible",
+          "total": 14,
+          "perSecond": 1.1641443538998837,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:264:103) ← at /app.js:265:73",
+              "count": 2,
+              "perMinute": 9.978380176284716
+            },
+            {
+              "route": "host.business /personal/v1/activity/changes",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:33:44) ← at async refresh (/app.js:264:90)",
+              "count": 2,
+              "perMinute": 9.978380176284716
+            },
+            {
+              "route": "host.business /personal/v1/tasks",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.978380176284716
+            },
+            {
+              "route": "shared.sessions.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:50:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.978380176284716
+            },
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at /app.js:212:158",
+              "count": 2,
+              "perMinute": 9.978380176284716
+            },
+            {
+              "route": "host.business /personal/v1/activity/changes",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:33:44)",
+              "count": 2,
+              "perMinute": 9.978380176284716
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 1,
+              "perMinute": 4.989190088142358
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:31:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:91:15) ← at /ui-core/presence.js:55:113",
+              "count": 1,
+              "perMinute": 4.989190088142358
+            }
+          ]
+        },
+        {
+          "name": "goals",
+          "seconds": 12.034,
+          "visibility": "visible",
+          "total": 12,
+          "perSecond": 0.9971746717633372,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/tasks",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /ui-core/goals.js:12:27",
+              "count": 4,
+              "perMinute": 19.943493435266742
+            },
+            {
+              "route": "shared.sessions.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:50:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27",
+              "count": 4,
+              "perMinute": 19.943493435266742
+            },
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:264:103) ← at /app.js:265:73",
+              "count": 2,
+              "perMinute": 9.971746717633371
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 1,
+              "perMinute": 4.9858733588166855
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:31:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:91:15) ← at /ui-core/presence.js:55:113",
+              "count": 1,
+              "perMinute": 4.9858733588166855
+            }
+          ]
+        },
+        {
+          "name": "library",
+          "seconds": 12.04,
+          "visibility": "visible",
+          "total": 10,
+          "perSecond": 0.8305647840531563,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/library",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/library.js:17:57 ← at Object.readLibrary (/ui-core/library.js:20:147) ← at /components/library-view.js:74:126",
+              "count": 2,
+              "perMinute": 9.966777408637874
+            },
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:264:103) ← at /app.js:265:73",
+              "count": 2,
+              "perMinute": 9.966777408637874
+            },
+            {
+              "route": "host.business /personal/v1/tasks",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.966777408637874
+            },
+            {
+              "route": "shared.sessions.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:50:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.966777408637874
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 1,
+              "perMinute": 4.983388704318937
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:31:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:91:15) ← at /ui-core/presence.js:55:113",
+              "count": 1,
+              "perMinute": 4.983388704318937
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "electron-minimized",
+      "minimized": true,
+      "visibility": "visible"
+    }
+  ]
+}

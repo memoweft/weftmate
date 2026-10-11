@@ -1,12 +1,12 @@
 import { PRIVATE_PROFILE_ID, publicAccountModel, publicModelOperation } from '../personal-account-models/index.mjs';
-import { failure } from './common.mjs';
+import { failure, modelProjection } from './common.mjs';
 import { PUBLIC_CODES } from './constants.mjs';
 
 export function createAccountModelOperations(context) {
   const accountModelForProfile = (ownerId, profileId, account = context.accountState(ownerId)) => Object.values(account.accountModels ?? {})
     .find((model) => Object.values(model.revisions).some((revision) => revision.profileId === profileId));
 
-  const modelVisible = (ownerId, profileId, account = context.accountState(ownerId)) => {
+  const modelVisible = (ownerId, profileId, account = context.accountState(ownerId), root = context.rootState) => {
     if (typeof profileId !== 'string') return false;
     if (profileId.startsWith('private-model-')) {
       const model = PRIVATE_PROFILE_ID.test(profileId) ? accountModelForProfile(ownerId, profileId, account) : null;
@@ -16,18 +16,26 @@ export function createAccountModelOperations(context) {
         ['stop_using', 'remove'].includes(operation.kind) &&
         ['pending', 'applying', 'uncertain'].includes(operation.status));
     }
-    if (context.hostOwner(ownerId)) return true;
-    const marker = context.rootState.sharedModelProfiles.find((item) => item.id === profileId);
+    if (ownerId === (root.executionOwnerId ?? root.legacyOwnerId)) return true;
+    const marker = root.sharedModelProfiles.find((item) => item.id === profileId);
     if (!marker) return false;
     try { return context.sharedProfileIsFormal(marker) === true; } catch { return false; }
   };
 
-  const modelSelectable = (ownerId, profileId) => {
-    if (!modelVisible(ownerId, profileId)) return false;
+  const modelSelectable = (ownerId, profileId, account = context.accountState(ownerId), root = context.rootState) => {
+    if (!modelVisible(ownerId, profileId, account, root)) return false;
     if (!profileId.startsWith('private-model-')) return true;
-    const model = accountModelForProfile(ownerId, profileId);
+    const model = accountModelForProfile(ownerId, profileId, account);
     return model?.revisions[String(model.runtimeRevision)]?.profileId === profileId;
   };
+
+  // The public /models response and its invalidation marker share this exact
+  // projection. A caller holding a committed snapshot supplies both objects.
+  const visibleModels = (ownerId, models, account = context.accountState(ownerId), root = context.rootState) =>
+    modelProjection(models).filter(item => modelSelectable(ownerId, item.id, account, root)).map(item => {
+      const owned = item.id.startsWith('private-model-') ? accountModelForProfile(ownerId, item.id, account) : null;
+      return owned ? { ...item, name: owned.name, accountModelId: owned.accountModelId, revision: owned.revision } : item;
+    });
 
   const messageModelUsable = (ownerId, session, account = context.accountState(ownerId)) => !!session &&
     (modelVisible(ownerId, session.modelProfileId, account) ||
@@ -176,6 +184,7 @@ export function createAccountModelOperations(context) {
     accountModelForProfile,
     modelVisible,
     modelSelectable,
+    visibleModels,
     messageModelUsable,
     accountModelView,
     modelOperationResponse,

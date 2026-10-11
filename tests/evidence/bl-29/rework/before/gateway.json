@@ -1,0 +1,41 @@
+[
+  {
+    "mode": "gateway-close",
+    "receivedAfterClose100ms": false,
+    "serverClosed100ms": false,
+    "response": {
+      "status": 200,
+      "body": {
+        "events": [],
+        "nextSeq": -1,
+        "nextBeforeSeq": null,
+        "hasMore": false,
+        "hasOlder": false,
+        "latestSeq": -1,
+        "liveSeq": -1,
+        "liveEvents": []
+      }
+    },
+    "responseAfterCloseMs": 1136,
+    "closeMs": 1136
+  },
+  {
+    "mode": "cordis-dispose",
+    "receivedAfterClose100ms": false,
+    "serverClosed100ms": false,
+    "response": {
+      "status": 400,
+      "body": {
+        "error": {
+          "code": "gateway-error",
+          "message": "Gateway request failed",
+          "details": {
+            "digest": "1ec0905aec63cc97d3c9b6e48a115ad4b2c78b96f0f7d9269cbc4cfebae28142"
+          }
+        }
+      }
+    },
+    "responseAfterCloseMs": 1127,
+    "closeMs": 1127
+  }
+]
