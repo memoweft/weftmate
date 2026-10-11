@@ -135,7 +135,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # FX-18 formation recovery candidate; replace after Claude squash.
-          ref: dc7803262e016623f83b1951210fe7c779b25361
+          ref: e86b73ba9570a9bd490ef90bfb7059574de5e449
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
