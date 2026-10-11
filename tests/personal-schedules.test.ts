@@ -97,6 +97,16 @@ test('one-shot dispatch survives restart and only delivers once with missed time
   assert.equal(f.events.filter(e => e.type === 'user/message').length, 1);
   assert.equal((await f.manager.manage(f.agent, 'list')).items[0].state, 'completed');
 });
+test('internal weekly memory digest wakes once without a chat message or inference and stays out of user schedules',nativeFixture,async t=>{
+  const f=await fixture(t),input={enabled:true,weekday:0,time:'21:00'};
+  await f.manager.manage(f.agent,'memory_digest',undefined,input);await f.manager.manage(f.agent,'memory_digest',undefined,input);
+  assert.equal(native.foldScheduleEvents(f.events).active.length,1);assert.deepEqual((await f.manager.manage(f.agent,'list')).items,[]);
+  const id=native.foldScheduleEvents(f.events).active[0].id;f.advance(7*86400000);f.agent.session.append('schedule/change',{version:1,operation:'dispatch',id});
+  await f.manager.due(f.agent);await f.manager.due(f.agent);await f.restart();await f.manager.due(f.agent);
+  assert.equal(f.calls.filter(call=>call.action==='memory_digest').length,1);assert.equal(f.calls.filter(call=>call.action==='execute').length,0);
+  assert.equal(f.events.filter(event=>event.type==='user/message').length,0);assert.deepEqual((await f.manager.manage(f.agent,'notifications')).items,[]);
+  await f.manager.manage(f.agent,'memory_digest',undefined,{...input,enabled:false});assert.equal(native.foldScheduleEvents(f.events).active.length,0);
+});
 
 test('native periodic dispatch skips missed backlog; pause/resume/delete and run now', nativeFixture, async t => {
   const f = await fixture(t);

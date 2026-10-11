@@ -45,7 +45,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
   }
   function items(agent) {
     const active = folded(agent), rows = bucket(agent.id).items;
-    return Object.values(rows).filter(row => row.state !== 'deleted').map(row => {
+    return Object.values(rows).filter(row => row.state !== 'deleted'&&!row.internal).map(row => {
       const current = active.find(record => record.id === row.nativeId);
       return { id: row.id, nativeId: row.nativeId, text: row.text, kind: row.kind, timeZone: row.timeZone,
         createdAt: row.createdAt, revision: row.revision ?? 1, lastResult: row.lastResult ?? null,
@@ -82,6 +82,9 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
     row.nativeId = result.id; row.state = 'scheduled'; row.nextRecord = result;
   }
   async function deliver(agent, row, occurrenceAt, deliveryId, manual = false) {
+    if(row.internal==='memory_digest'){
+      await request({action:'memory_digest',sessionId:agent.id});row.lastRunAt=new Date(clock()).toISOString();return;
+    }
     const notificationId = `${agent.id}:${deliveryId}`;
     if (bucket(agent.id).notifications.some(n => n.id === notificationId)) return;
     const missed = !manual && clock() - Date.parse(occurrenceAt) >= 60000;
@@ -142,6 +145,20 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
         return prior.result;
       }
       const done = async result => { const targetId = id ?? result.item?.id; if (input.requestId) b.operations[input.requestId] = { fingerprint, targetId, sourceReceiptId: input.sourceReceiptId ?? b.items[targetId]?.sourceReceiptId, result }; await save(); return result; };
+      if(action==='memory_digest'){
+        const policy=await request({action:'context',sessionId:agent.id});
+        const prior=Object.values(b.items).find(row=>row.internal==='memory_digest');
+        const repeat={kind:'weekly',weekday:input.weekday,time:`${input.time}:00`};
+        const signature=JSON.stringify([input.enabled,repeat,policy.timeZone]);
+        if(prior?.signature===signature&&(!input.enabled||folded(agent).some(row=>row.id===prior.nativeId)||agent.session.events.some(event=>event.type==='schedule/change'&&event.data.operation==='dispatch'&&event.data.id===prior.nativeId&&event.seq>(prior.lastDispatchSeq??-1))))return {ok:true};
+        if(prior&&folded(agent).some(row=>row.id===prior.nativeId))requireSuccess(await call(agent,'schedule_delete',{id:prior.nativeId}));
+        if(!input.enabled){if(prior){prior.state='paused';prior.signature=signature;}return done({ok:true});}
+        const prompt='WeftMate memory digest';
+        const row={...prior,id:prior?.id??randomUUID(),internal:'memory_digest',signature,prompt,text:prompt,kind:'reminder',repeat,timeZone:policy.timeZone,
+          state:'scheduled',createdAt:prior?.createdAt??new Date(clock()).toISOString()};
+        await renew(agent,row);row.record=row.nextRecord;
+        b.items[row.id]=row;return done({ok:true});
+      }
       if (action === 'erase' || action === 'forget') {
         const removed = new Set(), nativeIds = new Set();
         for (const row of Object.values(b.items)) {

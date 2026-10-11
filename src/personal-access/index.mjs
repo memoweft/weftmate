@@ -635,6 +635,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const service = {
     pushActivity: (ownerId, eventId) => sendHostPush(context, ownerId, eventId),
     recordActivity: activity.record,
+    recordMemoryUse: activity.memoryDigest.noteUse,
     dataControls,
     captureMemoryTurn: memoryIngestion.capture,
     memoryTurnPolicy: temporaryChats.policy,

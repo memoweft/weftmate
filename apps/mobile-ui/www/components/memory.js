@@ -106,7 +106,9 @@ function memoryIngestionPanel(target){
 }
 
 function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||state.page!=='memory')return;const memory=state.memory;clear(target);
+  if(memory.digestReturn){target.append(action('返回动态',()=>page('activity'),false));}
   target.append(heading('记忆','查看当前账户的理解与来源；整理过去的对话，或在详情中纠正、停用与忘掉。'));
+  if(memory.weekFilter)target.append(action('正在查看这一周的记忆 · 查看全部',()=>{memory.weekFilter=null;startMemorySnapshot(target,memory.kind,memory.query)},false));
   target.append(notice(memoryStatusText(),memory.error?'读取状态':''));
   renderMemoryReceipt(target);
   if(!state.loggedIn||!state.owner){target.append(action('连接个人账户',()=>page('connect')));return}
@@ -189,6 +191,7 @@ function openMemoryDetail(target,...args){if(target&&typeof target==='object')me
 
 function renderMemoryDetail(target=memoryTarget,token=memoryToken()){target=memoryTarget;if(!target||!memoryCurrent(token)||state.memory.view!=='detail')return;
   const memory=state.memory;const selected=memory.detail?.item||memory.selectedItem;clear(target);
+  if(memory.digestReturn)target.append(action('返回动态',()=>page('activity'),false));
   target.append(heading(MEMORY_KINDS[selected?.kind]||'记忆详情'),action('返回记忆列表',()=>{
     if(!memoryCurrent(token))return;if(memory.refreshOnReturn){const kind=memory.kind,query=memory.query;startMemorySnapshot(target,kind,query);return}
     memory.flow++;memory.view='list';renderMemoryList(target)},false));
@@ -221,6 +224,14 @@ function renderMemoryDetail(target=memoryTarget,token=memoryToken()){target=memo
   renderMemoryActions(target,token)}
 
 function loadMemoryDetail(target,...args){if(target&&typeof target==='object')memoryTarget=target;return uiCore.mobile.loadMemoryDetail('memory',...args)}
+async function openDigestMemoryItem(target,mode){
+  state.memory??=emptyMemoryState(state.owner||'');
+  state.memory.weekFilter=null;state.memory.digestReturn=true;page('memory');
+  await startMemorySnapshot(memoryTarget,'all','');
+  if(state.page!=='memory')return;
+  await openMemoryDetail(memoryTarget,target);
+  if(mode&&state.memory.detail){const operation=mode==='delete'?'deleteItem':mode;if(memoryActionAllowed(operation))openMemoryConfirmation({operation,confirmText:''},memoryTarget,memoryToken());}
+}
 
 function openMemoryConfirmation(choice,target,token){if(!memoryCurrent(token)||state.memory.view!=='detail')return;
   state.memory.confirmation=choice;renderMemoryDetail(target,token);

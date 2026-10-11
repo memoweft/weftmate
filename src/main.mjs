@@ -1884,6 +1884,7 @@ async function bootstrap() {
         sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile) })
         .catch(() => ({ state: 'withheld', reasonCode: 'MEMORY_UNAVAILABLE' })).finally(finishMemory);
       if (recalled?.state === 'ready' && typeof recalled.contextText === 'string' && recalled.contextText.trim()) {
+        await personalAccessService?.recordMemoryUse?.(binding.ownerId,recalled.memories).catch(()=>{});
         personalMemoryIpc.recallWithContext++;
       }
       personalMemoryIpc.recallReplies++;

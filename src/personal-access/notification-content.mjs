@@ -2,6 +2,7 @@ const text = (value, limit = 160) => Array.from(String(value ?? '').replace(/\s+
 
 /** Notification copy belongs to the host; native clients only display these fields. */
 export function activityNotificationContent(account, row) {
+  if(row.memoryDigest)return {title:'本周记忆周报已生成',body:'本周记忆周报已生成'};
   const session = account.sessions?.[row.source?.sessionId];
   const task = account.commands?.[row.source?.taskId];
   const taskTitle = row.temporary ? '临时对话中的任务' : text(session?.title || task?.payload?.text || row.title, 80);

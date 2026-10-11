@@ -5,6 +5,7 @@ import { REQUEST_ID } from './constants.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { nativeFailureReason } from './notification-content.mjs';
 import { ACTIVITY_TYPES, activityState, activityCounts, activitySource, putActivity, activityToken, readActivityToken, activityMatches, nativeTaskActivity } from './activity-store.mjs';
+import { createMemoryDigest, confirmDigestMemory } from './memory-digest.mjs';
 
 export function observeActivityEvents(account,sessionId,events,nextSeq,observeReminders=true) {
   const state=activityState(account), session=account.sessions[sessionId];
@@ -43,6 +44,7 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
 }
 
 export function createActivity(context) {
+  const memoryDigest=createMemoryDigest(context);
   const flights=new Map(), bootId=randomUUID();let timer,closed=false;
   async function refresh(ownerId){
     if(context.dataControls?.isLocked(ownerId))return;
@@ -111,7 +113,7 @@ export function createActivity(context) {
           if(job?.state==='completed'&&job.cursor>(job.skipped??0))putActivity(next,`backfill-completed:${job.id}`,{at:new Date(context.timestamp()).toISOString(),type:'memory.submission.completed',title:'历史对话补交完成',
             summary:'历史对话已提交整理，形成进度可在记忆页查看。',source:{memoryJobId:job.id},level:'silent',actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});
           state.memoryState=healthKey;
-        }));}
+        }));await memoryDigest.refresh(ownerId,memory);}
       const update=await context.updateStatus();
       for(const layer of update?.layers??[])if(layer.availableVersion&&layer.availableVersion!==layer.currentVersion)await record(ownerId,{key:`update:${layer.layer}:${layer.availableVersion}`,type:'system.update.available',title:'更新可用',summary:`新版本 ${layer.availableVersion} 已可用。`,level:'normal',actions:[{kind:'view_settings',label:'查看更新',target:{category:'about'}}]});
       await context.sideChats.reconcile(ownerId);
@@ -157,7 +159,8 @@ export function createActivity(context) {
     }
     if(url.search)throw failure('INVALID_REQUEST');
     const body=await context.readJson(request),readMatch=/^\/(activity-[A-Za-z0-9_-]+)\/read$/.exec(path);
-    if(request.method==='PATCH'&&readMatch){exactKeys(body,['requestId','read','attentionRevision'],['requestId','read','attentionRevision']);if(typeof body.read!=='boolean'||!Number.isSafeInteger(body.attentionRevision))throw failure('INVALID_REQUEST');}
+    if(request.method==='PATCH'&&readMatch){exactKeys(body,['requestId','read','attentionRevision','reviewedMemory'],['requestId','read','attentionRevision']);if(typeof body.read!=='boolean'||!Number.isSafeInteger(body.attentionRevision))throw failure('INVALID_REQUEST');
+      if(body.reviewedMemory){exactKeys(body.reviewedMemory,['kind','id'],['kind','id']);if(!['cognition','entity','relationship','event'].includes(body.reviewedMemory.kind)||typeof body.reviewedMemory.id!=='string')throw failure('INVALID_REQUEST');context.authenticate(request,'account:manage');}}
     else if(request.method==='POST'&&path==='/read')exactKeys(body,['requestId','through'],['requestId','through']);
     else throw failure('INVALID_REQUEST');
     if(typeof body.requestId!=='string'||!REQUEST_ID.test(body.requestId))throw failure('INVALID_REQUEST');
@@ -170,12 +173,13 @@ export function createActivity(context) {
       const rows=readMatch?[store.items[readMatch[1]]]:Object.values(store.items).filter(row=>row.attentionRevision<=token.through&&activityMatches(row,token.filter,token.type));
       if(readMatch&&!rows[0])throw failure('NOT_FOUND',404);
       if(readMatch&&rows[0].attentionRevision!==body.attentionRevision)throw failure('REQUEST_CONFLICT',409);
+      if(body.reviewedMemory){context.authenticate(request,'account:manage');confirmDigestMemory(next,readMatch[1],body.reviewedMemory,new Date(context.timestamp()).toISOString());}
       for(const row of rows)if(row.read!==(readMatch?body.read:true)){row.read=readMatch?body.read:true;row.revision++;store.changes.push({seq:++store.sequence,id:row.id});}
       store.operations[body.requestId]=fingerprint;
     },authorize));
     return reply(readMatch?{item:context.accountState(ownerId).activity.items[readMatch[1]]}:counts(ownerId));
   }
   async function tick(){try{for(const ownerId of context.ownerIds())if(!closed)await refresh(ownerId);}catch{/* Next observation retries; no task is dispatched. */}finally{if(!closed){timer=setTimeout(tick,2000);timer.unref?.();}}}
-  return {refresh,record,counts,watermark,handleHttp,start(){closed=false;void tick();},async close(){closed=true;clearTimeout(timer);await Promise.allSettled([...flights.values()]);}};
+  return {refresh,record,counts,watermark,handleHttp,memoryDigest,start(){closed=false;void tick();},async close(){closed=true;clearTimeout(timer);await Promise.allSettled([...flights.values()]);}};
 }
 function pageLimit(url){const text=url.searchParams.get('limit')??'50';if(!/^\d+$/.test(text)||Number(text)<1||Number(text)>200)throw failure('INVALID_REQUEST');return Number(text);}
