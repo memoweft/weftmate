@@ -43,5 +43,26 @@
   "cleanedProcesses": 10,
   "remainingProcesses": 0,
   "retainedInterruptedDirectories": 2,
-  "preMerge": true
+  "preMerge": true,
+  "postMerge": {
+    "capturedAt": "2026-10-11T08:33:31.575Z",
+    "mergeCommit": "80ef187b",
+    "relatedTests": {
+      "passed": 42,
+      "failed": 0,
+      "files": [
+        "tests/eval-runner.test.ts",
+        "tests/next-suggestions.test.ts",
+        "tests/personalization.test.ts",
+        "tests/settings-registry.test.ts"
+      ]
+    },
+    "typecheck": "passed",
+    "vendorAssemblyVerification": "passed; 197 manifest packages / 195 installed; official web bootstrap smoke passed",
+    "publicHygiene": "7479 text files, 0 findings",
+    "diffWhitespace": "passed",
+    "ci": "Latest merge-head checks queried: 11 queued or in progress; no completed failures at this snapshot",
+    "formalEvaluationBasis": "360 runs retained from pre-merge product baseline; no completed official batch rerun after merging main",
+    "remainingOwnedProcesses": 0
+  }
 }
