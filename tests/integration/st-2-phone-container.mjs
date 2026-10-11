@@ -6,7 +6,7 @@ const java=join(root,'java/com/memoweft/weftmate/mobile');await mkdir(java,{recu
 await writeFile(join(java,'St2PhoneBrowserActivity.java'),`package com.memoweft.weftmate.mobile;
 import android.app.Activity;import android.os.Bundle;import android.graphics.Color;import android.view.View;import android.webkit.*;
 public class St2PhoneBrowserActivity extends Activity {
- public void onCreate(Bundle state){super.onCreate(state);String url=getIntent().getStringExtra("st4Url");if(url==null||!url.matches("http://127\\.0\\.0\\.1:[0-9]+/personal/v1/ui"))throw new IllegalArgumentException("Synthetic URL required");
+ public void onCreate(Bundle state){super.onCreate(state);String url=getIntent().getStringExtra("st4Url");if(url==null||!url.matches("http://127[.]0[.]0[.]1:[0-9]+/personal/v1/ui"))throw new IllegalArgumentException("Synthetic URL required");
  WebView.setDataDirectorySuffix("st2-synthetic");WebView.setWebContentsDebuggingEnabled(true);boolean dark="dark".equals(getIntent().getStringExtra("st4Theme"));palette(dark?"#262723":"#ffffff",dark);
  WebView browser=new WebView(this);browser.getSettings().setJavaScriptEnabled(true);browser.getSettings().setDomStorageEnabled(true);browser.addJavascriptInterface(new Object(){@JavascriptInterface public void sync(String color,boolean dark){runOnUiThread(()->palette(color,dark));}},"st2Bars");
  browser.setWebViewClient(new WebViewClient(){public void onPageFinished(WebView view,String url){view.evaluateJavascript("window.weftSyncSystemBars=dark=>st2Bars.sync(document.querySelector('meta[name=theme-color]').content,dark);WeftSystemBars.sync();",null);}});setContentView(browser);browser.loadUrl(url);}
