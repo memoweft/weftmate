@@ -1,6 +1,10 @@
 {
   "tests": [
     {
+      "file": "tests/personal-schedules.test.ts",
+      "name": "internal weekly memory digest wakes once without a chat message or inference and stays out of user schedules"
+    },
+    {
       "file": "tests/bl-29-rework.test.ts",
       "name": "BL-29c N4 real Electron and mobile independently sync catalog, settings, personalization, rename and list within 7s"
     },
