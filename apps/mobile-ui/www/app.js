@@ -46,7 +46,7 @@ const mobileEffects = {
   openActivitySource:target=>openGoalSource(target),
   openActivityMemory:target=>{state.memory??=emptyMemoryState(state.owner||'');state.memory.weekFilter=target?.from?{from:target.from,to:target.to}:null;page('memory');},
   openActivityMemoryItem:(target,mode)=>openDigestMemoryItem(target,mode),
-  openActivitySettings:()=>page('about'),
+  openActivitySettings:(category='about')=>page(category),
   nativeCall: (...args) => call(...args),
   foregroundRestored: async () => {
     if(!state.loggedIn)return;

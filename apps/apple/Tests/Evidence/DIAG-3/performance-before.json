@@ -1,0 +1,20 @@
+{
+  "measurement": "Identical synthetic About page, app own window capture; includes fixed stabilization delay and screenshot work. Not pure first-frame or user-quit latency.",
+  "runs": [
+    {
+      "launchToCapturedWindowMs": 11548.47,
+      "captureToProcessExitMs": 55.03,
+      "exitCode": 0
+    },
+    {
+      "launchToCapturedWindowMs": 10915.5,
+      "captureToProcessExitMs": 58.57,
+      "exitCode": 0
+    },
+    {
+      "launchToCapturedWindowMs": 10622.65,
+      "captureToProcessExitMs": 53.36,
+      "exitCode": 0
+    }
+  ]
+}

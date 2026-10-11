@@ -3,6 +3,7 @@ import AppKit
 
 @main
 struct WeftMateMacApp: App {
+    @NSApplicationDelegateAdaptor(RunLogMacDelegate.self) private var logDelegate
     @StateObject private var model = AppleAppModel()
     @StateObject private var updates = MacUpdateModel()
     @Environment(\.openWindow) private var openWindow
@@ -25,9 +26,17 @@ struct WeftMateMacApp: App {
         }
         #endif
     }
+    @Environment(\.scenePhase) private var logScenePhase
     var body: some Scene {
         Window("WeftMate", id: "main") {
-            WeftMateRootView(model: model)
+            Group {
+                    #if DEBUG
+                    if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--diag3-fixture") { DIAG3TestHost(model: model) }
+                    else { WeftMateRootView(model: model) }
+                    #else
+                    WeftMateRootView(model: model)
+                    #endif
+                }
                 .environmentObject(updates)
                 .frame(minWidth: 480, minHeight: 540)
         }
@@ -59,5 +68,6 @@ struct WeftMateMacApp: App {
         }
         .defaultSize(width: 520, height: 620)
         .windowResizability(.contentMinSize)
+        .onChange(of: logScenePhase) { _, phase in RunLogRuntime.shared.phase(phase) }
     }
 }

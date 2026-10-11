@@ -8,7 +8,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { startTimelineCandidate } from './bl29-rework/fixture.mjs';
-import { localUiSession } from '../helpers/local-ui-session.mjs';
+import { initializeDesktopSession } from './bl29-rework/auth.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const stage = process.argv.includes('--before') ? 'before' : 'after';
 const latencyOnly=process.argv.includes('--latency');
@@ -16,9 +16,13 @@ const logical=process.argv.includes('--logical'),reportName=latencyOnly?'respons
 const baseline='ec3ab4996609a6d81181bc178f024d5e5158c577';
 const out = resolve(process.env.WEFTMATE_BL29_EVIDENCE_DIR || 'tests/evidence/bl-29'); mkdirSync(out,{recursive:true});
 const pause = ms => new Promise(done=>setTimeout(done,ms));
-const f = await startTimelineCandidate({interactive:true,daily:true,logicalMobile:logical,inlineProgress:true,sidebar:true,composerMenu:true,historyCount:0,baseTime:Date.now()});
+const diagnosticStarted = Date.now();
+const checkpoint = label => console.log(`BL-29 lifecycle: ${label} (${Date.now()-diagnosticStarted}ms)`);
+checkpoint('startup / synthetic cloud authentication started');
+const f = await startTimelineCandidate({interactive:true,daily:true,logicalMobile:logical,cloudMobile:true,inlineProgress:true,sidebar:true,composerMenu:true,historyCount:0,baseTime:Date.now()});
+checkpoint('fixture / verified synthetic cloud authentication ready');
 const profile = mkdtempSync(join(tmpdir(),'weftmate-bl29-'));
-let app, browser, timer, mobile;
+let app, browser, timer, mobile, desktop;
 const report = {synthetic:true,realModelRequests:0,stage,logical,baseline,surfaces:[],checks:[]};
 const source=path=>stage==='before'?execFileSync('git',['show',baseline+':'+path],{encoding:'utf8'}):readFileSync(path,'utf8');
 function instrument() {
@@ -34,26 +38,33 @@ function instrument() {
   if(window.weftNative){const post=weftNative.postMessage;weftNative.postMessage=function(raw){const input=JSON.parse(raw);record(input.method+(input.params?.path?' '+new URL(input.params.path,location.href).pathname:''),new Error().stack);return post.call(this,raw);};}
 }
 try {
+  checkpoint('main warmup started');
   if(logical){
     const chat=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
     const created=await f.request('/commands',{requestId:'bl29-main-warm',kind:'chat.message',chatId:chat.chatId,modelProfileId:'local',targetDeviceId:host,text:'合成主对话'});
     for(let n=0;n<100;n++){const command=(await f.request('/commands/'+created.command.commandId)).command;if(command.state==='accepted_by_dsh'){f.sessionId=command.sessionId;break;}await pause(20);}
   }
   f.progress.text('已完成的合成回复。'); f.progress.finish();
-  const entry=join(profile,'desktop.cjs');writeFileSync(entry,`const {app}=require('electron');app.setPath('userData',${JSON.stringify(profile)});app.whenReady().then(async()=>{const {createPersonalDesktop}=await import(${JSON.stringify(pathToFileURL(resolve('src/personal-desktop.mjs')).href)});let quitting=false;app.on('before-quit',()=>quitting=true);const desktop=createPersonalDesktop({origin:${JSON.stringify(f.origin)},isQuitting:()=>quitting});await desktop.ready;desktop.window.setContentSize(1120,800);});`);
+  checkpoint('main warmup ready');
+  const entry=join(profile,'desktop.cjs');writeFileSync(entry,`const {app}=require('electron');app.setPath('userData',${JSON.stringify(profile)});app.whenReady().then(async()=>{const {createPersonalDesktop}=await import(${JSON.stringify(pathToFileURL(resolve('src/personal-desktop.mjs')).href)});let quitting=false;app.on('before-quit',()=>quitting=true);const desktop=createPersonalDesktop({origin:${JSON.stringify(f.origin)},libraryDesktopToken:${JSON.stringify(f.libraryDesktopToken)},isQuitting:()=>quitting});globalThis.__bl29Desktop=desktop;await desktop.ready;desktop.window.setContentSize(1120,800);});`);
   const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
+  checkpoint('desktop launch started');
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:[entry],env});
-  const desktop=await app.firstWindow();
+  desktop=await app.firstWindow(); checkpoint('desktop window ready');
   desktop.setDefaultTimeout(15000);
   await desktop.route('**/personal/v1/ui/**/*.js',route=>{const path=new URL(route.request().url()).pathname.split('/ui/')[1];const file=path.startsWith('ui-core/')?'src/'+path:'src/personal-access-ui/'+path;
     return route.fulfill({contentType:'text/javascript',body:source(file).replace('ui.loadAttachmentHasher =','globalThis.__streamCore=core;globalThis.__streamUi=ui;ui.loadAttachmentHasher =')});});
-  await localUiSession(desktop,f.credentials,'BL-29',{interceptLegacyStatus:false});
+  if(stage==='before')await desktop.route('**/personal/v1/cloud/config',route=>route.fulfill({status:404,contentType:'application/json',body:JSON.stringify({error:{code:'NOT_FOUND'}})}));
+  checkpoint('desktop native initialization started');
+  await initializeDesktopSession(desktop,f,{legacy:stage==='before',deviceName:'BL-29'});
   console.log('desktop logged in');
   await desktop.waitForFunction(()=>globalThis.__streamCore?.state.mainChat&&!__streamCore.state.refreshing&&!__streamCore.state.sessionSelecting);
   await desktop.evaluate(id=>__streamCore.selectSession(id),f.sessionId);
+  checkpoint('desktop ready / mobile launch started');
   browser=await chromium.launch({headless:true});mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   if(stage==='before')await mobile.route('**/*.js',route=>{const path=new URL(route.request().url()).pathname.slice(1);if(path==='bridge.js')return route.continue();return route.fulfill({contentType:'text/javascript',body:source('apps/mobile-ui/www/'+path)});});
   await mobile.goto(f.mobileUrl);await mobile.waitForFunction(()=>state.booted&&state.loggedIn);await mobile.evaluate(id=>selectSharedSession(id),f.sessionId);
+  checkpoint('mobile verified session / desktop and mobile ready');
   const pages=[['electron',desktop],['mobile',mobile]];
   for(const [surface,p] of pages){await p.evaluate(instrument);report.surfaces.push({surface,windows:[]});}
   async function measure(name,duration){
@@ -84,19 +95,24 @@ try {
         return track(input);
       };
     }
+    checkpoint('approval-visible check started');
     let start=Date.now();const approval=await f.progress.approve('bl29-approval','Write-Output synthetic');
     await mobile.locator('#approval-bar').getByRole('button',{name:'批准',exact:true}).waitFor({state:'visible',timeout:2000});
-    report.checks.push({name:'approval-visible',surface:'mobile',ms:Date.now()-start});start=Date.now();
+    report.checks.push({name:'approval-visible',surface:'mobile',ms:Date.now()-start});checkpoint('approval-visible check passed');
+    checkpoint('approval-accepted check started');start=Date.now();
     await mobile.locator('#approval-bar').getByRole('button',{name:'批准',exact:true}).click();
     await mobile.waitForFunction(()=>document.querySelector('#approval-bar').hidden,{timeout:2000});
     const approvals=(await f.request(`/sessions/${f.sessionId}/approvals?limit=100`)).approvals;
     assert.equal(approvals.find(row=>row.approvalId===approval.approvalId)?.status,'answered');report.checks.push({name:'approval-accepted',ms:Date.now()-start});
+    checkpoint('approval-accepted check passed');
     await f.progress.resolve(approval,'allowed-once');
     f.progress.result('bl29-approval','Synthetic command completed.');
-    start=Date.now();f.progress.ask([{id:'format',question:'合成问题：请填写一个词',multiSelect:false,options:[]}]);
+    checkpoint('question-visible check started');start=Date.now();f.progress.ask([{id:'format',question:'合成问题：请填写一个词',multiSelect:false,options:[]}]);
     await mobile.getByRole('textbox',{name:'你的回答',exact:true}).waitFor({state:'visible',timeout:2000});report.checks.push({name:'question-visible',surface:'mobile',ms:Date.now()-start});
-    await mobile.getByRole('textbox',{name:'你的回答',exact:true}).fill('合成答案');start=Date.now();await mobile.getByRole('button',{name:'提交回答',exact:true}).click();
+    checkpoint('question-visible check passed');await mobile.getByRole('textbox',{name:'你的回答',exact:true}).fill('合成答案');
+    checkpoint('question-accepted check started');start=Date.now();await mobile.getByRole('button',{name:'提交回答',exact:true}).click();
     await mobile.waitForFunction(()=>document.querySelector('#question-bar').hidden,{timeout:2000});report.checks.push({name:'question-accepted',ms:Date.now()-start});
+    checkpoint('question-accepted check passed');
     f.progress.finish();
     const createAt=Date.now(),created=await f.request('/commands',{requestId:'bl29-new-session',kind:'session.create',modelProfileId:'local',targetDeviceId:host});
     let newId;
@@ -144,7 +160,30 @@ try {
     assert.ok(row.windows.find(w=>w.name==='background').total<=3,row.surface+' background 30s budget');
     if(row.surface==='electron')assert.ok(row.windows.find(w=>w.name==='electron-minimized').total<=3,'native minimized 30s budget');
   }
+  checkpoint('all observations and assertions completed');
 } catch(error){report.failure=error.message;report.desktopDebug=await (await app?.firstWindow())?.evaluate(()=>({text:document.body.innerText,core:!!globalThis.__streamCore,state:globalThis.__streamCore?{view:__streamCore.state.currentView,main:__streamCore.state.mainChat,refreshing:__streamCore.state.refreshing}:null})).catch(()=>null);
   report.mobileDebug=await mobile?.evaluate(()=>({text:document.body.innerText,sharedSessionId:state.sharedSessionId,selectedChatId:uiCore.state.selectedChatId,main:uiCore.state.mainChat,context:uiCore.conversationTaskContext(),facts:uiCore.state.historyReadResult})).catch(()=>null);
   report.currentApprovals=await f.request(`/sessions/${f.sessionId}/approvals?limit=100`).catch(()=>null);throw error;}
-finally{clearInterval(timer);writeFileSync(join(out,reportName+'.json'),JSON.stringify(report,null,2)+'\n');await browser?.close();await app?.close();await f.close();rmSync(profile,{recursive:true,force:true});rmSync(f.root,{recursive:true,force:true});}
+finally{
+  clearInterval(timer);writeFileSync(join(out,reportName+'.json'),JSON.stringify(report,null,2)+'\n');checkpoint('report written / teardown started');
+  if(mobile&&!mobile.isClosed()){
+    checkpoint('mobile refresh stop / unload started');await mobile.evaluate(()=>{if(typeof uiCore!=='undefined')uiCore.stopAssistantRefresh?.();});
+    await mobile.goto('about:blank',{timeout:30000});checkpoint('mobile unload completed');
+  }
+  if(desktop&&!desktop.isClosed()){
+    checkpoint('desktop refresh stop / unload started');await desktop.evaluate(()=>globalThis.__streamCore?.stopAssistantRefresh());
+    await desktop.goto('about:blank',{timeout:30000});checkpoint('desktop unload completed');
+  }
+  checkpoint('browser close started');await browser?.close();checkpoint('browser close completed');
+  if(app){
+    checkpoint('production desktop cleanup started');await app.evaluate(async()=>{await globalThis.__bl29Desktop.close();});checkpoint('production desktop cleanup completed');
+    const child=app.process();let exitListener;
+    const exited=child.exitCode!==null||child.signalCode!==null?Promise.resolve({code:child.exitCode,signal:child.signalCode})
+      :new Promise(resolve=>{exitListener=(code,signal)=>resolve({code,signal});child.once('exit',exitListener);});
+    const closed=app.waitForEvent('close',{timeout:30000});checkpoint('Electron close started');
+    try{const[,,exit]=await Promise.all([app.close(),closed,exited]);assert.equal(exit.code,0);assert.equal(exit.signal,null);checkpoint('Electron exit 0 / no signal');}
+    finally{if(exitListener)child.removeListener('exit',exitListener);}
+  }
+  checkpoint('host / synthetic cloud close started');await f.close();checkpoint('host / synthetic cloud close completed');
+  rmSync(profile,{recursive:true,force:true});rmSync(f.root,{recursive:true,force:true});checkpoint('owned directories removed / teardown completed');
+}

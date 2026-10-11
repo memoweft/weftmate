@@ -345,6 +345,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get requestAuthority() { return requestAuthority; },
     get requestIdUsed() { return requestIdUsed; },
     get requireBrowserOrigin() { return requireBrowserOrigin; },
+    get requireLocalDesktop() { return requireLocalDesktop; },
+    get requireDirectLocal() { return requireDirectLocal; },
+    get localAccounts() { return localAccounts; },
+    get desktopSession() { return desktopSession; },
     get requireOpen() { return requireOpen; },
     get requireOriginalAttachments() { return requireOriginalAttachments; },
     get requireToolRuntime() { return requireToolRuntime; },
@@ -402,7 +406,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   } = sessions;
   const authentication = createAuthenticationOperations(context);
   const {
-    hashWork, requestAuthority, matchingOrigin, requireBrowserOrigin, cookieToken, ownerForRequest,
+    hashWork, requestAuthority, matchingOrigin, requireBrowserOrigin, requireLocalDesktop, requireDirectLocal, localAccounts, desktopSession, cookieToken, ownerForRequest,
     authenticate, json, sessionCookie, clearCookie, newPasswordDevice, rotatePasswordDevice,
     publicAuth, readJson, deviceName, assertLoginWindow, recordFailedPassword, setupAccount,
     registerAccount, updateAccountProfile, loginAccount, loginAccountForOwner,

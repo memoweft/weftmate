@@ -6,30 +6,36 @@ import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
-import {localUiSession} from '../helpers/local-ui-session.mjs';
+import {digestAuthFixture} from '../helpers/memory-digest-auth-fixture.mjs';
 import {digestMemoryFixture} from '../helpers/memory-digest-fixture.mjs';
 const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/mem-3');await mkdir(out,{recursive:true});
-const memory=digestMemoryFixture();memory.setReady(false);let now=Date.parse('2026-10-11T12:00:00Z');
-const fixture=await startTimelineCandidate({logicalMobile:true,inlineProgress:true,historyCount:0,memoryManager:memory.manager,clock:()=>now});
+const memory=digestMemoryFixture();memory.setReady(false);let now;
+const authentication=await digestAuthFixture();
+const fixture=await startTimelineCandidate({logicalMobile:true,inlineProgress:true,historyCount:0,memoryManager:memory.manager,clock:()=>now??Date.now(),cloudIdentity:authentication.cloudIdentity,authenticate:authentication.authenticate}).catch(async error=>{await authentication.close();throw error;});
+now=Date.parse('2026-10-11T12:00:00Z');
 await fixture.request('/memory/items/cognition/previous-week/correct',{requestId:'seed-correction',expectedWorldRevision:memory.revision,text:'摄影课改在周六上午上。'});
 await fixture.request('/memory/items/cognition/obsolete',{requestId:'seed-forget',expectedWorldRevision:memory.revision},'DELETE');
 memory.setReady(true);now=Date.parse('2026-10-11T14:00:00Z');
 const profile=await mkdtemp(join(tmpdir(),'weftmate-mem3-desktop-'));
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
-Object.assign(env,{WEFTMATE_TEST_HOST_NAME:'synthetic-host',REVIEW_PROFILE:profile,REVIEW_THEME:'light',REVIEW_ORIGIN:fixture.origin});
+Object.assign(env,{WEFTMATE_TEST_HOST_NAME:'synthetic-host',REVIEW_PROFILE:profile,REVIEW_THEME:'light',REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken});
 let app,browser,phone;const report={realElectron:true,syntheticHost:true,modelRequests:0,mobileSystemBars:'Browser content screenshots only; native shell excluded by package scope.',checks:[],errors:[]};
 const activity=page=>page.getByRole('button',{name:/^动态(?:，|$)/}).click();
 const menu=async(page,text)=>{await page.getByRole('button',{name:`记忆操作 ${text}`,exact:true}).click();};
 try{
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repo,args:[join(repo,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env,timeout:90000});
   const page=await app.firstWindow();page.setDefaultTimeout(20000);page.on('pageerror',error=>report.errors.push(error.message));
-  await localUiSession(page,fixture.credentials,'MEM-3 synthetic',{mainChat:true});await activity(page);
+  await page.waitForURL(fixture.origin+'/personal/v1/ui',{waitUntil:'load',timeout:30000});await page.locator('#assistant-view').waitFor({state:'visible'});
+  const nativeIdentity=await page.evaluate(async()=>{const response=await fetch('/personal/v1/auth/me');if(!response.ok)throw Error('Synthetic native authentication failed');return response.json();});
+  assert.equal(nativeIdentity.device.authKind,'desktop');assert.equal(nativeIdentity.account.ownerId,(await fixture.request('/auth/me')).account.ownerId);assert.equal((await fixture.mobileBridge({method:'auth.me'})).device.authKind,'cloud');assert.equal(await page.locator('#login-view').isVisible(),false);report.checks.push('native-owner-direct-entry-and-verified-cloud-phone');await activity(page);
   await page.getByRole('heading',{name:'这周我记住了什么',exact:true}).waitFor();
+  await page.getByRole('button',{name:'查看设备',exact:true}).first().click();await page.locator('#cloud-devices-panel').waitFor({state:'visible'});await page.keyboard.press('Escape');await activity(page);report.checks.push('desktop-activity-device-settings-action-retained');
   assert.equal((await fixture.request('/activity')).items.filter(row=>row.memoryDigest).length,1);
   const seeded=(await fixture.request('/activity')).items.find(row=>row.memoryDigest).memoryDigest;assert.equal(seeded.correctedCount,1);assert.equal(seeded.forgottenCount,1);assert.equal(seeded.corrected[0].text,'摄影课改在周六上午上。');
   for(const theme of ['light','dark'])for(const width of [1200,480]){
     await page.evaluate(theme=>{document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;},theme);
     await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,900),width);
+    await page.getByRole('heading',{name:'这周我记住了什么',exact:true}).evaluate(node=>node.scrollIntoView({block:'start'}));
     await page.screenshot({path:join(out,`electron-${width}-${theme}-report.png`)});
     await page.getByRole('button',{name:'还对',exact:true}).last().scrollIntoViewIfNeeded();await page.screenshot({path:join(out,`electron-${width}-${theme}-review.png`)});await page.locator('.activity-surface').evaluate(node=>node.scrollTop=0);
     assert.ok(await page.locator('.activity-surface').evaluate(node=>node.scrollWidth<=node.clientWidth));
@@ -52,8 +58,10 @@ try{
   await page.keyboard.press('Escape');await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1200,900));await activity(page);
   browser=await chromium.launch({channel:'msedge',headless:true});phone=await browser.newPage({viewport:{width:390,height:844}});phone.setDefaultTimeout(20000);phone.on('pageerror',error=>report.errors.push(error.message));
   await phone.goto(fixture.mobileUrl);await phone.waitForFunction(()=>state.booted&&state.loggedIn);await phone.getByRole('tab',{name:/^动态(?:，|$)/}).click();await phone.getByRole('heading',{name:'这周我记住了什么',exact:true}).waitFor();
+  await phone.getByRole('button',{name:'更多操作 有一台新设备登录',exact:true}).first().click();await phone.getByRole('menuitem',{name:'查看设备',exact:true}).click();await phone.waitForFunction(()=>state.page==='devices');await phone.evaluate(()=>page('activity'));report.checks.push('phone-activity-device-settings-action-retained');
   for(const theme of ['light','dark'])for(const [width,height]of [[360,780],[390,844]]){
     await phone.setViewportSize({width,height});await phone.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
+    await phone.getByRole('heading',{name:'这周我记住了什么',exact:true}).evaluate(node=>node.scrollIntoView({block:'start'}));
     await phone.screenshot({path:join(out,`phone-web-${width}-${theme}-report.png`)});
     await phone.getByRole('button',{name:'还对',exact:true}).scrollIntoViewIfNeeded();await phone.screenshot({path:join(out,`phone-web-${width}-${theme}-review.png`)});await phone.locator('#generic-page').evaluate(node=>node.scrollTop=0);
     assert.ok(await phone.locator('#page-content').evaluate(node=>node.scrollWidth<=node.clientWidth));
@@ -85,7 +93,7 @@ try{
   for(const theme of ['light','dark']){await phone.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await phone.getByRole('switch',{name:'每周生成记忆周报',exact:true}).scrollIntoViewIfNeeded();await phone.screenshot({path:join(out,`phone-web-${theme}-digest-settings.png`)});
     await phone.getByRole('combobox',{name:'每周哪一天',exact:true}).click();await phone.screenshot({path:join(out,`phone-web-${theme}-weekday-open.png`)});await phone.keyboard.press('Escape');}
   const beforeRestart=(await fixture.request('/activity')).items.find(row=>row.memoryDigest);await app.close();app=null;await browser.close();browser=null;
-  await fixture.restartWithCloud(null);const afterRestart=(await fixture.request('/activity')).items.filter(row=>row.memoryDigest);assert.equal(afterRestart.length,1);assert.equal(afterRestart[0].id,beforeRestart.id);assert.equal(afterRestart[0].memoryDigest.review[0].status,'confirmed');assert.equal((await fixture.request('/settings/notifications')).settings.memoryDigestEnabled,false);report.checks.push('durable-host-restart-report-and-settings');
+  await fixture.restartWithCloud(authentication.cloudIdentity);const afterRestart=(await fixture.request('/activity')).items.filter(row=>row.memoryDigest);assert.equal(afterRestart.length,1);assert.equal(afterRestart[0].id,beforeRestart.id);assert.equal(afterRestart[0].memoryDigest.review[0].status,'confirmed');assert.equal((await fixture.request('/settings/notifications')).settings.memoryDigestEnabled,false);report.checks.push('durable-host-restart-report-and-settings');
   assert.deepEqual(report.errors,[]);await writeFile(join(out,'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
 }catch(error){if(phone){console.log(await phone.evaluate(()=>({page:state.page,memory:state.memory&&{view:state.memory.view,loading:state.memory.loading,error:state.memory.error,status:state.memory.statusState,detailError:state.memory.detailError,capabilities:state.memory.capabilities,detail:state.memory.detail,detailRevision:state.memory.detailRevision,worldRevision:state.memory.worldRevision,activeOperation:state.memory.activeOperation,pendingMarker:state.memory.pendingMarker,storedMarker:savedMemoryMarker(),confirmation:state.memory.confirmation}})));await phone.screenshot({path:join(out,'phone-debug.png')});}throw error;}
-finally{await app?.close();await browser?.close();await fixture.close();await rm(profile,{recursive:true,force:true});await rm(fixture.root,{recursive:true,force:true});}
+finally{await app?.close();await browser?.close();await fixture.close();await authentication.close();await rm(profile,{recursive:true,force:true});await rm(fixture.root,{recursive:true,force:true});}

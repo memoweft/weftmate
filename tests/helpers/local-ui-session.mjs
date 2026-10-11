@@ -1,10 +1,17 @@
 /** Seed an isolated legacy host session for UI regressions unrelated to cloud login.
  * LG-1a exercises the actual visible account journey against the real cloud. */
 import assert from 'node:assert/strict';
-export async function localUiSession(page, credentials, deviceName = 'Synthetic UI regression', { mainChat = false, interceptLegacyStatus = !mainChat } = {}) {
+/** route.fetch uses an API client, so the native window header hook does not run.
+ * Apply an explicitly supplied fixture identity only to that fixture's own origin. */
+export function nativeFixtureFetchOptions(route, nativeIdentity) {
+  if (!nativeIdentity?.libraryDesktopToken || new URL(route.request().url()).origin !== nativeIdentity.origin) return undefined;
+  return { maxRedirects: 0, headers: { ...route.request().headers(), origin: nativeIdentity.origin,
+    'x-weftmate-desktop': nativeIdentity.libraryDesktopToken } };
+}
+export async function localUiSession(page, credentials, deviceName = 'Synthetic UI regression', { mainChat = false, interceptLegacyStatus = !mainChat, nativeIdentity } = {}) {
   if (interceptLegacyStatus) await page.route('**/personal/v1/status', async route => {
     try {
-      const response = await route.fetch(), body = await response.json();
+      const response = await route.fetch(nativeFixtureFetchOptions(route, nativeIdentity)), body = await response.json();
       // Existing feature regressions also cover hosts before IA-2 capabilities.
       await route.fulfill({ response, json: { ...body, personalCapabilities: {} } });
     } catch { await route.abort().catch(() => {}); }

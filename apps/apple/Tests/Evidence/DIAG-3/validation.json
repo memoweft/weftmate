@@ -1,0 +1,166 @@
+{
+  "swiftPackage": {
+    "swiftTesting": 426,
+    "xctest": 5,
+    "total": 431,
+    "passed": true,
+    "passedCount": 429,
+    "skipped": 2,
+    "failed": 0,
+    "skippedTests": [
+      "CloudLiveTests.actualCloudCodeRefreshDPoPAndHostApproval",
+      "CloudTLSTests.nativeTransportRequiresCAHostnameAndPairedSPKI"
+    ],
+    "skipReason": "Existing WEFTMATE_S1C_LIVE fixture not enabled; no conditions or assertions changed."
+  },
+  "runLogNewTests": 20,
+  "macXcodePackage": {
+    "total": 431,
+    "passed": true,
+    "scheme": "WeftMateCore-Package",
+    "macUITestAutomation": "Not attempted per task restriction",
+    "passedCount": 429,
+    "skipped": 2,
+    "failed": 0,
+    "skippedTests": [
+      "CloudLiveTests.actualCloudCodeRefreshDPoPAndHostApproval",
+      "CloudTLSTests.nativeTransportRequiresCAHostnameAndPairedSPKI"
+    ],
+    "skipReason": "Existing WEFTMATE_S1C_LIVE fixture not enabled; no conditions or assertions changed."
+  },
+  "macNativeAX": {
+    "scenarios": 8,
+    "passed": true
+  },
+  "iphoneXcodeUI": {
+    "tests": 5,
+    "passed": true,
+    "failed": 0,
+    "skipped": 0
+  },
+  "watchXcodeUI": {
+    "tests": 1,
+    "passed": true,
+    "failed": 0,
+    "skipped": 0,
+    "toolAutomaticallyBootedPairedPhone": true
+  },
+  "nodeStatic": {
+    "tests": 14,
+    "passed": true
+  },
+  "callbackInventorySites": 56,
+  "publicHygieneHits": 0,
+  "realModelRequests": 0,
+  "pairedWatchTransfer": {
+    "method": "Existing iPhone/Watch pair, both native apps, synthetic in-memory host; inspect phone local Watch inbox only. No pairing or system-settings changes.",
+    "passed": true,
+    "receivedRecords": 2,
+    "events": [
+      "app.start",
+      "app.state"
+    ],
+    "scope": "Original DIAG-3 evidence, preserved; not rerun by the UI-only handoff."
+  },
+  "originalDIAG3HistoricalEvidence": {
+    "swiftPackage": {
+      "swiftTesting": 426,
+      "xctest": 5,
+      "total": 431,
+      "passed": true,
+      "passedCount": 429,
+      "skipped": 2,
+      "failed": 0,
+      "skippedTests": [
+        "CloudLiveTests.actualCloudCodeRefreshDPoPAndHostApproval",
+        "CloudTLSTests.nativeTransportRequiresCAHostnameAndPairedSPKI"
+      ],
+      "skipReason": "Existing WEFTMATE_S1C_LIVE fixture not enabled; no conditions or assertions changed."
+    },
+    "runLogNewTests": 20,
+    "macXcodePackage": {
+      "total": 431,
+      "passed": true,
+      "scheme": "WeftMateCore-Package",
+      "macUITestAutomation": "Not attempted per task restriction",
+      "passedCount": 429,
+      "skipped": 2,
+      "failed": 0,
+      "skippedTests": [
+        "CloudLiveTests.actualCloudCodeRefreshDPoPAndHostApproval",
+        "CloudTLSTests.nativeTransportRequiresCAHostnameAndPairedSPKI"
+      ],
+      "skipReason": "Existing WEFTMATE_S1C_LIVE fixture not enabled; no conditions or assertions changed."
+    },
+    "macNativeAX": {
+      "scenarios": 8,
+      "passed": true
+    },
+    "iphoneXcodeUI": {
+      "tests": 5,
+      "passed": true,
+      "failed": 0,
+      "skipped": 0
+    },
+    "watchXcodeUI": {
+      "tests": 1,
+      "passed": true,
+      "failed": 0,
+      "skipped": 0,
+      "toolAutomaticallyBootedPairedPhone": true
+    },
+    "nodeStatic": {
+      "tests": 14,
+      "passed": true
+    },
+    "callbackInventorySites": 56,
+    "publicHygieneHits": 0,
+    "realModelRequests": 0,
+    "pairedWatchTransfer": {
+      "method": "Existing iPhone/Watch pair, both native apps, synthetic in-memory host; inspect phone local Watch inbox only. No pairing or system-settings changes.",
+      "passed": true,
+      "receivedRecords": 2,
+      "events": [
+        "app.start",
+        "app.state"
+      ],
+      "scope": "Original DIAG-3 evidence, preserved; not rerun by the UI-only handoff."
+    }
+  },
+  "package": "DIAG-3b",
+  "handoff": "DIAG-3c",
+  "screenshots": {
+    "captures": 92,
+    "iphoneFullScreenStatusBar": true,
+    "iphoneHomeIndicator": false,
+    "acceptedAllScreenshotRequirements": false
+  },
+  "singleSimulatorRequirementFullyMet": false,
+  "fullyAccepted": false,
+  "postMerge": {
+    "main": "1491fe5a8",
+    "swiftPackage": {
+      "total": 431,
+      "passedCount": 429,
+      "failed": 0,
+      "skipped": 2
+    },
+    "iphoneXcodeUI": {
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "macBuildForTesting": true,
+    "watchBuildForTesting": true,
+    "nodeStatic": {
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    "callbackSites": 56,
+    "callbackFailures": 0,
+    "publicHygieneHits": 0
+  }
+}

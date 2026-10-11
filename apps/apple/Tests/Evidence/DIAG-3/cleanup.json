@@ -1,0 +1,11 @@
+{
+  "manuallyStoppedProcesses": 1,
+  "manualStopScope": "Interrupted the first native capture runner to correct entry scrolling; incomplete captures not published.",
+  "finalAdditionalTerminations": 0,
+  "fixtureAppsAndHelpersReapedByRunners": true,
+  "remainingOwnProcesses": [],
+  "bootedSimulators": 0,
+  "allSimulatorsShutdown": true,
+  "preExistingUnrelatedAppPreserved": true,
+  "crashDialogsPreserved": true
+}
