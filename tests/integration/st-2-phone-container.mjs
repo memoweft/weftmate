@@ -14,4 +14,14 @@ public class St2PhoneBrowserActivity extends Activity {
 }`);
 await writeFile(join(root,'AndroidManifest.xml'),`<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:usesCleartextTraffic="true"><activity android:name="com.memoweft.weftmate.mobile.St2PhoneBrowserActivity" android:exported="true" android:process=":st4remote" android:theme="@android:style/Theme.Material.Light.NoActionBar" /></application></manifest>`);
 await writeFile(join(root,'fixture.gradle'),`gradle.projectsEvaluated { def app = rootProject.project(':app'); app.android.sourceSets.debug.java.srcDir('${root.replaceAll('\\','/')}/java'); app.android.sourceSets.debug.manifest.srcFile('${root.replaceAll('\\','/')}/AndroidManifest.xml') }`);
+await writeFile(join(root,'capture.sh'),`#!/usr/bin/env bash
+set -euo pipefail
+export WEFTMATE_ST2_ADB="$ANDROID_HOME/platform-tools/adb"
+export WEFTMATE_ST2_ANDROID_SERIAL="$(adb devices | awk '/^emulator-/ {print $1; exit}')"
+export WEFTMATE_ST2_ANDROID_PACKAGE=com.memoweft.weftmate.mobile.st2qa
+export WEFTMATE_ST2_ANDROID_ACTIVITY=com.memoweft.weftmate.mobile.St2PhoneBrowserActivity
+export WEFTMATE_ST2_ANDROID_APK="$PWD/apps/android/app/build/outputs/apk/debug/app-debug.apk"
+export WEFTMATE_ST2_AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -1)"
+node tests/integration/st-2-system-bars.mjs
+`);
 console.log('Generated isolated phone browser fixture');
