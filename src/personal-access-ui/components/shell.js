@@ -464,10 +464,17 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
                 void core.load();
             }
         });
-        globalThis.WeftDesktopUI?.init({ error: ui.toast, openConversation: async (sessionId) => {
+        globalThis.WeftDesktopUI?.init({ error: ui.toast, readyForFiles: () => !!core.state.account && !!core.state.csrfToken && !core.state.submitting,
+            receiveFiles: payload => ui.receiveWindowsSendTo(payload), openConversation: async (sessionId, approvalId) => {
                 await core.enterAssistant();
                 await core.refreshSessions();
                 await core.selectSession(sessionId);
+                if (approvalId) {
+                    await core.refreshConversationApprovals();
+                    const card = ui.byId('approval-bar').querySelector(`[data-conversation-approval="${CSS.escape(approvalId)}"]`);
+                    const detail = card?.querySelector('details'); if (detail) detail.open = true;
+                    card?.querySelector('summary')?.focus({preventScroll:true});
+                }
             } });
         void core.load();
         setInterval(() => {
