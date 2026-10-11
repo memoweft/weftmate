@@ -176,7 +176,7 @@
         if (option.hidden || !option.textContent.toLocaleLowerCase().includes(query.toLocaleLowerCase())) continue;
         const button = document.createElement('button'); button.type = 'button'; button.textContent = option.textContent;
         button.setAttribute('role', 'option'); button.setAttribute('aria-selected', String(option.selected));
-        if (goalsControl && option.selected && globalThis.WeftIcons) button.append(WeftIcons.create('allow',16));
+        if ((goalsControl||select.dataset.checkSelection==='true') && option.selected && globalThis.WeftIcons) button.append(WeftIcons.create('allow',16));
         button.disabled = option.disabled || option.parentElement?.disabled;
         button.onclick = () => { select.value = option.value; select.dispatchEvent(new Event('change', { bubbles: true })); sync(); close(true); };
         list.append(button);

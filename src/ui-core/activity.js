@@ -54,7 +54,9 @@ globalThis.WeftUiCore.factories.activity = (core,effects,environment) => {
                 await core.submitApproval(context,original,outcome);
                 const current=core.conversationApprovals.entries.get(original.approvalId);
                 if(current?.row.status==='pending'||current?.notice)throw {code:'REQUEST_FAILED'};
-            }else if(action.kind==='view_memory')await effects.openActivityMemory?.();
+            }else if(action.kind==='view_memory')await effects.openActivityMemory?.(action.target);
+            else if(action.kind==='memory_item')await effects.openActivityMemoryItem?.(action.target,outcome);
+            else if(action.kind==='memory_confirm')await core.accessApi(`/activity/${encodeURIComponent(row.id)}/read`,{method:'PATCH',protectedWrite:true,body:{requestId:environment.crypto.randomUUID(),read:true,attentionRevision:row.attentionRevision,reviewedMemory:action.target}});
             else if(action.kind==='view_settings'&&action.target.category==='about')await effects.openActivitySettings?.('about');
             else if(['open_chat','answer_question'].includes(action.kind))await effects.openActivitySource?.(action.target,action.kind);
             else return;

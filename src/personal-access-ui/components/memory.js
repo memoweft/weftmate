@@ -68,6 +68,9 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ui.byId('memory-receipt').hidden = false;
     }
     function renderMemoryItems() {
+        let week=ui.byId('memory-week-filter');
+        if(!week){week=ui.element('button','button secondary small');week.id='memory-week-filter';week.type='button';week.textContent='正在查看这一周的记忆 · 查看全部';week.onclick=()=>{core.memory.weekFilter=null;void core.loadMemoryPage();};ui.byId('memory-search-form').before(week);}
+        week.hidden=!core.memory.weekFilter;
         const list = ui.byId('memory-list');
         list.replaceChildren();
         for (const item of core.memory.items) {

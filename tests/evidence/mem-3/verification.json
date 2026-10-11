@@ -1,0 +1,19 @@
+{
+  "realElectron": true,
+  "syntheticHost": true,
+  "modelRequests": 0,
+  "mobileSystemBars": "Browser content screenshots only; native shell excluded by package scope.",
+  "checks": [
+    "desktop-direct-correction-and-live-report",
+    "desktop-direct-forget-and-live-report",
+    "review-confirmation-and-quiet-period",
+    "desktop-memory-page-week-filter",
+    "phone-direct-correction-and-returned-report",
+    "phone-existing-forget-confirmation",
+    "phone-review-confirmation",
+    "phone-week-filter",
+    "saved-weekday-time-and-disabled-setting",
+    "durable-host-restart-report-and-settings"
+  ],
+  "errors": []
+}

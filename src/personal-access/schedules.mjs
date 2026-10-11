@@ -19,6 +19,7 @@ export function createScheduleOperations(context) {
     const ownerId = context.sessionOperations.ownerForSession(input.sessionId)?.ownerId;
     if (!ownerId || !context.hostOwner(ownerId)) throw failure('SESSION_UNAVAILABLE', 404);
     const row = session(ownerId, input.sessionId);
+    if(input.action==='memory_digest'){const status=await context.memoryManager?.status(ownerId);if(status)await context.activity.memoryDigest.refresh(ownerId,status,{arm:false});return {accepted:true};}
     if (input.action === 'context') return { timeZone: context.usage.settings(ownerId).timeZone,
       approvalMode: row.approvalMode ?? context.accountState(ownerId).defaultApprovalMode ?? 'auto' };
     if (input.action !== 'execute' || typeof input.text !== 'string' || !input.text.trim() || input.text.length > 32000 ||
