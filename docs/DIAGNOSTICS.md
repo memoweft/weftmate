@@ -1,6 +1,117 @@
-# 本机运行记录
+# 五端本机运行记录
 
-程序每轮生成独立 `runId`（运行标识）。设置 → 系统状态显示本次启动、上一轮是否正常退出与最近七天检测到的异常退出次数；手机在现有常规设置的系统状态区查看。上次未正常退出时，已有状态提示条提供「查看详情」。诊断摘要先在页内预览，再由使用者复制。
+Windows、Android、macOS、iOS 和 watchOS 的运行记录只在设备本机保留，不上传、不接第三方崩溃服务、不随系统备份或设备迁移带走。程序每轮生成独立 `runId`（运行标识）。设置里的「运行记录」显示本次启动、上一轮结束情况和最近七天异常线索；Android 在已有区域增加「本机（这部手机）」，电脑宿主记录仍可单独查看。上次没有正常结束时，已有状态提示条提供详情入口；后台被系统回收不弹异常提示。记录缺少正常退出仅是线索，不直接称为已确诊崩溃。
+
+诊断摘要先给人话预览，再由使用者复制 JSON（结构化数据格式）。Android「分享日志文件」只在使用者主动点击后打开系统分享面板，分享历史记录的脱敏投影，不自动发送。普通手机浏览器没有原生壳，网页运行异常只在浏览器本地保存容量很小的最近记录，可在同一设置区域查看。
+
+## 统一诊断摘要
+
+五端复制出去的摘要是一个对象，采用苹果端 DIAG-3 的结构；人话预览与机器可读摘要分开。Windows 与 Android 的 `status().summary` 是这个对象的 JSON 字符串，`summaryPreview` 是预览文字。字段类型如下。
+
+| 字段 | 类型与约定 |
+|---|---|
+| `platform` | `windows` / `android` / `macos` / `ios` / `watchos` |
+| `appVersion` | 已安装程序版本，不使用账户、设备或宿主身份 |
+| `osVersion` | 操作系统版本，不含机器名 |
+| `generatedAt` | 生成时间，UTC（协调世界时）的 ISO 8601（标准日期格式）字符串 |
+| `recentAbnormalRecords` | 最多 20 条最近异常线索；每条含 `at / event / runId / platform / appVersion / osVersion / fields`；苹果系统诊断可以有下表注明的白名单扩展 |
+| `abnormalCountsLast7Days` | 按事件名计数的对象，值为整数；统计保留的七天记录，不局限于摘要里最后 20 条 |
+| `retentionPolicy.retentionDays` | 本端的保留天数 |
+| `retentionPolicy.maxBytes` | 本端运行记录总大小上限，数值为字节；转储另有本机限制，不进入摘要 |
+| 记录的 `at / event / runId` | 原始标准时间、固定事件名、程序生成的 UUID（随机唯一标识）；页面显示日期使用设备时区，不显示秒 |
+| 记录的 `fields` | 白名单字段字典，摘要中的所有值均为字符串；未知字段、自由文本和用户文件名全部丢弃 |
+| `fields.recordIndex` | 每轮单调递增序号；用 `runId + recordIndex` 区分同一秒内相同事件，不按秒去重 |
+
+Windows 历史日志没有序号时，读取时按文件顺序补序号，不丢弃同秒的不同记录。新 Windows 原始 JSONL（每行一个 JSON 对象）日志的序号和诊断字段在顶层；Android、苹果原始日志的事件字段在 `fields` 内。对外摘要统一使用上表结构，原始日志无需为摘要格式改写历史记录。
+
+以下示例使用合成运行标识：
+
+```json
+{
+  "platform": "android",
+  "appVersion": "0.1.0",
+  "osVersion": "12 (API 31)",
+  "generatedAt": "2026-10-11T12:00:00Z",
+  "recentAbnormalRecords": [{
+    "at": "2026-10-11T11:59:00Z",
+    "event": "app.failure",
+    "runId": "00000000-0000-4000-8000-000000000001",
+    "platform": "android",
+    "appVersion": "0.1.0",
+    "osVersion": "12 (API 31)",
+    "fields": {"recordIndex": "2", "source": "native-uncaught", "name": "java.lang.RuntimeException"}
+  }],
+  "abnormalCountsLast7Days": {"app.failure": 1},
+  "retentionPolicy": {"retentionDays": 7, "maxBytes": 2097152}
+}
+```
+
+## 平台事件与白名单字段
+
+Windows 保留既有 `host.*` 事件名；Android 和苹果使用 `app.*`。共同摘要格式不把平台事实强行改成同一种退出原因。
+
+| 事件 | Windows | Android | macOS / iOS / watchOS |
+|---|---|---|---|
+| 冷启动 / 后台恢复 | `host.start`；桌面进程启动 | `app.start`，`phase=cold/resume`，恢复沿用 `runId` | `app.start`，`launchKind=cold/resume` |
+| 能确定的结束 | `host.exit`，退出码、收尾结果 | `app.exit`，已知界面结束；系统历史退出在下轮解释 | `app.exit`；macOS 正常退出接线；iOS 系统退出回调尽力记录 |
+| 生命周期状态 | `host.session_end` | `app.background` | `app.state`，前台 / 非活跃 / 后台 |
+| 上轮没有正常结束 | `host.previous_unclean_exit` | `app.previous_unclean_exit`；正常的历史结束用 `app.previous_exit` | `app.previous_unclean_exit`；iOS / Watch 后台终止标记 `terminated_in_background`，不弹提示 |
+| 未捕获与关键错误 | `host.failure` | `app.failure`，原生异常或网页运行异常 | `app.failure`；手机 / Mac 的 Objective-C（苹果对象运行时）异常尽力记录 |
+| 连接变化 | 既有宿主元数据；本包不新增接线 | `connection.change`，在线 / 离线 / 需要登录 / 证书错误 / 中继不可用 | `connection.change`；手机 / Mac；Watch 通道失败用同步事件 |
+| 同步 / 审批失败 | 既有宿主失败与阶段元数据；本包不新增接线 | `sync.failure` / `approval.failure`，含后台任务、离线副本与通知操作 | `sync.failure` / `approval.failure`，含通知与 Watch 配对通道 |
+| 通知失败 | — | `notification.failure` | 归入同步 / 审批阶段 |
+| 网页内核 / 渲染进程 | `renderer.process_gone` / `renderer.recovery` | `webview.process_gone` / `webview.recovery`，崩溃或回收、退出优先级、重建结果 | — |
+| 辅助 / 运行时进程 | `child.process_gone` / `runtime.process_gone` | Android 历史进程退出原因 | — |
+| 界面加载 / 签名 / 回退 | 既有启动失败、渲染恢复 | `ui.load_failure` / `ui.verification_failure` / `ui.fallback` | — |
+| 系统诊断 | 本机 Crashpad（原生转储机制），不导出转储 | Android 11 及以上历史退出 API（应用程序接口） | `diagnostic.crash` / `diagnostic.hang` / `diagnostic.cpu` / `diagnostic.disk`；手机 / Mac 的 MetricKit（苹果系统诊断框架）；Mac 另有 `diagnostic.reports`，盘点不计新异常 |
+
+| 白名单字段 | 限制与平台差异 |
+|---|---|
+| `reason / phase / source / action / state / status / processType` | 每个平台各自的固定词表；状态码字段可为数字的字符串，不接受地址或业务文本 |
+| `code / name / errorType / errorCode` | 固定安全错误码、已知异常类或数字系统错误码；不记录异常消息原文 |
+| `exitCode / signal / normal / cleanupComplete / durationMs / shutdownDurationMs` | Windows 已知退出结果及收尾耗时；没有真实退出码时不猜测 |
+| `previousRunId / lastAt / lastEvent / previousAt / exitTimeKnown` | 前一轮运行标识、已知时间和事件；Android 时间未知时明确标记，不拿最后活动时间冒充实际退出时间 |
+| `reasonCode / importance / importanceCode / priority / didCrash` | Android 系统退出原因、前台 / 后台重要性级别与网页内核崩溃事实 |
+| `script / line / column / stackFrame1` … `stackFrame8` | Android / Windows 自家源码白名单定位；最多八帧；不含异常消息、参数或用户文件路径 |
+| `module / file / line / frames` | 苹果编译期模块与源文件白名单；系统诊断树最多八个自家二进制模块 + 数字偏移，不伪造未提供的函数名 |
+| `diagnosticBeginAt / diagnosticEndAt / diagnosticAppVersion / association` | 苹果延迟系统诊断的覆盖时段和版本；`previous_run_candidate` 是候选关联，不声称精确归属 |
+| `dumpCount / dumpBytes` | Windows 转储数量与总大小；摘要不含转储文件名或正文 |
+| `reports / reportCount` | 苹果 Mac 固定格式系统报告元数据，不读报告正文；具体字段见 PR #210 的字段表 |
+
+苹果字段与保留策略以 [DIAG-3 字段表](https://github.com/memoweft/WeftMate/blob/wp/diag-3-apple-run-log/apps/apple/Tests/Evidence/DIAG-3/fields.md)和 [RunLog.swift](https://github.com/memoweft/WeftMate/blob/wp/diag-3-apple-run-log/apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/RunLog.swift) 为依据，DIAG-2 不改苹果实现。
+
+## Android 原生记录与历史退出
+
+原生日志位于 `Context.noBackupFilesDir/diagnostics/android-YYYY-MM-DD.jsonl`，按天分片；持久启动标记是同目录的 `current-run.json`。写入刷新到磁盘，标记以临时文件原子替换；被系统直接杀掉仍能在下一轮恢复前一轮状态。写失败只使运行记录状态变为错误，不中断应用。后台进入、恢复更新前台状态，恢复沿用本轮标识。
+
+Android 11（API 30）及以上调用 `ActivityManager.getHistoricalProcessExitReasons`，按上一轮进程号和启动时间筛选系统历史记录，不读系统给的自由文本描述和进程转储。退出原因映射如下。
+
+| 系统原因 | 记录原因 | 解释与提示 |
+|---|---|---|
+| `REASON_CRASH` / `REASON_CRASH_NATIVE` / `REASON_ANR` | `crash` / `native_crash` / `anr` | 系统确认的崩溃 / 原生崩溃 / ANR（应用无响应），记异常并提示 |
+| `REASON_LOW_MEMORY` | `low_memory`；后台回收为 `terminated_in_background` | 前台保留异常线索；后台正常回收不提示 |
+| `REASON_USER_REQUESTED` / `REASON_USER_STOPPED` | `user_requested` / `user_stopped` | 使用者划掉、强行停止等，保留实际系统分类 |
+| `REASON_PERMISSION_CHANGE` / `REASON_PACKAGE_UPDATED` | `permission_change` / `system_update` | 权限变化、程序包更新；保留原因，不冒充崩溃 |
+| `REASON_EXIT_SELF` | `activity_finished` | 程序自行结束，视为正常 |
+| `REASON_UNKNOWN` / 其余原因 | `unknown` / `system_other` | 不推断缺失的原因；后台系统回收按正常后台结束处理 |
+| 无历史记录或 API 30 以下 | `unknown`；根据最后落盘前台 / 后台状态判断是否提示 | 未知实际退出时间写 `exitTimeKnown=false`；界面明确时间未知 |
+
+网页内核结束由 `onRenderProcessGone` 记录并销毁失效的 WebView（安卓网页控件），建立新界面；区分崩溃和内存回收。网页运行期间 `error` / `unhandledrejection`（未处理的拒绝）经通用桥方法写原生日志；只接受错误类型、自家脚本名和行列号。新桥方法为 `diagnostics.status`、`diagnostics.record`、`diagnostics.share`，不新增 `/personal/v1` 路由。**需要新壳版本**：应用启动标记、系统退出查询、未捕获异常处理、网页内核恢复及三个桥方法都依赖新增原生代码；版本号由发布流程统一递增。
+
+应用的未捕获异常处理器先落安全 `app.failure`，然后把控制权交还原来的系统处理器，让 Android 按原来方式结束应用。交还的是固定技术提示、没有原始消息或异常原因链、仅有安全本包栈帧的异常副本，避免再次向默认处理器传递原文。新增诊断代码没有 `Log.*`（安卓系统日志调用）。但 Android 的系统 pre-handler（异常预处理器）会在应用默认处理器之前打印原异常，公开 SDK（软件开发工具包）不能替换它；[AOSP 的 RuntimeInit 实现](https://android.googlesource.com/platform/frameworks/base/%2B/296c28979c5b212e9e32be397901f93e15b60bf3/core/java/com/android/internal/os/RuntimeInit.java)明确分开这两步。MuMu 实测确认：本机日志不含注入私文，但系统 logcat 原文检查失败。**不能声称所有系统日志都已脱敏**；本包不绕过非 SDK 限制、不改模拟器日志设置、不取消默认崩溃终止。Android 系统和网页内核自身日志不经过该模块，分享入口只提供重新投影的本机 JSONL 文件，公开证据也只使用脱敏后的日志样例。系统日志的绝对脱敏要求尚未满足，须在后续平台范围评审中处理。
+
+## 保留、备份与分享边界
+
+| 平台 | 运行记录保留 | 总大小上限与备份 |
+|---|---|---|
+| Windows | 7 天；每片 2 MiB（兆二进制字节） | JSONL 总计 32 MiB；`logs/` 与 `Crashpad/` 不进个人备份 |
+| Android | 7 天；每日分片 | 2 MiB，预留启动标记空间；`noBackupFilesDir` 不进 Auto Backup（自动备份），现有 `backup_rules.xml` / `data_extraction_rules.xml` 也排除应用目录与设备迁移数据 |
+| macOS / iOS | 7 天；每日文件 | 2 MiB；预留启动标记空间；iOS 接收的 Watch 副本也计入目录上限；目录标记不备份 |
+| watchOS | 7 天；每日文件 | 256 KiB（二进制千字节）；目录标记不备份；配对手机只接收有界副本 |
+
+所有平台不记录对话、提示词、模型输出、文件内容、用户文件名、账户名、邮箱、设备名、服务器地址、域名、IP、密钥、令牌、Cookie（会话凭据）、授权头、URL（网址）查询串或随机业务长串。运行 UUID 和每轮序号是程序生成的诊断身份，不得替换成业务身份。摘要与分享在读取历史数据时再次校验白名单。原生转储可能含内存，绝不进入摘要、日志分享或公开证据。
+
+## Windows 原有记录与可靠退出
 
 | 记录 | 用途 |
 |---|---|
@@ -45,4 +156,4 @@ BK-1（个人备份）的 `included()` 排除数据目录下的 `Crashpad/` 与�
 
 测试使用 `tests/helpers/process-evidence.mjs`：`spawn()` 跑子进程，`track()` 接已有 Electron 进程，`runSync()` 兼容同步运行器，`recordLaunchFailure()` 留下启动失败。输出原始 / 无符号十进制与十六进制退出码、信号、输出各最近 1 MiB 和系统提交内存余量。异常时先保存宿主元数据日志与转储清单，再清理资料；转储内容始终不复制。`finalize()` 按创建时间、精确可执行路径、命令行中的隔离目录三项匹配清理，停止前再次核对，失败保留目录。PR #208 合并后，`tests/bl-29-runtime-close.test.ts` 应改用此助手。
 
-手机本包验证使用网页视口；原生系统状态栏与底部导航栏没有验收。用户禁止 MuMu（安卓模拟器）和桌面接管，因此不把网页截图当成系统栏证据。真实系统文件夹打开与原生卸载勾选界面留本人试用确认，测试用替身及合成目录覆盖其接缝。
+DIAG-2 的 Android 验收使用 MuMu（安卓模拟器）独立测试包名和合成数据：冷启动、强行停止后再启动、正常后台恢复、未捕获异常和网页内核崩溃恢复。证据必须是带系统状态栏的整屏截图，并注明系统 / 页面主题、系统版本及底部导航区域是否可见；模拟器隐藏底部导航栏时如实标注，不声称该区域已验收。脱敏日志与摘要样例放在 `tests/evidence/diag-2/`。模拟器验证不能替代真实设备的低内存回收、实际 ANR、系统更新 / 权限变更或厂商后台管理行为；这些属于本人真机验证清单。苹果 MetricKit 的真实投递同样需要真机。真实系统文件夹打开与 Windows 原生卸载勾选界面仍留本人试用确认，测试使用合成路径替身。

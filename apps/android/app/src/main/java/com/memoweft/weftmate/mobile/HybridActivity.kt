@@ -159,6 +159,7 @@ class HybridActivity : Activity() {
     @Volatile private var activeTurnScope: String? = null
     @Volatile private var stopped = false
     @Volatile private var currentPageReady = false
+    private var rendererRecovering = false
     @Volatile private var draftKnowledgeReady = false
     @Volatile private var pageGeneration = 0
     private var events: JavaScriptReplyProxy? = null
@@ -259,6 +260,7 @@ class HybridActivity : Activity() {
             }
         }
         web.webChromeClient = object : android.webkit.WebChromeClient() {
+            override fun onConsoleMessage(message: android.webkit.ConsoleMessage): Boolean = true
             override fun onPermissionRequest(request: android.webkit.PermissionRequest) {
                 if (closed.get() || request.origin.toString().trimEnd('/') != origin ||
                     request.resources.toSet() != setOf(android.webkit.PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
@@ -276,6 +278,22 @@ class HybridActivity : Activity() {
             }
         }
         web.webViewClient = object : WebViewClient() {
+            override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                RunDiagnostics.write("webview.process_gone", JSONObject().put("didCrash", detail.didCrash())
+                    .put("priority", detail.rendererPriorityAtExit()).put("action", "rebuild"))
+                if (closed.get()) return true
+                events = null
+                currentPageReady = false
+                rendererRecovering = true
+                pendingCameraPermission?.deny(); pendingCameraPermission = null
+                container.removeView(view)
+                view.destroy()
+                web = WebView(this@HybridActivity)
+                web.setBackgroundColor(SystemBars.surface(this@HybridActivity, resolvedAppearanceDark(appearance(), systemAppearanceDark())))
+                container.addView(web, FrameLayout.LayoutParams(-1, -1))
+                configureWeb(); loadPage(); syncSafeInsets()
+                return true
+            }
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
                 return if (request.url.scheme == "https" && request.url.host == "appassets.androidplatform.net")
                     if (request.url.path?.startsWith("/media/session/") == true) mediaSharedImage(request)
@@ -316,6 +334,7 @@ class HybridActivity : Activity() {
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
                 if (closed.get()) return
                 if (request.isForMainFrame && request.url.toString() == entry) {
+                    RunDiagnostics.write("ui.load_failure", JSONObject().put("phase", "load").put("code", "UI_LOAD_FAILED").put("status", error.errorCode))
                     if (bundles.state().active != "builtin") fallbackUi("更新页面读取失败，已返回上一版")
                     else showNativeCompatibility("内置界面读取失败")
                 }
@@ -408,6 +427,8 @@ class HybridActivity : Activity() {
                     else respond(reply, id, true, result)
                     if (method == "app.ready") scheduleStagedApply()
                 } catch (error: Exception) {
+                    if (method == "shared.approvals.decide") RunDiagnostics.failed("approval.failure", "bridge", error)
+                    if (method.startsWith("offline.")) RunDiagnostics.failed("sync.failure", "offline-copy", error)
                     respond(reply, id, false, JSONObject().put("code", safeCode(error))
                         .apply { if (error is ApiFailure) put("status", error.status) })
                 } finally { if (authMutation) {
@@ -786,10 +807,12 @@ class HybridActivity : Activity() {
     }
     private fun profileFor(host: HostIdentity): JSONObject {
         val remote = try { api.me(host) } catch (error: Exception) {
+            RunDiagnostics.connection(false, error)
             if (error is ApiFailure && (error.status == 401 || error.safeCode == "ACCOUNT_IDENTITY_MISMATCH"))
                 throw error
             return secrets.cachedProfile(owner(host)!!)?.put("connectionVerified", false) ?: throw error
         }
+        RunDiagnostics.connection(true)
         return rememberProfile(host, remote).put("connectionVerified", true)
     }
     private fun savedIdentityView(identity: HostIdentity): JSONObject = try {
@@ -860,6 +883,21 @@ class HybridActivity : Activity() {
     }
 
     private fun handle(method: String, params: JSONObject, requestEpoch: Long, requestHost: HostIdentity?): JSONObject = when (method) {
+        "diagnostics.status" -> RunDiagnostics.status()
+        "diagnostics.record" -> {
+            val webError = JSONObject()
+            for (key in listOf("source", "name", "script", "line", "column")) if (params.has(key)) webError.put(key, params.get(key))
+            RunDiagnostics.write("app.failure", DiagnosticPolicy.fields(webError))
+            JSONObject().put("recorded", true)
+        }
+        "diagnostics.share" -> {
+            val completed = CountDownLatch(1)
+            val failure = AtomicReference<Exception?>()
+            runOnUiThread { try { RunDiagnostics.share(this) } catch (error: Exception) { failure.set(error) } finally { completed.countDown() } }
+            if (!completed.await(5, TimeUnit.SECONDS)) throw ApiFailure(503, "SERVICE_UNAVAILABLE")
+            failure.get()?.let { throw it }
+            JSONObject().put("opened", true)
+        }
         "offline.identity" -> secrets.host()?.let { host -> JSONObject().put("ownerId", host.ownerId).put("hostId", host.hostId)
             .put("deviceId", host.deviceId).put("origin", host.origin) } ?: JSONObject()
         "offline.key", "offline.load", "offline.save", "offline.open", "offline.complete", "offline.clear" -> {
@@ -895,6 +933,10 @@ class HybridActivity : Activity() {
             draftKnowledgeReady = true
             currentPageReady = true
             runOnUiThread {
+                if (rendererRecovering) {
+                    rendererRecovering = false
+                    RunDiagnostics.write("webview.recovery", JSONObject().put("phase", "recovery").put("action", "rebuild"))
+                }
                 compatibilityMessage?.visibility = View.GONE
                 compatShown.set(false)
                 handleNotificationIntent()
@@ -913,6 +955,7 @@ class HybridActivity : Activity() {
             JSONObject().put("saved", true)
         }
         "app.failed" -> {
+            RunDiagnostics.write("ui.load_failure", JSONObject().put("phase", "load").put("code", "UI_BOOT_FAILED"))
             runOnUiThread {
                 if (bundles.state().active != "builtin") fallbackUi("更新页面启动失败，已返回上一版")
                 else showNativeCompatibility("内置界面启动失败")
@@ -1704,6 +1747,7 @@ class HybridActivity : Activity() {
             val result = try { SyncManager(store, api, attachments).syncOnce(identity,
                 { !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() &&
                     secrets.host() == identity }) } catch (error: Exception) {
+                RunDiagnostics.failed("sync.failure", "manual", error)
                 note("sync", "同步未完成", "本机记录仍保留，请检查连接后重试", scope = owner(identity) ?: "local")
                 throw error
             }
@@ -2095,7 +2139,7 @@ class HybridActivity : Activity() {
                     emitForAccount(epoch, "sync.finished", data)
                 }
             }
-            catch (_: Exception) { /* Durable outbox retries via the scheduled Job and manual sync. */ }
+            catch (error: Exception) { if (error !is SyncInterrupted) RunDiagnostics.failed("sync.failure", "foreground", error) }
         } } catch (_: RejectedExecutionException) { }
     }
 
@@ -2114,7 +2158,7 @@ class HybridActivity : Activity() {
                     notices.markPermissionAsked()
                     emit("notifications.needed", JSONObject())
                 }
-            } catch (_: Exception) { /* Same durable cursor is retried by polling or periodic work. */ }
+            } catch (error: Exception) { RunDiagnostics.failed("notification.failure", "foreground", error) }
             finally { notificationPolling.set(false) }
         } } catch (_: RejectedExecutionException) { notificationPolling.set(false) }
     }
@@ -2130,7 +2174,7 @@ class HybridActivity : Activity() {
             worker.execute {
                 try { ActivityNotifications(this).respond(host, id, outcome) { !closed.get() && !accountTransition.get() && secrets.host() == host }
                     emit("notifications.action", JSONObject().put("accepted", true)); pollNotifications()
-                } catch (_: Exception) { emit("notifications.action", JSONObject().put("accepted", false)) }
+                } catch (error: Exception) { RunDiagnostics.failed("approval.failure", "notification-action", error); emit("notifications.action", JSONObject().put("accepted", false)) }
             }
         }
         runOnUiThread {
