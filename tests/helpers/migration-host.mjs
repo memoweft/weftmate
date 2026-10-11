@@ -17,10 +17,11 @@ export async function until(fn, timeout = 45000) {
   while (Date.now() < end) { const value = await fn(); if (value) return value; await new Promise(r => setTimeout(r, 100)); }
   throw new Error('MIGRATION_SMOKE_TIMEOUT');
 }
-export async function migrationHost({ executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir() } = {}) {
+export async function migrationHost({ executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir(), processEvidence } = {}) {
   const root = realpathSync.native(mkdtempSync(join(tempRoot, 'weftmate-fx21-'))), profile = join(root, 'profile');
   mkdirSync(profile); writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
   const h = { root, profile, app: null, requests: [], source, executable, old };
+  const evidence = processEvidence?.({ root, profile, executable: executable || createRequire(import.meta.url)('electron') });
   const server = createServer(async (req, res) => {
     if (req.url.endsWith('/models')) return res.writeHead(200, {'content-type':'application/json'}).end(JSON.stringify({data:[{id:'synthetic-fx21',context_window:32768}]}));
     if (req.method === 'GET') return res.writeHead(200, {'content-type':'application/json'}).end(JSON.stringify({total_slots:1,n_ctx:32768,currentModelId:'synthetic-fx21',switching:false,probe:{health:true}}));
@@ -49,6 +50,7 @@ export async function migrationHost({ executable, source = resolve(process.env.F
     env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
     const passwordStore = process.platform === 'linux' ? ['--password-store=gnome-libsecret'] : [];
     h.app = await _electron.launch({executablePath:h.executable || createRequire(import.meta.url)('electron'),args:h.executable?[...passwordStore,`--desktop-config=${config}`]:[h.source,...passwordStore,`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],cwd:h.source,env,timeout:90000});
+    evidence?.track(h.app.process(), { executable: h.executable || createRequire(import.meta.url)('electron'), label: 'installed-electron' });
     h.stderr = []; h.app.process().stderr?.on('data', chunk => { h.stderr.push(String(chunk)); if (h.stderr.length > 200) h.stderr.shift(); });
     h.page = await h.app.firstWindow(); h.page.setDefaultTimeout(15000);
     await h.page.waitForURL('**/personal/v1/ui*');
@@ -78,7 +80,18 @@ export async function migrationHost({ executable, source = resolve(process.env.F
     });
     return {chatId:chat.chatId,sessionId:receipt.sessionId,reply:events.find(e=>e.type==='assistant.message').data.text};
   };
-  h.close = async () => { await h.app?.close(); h.app=null; server.closeAllConnections(); await new Promise(r=>server.close(r)); rmSync(root,{recursive:true,force:true}); };
+  h.close = async ({ failed = false, beforeDataRemoval } = {}) => {
+    if (failed) evidence?.preserveFailure();
+    try { await h.app?.close(); } catch (error) { failed = true; evidence?.preserveFailure(); throw error; } finally {
+      h.app=null; server.closeAllConnections(); await new Promise(r=>server.close(r));
+      try { await beforeDataRemoval?.(); }
+      catch (error) { failed = true; evidence?.preserveFailure(); throw error; }
+      finally {
+        h.processCleanup = await evidence?.finalize({ failed });
+        if (!h.processCleanup?.stillRunning && !h.processCleanup?.preservationError) rmSync(root,{recursive:true,force:true});
+      }
+    }
+  };
   try {
     await h.launch();
     const requestId = randomUUID();
@@ -89,5 +102,5 @@ export async function migrationHost({ executable, source = resolve(process.env.F
     h.hostId=(await h.api('/status')).body.hostId;
     await h.page.reload(); await h.page.locator('#assistant-view').waitFor({state:'visible'});
     return h;
-  } catch(error) { await h.close(); throw error; }
+  } catch(error) { if (!h.app) evidence?.recordLaunchFailure(error); await h.close({ failed: true }); if (error && typeof error === 'object') error.processCleanup = h.processCleanup; throw error; }
 }
