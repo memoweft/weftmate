@@ -26,3 +26,10 @@ test('failed connection disconnects only the reported address and never tries a 
   await assert.rejects(connectMuMu(async (command: string, args: string[]) => { calls.push([command, args]); return { output: command === mumuManager ? output(19001) : 'unable to connect' }; }), /环境问题：未拍/);
   assert.deepEqual(calls, [[mumuManager, ['info', '-v', '0']], [adbExecutable, ['connect', '127.0.0.1:19001']], [adbExecutable, ['disconnect', '127.0.0.1:19001']]]);
 });
+
+import { androidBusyReason } from '../scripts/nightly/android-packages.mjs';
+test('independent APK compilation does not occupy MuMu, but connected tests and instrumentation do', () => {
+  assert.equal(androidBusyReason('', '', '', ['java gradle -PweftmateApplicationId=com.memoweft.weftmate.mobile.diag2qa :app:assembleDebug :app:testDebugUnitTest']), '');
+  for (const command of ['gradle :app:connectedDebugAndroidTest', 'adb shell am instrument -w synthetic.test/runner', 'node review-capture-mobile.mjs --android'])
+    assert.match(androidBusyReason('', '', '', [command]), /Windows/);
+});
