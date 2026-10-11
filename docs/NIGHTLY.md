@@ -80,3 +80,5 @@ pwsh -NoProfile -File scripts/nightly/unregister-task.ps1
 合成目录由 `tests/helpers/managed-temp.mjs` 统一创建：Windows 固定匿名父目录 `C:/weftmate-temp`，随机子目录一律 `weftmate-` 开头。CI（持续集成）与夜间为本次子进程设置独立范围，成功、失败和可处理的中断先停止并等待自己的进程，再删除该范围。强制结束来不及清理的目录，下次运行开头用同一安全清理器回收24小时以上、无活动所属进程或命令行引用的子目录。24小时远大于正常夜间两小时上限；父目录本身保留，联接根不遍历，删除前仍做路径边界、工作树和在用检查。`prune-temp.ps1` 默认24小时，可用 `-Prefixes` 仅选择获准的历史前缀。
 
 `tests/nightly-temp.test.ts` 在必过组内验证代表性成功、失败、中断后本次目录无遗留，以及强杀遗留的下次回收；夜间清理还记录 `cleanup.temp.removed`，删不掉时清理阶段失败。公开日志写入前去除本机用户名与机器名。
+
+本机 MuMu 的 WebView（网页视图）110 未提供 `AbortSignal.any`；当前共同请求层的下一步建议路径使用该 API，会在请求发出前失败。夜间保留原等待与截图断言，并在对应格明确记录产品兼容原因；不通过合成夹具补齐浏览器 API 来冒充产品通过。兼容修复属于产品包。模拟器隐藏底部导航区域时，整屏图和侧车元数据明确记录 `bottomNavigationVisible=false`，这些图只能验收可见状态栏，不能声称底部系统栏已验收；夜间不修改模拟器导航设置。
