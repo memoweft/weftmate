@@ -42,7 +42,7 @@
         }
         function acceptCompletion() {
             const value = core.nextSuggestionsView();
-            if (ghost.hidden || !value.completion || field.value !== value.draft) return false;
+            if (!value.inlineCompletionEnabled || ghost.hidden || !value.completion || field.value !== value.draft) return false;
             fill(value.draft + value.completion); return true;
         }
         function positionGhost() {
@@ -70,7 +70,7 @@
                     });
                 }
                 scroller.classList.toggle('has-overflow', scroller.scrollWidth > scroller.clientWidth + 1);
-                const showCompletion = value.enabled && !['approval', 'question', 'connection'].includes(selected) && !field.disabled &&
+                const showCompletion = value.inlineCompletionEnabled && !['approval', 'question', 'connection'].includes(selected) && !field.disabled &&
                     !!value.completion && field.value === value.draft && field.selectionStart === field.value.length && field.selectionEnd === field.value.length;
                 if (ghost.hidden !== !showCompletion) ghost.hidden = !showCompletion;
                 if (prefix.textContent !== value.draft) prefix.textContent = value.draft;
