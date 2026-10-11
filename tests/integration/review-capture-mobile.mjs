@@ -10,6 +10,7 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { mockUx7Requests, prepareUx7Suggestions, ux7Replies } from './ux-7-scenes.mjs';
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
+import { redactEvidenceText } from '../helpers/process-evidence.mjs';
 import { startAndroid } from '../../scripts/nightly/android.mjs';
 const assets = join(repository, 'apps/mobile-ui/www'), out = outDirectory();
 const sceneIndex = process.argv.indexOf('--scene'), onlyScene = sceneIndex < 0 ? null : process.argv[sceneIndex + 1];
@@ -63,7 +64,7 @@ try {
         await current.waitForFunction(() => state.booted && String(window.weftNative?.postMessage).includes('__reviewNative'));
       };
       if (android) await android.theme(theme);
-      page.setDefaultTimeout(30000); page.on('pageerror', error => errors.push(error.message));
+      page.setDefaultTimeout(30000); page.on('pageerror', error => { errors.push(error.message); console.error('Mobile page error:',redactEvidenceText(error.message)); });
       if (!android) await page.exposeFunction('__reviewNative', async payload => {
         try { return { id: payload.id, ok: true, result: await bridge(payload) }; }
         catch (error) { return { id: payload.id, ok: false, error: { code: error.message } }; }
@@ -142,7 +143,7 @@ try {
         await mainPage.evaluate(theme=>applyTheme(theme),theme);
         await mainPage.getByRole('button',{name:'搜索主对话',exact:true}).click();await mainPage.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await mainPage.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await mainPage.locator('mark').first().waitFor();
       },mainPage);
-      if (errors.length) throw Error('Mobile renderer failed');
+      if (errors.length) throw Error('Mobile renderer failed: ' + errors.map(redactEvidenceText).join('; '));
       console.log(`Mobile ${theme}: scene outcomes recorded.`);
     } finally { if (!android) await context.close(); await fixture.close(); await candidate.close();await mainFixture?.close();await suggestionFixture?.close();await renderingFixture?.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});if(suggestionFixture)await rm(suggestionFixture.root,{recursive:true,force:true}); }
   }
