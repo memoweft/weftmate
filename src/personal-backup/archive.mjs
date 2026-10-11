@@ -13,9 +13,10 @@ import { durableWrite } from '../personal-access/store.mjs';
 const sha = value => createHash('sha256').update(value).digest('hex');
 export const backupError = code => Object.assign(new Error(code), { code, status: 409 });
 // Browser sessions/cache and all host-managed credential locations are deliberately absent.
+// Host run logs and native crash dumps are local diagnostics: they stay on this machine.
 const omitted = new Set(['cloud-identity', 'personal-backup', 'Backups', 'Cache', 'Code Cache',
   'GPUCache', 'DawnGraphiteCache', 'DawnWebGPUCache', 'Network', 'Session Storage', 'Local Storage',
-  'IndexedDB', 'Service Worker', 'Partitions', 'Crashpad', 'blob_storage', 'SingletonLock',
+  'IndexedDB', 'Service Worker', 'Partitions', 'Crashpad', 'logs', 'blob_storage', 'SingletonLock',
   'SingletonCookie', 'SingletonSocket', 'Local State', 'Preferences', 'DevTools Extensions', 'DevToolsActivePort']);
 export function included(relative) {
   const parts = relative.split('/');

@@ -112,11 +112,13 @@ async function mobileSettingsLegal(kind){
 async function systemStatusSection(target){const owner=state.owner,epoch=state.authEpoch;
   const section=el('section','group');section.append(el('h2','','系统状态'));
   const status=el('p','hint','正在读取…');section.append(status);target.append(section);
+  const records=globalThis.WeftRunRecords?.mount(section,{core:uiCore,toast,retry:()=>page('general'),desktop:null});
   const current=()=>state.owner===owner&&state.authEpoch===epoch&&target.isConnected&&state.page==='general';
   try{const [system,settings]=await Promise.all([
     uiCore.readMobileSystem(),
     uiCore.readMobileModelSettings()]);
     if(!current())return;
+    records?.paint(system.runRecord || {state:'error'});
     const labels={ready:'运行中',connected:'运行中',stopped:'已停止',starting:'启动中',disabled:'未启用',
       unavailable:'不可用',unconfigured:'尚未配置',degraded:'需要处理'};
     status.textContent=system.queue?.backgroundPending?`${system.queue.backgroundPending} 项后台请求排队中`:'';
@@ -137,7 +139,7 @@ async function systemStatusSection(target){const owner=state.owner,epoch=state.a
     }
     const background=el('p','hint',settings.backgroundModelProfileId?'后台模型已单独配置 · 在电脑设置中修改':'后台模型跟随主模型 · 在电脑设置中修改');section.append(background);
     const refresh=el('button','icon-button');refresh.type='button';refresh.setAttribute('aria-label','刷新系统状态');refresh.append(WeftIcons.create('sync',20));refresh.addEventListener('click',()=>page('general'));section.append(refresh);
-  }catch(e){if(current())status.textContent=state.loggedIn?'系统状态暂时无法读取，请重新连接电脑后刷新。':'登录并连接电脑后查看系统状态。'}
+  }catch(e){if(current())records?.paint({state:'error'});if(current())status.textContent=state.loggedIn?'系统状态暂时无法读取，请重新连接电脑后刷新。':'登录并连接电脑后查看系统状态。'}
 }
 
 function capabilitiesPage(target){target.append(heading('能力与扩展','手机能执行的动作与电脑已有组件清楚分开。'),
