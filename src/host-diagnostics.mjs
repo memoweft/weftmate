@@ -76,6 +76,7 @@ export function createHostDiagnostics(root, { version = 'unknown', appRoot, now 
   const crashDirectory = join(root, 'Crashpad');
   let startedAt = null, previous = null, failed = false, begun = false, exited = false;
   let rows = [], recent = [], dumps = [];
+  let startupMs = null, firstTokenMs = [];
   function readRows() {
     const result = [];
     const legacyIndices = new Map();
@@ -106,13 +107,21 @@ export function createHostDiagnostics(root, { version = 'unknown', appRoot, now 
     return row;
   }
   // Detached single-instance start/exit records may be written without owning the marker.
-  function write(event, data = {}) { return remember(log.write(event, { ...data, runId })); }
+  function write(event, data = {}) {
+    if (event === 'host.ready' && Number.isFinite(data.durationMs)) startupMs = data.durationMs;
+    if (event === 'model.first_token' && Number.isFinite(data.durationMs) && data.durationMs >= 0) {
+      firstTokenMs.push(data.durationMs); firstTokenMs = firstTokenMs.slice(-20);
+    }
+    return remember(log.write(event, { ...data, runId }));
+  }
   function begin(metadata = {}) {
     if (begun) return previous;
     begun = true; startedAt = now().toISOString();
     try {
       mkdirSync(log.directory, { recursive: true });
       rows = readRows();
+      firstTokenMs = rows.filter(row => row.event === 'model.first_token' && Number.isFinite(row.durationMs) && row.durationMs >= 0)
+        .slice(-20).map(row => row.durationMs);
       recent = rows.filter(isAnomaly);
       dumps = crashDumps(crashDirectory, now());
       let mark;
@@ -207,5 +216,6 @@ export function createHostDiagnostics(root, { version = 'unknown', appRoot, now 
     const summaryPreview = `WeftMate ${diagnosticAppVersion(version)}\n系统：${diagnosticPlatform} ${diagnosticOsVersion}\n本次启动（电脑时间）：${humanDate(startedAt)}\n上次退出：${previous ? (previous.normal ? '正常 · ' : '异常 · ') + lastReason : '暂无记录'}\n最近 7 天异常退出：${uncleanCount7Days}\n运行记录：保留 7 天，总大小上限 32 MiB\n${safe.map(row => `${humanDate(row.at)} · ${row.event}${row.fields.reason ? ` · ${reasonText[row.fields.reason] ?? row.fields.reason}` : ''}${row.fields.code ? ` · ${row.fields.code}` : ''}`).join('\n')}`;
     return { state: failed ? 'error' : 'ready', runId, startedAt, previous, uncleanCount7Days, summary, summaryPreview };
   }
-  return { runId, directory: log.directory, crashDirectory, begin, write, failure, step, exit, status };
+  return { runId, directory: log.directory, crashDirectory, begin, write, failure, step, exit, status,
+    records: readRows, performance: () => ({ startupMs, firstTokenMs: [...firstTokenMs] }) };
 }
