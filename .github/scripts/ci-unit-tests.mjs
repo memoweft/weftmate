@@ -2,7 +2,7 @@
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, parse } from 'node:path';
+import { join, parse, resolve } from 'node:path';
 
 const mode = process.argv[2];
 if (!['required', 'known', 'vendor'].includes(mode)) throw new Error('Use required, known or vendor');
@@ -71,7 +71,9 @@ if (mode === 'required') {
 }
 console.log(lines.join('\n'));
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
-const result = spawnSync(process.execPath, [...args, ...selected], { env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+// Absolute test paths keep every worker's command line attributable to its
+// worktree during the required creation-time/executable/command-line cleanup.
+const result = spawnSync(process.execPath, [...args, ...selected.map(file => resolve(file))], { env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 const output = (result.stdout || '') + (result.stderr || '');
 process.stdout.write(output);
 const count = name => Number(new RegExp(`^# ${name} (\\d+)$`, 'm').exec(output)?.[1] || 0);

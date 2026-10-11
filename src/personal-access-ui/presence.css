@@ -18,3 +18,17 @@
 .message.send-failed > .button, .main-chat-row.message > .button { border-color:var(--line); background:var(--surface-soft,var(--soft)); border-radius:var(--wm-radius-8); }
 .message.send-failed > .button:active:not(:disabled), .main-chat-row.message > .button:active:not(:disabled) { background:var(--accent-soft); }
 @media (pointer:coarse),(max-width:720px) { .message.send-failed > .button, .main-chat-row.message > .button { min-height:var(--wm-space-40); } }
+
+.run-records { margin-top:var(--wm-space-24); padding-top:var(--wm-space-20); border-top:var(--wm-space-1) solid var(--line); color:var(--ink); }
+.group:not(.card) > .run-records { margin-inline:var(--wm-space-20); }
+.run-records h3 { margin:0 0 var(--wm-space-12); font-size:var(--wm-font-size-15); font-weight:600; }
+.run-record-facts { display:grid; grid-template-columns:auto minmax(0,1fr); gap:var(--wm-space-8) var(--wm-space-16); margin:0; font-size:var(--wm-font-size-13); line-height:var(--wm-line-height-1_55); }
+.run-record-facts dt { color:var(--ink-secondary,var(--muted)); }
+.run-record-facts dd { margin:0; overflow-wrap:anywhere; }
+.run-record-empty { display:flex; align-items:center; gap:var(--wm-space-8); color:var(--ink-secondary,var(--muted)); margin-top:var(--wm-space-16); font-size:var(--wm-font-size-13); }
+.run-record-actions { display:flex; flex-wrap:wrap; gap:var(--wm-space-8); margin-top:var(--wm-space-16); }
+.run-record-preview { margin-top:var(--wm-space-16); }
+.run-record-preview[hidden] { display:none; }
+.run-record-summary { white-space:pre-wrap; overflow-wrap:anywhere; max-height:var(--wm-size-220); overflow:auto; padding:var(--wm-space-12); background:var(--surface-soft,var(--soft)); color:var(--ink); border-radius:var(--wm-radius-8); font-size:var(--wm-font-size-12); user-select:text; }
+.run-record-loading { height:var(--wm-space-44); border-radius:var(--wm-radius-8); background:var(--surface-soft,var(--soft)); padding:var(--wm-space-12); color:var(--ink-secondary,var(--muted)); font-size:var(--wm-font-size-13); }
+@media (max-width:480px) { .run-record-facts { grid-template-columns:1fr; gap:var(--wm-space-4); } .run-record-facts dd { margin-bottom:var(--wm-space-8); } .run-record-actions .button,.run-record-preview .button { min-height:var(--wm-space-44); } }
