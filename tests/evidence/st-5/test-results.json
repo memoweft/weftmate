@@ -46,5 +46,28 @@
     "remaining": 0,
     "note": "One cleanup helper terminated itself during the first scan; second scan returned cleaned=0, failed=0. Test apps and hosts closed normally."
   },
-  "vendor": "Not run: no shared runtime files changed; prebuilt vendor unmodified."
+  "vendor": "Not run: no shared runtime files changed; prebuilt vendor unmodified.",
+  "postMain": {
+    "mergeCommit": "7c311345",
+    "appearance": {
+      "combinations": 12,
+      "screenshots": 288,
+      "errors": 0,
+      "nonemptyStreamingProbe": true
+    },
+    "mobileInteractions": {
+      "passed": 109,
+      "failed": 0,
+      "skipped": 0
+    },
+    "related": {
+      "passed": 88,
+      "failed": 0
+    },
+    "typecheck": "passed",
+    "publicHygiene": {
+      "identities": 0
+    },
+    "heavySlot": "heavy-1"
+  }
 }
