@@ -5,7 +5,7 @@
     "fileSelection": "Direct comparison of fixed baseline tree and HEAD",
     "missingHistoricalFiles": "Skip only paths absent from the fixed tree; preserve empty files and propagate Git errors"
   },
-  "required": {"files": 297, "passed": 1617, "failed": 0, "existingConditionalSkipped": 14, "exitCode": 0},
+  "required": {"sourceHead": "a1ed8955731857c27f25601b5b1ce109901cf0af", "files": 298, "passed": 1618, "failed": 0, "existingConditionalSkipped": 14, "exitCode": 0},
   "vendor": {"files": 31, "passed": 219, "failed": 0, "skipped": 0, "exitCode": 0},
   "focusedM1M5N5": {"passed": 4, "failed": 0, "skipped": 0},
   "baselineRegression": {"passed": 4, "failed": 0},
@@ -22,9 +22,11 @@
   ],
   "extraManuallyCleanedProcesses": 28,
   "failedGallerySupervisedCleanupProcesses": 9,
+  "heavySlotDelayedRelease": {"phase": "final required", "testRuntimeSeconds": 1768.734, "slotHeldSeconds": 2008, "corrected": "Subsequent heavy commands release their owned marker in PowerShell finally, independently of output polling."},
   "followup": {
     "windowsFreshCloudDependencyInstall": {"exitCode": 0, "fixedCommandArgumentsUnchanged": true},
     "windowsFailedCasesRecheck": {"passed": 2, "failed": 0, "skipped": 0},
+    "earlyApprovalPostObservationCleanup": {"passed": 1, "failed": 0, "skipped": 0, "observedCaseMs": 13655.048, "originalChildBudgetMs": 25000, "originalInteractionBudgetMs": 2000, "allOriginalAssertionsPreserved": true},
     "ciOutputAndBaselineRecheck": {"passed": 5, "failed": 0, "skipped": 0},
     "gallery": {"freshDesktopCaptures": 42, "freshMobileWebCaptures": 42, "failed": 0, "viewportThemeVerificationCombinations": 4, "textAndMetadataScan": "passed"},
     "galleryCleanupFocused": {"normalElectronExits": 6, "exitCodes": [0, 0, 0, 0, 0, 0], "forcedSignals": 0, "pageErrors": 0},
