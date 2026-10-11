@@ -73,7 +73,7 @@ try {
       const button = name => page.getByRole('button', { name, exact: typeof name === 'string' });
       const conversation = title => button(new RegExp(`^${title} [0-9]`));
       const shot = (scene, prepare, current = page) => (!onlyScene || scene === onlyScene) && !(android && catalog.scenes.find(row => row.id === scene).unavailable?.includes('android'))
-        ? runScene({ page: current, out, platform: android ? 'android' : 'mobile-web', scene, theme, prepare, screenshot: android?.screenshot }) : null;
+        ? runScene({ page: current, out, platform: android ? 'android' : 'mobile-web', scene, theme, prepare, screenshot: android ? () => android.screenshot(scene, theme) : undefined }) : null;
       // LG-1b account-first login; authentication below remains independent.
       const prepareLogin = async () => {
         // FE-1b's local auth fixture predates the native cloudApp bootstrap flag.
@@ -146,4 +146,5 @@ try {
       console.log(`Mobile ${theme}: scene outcomes recorded.`);
     } finally { if (!android) await context.close(); await fixture.close(); await candidate.close();await mainFixture?.close();await suggestionFixture?.close();await renderingFixture?.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});if(suggestionFixture)await rm(suggestionFixture.root,{recursive:true,force:true}); }
   }
-} finally { if (android) await android.close(); else await browser.close(); server.closeAllConnections(); await new Promise(done => server.close(done)); }
+} catch (error) { console.error('Primary mobile capture failure:', error.stack, error.cause?.stack || ''); throw error; }
+finally { try { if (android) await android.close(); else await browser.close(); } finally { server.closeAllConnections(); await new Promise(done => server.close(done)); } }

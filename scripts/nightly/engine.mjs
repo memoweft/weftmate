@@ -5,6 +5,9 @@ import { generateKeyPairSync } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { report, retention, previousRun } from './report.mjs';
 import { androidBusyReason, nightlyPackage } from './android-packages.mjs';
+import { connectMuMu, adbExecutable as adb, AndroidEnvironmentError } from './mumu.mjs';
+import { acquireHeavySlot } from './heavy-slot.mjs';
+import { redactEvidenceText, systemCommitMemory, describeExit } from '../../tests/helpers/process-evidence.mjs';
 const scripts = fileURLToPath(new URL('.', import.meta.url));
 const value = (name, fallback) => { const i = process.argv.indexOf(name); return i < 0 ? fallback : process.argv[i + 1]; };
 const repository = resolve(value('--repository', join(scripts, '../..')));
@@ -16,7 +19,9 @@ const context = JSON.parse(await readFile(value('--nightly-engine'), 'utf8'));
 const { startedAt, deadline, runId, out, date, bootstrapCommit } = context;
 const gallery = join(out, 'gallery'), phases = [], children = new Set(), locks = [];
 const cleanup = { windows: null, android: null, apple: null };
-let sourceCommit = context.sourceCommit, temp, cancelled = false;
+let sourceCommit = context.sourceCommit, temp, cancelled = false, phaseDeadline = deadline, androidSerial;
+const selectedPhases = value('--phases')?.split(',');
+if (selectedPhases?.some(name => !['prepare','vendor-tests','installed-smoke','windows','mobile-web','android','apple','cleanup'].includes(name))) throw Error('Unknown --phases selection');
 const engineScripts = scripts, reporting = { report, retention, previousRun };
 if (resolve(context.worktree) !== resolve(join(scripts, '../..'))) throw Error('Engine must run from the tested worktree');
 await mkdir(gallery, { recursive: true });
@@ -29,15 +34,21 @@ process.on('SIGTERM', () => { cancelled = true; for (const child of children) ch
 
 async function run(command, args, { cwd = worktree, env = {}, name = 'command', limit = deadline - Date.now(), allowFailure = false } = {}) {
   if ((cancelled || Date.now() >= deadline) && !allowFailure) throw Error('整晚总时长超时或已停止');
+  limit = Math.min(limit, phaseDeadline - Date.now());
   const logPath = join(out, 'logs', name + '.log'), log = await open(logPath, 'a'); let output = '', timedOut = false;
   const child = spawn(command, args, { cwd, windowsHide: true, env: { ...process.env, ...env, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' }, stdio: ['ignore', 'pipe', 'pipe'] });
   children.add(child);
   const completion = new Promise((done, reject) => { child.once('error', reject); child.once('exit', done); });
-  const consume = bytes => { output += bytes.toString(); void log.write(bytes); };
+  const consume = bytes => { const text = redactEvidenceText(bytes.toString()); output += text; void log.write(text); };
   child.stdout.on('data', consume); child.stderr.on('data', consume);
   const timer = setTimeout(() => { timedOut = true; child.kill(); }, Math.max(100, limit));
   try {
     const code = await completion;
+    if (code !== 0 || timedOut) {
+      let tcp;
+      try { tcp = JSON.parse((await import('node:child_process')).execFileSync('pwsh', ['-NoProfile','-Command', '@{total=@(Get-NetTCPConnection -ErrorAction SilentlyContinue).Count} | ConvertTo-Json -Compress'], { encoding:'utf8', windowsHide:true, timeout:10000 })); } catch { tcp = { available:false }; }
+      await writeFile(join(out,'logs',name+'-failure.json'), JSON.stringify({name,lastPhase:phases.at(-1)?.name, ...describeExit(code,child.signalCode), timedOut, systemCommit:systemCommitMemory(), tcp},null,2));
+    }
     if (!allowFailure && (timedOut || code !== 0)) throw Error(timedOut ? `${name} 超时（整晚截止时间或本命令时限）` : `${name} 运行失败（退出 ${code}；见 logs/${name}.log）`);
     return { output, code: timedOut ? -1 : code, timedOut };
   } finally { clearTimeout(timer); children.delete(child); await log.close(); }
@@ -45,10 +56,21 @@ async function run(command, args, { cwd = worktree, env = {}, name = 'command', 
 async function phase(name, platforms, action) {
   const began = Date.now(), item = { name, platforms, status: 'passed' }; phases.push(item);
   console.log(`Start ${name}`);
+  let slot;
   try {
+    if (selectedPhases && !['prepare','cleanup'].includes(name) && !selectedPhases.includes(name)) return Object.assign(item, {status:'skipped',reason:'阶段专项，未执行',seconds:0}).status === 'passed';
     if (cancelled || Date.now() >= deadline) return Object.assign(item, { status:'not-run', reason:'整晚截止时间已到或已停止，未执行', seconds:0 }).status === 'passed';
-    const result = await action(); if (result) Object.assign(item, result); }
-  catch (error) { item.status = 'failed'; item.reason = error.message.replace(/[A-Z]:[\\/][^\s"']+/gi, '[local artifact]'); }
+    const skipped = (name === 'apple' && process.argv.includes('--skip-apple')) || (name === 'android' && process.argv.includes('--skip-android')) || (process.argv.includes('--devices-only') && ['vendor-tests','installed-smoke','windows','mobile-web'].includes(name));
+    if (skipped) Object.assign(item, {status:'skipped',reason:'专项或主动跳过，未执行'});
+    else {
+      slot = await acquireHeavySlot(orchestrator, `nightly ${runId} / ${name}`, {deadline,cancelled:()=>cancelled});
+      item.heavySlot = slot.index; item.slotTakenAt = new Date(slot.takenAt).toISOString();
+      // A stage must release its slot within 30 minutes, including owned cleanup.
+      phaseDeadline = Math.min(deadline, slot.takenAt + 29 * 60000);
+      const result = await action(); if (result) Object.assign(item, result);
+    }
+  } catch (error) { item.status = error instanceof AndroidEnvironmentError ? 'environment' : 'failed'; item.reason = redactEvidenceText(error.message).replace(/[A-Z]:[\\/][^\s"']+/gi, '[local artifact]'); }
+  finally { phaseDeadline=deadline; if (slot) { item.slotSeconds=(Date.now()-slot.takenAt)/1000; await slot.release(); } }
   item.seconds = (Date.now() - began) / 1000;
   console.log(`${name}: ${item.status} (${item.seconds.toFixed(1)}s)${item.reason ? ' · ' + item.reason : ''}`);
   return item.status === 'passed';
@@ -56,12 +78,24 @@ async function phase(name, platforms, action) {
 async function isLocked(name) { try { await readFile(join(orchestrator, name)); return true; } catch (error) { if (error.code === 'ENOENT') return false; throw error; } }
 async function takeLock(name) {
   const path = join(orchestrator, name);
-  try { const h = await open(path, 'wx'); await h.writeFile(JSON.stringify({ package: 'NIGHT-2', runId, startedAt })); await h.close(); locks.push(path); return true; }
+  try { const h = await open(path, 'wx'); await h.writeFile(JSON.stringify({ package: 'NIGHT-3a', runId, startedAt })); await h.close(); locks.push(path); return true; }
   catch (error) { if (error.code === 'EEXIST') return false; throw error; }
 }
+async function cleanupAndroid() {
+    try { cleanup.android = { ...cleanup.android, ...JSON.parse(await readFile(join(out,'android-cleanup.json'),'utf8')) }; } catch {}
+    // Handles an interrupted Android runner as well as its normal finally block.
+    try {
+      if (!androidSerial) return;
+      const state = JSON.parse(await readFile(join(out, 'android-state.json'), 'utf8'));
+      if (state.serial !== androidSerial) throw Error('安卓清理地址与本轮管理工具地址不符');
+      for (const mapping of state.reverse || []) await run(adb, ['-s', androidSerial, 'reverse', '--remove', `tcp:${mapping}`], { name: 'android-clean-reverse', allowFailure: true, limit: 5000 });
+      for (const mapping of state.forward || []) await run(adb, ['-s', androidSerial, 'forward', '--remove', `tcp:${mapping}`], { name: 'android-clean-forward', allowFailure: true, limit: 5000 });
+      for (const pkg of state.installed || []) { if (![nightlyPackage,nightlyPackage+'.test'].includes(pkg)) throw Error('拒绝清理非本轮夜间包'); const removed = await run(adb, ['-s', androidSerial, 'uninstall', pkg], { name: 'android-clean-uninstall', allowFailure: true, limit: 10000 }); if (removed.code !== 0 || !removed.output.includes('Success')) throw Error('夜间包卸载未确认'); cleanup.android = { ...cleanup.android, uninstalled:[...(cleanup.android?.uninstalled || []),pkg] }; }
+      if (state.installed?.length) cleanup.android.packageRemoved = !(await run(adb, ['-s',androidSerial,'shell','pm','list','packages',nightlyPackage], {name:'android-clean-confirm',allowFailure:true,limit:10000})).output.includes(nightlyPackage);
+    } catch (error) { if (error.code !== 'ENOENT') cleanup.android = {...cleanup.android, error:error.message}; }
+}
 const skip = reason => ({ status: 'skipped', reason });
-const adb = 'D:/Software/MuMuPlayer/nx_main/adb.exe', cli = 'D:/Software/MuMuPlayer/nx_main/mumu-cli.exe';
-let ownsMuMu = false;
+
 try {
   temp = await mkdtemp('C:/weftmate-nightly-');
   await writeFile(join(out, 'cleanup-roots.json'), JSON.stringify([temp, worktree, out]));
@@ -97,38 +131,29 @@ try {
     await phase('windows', ['windows'], () => process.argv.includes('--devices-only') ? skip('设备专项，未拍') : run('node', [join(worktree, 'tests/integration/review-capture-desktop.mjs'), '--out', gallery, ...sceneArgs], { name: 'windows' }).then(() => null));
     await phase('mobile-web', ['mobile-web'], () => process.argv.includes('--devices-only') ? skip('设备专项，未拍') : run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--out', gallery, ...sceneArgs], { name: 'mobile-web' }).then(() => null));
     await phase('android', ['android'], async () => {
-      if (process.argv.includes('--skip-android')) return skip('主动跳过，未拍');
       if (await isLocked('lan.lock') || !await takeLock('mumu.lock')) return skip('被占用，未拍（LAN / MuMu 锁）');
-      const info = JSON.parse((await run(cli, ['info', '--vmindex', '0'], { name: 'mumu-info' })).output);
-      const alreadyRunning = info.is_process_started || info.is_android_started;
-      const assess = async () => {
-        await run(adb, ['connect','127.0.0.1:7555'], {name:'adb-connect'});
-        const packages = (await run(adb,['-s','127.0.0.1:7555','shell','pm','list','packages','weftmate'],{name:'android-packages'})).output;
-        const processes = (await run(adb,['-s','127.0.0.1:7555','shell','ps','-A','-o','NAME'],{name:'android-processes'})).output;
-        const instrumentation = (await run(adb,['-s','127.0.0.1:7555','shell','dumpsys','activity'],{name:'android-instrumentation'})).output;
-        const host = await run('pwsh',['-NoProfile','-Command', String.raw`[bool]@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -notin @($PID,${process.pid},${context.bootstrapPid}) -and $_.CommandLine -match 'review-capture-mobile[^\r\n]*--android|weftmateApplicationId|NightlyWebViewProbeTest|adb[^\r\n]*\bam\s+instrument|weftmate[^\r\n]*android[^\r\n]*(?:test|probe)' }).Count`], {name:'android-host-occupancy'});
-        const reason = androidBusyReason(packages,processes,instrumentation,host.output.trim() === 'True' ? ['review-capture-mobile --android'] : []);
-        cleanup.android = { ...cleanup.android, reusedEmulator:!!alreadyRunning, occupancyChecked:true, occupancyReason:reason || 'MuMu 锁已持有；设备无 WeftMate / UI 测试进程和活动仪器测试；Windows 无安卓测试命令' };
-        return reason;
-      };
-      if (alreadyRunning) { const reason = await assess(); if (reason) return skip('被占用，未拍（'+reason+'）'); }
-      await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'build-android.ps1'), '-Worktree', worktree], { name: 'android-build' });
-      if (!alreadyRunning) {
-        const beforeLaunch = JSON.parse((await run(cli, ['info', '--vmindex', '0'], { name: 'mumu-recheck' })).output);
-        if (beforeLaunch.is_process_started || beforeLaunch.is_android_started) return skip('被占用，未拍（构建期间他人启动 MuMu）');
-        await run(cli, ['control', '--vmindex', '0', 'launch'], { name: 'mumu-launch' }); ownsMuMu = true;
+      const deviceLock = locks.at(-1);
+      try {
+        const info = await connectMuMu(run); androidSerial = info.serial;
+        const assess = async () => {
+          const packages = (await run(adb,['-s',androidSerial,'shell','pm','list','packages','weftmate'],{name:'android-packages'})).output;
+          const processes = (await run(adb,['-s',androidSerial,'shell','ps','-A','-o','NAME'],{name:'android-processes'})).output;
+          const instrumentation = (await run(adb,['-s',androidSerial,'shell','dumpsys','activity'],{name:'android-instrumentation'})).output;
+          const host = await run('pwsh',['-NoProfile','-Command', String.raw`[bool]@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -notin @($PID,${process.pid},${context.bootstrapPid}) -and $_.CommandLine -match 'review-capture-mobile[^\r\n]*--android|weftmateApplicationId|NightlyWebViewProbeTest|adb[^\r\n]*\bam\s+instrument|weftmate[^\r\n]*android[^\r\n]*(?:test|probe)' }).Count`], {name:'android-host-occupancy'});
+          const reason = androidBusyReason(packages,processes,instrumentation,host.output.trim() === 'True' ? ['review-capture-mobile --android'] : []);
+          cleanup.android = { ...cleanup.android, reusedEmulator:true, androidVersion:info.androidVersion, occupancyChecked:true, occupancyReason:reason || 'MuMu 锁已持有；设备无 WeftMate / UI 测试进程和活动仪器测试；Windows 无安卓测试命令' };
+          return reason;
+        };
+        const busy = await assess(); if (busy) return skip('被占用，未拍（'+busy+'）');
+        await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'build-android.ps1'), '-Worktree', worktree], { name: 'android-build' });
+        const occupied = await assess(); if (occupied) return skip('被占用，未拍（'+occupied+'）');
+        await run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--android', '--out', gallery, '--state', join(out, 'android-state.json'), ...sceneArgs], { name: 'android' });
+      } finally {
+        await cleanupAndroid();
+        if (androidSerial) await run(adb,['disconnect',androidSerial],{name:'adb-disconnect',allowFailure:true,limit:5000}).catch(()=>{});
+        await rm(deviceLock,{force:true}); locks.splice(locks.indexOf(deviceLock),1);
+        androidSerial = undefined;
       }
-      for (let i = 0; i < 90; i++) {
-        if (Date.now() >= deadline || cancelled) throw Error('整晚总时长超时或已停止');
-        await run(adb, ['connect', '127.0.0.1:7555'], { name: 'adb-connect', allowFailure: true, limit: 5000 });
-        const ready = await run(adb, ['-s', '127.0.0.1:7555', 'shell', 'getprop', 'sys.boot_completed'], { name: 'android-boot', allowFailure: true, limit: 5000 });
-        if (ready.output.trim() === '1') break;
-        if (i === 89) throw Error('MuMu 启动超时');
-        await new Promise(done => setTimeout(done, 1000));
-      }
-      const occupied = await assess(); if (occupied) return skip('被占用，未拍（'+occupied+'）');
-      await run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--android', '--out', gallery, '--state', join(out, 'android-state.json'), ...sceneArgs], { name: 'android' });
-      cleanup.android = { ...cleanup.android, ...JSON.parse(await readFile(join(out, 'android-cleanup.json'), 'utf8')) };
     });
     await phase('apple', ['mac', 'iphone', 'watch'], async () => {
       if (process.argv.includes('--skip-apple')) return skip('主动跳过，未拍');
@@ -158,33 +183,10 @@ finally {
       cleanup.windows = JSON.parse((await run('pwsh', ['-NoProfile', '-File', join(scripts, 'cleanup.ps1'), '-Since', startedAt, '-RootsJson', join(out, 'cleanup-roots.json'), '-OwnerPid', String(process.pid), '-BootstrapPid', String(context.bootstrapPid)], { cwd: repository, name: 'cleanup', allowFailure: true, limit: 15000 })).output);
     } catch (error) { cleanup.windows = { error: error.message };  }
   }
-  {
-    try { cleanup.android = { ...cleanup.android, ...JSON.parse(await readFile(join(out,'android-cleanup.json'),'utf8')) }; } catch {}
-    // Handles an interrupted Android runner as well as its normal finally block.
-    try {
-      const state = JSON.parse(await readFile(join(out, 'android-state.json'), 'utf8'));
-      for (const mapping of state.reverse || []) await run(adb, ['-s', '127.0.0.1:7555', 'reverse', '--remove', `tcp:${mapping}`], { name: 'android-clean-reverse', allowFailure: true, limit: 5000 });
-      for (const mapping of state.forward || []) await run(adb, ['-s', '127.0.0.1:7555', 'forward', '--remove', `tcp:${mapping}`], { name: 'android-clean-forward', allowFailure: true, limit: 5000 });
-      for (const pkg of state.installed || []) { if (![nightlyPackage,nightlyPackage+'.test'].includes(pkg)) throw Error('拒绝清理非本轮夜间包'); const removed = await run(adb, ['-s', '127.0.0.1:7555', 'uninstall', pkg], { name: 'android-clean-uninstall', allowFailure: true, limit: 10000 }); if (removed.code !== 0 || !removed.output.includes('Success')) throw Error('夜间包卸载未确认'); cleanup.android = { ...cleanup.android, uninstalled:[...(cleanup.android?.uninstalled || []),pkg] }; }
-      if (state.installed?.length) cleanup.android.packageRemoved = !(await run(adb, ['-s','127.0.0.1:7555','shell','pm','list','packages',nightlyPackage], {name:'android-clean-confirm',allowFailure:true,limit:10000})).output.includes(nightlyPackage);
-    } catch (error) { if (error.code !== 'ENOENT') cleanup.android = {...cleanup.android, error:error.message}; }
-    if (ownsMuMu) {
-    await run(cli, ['control', '--vmindex', '0', 'shutdown'], { name: 'mumu-shutdown', allowFailure: true, limit: 15000 }).catch(() => {});
-    let info;
-    for (let attempt = 0; attempt < 15; attempt++) {
-      const after = await run(cli, ['info', '--vmindex', '0'], { name: 'mumu-cleanup-info', allowFailure: true, limit: 5000 }).catch(() => null);
-      try { info = JSON.parse(after?.output); } catch {}
-      if (info && !info.is_process_started && !info.is_android_started) break;
-      await new Promise(done => setTimeout(done, 1000));
-    }
-    cleanup.android = { ...cleanup.android, ownedEmulatorShutdown: !!info && !info.is_process_started && !info.is_android_started };
-    if (!cleanup.android.ownedEmulatorShutdown) phases.push({ name: 'android-cleanup', status: 'failed', reason: 'MuMu 关闭未得到确认' });
-  }
-  }
   if (temp) await rm(temp, { recursive: true, force: true }).catch(() => {});
-  // Owner-approved housekeeping: prune synthetic test temp directories older than 48 hours.
+  // Owner-approved housekeeping: prune synthetic test temp directories older than 24 hours.
   try {
-    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '48', '-Repository', repository, '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
+    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '24', '-Repository', repository, '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
     cleanup.staleTemp = JSON.parse(pruned.output.trim().split(/\r?\n/).pop());
   } catch (error) { cleanup.staleTemp = { error: error.message }; }
   phases.push({ name: 'cleanup', status: cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.staleTemp?.failed || cleanup.android?.error || cleanup.android?.packageRemoved === false || cleanup.android?.reverseRemoved === false || cleanup.android?.forwardRemoved === false || cleanup.apple?.bootedOwnedRemaining?.length ? 'failed' : 'passed', reason: cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.android?.error || '', seconds: (Date.now()-cleanupStarted)/1000 });
