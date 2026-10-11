@@ -8,6 +8,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             contentType: blob.type.startsWith('image/') ? 'image/png' : 'text/markdown',
             bytes: new Uint8Array(await blob.arrayBuffer()), ownerId: core.state.ownerId }) : undefined,
         title: () => core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.title });
+    globalThis.WeftProblemFeedback = trigger => ui.messageActions.openFeedback(trigger);
     function clearHistoryView() {
         globalThis.WeftContent?.closeGallery(false);
         ui.byId('transcript').replaceChildren();
@@ -18,6 +19,10 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         if (kind === 'read-failure' && core.connectionView?.().kind !== 'online') message = '';
         ui.byId('timeline-status').textContent = message;
         ui.byId('timeline-status').hidden = !message;
+        if (message && kind === 'read-failure') {
+            const report = ui.element('button', 'button secondary small', '反馈问题'); report.type = 'button';
+            report.onclick = () => ui.messageActions.openFeedback(report); ui.byId('timeline-status').append(report);
+        }
     }
     function beginOlderHistory() {
         ui.conversationScroll?.hold();
@@ -57,6 +62,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (['failed','confirming','undelivered'].includes(row.status)) {
                 const retry = ui.element('button', 'button quiet small', '重试发送'); retry.type = 'button';
                 retry.addEventListener('click', () => core.retryOptimistic(row.requestId)); node.append(retry);
+                const report = ui.element('button', 'button secondary small', '反馈问题'); report.type = 'button';
+                report.onclick = () => ui.messageActions.openFeedback(report); node.append(report);
             }
         }
         for (const node of list.querySelectorAll('[data-optimistic]')) if (!node.dataset.motionSent) {node.dataset.motionSent='true';globalThis.WeftReplyMotion?.reveal(node,'send');}

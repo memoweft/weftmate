@@ -428,7 +428,11 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     })(); else if (auth.mode === 'authenticated') void (async () => { try { await finishCloudLogin(); } catch { await expireCloudSession(); } })(); else localExpired(); };
     return client;
   }
-  return { initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
+  async function cloudSendFeedback(payload) {
+    if (!client || auth.mode !== 'authenticated') throw Object.assign(new Error('FEEDBACK_LOGIN_REQUIRED'), { code: 'FEEDBACK_LOGIN_REQUIRED' });
+    return client.authorized('/feedback', { method: 'POST', body: payload });
+  }
+  return { cloudSendFeedback, initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
     retryCloudApproval, cancelCloudJourney, renewCloudSession, cloudOfflineLogin, cloudDirectory, cloudRename, cloudRemove, cloudConnect, cloudTrust,
     cloudEmailRequest, cloudEmailConfirm, cloudChangePassword, cloudLogout, cloudLogoutOthers, cloudDeleteAccount, cloudEmergencyPassword, cloudPairing, cloudRedeemPairing, cloudConnectTrusted,
     cloudTrustMaterial, cloudImportTrust, cloudApproveOffline };

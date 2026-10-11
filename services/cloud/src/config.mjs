@@ -97,6 +97,8 @@ export function loadConfig(env = process.env, cwd = process.cwd()) {
     relay = { domain, serverName, ...ports };
   }
   return Object.freeze({
+    feedbackRepository: env.CLOUD_FEEDBACK_REPOSITORY && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(env.CLOUD_FEEDBACK_REPOSITORY) ? env.CLOUD_FEEDBACK_REPOSITORY : undefined,
+    feedbackToken: env.CLOUD_FEEDBACK_TOKEN?.trim() || undefined,
     relay,
     host,
     port: Number(portText),

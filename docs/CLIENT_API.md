@@ -498,6 +498,12 @@ DIAG-2：既有 `GET /system` 保留可选只读 `runRecord:{state,runId,started
 
 MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话继续使用原绑定。后台配置默认跟随账户当前 / 最近聊天的模型，有会话和无会话的积压任务使用同一规则；没有最近聊天时才使用账户默认或已授权会话绑定，绝不回退到启动配置 `authRef`。标题、记忆整理以及后续关心/健康归纳按后台路由。仅本机回环且 `/props.total_slots=1` 的入口排队，云 API、多槽和未知槽数直接并行。本机 ModelSwitcher（模型切换代理）的后台请求仅在所选模型已经加载且未切换时进入推理；模型不一致则等待并释放槽位给聊天，后台不主动触发装卸。状态未知的已确认单槽服务也等待。单槽主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。记忆形成使用后台路由；World/interactions（记忆与经历）召回的来源权限按接收内容的主模型 modelTier 判定。
 
+R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metrics`（性能指标）与 `diagnosticPreview`（诊断包内容预览），保留旧字段与路由。`components` 固定为 `host / memory / model / relay / certificate` 五项，每项含 `id,name,state,label,description,reasonCode,repairable`；`state` 为 `healthy|problem|disabled`，有问题时另有 `nextStep:{target,label}`；模型正在准备时为正常状态，另有 `pending:true` 与人话说明，设置页会自动核对直到准备结束。显示名称使用人话；`memory.semanticRecall` 仅在记忆核心的 `health.runtime.semantic_recall` 存在时提供 `{state,label,description,reasonCode?}`，状态为 `disabled|preparing|ready|unavailable`；旧核心没有字段时不显示。语义查找状态不触发下载，不返回模型地址、目录或记忆内容。
+
+`metrics` 含 `startup / firstToken / memory`，每项有 `value:number|null,unit:ms|bytes,state:normal|slow|unknown,reference:string`；首字另有 `sampleCount`。启动从桌面进程启动到界面就绪；首字取最近最多 20 次首次正文时间的中位数（包含等待与思考，后台请求不计入），从本机运行记录恢复；内存为当前 Electron（桌面程序框架）进程组工作集之和。10 秒启动、5 秒首字、1 GB 内存仅是排查参照，不是设备性能保证。
+
+修复与压缩包导出只由本机 Windows 桌面接缝 `repairSystem(id)` 与 `exportSystemDiagnostics()` 发起，验证当前窗口、当前本机账户与既有宿主所有者资格；不新增 `/personal/v1` 路由，不需要安卓白名单或新壳。手机及远程网页只读。每次修复只调用对应组件已有的重启／重连／证书重试方法；普通模型入口重新检查目录，不发送推理消息，受管理的当前本机模型才调用原控制器。现有 DSH（助手运行时）重拉、记忆桥重连、远程隧道重连和证书日常续期负责自动恢复，不由状态读取增加重启循环。诊断压缩包的严格字段投影与文件清单见 DIAGNOSTICS.md。
+
 ### ST-1 个性化与助手设置
 
 | 方法与路径 | 请求 | 响应 / 权限 |
@@ -1020,6 +1026,16 @@ devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近
 **Apple 实现备注（LG-2）**：iPhone / Mac 账号页面在 App 内走本节 JSON 接口，使用独立内存 Cookie 容器。`/auth/authorization/resume` 是 provider 恢复路由的 JSON 包装：原生网络层须同时取本 App 接口路径与返回的固定 issuer `/oidc/auth/{uid}` 路径对应的交互 / resume Cookie；仅按包装接口路径筛选会漏掉 provider 的 resume Cookie。Cookie 只发往已配置的云 origin，不跨宿主传送。代码 / 刷新均发送 DPoP，同一 single-use refresh family 的消费在模型网络层串行；没有新增服务端路径或第二种登录协议。
 
 App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协议）会话 Cookie（会话凭据），再走原密码 / 验证码 / PKCE（授权码校验）流程；避免账号改变时进入提供方的 HTML（网页标记语言）自动注销表单。云 DPoP（设备密钥持有证明）凭据和其他客户端不随之撤权。
+
+### 7.9a 应用内反馈（R0-4）
+
+`POST /personal/v1/cloud/feedback` 只向云端发送，不经过本机业务代理。需要现有云账号登录与 DPoP（持有密钥证明）设备认证、允许的 `Origin`（请求来源），无查询参数。请求为 `{"title":"应用反馈：…","body":"完整预览正文"}`；标题非空、单行、最多120个 UTF-16（16位统一码编码）代码单元，正文非空、最多60,000 UTF-8（8位统一码编码）字节；传输 JSON（结构化数据格式）上限256 KiB。响应201 `{"number":42}` 为 GitHub 问题单编号。
+
+客户端在发送前展示最终标题和正文，确认后将同一份字符串发送。默认附上既有不含正文与密钥的诊断摘要，默认不附对话；主动勾选对话后还需一次明确确认。生成预览前沿用对话导出脱敏，并去掉控制字符、将 `<` / `>` / `@` 换成全角字符；云端不执行、不渲染内容，需要再清洗的请求返回400 `FEEDBACK_UNSAFE_TEXT`，不在发送时偷偷改字。回复「有用 / 没用」可换、可取消，仅按账户和消息存本机，无上传接口。发送成功后本机只保存时间、标题、编号，不保存反馈正文。
+
+沿用已有 `failure_limits` 表作账户限频：最多连续5次代发尝试，之后至少等待10分钟；一小时窗口重置，无新增表或反馈内容持久化。429 `RATE_LIMITED` 附 `Retry-After`（重试等待秒数）。其他错误：401 `UNAUTHORIZED`；400 `FEEDBACK_INVALID` / `FEEDBACK_UNSAFE_TEXT`；413 `FEEDBACK_TOO_LARGE` / `BODY_TOO_LARGE`；503 `FEEDBACK_NOT_CONFIGURED` 明确表示暂未开通；502 `FEEDBACK_GITHUB_<HTTP状态码>` / `FEEDBACK_NETWORK_FAILED` / `FEEDBACK_INVALID_RECEIPT` 如实表示代发失败。失败不产生本机成功记录；客户端保留完整预览及「复制内容」。本机未登录云账号直接提供同一复制路径，不伪装成功。
+
+原生配合：Android（安卓）`CloudAppCrypto.kt::cloudAppRouteAllowed` 需要允许云来源的精确 `/feedback` POST（提交请求）并加允许／拒绝测试；本包按任务边界不改壳，现有安卓发送会失败并保留复制路径，需要后续新壳。Apple（苹果端）需接本机评价、相同预览与确认、此云接口和本机元数据记录；本包不改 Apple。
 
 ### 7.9 账号生命周期（S1e / D30）
 
