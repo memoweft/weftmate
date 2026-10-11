@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFile, rm } from 'node:fs/promises';
+import { readFile, writeFile, rm } from 'node:fs/promises';
 import { resolve, extname, join, sep } from 'node:path';
 import { startFe1bFixture } from './fe-1b-fixture.mjs';
 import {startRenderingCandidate} from './ux-5-fixture.mjs';
@@ -71,8 +71,18 @@ try {
       await navigate(page, `http://127.0.0.1:${server.address().port}/`);
       const button = name => page.getByRole('button', { name, exact: typeof name === 'string' });
       const conversation = title => button(new RegExp(`^${title} [0-9]`));
-      const shot = (scene, prepare, current = page) => (!onlyScene || scene === onlyScene) && !(android && catalog.scenes.find(row => row.id === scene).unavailable?.includes('android'))
-        ? runScene({ page: current, out, platform: android ? 'android' : 'mobile-web', scene, theme, prepare, screenshot: android ? () => android.screenshot(scene, theme) : undefined }) : null;
+      const shot = async (scene, prepare, current = page) => {
+        if ((onlyScene && scene !== onlyScene) || android && catalog.scenes.find(row => row.id === scene).unavailable?.includes('android')) return null;
+        const record = await runScene({ page:current, out, platform:android?'android':'mobile-web',scene,theme,prepare,screenshot:android?()=>android.screenshot(scene,theme):undefined });
+        if (android && scene === 'next-suggestions' && record.status === 'failed') {
+          const support = await current.evaluate(()=>({abortAny:typeof AbortSignal.any,webView:navigator.userAgent.match(/Chrome\/([0-9.]+)/)?.[1] || 'unknown'}));
+          if (support.abortAny !== 'function') {
+            record.reason=`产品兼容问题：WebView ${support.webView} 未提供 AbortSignal.any，下一步建议请求在发出前失败；原页面等待断言仍超时`;
+            await writeFile(join(out,`review-android-${scene}-${theme}.json`),JSON.stringify(record,null,2)+'\n');
+          }
+        }
+        return record;
+      };
       // LG-1b account-first login; authentication below remains independent.
       const prepareLogin = async () => {
         // FE-1b's local auth fixture predates the native cloudApp bootstrap flag.
