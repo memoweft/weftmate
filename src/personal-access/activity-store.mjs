@@ -41,7 +41,7 @@ export function putActivity(account, key, input) {
   if(input.source?.sessionId&&state.erasedBefore?.[input.source.sessionId]&&input.at<=state.erasedBefore[input.source.sessionId])return null;
   const privateSource=input.source?.sessionId && hasPrivateContent(account.sessions[input.source.sessionId]);
   const row={ id, at:previous?.at ?? input.at, type:input.type, title:short(input.title), summary:short(input.summary), source:input.source ?? {},
-    actions:input.actions ?? [], state:input.state ?? 'completed', notification:{level:input.level ?? 'normal',type:input.type,initiatedBy:input.initiatedBy ?? previous?.notification.initiatedBy ?? (['memory','system','companion'].includes(input.type.split('.')[0])?'assistant':'user'),...(input.test?{test:true}:{})},
+    actions:input.actions ?? [], state:input.state ?? 'completed', ...(input.memoryDigest?{memoryDigest:input.memoryDigest}:{}), notification:{level:input.level ?? 'normal',type:input.type,initiatedBy:input.initiatedBy ?? previous?.notification.initiatedBy ?? (['memory','system','companion'].includes(input.type.split('.')[0])?'assistant':'user'),...(input.test?{test:true}:{})},
     ...(privateSource ? {temporary:true}: {}) };
   if (privateSource) { row.title=input.type.startsWith('task.') ? '临时对话中的任务' : input.type==='approval.pending' ? '临时对话需要审批' : input.type==='question.pending' ? '临时对话需要回答' : '临时对话动态';
     row.summary=input.type==='task.completed' ? '临时对话中的任务已完成' : input.type==='task.failed' ? '临时对话中的任务失败' : input.type==='task.stopped' ? '临时对话中的任务已停止' : '打开临时对话查看。'; }

@@ -1,7 +1,7 @@
 /* Shared presentation for desktop and the mobile web shell. */
 globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.activity.timeZone}){
     const node=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls||'';if(text!==undefined)el.textContent=text;return el;};
-    const button=(text,action)=>{const el=node('button','button quiet small',text);el.type='button';el.onclick=()=>Promise.resolve(action()).catch(error=>{notice.textContent=core.failureMessage(error);});return el;};
+    const button=(text,action)=>{const el=node('button','button quiet small',text);el.type='button';el.onclick=()=>Promise.resolve().then(action).catch(error=>{notice.textContent=core.failureMessage(error);});return el;};
     target.classList.add('activity-page');
     const head=node('div','activity-heading'),title=node('h1','','动态'),notice=node('p','activity-notice');notice.setAttribute('role','status');
     title.tabIndex=-1;
@@ -12,6 +12,31 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
     const list=node('div','activity-days'),more=button('更多动态',()=>core.readActivity(true));
     target.replaceChildren(head,description,filters,notice,list,more);
     const mounted=new Map();
+    function digestContent(item){
+        const report=item.memoryDigest,body=node('div','memory-digest');
+        const formatter=new Intl.DateTimeFormat('zh-CN',{timeZone:report.timeZone,month:'long',day:'numeric'});
+        body.append(node('p','muted',`${formatter.format(new Date(report.from))} — ${formatter.format(new Date(report.to))}`));
+        function entries(values,review=false){
+            for(const value of values){const line=node('div','digest-memory'),copy=node('div','digest-memory-copy');
+                const disabled=['forgotten','unavailable'].includes(value.status),content=button(disabled?value.status==='forgotten'?'已忘掉':value.statusLabel||'当前不可用':value.text,()=>core.activityAction(item,{kind:'memory_item',target:{kind:value.kind,id:value.id}}));
+                content.className='digest-memory-open';content.disabled=disabled;content.prepend(WeftIcons.create('memory',16));copy.append(content);
+                if(review||['confirmed','corrected'].includes(value.status))copy.append(node('small','muted',value.status==='confirmed'?'已确认，90 天内不再询问':value.status==='corrected'?'已更正':value.reviewReason));
+                line.append(copy);
+                if(review&&['current','corrected'].includes(value.status)){const confirm=button('还对',()=>core.activityAction(item,{kind:'memory_confirm',target:{kind:value.kind,id:value.id}}));confirm.className='button secondary small';confirm.disabled=core.activity.busy.has(item.id);line.append(confirm);}
+                if(!disabled){const more=button('',()=>{});more.className='icon-button digest-more';more.setAttribute('aria-label',`记忆操作 ${value.text}`);more.setAttribute('aria-haspopup','menu');more.append(WeftIcons.create('more',16));
+                    more.onclick=()=>WeftPopover.menu(more,[{name:'不对，改一下',icon:'edit',disabled:value.kind==='entity',action:()=>core.activityAction(item,{kind:'memory_item',target:{kind:value.kind,id:value.id}},'correct')},
+                        {name:'忘掉',icon:'trash',danger:true,action:()=>core.activityAction(item,{kind:'memory_item',target:{kind:value.kind,id:value.id}},'delete')}],error=>notice.textContent=core.failureMessage(error));
+                    more.disabled=core.activity.busy.has(item.id);line.append(more);}
+                body.append(line);
+            }
+        }
+        const groups=new Map();for(const value of report.added){if(!groups.has(value.topic))groups.set(value.topic,[]);groups.get(value.topic).push(value);}
+        for(const [topic,values]of groups){body.append(node('h4','',topic));entries(values);}
+        if(report.moreCount){const more=button(`还有 ${report.moreCount} 条`,()=>core.activityAction(item,{kind:'view_memory',target:{from:report.from,to:report.to}}));more.className='button secondary small';body.append(more);}
+        if(report.corrected.length){body.append(node('h4','','这一周更正过的'));entries(report.corrected);}
+        if(report.review.length){body.append(node('h4','','这些很久没用到了，还对吗？'));entries(report.review,true);}
+        return body;
+    }
     function render(){
         const model=core.activity;all.disabled=!model.snapshotCursor||!model.unreadCount||model.loading;
         for(const el of filters.children){el.setAttribute('aria-current',el.dataset.filter===model.filter?'true':'false');el.disabled=model.loading;}
@@ -45,6 +70,14 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
                 }
                 for(const el of actions.children)el.disabled=model.busy.has(item.id);
                 if(!mobile){row.replaceChildren(heading,summary,reason,status,actions);row.setAttribute('aria-label',`${item.read?'':'未读，'}${item.title}`);}
+                if(item.memoryDigest){
+                    row.classList.add('has-memory-digest');
+                    if(!mobile){
+                        const header=node('div','digest-report-heading'),open=button('',()=>core.activityAction(item,item.actions[0]));open.className='activity-row-open digest-report-open';open.setAttribute('aria-label',`打开动态 ${item.title}`);heading.prepend(WeftIcons.create('memory',20));open.append(heading,summary);
+                        const more=button('',()=>{});more.className='icon-button';more.setAttribute('aria-label',`更多操作 ${item.title}`);more.setAttribute('aria-haspopup','menu');more.append(WeftIcons.create('more',16));more.onclick=()=>WeftPopover.menu(more,[...actions.children].map(control=>({name:control.textContent,action:()=>control.click()})));header.append(open,more);row.replaceChildren(header);
+                    }
+                    row.append(digestContent(item));
+                }
             }
             days.get(date).append(row);
         }

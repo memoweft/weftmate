@@ -1,3 +1,4 @@
+import { memoryItemsFormedInWindow } from './world-projection.mjs';
 const KINDS = new Set(['cognition', 'entity', 'relationship', 'event']);
 const REQUEST_ID = /^[A-Za-z0-9_.:-]{1,128}$/;
 const ITEM_ID = /^[A-Za-z0-9._:-]{1,512}$/;
@@ -123,12 +124,15 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
     return { status: 200, body: forgetPreviewView(result) };
   }
   if (method === 'GET' && path === '/personal/v1/memory/items') {
-    if ([...url.searchParams.keys()].some((key) => !['kind', 'query', 'limit', 'after', 'includeSources'].includes(key))) {
+    if ([...url.searchParams.keys()].some((key) => !['kind', 'query', 'limit', 'after', 'includeSources','from','to'].includes(key))) {
       throw failure('INVALID_REQUEST');
     }
     const kind = url.searchParams.get('kind') ?? 'cognition';
     const rawQuery = url.searchParams.get('query') ?? '';
     const query = rawQuery.normalize('NFKC').trim().toLocaleLowerCase();
+    const from=url.searchParams.get('from'),to=url.searchParams.get('to');
+    if((from||to)&&(!from||!to||!Number.isFinite(Date.parse(from))||!Number.isFinite(Date.parse(to))||Date.parse(from)>=Date.parse(to)))throw failure('INVALID_REQUEST');
+    const cursorQuery=from?JSON.stringify([query,from,to]):query;
     const limit = Number(url.searchParams.get('limit') ?? '50');
     if (!(KINDS.has(kind) || kind === 'all') || rawQuery.length > 120 || !Number.isInteger(limit) || limit < 1 || limit > 50 || url.searchParams.has('includeSources') && url.searchParams.get('includeSources') !== 'true') {
       throw failure('INVALID_REQUEST');
@@ -141,13 +145,14 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
         Buffer.byteLength(JSON.stringify(result), 'utf8') > MAX_SNAPSHOT_BYTES) {
       throw failure('MEMORY_SEARCH_LIMIT', 413);
     }
-    const items = result.items.filter((item) => {
+    const candidates=from?memoryItemsFormedInWindow(result.items,from,to):result.items;
+    const items = candidates.filter((item) => {
       if (!query) return true;
       const fullText = item?.value?.content ?? item?.value?.canonical_name;
       return typeof fullText === 'string' && fullText.normalize('NFKC').toLocaleLowerCase().includes(query);
     }).map(itemView);
     if (kind === 'all') items.sort((a,b) => b.updatedAt.localeCompare(a.updatedAt) || a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id));
-    const offset = cursor(url.searchParams.get('after'), ownerId, kind, query, result.world_revision);
+    const offset = cursor(url.searchParams.get('after'), ownerId, kind, cursorQuery, result.world_revision);
     if (offset > items.length) throw failure('INVALID_REQUEST');
     const page = items.slice(offset, offset + limit);
     if (url.searchParams.get('includeSources') === 'true') {
@@ -161,10 +166,10 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
       }
     }
     const hasMore = offset + page.length < items.length;
-    const nextCursor = hasMore ? Buffer.from(JSON.stringify({ ownerId, kind, query,
+    const nextCursor = hasMore ? Buffer.from(JSON.stringify({ ownerId, kind, query:cursorQuery,
       worldRevision: result.world_revision, offset: offset + page.length })).toString('base64url') : null;
     return { status: 200, body: { items: page, worldRevision: result.world_revision,
-      nextCursor, hasMore, searchScope: 'account_snapshot', totalCount:result.items.length } };
+      nextCursor, hasMore, searchScope: 'account_snapshot', totalCount:from?items.length:result.items.length } };
   }
   if (method === 'GET' && path === '/personal/v1/memory/export') {
     keys(Object.fromEntries(url.searchParams), ['format']);
