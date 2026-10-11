@@ -1,0 +1,155 @@
+{
+  "task": "INST-1",
+  "testIdentity": "inst1qa",
+  "ui": {
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "dpi": 144,
+    "windowsBuild": 26200,
+    "visibleScreenshots": 16,
+    "rawScreenshots": 16,
+    "privateDesktop": true,
+    "globalInputUsed": false,
+    "review": "ship"
+  },
+  "required": {
+    "mode": "required",
+    "files": 282,
+    "exitCode": 0,
+    "passed": 1523,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 29,
+    "exitCode": 0,
+    "passed": 204,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "cloudInteractions": {
+    "files": 5,
+    "passed": 109,
+    "failed": 0,
+    "skipped": 0
+  },
+  "related": {
+    "releaseAndAssets": 14,
+    "updateAndInstallerContracts": 7
+  },
+  "typecheck": "passed",
+  "publicHygiene": {
+    "identityHits": 0
+  },
+  "smoke": {
+    "fullDefaultBuild": {
+      "passed": true,
+      "smokePassed": true,
+      "realInstall": false,
+      "checks": [
+        "packaged-local-diagnostic-paths-and-active-run",
+        "fresh-main-created-and-replied",
+        "native-folder-picker-substitute-registered-project",
+        "native-project-read-and-approved-write",
+        "native-conversation-export-written",
+        "assistant-switch-size-and-save-toast",
+        "packaged-normal-close-recorded"
+      ],
+      "installerSha256": "159352de5b2f0f986747a5c08418b649ec2fa907ed88a744f5f6b9085640343b",
+      "buildPassed": true
+    },
+    "finalVerifiedUnpacked": {
+      "passed": true,
+      "smokePassed": true,
+      "realInstall": false,
+      "checks": [
+        "packaged-local-diagnostic-paths-and-active-run",
+        "fresh-main-created-and-replied",
+        "native-folder-picker-substitute-registered-project",
+        "native-project-read-and-approved-write",
+        "native-conversation-export-written",
+        "assistant-switch-size-and-save-toast",
+        "packaged-normal-close-recorded"
+      ]
+    },
+    "finalInstalled": {
+      "passed": true,
+      "smokePassed": true,
+      "realInstall": true,
+      "checks": [
+        "packaged-local-diagnostic-paths-and-active-run",
+        "fresh-main-created-and-replied",
+        "native-folder-picker-substitute-registered-project",
+        "native-project-read-and-approved-write",
+        "native-conversation-export-written",
+        "assistant-switch-size-and-save-toast",
+        "packaged-normal-close-recorded"
+      ],
+      "installationRegistered": true,
+      "uninstalled": true,
+      "installationRegistrationRemoved": true,
+      "installerSha256": "e15dd038c254a9d00488b73693e9f207239554b4c692b248e341db0a83fe34bf",
+      "buildPassed": true
+    }
+  },
+  "packages": {
+    "sameUnpackedPayload": true,
+    "before": {
+      "file": "WeftMate-Setup-0.1.1-preview.21.exe",
+      "bytes": 184455855,
+      "sha256": "3ea4129cb7239edff36b3423c53b14cfdfd7cec4eea31b954f8f35184d4d5c3b",
+      "boundaries": {
+        "developmentPaths": 0,
+        "buildMachineIdentityHits": 0,
+        "userDataFiles": 0,
+        "dogfoodOrRepositoryTests": 0,
+        "credentialsFiles": 0
+      }
+    },
+    "after": {
+      "file": "WeftMate-Setup-0.1.1-preview.21.exe",
+      "bytes": 184603821,
+      "sha256": "e15dd038c254a9d00488b73693e9f207239554b4c692b248e341db0a83fe34bf",
+      "boundaries": {
+        "developmentPaths": 0,
+        "buildMachineIdentityHits": 0,
+        "userDataFiles": 0,
+        "dogfoodOrRepositoryTests": 0,
+        "credentialsFiles": 0
+      }
+    },
+    "upgrade": {
+      "file": "WeftMate-Setup-0.1.2-preview.22.exe",
+      "bytes": 184603839,
+      "sha256": "bd7336fc334d33688af9bc5f3c89848d9cfc079136ac1f5505550cb09a070d33",
+      "boundaries": {
+        "developmentPaths": 0,
+        "buildMachineIdentityHits": 0,
+        "userDataFiles": 0,
+        "dogfoodOrRepositoryTests": 0,
+        "credentialsFiles": 0
+      }
+    },
+    "increaseBytes": 147966,
+    "increasePercent": 0.08021756750415973
+  },
+  "cleanup": {
+    "cleanedProcesses": 72,
+    "remainingOwnedProcesses": 0,
+    "remainingSyntheticRoots": 0,
+    "controlNamespaceRemaining": false,
+    "startMenuRemaining": false,
+    "startupItemRemaining": false
+  },
+  "limits": [
+    "Chinese and 144 DPI tested; other DPI and cross-monitor movement not tested",
+    "Running-app retry and synthetic Abort tested; no separate physical disk-full or antivirus fault injection",
+    "Private desktop has no Explorer taskbar; icon resources, installed icon hash, registry and Start Menu verified",
+    "Windows publisher/SmartScreen dialogs remain system-owned; no code signing certificate"
+  ]
+}
