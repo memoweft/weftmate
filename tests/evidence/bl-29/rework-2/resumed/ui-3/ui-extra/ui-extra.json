@@ -1,0 +1,114 @@
+{
+  "rows": [
+    {
+      "kind": "rename",
+      "delayMs": 500,
+      "desktop": 1578,
+      "mobile": 1568
+    },
+    {
+      "kind": "foreground",
+      "surface": "desktop",
+      "delayMs": 500,
+      "ms": 825
+    },
+    {
+      "kind": "foreground",
+      "surface": "mobile",
+      "delayMs": 500,
+      "ms": 810
+    }
+  ],
+  "errors": [],
+  "configurationTimes": [
+    {
+      "surface": "desktop",
+      "ms": 421
+    },
+    {
+      "surface": "mobile",
+      "ms": 1793
+    }
+  ],
+  "electronConfig": {
+    "models": [
+      "local",
+      "added-electron"
+    ],
+    "suggestions": false
+  },
+  "mobileConfig": {
+    "models": [
+      "local",
+      "added-electron"
+    ],
+    "suggestions": false
+  },
+  "individualChanges": [
+    {
+      "kind": "modelSettings",
+      "rows": [
+        {
+          "surface": "desktop",
+          "ms": 57
+        },
+        {
+          "surface": "mobile",
+          "ms": 42
+        }
+      ]
+    },
+    {
+      "kind": "personalization",
+      "rows": [
+        {
+          "surface": "desktop",
+          "ms": 57
+        },
+        {
+          "surface": "mobile",
+          "ms": 36
+        }
+      ]
+    },
+    {
+      "kind": "modelCatalog",
+      "rows": [
+        {
+          "surface": "desktop",
+          "ms": 80
+        },
+        {
+          "surface": "mobile",
+          "ms": 61
+        }
+      ]
+    },
+    {
+      "kind": "modelRename",
+      "rows": [
+        {
+          "surface": "desktop",
+          "ms": 81
+        },
+        {
+          "surface": "mobile",
+          "ms": 50
+        }
+      ]
+    },
+    {
+      "kind": "sessionList",
+      "rows": [
+        {
+          "surface": "desktop",
+          "ms": 133
+        },
+        {
+          "surface": "mobile",
+          "ms": 86
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "name": "approval-1",
+    "code": 0,
+    "ms": 15626,
+    "passed": 1,
+    "failed": 0
+  },
+  {
+    "name": "approval-2",
+    "code": 0,
+    "ms": 15367,
+    "passed": 1,
+    "failed": 0
+  },
+  {
+    "name": "approval-3",
+    "code": 0,
+    "ms": 15481,
+    "passed": 1,
+    "failed": 0
+  },
+  {
+    "name": "approval-4",
+    "code": 0,
+    "ms": 15463,
+    "passed": 1,
+    "failed": 0
+  },
+  {
+    "name": "approval-5",
+    "code": 0,
+    "ms": 15534,
+    "passed": 1,
+    "failed": 0
+  },
+  {
+    "name": "approval-6",
+    "code": 0,
+    "ms": 15505,
+    "passed": 1,
+    "failed": 0
+  },
+  {
+    "name": "approval-7",
+    "code": 0,
+    "ms": 15435,
+    "passed": 1,
+    "failed": 0
+  },
+  {
+    "name": "approval-8",
+    "code": 0,
+    "ms": 15503,
+    "passed": 1,
+    "failed": 0
+  },
+  {
+    "name": "approval-9",
+    "code": 0,
+    "ms": 15494,
+    "passed": 1,
+    "failed": 0
+  },
+  {
+    "name": "approval-10",
+    "code": 0,
+    "ms": 15468,
+    "passed": 1,
+    "failed": 0
+  }
+]
