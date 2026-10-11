@@ -1,10 +1,19 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 const execute = promisify(execFile);
-export const SYSTEM_QUERY_TIMEOUT_MS = 5000;
+export const SYSTEM_QUERY_TIMEOUT_MS = 15000;
 export const STOP_PROCESS_TIMEOUT_MS = 5000;
-export const REGISTRY_TIMEOUT_MS = 5000;
-export async function readNotificationPermission({exec,timeoutMs=SYSTEM_QUERY_TIMEOUT_MS,onFailure=()=>{}}={}) {
+export const REGISTRY_TIMEOUT_MS = 15000;
+export const NOTIFICATION_QUERY_TIMEOUT_MS = 5000;
+async function cancelCommandTree(child) {
+  if (!Number.isInteger(child?.pid) || child.pid < 1) return;
+  try {
+    if (process.platform === 'win32') {
+      await execute('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, timeout: 5000 });
+    } else process.kill(-child.pid, 'SIGKILL');
+  } catch { try { child.kill('SIGKILL'); } catch {} }
+}
+export async function readNotificationPermission({exec,timeoutMs=NOTIFICATION_QUERY_TIMEOUT_MS,onFailure=()=>{}}={}) {
   const script="$globalEnabled=(Get-ItemProperty -LiteralPath 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications' -Name ToastEnabled -ErrorAction SilentlyContinue).ToastEnabled; $appEnabled=(Get-ItemProperty -LiteralPath 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\\com.memoweft.weftmate' -Name Enabled -ErrorAction SilentlyContinue).Enabled; if($globalEnabled -eq 0 -or $appEnabled -eq 0){'disabled'}elseif($globalEnabled -eq 1){'enabled'}else{'unknown'}";
   try {
     const {stdout}=await boundedCommand('powershell.exe',['-NoProfile','-NonInteractive','-Command',script],{exec,timeoutMs,windowsHide:true});
@@ -20,16 +29,22 @@ export async function readUninstallRegistry(executable,{exec,timeoutMs=REGISTRY_
 /** The deadline also covers an injected executor that never settles. Child
  * errors/stdout/stderr never escape through the public error object. */
 export async function boundedCommand(command, args, { exec=execute, timeoutMs, timeoutCode='EXTERNAL_COMMAND_TIMEOUT', failureCode='EXTERNAL_COMMAND_FAILED', ...options }) {
-  let task, timer;
+  let task, timer, cancellation, timedOut = false;
   try {
-    task=exec(command,args,{...options,timeout:timeoutMs,killSignal:'SIGKILL'});
+    // Own the deadline: execFile's timer would kill the root before taskkill
+    // can enumerate descendants. Unix commands own a cancellable process group.
+    task=exec(command,args,{...options,detached:process.platform!=='win32'});
     return await Promise.race([task,new Promise((_,reject)=>{
-      timer=setTimeout(()=>{try {task?.child?.kill('SIGKILL');} catch {} reject(Object.assign(new Error(timeoutCode),{code:timeoutCode}));},timeoutMs);
+      timer=setTimeout(()=>{
+        timedOut = true;
+        cancellation = cancelCommandTree(task?.child);
+        void cancellation.then(() => reject(Object.assign(new Error(timeoutCode),{code:timeoutCode})));
+      },timeoutMs);
     })]);
   } catch(error) {
-    const code=error?.code===timeoutCode || error?.killed && error?.code!=='ERR_CHILD_PROCESS_STDIO_MAXBUFFER' ? timeoutCode : failureCode;
+    const code=timedOut || error?.code===timeoutCode ? timeoutCode : failureCode;
     throw Object.assign(new Error(code),{code});
-  } finally {clearTimeout(timer);}
+  } finally {clearTimeout(timer); await cancellation;}
 }
 // Get-Process uses native process enumeration, not the CIM/WMI service.
 // A candidate with an unreadable path is UNKNOWN, never an absent process.

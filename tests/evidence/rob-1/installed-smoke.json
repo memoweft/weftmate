@@ -1,9 +1,8 @@
 {
-  "passed": true,
-  "buildPassed": true,
-  "testIdentity": "rob1qa",
-  "packaged": true,
-  "realSystemInstall": false,
+  "synthetic": true,
+  "realMain": true,
+  "pinnedDsh": true,
+  "realInstall": false,
   "checks": [
     "packaged-local-diagnostic-paths-and-active-run",
     "fresh-main-created-and-replied",
@@ -13,28 +12,240 @@
     "assistant-switch-size-and-save-toast",
     "packaged-normal-close-recorded"
   ],
-  "boundaries": {
-    "developmentPaths": 0,
-    "buildMachineIdentityHits": 0,
-    "userDataFiles": 0,
-    "dogfoodOrRepositoryTests": 0,
-    "credentialsFiles": 0
+  "testIdentity": "rob1qa",
+  "buildPassed": true,
+  "packageCheck": {
+    "schemaVersion": 1,
+    "installer": {
+      "file": "WeftMate-Setup-0.1.1-preview.21.exe",
+      "bytes": 184458594,
+      "sha256": "044c32475b0bc2e57f956829e3416ecec243cd345eb870b044acd8f0472826d2"
+    },
+    "appArchive": {
+      "entries": 5343,
+      "directories": 794,
+      "links": 0,
+      "scannedTextFiles": 4500,
+      "scannedBinaryFiles": 49,
+      "forbiddenEntries": 0,
+      "unsafeLinks": 0
+    },
+    "vendor": {
+      "packageVersion": "0.1.0-rc.5",
+      "commit": "47f943859bef60e4160492346772ded9b24f765a",
+      "closureCount": 197,
+      "carriedButNotMounted": 0,
+      "manifestSha256": "eab20512be3df600d6294516f9722c6b57d8ce820a80cd987b7d82a9dced2a3d",
+      "scannedTextFiles": 32792,
+      "reparsePoints": 0
+    },
+    "looseResources": {
+      "scannedTextFiles": 32801,
+      "scannedBinaryFiles": 168
+    },
+    "boundaries": {
+      "developmentPaths": 0,
+      "buildMachineIdentityHits": 0,
+      "userDataFiles": 0,
+      "dogfoodOrRepositoryTests": 0,
+      "credentialsFiles": 0
+    }
   },
-  "appArchive": {
-    "entries": 5343,
-    "directories": 794,
-    "links": 0,
-    "scannedTextFiles": 4500,
-    "scannedBinaryFiles": 49,
-    "forbiddenEntries": 0,
-    "unsafeLinks": 0
+  "buildSeconds": 115.089,
+  "installerSha256": "044c32475b0bc2e57f956829e3416ecec243cd345eb870b044acd8f0472826d2",
+  "packaged": {
+    "isPackaged": true,
+    "appPath": "D:\\AIProjects\\WeftMate\\Worktrees\\w3\\.local\\rob-1b-packaged-final\\0.1.1-preview.21\\build\\win-unpacked\\resources\\app.asar"
   },
-  "cleanup": {
+  "diagnostics": {
+    "runId": "8d72c079-e2c1-4f69-8631-01ceb5d1e9ed",
+    "logDirectory": "<dataDirectory>/logs",
+    "crashDirectory": "<dataDirectory>/Crashpad",
+    "uploadToServer": false,
+    "runRecordState": "ready",
+    "hostStartRecorded": true,
+    "hostExitRecordedBeforeClose": false,
+    "hostExitRecordedAfterClose": true,
+    "normalExit": true
+  },
+  "nativeBindingLoaded": true,
+  "folderCommands": [
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "pending"
+    },
+    {
+      "kind": "chat.message",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.side.create",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "pending"
+    },
+    {
+      "kind": "session.create",
+      "state": "accepted_by_dsh"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "pending"
+    },
+    {
+      "kind": "session.message",
+      "state": "accepted_by_dsh"
+    }
+  ],
+  "main": {
+    "chatId": "chat-0e53ec47-40f3-4b1d-80bf-bf5b37524d60",
+    "sessionId": "session-2a70f4ce-743f-4ba4-a3b8-65ac5794ac71",
+    "reply": "主对话首条消息成功，合成回复。"
+  },
+  "project": {
+    "name": "synthetic-project",
+    "permission": "read-only"
+  },
+  "approvals": [
+    "0a6e48f4-be62-451d-9173-9ac99c497d15",
+    "679c2ae1-2c34-45e8-8229-97d8524415a0"
+  ],
+  "readProof": true,
+  "switches": [
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    },
+    {
+      "width": 44,
+      "height": 26
+    }
+  ],
+  "desktop480": {
+    "bottom": 759.3333740234375,
+    "height": 780,
+    "pageHeight": 780
+  },
+  "smokePassed": true,
+  "passed": true,
+  "modelCalls": [
+    {
+      "stream": true,
+      "toolResponses": []
+    },
+    {
+      "stream": true,
+      "toolResponses": []
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        },
+        {
+          "content": "<path>%TEMP%\\weftmate-fx21-CVnQ5E\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": [
+        {
+          "content": "{\"loaded\":[\"read\",\"write\"]}"
+        },
+        {
+          "content": "<path>%TEMP%\\weftmate-fx21-CVnQ5E\\synthetic-project\\brief.md</path>\n<type>file</type>\n<content>\n1: FX21 synthetic project file\n\n(End of file - total 1 lines)\n</content>"
+        },
+        {
+          "content": "<path>%TEMP%\\weftmate-fx21-CVnQ5E\\synthetic-project\\approved.md</path>\n<type>file</type>\n<content>\nCreated file\n</content>{\"artifact\":{\"taskId\":\"cmd-539f4073-9e97-4522-923f-38bf41fff5af\",\"artifactId\":\"artifact-cee0652a-10a2-4ba6-b82f-bce0bcbbbf6c\",\"fileName\":\"approved.md\",\"contentType\":\"text/plain; charset=utf-8\",\"size\":28,\"sha256\":\"ca1e3c188b81dba2447c0d51777b8ba76a6387668ed78fac6ab2b2cfdb18de43\",\"state\":\"observed\"},\"createdFilePath\":\"C:\\\\weftmate-fx21-install-9nx1dL\\\\weftmate-fx21-CVnQ5E\\\\synthetic-project\\\\approved.md\"}"
+        }
+      ]
+    },
+    {
+      "stream": true,
+      "toolResponses": []
+    }
+  ],
+  "electronProcessCleanup": {
     "available": true,
     "failed": 0,
     "cleaned": 0,
     "preservationError": false,
     "stillRunning": false
   },
-  "realProviderRequests": 0
+  "runnerProcessCleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0,
+    "preservationError": false,
+    "stillRunning": false
+  },
+  "durationSeconds": 152.354
 }

@@ -6,8 +6,18 @@ import { tmpdir } from 'node:os';
 import { boundedCommand, relevantProcesses, readNotificationPermission, readUninstallRegistry } from '../src/personal-update/watchdog-commands.mjs';
 import { createHostRelay } from '../src/personal-relay/index.mjs';
 import { readLocalServiceKey } from '../src/local-service-key.mjs';
+import { SYSTEM_QUERY_TIMEOUT_MS, REGISTRY_TIMEOUT_MS } from '../src/personal-update/watchdog-commands.mjs';
+import { LOCAL_SERVICE_QUERY_TIMEOUT_MS } from '../src/local-service-key.mjs';
 import { createProcessEvidence } from './helpers/process-evidence.mjs';
 const never=()=>new Promise(()=>{});
+test('background query budgets are 15 seconds while local key query remains short and retryable',()=>{
+  assert.equal(SYSTEM_QUERY_TIMEOUT_MS,15000); assert.equal(REGISTRY_TIMEOUT_MS,15000); assert.equal(LOCAL_SERVICE_QUERY_TIMEOUT_MS,5000);
+});
+test('review command trees leave no descendants in three runs and 6/8-second background successes remain usable',{skip:process.platform!=='win32',timeout:60000},async()=>{
+  const evidence=createProcessEvidence({outputDir:resolve('.local/rob-1-command-runner'),executables:[process.execPath],commandRoots:[resolve('tests/integration')],startedAt:Date.now()});
+  const {done}=evidence.spawn(process.execPath,[resolve('tests/integration/rob-1-command-probe.mjs')]);
+  try {assert.equal((await done).decimal,0);} finally {assert.equal((await evidence.finalize()).stillRunning,false);}
+});
 test('notification query timeout preserves unknown permission and logs the fixed failure',async()=>{
   const failures=[];
   assert.equal(await readNotificationPermission({exec:never,timeoutMs:20,onFailure:error=>failures.push(error.code)}),null);

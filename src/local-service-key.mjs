@@ -1,5 +1,6 @@
-import { boundedCommand, SYSTEM_QUERY_TIMEOUT_MS } from './personal-update/watchdog-commands.mjs';
-export async function readLocalServiceKey({ exec, timeoutMs=SYSTEM_QUERY_TIMEOUT_MS, onFailure=()=>{} }={}) {
+import { boundedCommand } from './personal-update/watchdog-commands.mjs';
+export const LOCAL_SERVICE_QUERY_TIMEOUT_MS = 5000;
+export async function readLocalServiceKey({ exec, timeoutMs=LOCAL_SERVICE_QUERY_TIMEOUT_MS, onFailure=()=>{} }={}) {
   const script=["$ErrorActionPreference = 'Stop'", "$items = @(Get-CimInstance Win32_Process -Filter \"Name = 'llama-server.exe'\" | Where-Object { $_.CommandLine -match '--api[-_]key' })",
     'if ($items.Count -ne 1) { exit 41 }', "$match = [regex]::Match($items[0].CommandLine, '(?i)--api[-_]key\\s+(?:\\\"(?<key>[^\\\"]+)\\\"|(?<key>[^\\s]+))')",
     'if (!$match.Success) { exit 42 }', "[Console]::Out.Write($match.Groups['key'].Value)"].join('; ');

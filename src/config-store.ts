@@ -8,50 +8,53 @@
  * before future writes use the v2 shape.
  */
 import { app, safeStorage } from 'electron';
-import { existsSync, readFileSync, renameSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, renameSync, rmSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { randomUUID } from 'node:crypto';
 import { prepareLegacyVaultMigration, type LegacyVaultPayload } from './legacy-vault-migration.ts';
 import type { LegacyCompatibilityEvidence } from './legacy-compatibility-backfill.ts';
 import type { PublicModelProfile } from './stage2-config.ts';
 import { createEncryptedCredentialVaultStore, validateCredentialVaultDocument } from './credential-vault-document.ts';
-import { durableReplace, persistWrappedStorageKey, persistedWindowsStorageKey } from './windows-vault-storage.mjs';
+import { durableReplace, persistedWindowsStorageKey, cleanupVaultTemporaries } from './windows-vault-storage.mjs';
 
 export interface ModelGroup { baseUrl: string; apiKey: string; model: string; }
 export type LegacyPublicProfile = PublicModelProfile;
 interface SecretDocument { schemaVersion: 2; credentials: Record<string, string>; legacyPayload?: LegacyVaultPayload; }
 
 function configPath(): string { return join(app.getPath('userData'), 'weftmate-model.enc'); }
-let wrappedStorageKey: string | null = null;
+let storageReady = process.platform !== 'win32';
 let initialization: Promise<void> | null = null;
-let initializationFailed = false;
-export function credentialRecoveryRequired(): boolean { return existsSync(`${configPath()}.recovery.json`); }
+let unreadable = false;
+let cleanedTemporaries = false;
+let reportFailure: (error: Error) => void = () => {};
+const reportedFailures = new Set<string>();
+function noteUnreadable(): void {
+  unreadable = true;
+  const code = 'CREDENTIAL_VAULT_UNREADABLE';
+  if (!reportedFailures.has(code)) {
+    reportedFailures.add(code);
+    reportFailure(Object.assign(new Error('密钥暂时读不出，请重试或重新填写。'), { code }));
+  }
+}
 export async function initializeCredentialStorage(onFailure: (error: Error) => void = () => {}): Promise<void> {
+  reportFailure = onFailure;
+  if (!cleanedTemporaries) { cleanupVaultTemporaries(app.getPath('userData')); cleanedTemporaries = true; }
+  if (existsSync(configPath())) {
+    try { const raw = decryptRaw(); if (!(raw && prepareLegacyVaultMigration(raw))) validateSecretDocument(raw); unreadable = false; }
+    catch { noteUnreadable(); }
+  }
+  if (storageReady || !safeStorage.isEncryptionAvailable()) return;
   if (initialization) return initialization;
   initialization = (async () => {
-    if (process.platform === 'win32' && !wrappedStorageKey) {
-      const key = await persistedWindowsStorageKey(safeStorage, app.getPath('sessionData'));
-      persistWrappedStorageKey(app.getPath('userData'), key);
-      wrappedStorageKey = key; // Writes become possible only after the protected key is flushed.
-    }
-    initializationFailed = false;
-    if (!existsSync(configPath())) return;
-    try { const raw = decryptRaw(); if (!(raw && prepareLegacyVaultMigration(raw))) validateSecretDocument(raw); }
-    catch {
-      // Preserve the exact unreadable bytes. Persist the recovery state BEFORE
-      // retiring the vault; interruption here repeats the safe startup check.
-      durableReplace(`${configPath()}.recovery.json`, Buffer.from('{"needsRefill":true}'));
-      renameSync(configPath(), `${configPath()}.unreadable-${randomUUID()}`);
-      onFailure(Object.assign(new Error('模型凭据需要重新填写。'), { code: 'CREDENTIAL_VAULT_UNREADABLE' }));
-    }
+    await persistedWindowsStorageKey(safeStorage, app.getPath('sessionData'));
+    storageReady = true; // No ciphertext can commit before Chromium's master is durable.
   })();
-  try { await initialization; } catch (error) { initializationFailed = true; initialization = null; throw error; }
+  try { await initialization; } finally { initialization = null; }
 }
 function decryptVaultBytes(bytes: Buffer): string {
   return safeStorage.decryptString(bytes);
 }
 function encryptVaultText(text: string): Buffer {
-  if (process.platform === 'win32' && !wrappedStorageKey) throw Object.assign(new Error('本机加密存储尚未准备好，请稍后重新保存密钥。'), { code: 'CREDENTIAL_STORAGE_NOT_READY' });
+  if (!storageReady) throw Object.assign(new Error('本机加密存储尚未准备好，请稍后重新保存密钥。'), { code: 'CREDENTIAL_STORAGE_NOT_READY' });
   const ciphertext = safeStorage.encryptString(text);
   return ciphertext;
 }
@@ -85,7 +88,8 @@ function decryptRaw(): unknown {
 }
 
 function readSecrets(): SecretDocument {
-  return encryptedVault().read() as SecretDocument;
+  try { const document = encryptedVault().read() as SecretDocument; unreadable = false; return document; }
+  catch (error) { noteUnreadable(); throw error; }
 }
 
 function writeSecrets(document: SecretDocument): void {
@@ -128,8 +132,8 @@ function readLegacyProfiles() {
 export function migrateLegacyProfiles(): { pending: boolean; profiles: LegacyPublicProfile[]; activeId: string | null } {
   // A deferred/unavailable crypto backend must not turn migration's optional
   // startup probe into a fatal exit. Keep every old byte until initialization can retry.
-  if (initializationFailed) return { pending: false, profiles: [], activeId: null };
-  const legacy = readLegacyProfiles();
+  let legacy;
+  try { legacy = readLegacyProfiles(); } catch { noteUnreadable(); return { pending: false, profiles: [], activeId: null }; }
   return legacy ? { pending: true, profiles: legacy.publicProfiles, activeId: legacy.activeId } : { pending: false, profiles: [], activeId: null };
 }
 
@@ -169,6 +173,26 @@ export function getCredential(id: string): string | null {
 export function saveCredential(id: string, apiKey: string): void {
   if (!validId(id) || !validKey(apiKey)) throw new TypeError('credential input is invalid');
   encryptedVault().save(id, apiKey);
+}
+/** Only the explicit model form submission may replace a currently unreadable
+ * vault. Encrypt first; failed encryption never moves the original. A failed
+ * commit restores its original path. Keep one prior ciphertext after success. */
+export function saveSubmittedCredential(id: string, apiKey: string): void {
+  if (!validId(id) || ['__proto__', 'constructor', 'prototype'].includes(id) || !validKey(apiKey)) throw new TypeError('credential input is invalid');
+  try { preflightVault(); } catch { /* The fresh read, not a cached failure, authorizes the refill path. */ }
+  if (!unreadable) { saveCredential(id, apiKey); return; }
+  if (!safeStorage.isEncryptionAvailable()) throw Object.assign(new Error('本机加密存储尚未准备好，请稍后重新保存密钥。'), { code: 'CREDENTIAL_STORAGE_NOT_READY' });
+  const ciphertext = encryptVaultText(JSON.stringify({ schemaVersion: 2, credentials: { [id]: apiKey } }));
+  const file = configPath(), replaced = `${file}.replaced-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+  renameSync(file, replaced);
+  try { durableReplace(file, ciphertext); }
+  catch (error) { renameSync(replaced, file); throw error; }
+  unreadable = false;
+  for (const name of readdirSync(app.getPath('userData'))) {
+    if (name.startsWith('weftmate-model.enc.replaced-') && join(app.getPath('userData'), name) !== replaced) {
+      try { rmSync(join(app.getPath('userData'), name)); } catch {}
+    }
+  }
 }
 export function removeCredential(id: string): void {
   if (!validId(id)) return;

@@ -3,8 +3,8 @@
   "normalInitializationBeforeKill": false,
   "firstRunSavedSyntheticCredential": true,
   "forcedRestart": true,
-  "lostLocalStateRestored": true,
+  "durableLocalStateRetained": true,
   "credentialReadable": true,
   "modelRequests": 0,
-  "cleaned": 2
+  "cleaned": 3
 }

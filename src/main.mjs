@@ -19,7 +19,6 @@ import { createLatestFileWriter } from './latest-file-writer.mjs';
  */
 import { createHostDiagnostics } from './host-diagnostics.mjs';
 import { createHostLog, redactSecretText } from './host-log.mjs';
-import { restoreVaultLocalState } from './windows-vault-storage.mjs';
 import { readLocalServiceKey } from './local-service-key.mjs';
 import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
@@ -238,16 +237,12 @@ if (wipeLaunch) {
 }
 
 // 去掉 Electron 默认应用菜单(顶栏那条 File/Edit/View/Window)——桌面产品不该露原生菜单,不像成品。
-let credentialStateRecoveryError = null;
-try { restoreVaultLocalState(app.getPath('userData'), app.getPath('sessionData')); }
-catch { credentialStateRecoveryError = Object.assign(new Error('CREDENTIAL_STORAGE_NOT_READY'), { code: 'CREDENTIAL_STORAGE_NOT_READY' }); }
 Menu.setApplicationMenu(null);
 // electron-builder removes build metadata from the packaged package.json.
 if (process.platform === 'win32') app.setAppUserModelId(packageInfo.desktopAppId ?? packageInfo.build?.appId ?? 'com.memoweft.weftmate');
 
 // ── B4·崩溃/错误上报最小闭环（v2 遗产）──
 const hostLog = createHostDiagnostics(app.getPath('userData'), { version: app.getVersion(), appRoot: app.getAppPath() });
-if (credentialStateRecoveryError) hostLog.failure('credential-storage', credentialStateRecoveryError);
 let hostExitReason = 'unknown';
 let shutdownStep = null;
 let shutdownComplete = false;
@@ -3164,12 +3159,11 @@ async function bootstrap() {
       }
       return enqueueRouteMutation(async () => {
         await configStoreMod.initializeCredentialStorage(error => logCrash('credential-storage', error));
-        configStoreMod.preflightVault();
         const existing = configStoreMod.getCredential(stageRef);
         if (existing && existing !== apiKey) {
           throw Object.assign(new Error('staged secret conflict'), { code: 'REQUEST_CONFLICT' });
         }
-        if (!existing) configStoreMod.saveCredential(stageRef, apiKey);
+        if (!existing) configStoreMod.saveSubmittedCredential(stageRef, apiKey);
       });
     },
     async apply({ target, stageRef, previousProfileId }) {

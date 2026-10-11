@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createProcessEvidence } from '../helpers/process-evidence.mjs';
 const repo=resolve(import.meta.dirname,'../..'), electron=createRequire(import.meta.url)('electron');
@@ -32,13 +32,22 @@ try {
     if(phase==='after-fix') assert.ok(!committed || read.readable,'committed credentials must be readable after interruption');
     if(phase==='after-fix' && (established || timing==='after')) assert.equal(read.revision,timing==='after'?'new':'old','an interrupted replacement keeps the old complete value or the newly committed complete value');
     if(phase==='after-fix' && committed && timing==='after') {
+      const previousVersion=await run(profile,'read','none',join(repo,'tests/helpers/rob-1-legacy-vault.mjs'));
+      assert.equal(previousVersion.stages.find(row=>row.stage==='read')?.readable,true,'previous binaries must still read the updated raw safeStorage vault');
+      report.at(-1).previousVersion=previousVersion;
+      const original=readFileSync(join(profile,'weftmate-model.enc'));
       rmSync(join(profile,'Local State'),{force:true});
       const lostStateRestart=await run(profile,'read','none');
-      assert.equal(lostStateRestart.stages.find(row=>row.stage==='read')?.readable,true,'the already-persisted protected master must recover a lost Local State');
+      assert.equal(lostStateRestart.stages.find(row=>row.stage==='read')?.readable,false,'deleted Chromium master is not reconstructed by product code');
+      assert.deepEqual(readFileSync(join(profile,'weftmate-model.enc')),original,'unreadable original stays in place');
+      assert.equal(readdirSync(profile).some(name=>name.includes('.unreadable-')||name.includes('.recovery.')),false);
       report.at(-1).lostStateRestart=lostStateRestart;
-      const previousVersion=await run(profile,'read','none',join(repo,'tests/helpers/rob-1-legacy-vault.mjs'));
-      assert.equal(previousVersion.stages.find(row=>row.stage==='read')?.readable,true,'previous binaries must still be able to read the updated raw safeStorage vault');
-      report.at(-1).previousVersion=previousVersion;
+      assert.equal((await run(profile,'refill','none')).exit,'0x00000000');
+      assert.equal((await run(profile,'read','none')).stages.find(row=>row.stage==='read')?.readable,true);
+      const replaced=readdirSync(profile).filter(name=>name.startsWith('weftmate-model.enc.replaced-'));
+      assert.equal(replaced.length,1); assert.deepEqual(readFileSync(join(profile,replaced[0])),original);
+      report.at(-1).lostStateOriginalRetained=true; report.at(-1).explicitRefillReadable=true;
+
     }
   }
 } finally {

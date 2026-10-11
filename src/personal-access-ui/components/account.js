@@ -213,11 +213,11 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
             const loaded = group === 'computer' && core.state.system?.model?.currentModelId === model.modelId;
             const available = model.status === 'active' && model.configured;
             const failed = checked && (!checked.reachable || checked.authentication === 'rejected' || checked.model === 'missing' || checked.model === 'test_failed' || ['failed', 'invalid'].includes(checked.catalog) || checked.catalog === 'unsupported' && !checked.inferenceVerified);
-            const status = !model.configured ? '需要重新填写密钥' : loaded ? '已加载' : !available || failed ? '不可用' : '可用';
+            const status = !model.configured ? '密钥暂时读不出' : loaded ? '已加载' : !available || failed ? '不可用' : '可用';
             main.append(ui.element('small','muted',model.deepThinking?.supported?'支持深入思考':'此模型未声明深入思考能力'));
             main.append(ui.element('strong', '', model.name || model.modelId), ui.element('small', 'muted', `${model.modelId} · ${label}`), ui.element('span', 'model-status' + (loaded ? ' is-loaded' : ''), status));
             const actions = ui.element('div', 'actions');
-            const edit = ui.element('button', model.configured ? 'button quiet small' : 'button secondary small', model.configured ? '编辑' : '重新填写密钥');
+            const edit = ui.element('button', model.configured ? 'button quiet small' : 'button secondary small', model.configured ? '编辑' : '重新填写');
             edit.disabled = core.state.accountModelBusy || !!marker || model.status !== 'active';
             edit.addEventListener('click', () => {
                 core.state.accountModelEditing = { id: model.accountModelId, revision: model.revision };
@@ -230,7 +230,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
                 ui.byId('account-model-key').placeholder = model.configured ? '留空沿用原密钥' : '重新输入此模型的密钥';
                 ui.byId('account-model-submit').textContent = '保存修改';
                 ui.byId('account-model-cancel').hidden = false;
-                ui.accountModelFormNotice(model.configured ? '留空密钥表示沿用原地址已保存的密钥；换地址需输入新地址的密钥。' : '原密钥无法读取，请重新填写并保存。模型地址和名称已保留。');
+                ui.accountModelFormNotice(model.configured ? '留空密钥表示沿用原地址已保存的密钥；换地址需输入新地址的密钥。' : '密钥暂时读不出，可以关闭后重试。重新填写并保存后会保留一份旧密文；模型地址和名称已保留。');
                 ui.byId('model-editor-title').textContent = '编辑模型';
                 ui.byId('account-model-draft-result').replaceChildren();
                 ui.byId('account-model-dialog').showModal();
@@ -239,6 +239,12 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
             if (model.accountModelId && core.state.accountModelsCanManage) actions.append(edit);
             else if (!model.accountModelId) actions.append(ui.element('span', 'muted model-host-note', '宿主目录'));
             if (model.status === 'active' && !model.configured && model.accountModelId && core.state.accountModelsCanManage) {
+                const retry = ui.element('button', 'icon-button');
+                retry.type = 'button'; retry.setAttribute('aria-label', '重试'); retry.title = '重试';
+                retry.append(WeftIcons.create('sync', 16));
+                retry.disabled = core.state.accountModelBusy || !!marker;
+                retry.addEventListener('click', () => { retry.disabled = true; void core.refreshAccountModels(); });
+                actions.prepend(retry);
                 const more = ui.element('button', 'icon-button');
                 more.setAttribute('aria-label', '更多模型操作'); more.setAttribute('aria-haspopup', 'menu');
                 more.append(WeftIcons.create('more', 16));

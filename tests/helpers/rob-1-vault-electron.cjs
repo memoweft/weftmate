@@ -33,7 +33,7 @@ fs.renameSync = function(from, to) {
   return result;
 };
 syncBuiltinESMExports();
-require('../../src/windows-vault-storage.mjs').restoreVaultLocalState(profile);
+
 app.whenReady().then(async () => {
   const store = await import(pathToFileURL(moduleFile).href);
   if (action === 'read') {
@@ -43,6 +43,7 @@ app.whenReady().then(async () => {
     process.stdout.write(JSON.stringify({ stage:'read', readable, revision, files:metadata() })+'\n');
     app.quit(); return;
   }
+  if (action === 'refill') { await store.initializeCredentialStorage(); store.saveSubmittedCredential('synthetic-model','synthetic-rob1-key'); app.quit(); return; }
   checkpoint('before');
   if (store.initializeCredentialStorage) await store.initializeCredentialStorage();
   store.saveCredential('synthetic-model', action==='normal'?'synthetic-rob1-old-key':'synthetic-rob1-key');
