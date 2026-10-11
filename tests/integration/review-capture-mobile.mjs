@@ -11,6 +11,7 @@ import { mockUx7Requests, prepareUx7Suggestions, ux7Replies } from './ux-7-scene
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 import { redactEvidenceText } from '../helpers/process-evidence.mjs';
+import { galleryBridge } from '../../scripts/nightly/gallery-bridge.mjs';
 import { startAndroid } from '../../scripts/nightly/android.mjs';
 const assets = join(repository, 'apps/mobile-ui/www'), out = outDirectory();
 const sceneIndex = process.argv.indexOf('--scene'), onlyScene = sceneIndex < 0 ? null : process.argv[sceneIndex + 1];
@@ -56,11 +57,7 @@ try {
       const navigate = async (current, url) => {
         if (!android) return current.goto(url);
         const source = [candidate, mainFixture, suggestionFixture, renderingFixture].find(fixture=>fixture?.mobileUrl === url);
-        currentBridge = source ? async payload => {
-          if (payload.method === 'settings.appearance') return {value:theme};
-          if (source === suggestionFixture && payload.method === 'host.business' && payload.params?.path?.includes('/suggestions')) return {requestId:payload.params.body?.requestId,suggestions:ux7Replies,completion:payload.params.body?.kind === 'completion' ? '保存成文件' : '',available:true};
-          return source.mobileBridge(payload);
-        } : bridge;
+        currentBridge = source ? galleryBridge(source, theme, source === suggestionFixture ? {suggestions:ux7Replies} : {}) : bridge;
         await current.goto(android.entryUrl);
         await current.waitForFunction(() => state.booted && String(window.weftNative?.postMessage).includes('__reviewNative'));
       };
