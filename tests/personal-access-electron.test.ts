@@ -1,15 +1,22 @@
 import assert from 'node:assert/strict'
-import { spawn, type ChildProcess } from 'node:child_process'
+import { type ChildProcess } from 'node:child_process'
 import { existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { windowsProfileProcesses } from './helpers/windows-profile-processes.mjs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
 import test from 'node:test'
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../src/host-mode.mjs'
+import { createProcessEvidence } from './helpers/process-evidence.mjs'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
 const launcher = join(repository, 'scripts', 'run-personal-host.mjs')
+const electron = createRequire(import.meta.url)('electron')
+const evidenceFor = (profile: string, name: string) => createProcessEvidence({
+  profileDirectory: profile, commandRoots: [profile], executables: [process.execPath, electron],
+  outputDir: join(repository, '.local', 'process-evidence', `${name}-${Date.now()}`),
+})
 
 function assertNoOwnedProcesses(profile: string) {
   if (process.platform !== 'win32') return
@@ -19,13 +26,15 @@ function assertNoOwnedProcesses(profile: string) {
 test('two local devices use the same attached empty session across a real Electron restart', { timeout: 120_000 }, async () => {
   const parent = mkdtempSync(join(tmpdir(), 'weftmate-access-electron-'))
   const profile = join(parent, 'profile')
+  const evidence = evidenceFor(profile, 'access-electron')
+  let failed = true
   const processes: ChildProcess[] = []
   const outputs = new Map<ChildProcess, () => string>()
   const launch = async () => {
     const env = { ...process.env }
     for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key]
     env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host'
-    const child = spawn(process.execPath, [launcher, '--user-data-dir', profile, '--access-port', '0'], {
+    const { child } = evidence.spawn(process.execPath, [launcher, '--user-data-dir', profile, '--access-port', '0'], {
       cwd: repository, env, stdio: ['pipe', 'pipe', 'pipe'],
     })
     processes.push(child)
@@ -50,7 +59,9 @@ test('two local devices use the same attached empty session across a real Electr
       })
     })
     const access = await waitFor(/personal-access listening origin=(http:\/\/127\.0\.0\.1:\d+)/)
-    const dsh = /dsh web: (http:\/\/127\.0\.0\.1:\d+)/.exec(output)
+    // Raw runtime output is now redacted. Use the host's existing sanctioned
+    // loopback-ready announcement, which names the same attached DSH origin.
+    const dsh = await waitFor(/personal-host (?:ready|degraded) origin=(http:\/\/127\.0\.0\.1:\d+)/)
     assert.ok(dsh)
     return { child, access: access[1], dsh: dsh[1], waitFor, output: () => output }
   }
@@ -128,13 +139,16 @@ test('two local devices use the same attached empty session across a real Electr
     assert.equal(state.runtime.state, 'stopped')
     assert.equal(existsSync(join(profile, 'dsh-home', 'weftmate-host-state.json.tmp')), false)
     assertNoOwnedProcesses(profile)
+    failed = false
   } finally {
+    if (failed) evidence.preserveFailure()
     for (const child of processes) {
       if (child.exitCode === null && child.signalCode === null) {
         try { await stop(child) } catch { /* Keep the owned profile for diagnosis if the process cannot stop. */ }
       }
     }
-    if (processes.every((child) => child.exitCode !== null || child.signalCode !== null)
+    const cleanup = await evidence.finalize({ failed })
+    if (!cleanup.stillRunning && !cleanup.preservationError && processes.every((child) => child.exitCode !== null || child.signalCode !== null)
       && existsSync(parent) && dirname(realpathSync(parent)) === realpathSync(tmpdir())) {
       rmSync(parent, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
     }
@@ -144,6 +158,8 @@ test('two local devices use the same attached empty session across a real Electr
 test('window close stays in tray and tray exit drains the final Electron snapshot', { timeout: 60_000 }, async () => {
   const { _electron } = await import('playwright')
   const profile = mkdtempSync(join(tmpdir(), 'weftmate-tray-exit-'))
+  const evidence = evidenceFor(profile, 'tray-exit')
+  let failed = true
   writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT))
   const env = { ...process.env }
   for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key]
@@ -151,6 +167,7 @@ test('window close stays in tray and tray exit drains the final Electron snapsho
   let application: Awaited<ReturnType<typeof _electron.launch>> | undefined
   try {
     application = await _electron.launch({ args: ['.', `--user-data-dir=${profile}`, '--personal-host', '--access-port=0'], cwd: repository, env })
+    evidence.track(application.process(), { executable: electron, label: 'tray-electron' })
     const page = await application.firstWindow()
     await page.waitForURL(/\/personal\/v1\/ui(?:\/|#|$)/)
     const child = application.process()
@@ -184,8 +201,15 @@ test('window close stays in tray and tray exit drains the final Electron snapsho
     assert.equal(existsSync(`${stateFile}.tmp`), false)
     assert.equal(readdirSync(join(profile, 'dsh-home', 'profiles', 'weftmate')).some(file => file.startsWith('.weftmate-secure-snapshot-')), false)
     assertNoOwnedProcesses(profile)
+    failed = false
+  } catch (error) {
+    if (!application) evidence.recordLaunchFailure(error)
+    throw error
   } finally {
-    await application?.close()
-    rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
+    if (failed) evidence.preserveFailure()
+    try { await application?.close() } finally {
+      const cleanup = await evidence.finalize({ failed })
+      if (!cleanup.stillRunning && !cleanup.preservationError) rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
+    }
   }
 })

@@ -6,7 +6,7 @@ import { snapshot, verify, listBackups, prune, durableWrite, backupError } from 
 import { beginRestore, rollbackRestore, commitRestore } from './restore.mjs';
 import { validateStore } from '../personal-access/store.mjs';
 
-export async function createBackupManager({ root, isIdle, requestRestart, clock = Date.now, appVersion = '0', captureBoundary = work => work(), pauseTimeoutMs = 2000, validate = async stage => {
+export async function createBackupManager({ root, isIdle, requestRestart, clock = Date.now, appVersion = '0', onShutdownFailure = () => {}, captureBoundary = work => work(), pauseTimeoutMs = 2000, validate = async stage => {
   validateStore(JSON.parse(await readFile(path.join(stage, 'personal-access', 'store.json'), 'utf8')));
 } }) {
   const control = path.join(root, 'personal-backup'); await mkdir(control, { recursive: true, mode: 0o700 });
@@ -130,6 +130,7 @@ export async function createBackupManager({ root, isIdle, requestRestart, clock 
       if (!operation.file) await prune(settings.directory, settings, clock());
     } catch (error) {
       status = { state: 'failed', at: new Date(clock()).toISOString(), code: error.code ?? 'STORAGE_UNAVAILABLE' };
+      try { onShutdownFailure(error)?.catch?.(() => {}); } catch { /* Diagnostics cannot change backup shutdown. */ }
       await durableWrite(statusFile, status);
     } finally { pending = null; await rm(pendingFile, { force: true }); }
     return true;

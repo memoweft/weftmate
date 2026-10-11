@@ -217,7 +217,15 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   const refreshTicks = new Map<number, () => void>()
   const fetch = (url: string, options: any = {}) => {
     requests.push({ url, options })
-    if (url.endsWith('/system') && config.systemRead) return Promise.resolve(reply(config.systemRead))
+    // Presence now reads diagnostics on every authenticated startup. An
+    // unimplemented fixture route throws NETWORK and interrupts the unrelated
+    // session/phone refresh; keep the default synthetic host reachable.
+    if (url.endsWith('/system')) return Promise.resolve(reply(config.systemRead ?? {
+      model: { state: 'ready', canRestart: false }, host: { state: 'ready', canRestart: false },
+      memory: { state: 'unconfigured', canRestart: false }, canRestart: false,
+      runRecord: { state: 'ready', startedAt: '2026-10-11T01:00:00.000Z', previous: null,
+        uncleanCount7Days: 0, summary: 'Synthetic test host: no abnormal exit records.' },
+    }))
     if (url.endsWith('/settings/models')) return Promise.resolve(reply({ backgroundModelProfileId: null }))
     if (/\/system\/(model|host|memory)\/restart$/.test(url) && config.restartRead) return config.restartRead(url, options)
     if (url.endsWith('/cloud/devices/pending')) return Promise.resolve(reply({ devices: config.pendingDevices?.[profileOwner] ?? [] }))
