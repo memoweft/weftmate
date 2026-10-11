@@ -132,3 +132,22 @@
 
 .model-current { margin-top: var(--wm-space-8); color: var(--ink); font-size: var(--wm-font-size-13); overflow-wrap: anywhere; }
 .model-editor-form > #account-model-form-status:not(.form-error) { color: var(--ink-secondary); background: transparent; padding: 0; }
+
+.system-service-title { display:flex; align-items:center; flex-wrap:wrap; gap:var(--wm-space-12); }
+.system-status-label { font-size:var(--wm-font-size-13); color:var(--ink-secondary); }
+.system-service[data-state=healthy] .system-status-label { color:var(--success); }
+.system-service[data-state=problem] .system-status-label { color:var(--danger); }
+.system-service-detail { min-width:0; }
+.system-service-detail small { overflow-wrap:anywhere; }
+.system-semantic { display:block; margin-top:var(--wm-space-4); }
+.system-next-step { margin-top:var(--wm-space-8); white-space:normal; text-align:left; }
+.system-metrics, .system-diagnostic-export { margin-top:var(--wm-space-24); }
+.system-metric { display:flex; justify-content:space-between; gap:var(--wm-space-16); padding:var(--wm-space-12) 0; }
+.system-metric small { display:block; margin-top:var(--wm-space-4); font-size:var(--wm-font-size-13); }
+.system-metric-value { flex:none; text-align:right; font-variant-numeric:tabular-nums; }
+.system-export-preview { margin-top:var(--wm-space-12); padding:var(--wm-space-16); border-radius:var(--wm-radius-8); background:var(--surface-soft); }
+.system-export-preview p { margin-bottom:var(--wm-space-12); overflow-wrap:anywhere; }
+
+.settings-category[data-category=system] #system-heading { display:none; }
+.settings-category[data-category=system] .group-heading { justify-content:flex-end; border-bottom:0; padding-bottom:0; margin-bottom:0; }
+#system-notice:empty { display:none; }

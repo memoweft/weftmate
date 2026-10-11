@@ -23,6 +23,8 @@ globalThis.WeftPresenceView = {
             for(const [source,run] of [['host',diagnosticRun],['local',localRun]])if(run?.runId)WeftPresenceView.acknowledgedRuns.add(`${source}:${run.runId}`);
             openRunRecords();diagnosticRun=null;localRun=null;diagnostic.hidden=true;paint(core.connectionView());
         }); actions.append(diagnostic);
+        const feedback = make('button','button secondary presence-action','反馈问题'); feedback.type='button';
+        feedback.onclick=()=>globalThis.WeftProblemFeedback?.(feedback); actions.append(feedback);
         let diagnosticRun=null, localRun=null, closed=false, requestedScope=null, requestEpoch=0;
         let disconnected = false, lastKind;
         const paint = value => {
@@ -56,6 +58,7 @@ globalThis.WeftPresenceView = {
                 : model ? '模型暂不可用 · 请检查设置' : ({connecting:'正在连接 · 草稿会保留',host_offline:'电脑离线 · 等待接续',network_unavailable:'网络不可用 · 草稿会保留',login_required:'请重新登录 · 草稿会保留',approval_required:'请在已登录设备批准访问'})[value.kind] || '';
             copy.title = showDiagnostic ? copy.textContent : value.description || copy.textContent;
             diagnostic.hidden=!showDiagnostic; retry.hidden=showDiagnostic;
+            feedback.hidden=!core.state?.ownerId || value.kind==='connecting';
             retry.textContent = value.kind === 'login_required' ? '重新登录' : value.kind === 'approval_required' ? '查看设备' : '重试';
             offline.hidden = showDiagnostic || value.kind !== 'host_offline' || typeof core.openOfflineMode !== 'function';
             if (['login_required','approval_required'].includes(value.kind)) disconnected = false;
@@ -106,6 +109,8 @@ globalThis.WeftRunRecords = {
             const fact=(label,text)=>{list.append(node('dt','',label),node('dd','',text));};
             fact('本次启动',core.dateText(value.startedAt));
             const previous=value.previous;
+            if (previous?.normal === false && !browser) body.append(node('p','muted run-record-unclean',
+                local ? '上次没有正常退出，记录已保存在这台设备上。' : '上次没有正常退出，记录已保存在电脑上。'));
             const exitKnown=previous && (previous.exitTimeKnown===true || Number.isFinite(previous.exitCode));
             if(!browser)fact('上次退出',previous ? `${exitKnown ? core.dateText(previous.at) : '结束时间未知'} · ${previous.normal ? '正常结束' : '未正常结束'}` : '首次启动，还没有上一轮记录');
             if (previous && !exitKnown && previous.lastAt) fact('最后记录',core.dateText(previous.lastAt));

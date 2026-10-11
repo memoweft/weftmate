@@ -92,6 +92,17 @@ summary:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-o
 .memory-issue-card > p:first-child { width:100%; white-space:pre-wrap; overflow-wrap:anywhere; }
 .memory-issue-card .model-setup-button { margin-left:auto; }
 .message-action:active { background:var(--surface-soft,var(--soft)); }
+.feedback-option { display:flex; align-items:center; gap:var(--wm-space-8); min-height:var(--wm-space-44); cursor:pointer; }
+.problem-feedback-dialog .message-action.button.secondary, .message-actions .message-action.button.secondary { border:var(--wm-space-1) solid var(--line); background:var(--surface); }
+.feedback-option input { flex-shrink:0; }
+.feedback-option-help { margin-top:0!important; }
+.feedback-conversation-warning { padding:var(--wm-space-16); background:var(--accent-soft); border-radius:var(--wm-radius-8); margin-block:var(--wm-space-8); }
+.feedback-conversation-warning p { margin-bottom:var(--wm-space-8); }
+.feedback-conversation-warning button { min-height:var(--wm-space-44); }
+.feedback-preview-title { font-weight:var(--wm-font-weight-600,600)!important; padding-bottom:var(--wm-space-16); border-bottom:1px solid var(--line); margin-bottom:var(--wm-space-16)!important; }
+.feedback-error { color:var(--danger); }
+.feedback-sent-row { padding-block:var(--wm-space-12); border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
+.problem-feedback-dialog .message-dialog-actions { position:sticky; bottom:0; padding-block:var(--wm-space-8); background:var(--surface); }
 
 .memory-health::before { display:none!important; }
 
