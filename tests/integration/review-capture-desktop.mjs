@@ -48,7 +48,7 @@ for (const theme of ['light', 'dark']) {
     const button = name => page.getByRole('button', { name, exact: typeof name === 'string' });
     const shot = (scene, prepare) => runScene({ page, out, platform: 'windows', scene, theme, prepare, application });
     const loginDialog = page.getByRole('dialog', { name: '登录以使用云端功能', exact: true });
-    await shot('login', async () => {
+    const loginOutcome = await shot('login', async () => {
       // The production native window opens its own existing account directly.
       // Capture the optional cloud login from Settings, keeping local use below it.
       await page.locator('#assistant-view').waitFor({ state: 'visible' });
@@ -60,10 +60,21 @@ for (const theme of ['light', 'dark']) {
       await loginDialog.getByLabel('邮箱', { exact: true }).waitFor();
       await loginDialog.getByRole('button', { name: '关闭登录', exact: true }).waitFor();
     });
-    await loginDialog.getByRole('button', { name: '关闭登录', exact: true }).click();
-    await loginDialog.waitFor({ state: 'hidden' });
-    await button('关闭设置').click();
-    await page.locator('#assistant-view').waitFor({ state: 'visible' });
+    // A failed scene remains failed; close only surfaces it actually opened.
+    // Do not turn runScene's recorded navigation failure into a second timeout.
+    if (await loginDialog.isVisible()) {
+      await loginDialog.getByRole('button', { name: '关闭登录', exact: true }).click();
+      await loginDialog.waitFor({ state: 'hidden' });
+    }
+    const settingsDialog = page.getByRole('dialog', { name: '设置', exact: true });
+    if (await settingsDialog.isVisible()) {
+      await settingsDialog.getByRole('button', { name: '关闭设置', exact: true }).click();
+      await settingsDialog.waitFor({ state: 'hidden' });
+    }
+    if (loginOutcome.status !== 'failed') {
+      await loginDialog.waitFor({ state: 'hidden' });
+      await page.locator('#assistant-view').waitFor({ state: 'visible' });
+    }
     // Real isolated host authentication is independent of login-page selectors.
     // Feature scenes retain their isolated local protocol authentication.
     ownerId = await page.evaluate(async credentials => {
