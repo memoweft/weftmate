@@ -264,5 +264,15 @@
     "formalWithoutQaCompiled": true,
     "warningLevel": "W4",
     "warningsAsErrors": true
+  },
+  "postMerge": {
+    "main": "7c166452",
+    "changedWindowsRuntimeFiles": false,
+    "relatedPassed": 14,
+    "relatedFailed": 0,
+    "typecheck": "passed",
+    "publicHygieneTextFiles": 7919,
+    "publicHygieneIdentityHits": 0,
+    "generatedReleaseNotesSynchronized": true
   }
 }
