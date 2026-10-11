@@ -222,11 +222,12 @@ finally {
     }
     catch (error) { cleanup.temp = {removed:false,error:redactEvidenceText(error.message)}; }
   }
-  // This replaces the paused prefix-only collector. Production tools stay on the
-  // paused version until confirmation review and owner notification before rollout.
-  // Only registered managed directories with expired leases and dead owner identities.
+  // This replaces the prefix-only collector: only registered managed directories with
+  // expired leases and dead owner identities are candidates.
+  // Deletion stays paused by the owner (2026-10-11): this runs as a preview and reports
+  // what it would remove. Add '-Apply' only after the owner agrees to resume cleanup.
   try {
-    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '24', '-Roots', tempParent || managedTempParent(), '-Repository', repository, '-Log', join(out, 'logs/prune-temp-audit.jsonl'), '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
+    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '24', '-Roots', tempParent || managedTempParent(), '-Repository', repository, '-Log', join(out, 'logs/prune-temp-audit.jsonl')], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
     if (pruned.code !== 0) throw Error(`清理器非零退出（${pruned.code}）；见 logs/prune-temp.log`);
     cleanup.staleTemp = JSON.parse(pruned.output.trim().split(/\r?\n/).pop());
   } catch (error) { cleanup.staleTemp = { error: error.message }; }

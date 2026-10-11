@@ -70,7 +70,7 @@ pwsh -NoProfile -File scripts/nightly/unregister-task.ps1
 
 ## 顺手清理测试临时目录
 
-> 2026-10-11 本人已暂停生产 tools 中旧的前缀清理器。下述受管版本须通过确认审查，由 Claude 先告知本人，再更新 tools／nightly 才恢复；本包只验证隔离候选，不切换生产工作树。
+> **删除目前是停着的（本人 2026-10-11 决定）。** 夜间引擎以预演方式调用下述受管版本（不带 `-Apply`）：报告里列出「会被删除」的候选，实际不删任何东西。要恢复删除，由 Claude 先征得本人同意，再在 `engine.mjs` 的调用里加回 `-Apply`。
 
 夜间收尾与测试开头的自动回收只枚举受管父目录：Windows 为 `C:\weftmate-temp`，Linux 为 `/tmp/weftmate-temp`，macOS 使用解析真实路径后的 `/tmp/weftmate-temp`（通常为 `/private/tmp/weftmate-temp`）。不会扫描系统 TEMP（临时目录）、`C:\Temp` 或 `C:\`。目录名只是筛选条件；没有有效归属记录的目录一律保留，输出 `keptUnowned` 数量和逐项名称。
 
