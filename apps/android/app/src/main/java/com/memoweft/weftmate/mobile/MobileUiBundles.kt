@@ -31,7 +31,13 @@ class MobileUiBundles(private val context: Context) {
     private val names = Regex("[A-Za-z0-9._/-]{1,180}")
     private val digest = Regex("[a-f0-9]{64}")
     private val updateKeys by lazy { JSONObject(context.assets.open("update-trusted-keys.json").bufferedReader().use { it.readText() }) }
-    private fun verifySignature(value: JSONObject) = SignedUiManifest.verify(value, updateKeys, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.UPDATE_CHANNEL)
+    private fun verifySignature(value: JSONObject) {
+        try { SignedUiManifest.verify(value, updateKeys, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.UPDATE_CHANNEL) }
+        catch (error: Exception) {
+            RunDiagnostics.write("ui.verification_failure", JSONObject().put("phase", "download").put("code", "UI_SIGNATURE_INVALID"))
+            throw error
+        }
+    }
     init {
         // Code 21 removes the old refresh-token bridge: cached pages using it must boot the new built-in UI.
         if (mobileUiNeedsNativeLoginUpgrade(prefs.getInt("nativeLoginUiVersion", 0), BuildConfig.VERSION_CODE)) {
@@ -39,7 +45,10 @@ class MobileUiBundles(private val context: Context) {
                 .remove("staged").putInt("nativeLoginUiVersion", 21).commit())
             activeId = builtIn
         }
-        if (activeId != builtIn && !verify(activeId)) rejectActive()
+        if (activeId != builtIn && !verify(activeId)) {
+            RunDiagnostics.write("ui.verification_failure", JSONObject().put("phase", "cached").put("code", "UI_HASH_INVALID"))
+            rejectActive()
+        }
     }
     private fun rejected(): Set<String> = try {
         val values = org.json.JSONArray(prefs.getString("rejectedIds", "[]"))
@@ -126,7 +135,10 @@ class MobileUiBundles(private val context: Context) {
                     else try { File(directory, "$activeId/$path").readBytes() } catch (_: Exception) { null }
                 val data = cached?.takeIf { it.size.toLong() == size && sha256(it) == hash }
                     ?: bytes("$origin$assetBase$path", size.toInt(), host.cookie)
-                require(data.size.toLong() == size && sha256(data) == hash)
+                if (data.size.toLong() != size || sha256(data) != hash) {
+                    RunDiagnostics.write("ui.verification_failure", JSONObject().put("phase", "download").put("code", "UI_HASH_INVALID"))
+                    throw ApiFailure(422, "UI_UPDATE_REJECTED")
+                }
                 val file = File(work, path)
                 check(file.canonicalPath.startsWith(work.canonicalPath + File.separator))
                 file.parentFile?.mkdirs()
@@ -187,6 +199,7 @@ class MobileUiBundles(private val context: Context) {
         check(prefs.edit().putString("active", next).putString("previous", builtIn)
             .putString("rejectedIds", list.toString()).remove("staged").commit())
         activeId = next
+        RunDiagnostics.write("ui.fallback", JSONObject().put("action", if (next == builtIn) "builtin" else "previous"))
         return state("UI_UPDATE_REJECTED")
     }
 

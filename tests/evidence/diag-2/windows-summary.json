@@ -1,0 +1,30 @@
+{
+  "platform": "windows",
+  "appVersion": "0.1.0",
+  "osVersion": "10.0.26200",
+  "generatedAt": "2026-10-11T07:31:22.572Z",
+  "recentAbnormalRecords": [
+    {
+      "at": "2026-10-11T07:31:22.544Z",
+      "event": "host.failure",
+      "runId": "f5eba4a9-153c-4217-843a-716ea35085a7",
+      "platform": "windows",
+      "appVersion": "0.1.0",
+      "osVersion": "10.0.26200",
+      "fields": {
+        "recordIndex": "6",
+        "source": "uncaughtException",
+        "name": "TypeError",
+        "code": "HOST_ERROR",
+        "message": "fetch failed"
+      }
+    }
+  ],
+  "abnormalCountsLast7Days": {
+    "host.failure": 1
+  },
+  "retentionPolicy": {
+    "retentionDays": 7,
+    "maxBytes": 33554432
+  }
+}
