@@ -1,0 +1,165 @@
+{
+  "rows": [],
+  "errors": [],
+  "sends": [
+    {
+      "surface": "desktop",
+      "state": {
+        "result": {
+          "kind": "failed",
+          "retryAfter": 1645,
+          "error": {
+            "code": "BACKEND_UNAVAILABLE",
+            "status": 503
+          },
+          "terminal": false
+        },
+        "allowed": false,
+        "online": true
+      },
+      "debug": {
+        "main": true,
+        "pending": [],
+        "model": "local",
+        "online": true,
+        "submitting": false,
+        "unresolved": false
+      },
+      "sendBackendMs": 71,
+      "replyVisibleMs": 1854
+    },
+    {
+      "surface": "mobile",
+      "state": {
+        "result": {
+          "kind": "failed",
+          "retryAfter": 1525,
+          "error": {
+            "code": "BACKEND_UNAVAILABLE",
+            "status": 503
+          },
+          "terminal": false
+        },
+        "allowed": false,
+        "online": true
+      },
+      "debug": {
+        "main": true,
+        "pending": [],
+        "model": "local",
+        "online": true,
+        "submitting": false,
+        "unresolved": false
+      },
+      "sendBackendMs": 97,
+      "replyVisibleMs": 1852
+    }
+  ],
+  "bridge": [
+    {
+      "request": {
+        "id": "r56",
+        "method": "shared.send",
+        "params": {
+          "chatId": "chat-b4ac883c-cf52-41db-82d1-0ce7402e1c73",
+          "text": "Message during read backoff mobile",
+          "requestId": "b7dd61c3-e6b1-471d-9be1-783fba535d60",
+          "modelProfileId": "local",
+          "intent": "queue",
+          "attachmentIds": []
+        }
+      },
+      "response": {
+        "result": {
+          "command": {
+            "commandId": "cmd-0c6e357c-ee6f-43af-bf72-f46b2c9ed55c",
+            "requestId": "b7dd61c3-e6b1-471d-9be1-783fba535d60",
+            "kind": "chat.message",
+            "targetDeviceId": "host-01edea88-c98b-4870-95e8-135e06777615",
+            "state": "pending",
+            "createdAt": "2026-10-11T04:24:39.636Z",
+            "updatedAt": "2026-10-11T04:24:39.636Z",
+            "chatId": "chat-b4ac883c-cf52-41db-82d1-0ce7402e1c73"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "r58",
+        "method": "shared.commands.byRequest",
+        "params": {
+          "requestId": "b7dd61c3-e6b1-471d-9be1-783fba535d60"
+        }
+      },
+      "response": {
+        "result": {
+          "command": {
+            "commandId": "cmd-0c6e357c-ee6f-43af-bf72-f46b2c9ed55c",
+            "requestId": "b7dd61c3-e6b1-471d-9be1-783fba535d60",
+            "kind": "chat.message",
+            "targetDeviceId": "host-01edea88-c98b-4870-95e8-135e06777615",
+            "state": "pending",
+            "createdAt": "2026-10-11T04:24:39.636Z",
+            "updatedAt": "2026-10-11T04:24:39.636Z",
+            "chatId": "chat-b4ac883c-cf52-41db-82d1-0ce7402e1c73"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "r69",
+        "method": "shared.commands.byRequest",
+        "params": {
+          "requestId": "b7dd61c3-e6b1-471d-9be1-783fba535d60"
+        }
+      },
+      "response": {
+        "result": {
+          "command": {
+            "commandId": "cmd-0c6e357c-ee6f-43af-bf72-f46b2c9ed55c",
+            "requestId": "b7dd61c3-e6b1-471d-9be1-783fba535d60",
+            "kind": "chat.message",
+            "targetDeviceId": "host-01edea88-c98b-4870-95e8-135e06777615",
+            "state": "accepted_by_dsh",
+            "createdAt": "2026-10-11T04:24:39.636Z",
+            "updatedAt": "2026-10-11T04:24:39.682Z",
+            "sessionId": "session-468b03eb-a4fa-441b-b574-6395a3988757",
+            "chatId": "chat-b4ac883c-cf52-41db-82d1-0ce7402e1c73",
+            "intent": "queue",
+            "taskLabel": "Message during read backoff mobile",
+            "receiptId": "synthetic-2023bb3c-14eb-4769-ba05-66f967ccf458"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "r73",
+        "method": "shared.commands.byRequest",
+        "params": {
+          "requestId": "b7dd61c3-e6b1-471d-9be1-783fba535d60"
+        }
+      },
+      "response": {
+        "result": {
+          "command": {
+            "commandId": "cmd-0c6e357c-ee6f-43af-bf72-f46b2c9ed55c",
+            "requestId": "b7dd61c3-e6b1-471d-9be1-783fba535d60",
+            "kind": "chat.message",
+            "targetDeviceId": "host-01edea88-c98b-4870-95e8-135e06777615",
+            "state": "accepted_by_dsh",
+            "createdAt": "2026-10-11T04:24:39.636Z",
+            "updatedAt": "2026-10-11T04:24:39.682Z",
+            "sessionId": "session-468b03eb-a4fa-441b-b574-6395a3988757",
+            "chatId": "chat-b4ac883c-cf52-41db-82d1-0ce7402e1c73",
+            "intent": "queue",
+            "taskLabel": "Message during read backoff mobile",
+            "receiptId": "synthetic-2023bb3c-14eb-4769-ba05-66f967ccf458"
+          }
+        }
+      }
+    }
+  ]
+}

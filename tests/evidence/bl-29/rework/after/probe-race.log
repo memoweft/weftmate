@@ -1,0 +1,8 @@
+{
+  clientAEmpty: 0,
+  clientBNew: 1,
+  subscribedNativeSeq: [],
+  waitMs: 0,
+  clientAAfter: 1,
+  alreadyAbortedMs: 0
+}

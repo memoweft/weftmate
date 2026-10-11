@@ -1,10 +1,11 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Explicit 20-minute isolated Core host for a manually observed desktop/Android memory UI pass. */
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+
 import { join, sep } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { createPersonalMemoryManager } from '../../src/personal-memory/index.mjs';

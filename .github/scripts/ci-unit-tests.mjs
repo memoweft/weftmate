@@ -1,8 +1,10 @@
 // CI-only selection: ordinary npm test keeps the complete local/release gates.
-import { spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, parse, resolve } from 'node:path';
+import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { assertRuntimeIdentity } from '../../scripts/dsh-runtime-identity.mjs';
+import { managedMkdtempSync, disposeManagedTemp, startManagedTempLease } from '../../tests/helpers/managed-temp.mjs';
+import { runManagedTestProcess } from '../../tests/helpers/managed-test-process.mjs';
 
 const mode = process.argv[2];
 if (!['required', 'known', 'vendor'].includes(mode)) throw new Error('Use required, known or vendor');
@@ -12,7 +14,8 @@ const suite = JSON.parse(readFileSync('.github/vendor-test-suite.json', 'utf8'))
 const vendorFiles = new Set([...suite.tests.map(entry => entry.file), ...suite.files]);
 const vendorReady = existsSync('vendor/dsh-runtime/node_modules/@deepseek-ai/dsh/lib/bin.js');
 if (mode === 'vendor') {
-  if (!vendorReady) throw new Error('vendor mode requires a prebuilt pinned vendor/dsh-runtime; run npm run vendor:dsh with WEFTMATE_DSH_CHECKOUT set to a compiled pinned checkout.');
+  if (!vendorReady) throw new Error('vendor mode requires vendor/dsh-runtime; run npm run vendor:dsh.');
+  await assertRuntimeIdentity(resolve('vendor/dsh-runtime'), process.cwd());
   const manifest = JSON.parse(readFileSync('vendor/dsh-runtime/VENDOR-MANIFEST.json', 'utf8'));
   const pin = JSON.parse(readFileSync('tests/contract/dsh-pin.json', 'utf8'));
   if (manifest.dsh.commit !== pin.commit) throw new Error('vendor mode requires the production DSH pin; vendor manifest does not match tests/contract/dsh-pin.json.');
@@ -51,11 +54,9 @@ args.push('--test-reporter=tap');
 // Windows' default TEMP uses RUNNER~1; RUNNER_TEMP is on the checkout's D:
 // drive. Use a fresh full path on the system drive so the C: versus D:
 // isolation fixture is actually exercised as well as the realpath contract.
-const tempBase = process.platform === 'win32'
-  ? parse(process.env.SystemRoot || 'C:\\Windows').root
-  : realpathSync(process.env.RUNNER_TEMP || tmpdir());
-const temp = mkdtempSync(join(tempBase, 'weftmate-ci-'));
-const env = { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' };
+const temp = managedMkdtempSync('weftmate-ci-');
+const stopLease = startManagedTempLease(temp);
+const env = { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp, WEFTMATE_TEST_TEMP_SCOPE: temp, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' };
 const lines = [
   `### Unit tests (${mode})`,
   `${selected.length} test files; isolated canonical temp: ${temp}.`,
@@ -73,7 +74,15 @@ console.log(lines.join('\n'));
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
 // Absolute test paths keep every worker's command line attributable to its
 // worktree during the required creation-time/executable/command-line cleanup.
-const result = spawnSync(process.execPath, [...args, ...selected.map(file => resolve(file))], { env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+let result;
+try {
+  result = await runManagedTestProcess(process.execPath, [...args, ...selected.map(file => resolve(file))],
+    { env, commandRoots: [temp, ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')] });
+} finally {
+  stopLease();
+  disposeManagedTemp(temp);
+  if (existsSync(temp)) throw Error('Unit test temp cleanup failed');
+}
 const output = (result.stdout || '') + (result.stderr || '');
 process.stdout.write(output);
 const count = name => Number(new RegExp(`^# ${name} (\\d+)$`, 'm').exec(output)?.[1] || 0);
@@ -85,7 +94,6 @@ const summary = { mode, files: selected.length, exitCode: result.status ?? 1, pa
 console.log(`Test result: ${JSON.stringify(summary)}`);
 const reportIndex = process.argv.indexOf('--report');
 if (reportIndex >= 0) writeFileSync(process.argv[reportIndex + 1], JSON.stringify(summary, null, 2) + '\n');
-rmSync(temp, { recursive: true, force: true });
 if (result.error) throw result.error;
 if (process.env.GITHUB_STEP_SUMMARY) {
   appendFileSync(process.env.GITHUB_STEP_SUMMARY,

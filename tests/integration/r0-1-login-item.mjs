@@ -1,10 +1,11 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
-import { mkdtemp,mkdir,writeFile,rm } from 'node:fs/promises';
+import { mkdir, writeFile, rm } from 'node:fs/promises';
 import { join,resolve } from 'node:path';
-import { tmpdir } from 'node:os';
+
 import { saveDesktopConfig } from '../../src/desktop-config.mjs';
 import { PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 const root=await mkdtemp(join(tmpdir(),'weftmate-r01-login-')),profile=join(root,'profile');

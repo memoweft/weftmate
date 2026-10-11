@@ -12,9 +12,8 @@
  * manifest.carriedButNotMounted 恒为空数组（字段保留供审计）。
  *
  * 流程（对应 docs/VENDOR-PACKAGING.md §6.1）：
- *   1. resolve+verify：复用契约测试的 pin 校验（tests/contract/support/checkout.ts，单一事实源）；
- *   2. preflight：验证 checkout 已有的官方编译入口；构建属于 Harness 所有者职责，
- *      本脚本绝不在 checkout 内执行 build/install/clean；
+ *   1. 读取 pin 与全部补丁身份；复用相同身份的共享缓存；
+ *   2. 从只读 Git 对象建立独立 LF clone，按文件名打补丁并编译；
  *   3. closure：从直接行（§发货子集）按 dependencies/peerDependencies/optionalDependencies 推导
  *      @deepseek-ai 传递闭包（workspace 扫描含 packages/vendor/apps 与 native/landlock-run/packages）；
  *   4. pack：逐包 `pnpm pack`（pnpm 会把 workspace: 协议替换为具体版本）；
@@ -30,17 +29,18 @@
  * 用法：
  *   node scripts/vendor-dsh.mjs [--dry-run]   # --dry-run 只计算并打印闭包，不构建/打包/安装
  *
- * 红线：本脚本只读 checkout 并只执行逐包 pack；不在 checkout 内执行 build/install/clean，
- * 不修改 checkout 中任何被 git 跟踪的文件。
+ * 红线：主 DSH checkout 的工作区、分支和配置只读；install/build/pack 只在独立 clone。
  */
 
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
-import { mkdir, readdir, rm, writeFile } from 'node:fs/promises'
-import { basename, dirname, join, resolve } from 'node:path'
+import { lstat, mkdir, mkdtemp, readdir, rm, symlink, unlink, writeFile, open } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { basename, delimiter, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { loadPin, resolveCheckout } from '../tests/contract/support/checkout.ts'
+import { loadPin } from '../tests/contract/support/checkout.ts'
+import { assertRuntimeIdentity, runtimeIdentity } from './dsh-runtime-identity.mjs'
 import {
   VENDOR_SCRIPT_VERSION,
   assertPackageEntrypoints,
@@ -58,10 +58,11 @@ const repoRoot = resolve(here, '..')
 // A candidate can redirect only its generated output. The default remains the
 // rc5 production vendor, so normal package/release commands retain their
 // existing source and output identity.
-const RUNTIME_DIR = process.env.WEFTMATE_DSH_RUNTIME_DIR === undefined || process.env.WEFTMATE_DSH_RUNTIME_DIR === ''
+const REQUESTED_RUNTIME_DIR = process.env.WEFTMATE_DSH_RUNTIME_DIR === undefined || process.env.WEFTMATE_DSH_RUNTIME_DIR === ''
   ? join(repoRoot, 'vendor', 'dsh-runtime')
   : resolve(repoRoot, process.env.WEFTMATE_DSH_RUNTIME_DIR)
-const TARBALLS_DIR = join(RUNTIME_DIR, 'tarballs')
+let RUNTIME_DIR
+let TARBALLS_DIR
 
 /** 发货子集·直接行（行集合变更需 owner 拍板；R1 起 = 官方 web 运行时 + v2 直接行保留）。 */
 const LEGACY_SUBSET = [
@@ -130,7 +131,7 @@ function tarballName(name, version) {
 /** 解析 pnpm 可执行（WEFTMATE_PNPM 覆盖，可含子命令如 'corepack pnpm' → PATH 上找 pnpm.cmd/.exe/pnpm → corepack.cmd pnpm 回退）。 */
 function resolvePnpm() {
   const findInPath = (name) => {
-    for (const dir of (process.env.PATH ?? '').split(';')) {
+    for (const dir of (process.env.PATH ?? '').split(delimiter)) {
       const path = join(dir || '.', name)
       if (existsSync(path)) return path
     }
@@ -155,10 +156,10 @@ function resolvePnpm() {
     const parts = override.split(/\s+/).filter(Boolean)
     return [resolveCommand(parts[0]), ...parts.slice(1)]
   }
+  const corepack = findInPath(process.platform === 'win32' ? 'corepack.cmd' : 'corepack')
+  if (corepack !== null) return [corepack, 'pnpm']
   const direct = findInPath('pnpm.cmd') ?? findInPath('pnpm.exe') ?? findInPath('pnpm')
   if (direct !== null) return [direct]
-  const corepack = findInPath('corepack.cmd')
-  if (corepack !== null) return [corepack, 'pnpm']
   return ['pnpm']
 }
 
@@ -166,13 +167,13 @@ function quoteCmd(arg) {
   return /[\s"&|<>^]/.test(arg) ? `"${arg.replaceAll('"', '\\"')}"` : arg
 }
 
-function run(command, args, cwd, label, env = process.env) {
+function run(command, args, cwd, label, env = process.env, input) {
   // command 可为多段（如 'corepack pnpm'）；Windows 上 .cmd shim 需 shell 包装（args 已逐项引号）。
   const parts = Array.isArray(command) ? command : [command]
   const useShell = /\.cmd$/i.test(parts[0] ?? '')
   const result = useShell
-    ? spawnSync([...parts, ...args].map(quoteCmd).join(' '), [], { cwd, env, encoding: 'utf8', shell: true })
-    : spawnSync(parts[0], [...parts.slice(1), ...args], { cwd, env, encoding: 'utf8' })
+    ? spawnSync([...parts, ...args].map(quoteCmd).join(' '), [], { cwd, env, input, encoding: 'utf8', shell: true, windowsHide: true, maxBuffer: 64 * 1024 * 1024 })
+    : spawnSync(parts[0], [...parts.slice(1), ...args], { cwd, env, input, encoding: 'utf8', windowsHide: true, maxBuffer: 64 * 1024 * 1024 })
   if (result.status !== 0) {
     const tail = (result.stderr ?? result.stdout ?? (result.error ? String(result.error) : '')).split('\n').slice(-15).join('\n')
     throw new Error(`${label} 失败（exit ${result.status}）：\n${tail}`)
@@ -266,11 +267,9 @@ async function assertSingleInstance(nodeModulesDir) {
   }
 }
 
-async function main() {
+async function assemble(checkout, pin, identity) {
   const dryRun = process.argv.includes('--dry-run')
   const subset = LEGACY_SUBSET
-  const pin = await loadPin()
-  const checkout = await resolveCheckout(pin)
   const packageManager = checkoutPackageManager(checkout)
   console.log(`[vendor-dsh] checkout ${checkout} @ ${pin.commit}（${pin.packageVersion}）`)
   console.log(`[vendor-dsh] Corepack packageManager：${packageManager}`)
@@ -289,7 +288,7 @@ async function main() {
   }
 
   await assertWorkspaceClosureEntrypoints(closure)
-  console.log('[vendor-dsh] checkout 已有编译入口检查通过（只读；未在 Harness checkout 执行 build/install/clean）')
+  console.log('[vendor-dsh] 独立固定检出的补丁编译入口检查通过')
 
   await rm(RUNTIME_DIR, { recursive: true, force: true })
   await mkdir(TARBALLS_DIR, { recursive: true })
@@ -369,6 +368,7 @@ async function main() {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     scriptVersion: VENDOR_SCRIPT_VERSION,
+    runtimeIdentity: identity,
     dsh: { repo: pin.repo, packageVersion: pin.packageVersion, commit: pin.commit },
     toolchain: { node: process.version, pnpm: pnpmVersion },
     subset: subset.map(({ name, why }) => ({ name, why })),
@@ -377,9 +377,9 @@ async function main() {
     carriedButNotMounted,
     buildScriptsIgnored: true,
     sourceArtifacts: {
-      mode: 'prebuilt-checkout',
+      mode: 'isolated-patched-checkout',
       verifiedEntrypoints: true,
-      harnessBuildInvoked: false,
+      harnessBuildInvoked: true,
       skippedPlatformOptionals,
       runtimeInstallNodeHeapMb: install.heapMb,
       workspaceOverrides: true,
@@ -389,6 +389,103 @@ async function main() {
   await writeFile(join(RUNTIME_DIR, 'VENDOR-MANIFEST.json'), JSON.stringify(manifest, null, 2) + '\n', 'utf8')
 
   console.log(`[vendor-dsh] 完成：${packed.length} 包 → ${RUNTIME_DIR}`)
+}
+
+/** Only remove the vendor pointer, never recursively traverse a shared junction. */
+async function pointVendor(cache) {
+  await mkdir(dirname(REQUESTED_RUNTIME_DIR), { recursive: true })
+  try {
+    const stat = await lstat(REQUESTED_RUNTIME_DIR)
+    if (stat.isSymbolicLink()) await unlink(REQUESTED_RUNTIME_DIR)
+    else await rm(REQUESTED_RUNTIME_DIR, { recursive: true, force: true })
+  } catch (error) { if (error.code !== 'ENOENT') throw error }
+  await symlink(cache, REQUESTED_RUNTIME_DIR, process.platform === 'win32' ? 'junction' : 'dir')
+}
+
+function sourceRepository(pin) {
+  for (const candidate of [process.env.WEFTMATE_DSH_CHECKOUT, 'D:/AIProjects/Shared/Dependencies/DeepSeekHarness', join(homedir(), 'deepseek-harness'), resolve(repoRoot, '..', 'deepseek-harness')].filter(Boolean)) {
+    const root = resolve(repoRoot, candidate)
+    const probe = spawnSync('git', ['-C', root, 'cat-file', '-e', `${pin.commit}^{commit}`], { windowsHide: true, stdio: 'ignore' })
+    if (probe.status === 0) return root
+  }
+  throw new Error(`找不到包含固定提交 ${pin.commit} 的 DSH git 仓库；设置 WEFTMATE_DSH_CHECKOUT（无需修改主检出分支或安装依赖）`)
+}
+
+export function preparePatchedCheckout(projectRoot, source, checkout, pin, identity) {
+  run('git', ['clone', '--shared', '--no-checkout', source, checkout], dirname(checkout), '独立 DSH clone')
+  run('git', ['config', 'core.autocrlf', 'false'], checkout, '独立检出 LF 配置')
+  run('git', ['-c', 'core.autocrlf=false', 'checkout', '--detach', pin.commit], checkout, '固定提交 LF checkout')
+  // Windows may check patch files out as CRLF; normalize only the apply stream.
+  for (const patch of identity.patches) run('git', ['apply', '-'], checkout, `apply ${patch.name}`, process.env,
+    readFileSync(join(projectRoot, 'patches/dsh', patch.name), 'utf8').replaceAll('\r\n', '\n'))
+}
+
+async function main() {
+  const pin = await loadPin()
+  const identity = await runtimeIdentity(repoRoot)
+  const shared = resolve(process.env.WEFTMATE_DSH_CACHE_ROOT || (process.platform === 'win32' && existsSync('D:/AIProjects/WeftMate/Worktrees')
+    ? 'D:/AIProjects/WeftMate/Worktrees/_shared' : join(repoRoot, '.local/dsh-cache')))
+  const cache = join(shared, `dsh-runtime-${pin.commit.slice(0, 12)}-${identity.patchesSha256.slice(0, 16)}`)
+  if (process.argv.includes('--dry-run')) {
+    RUNTIME_DIR = cache; TARBALLS_DIR = join(cache, 'tarballs')
+    return assemble(sourceRepository(pin), pin, identity)
+  }
+  const cacheReady = async () => {
+    try { await assertRuntimeIdentity(cache, repoRoot); return true }
+    catch (error) {
+      if (error.code === 'ENOENT' || error.message.startsWith('运行时过期：')) return false
+      throw error
+    }
+  }
+  const reuse = async () => {
+    await pointVendor(cache)
+    console.log(`[vendor-dsh] 复用固定提交 + 补丁哈希缓存 ${cache}`)
+  }
+  if (await cacheReady()) return reuse()
+  await mkdir(shared, { recursive: true })
+  const lockPath = `${cache}.lock`
+  let lock
+  try { lock = await open(lockPath, 'wx') }
+  catch (error) { if (error.code === 'EEXIST') throw new Error('同一 DSH 运行时正在编译；等该构建完成后重跑 npm run vendor:dsh'); throw error }
+  await lock.writeFile(JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString(), identity: identity.key }))
+  let buildRoot
+  try {
+    // A contender may have published a complete cache while we acquired the lock.
+    if (await cacheReady()) return await reuse()
+    // Same-identity directories are immutable, including incomplete/stale ones.
+    // An operator must diagnose them; building must never delete a cache in use.
+    if (existsSync(cache)) throw new Error(`同身份缓存已存在但校验失败；保留缓存，拒绝重新发布：${cache}`)
+    buildRoot = await mkdtemp(join(shared, 'weftmate-dsh-build-'))
+    const checkout = join(buildRoot, 'checkout')
+    RUNTIME_DIR = join(buildRoot, 'runtime'); TARBALLS_DIR = join(RUNTIME_DIR, 'tarballs')
+    // --shared shares immutable objects only; branch, index, config and working files are independent.
+    preparePatchedCheckout(repoRoot, sourceRepository(pin), checkout, pin, identity)
+    const actualVersion = JSON.parse(readFileSync(join(checkout, 'package.json'), 'utf8')).version
+    if (actualVersion !== pin.packageVersion) throw new Error('固定 DSH 提交的 packageVersion 与 pin 不一致')
+    console.log(`[vendor-dsh] 编译 ${identity.key}（隔离检出，主仓只读）`)
+    run(resolvePnpm(), ['install', '--frozen-lockfile'], checkout, 'DSH frozen install')
+    run(resolvePnpm(), ['run', 'build'], checkout, 'DSH patched build')
+    if (process.platform === 'linux') {
+      run(resolvePnpm(), ['run', 'build:native'], join(checkout, 'native/landlock-run'), 'DSH Linux launcher build')
+    }
+    await assemble(checkout, pin, identity)
+    await assertRuntimeIdentity(RUNTIME_DIR, repoRoot)
+    // Publish only a complete assembly; readers never see partially built cache content.
+    const { rename } = await import('node:fs/promises')
+    if (existsSync(cache)) {
+      if (await cacheReady()) return await reuse()
+      throw new Error(`同身份缓存已存在；保留缓存，拒绝重新发布：${cache}`)
+    }
+    await rename(RUNTIME_DIR, cache)
+    await pointVendor(cache)
+  } finally {
+    try {
+      if (buildRoot) await rm(buildRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 })
+    } finally {
+      await lock.close()
+      await unlink(lockPath)
+    }
+  }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

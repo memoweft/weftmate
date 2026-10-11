@@ -1,7 +1,8 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { DshWebRuntime } from '../../src/dsh-web-runtime.ts';
@@ -24,7 +25,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const profiles=[{id:'stream1',name:'Synthetic stream',provider:'openai-compatible',baseUrl:`http://127.0.0.1:${server.address().port}/v1`,model:'synthetic-stream'}];
 const patch=join(home,'routes.yml');writeModelRoutesPatch(patch,profiles);
-const plugin=join(root,'observe.mjs');writeFileSync(plugin,`import {appendFileSync} from 'node:fs';export default ctx=>ctx.on('session/event',(session,event)=>{if(['assistant/chunk','assistant/message','turn/end'].includes(event.type))appendFileSync(${JSON.stringify(trace)},JSON.stringify({at:Date.now(),seq:event.seq,type:event.type,chunk:event.data?.chunk?.type,length:event.data?.chunk?.text?.length})+'\\n');});`);
+const plugin=join(root,'observe.mjs');writeFileSync(plugin,`import { appendFileSync } from 'node:fs';export default ctx=>ctx.on('session/event',(session,event)=>{if(['assistant/chunk','assistant/message','turn/end'].includes(event.type))appendFileSync(${JSON.stringify(trace)},JSON.stringify({at:Date.now(),seq:event.seq,type:event.type,chunk:event.data?.chunk?.type,length:event.data?.chunk?.text?.length})+'\\n');});`);
 const observe=join(home,'observe.yml');writeFileSync(observe,`- insert:\n    - id: stream1-observe\n      name: ${pathToFileURL(plugin).href}\n`);
 const security=join(home,'security.yml');writeFileSync(security,'- id: credentials\n  disabled: true\n- id: weftmate-credentials\n  disabled: true\n- insert:\n    - id: weftmate-safe-credentials\n      name: ./plugins/weftmate-credentials.mjs\n');
 const runtime=new DshWebRuntime({homeDir:home,workspaceDir:join(root,'workspace'),runtimePath:resolve('vendor/dsh-runtime'),patchFiles:[patch,security,observe],credentialRequestHandler:async({operation})=>operation==='resolve'?{value:'synthetic-key'}:{configured:true,writable:true},readyTimeoutMs:45000});

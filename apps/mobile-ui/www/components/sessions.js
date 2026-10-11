@@ -106,11 +106,17 @@ async function mobileSessionProjects(session) {
   add('移出项目', null); const close = el('button', 'secondary', '取消'); close.onclick = () => dialog.close(); dialog.append(notice, close); dialog.onclose = () => dialog.remove(); document.body.append(dialog); dialog.showModal();
 }
 /* Mobile sessions presentation and named ui-core actions. */
-function stopSharedPoll(){clearTimeout(state.sharedPollTimer);state.sharedPollTimer=null}
+function stopSharedPoll(){clearTimeout(state.sharedPollTimer);state.sharedPollTimer=null;uiCore.historyWaitAbort?.abort()}
 
-function scheduleSharedPoll(){stopSharedPoll();if(state.chatSource!=='host'||state.page!=='chat'||document.visibilityState==='hidden'||!uiCore.state.online)return;
-  state.sharedPollTimer=setTimeout(async()=>{if(state.chatSource!=='host'||state.page!=='chat')return;
-    await loadSharedHistory();if(!state.sharedRunning)void listSharedSessions();if(state.chatSource==='host')scheduleSharedPoll()},uiCore.state.personalCapabilities?.replyStreaming===1 && (state.sharedRunning||uiCore.mainReplyActive?.()||state.sharedPending||uiCore.state.submitting)?250:uiCore.state.personalCapabilities?.replyStreaming===1?1000:3000)}
+function scheduleSharedPoll(result) {
+  stopSharedPoll();
+  if (state.chatSource !== 'host' || state.page !== 'chat' || document.visibilityState === 'hidden' || !uiCore.state.online) return;
+  state.sharedPollTimer = setTimeout(async () => {
+    if (state.chatSource !== 'host' || state.page !== 'chat') return;
+    const outcome = await loadSharedHistory(true);
+    if (state.chatSource === 'host') scheduleSharedPoll(outcome);
+  }, uiCore.historyPollDelay(result));
+}
 
 function selectSharedSession(sessionId){uiCore.cancelNextSuggestions?.();if(!state.sharedSessions.some(item=>item.sessionId===sessionId))return;
   uiCore.syncMobileIdentity();void uiCore.updateSession(sessionId,{unread:false}).catch(error=>toast(safeError(error),true));
@@ -232,7 +238,7 @@ function renderOptimisticMessages(){if(state.chatSource!=='host'||state.page!=='
   }
 }
 
-function loadSharedHistory(){return uiCore.loadMobileHistory()}
+function loadSharedHistory(wait=false){return uiCore.loadMobileHistory(wait)}
 
 function loadSharedOutbox(...args){return uiCore.mobile.loadSharedOutbox(...args)}
 

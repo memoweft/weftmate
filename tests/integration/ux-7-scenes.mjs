@@ -40,6 +40,10 @@ export async function mockUx7Requests(page, readReplies = () => ux7Replies, { le
   }));
   await page.route('**/bridge', routeHandler(page,'bridge',async route => {
     const input = route.request().postDataJSON();
+    if (input.method === 'host.status') {
+      const response=await route.fetch(), body=await response.json();
+      return route.fulfill({response,json:{...body,result:{...body.result,personalCapabilities:{...body.result?.personalCapabilities,nextSuggestions:1}}}});
+    }
     if (input.method !== 'host.business' || !input.params?.path?.includes('/suggestions')) return route.fallback();
     await route.fulfill({ json: { result: { requestId: input.params.body?.requestId,
       suggestions: readReplies(), completion: input.params.body?.kind === 'completion' ? '保存成文件' : '', available: true } } });

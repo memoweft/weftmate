@@ -1,8 +1,8 @@
 /** Packaged paths and real main gateway. Synthetic account/model, no daily data. */
 import assert from 'node:assert/strict';
 import {generateKeyPairSync,createHash,randomUUID} from 'node:crypto';
-import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,existsSync,rmSync,realpathSync,readdirSync} from 'node:fs';
-import {tmpdir} from 'node:os';
+import {mkdirSync,writeFileSync,readFileSync,existsSync,rmSync,realpathSync,readdirSync} from 'node:fs';
+import {managedMkdtempSync} from '../../tests/helpers/managed-temp.mjs';
 import {join,resolve,parse} from 'node:path';
 import {UUID} from 'builder-util-runtime';
 import {buildWindowsRelease} from '../release/windows.mjs';
@@ -16,8 +16,7 @@ const testIdentity=option('--test-identity','fx21qa');assert.match(testIdentity,
 const out=resolve(option('--out','.local/installed-smoke'));mkdirSync(out,{recursive:true});
 // Match the Windows CI fixture's isolated system-drive temp placement: native
 // folder dialogs display literal paths, so a user-profile TEMP leaks in PNGs.
-const tempBase=process.platform==='win32'?parse(process.env.SystemRoot||'C:\\Windows').root:tmpdir();
-const temp=realpathSync.native(mkdtempSync(join(tempBase,'weftmate-fx21-install-'))),report={synthetic:true,realMain:true,pinnedDsh:true,realInstall:process.argv.includes('--install'),checks:[]};
+const temp=managedMkdtempSync('weftmate-fx21-install-'),report={synthetic:true,realMain:true,pinnedDsh:true,realInstall:process.argv.includes('--install'),checks:[]};
 let h,installed=false,installation=join(temp,'installed'),build,executable;
 const started=Date.now();
 const runnerEvidence=createProcessEvidence({outputDir:join(out,'runner-processes'),commandRoots:[temp],executables:[process.execPath],startedAt:started});

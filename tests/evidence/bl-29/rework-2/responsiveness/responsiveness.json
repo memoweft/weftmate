@@ -1,0 +1,72 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "stage": "after",
+  "logical": true,
+  "baseline": "ec3ab4996609a6d81181bc178f024d5e5158c577",
+  "surfaces": [
+    {
+      "surface": "electron",
+      "windows": []
+    },
+    {
+      "surface": "mobile",
+      "windows": []
+    }
+  ],
+  "checks": [
+    {
+      "name": "other-device-message",
+      "surface": "electron",
+      "ms": 98
+    },
+    {
+      "name": "other-device-message",
+      "surface": "mobile",
+      "ms": 111
+    }
+  ],
+  "failure": "locator.waitFor: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#approval-bar').getByRole('button', { name: '批准', exact: true }) to be visible\u001b[22m\n",
+  "desktopDebug": {
+    "text": "WeftMate\n搜索\nCtrl K\nWeftMate\n动态\n目标\n成果库\n新旁聊\nCtrl N\n\n旁聊\n未分组\n新对话\n项目\n添加一个文件夹，开始项目对话。\nT\nTimelineFixture\nWeftMate\n输出与来源\n今天\n\n合成主对话\n\n已完成的合成回复。\n\n另一台设备的新消息\n\n正在运行命令 Write-Output synthetic…\n要运行命令：Write-Output synthetic\n批准\n拒绝\n输入消息\n自动\n合成会话",
+    "core": true,
+    "state": {
+      "view": "assistant",
+      "main": {
+        "chatId": "chat-c09a2bc5-b2ba-4ca0-a05d-f22f2d3cac3e",
+        "kind": "main",
+        "revision": 4,
+        "contentRevision": 1,
+        "activeSegmentId": "segment-bd3e9395-2fef-425c-ad17-957e70f51c47",
+        "activeSessionId": "session-c8ab7e8f-e3f4-4309-a9fb-a7a7c0ddf66a",
+        "deepThinking": false,
+        "timeZone": "Asia/Shanghai",
+        "temporary": false,
+        "hasTemporaryContent": false,
+        "memoryMode": "on",
+        "recallEnabled": true,
+        "autoDeleteDays": 30,
+        "expiresAt": null,
+        "parent": null,
+        "pinned": true,
+        "unread": false,
+        "attention": null,
+        "lastOutcome": "completed",
+        "updatedAt": "2026-10-11T04:31:00.897Z",
+        "groupId": null,
+        "title": "WeftMate",
+        "archived": false,
+        "projectId": null,
+        "modelProfileId": "local",
+        "running": true,
+        "sendAvailable": true,
+        "taskAvailable": true,
+        "processing": {
+          "phase": "loading",
+          "modelName": "合成模型"
+        }
+      },
+      "refreshing": false
+    }
+  }
+}

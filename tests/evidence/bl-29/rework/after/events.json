@@ -1,0 +1,204 @@
+[
+  {
+    "name": "empty-main-first-message",
+    "ms": 47,
+    "status": 200,
+    "upserts": 0,
+    "live": 0,
+    "action": {
+      "sessionId": "session-73e75079-bedb-4155-9c05-0bca86d33a7e"
+    }
+  },
+  {
+    "name": "another-message-existing-main",
+    "ms": 31,
+    "status": 200,
+    "upserts": 0,
+    "live": 0,
+    "action": {
+      "sessionId": "session-73e75079-bedb-4155-9c05-0bca86d33a7e"
+    }
+  },
+  {
+    "name": "approval-appears",
+    "ms": 13,
+    "status": 200,
+    "upserts": 2,
+    "live": 0,
+    "action": {
+      "approvalId": "17ad039c-cb50-4af5-b083-086739e2e214"
+    }
+  },
+  {
+    "name": "approval-resolved-other-device",
+    "ms": 17,
+    "status": 200,
+    "upserts": 0,
+    "live": 0
+  },
+  {
+    "name": "question-appears",
+    "ms": 3,
+    "status": 200,
+    "upserts": 1,
+    "live": 0,
+    "action": {
+      "questionRpcId": "787eb3b1-8c8d-4456-b65d-db36328a2fb5"
+    }
+  },
+  {
+    "name": "question-answered",
+    "ms": 19,
+    "status": 200,
+    "upserts": 0,
+    "live": 0,
+    "action": {
+      "question": {
+        "questionRpcId": "787eb3b1-8c8d-4456-b65d-db36328a2fb5",
+        "sessionId": "session-73e75079-bedb-4155-9c05-0bca86d33a7e",
+        "taskId": "cmd-66ca7108-ce1b-4285-82b6-01770cddc52b",
+        "sourceCommandId": "cmd-66ca7108-ce1b-4285-82b6-01770cddc52b",
+        "sourceReceiptId": "synthetic-58536256-9f86-4b12-9773-d9999e54a0e0",
+        "turn": 1,
+        "questions": [
+          {
+            "id": "q",
+            "question": "synthetic?",
+            "options": []
+          }
+        ],
+        "createdAt": "2026-10-11T01:26:11.670Z",
+        "status": "answered",
+        "answer": {
+          "answers": [
+            {
+              "id": "q",
+              "selected": [],
+              "custom": "synthetic"
+            }
+          ]
+        },
+        "answerRequestId": "412a44e5-6ae8-4d49-a8b6-19bc373407f0",
+        "answeredAt": "2026-10-11T01:26:11.677Z",
+        "observedSeq": 11
+      },
+      "requestId": "412a44e5-6ae8-4d49-a8b6-19bc373407f0"
+    }
+  },
+  {
+    "name": "main-handoff",
+    "ms": 83,
+    "status": 200,
+    "upserts": 1,
+    "live": 0,
+    "action": {
+      "previous": "session-73e75079-bedb-4155-9c05-0bca86d33a7e",
+      "sessionId": "session-f2483553-07c0-4741-b82a-d955a5582186"
+    }
+  },
+  {
+    "name": "personalization",
+    "ms": 11,
+    "status": 200,
+    "upserts": 0,
+    "live": 0,
+    "action": {
+      "settings": {
+        "preferredName": "",
+        "bio": "",
+        "tone": "natural",
+        "toneInstructions": "",
+        "fixedInstructions": "",
+        "useWritingStyle": false,
+        "writingStyle": "",
+        "webSearch": true,
+        "researchSelfCheck": true,
+        "verbosity": "medium",
+        "thinkingDisplay": "collapsed",
+        "defaultDeepThinking": false,
+        "messageMode": "queue",
+        "nextSuggestionsEnabled": false
+      },
+      "updatedAt": "2026-10-11T01:26:11.919Z",
+      "synced": true
+    }
+  },
+  {
+    "name": "side-rename",
+    "ms": 11,
+    "status": 200,
+    "upserts": 0,
+    "live": 0,
+    "action": {
+      "sessionId": "session-662decf4-2ac8-46eb-9e91-1a850d408e42",
+      "title": "renamed"
+    }
+  },
+  {
+    "name": "side-archive",
+    "ms": 22,
+    "status": 200,
+    "upserts": 0,
+    "live": 0,
+    "action": {
+      "chat": {
+        "chatId": "chat-4a50a04c-c398-4199-983c-a29d6d6323a3",
+        "kind": "side",
+        "revision": 4,
+        "contentRevision": 1,
+        "activeSegmentId": "segment-75f2b89a-3971-41d6-b356-616e1c51d6e3",
+        "activeSessionId": "session-662decf4-2ac8-46eb-9e91-1a850d408e42",
+        "deepThinking": false,
+        "timeZone": "Asia/Shanghai",
+        "temporary": false,
+        "hasTemporaryContent": false,
+        "memoryMode": "on",
+        "recallEnabled": true,
+        "autoDeleteDays": 30,
+        "expiresAt": null,
+        "parent": {
+          "kind": "main",
+          "id": "chat-a8dd696f-3a44-4695-a141-60a358016b3f"
+        },
+        "pinned": false,
+        "unread": true,
+        "attention": null,
+        "lastOutcome": "completed",
+        "updatedAt": "2026-10-11T01:26:11.170Z",
+        "groupId": null,
+        "title": "renamed",
+        "archived": true,
+        "projectId": null,
+        "modelProfileId": "local",
+        "running": false,
+        "sendAvailable": false,
+        "taskAvailable": true
+      }
+    }
+  },
+  {
+    "name": "archived-steady-wait",
+    "status": 200,
+    "ms": 202
+  },
+  {
+    "name": "side-delete",
+    "ms": 51,
+    "status": 200,
+    "upserts": 0,
+    "live": 0,
+    "action": {
+      "chatId": "chat-4a50a04c-c398-4199-983c-a29d6d6323a3",
+      "deleted": true
+    }
+  },
+  {
+    "name": "deleted-subsequent",
+    "status": 404,
+    "body": {
+      "error": {
+        "code": "CHAT_UNAVAILABLE"
+      }
+    }
+  }
+]

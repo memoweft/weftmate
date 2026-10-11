@@ -1,0 +1,41 @@
+node:internal/modules/cjs/loader:1479
+  throw err;
+  ^
+
+Error: Cannot find module 'yaml'
+Require stack:
+- D:\AIProjects\WeftMate\Worktrees\w4\[eval]
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1476:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1576:12)
+    at require (node:internal/modules/helpers:153:16)
+    at [eval]:1:36
+    at runScriptInThisContext (node:internal/vm:219:10) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ 'D:\\AIProjects\\WeftMate\\Worktrees\\w4\\[eval]' ]
+}
+
+Node.js v24.15.0
+✔ pinned vendor CSS virtual modules use portable source IDs instead of build-machine paths (10.182ms)
+✔ package scanner distinguishes upstream paths and refuses synthetic build identity across archives and loose resources (77.7402ms)
+▶ Windows candidate package policy
+  ✔ allows upstream examples only in third-party files while rejecting local identity in every layer (2.2916ms)
+  ✔ redacts runtime-read identities before serializing smoke diagnostics (0.9074ms)
+  ✔ omits generated package-manager state while retaining runtime code, native bindings and upstream sources (0.2427ms)
+  ✔ accepts explicit candidate revisions independently of the old Stage 3 name (0.4245ms)
+  ✔ allows external isolated output and only dist below the repository (0.7177ms)
+  ✔ rejects repository tests, dogfood state, credentials and user-data files from app.asar (0.1351ms)
+  ✔ detects development-machine paths and bounds updater errors (0.3379ms)
+✔ Windows candidate package policy (5.7669ms)
+ℹ tests 9
+ℹ suites 1
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 204.3631
