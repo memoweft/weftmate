@@ -7,6 +7,7 @@ import { report, retention, previousRun } from './report.mjs';
 import { androidBusyReason, androidHostUsesDevice, nightlyPackage } from './android-packages.mjs';
 import { connectMuMu, adbExecutable as adb, AndroidEnvironmentError } from './mumu.mjs';
 import { managedMkdtemp, disposeManagedTemp } from '../../tests/helpers/managed-temp.mjs';
+import { commandBudget } from './command-budget.mjs';
 import { acquireHeavySlot } from './heavy-slot.mjs';
 import { redactEvidenceText, systemCommitMemory, describeExit } from '../../tests/helpers/process-evidence.mjs';
 const scripts = fileURLToPath(new URL('.', import.meta.url));
@@ -20,7 +21,7 @@ const context = JSON.parse(await readFile(value('--nightly-engine'), 'utf8'));
 const { startedAt, deadline, runId, out, date, bootstrapCommit } = context;
 const gallery = join(out, 'gallery'), phases = [], children = new Set(), locks = [];
 const cleanup = { windows: null, android: null, apple: null };
-let sourceCommit = context.sourceCommit, temp, cancelled = false, phaseDeadline = deadline, androidSerial;
+let sourceCommit = context.sourceCommit, temp, cancelled = false, phaseDeadline = Infinity, slotDeadline = Infinity, androidSerial;
 const selectedPhases = value('--phases')?.split(',');
 if (selectedPhases?.some(name => !['prepare','vendor-tests','installed-smoke','windows','mobile-web','android','apple','cleanup'].includes(name))) throw Error('Unknown --phases selection');
 const engineScripts = scripts, reporting = { report, retention, previousRun };
@@ -35,7 +36,7 @@ process.on('SIGTERM', () => { cancelled = true; for (const child of children) ch
 
 async function run(command, args, { cwd = worktree, env = {}, name = 'command', limit = deadline - Date.now(), allowFailure = false } = {}) {
   if ((cancelled || Date.now() >= deadline) && !allowFailure) throw Error('整晚总时长超时或已停止');
-  limit = Math.min(limit, phaseDeadline - Date.now() - (allowFailure ? 0 : 60000));
+  limit = commandBudget(limit, {allowFailure, phaseDeadline:phaseDeadline-60000, slotDeadline});
   const logPath = join(out, 'logs', name + '.log'), log = await open(logPath, 'a'); let output = '', timedOut = false, writes = Promise.resolve();
   const child = spawn(command, args, { cwd, windowsHide: true, env: { ...process.env, ...env, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' }, stdio: ['ignore', 'pipe', 'pipe'] });
   children.add(child);
@@ -67,7 +68,7 @@ async function phase(name, platforms, action) {
       slot = await acquireHeavySlot(orchestrator, `nightly ${runId} / ${name}`, {deadline,cancelled:()=>cancelled});
       item.heavySlot = slot.index; item.slotTakenAt = new Date(slot.takenAt).toISOString();
       // A stage must release its slot within 30 minutes, including owned cleanup.
-      phaseDeadline = Math.min(deadline, slot.takenAt + 29 * 60000);
+      phaseDeadline = Math.min(deadline, slot.takenAt + 29 * 60000); slotDeadline=slot.takenAt+30*60000;
       const result = await action(); if (result) Object.assign(item, result);
     }
   } catch (error) { item.status = error instanceof AndroidEnvironmentError ? 'environment' : 'failed'; item.reason = redactEvidenceText(error.message).replace(/[A-Z]:[\\/][^\s"']+/gi, '[local artifact]'); }
@@ -75,7 +76,7 @@ async function phase(name, platforms, action) {
     if (slot && item.status === 'failed' && temp) {
       try { item.processCleanup = JSON.parse((await run('pwsh', ['-NoProfile','-File',join(scripts,'cleanup.ps1'),'-Since',new Date(began).toISOString(),'-RootsJson',join(out,'cleanup-roots.json'),'-OwnerPid',String(process.pid),'-BootstrapPid',String(context.bootstrapPid)],{name:name+'-process-cleanup',allowFailure:true,limit:15000})).output); } catch(error) { item.processCleanup={error:redactEvidenceText(error.message)}; }
     }
-    phaseDeadline=deadline; if (slot) { item.slotSeconds=(Date.now()-slot.takenAt)/1000; await slot.release(); }
+    phaseDeadline=Infinity; slotDeadline=Infinity; if (slot) { item.slotSeconds=(Date.now()-slot.takenAt)/1000; await slot.release(); }
   }
   item.seconds = (Date.now() - began) / 1000;
   console.log(`${name}: ${item.status} (${item.seconds.toFixed(1)}s)${item.reason ? ' · ' + item.reason : ''}`);
