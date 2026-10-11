@@ -2,7 +2,7 @@ globalThis.WeftUiComponents.factories.goals=(core,ui)=>{
     let panel,entry,view,opened=false,timer;
     const chat=()=>ui.byId('conversation-pane');
     function close(){const wasOpen=opened;opened=false;if(panel)panel.hidden=true;chat().hidden=false;document.body.classList.remove('goals-open');entry?.setAttribute('aria-current','false');if(wasOpen)ui.paintSelectedSession(core.state.selectedSessionId);clearInterval(timer);timer=null;view?.close();}
-    async function open(){document.dispatchEvent(new CustomEvent('weftmate:fixed-page',{detail:'goals'}));core.show('assistant');opened=true;panel.hidden=false;chat().hidden=true;document.body.classList.add('goals-open');entry.setAttribute('aria-current','page');ui.byId('assistant-title').textContent='目标';ui.closeRail();await core.readGoals();view.focus();clearInterval(timer);timer=setInterval(()=>{if(opened&&document.visibilityState==='visible')void core.readGoals();},6000);}
+    async function open(){document.dispatchEvent(new CustomEvent('weftmate:fixed-page',{detail:'goals'}));core.show('assistant');opened=true;panel.hidden=false;chat().hidden=true;document.body.classList.add('goals-open');entry.setAttribute('aria-current','page');ui.byId('assistant-title').textContent='目标';ui.closeRail();await core.readGoals();view.focus();clearInterval(timer);timer=setInterval(()=>{if(opened&&document.visibilityState==='visible'&&core.foreground())void core.readGoals();},core.polling.overview);}
     const selected=ui.paintSelectedSession,reset=ui.resetIdentityControls;
     return {mountGoals(){
         const select=core.selectSession;core.selectSession=(...args)=>{close();return select(...args);};const main=core.selectMainChat;core.selectMainChat=(...args)=>{close();return main(...args);};

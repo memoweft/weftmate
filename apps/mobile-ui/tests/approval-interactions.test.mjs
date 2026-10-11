@@ -36,6 +36,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
         if(method==='app.bootstrap')result={loggedIn:false,username:'',owner:'',model:null,busy:false};
         if(method==='settings.appearance')result={value:'light'};
         if(method==='auth.me')result={displayName:'合成测试账户'};
+        if(method==='host.status')result={ownerId:'synthetic-ui2a',hostId:'synthetic-host',hostName:'synthetic-host',personalCapabilities:{replyStreaming:1},backend:{runtime:'ready',capabilities:{chat:{available:true}}}};
         if(method==='attachments.list')result={attachments:[]};
         if(method==='models.host')result={models:[{profileId:'synthetic',displayName:'合成模型',configured:true}]};
         if(method==='host.business'){
@@ -56,7 +57,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
         if(method==='shared.tasks.detail')result={taskId:'cmd-demo',sessionId:'s1',source:{commandId:'cmd-demo',kind:'session.message',
           sessionId:'s1',receiptId:'rpc:demo.1'},artifacts:[],control:{state:'active',canStop:false,canSupplement:false}};
         if(method==='shared.sessions.events')result={source:'host',sessionId:params.sessionId,events:f.history,nextSeq:f.history.at(-1)?.seq??-1,hasMore:false,...(f.live?{liveSeq:++f.liveTick,liveEvents:[{seq:2,type:'assistant.live',data:{text:'中文流式正文。'.repeat(f.liveTick),streaming:true,cursor:f.liveTick}}]}:{})};
-        if(method==='shared.sessions.list')result={source:'host',hostAvailable:true,sessions:[{sessionId:'s1',title:'整理临时文件',sendAvailable:true,source:'host'},
+        if(method==='shared.sessions.list')result={source:'host',hostAvailable:true,sessions:[{sessionId:'s1',title:'整理临时文件',sendAvailable:true,running:!!f.live,source:'host'},
           {sessionId:'s2',title:'另一个合成对话',sendAvailable:true,source:'host'}]};
         if(method==='shared.outbox.list')result={source:'host',commands:[]};
         if(method==='shared.activity.list')result={activities:[]};

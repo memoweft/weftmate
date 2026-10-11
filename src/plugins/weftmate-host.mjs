@@ -42,9 +42,10 @@ export function apply(ctx) {
   // Required supported seam: same composed runtime only, never a second DSH client/runtime.
   const lifecycle = nativeSessionLifecycle(ctx)
   ctx.provide('weftmateSessionLifecycle', lifecycle)
+  const readLog = nativeTimelineLog(ctx);
   const gatewayV1 = createGatewayV1({
     client: new InProcessApiClient(toFetchHandler(apiProxy)),
-    readLog: nativeTimelineLog(ctx),
+    readLog,
     lifecycle,
     // P1-05 diagnostics deps：pin 由打包/启动方注入（env），不自行推断。
     diagnostics: {
@@ -68,10 +69,22 @@ export function apply(ctx) {
     perceptionPath: PERCEPTION_FILE(),
     readState,
     readPerception,
+    // The secure launcher drains this before disposing the HTTP listener.
+    async close() {
+      await gatewayV1.close();
+      await readLog.close();
+    },
   })
   ctx.provide('weftmateRuntime', runtime)
   ctx.effect(
-    () => ctx.webServer.register({ kind: 'prefix', path: '/weftmate', handler: serveWeftmate }),
+    () => {
+      const unregister = ctx.webServer.register({ kind: 'prefix', path: '/weftmate', handler: serveWeftmate });
+      return async () => {
+        await gatewayV1.close();
+        await readLog.close();
+        unregister?.();
+      };
+    },
     'weftmate-host: legacy seam + v1 session gateway route',
   )
   // ── R6-01 · 感知注入面：agent/pre-step 追加桌面感知快照（实现见 gateway/legacy/inject.mjs；

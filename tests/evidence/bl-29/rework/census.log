@@ -1,0 +1,17 @@
+desktop logged in
+after electron foreground-idle 86 1.410
+after mobile foreground-idle 106 1.737
+after electron streaming 162 5.400
+after mobile streaming 168 5.596
+after electron electron-minimized 0 0.000
+after mobile electron-minimized 53 1.766
+after electron background 0 0.000
+after mobile background 0 0.000
+after electron settings 2 0.067
+after mobile settings 10 0.333
+after electron activity 1 0.083
+after mobile activity 8 0.666
+after electron goals 7 0.583
+after mobile goals 11 0.916
+after electron library 28 2.333
+after mobile library 8 0.666

@@ -56,6 +56,8 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
     questionSourceAsOf(await sessions.questionHistoryAsOf(sessionId, observedSeq), observedSeq) })
   let questionPump = null
   let capture = null
+  const waitingReads = new Set(), readResponses = new Set();
+  let closing = false;
   const operations = new Set()
 
   function ensureQuestionPump() {
@@ -271,15 +273,51 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
           { receiptId, ...(turn === null ? {} : { turn: Number(turn) }) }))
       }
       if (action === 'history' && req.method === 'GET') {
-        const afterRaw = requestUrl.searchParams.get('afterSeq')
-        const beforeRaw = requestUrl.searchParams.get('beforeSeq')
-        const limitRaw = requestUrl.searchParams.get('limit') ?? '50'
-        if (afterRaw !== null && !/^-?\d+$/.test(afterRaw) || beforeRaw !== null && !/^\d+$/.test(beforeRaw) || !/^\d+$/.test(limitRaw)) throw new TypeError('invalid history cursor')
-        if (requestUrl.searchParams.has('detailSeq')) return writeJson(res, 200,
-          await sessions.historyDetail(sessionId, Number(requestUrl.searchParams.get('detailSeq'))))
-        return writeJson(res, 200, await sessions.historyPage(sessionId, {
-          ...(afterRaw === null ? {} : { afterSeq: Number(afterRaw) }),
-          ...(beforeRaw === null ? {} : { beforeSeq: Number(beforeRaw) }), limit: Number(limitRaw), includeThinking: requestUrl.searchParams.get('includeThinking') === 'true' }))
+        // Register cancellation before reading even the first native snapshot.
+        const controller = new AbortController(), abort = () => controller.abort();
+        res.on('close', abort);
+        waitingReads.add(controller);
+        const finished = new Promise(resolve => {
+          const finish = () => { res.off('finish', finish); res.off('close', finish); resolve(); };
+          res.once('finish', finish); res.once('close', finish);
+        });
+        readResponses.add(finished);
+        finished.then(() => readResponses.delete(finished));
+        try {
+          if (closing || readLog?.closed) return writeJson(res, 503, { error: { code: 'SERVICE_CLOSING' } });
+          if (res.destroyed) return;
+          if (requestUrl.searchParams.has('waitMs')) {
+            const ms = Number(requestUrl.searchParams.get('waitMs')), seq = Number(requestUrl.searchParams.get('waitSeq'));
+            if (!Number.isInteger(ms) || ms < 1 || ms > 30000 || !Number.isInteger(seq) || seq < -1) throw new TypeError('invalid history wait');
+            // Query/validate the native session with this request's watermark.
+            const snapshot = await sessions.historyPage(sessionId, { limit: 1 });
+            if (closing || readLog?.closed) return writeJson(res, 503, { error: { code: 'SERVICE_CLOSING' } });
+            if (res.destroyed || controller.signal.aborted) return;
+            // The native waiter registers then atomically rechecks its source.
+            if ((snapshot.liveSeq ?? snapshot.nextSeq) <= seq && readLog?.waitForChange)
+              await readLog.waitForChange(sessionId, seq, ms, controller.signal);
+          }
+          if (res.destroyed) return;
+          if (closing || readLog?.closed) return writeJson(res, 503, { error: { code: 'SERVICE_CLOSING' } });
+          if (controller.signal.aborted) return;
+          // Requery only after a normal wake, while the native cache is open.
+          const afterRaw = requestUrl.searchParams.get('afterSeq');
+          const beforeRaw = requestUrl.searchParams.get('beforeSeq');
+          const limitRaw = requestUrl.searchParams.get('limit') ?? '50';
+          if (afterRaw !== null && !/^-?\d+$/.test(afterRaw) || beforeRaw !== null && !/^\d+$/.test(beforeRaw) || !/^\d+$/.test(limitRaw)) throw new TypeError('invalid history cursor');
+          const result = requestUrl.searchParams.has('detailSeq')
+            ? await sessions.historyDetail(sessionId, Number(requestUrl.searchParams.get('detailSeq')))
+            : await sessions.historyPage(sessionId, { ...(afterRaw === null ? {} : { afterSeq: Number(afterRaw) }),
+              ...(beforeRaw === null ? {} : { beforeSeq: Number(beforeRaw) }), limit: Number(limitRaw),
+              includeThinking: requestUrl.searchParams.get('includeThinking') === 'true' });
+          if (res.destroyed) return;
+          return closing || readLog?.closed ? writeJson(res, 503, { error: { code: 'SERVICE_CLOSING' } }) : writeJson(res, 200, result);
+        } finally {
+          // Disconnect, failure and shutdown all release the same read owner.
+          controller.abort();
+          waitingReads.delete(controller);
+          res.off('close', abort);
+        }
       }
       if (action === 'resume' && req.method === 'POST') {
         const resumed = await sessions.resume(sessionId)
@@ -350,6 +388,7 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
   // Private loopback boundary used only by the host. Keep streams and agents
   // alive; queue new native requests while already admitted writes drain.
   async function handle(req, res) {
+    if (closing) return writeJson(res, 503, { error: { code: 'SERVICE_CLOSING' } });
     const pathname = new URL(req.url ?? '/', 'http://gateway').pathname
     if (pathname === `${BASE}/backup-pause` || pathname === `${BASE}/backup-resume`) {
       if (req.headers.origin || !LOOPBACK.has(req.socket?.remoteAddress ?? '') || req.method !== 'POST')
@@ -381,6 +420,9 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
     try { return await operation } finally { operations.delete(operation) }
   }
   return { handle, emitForTest: emit, reconcileForTest: reconcile, close() {
-    questionPump?.controller.abort(); questionPump = null; questions.close()
+    closing = true;
+    for (const controller of waitingReads) controller.abort();
+    questionPump?.controller.abort(); questionPump = null; questions.close();
+    return Promise.allSettled([...operations, ...readResponses]);
   } }
 }

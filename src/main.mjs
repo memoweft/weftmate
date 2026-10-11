@@ -429,7 +429,7 @@ async function stageOneGateway(path, init = {}) {
       ? body.error.code : 'unknown';
     console.error(`[weftmate] gateway ${init.method ?? 'GET'} ${path.split('?')[0]}: HTTP ${response.status} ${nativeCode}`);
     const error = Object.assign(new Error(`gateway request failed: HTTP ${response.status} ${nativeCode}`),
-      { code: 'BACKEND_UNAVAILABLE', status: 503, nativeStatus: response.status, nativeCode });
+      { code: nativeCode === 'SERVICE_CLOSING' ? 'SERVICE_CLOSING' : 'BACKEND_UNAVAILABLE', status: 503, nativeStatus: response.status, nativeCode });
     if (path === '/backup-pause') error.code = body.error?.code;
     throw error;
   }

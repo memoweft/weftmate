@@ -1,0 +1,2821 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "stage": "after",
+  "logical": true,
+  "baseline": "ec3ab4996609a6d81181bc178f024d5e5158c577",
+  "surfaces": [
+    {
+      "surface": "electron",
+      "windows": [
+        {
+          "name": "foreground-idle",
+          "seconds": 61.003,
+          "visibility": "visible",
+          "total": 65,
+          "perSecond": 1.0655213678015836,
+          "groups": [
+            {
+              "route": "/personal/v1/chats/main",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readMainChat (/personal/v1/ui/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:69:33) ← at Object.refreshSessions (/personal/v1/ui/ui-core/sessions.js:36:65) ← at Object.refreshAssistantOverview (/personal/v1/ui/ui-core/shell.js:17:42) ← at /personal/v1/ui/components/shell.js:241:27",
+              "count": 11,
+              "perMinute": 10.819140042293002
+            },
+            {
+              "route": "/personal/v1/activity/unread",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshActivity (/personal/v1/ui/ui-core/activity.js:27:36) ← at Object.refreshAssistantOverview (/personal/v1/ui/ui-core/shell.js:17:83) ← at /personal/v1/ui/components/shell.js:241:27",
+              "count": 11,
+              "perMinute": 10.819140042293002
+            },
+            {
+              "route": "/personal/v1/sessions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:80:59) ← at async Promise.all (index 0)",
+              "count": 11,
+              "perMinute": 10.819140042293002
+            },
+            {
+              "route": "/personal/v1/chats",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:80:103) ← at async Promise.all (index 0)",
+              "count": 11,
+              "perMinute": 10.819140042293002
+            },
+            {
+              "route": "/personal/v1/projects",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshSessionProjects (/personal/v1/ui/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:102:20) ← at async Promise.all (index 0)",
+              "count": 11,
+              "perMinute": 10.819140042293002
+            },
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 4,
+              "perMinute": 3.934232742652001
+            },
+            {
+              "route": "/personal/v1/status",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at /personal/v1/ui/ui-core/presence.js:65:41 ← at retryConnection (/personal/v1/ui/ui-core/presence.js:92:15) ← at /personal/v1/ui/ui-core/presence.js:55:113",
+              "count": 4,
+              "perMinute": 3.934232742652001
+            },
+            {
+              "route": "/personal/v1/chats/chat-:id/changes",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readChatChanges (/personal/v1/ui/ui-core/client.js:28:65) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:222:37) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:81:64) ← at Object.refreshLiveConversation (/personal/v1/ui/ui-core/shell.js:239:37) ← at /personal/v1/ui/components/shell.js:248:52",
+              "count": 2,
+              "perMinute": 1.9671163713260005
+            }
+          ],
+          "wire": []
+        },
+        {
+          "name": "streaming",
+          "seconds": 30.002,
+          "visibility": "visible",
+          "total": 154,
+          "perSecond": 5.132991133924405,
+          "groups": [
+            {
+              "route": "/personal/v1/chats/chat-:id/changes",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readChatChanges (/personal/v1/ui/ui-core/client.js:28:65) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:222:37) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:81:64) ← at Object.refreshLiveConversation (/personal/v1/ui/ui-core/shell.js:239:37) ← at /personal/v1/ui/components/shell.js:248:52",
+              "count": 120,
+              "perMinute": 239.98400106659557
+            },
+            {
+              "route": "/personal/v1/chats/main",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readMainChat (/personal/v1/ui/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:69:33) ← at Object.refreshSessions (/personal/v1/ui/ui-core/sessions.js:36:65) ← at Object.refreshAssistantOverview (/personal/v1/ui/ui-core/shell.js:17:42) ← at /personal/v1/ui/components/shell.js:241:27",
+              "count": 6,
+              "perMinute": 11.999200053329778
+            },
+            {
+              "route": "/personal/v1/activity/unread",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshActivity (/personal/v1/ui/ui-core/activity.js:27:36) ← at Object.refreshAssistantOverview (/personal/v1/ui/ui-core/shell.js:17:83) ← at /personal/v1/ui/components/shell.js:241:27",
+              "count": 6,
+              "perMinute": 11.999200053329778
+            },
+            {
+              "route": "/personal/v1/sessions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:80:59) ← at async Promise.all (index 0)",
+              "count": 6,
+              "perMinute": 11.999200053329778
+            },
+            {
+              "route": "/personal/v1/chats",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:80:103) ← at async Promise.all (index 0)",
+              "count": 6,
+              "perMinute": 11.999200053329778
+            },
+            {
+              "route": "/personal/v1/projects",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshSessionProjects (/personal/v1/ui/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:102:20) ← at async Promise.all (index 0)",
+              "count": 6,
+              "perMinute": 11.999200053329778
+            },
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 2,
+              "perMinute": 3.999733351109926
+            },
+            {
+              "route": "/personal/v1/status",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at /personal/v1/ui/ui-core/presence.js:65:41 ← at retryConnection (/personal/v1/ui/ui-core/presence.js:92:15) ← at /personal/v1/ui/ui-core/presence.js:55:113",
+              "count": 2,
+              "perMinute": 3.999733351109926
+            }
+          ],
+          "wire": []
+        },
+        {
+          "name": "electron-minimized",
+          "seconds": 30.003,
+          "visibility": "visible",
+          "total": 0,
+          "perSecond": 0,
+          "groups": [],
+          "wire": []
+        },
+        {
+          "name": "background",
+          "seconds": 30.003,
+          "visibility": "hidden",
+          "total": 0,
+          "perSecond": 0,
+          "groups": [],
+          "wire": []
+        },
+        {
+          "name": "settings",
+          "seconds": 30.002,
+          "visibility": "visible",
+          "total": 2,
+          "perSecond": 0.06666222251849876,
+          "groups": [
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 2,
+              "perMinute": 3.999733351109926
+            }
+          ],
+          "wire": []
+        },
+        {
+          "name": "activity",
+          "seconds": 12.002,
+          "visibility": "visible",
+          "total": 1,
+          "perSecond": 0.08331944675887351,
+          "groups": [
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 1,
+              "perMinute": 4.99916680553241
+            }
+          ],
+          "wire": []
+        },
+        {
+          "name": "goals",
+          "seconds": 12.001,
+          "visibility": "visible",
+          "total": 5,
+          "perSecond": 0.41663194733772185,
+          "groups": [
+            {
+              "route": "/personal/v1/tasks",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at /personal/v1/ui/ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /personal/v1/ui/ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.999166736105325
+            },
+            {
+              "route": "/personal/v1/sessions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at /personal/v1/ui/ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /personal/v1/ui/ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.999166736105325
+            },
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 1,
+              "perMinute": 4.9995833680526625
+            }
+          ],
+          "wire": []
+        },
+        {
+          "name": "library",
+          "seconds": 12.001,
+          "visibility": "visible",
+          "total": 19,
+          "perSecond": 1.5832013998833432,
+          "groups": [
+            {
+              "route": "/personal/v1/tasks",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at /personal/v1/ui/ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /personal/v1/ui/ui-core/goals.js:12:27",
+              "count": 3,
+              "perMinute": 14.998750104157988
+            },
+            {
+              "route": "/personal/v1/sessions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at /personal/v1/ui/ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /personal/v1/ui/ui-core/goals.js:12:27",
+              "count": 3,
+              "perMinute": 14.998750104157988
+            },
+            {
+              "route": "/personal/v1/chats/main",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readMainChat (/personal/v1/ui/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:69:33) ← at Object.refreshSessions (/personal/v1/ui/ui-core/sessions.js:36:65) ← at Object.refreshAssistantOverview (/personal/v1/ui/ui-core/shell.js:17:42) ← at /personal/v1/ui/components/shell.js:241:27",
+              "count": 2,
+              "perMinute": 9.999166736105325
+            },
+            {
+              "route": "/personal/v1/activity/unread",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshActivity (/personal/v1/ui/ui-core/activity.js:27:36) ← at Object.refreshAssistantOverview (/personal/v1/ui/ui-core/shell.js:17:83) ← at /personal/v1/ui/components/shell.js:241:27",
+              "count": 2,
+              "perMinute": 9.999166736105325
+            },
+            {
+              "route": "/personal/v1/sessions",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:80:59) ← at async Promise.all (index 0)",
+              "count": 2,
+              "perMinute": 9.999166736105325
+            },
+            {
+              "route": "/personal/v1/chats",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:80:103) ← at async Promise.all (index 0)",
+              "count": 2,
+              "perMinute": 9.999166736105325
+            },
+            {
+              "route": "/personal/v1/projects",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.refreshSessionProjects (/personal/v1/ui/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:102:20) ← at async Promise.all (index 0)",
+              "count": 2,
+              "perMinute": 9.999166736105325
+            },
+            {
+              "route": "/personal/v1/library",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at /personal/v1/ui/ui-core/library.js:17:57 ← at Object.readLibrary (/personal/v1/ui/ui-core/library.js:20:147) ← at /personal/v1/ui/components/library-view.js:74:145",
+              "count": 2,
+              "perMinute": 9.999166736105325
+            },
+            {
+              "route": "/personal/v1/cloud/devices/pending",
+              "caller": "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:65:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:83:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27",
+              "count": 1,
+              "perMinute": 4.9995833680526625
+            }
+          ],
+          "wire": []
+        }
+      ]
+    },
+    {
+      "surface": "mobile",
+      "windows": [
+        {
+          "name": "foreground-idle",
+          "seconds": 61.007,
+          "visibility": "visible",
+          "total": 87,
+          "perSecond": 1.4260658612946056,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/chats/main",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.readMainChat (/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:69:33) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:18) ← at listSharedSessions (/components/sessions.js:471:73) ← at refresh (/app.js:275:51) ← at /app.js:277:73",
+              "count": 11,
+              "perMinute": 10.81843067189011
+            },
+            {
+              "route": "host.business /personal/v1/sessions",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:48:32) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:80:59) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:7) ← at async refresh (/app.js:275:45)",
+              "count": 11,
+              "perMinute": 10.81843067189011
+            },
+            {
+              "route": "host.business /personal/v1/chats",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:80:103) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:7) ← at async refresh (/app.js:275:45)",
+              "count": 11,
+              "perMinute": 10.81843067189011
+            },
+            {
+              "route": "shared.projects.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:43:76) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshSessionProjects (/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:102:20) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:7) ← at async refresh (/app.js:275:45)",
+              "count": 11,
+              "perMinute": 10.81843067189011
+            },
+            {
+              "route": "shared.outbox.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.restoreMainNativeRequests (/components/main-chat-mobile.js:62:80) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:144:48) ← at async refresh (/app.js:275:45)",
+              "count": 11,
+              "perMinute": 10.81843067189011
+            },
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:276:45)",
+              "count": 11,
+              "perMinute": 10.81843067189011
+            },
+            {
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.readChatChanges (/ui-core/client.js:28:65) ← at Object.refreshHistory [as refreshLogicalHistory] (/ui-core/main-chat.js:222:37) ← at loadSharedHistory (/components/main-chat-mobile.js:116:63) ← at /components/sessions.js:113:11",
+              "count": 9,
+              "perMinute": 8.851443277001
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:32:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:92:15) ← at /ui-core/presence.js:55:113",
+              "count": 4,
+              "perMinute": 3.933974789778222
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 4,
+              "perMinute": 3.933974789778222
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:249:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:70:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at /ui-core/presence.js:70:27",
+              "count": 2,
+              "perMinute": 1.966987394889111
+            },
+            {
+              "route": "host.business /personal/v1/settings/personalization",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.loadPersonalization (/ui-core/settings.js:24:34) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:124:54) ← at listSharedSessions (/components/sessions.js:471:73) ← at refresh (/app.js:275:51) ← at /app.js:277:73",
+              "count": 2,
+              "perMinute": 1.966987394889111
+            }
+          ],
+          "wire": [
+            {
+              "at": 1791667453337,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 386,
+              "responseBodyBytes": 431,
+              "status": 200
+            },
+            {
+              "at": 1791667454843,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 386,
+              "responseBodyBytes": 431,
+              "status": 200
+            },
+            {
+              "at": 1791667456349,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 386,
+              "responseBodyBytes": 431,
+              "status": 200
+            },
+            {
+              "at": 1791667456585,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 96,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667456590,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 117,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667456592,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 114,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667456595,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 56,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667456599,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 54,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667456606,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 101,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667457855,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 386,
+              "responseBodyBytes": 431,
+              "status": 200
+            },
+            {
+              "at": 1791667459361,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 386,
+              "responseBodyBytes": 431,
+              "status": 200
+            },
+            {
+              "at": 1791667460797,
+              "route": "cloud.pending",
+              "requestBodyBytes": 49,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667460798,
+              "route": "host.status",
+              "requestBodyBytes": 47,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667462086,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 96,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667462089,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 117,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667462092,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 114,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667462094,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 56,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667462099,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 54,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667462106,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 101,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667467587,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 96,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667467592,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 117,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667467595,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 114,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667467597,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 56,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667467603,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 54,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667467613,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 101,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667473086,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 96,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667473089,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 117,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667473092,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 114,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667473094,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 56,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667473099,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 54,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667473106,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 101,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667475796,
+              "route": "cloud.pending",
+              "requestBodyBytes": 49,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667475806,
+              "route": "host.status",
+              "requestBodyBytes": 47,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667475810,
+              "route": "updates.status",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 63,
+              "status": 500
+            },
+            {
+              "at": 1791667475869,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 414,
+              "responseBodyBytes": 431,
+              "status": 200
+            },
+            {
+              "at": 1791667478585,
+              "route": "host.business /personal/v1/settings/personalization",
+              "requestBodyBytes": 110,
+              "responseBodyBytes": 361,
+              "status": 200
+            },
+            {
+              "at": 1791667478585,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 96,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667478589,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 117,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667478592,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 114,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667478594,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 56,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667478598,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 54,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667478603,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 101,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667484087,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 96,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667484090,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 117,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667484093,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667484095,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667484099,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667484107,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667489586,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667489589,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667489592,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667489593,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667489598,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667489605,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667490795,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667490814,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667490876,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 414,
+              "responseBodyBytes": 431,
+              "status": 200
+            },
+            {
+              "at": 1791667495086,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667495089,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667495091,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667495093,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667495097,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667495102,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667500586,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667500593,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667500595,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667500597,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667500600,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667500607,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667505795,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667505819,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667505823,
+              "route": "updates.status",
+              "requestBodyBytes": 51,
+              "responseBodyBytes": 63,
+              "status": 500
+            },
+            {
+              "at": 1791667505881,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 415,
+              "responseBodyBytes": 431,
+              "status": 200
+            },
+            {
+              "at": 1791667506085,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667506088,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667506090,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667506092,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667506096,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667506103,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667511584,
+              "route": "host.business /personal/v1/settings/personalization",
+              "requestBodyBytes": 111,
+              "responseBodyBytes": 361,
+              "status": 200
+            },
+            {
+              "at": 1791667511586,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667511590,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667511593,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667511596,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667511600,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667511607,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            }
+          ]
+        },
+        {
+          "name": "streaming",
+          "seconds": 30.015,
+          "visibility": "visible",
+          "total": 153,
+          "perSecond": 5.097451274362818,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.readChatChanges (/ui-core/client.js:28:65) ← at Object.refreshHistory [as refreshLogicalHistory] (/ui-core/main-chat.js:222:37) ← at loadSharedHistory (/components/main-chat-mobile.js:116:63) ← at /components/sessions.js:113:11",
+              "count": 117,
+              "perMinute": 233.8830584707646
+            },
+            {
+              "route": "host.business /personal/v1/chats/main",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.readMainChat (/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:69:33) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:18) ← at listSharedSessions (/components/sessions.js:471:73) ← at refresh (/app.js:275:51) ← at /app.js:277:73",
+              "count": 5,
+              "perMinute": 9.995002498750624
+            },
+            {
+              "route": "host.business /personal/v1/sessions",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:48:32) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:80:59) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:7) ← at async refresh (/app.js:275:45)",
+              "count": 5,
+              "perMinute": 9.995002498750624
+            },
+            {
+              "route": "host.business /personal/v1/chats",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:80:103) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:7) ← at async refresh (/app.js:275:45)",
+              "count": 5,
+              "perMinute": 9.995002498750624
+            },
+            {
+              "route": "shared.projects.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:43:76) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshSessionProjects (/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:102:20) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:7) ← at async refresh (/app.js:275:45)",
+              "count": 5,
+              "perMinute": 9.995002498750624
+            },
+            {
+              "route": "shared.outbox.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.restoreMainNativeRequests (/components/main-chat-mobile.js:62:80) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:144:48) ← at async refresh (/app.js:275:45)",
+              "count": 5,
+              "perMinute": 9.995002498750624
+            },
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:276:45)",
+              "count": 5,
+              "perMinute": 9.995002498750624
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 2,
+              "perMinute": 3.9980009995002495
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:32:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:92:15) ← at /ui-core/presence.js:55:113",
+              "count": 2,
+              "perMinute": 3.9980009995002495
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:249:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:70:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at /ui-core/presence.js:70:27",
+              "count": 1,
+              "perMinute": 1.9990004997501247
+            },
+            {
+              "route": "host.business /personal/v1/settings/personalization",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.loadPersonalization (/ui-core/settings.js:24:34) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:124:54) ← at listSharedSessions (/components/sessions.js:471:73) ← at refresh (/app.js:275:51) ← at /app.js:277:73",
+              "count": 1,
+              "perMinute": 1.9990004997501247
+            }
+          ],
+          "wire": [
+            {
+              "at": 1791667520079,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 1766,
+              "status": 200
+            },
+            {
+              "at": 1791667520336,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 1793,
+              "status": 200
+            },
+            {
+              "at": 1791667520593,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 1820,
+              "status": 200
+            },
+            {
+              "at": 1791667520796,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667520826,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667520851,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 1874,
+              "status": 200
+            },
+            {
+              "at": 1791667521107,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 1901,
+              "status": 200
+            },
+            {
+              "at": 1791667521363,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 1928,
+              "status": 200
+            },
+            {
+              "at": 1791667521620,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 1955,
+              "status": 200
+            },
+            {
+              "at": 1791667521876,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 1982,
+              "status": 200
+            },
+            {
+              "at": 1791667522134,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2009,
+              "status": 200
+            },
+            {
+              "at": 1791667522390,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2063,
+              "status": 200
+            },
+            {
+              "at": 1791667522585,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 756,
+              "status": 200
+            },
+            {
+              "at": 1791667522589,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667522591,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667522594,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667522600,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667522611,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667522646,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2090,
+              "status": 200
+            },
+            {
+              "at": 1791667522902,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2117,
+              "status": 200
+            },
+            {
+              "at": 1791667523158,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2144,
+              "status": 200
+            },
+            {
+              "at": 1791667523414,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2171,
+              "status": 200
+            },
+            {
+              "at": 1791667523671,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2198,
+              "status": 200
+            },
+            {
+              "at": 1791667523929,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2225,
+              "status": 200
+            },
+            {
+              "at": 1791667524185,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2279,
+              "status": 200
+            },
+            {
+              "at": 1791667524441,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2306,
+              "status": 200
+            },
+            {
+              "at": 1791667524697,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2333,
+              "status": 200
+            },
+            {
+              "at": 1791667524953,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2360,
+              "status": 200
+            },
+            {
+              "at": 1791667525211,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2387,
+              "status": 200
+            },
+            {
+              "at": 1791667525468,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2414,
+              "status": 200
+            },
+            {
+              "at": 1791667525725,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2468,
+              "status": 200
+            },
+            {
+              "at": 1791667525981,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2495,
+              "status": 200
+            },
+            {
+              "at": 1791667526237,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2522,
+              "status": 200
+            },
+            {
+              "at": 1791667526493,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2549,
+              "status": 200
+            },
+            {
+              "at": 1791667526749,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2576,
+              "status": 200
+            },
+            {
+              "at": 1791667527005,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2603,
+              "status": 200
+            },
+            {
+              "at": 1791667527260,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2657,
+              "status": 200
+            },
+            {
+              "at": 1791667527517,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2684,
+              "status": 200
+            },
+            {
+              "at": 1791667527776,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2711,
+              "status": 200
+            },
+            {
+              "at": 1791667528032,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2738,
+              "status": 200
+            },
+            {
+              "at": 1791667528086,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 756,
+              "status": 200
+            },
+            {
+              "at": 1791667528090,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667528092,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667528094,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667528098,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667528110,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667528287,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2765,
+              "status": 200
+            },
+            {
+              "at": 1791667528543,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2792,
+              "status": 200
+            },
+            {
+              "at": 1791667528799,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2846,
+              "status": 200
+            },
+            {
+              "at": 1791667529054,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2873,
+              "status": 200
+            },
+            {
+              "at": 1791667529311,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2900,
+              "status": 200
+            },
+            {
+              "at": 1791667529567,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2927,
+              "status": 200
+            },
+            {
+              "at": 1791667529825,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2954,
+              "status": 200
+            },
+            {
+              "at": 1791667530081,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 2981,
+              "status": 200
+            },
+            {
+              "at": 1791667530337,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3035,
+              "status": 200
+            },
+            {
+              "at": 1791667530593,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3062,
+              "status": 200
+            },
+            {
+              "at": 1791667530850,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3089,
+              "status": 200
+            },
+            {
+              "at": 1791667531105,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3116,
+              "status": 200
+            },
+            {
+              "at": 1791667531362,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3143,
+              "status": 200
+            },
+            {
+              "at": 1791667531619,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3170,
+              "status": 200
+            },
+            {
+              "at": 1791667531875,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3224,
+              "status": 200
+            },
+            {
+              "at": 1791667532130,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3251,
+              "status": 200
+            },
+            {
+              "at": 1791667532388,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3278,
+              "status": 200
+            },
+            {
+              "at": 1791667532644,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3305,
+              "status": 200
+            },
+            {
+              "at": 1791667532899,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3332,
+              "status": 200
+            },
+            {
+              "at": 1791667533155,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3359,
+              "status": 200
+            },
+            {
+              "at": 1791667533412,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3413,
+              "status": 200
+            },
+            {
+              "at": 1791667533587,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 756,
+              "status": 200
+            },
+            {
+              "at": 1791667533591,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667533594,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667533596,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667533600,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667533614,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667533670,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3440,
+              "status": 200
+            },
+            {
+              "at": 1791667533927,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3469,
+              "status": 200
+            },
+            {
+              "at": 1791667534183,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3496,
+              "status": 200
+            },
+            {
+              "at": 1791667534439,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3523,
+              "status": 200
+            },
+            {
+              "at": 1791667534695,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3550,
+              "status": 200
+            },
+            {
+              "at": 1791667534950,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3604,
+              "status": 200
+            },
+            {
+              "at": 1791667535207,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3631,
+              "status": 200
+            },
+            {
+              "at": 1791667535463,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3658,
+              "status": 200
+            },
+            {
+              "at": 1791667535719,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3685,
+              "status": 200
+            },
+            {
+              "at": 1791667535797,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667535832,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667535835,
+              "route": "updates.status",
+              "requestBodyBytes": 51,
+              "responseBodyBytes": 63,
+              "status": 500
+            },
+            {
+              "at": 1791667535975,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3713,
+              "status": 200
+            },
+            {
+              "at": 1791667536231,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3740,
+              "status": 200
+            },
+            {
+              "at": 1791667536487,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3767,
+              "status": 200
+            },
+            {
+              "at": 1791667536744,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3821,
+              "status": 200
+            },
+            {
+              "at": 1791667537000,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3848,
+              "status": 200
+            },
+            {
+              "at": 1791667537256,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3875,
+              "status": 200
+            },
+            {
+              "at": 1791667537513,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3902,
+              "status": 200
+            },
+            {
+              "at": 1791667537769,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3929,
+              "status": 200
+            },
+            {
+              "at": 1791667538025,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 3956,
+              "status": 200
+            },
+            {
+              "at": 1791667538281,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4010,
+              "status": 200
+            },
+            {
+              "at": 1791667538538,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4037,
+              "status": 200
+            },
+            {
+              "at": 1791667538794,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4064,
+              "status": 200
+            },
+            {
+              "at": 1791667539050,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4091,
+              "status": 200
+            },
+            {
+              "at": 1791667539084,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 756,
+              "status": 200
+            },
+            {
+              "at": 1791667539087,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667539089,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667539091,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667539094,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667539100,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667539305,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4118,
+              "status": 200
+            },
+            {
+              "at": 1791667539562,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4145,
+              "status": 200
+            },
+            {
+              "at": 1791667539819,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4199,
+              "status": 200
+            },
+            {
+              "at": 1791667540075,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4226,
+              "status": 200
+            },
+            {
+              "at": 1791667540331,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4253,
+              "status": 200
+            },
+            {
+              "at": 1791667540588,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4280,
+              "status": 200
+            },
+            {
+              "at": 1791667540844,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4307,
+              "status": 200
+            },
+            {
+              "at": 1791667541101,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4334,
+              "status": 200
+            },
+            {
+              "at": 1791667541358,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4388,
+              "status": 200
+            },
+            {
+              "at": 1791667541614,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4415,
+              "status": 200
+            },
+            {
+              "at": 1791667541870,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4442,
+              "status": 200
+            },
+            {
+              "at": 1791667542126,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4469,
+              "status": 200
+            },
+            {
+              "at": 1791667542383,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4496,
+              "status": 200
+            },
+            {
+              "at": 1791667542638,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4523,
+              "status": 200
+            },
+            {
+              "at": 1791667542894,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4577,
+              "status": 200
+            },
+            {
+              "at": 1791667543150,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4604,
+              "status": 200
+            },
+            {
+              "at": 1791667543404,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4631,
+              "status": 200
+            },
+            {
+              "at": 1791667543662,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4658,
+              "status": 200
+            },
+            {
+              "at": 1791667543918,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4685,
+              "status": 200
+            },
+            {
+              "at": 1791667544174,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4712,
+              "status": 200
+            },
+            {
+              "at": 1791667544431,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4766,
+              "status": 200
+            },
+            {
+              "at": 1791667544583,
+              "route": "host.business /personal/v1/settings/personalization",
+              "requestBodyBytes": 111,
+              "responseBodyBytes": 361,
+              "status": 200
+            },
+            {
+              "at": 1791667544585,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 756,
+              "status": 200
+            },
+            {
+              "at": 1791667544604,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667544604,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667544611,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667544616,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667544633,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667544686,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4793,
+              "status": 200
+            },
+            {
+              "at": 1791667544943,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4820,
+              "status": 200
+            },
+            {
+              "at": 1791667545200,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4847,
+              "status": 200
+            },
+            {
+              "at": 1791667545457,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4874,
+              "status": 200
+            },
+            {
+              "at": 1791667545715,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4901,
+              "status": 200
+            },
+            {
+              "at": 1791667545972,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4955,
+              "status": 200
+            },
+            {
+              "at": 1791667546228,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 4982,
+              "status": 200
+            },
+            {
+              "at": 1791667546483,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5009,
+              "status": 200
+            },
+            {
+              "at": 1791667546740,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5036,
+              "status": 200
+            },
+            {
+              "at": 1791667546995,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5063,
+              "status": 200
+            },
+            {
+              "at": 1791667547251,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5090,
+              "status": 200
+            },
+            {
+              "at": 1791667547508,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5117,
+              "status": 200
+            },
+            {
+              "at": 1791667547764,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5171,
+              "status": 200
+            },
+            {
+              "at": 1791667548021,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5198,
+              "status": 200
+            },
+            {
+              "at": 1791667548277,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5225,
+              "status": 200
+            },
+            {
+              "at": 1791667548533,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5252,
+              "status": 200
+            },
+            {
+              "at": 1791667548790,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5279,
+              "status": 200
+            },
+            {
+              "at": 1791667549045,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5306,
+              "status": 200
+            },
+            {
+              "at": 1791667549300,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5360,
+              "status": 200
+            },
+            {
+              "at": 1791667549556,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5387,
+              "status": 200
+            },
+            {
+              "at": 1791667549812,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 387,
+              "responseBodyBytes": 5414,
+              "status": 200
+            }
+          ]
+        },
+        {
+          "name": "electron-minimized",
+          "seconds": 30.016,
+          "visibility": "visible",
+          "total": 38,
+          "perSecond": 1.265991471215352,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/chats/main",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.readMainChat (/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:69:33) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:18) ← at listSharedSessions (/components/sessions.js:471:73) ← at refresh (/app.js:275:51) ← at /app.js:277:73",
+              "count": 5,
+              "perMinute": 9.994669509594884
+            },
+            {
+              "route": "host.business /personal/v1/sessions",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:48:32) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:80:59) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:7) ← at async refresh (/app.js:275:45)",
+              "count": 5,
+              "perMinute": 9.994669509594884
+            },
+            {
+              "route": "host.business /personal/v1/chats",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:80:103) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:7) ← at async refresh (/app.js:275:45)",
+              "count": 5,
+              "perMinute": 9.994669509594884
+            },
+            {
+              "route": "shared.projects.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:43:76) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshSessionProjects (/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:102:20) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:143:7) ← at async refresh (/app.js:275:45)",
+              "count": 5,
+              "perMinute": 9.994669509594884
+            },
+            {
+              "route": "shared.outbox.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.restoreMainNativeRequests (/components/main-chat-mobile.js:62:80) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:144:48) ← at async refresh (/app.js:275:45)",
+              "count": 5,
+              "perMinute": 9.994669509594884
+            },
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:276:45)",
+              "count": 5,
+              "perMinute": 9.994669509594884
+            },
+            {
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.readChatChanges (/ui-core/client.js:28:65) ← at Object.refreshHistory [as refreshLogicalHistory] (/ui-core/main-chat.js:222:37) ← at loadSharedHistory (/components/main-chat-mobile.js:116:63) ← at /components/sessions.js:113:11",
+              "count": 2,
+              "perMinute": 3.997867803837953
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 2,
+              "perMinute": 3.997867803837953
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:32:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:92:15) ← at /ui-core/presence.js:55:113",
+              "count": 2,
+              "perMinute": 3.997867803837953
+            },
+            {
+              "route": "updates.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:249:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:70:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at /ui-core/presence.js:70:27",
+              "count": 1,
+              "perMinute": 1.9989339019189765
+            },
+            {
+              "route": "host.business /personal/v1/settings/personalization",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.loadPersonalization (/ui-core/settings.js:24:34) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:124:54) ← at listSharedSessions (/components/sessions.js:471:73) ← at refresh (/app.js:275:51) ← at /app.js:277:73",
+              "count": 1,
+              "perMinute": 1.9989339019189765
+            }
+          ],
+          "wire": [
+            {
+              "at": 1791667555592,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667555595,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667555598,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667555601,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667555606,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667555612,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667561086,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667561089,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667561091,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667561094,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667561100,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667561108,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667565114,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 418,
+              "responseBodyBytes": 434,
+              "status": 200
+            },
+            {
+              "at": 1791667565796,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667565845,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667565849,
+              "route": "updates.status",
+              "requestBodyBytes": 51,
+              "responseBodyBytes": 63,
+              "status": 500
+            },
+            {
+              "at": 1791667566585,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667566588,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667566589,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667566591,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667566594,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667566599,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667572085,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667572088,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667572090,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667572092,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667572095,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667572100,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667577584,
+              "route": "host.business /personal/v1/settings/personalization",
+              "requestBodyBytes": 111,
+              "responseBodyBytes": 361,
+              "status": 200
+            },
+            {
+              "at": 1791667577586,
+              "route": "host.business /personal/v1/chats/main",
+              "requestBodyBytes": 97,
+              "responseBodyBytes": 697,
+              "status": 200
+            },
+            {
+              "at": 1791667577589,
+              "route": "host.business /personal/v1/sessions",
+              "requestBodyBytes": 118,
+              "responseBodyBytes": 939,
+              "status": 200
+            },
+            {
+              "at": 1791667577591,
+              "route": "host.business /personal/v1/chats",
+              "requestBodyBytes": 115,
+              "responseBodyBytes": 1153,
+              "status": 200
+            },
+            {
+              "at": 1791667577593,
+              "route": "shared.projects.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 43,
+              "status": 200
+            },
+            {
+              "at": 1791667577598,
+              "route": "shared.outbox.list",
+              "requestBodyBytes": 55,
+              "responseBodyBytes": 42,
+              "status": 200
+            },
+            {
+              "at": 1791667577607,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667580119,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 418,
+              "responseBodyBytes": 434,
+              "status": 200
+            },
+            {
+              "at": 1791667580796,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667580853,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            }
+          ]
+        },
+        {
+          "name": "background",
+          "seconds": 30.016,
+          "visibility": "hidden",
+          "total": 0,
+          "perSecond": 0,
+          "groups": [],
+          "wire": [
+            {
+              "at": 1791667595125,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 418,
+              "responseBodyBytes": 434,
+              "status": 200
+            }
+          ]
+        },
+        {
+          "name": "settings",
+          "seconds": 30.018,
+          "visibility": "visible",
+          "total": 9,
+          "perSecond": 0.29982010793523883,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:276:45) ← at /app.js:277:73",
+              "count": 5,
+              "perMinute": 9.994003597841296
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 2,
+              "perMinute": 3.997601439136518
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:32:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:92:15) ← at /ui-core/presence.js:55:113",
+              "count": 2,
+              "perMinute": 3.997601439136518
+            }
+          ],
+          "wire": [
+            {
+              "at": 1791667625796,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667627086,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667629097,
+              "route": "host.business /personal/v1/chats/chat-:id/changes",
+              "requestBodyBytes": 418,
+              "responseBodyBytes": 434,
+              "status": 200
+            },
+            {
+              "at": 1791667629101,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667632585,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667638087,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667640796,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667643587,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667644106,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667649087,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            }
+          ]
+        },
+        {
+          "name": "activity",
+          "seconds": 12.018,
+          "visibility": "visible",
+          "total": 6,
+          "perSecond": 0.4992511233150274,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at /app.js:222:158",
+              "count": 2,
+              "perMinute": 9.98502246630055
+            },
+            {
+              "route": "host.business /personal/v1/activity/changes",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshActivity (/ui-core/activity.js:33:44)",
+              "count": 2,
+              "perMinute": 9.98502246630055
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 1,
+              "perMinute": 4.992511233150275
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:32:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:92:15) ← at /ui-core/presence.js:55:113",
+              "count": 1,
+              "perMinute": 4.992511233150275
+            }
+          ],
+          "wire": [
+            {
+              "at": 1791667655796,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667658245,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667658251,
+              "route": "host.business /personal/v1/activity/changes",
+              "requestBodyBytes": 300,
+              "responseBodyBytes": 518,
+              "status": 200
+            },
+            {
+              "at": 1791667659112,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667663751,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667663757,
+              "route": "host.business /personal/v1/activity/changes",
+              "requestBodyBytes": 300,
+              "responseBodyBytes": 518,
+              "status": 200
+            }
+          ]
+        },
+        {
+          "name": "goals",
+          "seconds": 12.016,
+          "visibility": "visible",
+          "total": 8,
+          "perSecond": 0.6657789613848203,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:276:45) ← at /app.js:277:73",
+              "count": 2,
+              "perMinute": 9.986684420772304
+            },
+            {
+              "route": "host.business /personal/v1/tasks",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.986684420772304
+            },
+            {
+              "route": "shared.sessions.list",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:51:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27",
+              "count": 2,
+              "perMinute": 9.986684420772304
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 1,
+              "perMinute": 4.993342210386152
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:32:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:92:15) ← at /ui-core/presence.js:55:113",
+              "count": 1,
+              "perMinute": 4.993342210386152
+            }
+          ],
+          "wire": [
+            {
+              "at": 1791667670795,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667671087,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667672347,
+              "route": "host.business /personal/v1/tasks",
+              "requestBodyBytes": 92,
+              "responseBodyBytes": 1576,
+              "status": 200
+            },
+            {
+              "at": 1791667672347,
+              "route": "shared.sessions.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 634,
+              "status": 200
+            },
+            {
+              "at": 1791667674117,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667676585,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667677848,
+              "route": "host.business /personal/v1/tasks",
+              "requestBodyBytes": 92,
+              "responseBodyBytes": 1576,
+              "status": 200
+            },
+            {
+              "at": 1791667677849,
+              "route": "shared.sessions.list",
+              "requestBodyBytes": 57,
+              "responseBodyBytes": 634,
+              "status": 200
+            }
+          ]
+        },
+        {
+          "name": "library",
+          "seconds": 12.018,
+          "visibility": "visible",
+          "total": 6,
+          "perSecond": 0.4992511233150274,
+          "groups": [
+            {
+              "route": "host.business /personal/v1/library",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at /ui-core/library.js:17:57 ← at Object.readLibrary (/ui-core/library.js:20:147) ← at /components/library-view.js:74:145",
+              "count": 2,
+              "perMinute": 9.98502246630055
+            },
+            {
+              "route": "host.business /personal/v1/activity/unread",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:90:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at Object.accessApi (/ui-core/shell.js:83:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:276:45) ← at /app.js:277:73",
+              "count": 2,
+              "perMinute": 9.98502246630055
+            },
+            {
+              "route": "cloud.pending",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:10:14) ← at call (/app.js:318:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56",
+              "count": 1,
+              "perMinute": 4.992511233150275
+            },
+            {
+              "route": "host.status",
+              "caller": "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:13:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:10:14) ← at route (/ui-core/adapters/android-bridge.js:32:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:98:24) ← at Object.requestJson (/ui-core/shell.js:65:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:92:15) ← at /ui-core/presence.js:55:113",
+              "count": 1,
+              "perMinute": 4.992511233150275
+            }
+          ],
+          "wire": [
+            {
+              "at": 1791667685797,
+              "route": "cloud.pending",
+              "requestBodyBytes": 50,
+              "responseBodyBytes": 62,
+              "status": 500
+            },
+            {
+              "at": 1791667686530,
+              "route": "host.business /personal/v1/library",
+              "requestBodyBytes": 103,
+              "responseBodyBytes": 159,
+              "status": 200
+            },
+            {
+              "at": 1791667687585,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            },
+            {
+              "at": 1791667689122,
+              "route": "host.status",
+              "requestBodyBytes": 48,
+              "responseBodyBytes": 1710,
+              "status": 200
+            },
+            {
+              "at": 1791667692030,
+              "route": "host.business /personal/v1/library",
+              "requestBodyBytes": 103,
+              "responseBodyBytes": 159,
+              "status": 200
+            },
+            {
+              "at": 1791667693085,
+              "route": "host.business /personal/v1/activity/unread",
+              "requestBodyBytes": 102,
+              "responseBodyBytes": 48,
+              "status": 200
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "electron-minimized",
+      "minimized": true,
+      "visibility": "visible"
+    }
+  ]
+}

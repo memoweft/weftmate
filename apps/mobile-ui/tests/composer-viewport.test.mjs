@@ -48,7 +48,7 @@ test('mobile bundle keeps the composer and bottom tabs inside safe areas and abo
   try {
     const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
     await page.route('**/bridge.js',r=>r.fulfill({contentType:'text/javascript',body:'// authenticated HTTP test'}));
-    await page.route('**/personal/v1/**',async r=>{const u=new URL(r.request().url());const response=await r.fetch({url:f.origin+u.pathname+u.search,headers:{...r.request().headers(),origin:f.origin}});await r.fulfill({response});});
+    await page.route('**/personal/v1/**',async r=>{try{const u=new URL(r.request().url());const response=await r.fetch({url:f.origin+u.pathname+u.search,headers:{...r.request().headers(),origin:f.origin}});await r.fulfill({response});}catch(error){if(!page.isClosed())throw error;}});
     await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);
     const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}});assert.equal(login.status(),200);
     const identity=await login.json();

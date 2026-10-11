@@ -44,13 +44,13 @@ globalThis.WeftHelpView={mount({target,core,kind,back,run,mobile=false}){
   const body=el('div','dialog-body shortcuts-body');let group,section;for(const row of WeftShortcuts.rows){if(group!==row.group){group=row.group;section=el('section');section.append(el('h3','',group));body.append(section);}const line=el('div','shortcut-row');line.dataset.shortcutId=row.id;line.append(el('span','',row.label));const keys=el('span','shortcut-keys');for(const key of row.keys)keys.append(el('kbd','search-key',key));line.append(keys);section.append(line);}
   dialog.append(header,body);document.body.append(dialog);dialog.onclose=()=>{dialog.remove();if(previous?.isConnected)previous.focus();};dialog.onkeydown=e=>{if(e.key==='Escape')e.stopPropagation();};dialog.showModal();close.focus();return dialog;
 },notice({target,core,open,current=()=>true}){
-  let generation=0,lastScope,notice;
+  let generation=0,lastScope,notice,reading=false,retryAt=0;
   const identity=()=>core.releaseIdentity?.()||core.state;
-  async function check(){const value=identity(),owner=value.ownerId;if(!owner||!current()){notice?.remove();lastScope=null;return;}const scope=`${owner}:${value.identityGeneration}`;if(lastScope===scope)return;lastScope=scope;const token=++generation;
+  async function check(){const value=identity(),owner=value.ownerId;if(!owner||!current()){notice?.remove();lastScope=null;return;}const scope=`${owner}:${value.identityGeneration}`;if(lastScope===scope||reading||Date.now()<retryAt)return;lastScope=scope;const token=++generation;reading=true;
     try{let release=await core.currentRelease();const latest=identity();if(token!==generation||scope!==`${latest.ownerId}:${latest.identityGeneration}`||!current())return;
-      if(release.pending){lastScope=null;return;}const changes=(release.versions?.length?release.versions:[release]).filter(row=>core.observeRelease(row.version,row.layer));if(!changes.length)return;release=changes.find(row=>row.layer==='ui'||row.layer==='mobile-ui')||changes[0];notice?.remove();notice=document.createElement('aside');notice.className='release-notice';notice.setAttribute('aria-label','已更新');notice.setAttribute('role','status');
+      if(release.pending){lastScope=null;retryAt=Date.now()+WeftUiCore.polling.releaseRetry;return;}const changes=(release.versions?.length?release.versions:[release]).filter(row=>core.observeRelease(row.version,row.layer));if(!changes.length)return;release=changes.find(row=>row.layer==='ui'||row.layer==='mobile-ui')||changes[0];notice?.remove();notice=document.createElement('aside');notice.className='release-notice';notice.setAttribute('aria-label','已更新');notice.setAttribute('role','status');
       const link=document.createElement('button');link.className='release-notice-link';link.type='button';link.textContent=`已更新到 ${release.version} · 看看有什么新东西`;link.onclick=()=>{notice.remove();open();};
       const close=document.createElement('button');close.className='icon-button';close.type='button';close.setAttribute('aria-label','关闭更新提示');close.append(WeftIcons.create('deny',16));close.onclick=()=>notice.remove();notice.append(link,close);target.append(notice);
-    }catch{lastScope=null;}}
-  return {check,reset(){generation++;lastScope=null;notice?.remove();}};
+    }catch{lastScope=null;retryAt=Date.now()+WeftUiCore.polling.releaseRetry;}finally{reading=false;}}
+  return {check,reset(){generation++;lastScope=null;retryAt=0;notice?.remove();}};
 }};

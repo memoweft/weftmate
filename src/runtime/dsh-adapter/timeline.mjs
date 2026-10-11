@@ -7,6 +7,9 @@ import { createHistoryCache } from './history-cache.mjs';
  * persistence.inspect uses DSH's revision-aware prepared-session cache instead.
  */
 export function nativeTimelineLog(ctx, { cache = true } = {}) {
+  const waiters = new Set(), pendingWaits = new Set();
+  let closed = false, closePromise, history;
+  ctx.on?.('session/event',(session,event)=>{for(const wake of waiters)wake(session.id,event.seq);});
   const index = new Map(), changed = new Map(); let initialized;
   const summary = (session, prior = {}) => ({ ...prior, sessionId:session.id,
     agentPreset:session.header.agentPreset, ...(session.header.origin ? {origin:session.header.origin} : {}),
@@ -37,6 +40,48 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     if (!persistence) throw Object.assign(new Error('session not found'), { code: 'session-not-found' })
     return (await persistence.inspect(sessionId)).events
   }
+  read.waitForChange = (sessionId, seq, ms, signal) => {
+    // An already cancelled request never reads native storage or registers.
+    if (signal?.aborted || closed) return Promise.resolve();
+    const pending = (async () => {
+      let release;
+      const changed = new Promise(resolve => { release = resolve; });
+      const wake = (id, next) => { if (id === null || id === sessionId && next > seq) release(); };
+      const abort = () => release();
+      // Register both event and cancellation before querying the snapshot.
+      waiters.add(wake);
+      signal?.addEventListener('abort', abort, { once: true });
+      const timer = setTimeout(release, ms);
+      try {
+        // Recheck after registration so events during the native read wake us.
+        if (closed || signal?.aborted) return;
+        const events = await Promise.race([read(sessionId), changed.then(() => null)]);
+        if (events === null) return;
+        if (closed || signal?.aborted || (events.at(-1)?.event ?? events.at(-1))?.seq > seq) return;
+        // Wait only if this response's watermark is still current.
+        await changed;
+      } finally {
+        // Every timeout, cancellation and dispose removes both registrations.
+        clearTimeout(timer);
+        waiters.delete(wake);
+        signal?.removeEventListener('abort', abort);
+      }
+    })();
+    pendingWaits.add(pending);
+    pending.finally(() => pendingWaits.delete(pending)).catch(() => {});
+    return pending;
+  };
+  Object.defineProperty(read, 'closed', { get: () => closed });
+  read.close = () => {
+    if (closePromise) return closePromise;
+    closed = true;
+    // Revoke pending waits first; the cache stays available until they settle.
+    for (const wake of [...waiters]) wake(null, Infinity);
+    closePromise = Promise.allSettled([...pendingWaits]).then(() => history?.close());
+    return closePromise;
+  };
+  // cache:false has exactly the same lifecycle as the cached branch.
+  ctx.effect?.(() => () => read.close(), 'weftmate native timeline');
   read.listSessions=listSessions;
   read.sessionSummary=async(id,load)=>{await ensureIndex(load);return one(id);};
   read.refreshSession=async(id,load)=>{
@@ -49,7 +94,7 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
   read.removeSession=id=>{index.delete(id);changed.set(id,null);};
   const persistence = ctx.get('sessionPersistence');
   if (!cache || !persistence?.config?.root || !persistence.listSnapshots) return read;
-  const history = createHistoryCache({ file: resolve(persistence.config.root, '..', 'weftmate-history.sqlite'), readNative: read,
+  history = createHistoryCache({ file: resolve(persistence.config.root, '..', 'weftmate-history.sqlite'), readNative: read,
     async source(id) {
       const live = ctx.get('sessions')?.get(id);
       const artifact = live ? {meta:live.header,events:live.events} : await persistence.inspect(id);
@@ -60,7 +105,6 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
     } });
   read.historyPage = (id, options, project) => history.read(id, options, project);
   read.invalidate = id => history.invalidate(id);
-  read.close = () => history.close();
   read.setProjector = project => {
     ctx.on?.('agent/status', ({ agent, status }) => {
       if (status !== 'idle' || agent.session.header.agentPreset !== 'personal-remote') return;
@@ -68,7 +112,6 @@ export function nativeTimelineLog(ctx, { cache = true } = {}) {
       void history.read(agent.session.id, { limit: 1 }, (entries, options) => project(agent.session.id, entries, options)).catch(() => {});
     });
   };
-  ctx.effect?.(() => () => history.close(), 'weftmate public history cache');
   return read;
 }
 

@@ -9,7 +9,7 @@ import { join,resolve } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const mimo=process.argv.includes('--mimo'),long=process.argv.includes('--long'),out=resolve('tests/evidence/stream-1/rework/timeline',process.argv.includes('--privacy')?'privacy':process.argv.includes('--motion')?'mimo-motion':long?(mimo?(process.argv.includes('--text-only')?'mimo-long-final':process.argv.includes('--after')?'mimo-long-after':'mimo-long'):'synthetic-long'):mimo?'mimo':'synthetic');mkdirSync(out,{recursive:true});
+const mimo=process.argv.includes('--mimo'),long=process.argv.includes('--long'),out=resolve(process.env.WEFTMATE_STREAM_EVIDENCE_DIR || 'tests/evidence/stream-1/rework/timeline',process.argv.includes('--privacy')?'privacy':process.argv.includes('--motion')?'mimo-motion':long?(mimo?(process.argv.includes('--text-only')?'mimo-long-final':process.argv.includes('--after')?'mimo-long-after':'mimo-long'):'synthetic-long'):mimo?'mimo':'synthetic');mkdirSync(out,{recursive:true});
 const root=mkdtempSync(join(tmpdir(),'weftmate-stream1-live-')),profile=join(root,'profile'),wire=join(root,'wire.jsonl');mkdirSync(profile);
 writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const credentials={username:'stream1-'+randomUUID(),password:'synthetic-'+randomUUID(),deviceName:'synthetic-host'};
@@ -31,6 +31,7 @@ const server=createServer(async(req,res)=>{
 const env={...process.env,STREAM1_WIRE:wire,STREAM1_HOOK:resolve('tests/integration/stream-1-wire-hook.mjs')};
 if(process.argv.includes('--text-only'))env.STREAM1_TEXT_ONLY='1';
 for(const k of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(k)||k==='ELECTRON_RUN_AS_NODE')delete env[k];
+env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 let app,browser,page,phone,api;const report={mimo,textOnlyProvider:process.argv.includes('--text-only'),errors:[],provider,completions:[]};
 try{
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['tests/integration/stream-1-electron-entry.mjs',`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],env,timeout:90000});
@@ -42,6 +43,7 @@ try{
  await api('/settings/personalization',{nextSuggestionsEnabled:false},'PATCH');
  browser=await chromium.launch({headless:true});phone=await browser.newPage({viewport:{width:390,height:844}});await phone.goto(new URL('/personal/v1/ui',page.url()).href);await localUiSession(phone,credentials,'STREAM-1 phone',{mainChat:true});
  async function monitor(p){await p.waitForFunction(()=>!!globalThis.WeftContent);await p.evaluate(()=>{globalThis.stream1Frames=[];globalThis.stream1Updates=[];const update=WeftContent.update;WeftContent.update=function(node,text,options){const at=performance.now(),v=update(node,text,options);stream1Updates.push({at,duration:performance.now()-at,length:text.length,wallAt:Date.now()});return v;};function frame(){const body=[...document.querySelectorAll('.message.assistant .message-text,.main-chat-row.assistant .markdown')].at(-1);stream1Frames.push({active:globalThis.__timelineCore?.mainReplyActive(),pending:globalThis.__timelineCore?.optimisticMessages().map(r=>r.status),main:globalThis.__timelineCore?.state.mainChat?.running,at:Date.now(),length:body?.textContent?.replace(/\u200b/g,'').length||0,dot:!!body?.querySelector('.reply-indicator'),streaming:!!body?.classList.contains('reply-streaming'),fragments:document.querySelectorAll('.reply-fragment').length});globalThis.stream1Raf=requestAnimationFrame(frame);}frame();});}
+ report.reads=[];for(const [surface,p]of [['desktop',page],['phone',phone]])p.on('response',async response=>{if(/\/changes\?|\/commands\/by-request\//.test(response.url())){const value=await response.json().catch(()=>({}));report.reads.push({surface,at:Date.now(),path:new URL(response.url()).pathname,status:response.status(),code:value.error?.code,upserts:value.upserts?.length,live:value.liveEvents?.length});}});
  await monitor(page);await monitor(phone);
  const prompt=process.argv.includes('--motion')?'用中文给三点整理照片的实用建议，每点一句话，直接输出。':long?'请写一份约10000字的中文家庭资料整理实施指南，正文至少10000字，分30个小节，每节详细展开具体做法、情境和实例，包括照片、账单、证件、备份、命名、维护。用自然中文，不调用工具。':'家里的照片、账单和证件越来越多，请给一个自然、详细、可执行的整理方案，分段说明分类、命名、备份与维护，并举几个例子。不要使用工具。';
  report.started=Date.now();await page.getByRole('textbox',{name:'输入消息',exact:true}).fill(prompt);await page.getByRole('button',{name:'发送',exact:true}).click();
@@ -66,6 +68,17 @@ try{
   await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('请把刚才的整理建议');await until(async()=>page.locator('.composer-completion').count()?await page.locator('.composer-completion').isVisible():false,18000).catch(()=>{});await page.screenshot({path:join(out,'gray-completion.png')});
  }
  report.usage=await api('/usage');report.wire=existsSync(wire)?readFileSync(wire,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse):[];
+ if(process.argv.includes('--budgets')){
+  const counts={desktop:[],phone:[]};for(const [surface,p]of [['desktop',page],['phone',phone]])p.on('request',r=>{if(r.url().includes('/personal/v1/'))counts[surface].push({at:Date.now(),path:new URL(r.url()).pathname});});
+  const windows=[];
+  async function count(name){const at=Date.now(),before=Object.fromEntries(Object.entries(counts).map(([k,v])=>[k,v.length]));await pause(30000);
+    for(const surface of ['desktop','phone']){const rows=counts[surface].slice(before[surface]);windows.push({surface,name,seconds:(Date.now()-at)/1000,total:rows.length,requests:rows});assert.ok(rows.length<=(name==='foreground-idle'?60:3),`${surface} ${name} request budget: ${rows.length}`);}}
+  await count('foreground-idle');await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].minimize());
+  await phone.evaluate(()=>{Object.defineProperty(document,'visibilityState',{configurable:true,get:()=> 'hidden'});document.dispatchEvent(new Event('visibilitychange'));});await pause(1000);await count('background');
+  report.nativeRequestBudgets={pinnedDsh:true,syntheticModel:true,windows};
+ }
+ const firstNative=report.wire.find(row=>row.layer==='native'&&row.type==='assistant/chunk'&&row.chunk==='text-delta');
+ if(!mimo&&firstNative){report.firstCharacter={};for(const surface of ['desktop','phone']){const first=report[surface].frames.find(row=>row.length>0);const ms=first.at-firstNative.at;report.firstCharacter[surface]={ms,distinctLengths:new Set(report[surface].frames.map(row=>row.length)).size};assert.ok(ms<=250,`${surface} first native chunk → first character: ${ms}ms`);}}
  writeFileSync(join(out,'results.json'),JSON.stringify(report,null,2)+'\n');assert.deepEqual(report.errors,[]);console.log('STREAM-1 live desktop and phone passed');
 }catch(e){report.failure=e.message;for(const [surface,p]of [['desktop',page],['phone',phone]])if(p)try{report[surface]=await p.evaluate(()=>({frames:stream1Frames,updates:stream1Updates,remainingDots:document.querySelectorAll('.reply-indicator').length}));}catch{}if(page)await page.screenshot({path:join(out,'failure.png')});throw e;}
 finally{if(existsSync(wire))report.wire=readFileSync(wire,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);writeFileSync(join(out,'results.json'),JSON.stringify(report,null,2)+'\n');await browser?.close();await app?.close();server.closeAllConnections();await new Promise(done=>server.close(done));rmSync(root,{recursive:true,force:true});}

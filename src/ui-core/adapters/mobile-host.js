@@ -52,19 +52,20 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
       core.state.phoneHistoryCursors.set(id, { nextSeq: view.nextSeq, hasOlder: view.hasOlder, nextBeforeSeq: view.nextBeforeSeq });
     }
   }
-  async function loadMobileHistory() {
+  async function loadMobileHistory(wait = false) {
     if (state.chatSource !== 'host' || !state.sharedSessionId || state.sharedLoading || !effects.isVisible()) return;
     const owner = state.owner, epoch = state.authEpoch, generation = state.sharedGeneration, sessionId = state.sharedSessionId;
     syncMobileIdentity(); core.state.online = true;
     state.sharedLoading = true; state.sharedError = '';
-    await core.refreshHistory(loadedHistoryScope !== historyScope);
+    const outcome = await core.refreshHistory(loadedHistoryScope !== historyScope,false,wait);
     if (!core.mobile.sharedViewCurrent(owner, epoch, generation, sessionId)) return;
     state.sharedEvents = [...core.state.historyEvents.values()].sort((a,b) => a.seq-b.seq);
     state.sharedNextSeq = core.state.afterSeq; state.sharedHasOlder = core.state.hasOlder;
     state.sharedNextBeforeSeq = core.state.nextBeforeSeq; state.sharedLoading = false; loadedHistoryScope = historyScope;
     await core.mobile.reconcileSharedDelivery();
     if (!core.mobile.sharedViewCurrent(owner, epoch, generation, sessionId)) return;
-    effects.renderSharedConversation(); void effects.refreshConversationTasks();
+    effects.renderSharedConversation(); void core.refreshConversationFacts();
+    return outcome;
   }
   function mobileOutput(item) {
     const output = {...item.artifact};
@@ -120,9 +121,14 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
   async function listMobileSessions(){if(!state.loggedIn||state.transitionPending)return;
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration;
   syncMobileIdentity();
-  void core.loadPersonalization().catch(() => {});
+  if (!state.personalizationReadAt || Date.now()-state.personalizationReadAt>=core.polling.settings) {
+    state.personalizationReadAt=Date.now();void core.loadPersonalization().catch(() => {});
+  }
   try {
-    const status = await core.accessApi('/status');
+    const cached=core.state.hostStatusSnapshot;
+    const status = cached?.identity===core.state.identityGeneration && Date.now()-cached.at<core.polling.presence
+      ? cached.payload : await core.accessApi('/status');
+    core.state.hostStatusSnapshot={payload:status,at:cached?.payload===status?cached.at:Date.now(),identity:core.state.identityGeneration};
     core.connectionSucceeded?.(status.presence || {runtime:status.backend?.runtime === 'unavailable' ? 'unavailable' : 'ready'});
     if (owner !== state.owner || epoch !== state.authEpoch) return;
     const exact = ['chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].every(key => status.personalCapabilities?.[key] === 1);
@@ -132,7 +138,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     core.state.capabilities = status.backend?.capabilities || null;
     if (environment.logicalChats && exact) {
       state.logicalChats = true; state.sharedHostAvailable = true; core.state.online = true;
-      await core.refreshThinkingModels();
+      await core.refreshConfiguration();
       core.state.modelProfileId ||= core.state.models[0]?.id;
       if (!core.state.mainChat) { core.state.selectedSessionId = null; core.state.selectedChatId = null; }
       await core.refreshLogicalSessions();
@@ -142,7 +148,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     }
     if (state.logicalChats) { core.resetLogicalSession(); state.logicalChats = false; }
   } catch (error) { core.connectionFailed?.(error); if(state.logicalChats) { effects.status('主对话暂时无法读取，请重试',false,'read-failure');return; } /* Older native shells keep their existing list. */ }
-  void refreshMobileMemoryAvailability();
+  if(!state.memoryAvailabilityReadAt || Date.now()-state.memoryAvailabilityReadAt>=core.polling.settings){state.memoryAvailabilityReadAt=Date.now();void refreshMobileMemoryAvailability();}
   if (!core.state.models.length) void core.refreshThinkingModels().then(() => {
     if(owner===state.owner&&epoch===state.authEpoch)effects.updateComposer();
   }).catch(() => {});

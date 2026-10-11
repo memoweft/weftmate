@@ -1,0 +1,20 @@
+[weftmate] gateway GET failed: unknown Error
+    at file:///D:/AIProjects/WeftMate/Worktrees/w4/src/runtime/dsh-adapter/history-cache.mjs:37:27
+[
+  {
+    mode: 'gateway-close',
+    receivedAfterClose100ms: false,
+    serverClosed100ms: false,
+    response: { status: 200, body: [Object] },
+    responseAfterCloseMs: 1136,
+    closeMs: 1136
+  },
+  {
+    mode: 'cordis-dispose',
+    receivedAfterClose100ms: false,
+    serverClosed100ms: false,
+    response: { status: 400, body: [Object] },
+    responseAfterCloseMs: 1127,
+    closeMs: 1127
+  }
+]

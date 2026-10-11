@@ -8,7 +8,7 @@ import {mobileSource as source,mobileHtml as html} from './load-page.mjs';
 const styles=readFileSync(new URL('../www/styles.css',import.meta.url),'utf8');
 const htmlIds=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
 
-function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFrames=false,frameMs=1000/60}={}){
+function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFrames=false,frameMs=1000/60,virtualClock=false,businessReply}={}){
   const intervals=new Map();const timers=new Map();let nextTimer=0,nextInterval=0,now=0;
   const nodes=new Map();
   let domReady;
@@ -60,7 +60,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     focus(){document.activeElement=this}
     addEventListener(event,handler){this.listeners.set(event,[...(this.listeners.get(event)||[]),handler])}
     fire(event){for(const handler of this.listeners.get(event)||[])handler({target:this,currentTarget:this,preventDefault(){},stopPropagation(){}})}
-    querySelector(selector){if(selector===this.tagName||selector==='[role=status]'&&this.attrs.role==='status'||selector.startsWith('.')&&this.className?.split(' ').includes(selector.slice(1)))return this;
+    querySelector(selector){const attribute=/^\[([^=\]]+)\]$/.exec(selector);const dataKey=attribute?.[1].startsWith('data-')?attribute[1].slice(5).replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase()):null;if(attribute&&(Object.hasOwn(this.attrs,attribute[1])||dataKey&&Object.hasOwn(this.dataset,dataKey))||selector===this.tagName||selector==='[role=status]'&&this.attrs.role==='status'||selector.startsWith('.')&&this.className?.split(' ').includes(selector.slice(1)))return this;
       for(const child of this.children){const found=child.querySelector?.(selector);if(found)return found}return null}
     querySelectorAll(selector){const all=this.children.flatMap(child=>[child,...(child.querySelectorAll?.(selector)||[])]);return all.filter(node=>selector==='[data-question-control]'?node.dataset?.questionControl:selector===node.tagName||selector.startsWith('.')&&node.className?.split(' ').includes(selector.slice(1)))}
   }
@@ -73,6 +73,8 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     createElement:tagName=>{const node=new Node();node.tagName=tagName;if(tagName==='dialog')dialogs.push(node);return node},createTextNode:value=>new TextNode(value),
     addEventListener:(event,handler)=>{if(event==='DOMContentLoaded')domReady=handler},
     querySelectorAll:()=>[],querySelector:selector=>selector==='.session-menu[role=menu]'?document.body.children.find(node=>node.className==='session-menu'&&node.attrs?.role==='menu')||null:new Node()};
+  const topbar = new Node(); topbar.className = 'topbar';
+  topbar.append(document.getElementById('header-title')); document.body.append(topbar);
   const bridge=[];
   let observed=null;
   class ResizeObserver{observe(node){assert.ok(node instanceof Node);assert.ok(htmlIds.has(node.id));observed=node}unobserve(){}disconnect(){}}
@@ -80,6 +82,10 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     weftNative:{postMessage(json){const request=JSON.parse(json);bridge.push(request);
       if(!autoBoot&&request.method==='host.status')queueMicrotask(()=>vm.runInContext(`androidBridge.receive({data:${JSON.stringify(JSON.stringify({id:request.id,ok:true,result:{}}))}})`,context));
       if(autoBoot)queueMicrotask(()=>{
+        if (request.method === 'host.business' && businessReply) {
+          businessReply(request, payload => window.weftNative.onmessage({data:JSON.stringify({id:request.id,...payload})}), context);
+          return;
+        }
         const results={'app.bootstrap':{loggedIn:false,username:'',owner:'',model:null,busy:false},
           'settings.appearance':{value:'light'},'auth.me':{displayName:'本机个人空间'},...autoResults};
         window.weftNative.onmessage({data:JSON.stringify({id:request.id,ok:true,result:results[request.method]||{}})});
@@ -88,7 +94,8 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const saved=new Map(Object.entries(storage));
   const localStorage={setItem(key,value){saved.set(key,String(value))},removeItem(key){saved.delete(key)},
     getItem(key){return saved.get(key)??null},key(index){return [...saved.keys()][index]??null},get length(){return saved.size}};
-  const context=vm.createContext({document,window,innerHeight:window.innerHeight,localStorage,URL,AbortSignal,crypto:globalThis.crypto,performance:{now:()=>now},
+  const context=vm.createContext({document,window,innerHeight:window.innerHeight,localStorage,URL,URLSearchParams,AbortSignal,AbortController,crypto:globalThis.crypto,performance:{now:()=>now},
+    Date:virtualClock?class extends Date{static now(){return now}}:Date,
     // Page refresh intervals are tracked separately from the controlled send/retry clock.
     setInterval:(fn,delay)=>{const id=`interval-${++nextInterval}`;intervals.set(id,{fn,delay});return id},clearInterval:id=>intervals.delete(id),
     setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});return id},clearTimeout:id=>timers.delete(id),
@@ -111,8 +118,94 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const previewNote=()=>gallery()?.querySelector('.render-gallery-note')||node('image-preview-note');
   const previewTitle=()=>gallery()?.querySelector('h2')||node('image-preview-name');
   const previewVisible=()=>!!gallery()?.open;
-  return {run,node,gallery,previewImage,previewNote,previewTitle,previewVisible,timers,bridge,flush,reply,advance,frames,flushFrame,document,storage:saved,domReady:()=>domReady(),observed:()=>observed};
+  return {run,node,gallery,previewImage,previewNote,previewTitle,previewVisible,timers,intervals,now:()=>now,bridge,flush,reply,advance,frames,flushFrame,document,storage:saved,domReady:()=>domReady(),observed:()=>observed};
 }
+
+test('BL-29 synthetic 30-second request budgets include every bridge method in foreground idle and hidden',async()=>{
+  const session={sessionId:'s1',source:'host',running:false,sendAvailable:true,taskAvailable:false};
+  const h=harness({virtualClock:true,autoBoot:true,autoResults:{
+    'host.status':{ownerId:'A',hostId:'host',hostName:'synthetic-host',personalCapabilities:{replyStreaming:1},backend:{capabilities:{chat:{available:true}}}},
+    'shared.sessions.list':{source:'host',hostAvailable:true,sessions:[session]},'shared.projects.list':{projects:[]},
+    'shared.sessions.events':{source:'host',sessionId:'s1',events:[],nextSeq:-1,hasMore:false,liveSeq:-1,liveEvents:[]},
+    'shared.approvals.list':{approvals:[]},'shared.questions.list':{questions:[]},'activity.list':{hostAvailable:true,activities:[]},
+    'updates.status':{activeVersion:'0.8.25',nativeVersion:'synthetic'},
+  }});
+  h.document.visibilityState='visible';
+  h.run('window.weftNative.onmessage=event=>androidBridge.receive(event)');
+  h.run(`Object.assign(state,{loggedIn:true,owner:'A',deviceId:'device',authEpoch:1,page:'chat',chatSource:'host',sharedSessionId:'s1',sharedSessions:[${JSON.stringify(session)}],sharedHostAvailable:true});uiCore.syncMobileIdentity();uiCore.state.personalCapabilities={replyStreaming:1};uiCore.presence.success();startMobileConnection();mountMobileTabs();scheduleSharedPoll();`);
+  const advance=async ms=>{for(let n=0;n<ms;n+=50){h.advance(50);for(const interval of h.intervals.values()){
+    interval.due??=h.now()+interval.delay;if(interval.due<=h.now()){interval.due+=interval.delay;interval.fn();}}
+    for(let flush=0;flush<8;flush++)await h.flush();}};
+  await advance(6500);let before=h.bridge.length;await advance(30000);
+  const foreground=h.bridge.slice(before);assert.ok(foreground.some(row=>row.method==='shared.sessions.events'),'counts the actual history timer');
+  assert.ok(foreground.some(row=>row.method==='shared.sessions.list'),'counts independent metadata refresh');
+  assert.ok(foreground.length<=66,`foreground idle: ${foreground.length} calls / 30s (2/s + 10% scheduling margin)`);
+  h.document.visibilityState='hidden';h.run('stopSharedPoll();uiCore.connectionVisibility(true)');before=h.bridge.length;
+  await advance(30000);assert.ok(h.bridge.length-before<=3,`hidden: ${h.bridge.length-before} calls / 30s`);
+  h.run('stopSharedPoll();uiCore.stopConnection()');
+});
+
+test('BL-29b full empty logical main with replyWait counts every bridge call and backs off immediate errors',async()=>{
+  const capabilities = Object.fromEntries(['replyStreaming','replyWait','chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].map(key=>[key,1]));
+  const chat = {chatId:'chat-main',kind:'main',activeSessionId:null,revision:1,contentRevision:1,sendAvailable:true};
+  const page = {items:[],upserts:[],removals:[],liveEvents:[],liveRevision:0,syncCursor:'sync',nextCursor:'sync',contentRevision:1,chatRevision:1,hasMore:false};
+  for (const fault of [null,'BACKEND_UNAVAILABLE','HTTP_502','HTTP_504','CURSOR_RESET_REQUIRED','NOT_FOUND','CHAT_ARCHIVED','UNAUTHORIZED','NETWORK']) {
+    let changes = 0, tails = 0, injected = fault;
+    const h = harness({virtualClock:true,autoBoot:true,autoResults:{
+      'host.status':{ownerId:'A',hostId:'synthetic-host',personalCapabilities:capabilities,backend:{capabilities:{chat:{available:true}}}},
+      'shared.sessions.list':{source:'host',hostAvailable:true,sessions:[]},'shared.projects.list':{projects:[]},
+      'activity.list':{activities:[]},'updates.status':{activeVersion:'0.8.25',nativeVersion:'synthetic'},
+    },businessReply(request, deliver, clock) {
+      const path = request.params.path.replace('/personal/v1', '');
+      if (path.includes('/changes?')) {
+        changes++;
+        if (injected) { deliver({ok:false,error:{code:injected}}); return; }
+        clock.setTimeout(()=>deliver({ok:true,result:{...page,waitOutcome:'timeout'}}),15000);
+      } else {
+        let result = {};
+        if (path.startsWith('/chats/main')) result = {chat};
+        else if (path.startsWith('/chats?')) result = {items:[]};
+        else if (path.includes('/events?')) { tails++; result = page; }
+        else if (path.startsWith('/models')) result = {models:[{id:'synthetic',name:'synthetic',configured:true}]};
+        else if (path.startsWith('/settings/personalization')) result = {nextSuggestionsEnabled:true};
+        else if (path.includes('/dates?')) result = {days:[],contentRevision:1};
+        deliver({ok:true,result});
+      }
+    }});
+    h.document.visibilityState = 'visible';
+    h.run('window.weftNative.onmessage=event=>androidBridge.receive(event)');
+    h.run(`Object.assign(state,{loggedIn:true,owner:'A',deviceId:'device',authEpoch:1,page:'chat',chatSource:'host',logicalChats:true,sharedHostAvailable:true});uiCore.syncMobileIdentity();uiCore.state.personalCapabilities=${JSON.stringify(capabilities)};uiCore.state.mainChat=${JSON.stringify(chat)};uiCore.state.selectedChatId='chat-main';uiCore.state.chatWindow.syncCursor='sync';uiCore.state.chatWindow.contentRevision=1;uiCore.presence.success();startMobileConnection();mountMobileTabs();scheduleSharedPoll();`);
+    const advance = async ms => {
+      for (let elapsed=0;elapsed<ms;elapsed+=50) {
+        h.advance(50);
+        for (const interval of h.intervals.values()) {
+          interval.due ??= h.now()+interval.delay;
+          if (interval.due<=h.now()) {interval.due+=interval.delay;interval.fn();}
+        }
+        for (let n=0;n<10;n++) await h.flush();
+      }
+    };
+    await advance(6500);
+    const before = h.bridge.length, beforeChanges = changes, beforeTails = tails;
+    await advance(30000);
+    assert.ok(changes>0, `replyWait production changes path actually ran: ${fault} ${h.run("JSON.stringify({source:state.chatSource,main:uiCore.inMainChat(),result:uiCore.state.historyReadResult,error:uiCore.state.historyReadResult?.error?.stack,online:uiCore.state.online,csrf:uiCore.state.csrfToken,cursor:uiCore.state.chatWindow.syncCursor})")}`);
+    assert.ok(changes-beforeChanges<=20, `${fault}: ${changes-beforeChanges} changes / 30s`);
+    if (fault==='CURSOR_RESET_REQUIRED') assert.ok(tails-beforeTails<=1, 'continuous 409 rebuilds at most one tail');
+    if (!fault || ['BACKEND_UNAVAILABLE','HTTP_502','HTTP_504','CURSOR_RESET_REQUIRED'].includes(fault))
+      assert.ok(h.bridge.length-before<=60, `${fault || 'healthy'} full empty main idle: ${h.bridge.length-before} calls / 30s`);
+    if (fault && !['NOT_FOUND','UNAUTHORIZED'].includes(fault)) {
+      const recoveryChanges = changes; injected = null;
+      await advance(2000);
+      assert.ok(changes>recoveryChanges, `${fault}: recovered endpoint enters a new wait within 2s`);
+      assert.ok(h.bridge.some(row=>row.params?.path?.includes('waitMs=15000')), 'recovery returns to the real long-wait path');
+    }
+    h.document.visibilityState = 'hidden'; h.run('stopSharedPoll();uiCore.connectionVisibility(true)');
+    const hiddenBefore = h.bridge.length;
+    await advance(30000);
+    assert.ok(h.bridge.length-hiddenBefore<=3, `${fault}: hidden budget counts all methods`);
+    h.run('stopSharedPoll();uiCore.stopConnection()');
+  }
+});
 
 test('real HTML IDs support bootstrap and ResizeObserver without app.failed',async()=>{
   assert.equal(htmlIds.has('composer-dock'),true);

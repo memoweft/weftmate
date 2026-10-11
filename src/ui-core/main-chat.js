@@ -6,13 +6,16 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         'sendDraft', 'optimisticMessages', 'observeOptimistic', 'composerState', 'attachmentDraftKey', 'loadConversationResources', 'clearSession'].map(key => [key, core[key]]));
     const historyWindow = globalThis.WeftUiCore.ChatWindow.create();
     const pending = new Map(), drafts = new Map();
-    let selectionGeneration = 0;
+    let sideWaitScope,sideWaitCursor,sideWaitRevision=0,sideWaitRead;
+    let selectionGeneration = 0, unavailableChatId;
     core.state.chatWindow = historyWindow.state;
     const supports = name => core.state.personalCapabilities?.[name] === 1;
     const inMain = () => !!core.state.mainChat && core.state.selectedChatId === core.state.mainChat.chatId && core.state.activeChatSource === 'desktop';
     const scope = () => `${core.state.identityGeneration}:${core.state.ownerId}:${core.state.historyGeneration}:${core.state.selectedChatId}`;
     const notify = () => { effects.renderMainChat?.(); effects.renderOlderControl(); effects.updateAvailability(); };
     function clearLogical(purge = false) {
+        core.historyWaitAbort?.abort();
+        sideWaitScope=null;sideWaitCursor=null;sideWaitRevision=0;
         if (purge) {
             for (const row of pending.values()) {
                 if (row.status === 'accepted' && drafts.get(row.chatId) === row.text) drafts.set(row.chatId,'');
@@ -67,7 +70,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         if (identity !== core.state.identityGeneration) return;
         installMain(main.chat);
         // Readable/input-ready main tail is independent of the complete sidebar.
-        if (!core.state.selectedChatId && !core.state.selectedSessionId && !core.state.newConversation) await selectMainChat();
+        if (!core.state.selectedChatId && !core.state.selectedSessionId && !core.state.newConversation && main.chat.chatId !== unavailableChatId) await selectMainChat();
         const listGeneration = core.state.sessionListGeneration || 0;
         const params = new URLSearchParams({archived:'all',limit:100,...(core.state.sessionListQuery ? {q:core.state.sessionListQuery} : {})});
         const sessionParams = new URLSearchParams(params), chatParams = new URLSearchParams(params);
@@ -111,6 +114,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     function cancelSessionSelection() { selectionGeneration++;core.state.sessionSelecting=false;core.state.sideCreating=null;effects.updateAvailability(); }
     async function selectMainChat(anchor) {
         if (!supports('chats') || !core.state.mainChat) return;
+        unavailableChatId = null;
         if (!core.state.sessionSelecting && !core.state.sideCreating) drafts.set(core.state.selectedChatId || core.state.selectedSessionId, effects.readMessageDraft());
         selectionGeneration++; core.state.sessionSelecting = false;core.state.sideCreating=null;
         core.cancelAttachmentUpload(); core.state.activeChatSource = 'desktop'; core.state.selectedPhoneConversationId = null;
@@ -159,16 +163,19 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const token = scope(), generation = historyWindow.state.generation;
         try {
             const page = await core.readChatEvents(core.state.selectedChatId, { limit: 200, ...params });
-            if (token !== scope() || generation !== historyWindow.state.generation) return;
-            if (historyWindow.state.contentRevision !== null && historyWindow.state.contentRevision !== page.contentRevision) { clearLogical(true); return readPage({}, 'tail'); }
+            if (token !== scope() || generation !== historyWindow.state.generation) return {kind:'cancelled'};
+            if (historyWindow.state.contentRevision !== null && historyWindow.state.contentRevision !== page.contentRevision)
+                return failedRead({code:'CURSOR_RESET_REQUIRED',status:409}, token);
+            core.acceptAccountChanges?.(page.accountChanges);
             historyWindow.merge(page, direction); core.observeOptimistic(page.items || []); notify();
             void Promise.all([core.refreshConversationApprovals(),core.refreshConversationQuestions()]).catch(()=>{});
             void refreshChatDates().catch(() => {});
             if (page.deletedAnchor) effects.historyNotice('原消息已删除，已显示邻近内容。');
+            return core.historyReadResult('changed');
         } catch (error) {
-            if (token !== scope() || generation !== historyWindow.state.generation) return;
-            if (error.code === 'CURSOR_RESET_REQUIRED') { clearLogical(true); notify(); return readPage({}, 'tail'); }
+            if (token !== scope() || generation !== historyWindow.state.generation) return {kind:'cancelled'};
             effects.historyNotice('历史暂时无法读取，请重试。', 'read-failure');
+            return failedRead(error, token);
         }
     }
     async function refreshChatDates() {
@@ -187,28 +194,106 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         }
         notify();
     }
-    async function refreshHistory(reset = false) {
-        if (!inMain()) return legacy.refreshHistory(reset, true);
-        if (!supports('chatTimeline')) return;
-        if (reset || !historyWindow.state.syncCursor) { if (reset) clearLogical(true); return readPage({}, 'tail'); }
-        if (core.mainChatRefreshing) return;
-        core.mainChatRefreshing = true; const token = scope(), generation = historyWindow.state.generation;
-        try {
-            const page = await core.readChatChanges(core.state.selectedChatId, historyWindow.state.syncCursor, 200);
-            if (token !== scope() || generation !== historyWindow.state.generation) return;
-            if (historyWindow.state.contentRevision !== page.contentRevision) { clearLogical(true); notify(); return readPage({}, 'tail'); }
-            historyWindow.state.anchorId=effects.mainChatAnchor?.() || null;
-            const before=JSON.stringify(historyWindow.ordered());
-            historyWindow.merge(page, 'changes'); core.observeOptimistic(page.upserts || []);
-            if(before!==JSON.stringify(historyWindow.ordered())){
-                if(!(page.upserts?.length||page.removals?.length)){if(effects.paintLiveChatMessages?.()!==true)effects.renderMainChat?.();}else notify();
+    let resetAttempted = false, resetScope;
+    async function failedRead(error, token) {
+        if (token !== scope() || error.code === 'ABORTED' || error.name === 'AbortError') return core.historyReadResult('cancelled');
+        if (error.code === 'CURSOR_RESET_REQUIRED' || error.status === 409) {
+            // A continuous 409 may rebuild the tail once, never on every retry.
+            if (resetScope !== token) { resetScope = token; resetAttempted = false; }
+            if (!resetAttempted) {
+                resetAttempted = true;
+                if (inMain()) { clearLogical(true); resetScope = scope(); notify(); await readPage({}, 'tail'); }
+                else sideWaitCursor = null;
             }
-            if(environment.mobileState) await Promise.all([core.refreshConversationTasks(),core.refreshConversationApprovals(),core.refreshConversationQuestions()]);
-        await reconcileMainRequests();
-            const main = await core.readMainChat(); if (token === scope()) { const changed=JSON.stringify(core.state.mainChat)!==JSON.stringify(main.chat);installMain(main.chat);if(changed)notify(); }
-        } catch (error) {
-            if (token === scope() && generation === historyWindow.state.generation && error.code === 'CURSOR_RESET_REQUIRED') { clearLogical(true); notify(); await readPage({}, 'tail'); }
-        } finally { core.mainChatRefreshing = false; }
+            return core.historyReadResult('reset', { error });
+        }
+        if (error.status === 404 || ['NOT_FOUND','CHAT_UNAVAILABLE','SESSION_UNAVAILABLE'].includes(error.code)) {
+            unavailableChatId = core.state.selectedChatId;
+            clearLogical(true);
+            core.state.selectedChatId = null; core.state.selectedSessionId = null;
+            notify();
+        }
+        core.connectionFailed?.(error);
+        return core.historyReadResult('failed', { error, terminal:!!globalThis.WeftUiCore.Presence.authState(error) });
+    }
+    async function refreshHistory(reset = false, waitForChange = false) {
+        if (!reset && !core.historyReadAllowed()) return core.state.historyReadResult;
+        if (!inMain()) {
+            if (waitForChange && core.canWaitForReply() && core.state.selectedChatId && !core.conversationRunning(core.state.selectedSessionId) && core.state.turnStatus !== 'running' && !reset) {
+                if (sideWaitRead) return sideWaitRead;
+                const token = scope(), chatId = core.state.selectedChatId, controller = new AbortController();
+                core.historyWaitAbort = controller;
+                sideWaitRead = (async () => {
+                    if (sideWaitScope !== token || !sideWaitCursor) {
+                        const page = await core.readChatEvents(chatId, {limit:1}, {signal:controller.signal});
+                        if (token !== scope() || controller.signal.aborted) return core.historyReadResult('cancelled');
+                        sideWaitScope = token; sideWaitCursor = page.syncCursor; sideWaitRevision = page.liveRevision ?? 0;
+                        core.acceptAccountChanges?.(page.accountChanges);
+                    }
+                    const page = await core.readChatChanges(chatId, sideWaitCursor, 200,
+                        {ms:core.replyWaitMilliseconds(), liveRevision:sideWaitRevision, signal:controller.signal});
+                    if (token !== scope() || controller.signal.aborted) return core.historyReadResult('cancelled');
+                    sideWaitCursor = page.nextCursor; sideWaitRevision = page.liveRevision;
+                    core.acceptAccountChanges?.(page.accountChanges);
+                    const history = await legacy.refreshHistory(false, true);
+                    if (['failed','reset','cancelled'].includes(history?.kind)) return history;
+                    resetAttempted = false;
+                    return core.historyReadResult(page.upserts?.length || page.removals?.length ? 'changed' : 'unchanged',
+                        {immediateRenew:['timeout','changed'].includes(page.waitOutcome)});
+                })().catch(error => failedRead(error, token)).finally(() => {
+                    if (core.historyWaitAbort === controller) core.historyWaitAbort = null;
+                    sideWaitRead = null;
+                });
+                return sideWaitRead;
+            }
+            if (sideWaitRead) { core.historyWaitAbort?.abort(); await sideWaitRead; }
+            return legacy.refreshHistory(reset, true);
+        }
+        if (!supports('chatTimeline')) return core.historyReadResult('cancelled');
+        if (reset || !historyWindow.state.syncCursor) {
+            if (reset) clearLogical(true);
+            return readPage({}, 'tail');
+        }
+        if (core.mainChatRefreshing) {
+            if (!waitForChange && core.historyWaitAbort) {
+                core.historyWaitAbort.abort(); await core.mainChatRefreshPromise; return refreshHistory(reset, false);
+            }
+            return core.mainChatRefreshPromise;
+        }
+        let release;
+        core.mainChatRefreshPromise = new Promise(resolve => { release = resolve; });
+        core.mainChatRefreshing = true;
+        const token = scope(), generation = historyWindow.state.generation;
+        let outcome;
+        try {
+            const waiting = waitForChange && core.canWaitForReply() && (!core.mainReplyActive() || !(historyWindow.state.liveEvents || []).length) && !core.state.submitting && !core.state.unresolvedSubmission;
+            const controller = waiting ? new AbortController() : null;
+            if (controller) core.historyWaitAbort = controller;
+            const page = await core.readChatChanges(core.state.selectedChatId, historyWindow.state.syncCursor, 200,
+                controller ? {ms:core.replyWaitMilliseconds(),liveRevision:historyWindow.state.liveRevision ?? 0,signal:controller.signal} : undefined);
+            if (token !== scope() || generation !== historyWindow.state.generation || controller?.signal.aborted)
+                return outcome = core.historyReadResult('cancelled');
+            if (historyWindow.state.contentRevision !== page.contentRevision)
+                return outcome = await failedRead({code:'CURSOR_RESET_REQUIRED',status:409}, token);
+            historyWindow.state.anchorId = effects.mainChatAnchor?.() || null;
+            const before = JSON.stringify(historyWindow.ordered());
+            historyWindow.merge(page, 'changes'); core.observeOptimistic(page.upserts || []);
+            if (before !== JSON.stringify(historyWindow.ordered())) {
+                if (!(page.upserts?.length || page.removals?.length)) { if (effects.paintLiveChatMessages?.() !== true) effects.renderMainChat?.(); }
+                else notify();
+            }
+            core.acceptAccountChanges?.(page.accountChanges);
+            if (page.upserts?.length || page.removals?.length) void core.refreshConversationFacts?.();
+            await reconcileMainRequests();
+            if (page.upserts?.length || page.removals?.length) {
+                const main = await core.readMainChat();
+                if (token === scope()) { const changed = JSON.stringify(core.state.mainChat) !== JSON.stringify(main.chat); installMain(main.chat); if (changed) notify(); }
+            }
+            resetAttempted = false;
+            return outcome = core.historyReadResult(before !== JSON.stringify(historyWindow.ordered()) ? 'changed' : 'unchanged',
+                {immediateRenew:waiting && ['timeout','changed'].includes(page.waitOutcome)});
+        } catch (error) { return outcome = await failedRead(error, token); }
+        finally { core.mainChatRefreshing = false; core.historyWaitAbort = null; release(outcome); }
     }
     async function loadOlderHistory(direction = 'older') {
         if (!inMain()) return legacy.loadOlderHistory(true);
@@ -376,7 +461,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             const command = environment.mobileState ? await effects.sendMainNativeMessage(row.nativeFields) : attachments.length ? await core.sendDesktopMessageWithAttachments(text, row.requestId, row.nativeFields.intent,row.attachmentSnapshot)
                 : await core.submitCommand('chat.message', { chatId: row.chatId, text, modelProfileId: core.state.modelProfileId, mode: intent || core.composerInputMode(core.state.selectedSessionId) }, null, row.requestId);
             await checkMainRequest(row);
-            await refreshHistory();
+            await refreshHistory(false,true);
         } catch { row.status = 'confirming'; } finally { notify(); }
     }
     function observeOptimistic(events) {
