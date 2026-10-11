@@ -1,0 +1,50 @@
+{
+  "required": {
+    "files": 282,
+    "passed": 1525,
+    "failed": 0,
+    "skipped": 14
+  },
+  "mobileInteractions": {
+    "files": 5,
+    "passed": 109,
+    "failed": 0,
+    "skipped": 0
+  },
+  "targeted": {
+    "passed": 71,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "publicHygiene": {
+    "files": 7336,
+    "identities": 0
+  },
+  "designDetector": [],
+  "heavySlots": [
+    {
+      "slot": "heavy-1",
+      "work": "final real Electron / phone screenshot matrix",
+      "start": "2026-10-11T17:38:02+08:00",
+      "end": "2026-10-11T17:38:30+08:00"
+    },
+    {
+      "slot": "heavy-1",
+      "work": "required full unit tests",
+      "start": "2026-10-11T17:39:05+08:00",
+      "end": "2026-10-11T17:55:31+08:00"
+    },
+    {
+      "slot": "heavy-1",
+      "work": "five-file mobile interaction group",
+      "start": "2026-10-11T17:56:04+08:00",
+      "end": "2026-10-11T17:56:25+08:00"
+    }
+  ],
+  "cleanup": {
+    "forced": 1,
+    "remaining": 0,
+    "note": "One cleanup helper terminated itself during the first scan; second scan returned cleaned=0, failed=0. Test apps and hosts closed normally."
+  },
+  "vendor": "Not run: no shared runtime files changed; prebuilt vendor unmodified."
+}

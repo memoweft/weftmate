@@ -42,7 +42,7 @@ try {
     await page.getByRole('button', { name: '设置', exact: true }).click()
     await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '外观', exact: true }).click()
       await page.getByRole('button', { name: theme === 'light' ? '浅色' : '深色', exact: true }).click()
-    await page.getByRole('combobox', { name: /^主题色/ }).click()
+    await page.getByRole('combobox', { name: theme === 'light' ? '浅色强调色' : '深色强调色', exact: true }).click()
     await page.getByRole('option', { name: '松绿', exact: true }).click()
     await page.getByRole('combobox', { name: /^字号/ }).click()
     await page.getByRole('option', { name: '大 · 17', exact: true }).click()
