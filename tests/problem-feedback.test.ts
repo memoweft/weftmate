@@ -48,6 +48,7 @@ test('cloud feedback uses existing authorized transport and refuses a local-only
   sandbox.WeftUiCore.CloudAuthClient=class{authorized(path:string,options:any){calls.push({path,...options});return Promise.resolve({number:42})}};
   const core:any={state:{},load:()=>{},sessionExpired:()=>{},clearSession:()=>{}};
   Object.assign(core,sandbox.WeftUiCore.factories.cloudAccount(core,{},{}));core.initializeCloudAccount();
+  core.state.cloudAuth.localSession=true;core.state.cloudAuth.mode='offline';
   await assert.rejects(core.cloudSendFeedback({title:'test',body:'test'}),{code:'FEEDBACK_LOGIN_REQUIRED'});
   core.state.cloudAuth.mode='authenticated';const payload={title:'test',body:'test'};await core.cloudSendFeedback(payload);
   assert.deepEqual(calls,[{path:'/feedback',method:'POST',body:payload}]);

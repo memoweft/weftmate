@@ -14,7 +14,7 @@ const enabled = process.env.WEFTMATE_WEB_E2E === 'true';
 const button = (page, name) => page.getByRole('button', { name, exact: true });
 const field = (page, name) => page.getByLabel(name, { exact: true }).filter({ visible: true });
 
-test('D29 real browser: in-app login → device approval → remembered session → settings directory/rename/pairing; deny and unlink', { skip: !enabled, timeout: 180000 }, async t => {
+test('AUTH-1 real browser: password or email-code login → immediate session → directory/rename/offline; legacy pairing and unlink remain protected', { skip: !enabled, timeout: 180000 }, async t => {
   const { chromium } = await import('../../../apps/mobile-ui/node_modules/playwright/index.mjs');
   const reserved = createServer(); reserved.listen(0, '127.0.0.1'); await once(reserved, 'listening');
   const port = reserved.address().port; await new Promise(resolve => reserved.close(resolve));
@@ -80,21 +80,26 @@ test('D29 real browser: in-app login → device approval → remembered session 
     }
     assert.equal(page.url(), origin + '/personal/v1/ui/', 'authorization stays inside the app');
   }
-  async function cloudLogin(page) {
+  async function cloudLogin(page, codeLogin = false) {
     await page.goto(origin + '/personal/v1/ui/');
+    assert.equal((await page.request.get(origin+'/personal/v1/sessions')).status(),401,'unauthenticated browsers must not see host content');
     await page.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
     assert.equal(await field(page, '配对码').isVisible(), false);
     assert.equal(await button(page, '离线使用这台电脑').count(), 0, 'remote browsers have no local emergency login');
-    await field(page, '邮箱').fill(email); await field(page, '密码').fill(password);
-    const response = page.waitForResponse(value => value.url().endsWith(P + '/auth/login') && value.request().method() === 'POST');
-    await button(page, '登录').click();
+    if(codeLogin) await button(page,'用邮箱验证码登录').click();
+    await field(page, '邮箱').fill(email);
+    if(!codeLogin) await field(page, '密码').fill(password);
+    const response = page.waitForResponse(value => value.url().endsWith(P + (codeLogin ? '/auth/login/code/request' : '/auth/login')) && value.request().method() === 'POST');
+    await button(page, codeLogin ? '发送验证码' : '登录').click();
     const logged = await response;
     assert.equal(logged.status(), 202);
     const challenge = (await logged.json()).challengeId;
-    await page.getByRole('heading', { name: '确认新设备', exact: true }).waitFor();
-    await field(page, '验证码').fill(await f.mailCode(challenge));
-    await button(page, '验证').click();
-    await page.getByRole('heading', { name: '在你已登录的设备上允许这台设备', exact: true }).waitFor();
+    await field(page, '邮箱验证码').waitFor();
+    await field(page, '邮箱验证码').fill(await f.mailCode(challenge));
+    await button(page, '确认并登录').click();
+    await loggedIn(page);
+    assert.equal(await page.getByRole('heading',{name:'在你已登录的设备上允许这台设备',exact:true}).count(),0);
+    assert.equal(await page.getByRole('dialog',{name:'可信交付',exact:true}).count(),0);
     assert.equal(page.url(), origin + '/personal/v1/ui/');
   }
   async function openSettings(page) {
@@ -117,19 +122,27 @@ test('D29 real browser: in-app login → device approval → remembered session 
     await page.getByRole('heading', { name: '设备', exact: true, level: 1 }).waitFor();
   }
   async function rename(page, before, after) {
-    const row = page.getByRole('group', { name: before, exact: true });
-    await row.getByRole('button', { name: '改名', exact: true }).click();
-    await row.getByRole('textbox', { name: '设备名称', exact: true }).fill(after);
-    await row.getByRole('button', { name: '保存名称', exact: true }).click();
-    await page.getByRole('group', { name: after, exact: true }).waitFor();
+    const row = page.locator('#cloud-directory .cloud-device-row').filter({has:page.getByRole('button',{name:`查看 ${before}`,exact:true})});
+    await row.getByRole('button',{name:`${before}的更多操作`,exact:true}).click();
+    await page.getByRole('menuitem',{name:'修改名称',exact:true}).click();
+    const dialog=page.getByRole('dialog',{name:'修改设备名称',exact:true}); await dialog.waitFor();
+    await dialog.getByRole('textbox', { name: '设备名称', exact: true }).fill(after);
+    await dialog.getByRole('button', { name: '保存名称', exact: true }).click();
+    await page.getByRole('button',{name:`查看 ${after}`,exact:true}).waitFor();
+  }
+  async function offline(page,name) {
+    await page.getByRole('button',{name:`${name}的更多操作`,exact:true}).click();
+    await page.getByRole('menuitem',{name:'让设备下线',exact:true}).click();
+    const confirm=page.getByRole('dialog',{name:'让设备下线',exact:true}); await confirm.waitFor();
+    await confirm.getByRole('button',{name:'确认下线',exact:true}).click();
+    await confirm.waitFor({state:'hidden'}); await host.syncCloudRevocations();
   }
 
   const { context: ownerContext, page: owner } = await pageFor({ viewport: { width: 1280, height: 850 } });
   await cloudLogin(owner);
-  assert.equal((await ownerContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
+  assert.equal((await ownerContext.request.get(origin + '/personal/v1/sessions')).status(), 200);
   const firstPending = await hostApi('/cloud/devices/pending', undefined, local);
-  assert.equal(firstPending.devices.length, 1);
-  await hostApi(`/cloud/devices/${firstPending.devices[0].id}/decision`, { decision: 'allow' }, local);
+  assert.equal(firstPending.devices.length, 0);
   await loggedIn(owner);
   assert.equal((await ownerContext.request.get(origin + '/personal/v1/sessions')).status(), 200);
   await owner.reload(); await loggedIn(owner);
@@ -138,20 +151,7 @@ test('D29 real browser: in-app login → device approval → remembered session 
   await button(owner, '关闭设置').click();
 
   const { context: phoneContext, page: phone } = await pageFor({ viewport: { width: 390, height: 844 }, isMobile: true });
-  await cloudLogin(phone);
-  assert.equal((await phoneContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
-  await phone.screenshot({ path: '.local/s1c-web/mobile-wait.png' });
-  await phone.reload();
-  await phone.getByRole('heading', { name: '在你已登录的设备上允许这台设备', exact: true }).waitFor();
-  // Settings reads the same pending requests that appear in the top banner.
-  await openSettings(owner);
-  await owner.getByRole('heading', { name: '待批准设备', exact: true }).waitFor();
-  await button(owner, '允许').click();
-  const trust = owner.getByRole('dialog', { name: '可信交付', exact: true });
-  await trust.waitFor();
-  assert.match(await trust.getByRole('textbox', { name: '可信交付码', exact: true }).inputValue(), /^wmt1\./);
-  await trust.getByRole('button', { name: '关闭', exact: true }).click();
-  await loggedIn(phone);
+  await cloudLogin(phone,true);
   assert.equal((await phoneContext.request.get(origin + '/personal/v1/sessions')).status(), 200);
   assert.equal(await phone.evaluate(() => Object.keys(localStorage).some(key => /refresh|cloud.*token/i.test(key))), false);
   const protectedState = await phone.evaluate(async () => {
@@ -166,25 +166,26 @@ test('D29 real browser: in-app login → device approval → remembered session 
   await phone.getByText(/这台设备/).filter({ visible: true }).first().waitFor();
   await phone.screenshot({ path: '.local/s1c-web/remote-devices.png' });
 
-  // The remote web client consumes a QR/typed code in Settings → Devices.
+  // New UI does not expose pairing material. Keep the legacy one-use/owner
+  // compatibility assertions through the real browser's existing client API.
   // Only the directly authenticated computer can create pairing material.
   const pairing = await hostApi('/cloud/pairings', {}, local, 201);
-  const code = 'wm1.' + Buffer.from(JSON.stringify(pairing)).toString('base64url');
-  await field(phone, '输入电脑的配对码').fill(code);
-  const redeemed = phone.waitForResponse(response => response.url().endsWith('/cloud/pairings/redeem') && response.request().method() === 'POST');
-  await button(phone, '配对连接').click(); assert.equal((await redeemed).status(), 200);
-  await loggedIn(phone); await openSettings(phone);
-  await field(phone, '输入电脑的配对码').fill(code); await button(phone, '配对连接').click();
-  await phone.getByRole('status').filter({ hasText: '配对码已失效或不属于这台电脑，请获取新码。' }).waitFor();
+  const redeem=()=>phone.evaluate(async pairing=>{
+    const client = new WeftUiCore.CloudAuthClient({ fetch: (...args) => fetch(...args), crypto,
+      credentials: (...args) => WeftCloud.storage(...args), vendor: WeftCloudVendor, host: location.origin });
+    await client.configure();
+    try { const result=await client.exchange(false,pairing); return {ownerId:result.account.ownerId}; }
+    catch(error){return {error:error.code};}
+  },pairing);
+  assert.equal((await redeem()).ownerId,local.account.ownerId);
+  assert.equal((await redeem()).error,'PAIRING_INVALID');
+  await phone.reload(); await loggedIn(phone);
 
-  const { context: deniedContext, page: denied } = await pageFor();
-  await cloudLogin(denied);
-  await button(owner, '关闭设置').click(); await openSettings(owner);
-  await owner.getByRole('heading', { name: '待批准设备', exact: true }).waitFor();
-  await button(owner, '拒绝').click();
-  await denied.getByText('这台设备未获允许，请在已登录设备上重新批准。', { exact: true }).waitFor();
-  assert.equal((await deniedContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
-  await denied.screenshot({ path: '.local/s1c-web/device-denied.png' });
+  const { context: revokedContext, page: revoked } = await pageFor();
+  await cloudLogin(revoked); await openSettings(revoked); await rename(revoked,'这个浏览器','Revoked browser');
+  await openSettings(owner); await offline(owner,'Revoked browser');
+  assert.equal((await revokedContext.request.get(origin + '/personal/v1/sessions')).status(),401);
+  await owner.screenshot({path:'.local/s1c-web/device-offlined.png'});
   await hostApi('/cloud/binding', {}, local, 200, 'DELETE');
   assert.equal((await phoneContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
   assert.equal((await ownerContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
