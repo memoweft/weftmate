@@ -27,6 +27,41 @@ function fixture(options:any = {}) {
 }
 const body={kind:'replies',requestId:'r'};
 const delay=(ms=20)=>new Promise(resolve=>setTimeout(resolve,ms));
+test('BL-28a missing or disabled inline completion returns empty without a model call, context read or usage lease',async()=>{
+  for(const settings of [{nextSuggestionsEnabled:true},{nextSuggestionsEnabled:false},{nextSuggestionsEnabled:true,inlineCompletionEnabled:false}]) {
+    const f=fixture();f.account.personalization=settings;
+    f.context.backend.describeSession=()=>{throw new Error('disabled request must not inspect model')};
+    assert.deepEqual(await f.run({kind:'completion',draft:'请把',requestId:'off'}),{requestId:'off',suggestions:[],completion:''});
+    assert.equal(f.calls,0);assert.equal(f.tickets.length,0);assert.equal(f.finishes.length,0);
+  }
+});
+test('BL-28a server routes each request kind through its own switch for all four combinations',async()=>{
+  for(const replies of [false,true]) for(const completion of [false,true]) {
+    const f=fixture();f.account.personalization={nextSuggestionsEnabled:replies,inlineCompletionEnabled:completion};
+    let calls=0;f.context.backend.modelCompletion=async(input:any)=>{calls++;await input.onStart();return Response.json({choices:[{message:{content:input.body.stream?'保存成文件':'{"suggestions":["继续写方法部分"]}'}}]})};
+    const reply=await f.run(body);assert.deepEqual(reply.suggestions,replies?['继续写方法部分']:[]);
+    const suffix=await f.run({kind:'completion',draft:'请把',requestId:'completion'});assert.equal(suffix.completion,completion?'保存成文件':'');
+    assert.equal(f.tickets.length,Number(replies)+Number(completion));
+    assert.equal(calls,Number(replies)+Number(completion));
+  }
+});
+test('BL-28a server only cancels the request kind whose switch was disabled',async()=>{
+  for(const kind of ['replies','completion']) {
+    const f=fixture();f.account.personalization={nextSuggestionsEnabled:true,inlineCompletionEnabled:true};f.hold();
+    const work=f.run({kind,requestId:'r',...(kind==='completion'?{draft:'请把'}:{})});await delay();
+    const own=kind==='completion'?'inlineCompletionEnabled':'nextSuggestionsEnabled';
+    const other=kind==='completion'?'nextSuggestionsEnabled':'inlineCompletionEnabled';
+    f.account.personalization[other]=false;f.service.reconcile('o');assert.equal(f.aborted,false);
+    f.account.personalization[own]=false;f.service.reconcile('o');
+    const result=await work;assert.deepEqual(result,{requestId:'r',suggestions:[],completion:''});assert.equal(f.aborted,true);assert.equal(f.calls,1);
+  }
+});
+test('BL-28a a disabled completion request leaves enabled reply generation running',async()=>{
+  const f=fixture();f.hold();const work=f.run(body);await delay();
+  assert.deepEqual(await f.run({kind:'completion',draft:'请把',requestId:'disabled'}),{requestId:'disabled',suggestions:[],completion:''});
+  assert.equal(f.calls,1);assert.equal(f.aborted,false);
+  f.service.cancel('o','s');await work;assert.equal(f.aborted,true);
+});
 
 test('UX-7 short context includes visible recent rounds, excludes tools, hidden thinking and forgotten originals',()=>{
   const f=fixture();f.events.unshift({seq:0,type:'assistant.message',data:{text:'FORGOTTEN'}});
