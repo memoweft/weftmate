@@ -1,0 +1,2445 @@
+{
+  "synthetic": true,
+  "systemBarsVerified": false,
+  "surfaces": [
+    {
+      "surface": "electron",
+      "checks": [
+        {
+          "name": "approval-menu",
+          "durationMs": 3305,
+          "requests": 15,
+          "passed": true
+        },
+        {
+          "name": "risk-confirm",
+          "durationMs": 3100,
+          "passed": true,
+          "nativeDialog": true
+        },
+        {
+          "name": "plus-menu",
+          "durationMs": 3315,
+          "requests": 18,
+          "passed": true
+        },
+        {
+          "name": "model-menu",
+          "durationMs": 3339,
+          "requests": 18,
+          "passed": true
+        },
+        {
+          "name": "search",
+          "durationMs": 3418,
+          "requests": 16,
+          "passed": true
+        },
+        {
+          "name": "session-menu",
+          "durationMs": 3346,
+          "requests": 19,
+          "passed": true
+        },
+        {
+          "name": "folder-menu",
+          "durationMs": 3300,
+          "requests": 19,
+          "passed": true
+        },
+        {
+          "name": "message-more",
+          "durationMs": 3320,
+          "requests": 18,
+          "passed": true
+        },
+        {
+          "name": "gallery",
+          "durationMs": 3384,
+          "requests": 16,
+          "passed": true
+        },
+        {
+          "name": "chinese-composition",
+          "passed": true,
+          "value": "先整理资料中文输入",
+          "start": 9,
+          "end": 9
+        },
+        {
+          "name": "settings-dropdown",
+          "durationMs": 3359,
+          "requests": 0,
+          "passed": true
+        }
+      ],
+      "requests": [
+        {
+          "at": 1791692053605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692053855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692054106,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692054355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692054605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692054855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692055104,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692055355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692055605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692055855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692056106,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692056355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692056604,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692056680,
+          "path": "/personal/v1/ui/brand/color-dark.svg"
+        },
+        {
+          "at": 1791692056784,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/approval-mode"
+        },
+        {
+          "at": 1791692059946,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692059947,
+          "path": "/personal/v1/chats/main"
+        },
+        {
+          "at": 1791692059947,
+          "path": "/personal/v1/activity/unread"
+        },
+        {
+          "at": 1791692059968,
+          "path": "/personal/v1/sessions"
+        },
+        {
+          "at": 1791692059970,
+          "path": "/personal/v1/chats"
+        },
+        {
+          "at": 1791692059987,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692060106,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692060355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692060605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692060854,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692061105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692061355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692061605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692061855,
+          "path": "/personal/v1/chats/main"
+        },
+        {
+          "at": 1791692061855,
+          "path": "/personal/v1/activity/unread"
+        },
+        {
+          "at": 1791692061856,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692061864,
+          "path": "/personal/v1/sessions"
+        },
+        {
+          "at": 1791692061864,
+          "path": "/personal/v1/chats"
+        },
+        {
+          "at": 1791692061885,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692062105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692062355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692062605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692062855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692063105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692063354,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692063605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692063855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692064104,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692064355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692064604,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692064855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692065105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692065355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692065605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692065855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692066106,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692066355,
+          "path": "/personal/v1/chats/main"
+        },
+        {
+          "at": 1791692066356,
+          "path": "/personal/v1/activity/unread"
+        },
+        {
+          "at": 1791692066360,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692066364,
+          "path": "/personal/v1/sessions"
+        },
+        {
+          "at": 1791692066364,
+          "path": "/personal/v1/chats"
+        },
+        {
+          "at": 1791692066382,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692066606,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692066745,
+          "path": "/personal/v1/chats"
+        },
+        {
+          "at": 1791692066745,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692066747,
+          "path": "/personal/v1/library"
+        },
+        {
+          "at": 1791692066854,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692067104,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692067355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692067605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692067631,
+          "path": "/personal/v1/cloud/devices/pending"
+        },
+        {
+          "at": 1791692067855,
+          "path": "/personal/v1/status"
+        },
+        {
+          "at": 1791692067858,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692068105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692068355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692068604,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692068855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692069104,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692069355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692069604,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692069855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692070151,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692070355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692070606,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692070855,
+          "path": "/personal/v1/chats/main"
+        },
+        {
+          "at": 1791692070856,
+          "path": "/personal/v1/activity/unread"
+        },
+        {
+          "at": 1791692070857,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692070864,
+          "path": "/personal/v1/sessions"
+        },
+        {
+          "at": 1791692070865,
+          "path": "/personal/v1/chats"
+        },
+        {
+          "at": 1791692070888,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692071104,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692071355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692071605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692071855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692072107,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692072355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692072605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692072855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692073105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692073355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692073613,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692073747,
+          "path": "/personal/v1/sessions/session-1af89de1-4353-46c3-9732-0643bd9073a6/metadata"
+        },
+        {
+          "at": 1791692073773,
+          "path": "/personal/v1/chats/main"
+        },
+        {
+          "at": 1791692073781,
+          "path": "/personal/v1/sessions"
+        },
+        {
+          "at": 1791692073781,
+          "path": "/personal/v1/chats"
+        },
+        {
+          "at": 1791692073795,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692073855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692074105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692074355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692074605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692074855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692075105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692075355,
+          "path": "/personal/v1/chats/main"
+        },
+        {
+          "at": 1791692075355,
+          "path": "/personal/v1/activity/unread"
+        },
+        {
+          "at": 1791692075356,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692075362,
+          "path": "/personal/v1/sessions"
+        },
+        {
+          "at": 1791692075363,
+          "path": "/personal/v1/chats"
+        },
+        {
+          "at": 1791692075383,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692075605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692075855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692076106,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692076355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692076605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692076855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692077128,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692077214,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/chat"
+        },
+        {
+          "at": 1791692077355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692077604,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692077855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692078105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692078355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692078605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692078855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692079105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692079355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692079604,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692079855,
+          "path": "/personal/v1/chats/main"
+        },
+        {
+          "at": 1791692079855,
+          "path": "/personal/v1/activity/unread"
+        },
+        {
+          "at": 1791692079856,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692079865,
+          "path": "/personal/v1/sessions"
+        },
+        {
+          "at": 1791692079865,
+          "path": "/personal/v1/chats"
+        },
+        {
+          "at": 1791692079883,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692080106,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692080356,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692080607,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692080855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692081106,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692081355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692081604,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692081855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692082105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692082355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692082605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692082631,
+          "path": "/personal/v1/cloud/devices/pending"
+        },
+        {
+          "at": 1791692082856,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692082875,
+          "path": "/personal/v1/status"
+        },
+        {
+          "at": 1791692083105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692083354,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692083605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692083856,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692084106,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692084356,
+          "path": "/personal/v1/chats/main"
+        },
+        {
+          "at": 1791692084356,
+          "path": "/personal/v1/activity/unread"
+        },
+        {
+          "at": 1791692084358,
+          "path": "/personal/v1/models"
+        },
+        {
+          "at": 1791692084359,
+          "path": "/personal/v1/settings/personalization"
+        },
+        {
+          "at": 1791692084360,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692084368,
+          "path": "/personal/v1/sessions"
+        },
+        {
+          "at": 1791692084368,
+          "path": "/personal/v1/chats"
+        },
+        {
+          "at": 1791692084376,
+          "path": "/personal/v1/settings/models"
+        },
+        {
+          "at": 1791692084408,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692084605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692084855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692085105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692085354,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692085604,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692085856,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692086106,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692086355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692086604,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692086854,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692087105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692087356,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692087605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692087854,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692088105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692088355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692088605,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692088855,
+          "path": "/personal/v1/chats/main"
+        },
+        {
+          "at": 1791692088855,
+          "path": "/personal/v1/activity/unread"
+        },
+        {
+          "at": 1791692088856,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692088862,
+          "path": "/personal/v1/sessions"
+        },
+        {
+          "at": 1791692088862,
+          "path": "/personal/v1/chats"
+        },
+        {
+          "at": 1791692088883,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692089105,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692089355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692089607,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692089855,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692090106,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692090355,
+          "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+        },
+        {
+          "at": 1791692090475,
+          "path": "/personal/v1/settings/usage"
+        },
+        {
+          "at": 1791692090475,
+          "path": "/personal/v1/cloud/binding"
+        },
+        {
+          "at": 1791692090476,
+          "path": "/personal/v1/auth/me"
+        },
+        {
+          "at": 1791692090476,
+          "path": "/personal/v1/cloud/devices/pending"
+        },
+        {
+          "at": 1791692090477,
+          "path": "/personal/v1/auth/devices"
+        },
+        {
+          "at": 1791692090479,
+          "path": "/personal/v1/account/models"
+        },
+        {
+          "at": 1791692090480,
+          "path": "/personal/v1/settings/approvals"
+        },
+        {
+          "at": 1791692090480,
+          "path": "/personal/v1/system"
+        },
+        {
+          "at": 1791692090481,
+          "path": "/personal/v1/settings/models"
+        },
+        {
+          "at": 1791692090481,
+          "path": "/personal/v1/models"
+        },
+        {
+          "at": 1791692090482,
+          "path": "/personal/v1/projects"
+        },
+        {
+          "at": 1791692090484,
+          "path": "/personal/v1/models"
+        },
+        {
+          "at": 1791692090484,
+          "path": "/personal/v1/workspaces/browser"
+        },
+        {
+          "at": 1791692090484,
+          "path": "/personal/v1/cloud/binding"
+        },
+        {
+          "at": 1791692090492,
+          "path": "/personal/v1/usage"
+        },
+        {
+          "at": 1791692090521,
+          "path": "/personal/v1/settings/models"
+        },
+        {
+          "at": 1791692097630,
+          "path": "/personal/v1/cloud/devices/pending"
+        },
+        {
+          "at": 1791692112632,
+          "path": "/personal/v1/cloud/devices/pending"
+        },
+        {
+          "at": 1791692127630,
+          "path": "/personal/v1/cloud/devices/pending"
+        },
+        {
+          "at": 1791692142630,
+          "path": "/personal/v1/cloud/devices/pending"
+        }
+      ],
+      "streamingWindow": {
+        "start": 1791692087337,
+        "end": 1791692090438,
+        "requests": [
+          {
+            "at": 1791692087356,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692087605,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692087854,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692088105,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692088355,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692088605,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692088855,
+            "path": "/personal/v1/chats/main"
+          },
+          {
+            "at": 1791692088855,
+            "path": "/personal/v1/activity/unread"
+          },
+          {
+            "at": 1791692088856,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692088862,
+            "path": "/personal/v1/sessions"
+          },
+          {
+            "at": 1791692088862,
+            "path": "/personal/v1/chats"
+          },
+          {
+            "at": 1791692088883,
+            "path": "/personal/v1/projects"
+          },
+          {
+            "at": 1791692089105,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692089355,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692089607,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692089855,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692090106,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          },
+          {
+            "at": 1791692090355,
+            "path": "/personal/v1/sessions/session-8cb80b19-d3f5-413d-8060-3b6ff3d125df/events"
+          }
+        ]
+      },
+      "streamingRequestsPerSecond": 5.804579168010319,
+      "idleWindow": {
+        "start": 1791692139663,
+        "end": 1791692145763,
+        "requests": [
+          {
+            "at": 1791692142630,
+            "path": "/personal/v1/cloud/devices/pending"
+          }
+        ]
+      },
+      "idleRequestsPerSecond": 0.1639344262295082
+    },
+    {
+      "surface": "mobile",
+      "checks": [
+        {
+          "name": "approval-menu",
+          "durationMs": 3213,
+          "requests": 15,
+          "passed": true
+        },
+        {
+          "name": "risk-confirm",
+          "durationMs": 3237,
+          "requests": 19,
+          "passed": true
+        },
+        {
+          "name": "plus-menu",
+          "durationMs": 3239,
+          "requests": 18,
+          "passed": true
+        },
+        {
+          "name": "model-menu",
+          "durationMs": 3248,
+          "requests": 18,
+          "passed": true
+        },
+        {
+          "name": "search",
+          "durationMs": 3209,
+          "requests": 17,
+          "passed": true
+        },
+        {
+          "name": "session-menu",
+          "durationMs": 3225,
+          "requests": 22,
+          "passed": true
+        },
+        {
+          "name": "folder-menu",
+          "durationMs": 3182,
+          "requests": 19,
+          "passed": true
+        },
+        {
+          "name": "message-more",
+          "durationMs": 3196,
+          "requests": 14,
+          "passed": true
+        },
+        {
+          "name": "gallery",
+          "durationMs": 3249,
+          "requests": 18,
+          "passed": true
+        },
+        {
+          "name": "chinese-composition",
+          "passed": true,
+          "value": "先整理资料中文输入",
+          "start": 9,
+          "end": 9
+        },
+        {
+          "name": "settings-dropdown",
+          "durationMs": 3194,
+          "requests": 2,
+          "passed": true
+        }
+      ],
+      "requests": [
+        {
+          "at": 1791692093985,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692094060,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692094320,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692094578,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692094837,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692095096,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692095354,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692095612,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692095870,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692096128,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692096387,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692096645,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692096904,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692097109,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692097132,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692097163,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692097420,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692097677,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692097934,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692098194,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692098285,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692098291,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692098293,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692098391,
+          "path": "/bridge",
+          "body": "cloud.pending"
+        },
+        {
+          "at": 1791692098392,
+          "path": "/bridge",
+          "body": "host.status"
+        },
+        {
+          "at": 1791692098451,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692098710,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692098969,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692099228,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692099486,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692099745,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692100005,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692100265,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692100334,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692100382,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692100493,
+          "path": "/bridge",
+          "body": "models.host"
+        },
+        {
+          "at": 1791692100523,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692100780,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692101039,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692101296,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692101555,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692101816,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692102077,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692102336,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692102595,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692102784,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692102790,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692102791,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692102854,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692103113,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692103370,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692103617,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692103628,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692103666,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692103742,
+          "path": "/bridge",
+          "body": "models.list"
+        },
+        {
+          "at": 1791692103754,
+          "path": "/bridge",
+          "body": "models.host"
+        },
+        {
+          "at": 1791692103887,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692104145,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692104404,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692104663,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692104921,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692105181,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692105438,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692105696,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692105955,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692106214,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692106474,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692106734,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692106876,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692106912,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692106998,
+          "path": "/bridge",
+          "body": "models.list"
+        },
+        {
+          "at": 1791692106998,
+          "path": "/bridge",
+          "body": "models.host"
+        },
+        {
+          "at": 1791692106998,
+          "path": "/bridge",
+          "body": "models.account.list"
+        },
+        {
+          "at": 1791692107010,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692107023,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692107023,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692107023,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692107030,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692107261,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692107285,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692107291,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692107293,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692107519,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692107776,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692108034,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692108294,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692108550,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692108809,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692109069,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692109327,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692109585,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692109844,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692110104,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692110162,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692110183,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692110364,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692110623,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692110883,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692111140,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692111399,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692111657,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692111785,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692111791,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692111793,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692111915,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692112172,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692112432,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692112690,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692112948,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692113206,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692113383,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692113390,
+          "path": "/bridge",
+          "body": "cloud.pending"
+        },
+        {
+          "at": 1791692113399,
+          "path": "/bridge",
+          "body": "host.status"
+        },
+        {
+          "at": 1791692113409,
+          "path": "/bridge",
+          "body": "updates.status"
+        },
+        {
+          "at": 1791692113415,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692113464,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692113493,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692113512,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692113518,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692113723,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692113982,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692114241,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692114498,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692114756,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692115015,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692115273,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692115530,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692115788,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692116046,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692116286,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692116286,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692116286,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692116293,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692116295,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692116305,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692116563,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692116677,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692116700,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692116821,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692116872,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692117079,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692117338,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692117595,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692117855,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692118113,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692118370,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692118627,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692118886,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692119143,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692119401,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692119658,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692119915,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692120022,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692120057,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692120173,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692120432,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692120690,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692120785,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692120791,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692120794,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692120949,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692121207,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692121464,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692121722,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692121979,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692122238,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692122496,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692122755,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692123012,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692123240,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692123263,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692123270,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692123527,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692123671,
+          "path": "/bridge",
+          "body": "app.activity"
+        },
+        {
+          "at": 1791692123784,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692124041,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692124299,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692124557,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692124815,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692125072,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692125285,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692125294,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692125294,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692125330,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692125588,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692125845,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692126103,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692126362,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692126517,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692126549,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692126621,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692126877,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692127135,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692127392,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692127650,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692127909,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692128166,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692128390,
+          "path": "/bridge",
+          "body": "cloud.pending"
+        },
+        {
+          "at": 1791692128407,
+          "path": "/bridge",
+          "body": "host.status"
+        },
+        {
+          "at": 1791692128424,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692128681,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692128938,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692129196,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692129453,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692129789,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692133070,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692133094,
+          "path": "/bridge",
+          "body": "settings.appearance"
+        },
+        {
+          "at": 1791692133161,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692133182,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692133182,
+          "path": "/bridge",
+          "body": "activity.list"
+        },
+        {
+          "at": 1791692133190,
+          "path": "/bridge",
+          "body": "shared.approvals.list"
+        },
+        {
+          "at": 1791692133190,
+          "path": "/bridge",
+          "body": "shared.questions.list"
+        },
+        {
+          "at": 1791692133193,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692133411,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692134283,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692134294,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692134294,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692134918,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692136425,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692137931,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692138785,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692138790,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692138792,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692139438,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692140945,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692142451,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692143285,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692143290,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692143290,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692143391,
+          "path": "/bridge",
+          "body": "cloud.pending"
+        },
+        {
+          "at": 1791692143413,
+          "path": "/bridge",
+          "body": "host.status"
+        },
+        {
+          "at": 1791692143418,
+          "path": "/bridge",
+          "body": "updates.status"
+        },
+        {
+          "at": 1791692143958,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692145466,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692146973,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692147785,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692147785,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692147785,
+          "path": "/bridge",
+          "body": "shared.sessions.list"
+        },
+        {
+          "at": 1791692147794,
+          "path": "/bridge",
+          "body": "shared.projects.list"
+        },
+        {
+          "at": 1791692147796,
+          "path": "/bridge",
+          "body": "host.business"
+        },
+        {
+          "at": 1791692148480,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692149986,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        },
+        {
+          "at": 1791692151492,
+          "path": "/bridge",
+          "body": "shared.sessions.events"
+        }
+      ],
+      "streamingWindow": {
+        "start": 1791692126594,
+        "end": 1791692129695,
+        "requests": [
+          {
+            "at": 1791692126621,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692126877,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692127135,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692127392,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692127650,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692127909,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692128166,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692128390,
+            "path": "/bridge",
+            "body": "cloud.pending"
+          },
+          {
+            "at": 1791692128407,
+            "path": "/bridge",
+            "body": "host.status"
+          },
+          {
+            "at": 1791692128424,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692128681,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692128938,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692129196,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692129453,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          }
+        ]
+      },
+      "streamingRequestsPerSecond": 4.514672686230249,
+      "idleWindow": {
+        "start": 1791692145838,
+        "end": 1791692151940,
+        "requests": [
+          {
+            "at": 1791692146973,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692147785,
+            "path": "/bridge",
+            "body": "host.business"
+          },
+          {
+            "at": 1791692147785,
+            "path": "/bridge",
+            "body": "host.business"
+          },
+          {
+            "at": 1791692147785,
+            "path": "/bridge",
+            "body": "shared.sessions.list"
+          },
+          {
+            "at": 1791692147794,
+            "path": "/bridge",
+            "body": "shared.projects.list"
+          },
+          {
+            "at": 1791692147796,
+            "path": "/bridge",
+            "body": "host.business"
+          },
+          {
+            "at": 1791692148480,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692149986,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          },
+          {
+            "at": 1791692151492,
+            "path": "/bridge",
+            "body": "shared.sessions.events"
+          }
+        ]
+      },
+      "idleRequestsPerSecond": 1.4749262536873156
+    }
+  ],
+  "errors": []
+}

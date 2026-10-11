@@ -3,6 +3,7 @@
   function createAndroidBridge({ postMessage, onEvent = () => {}, timeout = 45000 } = {}) {
     let sequence = 0;
     const pending = new Map();
+    let waitingReads=0;
     function call(method, params = {}, timeoutMs = timeout) {
       if (!postMessage) return Promise.reject(new Error('NATIVE_UNAVAILABLE'));
       const id = `r${++sequence}`;
@@ -90,14 +91,22 @@
     }
     async function fetch(path, options = {}) {
       try {
-        const result = await route(path, options.method || 'GET', options.body === undefined ? undefined : typeof options.body === 'string' ? JSON.parse(options.body) : options.body);
+        const waiting=(options.method||'GET')==='GET'&&new URL(path,'https://host.invalid').searchParams.has('waitMs');
+        if(waiting&&options.signal?.aborted)throw new Error('ABORTED');
+        let abort;
+        if(waiting)waitingReads++;
+        const read=route(path, options.method || 'GET', options.body === undefined ? undefined : typeof options.body === 'string' ? JSON.parse(options.body) : options.body);
+        const physical=waiting?read.finally(()=>{waitingReads--;}):read;
+        let result;
+        try {result=waiting&&options.signal?await Promise.race([physical,new Promise((_,reject)=>{abort=()=>reject(new Error('ABORTED'));options.signal.addEventListener('abort',abort,{once:true});})]):await physical;}
+        finally{if(abort)options.signal.removeEventListener('abort',abort);}
         return { ok: true, status: 200, json: async () => result };
       } catch (error) {
         const code = error.message || 'OPERATION_FAILED';
         return { ok: false, status: error.status || (code === 'UNAUTHORIZED' ? 401 : code === 'NOT_FOUND' ? 404 : 503), json: async () => ({ error: { code } }) };
       }
     }
-    return { call, receive, fetch, account, nextRequestId: (prefix = 'ui') => `${prefix}-${Date.now().toString(36)}-${(++sequence).toString(36)}-${Math.random().toString(36).slice(2, 10)}` };
+    return { call, receive, fetch, account, canWaitForReply:()=>waitingReads===0, nextRequestId: (prefix = 'ui') => `${prefix}-${Date.now().toString(36)}-${(++sequence).toString(36)}-${Math.random().toString(36).slice(2, 10)}` };
   }
   globalThis.WeftUiCore.createAndroidBridge = createAndroidBridge;
   globalThis.WeftUiCore.adoptMobileHostSession = async (call, accept, payload) => {
