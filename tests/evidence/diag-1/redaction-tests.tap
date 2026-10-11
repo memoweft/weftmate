@@ -1,0 +1,178 @@
+TAP version 13
+# Subtest: redaction API key: sensitive example removed and technical example preserved
+ok 1 - redaction API key: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 1.1856
+  type: 'test'
+  ...
+# Subtest: redaction token: sensitive example removed and technical example preserved
+ok 2 - redaction token: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.1014
+  type: 'test'
+  ...
+# Subtest: redaction password: sensitive example removed and technical example preserved
+ok 3 - redaction password: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.0897
+  type: 'test'
+  ...
+# Subtest: redaction cookie: sensitive example removed and technical example preserved
+ok 4 - redaction cookie: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.0706
+  type: 'test'
+  ...
+# Subtest: redaction authorization: sensitive example removed and technical example preserved
+ok 5 - redaction authorization: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.0734
+  type: 'test'
+  ...
+# Subtest: redaction email: sensitive example removed and technical example preserved
+ok 6 - redaction email: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.0568
+  type: 'test'
+  ...
+# Subtest: redaction random token: sensitive example removed and technical example preserved
+ok 7 - redaction random token: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.065
+  type: 'test'
+  ...
+# Subtest: redaction URL query: sensitive example removed and technical example preserved
+ok 8 - redaction URL query: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.0548
+  type: 'test'
+  ...
+# Subtest: redaction absolute path: sensitive example removed and technical example preserved
+ok 9 - redaction absolute path: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.0776
+  type: 'test'
+  ...
+# Subtest: redaction Unix path: sensitive example removed and technical example preserved
+ok 10 - redaction Unix path: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.1073
+  type: 'test'
+  ...
+# Subtest: redaction standalone key: sensitive example removed and technical example preserved
+ok 11 - redaction standalone key: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.0541
+  type: 'test'
+  ...
+# Subtest: redaction JSON secret: sensitive example removed and technical example preserved
+ok 12 - redaction JSON secret: sensitive example removed and technical example preserved
+  ---
+  duration_ms: 0.097
+  type: 'test'
+  ...
+# Subtest: free messages, model output, file names and account names cannot enter diagnostics; templates remain useful
+ok 13 - free messages, model output, file names and account names cannot enter diagnostics; templates remain useful
+  ---
+  duration_ms: 24.5406
+  type: 'test'
+  ...
+# Subtest: stack frames only retain existing program source paths and line/column; functions, external paths and unknown files are removed
+ok 14 - stack frames only retain existing program source paths and line/column; functions, external paths and unknown files are removed
+  ---
+  duration_ms: 3.0359
+  type: 'test'
+  ...
+# Subtest: generic write rejects privileged message/name/stack fields; failure only persists canonical diagnostics
+ok 15 - generic write rejects privileged message/name/stack fields; failure only persists canonical diagnostics
+  ---
+  duration_ms: 6.8624
+  type: 'test'
+  ...
+# Subtest: startup is durable, idempotent and scoped by generated runId; unbegun instance never changes marker
+ok 16 - startup is durable, idempotent and scoped by generated runId; unbegun instance never changes marker
+  ---
+  duration_ms: 33.9206
+  type: 'test'
+  ...
+# Subtest: clean exit contains runtime duration and cleanup timing, repeated exit is idempotent, next launch has no unclean event
+ok 17 - clean exit contains runtime duration and cleanup timing, repeated exit is idempotent, next launch has no unclean event
+  ---
+  duration_ms: 30.6904
+  type: 'test'
+  ...
+# Subtest: missing exit recovers prior last event even with a truncated final JSONL line and counts each run once
+ok 18 - missing exit recovers prior last event even with a truncated final JSONL line and counts each run once
+  ---
+  duration_ms: 25.9779
+  type: 'test'
+  ...
+# Subtest: retained exit marker keeps normal result after old JSONL expires without a false crash
+ok 19 - retained exit marker keeps normal result after old JSONL expires without a false crash
+  ---
+  duration_ms: 32.0272
+  type: 'test'
+  ...
+# Subtest: recorded Windows session end explains an interrupted run without inventing an exit code
+ok 20 - recorded Windows session end explains an interrupted run without inventing an exit code
+  ---
+  duration_ms: 25.5357
+  type: 'test'
+  ...
+# Subtest: fsynced exit is authoritative if old running marker remains; startup failure remains abnormal
+ok 21 - fsynced exit is authoritative if old running marker remains; startup failure remains abnormal
+  ---
+  duration_ms: 46.2257
+  type: 'test'
+  ...
+# Subtest: abnormal counts expire after seven days and clean child exits do not pollute summary
+ok 22 - abnormal counts expire after seven days and clean child exits do not pollute summary
+  ---
+  duration_ms: 18.7782
+  type: 'test'
+  ...
+# Subtest: unavailable disk and corrupted marker are reported without throwing during begin/write/failure/exit
+ok 23 - unavailable disk and corrupted marker are reported without throwing during begin/write/failure/exit
+  ---
+  duration_ms: 16.824
+  type: 'test'
+  ...
+# Subtest: logs rotate below single-file and total limits and remove expired days only
+ok 24 - logs rotate below single-file and total limits and remove expired days only
+  ---
+  duration_ms: 22.0139
+  type: 'test'
+  ...
+# Subtest: dump retention caps count, size and age; previous-run correspondence is explicitly an inference
+ok 25 - dump retention caps count, size and age; previous-run correspondence is explicitly an inference
+  ---
+  duration_ms: 30.4078
+  type: 'test'
+  ...
+# Subtest: dump pruning never follows directory symlinks or Windows junctions including the Crashpad root
+ok 26 - dump pruning never follows directory symlinks or Windows junctions including the Crashpad root
+  ---
+  duration_ms: 22.0009
+  type: 'test'
+  ...
+# Subtest: diagnostic summary revalidates persisted error text and frames and includes OS version without identities
+ok 27 - diagnostic summary revalidates persisted error text and frames and includes OS version without identities
+  ---
+  duration_ms: 21.8802
+  type: 'test'
+  ...
+# Subtest: unsafe dump names and arbitrary signals are rejected, recognized process signals remain metadata
+ok 28 - unsafe dump names and arbitrary signals are rejected, recognized process signals remain metadata
+  ---
+  duration_ms: 1.8713
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 470.6258

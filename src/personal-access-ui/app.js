@@ -41,6 +41,7 @@
     ui.mountOnboarding();
     globalThis.WeftPresenceView.mount({core, badgeTarget:ui.byId('assistant-connection'),
         composerTarget:ui.byId('message-form').parentElement, toast:ui.toast,
+        openRunRecords:()=>ui.openSettings(globalThis.weftmateDesktop ? 'system' : 'general'),
         openLogin:()=>core.startCloudJourney(), openDevices:()=>{core.openAccount();ui.openSettings('devices');}});
     document.addEventListener('visibilitychange',()=>core.connectionVisibility(document.visibilityState==='hidden'));
     window.addEventListener('offline',()=>core.connectionNetwork(false));
