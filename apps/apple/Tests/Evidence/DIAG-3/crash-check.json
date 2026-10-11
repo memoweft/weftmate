@@ -1,0 +1,46 @@
+{
+  "package": "DIAG-3b",
+  "handoff": "DIAG-3c",
+  "originalDIAG3HistoricalEvidence": {
+    "baselineCount": 8,
+    "finalCount": 11,
+    "newReports": [
+      {
+        "name": "WeftMatePhone-2026-10-10-194737.ips",
+        "at": "2026-10-11T02:47:37.226174+00:00"
+      },
+      {
+        "name": "WeftMatePhone-2026-10-10-194818.ips",
+        "at": "2026-10-11T02:48:18.936173+00:00"
+      },
+      {
+        "name": "WeftMatePhone-2026-10-10-194808.ips",
+        "at": "2026-10-11T02:48:08.779808+00:00"
+      }
+    ],
+    "newMac": 0,
+    "newWatch": 0,
+    "newPhone": 3,
+    "finalStableBuildNewReports": 0,
+    "crashDialogsPreserved": true
+  },
+  "diag3bBaselineCount": 11,
+  "diag3bFinalCount": 12,
+  "diag3bNewReportFiles": 1,
+  "diag3bNewCrashEvents": 0,
+  "delayedOldReport": {
+    "name": "WeftMatePhone-2026-10-10-205340.ips",
+    "captureTime": "2026-10-11T02:48:43.727Z",
+    "taskStartedAt": "2026-10-11T03:52:37Z",
+    "deliveredAt": "2026-10-11T03:53:40Z"
+  },
+  "handoffBaselineCount": 12,
+  "handoffFinalCount": 12,
+  "handoffNewReports": [],
+  "newMac": 0,
+  "newPhone": 0,
+  "newWatch": 0,
+  "excludedOldUITestRunnerReports": 3,
+  "rootAndRetiredIncluded": true,
+  "crashDialogsPreserved": true
+}

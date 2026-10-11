@@ -1,0 +1,45 @@
+{
+  "abnormalCountsLast7Days" : {
+    "app.previous_unclean_exit" : 1,
+    "approval.failure" : 1
+  },
+  "appVersion" : "0.1.0",
+  "generatedAt" : "2026-10-10T00:00:00Z",
+  "osVersion" : "26.3",
+  "platform" : "watchos",
+  "recentAbnormalRecords" : [
+    {
+      "appVersion" : "0.1.0",
+      "at" : "2026-10-10T00:00:00Z",
+      "event" : "approval.failure",
+      "fields" : {
+        "code" : "UNCONFIRMED",
+        "phase" : "approval",
+        "recordIndex" : "2"
+      },
+      "osVersion" : "26.3",
+      "platform" : "watchos",
+      "runId" : "fe686e65-1025-41d8-ad99-57fc806467f3"
+    },
+    {
+      "appVersion" : "0.1.0",
+      "at" : "2026-10-10T00:00:00Z",
+      "event" : "app.previous_unclean_exit",
+      "fields" : {
+        "reason" : "suspected_foreground_crash",
+        "recordIndex" : "1",
+        "state" : "foreground"
+      },
+      "lastAt" : "2026-10-10T00:00:00Z",
+      "lastEvent" : "approval.failure",
+      "osVersion" : "26.3",
+      "platform" : "watchos",
+      "previousRunId" : "fe686e65-1025-41d8-ad99-57fc806467f3",
+      "runId" : "d6ee8f3a-76d7-4074-9eda-d4a490a9b5c3"
+    }
+  ],
+  "retentionPolicy" : {
+    "maxBytes" : 262144,
+    "retentionDays" : 7
+  }
+}

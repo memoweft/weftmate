@@ -17,6 +17,8 @@ struct WeftMateRootView: View {
     @Environment(\.openWindow) private var openWindow
     #endif
     @ObservedObject var model: AppleAppModel
+    @ObservedObject private var runLog = RunLogRuntime.shared
+    @State private var runLogOpen = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -44,6 +46,18 @@ struct WeftMateRootView: View {
         #if os(iOS)
         .overlay(alignment: .bottom) { ArchiveUndoBar(app: model) }
         #endif
+        .onChange(of: model.session?.verification) { _, _ in runLog.connection(model.offline.hostOffline ? "offline" : model.session == nil ? "login_required" : "online") }
+        .onReceive(model.offline.$hostOffline) { offline in runLog.connection(offline ? "offline" : model.session == nil ? "login_required" : "online") }
+        #if os(iOS)
+            .fullScreenCover(isPresented: $runLogOpen) { SettingsView(model: model, route: .init(categoryID: "run-log"), onClose: { runLogOpen = false }) }
+            #endif
+        .environment(\.openRunLogPage, {
+            #if os(macOS)
+            model.settingsRoute = .init(categoryID: "run-log"); openWindow(id: "settings")
+            #else
+            runLogOpen = true
+            #endif
+        })
         .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
         .sheet(item: Binding(get: { model.deletionInSettings ? nil : model.deletionCandidate }, set: { model.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: model) }
         #if os(iOS)
@@ -107,6 +121,11 @@ struct WeftMateRootView: View {
             }
             #endif
             await model.start()
+            #if DEBUG && os(macOS)
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--diag3-native-review") {
+                await DIAG3MacReview.run(); return
+            }
+            #endif
             #if DEBUG && os(macOS)
             if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--lg2-capture") {
                 NSApplication.shared.accessibilitySetValue(true, forAttribute: NSAccessibility.Attribute(rawValue: "AXEnhancedUserInterface"))
@@ -235,7 +254,7 @@ private struct AccountEntry: View {
     var body: some View {
         Group {
             if cloud.authenticated { CloudAccountHome(app: app, cloud: cloud) }
-            else { AuthView(model: cloud) }
+            else { AuthView(model: cloud).safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) } }
         }.task {
             while !Task.isCancelled {
                 await cloud.poll()
@@ -266,7 +285,7 @@ struct MacWorkspace: View {
                     .frame(maxHeight: .infinity)
                     .clipped() }
                 NavigationStack {
-                    detail
+                    detail.safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) }
                 }
                 .frame(minWidth: 440, maxWidth: .infinity)
                 .frame(maxHeight: .infinity)
@@ -447,6 +466,7 @@ struct PhoneWorkspace: View {
                         .toolbar { ToolbarItem(placement: .navigation) { NavigationLink(value: "a16-side-list") { WeftLabel("旁聊与项目", icon: "sidebar") }.accessibilityIdentifier("mainChat.sideList") } }
                 } else { sideList }
             }
+                .safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) }
                 .navigationDestination(for: String.self) { id in
                     if id == "a16-side-list" {
                         sideList.toolbar {
