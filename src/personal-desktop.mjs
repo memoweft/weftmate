@@ -17,6 +17,7 @@ import { join, basename } from 'node:path';
 import { validArtifactFileName } from './personal-artifacts/index.mjs';
 import { windowIcon, notificationIcon } from './app-icons.mjs';
 import { nativeEventNotification } from './personal-access/notification-content.mjs';
+import { nativeWindowRequest } from './personal-desktop-request.mjs';
 
 export function desktopNotification(event, taskTitle) {
   return nativeEventNotification(event, taskTitle);
@@ -69,6 +70,11 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
   const updateStatus = next => { Object.assign(status, next); onStatus({ ...status }); };
   const trusted = event => event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame &&
     new URL(event.senderFrame.url).origin === origin && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
+  desktopSession.webRequest.onBeforeSendHeaders({ urls: [origin + '/personal/v1/*'] }, (details, callback) => {
+    const localWindow = nativeWindowRequest(details, win, origin);
+    callback({ requestHeaders: { ...details.requestHeaders,
+      ...(localWindow ? { Origin: origin, 'X-WeftMate-Desktop': libraryDesktopToken } : {}) } });
+  });
   const handle = (channel, callback) => ipcMain.handle(channel, (event, ...args) => {
     if (!trusted(event)) throw new Error('Desktop bridge unavailable');
     return callback(...args);
@@ -79,7 +85,8 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
     const error = await shell.openPath(directory); if (error) throw new Error('LOG_FOLDER_UNAVAILABLE');
     return { opened: true };
   });
-  const fetchLocal = (path, options = {}) => desktopSession.fetch(new URL(`/personal/v1${path}`, contentOrigin).href, { ...options, credentials: 'include' });
+  const fetchLocal = (path, options = {}) => desktopSession.fetch(new URL(`/personal/v1${path}`, contentOrigin).href, { ...options,
+    headers: { ...options.headers, origin: contentOrigin, ...(contentOrigin === origin ? { 'x-weftmate-desktop': libraryDesktopToken } : {}) }, credentials: 'include' });
   const jsonLocal = async path => {
     const response = await fetchLocal(path);
     if (!response.ok) throw new Error('Session unavailable');
@@ -220,7 +227,7 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
     const dataOwner = target.origin === origin && target.pathname.startsWith('/personal/v1/data') && options.method === 'POST' ? (await jsonLocal('/auth/me')).account.ownerId : null;
     try {
       const response = await desktopSession.fetch(target.href, { method: options.method || 'GET', body: options.body,
-        headers: { ...options.headers, Origin: target.origin, ...(target.origin === origin && target.pathname.startsWith('/personal/v1/data') ? {'x-weftmate-desktop':libraryDesktopToken} : {}) }, credentials: 'include', cache: 'no-store', redirect: 'error', signal: controller.signal });
+        headers: { ...options.headers, Origin: target.origin, ...(target.origin === origin ? {'x-weftmate-desktop':libraryDesktopToken} : {}) }, credentials: 'include', cache: 'no-store', redirect: 'error', signal: controller.signal });
       const body = await response.json().catch(() => ({})); if (dataOwner && body.operation?.id) dataRequests.set(body.operation.id,dataOwner);
       return { status: response.status, body, headers: {
         'retry-after': response.headers.get('Retry-After'), 'dpop-nonce': response.headers.get('DPoP-Nonce') } };

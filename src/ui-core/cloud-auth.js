@@ -9,8 +9,8 @@
     return url.origin;
   }
   class CloudAuthClient {
-    constructor({ fetch, crypto, credentials, vendor, host, redirectUri, nativeKey, now = Date.now }) {
-      Object.assign(this, { fetch, crypto, credentials, vendor, nativeKey, now });
+    constructor({ fetch, crypto, credentials, vendor, host, redirectUri, nativeKey, localCsrf, now = Date.now }) {
+      Object.assign(this, { fetch, crypto, credentials, vendor, nativeKey, localCsrf, now });
       this.host = origin(host); this.redirectUri = redirectUri || this.host + '/personal/v1/ui/';
       this.generation = 0;
     }
@@ -93,6 +93,19 @@
       return this.finish(await this.publicRequest('/auth/device/confirm', { interactionUid: this.pending.interactionUid,
         csrfToken: this.pending.csrfToken, challengeId: this.pending.challengeId, code }));
     }
+    async beginCode({ email, deviceName, deviceType = 'web' }) {
+      const pending = await this.prepare(deviceName), key = await this.key();
+      const result = await this.publicRequest('/auth/login/code/request', { interactionUid: pending.interactionUid,
+        csrfToken: pending.csrfToken, email, deviceId: key.deviceId, publicJwk: key.publicJwk, deviceName, deviceType });
+      if (pending.generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
+      this.pending.challengeId = result.challengeId;
+      return result;
+    }
+    async confirmCode(code) {
+      if (!/^\d{6}$/.test(code) || !this.pending?.challengeId) fail('INVALID_LOGIN_CODE');
+      return this.finish(await this.publicRequest('/auth/login/code/confirm', { interactionUid: this.pending.interactionUid,
+        csrfToken: this.pending.csrfToken, challengeId: this.pending.challengeId, code }));
+    }
     async verify(tokens, { pending, audience = this.base, sub } = {}) {
       if (tokens.token_type !== 'DPoP') fail('CLOUD_TOKEN_INVALID');
       const keys = this.vendor.createLocalJWKSet(await this.request(this.config.issuer + '/jwks'));
@@ -109,6 +122,7 @@
       const key = await this.key(), jwk = key.publicJwk;
       const jkt = await this.hash(JSON.stringify({ crv: jwk.crv, kty: jwk.kty, x: jwk.x, y: jwk.y }));
       if (typeof access.sub !== 'string' || !access.sub || (sub && access.sub !== sub) || access.cnf?.jkt !== jkt) fail('CLOUD_TOKEN_INVALID');
+      if (access.device_verified !== true) fail('CLOUD_DEVICE_VERIFICATION_REQUIRED');
       return access;
     }
     async token(form) {
@@ -158,8 +172,10 @@
       try { return await current; } finally { if (this.refreshing === current) this.refreshing = null; }
     }
     async name(deviceName) {
+      const generation = this.generation;
       const previous = this.refreshing;
       const current = (async () => { if (previous) await previous; const saved = await this.saved();
+        if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
         if (saved) await this.credentials(this.tokenId, { ...saved, deviceName }); })();
       this.refreshing = current;
       try { await current; } finally { if (this.refreshing === current) this.refreshing = null; }
@@ -169,15 +185,42 @@
       return this.request(url, { method, body, headers: { Authorization: 'DPoP ' + token, DPoP: await this.proof(url, { method, token }) } });
     }
     async exchange(desktop = false, pairing = null) {
+      const generation = this.generation, csrf = desktop ? this.localCsrf?.() : undefined;
       const saved = await this.saved();
+      if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
       const resource = this.base + '/hosts/' + this.config.hostId;
       if (!desktop) await this.authorized('/hosts/connect', { method: 'POST', body: { hostId: this.config.hostId } });
       const token = await this.access(desktop ? this.base : resource);
       const nonce = await this.request(this.host + '/personal/v1/auth/cloud-nonce', { method: 'POST', body: {} });
+      if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
       const path = desktop ? '/auth/cloud-desktop' : pairing ? '/cloud/pairings/redeem' : '/auth/cloud-session';
       const url = this.host + '/personal/v1' + path;
-      return this.request(url, { method: 'POST', headers: { DPoP: await this.proof(url, { token, nonce: nonce.nonce }) },
+      const proof = await this.proof(url, { token, nonce: nonce.nonce });
+      if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
+      const result = await this.request(url, { method: 'POST', headers: { DPoP: proof,
+        ...(csrf ? { 'X-WeftMate-CSRF': csrf } : {}) },
         body: { accessToken: token, deviceName: saved.deviceName || '这台设备', ...(pairing ? { challenge: pairing.challenge } : {}) } });
+      if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
+      if (result.hostTrust) {
+        const trust = result.hostTrust, key = await this.key();
+        const jkt = await this.hash(JSON.stringify({ crv: key.publicJwk.crv, kty: key.publicJwk.kty, x: key.publicJwk.x, y: key.publicJwk.y }));
+        const { payload } = await this.vendor.jwtVerify(trust.trustToken, this.vendor.createLocalJWKSet({ keys: [trust.publicJwk] }), {
+          algorithms: ['ES256'], typ: 'wm-host-trust+jwt', issuer: this.config.hostId, audience: jkt,
+          requiredClaims: ['iat','exp','jti','sub','hostId','deviceId','jkt','tlsSpki','publicJwk'],
+          maxTokenAge: '120s', currentDate: new Date(this.now()) });
+        if (payload.sub !== saved.sub || payload.deviceId !== key.deviceId || payload.hostId !== this.config.hostId ||
+            payload.jkt !== jkt || payload.exp - payload.iat > 120 || payload.iat * 1000 > this.now() + 30000 ||
+            !/^[A-Za-z0-9_-]{43}$/.test(payload.tlsSpki) ||
+            await this.hash(JSON.stringify({ crv: payload.publicJwk.crv, kty: payload.publicJwk.kty, x: payload.publicJwk.x, y: payload.publicJwk.y })) !== await this.hash(JSON.stringify({ crv: trust.publicJwk.crv, kty: trust.publicJwk.kty, x: trust.publicJwk.x, y: trust.publicJwk.y }))) fail('HOST_TRUST_INVALID');
+        // The initial anchor comes from the authenticated host TLS connection
+        // under the existing D24 browser boundary; native pins retain this key.
+        const prior = await this.credentials('trusted-host:' + this.config.hostId);
+        if (prior?.publicJwk && await this.hash(JSON.stringify({ crv: prior.publicJwk.crv, kty: prior.publicJwk.kty, x: prior.publicJwk.x, y: prior.publicJwk.y })) !==
+            await this.hash(JSON.stringify({ crv: trust.publicJwk.crv, kty: trust.publicJwk.kty, x: trust.publicJwk.x, y: trust.publicJwk.y }))) fail('HOST_TRUST_INVALID');
+        await this.credentials('trusted-host:' + this.config.hostId, { tlsSpki: payload.tlsSpki, publicJwk: trust.publicJwk,
+          origin: payload.origin, relay: payload.relay });
+      }
+      return result;
     }
     async forget() { this.generation++; this.pending = null; if (this.tokenId) await this.credentials(this.tokenId, undefined, true); }
     async resetKey() { if (this.nativeKey) await this.nativeKey.clear(this.storageId); else await this.credentials('app-key:' + this.storageId, undefined, true); }

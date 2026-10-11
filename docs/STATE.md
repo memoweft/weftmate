@@ -8,6 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
+| Codex · Windows-5 | AUTH-1 · 本机直接用与登录后设备管理 | `wp/auth-1-login-first`：严格原生窗口免登并保留原 owner/数据，云邮箱核对后直接会话、纯验证码、按需可关闭登录、设备通知/立即下线。真实 Electron（桌面程序框架）同目录旧版卡住→升级进入与 HTTPS（加密传输）合成中继手机读原对话通过；89张浅深/窄窗/网页及弹层图。required（完整必过）1497/0失败/14既有条件跳过、vendor（固定运行时集成）204/0/0、手机109/0、云77/0/4既有可选未运行、类型与公开身份扫描0命中，auth1qa打包程序七项冒烟通过。云schema（存储结构）8无迁移，未部署，先云后客户端；安卓新壳与Apple（苹果端）接线/系统栏整屏待各端配合，未改原生与依赖。待Claude审查；[证据](../tests/evidence/auth-1/README.md)。 |
 | Codex · Windows-6 | BL-28a · 灰色补全独立默认关 | [PR #212](https://github.com/memoweft/weftmate/pull/212) · `wp/bl-28a-completion-default-off`：新增 `inlineCompletionEnabled:false`，存量缺字段也默认关、不继承旧值；回复胶囊仍由默认开的 `nextSuggestionsEnabled` 控制。电脑／两类手机网页五入口默认补全请求0、开启后1，四组合与 Tab（制表键）接受均通过；关闭时宿主不调用模型／不占租约。required（完整必过）1441通过／0失败／14既有条件跳过、vendor（固定运行时集成）204／0／0、手机109与资源复验114／0、定向45／0，类型／公开扫描通过。12张设置＋6张快捷键图，手机关闭态滑块颜色回退修复；无新路由／原生壳／版本／算法／模型选择改动，Apple（苹果端）清单见交付报告。已清理进程：5，残留0；已合主线，相关／手机154／0、类型与公开扫描零命中复验通过；待Claude审查。[证据](../tests/evidence/bl-28a/README.md)。 |
 | Codex · Windows-5 | DIAG-1 · 退出与崩溃记录 | [PR #211](https://github.com/memoweft/weftmate/pull/211) · `wp/diag-1-exit-and-crash-log`：持久运行标记、退出原因／码／每步耗时、隐私模板错误与源码帧、本机原生转储保留、进程异常及系统状态运行记录／摘要预览已接；真实 Electron（桌面程序框架）正常／强杀／异常／原生转储闭环通过，桌面浅深／480与手机360／390三态及预览通过。required（完整必过）1478／0失败／14既有条件跳过、vendor（固定运行时集成）204／0失败／0跳过、脱敏28／备份观察1与手机交互109通过；类型与公开身份扫描零命中。diag1qa 打包程序原五项冒烟及目录／正常退出验证通过；无新路由／新壳／安卓版本变更。BK-1（个人备份）仍包含日志，未擅自改范围；手机原生栏与真实资源管理器／卸载选择未验收，Apple（苹果端）原生只读展示待接。[证据](../tests/evidence/diag-1/README.md)，待 Claude 审查。 |
 | Codex · Windows-5 | MAIL-1 · 验证码邮件卡片 | [PR #207](https://github.com/memoweft/weftmate/pull/207) · `wp/mail-1-code-email`：六种邮件共用既有品牌卡片，提供文字／网页两版；验证码连续可复制、动态值转义、主题／预览不含验证码，自有云域名固定 PNG（位图）。云全套70通过／0失败／4既有跳过，required（完整必过）1429通过／0失败／14个既有跳过、vendor（固定运行时集成）203通过／0失败／0个跳过，相关23／手机交互109、类型检查／公开扫描通过；32图与25次选区／剪贴板检查、浅深／窄屏／退化通过。修复既有Windows（视窗系统）云测试兼容；无配置／数据库迁移／业务契约／版本号变更，未部署／未发真实邮件。已清理进程：11，残留0。已合主线，相关复验32/32、更新记录生成副本12/12、类型检查／公开身份扫描0命中通过；最新CI（持续集成）见PR检查。待Claude审查；[证据](../tests/evidence/mail-1/README.md)。 |
@@ -100,6 +101,8 @@
 MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌），缓存54,848，输出4,829，共95,668；按官方现价计**¥0.04674596（约¥0.05）**，不是账单，包含诊断与Qwen方向换模型时的MiMo调用。四个隔离根665实际文件密钥扫描0、凭据／宿主进程0；8081原模型、98,304/单槽及无切换／活动／排队／维护租约保持。未读日用保管库、未自起模型、未停止或重启8080。Core最新ee718d6由独立源码真实MiMo、正常形成路径真实Qwen及自身完整CI验证；本仓CI仍固定已合入M2b的0a0c54c，Core由Claude squash（压缩合并）后需更新固定提交。客户端接口无变更。
 
 ## 契约变更
+
+- AUTH-1：本机专用 `/auth/desktop` GET/POST；云纯验证码 `/cloud/auth/login/code/request|confirm`，签名 `device_verified:true` 严格检查；激活绑定交换直接会话和 hostTrust，不再 pending_approval；desktop 云登录保留本机 Cookie，新增设备动态 `system.device.signed_in`；`/auth/devices` 可选 cloudDeviceId 支持立即下线，整机备份只限直接本机。
 
 - **BL-28a / Windows-6**：既有 `GET/PATCH /settings/personalization` 增加 `inlineCompletionEnabled:boolean`（默认 `false`，存量缺字段不继承旧值）；`nextSuggestionsEnabled` 默认 `true` 仅管 `kind:"replies"`，新字段仅管 `kind:"completion"`。关闭只取消对应种类；补全关闭时客户端零补全请求、Tab（制表键）不接受，宿主空返回且不调用模型／不占模型租约。无新路由／权限／安卓壳要求；Apple（苹果端）需接新字段与独立开关，见本包交付清单。
 

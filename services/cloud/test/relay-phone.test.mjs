@@ -87,7 +87,8 @@ test('Relay phone first input and file task', {
     // and all subsequent phone content requests go through the browser relay.
     const device = await appDevice(f, 'ci-r1-phone');
     const selected = (await control(device, '/hosts/connect', { hostId: started.hostId })).data;
-    assert.equal(selected.approval, 'pending'); await refresh(device, selected.resource);
+    assert.equal(selected.approval, 'trusted'); assert.equal(selected.pairingRequired,false);
+    await refresh(device, selected.resource);
     const phoneApi = async (route, body, method = body === undefined ? 'GET' : 'POST', headers = {}) => phone.evaluate(async ({ route, body, method, headers }) => {
       const me = await (await fetch('/personal/v1/auth/me')).json();
       const response = await fetch('/personal/v1' + route, { method, signal: AbortSignal.timeout(15_000), headers: { 'content-type': 'application/json', 'x-weftmate-csrf': me.csrfToken ?? '', ...headers },
@@ -99,10 +100,10 @@ test('Relay phone first input and file task', {
       return phoneApi('/auth/cloud-session', { accessToken: device.tokens.access_token, deviceName: '合成中继手机' }, 'POST',
         { dpop: await proof(device, base + '/personal/v1/auth/cloud-session', device.tokens.access_token, { nonce: nonce.data.nonce }) });
     };
-    const pending = await exchange(); assert.equal(pending.status, 202, JSON.stringify(pending.data));
-    assert.equal((await phoneApi('/sessions')).status, 401, 'unapproved device must not see content');
-    assert.equal((await direct(`/cloud/devices/${pending.data.requestId}/decision`, { decision: 'allow' }, local)).status, 200);
-    assert.equal((await exchange()).status, 200); report.deviceApproval = true;
+    assert.equal((await phoneApi('/sessions')).status, 401, 'a device without a verified cloud exchange must not see content');
+    const login = await exchange(); assert.equal(login.status, 200, JSON.stringify(login.data));
+    assert.ok(login.data.hostTrust?.trustToken);
+    assert.equal((await phoneApi('/sessions')).status,200); report.deviceLogin = true;
     // Disable onboarding only via its existing API; no UI or business responses are mocked.
     await phoneApi('/onboarding', { step: 'first', completed: true }, 'PATCH');
     const settle = async command => {

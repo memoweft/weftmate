@@ -635,7 +635,7 @@ M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows �
 |---|---|
 | POST `/auth/register`；POST `/auth/login` | 请求 `username,password,deviceName,displayName?` 与服务端一致；读取Cookie/CSRF再用status核对owner/host |
 | GET `/auth/me`；GET `/status` | `account.ownerId,device.id,csrfToken` 与 `ownerId,hostId` 一致；身份不匹配或401清凭据，5xx/超时保留离线身份便于恢复 |
-| POST `/auth/logout`；GET `/auth/devices` | `{}`注销体、Cookie/Origin/CSRF一致；设备createdAt/lastSeenAt等可选字段兼容。注销先清本地身份，服务端失败仍报告未确认 |
+| POST `/auth/logout`；GET `/auth/devices` | `{}`注销体、Cookie/Origin/CSRF一致；设备createdAt/lastSeenAt等可选字段兼容；云内容会话增加可选 cloudDeviceId，限定当前 owner，用现有 DELETE 即时下线该云设备全部宿主会话。注销先清本地身份，服务端失败仍报告未确认 |
 | 云 OIDC discovery/auth/token/jwks（7.2） | S1c-Apple：系统 ASWebAuthenticationSession；Code + PKCE S256、精确 callback/state、ID token nonce/issuer/aud/RS256/exp 验证，JOSESwift 3.0.0 签验 JWS。按 7.7 发送 `wm_device_id=apple-<公钥指纹>`、`wm_public_jwk`，云浏览器隐藏字段仍需邮件确认；公开 client `weftmate-apple`、redirect `com.weftmate.apple:/oauth/callback` 须在云端登记；无 client secret。轮换 refresh token 存 ThisDeviceOnly Keychain，恢复时取新 access token |
 | POST `/auth/cloud-nonce`；POST `/auth/cloud-session`；POST `/cloud/pairings/redeem` | S1c-Apple：host:session resource + 设备 P-256 DPoP；每次新 nonce/jti/ath/精确 htu，无 Authorization；202 保持等待，不建立内容 session，允许/拒绝与重试/取消有明确界面；200 Cookie/CSRF 后再核对 status 的 ownerId/hostId |
 | GET `/cloud/devices/pending`；POST `/cloud/devices/{id}/decision` | S1c-Apple：已登录前台读取，显示设备名、平台（官方客户端在 deviceName 中带 Mac/iPhone）、请求时间，允许/拒绝使用当前 Cookie/CSRF；现有响应无独立 platform 字段，其他名称显示「平台未提供」 |
@@ -812,7 +812,7 @@ H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重�
 
 ## 7. 云端账号与宿主云身份（S1a / S1b / S1c-Web / S1d）
 
-7.1–7.3 由独立 `services/cloud/` 提供；7.4 是电脑宿主接口。桌面/手机浏览器与 Android 壳已接入 S1c-Web；Apple 客户端另包。云账号只授予云控制面访问，不授予宿主内容、shell 或备份解密权限；S1b 已实现宿主验签、DPoP、认领和 `/auth/cloud-session`。现有本地 `/auth/login(username)`、Cookie、ownerId 和数据不变。本节路径使用完整前缀，不计入第 1 节原宿主 81 项基线。
+7.1–7.3 由独立 `services/cloud/` 提供；7.4 是电脑宿主接口。桌面/手机浏览器与 Android 壳已接入 S1c-Web；Apple 客户端另包。AUTH-1 起，本机原生窗口直接进入已有账户；远程设备须完成云登录与设备邮箱核对，再由宿主验证绑定和 DPoP 后授予该账户内容会话。备份仍按恢复材料解密；S1b 的验签、认领与撤销保护保留。现有本地 `/auth/login(username)`、Cookie、ownerId 和数据不变。本节路径使用完整前缀，不计入第 1 节原宿主 81 项基线。
 
 ### 7.1 账号交互接口
 
@@ -852,7 +852,7 @@ issuer 示例 `https://api.example.com/personal/v1/cloud/oidc`；账号接口 or
 
 不支持 password grant、implicit response、动态客户端注册或未登记宿主 audience。客户端是 public/native、无 client secret。授权码 60 秒且单次使用；PKCE 只接受 S256。标准 token 响应包含 `access_token,token_type=Bearer,expires_in=300,id_token,refresh_token,scope`，openid/离线范围请求决定 ID/refresh 字段是否出现。每次刷新须原子替换已保存的 refresh token；旧 token 复用会撤销整个族及后继，族绝对寿命 30 天。
 
-访问令牌是 RS256、`typ=at+jwt`，包含 `iss,aud,sub,device_id,device_fingerprint,scope,auth_epoch,iat,exp,jti,client_id`。控制面 aud 为 `<issuer origin>/personal/v1/cloud`。S1b 另支持显式 `resource=<cloud audience>/hosts/<hostId>`、`scope=openid offline_access host:session`；仅已登记宿主的成员可授权。宿主 access token 增加 `host_id` 和 DPoP `cnf.jkt`，aud 为该确定宿主 resource，scope 含 host:session；token endpoint 必须提交标准 DPoP 证明，密钥须与该登录交互的邮件已确认设备公钥一致，返回 token_type=DPoP。云与宿主 token 均不含邮箱/用户内容。ID token 的 aud 是 client_id、含 nonce；不可用它授权 API。未知 kid 从固定 JWKS 地址刷新一次；issuer/aud/算法/有效期不匹配或获取失败时拒绝，不信 JWT 自带 jku/x5u。原生刷新凭据放 Keychain/Keystore/系统凭据库；浏览器不放 localStorage。
+访问令牌是 RS256、`typ=at+jwt`，包含 `iss,aud,sub,device_id,device_fingerprint,device_verified:true,scope,auth_epoch,iat,exp,jti,client_id`。核对声明由云端实时核验已确认的设备与 DPoP 公钥后签入；宿主和新界面严格要求字面 true，缺失返回 `CLOUD_DEVICE_VERIFICATION_REQUIRED`，须重新登录确认邮箱。控制面 aud 为 `<issuer origin>/personal/v1/cloud`。S1b 另支持显式 `resource=<cloud audience>/hosts/<hostId>`、`scope=openid offline_access host:session`；仅已登记宿主的成员可授权。宿主 access token 增加 `host_id` 和 DPoP `cnf.jkt`，aud 为该确定宿主 resource，scope 含 host:session；token endpoint 必须提交标准 DPoP 证明，密钥须与该登录交互的邮件已确认设备公钥一致，返回 token_type=DPoP。云与宿主 token 均不含邮箱/用户内容。ID token 的 aud 是 client_id、含 nonce；不可用它授权 API。未知 kid 从固定 JWKS 地址刷新一次；issuer/aud/算法/有效期不匹配或获取失败时拒绝，不信 JWT 自带 jku/x5u。原生刷新凭据放 Keychain/Keystore/系统凭据库；浏览器不放 localStorage。
 
 复用/撤销让刷新与授权码失效；已发自包含 JWT 仍有最多 5 分钟的离线有效窗口。密码重置与换邮箱同时递增 epoch，本服务实时检查立即拒绝旧 JWT；S1b 宿主通过签名撤销事件与轮询接收，事件到达后关闭活跃流并拒绝旧会话；离线宿主不能称立即生效。
 
@@ -878,7 +878,9 @@ file 开发传输只写专属私有 JSON outbox；Resend 要显式环境变量�
 
 ### 7.4 宿主认领、会话交换与内容设备（S1b）
 
-以下路径由**个人电脑宿主**提供，仍在 `/personal/v1`。旧本地账号绑定使用原 Cookie + `X-WeftMate-CSRF`；任何写操作要求同源 Origin、JSON ≤16 KiB，拒绝多余字段与 query。认领/绑定/解绑/生成当面配对挑战还要求原**电脑直接地址**的本地密码 Cookie 或 7.8 自动绑定电脑的已受信云 Cookie（普通手机云 Cookie / 管理 Bearer 不可用）；无密码 legacy 账号沿用原 setup grant。D29 新电脑无需先本地登录，使用 7.8 `/auth/cloud-desktop`。调用方不传 ownerId，账号从 Cookie 或验证后的云 sub 确定。
+以下路径由个人电脑宿主提供，仍在 `/personal/v1`。写操作保留 Cookie（会话凭据）、CSRF（跨站请求伪造防护）、同源 Origin（来源）、体积和字段检查。认领/绑定/解绑只允许直接电脑地址的已有本地密码会话、严格本机 desktop 会话或已受信的宿主电脑云会话。AUTH-1 的 `/auth/cloud-desktop` 必须有当前本机已选 Cookie/CSRF；不得从邮箱推断已有数据的 owner。
+
+本机新增 `GET/POST /personal/v1/auth/desktop`，不供远程客户端使用。两者都要求主程序窗口私有 `X-WeftMate-Desktop` 能力、环回 socket、直接 Host/Origin、无任何 forwarded/x-forwarded-*。GET 返回 `{accounts:[{ownerId,username,displayName}],selectedOwnerId}`；POST 可带 `{ownerId?,deviceName?}`，返回 `{account,device,csrfToken,local:true,accounts,selectedOwnerId}` 与 Cookie。单账户直接选它，多账户恢复 `desktopOwnerId`；显式切换不要求密码。零账户在原 legacy owner 建账户资料并撤销旧 legacy token，保留原目录及会话。每次使用 authKind=desktop 的 Cookie 都重查原生边界，远程持有该 Cookie 也无效。云登录、退出、密码重置、注销不更换或清除此本机 Cookie。旧本地密码接口/散列保留，新界面不用。`/auth/login|register` 及 password/legacy-local 会话只接受直接环回本机连接；公开/中继/非环回请求返回 `CLOUD_LOGIN_REQUIRED`，须更新客户端使用云邮箱登录。
 
 | 方法与路径 | 请求 | 返回 / 语义 |
 |---|---|---|
@@ -886,19 +888,19 @@ file 开发传输只写专属私有 JSON outbox；Resend 要显式环境变量�
 | POST `/personal/v1/cloud/binding` | `{claimId,accessToken}` + 本地 Cookie/CSRF；accessToken 为新鲜 cloud:account 控制面令牌 | 200 `{bound:true,ownerId,hostId}`；保存 pending，安装密钥签名，云确认成员后 active；可用原 claimId、新云登录重试。冲突不合并账号，不上传 ownerId/内容 |
 | DELETE `/personal/v1/cloud/binding` | `{}` + 本地 Cookie/CSRF | 200 `{unbound:true}`；撤销当前账号云映射与内容设备，异步幂等撤销云 membership；保留本地账号、密码与所有数据 |
 | POST `/personal/v1/auth/cloud-nonce` | `{}`；无 Cookie/Bearer 要求，但需同源 Origin | 200 `{nonce,expiresIn:120}`，同时返回 `DPoP-Nonce`；宿主随机 nonce 单次使用，保存在本机日志 |
-| POST `/personal/v1/auth/cloud-session` | `{accessToken,deviceName}` + `DPoP: <proof JWT>`；**不得带 Authorization**；旧 Cookie 可随浏览器自动携带但不参与授权 | 已受信 200，响应形状与 `/auth/login` 相同：`{account,device,csrfToken}` + 宿主 HttpOnly/SameSite=Strict Cookie（HTTPS Secure）；未受信 202 `{status:"pending_approval",requestId}`，无 Cookie/内容 |
+| POST `/personal/v1/auth/cloud-session` | `{accessToken,deviceName}` + `DPoP: <proof JWT>`；**不得带 Authorization**；旧 Cookie 可随浏览器自动携带但不参与授权 | 激活绑定、云声明 `device_verified:true` 且 DPoP 有效时 200 `{account,device,csrfToken,hostTrust}` + 宿主 HttpOnly/SameSite=Strict Cookie（HTTPS Secure）；新设备与历史 pending 自身重登转 trusted，不再返回 pending_approval；denied/revoked 仍 403 |
 | GET `/personal/v1/cloud/devices/pending` | 已认证本账号本地/云 Cookie（account:manage） | 200 `{devices:[{id,name,requestedAt,fingerprint}]}`；仅当前 owner 的待批准设备公钥指纹，不含另一账号的数据 |
 | POST `/personal/v1/cloud/devices/{id}/decision` | `{decision:"allow"}` 或 `{decision:"deny"}` + 同账号 Cookie/CSRF | 200 `{decision}`；同一决定幂等。允许后该设备以**新 nonce/新 DPoP** 重试交换；相反决定 409，跨账号 404 |
 | POST `/personal/v1/cloud/pairings` | `{}` + 电脑直接地址本地 Cookie/CSRF | 201 `{challenge,expiresIn:120,hostId,tlsSpki,publicJwk,origin}`；一次性当面配对材料，供 S1c 二维码展示/扫描；pub 为安装公钥，pin 来自宿主本机 |
 | POST `/personal/v1/cloud/pairings/redeem` | `{challenge,accessToken,deviceName}` + DPoP；无 Authorization；旧 Cookie 忽略 | 校验该云 sub 已绑定且 challenge 属于相同 owner、未过期/未用；本地登记 DPoP 公钥并返回 200 宿主 Cookie/CSRF，响应与交换相同 |
 
-DPoP proof 是 ES256 `typ=dpop+jwt`、仅公钥 `jwk`；含随机 `jti`、±60 秒 `iat`、`htm=POST`、**精确宿主 origin + 本次入口路径** `htu`（无 query/fragment）、`ath=base64url(SHA-256(accessToken))` 与宿主 nonce。nonce 与 `(公钥指纹,jti)` 提交后不可复用，重启不清空。宿主检查固定 issuer、RS256、固定 JWKS、`typ=at+jwt`、aud/host_id、host:session、sub/device_id/auth_epoch/iat/exp/jti/cnf.jkt；不接受 ID token，不读取 token jku/x5u，不把 JWT 送旧 Bearer tokenHash 路径。仅 DPoP 有效不构成内容信任；未知公钥仍返回等待批准。
+DPoP proof 是 ES256 `typ=dpop+jwt`、仅公钥 `jwk`；含随机 `jti`、±60 秒 `iat`、`htm=POST`、**精确宿主 origin + 本次入口路径** `htu`（无 query/fragment）、`ath=base64url(SHA-256(accessToken))` 与宿主 nonce。nonce 与 `(公钥指纹,jti)` 提交后不可复用，重启不清空。宿主检查固定 issuer、RS256、固定 JWKS、`typ=at+jwt`、aud/host_id、host:session、sub/device_id/auth_epoch/iat/exp/jti/cnf.jkt；不接受 ID token，不读取 token jku/x5u，不把 JWT 送旧 Bearer tokenHash 路径。DPoP 还须匹配云声明已核对的设备公钥与激活账户绑定；缺核对声明、失效绑定、已下线设备均拒绝。
 
-桌面/手机 Web 与 Android 在打开应用及前台每 15 秒读取待批准设备，可允许/拒绝；桌面设备卡展示一次性二维码并在两分钟后刷新。Android 本包用输入配对码，相机扫描另包；推送提醒在 S3。这里的 tlsSpki 已有本机内容密钥，实际 TLS listener/证书/原生 pin 连接验收在 S2。
+AUTH-1 新界面不读取批准队列或展示配对/可信码。登录后的设置列设备名称、首次登录、最近使用，逐个下线。首次新设备登录产生 `system.device.signed_in` 动态，动作 `view_settings` 指向 `devices`；其它同账户会话和本机窗口可查看。旧批准/配对接口仅保留兼容，不能恢复 denied/revoked 设备。
 
-新增宿主业务码：401 `CLOUD_TOKEN_INVALID / DPOP_INVALID / DPOP_REPLAY / PAIRING_INVALID`；403 `LOCAL_SESSION_REQUIRED / CLOUD_NOT_BOUND / DEVICE_NOT_TRUSTED`；400 `CLAIM_INVALID`；409 `CLOUD_BINDING_CONFLICT / DEVICE_DECISION_CONFLICT`；503 `CLOUD_UNAVAILABLE / STORAGE_UNAVAILABLE`。Origin、CSRF、媒体类型、大小与原宿主约定一致。等待批准是正常 202，禁止当作已登录内容账户；拒绝/撤销返回 403，需电脑/受信设备重新明确批准，不能自动用邮箱恢复信任。
+新增宿主业务码：401 `CLOUD_TOKEN_INVALID / DPOP_INVALID / DPOP_REPLAY / PAIRING_INVALID`；403 `LOCAL_SESSION_REQUIRED / CLOUD_NOT_BOUND / DEVICE_NOT_TRUSTED`；400 `CLAIM_INVALID`；409 `CLOUD_BINDING_CONFLICT / DEVICE_DECISION_CONFLICT`；503 `CLOUD_UNAVAILABLE / STORAGE_UNAVAILABLE`。Origin、CSRF、媒体类型、大小与原宿主约定一致。新登录不产生等待批准。拒绝/撤销返回 403，重新登录、换公钥或旧配对接口均不能恢复已下线的宿主信任记录。
 
-显式 DELETE 原 `/auth/devices/{localDeviceId}` 也撤销其对应云内容公钥及全部该公钥会话；当前流立即关闭，本地 outbox 等联网后同步。logout 只退出当前 Cookie。云 epoch 撤销与本地 authEpoch 分开；新的云 epoch 不自动撤销既有公钥信任，旧 Cookie 无效，本地密码/旧合法本地 Cookie/Bearer 不变。云已发 JWT 尚有最多 5 分钟有效窗；宿主每 60 秒轮询及启动同步，收到签名事件后立即失效；断网不能承诺取得最新撤权。有效宿主 Cookie 不要求每次请求联网，云离线不阻断本地登录。
+显式 DELETE 原 `/auth/devices/{localDeviceId}` 也撤销同绑定、同云设备号的全部内容公钥及会话；当前流立即关闭，本地 outbox 等联网后同步。logout 只退出当前 Cookie。云 epoch 撤销与本地 authEpoch 分开；新的云 epoch 不自动撤销既有公钥信任，旧 Cookie 无效，本地密码/旧合法本地 Cookie/Bearer 不变。云已发 JWT 尚有最多 5 分钟有效窗；宿主每 60 秒轮询及启动同步，收到签名事件后立即失效；断网不能承诺取得最新撤权。有效宿主 Cookie 不要求每次请求联网，云离线不阻断本地登录。
 
 ### 7.5 云控制面的宿主配合接口
 
@@ -974,7 +976,9 @@ Windows（视窗系统）日用桌面部署使用 `weftmate-desktop`、`applicat
 | POST `/personal/v1/cloud/auth/recovery/complete` | `{passwordTicket,password}` | 200 `{passwordChanged:true,notificationAccepted}`；递增 epoch，撤销此账号旧授权码/刷新族/会话/票据，回登录页 |
 | POST `/personal/v1/cloud/auth/authorization` | `{clientId,redirectUri,deviceId,publicJwk,codeChallenge,state,nonce}` | 200 `{interactionUid,csrfToken,clientId,appLogin:true,deviceId}` + 交互 Cookie；redirect 必须预登记，P-256 公钥、S256 challenge 43 字符、state/nonce 16–256 字符；服务端通过 provider 标准 HTTP 授权端点开始交互 |
 | POST `/personal/v1/cloud/auth/login` | `{interactionUid,csrfToken,email,password,deviceId,publicJwk,deviceName?,deviceType?}` | 沿用 7.1：新标识/公钥 202 `{confirmationRequired:true,challengeId,expiresIn}`，否则 200 `{account,resumeUrl}`；App 交互必须与 bootstrap（初始登记）的 deviceId/JWK 一致。name 默认 WeftMate device，type 为 windows/macos/android/ios/web/unknown |
-| POST `/personal/v1/cloud/auth/device/confirm` | `{interactionUid,csrfToken,challengeId,code}` | 200 `{account,resumeUrl}`；新云设备邮件确认只允许云登录，内容仍按 D23 等待批准 |
+| POST `/personal/v1/cloud/auth/device/confirm` | `{interactionUid,csrfToken,challengeId,code}` | 200 `{account,resumeUrl}`；新云设备邮件确认满足设备核对；激活绑定的宿主直接交换内容会话，不再要求另一设备批准 |
+| POST `/personal/v1/cloud/auth/login/code/request` | `{interactionUid,csrfToken,email,deviceId,publicJwk,deviceName?,deviceType?}` | 202 `{confirmationRequired:true,challengeId,expiresIn:600}`；注册/未知/未激活邮箱及投递故障同形；不等待邮件商响应，未知邮箱不发信 |
+| POST `/personal/v1/cloud/auth/login/code/confirm` | `{interactionUid,csrfToken,challengeId,code}` | 200 `{account,resumeUrl}`；同一交互与设备公钥；单次十分钟码、五次错误上限、持久账号/来源限速；无效/过期/超次统一 `INVALID_LOGIN_CODE` |
 | POST `/personal/v1/cloud/auth/authorization/resume` | `{resumeUrl}` + 同一交互 Cookie | 200 `{callbackUrl}`；恢复 provider 授权，不打开回调网页/系统浏览器；只允许固定 issuer 下的授权恢复路径 |
 | POST `/personal/v1/cloud/oidc/token` | 标准 form（表单）`grant_type=authorization_code,client_id,redirect_uri,code,code_verifier` + DPoP | 7.2 标准 token 响应，**token_type=DPoP**；App grant（授权记录）缺 proof/错误 key 不发弱化 Bearer；刷新同端点 `grant_type=refresh_token`，每次生成新 proof 并原子保存新 refresh token |
 | POST `/personal/v1/cloud/auth/password/change` | `{currentPassword,password}` + 下述云 DPoP 授权 | 200 `{passwordChanged:true,notificationAccepted}`；验证当前密码，递增 epoch/撤销全部旧云会话；客户端重新登录。不是更改电脑的离线应急密码 |
@@ -988,20 +992,20 @@ Windows（视窗系统）日用桌面部署使用 `weftmate-desktop`、`applicat
 
 | 提供者 / 方法与完整路径 | 请求 / 授权 | 响应 / 语义 |
 |---|---|---|
-| 云 GET `/personal/v1/cloud/devices` | 云 DPoP 授权 | 200 `{devices,hosts,sharing:{supported:false}}`。devices 每项 `{id,name,type,online,lastUsedAt,isCurrent}`；hosts 每项同字段及 `hostId`，type=computer。仅同账号已登录设备/已认领宿主；不返回邮箱、安装 key、pin、内容、frpc 凭据 |
-| 云 POST `/personal/v1/cloud/hosts/connect` | `{hostId}` + 云 DPoP 授权 | 200 `{hostId,baseUrl,status,resource,approval,pairingRequired}`；status=online/offline/revoked（无中继配置或尚无地址时 offline/null）；approval=pending/trusted/denied/revoked，pairingRequired 为未受信。非成员 404；旧非 App grant 403 APP_LOGIN_REQUIRED。增加本设备现有 provider grant 与尚未消费 refresh model（刷新记录）的该宿主 resource，不另发令牌/改变生命周期或消费状态 |
-| 宿主 POST `/personal/v1/auth/cloud-desktop` | `{accessToken,deviceName}` + 云 audience access token 的宿主 nonce/DPoP（htu 为本路径），无 Authorization | 只允许本机回环 socket、直接 Host/Origin、无转发头。首次云登录自动创建独立本地 owner、S1b claim/member/binding、受信电脑 key；空白安装的首个账号自动成为执行账号（完整通用工具与审批），并返回原宿主 `{account,device,csrfToken}` + Cookie；不读取或接管已有本地账号数据。执行归属持久保存；已有旧本地账号或历史设备/会话/命令时不转移归属，另一云账号仅可隔离聊天（D30），`GET /status.executionAccount=false`。相同 sub/key 重试保留 owner/claim；已绑定宿主的另一未知 key 202 等待批准，拒绝/撤销 key 403。已绑旧本地账号仍须已有设备批准 |
+| 云 GET `/personal/v1/cloud/devices` | 云 DPoP 授权 | 200 `{devices,hosts,sharing:{supported:false}}`。devices 每项 `{id,name,type,online,firstUsedAt,lastUsedAt,isCurrent}`；hosts 每项同字段及 `hostId`，type=computer。仅同账号已登录设备/已认领宿主；不返回邮箱、安装 key、pin、内容、frpc 凭据 |
+| 云 POST `/personal/v1/cloud/hosts/connect` | `{hostId}` + 云 DPoP 授权 | 200 `{hostId,baseUrl,status,resource,approval,pairingRequired}`；status=online/offline/revoked（无中继配置或尚无地址时 offline/null）；AUTH-1 登录过邮箱核对后 approval=trusted / pairingRequired=false；denied/revoked 拒绝，旧 pending 元数据仅作历史。非成员 404；旧非 App grant 403 APP_LOGIN_REQUIRED。增加本设备现有 provider grant 与尚未消费 refresh model（刷新记录）的该宿主 resource，不另发令牌/改变生命周期或消费状态 |
+| 宿主 POST `/personal/v1/auth/cloud-desktop` | `{accessToken,deviceName}` + 云 audience access token 的宿主 nonce/DPoP（htu 为本路径），无 Authorization | 要求与原生动作相同的私有桌面能力、环回 socket、直接 Host/Origin、无转发头，以及当前已选本机 Cookie/CSRF。云声明与 DPoP 有效后，绑定当前本机 owner；绝不创建空账户替换已有数据。不同本机账户/云身份冲突 409。200 `{account,device,csrfToken,local:true,cloudAuthenticated:true,hostTrust}`，保留原本机 Cookie；pending 重登转 trusted，denied/revoked 403。原执行账户隔离规则保留 |
 | 宿主 POST `/personal/v1/cloud/devices/{requestId}/trust` | `{}` + 同账号已受信宿主 Cookie/CSRF（电脑/受信设备） | 200 `{sub,hostId,deviceId,jkt,tlsSpki,publicJwk,origin,relay,trustToken,expiresIn:120}`。仅已批准的指定 recipient（接收设备）；pending 403，跨 owner 404。返回值只能从已有信任的宿主 TLS（传输层安全）连接取得，再经可信设备通道转交 |
 | 宿主 POST `/personal/v1/cloud/emergency-password` | `{password}` + 自动绑定电脑的直接地址受信 Cookie/CSRF | 200 `{configured:true}`；云创建账号可首次设置本机独立离线密码，后续改密码走原本地接口；手机/旧密码账号/再次初始设置 403。创建时随机不可用的本地密码不会交给客户端 |
 | 宿主 POST `/personal/v1/auth/cloud-offline` | `{cloudAccountId,password,deviceName}`，直接地址 Origin/JSON | 200 原本地登录响应；只查本机已设置应急密码的云映射并走原密码校验/限速，不调用云。旧本地账号继续原 `/auth/login`；cloudAccountId 仅用于选择账号，不构成认证 |
 
 devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近 90 秒安装签名心跳（宿主默认 60 秒同步），lastUsedAt 为 UTC ISO8601，旧未上报宿主可为 null。isCurrent 使用令牌设备指纹；电脑宿主通过签名的 device-host 映射标「这台设备」，客户端无需传可伪造的 currentHostId。这是最近活动提示，不能当作内容连接成功证明。可每 30 秒以新 proof 读取目录维持前台设备状态。
 
-连接时先从目录选择 hostId，调用 `/hosts/connect`，用**同一个轮换 refresh family（刷新授权族）**向 `/oidc/token` 指定返回的 resource，取得 7.4 宿主 token。未知 pin 时不要先试宿主内容连接：提示电脑展示二维码、扫描 7.7 的 wm1 / URL 材料建立 pin，再走 `/cloud/pairings/redeem`；受信设备批准场景可由下述 trust 交付建立 pin 后调用 `/auth/cloud-session`。待批准请求仍由宿主 `/cloud/devices/pending` / decision 管理；signed outbox（签名待同步记录）只向云报告最小批准状态，最终内容授权以宿主为准，离线/撤权延迟沿用 7.4 / 7.6。
+连接时从目录选择 hostId，调用 `/hosts/connect`，以同一个轮换 refresh family（刷新授权族）取得宿主 resource token。经过云邮箱核对、未被下线且有成员资格的设备返回 `approval:trusted,pairingRequired:false`；宿主继续独立核对声明、绑定、公钥持有与撤销状态。
 
-`trustToken` 为宿主安装 key 签的 ES256、`typ=wm-host-trust+jwt`，`iss=hostId,aud=recipient jkt,sub,hostId,deviceId,jkt,tlsSpki,publicJwk,origin,relay,iat,exp,jti`；寿命 120 秒。接收端先从**已经受信的发送设备通道/当面二维码**取得安装公钥作为 trust anchor（信任锚），再验签/iss/aud/sub/deviceId/jkt/期限及公钥一致，保存 pin。不得把云目录、未验证响应里的公钥、或 JWT 自带 key 当作信任锚；`src/personal-cloud/trust.mjs` 提供使用外部锚的参考校验。首次无可信设备通道用电脑二维码；本包提供服务端交付接口，不实现 LG-1 / LG-2 的相机与设备间传输界面。原生仍先标准 CA（证书机构）/域名验证再 pin；普通网页保持 D24 边界。
+成功交换的 `hostTrust` 含宿主安装公钥、TLS SPKI（证书公钥指纹）、连接信息及 120 秒宿主签名。普通网页在已有 D24 的内容 TLS（加密传输）边界内获取并校验收件设备号、公钥指纹、云主体、宿主号和签名；后续公钥变化拒绝覆盖。原生客户端仍先核对 CA（证书机构）与域名，再保存并使用 pin（证书公钥固定）。首次浏览器材料经本次认证宿主连接交付，不再需要另一个设备传码；接受的边界仍是 D24，不宣称能抵抗被完全控制的内容域名/浏览器代码。离线端到端内容密钥仍走既有 `/offline/device-key` 的设备 RSA-OAEP（公钥封装）流程，云不获得明文钥匙。旧 trust/配对/应急密码接口保留，新的登录与设置界面不用它们。
 
-宿主安装签名新增 `/personal/v1/cloud/hosts/status`（签入 action/sub/name）和 `/hosts/devices/status`（签入 action/sub/deviceId/jkt/status、可选 isHost=true）；沿用 7.5 的 `{hostId,proof}`、60 秒期限/jti 防重放/member 检查，只收名称、活动与内容信任元数据，不收 pin 交付材料或内容。云 schema 6 存放票据、设备元数据与映射。跨账号共享只有 `sharing.supported=false` 接口位置；本包所有连接/配对/信任交付都拒绝越权，S5 再实现主账号扫码确认。
+宿主安装签名新增 `/personal/v1/cloud/hosts/status`（签入 action/sub/name）和 `/hosts/devices/status`（签入 action/sub/deviceId/jkt/status、可选 isHost=true）；沿用 7.5 的 `{hostId,proof}`、60 秒期限/jti 防重放/member 检查，只收名称、活动与内容信任元数据，不收 pin 交付材料或内容。云 schema（存储结构）8 沿用现有表，无结构迁移；新字段由现有设备时间与已核对记录投影。跨账号共享只有 `sharing.supported=false` 接口位置；本包所有连接/配对/信任交付都拒绝越权，S5 再实现主账号扫码确认。
 
 新增业务码：400 `PASSWORD_TICKET_INVALID`（过期/错用途/已用/旧 epoch）、401 `DPOP_INVALID`、403 `APP_LOGIN_REQUIRED`；账号密码/验证码限速与 7.3 相同。接口必须来自固定配置的云/宿主 origin，不以邮箱或目录 pin 推断本地 owner 或宿主信任。S1d 不部署；本节服务端已交付，客户端完整页面与真机扫码由 LG-1 / LG-2 验收。
 
@@ -1031,7 +1035,7 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 ## 8. 本地备份与恢复（BK-1）
 
-以下接口由内容宿主提供，沿用 Cookie（会话凭据）/CSRF（跨站请求伪造防护）与 `account:manage` 权限。备份包含整个宿主，只有本地旧所有者或该安装已验证的桌面云归属账号可访问；普通配对成员返回 403 `FORBIDDEN`。路径均是宿主电脑上的路径，远程客户端不能用手机本地路径代替。无 query（查询参数），写请求字段须精确匹配。
+以下接口由内容宿主提供，沿用 Cookie（会话凭据）/CSRF（跨站请求伪造防护）与 `account:manage` 权限。AUTH-1 起还必须直接环回、无转发、使用本机来源；远程即使云登录有效也返回 `LOCAL_SESSION_REQUIRED`，在装着数据的电脑上管理。备份包含整个宿主，只有本地旧所有者或该安装已验证的桌面云归属账号可访问；普通配对成员返回 403 `FORBIDDEN`。路径均是宿主电脑上的路径，远程客户端不能用手机本地路径代替。无 query（查询参数），写请求字段须精确匹配。
 
 | 方法与完整路径 | 请求 | 响应 / 语义 |
 |---|---|---|

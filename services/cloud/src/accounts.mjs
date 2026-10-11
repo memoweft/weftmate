@@ -20,6 +20,7 @@ export class Accounts {
     this.now = now;
     this.logger = logger;
     this.limiter = new FailureLimiter(database, secret, now);
+    this.pendingMail = new Set();
   }
   get(id) {
     return this.db.prepare('SELECT * FROM cloud_accounts WHERE id=?').get(id);
@@ -40,8 +41,10 @@ export class Accounts {
     this.limiter.check(keys);
     this.limiter.fail(keys, true);
   }
-  async sendChallenge(account, purpose, email, context = {}) {
-    const id = randomUUID();
+  async settleMail() {
+    await Promise.all([...this.pendingMail]);
+  }
+  async sendChallenge(account, purpose, email, context = {}, id = randomUUID()) {
     const code = String(randomInt(0, 1000000)).padStart(6, '0');
     this.db
       .prepare(
@@ -60,7 +63,7 @@ export class Accounts {
     try {
       await this.sendMail(account, {
         to: email,
-        ...challengeMail(purpose.replace('app-', ''), code, context.device?.deviceId),
+        ...challengeMail(context.authMethod === 'email' ? 'login' : purpose.replace('app-', ''), code, context.device?.deviceId),
       });
     } catch {
       this.db.prepare('UPDATE email_challenges SET consumed=1 WHERE id=?').run(id);
@@ -260,6 +263,43 @@ export class Accounts {
       fingerprint: digest(this.secret, `${deviceId}:${fingerprint}`),
     };
   }
+  async loginDevice(body) {
+    const device = await this.device(body);
+    const name = body.deviceName ?? 'WeftMate device';
+    const type = body.deviceType ?? 'unknown';
+    if (typeof name !== 'string' || !name.trim() || name.length > 128 ||
+        !['windows','macos','android','ios','web','unknown'].includes(type)) throw new CloudError(400, 'INVALID_DEVICE');
+    return Object.assign(device, { name: name.trim(), type });
+  }
+  async requestLoginCode(body, source, uid) {
+    const email = normalizeEmail(body.email);
+    this.check(email, source);
+    this.delivery(email, source);
+    const device = await this.loginDevice(body);
+    const account = this.byEmail(email);
+    const response = { confirmationRequired: true, challengeId: randomUUID(), expiresIn: 600 };
+    // A request never reveals whether this mailbox has an active account,
+    // including when the delivery provider fails. Only receiving and redeeming
+    // the mailbox-bound code can authorize a provider grant.
+    if (!account?.active) return response;
+    // Do not wait for a mail provider only for real accounts: delivery latency
+    // itself would reveal whether the mailbox is registered. Track in-flight
+    // sends so shutdown drains them before closing the database.
+    const delivery = this.sendChallenge(account, 'device', email, { uid, device, authMethod: 'email' }, response.challengeId).catch(() => {
+      this.logger?.error('mail.login_failed', { code: 'MAIL_UNAVAILABLE' });
+    }).finally(() => this.pendingMail.delete(delivery));
+    this.pendingMail.add(delivery);
+    return response;
+  }
+  confirmLoginCode(body, source, uid) {
+    try {
+      return this.confirmDevice(body, source, uid, 'email');
+    } catch (error) {
+      if (error instanceof CloudError && ['CODE_INVALID','CHALLENGE_INVALID'].includes(error.code))
+        throw new CloudError(400, 'INVALID_LOGIN_CODE');
+      throw error;
+    }
+  }
   async login(body, source, uid) {
     const email = normalizeEmail(body.email);
     const keys = this.check(email, source);
@@ -269,18 +309,14 @@ export class Accounts {
       throw new CloudError(401, 'INVALID_CREDENTIALS');
     }
     const account = this.get(snapshot.id);
-    if (account.auth_epoch !== snapshot.auth_epoch || account.password !== snapshot.password)
+    if (!account || account.auth_epoch !== snapshot.auth_epoch || account.password !== snapshot.password)
       throw new CloudError(401, 'INVALID_CREDENTIALS');
     if (!account.active) {
       this.limiter.fail(keys);
       throw new CloudError(403, 'EMAIL_NOT_VERIFIED');
     }
-    const device = await this.device(body);
-    const name = body.deviceName ?? 'WeftMate device';
-    const type = body.deviceType ?? 'unknown';
-    if (typeof name !== 'string' || !name.trim() || name.length > 128 ||
-        !['windows','macos','android','ios','web','unknown'].includes(type)) throw new CloudError(400, 'INVALID_DEVICE');
-    Object.assign(device, { name: name.trim(), type });
+    const device = await this.loginDevice(body);
+    if (this.get(account.id)?.auth_epoch !== account.auth_epoch) throw new CloudError(401, 'INVALID_CREDENTIALS');
     if (
       !this.db
         .prepare('SELECT 1 FROM cloud_devices WHERE account_id=? AND fingerprint=?')
@@ -289,15 +325,16 @@ export class Accounts {
       this.delivery(email, source);
       return {
         confirmationRequired: true,
-        ...(await this.sendChallenge(account, 'device', email, { uid, device })),
+        ...(await this.sendChallenge(account, 'device', email, { uid, device, authMethod: 'pwd' })),
       };
     }
     this.db.prepare('UPDATE cloud_devices SET name=?,type=?,last_seen=? WHERE account_id=? AND fingerprint=?')
       .run(device.name, device.type, this.now(), account.id, device.fingerprint);
-    return { account, device };
+    return { account, device, authMethod: 'pwd' };
   }
-  confirmDevice(body, source, uid) {
+  confirmDevice(body, source, uid, authMethod) {
     const result = this.readChallenge(body.challengeId, 'device', source, body.code, uid);
+    if (authMethod && result.context.authMethod !== authMethod) throw new CloudError(400, 'CHALLENGE_INVALID');
     transaction(this.db, () => {
       this.consume(body.challengeId);
       const device = result.context.device;
@@ -312,7 +349,7 @@ export class Accounts {
           device.name, device.type, this.now(),
         );
     });
-    return { account: result.account, device: result.context.device };
+    return { account: result.account, device: result.context.device, authMethod: result.context.authMethod ?? 'pwd', emailConfirmed: true };
   }
   revoke(accountId) {
     this.db

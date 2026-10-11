@@ -13,6 +13,7 @@ const logger = createLogger();
 let database;
 let server;
 let relay;
+let accounts;
 let stopping = false;
 let maintenance;
 let maintenanceWork = Promise.resolve();
@@ -24,7 +25,8 @@ async function shutdown(signal) {
   await maintenanceWork;
   logger.info('service.stopping', { signal });
   await relay?.close();
-  server.close(() => {
+  server.close(async () => {
+    await accounts?.settleMail();
     database.close();
     logger.info('service.stopped');
   });
@@ -43,6 +45,7 @@ try {
   }, 60000);
   maintenance.unref();
   const identity = await createIdentity({ database, config, mailer, logger, relayDns: dnsFromEnvironment({ database, logger }) });
+  accounts = identity.accounts;
   relay = identity.relay;
   await relay.start();
   server = createCloudServer({ ...opened, logger, identity });
