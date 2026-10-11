@@ -1,0 +1,122 @@
+[
+  {
+    "name": "model-scope",
+    "code": 0,
+    "ms": 3075
+  },
+  {
+    "name": "catalog-generation",
+    "code": 0,
+    "ms": 1889
+  },
+  {
+    "name": "catalog-close",
+    "code": 0,
+    "ms": 5017
+  },
+  {
+    "name": "account-probe",
+    "code": 0,
+    "ms": 2081
+  },
+  {
+    "name": "frozen-state",
+    "code": 0,
+    "ms": 1825
+  },
+  {
+    "name": "policy-probe",
+    "code": 0,
+    "ms": 74
+  },
+  {
+    "name": "three-readers",
+    "code": 0,
+    "ms": 5123
+  },
+  {
+    "name": "cancel-stress",
+    "code": 0,
+    "ms": 121841
+  },
+  {
+    "name": "probe-race",
+    "code": 0,
+    "ms": 122
+  },
+  {
+    "name": "probe-http-race",
+    "code": 0,
+    "ms": 4873
+  },
+  {
+    "name": "probe-server",
+    "code": 0,
+    "ms": 3019
+  },
+  {
+    "name": "probe-gateway",
+    "code": 0,
+    "ms": 764
+  },
+  {
+    "name": "probe-auth",
+    "code": 0,
+    "ms": 5735
+  },
+  {
+    "name": "probe-compat",
+    "code": 0,
+    "ms": 8307
+  },
+  {
+    "name": "old-host",
+    "code": 0,
+    "ms": 7746
+  },
+  {
+    "name": "probe-desktop-errors",
+    "code": 0,
+    "ms": 54143
+  },
+  {
+    "name": "ui-extra",
+    "code": 0,
+    "ms": 15519
+  },
+  {
+    "name": "probe-latency",
+    "code": 0,
+    "ms": 13159
+  },
+  {
+    "name": "send-backoff",
+    "code": 0,
+    "ms": 9984
+  },
+  {
+    "name": "host-recovery",
+    "code": 0,
+    "ms": 35670
+  },
+  {
+    "name": "zero-browser",
+    "code": 0,
+    "ms": 11275
+  },
+  {
+    "name": "probe-browser",
+    "code": 0,
+    "ms": 73848
+  },
+  {
+    "name": "census",
+    "code": 0,
+    "ms": 253517
+  },
+  {
+    "name": "responsiveness",
+    "code": 1,
+    "ms": 8232
+  }
+]

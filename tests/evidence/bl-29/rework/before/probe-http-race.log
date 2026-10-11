@@ -1,0 +1,26 @@
+{
+  bUpserts: 1,
+  waitersDuring: { accountWaiters: 1, accountRevision: 14 },
+  nativeWaitersDuring: 1,
+  aDelayAfterReleaseMs: 1201,
+  aUpserts: 1,
+  after: { accountWaiters: 0, accountRevision: 14 },
+  nativeAfter: 0,
+  four: { accountWaiters: 4, accountRevision: 14 },
+  fourAfter: { accountWaiters: 0, accountRevision: 14 },
+  switches: [
+    [ 1, 0 ], [ 1, 0 ], [ 1, 0 ],
+    [ 1, 0 ], [ 1, 0 ], [ 1, 0 ],
+    [ 1, 0 ], [ 1, 0 ], [ 1, 0 ],
+    [ 1, 0 ], [ 1, 0 ], [ 0, 0 ],
+    [ 1, 0 ], [ 1, 0 ], [ 1, 0 ],
+    [ 1, 0 ], [ 1, 0 ], [ 1, 0 ],
+    [ 1, 0 ], [ 1, 0 ]
+  ],
+  abortBeforeWait: {
+    prepared: 20,
+    accountWaiters: 20,
+    nativeWaiters: 20,
+    afterTimeout: 0
+  }
+}

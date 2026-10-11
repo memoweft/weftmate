@@ -1,0 +1,55 @@
+{
+  "base": {
+    "revision": 9,
+    "models": "3cf9a71368d8b160105b772e9c77dbf81c4f8819f8f04a202f3146fc4da1ee1a",
+    "modelSettings": "95cb9b4f84ceff132cc7a875d8c192bf4997016a939ee64141c1fd628c0e8738",
+    "personalization": "4992816c9e2efdd4e61d8a9fec988ed06b04245928c89ec3ffd6a6363c23b773",
+    "sessions": "74884f71ef83f91d12f57bc2fb365beb8c6a9afce91e333ebd475398f290745b"
+  },
+  "guess": {
+    "matches": true,
+    "modelSettingsMatches": true
+  },
+  "keyOrderOnly": {
+    "before": "4992816c9e2efdd4e61d8a9fec988ed06b04245928c89ec3ffd6a6363c23b773",
+    "after": "4992816c9e2efdd4e61d8a9fec988ed06b04245928c89ec3ffd6a6363c23b773"
+  },
+  "unrelatedFieldChangesSessions": true,
+  "cost": [
+    {
+      "count": 500,
+      "actual": 500,
+      "bytes": 481478,
+      "p50": 0.6825000000001182,
+      "p95": 1.2355000000000018,
+      "max": 1.9739999999999327,
+      "n": 250,
+      "cpuMs": 140
+    },
+    {
+      "count": 2000,
+      "actual": 2000,
+      "bytes": 1929974,
+      "p50": 3.5916000000001986,
+      "p95": 4.469400000000405,
+      "max": 5.200399999999945,
+      "n": 250,
+      "cpuMs": 657
+    }
+  ],
+  "catalogFailure": {
+    "status": 503,
+    "body": {
+      "error": {
+        "code": "BACKEND_UNAVAILABLE"
+      }
+    }
+  },
+  "mixedRevision": {
+    "oldRevision": 13,
+    "staleRevision": 14,
+    "currentRevision": 14,
+    "staleModels": "3cf9a71368d8b160105b772e9c77dbf81c4f8819f8f04a202f3146fc4da1ee1a",
+    "currentModels": "63b555f41ccf2b64faa8a74a3c08dfc4707664e6d03010e5f5d831b58ef4c60a"
+  }
+}

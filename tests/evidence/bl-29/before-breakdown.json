@@ -1,0 +1,752 @@
+{
+  "stage": "before",
+  "surfaces": [
+    {
+      "surface": "electron",
+      "windows": [
+        {
+          "name": "foreground-idle",
+          "total": 309,
+          "seconds": 61.004,
+          "perSecond": 5.065241623500098
+        },
+        {
+          "name": "streaming",
+          "total": 334,
+          "seconds": 30.003,
+          "perSecond": 11.132220111322201
+        },
+        {
+          "name": "electron-minimized",
+          "total": 150,
+          "seconds": 30.005,
+          "perSecond": 4.999166805532411
+        },
+        {
+          "name": "background",
+          "total": 0,
+          "seconds": 30.002,
+          "perSecond": 0
+        },
+        {
+          "name": "settings",
+          "total": 2,
+          "seconds": 30.002,
+          "perSecond": 0.06666222251849876
+        },
+        {
+          "name": "activity",
+          "total": 1,
+          "seconds": 12.002,
+          "perSecond": 0.08331944675887351
+        },
+        {
+          "name": "goals",
+          "total": 5,
+          "seconds": 12.002,
+          "perSecond": 0.4165972337943676
+        },
+        {
+          "name": "library",
+          "total": 67,
+          "seconds": 12.003,
+          "perSecond": 5.5819378488711155
+        }
+      ],
+      "groups": [
+        {
+          "route": "/personal/v1/chats/chat-:id/changes",
+          "caller": "正文计时器",
+          "purpose": "正文／原生事件增量",
+          "necessity": "生成中约4次/秒必要；空闲现代主对话／旁聊等待原生事件，兼容路径1500毫秒；后台取消等待并暂停。",
+          "perMinute": {
+            "foreground-idle": 56.06189758048653,
+            "streaming": 239.97600239976003,
+            "electron-minimized": 55.990668221963006,
+            "library": 59.985003749062734
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readChatChanges (/personal/v1/ui/ui-core/client.js:28:59) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:197:37) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:80:64) ← at Object.refreshLiveConversation (/personal/v1/ui/ui-core/shell.js:203:37) ← at /personal/v1/ui/components/shell.js:248:52"
+          ]
+        },
+        {
+          "route": "/personal/v1/chats/main",
+          "caller": "正文计时器",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 56.06189758048653,
+            "streaming": 239.97600239976003,
+            "electron-minimized": 55.990668221963006,
+            "library": 59.985003749062734
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readMainChat (/personal/v1/ui/ui-core/client.js:25:34) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:208:37) ← at async Promise.all (index 0) ← at async Object.refreshLiveConversation (/personal/v1/ui/ui-core/shell.js:203:13)"
+          ]
+        },
+        {
+          "route": "/personal/v1/chats/main",
+          "caller": "原全量刷新计时器",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 21.637925381942168,
+            "streaming": 19.99800019998,
+            "electron-minimized": 19.996667222129645,
+            "library": 19.99500124968758
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readMainChat (/personal/v1/ui/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:66:33) ← at Object.refreshSessions (/personal/v1/ui/ui-core/sessions.js:36:65) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:24)",
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readMainChat (/personal/v1/ui/ui-core/client.js:25:34) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:208:37) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:223:28)"
+          ]
+        },
+        {
+          "route": "/personal/v1/status",
+          "caller": "原全量刷新计时器",
+          "purpose": "宿主连接／能力",
+          "necessity": "原全量刷新重复查询；复用同身份状态快照，在线探测15秒、后台60秒，失败沿原分级重连。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshStatus (/personal/v1/ui/ui-core/shell.js:141:34) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:213:24) ← at /personal/v1/ui/components/shell.js:241:27"
+          ]
+        },
+        {
+          "route": "/personal/v1/settings/personalization",
+          "caller": "原全量刷新计时器",
+          "purpose": "配置／用量／副本",
+          "necessity": "原来全量计时器反复读；设置在入页／写回时读取，手机配置和记忆可用性30秒检查，用量在回合事实变化时更新。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.loadPersonalization (/personal/v1/ui/ui-core/settings.js:24:34) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:214:52)"
+          ]
+        },
+        {
+          "route": "/personal/v1/activity/unread",
+          "caller": "原全量刷新计时器",
+          "purpose": "动态／待办徽标",
+          "necessity": "同一概览计时器，当前动态页与徽标不重复读取；前台5500毫秒。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshActivity (/personal/v1/ui/ui-core/activity.js:27:36) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:215:41)"
+          ]
+        },
+        {
+          "route": "/personal/v1/models",
+          "caller": "原全量刷新计时器",
+          "purpose": "配置／用量／副本",
+          "necessity": "原来全量计时器反复读；设置在入页／写回时读取，手机配置和记忆可用性30秒检查，用量在回合事实变化时更新。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshModels (/personal/v1/ui/ui-core/shell.js:173:36) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:216:24)"
+          ]
+        },
+        {
+          "route": "/personal/v1/settings/models",
+          "caller": "原全量刷新计时器",
+          "purpose": "配置／用量／副本",
+          "necessity": "原来全量计时器反复读；设置在入页／写回时读取，手机配置和记忆可用性30秒检查，用量在回合事实变化时更新。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshModels (/personal/v1/ui/ui-core/shell.js:177:42) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:216:13)"
+          ]
+        },
+        {
+          "route": "/personal/v1/commands",
+          "caller": "原全量刷新计时器",
+          "purpose": "当前页面数据",
+          "necessity": "完整调用链见原始JSON；按当前页面与身份保留。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshTasks (/personal/v1/ui/ui-core/resources.js:108:40) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:219:24)"
+          ]
+        },
+        {
+          "route": "/personal/v1/sessions",
+          "caller": "原全量刷新计时器",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:77:59) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)"
+          ]
+        },
+        {
+          "route": "/personal/v1/chats",
+          "caller": "原全量刷新计时器",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:77:103) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)"
+          ]
+        },
+        {
+          "route": "/personal/v1/projects",
+          "caller": "原全量刷新计时器",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshSessionProjects (/personal/v1/ui/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/personal/v1/ui/ui-core/main-chat.js:99:20) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:221:13)"
+          ]
+        },
+        {
+          "route": "/personal/v1/chats/chat-:id/changes",
+          "caller": "原全量刷新计时器",
+          "purpose": "正文／原生事件增量",
+          "necessity": "生成中约4次/秒必要；空闲现代主对话／旁聊等待原生事件，兼容路径1500毫秒；后台取消等待并暂停。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readChatChanges (/personal/v1/ui/ui-core/client.js:28:59) ← at Object.refreshHistory [as refreshLogicalHistory] (/personal/v1/ui/ui-core/main-chat.js:197:37) ← at Object.refreshHistory (/personal/v1/ui/ui-core/messages.js:80:64) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:223:39)"
+          ]
+        },
+        {
+          "route": "/personal/v1/usage",
+          "caller": "原全量刷新计时器",
+          "purpose": "配置／用量／副本",
+          "necessity": "原来全量计时器反复读；设置在入页／写回时读取，手机配置和记忆可用性30秒检查，用量在回合事实变化时更新。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.refreshUsageBudget (/personal/v1/ui/ui-core/usage.js:59:40) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:224:43)"
+          ]
+        },
+        {
+          "route": "/personal/v1/sync/events",
+          "caller": "原全量刷新计时器",
+          "purpose": "正文／原生事件增量",
+          "necessity": "生成中约4次/秒必要；空闲现代主对话／旁聊等待原生事件，兼容路径1500毫秒；后台取消等待并暂停。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPhoneEvents (/personal/v1/ui/ui-core/client.js:67:43) ← at Object.refreshPhoneRecords (/personal/v1/ui/ui-core/phone.js:428:41) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:226:28)"
+          ]
+        },
+        {
+          "route": "/personal/v1/sessions/session-:id/approvals",
+          "caller": "原全量刷新计时器",
+          "purpose": "决策／任务的权威回执",
+          "necessity": "原来正文每次重读都连带查询；现在仅事实变化、入页、处理动作／恢复时读取，保留来源和回执核对。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/approvals.js:240:45) ← at Object.refreshConversationApprovals (/personal/v1/ui/ui-core/approvals.js:284:25) ← at run (/personal/v1/ui/ui-core/tasks.js:187:37) ← at Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:237:25) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:39)"
+          ]
+        },
+        {
+          "route": "/personal/v1/sessions/session-:id/questions",
+          "caller": "原全量刷新计时器",
+          "purpose": "决策／任务的权威回执",
+          "necessity": "原来正文每次重读都连带查询；现在仅事实变化、入页、处理动作／恢复时读取，保留来源和回执核对。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 9.99900009999,
+            "electron-minimized": 9.998333611064822,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at run (/personal/v1/ui/ui-core/questions.js:115:45) ← at Object.refreshConversationQuestions (/personal/v1/ui/ui-core/questions.js:158:25) ← at run (/personal/v1/ui/ui-core/tasks.js:188:22) ← at Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:237:25) ← at Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:39)"
+          ]
+        },
+        {
+          "route": "/personal/v1/tasks/cmd-:id",
+          "caller": "原全量刷新计时器",
+          "purpose": "决策／任务的权威回执",
+          "necessity": "原来正文每次重读都连带查询；现在仅事实变化、入页、处理动作／恢复时读取，保留来源和回执核对。",
+          "perMinute": {
+            "foreground-idle": 10.818962690971084,
+            "streaming": 19.99800019998,
+            "electron-minimized": 19.996667222129645,
+            "library": 19.99500124968758
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at worker (/personal/v1/ui/ui-core/tasks.js:212:52) ← at run (/personal/v1/ui/ui-core/tasks.js:235:32) ← at async Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:240:13) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:28)",
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at worker (/personal/v1/ui/ui-core/tasks.js:212:52) ← at run (/personal/v1/ui/ui-core/tasks.js:235:42) ← at async Object.refreshConversationTasks (/personal/v1/ui/ui-core/tasks.js:240:13) ← at async Object.refreshAssistant (/personal/v1/ui/ui-core/shell.js:227:28)"
+          ]
+        },
+        {
+          "route": "/personal/v1/cloud/devices/pending",
+          "caller": "设备批准计时器",
+          "purpose": "新设备待批准",
+          "necessity": "前台15秒核对；后台暂停；必要，独立于对话正文。",
+          "perMinute": {
+            "foreground-idle": 3.9341682512622125,
+            "streaming": 3.9996000399960003,
+            "electron-minimized": 3.999333444425929,
+            "settings": 3.999733351109926,
+            "activity": 4.99916680553241,
+            "goals": 4.99916680553241,
+            "library": 4.998750312421895
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at Object.readPendingDevices (/personal/v1/ui/ui-core/client.js:40:40) ← at Object.refreshPendingDevices (/personal/v1/ui/ui-core/account.js:618:40) ← at /personal/v1/ui/components/shell.js:459:27"
+          ]
+        },
+        {
+          "route": "/personal/v1/status",
+          "caller": "连接探测计时器",
+          "purpose": "宿主连接／能力",
+          "necessity": "原全量刷新重复查询；复用同身份状态快照，在线探测15秒、后台60秒，失败沿原分级重连。",
+          "perMinute": {
+            "foreground-idle": 3.9341682512622125,
+            "streaming": 3.9996000399960003,
+            "electron-minimized": 3.999333444425929
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at /personal/v1/ui/ui-core/presence.js:65:41 ← at retryConnection (/personal/v1/ui/ui-core/presence.js:91:15) ← at /personal/v1/ui/ui-core/presence.js:55:113"
+          ]
+        },
+        {
+          "route": "/personal/v1/tasks",
+          "caller": "async /personal/v1/ui/ui-core/goals.js:12:27",
+          "purpose": "目标页内容",
+          "necessity": "仅当前目标页计时器读取；聊天页不再后台读完整目标页。",
+          "perMinute": {
+            "goals": 9.99833361106482,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at /personal/v1/ui/ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /personal/v1/ui/ui-core/goals.js:12:27"
+          ]
+        },
+        {
+          "route": "/personal/v1/sessions",
+          "caller": "async /personal/v1/ui/ui-core/goals.js:12:27",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "goals": 9.99833361106482,
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at /personal/v1/ui/ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /personal/v1/ui/ui-core/goals.js:12:27"
+          ]
+        },
+        {
+          "route": "/personal/v1/library",
+          "caller": "成果库计时器",
+          "purpose": "成果库内容",
+          "necessity": "仅当前成果库读取；后台暂停。",
+          "perMinute": {
+            "library": 9.99750062484379
+          },
+          "callStacks": [
+            "at Object.request [as fetch] (/personal/v1/ui/app.js:12:129) ← at Object.requestJson (/personal/v1/ui/ui-core/shell.js:31:42) ← at Object.accessApi (/personal/v1/ui/ui-core/shell.js:49:38) ← at /personal/v1/ui/ui-core/library.js:17:57 ← at Object.readLibrary (/personal/v1/ui/ui-core/library.js:20:147) ← at /personal/v1/ui/components/library-view.js:74:126"
+          ]
+        }
+      ]
+    },
+    {
+      "surface": "mobile",
+      "windows": [
+        {
+          "name": "foreground-idle",
+          "total": 1020,
+          "seconds": 61.037,
+          "perSecond": 16.711175188819897
+        },
+        {
+          "name": "streaming",
+          "total": 467,
+          "seconds": 30.044,
+          "perSecond": 15.543868992144853
+        },
+        {
+          "name": "electron-minimized",
+          "total": 509,
+          "seconds": 30.07,
+          "perSecond": 16.9271699368141
+        },
+        {
+          "name": "background",
+          "total": 0,
+          "seconds": 30.058,
+          "perSecond": 0
+        },
+        {
+          "name": "settings",
+          "total": 19,
+          "seconds": 30.063,
+          "perSecond": 0.6320061204803247
+        },
+        {
+          "name": "activity",
+          "total": 13,
+          "seconds": 12.052,
+          "perSecond": 1.0786591437105875
+        },
+        {
+          "name": "goals",
+          "total": 12,
+          "seconds": 12.057,
+          "perSecond": 0.9952724558347847
+        },
+        {
+          "name": "library",
+          "total": 10,
+          "seconds": 12.061,
+          "perSecond": 0.8291186468783683
+        }
+      ],
+      "groups": [
+        {
+          "route": "updates.status",
+          "caller": "更新提示：重绘事件",
+          "purpose": "本机已安装版本",
+          "necessity": "原来失败后每次重绘重试；合成桥未实现该方法。现在失败／待验证最多30秒重试一次；正常成功同身份只读一次。此方法不走中继。",
+          "perMinute": {
+            "foreground-idle": 257.54869996887135,
+            "streaming": 23.964851551058445,
+            "electron-minimized": 259.39474559361486
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at Object.connectionSucceeded (/ui-core/presence.js:103:155) ← at Object.setOnline (/ui-core/shell.js:104:30) ← at Object.accessApi (/ui-core/shell.js:52:22) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:125:20)",
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at mobileEffects.renderMainChat (/components/main-chat-mobile.js:140:154) ← at notify (/ui-core/main-chat.js:14:52) ← at Object.restoreMainRequests (/ui-core/main-chat.js:427:54) ← at Object.restoreMainNativeRequests (/components/main-chat-mobile.js:62:114) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:139:7)",
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at Object.connectionSucceeded (/ui-core/presence.js:103:155) ← at Object.setOnline (/ui-core/shell.js:104:30) ← at Object.accessApi (/ui-core/shell.js:52:22) ← at async Promise.all (index 0) ← at async Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:77:35) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:138:7)",
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at Object.paintSelectedSession (/components/main-chat-mobile.js:38:85) ← at Object.paintSelectedSession (/components/main-chat.js:292:48) ← at Object.paintSelectedSession (/components/main-chat-mobile.js:51:43) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:99:80) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:138:7)",
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at Object.renderActivityBadge (/app.js:43:27) ← at Object.refreshActivity (/ui-core/activity.js:28:69) ← at async refresh (/app.js:264:90)",
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at Object.connectionSucceeded (/ui-core/presence.js:103:155) ← at Object.setOnline (/ui-core/shell.js:104:30) ← at Object.accessApi (/ui-core/shell.js:52:22) ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27 ← at async refresh (/app.js:264:175)",
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.nativeCall (/app.js:49:28) ← at Object.readUpdateState (/ui-core/update.js:11:43) ← at Object.currentRelease (/ui-core/help.js:33:30) ← at Object.check (/components/help-view.js:50:32) ← at syncMobileTabs (/app.js:239:39) ← at updatePageHeader (/components/main-chat-mobile.js:123:66) ← at updateComposer (/components/chat.js:391:77) ← at Object.updateAvailability (/app.js:61:69) ← at notify (/ui-core/presence.js:50:118) ← at update (/ui-core/presence.js:17:97) ← at Object.success (/ui-core/presence.js:20:30) ← at /ui-core/presence.js:69:27"
+          ]
+        },
+        {
+          "route": "host.business /personal/v1/chats/chat-:id/changes",
+          "caller": "正文计时器",
+          "purpose": "正文／原生事件增量",
+          "necessity": "生成中约4次/秒必要；空闲现代主对话／旁聊等待原生事件，兼容路径1500毫秒；后台取消等待并暂停。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "streaming": 217.68073492211423,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.readChatChanges (/ui-core/client.js:28:59) ← at Object.refreshHistory [as refreshLogicalHistory] (/ui-core/main-chat.js:197:37) ← at loadSharedHistory (/components/main-chat-mobile.js:116:53) ← at /components/sessions.js:113:11"
+          ]
+        },
+        {
+          "route": "shared.approvals.list",
+          "caller": "正文计时器",
+          "purpose": "决策／任务的权威回执",
+          "necessity": "原来正文每次重读都连带查询；现在仅事实变化、入页、处理动作／恢复时读取，保留来源和回执核对。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "streaming": 217.68073492211423,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:67:16) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at run (/ui-core/approvals.js:240:45) ← at refreshConversationApprovals (/ui-core/approvals.js:284:25) ← at refreshShared (/ui-core/adapters/mobile-decisions.js:166:78) ← at refreshFromSharedTask (/ui-core/adapters/mobile-decisions.js:327:16) ← at Object.refreshConversationApprovals (/ui-core/adapters/mobile-decisions.js:330:90) ← at run (/ui-core/tasks.js:187:37) ← at Object.refreshConversationTasks (/ui-core/tasks.js:237:25) ← at Object.refreshHistory [as refreshLogicalHistory] (/ui-core/main-chat.js:206:65) ← at async /components/sessions.js:113:5"
+          ]
+        },
+        {
+          "route": "shared.questions.list",
+          "caller": "正文计时器",
+          "purpose": "决策／任务的权威回执",
+          "necessity": "原来正文每次重读都连带查询；现在仅事实变化、入页、处理动作／恢复时读取，保留来源和回执核对。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "streaming": 217.68073492211423,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:67:16) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at run (/ui-core/questions.js:115:45) ← at refreshConversationQuestions (/ui-core/questions.js:158:25) ← at refreshShared (/ui-core/adapters/mobile-decisions.js:166:78) ← at refreshFromSharedTask (/ui-core/adapters/mobile-decisions.js:327:16) ← at Object.refreshConversationQuestions (/ui-core/adapters/mobile-decisions.js:331:90) ← at run (/ui-core/tasks.js:188:22) ← at Object.refreshConversationTasks (/ui-core/tasks.js:237:25) ← at Object.refreshHistory [as refreshLogicalHistory] (/ui-core/main-chat.js:206:65) ← at async /components/sessions.js:113:5"
+          ]
+        },
+        {
+          "route": "host.business /personal/v1/chats/main",
+          "caller": "正文计时器",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "streaming": 217.68073492211423,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.readMainChat (/ui-core/client.js:25:34) ← at Object.refreshHistory [as refreshLogicalHistory] (/ui-core/main-chat.js:208:37) ← at async /components/sessions.js:113:5"
+          ]
+        },
+        {
+          "route": "host.business /personal/v1/settings/personalization",
+          "caller": "会话概览计时器",
+          "purpose": "配置／用量／副本",
+          "necessity": "原来全量计时器反复读；设置在入页／写回时读取，手机配置和记忆可用性30秒检查，用量在回合事实变化时更新。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.loadPersonalization (/ui-core/settings.js:24:34) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:123:13) ← at listSharedSessions (/components/sessions.js:471:73) ← at /components/sessions.js:113:60"
+          ]
+        },
+        {
+          "route": "host.status",
+          "caller": "会话概览计时器",
+          "purpose": "宿主连接／能力",
+          "necessity": "原全量刷新重复查询；复用同身份状态快照，在线探测15秒、后台60秒，失败沿原分级重连。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:31:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:125:31) ← at listSharedSessions (/components/sessions.js:471:73) ← at /components/sessions.js:113:60"
+          ]
+        },
+        {
+          "route": "models.host",
+          "caller": "会话概览计时器",
+          "purpose": "配置／用量／副本",
+          "necessity": "原来全量计时器反复读；设置在入页／写回时读取，手机配置和记忆可用性30秒检查，用量在回合事实变化时更新。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:84:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshThinkingModels (/ui-core/composer.js:7:34) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:135:18)"
+          ]
+        },
+        {
+          "route": "host.business /personal/v1/chats/main",
+          "caller": "会话概览计时器",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.readMainChat (/ui-core/client.js:25:34) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:66:33) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:138:18)"
+          ]
+        },
+        {
+          "route": "host.business /personal/v1/sessions",
+          "caller": "会话概览计时器",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:47:32) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:77:59) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:138:7)"
+          ]
+        },
+        {
+          "route": "host.business /personal/v1/chats",
+          "caller": "会话概览计时器",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:77:103) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:138:7)"
+          ]
+        },
+        {
+          "route": "shared.projects.list",
+          "caller": "会话概览计时器",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:42:76) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshSessionProjects (/ui-core/sessions.js:68:40) ← at Object.refreshSessions [as refreshLogicalSessions] (/ui-core/main-chat.js:99:20) ← at async Object.listMobileSessions (/ui-core/adapters/mobile-host.js:138:7)"
+          ]
+        },
+        {
+          "route": "shared.outbox.list",
+          "caller": "会话概览计时器",
+          "purpose": "本机待确认发送",
+          "necessity": "原生本地存储读取；网络不确定时仍需恢复原请求编号，不走中继。",
+          "perMinute": {
+            "foreground-idle": 58.98061831348199,
+            "electron-minimized": 59.86032590621882
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.restoreMainNativeRequests (/components/main-chat-mobile.js:62:80) ← at Object.listMobileSessions (/ui-core/adapters/mobile-host.js:139:48)"
+          ]
+        },
+        {
+          "route": "host.business /personal/v1/activity/unread",
+          "caller": "动态页／徽标计时器",
+          "purpose": "动态／待办徽标",
+          "necessity": "同一概览计时器，当前动态页与徽标不重复读取；前台5500毫秒。",
+          "perMinute": {
+            "foreground-idle": 9.830103052246997,
+            "streaming": 9.985354812941019,
+            "electron-minimized": 9.976720984369804,
+            "settings": 9.979044007584074,
+            "activity": 19.913707268503153,
+            "goals": 9.952724558347848,
+            "library": 9.94942376254042
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at refresh (/app.js:264:103) ← at /app.js:265:73",
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:27:36) ← at /app.js:212:158"
+          ]
+        },
+        {
+          "route": "host.business /personal/v1/tasks",
+          "caller": "async /ui-core/goals.js:12:27",
+          "purpose": "目标页内容",
+          "necessity": "仅当前目标页计时器读取；聊天页不再后台读完整目标页。",
+          "perMinute": {
+            "foreground-idle": 9.830103052246997,
+            "streaming": 9.985354812941019,
+            "electron-minimized": 9.976720984369804,
+            "settings": 9.979044007584074,
+            "activity": 9.956853634251576,
+            "goals": 19.905449116695696,
+            "library": 9.94942376254042
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 0) ← at async /ui-core/goals.js:12:27"
+          ]
+        },
+        {
+          "route": "shared.sessions.list",
+          "caller": "async /ui-core/goals.js:12:27",
+          "purpose": "跨设备会话与项目列表",
+          "necessity": "前台5500毫秒，保证6秒内看见新建／改名；设置页不读对话内容；恢复前台立即读。多个现有接口各有契约用途，本包不加聚合路由。",
+          "perMinute": {
+            "foreground-idle": 9.830103052246997,
+            "streaming": 9.985354812941019,
+            "electron-minimized": 9.976720984369804,
+            "settings": 9.979044007584074,
+            "activity": 9.956853634251576,
+            "goals": 19.905449116695696,
+            "library": 9.94942376254042
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:50:30) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/goals.js:12:206 ← at async Promise.allSettled (index 3) ← at async /ui-core/goals.js:12:27"
+          ]
+        },
+        {
+          "route": "host.status",
+          "caller": "连接探测计时器",
+          "purpose": "宿主连接／能力",
+          "necessity": "原全量刷新重复查询；复用同身份状态快照，在线探测15秒、后台60秒，失败沿原分级重连。",
+          "perMinute": {
+            "foreground-idle": 3.932041220898799,
+            "streaming": 3.9941419251764074,
+            "electron-minimized": 3.9906883937479214,
+            "settings": 3.99161760303363,
+            "activity": 4.978426817125788,
+            "goals": 4.976362279173924,
+            "library": 4.97471188127021
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:31:54) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at /ui-core/presence.js:65:41 ← at retryConnection (/ui-core/presence.js:91:15) ← at /ui-core/presence.js:55:113"
+          ]
+        },
+        {
+          "route": "cloud.pending",
+          "caller": "设备批准计时器",
+          "purpose": "新设备待批准",
+          "necessity": "前台15秒核对；后台暂停；必要，独立于对话正文。",
+          "perMinute": {
+            "foreground-idle": 3.932041220898799,
+            "streaming": 3.9941419251764074,
+            "electron-minimized": 3.9906883937479214,
+            "settings": 3.99161760303363,
+            "goals": 4.976362279173924,
+            "library": 4.97471188127021
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at Object.call (/ui-core/adapters/android-bridge.js:9:14) ← at call (/app.js:306:126) ← at Object.pending (/cloud-native.js:74:30) ← at refreshCloudDevices (/components/chat.js:524:38) ← at /cloud-native.js:31:56"
+          ]
+        },
+        {
+          "route": "host.business /personal/v1/activity/changes",
+          "caller": "动态页／徽标计时器",
+          "purpose": "正文／原生事件增量",
+          "necessity": "生成中约4次/秒必要；空闲现代主对话／旁聊等待原生事件，兼容路径1500毫秒；后台取消等待并暂停。",
+          "perMinute": {
+            "activity": 19.913707268503153
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:33:44)",
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at Object.refreshActivity (/ui-core/activity.js:33:44) ← at async refresh (/app.js:264:90)"
+          ]
+        },
+        {
+          "route": "host.business /personal/v1/library",
+          "caller": "成果库计时器",
+          "purpose": "成果库内容",
+          "necessity": "仅当前成果库读取；后台暂停。",
+          "perMinute": {
+            "library": 9.94942376254042
+          },
+          "callStacks": [
+            "at WeftUiCore.createAndroidBridge.postMessage (/app.js:29:78) ← at /ui-core/adapters/android-bridge.js:12:9 ← at new Promise (<anonymous>) ← at call (/ui-core/adapters/android-bridge.js:9:14) ← at route (/ui-core/adapters/android-bridge.js:89:14) ← at Object.fetch (/ui-core/adapters/android-bridge.js:93:30) ← at Object.requestJson (/ui-core/shell.js:31:42) ← at Object.accessApi (/ui-core/shell.js:49:38) ← at /ui-core/library.js:17:57 ← at Object.readLibrary (/ui-core/library.js:20:147) ← at /components/library-view.js:74:126"
+          ]
+        }
+      ]
+    }
+  ]
+}
