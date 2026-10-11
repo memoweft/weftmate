@@ -12,6 +12,13 @@ import { createPersonalAccessService } from '../src/personal-access/index.mjs';
 
 test('account defaults migrate without changing history; prompt handles empty values and every combination', () => {
   assert.deepEqual(accountPersonalization({}), P.defaults); assert.equal(P.prompt({}), '');
+  for (const nextSuggestionsEnabled of [false,true]) {
+    const legacy={personalization:{nextSuggestionsEnabled}};
+    assert.equal(accountPersonalization(legacy).inlineCompletionEnabled,false);
+    assert.equal(accountPersonalization(legacy).nextSuggestionsEnabled,nextSuggestionsEnabled);
+    assert.equal(Object.hasOwn(legacy.personalization,'inlineCompletionEnabled'),false);
+  }
+  assert.equal(P.defaults.inlineCompletionEnabled,false);assert.equal(P.defaults.nextSuggestionsEnabled,true);
   for (const tone of ['natural','concise','detailed','formal','casual']) for (const verbosity of ['short','medium','thorough']) {
     const value = { preferredName:'小合成',bio:'合成职业',tone,verbosity,fixedInstructions:'末尾加 —WM',toneInstructions:'先结论',useWritingStyle:true,writingStyle:'短句' };
     assert.doesNotThrow(() => P.validate(value));
@@ -24,7 +31,7 @@ test('account defaults migrate without changing history; prompt handles empty va
     assert.doesNotThrow(()=>P.validate({[key]:'😀'.repeat(limit)}));
     assert.throws(()=>P.validate({[key]:'字'.repeat(limit+1)})); assert.throws(()=>P.validate({[key]:null}));
   }
-  for (const patch of [{},{unknown:true},{constructor:'queue'},{tone:'bad'},{webSearch:'true'},{thinkingDisplay:'bad'}]) assert.throws(()=>P.validate(patch));
+  for (const patch of [{},{unknown:true},{constructor:'queue'},{tone:'bad'},{webSearch:'true'},{thinkingDisplay:'bad'},...[null,0,1,'true',{},[]].map(inlineCompletionEnabled=>({inlineCompletionEnabled}))]) assert.throws(()=>P.validate(patch));
   assert.equal(P.extractStyle([]),''); assert.match(P.extractStyle(['你好？','短句？']),/短句/);
 });
 
@@ -69,6 +76,9 @@ test('settings API is account isolated, last-write wins per field, persists and 
   const register=async(username:string)=>{const r=await api('/auth/register',null,{username,password:'Synthetic-ST1-password-2026!',deviceName:'合成设备'},'POST');assert.equal(r.status,201);return {cookie:r.cookie,csrf:r.body.csrfToken}};
   const a=await register('SyntheticST1A'),b=await register('SyntheticST1B');
   assert.deepEqual((await api('/settings/personalization',a)).body.settings,P.defaults);
+  for (const inlineCompletionEnabled of [null,0,1,'true',{},[]]) assert.equal((await api('/settings/personalization',a,{inlineCompletionEnabled})).status,400);
+  assert.equal((await api('/settings/personalization',a,{inlineCompletionEnabled:true})).body.settings.inlineCompletionEnabled,true);
+  assert.equal((await api('/settings/personalization',b)).body.settings.inlineCompletionEnabled,false);
   assert.equal((await api('/settings/personalization',a,{preferredName:'小合成',fixedInstructions:'末尾加 —WM'})).status,200);
   await api('/settings/personalization',a,{tone:'concise'});await api('/settings/personalization',a,{tone:'formal'});
   const saved=(await api('/settings/personalization',a)).body;assert.equal(saved.settings.preferredName,'小合成');assert.equal(saved.settings.tone,'formal');assert.equal(saved.synced,true);
@@ -79,6 +89,7 @@ test('settings API is account isolated, last-write wins per field, persists and 
   await service.close();service=await createPersonalAccessService({root,port:0,backend});origin=(await service.start()).origin;
   const login=await api('/auth/login',null,{username:'SyntheticST1A',password:'Synthetic-ST1-password-2026!',deviceName:'合成设备二'},'POST');
   assert.equal((await api('/settings/personalization',{cookie:login.cookie,csrf:login.body.csrfToken})).body.settings.fixedInstructions,'末尾加 —WM');
+  assert.equal((await api('/settings/personalization',{cookie:login.cookie,csrf:login.body.csrfToken})).body.settings.inlineCompletionEnabled,true);
 });
 
 test('old queue preference migrates once, account changes ignore late reads and writes', async () => {
