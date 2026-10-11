@@ -9,7 +9,10 @@ const arg = name => { const i = process.argv.indexOf(name); return i < 0 ? null 
 let evaluationFailed = false;
 for (let batch = arg('--from') ?? 1; batch <= (arg('--to') ?? batches); batch++) {
   const resultPath = resolve(import.meta.dirname, `../../evidence/sec-2/batch-${batch}/results.json`);
-  if (process.argv.includes('--resume') && existsSync(resultPath) && JSON.parse(readFileSync(resultPath)).stage === 'completed') continue;
+  if (process.argv.includes('--resume') && existsSync(resultPath)) {
+    const saved = JSON.parse(readFileSync(resultPath));
+    if (saved.stage === 'completed') { evaluationFailed ||= saved.results.some(r => !r.objectivePassed); continue; }
+  }
   const child = spawn(process.execPath, [resolve(import.meta.dirname, 'run.mjs'), '--batch', String(batch), '--batch-size', String(size), '--repeat', '3'], { cwd: resolve(import.meta.dirname, '../../..'), stdio: 'inherit', windowsHide: true });
   const [code] = await once(child, 'exit');
   if (code === 1 && existsSync(resultPath) && JSON.parse(readFileSync(resultPath)).stage === 'completed') { evaluationFailed = true; continue; }
