@@ -75,17 +75,27 @@ export async function hostFixture(f, t) {
     const response = await fetch(started.origin + '/personal/v1' + route, {
       method: body === undefined ? 'GET' : 'POST', headers: { origin: started.origin,
         ...(body === undefined ? {} : { 'content-type': 'application/json' }),
-        ...(auth ? { cookie: auth.cookie, 'x-weftmate-csrf': auth.csrfToken } : {}), ...headers },
+        ...(auth ? { cookie: auth.cookie, 'x-weftmate-csrf': auth.csrfToken,
+          ...(auth.local ? { 'x-weftmate-desktop': host.libraryDesktopToken } : {}) } : {}), ...headers },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     const data = await response.json();
-    return { ...data, data, status: response.status, cookie: response.headers.get('set-cookie')?.split(';')[0] };
+    return { ...data, data, status: response.status, cookie: response.headers.get('set-cookie')?.split(';')[0] ?? auth?.cookie };
+  }
+  let native;
+  async function nativeDesktop(ownerId) {
+    native = await hostApi('/auth/desktop', { ...(ownerId ? { ownerId } : {}), deviceName: 'Synthetic computer' }, undefined,
+      { 'x-weftmate-desktop': host.libraryDesktopToken });
+    assert.equal(native.status,200,JSON.stringify(native));
+    return native;
   }
   async function exchange(device, route, body = {}) {
+    const desktop = route === '/auth/cloud-desktop' ? native ?? await nativeDesktop() : undefined;
     const nonce = await hostApi('/auth/cloud-nonce', {});
-    return hostApi(route, { accessToken: device.tokens.access_token, deviceName: device.deviceId, ...body }, undefined,
-      { dpop: await proof(device, started.origin + '/personal/v1' + route, device.tokens.access_token, { nonce: nonce.nonce }) });
+    return hostApi(route, { accessToken: device.tokens.access_token, deviceName: device.deviceId, ...body }, desktop,
+      { ...(desktop ? { 'x-weftmate-desktop': host.libraryDesktopToken } : {}),
+        dpop: await proof(device, started.origin + '/personal/v1' + route, device.tokens.access_token, { nonce: nonce.nonce }) });
   }
-  return { host, root, started, hostApi, exchange };
+  return { host, root, started, hostApi, exchange, nativeDesktop };
 }
 

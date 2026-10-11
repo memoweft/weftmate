@@ -151,3 +151,11 @@ iPhone / Mac 已按 D35 / UI-P4 接入单行工具进展、输入区审批条、
 A8 运行中发送固定排队，输入区移除插话 / 新任务选择；D36 设置接线按派发边界留下一包。模型菜单沿用绑定模型与配置模型入口，现有契约没有会话换模型接口。麦克风按钮聚焦输入并提示使用系统听写，不增加录音权限。
 
 相关单测、隔离原生场景、截图与验证边界见 [A8 证据](Tests/Evidence/A8/README.md)。UI 测试使用 `run_a5_ui.py --phase a8-light` / `a8-dark`，Mac 自身窗口使用 `run_a8_mac.py`；构建串行 `-jobs 2`，只启动一个隔离 iPhone，测试后立即关闭全部模拟器，不启动 Watch 模拟器。
+
+## 本机运行记录
+
+三端共用 `WeftMateCore/RunLog.swift`，按天保存白名单 JSONL，启动标记落盘，后台回收和可疑前台异常结束分开。iPhone / Mac 在设置 → 关于 → 运行记录查看、预览并复制诊断摘要；分享先预览文件，再由本人打开系统分享面板或访达。手机页可切换手表，通过已有 WatchConnectivity 本机配对通道接收有上限的记录，离线保留并重连补送。
+
+保留 7 天；手机 / Mac 日志目录总上限 2 MiB（含启动标记与手机手表收件箱），Watch 256 KiB；分享临时快照单独保留最多一份、最多 2 MiB。目录和分享快照均排除备份，不上传或接第三方服务。iPhone / Mac MetricKit 只保留类型、时段、数字诊断码、泛化原因和最多 8 个自家模块偏移，不保存原始负载。模拟器用注入投影测试，真实系统诊断需真机；延迟送达可能覆盖多轮，上一轮运行仅作候选关联。Swift fatalError / SIGKILL / 断电不能可靠运行处理器，以落盘标记和延迟诊断补线索。Mac 系统报告目录无权读取时记 unavailable，不把它当作零崩溃；没有为此新增沙盒权限。
+
+字段与合成证据见 [DIAG-3](Tests/Evidence/DIAG-3/README.md)。双重 Debug 夹具 `--ui-testing --diag3-fixture --apple-contract-fixture` 直接复用设置关于页，namespace 隔离日志；没有账号创建、口令登录或模型请求。Mac 使用 App 内 AX 运行器，不重试 XCUITest automation mode。

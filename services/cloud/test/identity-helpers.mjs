@@ -5,6 +5,7 @@ import path from 'node:path';
 import { once } from 'node:events';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { randomBytes, createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -104,6 +105,7 @@ export async function fixture(t, { env = {}, relayDns, feedbackFetch, realProces
         server.close(resolve);
         server.closeAllConnections();
       });
+    await identity?.accounts?.settleMail();
     opened?.database.close();
     server = null;
     opened = null;
@@ -152,24 +154,24 @@ export async function fixture(t, { env = {}, relayDns, feedbackFetch, realProces
   }
   const api = browser();
   async function mailCode(challengeId) {
+    await identity?.accounts?.settleMail();
     const challenge = opened.database
       .prepare('SELECT * FROM email_challenges WHERE id=?')
       .get(challengeId);
-    const files = await readdir(config.mailDir);
-    const mails = await Promise.all(
-      files.map(async (name) =>
-        JSON.parse(await readFile(path.join(config.mailDir, name), 'utf8')),
-      ),
-    );
-    const matching = mails.filter(
-      (mail) => mail.to === challenge.email && /验证码：\d{6}/.test(mail.text),
-    );
     const { digest } = await import('../src/security.mjs');
-    for (const mail of matching) {
-      const code = /验证码：(\d{6})/.exec(mail.text)[1];
-      if (digest(identity.keys.cookieSecret, `${challengeId}:${code}`) === challenge.code_hash)
-        return code;
-    }
+    // A real child now responds before its file-mail send has finished. Wait
+    // only on that synthetic outbox, never on a user mailbox or public service.
+    const deadline=Date.now()+5000;
+    do {
+      const files = await readdir(config.mailDir);
+      const mails = await Promise.all(files.filter(name=>name.endsWith('.json')).map(async name =>
+        JSON.parse(await readFile(path.join(config.mailDir,name),'utf8'))));
+      for (const mail of mails.filter(mail=>mail.to===challenge.email && /验证码：\d{6}/.test(mail.text))) {
+        const code = /验证码：(\d{6})/.exec(mail.text)[1];
+        if (digest(identity.keys.cookieSecret, `${challengeId}:${code}`) === challenge.code_hash) return code;
+      }
+      await delay(20);
+    } while(realProcess && Date.now()<deadline);
     throw new Error('No development mail for challenge');
   }
   async function register(email = EMAIL) {

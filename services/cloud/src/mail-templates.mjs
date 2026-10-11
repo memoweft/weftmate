@@ -4,6 +4,11 @@ export const MAIL_MARK_PATH = '/assets/mail/weftmate-mark.png';
 export const MAIL_MARK_URL = `https://api.weftmate.com${MAIL_MARK_PATH}`;
 
 const purposes = {
+  login: {
+    subject: 'WeftMate 登录验证码', title: '登录你的账号',
+    preview: '在你正在登录的设备上输入验证码。',
+    body: '你正在登录 WeftMate。在这台设备的登录页面输入下面的验证码，完成登录。',
+  },
   register: {
     subject: '验证 WeftMate 邮箱', title: '验证你的邮箱',
     preview: '完成邮箱验证，开始使用 WeftMate。',
@@ -71,9 +76,9 @@ export function challengeMail(purpose, code, deviceId) {
   if (typeof code !== 'string' || !/^[0-9]{6}$/.test(code)) throw new TypeError('Mail code must be six digits');
   if (!Object.hasOwn(purposes, purpose)) throw new TypeError('Unknown mail purpose');
   const copy = purposes[purpose];
-  const device = purpose === 'device' ? [
+  const device = ['device','login'].includes(purpose) ? [
     `设备标识：${deviceId}`,
-    '确认只授权云账号登录，内容权限须另行配对。',
+    '验证码只用于你正在操作的这台设备。登录后可在设置中查看和退出已登录设备。',
   ] : [];
   const footnotes = ['10 分钟内有效，只能使用一次。', '如果不是你发起，请忽略此邮件。'];
   return {

@@ -175,11 +175,14 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       const account = binding ? accounts.get(binding.account_id) : undefined;
       if (!binding || !account?.active || account.auth_epoch !== binding.auth_epoch)
         throw new errors.InvalidGrant('grant revoked');
+      const device = database.prepare('SELECT public_jwk,confirmed_at FROM cloud_devices WHERE account_id=? AND fingerprint=?')
+        .get(account.id, binding.fingerprint);
+      // cloud_devices contains only keys admitted by a mailbox confirmation.
+      // Check the live row for every audience, including refreshed host tokens.
+      if (!device || !Number.isSafeInteger(device.confirmed_at)) throw new errors.InvalidGrant('device not verified');
       const hostId = token.resourceServer?.audience?.startsWith(`${config.audience}/hosts/`)
         ? token.resourceServer.audience.slice(`${config.audience}/hosts/`.length) : null;
       if (hostId || binding.app_login || token.jkt) {
-        const device = database.prepare('SELECT public_jwk FROM cloud_devices WHERE account_id=? AND fingerprint=?')
-          .get(account.id, binding.fingerprint);
         if (hostId && !database.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(hostId, account.id) ||
             !device?.public_jwk || !token.jkt || token.jkt !== await calculateJwkThumbprint(JSON.parse(device.public_jwk)))
           throw new errors.InvalidGrant('host or device not authorized');
@@ -189,6 +192,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       return {
         device_id: binding.device_id,
         device_fingerprint: binding.fingerprint,
+        device_verified: true,
         auth_epoch: binding.auth_epoch,
         ...(hostId ? { host_id: hostId } : {}),
       };
@@ -303,7 +307,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       req,
       res,
       {
-        login: { accountId: account.id, amr: ['pwd', 'email'], remember: false },
+        login: { accountId: account.id, amr: result.authMethod === 'email' ? ['email'] : result.emailConfirmed ? ['pwd', 'email'] : ['pwd'], remember: false },
         consent: { grantId },
       },
       { mergeWithLastSubmission: false },
@@ -320,6 +324,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     [`${CLOUD_PATH}/auth/register/resend`, 'resend'],
     [`${CLOUD_PATH}/auth/register/verify`, 'verify'],
     [`${CLOUD_PATH}/auth/login`, 'login'],
+    [`${CLOUD_PATH}/auth/login/code/request`, 'loginCodeRequest'],
+    [`${CLOUD_PATH}/auth/login/code/confirm`, 'loginCodeConfirm'],
     [`${CLOUD_PATH}/auth/device/confirm`, 'device'],
     [`${CLOUD_PATH}/auth/password/request`, 'resetRequest'],
     [`${CLOUD_PATH}/auth/password/reset`, 'reset'],
@@ -455,6 +461,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           const devices = database.prepare('SELECT * FROM cloud_devices WHERE account_id=? ORDER BY confirmed_at').all(account.id)
             .map(d => ({ id: d.device_id, name: d.name, type: d.type,
               online: d.last_seen !== null && now() - d.last_seen < 60000,
+              firstUsedAt: new Date(d.confirmed_at).toISOString(),
               lastUsedAt: new Date(d.last_seen ?? d.confirmed_at).toISOString(),
               isCurrent: d.fingerprint === req.cloudToken.device_fingerprint }));
           const computers = database.prepare(`SELECT h.* FROM cloud_hosts h JOIN host_memberships m ON m.host_id=h.host_id
@@ -473,14 +480,14 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
         const body = await bodyOf(req);
         if (url.search) throw new CloudError(400, 'INVALID_REQUEST');
-        if (route === 'login' && typeof body.publicJwk === 'string') {
+        if (['login','loginCodeRequest'].includes(route) && typeof body.publicJwk === 'string') {
           try { body.publicJwk = JSON.parse(body.publicJwk); }
           catch { throw new CloudError(400, 'INVALID_DEVICE_KEY'); }
         }
         const from = source(req);
-        if (route === 'login' || route === 'device') {
+        if (['login','device','loginCodeRequest','loginCodeConfirm'].includes(route)) {
           const interaction = await checkedInteraction(req, res, body);
-          if (route === 'login' && interaction.params.wm_app === '1') {
+          if (['login','loginCodeRequest'].includes(route) && interaction.params.wm_app === '1') {
             await accounts.device(body);
             if (!body.publicJwk || body.deviceId !== interaction.params.wm_device_id ||
                 await calculateJwkThumbprint(body.publicJwk) !== await calculateJwkThumbprint(JSON.parse(interaction.params.wm_public_jwk)))
@@ -489,6 +496,10 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           const result =
             route === 'login'
               ? await accounts.login(body, from, interaction.uid)
+              : route === 'loginCodeRequest'
+                ? await accounts.requestLoginCode(body, from, interaction.uid)
+                : route === 'loginCodeConfirm'
+                  ? accounts.confirmLoginCode(body, from, interaction.uid)
               : accounts.confirmDevice(body, from, interaction.uid);
           if (result.confirmationRequired) {
             if (req.headers['content-type'].startsWith('application/x-www-form-urlencoded'))
@@ -600,6 +611,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           reply(res, route === 'register' ? 201 : 200, result);
         }
       } catch (error) {
+        if (route === 'loginCodeConfirm' && error instanceof CloudError && error.code === 'INTERACTION_INVALID')
+          error = new CloudError(400, 'INVALID_LOGIN_CODE');
         const known = error instanceof CloudError;
         if (!known) logger?.error('identity.error', { code: 'IDENTITY_UNAVAILABLE' });
         if (!res.headersSent)

@@ -75,16 +75,18 @@ if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMM
 // Absolute test paths keep every worker's command line attributable to its
 // worktree during the required creation-time/executable/command-line cleanup.
 let result;
+const streamingOutput = process.env.CI === 'true';
 try {
   result = await runManagedTestProcess(process.execPath, [...args, ...selected.map(file => resolve(file))],
-    { env, commandRoots: [temp, ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')] });
+    { env, commandRoots: [temp, ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')],
+      onOutput: streamingOutput ? (stream, chunk) => process[stream].write(chunk) : undefined });
 } finally {
   stopLease();
   disposeManagedTemp(temp);
   if (existsSync(temp)) throw Error('Unit test temp cleanup failed');
 }
 const output = (result.stdout || '') + (result.stderr || '');
-process.stdout.write(output);
+if (!streamingOutput) process.stdout.write(output);
 const count = name => Number(new RegExp(`^# ${name} (\\d+)$`, 'm').exec(output)?.[1] || 0);
 // Failed parent suites repeat their leaf failure; report assertions once so
 // the failing-name list agrees with Node's failed-test count.

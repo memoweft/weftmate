@@ -9,7 +9,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { startFixture } from './ux-4-fixture.mjs';
-import { localUiSession } from '../helpers/local-ui-session.mjs';
+import { feedbackUiSession } from '../helpers/feedback-ui-session.mjs';
 import { fixture as cloudFixture } from '../../services/cloud/test/identity-helpers.mjs';
 import { registration, appDevice, control } from '../../services/cloud/test/app-helpers.mjs';
 import { createProcessEvidence } from '../helpers/process-evidence.mjs';
@@ -31,7 +31,7 @@ await registration(cloud);const device=await appDevice(cloud,'desktop');
 const unconfigured=await cloudFixture({after:fn=>teardown.push(fn)});await registration(unconfigured);const noTokenDevice=await appDevice(unconfigured,'desktop');
 try {
   for(const surface of ['desktop','mobile-web','mobile-ui']) {
-    const f=await startFixture(),profile=await mkdtemp(join(tmpdir(),'weftmate-r04-electron-'));let app,browser,page,failed=false;
+    const f=await startFixture({auth1:true,cloud,bindingDevice:device}),profile=await mkdtemp(join(tmpdir(),'weftmate-r04-electron-'));let app,browser,page,failed=false;
     const executable=createRequire(import.meta.url)('electron');
     const processEvidence=createProcessEvidence({outputDir:join(evidence,'process',surface),profileDirectory:profile,commandRoots:[resolve('.')],executables:[process.execPath,executable]});
     try {
@@ -39,15 +39,15 @@ try {
       if(surface==='desktop') {
         const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
         env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
-        try { app=await _electron.launch({executablePath:executable,cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light'}}); }
+        try { app=await _electron.launch({executablePath:executable,cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_LIBRARY_TOKEN:f.libraryDesktopToken,REVIEW_THEME:'light'}}); }
         catch(error){processEvidence.recordLaunchFailure(error,'last-stage: launch-electron');throw error;}
         processEvidence.track(app.process(),{label:'production-electron',executable});
-        page=await app.firstWindow();await page.route('**/message-actions.js',captureScript);await localUiSession(page,f.credentials);
+        page=await app.firstWindow();await page.route('**/message-actions.js',captureScript);await feedbackUiSession(page,f,{native:true});
       } else {
         browser=await chromium.launchPersistentContext(profile,{channel:'chrome',headless:true,viewport:{width:390,height:844},isMobile:true,hasTouch:true});page=await browser.newPage();
         await page.route('**/message-actions.js',captureScript);await page.goto(surface==='mobile-web'?f.origin+'/personal/v1/ui':f.mobileUrl);
-        if(surface==='mobile-web')await localUiSession(page,f.credentials);
-        else {await page.waitForFunction(()=>state.booted);await page.evaluate(()=>listSharedSessions());await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:'合成消息操作',exact:true}).last().click();}
+        if(surface==='mobile-web')await feedbackUiSession(page,f);
+        else {await feedbackUiSession(page,f);await page.waitForFunction(()=>state.booted);await page.evaluate(()=>listSharedSessions());await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:'合成消息操作',exact:true}).last().click();}
       }
       page.setDefaultTimeout(20000);page.on('pageerror',error=>errors.push({surface,error:error.message}));
       await page.getByRole('button',{name:'没用',exact:true}).last().waitFor();
@@ -58,9 +58,8 @@ try {
       });
       await page.evaluate(surface=>{
         window.__copies=[];Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>window.__copies.push(text)},configurable:true});
-        const core=surface==='mobile-ui'?WeftUiCore.create({hostOrigin:location.origin}):window.__feedbackCore;
-        core.initializeCloudAccount();core.state.cloudAuth.mode='authenticated';
-        if(surface==='mobile-ui')WeftMobileCloud.core=core;
+        const core=surface==='mobile-ui'?WeftMobileCloud.core:window.__feedbackCore;
+        core.state.cloudAuth.mode='authenticated';
         WeftUiCore.CloudAuthClient.prototype.authorized=async function(path,options){if(path!=='/feedback'||options.method!=='POST')throw Error('Unexpected test cloud route');
           try{return await window.__feedbackTransport(options.body)}catch(error){throw {code:error.message.replace(/^.*?: /,'')}}};
         core.feedbackDiagnostic=async()=>'{"platform":"synthetic","state":"ready"}';
