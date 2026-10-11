@@ -8,7 +8,8 @@ import { isIP } from 'node:net';
 import { sqliteAdapter } from './oidc-adapter.mjs';
 import { Accounts } from './accounts.mjs';
 import { loadKeys } from './keys.mjs';
-import { CloudError, digest, equalDigest, transaction } from './security.mjs';
+import { CloudError, FailureLimiter, digest, equalDigest, transaction } from './security.mjs';
+import { createFeedback } from './feedback.mjs';
 import { deviceProof } from './device-proof.mjs';
 import { appAuthorization, widenAppResumeCookies } from './app-authorization.mjs';
 import { accountLifecycle } from './account-lifecycle.mjs';
@@ -38,7 +39,7 @@ const field = (name, value) => `<input type="hidden" name="${name}" value="${esc
 function confirmationForm(uid, csrfToken, challengeId) {
   return `<p>请查看邮箱并输入新设备确认验证码。此确认仅授权云账号。</p><form method="post" action="${CLOUD_PATH}/auth/device/confirm">${field('interactionUid', uid)}${field('csrfToken', csrfToken)}${field('challengeId', challengeId)}<label>验证码 <input name="code" inputmode="numeric" required></label><button>确认登录</button></form>`;
 }
-async function bodyOf(req) {
+async function bodyOf(req, maxBytes = 16384) {
   const type = req.headers['content-type']?.split(';')[0];
   if (!['application/json', 'application/x-www-form-urlencoded'].includes(type))
     throw new CloudError(415, 'UNSUPPORTED_MEDIA_TYPE');
@@ -46,7 +47,7 @@ async function bodyOf(req) {
   let bytes = 0;
   for await (const chunk of req) {
     bytes += chunk.length;
-    if (bytes > 16384) throw new CloudError(413, 'BODY_TOO_LARGE');
+    if (bytes > maxBytes) throw new CloudError(413, 'BODY_TOO_LARGE');
     chunks.push(chunk);
   }
   try {
@@ -62,7 +63,7 @@ async function bodyOf(req) {
   }
 }
 
-export async function createIdentity({ database, config, mailer, logger, now = Date.now, relayDns = null }) {
+export async function createIdentity({ database, config, mailer, logger, now = Date.now, relayDns = null, feedbackFetch }) {
   const keys = await loadKeys(config.dataDir);
   const accounts = new Accounts(database, mailer, keys.cookieSecret, { now, logger });
   const policy = interactionPolicy.base();
@@ -347,6 +348,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
   const relay = createRelay({ database, config, secret: keys.cookieSecret, now, dns: relayDns });
   const lifecycle = accountLifecycle({ database, accounts, relay });
   const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider });
+  const feedback = createFeedback({ config, limiter: new FailureLimiter(database, keys.cookieSecret, now), fetch: feedbackFetch });
   const authorizeInApp = appAuthorization({ config });
   const allowedOrigin = origin => origin === new URL(config.issuer).origin || config.clients
     .some(c => c.redirect_uris.some(uri => new URL(uri).origin !== 'null' && new URL(uri).origin === origin));
@@ -390,12 +392,19 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         return true;
       }
       const match = new RegExp(`^${CLOUD_PATH}/interactions/([A-Za-z0-9_-]+)$`).exec(url.pathname);
-      const route = routes.get(url.pathname);
+      const route = url.pathname === `${CLOUD_PATH}/feedback` ? 'feedback' : routes.get(url.pathname);
       const hostRoute = url.pathname.startsWith(`${CLOUD_PATH}/hosts/`);
       if (!route && !match && !hostRoute) return false;
       try {
         if (req.headers.origin && !allowedOrigin(req.headers.origin))
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
+        if (route === 'feedback') {
+          if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
+          if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
+          const account = await authenticate(req, true);
+          reply(res, 201, await feedback(account, await bodyOf(req, 262144)));
+          return true;
+        }
         if (hostRoute) {
           if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
           if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
