@@ -20,7 +20,7 @@
     }
     function modal(name, trigger) {
       const dialog = el('dialog', 'message-action-dialog'); dialog.setAttribute('aria-label', name);
-      const heading = el('h2', '', name), close = button('关闭', null, () => dialog.close());
+      const heading = el('h2', '', name), close = button('关闭', 'deny', () => dialog.close());
       close.classList.add('message-dialog-close'); dialog.append(heading, close); document.body.append(dialog);
       dialog.addEventListener('close', () => { dialog.remove(); (trigger?.isConnected ? trigger : draft())?.focus({ preventScroll: true }); }, { once: true });
       dialog.addEventListener('keydown', event => { if (event.key === 'Escape') event.stopPropagation(); });
@@ -48,19 +48,65 @@
       await core.branchMessage(id, event, 'regenerate', null, model, crypto.randomUUID()); versions.clear();
       notice('已创建新版本并重新生成');
     }
-    function feedback(id, event, trigger) {
-      const dialog = modal('这条回复哪里需要改进？', trigger);
-      dialog.append(el('p', 'muted', '原因和备注仅保存在这台设备，不会上传。'));
-      const reasons = el('fieldset', 'message-feedback-reasons'); reasons.append(el('legend', '', '原因（可选）'));
-      for (const value of ['不准确', '没有遵循要求', '不够有帮助', '格式或表达问题', '其他']) {
-        const label = el('label'), input = el('input'); input.type = 'radio'; input.name = 'message-feedback-reason'; input.value = value;
-        label.append(input, document.createTextNode(value)); reasons.append(label);
-      }
-      const note = el('textarea', 'message-edit-text'); note.setAttribute('aria-label', '备注（可选）'); note.maxLength = 500; note.placeholder = '补充一句你的期望';
-      const submit = button('保存本机反馈', null, () => void guarded(async () => {
-        await core.saveMessageFeedback(id, event.seq, 'unhelpful', reasons.querySelector('input:checked')?.value || '', note.value);
-        dialog.close(); refresh(); notice('已保存本机反馈');
-      })); submit.classList.add('message-action-primary'); dialog.append(reasons, note, submit);
+    function openFeedback(trigger, id = sessionId(), local = false) {
+      const dialog = modal('反馈问题', trigger), captured = identity();
+      dialog.classList.add('problem-feedback-dialog');
+      const form = el('div'), previewPage = el('div'); previewPage.hidden = true;
+      form.append(el('p', 'muted', '先写下问题，再核对完整预览。确认后会发送为 GitHub 问题单。'));
+      const label = el('label', '', '哪里不对（必填）'), note = el('textarea', 'message-edit-text');
+      note.id = 'problem-feedback-description'; note.maxLength = 3000; note.required = true; note.placeholder = '用一两句话说明发生了什么、你希望怎样'; label.htmlFor = note.id;
+      form.append(label, note);
+      const option = (text, checked) => { const label = el('label', 'feedback-option'), input = el('input'); input.type = 'checkbox'; input.classList.add('settings-switch'); input.checked = checked; label.append(input, document.createTextNode(text)); form.append(label); return input; };
+      const diagnostic = option('附上诊断摘要', true); form.append(el('p', 'muted feedback-option-help', '摘要不含对话正文与密钥。'));
+      const conversation = option('附上这段对话', false); conversation.disabled = !id;
+      const warning = el('div', 'feedback-conversation-warning'); warning.hidden = true; warning.setAttribute('role', 'alert');
+      warning.append(el('p', '', '这会包含这段对话的内容。请确认你愿意发送，预览中还可以核对。'));
+      let conversationConfirmed = false;
+      const include = button('确认附上对话', null, () => { conversationConfirmed = true; warning.hidden = true; });
+      const cancel = button('不附对话', null, () => { conversation.checked = false; conversationConfirmed = false; warning.hidden = true; });
+      for(const control of [include,cancel])control.classList.add('button','secondary','small');warning.append(include, cancel); form.append(warning);
+      conversation.addEventListener('change', () => { conversationConfirmed = false; warning.hidden = !conversation.checked; });
+      const status = el('p', 'message-action-status'); status.setAttribute('role', 'status');
+      const error = value => { status.textContent = value; status.classList.toggle('feedback-error', !!value); };
+      let payload, sending = false;
+      const next = button('查看完整预览', null, () => void (async () => {
+        if (conversation.checked && !conversationConfirmed) { warning.hidden = false; include.focus(); return; }
+        if (!note.value.trim()) { error('请用一两句话说明哪里不对。'); note.focus(); return; }
+        next.disabled = true; error('正在准备预览…'); status.classList.remove('feedback-error');
+        try {
+          const summary = diagnostic.checked ? await core.feedbackDiagnostic() : '';
+          const loaded = conversation.checked ? (local ? await localEvents(id) : await core.conversationExportEvents(id)) : null;
+          if (!dialog.isConnected || identity() !== captured) return;
+          payload = core.feedbackPreview(note.value, summary, loaded ? core.messageExport(loaded, title?.() || 'WeftMate 对话') : '');
+          previewTitle.textContent = payload.title; previewBody.textContent = payload.body;
+          form.hidden = true; previewPage.hidden = false; error(''); confirm.focus();
+        } catch (e) { error(e.message); } finally { next.disabled = false; }
+      })()); next.classList.add('message-action-primary'); form.append(next);
+      previewPage.append(el('p', 'muted', '以下标题与正文就是将发送的全部内容。可能会公开，请仔细核对。'));
+      const preview = el('div', 'message-export-preview'); preview.setAttribute('role', 'region'); preview.setAttribute('aria-label', '反馈完整预览');
+      const previewTitle = el('pre', 'feedback-preview-title'), previewBody = el('pre'); previewTitle.setAttribute('aria-label', '问题单标题'); previewBody.setAttribute('aria-label', '问题单正文'); preview.append(previewTitle, previewBody); previewPage.append(preview);
+      const actions = el('div', 'message-dialog-actions');
+      const back = button('返回修改', null, () => { form.hidden = false; previewPage.hidden = true; error(''); note.focus(); });
+      const copyContent = button('复制内容', 'copy', () => void guarded(async () => { await writeCopy(payload.title + '\n\n' + payload.body); status.textContent = '已复制，可以自行保存。'; status.classList.remove('feedback-error'); }));
+      copyContent.append(document.createTextNode('复制内容'));for(const control of [back,copyContent])control.classList.add('button','secondary','small');
+      const confirm = button('确认发送', null, () => void (async () => {
+        if (sending || identity() !== captured) return; sending = true; confirm.disabled = back.disabled = true; error('正在发送…'); status.classList.remove('feedback-error');
+        try {
+          const result = await core.sendProblemFeedback(payload);
+          if (!dialog.isConnected || identity() !== captured) return;
+          status.textContent = `已发送，问题单 #${result.number}${result.recordWarning ? '；本机记录未保存，请记下编号。' : '。'}`; status.classList.remove('feedback-error');
+          confirm.hidden = true; back.hidden = true;
+        } catch (e) { error(core.feedbackError(e)); } finally { sending = false; confirm.disabled = back.disabled = false; }
+      })()); confirm.classList.add('message-action-primary'); actions.append(back, copyContent, confirm); previewPage.append(actions);
+      dialog.append(form, previewPage, status); note.focus(); return dialog;
+    }
+    async function sentFeedback(trigger) {
+      const dialog = modal('我发过的反馈', trigger), captured = identity();
+      const content = el('div'); dialog.append(content); content.append(el('p', 'muted', '正在读取…'));
+      try { const rows = await core.readSentFeedback(); if (!dialog.isConnected || captured !== identity()) return; content.replaceChildren();
+        if (!rows.length) content.append(el('p', 'muted', '还没有发出的反馈。发送成功后会在这里留下编号。'));
+        for (const row of rows.slice().reverse()) { const item = el('div', 'feedback-sent-row'); item.append(el('p', '', row.title), el('small', 'muted', `${new Intl.DateTimeFormat('zh-CN', {month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(row.at))} · #${row.number}`)); content.append(item); }
+      } catch { content.replaceChildren(el('p', 'muted', '记录暂时无法读取，请重新打开。')); }
     }
     function quote(row) {
       if (!selection || selectionRow !== row) { notice('先选中一段回复文字'); return; }
@@ -160,8 +206,11 @@
         row.addEventListener('click',e=>{if(matchMedia('(pointer:coarse)').matches&&!e.target.closest('button,a')){if(held){held=false;return;}row.classList.toggle('time-visible');}});
         row.addEventListener('contextmenu',e=>{if(!matchMedia('(pointer:coarse)').matches)return;e.preventDefault();menu(bubble,[{name:'复制',icon:'copy',action:()=>copyMessage('plain')},{name:'引用',icon:'quote',action:quoteMessage}]);});
       } else {
-        const useful = button('有用', 'thumb-up', () => void guarded(async () => { await core.saveMessageFeedback(id, event.seq, 'helpful'); refresh(); notice('已保存本机反馈'); })); useful.dataset.feedback = `${id}:${event.seq}:helpful`;
-        const bad = button('没用', 'thumb-down', () => feedback(id, event, bad)); bad.dataset.feedback = `${id}:${event.seq}:unhelpful`;
+        const rate = async rating => { const old = core.readMessageFeedback().find(row => (row.sessionId ?? row.conversationId) === id && (row.seq ?? row.messageId) === event.seq); await core.saveMessageFeedback(id, event.seq, old?.rating === rating ? null : rating); refresh(); };
+        const useful = button('有用', 'thumb-up', () => void guarded(() => rate('helpful'))); useful.dataset.feedback = `${id}:${event.seq}:helpful`;
+        const bad = button('没用', 'thumb-down', () => void guarded(() => rate('unhelpful'))); bad.dataset.feedback = `${id}:${event.seq}:unhelpful`;
+        const report = button('告诉我们哪里不对', 'info', () => openFeedback(report, id, local)); report.dataset.problemFeedback = `${id}:${event.seq}`; report.hidden = true;
+        report.append(document.createTextNode('告诉我们哪里不对')); report.classList.add('button','secondary','small');
         const share = button('分享 / 导出对话', 'share', () => void guarded(() => exportConversation(id, share, local)));
         const more = button('更多回复操作', 'more', () => void guarded(async () => {
           const source = local ? null : await resolveSource(id, event);
@@ -176,7 +225,7 @@
         }));
         more.setAttribute('aria-haspopup', 'menu'); more.setAttribute('aria-expanded', 'false');
         const quoteButton = button('引用选中文字', 'quote', () => quote(quoteButton.closest('.message'))); quoteButton.dataset.messageQuote = 'true'; quoteButton.hidden = true;
-        quoteButton.addEventListener('mousedown', event => event.preventDefault()); bar.append(useful, bad, share, more, quoteButton);
+        quoteButton.addEventListener('mousedown', event => event.preventDefault()); bar.append(useful, bad, share, more, quoteButton, report);
       }
       row.dataset.memorySession=id;row.append(bar); if (!local) void versionBar(row, id, event); refresh();
     }
@@ -190,6 +239,7 @@
       for (const node of document.querySelectorAll('[data-message-mutation]')) node.disabled = !!core.messageBusy(node.dataset.messageMutation);
       const replies=[...document.querySelectorAll('#chat-content .message.assistant:not(.main-chat-row)')];for(const row of replies)row.classList.toggle('is-last-assistant',row===replies.at(-1));
       const records = core.readMessageFeedback();
+      for (const node of document.querySelectorAll('[data-problem-feedback]')) node.hidden = !records.some(row => `${row.sessionId ?? row.conversationId}:${row.seq ?? row.messageId}` === node.dataset.problemFeedback && row.rating === 'unhelpful');
       for (const node of document.querySelectorAll('[data-feedback]')) node.setAttribute('aria-pressed', String(records.some(row => `${row.sessionId ?? row.conversationId}:${row.seq ?? row.messageId}:${row.rating}` === node.dataset.feedback)));
       if (!draft()?.value.startsWith('> ')) document.querySelector('.composer-message-quote')?.remove();
     }
@@ -199,7 +249,7 @@
       if (openMenuClose) { openMenuClose(); return true; }
       return false;
     }
-    return { bind, refresh, exportConversation, dismiss, clearVersions: () => versions.clear() };
+    return { bind, refresh, openFeedback, sentFeedback, exportConversation, dismiss, clearVersions: () => versions.clear() };
   }
   globalThis.WeftMessageActions = { create };
 })();
