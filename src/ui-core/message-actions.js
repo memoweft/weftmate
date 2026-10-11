@@ -55,14 +55,66 @@
       const prior = environment.feedbackStorage ? await loadMessageFeedback() : readFeedback();
       if (!current(captured)) throw new Error('账户已切换');
       const rows = prior.filter(row => (row.sessionId ?? row.conversationId) !== sessionId || (row.seq ?? row.messageId) !== seq);
-      rows.push({ version: 1, ...(typeof seq === 'number' ? { sessionId, seq } : { source: 'phone', conversationId: sessionId, messageId: seq }),
+      if (rating) rows.push({ version: 1, ...(typeof seq === 'number' ? { sessionId, seq } : { source: 'phone', conversationId: sessionId, messageId: seq }),
         rating, reason, note: String(note).slice(0, 500), at: new Date().toISOString() });
       const encoded = JSON.stringify(rows);
       if (environment.feedbackStorage) await environment.feedbackStorage(`weftmate:message-feedback:${captured.owner}`, encoded);
       if (!current(captured)) throw new Error('账户已切换');
       if (feedbackCache.has(feedbackScope())) feedbackCache.get(feedbackScope()).rows = rows;
       environment.storage.setItem(storageKey('message-feedback'), encoded);
-      return rows.at(-1);
+      return rating ? rows.at(-1) : null;
+    }
+    const cleanFeedbackText = value => String(value ?? '').replace(/\r\n?/g, '\n')
+      .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '')
+      .replace(/</g, '＜').replace(/>/g, '＞').replace(/@/g, '＠');
+    function feedbackPreview(description, diagnostic = '', conversation = '') {
+      const text = cleanFeedbackText(redact(description)).trim();
+      if (!text) throw new Error('请用一两句话说明哪里不对。');
+      const title = '应用反馈：' + Array.from(text.split('\n')[0]).slice(0, 55).join('');
+      const body = [text, diagnostic && '诊断摘要（不含正文与密钥）\n' + cleanFeedbackText(redact(diagnostic)),
+        conversation && '附带对话（本人已确认）\n' + cleanFeedbackText(redact(conversation))].filter(Boolean).join('\n\n');
+      if (new TextEncoder().encode(body).length > 60000) throw new Error('反馈内容太大，请取消附带对话或缩短说明。');
+      return Object.freeze({ title, body });
+    }
+    async function feedbackDiagnostic() {
+      try {
+        const value = core.readMobileSystem ? await core.readMobileSystem() : await core.accessApi('/system');
+        return value.runRecord?.summary || '诊断摘要暂时无法读取。';
+      } catch { return '诊断摘要暂时无法读取。'; }
+    }
+    async function readSentFeedback() {
+      const captured = scope(null);
+      if (environment.feedbackStorage) {
+        const saved = await environment.feedbackStorage(`weftmate:sent-feedback:${captured.owner}`);
+        if (!current(captured)) throw new Error('账户已切换');
+        if (saved !== undefined) return parseFeedback(saved);
+      }
+      return parseFeedback(environment.storage.getItem(storageKey('sent-feedback')));
+    }
+    async function sendProblemFeedback(preview) {
+      const captured = scope(null), payload = { title: preview.title, body: preview.body };
+      const result = await core.cloudSendFeedback(payload);
+      if (!current(captured)) throw new Error('账户已切换');
+      try {
+        const rows = await readSentFeedback();
+        rows.push({ at: new Date().toISOString(), title: payload.title, number: result.number });
+        const encoded = JSON.stringify(rows);
+        if (environment.feedbackStorage) await environment.feedbackStorage(`weftmate:sent-feedback:${captured.owner}`, encoded);
+        if (current(captured)) environment.storage.setItem(storageKey('sent-feedback'), encoded);
+      } catch { return { ...result, recordWarning: true }; }
+      return result;
+    }
+    function feedbackError(error) {
+      const code = error?.code || error?.message;
+      if (code === 'FEEDBACK_NOT_CONFIGURED') return '反馈暂时发不出去：云端暂未开通。请复制内容保存。';
+      if (['UNAUTHORIZED', 'CLOUD_TOKEN_INVALID', 'FEEDBACK_LOGIN_REQUIRED'].includes(code)) return '反馈暂时发不出去：请先登录云账号，或复制内容保存。';
+      if (code === 'RATE_LIMITED') return `反馈发送太频繁，请等待 ${error.retryAfter || 600} 秒后重试，或复制内容保存。`;
+      if (['FEEDBACK_TOO_LARGE', 'BODY_TOO_LARGE'].includes(code)) return '反馈内容太大，请返回修改或复制内容保存。';
+      if (/^FEEDBACK_GITHUB_\d+$/.test(code)) return `问题单服务拒绝了发送（${code.split('_').at(-1)}），请稍后重试或复制内容保存。`;
+      if (code === 'FEEDBACK_NETWORK_FAILED' || code === 'NETWORK') return '反馈暂时发不出去：网络请求失败，请稍后重试或复制内容保存。';
+      if (code === 'FEEDBACK_INVALID_RECEIPT') return '问题单服务未返回编号，发送结果待确认。请复制内容保存。';
+      if (['FEEDBACK_INVALID', 'FEEDBACK_UNSAFE_TEXT'].includes(code)) return '反馈内容无法发送，请返回修改或复制内容保存。';
+      return '反馈暂时发不出去，请稍后重试或复制内容保存。';
     }
     async function allMessageEvents(sessionId) {
       const captured = scope(sessionId), events = []; let afterSeq = -1;
@@ -207,7 +259,7 @@
       }
       return parts.join('\n\n') + '\n';
     }
-    return { readMessageFeedback: readFeedback, loadMessageFeedback, saveMessageFeedback, allMessageEvents, messageSource, readMessageInput, completeMessageEvent,
+    return { feedbackPreview, feedbackDiagnostic, readSentFeedback, sendProblemFeedback, feedbackError, readMessageFeedback: readFeedback, loadMessageFeedback, saveMessageFeedback, allMessageEvents, messageSource, readMessageInput, completeMessageEvent,
       messageBusy, branchMessage, retryMessageBranch, hasPendingMessageBranch: () => !!environment.storage.getItem(storageKey('message-action-pending')), messageExport, conversationExportEvents };
   };
 })();
