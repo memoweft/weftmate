@@ -19,7 +19,8 @@ for (const theme of ['light', 'dark']) {
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
   env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
-  Object.assign(env, { REVIEW_PROFILE: profile, REVIEW_THEME: theme, REVIEW_ORIGIN: fixture.origin });
+  Object.assign(env, { REVIEW_PROFILE: profile, REVIEW_THEME: theme, REVIEW_ORIGIN: fixture.origin,
+    REVIEW_LIBRARY_TOKEN: fixture.libraryDesktopToken });
   let application, page, mainFixture, suggestionFixture, renderingSeeded=false, closing = false, ownerId;
   const errors = [];
   try {
@@ -46,13 +47,25 @@ for (const theme of ['light', 'dark']) {
     console.log('Desktop fixture loaded.');
     const button = name => page.getByRole('button', { name, exact: typeof name === 'string' });
     const shot = (scene, prepare) => runScene({ page, out, platform: 'windows', scene, theme, prepare, application });
+    const loginDialog = page.getByRole('dialog', { name: '登录以使用云端功能', exact: true });
     await shot('login', async () => {
-      await page.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
-      await page.getByLabel('邮箱', { exact: true }).filter({ visible: true }).waitFor();
-      await button('离线使用这台电脑').waitFor();
+      // The production native window opens its own existing account directly.
+      // Capture the optional cloud login from Settings, keeping local use below it.
+      await page.locator('#assistant-view').waitFor({ state: 'visible' });
+      await button('账户菜单').click(); await button('设置').click();
+      await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '账户', exact: true }).click();
+      await page.locator('#cloud-account-panel').getByRole('button', { name: '登录以使用远程访问', exact: true }).click();
+      await loginDialog.waitFor({ state: 'visible' });
+      await loginDialog.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
+      await loginDialog.getByLabel('邮箱', { exact: true }).waitFor();
+      await loginDialog.getByRole('button', { name: '关闭登录', exact: true }).waitFor();
     });
+    await loginDialog.getByRole('button', { name: '关闭登录', exact: true }).click();
+    await loginDialog.waitFor({ state: 'hidden' });
+    await button('关闭设置').click();
+    await page.locator('#assistant-view').waitFor({ state: 'visible' });
     // Real isolated host authentication is independent of login-page selectors.
-    // This gallery captures LG-1a's first screen, not the cloud registration flow.
+    // Feature scenes retain their isolated local protocol authentication.
     ownerId = await page.evaluate(async credentials => {
       const response = await fetch('/personal/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(credentials) });
       if (!response.ok) throw Error('Isolated desktop authentication failed');
@@ -90,12 +103,12 @@ for (const theme of ['light', 'dark']) {
     if(!onlyScene||onlyScene==='next-suggestions'){
       closing=true;await page.unrouteAll({behavior:'ignoreErrors'});await application.evaluate(({app})=>app.exit(0)).catch(()=>{});await application.close().catch(()=>{});
       suggestionFixture=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await suggestionFixture.complete();
-      application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:suggestionFixture.origin}});
+      application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:suggestionFixture.origin,REVIEW_LIBRARY_TOKEN:suggestionFixture.libraryDesktopToken}});
       page=await application.firstWindow();page.setDefaultTimeout(30000);closing=false;page.on('pageerror',e=>errors.push(e.message));await exposeUx7Desktop(page);await localUiSession(page,suggestionFixture.credentials);await mockUx7Requests(page,undefined,{legacy:true});await page.reload();
       await shot('next-suggestions',async()=>{await page.waitForFunction(()=>globalThis.__ux7core?.state.account);await page.evaluate(id=>__ux7core.selectSession(id),suggestionFixture.sessionId);await prepareUx7Suggestions(page);});
     }
     closing=true;await page.unrouteAll({behavior:'ignoreErrors'});await application.evaluate(({app})=>app.exit(0)).catch(()=>{});await application.close().catch(()=>{});mainFixture=await startMainChatCandidate();
-    application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:mainFixture.origin}});
+    application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:mainFixture.origin,REVIEW_LIBRARY_TOKEN:mainFixture.libraryDesktopToken}});
     page=await application.firstWindow();page.setDefaultTimeout(30000);closing=false;
     await localUiSession(page,mainFixture.credentials,'Synthetic main gallery',{mainChat:true});
     await shot('main-chat',async()=>{await button('WeftMate 主对话').click();await page.waitForFunction(()=>document.querySelector('#transcript .main-chat-row'));await button('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await page.locator('mark').first().waitFor();});

@@ -81,7 +81,7 @@ try {
         await page.evaluate(() => WeftMobileCloud.init());
         await page.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
         await page.getByRole('textbox', { name: '邮箱', exact: true }).waitFor();
-        await page.getByRole('button', { name: '还没有账号？注册', exact: true }).waitFor();
+        await page.getByRole('button', { name: '注册账号', exact: true }).waitFor();
       };
       await shot('login', prepareLogin);
       // Keep authenticated scenes independent of an evolving login form.

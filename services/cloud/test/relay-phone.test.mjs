@@ -29,15 +29,20 @@ test('Relay phone first input and file task', {
     runtime.setHost(host); await runtime.start(); const started = await host.start();
     const direct = async (route, body, auth, method = body === undefined ? 'GET' : 'POST', headers = {}) => {
       const response = await fetch(started.origin + '/personal/v1' + route, { method, signal: AbortSignal.timeout(15_000),
-        headers: { origin: started.origin, 'content-type': 'application/json', ...(auth ? { cookie: auth.cookie, 'x-weftmate-csrf': auth.csrfToken } : {}), ...headers },
+        headers: { origin: started.origin, 'content-type': 'application/json', ...(auth ? { cookie: auth.cookie, 'x-weftmate-csrf': auth.csrfToken,
+          'x-weftmate-desktop': host.libraryDesktopToken } : {}), ...headers },
         body: body === undefined ? undefined : JSON.stringify(body) });
       return { status: response.status, data: await response.json(), cookie: response.headers.get('set-cookie')?.split(';')[0] };
     };
     await registration(f); const desktop = await appDevice(f, 'desktop');
+    const native = await direct('/auth/desktop', {}, undefined, 'POST', { 'x-weftmate-desktop': host.libraryDesktopToken });
+    assert.equal(native.status, 200, JSON.stringify(native.data));
+    const local = { cookie: native.cookie, csrfToken: native.data.csrfToken };
     const nonce = await direct('/auth/cloud-nonce', {});
-    const logged = await direct('/auth/cloud-desktop', { accessToken: desktop.tokens.access_token, deviceName: '合成电脑' }, undefined, 'POST',
+    const logged = await direct('/auth/cloud-desktop', { accessToken: desktop.tokens.access_token, deviceName: '合成电脑' }, local, 'POST',
       { dpop: await proof(desktop, started.origin + '/personal/v1/auth/cloud-desktop', desktop.tokens.access_token, { nonce: nonce.data.nonce }) });
-    assert.equal(logged.status, 200, JSON.stringify(logged.data)); const local = { cookie: logged.cookie, csrfToken: logged.data.csrfToken };
+    assert.equal(logged.status, 200, JSON.stringify(logged.data));
+    assert.equal(logged.data.device.id, native.data.device.id, 'cloud login retains the native local session');
     await waitFor(() => host.relayStatus().state === 'online', 'relay not online');
     const base = host.relayStatus().baseUrl, domain = new URL(base).hostname;
     const pairing = await direct('/cloud/pairings', {}, local); assert.equal(pairing.status, 201);
