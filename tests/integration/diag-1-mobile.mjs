@@ -9,12 +9,12 @@ import { join, resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
-const out = resolve(import.meta.dirname, '../evidence/diag-1');
+const out = process.env.DIAG1_EVIDENCE_DIR ? resolve(process.env.DIAG1_EVIDENCE_DIR) : resolve(import.meta.dirname, '../evidence/diag-1');
 await mkdir(out, { recursive: true });
 const report = {
   synthetic: true, productionMobile: true, modelRequests: 0, transport: 'local authenticated HTTP',
   screenshotScope: 'viewport-only', systemBars: false, systemVersion: 'headless Chromium; no native system UI',
-  nativeBarsVerification: 'Not verified: this task forbids MuMu and desktop control.',
+  nativeBarsVerification: 'Not verified by this browser-only runner; use independent native acceptance for system bars.',
   checks: [], screenshots: [], errors: [],
 };
 const fixture = await startTimelineCandidate({ daily: true, sidebar: true, logicalMobile: true,
@@ -93,9 +93,31 @@ try {
           }, { identity, theme });
           await page.waitForFunction(() => typeof globalThis.WeftRunRecords?.mount === 'function');
           await page.evaluate(() => page('general'));
-          const records = page.getByRole('region', { name: '运行记录', exact: true });
+          // DIAG-2 retains browser failures on this device independently of the
+          // connected computer. Exercise the actual runtime listener and copy.
+          if(scene==='record'){
+            await page.evaluate(()=>window.dispatchEvent(new ErrorEvent('error',{
+              error:new TypeError('synthetic private prompt'),filename:new URL('app.js',location.href).href,lineno:12,colno:3})));
+            await page.evaluate(()=>page('general'));
+          }
+          const localRecords=page.getByRole('region',{name:'运行记录',exact:true}).filter({has:page.getByRole('heading',{name:'本机（这个浏览器）',exact:true})});
+          await localRecords.locator('.run-record-facts').waitFor();
+          assert.match(await localRecords.innerText(),scene==='record'?/1 条异常记录/:/没有异常记录/);
+          await localRecords.getByRole('button',{name:'复制诊断摘要',exact:true}).click();
+          const localPreview=localRecords.getByRole('region',{name:'诊断摘要预览',exact:true});
+          await localPreview.scrollIntoViewIfNeeded();
+          await page.screenshot({path:join(out,`${prefix}-local-summary-preview.png`),animations:'disabled'});
+          report.screenshots.push({file:`${prefix}-local-summary-preview.png`,viewport,pageTheme:theme,scope:'viewport-only',systemBars:false});
+          await localPreview.getByRole('button',{name:'复制摘要',exact:true}).click();
+          const localSummary=JSON.parse(await page.evaluate(()=>__diag1Copies.at(-1)));
+          assert.equal(localSummary.platform,'mobile-web');
+          assert.equal(localSummary.recentAbnormalRecords.length,scene==='record'?1:0);
+          assert.equal(JSON.stringify(localSummary).includes('synthetic private prompt'),false);
+          await page.evaluate(()=>{__diag1Copies.length=0;});
+          report.checks.push(`${prefix}: local browser records, human preview and private-text-free JSON copy`);
+          const records = page.getByRole('region', { name: '运行记录', exact: true }).filter({has:page.getByRole('heading',{name:'已连接的电脑',exact:true})});
           await records.waitFor();
-          await page.waitForFunction(expected => document.querySelector('.run-records')?.dataset.state === expected,
+          await page.waitForFunction(expected => [...document.querySelectorAll('.run-records')].at(-1)?.dataset.state === expected,
             scene === 'error' ? 'error' : 'ready');
           assert.equal(await records.getByRole('button', { name: '打开日志文件夹', exact: true }).count(), 0);
 
@@ -115,8 +137,8 @@ try {
             await shot('unavailable');
             currentScene = 'empty';
             await records.getByRole('button', { name: '重试读取', exact: true }).click();
-            await page.waitForFunction(() => document.querySelector('.run-records')?.dataset.state === 'ready');
-            assert.match(await page.getByRole('region', { name: '运行记录', exact: true }).innerText(), /没有异常退出记录/);
+            await page.waitForFunction(() => [...document.querySelectorAll('.run-records')].at(-1)?.dataset.state === 'ready');
+            assert.match(await records.innerText(), /没有异常退出记录/);
             report.checks.push(`${prefix}: HTTP 503 error, visible retry, recovered empty records, no desktop folder operation`);
           } else {
             const text = await records.innerText();
@@ -137,7 +159,7 @@ try {
             assert.match(summary, /WeftMate 0\.1\.0/);
             assert.match(summary, /DIAG-1 synthetic diagnostics/);
             await shot('summary-preview');
-            await preview.getByRole('button', { name: '复制以上内容', exact: true }).click();
+            await preview.getByRole('button', { name: '复制摘要', exact: true }).click();
             await page.waitForFunction(() => __diag1Copies.length === 1);
             assert.deepEqual(await page.evaluate(() => __diag1Copies), [summary]);
             report.checks.push(`${prefix}: normal settings entry, human dates, ${scene} records, summary preview before exact clipboard copy, no desktop folder operation`);

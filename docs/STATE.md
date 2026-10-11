@@ -8,7 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-5 | DIAG-1 · 退出与崩溃记录 | [PR #211](https://github.com/memoweft/weftmate/pull/211) · `wp/diag-1-exit-and-crash-log`：持久运行标记、退出原因／码／每步耗时、隐私模板错误与源码帧、本机原生转储保留、进程异常及系统状态运行记录／摘要预览已接；真实 Electron（桌面程序框架）正常／强杀／异常／原生转储闭环通过，桌面浅深／480与手机360／390三态及预览通过。required（完整必过）1478／0失败／14既有条件跳过、vendor（固定运行时集成）204／0失败／0跳过、脱敏28／备份观察1与手机交互109通过；类型与公开身份扫描零命中。diag1qa 打包程序原五项冒烟及目录／正常退出验证通过；无新路由／新壳／安卓版本变更。BK-1（个人备份）仍包含日志，未擅自改范围；手机原生栏与真实资源管理器／卸载选择未验收，Apple（苹果端）原生只读展示待接。[证据](../tests/evidence/diag-1/README.md)，待 Claude 审查。 |
+| Codex · Windows-5 | DIAG-2 · 安卓运行记录与统一摘要 | `wp/diag-2-android-run-log`：原生持久标记、历史退出、默认异常委托、内核恢复、连接／同步／审批／通知记录与手机本机栏已接；Windows／安卓／苹果摘要统一，序号去重、人话预览与 JSON（结构化数据格式）复制验证通过。required（完整必过）1513／0失败／14既有条件跳过、vendor（固定运行时集成）204、手机交互109、JVM（Java 虚拟机）71及相关64通过；安卓70任务强制构建、2仪器用例、MuMu（安卓模拟器）6场景／24浅深整屏、浏览器24检查／32图、实际Windows4图通过；类型／公开扫描0命中。**系统logcat（系统日志）私文检查未满足**：系统预处理器先于应用处理器，公开SDK（软件开发工具包）不可替换，严格失败保留、驱动非零；本机日志／摘要脱敏通过，未声称全项放行。需要新壳版本，无新权限／业务路由／版号或受限适配器改动；真机导航／厂商回收等另验。[证据](../tests/evidence/diag-2/README.md)，待审。 |
 | Codex · Windows-5 | MAIL-1 · 验证码邮件卡片 | [PR #207](https://github.com/memoweft/weftmate/pull/207) · `wp/mail-1-code-email`：六种邮件共用既有品牌卡片，提供文字／网页两版；验证码连续可复制、动态值转义、主题／预览不含验证码，自有云域名固定 PNG（位图）。云全套70通过／0失败／4既有跳过，required（完整必过）1429通过／0失败／14个既有跳过、vendor（固定运行时集成）203通过／0失败／0个跳过，相关23／手机交互109、类型检查／公开扫描通过；32图与25次选区／剪贴板检查、浅深／窄屏／退化通过。修复既有Windows（视窗系统）云测试兼容；无配置／数据库迁移／业务契约／版本号变更，未部署／未发真实邮件。已清理进程：11，残留0。已合主线，相关复验32/32、更新记录生成副本12/12、类型检查／公开身份扫描0命中通过；最新CI（持续集成）见PR检查。待Claude审查；[证据](../tests/evidence/mail-1/README.md)。 |
 | Codex · Windows-5 | QA-7 · 迁移放行第三次验收 | `wp/qa-7-migration-gate`，固定 `2a075c13`／Core `233cc2f`：**暂不放行**。旧两个产品阻断已解除：真实安装版MiMo主对话首句＋5轮纠正／旁聊召回、项目读写审批／成果／橙点、真实目录拖放通过；旧版3会话升级全文检索和主对话首句通过。私人副本66,050文件、原主账号合成首句／Verify（验证）／源码回退／恢复哈希全通过，副本删除。required（必过单测）1415通过／0失败／14跳过，vendor（固定运行时集成）203/203；官方安装冒烟5项通过。手机24场景几何通过。固定基线CI（持续集成）9绿1红：Windows夜间回归2失败；安卓真实登录后与底部系统栏证据缺口保留，14张原生夹具图不替代业务连接。灰字空结果／正文一次性到达无尾点列非阻断问题。仅运行器／证据，无产品修改；清理1遗留进程，运行残留／副本／私钥0。[证据](../tests/evidence/qa-7/README.md)。 |
 | Codex · Windows-5 | CI-R1 · 完整中继手机场景 | [PR #191](https://github.com/memoweft/weftmate/pull/191) · `wp/ci-r1-relay-phone-scenario`：独立 Linux CI（持续集成），复用真实云身份／设备批准／HAProxy（传输代理）／frp（隧道）／TLS（加密传输）；手机390×844交替10次、历史延迟2秒，首次输入零丢失／仅发送一次。原生DSH（助手运行时）合成模型读／写／读回，手机3次审批，磁盘／成果库来源与预览／可见完成通过；[恢复后实跑](https://github.com/memoweft/weftmate/actions/runs/38048827961)合MOB-P1／M3-1主线后场景84.182秒、job（任务）2分45秒（恢复编译缓存），[故意破坏加载锁](https://github.com/memoweft/weftmate/actions/runs/38045983528)正确失败并已恢复，原中继job通过。相关单测34/34、合主线后补验37/37、语法／类型检查通过；未改产品代码，无契约变化。临时Linux项目目录、身份助手准备／真实回执恢复界面；Windows文件夹登记、邮箱表单与离线副本不计验收。自有进程残留0，Linux手动命令见SETUP。 |
@@ -100,7 +100,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 ## 契约变更
 
-- **DIAG-1 / Windows-5**：现有 `GET /system` 增加可选只读 `runRecord`（运行标识、上次退出与脱敏摘要），见 CLIENT_API 3.15；无新路由、权限或安卓版本变更，不需要新壳版本。Apple（苹果端）原生 Mac / iPhone 待按原系统状态范围接只读展示，Watch 不加入口。
+- **DIAG-2 / Windows-5**：现有 `GET /system` 的 `runRecord.summary` 改为统一 JSON 字符串，新增人话 `summaryPreview`；安卓新增本机 `diagnostics.status / diagnostics.record / diagnostics.share` 桥方法，沿通用 `call(method, params)`，无新增 `/personal/v1` 路由或权限。需要新壳版本；苹果摘要字段对齐 PR #210。
 
 - **STREAM-1 / Windows-4**：能力 `replyStreaming:1`；现有会话事件页增加 `liveEvents/liveSeq`，逻辑历史／变更页增加 `liveEvents/liveRevision`，累计 `assistant.delta` 快照与完整消息 `data.streamSeq` 替换关系见CLIENT_API 3.4。历史游标、事件序号、权限和路由不变，公开快照不落盘；补全仍沿 `nextSuggestions:1` 的200短文本结果与5秒静默超时。安卓透传即可，无新壳要求；Apple原生待接。
 
