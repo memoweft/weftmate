@@ -45,7 +45,7 @@ const mobileEffects = {
   activityActionFinished:()=>{if(activityReturn){activityReturn=false;state.tabSource=null;page('activity');}},
   openActivitySource:target=>openGoalSource(target),
   openActivityMemory:()=>page('memory'),
-  openActivitySettings:()=>page('about'),
+  openActivitySettings:(category='about')=>page(category),
   nativeCall: (...args) => call(...args),
   foregroundRestored: async () => {
     if(!state.loggedIn)return;

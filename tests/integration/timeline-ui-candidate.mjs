@@ -215,6 +215,12 @@ export async function startTimelineCandidate(options = {}) {
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
   return { root, origin,
+    resolveInitialApproval: async outcome => {
+      await service.trackToolApproval({ action: 'resolve_approval', runtimeId, approvalId, sessionId, turn: 1,
+        callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh',
+        argumentsHash: hash('write report'), outcome });
+      append('approval/decided', { id: approvalId, outcome });
+    },
     deliverReminder: text => notificationRows.push({id:randomUUID(),messageId:randomUUID(),text,kind:"reminder",createdAt:new Date().toISOString()}),
     recordActivity: input => service.recordActivity(auth.account.ownerId,input),
     relayNextMain: () => {relayPending=true;running=false;if(dailySessions.has(sessionId))dailySessions.get(sessionId).running=false;},

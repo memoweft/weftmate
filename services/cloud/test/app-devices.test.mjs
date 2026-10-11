@@ -89,14 +89,16 @@ test('device directory is account-scoped; cloud DPoP checks key, URL, hash and r
   assert.deepEqual((await control(b, '/devices')).data.devices.map(d => d.id), ['phone']);
 });
 
-test('real cloud process + isolated host: register → desktop auto-bind → phone pending → approve → directory → connect → QR pair + trusted pin handoff', { timeout: 90000 }, async t => {
+test('real cloud process + isolated host: native owner → cloud bind → verified phone login → directory → optional legacy QR + signed host handoff', { timeout: 90000 }, async t => {
   const f = await fixture(t, { realProcess: true }); await registration(f);
   const desktop = await appDevice(f, 'desktop');
   const { host, started, hostApi, exchange } = await hostFixture(f, t);
   const local = await exchange(desktop, '/auth/cloud-desktop');
   assert.equal(local.status, 200, JSON.stringify(local));
   await host.syncCloudRevocations();
-  assert.equal((await hostApi('/cloud/binding', undefined, local)).data.status, 'active');
+  const binding = await hostApi('/cloud/binding', undefined, local);
+  assert.equal(binding.status,200,JSON.stringify(binding));
+  assert.equal(binding.data.status, 'active');
   const directory = (await control(desktop, '/devices')).data;
   assert.equal(directory.hosts[0].hostId, started.hostId);
   assert.equal(directory.hosts[0].isCurrent, true);
@@ -104,14 +106,12 @@ test('real cloud process + isolated host: register → desktop auto-bind → pho
   assert.doesNotMatch(JSON.stringify(directory), /tlsSpki|publicJwk|pin|credential/);
   const phone = await appDevice(f, 'phone');
   const selected = (await control(phone, '/hosts/connect', { hostId: started.hostId })).data;
-  assert.equal(selected.approval, 'pending');
+  assert.equal(selected.approval, 'trusted'); assert.equal(selected.pairingRequired,false);
   await refresh(phone, selected.resource);
-  const pending = await exchange(phone, '/auth/cloud-session');
-  assert.equal(pending.status, 202); assert.equal(pending.cookie, undefined);
+  const remote = await exchange(phone, '/auth/cloud-session');
+  assert.equal(remote.status, 200); assert.ok(remote.cookie);
   assert.equal((await hostApi('/sessions')).status, 401);
-  assert.equal((await hostApi(`/cloud/devices/${pending.requestId}/trust`, {}, local)).status, 403);
-  const decision = await hostApi(`/cloud/devices/${pending.requestId}/decision`, { decision: 'allow' }, local);
-  assert.equal(decision.status, 200);
+  assert.equal((await hostApi('/cloud/devices/pending', undefined, local)).data.devices.length,0);
   await host.syncCloudRevocations();
   // Refresh back to cloud to use the settings directory; the same rotating
   // refresh family selects a different resource, without another password.
@@ -119,8 +119,8 @@ test('real cloud process + isolated host: register → desktop auto-bind → pho
   assert.equal((await control(phone, '/devices')).data.hosts[0].hostId, started.hostId);
   const connect = (await control(phone, '/hosts/connect', { hostId: started.hostId })).data;
   assert.equal(connect.approval, 'trusted'); assert.equal(connect.pairingRequired, false);
-  const handoff = await hostApi(`/cloud/devices/${pending.requestId}/trust`, {}, local);
-  assert.equal(handoff.status, 200);
+  const handoff = remote.hostTrust;
+  assert.ok(handoff.trustToken);
   const verified = await jwtVerify(handoff.trustToken, await importJWK(handoff.publicJwk, 'ES256'), {
     issuer: started.hostId, audience: handoff.jkt, algorithms: ['ES256'], typ: 'wm-host-trust+jwt' });
   assert.equal(verified.payload.deviceId, 'phone'); assert.equal(verified.payload.tlsSpki, handoff.tlsSpki);
@@ -132,7 +132,7 @@ test('real cloud process + isolated host: register → desktop auto-bind → pho
     { jkt: 'other-key' }, { now: Date.now() + 121000 }, { trustToken: handoff.trustToken.slice(0, -8) + 'invalidx' }])
     await assert.rejects(verifyHostTrust({ ...trustInput, ...overrides }), /HOST_TRUST_INVALID/);
   await assert.rejects(jwtVerify(handoff.trustToken, await importJWK(phone.publicJwk, 'ES256')));
-  assert.equal((await hostApi(`/cloud/devices/${pending.requestId}/trust`, {})).status, 401);
+  assert.equal((await hostApi(`/cloud/devices/${randomUUID()}/trust`, {})).status, 401);
   const pairing = await hostApi('/cloud/pairings', {}, local);
   assert.equal(pairing.status, 201); assert.equal(pairing.tlsSpki, handoff.tlsSpki);
   const qr = `wm1.${Buffer.from(JSON.stringify(pairing.data)).toString('base64url')}`;
@@ -149,8 +149,8 @@ test('real cloud process + isolated host: register → desktop auto-bind → pho
   assert.equal((await control(stranger, '/devices')).data.hosts.length, 0);
   await control(stranger, '/hosts/connect', { hostId: started.hostId }, 404);
   const otherLocal = await exchange(stranger, '/auth/cloud-desktop');
-  assert.equal(otherLocal.status, 200); assert.notEqual(otherLocal.account.ownerId, local.account.ownerId);
-  assert.equal((await hostApi(`/cloud/devices/${pending.requestId}/trust`, {}, otherLocal)).status, 404);
+  assert.equal(otherLocal.status, 409,'a different cloud account cannot substitute the selected local owner');
+  assert.equal((await hostApi('/auth/me', undefined, local)).account.ownerId,local.account.ownerId);
   assert.equal((await hostApi('/cloud/emergency-password', { password: NEXT_PASSWORD }, session)).status, 403);
   assert.equal((await hostApi('/cloud/emergency-password', { password: NEXT_PASSWORD }, local)).status, 200);
   await host.syncCloudRevocations();
@@ -163,24 +163,24 @@ test('real cloud process + isolated host: register → desktop auto-bind → pho
   assert.doesNotMatch(f.logs(), /account@example|password|access_token|refresh_token|tlsSpki/);
 });
 
-test('desktop bootstrap cannot replace an existing binding or approve a new key; nonce replay and forwarded bootstrap fail', { timeout: 60000 }, async t => {
+test('native cloud login keeps the selected owner, admits only email-verified keys, and rejects nonce replay or forwarded bootstrap', { timeout: 60000 }, async t => {
   const f = await fixture(t); const { account } = await registration(f);
   const desktop = await appDevice(f, 'desktop');
   const { host, started, hostApi, exchange } = await hostFixture(f, t);
   const local = await exchange(desktop, '/auth/cloud-desktop');
   assert.equal(local.status, 200);
   const next = await appDevice(f, 'new-desktop');
-  const pending = await exchange(next, '/auth/cloud-desktop');
-  assert.equal(pending.status, 202); assert.equal(pending.cookie, undefined);
-  assert.equal((await hostApi(`/cloud/devices/${pending.requestId}/decision`, { decision: 'allow' }, local)).status, 200);
+  const nextLogin = await exchange(next, '/auth/cloud-desktop');
+  assert.equal(nextLogin.status, 200); assert.equal(nextLogin.account.ownerId,local.account.ownerId);
   assert.equal((await exchange(next, '/auth/cloud-desktop')).account.ownerId, local.account.ownerId);
   const nonce = await hostApi('/auth/cloud-nonce', {});
   const url = started.origin + '/personal/v1/auth/cloud-desktop';
   const dpop = await proof(desktop, url, desktop.tokens.access_token, { nonce: nonce.nonce });
   const body = { accessToken: desktop.tokens.access_token, deviceName: 'desktop' };
-  assert.equal((await hostApi('/auth/cloud-desktop', body, undefined, { dpop, 'x-forwarded-for': '127.0.0.1' })).status, 403);
-  assert.equal((await hostApi('/auth/cloud-desktop', body, undefined, { dpop })).status, 200);
-  assert.equal((await hostApi('/auth/cloud-desktop', body, undefined, { dpop })).status, 401);
+  const nativeHeader = { 'x-weftmate-desktop': host.libraryDesktopToken };
+  assert.equal((await hostApi('/auth/cloud-desktop', body, local, { ...nativeHeader,dpop, 'x-forwarded-for': '127.0.0.1' })).status, 403);
+  assert.equal((await hostApi('/auth/cloud-desktop', body, local, { ...nativeHeader,dpop })).status, 200);
+  assert.equal((await hostApi('/auth/cloud-desktop', body, local, { ...nativeHeader,dpop })).status, 401);
   assert.equal((await hostApi('/cloud/emergency-password', { password: NEXT_PASSWORD }, local)).status, 200);
   await host.syncCloudRevocations();
   await f.api(`${P}/auth/logout`, { method: 'POST', body: {}, headers: {
@@ -189,7 +189,7 @@ test('desktop bootstrap cannot replace an existing binding or approve a new key;
   }, status: 200 });
   await host.syncCloudRevocations();
   await host.syncCloudRevocations();
-  assert.equal((await hostApi('/sessions', undefined, local)).status, 401);
+  assert.equal((await hostApi('/sessions', undefined, local)).status, 200,'cloud logout preserves native local use');
   await f.offline();
   const offline = await hostApi('/auth/cloud-offline', { cloudAccountId: account.cloudAccountId,
     password: NEXT_PASSWORD, deviceName: 'Offline desktop' });
