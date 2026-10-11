@@ -18,7 +18,9 @@
     "rawScreenshots": 46,
     "privateDesktop": true,
     "globalInputUsed": false,
-    "review": "ship: installer windows and validated manual lifecycle; existing application limitations retained"
+    "review": "ship: installer windows and validated manual lifecycle; existing application limitations retained",
+    "capturedAgainstMain": "1491fe5a",
+    "installerSourcesUnchangedThroughAuthMainMerge": true
   },
   "required": {
     "mode": "required",
@@ -223,10 +225,10 @@
   },
   "installerSize": {
     "sameAppPayload": true,
-    "bytesBefore": 184475248,
-    "bytesAfter": 184643041,
-    "addedBytes": 167793,
-    "percentAdded": 0.0909569179709139
+    "bytesBefore": 184478232,
+    "bytesAfter": 184646037,
+    "addedBytes": 167805,
+    "percentAdded": 0.09096195154342113
   },
   "customPath": {
     "unicodeAndSpaces": true,
@@ -274,5 +276,120 @@
     "publicHygieneTextFiles": 7919,
     "publicHygieneIdentityHits": 0,
     "generatedReleaseNotesSynchronized": true
+  },
+  "preAuthInstallerSize": {
+    "sameAppPayload": true,
+    "bytesBefore": 184475248,
+    "bytesAfter": 184643041,
+    "addedBytes": 167793,
+    "percentAdded": 0.0909569179709139
+  },
+  "postAuthMerge": {
+    "main": "1ddae8b3",
+    "mergeCommit": "51dfe665",
+    "relatedPassed": 14,
+    "relatedFailed": 0,
+    "typecheck": "passed",
+    "publicHygieneTextFiles": 7941,
+    "publicHygieneIdentityHits": 0,
+    "defaultSmoke": {
+      "checks": [
+        "packaged-local-diagnostic-paths-and-active-run",
+        "fresh-main-created-and-replied",
+        "native-folder-picker-substitute-registered-project",
+        "native-project-read-and-approved-write",
+        "native-conversation-export-written",
+        "assistant-switch-size-and-save-toast",
+        "packaged-normal-close-recorded"
+      ],
+      "buildPassed": true
+    },
+    "installedSmoke": {
+      "checks": [
+        "packaged-local-diagnostic-paths-and-active-run",
+        "fresh-main-created-and-replied",
+        "native-folder-picker-substitute-registered-project",
+        "native-project-read-and-approved-write",
+        "native-conversation-export-written",
+        "assistant-switch-size-and-save-toast",
+        "packaged-normal-close-recorded"
+      ],
+      "realInstall": true,
+      "uninstalled": true
+    },
+    "packageCheck": {
+      "schemaVersion": 1,
+      "installer": {
+        "file": "WeftMate-Setup-0.1.1-preview.21.exe",
+        "bytes": 184646037,
+        "sha256": "ed9941b0909e42d3cdc40653587d36d80ad13d26fe5bb9fdf89f7ed9c5639fec"
+      },
+      "appArchive": {
+        "entries": 5346,
+        "directories": 794,
+        "links": 0,
+        "scannedTextFiles": 4503,
+        "scannedBinaryFiles": 49,
+        "forbiddenEntries": 0,
+        "unsafeLinks": 0
+      },
+      "vendor": {
+        "packageVersion": "0.1.0-rc.5",
+        "commit": "47f943859bef60e4160492346772ded9b24f765a",
+        "closureCount": 197,
+        "carriedButNotMounted": 0,
+        "manifestSha256": "fd39566647e79ed0f8d30ec95841a3504e8e0320dae6f202be50030fb256a434",
+        "scannedTextFiles": 32792,
+        "reparsePoints": 0
+      },
+      "looseResources": {
+        "scannedTextFiles": 32801,
+        "scannedBinaryFiles": 168
+      },
+      "boundaries": {
+        "developmentPaths": 0,
+        "buildMachineIdentityHits": 0,
+        "userDataFiles": 0,
+        "dogfoodOrRepositoryTests": 0,
+        "credentialsFiles": 0
+      }
+    },
+    "baselinePackageCheck": {
+      "schemaVersion": 1,
+      "installer": {
+        "file": "WeftMate-Setup-0.1.1-preview.21.exe",
+        "bytes": 184478232,
+        "sha256": "5de71c56002f493bf24f7b28890de201c6fa5ee79ced2d72b57bc5ab5932f7c3"
+      },
+      "appArchive": {
+        "entries": 5346,
+        "directories": 794,
+        "links": 0,
+        "scannedTextFiles": 4503,
+        "scannedBinaryFiles": 49,
+        "forbiddenEntries": 0,
+        "unsafeLinks": 0
+      },
+      "vendor": {
+        "packageVersion": "0.1.0-rc.5",
+        "commit": "47f943859bef60e4160492346772ded9b24f765a",
+        "closureCount": 197,
+        "carriedButNotMounted": 0,
+        "manifestSha256": "fd39566647e79ed0f8d30ec95841a3504e8e0320dae6f202be50030fb256a434",
+        "scannedTextFiles": 32792,
+        "reparsePoints": 0
+      },
+      "looseResources": {
+        "scannedTextFiles": 32801,
+        "scannedBinaryFiles": 168
+      },
+      "boundaries": {
+        "developmentPaths": 0,
+        "buildMachineIdentityHits": 0,
+        "userDataFiles": 0,
+        "dogfoodOrRepositoryTests": 0,
+        "credentialsFiles": 0
+      }
+    }
   }
 }
