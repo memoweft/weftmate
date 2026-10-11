@@ -26,7 +26,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             && token.deviceId === core.state.device?.id && token.csrf === core.state.csrfToken && !!token.csrf;
     }
     function memoryViewCurrent(token) {
-        return core.memoryIdentityCurrent(token) && core.state.currentView === 'memory' && token.view === core.memory.viewGeneration;
+        return core.memoryIdentityCurrent(token) && (core.state.currentView === 'memory'||core.memory.activityContext===true) && token.view === core.memory.viewGeneration;
     }
     async function memoryRequest(path, { method = 'GET', body } = {}) {
         const identity = core.memoryIdentity();
@@ -230,6 +230,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
             core.memory.unresolvedMarker = null;
         core.memory.cleanupMarker = cleanupMarker;
         if (receipt.state === 'applied' || receipt.state === 'no_change') {
+            if(core.memory.activityContext)void core.readActivity?.();
             core.showMemoryReceipt(core.memoryReceiptMessage(receipt, marker.operation), marker.requestId, cleanupMarker ? cleanupMarker.cleanupState === 'pending' ? 'retry-cleanup' : 'check' : 'none');
             if (marker.operation === 'correct')
                 core.memory.drafts.delete(`${marker.kind}|${marker.id}`);
@@ -298,6 +299,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         }
     }
     function resetMemoryIdentity() {
+        core.memory.activityContext=false;core.memory.weekFilter=null;
         core.memory.viewGeneration++;
         core.memory.entryGeneration++;
         core.memory.queryGeneration++;
@@ -350,6 +352,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         effects.setMemoryMoreBusy(true);
         try {
             const params = new URLSearchParams({ kind, limit: '20', includeSources:'true' });
+            if(core.memory.weekFilter){params.set('from',core.memory.weekFilter.from);params.set('to',core.memory.weekFilter.to);}
             if (query)
                 params.set('query', query);
             if (after)
@@ -605,13 +608,16 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         }
     }
     function closeMemoryDetail() {
+        core.memory.activityContext=false;
         core.memory.selectedGeneration++;
         core.memory.selected = null;
         core.memory.sources = [];
         core.memory.mode = 'detail';
         effects.clearMemoryDetailView();
     }
-    async function openMemory() {
+    async function openMemory(options={}) {
+        core.memory.activityContext=false;
+        if(options.from&&options.to)core.memory.weekFilter={from:options.from,to:options.to};
         if (core.state.currentView === 'memory') {
             core.memory.viewGeneration++;
             core.closeMemoryDetail();
@@ -622,7 +628,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         effects.closeRail();
         core.show('memory');
         const token = core.memoryIdentity();
-        const filters = effects.memoryFilterInput();
+        const filters = options.from?{kind:'all',query:''}:effects.memoryFilterInput();
         core.setMemoryFilters(filters.kind, filters.query);
         core.invalidateMemorySnapshot('正在读取记忆…', false);
         if (!core.state.hostId) {
@@ -659,6 +665,12 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         core.memory.kind = kind;
         core.memory.query = query;
     }
+    async function openDigestMemoryDetail(target,mode){
+        core.memory.activityContext=true;core.memory.viewGeneration++;
+        if(!await core.refreshMemoryStatus()){core.memory.activityContext=false;return;}
+        await core.openMemoryDetail(target.kind,target.id);
+        if(mode&&core.memory.selected&&core.memoryActionAllowed(mode)){await core.setMemoryMode(mode);effects.renderMemoryMode();}
+    }
     async function setMemoryMode(mode) {
         core.memory.mode = mode;
         core.memory.forgetPreview = null;
@@ -690,6 +702,7 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         return `${item.text.length > 160 ? item.text.slice(0, 160) + '…' : item.text}（${label}）`;
     }
     core.forgetItemSummary = forgetItemSummary;
+    core.openDigestMemoryDetail = openDigestMemoryDetail;
     function showMemoryReceipt(message, requestId, action = 'none') {
         core.memory.receiptNotice = { message, requestId, action };
         effects.paintMemoryReceipt(message, requestId, action);

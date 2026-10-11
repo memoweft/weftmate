@@ -21,6 +21,24 @@
 .activity-empty { padding-block:var(--wm-space-48); color:var(--ink-muted); max-width:65ch; }
 .activity-count { margin-left:auto; font-size:var(--wm-font-size-12); color:var(--accent); font-variant-numeric:tabular-nums; }
 .activity-entry { display:flex; align-items:center; gap:var(--wm-space-8); width:100%; }
+.has-memory-digest { flex-wrap:wrap; }
+.memory-digest { flex-basis:100%; width:100%; min-width:0; margin-top:var(--wm-space-16); }
+.memory-digest h4 { font-size:var(--wm-font-size-14); color:var(--ink-secondary); margin-block:var(--wm-space-24) var(--wm-space-8); }
+.digest-memory { display:flex; align-items:center; gap:var(--wm-space-8); padding-block:var(--wm-space-8); }
+.digest-memory-copy { flex:1; min-width:0; }
+.digest-memory-copy small { display:block; margin-left:var(--wm-space-32); font-size:var(--wm-font-size-12); }
+.digest-memory-open { display:flex; align-items:baseline; gap:var(--wm-space-12); width:100%; padding:var(--wm-space-8); border:0; border-radius:var(--wm-radius-8); background:transparent; color:var(--ink); text-align:left; font:inherit; overflow-wrap:anywhere; cursor:pointer; }
+.digest-memory-open svg { flex-shrink:0; align-self:center; color:var(--ink-muted); }
+.digest-memory-open:hover { background:var(--accent-soft); }
+.digest-memory-open:active { background:var(--surface-raised); }
+.digest-memory-open:disabled { color:var(--ink-muted); cursor:default; }
+.digest-more { flex-shrink:0; }
+.digest-report-heading { display:flex; align-items:center; gap:var(--wm-space-8); }
+.digest-report-open { flex:1; min-width:0; padding:var(--wm-space-8); border:0; border-radius:var(--wm-radius-8); background:transparent; color:var(--ink); text-align:left; font:inherit; cursor:pointer; }
+.digest-report-open .activity-row-heading h3 { flex:1; }
+.digest-report-open .activity-summary { margin-bottom:0; }
+.digest-report-open:hover { background:var(--accent-soft); }
+.digest-report-open:active { background:var(--surface-raised); }
 .activity-open .main-chat-tools { display:none; }
 @media(max-width:720px) { .activity-page { padding:var(--wm-space-20); } .activity-surface { height:100dvh; } }
 #page-content.activity-page button { min-height:var(--wm-space-48); padding:var(--wm-space-8) var(--wm-space-12); border-radius:var(--wm-radius-8); }
