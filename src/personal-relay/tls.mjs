@@ -2,13 +2,11 @@ import { createPrivateKey, X509Certificate, createHash } from 'node:crypto';
 import { createServer } from 'node:https';
 import { request as httpRequest } from 'node:http';
 import { readFile, writeFile, access } from 'node:fs/promises';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
+import { boundedCommand } from '../personal-update/watchdog-commands.mjs';
 import path from 'node:path';
 import CSR from '@root/csr';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 
-const run = promisify(execFile);
 export const tlsSpki = certificate => createHash('sha256').update(new X509Certificate(certificate)
   .publicKey.export({ type: 'spki', format: 'der' })).digest('base64url');
 
@@ -28,6 +26,10 @@ export async function createHostCsr({ root, domain, privateJwk }) {
   return { keyFile, csrFile, configFile, dir };
 }
 export async function developmentCertificate(options) {
+  const run=async(command,args)=>{
+    try { return await (options.executeCommand??boundedCommand)(command,args,{timeoutMs:30000}); }
+    catch(error) { options.diagnostic?.(error); throw error; }
+  };
   const files = await createHostCsr(options);
   const caKey = path.join(files.dir, 'development-ca-key.pem'), ca = path.join(files.dir, 'development-ca.pem');
   try { await access(ca); } catch (error) {

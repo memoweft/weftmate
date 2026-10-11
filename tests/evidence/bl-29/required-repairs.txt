@@ -1,0 +1,15 @@
+✔ sync errors distinguish connectivity from permission, request and replica errors (1.517ms)
+✔ polling never navigates over approvals; return stays closed on repeated offline ticks (3.2321ms)
+✔ manually opened offline content belongs to the chat scroller, outside approval and settings layers (0.9804ms)
+✔ a replica transport timeout does not declare a responsive host offline (0.9231ms)
+✔ both production mount transports pass objects and protected writes through requestJson (22.2827ms)
+✔ notepad command is strictly bounded, deduplicated across devices, listed and recoverable by requestId (1387.5219ms)
+✔ a restarted dispatching desktop action remains uncertain and is not launched twice (1284.9457ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2880.6013

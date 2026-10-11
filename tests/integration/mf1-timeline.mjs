@@ -1,9 +1,10 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** MF-1: synthetic accounts, real Core, timestamped formation and immediate recall. */
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, openSync, closeSync, readFileSync, rmSync, utimesSync, copyFileSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, openSync, closeSync, readFileSync, rmSync, utimesSync, copyFileSync, existsSync } from 'node:fs';
+
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createPersonalMemoryManager } from '../../src/personal-memory/index.mjs';

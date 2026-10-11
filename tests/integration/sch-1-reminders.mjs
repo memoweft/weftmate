@@ -1,3 +1,4 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real Electron/DSH/MiMo, numeric-only evidence, ephemeral account/ports. */
@@ -6,9 +7,9 @@ import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { mkdir, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { tmpdir } from 'node:os';
+
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { normalizeUsage, usageCost, MIMO_PRICE } from '../../src/personal-access/usage.mjs';

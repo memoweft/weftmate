@@ -1,3 +1,4 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** D50 / UX-P3: production Electron and touch bundles against synthetic isolated hosts. */
@@ -6,8 +7,8 @@ import {_electron,chromium} from 'playwright';
 import {createRequire} from 'node:module';
 import {execFileSync} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
-import {mkdir,mkdtemp,rm,writeFile} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+
 import {resolve,join} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';

@@ -1,3 +1,4 @@
+import { managedMkdtemp as mkdtemp } from '../helpers/managed-temp.mjs';
 /** Real isolated host and repository cloud identity service, synthetic accounts/model only. */
 import assert from 'node:assert/strict';
 import os from 'node:os';
@@ -5,7 +6,7 @@ import { syncBuiltinESMExports, registerHooks } from 'node:module';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fork } from 'node:child_process';
 import { createServer, request as httpRequest } from 'node:http';
-import { mkdtemp, rm, realpath } from 'node:fs/promises';
+import { rm, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 // Windows cannot fsync a directory handle. Keep file fsync and all identity logic;

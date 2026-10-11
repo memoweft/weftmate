@@ -29,7 +29,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         ui.byId('rail-devices').addEventListener('click', () => { ui.openSettings('devices'); });
         const banner = ui.element('div', 'cloud-access-banner'); banner.id = 'cloud-access-banner'; banner.hidden = true;
         ui.byId('connection-banner').before(banner);
-        directoryTimer = setInterval(() => { if (document.visibilityState === 'visible' && core.state.cloudAuth.mode === 'authenticated') void refreshDirectory(false); }, 30000);
+        directoryTimer = setInterval(() => { if (document.visibilityState === 'visible' && core.foreground() && core.state.currentView === 'account' && tab === 'devices' && core.state.cloudAuth.mode === 'authenticated') void refreshDirectory(false); }, core.polling.settings);
     }
     function select(value) {
         tab = value; ui.byId('cloud-account-panel').hidden = tab !== 'account'; ui.byId('cloud-devices-panel').hidden = tab !== 'devices';

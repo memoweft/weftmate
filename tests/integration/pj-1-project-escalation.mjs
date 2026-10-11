@@ -1,3 +1,4 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Synthetic model, real Electron/DSH: project escape still requires explicit one-shot approval in allow-all. */
@@ -5,8 +6,8 @@ import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';

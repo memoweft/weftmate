@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { tmpdir } from 'node:os';
+import { managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import { execFileSync } from 'node:child_process';
 const evidence=resolve('tests/evidence/mem-2');
 const roots=readdirSync(tmpdir()).filter(name=>name.startsWith('weftmate-mem2-real-')).map(name=>join(tmpdir(),name));
