@@ -4,6 +4,8 @@ import { superviseExit } from './integration/bl29-rework/exit-supervisor.mjs';
 
 test('BL-29b M5 real tray/update shutdown and both runtime orders drain protocol waits', {timeout:120000}, async t => {
     const run = await superviseExit();
+    t.diagnostic(JSON.stringify({kind:'exit-five',rows:run.rows,registeredProcesses:run.registeredProcesses,
+      cleanup:run.cleanup,remaining:run.remaining,lastStage:run.lastStage,resources:run.resources}));
     assert.equal(run.status, 0, JSON.stringify(run));
     const rows = run.rows;
     assert.equal(rows.length, 5);
@@ -20,7 +22,6 @@ test('BL-29b M5 real tray/update shutdown and both runtime orders drain protocol
     assert.equal(run.remaining,0);assert.equal(run.rootRemoved,true);
     assert.equal(run.registeredProcesses.length,5,'each launch records PID, executable, creation time and owned profile');
     for(const row of run.registeredProcesses){assert.ok(row.pid>0);assert.ok(row.createdAt);assert.ok(row.executable);assert.ok(row.profile.startsWith('%TEMP%/weftmate-'));}
-    t.diagnostic(JSON.stringify({kind:'exit-five',rows:run.rows,registeredProcesses:run.registeredProcesses,cleanup:run.cleanup,remaining:run.remaining}));
 });
 
 test('BL-29c N5 parent cleans the whole owned Electron set when the driver is terminated after first window', {timeout:60000}, async t => {
