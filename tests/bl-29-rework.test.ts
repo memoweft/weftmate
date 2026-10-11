@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { startTimelineCandidate } from './integration/bl29-rework/fixture.mjs';
@@ -14,10 +14,15 @@ function probe(name: string, output: string, timeout = 60000, args: string[] = [
   try {
     const env = { ...process.env, BL29_EVIDENCE_DIR:root, WEFTMATE_TEST_HOST_NAME:'synthetic-host' };
     delete env.ELECTRON_RUN_AS_NODE;
-    const result = spawnSync(process.execPath, [`tests/integration/bl29-rework/${name}.mjs`, ...args], {
+    const result = spawnSync(process.execPath, ['--report-on-fatalerror', '--report-exclude-env', `--report-directory=${root}`,
+      `tests/integration/bl29-rework/${name}.mjs`, ...args], {
       env, windowsHide:true, encoding:'utf8', timeout, maxBuffer:8 * 1024 * 1024,
     });
-    assert.equal(result.status, 0, result.stderr || result.error?.message || result.stdout);
+    assert.equal(result.status, 0, JSON.stringify({probe:name,status:result.status,
+      hex:typeof result.status==='number'?'0x'+(result.status>>>0).toString(16).toUpperCase().padStart(8,'0'):null,
+      signal:result.signal,error:result.error?.message,stdout:result.stdout,stderr:result.stderr,
+      fatalReports:result.status===0?[]:readdirSync(root).filter(file=>/^report.*\.json$/.test(file))
+        .map(file=>({file,report:readFileSync(join(root,file),'utf8')}))}));
     return JSON.parse(readFileSync(join(root, output), 'utf8'));
   } finally { rmSync(root, {recursive:true, force:true, maxRetries:5, retryDelay:100}); }
 }
