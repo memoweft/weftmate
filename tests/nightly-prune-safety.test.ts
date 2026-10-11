@@ -89,7 +89,7 @@ test('denied, timed-out and empty process queries stop nonzero and delete nothin
   try {
     const live=JSON.parse(readFileSync(join(root,marker),'utf8'));
     const targets=[fixture(root,'weftmate-live',live),fixture(root,'weftmate-dead',owner())];
-    for(const body of ["Write-Error 'synthetic process query denied'","throw [TimeoutException]::new('synthetic timeout')",'return @()']) {
+    for(const body of ["Write-Error 'synthetic process query denied'", "Write-Error 'synthetic denied with partial data'; [pscustomobject]@{ProcessId=$PID;CreationDate=(Get-Date)}", "throw [TimeoutException]::new('synthetic timeout')",'return @()']) {
       const harness=join(root,'query.ps1');
       writeFileSync(harness,"function Get-CimInstance { "+body+" }\n& $env:PRUNER -Roots $env:PRUNE_ROOT -Apply\n");
       const result=spawnSync('pwsh',['-NoProfile','-File',harness],{encoding:'utf8',windowsHide:true,env:{...process.env,PRUNER:script,PRUNE_ROOT:root}});
