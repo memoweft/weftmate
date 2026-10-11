@@ -368,24 +368,26 @@ test('close prevents a blocked dispatch from writing or invoking the old backend
     if (calls === 2) { entered?.(); await gate }
     return oldPreflight(command)
   }
-  const first = await createPersonalAccessService({ root, port: 0, backend: old.backend })
-  const identity = await first.start()
-  const device = await first.enrollDevice({ name: 'phone' })
-  const accepted = await request(identity.origin, device.token, 'POST', '/personal/v1/commands',
-    { requestId: 'close-race', kind: 'session.create', targetDeviceId: identity.hostId, modelProfileId: 'local' })
-  assert.equal(accepted.status, 202)
-  await enteredPromise
-  const firstClose = first.close()
-  const secondClose = first.close()
-  assert.strictEqual(secondClose, firstClose)
-  let secondCompleted = false
-  secondClose.then(() => { secondCompleted = true })
-  await Promise.resolve()
-  assert.equal(secondCompleted, false)
-  await Promise.all([firstClose, secondClose])
-  const fresh = fixture()
-  const second = await createPersonalAccessService({ root, port: 0, backend: fresh.backend })
+  let first: Awaited<ReturnType<typeof createPersonalAccessService>> | undefined
+  let second: Awaited<ReturnType<typeof createPersonalAccessService>> | undefined
   try {
+    first = await createPersonalAccessService({ root, port: 0, backend: old.backend })
+    const identity = await first.start()
+    const device = await first.enrollDevice({ name: 'phone' })
+    const accepted = await request(identity.origin, device.token, 'POST', '/personal/v1/commands',
+      { requestId: 'close-race', kind: 'session.create', targetDeviceId: identity.hostId, modelProfileId: 'local' })
+    assert.equal(accepted.status, 202)
+    await enteredPromise
+    const firstClose = first.close()
+    const secondClose = first.close()
+    assert.strictEqual(secondClose, firstClose)
+    let secondCompleted = false
+    secondClose.then(() => { secondCompleted = true })
+    await Promise.resolve()
+    assert.equal(secondCompleted, false)
+    await Promise.all([firstClose, secondClose])
+    const fresh = fixture()
+    second = await createPersonalAccessService({ root, port: 0, backend: fresh.backend })
     const restarted = await second.start()
     await eventually(() => request(restarted.origin, device.token, 'GET',
       `/personal/v1/commands/${accepted.body.command.commandId}`),
@@ -398,8 +400,13 @@ test('close prevents a blocked dispatch from writing or invoking the old backend
     assert.equal(readFileSync(join(root, 'store.json'), 'utf8'), before)
   } finally {
     release?.()
-    await second.close()
-    rmSync(root, { recursive: true, force: true })
+    // Acceptance can fail before the second service exists (e.g. ENOBUFS).
+    // Always close the first listener so an early assertion cannot hang this file.
+    try { await second?.close() }
+    finally {
+      try { await first?.close() }
+      finally { rmSync(root, { recursive: true, force: true }) }
+    }
   }
 })
 

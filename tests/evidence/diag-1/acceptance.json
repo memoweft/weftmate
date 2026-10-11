@@ -1,0 +1,10 @@
+{
+  "normalRestart": true,
+  "forcedRestart": true,
+  "uncaughtException": true,
+  "nativeDump": true,
+  "localOnly": true,
+  "folderOpenStub": true,
+  "modelRequests": 0,
+  "cleanupCount": 1
+}
