@@ -71,7 +71,7 @@ async function api(path, body, method = body ? 'POST' : 'GET') {
   }, { path, body, method });
 }
 async function newConversation(project=null) {
-  const status=(await api('/status')).body;
+  const status=(await api('/status')).body;assert.ok(status.hostId,JSON.stringify(status));
   const accepted=await api(project?`/projects/${project.projectId}/sessions`:'/commands',project?{requestId:randomUUID(),modelProfileId}: {requestId:randomUUID(),kind:'session.create',targetDeviceId:status.hostId,modelProfileId});
   assert.equal(accepted.status,202,JSON.stringify(accepted.body));
   const row=await until(async()=>{const command=(await api('/commands/'+accepted.body.command.commandId)).body.command;return command.state==='accepted_by_dsh'&&command;});
@@ -90,11 +90,12 @@ try {
   application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'tests/integration/st-2-bootstrap.mjs'),`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],env,timeout:90000});
   nativeProcess=application.process();
   for(const stream of [nativeProcess.stdout,nativeProcess.stderr])stream?.on('data',part=>{output=(output+part).slice(-100000);});
-  page=await application.firstWindow({timeout:90000});page.setDefaultTimeout(45000);await page.waitForURL('**/personal/v1/ui');await page.addInitScript(()=>{let api;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>api,set:value=>{api=value;const create=value.create;value.create=(...args)=>{const core=create(...args),enter=core.enterAssistant;globalThis.st2Core=core;core.enterAssistant=async(...values)=>{globalThis.st2Entered=false;try{return await enter(...values);}finally{globalThis.st2Entered=true;}};return core;};}});});await localUiSession(page,{username,password});
+  page=await application.firstWindow({timeout:90000});page.setDefaultTimeout(45000);await page.waitForURL('**/personal/v1/ui');await page.addInitScript(()=>{let api;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>api,set:value=>{api=value;const create=value.create;value.create=(...args)=>{const core=create(...args),enter=core.enterAssistant;globalThis.st2Core=core;core.enterAssistant=async(...values)=>{globalThis.st2Entered=false;try{return await enter(...values);}finally{globalThis.st2Entered=true;}};return core;};}});});await localUiSession(page,{username,password},'ST-2 synthetic native',{interceptLegacyStatus:false});
   await page.waitForFunction(()=>globalThis.st2Entered===true);
   const configured=await api('/account/models',{requestId:'st2-model',name:'合成工具模型',baseUrl:`http://127.0.0.1:${model.address().port}/v1`,modelId:'m1-2-synthetic',apiKey:'synthetic-no-secret'});assert.equal(configured.status,202,JSON.stringify(configured.body));
   const operation=await until(async()=>{const result=(await api('/account/models/by-request/st2-model')).body.operation;return result.status==='succeeded'&&result;});modelProfileId=(await api('/models')).body.models.find(row=>row.accountModelId===operation.accountModelId).id;
-  assert.ok(modelProfileId,JSON.stringify(operation));await until(async()=>((await api('/status')).body.backend?.runtime==='ready'));await page.reload();await page.waitForFunction(()=>globalThis.st2Entered===true);
+  assert.ok(modelProfileId,JSON.stringify(operation));// Session creation below waits for an actual accepted_by_dsh receipt; diagnostics may time out independently.
+  await page.reload();await page.waitForFunction(()=>globalThis.st2Entered===true);
   await settings('approvals');await select('写文件','总是允许');await page.getByRole('button',{name:'关闭设置',exact:true}).click();
   const writeFile=join(root,'allowed.txt');writeFileSync(writeFile,'original synthetic content');const autoSession=await newConversation();
   await send('合成写入文件',[{name:'read',args:{file_path:writeFile}},{name:'write',args:{file_path:writeFile,content:'ST-2 synthetic file'}}]);await completed('合成写入文件');assert.equal(readFileSync(writeFile,'utf8'),'ST-2 synthetic file');
