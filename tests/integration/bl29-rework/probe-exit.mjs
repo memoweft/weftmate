@@ -1,7 +1,8 @@
 import { outputPath } from './evidence.mjs';
+import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {superviseExit, scrub} from './exit-supervisor.mjs';
-import {execFileSync} from 'node:child_process';
+import {createBl29Baseline} from './baseline.mjs';
 import {mkdtempSync,writeFileSync,rmSync,readFileSync,appendFileSync,readdirSync,existsSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {randomUUID} from 'node:crypto';
@@ -9,6 +10,20 @@ import {createPersonalAccessService} from '../../../src/personal-access/index.mj
 import {PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT} from '../../../src/host-mode.mjs';
 import {localUiSession} from '../../helpers/local-ui-session.mjs';
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
+async function nativeReadiness(page) {
+ return page.evaluate(()=>{
+  const core=globalThis.__revExitCore;
+  return {coreReady:!!core,view:core?.state.currentView,visible:document.visibilityState,
+   foreground:core?.foreground?.(),modelsKnown:core?.state.modelsKnown,models:core?.state.models.length,
+   mainReady:!!core?.state.mainChat,mainSelected:core?.inMainChat?.(),canWait:core?.canWaitForReply?.(),
+   refreshing:core?.state.refreshing,selecting:core?.state.sessionSelecting,online:core?.state.online,
+   background:core?.state.background,connection:core?.state.connection?.kind,
+   refreshTimer:!!core?.state.refreshTimer,liveTimer:!!core?.state.liveRefreshTimer,
+   historyKind:core?.state.historyReadResult?.kind,historyWait:!!core?.historyWaitAbort,
+   timelineReady:!!core?.state.chatWindow?.syncCursor,
+   onboardingVisible:!!document.querySelector('.onboarding:not([hidden])')};
+ });
+}
 function shutdownStages(profile) {
  const logs=join(profile,'logs');
  if(!existsSync(logs))return [];
@@ -27,8 +42,7 @@ const ownedRoot=resolve(process.env.BL29_OWNED_ROOT);
 let currentProfile, currentMethod;
 const stage=(name,extra={})=>appendFileSync(join(ownedRoot,'stages.jsonl'),JSON.stringify({at:new Date().toISOString(),stage:name,method:currentMethod,rss:process.memoryUsage().rss,...extra})+'\n');
 const {_electron}=await import('playwright');
-const files=execFileSync('git',['diff','--name-only','origin/main...HEAD','--','src','apps/mobile-ui/www'],{encoding:'utf8'}).trim().split('\n');
-const baseline=Object.fromEntries(files.map(p=>[p,execFileSync('git',['show','origin/main:'+p],{encoding:'utf8'})]));writeFileSync(outputPath('baseline.json'),JSON.stringify(baseline));process.env.BL29_BASELINE_FILE=outputPath('baseline.json');
+const baseline=createBl29Baseline().changedSources(['src','apps/mobile-ui/www']);writeFileSync(outputPath('baseline.json'),JSON.stringify(baseline));process.env.BL29_BASELINE_FILE=outputPath('baseline.json');
 const report=[];
 const methods=process.argv.find(arg=>arg.startsWith('--methods='))?.slice(10).split(',') ?? (process.argv.includes('--orders-only')?['runtime-first','access-first']:['window-tray-exit','tray-exit','update-restart','runtime-first','access-first']);
 for(const version of (process.argv.includes('--head-only')?['head']:['main','head']))for(const method of methods){
@@ -40,9 +54,37 @@ for(const version of (process.argv.includes('--head-only')?['head']:['main','hea
  let app;const row={version,method};report.push(row);console.log('START',version,method);
  try{
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['tests/integration/bl29-rework/exit-entry.mjs',`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],env,timeout:90000});
-  const p=await app.firstWindow();stage('first-window');await p.waitForURL('**/personal/v1/ui*');await localUiSession(p,credentials,'synthetic-host',{interceptLegacyStatus:false,mainChat:true});stage('login');
-  let pending=0;p.on('request',r=>{if(r.url().includes('waitMs='))pending++;});p.on('requestfinished',r=>{if(r.url().includes('waitMs='))pending--;});p.on('requestfailed',r=>{if(r.url().includes('waitMs='))pending--;});
-  await pause(2500);row.pendingWaitRequests=pending;const child=app.process();const closed=new Promise(r=>child.once('close',()=>r()));
+  const p=await app.firstWindow(),pending=new Set(),waitCounts={started:0,finished:0,failed:0};
+  // Native startup owns login and can start its first wait before /auth/me.
+  // Observe real requests from the first window, not only after login; request
+  // identity also avoids negative counts when startup is reloaded/cancelled.
+  p.on('request',r=>{if(r.url().includes('waitMs=')){pending.add(r);waitCounts.started++;}});
+  p.on('requestfinished',r=>{if(r.url().includes('waitMs=')){pending.delete(r);waitCounts.finished++;}});
+  p.on('requestfailed',r=>{if(r.url().includes('waitMs=')){pending.delete(r);waitCounts.failed++;}});
+  stage('first-window');await p.waitForURL('**/personal/v1/ui*');
+  if(version==='main') await localUiSession(p,credentials,'synthetic-host',{interceptLegacyStatus:false,mainChat:true});
+  else {
+   await p.route('**/personal/v1/ui/app.js',route=>route.fulfill({contentType:'text/javascript',
+    body:readFileSync('src/personal-access-ui/app.js','utf8').replace('ui.loadAttachmentHasher =',
+     'globalThis.__revExitCore=core;ui.loadAttachmentHasher =')}));
+   // Reload installs only the diagnostic projection; the actual native
+   // bootstrap, credentials and ordinary overview/history timers run again.
+   await p.reload();
+   await p.locator('#assistant-view').waitFor({state:'visible'});
+   row.nativeSession=await p.evaluate(async()=>{const response=await fetch('/personal/v1/auth/me');const body=await response.json();
+    return {status:response.status,authKind:body.device?.authKind,local:body.local};});
+   assert.equal(row.nativeSession.status,200);assert.equal(row.nativeSession.authKind,'desktop');assert.equal(row.nativeSession.local,true);
+   await p.waitForFunction(()=>{const core=globalThis.__revExitCore;return core?.state.mainChat&&core.state.modelsKnown&&
+    !core.state.refreshing&&!core.state.sessionSelecting;});
+   await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.restore();w.show();});
+   await p.waitForFunction(()=>document.visibilityState==='visible'&&globalThis.__revExitCore.foreground());
+   if(!await p.evaluate(()=>__revExitCore.inMainChat())) await p.evaluate(()=>__revExitCore.selectMainChat());
+   row.nativeReadiness=await nativeReadiness(p);
+  }
+  stage('login');
+  await pause(2500);row.pendingWaitRequests=pending.size;row.waitRequestCounts={...waitCounts};
+  if(version==='head')row.beforeCloseReadiness=await nativeReadiness(p);
+  const child=app.process();const closed=new Promise(r=>child.once('close',()=>r()));
   if(['runtime-first','access-first'].includes(method)){
    const origin=await app.evaluate(()=>globalThis.revRuntimeOrigin());if(!origin)throw Error('runtime origin unavailable');
    const created=await fetch(origin+'/weftmate/api/v1/sessions',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sessionId:'rev-runtime',agentPreset:'personal-remote'})});row.gatewayCreated=created.status;const data=await created.json();const id=data.sessionId||'rev-runtime';
@@ -56,5 +98,5 @@ for(const version of (process.argv.includes('--head-only')?['head']:['main','hea
   await app.evaluate(async()=>{for(let i=0;i<70&&!globalThis.revTray;i++)await new Promise(r=>setTimeout(r,100));if(!globalThis.revTray)throw Error('tray missing');});
   stage('quit-requested');const at=Date.now();if(method==='update-restart')await app.evaluate(()=>{setTimeout(()=>void globalThis.revUpdate(),0);});else await app.evaluate(()=>{setTimeout(()=>globalThis.revTray.items.find(i=>i.label==='退出').click(),0);});
   await closed;row.ms=Date.now()-at;row.exitCode=child.exitCode;stage('closed',{exitCode:child.exitCode});app=null;
- }catch(e){row.error=scrub(e.message);process.exitCode=1;}finally{await app?.close();row.shutdownStages=shutdownStages(profile);rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});writeFileSync(outputPath(process.argv.includes('--orders-only')?'orders.json':'exit.json'),JSON.stringify(report,null,2));console.log(row);}
+ }catch(e){row.error=scrub(e.message);if(version==='head'&&app)row.failedReadiness=await app.firstWindow().then(nativeReadiness).catch(()=>null);process.exitCode=1;}finally{await app?.close();row.shutdownStages=shutdownStages(profile);rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});writeFileSync(outputPath(process.argv.includes('--orders-only')?'orders.json':'exit.json'),JSON.stringify(report,null,2));console.log(row);}
 }

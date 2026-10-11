@@ -8,7 +8,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { startTimelineCandidate } from './bl29-rework/fixture.mjs';
-import { localUiSession } from '../helpers/local-ui-session.mjs';
+import { initializeDesktopSession } from './bl29-rework/auth.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const stage = process.argv.includes('--before') ? 'before' : 'after';
 const latencyOnly=process.argv.includes('--latency');
@@ -16,7 +16,7 @@ const logical=process.argv.includes('--logical'),reportName=latencyOnly?'respons
 const baseline='ec3ab4996609a6d81181bc178f024d5e5158c577';
 const out = resolve(process.env.WEFTMATE_BL29_EVIDENCE_DIR || 'tests/evidence/bl-29'); mkdirSync(out,{recursive:true});
 const pause = ms => new Promise(done=>setTimeout(done,ms));
-const f = await startTimelineCandidate({interactive:true,daily:true,logicalMobile:logical,inlineProgress:true,sidebar:true,composerMenu:true,historyCount:0,baseTime:Date.now()});
+const f = await startTimelineCandidate({interactive:true,daily:true,logicalMobile:logical,cloudMobile:true,inlineProgress:true,sidebar:true,composerMenu:true,historyCount:0,baseTime:Date.now()});
 const profile = mkdtempSync(join(tmpdir(),'weftmate-bl29-'));
 let app, browser, timer, mobile;
 const report = {synthetic:true,realModelRequests:0,stage,logical,baseline,surfaces:[],checks:[]};
@@ -40,14 +40,15 @@ try {
     for(let n=0;n<100;n++){const command=(await f.request('/commands/'+created.command.commandId)).command;if(command.state==='accepted_by_dsh'){f.sessionId=command.sessionId;break;}await pause(20);}
   }
   f.progress.text('已完成的合成回复。'); f.progress.finish();
-  const entry=join(profile,'desktop.cjs');writeFileSync(entry,`const {app}=require('electron');app.setPath('userData',${JSON.stringify(profile)});app.whenReady().then(async()=>{const {createPersonalDesktop}=await import(${JSON.stringify(pathToFileURL(resolve('src/personal-desktop.mjs')).href)});let quitting=false;app.on('before-quit',()=>quitting=true);const desktop=createPersonalDesktop({origin:${JSON.stringify(f.origin)},isQuitting:()=>quitting});await desktop.ready;desktop.window.setContentSize(1120,800);});`);
+  const entry=join(profile,'desktop.cjs');writeFileSync(entry,`const {app}=require('electron');app.setPath('userData',${JSON.stringify(profile)});app.whenReady().then(async()=>{const {createPersonalDesktop}=await import(${JSON.stringify(pathToFileURL(resolve('src/personal-desktop.mjs')).href)});let quitting=false;app.on('before-quit',()=>quitting=true);const desktop=createPersonalDesktop({origin:${JSON.stringify(f.origin)},libraryDesktopToken:${JSON.stringify(f.libraryDesktopToken)},isQuitting:()=>quitting});await desktop.ready;desktop.window.setContentSize(1120,800);});`);
   const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:[entry],env});
   const desktop=await app.firstWindow();
   desktop.setDefaultTimeout(15000);
   await desktop.route('**/personal/v1/ui/**/*.js',route=>{const path=new URL(route.request().url()).pathname.split('/ui/')[1];const file=path.startsWith('ui-core/')?'src/'+path:'src/personal-access-ui/'+path;
     return route.fulfill({contentType:'text/javascript',body:source(file).replace('ui.loadAttachmentHasher =','globalThis.__streamCore=core;globalThis.__streamUi=ui;ui.loadAttachmentHasher =')});});
-  await localUiSession(desktop,f.credentials,'BL-29',{interceptLegacyStatus:false});
+  if(stage==='before')await desktop.route('**/personal/v1/cloud/config',route=>route.fulfill({status:404,contentType:'application/json',body:JSON.stringify({error:{code:'NOT_FOUND'}})}));
+  await initializeDesktopSession(desktop,f,{legacy:stage==='before',deviceName:'BL-29'});
   console.log('desktop logged in');
   await desktop.waitForFunction(()=>globalThis.__streamCore?.state.mainChat&&!__streamCore.state.refreshing&&!__streamCore.state.sessionSelecting);
   await desktop.evaluate(id=>__streamCore.selectSession(id),f.sessionId);

@@ -1,0 +1,28 @@
+{
+  "baseline": {
+    "sha": "8f1b5de54e15720271e49e9b0653cd06ece3b096",
+    "source": "First parent of PR #208 merge 375d68ed021c4eca1162d7055e30165c6003021f",
+    "fileSelection": "Direct comparison of fixed baseline tree and HEAD",
+    "missingHistoricalFiles": "Skip only paths absent from the fixed tree; preserve empty files and propagate Git errors"
+  },
+  "required": {"files": 297, "passed": 1617, "failed": 0, "existingConditionalSkipped": 14, "exitCode": 0},
+  "vendor": {"files": 31, "passed": 219, "failed": 0, "skipped": 0, "exitCode": 0},
+  "focusedM1M5N5": {"passed": 4, "failed": 0, "skipped": 0},
+  "baselineRegression": {"passed": 4, "failed": 0},
+  "nativeRuntimeFirst": {"pendingWaitRequests": 1, "runtimeCloseMs": 277, "accessCloseMs": 4, "gatewayStatus": 503, "exitCode": 0, "exitMs": 140},
+  "independentConfigurationSync": {"fiveChangeKinds": true, "observedMsRange": [27, 65], "originalBudgetMs": 7000},
+  "transportForeground": {"maximumObservedMs": 824, "originalBudgetMs": 1000},
+  "typecheck": "passed",
+  "publicHygiene": {"textFilesAtCheck": 7860, "localIdentityHits": 0},
+  "preserved": ["eight errors", "request budgets", "transport delays", "synchronization deadlines", "overall timeouts", "real held reply wait", "shutdown order", "replay and revocation", "owned-process cleanup"],
+  "observedFailures": [
+    "Initial M1 only injected changes 401 while native recovery remained 200; corrected persistent unauthorized fixture without changing its request budget.",
+    "Initial shutdown fixture attached its census after native startup and did not wait for hydration; corrected preparation and observation of real requests.",
+    "First full vendor run failed temp cleanup with three owned Electron remnants, masking the test summary. Exactly those three were stopped; residual synthetic files were privately archived. Same canonical-scope approval test passed under its original 25-second budget. Complete vendor retry passed and cleaned its scope."
+  ],
+  "extraManuallyCleanedProcesses": 3,
+  "productionCodeChangesInThisFix": 0,
+  "realModelRequests": 0,
+  "realEmailDeliveries": 0,
+  "cloudDeployment": false
+}
