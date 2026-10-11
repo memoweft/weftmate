@@ -13,10 +13,14 @@ export function androidPackageReason(output) {
 
 export const nightlyPackage = 'com.memoweft.weftmate.mobile.nightly';
 export function androidHostUsesDevice(command) {
-  // Building another tree's independent APK does not use this device. Gradle's
-  // connected tests, ADB instrumentation and gallery drivers do; mumu.lock and
-  // the actual device process/instrumentation inventory remain authoritative.
-  return /review-capture-mobile[^\r\n]*--android|NightlyWebViewProbeTest|adb[^\r\n]*\bam\s+instrument|connected[A-Za-z]*AndroidTest|connectedCheck/i.test(command);
+  const first = /^(?:"([^"\r\n]+)"|(\S+))/.exec(command.trim());
+  const executable = (first?.[1] || first?.[2] || '').split(/[\\/]/).at(-1).toLowerCase();
+  // Inspect executable arguments, not source text inside a PowerShell controller.
+  // Independent APK compilation is protected by heavy slots, not the device lock.
+  if (/^adb(?:\.exe)?$/.test(executable)) return /\bam\s+instrument\b/i.test(command);
+  if (/^(?:java|gradle)(?:\.exe|\.bat|\.cmd)?$/.test(executable)) return /connected[A-Za-z]*AndroidTest|connectedCheck/i.test(command);
+  if (/^node(?:\.exe)?$/.test(executable)) return /review-capture-mobile[^\r\n]*--android/i.test(command);
+  return false;
 }
 export function androidBusyReason(packages, processes, instrumentation, hostCommands = []) {
   if (androidPackages(packages).packages.some(p => p === nightlyPackage || p === nightlyPackage+'.test')) return '夜间独立包仍已安装，无法证明它未被其它批次使用';

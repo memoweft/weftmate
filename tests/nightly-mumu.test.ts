@@ -30,6 +30,7 @@ test('failed connection disconnects only the reported address and never tries a 
 import { androidBusyReason } from '../scripts/nightly/android-packages.mjs';
 test('independent APK compilation does not occupy MuMu, but connected tests and instrumentation do', () => {
   assert.equal(androidBusyReason('', '', '', ['java gradle -PweftmateApplicationId=com.memoweft.weftmate.mobile.diag2qa :app:assembleDebug :app:testDebugUnitTest']), '');
+  assert.equal(androidBusyReason('', '', '', ['pwsh -Command \"echo adb shell am instrument; node review-capture-mobile.mjs --android\"']), '');
   for (const command of ['gradle :app:connectedDebugAndroidTest', 'adb shell am instrument -w synthetic.test/runner', 'node review-capture-mobile.mjs --android'])
     assert.match(androidBusyReason('', '', '', [command]), /Windows/);
 });
