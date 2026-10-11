@@ -10,7 +10,7 @@ import { stat, realpath } from 'node:fs/promises';
 import { hostName } from './host-name.mjs';
 import { createHash, X509Certificate } from 'node:crypto';
 import { desktopAuthStorage } from './personal-desktop-auth.mjs';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdirSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createLatestFileWriter } from './latest-file-writer.mjs';
 import { join, basename } from 'node:path';
