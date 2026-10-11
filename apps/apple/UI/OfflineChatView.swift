@@ -42,6 +42,7 @@ struct OfflineChatView: View {
                 if !model.hostOffline { Button("返回") { model.showHistory = false }.accessibilityIdentifier("offlineBack") }
                 Button("重新连接") { Task { await app.pollOffline() } }.accessibilityIdentifier("offlineReconnect")
             }
+            PreviousRunNotice()
             if model.hostOffline {
                 Text(OfflineChatModel.warning).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
                     .accessibilityIdentifier("offlineTopWarning")

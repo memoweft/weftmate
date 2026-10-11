@@ -25,11 +25,11 @@ import WeftMateCore
     }
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         let reachable = session.isReachable, bytes = session.receivedApplicationContext["snapshot"] as? Data
-        Task { @MainActor in self.reachable = reachable; self.apply(bytes) }
+        Task { @MainActor in self.reachable = reachable; self.apply(bytes); if reachable { self.transferRunLog() } }
     }
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
         let reachable = session.isReachable
-        Task { @MainActor in self.reachable = reachable }
+        Task { @MainActor in self.reachable = reachable; RunLogRuntime.shared.connection(reachable ? "connecting" : "offline", code: reachable ? nil : "UNAVAILABLE"); if reachable { self.transferRunLog() } }
     }
     nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
         let data = applicationContext["snapshot"] as? Data, clear = applicationContext["clear"] as? Bool == true
@@ -39,11 +39,33 @@ import WeftMateCore
         let data = message["snapshot"] as? Data, clear = message["clear"] as? Bool == true
         Task { @MainActor in self.apply(data, clear: clear) }
     }
+    private func transferRunLog() {
+        guard session.isReachable else { return }
+        Task {
+            await RunLogRuntime.shared.ready()
+            _ = await RunLogRuntime.shared.store.deliverWatch { [weak self] bytes in
+                await self?.sendRunLog(bytes) ?? false
+            }
+        }
+    }
+    private func sendRunLog(_ bytes: Data) async -> Bool {
+        guard session.isReachable else { return false }
+        return await withCheckedContinuation { continuation in
+            // SDK callbacks capture only the Sendable continuation; no Watch UI actor state.
+            session.sendMessage(["action": "run_log", "runLog": bytes], replyHandler: { reply in
+                continuation.resume(returning: reply["accepted"] as? Bool == true)
+            }, errorHandler: { _ in continuation.resume(returning: false) })
+        }
+    }
     private func receive(_ payload: [String: Any]) { apply(payload["snapshot"] as? Data, clear: payload["clear"] as? Bool == true) }
     private func apply(_ data: Data?, clear: Bool = false) {
         if clear { snapshot = nil; feedback = WatchFeedbackTracker(); decisions.apply(nil); return }
-        guard let data, let value = try? JSONDecoder().decode(WatchTimelineSnapshot.self, from: data) else { return }
+        guard let data else { return }
+        guard let value = try? JSONDecoder().decode(WatchTimelineSnapshot.self, from: data) else {
+            RunLogRuntime.shared.record(.syncFailure, ["phase": "notification", "code": "UNCONFIRMED"]); return
+        }
         snapshot = value
+        RunLogRuntime.shared.connection(value.progress == "电脑离线" ? "offline" : "online", code: value.progress == "电脑离线" ? "UNAVAILABLE" : nil)
         decisions.apply(value)
         record("snapshot", ["sessionID": value.sessionID, "running": value.running, "progress": value.progress, "approvals": value.approvals.map(\.summary)])
         // No remote push yet: feedback is emitted only while this Watch app is active or refreshed.
@@ -54,6 +76,7 @@ import WeftMateCore
         }
     }
     func refresh() {
+        transferRunLog()
         // A completion received in the background is announced on the next foreground refresh.
         if let snapshot, let bytes = try? JSONEncoder().encode(snapshot) { apply(bytes) }
         send(["action": "refresh"])
@@ -90,22 +113,30 @@ import WeftMateCore
             self.record("reply", ["registered": registered, "error": error ?? "", "approvalID": approvalID ?? ""])
             self.apply(data)
             self.notice = error ?? (registered ? "决定已登记" : nil)
+            if error != nil || (approvalID != nil && !registered) { RunLogRuntime.shared.record(.approvalFailure, ["phase": "approval", "code": "UNCONFIRMED"]) }
             if registered { self.refresh() }
         }, errorHandler: WatchMessageDelivery.failure {
             self.busy = false
             if let approvalID { self.decisions.finish(approvalID, registered: false) }
             self.record("transportError")
+            RunLogRuntime.shared.record(approvalID == nil ? .syncFailure : .approvalFailure, ["phase": approvalID == nil ? "notification" : "approval", "code": "UNAVAILABLE"])
             self.notice = "手机未响应，请刷新后重试。"
         })
     }
 }
 struct WatchHomeView: View {
+    @ObservedObject private var runLog = RunLogRuntime.shared
     @StateObject private var model = WatchTimelineModel()
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
+                    #if DEBUG
+                    if ProcessInfo.processInfo.arguments.contains("--diag3-check-marker") {
+                        Text("运行记录检查").accessibilityIdentifier("diag3WatchMarker").accessibilityValue(runLog.snapshot?.previous?.clean == false ? "unclean" : "clean")
+                    }
+                    #endif
                     if let snapshot = model.snapshot {
                         if !snapshot.running && snapshot.progress == "已完成" {
                             WeftLabel("已完成", icon: "allow", size: AppleTokens.Space.p16)

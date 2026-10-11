@@ -1,0 +1,2 @@
+{"appVersion":"0.1.0","at":"2026-10-10T00:00:00Z","event":"app.start","fields":{"launchKind":"cold","recordIndex":"1"},"osVersion":"26.3","platform":"macos","runId":"28b6aefd-edf5-47b8-ab71-961a24abba25"}
+{"appVersion":"0.1.0","at":"2026-10-10T00:00:00Z","event":"app.exit","fields":{"exitCode":"0","reason":"user_quit","recordIndex":"2"},"osVersion":"26.3","platform":"macos","runId":"28b6aefd-edf5-47b8-ab71-961a24abba25"}

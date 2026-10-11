@@ -1,0 +1,172 @@
+{
+  "checks": [
+    {
+      "state": "empty",
+      "theme": "light",
+      "captures": [
+        "mac-about-empty-light.png",
+        "mac-empty-light.png",
+        "mac-summary-preview-empty-light.png",
+        "mac-summary-raw-empty-light.png",
+        "mac-file-preview-empty-light.png",
+        "mac-file-raw-empty-light.png"
+      ],
+      "passed": true,
+      "expectedState": "empty",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": -9
+    },
+    {
+      "state": "records",
+      "theme": "light",
+      "captures": [
+        "mac-banner-light.png",
+        "mac-banner-dismissed-light.png",
+        "mac-about-records-light.png",
+        "mac-records-light.png",
+        "mac-detail-light.png",
+        "mac-detail-raw-light.png",
+        "mac-summary-preview-records-light.png",
+        "mac-summary-raw-records-light.png",
+        "mac-file-preview-records-light.png",
+        "mac-file-raw-records-light.png"
+      ],
+      "passed": true,
+      "expectedState": "records",
+      "hadNotice": true,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
+    },
+    {
+      "state": "normal",
+      "theme": "light",
+      "captures": [
+        "mac-about-normal-light.png",
+        "mac-normal-light.png",
+        "mac-summary-preview-normal-light.png",
+        "mac-summary-raw-normal-light.png",
+        "mac-file-preview-normal-light.png",
+        "mac-file-raw-normal-light.png"
+      ],
+      "passed": true,
+      "expectedState": "normal",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
+    },
+    {
+      "state": "read-failure",
+      "theme": "light",
+      "captures": [
+        "mac-about-read-failure-light.png",
+        "mac-read-failure-light.png"
+      ],
+      "passed": true,
+      "expectedState": "read-failure",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
+    },
+    {
+      "state": "empty",
+      "theme": "dark",
+      "captures": [
+        "mac-about-empty-dark.png",
+        "mac-empty-dark.png",
+        "mac-summary-preview-empty-dark.png",
+        "mac-summary-raw-empty-dark.png",
+        "mac-file-preview-empty-dark.png",
+        "mac-file-raw-empty-dark.png"
+      ],
+      "passed": true,
+      "expectedState": "empty",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": -9
+    },
+    {
+      "state": "records",
+      "theme": "dark",
+      "captures": [
+        "mac-banner-dark.png",
+        "mac-banner-dismissed-dark.png",
+        "mac-about-records-dark.png",
+        "mac-records-dark.png",
+        "mac-detail-dark.png",
+        "mac-detail-raw-dark.png",
+        "mac-summary-preview-records-dark.png",
+        "mac-summary-raw-records-dark.png",
+        "mac-file-preview-records-dark.png",
+        "mac-file-raw-records-dark.png"
+      ],
+      "passed": true,
+      "expectedState": "records",
+      "hadNotice": true,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
+    },
+    {
+      "state": "normal",
+      "theme": "dark",
+      "captures": [
+        "mac-about-normal-dark.png",
+        "mac-normal-dark.png",
+        "mac-summary-preview-normal-dark.png",
+        "mac-summary-raw-normal-dark.png",
+        "mac-file-preview-normal-dark.png",
+        "mac-file-raw-normal-dark.png"
+      ],
+      "passed": true,
+      "expectedState": "normal",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
+    },
+    {
+      "state": "read-failure",
+      "theme": "dark",
+      "captures": [
+        "mac-about-read-failure-dark.png",
+        "mac-read-failure-dark.png"
+      ],
+      "passed": true,
+      "expectedState": "read-failure",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
+    }
+  ]
+}
