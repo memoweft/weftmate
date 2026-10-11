@@ -52,6 +52,8 @@ def main():
             continue
         executable = run / name
         sources = [ROOT / "UI" / (model + ".swift") for model in models]
+        if "AppleAppModel" in models or "TaskInteractionModel" in models:
+            sources.append(ROOT / "UI/RunLogRuntime.swift")
         if models == APP_MODEL:
             sources.append(ROOT / "Tests/TaskProgressUIFixture.swift")
             sources.append(ROOT / "Tests/AppleContractUIFixture.swift")

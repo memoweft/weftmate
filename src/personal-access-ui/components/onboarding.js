@@ -78,6 +78,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
         catch { if (current(token)) say(copy.error); }
       }); return;
     }
+    if (core.cloudAuthView?.().localDesktop) { content.append(node('p', 'muted', '本机账户暂时无法读取，请重试。'), button('重试读取', () => void core.load())); next.disabled = true; return; }
     const slot = node('div', 'onboarding-auth');
     const attach = () => { for (const id of ['login-view', 'setup-view', 'cloud-wait-view']) { const element = ui.byId(id); authPositions.push([element, element.parentNode, element.nextSibling]); slot.append(element); } };
     content.append(button(copy.accountCloud, () => { core.state.setupGrant = null; core.show('login'); core.startCloudJourney(); }),
@@ -157,30 +158,13 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     void core.accessApi('/memory/status').then(value => { if (current(token)) health.textContent = copy.healthLabel(core.memoryHealthText(value)); }).catch(() => { if (current(token)) health.textContent = copy.healthError; });
     void core.accessApi('/memory/backfill').then(value => { if (current(token) && value.turnCount > 0) content.append(node('p', 'muted', copy.backfillHint), button(copy.backfill, () => { conceal(); ui.openSettings('memory'); })); }).catch(() => {});
   }
-  function phone(token) {
-    content.append(node('p', 'muted', copy.pairRefresh));
-    const qr = node('img', 'onboarding-qr'); qr.alt = copy.pairQr; qr.hidden = true;
-    const code = node('textarea'); code.readOnly = true; code.setAttribute('aria-label', copy.pairCode); code.hidden = true;
-    const devices = node('div');
-    const pair = button(copy.pair, async () => {
-      pair.disabled = true; say(copy.pairLoading);
-      try {
-        const result = await core.cloudPairing(), value = globalThis.WeftCloud.pairingCode(result);
-        const data = await globalThis.WeftCloudVendor.QRCode.toDataURL((result.relay?.baseUrl || result.origin) + '/personal/v1/ui/#pair=' + value.slice(4));
-        if (!current(token)) return; qr.src = data; code.value = value; qr.hidden = code.hidden = false; say('');
-      } catch { if (current(token)) say(copy.pairOffline); } finally { if (current(token)) pair.disabled = false; }
-    });
-    content.append(pair, qr, code, devices, button(copy.deviceSettings, () => { conceal(); ui.openSettings('devices'); }));
-    const poll = async () => {
-      try {
-        const pending = await core.readPendingDevices(); if (!current(token)) return; devices.replaceChildren();
-        for (const device of pending.devices || []) {
-          const row = node('div', 'onboarding-device', device.name);
-          for (const [decision, label] of [['allow', '允许'], ['deny', '拒绝']]) row.append(button(label + ' ' + device.name, async () => { try { await ui.decideCloudDevice(device, decision); if (current(token)) void poll(); } catch { if (current(token)) say(copy.error); } }));
-          devices.append(row);
-        }
-      } catch {} finally { if (current(token)) pendingTimer = setTimeout(poll, 2000); }
-    }; void poll();
+  function phone() {
+    content.append(node('p', 'muted', '在手机或其他电脑上打开 WeftMate，使用同一邮箱登录即可。电脑需要保持运行。'));
+    if (core.state.cloudAuth.mode !== 'authenticated') content.append(
+      node('p', 'muted', '远程访问需要登录。也可以先跳过，继续在这台电脑上使用。'),
+      button('登录以使用远程访问', () => core.startCloudJourney(), 'primary'));
+    else content.append(node('p', 'muted', '已登录。新设备首次登录时，用邮箱验证码确认是你本人。'));
+    content.append(button(copy.deviceSettings, () => { conceal(); ui.openSettings('devices'); }));
   }
   function showSamples() {
     if (ui.byId('onboarding-samples')) return;
@@ -213,6 +197,8 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     document.querySelector('section.settings-category[data-category="general"]').append(replay);
     const originalAvailability=ui.updateAvailability;
     ui.updateAvailability=(...args)=>{originalAvailability(...args);if(active&&journey?.step==='first')next.disabled=!core.state.models.some(model=>model.configured)||core.folderMutationPending?.()===true;};
+    const originalCloudPaint = ui.paintCloudAuth;
+    ui.paintCloudAuth = value => { originalCloudPaint(value); if (active && journey?.step === 'phone' && !value.modal && ['authenticated', 'offline'].includes(value.mode)) render(); };
     const originalPaint = ui.paintScreen;
     ui.paintScreen = view => { originalPaint(view); if (active && journey?.step === 'account') { if (core.state.account) render(); else reveal(); } };
 

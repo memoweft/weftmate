@@ -57,7 +57,7 @@ globalThis.WeftUiCore.factories.activity = (core,effects,environment) => {
             }else if(action.kind==='view_memory')await effects.openActivityMemory?.(action.target);
             else if(action.kind==='memory_item')await effects.openActivityMemoryItem?.(action.target,outcome);
             else if(action.kind==='memory_confirm')await core.accessApi(`/activity/${encodeURIComponent(row.id)}/read`,{method:'PATCH',protectedWrite:true,body:{requestId:environment.crypto.randomUUID(),read:true,attentionRevision:row.attentionRevision,reviewedMemory:action.target}});
-            else if(action.kind==='view_settings'&&action.target.category==='about')await effects.openActivitySettings?.('about');
+            else if(action.kind==='view_settings'&&['about','devices'].includes(action.target.category))await effects.openActivitySettings?.(action.target.category);
             else if(['open_chat','answer_question'].includes(action.kind))await effects.openActivitySource?.(action.target,action.kind);
             else return;
             if(scope()===token){try{await markActivityRead(row);}catch{/* A resolved approval has a new attention revision. */}await readActivity();}

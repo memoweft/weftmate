@@ -97,8 +97,8 @@ test('unsupported transports and malformed mail fail without claiming delivery',
   );
 });
 
-test('six templates share a safe card, code-free subject/preview and continuous fixture code', () => {
-  for (const purpose of ['register', 'reset', 'device', 'email']) {
+test('seven templates share a safe card, code-free subject/preview and continuous fixture code', () => {
+  for (const purpose of ['register', 'reset', 'device', 'email', 'login']) {
     const message = challengeMail(purpose, '012345', 'synthetic-device');
     assert.deepEqual(Object.keys(message), ['subject', 'text', 'html']);
     assert.equal(/验证码：(\d{6})/.exec(message.text)[1], '012345');
@@ -127,7 +127,9 @@ test('HTML escapes script, quotes and ampersands; plain text keeps the original 
   assert.ok(message.text.includes(`设备标识：${device}`));
   assert.ok(message.html.includes('设备标识：&lt;script&gt;&quot;x&quot; &amp; &#39;y&#39;&lt;/script&gt;'));
   assert.doesNotMatch(message.html, /<script>/);
-  assert.match(message.html, /内容权限须另行配对/);
+  assert.match(message.html, /验证码只用于你正在操作的这台设备/);
+  assert.match(message.html, /登录后可在设置中查看和退出已登录设备/);
+  assert.doesNotMatch(message.html, /另行配对/);
   for (const code of ['12345', '1234567', '12 345', '<1234>', '１２３４５６', '123456\n', 123456, null]) {
     assert.throws(() => challengeMail('register', code), /six digits/);
   }

@@ -1,0 +1,31 @@
+{
+  "abnormalCountsLast7Days": {
+    "app.previous_unclean_exit": 1
+  },
+  "appVersion": "0.1.0",
+  "generatedAt": "2026-10-11T03:40:05Z",
+  "osVersion": "26.6.2",
+  "platform": "macos",
+  "recentAbnormalRecords": [
+    {
+      "appVersion": "0.1.0",
+      "at": "2026-10-11T03:40:01Z",
+      "event": "app.previous_unclean_exit",
+      "fields": {
+        "reason": "suspected_foreground_crash",
+        "recordIndex": "1",
+        "state": "foreground"
+      },
+      "lastAt": "2026-10-11T03:39:57Z",
+      "lastEvent": "diagnostic.reports",
+      "osVersion": "26.6.2",
+      "platform": "macos",
+      "previousRunId": "4c2287b7-7698-4774-9b2f-f87cd5eb114b",
+      "runId": "3b095674-c3b0-44a8-b166-01e7df54a7bb"
+    }
+  ],
+  "retentionPolicy": {
+    "maxBytes": 2097152,
+    "retentionDays": 7
+  }
+}

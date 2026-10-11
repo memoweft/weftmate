@@ -78,7 +78,7 @@ import WeftMateCore
         }
         return visit(element)
     }
-    static func capture(_ scene: String, settings: Bool = false, identifier: String? = nil) async throws {
+    static func capture(_ scene: String, settings: Bool = false, identifier: String? = nil, includeSheets: Bool = false) async throws {
         let rootID = identifier ?? (settings ? "settingsPage." + String(scene.dropFirst("settings-".count)) : "conversationDetail")
         let window = NSApplication.shared.windows.first { $0.isVisible && find(rootID, in: $0) != nil }
         guard let window else { throw Failure(step: "Missing own window: " + scene) }
@@ -86,7 +86,11 @@ import WeftMateCore
         try await Task.sleep(for: .milliseconds(500))
         typealias Images = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
         guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "CGWindowListCreateImageFromArray") else { throw Failure(step: "Window capture unavailable") }
-        let windows = identifier == nil || settings ? [window] : NSApplication.shared.orderedWindows.filter(\.isVisible)
+        let windows: [NSWindow]
+        if includeSheets {
+            // The isolated caller hides its fixture window; keep native sheet panels too.
+            windows = NSApplication.shared.orderedWindows.filter(\.isVisible)
+        } else { windows = identifier == nil || settings ? [window] : NSApplication.shared.orderedWindows.filter(\.isVisible) }
         var ids = windows.map { UnsafeRawPointer(bitPattern: $0.windowNumber) }
         let array = CFArrayCreate(kCFAllocatorDefault, &ids, ids.count, nil)!
         guard let image = unsafeBitCast(symbol, to: Images.self)(.null, array, 1)?.takeRetainedValue(),
