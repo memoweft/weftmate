@@ -145,7 +145,7 @@ try {
           const packages = (await run(adb,['-s',androidSerial,'shell','pm','list','packages','weftmate'],{name:'android-packages'})).output;
           const processes = (await run(adb,['-s',androidSerial,'shell','ps','-A','-o','NAME'],{name:'android-processes'})).output;
           const instrumentation = (await run(adb,['-s',androidSerial,'shell','dumpsys','activity'],{name:'android-instrumentation'})).output;
-          const host = await run('pwsh',['-NoProfile','-Command', String.raw`[bool]@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -notin @($PID,${process.pid},${context.bootstrapPid}) -and $_.CommandLine -match 'review-capture-mobile[^\r\n]*--android|weftmateApplicationId|NightlyWebViewProbeTest|adb[^\r\n]*\bam\s+instrument|weftmate[^\r\n]*android[^\r\n]*(?:test|probe)' }).Count`], {name:'android-host-occupancy'});
+          const host = await run('pwsh',['-NoProfile','-Command', String.raw`[bool]@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -notin @($PID,${process.pid},${context.bootstrapPid}) -and ([IO.Path]::GetFileName($_.ExecutablePath) -match '^(node|java|adb)\.exe$' -or $_.CommandLine -match '\s-File\s+(?:"[^"]*[\\/]build-android\.ps1"|\S*[\\/]build-android\.ps1)(?:\s|$)') -and $_.CommandLine -match 'review-capture-mobile[^\r\n]*--android|weftmateApplicationId|NightlyWebViewProbeTest|adb[^\r\n]*\bam\s+instrument|weftmate[^\r\n]*android[^\r\n]*(?:test|probe)' }).Count`], {name:'android-host-occupancy'});
           const reason = androidBusyReason(packages,processes,instrumentation,host.output.trim() === 'True' ? ['review-capture-mobile --android'] : []);
           cleanup.android = { ...cleanup.android, reusedEmulator:true, androidVersion:info.androidVersion, occupancyChecked:true, occupancyReason:reason || 'MuMu 锁已持有；设备无 WeftMate / UI 测试进程和活动仪器测试；Windows 无安卓测试命令' };
           return reason;
@@ -195,7 +195,7 @@ finally {
   }
   // Owner-approved housekeeping: prune synthetic test temp directories older than 24 hours.
   try {
-    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '24', '-Repository', repository, '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
+    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '24', '-Roots', 'C:/weftmate-temp', '-Repository', repository, '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
     cleanup.staleTemp = JSON.parse(pruned.output.trim().split(/\r?\n/).pop());
   } catch (error) { cleanup.staleTemp = { error: error.message }; }
   phases.push({ name: 'cleanup', status: cleanup.temp?.removed === false || cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.staleTemp?.failed || cleanup.android?.error || cleanup.android?.packageRemoved === false || cleanup.android?.reverseRemoved === false || cleanup.android?.forwardRemoved === false || cleanup.apple?.bootedOwnedRemaining?.length ? 'failed' : 'passed', reason: cleanup.temp?.error || cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.android?.error || '', seconds: (Date.now()-cleanupStarted)/1000 });
