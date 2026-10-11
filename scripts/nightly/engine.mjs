@@ -210,6 +210,9 @@ finally {
   }
   if (temp) {
     stopLease?.();
+    // Later PowerShell/Electron processes must not recreate the disposed TEMP scope.
+    process.env.TEMP = tempParent; process.env.TMP = tempParent; process.env.TMPDIR = tempParent;
+    delete process.env.WEFTMATE_TEST_TEMP_SCOPE;
     try {
       disposeManagedTemp(temp, {log: line => {
         const redacted = redactEvidenceText(line);
