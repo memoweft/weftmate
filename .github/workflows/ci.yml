@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -40,6 +42,9 @@ jobs:
       # ever missing for a runner, add the platform's build deps here.
       - name: Install dependencies
         run: npm ci
+
+      - name: Install Chromium for real UI regression probes
+        run: npx playwright install --with-deps chromium
 
       # Cloud + host identity integration; isolated services, no Electron or DSH runtime.
       - name: Cloud identity tests (Linux)
