@@ -2,13 +2,22 @@ import { outputPath } from './evidence.mjs';
 import {createRequire} from 'node:module';
 import {superviseExit, scrub} from './exit-supervisor.mjs';
 import {execFileSync} from 'node:child_process';
-import {mkdtempSync,writeFileSync,rmSync,readFileSync,appendFileSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,rmSync,readFileSync,appendFileSync,readdirSync,existsSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {createPersonalAccessService} from '../../../src/personal-access/index.mjs';
 import {PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT} from '../../../src/host-mode.mjs';
 import {localUiSession} from '../../helpers/local-ui-session.mjs';
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
+function shutdownStages(profile) {
+ const logs=join(profile,'logs');
+ if(!existsSync(logs))return [];
+ return readdirSync(logs).filter(name=>/^host-.*\.jsonl$/.test(name)).flatMap(name=>
+  readFileSync(join(logs,name),'utf8').trim().split('\n').flatMap(line=>{
+   try {const row=JSON.parse(line);return ['host.shutdown_step','host.exit','host.failure'].includes(row.event)?[row]:[];}
+   catch{return [];}
+  }));
+}
 if (!process.env.BL29_OWNED_ROOT) {
  const result = await superviseExit({args:process.argv.slice(2),outputDir:resolve(outputPath('.'))});
  writeFileSync(outputPath('exit.json'),JSON.stringify(result.rows,null,2));
@@ -47,5 +56,5 @@ for(const version of (process.argv.includes('--head-only')?['head']:['main','hea
   await app.evaluate(async()=>{for(let i=0;i<70&&!globalThis.revTray;i++)await new Promise(r=>setTimeout(r,100));if(!globalThis.revTray)throw Error('tray missing');});
   stage('quit-requested');const at=Date.now();if(method==='update-restart')await app.evaluate(()=>{setTimeout(()=>void globalThis.revUpdate(),0);});else await app.evaluate(()=>{setTimeout(()=>globalThis.revTray.items.find(i=>i.label==='退出').click(),0);});
   await closed;row.ms=Date.now()-at;row.exitCode=child.exitCode;stage('closed',{exitCode:child.exitCode});app=null;
- }catch(e){row.error=scrub(e.message);process.exitCode=1;}finally{await app?.close();rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});writeFileSync(outputPath(process.argv.includes('--orders-only')?'orders.json':'exit.json'),JSON.stringify(report,null,2));console.log(row);}
+ }catch(e){row.error=scrub(e.message);process.exitCode=1;}finally{await app?.close();row.shutdownStages=shutdownStages(profile);rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});writeFileSync(outputPath(process.argv.includes('--orders-only')?'orders.json':'exit.json'),JSON.stringify(report,null,2));console.log(row);}
 }
