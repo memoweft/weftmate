@@ -146,6 +146,8 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         move(globalThis.weftmateDesktop ? 'system' : 'general', ui.byId('connection-copy').closest('section'));
         const nativeSettings = ui.byId('desktop-auto-start');
         if (nativeSettings) {
+            const sendTo = ui.byId('desktop-send-to');
+            if (sendTo) panels.get('general').append(sendTo.closest('.settings-row'));
             const original = nativeSettings.closest('section'); nativeSettings.remove();
             globalThis.WeftSettingsControls.toggle(nativeSettings);
             panels.get('general').append(globalThis.WeftSettingsControls.row('开机自启', '启动后留在托盘，随时继续对话。', nativeSettings)); original.remove();
