@@ -50,7 +50,7 @@ try {
     if(report.realInstall){await run(installer,['--updated','/S','/currentuser',`/D=${installation}`]);installed=true;executable=installedExecutable();}
     else executable=join(build,'win-unpacked',`WeftMate-${testIdentity}.exe`);
   }
-  h=await migrationHost({executable,tempRoot:temp,processEvidence:({root,profile,executable})=>createProcessEvidence({outputDir:join(out,'electron-processes'),profileDirectory:profile,commandRoots:[root],executables:[executable,process.execPath],startedAt:started})});
+  h=await migrationHost({nativeSession:true,executable,tempRoot:temp,processEvidence:({root,profile,executable})=>createProcessEvidence({outputDir:join(out,'electron-processes'),profileDirectory:profile,commandRoots:[root],executables:[executable,process.execPath],startedAt:started})});
   if(installed){report.installationRegistered=hasTestInstallation();assert.equal(report.installationRegistered,true);}
   h.page.on('response',async r=>{if(r.url().includes('/commands')){try{const value=await r.json();if(value.command)report.folderCommands=[...(report.folderCommands||[]),{kind:value.command.kind,state:value.command.state,errorCode:value.command.errorCode}];}catch{}}});
   report.packaged=await h.app.evaluate(({app})=>({isPackaged:app.isPackaged,appPath:app.getAppPath()}));assert.equal(report.packaged.isPackaged,true);
