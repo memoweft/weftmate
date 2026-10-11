@@ -111,9 +111,16 @@ async function mobileSettingsLegal(kind){
 
 async function systemStatusSection(target){const owner=state.owner,epoch=state.authEpoch;
   const section=el('section','group');section.append(el('h2','','系统状态'));
-  const status=el('p','hint','正在读取…');section.append(status);target.append(section);
-  const records=globalThis.WeftRunRecords?.mount(section,{core:uiCore,toast,retry:()=>page('general'),desktop:null});
+  const status=el('p','hint','正在读取电脑状态…');section.append(status);target.append(section);
+  const localRecords=globalThis.WeftRunRecords?.mount(section,{core:uiCore,toast,retry:()=>page('general'),desktop:null,
+    title:window.weftNative?'本机（这部手机）':'本机（这个浏览器）',local:true,browser:!window.weftNative,
+    copySummary:text=>window.weftNative?call('clipboard.copy',{text}):navigator.clipboard.writeText(text),
+    shareLogs:window.weftNative?()=>call('diagnostics.share'):null});
+  const records=globalThis.WeftRunRecords?.mount(section,{core:uiCore,toast,retry:()=>page('general'),desktop:null,title:'已连接的电脑'});
   const current=()=>state.owner===owner&&state.authEpoch===epoch&&target.isConnected&&state.page==='general';
+  // Phone records belong to this device, independently of host or account state.
+  void Promise.resolve().then(()=>window.weftNative?call('diagnostics.status',{},5000):globalThis.WeftLocalDiagnostics.status())
+    .then(value=>{if(current())localRecords?.paint(value);}).catch(()=>{if(current())localRecords?.paint({state:'error'});});
   try{const [system,settings]=await Promise.all([
     uiCore.readMobileSystem(),
     uiCore.readMobileModelSettings()]);
