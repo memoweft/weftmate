@@ -57,6 +57,7 @@ try{
     usage:{requests:after.requests-before.requests,inputTokens:after.inputTokens-before.inputTokens,cachedInputTokens:after.cachedInputTokens-before.cachedInputTokens,outputTokens:after.outputTokens-before.outputTokens,cost:after.cost-before.cost}});
   console.log('UX-7 MiMo round',ended,JSON.stringify(turns.at(-1)));
  }
+ assert.equal((await api('/settings/personalization',{inlineCompletionEnabled:true},'PATCH')).status,200);
  const completionStarted=Date.now(),completion=await api(`/sessions/${sessionId}/suggestions`,{kind:'completion',draft:'请把刚才的安排',requestId:'quality-completion'});
  const usage=(await api('/usage')).body;attemptUsage=usage;
  const wire=existsSync(wireFile)?readFileSync(wireFile,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse):[];
