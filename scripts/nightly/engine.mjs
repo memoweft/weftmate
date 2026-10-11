@@ -96,6 +96,8 @@ async function cleanupAndroid() {
       if (!androidSerial) return;
       const state = JSON.parse(await readFile(join(out, 'android-state.json'), 'utf8'));
       if (state.serial !== androidSerial) throw new AndroidEnvironmentError('安卓清理地址与本轮管理工具地址不符');
+      // A successful collector already removed everything and disconnected.
+      if (![...(state.reverse || []), ...(state.forward || []), ...(state.installed || [])].length) return;
       await assertAndroidDevice(androidSerial, run);
       for (const mapping of state.reverse || []) await run(adb, ['-s', androidSerial, 'reverse', '--remove', `tcp:${mapping}`], { name: 'android-clean-reverse', allowFailure: true, limit: 5000 });
       for (const mapping of state.forward || []) await run(adb, ['-s', androidSerial, 'forward', '--remove', `tcp:${mapping}`], { name: 'android-clean-forward', allowFailure: true, limit: 5000 });
@@ -166,7 +168,11 @@ try {
         const busy = await assess(); if (busy) return skip('被占用，未拍（'+busy+'）');
         await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'build-android.ps1'), '-Worktree', worktree], { name: 'android-build' });
         const occupied = await assess(); if (occupied) return skip('被占用，未拍（'+occupied+'）');
-        await run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--android', '--android-device', deviceInfo, '--out', gallery, '--state', join(out, 'android-state.json'), ...sceneArgs], { name: 'android' });
+        const captured = await run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--android', '--android-device', deviceInfo, '--out', gallery, '--state', join(out, 'android-state.json'), ...sceneArgs], { name: 'android', allowFailure:true });
+        if (captured.code !== 0) {
+          if (captured.output.includes('环境问题：未拍')) throw new AndroidEnvironmentError('采集器发现设备身份或连接已变化；见 logs/android.log');
+          throw Error(`android 运行失败（退出 ${captured.code}；见 logs/android.log）`);
+        }
       } finally {
         await cleanupAndroid();
         if (androidSerial) await run(adb,['disconnect',androidSerial],{name:'adb-disconnect',allowFailure:true,limit:5000}).catch(()=>{});
