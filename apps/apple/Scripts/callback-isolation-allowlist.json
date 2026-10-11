@@ -245,27 +245,6 @@
     "reason": "Explicit @Sendable completion transports its Result to Task @MainActor before reading or writing any view/model state. No UI actor access on the file-service callback executor."
   },
   {
-    "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
-    "line": 14,
-    "api": "session",
-    "sha256": "d438763efaf4dce976d6b0467c38c26707e453c264b684ebe7d1da5ee7d755c7",
-    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
-  },
-  {
-    "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
-    "line": 17,
-    "api": "session",
-    "sha256": "365ad4ceb5bc22ffb14c3168d8dd7403c6db49e268f200518708386de38ce282",
-    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
-  },
-  {
-    "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
-    "line": 35,
-    "api": "sendMessage",
-    "sha256": "f3036f02318ea46c49fe04e61e67f6cadc4d3812336a3d876e1342085a1226b9",
-    "reason": "WCSession sendMessage has nil reply/error handlers. The nonisolated delegate converts input to Sendable values before Task @MainActor."
-  },
-  {
     "file": "apps/apple/UI/ProjectsView.swift",
     "line": 21,
     "api": "begin",
@@ -308,18 +287,53 @@
     "reason": "Platform SDK declares DataScannerViewControllerDelegate @MainActor and UIImagePickerControllerDelegate NS_SWIFT_UI_ACTOR. Native UI delegate delivery is main-actor isolated."
   },
   {
+    "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
+    "line": 14,
+    "api": "session",
+    "sha256": "d438763efaf4dce976d6b0467c38c26707e453c264b684ebe7d1da5ee7d755c7",
+    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+  },
+  {
+    "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
+    "line": 17,
+    "api": "session",
+    "sha256": "a92313b0091fa50dcf1d3b324b61082451396b64b924bbb6f5057fbfab1ee95b",
+    "reason": "nonisolated WC callback extracts Data values and wraps reply in Sendable owner; explicit MainActor task handles UI and awaits RunLog actor persistence."
+  },
+  {
+    "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
+    "line": 45,
+    "api": "sendMessage",
+    "sha256": "f3036f02318ea46c49fe04e61e67f6cadc4d3812336a3d876e1342085a1226b9",
+    "reason": "WCSession sendMessage has nil reply/error handlers. The nonisolated delegate converts input to Sendable values before Task @MainActor."
+  },
+  {
+    "file": "apps/apple/UI/RunLogRuntime.swift",
+    "line": 53,
+    "api": "detached",
+    "sha256": "5cf1e1fe78411d206f947730c92780009b6209c8e172ad2db51f8d248b66387a",
+    "reason": "Detached closure captures only a local URL value for synthetic blocked-disk fixture; performs no UI state access; awaited result resumes MainActor."
+  },
+  {
+    "file": "apps/apple/UI/RunLogView.swift",
+    "line": 86,
+    "api": "detached",
+    "sha256": "92e5a36c436105a26ec5ea57a073ff8277c121995bfe9790a401512bfe08f2d7",
+    "reason": "Detached preview read captures only Sendable URL, returns Data, and is explicitly awaited on MainActor before updating UI or opening share sheet."
+  },
+  {
     "file": "apps/apple/watchOS/WatchHomeView.swift",
     "line": 26,
     "api": "session",
-    "sha256": "f2e3016466a4ae245fb66b642d96a7df7a023d77cf27b173e26609d91d06bc0c",
-    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+    "sha256": "2db5322515844d9525eb1b0acc2e38b1adb087d86f7342be91158922e4f7c1b0",
+    "reason": "WC delegate callbacks are nonisolated and copy Sendable values before explicit MainActor task; delivery wrappers restore MainActor; log-transfer callbacks capture no state."
   },
   {
     "file": "apps/apple/watchOS/WatchHomeView.swift",
     "line": 30,
     "api": "sessionReachabilityDidChange",
-    "sha256": "d93bebc277cf21b2d28789fcd0adf4ab0b2846c73bfef8f880a12eb94f926e80",
-    "reason": "Explicit nonisolated WCSession delegate snapshots typed input before Task @MainActor; empty activation callback needs no UI delivery."
+    "sha256": "f67049b19dd2c3486d7f44181b23c6319974988c014e0d1814bc6eac895b6d69",
+    "reason": "Nonisolated WC callbacks extract value projections and explicitly enter MainActor; log transfer SDK callbacks capture only Sendable continuation and return a boolean. No raw SDK errors or UI state cross the callback."
   },
   {
     "file": "apps/apple/watchOS/WatchHomeView.swift",
@@ -337,9 +351,44 @@
   },
   {
     "file": "apps/apple/watchOS/WatchHomeView.swift",
-    "line": 86,
+    "line": 55,
     "api": "sendMessage",
-    "sha256": "20a44a3b428bd24b577818912dcce8f6a5978e162ded636a6ec0d7f57a681ea7",
-    "reason": "WatchMessageDelivery factories are nonisolated and return @Sendable reply/error closures, converting typed values before explicit Task @MainActor delivery."
+    "sha256": "2cc9d5a22568f76475930298e7a4b1cd8b33234c164cbadb95d0ebeee68a9011",
+    "reason": "WC SDK reply/error callbacks capture only checked Sendable continuation, return a boolean, and never touch MainActor state. The injectable RunLog channel awaits a MainActor send function; delegates copy values before explicit UI hops."
+  },
+  {
+    "file": "apps/apple/watchOS/WatchHomeView.swift",
+    "line": 109,
+    "api": "sendMessage",
+    "sha256": "9dd7ba41c5acffb04415e714c78bd607665b180b59c312fe0c1b682cdf35c392",
+    "reason": "WC delegate callbacks are nonisolated and copy Sendable values before explicit MainActor task; delivery wrappers restore MainActor; log-transfer callbacks capture no state."
+  },
+  {
+    "file": "apps/apple/iOS/RunLogPhoneDelegate.swift",
+    "line": 7,
+    "api": "detached",
+    "sha256": "f2395719236e67199d2bca5bcaa2f782f537fd774506e36bbfc10dabe4a10d0c",
+    "reason": "Detached system-termination task captures only Sendable RunLog actor; no UIKit objects or UI state cross the closure. iOS callback is best effort and background reclaim is handled by durable marker."
+  },
+  {
+    "file": "apps/apple/macOS/RunLogMacDelegate.swift",
+    "line": 16,
+    "api": "detached",
+    "sha256": "89c09ff7ed14a3e0b706f109073af1bb3b0fcc3b1eeb43a0643c0679cac8ccdd",
+    "reason": "Detached termination worker captures only Sendable RunLog actor and reason; filesystem writes stay off MainActor. Reply is scheduled on RunLoop.main including modalPanel mode; assumeIsolated is valid because that run-loop callback is guaranteed on the main thread. Power-off selector ignores Notification and explicitly hops to MainActor."
+  },
+  {
+    "file": "apps/apple/macOS/RunLogMacDelegate.swift",
+    "line": 29,
+    "api": "addObserver",
+    "sha256": "3401605c4c1197f8c964ef14e60738ac1a141f76c1b68f803eadae3e524ecb8a",
+    "reason": "Selector-based workspace power-off observer targets a nonisolated ObjC method that ignores Notification and explicitly enters MainActor to set a constant termination reason; registration runs on AppKit MainActor."
+  },
+  {
+    "file": "apps/apple/macOS/RunLogMacDelegate.swift",
+    "line": 33,
+    "api": "detached",
+    "sha256": "d12bc199c70ab09df2e6e646e0defa206461961a7bd43b45cc06308de65e4627",
+    "reason": "Detached utility task copies no AppKit state; it enumerates report names and timestamps off main, discards errors, and awaits RunLog actor for the whitelisted projection."
   }
 ]
