@@ -30,6 +30,7 @@ try { android = device ? await startAndroid(out) : null; }
 catch (error) { server.closeAllConnections(); await new Promise(done=>server.close(done)); throw error; }
 const browser = android?.browser || await chromium.launch({ headless: true });
 let currentBridge;
+const themeErrors = [];
 if (android) {
   await android.page.exposeFunction('__reviewNative', async payload => {
     try { return { id: payload.id, ok: true, result: await currentBridge(payload) }; }
@@ -64,7 +65,7 @@ try {
         await current.waitForFunction(() => state.booted && String(window.weftNative?.postMessage).includes('__reviewNative'));
       };
       if (android) await android.theme(theme);
-      page.setDefaultTimeout(30000); page.on('pageerror', error => { errors.push(error.message); console.error('Mobile page error:',redactEvidenceText(error.message)); });
+      page.setDefaultTimeout(30000); page.on('pageerror', error => { errors.push(error.message); console.error('Mobile page error:',redactEvidenceText(error.stack || error.message)); });
       if (!android) await page.exposeFunction('__reviewNative', async payload => {
         try { return { id: payload.id, ok: true, result: await bridge(payload) }; }
         catch (error) { return { id: payload.id, ok: false, error: { code: error.message } }; }
@@ -135,7 +136,8 @@ try {
         await questionPage.getByRole('region',{name:'待回答问题'}).waitFor();
         await questionPage.getByRole('radio',{name:'简要报告',exact:true}).waitFor();
       }, questionPage);
-      await shot('next-suggestions', async () => { suggestionFixture=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await suggestionFixture.complete();await mockUx7Requests(questionPage); await navigate(questionPage, suggestionFixture.mobileUrl); await questionPage.waitForFunction(()=>state.booted); await questionPage.evaluate(async id=>{await selectSharedSession(id);closeDrawer()},suggestionFixture.sessionId); await prepareUx7Suggestions(questionPage); }, questionPage);
+      await shot('next-suggestions', async () => { suggestionFixture=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await suggestionFixture.complete();await mockUx7Requests(questionPage); await navigate(questionPage, suggestionFixture.mobileUrl); await questionPage.waitForFunction(()=>state.booted); await questionPage.evaluate(async id=>{await selectSharedSession(id);closeDrawer()},suggestionFixture.sessionId); try { await prepareUx7Suggestions(questionPage); }
+        catch(error) { if(android) console.error('Suggestion readiness:',JSON.stringify(await questionPage.evaluate(()=>({booted:state.booted,loggedIn:state.loggedIn,sharedRunning:state.sharedRunning,sharedLoading:state.sharedLoading,hostAvailable:state.sharedHostAvailable,chatSource:state.chatSource,owner:!!uiCore.state.ownerId,session:!!uiCore.state.selectedSessionId,online:uiCore.state.online,selecting:uiCore.state.sessionSelecting,submitting:uiCore.state.submitting,historyCount:uiCore.state.historyEvents.size,capability:uiCore.state.personalCapabilities?.nextSuggestions,enabled:uiCore.nextSuggestionsView().enabled,replies:uiCore.nextSuggestionsView().suggestions.length,crypto:typeof crypto.randomUUID}))));throw error; } }, questionPage);
       const mainPage=android?.page || await context.newPage();
       await shot('main-chat',async()=>{
         mainFixture=await startMainChatCandidate(300,{logicalMobile:true});await navigate(mainPage, mainFixture.mobileUrl);
@@ -143,9 +145,10 @@ try {
         await mainPage.evaluate(theme=>applyTheme(theme),theme);
         await mainPage.getByRole('button',{name:'搜索主对话',exact:true}).click();await mainPage.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await mainPage.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await mainPage.locator('mark').first().waitFor();
       },mainPage);
-      if (errors.length) throw Error('Mobile renderer failed: ' + errors.map(redactEvidenceText).join('; '));
+      if (errors.length) themeErrors.push({theme,errors:errors.map(error => redactEvidenceText(error))});
       console.log(`Mobile ${theme}: scene outcomes recorded.`);
     } finally { if (!android) await context.close(); await fixture.close(); await candidate.close();await mainFixture?.close();await suggestionFixture?.close();await renderingFixture?.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});if(suggestionFixture)await rm(suggestionFixture.root,{recursive:true,force:true}); }
   }
+  if(themeErrors.length) throw Error('Mobile renderer failed: ' + JSON.stringify(themeErrors));
 } catch (error) { console.error('Primary mobile capture failure:', error.stack, error.cause?.stack || ''); throw error; }
 finally { try { if (android) await android.close(); else await browser.close(); } finally { server.closeAllConnections(); await new Promise(done => server.close(done)); } }
