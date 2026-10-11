@@ -94,7 +94,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const saved=new Map(Object.entries(storage));
   const localStorage={setItem(key,value){saved.set(key,String(value))},removeItem(key){saved.delete(key)},
     getItem(key){return saved.get(key)??null},key(index){return [...saved.keys()][index]??null},get length(){return saved.size}};
-  const context=vm.createContext({document,window,innerHeight:window.innerHeight,localStorage,URL,URLSearchParams,AbortSignal,AbortController,crypto:globalThis.crypto,performance:{now:()=>now},
+  const context=vm.createContext({document,window,addEventListener:window.addEventListener.bind(window),innerHeight:window.innerHeight,localStorage,URL,URLSearchParams,AbortSignal,AbortController,crypto:globalThis.crypto,performance:{now:()=>now},
     Date:virtualClock?class extends Date{static now(){return now}}:Date,
     // Page refresh intervals are tracked separately from the controlled send/retry clock.
     setInterval:(fn,delay)=>{const id=`interval-${++nextInterval}`;intervals.set(id,{fn,delay});return id},clearInterval:id=>intervals.delete(id),

@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { createHostDiagnostics } from '../src/host-diagnostics.mjs';
-import { createHostLog, redactSecretText, sanitizeErrorDiagnostic } from '../src/host-log.mjs';
+import { createHostLog, redactSecretText, sanitizeErrorDiagnostic, diagnosticPlatform, diagnosticOsVersion } from '../src/host-log.mjs';
 
 const appRoot = resolve('.');
 function fixture() { const root = mkdtempSync(join(tmpdir(), 'diag1-storage-')); return { root, remove: () => rmSync(root, { recursive: true, force: true }) }; }
@@ -112,7 +112,7 @@ test('missing exit recovers prior last event even with a truncated final JSONL l
     const next = createHostDiagnostics(f.root, { appRoot, now: () => time }); const previous = next.begin();
     assert.equal(previous.runId, diag.runId); assert.equal(previous.normal, false); assert.equal(previous.lastEvent, 'runtime.state');
     assert.equal(previous.lastAt, '2026-10-11T01:00:05.000Z'); assert.equal(previous.exitCode, null);
-    assert.equal(next.status().uncleanCount7Days, 1); assert.ok(next.status().summary.includes('异常'));
+    assert.equal(next.status().uncleanCount7Days, 1); assert.ok(next.status().summaryPreview.includes('异常'));
   } finally { f.remove(); }
 });
 
@@ -236,8 +236,12 @@ test('diagnostic summary revalidates persisted error text and frames and include
     const next = createHostDiagnostics(f.root, { appRoot, version: '3.1.0' }); next.begin();
     const summary = next.status().summary;
     for (const text of ['SyntheticPrivateAccount', 'PRIVATE_SECRET', 'Confidential private', 'synthetic-private', 'notes.txt']) assert.equal(summary.includes(text), false);
-    assert.ok(summary.includes('src/main.mjs:10:2')); assert.ok(summary.includes(process.platform)); assert.ok(summary.includes('WeftMate 3.1.0'));
-    assert.doesNotMatch(summary, /\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/);
+    const parsed = JSON.parse(summary);
+    assert.ok(summary.includes('src/main.mjs:10:2')); assert.equal(parsed.platform, diagnosticPlatform); assert.equal(parsed.appVersion, '3.1.0');
+    assert.equal(parsed.osVersion, diagnosticOsVersion);
+    assert.match(parsed.generatedAt, /\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/);
+    assert.match(next.status().summaryPreview, /WeftMate 3.1.0/);
+    assert.doesNotMatch(next.status().summaryPreview, /\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/);
   } finally { f.remove(); }
 });
 
@@ -250,5 +254,73 @@ test('unsafe dump names and arbitrary signals are rejected, recognized process s
     assert.equal(item.dumps, undefined); assert.equal(item.signal, undefined);
     assert.equal(log.previousUnclean({}, list).dumps.length, 1);
     assert.equal(log.write('host.event', { signal: 'SIGTERM' }).signal, 'SIGTERM');
+  } finally { f.remove(); }
+});
+
+test('canonical summary caps records at twenty, counts all seven-day anomalies and keeps same-second records distinct', () => {
+  const f = fixture(); const at = new Date('2026-10-11T12:00:00Z');
+  try {
+    const diag = createHostDiagnostics(f.root, { version: '3.1.0', now: () => at }); diag.begin();
+    for (let i = 0; i < 24; i++) diag.failure('unhandledRejection', new TypeError('fetch failed'));
+    diag.write('renderer.process_gone', { reason: 'crashed', exitCode: 1, action: 'no-recovery-requested' });
+    const persisted = rows(f.root);
+    assert.deepEqual(persisted.map(row => row.recordIndex), Array.from({ length: 26 }, (_, index) => index + 1));
+    assert.ok(persisted.every(row => row.platform === diagnosticPlatform && row.appVersion === '3.1.0' && row.osVersion === diagnosticOsVersion));
+    const summary = JSON.parse(diag.status().summary);
+    assert.deepEqual(Object.keys(summary), ['platform', 'appVersion', 'osVersion', 'generatedAt', 'recentAbnormalRecords', 'abnormalCountsLast7Days', 'retentionPolicy']);
+    assert.equal(summary.generatedAt, at.toISOString());
+    assert.equal(summary.recentAbnormalRecords.length, 20);
+    assert.deepEqual(summary.abnormalCountsLast7Days, { 'host.failure': 24, 'renderer.process_gone': 1 });
+    assert.deepEqual(summary.retentionPolicy, { retentionDays: 7, maxBytes: 32 * 1024 * 1024 });
+    assert.equal(new Set(summary.recentAbnormalRecords.map((row: any) => `${row.runId}:${row.fields.recordIndex}`)).size, 20);
+    assert.ok(summary.recentAbnormalRecords.every((row: any) => row.at === at.toISOString() && row.platform === diagnosticPlatform && row.appVersion === '3.1.0' && row.osVersion === diagnosticOsVersion));
+    assert.ok(summary.recentAbnormalRecords.every((row: any) => Object.values(row.fields).every(value => typeof value === 'string')));
+  } finally { f.remove(); }
+});
+
+test('summary deduplicates by runId and recordIndex and rejects persisted names, domains and arbitrary stage text', () => {
+  const f = fixture(); const at = new Date('2026-10-11T12:00:00Z');
+  try {
+    const first = createHostDiagnostics(f.root, { now: () => at }); first.begin(); first.exit('user-quit');
+    const name = readdirSync(join(f.root, 'logs')).find(name => name.endsWith('.jsonl'))!;
+    const dumpName = `${randomUUID()}.dmp`;
+    const record = { at: at.toISOString(), event: 'renderer.process_gone', runId: first.runId, recordIndex: 3,
+      reason: 'crashed', source: 'synthetic-account', action: 'private.txt', processType: 'server.example.invalid',
+      code: 'PRIVATE_SECRET', dumps: [{ name: dumpName, size: 10 }], dumpCount: 1, dumpBytes: 10 };
+    writeFileSync(join(f.root, 'logs', name), [record, record, { ...record, recordIndex: 4 }].map(row => JSON.stringify(row) + '\n').join(''), { flag: 'a' });
+    const next = createHostDiagnostics(f.root, { now: () => at }); next.begin();
+    const summary = JSON.parse(next.status().summary);
+    assert.deepEqual(summary.abnormalCountsLast7Days, { 'renderer.process_gone': 2 });
+    assert.deepEqual(summary.recentAbnormalRecords.map((row: any) => row.fields.recordIndex), ['3', '4']);
+    assert.equal(summary.recentAbnormalRecords[0].fields.reason, 'crashed');
+    assert.equal(summary.recentAbnormalRecords[0].fields.dumpCount, '1');
+    for (const text of ['synthetic-account', 'private.txt', 'server.example.invalid', 'PRIVATE_SECRET', dumpName]) assert.equal(next.status().summary.includes(text), false);
+  } finally { f.remove(); }
+});
+
+test('legacy same-second failures receive stable sequence identities without dropping records', () => {
+  const f = fixture(); const at = new Date('2026-10-11T12:00:00Z');
+  try {
+    const first = createHostDiagnostics(f.root, { now: () => at }); first.begin(); first.exit('user-quit');
+    const name = readdirSync(join(f.root, 'logs')).find(name => name.endsWith('.jsonl'))!;
+    const legacy = { at: at.toISOString(), event: 'host.failure', runId: randomUUID(), name: 'TypeError', code: 'HOST_ERROR' };
+    writeFileSync(join(f.root, 'logs', name), [legacy, legacy].map(row => JSON.stringify(row) + '\n').join(''), { flag: 'a' });
+    const next = createHostDiagnostics(f.root, { now: () => at }); next.begin();
+    const summary = JSON.parse(next.status().summary);
+    assert.equal(summary.abnormalCountsLast7Days['host.failure'], 2);
+    assert.deepEqual(summary.recentAbnormalRecords.map((row: any) => row.fields.recordIndex), ['1', '2']);
+  } finally { f.remove(); }
+});
+
+test('logger owns mandatory metadata and rejects supplied sequence and invalid run identity', () => {
+  const f = fixture(); const at = new Date('2026-10-11T12:00:00Z');
+  try {
+    const log = createHostLog(f.root, { version: '3.1.0', now: () => at });
+    const one = log.write('host.start', { runId: 'synthetic-account', recordIndex: 999, platform: 'private', appVersion: 'private', osVersion: 'private' });
+    const two = log.failure('startup', new Error('fetch failed'));
+    assert.match(one.runId, /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i);
+    assert.equal(two.runId, one.runId); assert.equal(one.recordIndex, 1); assert.equal(two.recordIndex, 2);
+    assert.equal(one.platform, diagnosticPlatform); assert.equal(one.appVersion, '3.1.0'); assert.equal(one.osVersion, diagnosticOsVersion);
+    assert.equal(JSON.stringify(rows(f.root)).includes('synthetic-account'), false);
   } finally { f.remove(); }
 });

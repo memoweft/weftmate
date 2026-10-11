@@ -324,6 +324,7 @@ const receiptIdPattern=/^[A-Za-z0-9._:-]{1,160}$/;
 
 
 function call(method, params={}, timeoutMs=45000) { return mobileWebBridge?mobileWebBridge.call(method,params):androidBridge.call(method,params,timeoutMs); }
+globalThis.WeftLocalDiagnostics?.configure((method,params)=>call(method,params,5000));
 
 
 
@@ -773,7 +774,8 @@ function handleBack(){if(uiCore.search?.open){uiCore.closeSearch();return;}if(gl
   if(window.weftNative)void call('app.exit').catch(error=>toast(safeError(error)));}
 document.addEventListener('DOMContentLoaded',()=>{
   globalThis.WeftPresenceView.mount({core:uiCore,badgeTarget:document.querySelector('.topbar .brand'),composerTarget:$('composer-dock'),toast,
-    openRunRecords:()=>page('general'),openLogin:()=>globalThis.WeftMobileCloud.core?.startCloudJourney(),openDevices:()=>page('devices')});
+    openRunRecords:()=>page('general'),openLogin:()=>globalThis.WeftMobileCloud.core?.startCloudJourney(),openDevices:()=>page('devices'),
+    readLocalDiagnostics:window.weftNative?()=>call('diagnostics.status',{},5000):null});
   uiCore.observeConnection(value=>{
     if(value.kind!=='online')for(const notice of document.querySelectorAll('.chat-read-notice'))if(!notice.dataset.noticeKind||notice.dataset.noticeKind==='read-failure')notice.hidden=true;
     if(state.page==='chat'&&state.chatSource==='host'){
