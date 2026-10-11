@@ -95,9 +95,9 @@ function pruneManagedTemps({ hours = 24, now = Date.now(), root = managedTempPar
   if (process.platform === 'win32') {
     const result = spawnSync('pwsh', ['-NoProfile', '-File', path.resolve(__dirname, '../../scripts/nightly/prune-temp.ps1'),
       '-Hours', String(hours), '-Roots', root, '-Apply'], { encoding: 'utf8', windowsHide: true, timeout: 30000 });
+    const lines = (result.stdout || '').trim().split(/\r?\n/).filter(Boolean);
+    for (const line of (result.status !== 0 || result.error ? lines : lines.slice(0, -1))) log(line);
     if (result.status !== 0 || result.error) throw Error('Managed temp prune failed; ' + (result.stderr || result.error?.message || 'process query unavailable'));
-    const lines = result.stdout.trim().split(/\r?\n/);
-    for (const line of lines.slice(0, -1)) log(line);
     const summary = JSON.parse(lines.at(-1));
     if (summary.keptUnowned) log(JSON.stringify(summary));
     return summary;
@@ -171,11 +171,12 @@ function initialize() {
 }
 function managedMkdtempSync(prefix = 'weftmate-test-') {
   initialize();
+  const startedAt = ownProcessStart(); // No unregistered directory if querying our identity fails.
   const root = managedTempRoot(); ensureRoot(root);
   let name = path.basename(String(prefix).replaceAll('\\', '/'));
   if (!name.startsWith('weftmate-')) name = 'weftmate-' + name;
   const directory = fs.realpathSync.native(fs.mkdtempSync(path.join(root, name)));
-  const owner = { schemaVersion: 1, pid: process.pid, processStartedAt: ownProcessStart(),
+  const owner = { schemaVersion: 1, pid: process.pid, processStartedAt: startedAt,
     createdAt: new Date().toISOString(), heartbeatAt: new Date().toISOString(), id: require('node:crypto').randomUUID() };
   fs.writeFileSync(path.join(directory, OWNER_FILE), JSON.stringify(owner));
   owned.set(directory, { id: owner.id, stop: startManagedTempLease(directory), root });
