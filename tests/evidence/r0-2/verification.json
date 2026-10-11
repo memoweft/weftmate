@@ -1,0 +1,57 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "required": {
+    "mode": "required",
+    "files": 297,
+    "exitCode": 0,
+    "passed": 1617,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 31,
+    "exitCode": 0,
+    "passed": 219,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "diagnosticAndRuntime": {
+    "failed": 0,
+    "passed": 13
+  },
+  "mobileInteractionGroup": {
+    "files": 5,
+    "failed": 0,
+    "skipped": 0,
+    "passed": 113
+  },
+  "electronAcceptance": {
+    "failed": 0,
+    "passed": 12
+  },
+  "androidInstrumentation": {
+    "nativeSystemBarsComplete": false,
+    "passed": 1,
+    "failed": 0,
+    "topBarColorDifference": 0
+  },
+  "typecheck": "passed",
+  "publicHygieneIdentityHits": 0,
+  "uiCoreGeneratedAssets": 53,
+  "vendorIdentityAndPackageVerification": "passed",
+  "sensitiveMarkerHits": 0,
+  "requiredHeavySlot": {
+    "start": "2026-10-12T01:25:14+08:00",
+    "end": "2026-10-12T01:54:07+08:00",
+    "slot": 2
+  },
+  "screenshots": {
+    "mobileWeb": 8,
+    "desktop": 56,
+    "androidNative": 12
+  }
+}

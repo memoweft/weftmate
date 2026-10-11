@@ -6,7 +6,8 @@ const context: any = { WeftUiCore: {} };
 runInNewContext(readFileSync(new URL('../src/ui-core/settings-registry.js', import.meta.url), 'utf8'), context);
 test('settings taxonomy and multiword keyword search work without a DOM', () => {
   const registry = context.WeftUiCore.settingsRegistry();
-  assert.equal(registry.list().some((category: any) => category.group === '此电脑'), false);
+  assert.deepEqual(Array.from(registry.list().filter((category: any) => category.group === '此电脑'), (category: any) => category.id), ['system']);
+  assert.equal(registry.list().some((category: any) => category.id === 'backups'), false);
   assert.equal(registry.list({ desktop: true }).filter((category: any) => category.group === '此电脑').length, 2);
   assert.equal(registry.list({ query: '费用 月度' })[0].id, 'usage');
   assert.equal(registry.list({ query: '   API  ' })[0].id, 'models');

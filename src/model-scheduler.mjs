@@ -183,7 +183,13 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       if (route === '/progress' && request.method === 'POST') {
         let raw = ''; for await (const part of request) raw += part;
         const input = JSON.parse(raw), current = progress.get(input.sessionId);
-        if (current && ['reasoning', 'answering', 'retrying'].includes(input.phase)) current.phase = input.phase;
+        if (current && ['reasoning', 'answering', 'retrying'].includes(input.phase)) {
+          current.phase = input.phase;
+          if (input.phase === 'answering' && current.startedAt && !current.firstTokenRecorded) {
+            current.firstTokenRecorded = true;
+            onEvent('model.first_token', { priority: 'foreground', durationMs: Date.now() - current.startedAt });
+          }
+        }
         response.writeHead(204).end(); return;
       }
       if ((route === '/usage/start' || route === '/usage/finish') && request.method === 'POST') {
@@ -204,7 +210,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
         const requestedPriority = url.searchParams.get('priority');
         const priority = ['background', 'suggestion'].includes(requestedPriority) ? requestedPriority : 'foreground';
         const sessionId = url.searchParams.get('sessionId');
-        const state = { phase: 'waiting', profileId: url.searchParams.get('profileId') };
+        const state = { phase: 'waiting', profileId: url.searchParams.get('profileId'), startedAt: started };
         metadata = { profileId: state.profileId, sessionId, priority };
         onEvent('model.start', metadata);
         if (priority === 'foreground' && sessionId) {
