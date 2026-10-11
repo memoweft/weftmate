@@ -1,3 +1,4 @@
+import { validPermissionRules } from '../plugins/personal-permission-rules.mjs';
 import { failure, publicProject, validProjectName } from '../personal-access/common.mjs';
 
 export function redactProjectPath(text, rootPath) {
@@ -27,10 +28,11 @@ export function migrateProjects(account) {
 }
 
 export function projectSettings(body) {
+  if (body.permissionRules !== undefined && !validPermissionRules(body.permissionRules)) throw failure('INVALID_REQUEST');
   if (body.name !== undefined && !validProjectName(body.name) ||
       body.instructions !== undefined && (typeof body.instructions !== 'string' || body.instructions.length > 16000) ||
       body.permission !== undefined && !['read-only', 'write'].includes(body.permission)) throw failure('INVALID_REQUEST');
-  return { ...(body.name !== undefined ? { name: body.name.trim() } : {}),
+  return { ...(body.permissionRules !== undefined ? { permissionRules: body.permissionRules } : {}), ...(body.name !== undefined ? { name: body.name.trim() } : {}),
     ...(body.instructions !== undefined ? { instructions: body.instructions } : {}),
     ...(body.permission !== undefined ? { permission: body.permission } : {}) };
 }
@@ -39,7 +41,7 @@ export function createProjectOperations(context) {
   return async (ownerId, projectId, method, body, assertCurrent = () => {}) => context.serial(async () => {
     const account = context.accountState(ownerId), project = account.projects?.[projectId];
     if (!project || project.removed) throw failure('NOT_FOUND', 404);
-    const keys = method === 'DELETE' ? ['expectedRevision'] : ['name', 'instructions', 'permission', 'expectedRevision'];
+    const keys = method === 'DELETE' ? ['expectedRevision'] : ['name', 'instructions', 'permission', 'permissionRules', 'expectedRevision'];
     if (!body || Object.keys(body).some(key => !keys.includes(key)) ||
         !Number.isSafeInteger(body.expectedRevision)) throw failure('INVALID_REQUEST');
     if (body.expectedRevision !== project.revision) throw failure('PROJECT_REVISION_CHANGED', 409);

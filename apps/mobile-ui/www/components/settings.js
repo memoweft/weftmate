@@ -54,6 +54,7 @@ const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
   account: target => accountPage(target), devices: target => devicesPage(target),
   usage: target => usagePage(target, state.usageSessionId || ''), models: target => modelsPage(target),
   schedules: target => {target.append(heading('提醒与定时任务'));const body=el('section');target.append(body);WeftSchedulesView(uiCore,body,{current:()=>body.isConnected&&state.page==='schedules',openConversation:id=>selectSharedSession(id)})},
+  executionRecords: target => {target.append(heading('执行记录'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftExecutionRecordsView(uiCore,body,{current:()=>state.page==='executionRecords',openConversation:row=>row?selectSharedSession(row.sessionId):page('chat')});},
   about: target => aboutSettingsPage(target), approvals: target => approvalSettingsPage(target), memory: target => memoryPage(target), resources: target => workspacesPage(target),
 });
 const settingsListPosition = { scroll: 0, query: '' };
@@ -68,7 +69,7 @@ function settingsPage(target){
   const draw=()=>{clear(list);let name,section;
     for(const category of mobileSettingsRegistry.list({query:search.value})){
       if(name!==category.group){name=category.group;section=group(name,[]);list.append(section)}
-      const summaries={general:'离线与同步',notifications:'勿扰、提醒方式与声音',appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.loggedIn?state.username:'未登录',devices:'连接、配对与待批准',usage:'本月费用、用量与月度上限',models:state.model?.displayName||'管理手机与账户模型',schedules:'管理提醒与定时任务',approvals:'新对话的默认模式',memory:'查看理解与来源',resources:'项目与网页资料',about:state.ui?.activeVersion||'版本、条款与隐私'};
+      const summaries={general:'离线与同步',notifications:'勿扰、提醒方式与声音',appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.loggedIn?state.username:'未登录',devices:'连接、配对与待批准',usage:'本月费用、用量与月度上限',models:state.model?.displayName||'管理手机与账户模型',schedules:'管理提醒与定时任务',approvals:'选择哪些操作要先问你',memory:'查看理解与来源',resources:'项目与网页资料',about:state.ui?.activeVersion||'版本、条款与隐私'};
       const item=row(category.name,summaries[category.id]||'',()=>{
         settingsListPosition.scroll=$('generic-page').scrollTop;settingsListPosition.query=search.value;state.settingsChild=true;page(category.id)});
       const icon=el('img','settings-category-icon');icon.src='icons/'+category.icon+'.svg';icon.alt='';item.prepend(icon);section.querySelector('.group-body').append(item);
@@ -87,7 +88,7 @@ function generalSettingsPage(target){target.append(heading('常规'),group('此�
   uiCore.syncMobileIdentity();
   void systemStatusSection(target);
 }
-function approvalSettingsPage(target){target.append(heading('审批'));
+function approvalSettingsPage(target){target.append(heading('权限'));uiCore.syncMobileIdentity();const rules=el('section');target.append(rules);WeftPermissionRulesView(uiCore,rules,{toast});
   const button=el('button','secondary','设置默认审批模式');button.type='button';button.disabled=!state.loggedIn;
   button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-controls','approval-mode-popover');
   button.addEventListener('click',()=>{void openApprovalModes(true,button)});

@@ -1,0 +1,58 @@
+name: ST-2 phone system bars
+on:
+  push:
+    branches: [wp/st-2-permission-rules]
+    paths: [tests/integration/st-2-phone-container.mjs, tests/integration/st-2-system-bars.mjs, .github/workflows/st-2-phone-evidence.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+      - run: npm ci
+      - run: node tests/integration/st-2-phone-container.mjs
+      - run: gradle -I ../../.local/st2-phone-container/fixture.gradle -PweftmateApplicationId=com.memoweft.weftmate.mobile.st2qa :app:assembleDebug --no-daemon --console=plain
+        working-directory: apps/android
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            export WEFTMATE_ST2_ADB="$ANDROID_HOME/platform-tools/adb"
+            export WEFTMATE_ST2_ANDROID_SERIAL="$(adb devices | awk '/^emulator-/ {print $1; exit}')"
+            export WEFTMATE_ST2_ANDROID_PACKAGE=com.memoweft.weftmate.mobile.st2qa
+            export WEFTMATE_ST2_ANDROID_ACTIVITY=com.memoweft.weftmate.mobile.St2PhoneBrowserActivity
+            export WEFTMATE_ST2_ANDROID_APK="$PWD/apps/android/app/build/outputs/apk/debug/app-debug.apk"
+            export WEFTMATE_ST2_AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -1)"
+            node tests/integration/st-2-system-bars.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: st-2-phone-system-bars
+          path: |
+            tests/evidence/st-2/phone-system-*.png
+            tests/evidence/st-2/system-bar-checks.json
+          retention-days: 7

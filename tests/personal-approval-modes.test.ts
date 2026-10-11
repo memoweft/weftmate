@@ -152,3 +152,15 @@ test('FX-10 directory arrays and non-replacing pipeline moves do not invent over
     assert.ok(classifyPersonalRisk('pwsh', {command:pipeline + '; Set-Content user.txt changed'}, cwd).includes('overwrite'))
   } finally { rmSync(cwd, {recursive:true,force:true}) }
 })
+
+
+test('ST-2 script inspection classifies new writes and network/read operations without changing default risks', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'weftmate-script-permissions-'))
+  try {
+    writeFileSync(join(cwd, 'generated.mjs'), "import fs from 'node:fs'; fs.readFileSync('source.txt'); fs.writeFileSync('new.txt', 'generated'); fetch('https://example.test');")
+    const operationTypes = new Set<string>()
+    assert.deepEqual(classifyPersonalRisk('pwsh', { command: 'node generated.mjs' }, cwd, new Set(), { operationTypes }), [])
+    assert.deepEqual([...operationTypes].sort(), ['network', 'read', 'write'])
+    assert.equal(classifyPersonalRisk('pwsh', { command: 'Write-Output \"status -> ok\"' }, cwd, new Set(), { operationTypes: new Set() }).length, 0)
+  } finally { rmSync(cwd, { recursive: true, force: true }) }
+})

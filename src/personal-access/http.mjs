@@ -1,3 +1,5 @@
+import { PERMISSION_TYPES, validPermissionRules, mergePermissionRules } from '../plugins/personal-permission-rules.mjs';
+import { executionRecords } from './execution-records.mjs';
 import { hostName } from '../host-name.mjs';
 import { handlePush } from './push.mjs';
 import { handleNotificationSettings } from './notification-settings.mjs';
@@ -697,6 +699,14 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, { supported, enabled: supported && (chatForSession(context.accountState(ownerId), sessionId)?.deepThinking ?? context.accountState(ownerId).sessions[sessionId].deepThinking) === true });
       }
+      if (pathname === '/personal/v1/execution-records' && request.method === 'GET') {
+        context.authenticate(request, 'sessions:read');
+        const records = executionRecords(context.accountState(ownerId), url.searchParams);
+        try { const descriptions = await context.sessionOperations.describe(ownerId, [...new Set(records.items.map(row=>row.sessionId))]);
+          for (const row of records.items) row.conversationName = context.accountState(ownerId).sessions[row.sessionId]?.title ?? descriptions.get(row.sessionId)?.title ?? row.conversationName;
+        } catch { /* Keep the durable operation record readable while the computer reconnects. */ }
+        return context.json(response, 200, records);
+      }
       const modeMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/approval-mode$/.exec(pathname);
       if ((modeMatch || pathname === '/personal/v1/settings/approvals') && ['GET', 'PATCH'].includes(request.method)) {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -705,12 +715,14 @@ export function createHttpHandler(context) {
         if (sessionId && account.sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_UNAVAILABLE', 404);
         if (request.method === 'PATCH') {
           const body = await context.readJson(request);
-          exactKeys(body, ['mode'], ['mode']);
-          if (!APPROVAL_MODES.includes(body.mode)) throw failure('INVALID_REQUEST');
+          exactKeys(body, sessionId ? ['mode'] : ['mode', 'rules'], sessionId ? ['mode'] : []);
+          if (!Object.keys(body).length || body.mode !== undefined && !APPROVAL_MODES.includes(body.mode) || body.rules !== undefined && !validPermissionRules(body.rules, { patch: true })) throw failure('INVALID_REQUEST');
           await context.serial(() => context.mutate(ownerId, next => {
             context.authenticate(request, 'commands:write');
             if (sessionId) next.sessions[sessionId].approvalMode = body.mode;
             else {
+              if (body.rules !== undefined) next.permissionRules = mergePermissionRules(next.permissionRules, body.rules);
+              if (body.mode === undefined) return;
               for (const session of Object.values(next.sessions)) session.approvalMode ??= next.defaultApprovalMode ?? 'auto';
               next.defaultApprovalMode = body.mode;
             }
@@ -718,7 +730,7 @@ export function createHttpHandler(context) {
         }
         const saved = context.accountState(ownerId);
         return context.json(response, 200, { mode: sessionId ? saved.sessions[sessionId].approvalMode ?? saved.defaultApprovalMode ?? 'auto'
-          : saved.defaultApprovalMode ?? 'auto', ...(sessionId ? { allowedCategories: saved.sessions[sessionId].allowedApprovalCategories ?? [] } : {}) });
+          : saved.defaultApprovalMode ?? 'auto', ...(!sessionId ? { rules: saved.permissionRules ?? {}, types: PERMISSION_TYPES } : {}), ...(sessionId ? { allowedCategories: saved.sessions[sessionId].allowedApprovalCategories ?? [] } : {}) });
       }
       if (['/personal/v1/usage', '/personal/v1/settings/usage'].includes(pathname) && ['GET', 'PATCH'].includes(request.method)) {
         const settingsRoute = pathname.endsWith('/settings/usage');

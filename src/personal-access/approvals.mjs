@@ -1,3 +1,4 @@
+import { PERMISSION_TYPES, riskPermissionType } from '../plugins/personal-permission-rules.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { readSourceEvents } from './source-history.mjs';
 import { exactKeys, failure, validId, withDeadline } from './common.mjs';
@@ -148,7 +149,7 @@ export function createApprovalOperations(context) {
 
   async function answerToolApproval(request, ownerId, deviceId, sessionId, approvalId, body) {
     exactKeys(body, ['requestId', 'outcome', 'scope'], ['requestId', 'outcome']);
-    if (body.scope !== undefined && (!['once', 'conversation-category'].includes(body.scope) || body.outcome !== 'allowed-once')) throw failure('INVALID_REQUEST');
+    if (body.scope !== undefined && (!['once', 'conversation-category', 'global-category'].includes(body.scope) || body.outcome !== 'allowed-once')) throw failure('INVALID_REQUEST');
     if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId) || !APPROVAL_DECISIONS.has(body.outcome)) throw failure('INVALID_REQUEST');
     const account = context.accountState(ownerId);
     if (!account.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
@@ -176,6 +177,11 @@ export function createApprovalOperations(context) {
         if (!row.riskCategories?.length) throw failure('INVALID_REQUEST');
         const session = next.sessions[sessionId];
         session.allowedApprovalCategories = [...new Set([...(session.allowedApprovalCategories ?? []), ...row.riskCategories])];
+      }
+      if (row.decisionScope === 'global-category') {
+        if (!row.canAlwaysAllow || !row.operationCategories?.length) throw failure('INVALID_REQUEST');
+        next.permissionRules ??= {};
+        for (const type of row.operationCategories) next.permissionRules[type] = 'allow';
       }
       row.answeredAt = new Date(context.timestamp()).toISOString();
       return approvalDecisionReceipt(row);
@@ -285,6 +291,8 @@ export function createApprovalOperations(context) {
           sourceCommandId: checked.source.commandId, sourceReceiptId: receiptId, turn, callId, rootCallId,
           toolName: input.toolName, messageHash: input.messageHash, argumentsHash: input.argumentsHash,
           reason: input.reason, riskCategories: approvalCategories(input.reason), status: 'pending', createdAt: new Date(context.timestamp()).toISOString() };
+        row.operationCategories = [...new Set(row.riskCategories.map(riskPermissionType))];
+        row.canAlwaysAllow = row.operationCategories.length > 0 && row.operationCategories.every(type => PERMISSION_TYPES.some(item => item.id === type && !item.restricted));
         checked.source.toolApprovals = [...rows, row];
         return publicToolApproval(row);
       }, () => requireToolRuntime(runtimeId)));

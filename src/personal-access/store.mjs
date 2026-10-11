@@ -110,7 +110,7 @@ export function validateSingleStore(store) {
     if (session.deepThinking !== undefined && typeof session.deepThinking !== 'boolean') throw failure('STORE_CORRUPT', 500);
     if (session.approvalMode !== undefined && !APPROVAL_MODES.includes(session.approvalMode) ||
         session.allowedApprovalCategories !== undefined && (!Array.isArray(session.allowedApprovalCategories) ||
-          session.allowedApprovalCategories.some(x => !RISK_CATEGORIES.includes(x)))) throw failure('STORE_CORRUPT', 500);
+          session.allowedApprovalCategories.some(x => ![...RISK_CATEGORIES,'read','network'].includes(x)))) throw failure('STORE_CORRUPT', 500);
   }
   if (!plainObject(store) || ![SINGLE_ACCOUNT_VERSION, LEGACY_VERSION].includes(store.version) || !validId(store.hostId) ||
       !validId(store.ownerId) || !plainObject(store.devices) ||

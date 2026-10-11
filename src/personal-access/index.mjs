@@ -1,3 +1,4 @@
+import { migratePermissionRules } from '../plugins/personal-permission-rules.mjs';
 import { createLibrary } from './library.mjs';
 import { createDataControls } from '../personal-data/index.mjs';
 import { finalizeNotifications } from './notification-settings.mjs';
@@ -450,7 +451,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     rootState = JSON.parse(await readFile(storeFile, 'utf8'));
     if (rootState.version === VERSION) {
       let upgraded = false;
-      for (const account of Object.values(rootState.accounts)) if (migrateProjects(account)) upgraded = true;
+      for (const account of Object.values(rootState.accounts)) { const projectsChanged=migrateProjects(account); const rulesChanged=migratePermissionRules(account); if(projectsChanged||rulesChanged) upgraded=true; }
       if (!Object.hasOwn(rootState, 'unknownAuthLimits')) {
         rootState.unknownAuthLimits = { failures: 0, lastFailureAt: 0, lockUntil: 0 };
         upgraded = true;
@@ -463,7 +464,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       validateStore(rootState);
       if (upgraded) await durableWrite(storeFile, rootState);
     }
-    else { migrateProjects(rootState); validateSingleStore(rootState); }
+    else { migrateProjects(rootState); migratePermissionRules(rootState); validateSingleStore(rootState); }
   } catch (error) {
     if (error?.code !== 'ENOENT') throw failure('STORE_CORRUPT', 500);
     freshInstallation = true;
@@ -699,7 +700,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     publishAccountChange(previousRoot);
     for (const ownerId of Object.keys(rootState.accounts)) {
       const previous = beforeDataAccounts?.[ownerId];
-      if (['sessions','commands','projects','personalization','defaultApprovalMode','notificationSettings','account'].some(key=>!isDeepStrictEqual(previous?.[key],rootState.accounts[ownerId][key]))) dataControls?.invalidate(ownerId);
+      if (['sessions','commands','projects','personalization','defaultApprovalMode','permissionRules','notificationSettings','account'].some(key=>!isDeepStrictEqual(previous?.[key],rootState.accounts[ownerId][key]))) dataControls?.invalidate(ownerId);
     }
     for (const ownerId of Object.keys(rootState.accounts)) nextSuggestions.reconcile(ownerId);
     hostCloudIdentity?.closeInvalidResponses();
@@ -891,6 +892,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
 
         mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
         allowedCategories: session.allowedApprovalCategories ?? [],
+        permissionRules: account.permissionRules ?? {},
+        projectPermissionRules: project && !project.revoked ? project.permissionRules ?? {} : {},
         ...(project && !project.revoked ? { project: { projectId: project.projectId,
           rootPath: project.rootPath, revision: project.revision, instructions: project.instructions ?? '',
           name: project.name, permission: project.permission ?? 'read-only' } } : {}),

@@ -91,11 +91,11 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             button.disabled = !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== outcome || (marker.scope ?? 'once') !== 'once');
             button.addEventListener('click', () => { const fresh = actionContext(); if (fresh) void core.submitApproval(fresh, row, outcome); }); actions.append(button);
         }
-        if (row.riskCategories?.length) {
-            const always = ui.element('button', 'button quiet small', '总是允许此类'); always.type = 'button';
-            always.dataset.conversationApprovalAction = 'allowed-always';
-            always.disabled = !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== 'allowed-once' || marker.scope !== 'conversation-category');
-            always.addEventListener('click', () => { const fresh = actionContext(); if (fresh) void core.submitApproval(fresh, row, 'allowed-once', 'conversation-category'); }); details.append(always);
+        if (row.canAlwaysAllow) {
+            const always = ui.element('button', 'button secondary small', '以后这类都允许'); always.type = 'button';
+            always.dataset.conversationApprovalAction = 'allowed-always';always.title = '保存为通用设置，项目单独设置的规则仍优先。';
+            always.disabled = !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== 'allowed-once' || marker.scope !== 'global-category');
+            always.addEventListener('click', () => { const fresh = actionContext(); if (fresh) void core.submitApproval(fresh, row, 'allowed-once', 'global-category'); }); actions.append(always);
         }
         if (notice || marker) {
             const check = ui.element('button', 'button quiet small', '重新核对答复'); check.type = 'button'; check.disabled = !!operation;

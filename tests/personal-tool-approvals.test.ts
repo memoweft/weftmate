@@ -595,3 +595,45 @@ test('FX-9 a non-legacy execution account receives approvals, executes, and reco
     assert.ok(Object.values(store.accounts[store.executionOwnerId].commands).some((command:any)=>command.artifactId===saved.artifactId));
   } finally {await f.close();}
 });
+
+
+test('ST-2 rules persist, native approval shortcut saves globally, denied shortcuts reject and records remain owner scoped', async () => {
+  const f = await fixture()
+  try {
+    const initial = await f.request('settings/approvals')
+    assert.deepEqual(initial.body.rules, {})
+    assert.equal(initial.body.types.length, 9)
+    for (const type of ['delete', 'external', 'spend']) assert.equal((await f.request('settings/approvals', { rules: { [type]: 'allow' } }, {}, 'PATCH')).status, 400)
+    assert.equal((await f.request('settings/approvals', { rules: { command: 'deny', read: 'ask' } }, {}, 'PATCH')).status, 200)
+    assert.deepEqual(f.service.getApprovalPolicy({ sessionId: f.input.sessionId }).permissionRules, { command: 'deny', read: 'ask' })
+    const approval = await f.register({ reason: '[weftmate:overwrite] Write synthetic note.txt' })
+    assert.equal(approval.canAlwaysAllow, true)
+    assert.deepEqual(approval.operationCategories, ['write'])
+    const answer = await f.request(`${f.approvalsPath}/${f.input.approvalId}`, { requestId: 'st2-always', outcome: 'allowed-once', scope: 'global-category' })
+    assert.equal(answer.status, 200, JSON.stringify(answer.body))
+    assert.equal((await f.request('settings/approvals')).body.rules.write, 'allow')
+    assert.equal((await f.request('execution-records?type=write')).body.items[0].result, 'allowed')
+    await f.resolve('allowed-once')
+    await f.restart()
+    assert.deepEqual((await f.request('settings/approvals')).body.rules, { command: 'deny', read: 'ask', write: 'allow' })
+    const blockedInput = { ...f.input, callId: 'st2-blocked', rootCallId: 'st2-blocked', runtimeId: randomUUID() }
+    const { approvalId, ...identity } = blockedInput
+    const granted = await f.service.trackToolExecution({ ...identity, action: 'authorize_execution', permission: { types: ['command'], summary: 'pwsh synthetic command', decision: 'deny', source: 'global' } })
+    await f.service.trackToolExecution({ ...identity, action: 'finish_execution', executionId: granted.executionId, state: 'cancelled', resultHash: hash('blocked') })
+    const records = await f.request('execution-records?type=command')
+    assert.equal(records.body.items[0].result, 'blocked')
+    assert.equal(records.body.items[0].sessionId, f.input.sessionId)
+    await f.restart()
+    assert.equal((await f.request('execution-records?type=command')).body.items[0].result, 'blocked')
+    assert.equal((await f.request('settings/approvals', { rules: { write: null } }, {}, 'PATCH')).status, 200)
+    assert.equal((await f.request('settings/approvals')).body.rules.write, undefined)
+    const unsafe = await f.register({ approvalId: randomUUID(), callId: 'st2-delete', rootCallId: 'st2-delete', runtimeId: randomUUID(), reason: '[weftmate:delete] Delete synthetic note.txt' })
+    assert.equal(unsafe.canAlwaysAllow, false)
+    assert.equal((await f.request(`${f.approvalsPath}/${unsafe.approvalId}`, { requestId: 'st2-unsafe', outcome: 'allowed-once', scope: 'global-category' })).status, 400)
+    const damaged = JSON.parse(f.raw())
+    damaged.accounts[f.auth.account.ownerId].permissionRules = { write: 'invalid' }
+    await f.restart(JSON.stringify(damaged))
+    assert.deepEqual((await f.request('settings/approvals')).body.rules, {})
+    assert.equal((await f.request('settings/approvals', { rules: {} }, {}, 'PATCH')).status, 200)
+  } finally { await f.close() }
+})
