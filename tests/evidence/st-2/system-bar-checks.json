@@ -1,0 +1,1331 @@
+{
+  "remoteWeb": true,
+  "stockAndroidEmulator": true,
+  "nativeProductBridge": false,
+  "realModelRequests": 0,
+  "rawScreensUnmodified": true,
+  "sizeThemeJobsPassed": 4,
+  "checks": [
+    {
+      "file": "phone-system-360-light-approvals.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 720,
+        "height": 1560
+      },
+      "rgb": {
+        "status": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "navigation": [
+          249,
+          248,
+          246
+        ],
+        "adjacentBottom": [
+          249,
+          248,
+          246
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          348,
+          8,
+          372,
+          24
+        ],
+        "header": [
+          348,
+          136,
+          372,
+          152
+        ],
+        "navigation": [
+          180,
+          1542,
+          204,
+          1554
+        ],
+        "adjacentBottom": [
+          180,
+          1494,
+          204,
+          1506
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "10925ebb393444ca4ddc68047f85f297af1fe2850c66cab4a36a43218785af30",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-360-light-approvals-menu.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "menuOpen": true,
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 720,
+        "height": 1560
+      },
+      "rgb": {
+        "status": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "navigation": [
+          255,
+          255,
+          255
+        ],
+        "adjacentBottom": [
+          255,
+          255,
+          255
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          348,
+          8,
+          372,
+          24
+        ],
+        "header": [
+          348,
+          136,
+          372,
+          152
+        ],
+        "navigation": [
+          180,
+          1542,
+          204,
+          1554
+        ],
+        "adjacentBottom": [
+          180,
+          1494,
+          204,
+          1506
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "7b717f3b4384f5d7dc7f665bdaca34ee60151aabba855ad9bf88f5ec44522dce",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-360-light-executionRecords.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 720,
+        "height": 1560
+      },
+      "rgb": {
+        "status": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "navigation": [
+          249,
+          248,
+          246
+        ],
+        "adjacentBottom": [
+          249,
+          248,
+          246
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          348,
+          8,
+          372,
+          24
+        ],
+        "header": [
+          348,
+          136,
+          372,
+          152
+        ],
+        "navigation": [
+          180,
+          1542,
+          204,
+          1554
+        ],
+        "adjacentBottom": [
+          180,
+          1494,
+          204,
+          1506
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "98069ae6609ad168a8133c66fe2d76eb67f204109c4bd94979b5c4737ba96d3e",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-360-light-executionRecords-menu.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "menuOpen": true,
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 720,
+        "height": 1560
+      },
+      "rgb": {
+        "status": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "navigation": [
+          255,
+          255,
+          255
+        ],
+        "adjacentBottom": [
+          255,
+          255,
+          255
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          348,
+          8,
+          372,
+          24
+        ],
+        "header": [
+          348,
+          136,
+          372,
+          152
+        ],
+        "navigation": [
+          180,
+          1542,
+          204,
+          1554
+        ],
+        "adjacentBottom": [
+          180,
+          1494,
+          204,
+          1506
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "e19da5c404e44375ad98c75acd94acdf17be0eea24209c26237a65c26702fd69",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-360-dark-approvals.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 720,
+        "height": 1560
+      },
+      "rgb": {
+        "status": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "navigation": [
+          32,
+          34,
+          31
+        ],
+        "adjacentBottom": [
+          32,
+          34,
+          31
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          348,
+          8,
+          372,
+          24
+        ],
+        "header": [
+          348,
+          136,
+          372,
+          152
+        ],
+        "navigation": [
+          180,
+          1542,
+          204,
+          1554
+        ],
+        "adjacentBottom": [
+          180,
+          1494,
+          204,
+          1506
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "372461c8940d4efb888b26673e0c1d39ad09a306d5c5f83fb423e0ef12dc0291",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-360-dark-approvals-menu.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "menuOpen": true,
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38169057883",
+      "rawPixels": {
+        "width": 720,
+        "height": 1560
+      },
+      "rgb": {
+        "status": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "navigation": [
+          47,
+          49,
+          43
+        ],
+        "adjacentBottom": [
+          42,
+          43,
+          38
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          348,
+          8,
+          372,
+          24
+        ],
+        "header": [
+          348,
+          136,
+          372,
+          152
+        ],
+        "navigation": [
+          180,
+          1542,
+          204,
+          1554
+        ],
+        "adjacentBottom": [
+          180,
+          1494,
+          204,
+          1506
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        5,
+        6,
+        5
+      ],
+      "sha256": "d058b6cba0f61928e67969c9a8d3182880e008adc5e1fdbc878a34b0cf09b90f",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-360-dark-executionRecords.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 720,
+        "height": 1560
+      },
+      "rgb": {
+        "status": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "navigation": [
+          32,
+          34,
+          31
+        ],
+        "adjacentBottom": [
+          32,
+          34,
+          31
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          348,
+          8,
+          372,
+          24
+        ],
+        "header": [
+          348,
+          136,
+          372,
+          152
+        ],
+        "navigation": [
+          180,
+          1542,
+          204,
+          1554
+        ],
+        "adjacentBottom": [
+          180,
+          1494,
+          204,
+          1506
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "d3dd228208d6ed6e08829a0d638e05c564e78938b8837e438cd5c3250abd19f5",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-360-dark-executionRecords-menu.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "menuOpen": true,
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 720,
+        "height": 1560
+      },
+      "rgb": {
+        "status": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "navigation": [
+          47,
+          49,
+          43
+        ],
+        "adjacentBottom": [
+          47,
+          49,
+          43
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          348,
+          8,
+          372,
+          24
+        ],
+        "header": [
+          348,
+          136,
+          372,
+          152
+        ],
+        "navigation": [
+          180,
+          1542,
+          204,
+          1554
+        ],
+        "adjacentBottom": [
+          180,
+          1494,
+          204,
+          1506
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "0a466a7fcdc657d562410ba6b537a05280d8ebb08445b4223243b75a49917ed0",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-390-light-approvals.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 780,
+        "height": 1688
+      },
+      "rgb": {
+        "status": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "navigation": [
+          249,
+          248,
+          246
+        ],
+        "adjacentBottom": [
+          249,
+          248,
+          246
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          378,
+          8,
+          402,
+          24
+        ],
+        "header": [
+          378,
+          147,
+          402,
+          163
+        ],
+        "navigation": [
+          195,
+          1670,
+          219,
+          1682
+        ],
+        "adjacentBottom": [
+          195,
+          1622,
+          219,
+          1634
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "d63e0e3083d2cbb81bca1a8f76d9cb6b463d092514020de19e2cb143f1235cb9",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-390-light-approvals-menu.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "menuOpen": true,
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 780,
+        "height": 1688
+      },
+      "rgb": {
+        "status": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "navigation": [
+          255,
+          255,
+          255
+        ],
+        "adjacentBottom": [
+          255,
+          255,
+          255
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          378,
+          8,
+          402,
+          24
+        ],
+        "header": [
+          378,
+          147,
+          402,
+          163
+        ],
+        "navigation": [
+          195,
+          1670,
+          219,
+          1682
+        ],
+        "adjacentBottom": [
+          195,
+          1622,
+          219,
+          1634
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "8a0f29f6c4b89b1aa98d7439c5c7a1a81fd681bd5bca95f934b9fc115f613b57",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-390-light-executionRecords.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 780,
+        "height": 1688
+      },
+      "rgb": {
+        "status": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "navigation": [
+          249,
+          248,
+          246
+        ],
+        "adjacentBottom": [
+          249,
+          248,
+          246
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          378,
+          8,
+          402,
+          24
+        ],
+        "header": [
+          378,
+          147,
+          402,
+          163
+        ],
+        "navigation": [
+          195,
+          1670,
+          219,
+          1682
+        ],
+        "adjacentBottom": [
+          195,
+          1622,
+          219,
+          1634
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "3329ab0e1c801012b10dede685d264b226f3b4fa51d95aa2b1a483ec8f718bfd",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-390-light-executionRecords-menu.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "menuOpen": true,
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 780,
+        "height": 1688
+      },
+      "rgb": {
+        "status": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "navigation": [
+          255,
+          255,
+          255
+        ],
+        "adjacentBottom": [
+          255,
+          255,
+          255
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          378,
+          8,
+          402,
+          24
+        ],
+        "header": [
+          378,
+          147,
+          402,
+          163
+        ],
+        "navigation": [
+          195,
+          1670,
+          219,
+          1682
+        ],
+        "adjacentBottom": [
+          195,
+          1622,
+          219,
+          1634
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "c7318452ecd76c4d69d7895966cb6db60a0f82354abe2f4123bade9afff60b05",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-390-dark-approvals.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 780,
+        "height": 1688
+      },
+      "rgb": {
+        "status": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "navigation": [
+          32,
+          34,
+          31
+        ],
+        "adjacentBottom": [
+          32,
+          34,
+          31
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          378,
+          8,
+          402,
+          24
+        ],
+        "header": [
+          378,
+          147,
+          402,
+          163
+        ],
+        "navigation": [
+          195,
+          1670,
+          219,
+          1682
+        ],
+        "adjacentBottom": [
+          195,
+          1622,
+          219,
+          1634
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "3adff9976a7ac5dfceb72414ef3a30fb5e638477797c4f43fd80de0ddeb1e177",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-390-dark-approvals-menu.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "menuOpen": true,
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38167738221",
+      "rawPixels": {
+        "width": 780,
+        "height": 1688
+      },
+      "rgb": {
+        "status": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "navigation": [
+          38,
+          39,
+          35
+        ],
+        "adjacentBottom": [
+          41,
+          43,
+          38
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          378,
+          8,
+          402,
+          24
+        ],
+        "header": [
+          378,
+          147,
+          402,
+          163
+        ],
+        "navigation": [
+          195,
+          1670,
+          219,
+          1682
+        ],
+        "adjacentBottom": [
+          195,
+          1622,
+          219,
+          1634
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        3,
+        4,
+        3
+      ],
+      "sha256": "a03be6974430350d88fb68a25fa442dd3ca593e441cd806bf9b865270e739252",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-390-dark-executionRecords.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 780,
+        "height": 1688
+      },
+      "rgb": {
+        "status": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "navigation": [
+          32,
+          34,
+          31
+        ],
+        "adjacentBottom": [
+          32,
+          34,
+          31
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          378,
+          8,
+          402,
+          24
+        ],
+        "header": [
+          378,
+          147,
+          402,
+          163
+        ],
+        "navigation": [
+          195,
+          1670,
+          219,
+          1682
+        ],
+        "adjacentBottom": [
+          195,
+          1622,
+          219,
+          1634
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "7be51725a2797581218877aa6cb6dc1fe5d92df5d52d6f7e9e5a3fc27e39cb10",
+      "manuallyReviewed": true
+    },
+    {
+      "file": "phone-system-390-dark-executionRecords-menu.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "physicalScreen": "Physical size: 720x1560\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": true,
+      "fullSystemBars": true,
+      "surface": "synthetic-mobile-web-in-stock-android-test-browser",
+      "menuOpen": true,
+      "sourceRun": "https://github.com/memoweft/weftmate/actions/runs/38170291481",
+      "rawPixels": {
+        "width": 780,
+        "height": 1688
+      },
+      "rgb": {
+        "status": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "navigation": [
+          47,
+          49,
+          43
+        ],
+        "adjacentBottom": [
+          47,
+          49,
+          43
+        ]
+      },
+      "sampleRects": {
+        "status": [
+          378,
+          8,
+          402,
+          24
+        ],
+        "header": [
+          378,
+          147,
+          402,
+          163
+        ],
+        "navigation": [
+          195,
+          1670,
+          219,
+          1682
+        ],
+        "adjacentBottom": [
+          195,
+          1622,
+          219,
+          1634
+        ]
+      },
+      "statusHeaderDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "navigationAdjacentDeltaRGB": [
+        0,
+        0,
+        0
+      ],
+      "sha256": "ed0044048e25adcf72878e7b727221774ffb33447f84de2e1bb23271fba50b73",
+      "manuallyReviewed": true
+    }
+  ],
+  "provenanceNote": "Four independent size/theme jobs passed. Two dark rule-menu frames are taken from explicitly reviewed earlier raw captures; their source run is recorded per frame. No closed-menu or failure frame is included."
+}
