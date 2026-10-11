@@ -84,12 +84,14 @@ class SyncJobService : JobService() {
                 // Identity changed or Android stopped this execution. The next owner keeps its own Job.
             } catch (error: ApiFailure) {
                 if (stillCurrent(run)) {
+                    RunDiagnostics.failed("sync.failure", "background-job", error)
                     retry = error.status !in setOf(401, 409, 413, 429)
                     recordFailure(run, "同步未完成", "本机记录仍保留，请在应用中查看状态", scope)
                     if (!retry) cancelOnlyThisGeneration(run)
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 if (stillCurrent(run)) {
+                    RunDiagnostics.failed("sync.failure", "background-job", error)
                     retry = true
                     recordFailure(run, "暂时无法同步", "本机记录仍保留，稍后会再试", scope)
                 }

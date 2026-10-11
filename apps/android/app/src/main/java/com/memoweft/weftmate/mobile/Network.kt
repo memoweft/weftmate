@@ -319,7 +319,19 @@ class JsonHttp : SseTransport {
     }
 }
 
-class PersonalApi(private val http: JsonTransport = JsonHttp()) {
+class PersonalApi(transport: JsonTransport = JsonHttp()) {
+    // Observe the existing host transport; addresses and request bodies never
+    // cross this metadata-only callback. Model transports remain separate.
+    private val http = object : JsonTransport {
+        override fun request(url: String, method: String, body: JSONObject?, headers: Map<String, String>,
+            active: AtomicReference<HttpURLConnection?>?, readTimeoutMs: Int): HttpReply = try {
+            transport.request(url, method, body, headers, active, readTimeoutMs).also { RunDiagnostics.connection(true) }
+        } catch (error: Exception) {
+            if (error !is SyncInterrupted && !(error is ApiFailure && error.safeCode in setOf("CANCELLED", "ACCOUNT_SWITCHED")))
+                RunDiagnostics.connection(false, error)
+            throw error
+        }
+    }
     fun uploadSharedImage(host: HostIdentity, sessionId: String, requestId: String,
         row: ChatAttachment, logical: Boolean = false): JSONObject {
         require(sessionId.matches(Regex(if (logical) "chat-[0-9a-f-]{36}" else "session-[0-9a-f-]{36}")) &&
