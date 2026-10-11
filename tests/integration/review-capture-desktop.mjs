@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import {renderingSample} from '../helpers/rendering-sample.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { startMainChatCandidate } from './main-chat-candidate.mjs';
-import { localUiSession } from '../helpers/local-ui-session.mjs';
+import { localUiSession, nativeFixtureFetchOptions } from '../helpers/local-ui-session.mjs';
 import { exposeUx7Desktop, mockUx7Requests, prepareUx7Suggestions } from './ux-7-scenes.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 const out = outDirectory();
@@ -28,7 +28,7 @@ for (const theme of ['light', 'dark']) {
       args: [join(repository, 'scripts/review-gallery/electron.mjs'), '--force-device-scale-factor=1', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding'], env, timeout: 90000 });
     console.log('Desktop shell launched.');
     page = await application.firstWindow(); page.setDefaultTimeout(30000);
-    await exposeUx7Desktop(page); await mockUx7Requests(page);
+    await exposeUx7Desktop(page); await mockUx7Requests(page, undefined, { nativeIdentity: fixture });
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(theme => {
       localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme, accent: 'neutral', fontSize: '15' }));
@@ -38,7 +38,7 @@ for (const theme of ['light', 'dark']) {
     await page.route('**/personal/v1/memory/items/**/sources', route => route.fulfill({ json: { ownerId, sources: [{ recordedAt: '2026-10-08T08:00:00Z', contentAvailable: true, rawContent: '合成偏好：使用中文说明。' }] } }));
     await page.route('**/personal/v1/sessions/*/events?*', async route => {
       try {
-        const response = await route.fetch(), data = await response.json();
+        const response = await route.fetch(nativeFixtureFetchOptions(route, fixture)), data = await response.json();
         for (const event of data.events || []) if (event.type === 'assistant.message') event.data.memoryUsed = [{ id: 'synthetic-memory', kind: 'cognition', summary: '使用中文说明' }];
         await route.fulfill({ response, json: data });
       } catch { if (!closing) errors.push('Synthetic event projection failed'); }
@@ -115,13 +115,13 @@ for (const theme of ['light', 'dark']) {
       closing=true;await page.unrouteAll({behavior:'ignoreErrors'});await application.evaluate(({app})=>app.exit(0)).catch(()=>{});await application.close().catch(()=>{});
       suggestionFixture=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await suggestionFixture.complete();
       application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:suggestionFixture.origin,REVIEW_LIBRARY_TOKEN:suggestionFixture.libraryDesktopToken}});
-      page=await application.firstWindow();page.setDefaultTimeout(30000);closing=false;page.on('pageerror',e=>errors.push(e.message));await exposeUx7Desktop(page);await localUiSession(page,suggestionFixture.credentials);await mockUx7Requests(page,undefined,{legacy:true});await page.reload();
+      page=await application.firstWindow();page.setDefaultTimeout(30000);closing=false;page.on('pageerror',e=>errors.push(e.message));await exposeUx7Desktop(page);await localUiSession(page,suggestionFixture.credentials,'Synthetic UI regression',{nativeIdentity:suggestionFixture});await mockUx7Requests(page,undefined,{legacy:true,nativeIdentity:suggestionFixture});await page.reload();
       await shot('next-suggestions',async()=>{await page.waitForFunction(()=>globalThis.__ux7core?.state.account);await page.evaluate(id=>__ux7core.selectSession(id),suggestionFixture.sessionId);await prepareUx7Suggestions(page);});
     }
     closing=true;await page.unrouteAll({behavior:'ignoreErrors'});await application.evaluate(({app})=>app.exit(0)).catch(()=>{});await application.close().catch(()=>{});mainFixture=await startMainChatCandidate();
     application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:mainFixture.origin,REVIEW_LIBRARY_TOKEN:mainFixture.libraryDesktopToken}});
     page=await application.firstWindow();page.setDefaultTimeout(30000);closing=false;
-    await localUiSession(page,mainFixture.credentials,'Synthetic main gallery',{mainChat:true});
+    await localUiSession(page,mainFixture.credentials,'Synthetic main gallery',{mainChat:true,nativeIdentity:mainFixture});
     await shot('main-chat',async()=>{await button('WeftMate 主对话').click();await page.waitForFunction(()=>document.querySelector('#transcript .main-chat-row'));await button('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await page.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await page.locator('mark').first().waitFor();});
     if (errors.length) throw Error('Desktop renderer or synthetic projection failed');
     console.log(`Desktop ${theme}: scene outcomes recorded.`);

@@ -1,4 +1,5 @@
 /** Synthetic responses with production suggestion rendering; no model or personal data. */
+import { nativeFixtureFetchOptions } from '../helpers/local-ui-session.mjs';
 export const ux7Replies = ['把它保存成文件', '继续说第二点', '帮我设个提醒'];
 const routeStates = new WeakMap();
 function routeState(page) {
@@ -27,9 +28,9 @@ export async function exposeUx7Desktop(page) {
     await route.fulfill({ response, body: code });
   }));
 }
-export async function mockUx7Requests(page, readReplies = () => ux7Replies, { legacy = false } = {}) {
+export async function mockUx7Requests(page, readReplies = () => ux7Replies, { legacy = false, nativeIdentity } = {}) {
   await page.route('**/personal/v1/status', routeHandler(page,'status',async route => {
-    const response=await route.fetch(), body=await response.json();
+    const response=await route.fetch(nativeFixtureFetchOptions(route, nativeIdentity)), body=await response.json();
     await route.fulfill({response,json:{...body,personalCapabilities:{...(legacy?{}:body.personalCapabilities),nextSuggestions:1}}});
   }));
   await page.route('**/personal/v1/sessions/*/suggestions*', routeHandler(page,'suggestions',async route => {
