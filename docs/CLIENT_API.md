@@ -498,6 +498,12 @@ DIAG-2：既有 `GET /system` 保留可选只读 `runRecord:{state,runId,started
 
 MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话继续使用原绑定。后台配置默认跟随账户当前 / 最近聊天的模型，有会话和无会话的积压任务使用同一规则；没有最近聊天时才使用账户默认或已授权会话绑定，绝不回退到启动配置 `authRef`。标题、记忆整理以及后续关心/健康归纳按后台路由。仅本机回环且 `/props.total_slots=1` 的入口排队，云 API、多槽和未知槽数直接并行。本机 ModelSwitcher（模型切换代理）的后台请求仅在所选模型已经加载且未切换时进入推理；模型不一致则等待并释放槽位给聊天，后台不主动触发装卸。状态未知的已确认单槽服务也等待。单槽主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。记忆形成使用后台路由；World/interactions（记忆与经历）召回的来源权限按接收内容的主模型 modelTier 判定。
 
+R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metrics`（性能指标）与 `diagnosticPreview`（诊断包内容预览），保留旧字段与路由。`components` 固定为 `host / memory / model / relay / certificate` 五项，每项含 `id,name,state,label,description,reasonCode,repairable`；`state` 为 `healthy|problem|disabled`，有问题时另有 `nextStep:{target,label}`；模型正在准备时为正常状态，另有 `pending:true` 与人话说明，设置页会自动核对直到准备结束。显示名称使用人话；`memory.semanticRecall` 仅在记忆核心的 `health.runtime.semantic_recall` 存在时提供 `{state,label,description,reasonCode?}`，状态为 `disabled|preparing|ready|unavailable`；旧核心没有字段时不显示。语义查找状态不触发下载，不返回模型地址、目录或记忆内容。
+
+`metrics` 含 `startup / firstToken / memory`，每项有 `value:number|null,unit:ms|bytes,state:normal|slow|unknown,reference:string`；首字另有 `sampleCount`。启动从桌面进程启动到界面就绪；首字取最近最多 20 次首次正文时间的中位数（包含等待与思考，后台请求不计入），从本机运行记录恢复；内存为当前 Electron（桌面程序框架）进程组工作集之和。10 秒启动、5 秒首字、1 GB 内存仅是排查参照，不是设备性能保证。
+
+修复与压缩包导出只由本机 Windows 桌面接缝 `repairSystem(id)` 与 `exportSystemDiagnostics()` 发起，验证当前窗口、当前本机账户与既有宿主所有者资格；不新增 `/personal/v1` 路由，不需要安卓白名单或新壳。手机及远程网页只读。每次修复只调用对应组件已有的重启／重连／证书重试方法；普通模型入口重新检查目录，不发送推理消息，受管理的当前本机模型才调用原控制器。现有 DSH（助手运行时）重拉、记忆桥重连、远程隧道重连和证书日常续期负责自动恢复，不由状态读取增加重启循环。诊断压缩包的严格字段投影与文件清单见 DIAGNOSTICS.md。
+
 ### ST-1 个性化与助手设置
 
 | 方法与路径 | 请求 | 响应 / 权限 |

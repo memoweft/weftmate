@@ -1,0 +1,31 @@
+{
+  "fullMainEntry": true,
+  "synthetic": true,
+  "realModelRequests": 0,
+  "components": [
+    {
+      "id": "host",
+      "state": "healthy"
+    },
+    {
+      "id": "memory",
+      "state": "disabled"
+    },
+    {
+      "id": "model",
+      "state": "disabled"
+    },
+    {
+      "id": "relay",
+      "state": "disabled"
+    },
+    {
+      "id": "certificate",
+      "state": "disabled"
+    }
+  ],
+  "startupMs": 16069,
+  "memoryBytes": 520384512,
+  "firstTokenUnmeasured": true,
+  "exportPreview": true
+}

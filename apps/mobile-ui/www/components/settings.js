@@ -51,6 +51,7 @@ const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
   personalization: target => {target.append(heading('个性化'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'personalization',{toast})},
   assistant: target => {target.append(heading('助手'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'assistant',{toast})},
   general: target => generalSettingsPage(target), appearance: target => appearancePage(target),
+  system: target => {target.append(heading('系统状态','查看已连接电脑的状态；修复与导出诊断包请在电脑上操作。'));uiCore.syncMobileIdentity();void systemStatusSection(target)},
   account: target => accountPage(target), devices: target => devicesPage(target),
   usage: target => usagePage(target, state.usageSessionId || ''), models: target => modelsPage(target),
   schedules: target => {target.append(heading('提醒与定时任务'));const body=el('section');target.append(body);WeftSchedulesView(uiCore,body,{current:()=>body.isConnected&&state.page==='schedules',openConversation:id=>selectSharedSession(id)})},
@@ -68,7 +69,7 @@ function settingsPage(target){
   const draw=()=>{clear(list);let name,section;
     for(const category of mobileSettingsRegistry.list({query:search.value})){
       if(name!==category.group){name=category.group;section=group(name,[]);list.append(section)}
-      const summaries={general:'离线与同步',notifications:'勿扰、提醒方式与声音',appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.loggedIn?state.username:'未登录',devices:'连接、配对与待批准',usage:'本月费用、用量与月度上限',models:state.model?.displayName||'管理手机与账户模型',schedules:'管理提醒与定时任务',approvals:'新对话的默认模式',memory:'查看理解与来源',resources:'项目与网页资料',about:state.ui?.activeVersion||'版本、条款与隐私'};
+      const summaries={general:'离线与同步',system:'电脑组件、性能与运行记录',notifications:'勿扰、提醒方式与声音',appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.loggedIn?state.username:'未登录',devices:'连接、配对与待批准',usage:'本月费用、用量与月度上限',models:state.model?.displayName||'管理手机与账户模型',schedules:'管理提醒与定时任务',approvals:'新对话的默认模式',memory:'查看理解与来源',resources:'项目与网页资料',about:state.ui?.activeVersion||'版本、条款与隐私'};
       const item=row(category.name,summaries[category.id]||'',()=>{
         settingsListPosition.scroll=$('generic-page').scrollTop;settingsListPosition.query=search.value;state.settingsChild=true;page(category.id)});
       const icon=el('img','settings-category-icon');icon.src='icons/'+category.icon+'.svg';icon.alt='';item.prepend(icon);section.querySelector('.group-body').append(item);
@@ -79,13 +80,14 @@ function settingsPage(target){
   $('generic-page').scrollTop=settingsListPosition.scroll;
 }
 function generalSettingsPage(target){target.append(heading('常规'),group('此设备',[
+  row('系统状态','查看电脑组件、性能与运行记录',()=>page('system')),
   row('通知','按类型提醒、勿扰与声音',()=>page('notifications')),
   row('离线与同步',state.loggedIn?'当前账户的记录与状态':'登录后查看本机与同步状态',()=>page('sync')),
   ...(!globalThis.WeftMobileCloud?.active?[row('电脑账户与连接',connectionLabel(),()=>page('connect'))]:[]),
   row('界面更新',state.ui?.activeVersion||'内置页面',()=>page('updates')),
   row('原生兼容界面','排查系统网页组件',()=>call('compat.openNative').catch(e=>toast(safeError(e),true)))]));
   uiCore.syncMobileIdentity();
-  void systemStatusSection(target);
+  void systemStatusSection(target,{localOnly:true});
 }
 function approvalSettingsPage(target){target.append(heading('审批'));
   const button=el('button','secondary','设置默认审批模式');button.type='button';button.disabled=!state.loggedIn;
@@ -109,44 +111,69 @@ async function mobileSettingsLegal(kind){
   try{const response=await fetch('legal/'+kind+'-zh.txt');body.innerHTML=WeftFormat.render(await response.text())}catch{body.textContent='内容暂时无法读取，请重试。'}
 }
 
-async function systemStatusSection(target){const owner=state.owner,epoch=state.authEpoch;
-  const section=el('section','group');section.append(el('h2','','系统状态'));
-  const status=el('p','hint','正在读取电脑状态…');section.append(status);target.append(section);
-  const localRecords=globalThis.WeftRunRecords?.mount(section,{core:uiCore,toast,retry:()=>page('general'),desktop:null,
+let mobileSystemRefresh = null;
+function refreshMobileSystemStatus(){if(state.page==='system')void mobileSystemRefresh?.()}
+function mobileSystemComponents(system){
+  if(Array.isArray(system.components))return system.components;
+  // Older computers report these three states, without the richer projection.
+  return [['host','对话与工具'],['memory','记忆'],['model','回复模型']].map(([id,name])=>{
+    const value=system[id]||{},disabled=['disabled','unconfigured'].includes(value.state),healthy=['ready','connected','running'].includes(value.state);
+    const state=disabled?'disabled':healthy?'healthy':'problem';
+    const description=id==='memory'?uiCore.memoryHealthText(value):disabled?'尚未启用。':healthy?'可以正常使用。':
+      id==='model'?'回复模型暂时连不上，新的回复可能无法生成。':'电脑暂时没有连接，对话与工具可能无法运行。';
+    return {id,name,state,label:{healthy:'正常',problem:'有问题',disabled:'未启用'}[state],description};
+  });
+}
+function mobileSystemMetricText(metric){
+  if(typeof metric?.value!=='number'||!Number.isFinite(metric.value))return '—';
+  if(metric.unit==='bytes')return `${(metric.value/1024/1024).toLocaleString('zh-CN',{maximumFractionDigits:0})} MB`;
+  if(metric.unit==='ms')return `${(metric.value/1000).toLocaleString('zh-CN',{maximumFractionDigits:2})} 秒`;
+  return `${metric.value.toLocaleString('zh-CN',{maximumFractionDigits:2})}${metric.unit?' '+metric.unit:''}`;
+}
+async function systemStatusSection(target,{localOnly=false}={}){
+  const owner=state.owner,epoch=state.authEpoch,generation=state.generation,pageName=localOnly?'general':'system';
+  const current=()=>state.owner===owner&&state.authEpoch===epoch&&state.generation===generation&&target.isConnected&&state.page===pageName;
+  const section=group(localOnly?'本机运行记录':'电脑组件',[]),body=section.querySelector('.group-body');target.append(section);
+  const controls=el('div','mobile-system-toolbar'),status=el('p','hint',localOnly?'':'正在读取电脑状态…');status.setAttribute('role','status');
+  const refresh=el('button','icon-button');refresh.type='button';refresh.setAttribute('aria-label','刷新系统状态');refresh.append(WeftIcons.create('sync',20));
+  controls.append(status,refresh);body.append(controls);
+  const components=el('div','mobile-system-components');if(!localOnly)body.append(components);
+  const metrics=group('电脑性能',[]);if(!localOnly)target.append(metrics);
+  const localRecords=globalThis.WeftRunRecords?.mount(target,{core:uiCore,toast,retry:()=>load(),desktop:null,
     title:window.weftNative?'本机（这部手机）':'本机（这个浏览器）',local:true,browser:!window.weftNative,
     copySummary:text=>window.weftNative?call('clipboard.copy',{text}):navigator.clipboard.writeText(text),
     shareLogs:window.weftNative?()=>call('diagnostics.share'):null});
-  const records=globalThis.WeftRunRecords?.mount(section,{core:uiCore,toast,retry:()=>page('general'),desktop:null,title:'已连接的电脑'});
-  const current=()=>state.owner===owner&&state.authEpoch===epoch&&target.isConnected&&state.page==='general';
-  // Phone records belong to this device, independently of host or account state.
-  void Promise.resolve().then(()=>window.weftNative?call('diagnostics.status',{},5000):globalThis.WeftLocalDiagnostics.status())
-    .then(value=>{if(current())localRecords?.paint(value);}).catch(()=>{if(current())localRecords?.paint({state:'error'});});
-  try{const [system,settings]=await Promise.all([
-    uiCore.readMobileSystem(),
-    uiCore.readMobileModelSettings()]);
-    if(!current())return;
-    records?.paint(system.runRecord || {state:'error'});
-    const labels={ready:'运行中',connected:'运行中',stopped:'已停止',starting:'启动中',disabled:'未启用',
-      unavailable:'不可用',unconfigured:'尚未配置',degraded:'需要处理'};
-    status.textContent=system.queue?.backgroundPending?`${system.queue.backgroundPending} 项后台请求排队中`:'';
-    for(const [key,name] of [['model','模型服务'],['host','宿主'],['memory','记忆']]){const value=system[key];
-      const detail=[key==='memory'?uiCore.memoryHealthText(value):labels[value.state]||'状态未知',value.currentModelId?`当前模型 ${value.currentModelId}`:'',
-        value.version?`版本 ${value.version}`:['disabled','unconfigured','stopped'].includes(value.state)?'':'版本未知',
-        value.contextWindow?`上下文 ${value.contextWindow.toLocaleString()}`:'',
-        value.slots?`槽数 ${value.slots}`:'',
-        value.lastSwitch?.at?`最近切换 ${uiCore.dateText(value.lastSwitch.at)}${value.lastSwitch.ok?'':'（未成功）'}`:'',
-        value.lastError?`最近错误：${value.lastError}`:''].filter(Boolean).join(' · ');
-      const item=el('div','row'),text=el('span');text.append(el('strong','',name),el('small','',detail));item.append(text);section.append(item);
-      const button=el('button','secondary',`重启${name}`);button.disabled=!system.canRestart||!value.canRestart;
-      button.addEventListener('click',async()=>{button.disabled=true;button.textContent='重启中…';
-        try{await uiCore.restartService(key);
-          if(current())page('general')
-        }catch(e){if(current()){status.textContent='重启未确认，请刷新查看实际状态。';button.disabled=false;button.textContent=`重启${name}`}}});
-      section.append(button)
-    }
-    const background=el('p','hint',settings.backgroundModelProfileId?'后台模型已单独配置 · 在电脑设置中修改':'后台模型跟随主模型 · 在电脑设置中修改');section.append(background);
-    const refresh=el('button','icon-button');refresh.type='button';refresh.setAttribute('aria-label','刷新系统状态');refresh.append(WeftIcons.create('sync',20));refresh.addEventListener('click',()=>page('general'));section.append(refresh);
-  }catch(e){if(current())records?.paint({state:'error'});if(current())status.textContent=state.loggedIn?'系统状态暂时无法读取，请重新连接电脑后刷新。':'登录并连接电脑后查看系统状态。'}
+  const records=!localOnly?globalThis.WeftRunRecords?.mount(target,{core:uiCore,toast,retry:()=>load(),desktop:null,title:'已连接的电脑'}):null;
+  let loading=false;
+  const load=async()=>{
+    if(!current()||loading)return;loading=true;refresh.disabled=true;
+    if(localRecords)void Promise.resolve().then(()=>window.weftNative?call('diagnostics.status',{},5000):globalThis.WeftLocalDiagnostics.status())
+      .then(value=>{if(current())localRecords.paint(value)}).catch(()=>{if(current())localRecords.paint({state:'error'})});
+    try{
+      if(localOnly)return;
+      const system=await uiCore.readMobileSystem();if(!current())return;
+      records?.paint(system.runRecord||{state:'error'});clear(components);
+      status.textContent=system.queue?.backgroundPending?`${system.queue.backgroundPending} 项后台请求排队中`:'';
+      for(const component of mobileSystemComponents(system)){
+        const item=el('div','row mobile-system-component');item.dataset.component=component.id;item.dataset.state=component.state;
+        const text=el('span'),title=el('strong','',component.name);text.append(title,el('small','',component.description||'状态待确认。'));
+        if(component.semanticRecall){const value=component.semanticRecall,semantic=el('small','mobile-system-semantic',`按意思找 · ${value.label||{disabled:'未启用',preparing:'准备中',ready:'就绪',unavailable:'不可用'}[value.state]||'状态待确认'}${value.description?' · '+value.description:''}`);
+          semantic.dataset.semanticState=value.state;text.append(semantic)}
+        if(component.state==='problem'&&component.nextStep?.label)text.append(el('small','',`在电脑上${component.nextStep.label}。`));
+        const label=el('span','mobile-system-label',component.label||{healthy:'正常',problem:'有问题',disabled:'未启用'}[component.state]||'待确认');
+        item.append(text,label);components.append(item);
+      }
+      const metricBody=metrics.querySelector('.group-body');clear(metricBody);
+      for(const [key,name] of [['startup','启动用时'],['firstToken','最近回复首字（中位）'],['memory','当前内存']]){
+        const metric=system.metrics?.[key],item=el('div','row mobile-system-metric'),text=el('span');item.dataset.metric=key;
+        text.append(el('strong','',name),el('small','',metric?.reference||'尚未记录'));item.append(text,el('span','mobile-system-number',mobileSystemMetricText(metric)));metricBody.append(item);
+      }
+    }catch{
+      if(current()){records?.paint({state:'error'});clear(components);metrics.querySelector('.group-body').replaceChildren(el('p','hint','连接电脑后查看性能数据。'));
+        status.textContent=state.loggedIn?'电脑状态暂时无法读取，请重新连接电脑后点刷新。':'登录并连接电脑后查看系统状态。'}
+    }finally{loading=false;if(current())refresh.disabled=false}
+  };
+  refresh.addEventListener('click',()=>void load());if(!localOnly)mobileSystemRefresh=load;await load();
 }
 
 function capabilitiesPage(target){target.append(heading('能力与扩展','手机能执行的动作与电脑已有组件清楚分开。'),
