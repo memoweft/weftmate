@@ -23,9 +23,6 @@ struct WeftMateRootView: View {
 
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
-            if runLog.notify {
-                Button { runLogOpen = true; runLog.notify = false } label: { InlineNotice(message: "上次没有正常结束，已留下运行记录。点击查看。", isError: true) }.buttonStyle(.plain).padding(AppleTokens.Space.p8).accessibilityIdentifier("previousRunNotice")
-            }
             if model.developmentRouteEnabled {
                 WeftLabel("局域网开发联调", icon: "cloud", size: 16)
                     .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.secondary)
@@ -52,10 +49,15 @@ struct WeftMateRootView: View {
         .onChange(of: model.session?.verification) { _, _ in runLog.connection(model.offline.hostOffline ? "offline" : model.session == nil ? "login_required" : "online") }
         .onReceive(model.offline.$hostOffline) { offline in runLog.connection(offline ? "offline" : model.session == nil ? "login_required" : "online") }
         #if os(iOS)
-            .fullScreenCover(isPresented: $runLogOpen) { RunLogView(onClose: { runLogOpen = false }) }
-            #else
-            .sheet(isPresented: $runLogOpen) { RunLogView(onClose: { runLogOpen = false }) }
+            .fullScreenCover(isPresented: $runLogOpen) { SettingsView(model: model, route: .init(categoryID: "run-log"), onClose: { runLogOpen = false }) }
             #endif
+        .environment(\.openRunLogPage, {
+            #if os(macOS)
+            model.settingsRoute = .init(categoryID: "run-log"); openWindow(id: "settings")
+            #else
+            runLogOpen = true
+            #endif
+        })
         .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
         .sheet(item: Binding(get: { model.deletionInSettings ? nil : model.deletionCandidate }, set: { model.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: model) }
         #if os(iOS)
@@ -252,7 +254,7 @@ private struct AccountEntry: View {
     var body: some View {
         Group {
             if cloud.authenticated { CloudAccountHome(app: app, cloud: cloud) }
-            else { AuthView(model: cloud) }
+            else { AuthView(model: cloud).safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) } }
         }.task {
             while !Task.isCancelled {
                 await cloud.poll()
@@ -283,7 +285,7 @@ struct MacWorkspace: View {
                     .frame(maxHeight: .infinity)
                     .clipped() }
                 NavigationStack {
-                    detail
+                    detail.safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) }
                 }
                 .frame(minWidth: 440, maxWidth: .infinity)
                 .frame(maxHeight: .infinity)
@@ -464,6 +466,7 @@ struct PhoneWorkspace: View {
                         .toolbar { ToolbarItem(placement: .navigation) { NavigationLink(value: "a16-side-list") { WeftLabel("旁聊与项目", icon: "sidebar") }.accessibilityIdentifier("mainChat.sideList") } }
                 } else { sideList }
             }
+                .safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) }
                 .navigationDestination(for: String.self) { id in
                     if id == "a16-side-list" {
                         sideList.toolbar {
