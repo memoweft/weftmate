@@ -24,7 +24,10 @@ export async function assertRuntimeIdentity(runtime, repoRoot, options) {
   const expected = await runtimeIdentity(repoRoot, options)
   let manifest
   try { manifest = JSON.parse(await readFile(join(runtime, 'VENDOR-MANIFEST.json'), 'utf8')) }
-  catch (error) { throw new Error(`运行时过期：缺少有效 VENDOR-MANIFEST.json（${error.code ?? 'invalid JSON'}）；运行 npm run vendor:dsh`) }
+  catch (error) {
+    if (error.code !== 'ENOENT' && !(error instanceof SyntaxError)) throw error
+    throw new Error(`运行时过期：缺少有效 VENDOR-MANIFEST.json（${error.code ?? 'invalid JSON'}）；运行 npm run vendor:dsh`)
+  }
   const actual = manifest.runtimeIdentity
   if (manifest.dsh?.commit !== expected.commit || manifest.dsh?.packageVersion !== expected.packageVersion
     || JSON.stringify(actual) !== JSON.stringify(expected)) {

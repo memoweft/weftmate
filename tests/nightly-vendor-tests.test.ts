@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { managedMkdtemp } from './helpers/managed-temp.mjs'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import test from 'node:test'
 import { runVendorTests, pinnedBuild } from '../scripts/nightly/vendor-tests.mjs'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
+import { pathToFileURL } from 'node:url'
 import { inspect, report } from '../scripts/nightly/report.mjs'
 import { runtimeIdentity, assertRuntimeIdentity } from '../scripts/dsh-runtime-identity.mjs'
 import { preparePatchedCheckout } from '../scripts/vendor-dsh.mjs'
@@ -140,4 +141,57 @@ test('nightly finds a compiled pinned linked checkout without resetting the shar
     assert.equal(await pinnedBuild(candidate,[shared]),pinned.replaceAll('\\','/'))
     assert.equal(git('rev-parse','HEAD'),before)
   } finally { await rm(root,{recursive:true,force:true}) }
+})
+
+test('valid shared cache pointer failure reports its cause and never enters build or touches an existing lock', async () => {
+  const root = await managedMkdtemp('weftmate-nightly-pointer-')
+  try {
+    const identity = await runtimeIdentity(process.cwd()), pin = JSON.parse(await readFile('tests/contract/dsh-pin.json','utf8'))
+    const shared=join(root,'cache'), cache=join(shared,`dsh-runtime-${identity.commit.slice(0,12)}-${identity.patchesSha256.slice(0,16)}`)
+    await mkdir(join(cache,'node_modules/@deepseek-ai/dsh/lib'),{recursive:true})
+    await writeFile(join(cache,'node_modules/@deepseek-ai/dsh/lib/bin.js'),'// synthetic')
+    const manifest=JSON.stringify({dsh:pin,runtimeIdentity:identity})
+    await writeFile(join(cache,'VENDOR-MANIFEST.json'),manifest)
+    await writeFile(cache+'.lock','synthetic active builder')
+    const blocked=join(root,'blocked-parent');await writeFile(blocked,'regular file')
+    const result=spawnSync(process.execPath,[resolve('scripts/vendor-dsh.mjs')],{encoding:'utf8',windowsHide:true,
+      env:{...process.env,WEFTMATE_DSH_CACHE_ROOT:shared,WEFTMATE_DSH_RUNTIME_DIR:join(blocked,'runtime')}})
+    assert.equal(result.status,1);assert.match(result.stderr,/EEXIST|ENOTDIR/)
+    assert.doesNotMatch(result.stderr,/同一 DSH 运行时正在编译/)
+    assert.equal(await readFile(join(cache,'VENDOR-MANIFEST.json'),'utf8'),manifest)
+    assert.equal(await readFile(cache+'.lock','utf8'),'synthetic active builder')
+  } finally {await rm(root,{recursive:true,force:true})}
+})
+
+test('cache published while obtaining the lock is rechecked and reused without building or replacing it', async () => {
+  const root=await managedMkdtemp('weftmate-nightly-cache-race-')
+  try {
+    const identity=await runtimeIdentity(process.cwd()), pin=JSON.parse(await readFile('tests/contract/dsh-pin.json','utf8'))
+    const shared=join(root,'cache'), cache=join(shared,`dsh-runtime-${identity.commit.slice(0,12)}-${identity.patchesSha256.slice(0,16)}`)
+    const manifest=JSON.stringify({dsh:pin,runtimeIdentity:identity}), hook=join(root,'publish-on-lock.mjs')
+    await writeFile(hook,`import fs from 'node:fs/promises';import {syncBuiltinESMExports} from 'node:module';import {join} from 'node:path';
+      const original=fs.open;fs.open=async function(file,...args){if(String(file)===process.env.WEFTMATE_TEST_CACHE+'.lock'){
+        await fs.mkdir(join(process.env.WEFTMATE_TEST_CACHE,'node_modules/@deepseek-ai/dsh/lib'),{recursive:true});
+        await fs.writeFile(join(process.env.WEFTMATE_TEST_CACHE,'node_modules/@deepseek-ai/dsh/lib/bin.js'),'// published by peer');
+        await fs.writeFile(join(process.env.WEFTMATE_TEST_CACHE,'VENDOR-MANIFEST.json'),process.env.WEFTMATE_TEST_MANIFEST);
+      }return original.call(this,file,...args)};syncBuiltinESMExports();`)
+    const result=spawnSync(process.execPath,['--import',pathToFileURL(hook).href,resolve('scripts/vendor-dsh.mjs')],{encoding:'utf8',windowsHide:true,
+      env:{...process.env,WEFTMATE_DSH_CACHE_ROOT:shared,WEFTMATE_DSH_RUNTIME_DIR:join(root,'runtime'),WEFTMATE_TEST_CACHE:cache,WEFTMATE_TEST_MANIFEST:manifest}})
+    assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/复用固定提交/);assert.doesNotMatch(result.stdout,/编译 .*隔离检出/)
+    assert.equal(await readFile(join(cache,'VENDOR-MANIFEST.json'),'utf8'),manifest)
+    assert.equal(await readFile(join(cache,'node_modules/@deepseek-ai/dsh/lib/bin.js'),'utf8'),'// published by peer')
+  } finally {await rm(root,{recursive:true,force:true})}
+})
+
+test('an existing invalid same-identity cache is preserved instead of rebuilding or republishing', async () => {
+  const root=await managedMkdtemp('weftmate-nightly-cache-preserve-')
+  try {
+    const identity=await runtimeIdentity(process.cwd()), shared=join(root,'cache')
+    const cache=join(shared,`dsh-runtime-${identity.commit.slice(0,12)}-${identity.patchesSha256.slice(0,16)}`)
+    await mkdir(cache,{recursive:true});await writeFile(join(cache,'keep.txt'),'existing cache data')
+    const result=spawnSync(process.execPath,[resolve('scripts/vendor-dsh.mjs')],{encoding:'utf8',windowsHide:true,
+      env:{...process.env,WEFTMATE_DSH_CACHE_ROOT:shared,WEFTMATE_DSH_RUNTIME_DIR:join(root,'runtime')}})
+    assert.equal(result.status,1);assert.match(result.stderr,/保留缓存，拒绝重新发布/)
+    assert.equal(await readFile(join(cache,'keep.txt'),'utf8'),'existing cache data')
+  } finally {await rm(root,{recursive:true,force:true})}
 })

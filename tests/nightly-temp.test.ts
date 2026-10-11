@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { join, resolve, basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import test from 'node:test';
-import { managedMkdtempSync, managedTempRoot, disposeManagedTemp } from './helpers/managed-temp.mjs';
+import { managedMkdtempSync, managedTempRoot, disposeManagedTemp, startManagedTempLease } from './helpers/managed-temp.mjs';
 
 const helper = pathToFileURL(resolve('tests/helpers/managed-temp.mjs')).href;
 const runner = pathToFileURL(resolve('tests/helpers/managed-test-process.mjs')).href;
@@ -64,16 +64,19 @@ test('asynchronous CI runner handles interruption while its child is running and
   } finally { disposeManagedTemp(root); }
 });
 
-test('temp pruner defaults to 24 hours, scopes approved legacy prefixes and protects live owner markers', { skip: process.platform !== 'win32' }, () => {
+test('temp pruner defaults to 24 hours, limits prefixes and requires valid owner leases', { skip: process.platform !== 'win32' }, () => {
   const root = managedMkdtempSync('weftmate-prune-owner-test-');
   try {
     const parent = join(root, 'fixtures'); mkdirSync(parent);
     for (const name of ['weftmate-ci-old', 'weftmate-nightly-other', 'weftmate-ci-live']) mkdirSync(join(parent, name));
-    writeFileSync(join(parent, 'weftmate-ci-live', '.weftmate-temp-owner.json'), JSON.stringify({pid:process.pid}));
+    const live = JSON.parse(readFileSync(join(root, '.weftmate-temp-owner.json'), 'utf8'));
+    writeFileSync(join(parent, 'weftmate-ci-live', '.weftmate-temp-owner.json'), JSON.stringify(live));
+    writeFileSync(join(parent, 'weftmate-ci-old', '.weftmate-temp-owner.json'), JSON.stringify({ ...live, pid:2147483647,
+      processStartedAt:new Date(Date.now()-50*3600000).toISOString(), createdAt:new Date(Date.now()-40*3600000).toISOString(), heartbeatAt:new Date(Date.now()-30*3600000).toISOString() }));
     execFileSync('pwsh', ['-NoProfile', '-Command',
       '$env:WEFTMATE_PRUNE_TEST_ROOT | Get-ChildItem -Directory | ForEach-Object { $_.CreationTime=(Get-Date).AddHours(-25); $_.LastWriteTime=(Get-Date).AddHours(-25) }'],
       {env:{...process.env,WEFTMATE_PRUNE_TEST_ROOT:parent},windowsHide:true});
-    const result = JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', resolve('scripts/nightly/prune-temp.ps1'), '-Roots', parent, '-Prefixes', 'weftmate-ci-', '-Apply'], {encoding:'utf8',windowsHide:true}).trim());
+    const result = JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', resolve('scripts/nightly/prune-temp.ps1'), '-Roots', parent, '-Prefixes', 'weftmate-ci-', '-Apply'], {encoding:'utf8',windowsHide:true}).trim().split(/\r?\n/).at(-1)!);
     assert.equal(result.hours,24); assert.equal(result.deleted,1); assert.equal(result.keptInUse,1);
     assert.equal(existsSync(join(parent,'weftmate-ci-old')),false);
     assert.equal(existsSync(join(parent,'weftmate-ci-live')),true);
@@ -92,6 +95,16 @@ test('next process prunes a stale fixture left by a force-killed owner', { skip:
     const directory = await new Promise<string>((done,reject) => {child.stdout.once('data', data=>done(data.toString().trim()));child.once('error',reject);});
     const closed = new Promise(done => child.once('close',done)); child.kill('SIGKILL'); await closed;
     assert.equal(existsSync(directory),true);
+    const ownerFile = join(directory, '.weftmate-temp-owner.json'), owner = JSON.parse(readFileSync(ownerFile, 'utf8'));
+    // An ended creator is insufficient: first prove its fresh lease is retained.
+    const fresh = spawnSync(process.execPath,['--input-type=module','-e',
+      `import {pruneManagedTemps} from ${JSON.stringify(helper)}; console.log(JSON.stringify(pruneManagedTemps()));`],
+      {env:environment(parent),encoding:'utf8',windowsHide:true});
+    assert.equal(fresh.status,0,fresh.stderr); assert.equal(existsSync(directory),true);
+    owner.processStartedAt = new Date(Date.now()-50*3600000).toISOString();
+    owner.createdAt = new Date(Date.now()-40*3600000).toISOString();
+    owner.heartbeatAt = new Date(Date.now()-30*3600000).toISOString();
+    writeFileSync(ownerFile, JSON.stringify(owner));
     execFileSync('pwsh',['-NoProfile','-Command',
       '$d=Get-Item -LiteralPath $env:WEFTMATE_PRUNE_TEST_ROOT; $d.CreationTime=(Get-Date).AddHours(-25); $d.LastWriteTime=(Get-Date).AddHours(-25)'],
       {env:{...process.env,WEFTMATE_PRUNE_TEST_ROOT:directory},windowsHide:true});

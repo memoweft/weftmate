@@ -1,12 +1,13 @@
 import { spawn } from 'node:child_process';
+import { appendFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile, open, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { report, retention, previousRun } from './report.mjs';
 import { androidBusyReason, androidHostUsesDevice, nightlyPackage } from './android-packages.mjs';
-import { connectMuMu, adbExecutable as adb, AndroidEnvironmentError } from './mumu.mjs';
-import { managedMkdtemp, disposeManagedTemp } from '../../tests/helpers/managed-temp.mjs';
+import { connectMuMu, assertAndroidDevice, adbExecutable as adb, AndroidEnvironmentError } from './mumu.mjs';
+import { managedMkdtemp, disposeManagedTemp, managedTempParent, startManagedTempLease } from '../../tests/helpers/managed-temp.mjs';
 import { commandBudget } from './command-budget.mjs';
 import { acquireHeavySlot } from './heavy-slot.mjs';
 import { redactEvidenceText, systemCommitMemory, describeExit } from '../../tests/helpers/process-evidence.mjs';
@@ -21,7 +22,7 @@ const context = JSON.parse(await readFile(value('--nightly-engine'), 'utf8'));
 const { startedAt, deadline, runId, out, date, bootstrapCommit } = context;
 const gallery = join(out, 'gallery'), phases = [], children = new Set(), locks = [];
 const cleanup = { windows: null, android: null, apple: null };
-let sourceCommit = context.sourceCommit, temp, cancelled = false, phaseDeadline = Infinity, slotDeadline = Infinity, androidSerial;
+let sourceCommit = context.sourceCommit, temp, stopLease, tempParent, cancelled = false, phaseDeadline = Infinity, slotDeadline = Infinity, androidSerial;
 const selectedPhases = value('--phases')?.split(',');
 if (selectedPhases?.some(name => !['prepare','vendor-tests','installed-smoke','windows','mobile-web','android','apple','cleanup'].includes(name))) throw Error('Unknown --phases selection');
 const engineScripts = scripts, reporting = { report, retention, previousRun };
@@ -94,7 +95,8 @@ async function cleanupAndroid() {
     try {
       if (!androidSerial) return;
       const state = JSON.parse(await readFile(join(out, 'android-state.json'), 'utf8'));
-      if (state.serial !== androidSerial) throw Error('安卓清理地址与本轮管理工具地址不符');
+      if (state.serial !== androidSerial) throw new AndroidEnvironmentError('安卓清理地址与本轮管理工具地址不符');
+      await assertAndroidDevice(androidSerial, run);
       for (const mapping of state.reverse || []) await run(adb, ['-s', androidSerial, 'reverse', '--remove', `tcp:${mapping}`], { name: 'android-clean-reverse', allowFailure: true, limit: 5000 });
       for (const mapping of state.forward || []) await run(adb, ['-s', androidSerial, 'forward', '--remove', `tcp:${mapping}`], { name: 'android-clean-forward', allowFailure: true, limit: 5000 });
       for (const pkg of state.installed || []) { if (![nightlyPackage,nightlyPackage+'.test'].includes(pkg)) throw Error('拒绝清理非本轮夜间包'); const removed = await run(adb, ['-s', androidSerial, 'uninstall', pkg], { name: 'android-clean-uninstall', allowFailure: true, limit: 10000 }); if (removed.code !== 0 || !removed.output.includes('Success')) throw Error('夜间包卸载未确认'); cleanup.android = { ...cleanup.android, uninstalled:[...(cleanup.android?.uninstalled || []),pkg] }; }
@@ -104,11 +106,14 @@ async function cleanupAndroid() {
 const skip = reason => ({ status: 'skipped', reason });
 
 try {
+  tempParent = managedTempParent();
   temp = await managedMkdtemp('weftmate-nightly-');
+  stopLease = startManagedTempLease(temp);
   await writeFile(join(out, 'cleanup-roots.json'), JSON.stringify([temp, worktree, out]));
   // Do not inherit real model, cloud, personal-host or relay configuration.
   for (const name of Object.keys(process.env)) if (/^(WEFTMATE_|MEMOWEFT_|MIMO_|MODEL_SWITCH_|CLOUD_|ELECTRON_RUN_AS_NODE)/.test(name)) delete process.env[name];
   process.env.TEMP = temp; process.env.TMP = temp; process.env.WEFTMATE_TEST_TEMP_SCOPE = temp;
+  process.env.WEFTMATE_MANAGED_TEMP_ROOT = tempParent;
   const prepared = await phase('prepare', [], async () => {
     // npm ci only if the exact lockfile changed. Local dependencies are not shared
     // with developer trees and never point to another package's node_modules.
@@ -142,7 +147,10 @@ try {
       const deviceLock = locks.at(-1);
       try {
         const info = await connectMuMu(run); androidSerial = info.serial;
+        const deviceInfo = join(out, 'android-device.json');
+        await writeFile(deviceInfo, JSON.stringify(info));
         const assess = async () => {
+          await assertAndroidDevice(androidSerial, run);
           const packages = (await run(adb,['-s',androidSerial,'shell','pm','list','packages','weftmate'],{name:'android-packages'})).output;
           const processes = (await run(adb,['-s',androidSerial,'shell','ps','-A','-o','NAME'],{name:'android-processes'})).output;
           const instrumentation = (await run(adb,['-s',androidSerial,'shell','dumpsys','activity'],{name:'android-instrumentation'})).output;
@@ -158,7 +166,7 @@ try {
         const busy = await assess(); if (busy) return skip('被占用，未拍（'+busy+'）');
         await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'build-android.ps1'), '-Worktree', worktree], { name: 'android-build' });
         const occupied = await assess(); if (occupied) return skip('被占用，未拍（'+occupied+'）');
-        await run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--android', '--out', gallery, '--state', join(out, 'android-state.json'), ...sceneArgs], { name: 'android' });
+        await run('node', [join(worktree, 'tests/integration/review-capture-mobile.mjs'), '--android', '--android-device', deviceInfo, '--out', gallery, '--state', join(out, 'android-state.json'), ...sceneArgs], { name: 'android' });
       } finally {
         await cleanupAndroid();
         if (androidSerial) await run(adb,['disconnect',androidSerial],{name:'adb-disconnect',allowFailure:true,limit:5000}).catch(()=>{});
@@ -195,12 +203,20 @@ finally {
     } catch (error) { cleanup.windows = { error: error.message };  }
   }
   if (temp) {
-    try { disposeManagedTemp(temp); cleanup.temp = {removed:true}; }
+    stopLease?.();
+    try {
+      disposeManagedTemp(temp, {log: line => {
+        const redacted = redactEvidenceText(line);
+        appendFileSync(join(out, 'logs/prune-temp-audit.jsonl'), redacted + '\n'); console.log(redacted);
+      }});
+      cleanup.temp = {removed:true};
+    }
     catch (error) { cleanup.temp = {removed:false,error:redactEvidenceText(error.message)}; }
   }
-  // Owner-approved housekeeping: prune synthetic test temp directories older than 24 hours.
+  // Only registered managed directories with expired leases and dead owner identities.
   try {
-    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '24', '-Roots', 'C:/weftmate-temp', '-Repository', repository, '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
+    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '24', '-Roots', tempParent || managedTempParent(), '-Repository', repository, '-Log', join(out, 'logs/prune-temp-audit.jsonl'), '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
+    if (pruned.code !== 0) throw Error(`清理器非零退出（${pruned.code}）；见 logs/prune-temp.log`);
     cleanup.staleTemp = JSON.parse(pruned.output.trim().split(/\r?\n/).pop());
   } catch (error) { cleanup.staleTemp = { error: error.message }; }
   phases.push({ name: 'cleanup', status: cleanup.temp?.removed === false || cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.staleTemp?.failed || cleanup.android?.error || cleanup.android?.packageRemoved === false || cleanup.android?.reverseRemoved === false || cleanup.android?.forwardRemoved === false || cleanup.apple?.bootedOwnedRemaining?.length ? 'failed' : 'passed', reason: cleanup.temp?.error || cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.android?.error || '', seconds: (Date.now()-cleanupStarted)/1000 });

@@ -27,7 +27,11 @@ const server = createServer(async (req, res) => {
 await new Promise(done => server.listen(0, '127.0.0.1', done));
 const device = process.argv.includes('--android');
 let android;
-try { android = device ? await startAndroid(out) : null; }
+try {
+  const infoIndex = process.argv.indexOf('--android-device');
+  const deviceInfo = infoIndex < 0 ? undefined : JSON.parse(await readFile(process.argv[infoIndex + 1], 'utf8'));
+  android = device ? await startAndroid(out, deviceInfo) : null;
+}
 catch (error) { server.closeAllConnections(); await new Promise(done=>server.close(done)); throw error; }
 const browser = android?.browser || await chromium.launch({ headless: true });
 let currentBridge;
