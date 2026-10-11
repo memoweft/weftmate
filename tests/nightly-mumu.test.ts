@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseMuMuInfo, readMuMuInfo, connectMuMu, mumuManager, adbExecutable } from '../scripts/nightly/mumu.mjs';
+import { parseMuMuInfo, readMuMuInfo, connectMuMu, mumuManager, adbExecutable, assertAndroidDevice } from '../scripts/nightly/mumu.mjs';
 
 const output = (port: unknown = 16386, extra = {}) => JSON.stringify({ adb_port: port, is_android_started: true, is_process_started: true, android_version: '15.0', error_code: 0, ...extra });
 test('MuMu runtime address comes exclusively from manager info -v 0', async () => {
@@ -25,6 +25,20 @@ test('failed connection disconnects only the reported address and never tries a 
   const calls: unknown[] = [];
   await assert.rejects(connectMuMu(async (command: string, args: string[]) => { calls.push([command, args]); return { output: command === mumuManager ? output(19001) : 'unable to connect' }; }), /环境问题：未拍/);
   assert.deepEqual(calls, [[mumuManager, ['info', '-v', '0']], [adbExecutable, ['connect', '127.0.0.1:19001']], [adbExecutable, ['disconnect', '127.0.0.1:19001']]]);
+});
+
+test('the round reads the manager once, passes the same serial and rejects device changes before operations', async () => {
+  const calls: unknown[] = [];
+  const run = async (command: string, args: string[]) => {
+    calls.push([command,args]);
+    return {output:command===mumuManager?output(19001):args[0]==='connect'?'connected to 127.0.0.1:19001':'127.0.0.1:19001'};
+  };
+  const info=await connectMuMu(run);
+  await assertAndroidDevice(info.serial,run);await assertAndroidDevice(info.serial,run);
+  assert.equal(calls.filter((call:any)=>call[0]===mumuManager).length,1);
+  assert.deepEqual(calls.slice(2),[[adbExecutable,['-s',info.serial,'get-serialno']],[adbExecutable,['-s',info.serial,'get-serialno']]]);
+  await assert.rejects(assertAndroidDevice(info.serial,async()=>({output:'127.0.0.1:19002'})),/环境问题：未拍.*序列号/);
+  await assert.rejects(assertAndroidDevice(info.serial,async()=>{throw Error('disconnected')}),/环境问题：未拍.*不可核实/);
 });
 
 import { androidBusyReason } from '../scripts/nightly/android-packages.mjs';

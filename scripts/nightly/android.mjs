@@ -4,19 +4,27 @@ import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
 import { assertSystemBars } from './system-bars.mjs';
-import { readMuMuInfo, adbExecutable as adb } from './mumu.mjs';
+import { readMuMuInfo, verifyAndroidSerial, AndroidEnvironmentError, adbExecutable as adb } from './mumu.mjs';
 import { redactEvidenceText } from '../../tests/helpers/process-evidence.mjs';
 import { repository, option } from '../review-gallery/common.mjs';
 const pkg = 'com.memoweft.weftmate.mobile.nightly';
 async function until(fn) { for (let i = 0; i < 100; i++) { try { if (await fn()) return; } catch {} await new Promise(done => setTimeout(done, 300)); } throw Error('Android WebView readiness timed out'); }
-export async function startAndroid(out) {
-  const info = readMuMuInfo(), serial = info.serial;
-  execFileSync(adb, ['connect',serial], { windowsHide:true,timeout:10000 });
-  const command = (...args) => execFileSync(adb, ['-s', serial, ...args], { windowsHide: true, timeout: 10000, maxBuffer: 20 * 1024 * 1024 });
+export async function startAndroid(out, deviceInfo) {
+  const info = deviceInfo || readMuMuInfo(), serial = info.serial;
+  if (!deviceInfo) execFileSync(adb, ['connect',serial], { windowsHide:true,timeout:10000 });
+  const command = (...args) => {
+    try { verifyAndroidSerial(serial, execFileSync(adb, ['-s', serial, 'get-serialno'], {encoding:'utf8',windowsHide:true,timeout:5000})); }
+    catch (error) { if (error instanceof AndroidEnvironmentError) throw error; throw new AndroidEnvironmentError('本轮安卓设备连接已变化或不可核实'); }
+    return execFileSync(adb, ['-s', serial, ...args], { windowsHide: true, timeout: 10000, maxBuffer: 20 * 1024 * 1024 });
+  };
   let uiMode = '';
   try { uiMode = command('shell','dumpsys','uimode').toString(); } catch { /* Metadata stays explicitly unknown; no settings changes. */ }
   const systemTheme = /mComputedNightMode=true/.test(uiMode) ? 'dark' : /mComputedNightMode=false/.test(uiMode) ? 'light' : 'unknown';
   const statePath = option('--state', join(out, '../android-state.json'));
+  try {
+    const previous = JSON.parse(await readFile(statePath, 'utf8'));
+    if (previous.serial !== serial) throw new AndroidEnvironmentError('采集状态中的安卓序列号与本轮不一致');
+  } catch (error) { if (error.code !== 'ENOENT') throw error; }
   const state = { serial, installed: [], forward: [], reverse: [] }, persist = () => writeFile(statePath, JSON.stringify(state));
   let browser, probe, probeLog = '';
   const reverse = async port => { port = String(port); if (['8080', '8081', '18186'].includes(port)) throw Error('Forbidden personal port'); if (state.reverse.includes(port)) return; command('reverse', `tcp:${port}`, `tcp:${port}`); state.reverse.push(port); await persist(); };

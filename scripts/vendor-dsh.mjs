@@ -430,12 +430,18 @@ async function main() {
     RUNTIME_DIR = cache; TARBALLS_DIR = join(cache, 'tarballs')
     return assemble(sourceRepository(pin), pin, identity)
   }
-  try {
-    await assertRuntimeIdentity(cache, repoRoot)
+  const cacheReady = async () => {
+    try { await assertRuntimeIdentity(cache, repoRoot); return true }
+    catch (error) {
+      if (error.code === 'ENOENT' || error.message.startsWith('运行时过期：')) return false
+      throw error
+    }
+  }
+  const reuse = async () => {
     await pointVendor(cache)
     console.log(`[vendor-dsh] 复用固定提交 + 补丁哈希缓存 ${cache}`)
-    return
-  } catch { /* incomplete, legacy or stale caches must be built, never signed retroactively */ }
+  }
+  if (await cacheReady()) return reuse()
   await mkdir(shared, { recursive: true })
   const lockPath = `${cache}.lock`
   let lock
@@ -444,6 +450,11 @@ async function main() {
   await lock.writeFile(JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString(), identity: identity.key }))
   let buildRoot
   try {
+    // A contender may have published a complete cache while we acquired the lock.
+    if (await cacheReady()) return await reuse()
+    // Same-identity directories are immutable, including incomplete/stale ones.
+    // An operator must diagnose them; building must never delete a cache in use.
+    if (existsSync(cache)) throw new Error(`同身份缓存已存在但校验失败；保留缓存，拒绝重新发布：${cache}`)
     buildRoot = await mkdtemp(join(shared, 'weftmate-dsh-build-'))
     const checkout = join(buildRoot, 'checkout')
     RUNTIME_DIR = join(buildRoot, 'runtime'); TARBALLS_DIR = join(RUNTIME_DIR, 'tarballs')
@@ -461,7 +472,10 @@ async function main() {
     await assertRuntimeIdentity(RUNTIME_DIR, repoRoot)
     // Publish only a complete assembly; readers never see partially built cache content.
     const { rename } = await import('node:fs/promises')
-    await rm(cache, { recursive: true, force: true })
+    if (existsSync(cache)) {
+      if (await cacheReady()) return await reuse()
+      throw new Error(`同身份缓存已存在；保留缓存，拒绝重新发布：${cache}`)
+    }
     await rename(RUNTIME_DIR, cache)
     await pointVendor(cache)
   } finally {

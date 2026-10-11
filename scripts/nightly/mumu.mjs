@@ -36,3 +36,19 @@ export async function connectMuMu(run) {
   } catch { await run(adbExecutable, ['disconnect', info.serial], { name: 'adb-disconnect', allowFailure: true, limit: 5000 }).catch(() => {}); throw new AndroidEnvironmentError('管理工具给出的安卓调试地址无法连接'); }
   return info;
 }
+
+export function verifyAndroidSerial(expected, actual) {
+  if (!/^127\.0\.0\.1:\d+$/.test(expected || '') || String(actual).trim() !== expected)
+    throw new AndroidEnvironmentError('本轮安卓序列号与操作设备不一致');
+}
+
+// Confirm the existing connection, without another manager lookup or port probe.
+export async function assertAndroidDevice(serial, run) {
+  try {
+    const result = await run(adbExecutable, ['-s', serial, 'get-serialno'], { name: 'android-device-identity', limit: 5000 });
+    verifyAndroidSerial(serial, result.output);
+  } catch (error) {
+    if (error instanceof AndroidEnvironmentError) throw error;
+    throw new AndroidEnvironmentError('本轮安卓设备连接已变化或不可核实');
+  }
+}

@@ -3,7 +3,7 @@ import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } 
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { assertRuntimeIdentity } from '../../scripts/dsh-runtime-identity.mjs';
-import { managedMkdtempSync, disposeManagedTemp } from '../../tests/helpers/managed-temp.mjs';
+import { managedMkdtempSync, disposeManagedTemp, startManagedTempLease } from '../../tests/helpers/managed-temp.mjs';
 import { runManagedTestProcess } from '../../tests/helpers/managed-test-process.mjs';
 
 const mode = process.argv[2];
@@ -55,6 +55,7 @@ args.push('--test-reporter=tap');
 // drive. Use a fresh full path on the system drive so the C: versus D:
 // isolation fixture is actually exercised as well as the realpath contract.
 const temp = managedMkdtempSync('weftmate-ci-');
+const stopLease = startManagedTempLease(temp);
 const env = { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp, WEFTMATE_TEST_TEMP_SCOPE: temp, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' };
 const lines = [
   `### Unit tests (${mode})`,
@@ -78,6 +79,7 @@ try {
   result = await runManagedTestProcess(process.execPath, [...args, ...selected.map(file => resolve(file))],
     { env, commandRoots: [temp, ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')] });
 } finally {
+  stopLease();
   disposeManagedTemp(temp);
   if (existsSync(temp)) throw Error('Unit test temp cleanup failed');
 }
