@@ -1,0 +1,19 @@
+{
+  "platform": "ios",
+  "appVersion": "unknown",
+  "osVersion": "unknown",
+  "generatedAt": "2026-10-11T00:00:00Z",
+  "recentAbnormalRecords": [
+    {
+      "at": "2026-10-11T00:00:00Z",
+      "event": "app.previous_unclean_exit",
+      "runId": "11111111-1111-4111-8111-111111111111",
+      "platform": "ios",
+      "appVersion": "unknown",
+      "osVersion": "unknown",
+      "fields": { "recordIndex": "1", "reason": "unknown" }
+    }
+  ],
+  "abnormalCountsLast7Days": { "app.previous_unclean_exit": 1 },
+  "retentionPolicy": { "retentionDays": 7, "maxBytes": 2097152 }
+}

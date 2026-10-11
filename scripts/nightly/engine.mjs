@@ -222,6 +222,8 @@ finally {
     }
     catch (error) { cleanup.temp = {removed:false,error:redactEvidenceText(error.message)}; }
   }
+  // This replaces the paused prefix-only collector. Production tools stay on the
+  // paused version until confirmation review and owner notification before rollout.
   // Only registered managed directories with expired leases and dead owner identities.
   try {
     const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '24', '-Roots', tempParent || managedTempParent(), '-Repository', repository, '-Log', join(out, 'logs/prune-temp-audit.jsonl'), '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });

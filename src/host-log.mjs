@@ -1,7 +1,12 @@
 import { mkdirSync, readdirSync, statSync, unlinkSync, appendFileSync, openSync, readSync, closeSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { constants } from 'node:os';
+import { randomUUID } from 'node:crypto';
+import { constants, release } from 'node:os';
+
+export const diagnosticPlatform = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'macos' : 'linux';
+export const diagnosticAppVersion = value => typeof value === 'string' && /^(?:\d+\.){1,3}\d+(?:[-+][A-Za-z0-9.-]{1,40})?$/.test(value) ? value : 'unknown';
+export const diagnosticOsVersion = /^[0-9][0-9A-Za-z.+_-]{0,79}$/.test(release()) ? release() : 'unknown';
 
 // Metadata only. Fields describe execution, never user/model/file content.
 // runId: generated UUID; reason/action: lifecycle enums; exitCode: OS code;
@@ -81,9 +86,10 @@ export function sanitizeErrorDiagnostic(error, { appRoot, knownPaths = sourcePat
   return result;
 }
 export function createHostLog(root, { now = () => new Date(), maxBytes = 2 * 1024 * 1024, retentionDays = 7,
-  maxTotalBytes = 32 * 1024 * 1024, appRoot } = {}) {
+  maxTotalBytes = 32 * 1024 * 1024, appRoot, version, runId = randomUUID() } = {}) {
   const directory = join(root, 'logs');
   const knownPaths = sourcePaths(appRoot);
+  const runs = new Map();
   function writeRow(event, data, errorData) {
     try {
       mkdirSync(directory, { recursive: true });
@@ -93,7 +99,12 @@ export function createHostLog(root, { now = () => new Date(), maxBytes = 2 * 102
       const metadata = Object.fromEntries(Object.entries(data).filter(([key, value]) => fields.has(key) &&
         (typeof value === 'boolean' || typeof value === 'number' && Number.isFinite(value) || safeString(value))));
       if (['SIGTERM', 'SIGINT', 'SIGKILL', 'SIGHUP', 'SIGABRT', 'SIGSEGV', 'SIGBREAK', 'SIGQUIT'].includes(data.signal)) metadata.signal = data.signal;
-      const row = { at: date.toISOString(), event: /^[a-z][a-z0-9._-]{0,80}$/.test(event) ? event : 'host.event', ...metadata, ...errorData };
+      const rowRunId = typeof data.runId === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(data.runId) ? data.runId : runId;
+      const run = runs.get(rowRunId) ?? { recordIndex: 0, appVersion: diagnosticAppVersion(version ?? data.version) };
+      runs.set(rowRunId, run);
+      const row = { at: date.toISOString(), event: /^[a-z][a-z0-9._-]{0,80}$/.test(event) ? event : 'host.event', ...metadata, ...errorData,
+        runId: rowRunId, recordIndex: ++run.recordIndex, platform: diagnosticPlatform,
+        appVersion: run.appVersion, osVersion: diagnosticOsVersion };
       let encoded = JSON.stringify(row) + '\n';
       if (Buffer.byteLength(encoded) > maxBytes) return null;
       let index = 0, file;
@@ -112,7 +123,7 @@ export function createHostLog(root, { now = () => new Date(), maxBytes = 2 * 102
       return row;
     } catch { return null; /* A full/unavailable disk must not crash the host. */ }
   }
-  return { directory, write: (event, data = {}) => writeRow(event, data),
+  return { directory, retentionPolicy: { retentionDays, maxBytes: maxTotalBytes }, write: (event, data = {}) => writeRow(event, data),
     sanitizeError: error => sanitizeErrorDiagnostic(error, { appRoot, knownPaths }),
     failure: (source, error, data = {}) => writeRow('host.failure', { ...data, source }, sanitizeErrorDiagnostic(error, { appRoot, knownPaths })),
     previousUnclean: (data, dumps) => writeRow('host.previous_unclean_exit', data, { dumps: safeDumps(dumps) }) };
