@@ -1,3 +1,4 @@
+import { redactProjectPath } from '../personal-projects/projects.mjs';
 import { readSourceEvents } from './source-history.mjs';
 import {
   digest,
@@ -421,8 +422,12 @@ export function createTaskOperations(context) {
     /** Managed-child only: bind generic tools to the original authorized receipt, with no new scheduler. */
     async trackToolExecution(input) {
       exactKeys(input, ['id', 'action', 'sessionId', 'turn', 'callId', 'rootCallId', 'receiptId', 'messageHash',
-        'toolName', 'argumentsHash', 'executionId', 'state', 'resultHash', 'jobId', 'jobState', 'runtimeId']);
+        'toolName', 'argumentsHash', 'executionId', 'state', 'resultHash', 'jobId', 'jobState', 'runtimeId', 'permission']);
       const { action, sessionId, turn, callId, rootCallId, receiptId, toolName, argumentsHash } = input;
+      if (input.permission !== undefined && (action !== 'authorize_execution' || !input.permission ||
+          !Array.isArray(input.permission.types) || input.permission.types.some(type => !['read','write','delete','command','network','external','spend','install','system'].includes(type)) ||
+          !['allow','ask','deny'].includes(input.permission.decision) || !['project','global','default'].includes(input.permission.source) ||
+          typeof input.permission.summary !== 'string' || input.permission.summary.length > 500)) throw failure('INVALID_COMMAND');
       if (action === 'authorize_execution' && [input.executionId, input.state, input.resultHash, input.jobId, input.jobState].some(value => value !== undefined) ||
           action === 'observe_execution_job' && [input.state, input.resultHash].some(value => value !== undefined)) throw failure('INVALID_COMMAND');
       if (!['authorize_execution', 'finish_execution', 'observe_execution_job'].includes(action) || !validId(sessionId) ||
@@ -508,6 +513,7 @@ export function createTaskOperations(context) {
         source.dshTurn = turn;
         source.toolExecutions = [...rows, { executionId, sourceCommandId: source.commandId, sourceReceiptId: receiptId,
           rootCallId, callId, toolName, turn, state: 'running', argumentsHash,
+          ...(input.permission ? { permission: { ...input.permission, summary: redactProjectPath(input.permission.summary, next.projects?.[source.payload.projectId]?.rootPath) } } : {}),
           ...(input.runtimeId !== undefined ? { runtimeId: input.runtimeId } : {}), startedAt: now, updatedAt: now }];
         return { executionId, taskId: root.commandId, state: 'running' };
       }, () => context.requireToolRuntime(input.runtimeId)));

@@ -102,5 +102,5 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
         void core.refreshModels();
         void core.refreshBrowserWorkspace();
     }
-    return { loadNotificationSettings, saveNotificationSettings, sendTestNotification, loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
+    return { readPermissionRules: () => core.accessApi('/settings/approvals'), savePermissionRules: rules => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { rules } }), readExecutionRecords: params => core.accessApi('/execution-records?' + params), loadNotificationSettings, saveNotificationSettings, sendTestNotification, loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
 };
