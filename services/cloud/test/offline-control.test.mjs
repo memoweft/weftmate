@@ -14,8 +14,9 @@ test('offline control is DPoP/device/member scoped, monotone, and rejects revoke
   assert.equal(local.status, 200); await h.host.syncCloudRevocations();
   const connection = (await control(phone, '/hosts/connect', { hostId: h.started.hostId })).data;
   await refresh(phone, connection.resource);
-  const pending = await h.exchange(phone, '/auth/cloud-session'); assert.equal(pending.status, 202);
-  assert.equal((await h.hostApi(`/cloud/devices/${pending.requestId}/decision`, { decision: 'allow' }, local)).status, 200);
+  const session = await h.exchange(phone, '/auth/cloud-session'); assert.equal(session.status, 200);
+  assert.ok(session.cookie);
+  assert.equal((await h.hostApi('/cloud/devices/pending',undefined,local)).data.devices.length,0);
   await h.host.syncCloudRevocations(); await refresh(phone, f.config.audience);
   const state = JSON.parse(await readFile(join(h.root, 'cloud-identity/identity.json'), 'utf8'));
   async function publish(generation) {

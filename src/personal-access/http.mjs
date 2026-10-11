@@ -132,6 +132,14 @@ export function createHttpHandler(context) {
         return context.json(response, 200, { configured: context.registeredAccountCount() > 0,
           registrationAvailable: context.registeredAccountCount() < MAX_ACCOUNTS });
       }
+      if (pathname === '/personal/v1/auth/desktop') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.requireLocalDesktop(request);
+        if (request.method === 'GET') return context.json(response, 200, context.localAccounts(request));
+        if (request.method !== 'POST') throw failure('METHOD_NOT_ALLOWED', 405);
+        const { token, ...result } = await context.desktopSession(request, await context.readJson(request));
+        return context.json(response, 200, result, { 'set-cookie': context.sessionCookie(token, false) });
+      }
       if (request.method === 'POST' && pathname === '/personal/v1/auth/setup') {
         if (url.search) throw failure('INVALID_REQUEST');
         const matched = context.requireBrowserOrigin(request, true);
@@ -142,6 +150,7 @@ export function createHttpHandler(context) {
       }
       if (request.method === 'POST' && pathname === '/personal/v1/auth/register') {
         if (url.search) throw failure('INVALID_REQUEST');
+        context.requireDirectLocal(request);
         const matched = context.requireBrowserOrigin(request);
         const result = await context.registerAccount(await context.readJson(request));
         const { token, ...publicResult } = result;
@@ -149,6 +158,7 @@ export function createHttpHandler(context) {
       }
       if (request.method === 'POST' && pathname === '/personal/v1/auth/login') {
         if (url.search) throw failure('INVALID_REQUEST');
+        context.requireDirectLocal(request);
         const matched = context.requireBrowserOrigin(request);
         const result = await context.loginAccount(await context.readJson(request));
         const { token, ...publicResult } = result;
@@ -165,6 +175,7 @@ export function createHttpHandler(context) {
           !(request.method==='GET'&&pathname.startsWith('/personal/v1/activity'))) throw failure('SESSION_BUSY',409);
       if (pathname === '/personal/v1/backups' || pathname.startsWith('/personal/v1/backups/')) {
         const current = context.authenticate(request, 'account:manage');
+        context.requireDirectLocal(request, 'LOCAL_SESSION_REQUIRED');
         // Backups contain the whole host, so only its local owner may manage them.
         if (!context.backupOwner(current.ownerId)) throw failure('FORBIDDEN', 403);
         if (!context.backupManager) throw failure('CAPABILITY_UNAVAILABLE', 503);
@@ -205,6 +216,7 @@ export function createHttpHandler(context) {
         const current = context.authenticate(request, 'account:manage');
         const devices = Object.entries(state.devices).map(([deviceId, device]) => ({
           id: deviceId, name: device.name, createdAt: device.enrolledAt,
+          ...(context.cloudIdentity?.cloudDeviceId(current.ownerId, deviceId) ? { cloudDeviceId: context.cloudIdentity.cloudDeviceId(current.ownerId, deviceId) } : {}),
           ...(device.lastSeenAt ? { lastSeenAt: device.lastSeenAt } : {}),
           expiresAt: device.expiresAt ?? null, revoked: device.revoked,
           current: deviceId === current.deviceId,
@@ -495,7 +507,7 @@ export function createHttpHandler(context) {
       if (pathname === '/personal/v1/sync/capabilities' && request.method === 'POST') {
         if (url.search) throw failure('INVALID_REQUEST');
         const current = context.authenticate(request, 'commands:write');
-        if (current.via !== 'cookie' || !['password', 'cloud'].includes(current.device.authKind)) {
+        if (current.via !== 'cookie' || !['password', 'cloud', 'desktop'].includes(current.device.authKind)) {
           throw failure('FORBIDDEN', 403);
         }
         const body = await context.readJson(request);
@@ -513,7 +525,7 @@ export function createHttpHandler(context) {
           await context.serial(() => {
             const latest = context.authenticate(request, 'commands:write');
             if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
-                latest.via !== 'cookie' || !['password', 'cloud'].includes(latest.device.authKind)) {
+                latest.via !== 'cookie' || !['password', 'cloud', 'desktop'].includes(latest.device.authKind)) {
               throw failure('UNAUTHORIZED', 401);
             }
             if (latest.device.syncCapabilities?.nativeVersionCode !== level) {
@@ -538,7 +550,7 @@ export function createHttpHandler(context) {
         const recorded = await context.serial(() => context.mutate(ownerId, (next) => {
           const latest = context.authenticate(request, 'commands:write');
           if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
-              latest.via !== 'cookie' || !['password', 'cloud'].includes(latest.device.authKind)) {
+              latest.via !== 'cookie' || !['password', 'cloud', 'desktop'].includes(latest.device.authKind)) {
             throw failure('UNAUTHORIZED', 401);
           }
           const existing = next.devices[deviceId].syncCapabilities;
@@ -877,7 +889,7 @@ export function createHttpHandler(context) {
           (accountModelMatch && ['PATCH', 'POST', 'DELETE'].includes(request.method))) {
         if (url.search || !context.accountModelManager) throw failure('ACCOUNT_MODEL_UNAVAILABLE', 503);
         const current = context.authenticate(request, 'account:manage');
-        if (current.via !== 'cookie' || !['password', 'cloud'].includes(current.device.authKind)) {
+        if (current.via !== 'cookie' || !['password', 'cloud', 'desktop'].includes(current.device.authKind)) {
           throw failure('FORBIDDEN', 403);
         }
         const action = !accountModelMatch ? 'create' : request.method === 'PATCH' ? 'update'
@@ -915,7 +927,7 @@ export function createHttpHandler(context) {
           const latest = context.authenticate(request, 'account:manage');
           const newest = context.accountState(ownerId).accountModels?.[accountModelId];
           if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
-              latest.via !== 'cookie' || !['password', 'cloud'].includes(latest.device.authKind) ||
+              latest.via !== 'cookie' || !['password', 'cloud', 'desktop'].includes(latest.device.authKind) ||
               latest.device.authEpoch !== current.device.authEpoch ||
               latest.device.syncCapabilities?.nativeVersionCode < 12 ||
               newest?.ownerId !== ownerId || newest.status !== 'active' ||
@@ -2126,7 +2138,7 @@ export function createHttpHandler(context) {
             next.commands[commandId] = {
               commandId, ownerId: next.ownerId, requestId: payload.requestId,
               payloadHash, payload, sourceDeviceId: deviceId,
-              ...(['password', 'cloud'].includes(latest.devices[deviceId].authKind)
+              ...(['password', 'cloud', 'desktop'].includes(latest.devices[deviceId].authKind)
                 ? { sourceAuthEpoch: latest.devices[deviceId].authEpoch } : {}),
               targetDeviceId: payload.targetDeviceId, kind: payload.kind,
               ...(taskAction ? { rootTaskId, taskAction } : {}),

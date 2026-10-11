@@ -2,6 +2,8 @@
 globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
     let writes = Promise.resolve();
     let settingsGeneration = 0;
+    let systemRefreshTimer;
+    let systemReadGeneration = 0;
     const owner = () => core.state.account?.ownerId || core.state.ownerId;
     function acceptPersonalization(value, identity) {
         if (identity !== core.state.identityGeneration || !value?.settings) return value;
@@ -61,21 +63,26 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
         effects.toast('登录已失效，请重新登录。');
     }
     function formatDate(value) { return core.dateText(value, { year: true }); }
-    async function refreshSystem() {
+    async function refreshSystem(quiet = false) {
+        clearTimeout(systemRefreshTimer);
+        const generation = ++systemReadGeneration;
         void core.refreshApprovalSettings();
         const token = core.accountToken();
-        effects.systemLoading();
+        if (!quiet) effects.systemLoading();
         try {
             const [system, settings, catalog] = await Promise.all([core.accessApi('/system'),
                 core.accessApi('/settings/models'), core.accessApi('/models')]);
-            if (!core.accountCurrent(token))
+            if (!core.accountCurrent(token) || generation !== systemReadGeneration)
                 return;
             core.state.system = system;
             core.state.modelSettings = settings;
             effects.paintSystem(system, settings, catalog, token);
+            if (effects.systemVisible?.() && system.components?.some(row => row.state === 'problem' || row.pending || row.semanticRecall?.state === 'preparing')) {
+                systemRefreshTimer = setTimeout(() => { if (core.accountCurrent(token) && effects.systemVisible?.()) void refreshSystem(true); }, 2000);
+            }
         }
         catch {
-            if (core.accountCurrent(token))
+            if (core.accountCurrent(token) && generation === systemReadGeneration)
                 effects.systemNotice('系统状态暂时无法读取，请刷新重试。');
         }
     }

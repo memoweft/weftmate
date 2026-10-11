@@ -126,7 +126,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const currentModel = node('p', 'model-current'); currentModel.id = 'background-current-model';
         backgroundRow.firstElementChild.append(currentModel); panels.get('models').append(backgroundRow);
         move('models', ui.byId('background-model-notice'));
-        move(globalThis.weftmateDesktop ? 'system' : 'general', system); move('models', ui.byId('account-model-section'));
+        move('system', system); move('models', ui.byId('account-model-section'));
         const form = ui.byId('account-model-form'), editor = node('dialog', 'dialog model-editor-dialog');
         editor.id = 'account-model-dialog'; editor.setAttribute('aria-labelledby', 'model-editor-title');
         const editorHead = node('div', 'dialog-head'), editorTitle = node('h2', '', '添加模型'); editorTitle.id = 'model-editor-title';
@@ -185,6 +185,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         registry = globalThis.WeftUiCore.settingsRegistry({
             approvals: () => { let target=panels.get('approvals').querySelector('.permission-settings'); if(!target){target=node('div','permission-settings');panels.get('approvals').prepend(target);}globalThis.WeftPermissionRulesView(core,target,{toast:ui.toast}); },
             executionRecords: ({target}) => globalThis.WeftExecutionRecordsView(core,target,{current:()=>dialog.open&&selected==='executionRecords',openConversation:async row=>{ui.byId('account-back').click();if(core.state.currentView!=='assistant')await core.enterAssistant();if(row)await core.selectSession(row.sessionId);}}),
+            system: () => { void core.refreshSystem(); },
             data: ({target}) => globalThis.WeftDataView(core,target,{toast:ui.toast}),
             notifications: () => globalThis.WeftNotificationsView(core, panels.get('notifications'), {toast:ui.toast}),
             personalization: () => globalThis.WeftPersonalizationView(core, panels.get('personalization'), 'personalization', {toast:ui.toast}),

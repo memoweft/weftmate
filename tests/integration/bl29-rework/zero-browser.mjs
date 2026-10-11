@@ -2,13 +2,14 @@ import { outputPath } from './evidence.mjs';
 process.argv.push('--budget-only','--empty-main');
 import {chromium} from 'playwright';
 import {writeFileSync,rmSync} from 'node:fs';
-import {execFileSync} from 'node:child_process';
+import {createBl29Baseline} from './baseline.mjs';
 import {readFileSync} from 'node:fs';
 import {localUiSession} from '../../helpers/local-ui-session.mjs';
 process.argv.push('--export-only');
 const {startTimelineCandidate}=await import("./probe-server.mjs");
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
-const f=await startTimelineCandidate({daily:true,inlineProgress:true,logicalMobile:true,sidebar:true,historyCount:0});let browser;
+// Both UI versions use the current host's mailbox-verified cloud transport.
+const f=await startTimelineCandidate({daily:true,inlineProgress:true,logicalMobile:true,cloudMobile:true,sidebar:true,historyCount:0});let browser;
 const report={errors:[],cases:[]};
 try{
  const chat=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
@@ -20,8 +21,9 @@ try{
  browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:390,height:844}});
  page.on('pageerror',e=>report.errors.push(e.message));
  let failure=null,requests=[],delay=0,clientVersion='new',recovering=false,healthyAt=null;
- const oldFiles=execFileSync('git',['diff','--name-only','origin/main...HEAD','--','apps/mobile-ui/www'],{encoding:'utf8'}).trim().split('\n').filter(p=>p.endsWith('.js'));
- const oldSources=Object.fromEntries(oldFiles.map(p=>[p.replace('apps/mobile-ui/www/',''),execFileSync('git',['show','origin/main:'+p],{encoding:'utf8'})]));
+ const baseline=createBl29Baseline();
+ const oldSources=Object.fromEntries(Object.entries(baseline.changedSources(['apps/mobile-ui/www']))
+  .filter(([p])=>p.endsWith('.js')).map(([p,source])=>[p.replace('apps/mobile-ui/www/',''),source]));
  await page.route('**/*.js',route=>{if(new URL(route.request().url()).pathname.endsWith('/components/sessions.js'))return route.fulfill({contentType:'text/javascript',body:readFileSync('apps/mobile-ui/www/components/sessions.js','utf8').replace('uiCore.historyPollDelay(result)','0').replace('const outcome = await loadSharedHistory(true);','globalThis.__reviewTicks=(globalThis.__reviewTicks||0)+1;const outcome = await loadSharedHistory(true);')});const source=oldSources[new URL(route.request().url()).pathname.slice(1)];return clientVersion==='old'&&source!==undefined?route.fulfill({contentType:'text/javascript',body:source}):route.continue();});
  await page.route('**/bridge',async route=>{const m=JSON.parse(route.request().postData());
   if(m.method==='host.business'&&/\/changes\?/.test(m.params?.path||'')){requests.push({at:Date.now(),path:m.params.path});if(!failure&&recovering)healthyAt??=Date.now();if(failure)return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({error:{code:failure}})});}
@@ -61,7 +63,7 @@ try{
   const desktop=await browser.newPage();const reads=[];
   desktop.on('request',r=>{if(/\/models|\/settings\/personalization/.test(r.url()))reads.push(new URL(r.url()).pathname);});
   await desktop.route('**/personal/v1/ui/**/*.js',route=>{const p=new URL(route.request().url()).pathname.split('/ui/')[1],file=p.startsWith('ui-core/')?'src/'+p:'src/personal-access-ui/'+p;
-   let source=version==='main'?execFileSync('git',['show','origin/main:'+file],{encoding:'utf8'}):readFileSync(file,'utf8');source=source.replace('ui.loadAttachmentHasher =','globalThis.__revCore=core;ui.loadAttachmentHasher =');return route.fulfill({contentType:'text/javascript',body:source});});
+   let source=version==='main'?baseline.read(file):readFileSync(file,'utf8');if(source===undefined)return route.continue();source=source.replace('ui.loadAttachmentHasher =','globalThis.__revCore=core;ui.loadAttachmentHasher =');return route.fulfill({contentType:'text/javascript',body:source});});
   await desktop.goto(f.origin+'/personal/v1/ui');await localUiSession(desktop,f.credentials,'synthetic-config',{interceptLegacyStatus:false,mainChat:true});
   await desktop.waitForFunction(()=>globalThis.__revCore?.state.models.length&&!__revCore.state.refreshing);
   reads.length=0;f.debug.backend.listModels=async()=>[...await originalModels(),{id:'added-model',name:'synthetic added model',model:'synthetic',configured:true}];await f.request('/settings/personalization',{nextSuggestionsEnabled:false},'PATCH');

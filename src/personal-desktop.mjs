@@ -17,6 +17,7 @@ import { join, basename } from 'node:path';
 import { validArtifactFileName } from './personal-artifacts/index.mjs';
 import { windowIcon, notificationIcon } from './app-icons.mjs';
 import { nativeEventNotification } from './personal-access/notification-content.mjs';
+import { nativeWindowRequest } from './personal-desktop-request.mjs';
 
 export function desktopNotification(event, taskTitle) {
   return nativeEventNotification(event, taskTitle);
@@ -40,7 +41,7 @@ export function restoreDesktopBounds(saved, displays) {
     y: Math.max(area.y, Math.min(bounds.y, area.y + area.height - height)) };
 }
 
-export function createPersonalDesktop({ dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
+export function createPersonalDesktop({ systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
   const stateFile = join(app.getPath('userData'), 'desktop-window.json');
   let saved = {};
   try { saved = JSON.parse(readFileSync(stateFile, 'utf8')); } catch { /* first launch */ }
@@ -69,6 +70,11 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
   const updateStatus = next => { Object.assign(status, next); onStatus({ ...status }); };
   const trusted = event => event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame &&
     new URL(event.senderFrame.url).origin === origin && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
+  desktopSession.webRequest.onBeforeSendHeaders({ urls: [origin + '/personal/v1/*'] }, (details, callback) => {
+    const localWindow = nativeWindowRequest(details, win, origin);
+    callback({ requestHeaders: { ...details.requestHeaders,
+      ...(localWindow ? { Origin: origin, 'X-WeftMate-Desktop': libraryDesktopToken } : {}) } });
+  });
   const handle = (channel, callback) => ipcMain.handle(channel, (event, ...args) => {
     if (!trusted(event)) throw new Error('Desktop bridge unavailable');
     return callback(...args);
@@ -79,12 +85,34 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
     const error = await shell.openPath(directory); if (error) throw new Error('LOG_FOLDER_UNAVAILABLE');
     return { opened: true };
   });
-  const fetchLocal = (path, options = {}) => desktopSession.fetch(new URL(`/personal/v1${path}`, contentOrigin).href, { ...options, credentials: 'include' });
+  const fetchLocal = (path, options = {}) => desktopSession.fetch(new URL(`/personal/v1${path}`, contentOrigin).href, { ...options,
+    headers: { ...options.headers, origin: contentOrigin, ...(contentOrigin === origin ? { 'x-weftmate-desktop': libraryDesktopToken } : {}) }, credentials: 'include' });
   const jsonLocal = async path => {
     const response = await fetchLocal(path);
     if (!response.ok) throw new Error('Session unavailable');
     return response.json();
   };
+  const diagnosticOwner = async () => {
+    const [me, system] = await Promise.all([jsonLocal('/auth/me'), jsonLocal('/system')]);
+    if (!systemManager || contentOrigin !== origin || !system.canRestart) throw new Error('LOCAL_HOST_REQUIRED');
+    return me.account.ownerId;
+  };
+  handle('wm:desktop:system-repair', async id => {
+    if (!['host', 'memory', 'model', 'relay', 'certificate'].includes(id)) throw new Error('COMPONENT_REPAIR_UNAVAILABLE');
+    const ownerId = await diagnosticOwner();
+    await systemManager.restart(id, ownerId);
+    return systemManager.status(ownerId);
+  });
+  handle('wm:desktop:system-export', async () => {
+    const ownerId = await diagnosticOwner();
+    const selection = await dialog.showSaveDialog(win, { title: '保存诊断包',
+      defaultPath: `weftmate-diagnostics-${new Date().toISOString().slice(0, 10)}.zip`,
+      filters: [{ name: '诊断压缩包', extensions: ['zip'] }] });
+    if (selection.canceled || !selection.filePath) return { canceled: true };
+    const bundle = await systemManager.export(ownerId);
+    await writeFile(selection.filePath, bundle.buffer);
+    return { saved: true };
+  });
   const dataExports = new Map();
   const dataRequests = new Map();
   handle('wm:desktop:data-status', async id => {
@@ -216,7 +244,7 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
     const dataOwner = target.origin === origin && target.pathname.startsWith('/personal/v1/data') && options.method === 'POST' ? (await jsonLocal('/auth/me')).account.ownerId : null;
     try {
       const response = await desktopSession.fetch(target.href, { method: options.method || 'GET', body: options.body,
-        headers: { ...options.headers, Origin: target.origin, ...(target.origin === origin && target.pathname.startsWith('/personal/v1/data') ? {'x-weftmate-desktop':libraryDesktopToken} : {}) }, credentials: 'include', cache: 'no-store', redirect: 'error', signal: controller.signal });
+        headers: { ...options.headers, Origin: target.origin, ...(target.origin === origin ? {'x-weftmate-desktop':libraryDesktopToken} : {}) }, credentials: 'include', cache: 'no-store', redirect: 'error', signal: controller.signal });
       const body = await response.json().catch(() => ({})); if (dataOwner && body.operation?.id) dataRequests.set(body.operation.id,dataOwner);
       return { status: response.status, body, headers: {
         'retry-after': response.headers.get('Retry-After'), 'dpop-nonce': response.headers.get('DPoP-Nonce') } };
@@ -432,6 +460,8 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
     for (const notification of notifications) notification.close();
     nativeTheme.removeListener('updated', updatePalette);
     ipcMain.removeHandler('wm:desktop:conversation-export');
+    ipcMain.removeHandler('wm:desktop:system-repair');
+    ipcMain.removeHandler('wm:desktop:system-export');
     for(const channel of ['wm:desktop:data-export','wm:desktop:data-status','wm:desktop:data-show-export'])ipcMain.removeHandler(channel);
     for (const request of networkRequests.values()) request.abort();
     for (const channel of ['wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-choice', 'wm:desktop:project-create', 'wm:desktop:project-info', 'wm:desktop:project-show', 'wm:desktop:project-drop', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);

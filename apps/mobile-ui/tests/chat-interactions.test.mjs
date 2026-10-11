@@ -1742,18 +1742,35 @@ test('consecutive steps show readable descriptions before their raw detail',()=>
   assert.equal(subgroup.querySelector('.execution-records').children.filter(node=>node.className==='execution-step').length,2);
 })
 
-test('model restart stays pending on mobile through a two-minute native load and is not resubmitted',async()=>{
+test('system status on phones is read-only even when the computer advertises component repair',async()=>{
   const h=harness();
-  h.run(`state.page='general';state.loggedIn=true;state.owner='fixture-owner';document.getElementById('page-content').isConnected=true;void systemStatusSection(document.getElementById('page-content'))`);
-  const system={canRestart:true,queue:{},model:{state:'ready',canRestart:true,contextWindow:98304},
-    host:{state:'ready',canRestart:true},memory:{state:'disabled',canRestart:false}};
-  h.reply(0,system);h.reply(1,{backgroundModelProfileId:null});await h.flush();await h.flush();
-  const walk=node=>[node,...node.children.flatMap(child=>child.children?walk(child):[])];
-  const target=h.node('page-content');const button=walk(target).find(node=>node.tagName==='button'&&node.textContent==='重启模型服务');
-  assert.ok(button);button.fire('click');await h.flush();
-  h.advance(120000);await h.flush();
-  assert.equal(button.disabled,true);assert.equal(button.textContent,'重启中…');
-  assert.equal(h.bridge.filter(row=>row.params.path==='/personal/v1/system/model/restart').length,1);
-  h.reply(2,system);await h.flush();await h.flush();
-  assert.equal(walk(target).some(node=>node.textContent==='重启未确认，请刷新查看实际状态。'),false);
+  h.run(`state.page='system';state.loggedIn=true;state.owner='fixture-owner';document.getElementById('page-content').isConnected=true;void systemStatusSection(document.getElementById('page-content'))`);
+  const names={host:'对话与工具',memory:'记忆',model:'回复模型',relay:'远程连接',certificate:'安全连接'};
+  const system={canRestart:true,components:Object.entries(names).map(([id,name])=>({id,name,state:id==='model'?'problem':'healthy',label:id==='model'?'有问题':'正常',description:id==='model'?'模型地址暂时连不上，新的回复暂时不能生成。':'可以正常使用。',repairable:true,
+    ...(id==='model'?{nextStep:{target:'models',label:'去模型设置检查地址与模型'}}:{}),...(id==='memory'?{semanticRecall:{state:'ready',label:'就绪',description:'可以按意思查找记忆。'}}:{})})),
+    metrics:{startup:{value:1500,unit:'ms',reference:'正常'},firstToken:{value:3200,unit:'ms',reference:'正常'},memory:{value:268435456,unit:'bytes',reference:'正常'}}};
+  h.reply(0,system);await h.flush();
+  const walk=node=>[node,...node.children.flatMap(child=>child.children?walk(child):[])],target=h.node('page-content');
+  assert.deepEqual(walk(target).filter(node=>node.dataset?.component).map(node=>node.dataset.component),['host','memory','model','relay','certificate']);
+  assert.match(allText(target),/按意思找 · 就绪/);assert.match(allText(target),/1.5 秒/);assert.match(allText(target),/3.2 秒/);assert.match(allText(target),/256 MB/);
+  assert.match(allText(target),/在电脑上去模型设置检查地址与模型/);
+  assert.equal(walk(target).filter(node=>node.tagName==='button'&&/修复|重启|导出/.test(node.textContent)).length,0);
+  assert.equal(h.bridge.some(row=>/restart|repair|diagnostics.bundle/.test(row.params?.path||'')),false);
+  const refresh=walk(target).find(node=>node.attrs?.['aria-label']==='刷新系统状态');assert.ok(refresh);assert.equal(refresh.textContent,'');refresh.fire('click');await h.flush();
+  assert.equal(h.bridge.filter(row=>row.params?.path==='/personal/v1/system').length,2);
+  system.components[2]={...system.components[2],state:'healthy',label:'正常',description:'可以正常连接。'};
+  h.reply(h.bridge.findLastIndex(row=>row.params?.path==='/personal/v1/system'),system);await h.flush();assert.equal(walk(target).find(node=>node.dataset?.component==='model').dataset.state,'healthy');
+});
+
+test('older computers retain status and omit semantic recall when the health field is absent',async()=>{
+  const h=harness();h.run(`state.page='system';state.loggedIn=true;state.owner='fixture-owner';document.getElementById('page-content').isConnected=true;void systemStatusSection(document.getElementById('page-content'))`);
+  h.reply(0,{canRestart:true,host:{state:'ready',canRestart:true},model:{state:'unconfigured'},memory:{state:'disabled'}});await h.flush();
+  const target=h.node('page-content');assert.match(allText(target),/对话与工具/);assert.match(allText(target),/回复模型/);assert.match(allText(target),/未启用/);assert.match(allText(target),/尚未记录/);
+  assert.doesNotMatch(allText(target),/按意思找|重启/);
+});
+
+test('late system status does not repaint a different account or page',async()=>{
+  const h=harness();h.run(`state.page='system';state.loggedIn=true;state.owner='fixture-owner';document.getElementById('page-content').isConnected=true;void systemStatusSection(document.getElementById('page-content'));state.owner='next-owner'`);
+  h.reply(0,{components:[{id:'model',name:'回复模型',state:'problem',description:'旧账户的状态'}]});await h.flush();
+  assert.doesNotMatch(allText(h.node('page-content')),/旧账户的状态/);
 });

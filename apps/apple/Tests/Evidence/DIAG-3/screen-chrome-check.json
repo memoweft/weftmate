@@ -1,0 +1,170 @@
+{
+  "package": "DIAG-3b",
+  "handoff": "DIAG-3c",
+  "source": "Whole native simctl display outside XCTest. Same compiled App and shared settings UI; actual status bar. No image modification.",
+  "method": "Inspect the complete native images and scan the bottom 90 native pixel rows for a contrasting contiguous bar wider than 300 pixels in the centered 520 pixel region.",
+  "captures": [
+    {
+      "file": "iphone-about-empty-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-about-empty-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-about-normal-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-about-normal-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-about-read-failure-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-about-read-failure-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-about-records-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-about-records-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-banner-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-banner-dismissed-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-banner-dismissed-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-banner-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-detail-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-detail-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-detail-raw-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-detail-raw-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-empty-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-empty-file-preview-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-empty-file-preview-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-empty-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-file-preview-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-file-preview-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-file-raw-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-file-raw-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-normal-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-normal-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-read-failure-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-read-failure-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-records-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-records-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-summary-preview-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-summary-preview-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-summary-raw-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-summary-raw-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-system-share-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-system-share-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-watch-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-watch-detail-dark.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-watch-detail-light.png",
+      "candidateContrastRows": []
+    },
+    {
+      "file": "iphone-watch-light.png",
+      "candidateContrastRows": []
+    }
+  ],
+  "homeIndicatorRequirementMet": false,
+  "limitation": "Bottom home indicator remains absent after XCTest, simulator restart and native UIKit hosting controller. No system/simulator settings changed; no drawn replacement."
+}

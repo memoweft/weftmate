@@ -1,0 +1,12 @@
+{
+  "mode": "required",
+  "files": 296,
+  "exitCode": 1,
+  "passed": 1603,
+  "failed": 2,
+  "skipped": 14,
+  "failures": [
+    "D:\\\\AIProjects\\\\WeftMate\\\\Worktrees\\\\w4\\\\tests\\\\personal-shared-attachments.test.ts",
+    "review command trees leave no descendants in three runs and 6/8-second background successes remain usable"
+  ]
+}

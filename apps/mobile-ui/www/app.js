@@ -45,7 +45,7 @@ const mobileEffects = {
   activityActionFinished:()=>{if(activityReturn){activityReturn=false;state.tabSource=null;page('activity');}},
   openActivitySource:target=>openGoalSource(target),
   openActivityMemory:()=>page('memory'),
-  openActivitySettings:()=>page('about'),
+  openActivitySettings:(category='about')=>page(category),
   nativeCall: (...args) => call(...args),
   foregroundRestored: async () => {
     if(!state.loggedIn)return;
@@ -95,6 +95,11 @@ const uiCore = WeftUiCore.create({ fetch: mobileWebBridge?.fetch || androidBridg
   networkAvailable:()=>globalThis.navigator?.onLine,nativeMobile:!!window.weftNative,
   canWaitForReply:()=>!window.weftNative||androidBridge.canWaitForReply() });
 uiCore.android = androidBridge;
+uiCore.cloudSendFeedback = payload => {
+  const account = globalThis.WeftMobileCloud?.core;
+  if (!account) return Promise.reject({ code: 'FEEDBACK_LOGIN_REQUIRED' });
+  return account.cloudSendFeedback(payload);
+};
 function startMobileConnection() {
   uiCore.syncMobileIdentity();
   uiCore.startConnection(async()=>{
@@ -124,6 +129,7 @@ const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore,
     ...result.messages.map(message=>({type:message.role==='user'?'user.message':'assistant.message',data:{text:message.text,
       originalAttachments:(message.thumbnails||[]).map(image=>({name:image.name||'图片'}))}})),
     ...(result.receipts||[]).map(receipt=>({type:'step.completed',data:{summary:uiCore.interfaceText(receipt.summary),toolName:receipt.toolName}}))];}});
+globalThis.WeftProblemFeedback=trigger=>mobileMessageActions.openFeedback(trigger,state.chatSource==='phone'?state.conversationId:state.sharedSessionId,state.chatSource==='phone');
 const conversationTasks=uiCore.mobileDecisions.tasks;
 const toolApprovals=uiCore.mobileDecisions.approvals;
 const toolQuestions=uiCore.mobileDecisions.questions;
@@ -131,7 +137,9 @@ let libraryView=null;
 let searchView=null;
 let helpView=null,releaseNotice=null;
 function mobileHelpPage(kind,target){
-  helpView?.close();uiCore.syncMobileIdentity();helpView=WeftHelpView.mount({target,core:uiCore,kind,mobile:true,back:()=>page(state.returnPage||'chat'),run:action=>{
+  helpView?.close();uiCore.syncMobileIdentity();helpView=WeftHelpView.mount({target,core:uiCore,kind,mobile:true,back:()=>page(state.returnPage||'chat'),run:(action,trigger)=>{
+    if(action==='feedback')return mobileMessageActions.openFeedback(trigger,state.chatSource==='phone'?state.conversationId:state.sharedSessionId,state.chatSource==='phone');
+    if(action==='sentFeedback')return mobileMessageActions.sentFeedback(trigger);
     const actions={main:()=>uiCore.selectMainChat(),temporary:()=>mobileNewTemporaryConversation(),memory:()=>page('memory'),goals:()=>page('goals'),devices:()=>page('devices'),approvals:()=>page('approvals'),backups:()=>{page('settings');toast('备份与恢复请在电脑的设置中打开。');},about:()=>page('about')};return actions[action]?.();}});helpView.focus();
 }
 function mobileProfileMenu(trigger){WeftPopover.menu(trigger,[{name:'设置',icon:'settings',action:()=>page('settings')},{name:'帮助',icon:'info',action:()=>page('help')},{name:'更新内容',icon:'sync',action:()=>page('releases')}],error=>toast(safeError(error),true));}
@@ -378,7 +386,7 @@ function page(name,{dataLoaded=false}={}){
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
     help:'帮助与小技巧',releases:'更新内容',goals:'目标',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'权限',executionRecords:'执行记录',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
-    account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
+    account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑',system:'系统状态'
   }[name]||name;
   syncMobileTabs();
   if(['help','releases'].includes(name))$('header-title').textContent=name==='help'?'帮助与小技巧':'更新内容';
@@ -443,6 +451,7 @@ function page(name,{dataLoaded=false}={}){
 
 
 function processEvent(message){const {event,data}=message;if(state.page==='goals')void uiCore.readGoals();
+  if(state.page==='system'&&/^(system|host|connection|model|memory|relay|certificate)\./.test(event))refreshMobileSystemStatus();
   if(event==='conversation.exported')toast(data.saved?'对话已保存':'导出未完成，请重试',!data.saved);
   if(event==='cloud.callback')void resumeCloudLogin();if(event==='chat.started'){
     invalidateLiveProgress();
@@ -777,6 +786,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     openRunRecords:()=>page('general'),openLogin:()=>globalThis.WeftMobileCloud.core?.startCloudJourney(),openDevices:()=>page('devices'),
     readLocalDiagnostics:window.weftNative?()=>call('diagnostics.status',{},5000):null});
   uiCore.observeConnection(value=>{
+    if(state.page==='system')refreshMobileSystemStatus();
     if(value.kind!=='online')for(const notice of document.querySelectorAll('.chat-read-notice'))if(!notice.dataset.noticeKind||notice.dataset.noticeKind==='read-failure')notice.hidden=true;
     if(state.page==='chat'&&state.chatSource==='host'){
       if(state.logicalChats)renderOptimisticMessages();else renderSharedConversation();

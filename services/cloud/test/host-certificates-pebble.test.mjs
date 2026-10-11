@@ -8,7 +8,9 @@ import { createServer as netServer } from 'node:net';
 import { request as httpsRequest } from 'node:https';
 import { Resolver } from 'node:dns/promises';
 import { X509Certificate } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { fixture } from './identity-helpers.mjs';
+import { appDevice, control, refresh, proof } from './app-helpers.mjs';
 import { createAliyunDns, waitForAuthoritativeTxt } from '../src/dns-aliyun.mjs';
 import { fakeAliyun, TEST_ACCESS_KEY_ID as accessKeyId, TEST_ACCESS_KEY_SECRET as accessKeySecret } from './dns-aliyun-helpers.mjs';
 import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
@@ -63,6 +65,8 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
       database, zone:'example.com', accessKeyId, accessKeySecret, endpoint:fake.endpoint,
       waitForTxt: data => waitForAuthoritativeTxt({ ...data, resolvers:[resolver], intervalMs:10, timeoutMs:2000 }),
     }) });
+    const clockTimer = setInterval(() => f.advance(Date.now() - f.now),250);
+    t.after(() => clearInterval(clockTimer));
     await f.verified(); const logged = await f.signedIn();
     let host, renewal;
     try {
@@ -100,16 +104,34 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
       const contentCa = await (await fetch(`https://localhost:${managementPort}/roots/0`)).text();
       const configBefore = await readFile(path.join(hostRoot,'relay/frpc.toml'),'utf8');
       const adapterPort = Number(/^localPort = (\d+)$/m.exec(configBefore)[1]);
-      async function tlsStatus() {
+      async function tlsRequest(route,{method='GET',body,headers={}}={}) {
         return new Promise((resolve,reject)=> {
           const request = httpsRequest({hostname:'127.0.0.1',port:adapterPort,servername:domain,ca:contentCa,agent:false,
-            path:'/personal/v1/status',headers:{host:domain,cookie:auth.cookie}}, response=> {
+            path:'/personal/v1'+route,method,headers:{host:domain,
+              ...(body!==undefined?{origin:pairing.relay.baseUrl,'content-type':'application/json'}:{}),...headers}}, response=> {
             const cert = response.socket.getPeerCertificate().raw;
             const chunks=[];response.on('data',c=>chunks.push(c));response.on('end',()=>resolve({
-              cert,status:response.statusCode,data:JSON.parse(Buffer.concat(chunks).toString())}));
-          });request.on('error',reject);request.end();
+              cert,status:response.statusCode,headers:response.headers,data:JSON.parse(Buffer.concat(chunks).toString())}));
+          });request.on('error',reject);request.end(body===undefined?undefined:JSON.stringify(body));
         });
       }
+      const localReplay = await tlsRequest('/status',{headers:{cookie:auth.cookie}});
+      assert.equal(localReplay.status,403,JSON.stringify(localReplay.data));
+      assert.equal(localReplay.data.error.code,'CLOUD_LOGIN_REQUIRED');
+      assert.equal(tlsSpki(localReplay.cert),pairing.tlsSpki,'rejected local credentials still traverse the original validated host certificate');
+      const remote = await appDevice(f,'synthetic-certificate-browser');
+      const selected = (await control(remote,'/hosts/connect',{hostId:started.hostId})).data;
+      assert.equal(selected.approval,'trusted'); assert.equal(selected.pairingRequired,false);
+      await refresh(remote,selected.resource);
+      const nonce = await tlsRequest('/auth/cloud-nonce',{method:'POST',body:{}}); assert.equal(nonce.status,200);
+      const dpop = await proof(remote,pairing.relay.baseUrl+'/personal/v1/auth/cloud-session',remote.tokens.access_token,{nonce:nonce.data.nonce});
+      const session = await tlsRequest('/auth/cloud-session',{method:'POST',headers:{dpop},
+        body:{accessToken:remote.tokens.access_token,deviceName:'Synthetic certificate browser'}});
+      assert.equal(session.status,200,JSON.stringify(session.data)); assert.ok(session.data.hostTrust?.trustToken);
+      assert.equal(session.data.account.ownerId,setup.data.account.ownerId);
+      assert.match(session.headers['set-cookie'][0],/Secure/); assert.match(session.headers['set-cookie'][0],/HttpOnly/);
+      const remoteCookie = session.headers['set-cookie'][0].split(';')[0];
+      const tlsStatus = () => tlsRequest('/status',{headers:{cookie:remoteCookie}});
       const first = await tlsStatus(); assert.equal(first.status,200); assert.equal(tlsSpki(first.cert),pairing.tlsSpki);
       assert.equal(first.data.relay.certificateExpiresAt,new Date(new X509Certificate(original).validTo).toISOString());
       assert.equal(first.data.relay.certificateErrorCode,null);
@@ -121,7 +143,7 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
       // persisted account and cert; callback reloads the *existing* adapter.
       const identity = await createHostCloudIdentity({root:hostRoot,rootState:{hostId:started.hostId},timestamp:Date.now},
         {issuer:f.config.issuer,allowInsecureLoopback:true});
-      const identityBefore = await readFile(path.join(hostRoot,'cloud-identity/identity.json'),'utf8');
+      const identityBefore = JSON.parse(await readFile(path.join(hostRoot,'cloud-identity/identity.json'),'utf8'));
       let clock = Date.parse(new X509Certificate(original).validTo) - 29*86_400_000;
       renewal = await createCertificateManager({root:hostRoot,domain,identity,directoryUrl,now:()=>clock,
         onInstalled:()=>host.reloadRelayCertificate()});
@@ -130,12 +152,20 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
       assert.notEqual(new X509Certificate(first.cert).serialNumber,new X509Certificate(renewed.cert).serialNumber);
       assert.equal(existingClosed,false,'hot reload preserves live TLS connections');
       assert.equal(await readFile(path.join(hostRoot,'relay/frpc.toml'),'utf8'),configBefore,'adapter port and sidecar config unchanged');
-      assert.equal(await readFile(path.join(hostRoot,'cloud-identity/identity.json'),'utf8'),identityBefore,'content private key unchanged');
+      const identityAfter = JSON.parse(await readFile(path.join(hostRoot,'cloud-identity/identity.json'),'utf8'));
+      // Trusted-device status may finish publishing while the certificate renews.
+      // Compare actual key material, not the legitimately changing outbox; use
+      // boolean deep comparisons so a failure never prints private JWK fields.
+      assert.ok(isDeepStrictEqual(identityAfter.tls.privateJwk,identityBefore.tls.privateJwk),'content private key unchanged');
+      assert.equal(identityAfter.tls.spki,identityBefore.tls.spki,'content key fingerprint unchanged');
+      assert.ok(isDeepStrictEqual(identityAfter.installation.privateJwk,identityBefore.installation.privateJwk),'installation private key unchanged');
+      assert.ok(isDeepStrictEqual(identityAfter.installation.publicJwk,identityBefore.installation.publicJwk),'installation public key unchanged');
+      assert.equal(identityAfter.hostId,identityBefore.hostId,'installation host identity unchanged');
       assert.equal(fake.calls.filter(c=>c.action==='AddDomainRecord').length,2);
       await renewal.check(); assert.equal(fake.calls.filter(c=>c.action==='AddDomainRecord').length,2,'no retry before tomorrow');
       assert.equal(fake.records.size,1);
       const report={ca:'Pebble 2.10.1',signedHostDns:true,aliDnsV3:true,dns01:true,hotReload:true,pairingPinUnchanged:true,
-        renewal:true,liveConnectionPreserved:true,ownedTxtCleaned:true};
+        renewal:true,liveConnectionPreserved:true,ownedTxtCleaned:true,cloudVerifiedDpop:true,localCookieReplayRejected:true};
       if(process.env.WEFTMATE_PEBBLE_REPORT)await writeFile(process.env.WEFTMATE_PEBBLE_REPORT,JSON.stringify(report,null,2)+'\n');
       t.diagnostic(JSON.stringify(report));
     } catch(error) { t.diagnostic(pebble.output());t.diagnostic(dns.output());t.diagnostic(JSON.stringify(host?.relayStatus()));throw error; }
