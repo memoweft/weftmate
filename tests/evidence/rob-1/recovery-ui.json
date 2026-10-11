@@ -1,0 +1,113 @@
+{
+  "synthetic": true,
+  "realElectron": true,
+  "startupNeverMovesUnreadableCiphertext": true,
+  "retryAvailable": true,
+  "headerVisibleAfterScroll": true,
+  "startupContinues": true,
+  "profileMetadataPreserved": true,
+  "refillEntryOpens": true,
+  "emptySecretInput": true,
+  "refillCompletes": true,
+  "unreadableBytesRetained": true,
+  "fixedFailureCode": "CREDENTIAL_VAULT_UNREADABLE",
+  "modelRequests": 0,
+  "captures": [
+    {
+      "theme": "light",
+      "width": 1200,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
+      "viewportWidth": 1200,
+      "viewportHeight": 844,
+      "overflow": false,
+      "systemBars": false,
+      "surface": "real Electron responsive window"
+    },
+    {
+      "theme": "light",
+      "width": 480,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
+      "viewportWidth": 480,
+      "viewportHeight": 844,
+      "overflow": false,
+      "systemBars": false,
+      "surface": "real Electron responsive window"
+    },
+    {
+      "theme": "light",
+      "width": 360,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
+      "viewportWidth": 360,
+      "viewportHeight": 780,
+      "overflow": false,
+      "systemBars": false,
+      "surface": "real Electron responsive window"
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "overflow": false,
+      "systemBars": false,
+      "surface": "real Electron responsive window"
+    },
+    {
+      "theme": "dark",
+      "width": 1200,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
+      "viewportWidth": 1200,
+      "viewportHeight": 844,
+      "overflow": false,
+      "systemBars": false,
+      "surface": "real Electron responsive window"
+    },
+    {
+      "theme": "dark",
+      "width": 480,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
+      "viewportWidth": 480,
+      "viewportHeight": 844,
+      "overflow": false,
+      "systemBars": false,
+      "surface": "real Electron responsive window"
+    },
+    {
+      "theme": "dark",
+      "width": 360,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
+      "viewportWidth": 360,
+      "viewportHeight": 780,
+      "overflow": false,
+      "systemBars": false,
+      "surface": "real Electron responsive window"
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
+      "viewportWidth": 390,
+      "viewportHeight": 844,
+      "overflow": false,
+      "systemBars": false,
+      "surface": "real Electron responsive window"
+    }
+  ]
+}

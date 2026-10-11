@@ -1,0 +1,67 @@
+{
+  "at": "2026-10-11T07:47:31.183Z",
+  "mergedHead": "1ed9d53c",
+  "relatedPassed": 108,
+  "relatedFailed": 0,
+  "typecheck": true,
+  "publicIdentityHits": 0,
+  "conflictResolution": "STATE starts with origin/main and replaces only the two owned DIAG rows",
+  "ci": [
+    {
+      "conclusion": "",
+      "databaseId": 38122396470,
+      "event": "pull_request",
+      "name": "S2 Relay",
+      "status": "in_progress",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38122396470"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 38122396494,
+      "event": "pull_request",
+      "name": "Pinned DSH vendor tests",
+      "status": "in_progress",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38122396494"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 38122396521,
+      "event": "pull_request",
+      "name": "CI",
+      "status": "in_progress",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38122396521"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 38122396486,
+      "event": "pull_request",
+      "name": "Windows packaged application",
+      "status": "in_progress",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38122396486"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38122396469,
+      "event": "pull_request",
+      "name": "S2b Host certificates",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38122396469"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 38122396481,
+      "event": "pull_request",
+      "name": "Review gallery",
+      "status": "in_progress",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38122396481"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 38122396501,
+      "event": "pull_request",
+      "name": "S1c Web and Android",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38122396501"
+    }
+  ]
+}

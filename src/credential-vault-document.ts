@@ -15,7 +15,7 @@ export interface EncryptedCredentialVaultStore {
   remove(id: string): void;
 }
 
-const invalid = () => { throw new Error('模型凭据保险库不可读或尚未完成迁移。'); };
+const invalid = () => { throw Object.assign(new Error('模型凭据保险库不可读或尚未完成迁移。'), { code: 'CREDENTIAL_VAULT_UNREADABLE' }); };
 const validId = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= 160;
 const validKey = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= 4096;
 const unsafeOwnKey = (value: string) => value === '__proto__' || value === 'constructor' || value === 'prototype';

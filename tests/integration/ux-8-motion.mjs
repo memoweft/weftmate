@@ -277,14 +277,13 @@ for (const surface of surfaces) {
       await page.evaluate(theme => { document.documentElement.dataset.theme = theme; WeftReplyMotion.setPreference('reduce'); }, theme);
       if (!verifyOnly) await page.screenshot({ path: join(out, `${surface}-${theme}-reduced-motion.png`) });
       await page.evaluate(surface => surface === 'android-ui' ? page('appearance') : WeftSettingsNavigation.open('appearance'), surface);
-      const control = page.getByRole('combobox', { name: '减少动态效果', exact: true }); await control.waitFor();
-      const controlStyle = await control.evaluate(el => ({ height: el.getBoundingClientRect().height, border: getComputedStyle(el).borderTopWidth, dpr: devicePixelRatio, background: getComputedStyle(el).backgroundColor }));
+      const control = page.getByRole('switch', { name: '减少动态效果', exact: true }); await control.waitFor();
+      const controlStyle = await control.evaluate(el => ({ height: el.closest('.appearance-switch-target').getBoundingClientRect().height, border: getComputedStyle(el).borderTopWidth, dpr: devicePixelRatio, background: getComputedStyle(el).backgroundColor }));
       assert.ok(controlStyle.height >= 40 && parseFloat(controlStyle.border) * controlStyle.dpr >= .999 && controlStyle.background !== 'rgba(0, 0, 0, 0)', JSON.stringify(controlStyle));
       if (!verifyOnly) await page.screenshot({ path: join(out, `${surface}-${theme}-appearance-open.png`) });
-      await control.click();
-      if (!verifyOnly) await page.screenshot({ path: join(out, `${surface}-${theme}-motion-menu-open.png`) });
-      await page.getByRole('option', { name: '跟随系统', exact: true }).click(); assert.equal(await page.evaluate(() => WeftReplyMotion.preference), 'system');
-      await control.click(); await page.getByRole('option', { name: '开启', exact: true }).click(); assert.equal(await page.evaluate(() => WeftReplyMotion.reduced), true);
+      await page.getByRole('button', {name:'恢复跟随系统',exact:true}).click(); assert.equal(await page.evaluate(() => WeftReplyMotion.preference), 'system');
+      await control.check(); assert.equal(await page.evaluate(() => WeftReplyMotion.reduced), true);
+      if (!verifyOnly) await page.screenshot({ path: join(out, `${surface}-${theme}-motion-switch-on.png`) });
       if (surface === 'android-ui') { await page.getByRole('button', { name: '返回', exact: true }).click(); await page.evaluate(() => { if (state.page !== 'chat') page('chat'); }); }
       else await page.getByRole('button', { name: '关闭设置', exact: true }).click();
       report.checks.push({ surface, theme, appearancePreference: true, controlStyle });

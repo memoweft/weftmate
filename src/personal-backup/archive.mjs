@@ -18,8 +18,12 @@ const omitted = new Set(['cloud-identity', 'personal-backup', 'Backups', 'Cache'
   'GPUCache', 'DawnGraphiteCache', 'DawnWebGPUCache', 'Network', 'Session Storage', 'Local Storage',
   'IndexedDB', 'Service Worker', 'Partitions', 'Crashpad', 'logs', 'blob_storage', 'SingletonLock',
   'SingletonCookie', 'SingletonSocket', 'Local State', 'Preferences', 'DevTools Extensions', 'DevToolsActivePort']);
+export function storageAttachment(relative) {
+  return relative.split('/').some(part => /(?:\.enc\.|\.replaced-|^weftmate-storage-key\.json|^weftmate-.*\.recovery\.json(?:\.|$))/i.test(part));
+}
 export function included(relative) {
   const parts = relative.split('/');
+  if (storageAttachment(relative)) return false;
   // Local migration preimages retain original credential hashes for stopped
   // rollback. Portable backups use the scrubbed current store exclusively.
   if (relative === 'personal-access/chat-identity-v1.before.json') return false;
@@ -31,9 +35,9 @@ export function included(relative) {
   return !parts.some(part => /(?:^\.env(?:\.|$)|credentials?|vault|\.enc$|\.pem$|\.key$|\.p12$|\.pfx$|(?:^|[-_.])tokens?(?:[-_.]|$))/i.test(part)) &&
     !/(?:\.(?:sqlite3?|db)-(?:wal|shm)|\.tmp)$/.test(relative) && !relative.endsWith('weftmate-host-state.json') && !relative.endsWith('weftmate-crash.log');
 }
-function safePath(name) {
+function safePath(name, skipStorageAttachments = false) {
   return typeof name === 'string' && name.length > 0 && !name.includes('\\') && !name.includes(':') &&
-    !name.includes('\0') && !name.startsWith('/') && name.split('/').every(part => part && part !== '.' && part !== '..' && !/[. ]$/.test(part)) && included(name);
+    !name.includes('\0') && !name.startsWith('/') && name.split('/').every(part => part && part !== '.' && part !== '..' && !/[. ]$/.test(part)) && (included(name) || skipStorageAttachments && storageAttachment(name));
 }
 async function files(root, relative = '') {
   const rows = [];
@@ -141,7 +145,7 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
 }
 
 /** Stream validation/extraction. No archive path is trusted; all bytes and the manifest are hashed. */
-export async function verify(file, destination = null) {
+export async function verify(file, destination = null, { skipStorageAttachments = true } = {}) {
   const input = createReadStream(file), unzip = createGunzip();
   input.on('error', error => unzip.destroy(error)); input.pipe(unzip);
   const iterator = unzip[Symbol.asyncIterator](); let buffer = Buffer.alloc(0), ended = false;
@@ -159,11 +163,11 @@ export async function verify(file, destination = null) {
       !Number.isFinite(Date.parse(manifest.createdAt))) throw backupError('BACKUP_CORRUPT');
     for (const row of manifest.files) {
       const canonical = row.path?.toLowerCase();
-      if (!safePath(row.path) || names.has(canonical) || !Number.isSafeInteger(row.size) || row.size < 0 ||
+      if (!safePath(row.path, skipStorageAttachments) || names.has(canonical) || !Number.isSafeInteger(row.size) || row.size < 0 ||
         !/^[a-f0-9]{64}$/.test(row.sha256)) throw backupError('BACKUP_CORRUPT');
       names.add(canonical); const hash = createHash('sha256'); let remaining = row.size, handle;
       try {
-        if (destination) { const target = path.join(destination, row.path); await mkdir(path.dirname(target), { recursive: true }); handle = await open(target, 'wx', 0o600); }
+        if (destination && !(skipStorageAttachments && storageAttachment(row.path))) { const target = path.join(destination, row.path); await mkdir(path.dirname(target), { recursive: true }); handle = await open(target, 'wx', 0o600); }
         while (remaining > 0) {
           if (!buffer.length && !ended) await more();
           if (!buffer.length) throw backupError('BACKUP_CORRUPT');

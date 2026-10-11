@@ -13,7 +13,7 @@
     const root = document.documentElement
     root.dataset.theme = appearance.theme === 'system' ? media?.matches ? 'dark' : 'light' : appearance.theme
     root.style.colorScheme = root.dataset.theme
-    root.dataset.accent = appearance.accent
+    globalThis.WeftAppearanceControls.apply(appearance, root.dataset.theme)
     globalThis.WeftSystemBars?.sync()
     root.style.setProperty('--text-size', `var(--wm-font-size-${appearance.fontSize}, ${appearance.fontSize}px)`)
     for (const key of Object.keys(defaults)) if (byId(`appearance-${key}`)) byId(`appearance-${key}`).value = appearance[key]
@@ -187,11 +187,6 @@
     actions = callbacks
     byId('conversation-resources')?.addEventListener('click', () => { void showPicker() })
     document.addEventListener('click', e => { if (picker && !picker.contains(e.target) && !e.target.closest('#conversation-resources, .preview-add')) hidePicker() })
-    for (const key of Object.keys(defaults)) byId(`appearance-${key}`).addEventListener('change', e => {
-      appearance[key] = e.target.value; applyAppearance()
-      try { appearanceStore.set(appearance) } catch { /* device storage can be unavailable */ }
-    })
-
     byId('account-menu-trigger').addEventListener('click', () => {
       const menu = byId('account-menu'); menu.hidden = !menu.hidden
       byId('account-menu-trigger').setAttribute('aria-expanded', String(!menu.hidden))
@@ -224,5 +219,5 @@
     })
     applyAppearance()
   }
-  window.WeftDesktop = { configureLibraryPreview(items,open) { if(preview) { preview.libraryItems=items;preview.libraryOpen=open;const header=preview.panel.querySelector('.preview-heading');configureLibraryControls(header,preview.tablist,header.querySelector('.preview-add'),header.querySelector('[aria-label="放大右侧面板"]'),header.querySelector('[aria-label="收起右侧面板"]')); } }, init, markdown, fileLabel, sessionGroup, sortSessions, toggleRail, showResources:showPicker, openPreview, closePreview, showImage, openCollection, usageText, icon }
+  window.WeftDesktop = { configureLibraryPreview(items,open) { if(preview) { preview.libraryItems=items;preview.libraryOpen=open;const header=preview.panel.querySelector('.preview-heading');configureLibraryControls(header,preview.tablist,header.querySelector('.preview-add'),header.querySelector('[aria-label="放大右侧面板"]'),header.querySelector('[aria-label="收起右侧面板"]')); } }, getAppearance: () => appearanceStore.value, setAppearance(patch) { applyAppearance(appearanceStore.set({ ...appearance, ...patch })); }, init, markdown, fileLabel, sessionGroup, sortSessions, toggleRail, showResources:showPicker, openPreview, closePreview, showImage, openCollection, usageText, icon }
 })()
