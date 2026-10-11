@@ -8,6 +8,7 @@ import { createServer as netServer } from 'node:net';
 import { request as httpsRequest } from 'node:https';
 import { Resolver } from 'node:dns/promises';
 import { X509Certificate } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { fixture } from './identity-helpers.mjs';
 import { appDevice, control, refresh, proof } from './app-helpers.mjs';
 import { createAliyunDns, waitForAuthoritativeTxt } from '../src/dns-aliyun.mjs';
@@ -142,7 +143,7 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
       // persisted account and cert; callback reloads the *existing* adapter.
       const identity = await createHostCloudIdentity({root:hostRoot,rootState:{hostId:started.hostId},timestamp:Date.now},
         {issuer:f.config.issuer,allowInsecureLoopback:true});
-      const identityBefore = await readFile(path.join(hostRoot,'cloud-identity/identity.json'),'utf8');
+      const identityBefore = JSON.parse(await readFile(path.join(hostRoot,'cloud-identity/identity.json'),'utf8'));
       let clock = Date.parse(new X509Certificate(original).validTo) - 29*86_400_000;
       renewal = await createCertificateManager({root:hostRoot,domain,identity,directoryUrl,now:()=>clock,
         onInstalled:()=>host.reloadRelayCertificate()});
@@ -151,7 +152,15 @@ test('Pebble DNS-01: real host proof → AliDNS API/TXT → issuance → install
       assert.notEqual(new X509Certificate(first.cert).serialNumber,new X509Certificate(renewed.cert).serialNumber);
       assert.equal(existingClosed,false,'hot reload preserves live TLS connections');
       assert.equal(await readFile(path.join(hostRoot,'relay/frpc.toml'),'utf8'),configBefore,'adapter port and sidecar config unchanged');
-      assert.equal(await readFile(path.join(hostRoot,'cloud-identity/identity.json'),'utf8'),identityBefore,'content private key unchanged');
+      const identityAfter = JSON.parse(await readFile(path.join(hostRoot,'cloud-identity/identity.json'),'utf8'));
+      // Trusted-device status may finish publishing while the certificate renews.
+      // Compare actual key material, not the legitimately changing outbox; use
+      // boolean deep comparisons so a failure never prints private JWK fields.
+      assert.ok(isDeepStrictEqual(identityAfter.tls.privateJwk,identityBefore.tls.privateJwk),'content private key unchanged');
+      assert.equal(identityAfter.tls.spki,identityBefore.tls.spki,'content key fingerprint unchanged');
+      assert.ok(isDeepStrictEqual(identityAfter.installation.privateJwk,identityBefore.installation.privateJwk),'installation private key unchanged');
+      assert.ok(isDeepStrictEqual(identityAfter.installation.publicJwk,identityBefore.installation.publicJwk),'installation public key unchanged');
+      assert.equal(identityAfter.hostId,identityBefore.hostId,'installation host identity unchanged');
       assert.equal(fake.calls.filter(c=>c.action==='AddDomainRecord').length,2);
       await renewal.check(); assert.equal(fake.calls.filter(c=>c.action==='AddDomainRecord').length,2,'no retry before tomorrow');
       assert.equal(fake.records.size,1);
