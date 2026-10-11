@@ -10,6 +10,15 @@ jobs:
   phone:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        width: [360, 390]
+        theme: [light, dark]
+    env:
+      WEFTMATE_ST2_PHONE_WIDTH: ${{ matrix.width }}
+      WEFTMATE_ST2_PHONE_THEME: ${{ matrix.theme }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,7 +53,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: st-2-phone-system-bars
+          name: st-2-phone-system-bars-${{ matrix.width }}-${{ matrix.theme }}
           path: |
             tests/evidence/st-2/phone-system-*.png
             tests/evidence/st-2/system-bar-checks.json
