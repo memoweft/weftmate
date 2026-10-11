@@ -1,0 +1,112 @@
+[
+  {
+    code: 'NOT_FOUND',
+    ms: 4500,
+    count: 1,
+    rps: 0.2222222222222222,
+    debug: {
+      main: false,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    }
+  },
+  {
+    code: 'SESSION_ARCHIVED',
+    ms: 4500,
+    count: 3,
+    rps: 0.6666666666666666,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    },
+    recoveredWaitMs: 999
+  },
+  {
+    code: 'BACKEND_UNAVAILABLE',
+    ms: 4500,
+    count: 3,
+    rps: 0.6666666666666666,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    },
+    recoveredWaitMs: 1000
+  },
+  {
+    code: 'CURSOR_RESET_REQUIRED',
+    ms: 4499,
+    count: 3,
+    rps: 0.6668148477439432,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    },
+    recoveredWaitMs: 1000
+  },
+  {
+    code: 'UNAUTHORIZED',
+    ms: 4500,
+    count: 1,
+    rps: 0.2222222222222222,
+    debug: {
+      main: false,
+      view: 'login',
+      visible: 'visible',
+      background: false,
+      csrf: false
+    }
+  },
+  {
+    code: 'NETWORK',
+    ms: 4500,
+    count: 3,
+    rps: 0.6666666666666666,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    },
+    recoveredWaitMs: 1000
+  },
+  {
+    code: 'HTTP_502',
+    ms: 4501,
+    count: 3,
+    rps: 0.6665185514330149,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    },
+    recoveredWaitMs: 999
+  },
+  {
+    code: 'HTTP_504',
+    ms: 4499,
+    count: 3,
+    rps: 0.6668148477439432,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    },
+    recoveredWaitMs: 1000
+  }
+]

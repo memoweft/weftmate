@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
+import { assertRuntimeIdentity } from '../dsh-runtime-identity.mjs';
 
 export async function pinnedBuild(worktree, roots = ['D:/AIProjects/Shared/Dependencies/DeepSeekHarness', join(homedir(),'deepseek-harness')]) {
   let pin;
@@ -20,10 +21,14 @@ export async function pinnedBuild(worktree, roots = ['D:/AIProjects/Shared/Depen
 
 /** Uses the controller's deadline, log capture and owned-process cleanup. */
 export async function runVendorTests(run, worktree, out) {
-  if (!existsSync(join(worktree, 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh/lib/bin.js'))) {
+  let needsBuild = false;
+  try { await assertRuntimeIdentity(join(worktree, 'vendor/dsh-runtime'), worktree); }
+  catch { needsBuild = true; }
+  if (needsBuild) {
     try {
       const checkout = await pinnedBuild(worktree);
       await run('node', [join(worktree, 'scripts/vendor-dsh.mjs')], { name: 'vendor-assemble', env: checkout ? {WEFTMATE_DSH_CHECKOUT:checkout} : {} });
+      await assertRuntimeIdentity(join(worktree, 'vendor/dsh-runtime'), worktree);
     } catch (error) { return {status:'environment',reason:`固定运行时准备失败，vendor 测试未运行：${error.message}`}; }
   }
   const report = join(out, 'vendor-test-results.json');

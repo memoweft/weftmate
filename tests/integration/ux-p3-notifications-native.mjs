@@ -1,8 +1,9 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Real Android NotificationManager/shade, synthetic DSH host, isolated QA APK. */
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
+
 import { resolve, join } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 

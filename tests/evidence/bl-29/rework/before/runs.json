@@ -1,0 +1,42 @@
+[
+  {
+    "name": "probe-race",
+    "code": 0,
+    "ms": 1577
+  },
+  {
+    "name": "probe-http-race",
+    "code": 0,
+    "ms": 5871
+  },
+  {
+    "name": "probe-server",
+    "code": 0,
+    "ms": 3970
+  },
+  {
+    "name": "probe-gateway",
+    "code": 0,
+    "ms": 2619
+  },
+  {
+    "name": "probe-browser",
+    "code": 0,
+    "ms": 150409
+  },
+  {
+    "name": "probe-desktop-errors",
+    "code": 0,
+    "ms": 46986
+  },
+  {
+    "name": "probe-latency",
+    "code": 0,
+    "ms": 32363
+  },
+  {
+    "name": "probe-exit",
+    "code": 0,
+    "ms": 96512
+  }
+]

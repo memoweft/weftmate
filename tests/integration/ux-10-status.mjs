@@ -1,3 +1,4 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Isolated native-fact status acceptance; no external model or daily profile. */
@@ -5,8 +6,8 @@ import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
 import {createRequire} from 'node:module';
 import {randomUUID} from 'node:crypto';
-import {mkdir,mkdtemp,rm,writeFile} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+
 import {join,resolve} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';

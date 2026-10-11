@@ -81,7 +81,7 @@
         if (!nativeCall) localStorage.setItem('weftmate-offline-identity', JSON.stringify(current));
       }
       async function tick() {
-        if (polling || document.visibilityState === 'hidden') return;
+        if (polling || document.visibilityState === 'hidden' || !core.foreground()) return;
         polling = true;
         try {
           let current = await readIdentity();

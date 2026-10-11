@@ -1,0 +1,108 @@
+{
+  "status": 0,
+  "signal": null,
+  "hex": "0x00000000",
+  "timedOut": false,
+  "stdout": "START head tray-exit\n{\n  version: 'head',\n  method: 'tray-exit',\n  pendingWaitRequests: 1,\n  ms: 313,\n  exitCode: 0\n}\n",
+  "stderr": "",
+  "lastStage": {
+    "at": "2026-10-11T03:40:16.307Z",
+    "stage": "closed",
+    "method": "tray-exit",
+    "rss": 130568192,
+    "exitCode": 0
+  },
+  "registeredProcesses": [
+    {
+      "pid": 38436,
+      "executable": "D:\\AIProjects\\WeftMate\\Worktrees\\w4\\node_modules\\electron\\dist\\electron.exe",
+      "createdAt": "2026-10-11T03:40:08.7868471Z",
+      "profile": "%TEMP%/weftmate-bl29-exit-GNWblA/weftmate-case-KB2Eb2/profile"
+    }
+  ],
+  "before": {
+    "memory": {
+      "committedBytes": 97642033152,
+      "limitBytes": 104228143104
+    },
+    "tcp": {
+      "CLOSE_WAIT": 20,
+      "FIN_WAIT_2": 19,
+      "ESTABLISHED": 196,
+      "TIME_WAIT": 176,
+      "LISTENING": 71
+    },
+    "at": "2026-10-11T03:40:05.2998232Z"
+  },
+  "resources": {
+    "memory": {
+      "committedBytes": 97755254784,
+      "limitBytes": 104228143104
+    },
+    "tcp": {
+      "CLOSE_WAIT": 20,
+      "FIN_WAIT_2": 19,
+      "ESTABLISHED": 211,
+      "TIME_WAIT": 178,
+      "LISTENING": 71
+    },
+    "at": "2026-10-11T03:40:17.8030931Z"
+  },
+  "fatalReports": [],
+  "stages": [
+    {
+      "at": "2026-10-11T03:40:07.144Z",
+      "stage": "prepare",
+      "method": "tray-exit",
+      "rss": 147886080,
+      "profile": "%TEMP%/weftmate-bl29-exit-GNWblA/weftmate-case-KB2Eb2/profile"
+    },
+    {
+      "at": "2026-10-11T03:40:09.139Z",
+      "stage": "launch",
+      "method": "tray-exit",
+      "pid": 38436,
+      "rss": 54173696
+    },
+    {
+      "at": "2026-10-11T03:40:12.718Z",
+      "stage": "first-window",
+      "method": "tray-exit",
+      "rss": 159875072
+    },
+    {
+      "at": "2026-10-11T03:40:13.488Z",
+      "stage": "login",
+      "method": "tray-exit",
+      "rss": 172195840
+    },
+    {
+      "at": "2026-10-11T03:40:15.993Z",
+      "stage": "quit-requested",
+      "method": "tray-exit",
+      "rss": 129859584
+    },
+    {
+      "at": "2026-10-11T03:40:16.307Z",
+      "stage": "closed",
+      "method": "tray-exit",
+      "rss": 130568192,
+      "exitCode": 0
+    }
+  ],
+  "rows": [
+    {
+      "version": "head",
+      "method": "tray-exit",
+      "pendingWaitRequests": 1,
+      "ms": 313,
+      "exitCode": 0
+    }
+  ],
+  "cleanup": {
+    "checked": [],
+    "killed": [],
+    "matched": 0
+  },
+  "remaining": 0
+}

@@ -1,0 +1,190 @@
+{
+  "required": {
+    "files": 283,
+    "passed": 1508,
+    "failed": 0,
+    "skipped": 14
+  },
+  "vendor": {
+    "files": 29,
+    "passed": 204,
+    "failed": 0,
+    "skipped": 0
+  },
+  "mobile": {
+    "files": 5,
+    "passed": 109,
+    "failed": 0
+  },
+  "backupAfterLegacyPreflightFix": {
+    "passed": 25,
+    "failed": 0
+  },
+  "typecheck": true,
+  "hygiene": {
+    "files": 7323,
+    "identityHits": 0
+  },
+  "installedSmoke": {
+    "passed": true,
+    "checks": 7,
+    "realInstall": false
+  },
+  "installedFirstRun": {
+    "packaged": true,
+    "normalInitializationBeforeKill": false,
+    "firstRunSavedSyntheticCredential": true,
+    "forcedRestart": true,
+    "durableLocalStateRetained": true,
+    "credentialReadable": true,
+    "modelRequests": 0,
+    "cleaned": 3
+  },
+  "firstRunRetryCleaned": 5,
+  "heavyRuns": [
+    {
+      "label": "review-confirm",
+      "slot": "heavy-3.lock",
+      "start": "2026-10-11T07:54:13.513Z"
+    },
+    {
+      "label": "review-confirm",
+      "slot": "heavy-3.lock",
+      "end": "2026-10-11T07:54:39.458Z",
+      "code": 0
+    },
+    {
+      "label": "recovery-ui",
+      "slot": "heavy-1.lock",
+      "start": "2026-10-11T07:54:58.728Z"
+    },
+    {
+      "label": "recovery-ui",
+      "slot": "heavy-1.lock",
+      "end": "2026-10-11T07:55:30.843Z",
+      "code": 1
+    },
+    {
+      "label": "recovery-ui-confirm",
+      "slot": "heavy-2.lock",
+      "start": "2026-10-11T08:08:19.132Z"
+    },
+    {
+      "label": "recovery-ui-confirm",
+      "slot": "heavy-2.lock",
+      "end": "2026-10-11T08:08:54.423Z",
+      "code": 0
+    },
+    {
+      "label": "required",
+      "slot": "heavy-2.lock",
+      "start": "2026-10-11T08:08:58.692Z"
+    },
+    {
+      "label": "required",
+      "slot": "heavy-2.lock",
+      "end": "2026-10-11T08:34:22.262Z",
+      "code": 1
+    },
+    {
+      "label": "required",
+      "slot": "heavy-1.lock",
+      "start": "2026-10-11T08:36:03.795Z"
+    },
+    {
+      "label": "required",
+      "slot": "heavy-1.lock",
+      "end": "2026-10-11T09:00:50.324Z",
+      "code": 0
+    },
+    {
+      "label": "vendor",
+      "slot": "heavy-1.lock",
+      "start": "2026-10-11T09:00:50.401Z"
+    },
+    {
+      "label": "vendor",
+      "slot": "heavy-1.lock",
+      "end": "2026-10-11T09:04:47.946Z",
+      "code": 0
+    },
+    {
+      "label": "mobile",
+      "slot": "heavy-1.lock",
+      "start": "2026-10-11T09:04:48.006Z"
+    },
+    {
+      "label": "mobile",
+      "slot": "heavy-1.lock",
+      "end": "2026-10-11T09:05:07.748Z",
+      "code": 0
+    },
+    {
+      "label": "installed-smoke",
+      "slot": "heavy-1.lock",
+      "start": "2026-10-11T09:05:07.796Z"
+    },
+    {
+      "label": "installed-smoke",
+      "slot": "heavy-1.lock",
+      "end": "2026-10-11T09:07:54.839Z",
+      "code": 0
+    },
+    {
+      "label": "installed-first-run",
+      "slot": "heavy-1.lock",
+      "start": "2026-10-11T09:07:54.888Z"
+    },
+    {
+      "label": "installed-first-run",
+      "slot": "heavy-1.lock",
+      "end": "2026-10-11T09:07:57.178Z",
+      "code": 3221226505
+    },
+    {
+      "label": "installed-first-run-retry",
+      "slot": "heavy-1.lock",
+      "start": "2026-10-11T09:12:59.032Z"
+    },
+    {
+      "label": "installed-first-run-retry",
+      "slot": "heavy-1.lock",
+      "end": "2026-10-11T09:13:25.031Z",
+      "code": 0
+    },
+    {
+      "label": "installed-smoke-final",
+      "slot": "heavy-1.lock",
+      "start": "2026-10-11T09:16:26.274Z"
+    },
+    {
+      "label": "installed-smoke-final",
+      "slot": "heavy-1.lock",
+      "end": "2026-10-11T09:18:59.042Z",
+      "code": 0
+    },
+    {
+      "label": "installed-first-run-final",
+      "slot": "heavy-1.lock",
+      "start": "2026-10-11T09:21:03.803Z"
+    },
+    {
+      "label": "installed-first-run-final",
+      "slot": "heavy-1.lock",
+      "end": "2026-10-11T09:21:36.631Z",
+      "code": 0
+    }
+  ],
+  "nativeRunnerAborts": [
+    {
+      "stage": "required first run",
+      "code": "0xC0000409",
+      "retestPassed": true
+    },
+    {
+      "stage": "installed-first-run initial runner",
+      "code": "0xC0000409",
+      "retestPassed": true
+    }
+  ]
+}

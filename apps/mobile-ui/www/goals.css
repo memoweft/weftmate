@@ -63,7 +63,7 @@ body:has(#page-content) .session-menu-item { display:flex; align-items:center; w
 body:has(#page-content) .session-menu-item:hover { background:var(--accent-soft); }
 body:has(#page-content) .session-menu-item.danger { color:var(--danger); }
 @media(max-width:720px) { .goals-page { padding:var(--wm-space-20); } .goals-heading { flex-wrap:nowrap; } .goals-section .goals-heading { align-items:center; } .goals-heading .button { white-space:nowrap; flex:none; padding-inline:var(--wm-space-12); } .goals-section h2 { font-size:var(--wm-font-size-16); } .goals-page .goals-icon { min-height:var(--wm-space-44); width:var(--wm-space-44); } .goals-row-actions .button { min-height:var(--wm-space-44); } .goals-form { padding:var(--wm-space-12); } }
-@media(prefers-reduced-motion:reduce) { .goals-page .settings-switch::before { transition:none; } }
+@media(prefers-reduced-motion:reduce) {html:not([data-motion-full]) .goals-page .settings-switch::before { transition:none; } }
 
 .goals-field input[type=number] { appearance:textfield; }
 .goals-field input::-webkit-inner-spin-button,.goals-field input::-webkit-outer-spin-button { appearance:none; margin:0; }

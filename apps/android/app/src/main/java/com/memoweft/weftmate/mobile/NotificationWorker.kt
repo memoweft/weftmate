@@ -14,8 +14,8 @@ class NotificationWorker(context: Context, params: WorkerParameters) : Worker(co
         return try {
             ActivityNotifications(applicationContext).poll(host) { !isStopped && ActivityNotificationPolicy.current(host, settings.host()) }
             Result.success()
-        } catch (error: ApiFailure) { if (ActivityNotificationPolicy.retry(error.status)) Result.retry() else Result.failure() }
-        catch (_: Exception) { if (isStopped) Result.success() else Result.retry() }
+        } catch (error: ApiFailure) { RunDiagnostics.failed("notification.failure", "notification-worker", error); if (ActivityNotificationPolicy.retry(error.status)) Result.retry() else Result.failure() }
+        catch (error: Exception) { if (!isStopped) RunDiagnostics.failed("notification.failure", "notification-worker", error); if (isStopped) Result.success() else Result.retry() }
     }
     companion object {
         private const val NAME = "weftmate-activity-notifications"

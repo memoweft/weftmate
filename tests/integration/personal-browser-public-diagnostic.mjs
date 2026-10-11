@@ -1,9 +1,10 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Opt-in read-only default-reader diagnostic: two fixed public official pages, no model. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, realpathSync, rmSync } from 'node:fs';
+
 import { dirname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 

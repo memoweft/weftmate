@@ -1,10 +1,11 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Opt-in isolated Electron + pinned DSH account model route, without inference. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
-import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+
 import { dirname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { routeForProfile } from '../../src/harness-model-routes.ts';

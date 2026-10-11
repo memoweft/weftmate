@@ -1,33 +1,34 @@
 /** Packaged paths and real main gateway. Synthetic account/model, no daily data. */
 import assert from 'node:assert/strict';
 import {generateKeyPairSync,createHash,randomUUID} from 'node:crypto';
-import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,existsSync,rmSync,realpathSync,readdirSync} from 'node:fs';
-import {tmpdir} from 'node:os';
+import {mkdirSync,writeFileSync,readFileSync,existsSync,rmSync,realpathSync,readdirSync} from 'node:fs';
+import {managedMkdtempSync} from '../../tests/helpers/managed-temp.mjs';
 import {join,resolve,parse} from 'node:path';
-import {spawn,spawnSync} from 'node:child_process';
 import {UUID} from 'builder-util-runtime';
 import {buildWindowsRelease} from '../release/windows.mjs';
 import {buildForSmoke} from './installed-build.mjs';
 import {keyId} from '../../src/personal-update/manifest.mjs';
 import {migrationHost,until} from '../../tests/helpers/migration-host.mjs';
 import {redactBuildMachineIdentity} from '../windows-package-policy.mjs';
+import {createProcessEvidence} from '../../tests/helpers/process-evidence.mjs';
 const option=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
 const testIdentity=option('--test-identity','fx21qa');assert.match(testIdentity,/^[a-z0-9]+$/);
 const out=resolve(option('--out','.local/installed-smoke'));mkdirSync(out,{recursive:true});
 // Match the Windows CI fixture's isolated system-drive temp placement: native
 // folder dialogs display literal paths, so a user-profile TEMP leaks in PNGs.
-const tempBase=process.platform==='win32'?parse(process.env.SystemRoot||'C:\\Windows').root:tmpdir();
-const temp=realpathSync.native(mkdtempSync(join(tempBase,'weftmate-fx21-install-'))),report={synthetic:true,realMain:true,pinnedDsh:true,realInstall:process.argv.includes('--install'),checks:[]};
+const temp=managedMkdtempSync('weftmate-fx21-install-'),report={synthetic:true,realMain:true,pinnedDsh:true,realInstall:process.argv.includes('--install'),checks:[]};
 let h,installed=false,installation=join(temp,'installed'),build,executable;
 const started=Date.now();
+const runnerEvidence=createProcessEvidence({outputDir:join(out,'runner-processes'),commandRoots:[temp],executables:[process.execPath],startedAt:started});
+const hostLogRows=profile=>readdirSync(join(profile,'logs')).filter(name=>/^host-\d{4}-\d\d-\d\d(?:-\d+)?\.jsonl$/.test(name)).flatMap(name=>readFileSync(join(profile,'logs',name),'utf8').trim().split('\n').filter(Boolean).map(line=>JSON.parse(line)));
 const installedExecutable=()=>{const files=readdirSync(installation).filter(name=>/^WeftMate(?:-[a-z0-9]+)?\.exe$/.test(name));assert.equal(files.length,1);return join(installation,files[0]);};
 report.testIdentity=testIdentity;
 const testGuid=UUID.v5(`com.memoweft.weftmate.${testIdentity}`,UUID.parse('50e065bc-3134-11e6-9bab-38c9862bdaf3'));
 const hasTestInstallation=()=>{
-  const result=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','[Console]::Out.Write((Test-Path -LiteralPath $env:WEFTMATE_SMOKE_REGISTRY_PATH).ToString())'],{encoding:'utf8',windowsHide:true,env:{...process.env,WEFTMATE_SMOKE_REGISTRY_PATH:`HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${testGuid}`}});
+  const result=runnerEvidence.runSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','[Console]::Out.Write((Test-Path -LiteralPath $env:WEFTMATE_SMOKE_REGISTRY_PATH).ToString())'],{encoding:'utf8',windowsHide:true,env:{...process.env,WEFTMATE_SMOKE_REGISTRY_PATH:`HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${testGuid}`}});
   assert.equal(result.status,0);return result.stdout.trim()==='True';
 };
-const run=(command,args)=>new Promise((done,reject)=>{const p=spawn(command,args,{windowsHide:true,stdio:'inherit'});p.once('error',reject);p.once('close',code=>code===0?done():reject(Error(`process exit ${code}`)));});
+const run=async(command,args)=>{const handle=runnerEvidence.spawn(command,args);handle.child.stdout?.pipe(process.stdout,{end:false});handle.child.stderr?.pipe(process.stderr,{end:false});const result=await handle.done;if(result.decimal!==0||result.spawnErrorCode)throw Error(`process exit ${result.decimal} (${result.hexadecimal}) ${result.meaning} ${result.spawnErrorCode||''}`);};
 try {
   executable=option('--executable');
   const existingInstaller=option('--installer');
@@ -49,10 +50,16 @@ try {
     if(report.realInstall){await run(installer,['--updated','/S','/currentuser',`/D=${installation}`]);installed=true;executable=installedExecutable();}
     else executable=join(build,'win-unpacked',`WeftMate-${testIdentity}.exe`);
   }
-  h=await migrationHost({executable,tempRoot:temp});
+  h=await migrationHost({executable,tempRoot:temp,processEvidence:({root,profile,executable})=>createProcessEvidence({outputDir:join(out,'electron-processes'),profileDirectory:profile,commandRoots:[root],executables:[executable,process.execPath],startedAt:started})});
   if(installed){report.installationRegistered=hasTestInstallation();assert.equal(report.installationRegistered,true);}
   h.page.on('response',async r=>{if(r.url().includes('/commands')){try{const value=await r.json();if(value.command)report.folderCommands=[...(report.folderCommands||[]),{kind:value.command.kind,state:value.command.state,errorCode:value.command.errorCode}];}catch{}}});
   report.packaged=await h.app.evaluate(({app})=>({isPackaged:app.isPackaged,appPath:app.getAppPath()}));assert.equal(report.packaged.isPackaged,true);
+  const diagnosticPaths=await h.app.evaluate(({app,crashReporter})=>({userData:app.getPath('userData'),crashDumps:app.getPath('crashDumps'),uploadToServer:crashReporter.getUploadToServer()}));
+  assert.equal(realpathSync(diagnosticPaths.userData),realpathSync(h.profile));assert.equal(diagnosticPaths.crashDumps,join(h.profile,'Crashpad'));assert.equal(diagnosticPaths.uploadToServer,false);
+  const system=(await h.api('/system')).body;assert.equal(system.runRecord.state,'ready');
+  const activeRunId=system.runRecord.runId,initialLogs=hostLogRows(h.profile);
+  assert.ok(initialLogs.some(row=>row.event==='host.start'&&row.runId===activeRunId));assert.equal(initialLogs.some(row=>row.event==='host.exit'&&row.runId===activeRunId),false);
+  report.diagnostics={runId:activeRunId,logDirectory:'<dataDirectory>/logs',crashDirectory:'<dataDirectory>/Crashpad',uploadToServer:false,runRecordState:system.runRecord.state,hostStartRecorded:true,hostExitRecordedBeforeClose:false};report.checks.push('packaged-local-diagnostic-paths-and-active-run');
   report.nativeBindingLoaded=await h.app.evaluate(({app})=>{const {createRequire}=process.getBuiltinModule('module');const native=createRequire(app.getAppPath()+'/package.json')('get-windows');return typeof native.activeWindowSync==='function'&&typeof native.openWindowsSync==='function';});assert.equal(report.nativeBindingLoaded,true);
   report.main=await h.mainFirst();report.checks.push('fresh-main-created-and-replied');
   await h.page.reload();await h.page.locator('#message-text').waitFor({state:'visible'});
@@ -127,14 +134,21 @@ try {
   for(const theme of ['light','dark']){await h.page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await h.page.screenshot({path:join(out,`desktop-480-${theme}.png`)});}
   report.smokePassed=true;report.passed=report.buildPassed!==false;
   if(!report.passed)process.exitCode=1;
-}catch(error){report.error=error.stack;report.passed=false;process.exitCode=1;}
+}catch(error){report.error=error.stack;report.electronProcessCleanup=error.processCleanup;report.passed=false;process.exitCode=1;}
 finally{
   if(h)report.modelCalls=h.requests.map(r=>({stream:r.stream,toolResponses:r.messages?.filter(m=>m.role==='tool').map(m=>({name:m.name,content:String(m.content).slice(0,1000)}))}));
   try{
-  await h?.close();
+  await h?.close({failed:!report.smokePassed,beforeDataRemoval:()=>{
+    if(!report.smokePassed)return;
+    const exit=hostLogRows(h.profile).findLast(row=>row.event==='host.exit'&&row.runId===report.diagnostics?.runId);
+    assert.ok(exit,'normal packaged close must write host.exit');assert.equal(exit.normal,true);assert.equal(exit.exitCode,0);assert.equal(exit.cleanupComplete,true);
+    report.diagnostics.hostExitRecordedAfterClose=true;report.diagnostics.normalExit=true;report.checks.push('packaged-normal-close-recorded');
+  }});
+  report.electronProcessCleanup=h?.processCleanup||report.electronProcessCleanup;
   if(installed){const files=readdirSync(installation).filter(name=>/^Uninstall WeftMate(?:-[a-z0-9]+)?\.exe$/.test(name));assert.equal(files.length,1);await run(join(installation,files[0]),['/S',`_?=${installation}`]);report.uninstalled=!existsSync(executable);report.installationRegistrationRemoved=!hasTestInstallation();assert.equal(report.uninstalled,true);assert.equal(report.installationRegistrationRemoved,true);}
-  rmSync(temp,{recursive:true,force:true});
-  }catch(error){report.cleanupError=error.stack;report.passed=false;process.exitCode=1;}
+  }catch(error){report.cleanupError=error.stack;report.electronProcessCleanup=h?.processCleanup||report.electronProcessCleanup;report.passed=false;process.exitCode=1;}
+  report.runnerProcessCleanup=await runnerEvidence.finalize({failed:!report.passed});
+  if(!report.runnerProcessCleanup.stillRunning&&!report.runnerProcessCleanup.preservationError&&!report.electronProcessCleanup?.stillRunning&&!report.electronProcessCleanup?.preservationError)rmSync(temp,{recursive:true,force:true});
   report.durationSeconds=(Date.now()-started)/1000;
   writeFileSync(join(out,'results.json'),JSON.stringify(report,(_key,value)=>typeof value==='string'?redactBuildMachineIdentity(value).replaceAll(temp,'%TEMP%'):value,2));
 }

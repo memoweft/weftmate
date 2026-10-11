@@ -1,0 +1,9 @@
+{
+  "seconds": 61.007,
+  "calls": 73,
+  "payloadBytes": 52072,
+  "averagePayloadBytes": 713.3150684931506,
+  "estimatedDailyCalls": 103384.85747537168,
+  "estimatedPayloadBytesPerDay": 73745976.69119938,
+  "estimatedWithOneKiBOverheadBytesPerDay": 179612070.74598
+}

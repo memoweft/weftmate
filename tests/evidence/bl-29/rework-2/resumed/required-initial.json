@@ -1,0 +1,11 @@
+{
+  "mode": "required",
+  "files": 284,
+  "exitCode": 1,
+  "passed": 1511,
+  "failed": 1,
+  "skipped": 14,
+  "failures": [
+    "BL-29b M2/M3 HTTP race and twenty disconnects during first query leave zero waiters"
+  ]
+}

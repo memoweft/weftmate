@@ -1,12 +1,13 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 // Private backup diagnostics: never export account identifiers, names, text or credentials.
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
-import { mkdtemp, cp, readFile, writeFile, rm, mkdir, readdir } from 'node:fs/promises';
+import { cp, readFile, writeFile, rm, mkdir, readdir } from 'node:fs/promises';
 import { join, resolve, basename } from 'node:path';
-import { tmpdir } from 'node:os';
+
 import { hashPassword } from '../../src/personal-access/password.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { validateStore } from '../../src/personal-access/store.mjs';
