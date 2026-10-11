@@ -30,12 +30,12 @@ async function preserveExcluded(source, target, relative = '') {
 
 export async function beginRestore({ root, control, file, validate = async () => {}, afterMove = async () => {} }) {
   root = path.resolve(root); control = path.resolve(control);
-  await verify(file); // Refuse corruption before touching current data.
+  await verify(file, null, { skipStorageAttachments: true }); // Still hash skipped legacy storage material before touching current data.
   const transaction = path.join(control, `restore-${randomUUID()}`), stage = path.join(transaction, 'new'), old = path.join(transaction, 'old');
   await mkdir(stage, { recursive: true, mode: 0o700 }); await mkdir(old);
   const journalFile = path.join(control, 'restore.json');
   try {
-    const manifest = await verify(file, stage);
+    const manifest = await verify(file, stage, { skipStorageAttachments: true });
     await rehomeSessions(stage, root, manifest);
     // Keep this host's installation ID so its own cloud identity remains valid.
     const store = path.join(stage, 'personal-access', 'store.json');

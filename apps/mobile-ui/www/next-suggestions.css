@@ -34,4 +34,4 @@
 .composer-completion-hint { position:absolute; right:var(--wm-space-8); bottom:var(--wm-space-4); color:var(--ink-muted); background:var(--surface); font-family:inherit; font-size:var(--wm-font-size-10); line-height:var(--wm-line-height-1_4); border:1px solid var(--line); border-radius:var(--wm-radius-4); padding:0 var(--wm-space-4); }
 .composer-completion-hint[hidden] { display:none; }
 @media (pointer:coarse),(max-width:600px) { .next-suggestion-chip { height:var(--wm-space-40); max-width:var(--wm-size-220); } .composer-above-slot { min-height:var(--wm-space-44); } .next-suggestions-dismiss { height:var(--wm-space-40); width:var(--wm-space-32); } }
-@media(prefers-reduced-motion:reduce) { .next-suggestions,.next-suggestions[hidden],.next-suggestion-chip { transition:none; } }
+@media(prefers-reduced-motion:reduce) {html:not([data-motion-full]) .next-suggestions,html:not([data-motion-full]) .next-suggestions[hidden],html:not([data-motion-full]) .next-suggestion-chip { transition:none; } }

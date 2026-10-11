@@ -1,0 +1,35 @@
+{
+  "runId": 38119848422,
+  "head": "f097ec7866d57820714a529bf5876d7396942b32",
+  "attempts": [
+    {
+      "attempt": 1,
+      "passed": false,
+      "code": "PROJECT_READER_TIMEOUT",
+      "outerCode": "MIGRATION_SMOKE_TIMEOUT"
+    },
+    {
+      "attempt": 2,
+      "passed": false,
+      "code": "PROJECT_READER_TIMEOUT",
+      "outerCode": "MIGRATION_SMOKE_TIMEOUT"
+    },
+    {
+      "attempt": 3,
+      "passed": true,
+      "checks": [
+        "packaged-local-diagnostic-paths-and-active-run",
+        "fresh-main-created-and-replied",
+        "native-folder-picker-substitute-registered-project",
+        "native-project-read-and-approved-write",
+        "native-conversation-export-written",
+        "assistant-switch-size-and-save-toast",
+        "packaged-normal-close-recorded"
+      ],
+      "durationSeconds": 356.491
+    }
+  ],
+  "independentTimerMs": 15000,
+  "usesBoundedCommand": false,
+  "sourceChangedBetweenAttempts": false
+}

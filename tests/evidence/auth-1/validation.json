@@ -52,5 +52,16 @@
     ]
   },
   "screenshots": 89,
-  "modelRequests": 0
+  "modelRequests": 0,
+  "mainIntegration": {
+    "main": "efa62dc1",
+    "relatedPassed": 79,
+    "relatedFailed": 0,
+    "mobilePassed": 109,
+    "mobileFailed": 0,
+    "realElectronAndTlsRelay": "passed",
+    "typecheck": "passed",
+    "publicHygieneIdentityHits": 0,
+    "textFilesScanned": 7574
+  }
 }

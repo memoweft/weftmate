@@ -326,9 +326,9 @@ D33：`deleteConversationSnippets` 默认 `false`。桌面、手机网页及手�
 | POST `/models/{modelProfileId}/verify` | `{}` | 200 `{"configured":true,"reachable":true,"modelListed":true,"inferenceVerified":false}` | 422 `MODEL_UNAVAILABLE`；503 `CAPABILITY_UNAVAILABLE` | 手、安 |
 | POST `/models/{modelProfileId}/chat/completions` | `model,messages`；可选 `tools,tool_choice,stream,max_tokens,temperature`；≤256 KiB | 200 `{"choices":[{"message":{"role":"assistant","content":"你好"},"finish_reason":"stop"}],"usage":{"total_tokens":10}}`；`stream:true` 为 SSE `data: …`，以 `data: [DONE]` 结束 | 422 `MODEL_UNAVAILABLE`；503 `CAPABILITY_UNAVAILABLE / BACKEND_UNAVAILABLE` | 手、安 |
 | GET `/account/models` | 无 | 200 `{"models":[AccountModel],"canManage":true}` | — | 桌、手、安 |
-| POST `/account/models` | `requestId,name,baseUrl,modelId,apiKey`；可选 `modelTier`；≤12 KiB | 202 `ModelOperation`；重放完成请求可200 | 400 `ACCOUNT_MODEL_SECRET_REQUIRED`；409 `REQUEST_CONFLICT`；503 `ACCOUNT_MODEL_UNAVAILABLE` | 桌、手、安 |
+| POST `/account/models` | `requestId,name,baseUrl,modelId,apiKey`；可选 `modelTier`；≤12 KiB | 202 `ModelOperation`；重放完成请求可200 | 400 `ACCOUNT_MODEL_SECRET_REQUIRED`；409 `REQUEST_CONFLICT`；503 `ACCOUNT_MODEL_UNAVAILABLE / CREDENTIAL_STORAGE_NOT_READY`（稍后用原请求重试） | 桌、手、安 |
 | GET `/account/models/{accountModelId}` | 无 | 200 `{"model":AccountModel}` | 404 `NOT_FOUND` | 手（转移前核对）、安 |
-| PATCH `/account/models/{accountModelId}` | `requestId,expectedRevision`；至少一个 `name,baseUrl,modelId,apiKey,modelTier`；≤12 KiB | 202/200 `ModelOperation` | 409 `ACCOUNT_MODEL_REVISION_CHANGED / ACCOUNT_MODEL_BUSY / REQUEST_CONFLICT`；400 `ACCOUNT_MODEL_SECRET_REQUIRED` | 桌、安（能力） |
+| PATCH `/account/models/{accountModelId}` | `requestId,expectedRevision`；至少一个 `name,baseUrl,modelId,apiKey,modelTier`；≤12 KiB | 202/200 `ModelOperation` | 409 `ACCOUNT_MODEL_REVISION_CHANGED / ACCOUNT_MODEL_BUSY / REQUEST_CONFLICT`；400 `ACCOUNT_MODEL_SECRET_REQUIRED`；503 `CREDENTIAL_STORAGE_NOT_READY`（稍后用原请求重试） | 桌、安（能力） |
 | DELETE `/account/models/{accountModelId}` | `requestId,expectedRevision`（JSON体） | 202/200 `ModelOperation` | 409修订/忙/请求冲突 | 桌、安（能力） |
 | POST `/account/models/{accountModelId}/test` | `requestId,expectedRevision` | 202/200 `ModelOperation`，后续 `operation.testResult` | 409修订/忙/请求冲突 | 桌、手、安 |
 | POST `/account/models/{accountModelId}/stop-using` | `requestId,expectedRevision` | 202/200 `ModelOperation` | 409修订/忙/请求冲突 | 桌、安（能力） |
@@ -474,7 +474,7 @@ UPD-1：资源服务从当前已验证 `ui` 版本读取既有白名单中的路
 
 ### 3.15 系统状态与后台模型（M0-6，6）
 
-DIAG-1：既有 `GET /system` 增加可选只读 `runRecord:{state,runId,startedAt,previous,uncleanCount7Days,summary}`。`state` 为 `ready|error`；`previous` 为 null 或 `{runId,startedAt,at,reason,normal,exitCode,lastAt,lastEvent,dumps:[{name,size,at}],dumpMatch:"time-window-inference"}`。没有上一轮退出记录时 `normal:false`，原因无法确定则 `unknown`，转储仅时间窗口推断。`summary` 是已脱敏的最近十二条异常元数据及版本／系统版本，供显示后复制；不带转储内容。旧客户端可以忽略。没有新增路由、权限或安卓壳能力，不需要新壳版本；Apple（苹果端）清单：Mac 在系统状态展示运行记录与摘要，iPhone 在原有可见系统状态范围只读展示，Watch（手表）不增加入口。桌面打开日志沿既有 `openLogs` 本地接缝。
+DIAG-2：既有 `GET /system` 保留可选只读 `runRecord:{state,runId,startedAt,previous,uncleanCount7Days,summary,summaryPreview}`。`state` 为 `ready|error`；`previous` 为 null 或 `{runId,startedAt,at,reason,normal,exitCode,lastAt,lastEvent,dumps:[{name,size,at}],dumpMatch:"time-window-inference"}`。没有上一轮退出记录时 `normal:false`，原因无法确定则 `unknown`，转储仅时间窗口推断。`summary` 是统一 JSON（结构化数据格式）对象的字符串：`platform/appVersion/osVersion/generatedAt/recentAbnormalRecords/abnormalCountsLast7Days/retentionPolicy`，最多二十条异常，记录白名单字段置于字符串字典 `fields`；`summaryPreview` 是可读文字，预览它并复制 `summary`。不带转储文件名或内容；详细字段见 DIAGNOSTICS.md。旧客户端可忽略新增字段，没有新增路由或权限；桌面打开日志沿既有 `openLogs` 本地接缝。安卓另经现有通用桥 `call(method, params)` 提供本机 `diagnostics.status/diagnostics.record/diagnostics.share`，需要新壳版本。苹果原生记录与统一摘要由 PR #210 接入。
 
 
 | 方法与路径 | 请求 | 成功响应 | 权限 / 错误 | 使用端 |
