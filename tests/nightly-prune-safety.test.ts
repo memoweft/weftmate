@@ -126,6 +126,25 @@ test('heartbeat is renewed while a runner uses a managed directory', async () =>
   } finally {stop();disposeManagedTemp(root);}
 });
 
+test('a concurrently disposed directory is skipped without deleting or reporting a failed process query', windows, () => {
+  const root=managedMkdtempSync('weftmate-prune-disappeared-');
+  try {
+    const target=fixture(root,'weftmate-gone',owner()), harness=join(root,'disappear.ps1');
+    writeFileSync(harness,`function Get-ChildItem {
+      [CmdletBinding()]param([string]$LiteralPath,[switch]$Directory,[string]$Filter,[switch]$Force)
+      $rows=@(Microsoft.PowerShell.Management\\Get-ChildItem @PSBoundParameters)
+      if($Directory -and $LiteralPath -eq $env:PRUNE_ROOT){Remove-Item -LiteralPath $env:GONE_TARGET -Recurse -Force}
+      return $rows
+    }
+    & $env:PRUNER -Roots $env:PRUNE_ROOT -Apply\n`);
+    const result=spawnSync('pwsh',['-NoProfile','-File',harness],{encoding:'utf8',windowsHide:true,
+      env:{...process.env,PRUNER:script,PRUNE_ROOT:root,GONE_TARGET:target}});
+    assert.equal(result.status,0,result.stderr);
+    const summary=JSON.parse(result.stdout.trim().split(/\r?\n/).at(-1)!);
+    assert.equal(summary.deleted,0);assert.equal(summary.failed,0);assert.equal(summary.keptUnsafe,1);
+  } finally {disposeManagedTemp(root);}
+});
+
 test('legacy plan requires an explicit list; apply only removes unchanged listed paths and rejects open files', windows, () => {
   const root=managedMkdtempSync('weftmate-prune-list-');
   let fd;
