@@ -140,8 +140,9 @@ test('BL-29b M4/S1 real Electron and mobile synchronize settings and regain fore
   for (const row of r.configurationTimes) assert.ok(row.ms<=7000, JSON.stringify(row));
 });
 
-test('BL-29c N4 real Electron and mobile independently sync catalog, settings, personalization, rename and list within 7s', {timeout:60000}, () => {
+test('BL-29c N4 real Electron and mobile independently sync catalog, settings, personalization, rename and list within 7s', {timeout:60000}, t => {
   const r=probe('ui-extra','ui-extra.json',55000);
+  t.diagnostic(JSON.stringify({kind:'independent-config-sync',...r}));
   assert.equal(r.failure,undefined,JSON.stringify(r));assert.deepEqual(r.errors,[]);
   assert.deepEqual(r.individualChanges.map(row=>row.kind),['modelSettings','personalization','modelCatalog','modelRename','sessionList']);
   for(const change of r.individualChanges)for(const row of change.rows){
