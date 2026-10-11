@@ -53,5 +53,17 @@
     "mobileWeb": 8,
     "desktop": 56,
     "androidNative": 12
+  },
+  "postAuthMain": {
+    "fullMainEntry": true,
+    "sensitiveMarkerHits": 0,
+    "baseMerge": "f2cdb55c",
+    "publicHygieneIdentityHits": 0,
+    "relatedPassed": 67,
+    "electronPassed": 12,
+    "mobilePassed": 113,
+    "mobileFailed": 0,
+    "relatedFailed": 0,
+    "nativeSessionVerified": true
   }
 }

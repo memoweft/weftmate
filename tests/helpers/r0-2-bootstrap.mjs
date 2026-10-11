@@ -50,7 +50,7 @@ const manager=createSystemStatusManager({
 const fixture=await startR02Fixture({root,systemManager:manager});
 dialog.showSaveDialog=async()=>({canceled:false,filePath:join(root,'diagnostics.zip')});
 let quitting=false;app.on('before-quit',()=>quitting=true);
-const desktop=createPersonalDesktop({origin:fixture.origin,systemManager:manager,isQuitting:()=>quitting});await desktop.ready;
+const desktop=createPersonalDesktop({origin:fixture.origin,libraryDesktopToken:fixture.service.libraryDesktopToken,systemManager:manager,isQuitting:()=>quitting});await desktop.ready;
 globalThis.r02={fixture,manager,repairs,diagnostics,desktop,root,sensitiveMarkers,
   async fault(id){if(id==='certificate')writeFileSync(certificateFile,expiredCertificate);else await stop(id);if(id==='memory')semantic={state:'unavailable',reason:'bridge-disconnected'};},
   async restore(id){if(id==='certificate')writeFileSync(certificateFile,validCertificate);else await start(id);if(id==='memory')semantic={state:'ready'};},

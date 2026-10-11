@@ -6,7 +6,6 @@ import { mkdirSync, readFileSync, writeFileSync, rmSync, openSync, closeSync } f
 import { join, resolve } from 'node:path';
 import { inflateRawSync } from 'node:zlib';
 import { managedMkdtempSync, managedTempRoot } from '../helpers/managed-temp.mjs';
-import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { createProcessEvidence } from '../helpers/process-evidence.mjs';
 
 const repository=resolve(import.meta.dirname,'../..'),output=join(repository,'tests/evidence/r0-2');mkdirSync(output,{recursive:true});
@@ -16,7 +15,7 @@ const executable=createRequire(import.meta.url)('electron'),startedAt=Date.now()
 const processEvidence=createProcessEvidence({outputDir:join(repository,'.local/r0-2-processes'),profileDirectory:root,commandRoots:[root],executables:[executable,chromium.executablePath()],startedAt});
 const report={passed:false,synthetic:true,componentAdapters:'actual random-port HTTP probes; signed synthetic X.509 certificate',realModelRequests:0,checks:[],mobileEvidence:'browser viewport only; native system bars pending',screenshots:[]};
 if(mobileOnly)report.screenshots=JSON.parse(readFileSync(join(output,'acceptance.json'))).screenshots.filter(name=>name.startsWith('electron-'));
-let application,browser,heavyLock,cleanupCount=0;
+let application,browser,page,heavyLock,cleanupCount=0;
 const slots=process.env.R02_HEAVY_DIR||'D:/AIProjects/WeftMate/Runtime/Orchestrator';
 for(let slot=1;slot<=3;slot++){const file=join(slots,`heavy-${slot}.lock`);try{const fd=openSync(file,'wx');writeFileSync(fd,`R0-2 ${new Date().toISOString()} Electron acceptance\n`);closeSync(fd);heavyLock=file;break;}catch(error){if(error.code!=='EEXIST')throw error;}}
 if(!heavyLock){rmSync(root,{recursive:true,force:true});throw Error('All heavy slots occupied; retry this runner after a slot is released');}
@@ -43,10 +42,12 @@ try{
   try{application=await _electron.launch({executablePath:executable,args:[join(repository,'tests/helpers/r0-2-bootstrap.mjs'),`--user-data-dir=${root}`],cwd:repository,env,timeout:90000});}
   catch(error){processEvidence.recordLaunchFailure(error);throw error;}
   processEvidence.track(application.process(),{executable,label:'R0-2 Electron'});
-  const page=await application.firstWindow();page.setDefaultTimeout(15000);
+  page=await application.firstWindow();page.setDefaultTimeout(15000);
   await page.waitForURL('**/personal/v1/ui*');
-  const fixture=await application.evaluate(async()=>{while(!globalThis.r02)await new Promise(done=>setTimeout(done,10));return {credentials:r02.fixture.credentials,mobileUrl:r02.fixture.mobileUrl};});
-  await localUiSession(page,fixture.credentials,'synthetic-host',{mainChat:true});
+  const fixture=await application.evaluate(async()=>{const deadline=Date.now()+20000;while(!globalThis.r02){if(Date.now()>deadline)throw Error('Synthetic component fixture did not finish startup');await new Promise(done=>setTimeout(done,10));}return {credentials:r02.fixture.credentials,mobileUrl:r02.fixture.mobileUrl};});
+  await page.waitForFunction(async()=>{const response=await fetch('/personal/v1/auth/me');return response.ok&&(await response.json()).device?.authKind==='desktop';});
+  const identity=await page.evaluate(async()=>{const response=await fetch('/personal/v1/auth/me');if(!response.ok)throw Error('Synthetic desktop session unavailable');return response.json();});
+  assert.equal(identity.device.authKind,'desktop');assert.equal(identity.account.username,fixture.credentials.username);
   await page.locator('#assistant-view').waitFor({state:'visible'});
   await page.getByRole('button',{name:'查看详情',exact:true}).waitFor();
   await screenshot(page,'unclean-notice');
@@ -120,7 +121,7 @@ try{
   report.passed=true;
   console.log('R0-2 Electron acceptance passed');
 }finally{
-  await browser?.close().catch(()=>{});await application?.evaluate(async()=>r02.close()).catch(()=>{});await application?.close().catch(()=>{});
+  await browser?.close().catch(()=>{});if(page&&!page.isClosed())await page.goto('about:blank',{timeout:15000}).catch(()=>{});await application?.evaluate(async()=>r02.close()).catch(()=>{});await application?.close().catch(()=>{});
   const cleanup=await processEvidence.finalize({failed:!report.passed});cleanupCount+=cleanup.cleaned;report.cleanupCount=cleanupCount;report.cleanupSafe=!cleanup.stillRunning&&!cleanup.preservationError;
   writeFileSync(join(output,'acceptance.json'),JSON.stringify(report,null,2)+'\n');
   if(report.cleanupSafe)rmSync(root,{recursive:true,force:true});
