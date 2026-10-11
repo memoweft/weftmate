@@ -2,27 +2,31 @@
 globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   const auth = { mode: 'login', step: 'email', email: '', error: '', busy: false, resendAt: 0, retryAt: 0, deviceName: '这台设备', devices: [], hosts: [] };
   core.state.cloudAuth = auth;
-  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight, ownHost, bindingClaim;
+  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight, ownHost, bindingClaim, returnView;
   const now = () => environment.now?.() ?? Date.now();
   const paint = () => effects.paintCloudAuth?.(cloudAuthView());
   function cloudAuthView() {
     const retrySeconds = Math.max(0, Math.ceil((auth.retryAt - now()) / 1000));
     const error = auth.retryAt && auth.error.startsWith('尝试太多次')
       ? retrySeconds ? `尝试太多次，请等待 ${retrySeconds} 秒后重试。` : '等待已结束，可以重试。' : auth.error;
-    return { ...auth, error, resendSeconds: Math.max(0, Math.ceil((auth.resendAt - now()) / 1000)), retrySeconds };
+    return { ...auth, error, codeLoginSupported: environment.deviceType !== 'android' || client?.config?.nativeEmailCodeLogin === true,
+      resendSeconds: Math.max(0, Math.ceil((auth.resendAt - now()) / 1000)), retrySeconds };
   }
   function cloudError(error) {
     if (error?.code === 'BACKUP_PAUSE_TIMEOUT') return '本机备份未完成，程序已继续运行。请稍后重试注销。';
     const code = error?.code || error?.message;
     if (code === 'RATE_LIMITED' || code === 'LOGIN_RATE_LIMITED') { auth.retryAt = now() + Math.max(1, error.retryAfter || 60) * 1000; return `尝试太多次，请等待 ${Math.ceil((auth.retryAt - now()) / 1000)} 秒后重试。`; }
     return ({ INVALID_CREDENTIALS: '邮箱或密码不对，请重试。', INVALID_EMAIL: '请填写有效的邮箱地址。', EMAIL_IN_USE: '无法使用这个邮箱，请换一个邮箱或尝试登录。',
-      CODE_INVALID: '验证码不对，请重新输入。', CHALLENGE_INVALID: '验证码已失效，请重新发送。', PASSWORD_TICKET_INVALID: '验证已失效，请重新发送验证码。',
-      CLOUD_TOKEN_INVALID: '登录已失效，请重新登录。', UNAUTHORIZED: '登录已失效，请重新登录。', DEVICE_NOT_TRUSTED: '这台设备未获允许，请在已登录设备上重新批准。',
+      CODE_INVALID: '验证码不对，请重新输入。', INVALID_LOGIN_CODE: '验证码不对或已失效，请重发后再试。', CHALLENGE_INVALID: '验证码已失效，请重新发送。', PASSWORD_TICKET_INVALID: '验证已失效，请重新发送验证码。',
+      CLOUD_DEVICE_VERIFICATION_REQUIRED: '请重新登录并确认邮箱。', CLOUD_TOKEN_INVALID: '需要重新登录，电脑上的内容仍可继续使用。', UNAUTHORIZED: '登录已失效，请重新登录。', DEVICE_NOT_TRUSTED: '这台设备已下线，请联系账户所有者。',
       CLOUD_BINDING_CONFLICT: '这个云账号已绑定其他本地账户，请使用原账号或先解绑。',
       NETWORK: '网络不通，请检查连接后重试。', STORAGE_UNAVAILABLE: '无法安全记住本设备，请检查设备存储后重试。',
       PAIRING_INVALID: '配对码已失效或不属于这台电脑，请获取新码。', PAIRING_REQUIRED: '请在目标电脑显示二维码，并输入配对码后连接。',
-      HOST_TRUST_INVALID: '可信交付码已失效或不属于本设备，请在已登录设备上重新获取。',
+      HOST_TRUST_INVALID: '无法确认电脑身份，请检查连接后重试。',
       INVALID_DEVICE: '设备名称须为 1–128 个字符。',
+      UPDATE_REQUIRED: '请更新电脑上的 WeftMate 后重新登录。',
+      NATIVE_LOGIN_UPGRADE_REQUIRED: '请更新手机程序后使用这个登录入口。现在可以使用密码登录并确认邮箱。',
+      CLOUD_LOGIN_REQUIRED: '请更新客户端并使用邮箱登录，远程访问需要云账号。',
       PASSWORD_MISMATCH: '两次输入的密码不一致。', EMERGENCY_PASSWORD_INVALID: '离线密码须为 15–128 个字符。',
       INVALID_PASSWORD: '密码须为 8–128 个字符。', MAIL_UNAVAILABLE: '验证码暂时无法发送，请稍后重试。' })[code] || '操作未完成，请重试。';
   }
@@ -46,7 +50,48 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (mode === 'offline-login' || mode === 'local-login') bindingClaim = null;
     journey++; clearTimeout(waitTimer); client.generation++; client.pending = null;
     Object.assign(auth, { mode, step: 'email', error: '', busy: false, challengeId: null, passwordTicket: null, requestId: null, devices: [], hosts: [], resendAt: 0, retryAt: 0 });
-    core.show('login'); paint();
+    auth.modal = !!auth.localSession;
+    if (auth.modal) returnView ??= core.state.currentView;
+    else core.show('login');
+    paint();
+  }
+  function cloudDeviceTime(value) {
+    const date = new Date(value);
+    if (!value || !Number.isFinite(date.getTime())) return '未记录';
+    const today = new Date(now()), yesterday = new Date(now()); yesterday.setDate(yesterday.getDate() - 1);
+    const day = date.toDateString();
+    if (day === today.toDateString() || day === yesterday.toDateString()) {
+      const time = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
+      return `${day === today.toDateString() ? '今天' : '昨天'} ${time}`;
+    }
+    return core.dateText ? core.dateText(value, { year: date.getFullYear() !== today.getFullYear() }) : core.formatDate(value);
+  }
+  function dismissCloudLogin() {
+    if (!auth.localSession) return;
+    journey++; client.generation++; client.pending = null; bindingClaim = null;
+    auth.modal = false; auth.busy = false; auth.mode = 'offline'; auth.error = ''; paint();
+    if (returnView && core.state.currentView !== returnView) core.show(returnView);
+    returnView = null;
+  }
+  async function localAccounts() { return core.api('/desktop'); }
+  async function switchLocalAccount(ownerId) {
+    journey++; clearTimeout(renewalTimer); bindingClaim = null;
+    // A cloud credential belongs to one local owner; switching requires a new
+    // explicit cloud journey rather than carrying that authority to another.
+    await client.forget();
+    core.clearSession();
+    const session = await core.api('/desktop', { method: 'POST', body: { ownerId, deviceName: auth.deviceName } });
+    core.acceptSession(session); auth.localSession = true; auth.mode = 'offline'; auth.modal = false;
+    await core.enterAssistant(); paint();
+  }
+  async function localDeviceDirectory() {
+    const result = await core.api('/devices');
+    return { devices: result.devices.filter(d => !d.revoked).map(d => ({ ...d, isCurrent: d.current,
+      lastUsedAt: d.lastSeenAt || d.createdAt, type: d.current ? 'windows' : 'web' })), hosts: [] };
+  }
+  async function logoutLocalDevice(id) {
+    await core.api('/devices/' + encodeURIComponent(id), { method: 'DELETE', protectedWrite: true, body: {} });
+    return localDeviceDirectory();
   }
   async function cloudBindDesktop() {
     const claim = await core.accessApi('/cloud/claims', { method: 'POST', protectedWrite: true, body: {} });
@@ -58,6 +103,13 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return run(async () => {
       const ticket = journey;
       auth.email = email.trim().toLowerCase();
+      if (auth.mode === 'code-login') {
+        if (!cloudAuthView().codeLoginSupported) throw { code: 'NATIVE_LOGIN_UPGRADE_REQUIRED' };
+        const result = await client.beginCode({ email: auth.email, deviceName: auth.deviceName,
+          deviceType: environment.deviceType || (environment.desktop ? 'windows' : 'web') });
+        if (ticket !== journey) return;
+        auth.challengeId = result.challengeId; auth.resendAt = now() + 60000; auth.step = 'code'; return;
+      }
       if (auth.mode === 'registration' && !client.pending) await client.prepare(auth.deviceName);
       const result = await client.publicRequest(`/auth/${auth.mode === 'recovery' ? 'recovery' : 'registration'}/request`, { email: auth.email });
       if (ticket !== journey) return;
@@ -69,6 +121,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       const ticket = journey;
       if (!/^\d{6}$/.test(code)) throw { code: 'CODE_INVALID' };
       if (auth.mode === 'confirm') { await client.confirm(code); await finishCloudLogin(); return; }
+      if (auth.mode === 'code-login') { await client.confirmCode(code); await finishCloudLogin(); return; }
       const result = await client.publicRequest(`/auth/${auth.mode}/verify`, { challengeId: auth.challengeId, code });
       if (ticket !== journey) return;
       auth.passwordTicket = result.passwordTicket; auth.challengeId = null; auth.step = 'password';
@@ -130,16 +183,12 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     // Offline account selection contains no credential and remains after cloud logout/deletion.
     await environment.cloudCredentials('offline-account', { sub: saved.sub, email: auth.email, deviceName: saved.deviceName }); auth.offlineKnown = true;
     if (ticket !== journey) return;
-    if (result.status === 'pending_approval') {
-      auth.mode = 'waiting'; auth.requestId = result.requestId;
-      try { const directory = await client.authorized('/devices'); auth.devices = directory.devices; auth.hosts = directory.hosts; } catch { /* waiting remains usable offline */ }
-      if (ticket !== journey) return;
-      core.show('cloud-wait'); paint();
-      clearTimeout(waitTimer); waitTimer = setTimeout(() => void retryCloudApproval(ticket), 3000); return;
-    }
+    if (result.status === 'pending_approval') throw { code: environment.deviceType === 'android' && !result.requestId ? 'NATIVE_LOGIN_UPGRADE_REQUIRED' : 'UPDATE_REQUIRED' };
     clearTimeout(waitTimer); waitTimer = null;
     if (pairing) { await saveCloudPairingPin(pairing); environment.initialPairing = null; }
-    auth.mode = 'authenticated'; paint(); core.acceptSession(result); await core.enterAssistant();
+    auth.mode = 'authenticated'; auth.modal = false; paint();
+    if (!auth.localSession) { core.acceptSession(result); await core.enterAssistant(); }
+    returnView = null;
     await core.refreshPendingDevices(); scheduleRenewal();
     const draft = await environment.cloudCredentials('draft:' + saved.sub);
     if (draft) { effects.restoreCloudDraft?.(draft); await environment.cloudCredentials('draft:' + saved.sub, undefined, true); }
@@ -160,6 +209,11 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     catch (error) { if (error.code === 'NETWORK') { scheduleRenewal(); return; } await expireCloudSession(); }
   }
   async function expireCloudSession(email = auth.email) {
+    if (auth.localSession) {
+      clearTimeout(renewalTimer); clearTimeout(waitTimer); journey++; await client.forget();
+      Object.assign(auth, { mode: 'offline', modal: false, busy: false, email, error: '需要重新登录', cloudExpired: true });
+      paint(); effects.toast('需要重新登录，电脑上的内容仍可继续使用。'); return;
+    }
     const draft = effects.readMessageDraft?.() || core.state.desktopDraft;
     if (draft && auth.sub) await environment.cloudCredentials('draft:' + auth.sub, draft);
     clearTimeout(renewalTimer); clearTimeout(waitTimer); journey++;
@@ -169,7 +223,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await effects.clearNativeHostSessions?.();
     core.clearSession(); auth.email = email; startCloudJourney();
   }
-  async function cancelCloudJourney() { bindingClaim = null; await client.forget(); await client.resetKey(); startCloudJourney(); }
+  async function cancelCloudJourney() { if (auth.localSession) { dismissCloudLogin(); return; } bindingClaim = null; await client.forget(); await client.resetKey(); startCloudJourney(); }
   async function cloudOfflineLogin({ password, cloudAccountId, username }) {
     return run(async () => {
       const remembered = await environment.cloudCredentials('offline-account');
@@ -203,6 +257,13 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   async function cloudRemove(id) {
     const current = auth.devices.some(device => device.id === id && device.isCurrent);
     await client.authorized('/auth/devices/revoke', { method: 'POST', body: { deviceId: id } });
+    // Revoke content on the connected host as part of this explicit action;
+    // other hosts retain the existing signed-revocation polling boundary.
+    if (core.state.csrfToken) {
+      const local = await core.api('/devices');
+      const device = local.devices.find(device => !device.revoked && device.cloudDeviceId === id);
+      if (device) await core.api('/devices/' + encodeURIComponent(device.id), { method: 'DELETE', protectedWrite: true, body: {} });
+    }
     if (current) { await expireCloudSession(); return { devices: [], hosts: [] }; }
     return cloudDirectory();
   }
@@ -310,9 +371,14 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   }
   function initializeCloudAccount() {
     client = new globalThis.WeftUiCore.CloudAuthClient({ fetch: environment.fetch, crypto: environment.crypto,
-      credentials: environment.cloudCredentials, vendor: environment.cloudVendor, host: environment.hostOrigin, nativeKey: environment.nativeCloudKey, now });
-    const localLoad = core.load, localExpired = core.sessionExpired, localClear = core.clearSession;
-    core.clearSession = () => { bindingClaim = null; localClear(); if (auth.mode === 'offline') startCloudJourney(); };
+      credentials: environment.cloudCredentials, vendor: environment.cloudVendor, host: environment.hostOrigin, nativeKey: environment.nativeCloudKey,
+      localCsrf: () => core.state.csrfToken, now });
+    const localLoad = core.load, localExpired = core.sessionExpired, localClear = core.clearSession, localLogout = core.logout;
+    core.clearSession = () => { bindingClaim = null; localClear(); if (auth.mode === 'offline' && !auth.localSession) startCloudJourney(); };
+    if (localLogout) core.logout = async () => {
+      if (auth.localSession) { if (auth.mode === 'authenticated') await cloudLogout(); else effects.toast('本机内容可以继续使用。'); return; }
+      return localLogout();
+    };
     core.load = async () => {
 
       if (environment.nativeIdentity) {
@@ -321,6 +387,16 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
         if (identity.redirectUri) client.redirectUri = identity.redirectUri;
         environment.bindDesktop = identity.localOrigin === environment.hostOrigin;
         auth.localDesktop = environment.bindDesktop;
+      }
+      if (auth.localDesktop) {
+        try {
+          const before = await core.api('/state');
+          const session = await core.api('/desktop', { method: 'POST', body: { deviceName: auth.deviceName } });
+          core.state.setupGrant = null; core.acceptSession(session);
+          Object.assign(auth, { localSession: true, mode: 'offline', modal: false, error: '' }); paint();
+          if (await effects.startOnboarding?.(before)) return;
+          await core.enterAssistant(); return;
+        } catch (error) { auth.error = cloudError(error); core.show('owner'); paint(); return; }
       }
       try { await client.configure(); } catch (error) {
         if (error.status === 404 || error.status === 401) {
@@ -346,10 +422,13 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
         else { core.show('login'); paint(); }
       } catch (error) { if (error.code !== 'NETWORK') await client.forget(); auth.error = cloudError(error); core.show('login'); paint(); }
     };
-    core.sessionExpired = () => { if (auth.mode === 'authenticated') void (async () => { try { await finishCloudLogin(); } catch { await expireCloudSession(); } })(); else localExpired(); };
+    core.sessionExpired = () => { if (auth.localSession) void (async () => {
+      try { core.acceptSession(await core.api('/desktop', { method: 'POST', body: { ownerId: core.state.account?.ownerId, deviceName: auth.deviceName } })); await core.enterAssistant(); }
+      catch { effects.toast('暂时无法连接这台电脑，请重试。'); }
+    })(); else if (auth.mode === 'authenticated') void (async () => { try { await finishCloudLogin(); } catch { await expireCloudSession(); } })(); else localExpired(); };
     return client;
   }
-  return { initializeCloudAccount, cloudAuthView, cloudError, cloudPasswordHint, startCloudJourney, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
+  return { initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
     retryCloudApproval, cancelCloudJourney, renewCloudSession, cloudOfflineLogin, cloudDirectory, cloudRename, cloudRemove, cloudConnect, cloudTrust,
     cloudEmailRequest, cloudEmailConfirm, cloudChangePassword, cloudLogout, cloudLogoutOthers, cloudDeleteAccount, cloudEmergencyPassword, cloudPairing, cloudRedeemPairing, cloudConnectTrusted,
     cloudTrustMaterial, cloudImportTrust, cloudApproveOffline };

@@ -143,7 +143,7 @@ try {
     // A reload can leave a proxy fetch reading the old host. Keep that host
     // alive until all route handlers have drained in the final cleanup.
     await page.getByRole('heading', { name: '登录 WeftMate' }).waitFor();
-    await frames(phase, 'login-step', () => page.getByRole('button', { name: '还没有账号？注册', exact: true }).evaluate(button => button.click()));
+    await frames(phase, 'login-step', () => page.getByRole('button', { name: phase === 'before' ? '还没有账号？注册' : '注册账号', exact: true }).evaluate(button => button.click()));
     for (const step of ['code', 'password']) await frames(phase, `login-${step}`, () => page.evaluate(step => {
       window.__motionAuth ||= window.WeftUiComponents.factories.auth({}, { byId: id => document.getElementById(id), errorAt() {}, setBusy() {} });
       window.__motionAuth.paintCloudAuth({ mode: 'registration', step, email: 'synthetic@example.test', deviceName: '合成桌面', busy: false, error: '', resendSeconds: 0, retrySeconds: 0 });

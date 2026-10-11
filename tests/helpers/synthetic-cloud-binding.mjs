@@ -29,7 +29,7 @@ export async function syntheticCloudBinding() {
     async bind(request){
       const before=await request('/auth/me');
       const claim=await request('/cloud/claims',{});
-      const accessToken=await new SignJWT({sub:'fix8-cloud-synthetic',device_id:'fix8-control',auth_epoch:0,scope:'cloud:account'})
+      const accessToken=await new SignJWT({sub:'fix8-cloud-synthetic',device_id:'fix8-control',auth_epoch:0,device_verified:true,scope:'cloud:account'})
         .setProtectedHeader({alg:'RS256',typ:'at+jwt',kid:jwk.kid}).setIssuer(issuer).setAudience(base).setIssuedAt().setJti(randomUUID()).setExpirationTime('300s').sign(signing.privateKey);
       await request('/cloud/binding',{claimId:claim.claimId,accessToken});
       const after=await request('/auth/me');

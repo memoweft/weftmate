@@ -1,11 +1,29 @@
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {createMobileCloud, authorizeMobile} from './auth.mjs';
 function source(file){const url=pathToFileURL(resolve(file));return readFileSync(url,'utf8').replaceAll('import.meta.url',JSON.stringify(url.href)).replace(/from (['"])(\.\.?\/[^'"]+)\1/g,(_,q,p)=>`from '${new URL(p,url).href}'`);}
 const data=code=>'data:text/javascript;base64,'+Buffer.from(code).toString('base64');
 let service=source('src/personal-access/index.mjs').replace('const service = {','const service = { __reviewContext:context,__reviewCounts:()=>({accountWaiters:accountWaiters.size,accountRevision}),');
 service=service.replace('const changeKey =','const __reviewDigests=[]; const changeKey =')
  .replace("=> createHmac('sha256', changeKey)","=> (__reviewDigests.push(field), createHmac('sha256', changeKey))")
  .replace('__reviewContext:context,','__reviewContext:context,__reviewDigests:()=>__reviewDigests,');
-let fixture=source('tests/integration/timeline-ui-candidate.mjs').replace(pathToFileURL(resolve('src/personal-access/index.mjs')).href,data(service)).replace('return { root, origin,','return { root, origin, debug:{backend,service,eventWaiters,auth,cookie},');
-export const {startTimelineCandidate}=await import(data(fixture));
+let fixture=source('tests/integration/timeline-ui-candidate.mjs').replace(pathToFileURL(resolve('src/personal-access/index.mjs')).href,data(service))
+ .replace('backend, backupManager, libraryNativeActions:', 'backend, cloudIdentity:options.cloudIdentity??null, backupManager, libraryNativeActions:')
+ .replace("const command = async (body, route = '/commands') =>", "const command = async (body, route = '/commands', requestForCommand = request) =>")
+ .replace("const value = await request(route, body);", "const value = await requestForCommand(route, body);")
+ .replace("const row = (await request(`/commands/${value.command.commandId}`)).command;", "const row = (await requestForCommand(`/commands/${value.command.commandId}`)).command;");
+const bridgeStart=fixture.indexOf('  const bridge = async'),bridgeEnd=fixture.indexOf('  if (options.usageSamples)',bridgeStart);
+fixture=fixture.slice(0,bridgeStart)+'  let mobileRequest=request, mobileAuth=auth; const mobileCommand=(body,route)=>command(body,route,mobileRequest);\n'+
+ fixture.slice(bridgeStart,bridgeEnd).replace(/\brequest\(/g,'mobileRequest(').replace(/\bcommand\(/g,'mobileCommand(').replace(/\bauth\./g,'mobileAuth.')+fixture.slice(bridgeEnd);
+fixture=fixture.replace('return { root, origin,','return { root, origin, setMobileTransport:(request,auth)=>{mobileRequest=request;mobileAuth=auth;},debug:{backend,service,eventWaiters,auth,cookie},');
+const {startTimelineCandidate:startIsolatedTimelineCandidate}=await import(data(fixture));
+export async function startTimelineCandidate(options={}) {
+ let cloud,fixture;
+ try {
+  if(options.cloudMobile)cloud=await createMobileCloud();
+  fixture=await startIsolatedTimelineCandidate({...options,...(cloud?{cloudIdentity:cloud.configuration}:{})});
+  if(cloud){await authorizeMobile(fixture,cloud.cloud);const close=fixture.close;fixture.close=async()=>{try{await close();}finally{await cloud.close();}};}
+  return fixture;
+ }catch(error){try{await fixture?.close();}finally{await cloud?.close();}throw error;}
+}
