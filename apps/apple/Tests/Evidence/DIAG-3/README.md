@@ -53,9 +53,17 @@ DIAG-3 的日志功能与字段约定保持不变。本次 DIAG-3b 只返工设�
 
 所有场景为合成账号 / 数据。交互由原生 XCUITest 与 Mac App 内 AX 验证。iPhone 交付图是在 XCTest 会话结束后启动同一 App 的合成场景入口，以 simctl 抓实际完整显示画面；此模拟器的 XCTest 会话会隐藏底部指示条，不能把其附件声称为带指示条原图。合成入口复用真实设置、详情与同一预览 / 导出动作，日志状态来自隔离 RunLog actor 的实际持久标记。Mac 只捕获自己进程的真实设置窗口与原生预览面板，包含标题栏。
 
+**取证遗留：本机模拟器在 XCTest 结束后，重启同一 App 并使用原生 UIKit 系统栏控制器时，仍省略底部指示条。** 状态栏保留，PNG 是完整模拟器屏幕，没有裁切、遮罩或补画；原任务书的「底部指示条可见」验收项未完成。清单明确使用 `iphoneSystemHomeIndicator: false`，不得把这套图标为全部截图要求已通过。关于页入口场景仅在双重测试开关下滚动到实际列表内容，提示条场景保留在页面顶部；实际点击与布局由独立 XCUITest 验证。
+
+本包由新会话接手交付（DIAG-3c）：先保存上一会话的 16 文件进度，再重新运行验证、替换证据。运行记录不依赖真实宿主；关于页的版本不可用提示属于既有未连接设置状态，与日志读取失败是两个独立状态。
+
 ## 验证、崩溃盘点与边界
 
 最终数字与结果见 [validation.json](validation.json)、[mac-e2e.json](mac-e2e.json)、[crash-check.json](crash-check.json)、[cleanup.json](cleanup.json)。Swift 运行记录 20 项测试与 Watch 强制结束断言未修改。Mac 不启动不可用的 XCUITest automation mode，不重试授权、不更改系统设置；原生界面使用已有 App 内 AX。
+
+接手复验（合 main 前）：Swift 包与 Mac Xcode 包均为总计 431 项、429 通过、0 失败、2 既有跳过。两项跳过是 `CloudLiveTests.actualCloudCodeRefreshDPoPAndHostApproval` 与 `CloudTLSTests.nativeTransportRequiresCAHostnameAndPairedSPKI`，均要求已有 `WEFTMATE_S1C_LIVE` 集成夹具，本包未启用；没有改条件或断言。iPhone 5/5、Watch 1/1、Mac 原生 AX 8/8、Node 静态 14/14 通过。92 张当前图包括手机 40 张、Mac 48 张及四张完整原图并排图；旧 PNG 已替换。
+
+Watch Xcode 初始化自动唤起既有配对 iPhone。观察到后发出了关闭请求，但串行测试及 `shutdown all` 已经结束；测试 1/1 通过，仍不能声称全程只开一台模拟器。没有创建、删除、解除配对或更改模拟器设置；这项工具限制与底部指示条缺口均保留为未满足项，见 [simulator-scope.json](simulator-scope.json) 和 [screen-chrome-check.json](screen-chrome-check.json)。
 
 本轮开工的产品报告基线 11（Mac / Phone / Watch；另有旧 UITest Runner 报告 3 份，初次粗筛共 14，已纠正口径）。本轮收到一个新文件，但它的崩溃捕获时间为 19:48:43，早于本轮 20:52:37 开工；报告头的交付时间为 20:53:40。报告文件新增数与本轮新崩溃数分别列出，绝不把新增文件写成零。没有删除报告，没有关闭既有 Mac 崩溃对话框。
 

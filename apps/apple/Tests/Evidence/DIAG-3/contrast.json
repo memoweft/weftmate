@@ -1,5 +1,5 @@
 {
-  "method": "WCAG relative luminance of existing token foregrounds and native/default surface colors",
+  "method": "WCAG relative luminance; generated foreground tokens and native/default Form surface colors; InlineNotice background uses the existing 0.07 opacity token.",
   "activeTextThreshold": 4.5,
   "pairs": [
     {
@@ -19,6 +19,54 @@
       "foreground": "#A6A89B",
       "background": "#000000",
       "contrast": 8.6957624959
+    },
+    {
+      "role": "iPhone dark native Form card explanation",
+      "foreground": "#A6A89B",
+      "background": "#1C1C1E",
+      "contrast": 7.045528396428867
+    },
+    {
+      "role": "iPhone dark Form footer",
+      "foreground": "#C4C5BA",
+      "background": "#000000",
+      "contrast": 12.042687519737868
+    },
+    {
+      "role": "Mac dark canvas footer",
+      "foreground": "#A6A89B",
+      "background": "#252620",
+      "contrast": 6.316082722141668
+    },
+    {
+      "role": "Mac dark native Form card explanation",
+      "foreground": "#A6A89B",
+      "background": "#262628",
+      "contrast": 6.254597294355773
+    },
+    {
+      "role": "light primary action",
+      "foreground": "#FFFFFF",
+      "background": "#30352F",
+      "contrast": 12.53010156235076
+    },
+    {
+      "role": "dark primary action",
+      "foreground": "#252620",
+      "background": "#E5E5DE",
+      "contrast": 12.052972666925363
+    },
+    {
+      "role": "light inline error notice",
+      "foreground": "#B93248",
+      "background": "#FAF1F2",
+      "contrast": 5.239630471033534
+    },
+    {
+      "role": "dark inline error notice",
+      "foreground": "#FF8EA0",
+      "background": "#2C2427",
+      "contrast": 6.933480339744216
     }
   ],
   "passed": true,

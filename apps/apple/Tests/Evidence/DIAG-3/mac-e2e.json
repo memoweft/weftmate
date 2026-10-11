@@ -1,79 +1,172 @@
 {
   "checks": [
     {
-      "case": "mac-empty-light",
-      "exitCode": -9,
-      "forced": true,
+      "state": "empty",
+      "theme": "light",
       "captures": [
-        "mac-empty-light-diag3-records.png"
+        "mac-about-empty-light.png",
+        "mac-empty-light.png",
+        "mac-summary-preview-empty-light.png",
+        "mac-summary-raw-empty-light.png",
+        "mac-file-preview-empty-light.png",
+        "mac-file-raw-empty-light.png"
       ],
-      "abnormalCount": 0
+      "passed": true,
+      "expectedState": "empty",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": -9
     },
     {
-      "case": "mac-records-light",
-      "exitCode": 0,
-      "forced": false,
+      "state": "records",
+      "theme": "light",
       "captures": [
-        "mac-records-light-diag3-banner.png",
-        "mac-records-light-diag3-records.png"
+        "mac-banner-light.png",
+        "mac-banner-dismissed-light.png",
+        "mac-about-records-light.png",
+        "mac-records-light.png",
+        "mac-detail-light.png",
+        "mac-detail-raw-light.png",
+        "mac-summary-preview-records-light.png",
+        "mac-summary-raw-records-light.png",
+        "mac-file-preview-records-light.png",
+        "mac-file-raw-records-light.png"
       ],
-      "abnormalCount": 1
+      "passed": true,
+      "expectedState": "records",
+      "hadNotice": true,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
     },
     {
-      "case": "mac-normal-light",
-      "exitCode": 0,
-      "forced": false,
+      "state": "normal",
+      "theme": "light",
       "captures": [
-        "mac-normal-light-diag3-records.png"
+        "mac-about-normal-light.png",
+        "mac-normal-light.png",
+        "mac-summary-preview-normal-light.png",
+        "mac-summary-raw-normal-light.png",
+        "mac-file-preview-normal-light.png",
+        "mac-file-raw-normal-light.png"
       ],
-      "abnormalCount": 1
+      "passed": true,
+      "expectedState": "normal",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
     },
     {
-      "case": "mac-read-failure-light",
-      "exitCode": 0,
-      "forced": false,
+      "state": "read-failure",
+      "theme": "light",
       "captures": [
-        "mac-read-failure-light-diag3-records.png"
+        "mac-about-read-failure-light.png",
+        "mac-read-failure-light.png"
       ],
-      "abnormalCount": 0
+      "passed": true,
+      "expectedState": "read-failure",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
     },
     {
-      "case": "mac-empty-dark",
-      "exitCode": -9,
-      "forced": true,
+      "state": "empty",
+      "theme": "dark",
       "captures": [
-        "mac-empty-dark-diag3-records.png"
+        "mac-about-empty-dark.png",
+        "mac-empty-dark.png",
+        "mac-summary-preview-empty-dark.png",
+        "mac-summary-raw-empty-dark.png",
+        "mac-file-preview-empty-dark.png",
+        "mac-file-raw-empty-dark.png"
       ],
-      "abnormalCount": 0
+      "passed": true,
+      "expectedState": "empty",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": -9
     },
     {
-      "case": "mac-records-dark",
-      "exitCode": 0,
-      "forced": false,
+      "state": "records",
+      "theme": "dark",
       "captures": [
-        "mac-records-dark-diag3-banner.png",
-        "mac-records-dark-diag3-records.png"
+        "mac-banner-dark.png",
+        "mac-banner-dismissed-dark.png",
+        "mac-about-records-dark.png",
+        "mac-records-dark.png",
+        "mac-detail-dark.png",
+        "mac-detail-raw-dark.png",
+        "mac-summary-preview-records-dark.png",
+        "mac-summary-raw-records-dark.png",
+        "mac-file-preview-records-dark.png",
+        "mac-file-raw-records-dark.png"
       ],
-      "abnormalCount": 1
+      "passed": true,
+      "expectedState": "records",
+      "hadNotice": true,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
     },
     {
-      "case": "mac-normal-dark",
-      "exitCode": 0,
-      "forced": false,
+      "state": "normal",
+      "theme": "dark",
       "captures": [
-        "mac-normal-dark-diag3-records.png"
+        "mac-about-normal-dark.png",
+        "mac-normal-dark.png",
+        "mac-summary-preview-normal-dark.png",
+        "mac-summary-raw-normal-dark.png",
+        "mac-file-preview-normal-dark.png",
+        "mac-file-raw-normal-dark.png"
       ],
-      "abnormalCount": 1
+      "passed": true,
+      "expectedState": "normal",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
     },
     {
-      "case": "mac-read-failure-dark",
-      "exitCode": 0,
-      "forced": false,
+      "state": "read-failure",
+      "theme": "dark",
       "captures": [
-        "mac-read-failure-dark-diag3-records.png"
+        "mac-about-read-failure-dark.png",
+        "mac-read-failure-dark.png"
       ],
-      "abnormalCount": 0
+      "passed": true,
+      "expectedState": "read-failure",
+      "hadNotice": false,
+      "nativeOwnAX": true,
+      "noGlobalPermissionsRequested": true,
+      "rawInitiallyCollapsed": true,
+      "realModelRequests": 0,
+      "realSettingsWindow": true,
+      "exitCode": 0
     }
-  ],
-  "method": "Actual app processes, kill -9 first process, restart same namespace; native applicationShouldTerminate then restart; own in-app AX and own-window screenshot capture. No external automation or system settings."
+  ]
 }

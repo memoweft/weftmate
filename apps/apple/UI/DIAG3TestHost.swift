@@ -66,6 +66,8 @@ struct DIAG3TestHost: View {
                     window.rootViewController = controller
                     controller.setNeedsUpdateOfHomeIndicatorAutoHidden()
                     try? await Task.sleep(for: .seconds(3))
+                    controller.prepareCapture(scene: nativeScene)
+                    try? await Task.sleep(for: .seconds(AppleTokens.Motion.slow))
                     FileHandle.standardOutput.write(Data("DIAG3_NATIVE_READY\n".utf8))
                 }
             }
@@ -94,6 +96,19 @@ private final class DIAG3NativeCaptureController: UIHostingController<AnyView> {
     override var childForHomeIndicatorAutoHidden: UIViewController? { nil }
     override var prefersStatusBarHidden: Bool { false }
     override var preferredStatusBarStyle: UIStatusBarStyle { traitCollection.userInterfaceStyle == .dark ? .lightContent : .darkContent }
+    func prepareCapture(scene: String) {
+        // XCTest scrolls to the entry before its checkpoint. Match that visible state
+        // in the screenshot-only fixture without changing the real settings layout.
+        guard scene.hasPrefix("about"), scene != "about-banner" else { return }
+        func scrollViews(_ root: UIView) -> [UIScrollView] {
+            ((root as? UIScrollView).map { [$0] } ?? []) + root.subviews.flatMap(scrollViews)
+        }
+        guard let scroll = scrollViews(view).max(by: { $0.contentSize.height < $1.contentSize.height }) else { return }
+        let bottom = max(-scroll.adjustedContentInset.top,
+                         scroll.contentSize.height - scroll.bounds.height + scroll.adjustedContentInset.bottom)
+        scroll.setContentOffset(CGPoint(x: scroll.contentOffset.x, y: bottom), animated: false)
+        scroll.layoutIfNeeded()
+    }
 }
 #endif
 #endif

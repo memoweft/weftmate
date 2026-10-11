@@ -1,97 +1,656 @@
 {
+  "package": "DIAG-3b",
   "captures": [
+    {
+      "name": "iphone-about-and-run-log-dark.png",
+      "width": 2412,
+      "height": 2622,
+      "theme": "dark",
+      "source": "native side-by-side without resizing"
+    },
+    {
+      "name": "iphone-about-and-run-log-light.png",
+      "width": 2412,
+      "height": 2622,
+      "theme": "light",
+      "source": "native side-by-side without resizing"
+    },
+    {
+      "name": "iphone-about-empty-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-about-empty-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-about-normal-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-about-normal-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-about-read-failure-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-about-read-failure-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-about-records-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-about-records-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
     {
       "name": "iphone-banner-dark.png",
       "width": 1206,
-      "height": 2622
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-banner-dismissed-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-banner-dismissed-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
       "name": "iphone-banner-light.png",
       "width": 1206,
-      "height": 2622
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-detail-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-detail-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-detail-raw-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-detail-raw-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
       "name": "iphone-empty-dark.png",
       "width": 1206,
-      "height": 2622
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-empty-file-preview-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-empty-file-preview-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
       "name": "iphone-empty-light.png",
       "width": 1206,
-      "height": 2622
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-file-preview-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-file-preview-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-file-raw-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-file-raw-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-normal-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "iphone-normal-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
       "name": "iphone-read-failure-dark.png",
       "width": 1206,
-      "height": 2622
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
       "name": "iphone-read-failure-light.png",
       "width": 1206,
-      "height": 2622
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
       "name": "iphone-records-dark.png",
       "width": 1206,
-      "height": 2622
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
       "name": "iphone-records-light.png",
       "width": 1206,
-      "height": 2622
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
-      "name": "mac-empty-dark-diag3-records.png",
-      "width": 1126,
-      "height": 857
+      "name": "iphone-summary-preview-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
-      "name": "mac-empty-light-diag3-records.png",
-      "width": 1126,
-      "height": 857
+      "name": "iphone-summary-preview-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
-      "name": "mac-normal-dark-diag3-records.png",
-      "width": 1126,
-      "height": 857
+      "name": "iphone-summary-raw-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
-      "name": "mac-normal-light-diag3-records.png",
-      "width": 1126,
-      "height": 857
+      "name": "iphone-summary-raw-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
-      "name": "mac-read-failure-dark-diag3-records.png",
-      "width": 1126,
-      "height": 857
+      "name": "iphone-system-share-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
-      "name": "mac-read-failure-light-diag3-records.png",
-      "width": 1126,
-      "height": 857
+      "name": "iphone-system-share-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
-      "name": "mac-records-dark-diag3-banner.png",
-      "width": 1126,
-      "height": 857
+      "name": "iphone-watch-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
-      "name": "mac-records-dark-diag3-records.png",
-      "width": 1126,
-      "height": 857
+      "name": "iphone-watch-detail-dark.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "dark",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
-      "name": "mac-records-light-diag3-banner.png",
-      "width": 1126,
-      "height": 857
+      "name": "iphone-watch-detail-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
     },
     {
-      "name": "mac-records-light-diag3-records.png",
-      "width": 1126,
-      "height": 857
+      "name": "iphone-watch-light.png",
+      "width": 1206,
+      "height": 2622,
+      "theme": "light",
+      "source": "simctl whole-screen display outside XCTest, same App in synthetic scene independently verified by XCTest"
+    },
+    {
+      "name": "mac-about-and-run-log-dark.png",
+      "width": 2000,
+      "height": 760,
+      "theme": "dark",
+      "source": "native side-by-side without resizing"
+    },
+    {
+      "name": "mac-about-and-run-log-light.png",
+      "width": 2000,
+      "height": 760,
+      "theme": "light",
+      "source": "native side-by-side without resizing"
+    },
+    {
+      "name": "mac-about-empty-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-about-empty-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-about-normal-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-about-normal-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-about-read-failure-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-about-read-failure-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-about-records-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-about-records-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-banner-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-banner-dismissed-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-banner-dismissed-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-banner-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-detail-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-detail-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-detail-raw-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-detail-raw-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-empty-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-empty-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-preview-empty-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-preview-empty-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-preview-normal-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-preview-normal-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-preview-records-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-preview-records-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-raw-empty-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-raw-empty-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-raw-normal-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-raw-normal-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-raw-records-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-file-raw-records-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-normal-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-normal-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-read-failure-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-read-failure-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-records-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-records-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-preview-empty-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-preview-empty-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-preview-normal-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-preview-normal-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-preview-records-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-preview-records-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-raw-empty-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-raw-empty-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-raw-normal-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-raw-normal-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-raw-records-dark.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "dark",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
+    },
+    {
+      "name": "mac-summary-raw-records-light.png",
+      "width": 1000,
+      "height": 760,
+      "theme": "light",
+      "source": "app-owned native Settings window including titlebar and open sheet panels"
     }
   ],
   "iphoneFullScreen": true,
+  "iphoneSystemStatusBar": true,
+  "iphoneSystemHomeIndicator": false,
+  "iphoneSystemStatusAndHomeIndicator": false,
+  "homeIndicatorLimitation": "The simulator omitted the bottom indicator even outside XCTest. Full native PNGs are preserved; no indicator was drawn or overlaid. This acceptance item remains incomplete.",
   "macOwnWindowsWithTitlebar": true,
   "themes": [
     "light",
@@ -100,8 +659,16 @@
   "states": [
     "empty",
     "records",
+    "normal",
     "read_failure",
-    "previous_unclean_notice"
+    "previous_unclean_notice",
+    "summary_preview_open",
+    "file_preview_open",
+    "system_share_open",
+    "detail_open",
+    "watch_records"
   ],
-  "review": "Native controls, generated icon assets, AppleTokens spacing/color; human date text without seconds. JSON/file preview intentionally preserves source ISO timestamps. All contents synthetic; failure attempts excluded from final list."
+  "syntheticOnly": true,
+  "realModelRequests": 0,
+  "comparison": "About left, Run Log right. Both original full captures, native resolution, no cropping or masks."
 }
