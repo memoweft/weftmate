@@ -145,7 +145,7 @@
   function route(name) {
     if (!core) return false;
     if (['connect', 'login'].includes(name) && core.state.cloudAuth.mode !== 'authenticated') { core.startCloudJourney(); return true; }
-    if (!['account', 'devices'].includes(name) || !['authenticated', 'waiting'].includes(core.state.cloudAuth.mode)) return false;
+    if (!['account', 'devices'].includes(name) || core.state.cloudAuth.mode !== 'authenticated') return false;
     document.body.classList.remove('cloud-auth-active');
     for (const id of ['chat-page', 'home-page', 'generic-page', 'cloud-auth-page']) byId(id).classList.remove('active');
     byId('cloud-settings-page').classList.add('active');

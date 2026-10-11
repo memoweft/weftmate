@@ -487,6 +487,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     return matches[0];
   }
   return { core: runInNewContext('globalThis.__testCore', context), get, getByRole, conversationButtons, document, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
+    setNativeSystemRepair: (repairSystem: (id: string) => Promise<object>) => { (context as any).weftmateDesktop = {repairSystem}; },
     deferMe: () => { deferNextMe = true }, resolveMe: (value: object, status = 200) => { deferredMe?.resolve(reply(value, status)); deferredMe = null },
     deferDevices: () => { deferNextDevices = true }, resolveDevices: (value: object) => { deferredDevices?.resolve(reply(value)); deferredDevices = null },
     resolveTaskDetail: (value: object, status = 200) => { deferredTaskDetail?.resolve(reply(value, status)); deferredTaskDetail = null },
@@ -2263,22 +2264,35 @@ test('S1b opening the application shows pending device notice; settings allows o
 test('model maintenance keeps the desktop button waiting through a two-minute load and sends one restart', async () => {
   let now = 0;
   const deadlines: Array<{ due: number; controller: AbortController }> = [];
-  const restart = deferred<ReturnType<typeof reply>>();
-  const system = { canRestart: true, queue: {}, model: { state: 'ready', canRestart: true, contextWindow: 98304 },
+  const restart = deferred<object>(), legacyRestart = deferred<ReturnType<typeof reply>>();
+  const nativeCalls: string[] = [];
+  const system = { canRestart: true, queue: {}, model: { state: 'unavailable', canRestart: true, contextWindow: 98304 },
     host: { state: 'ready', canRestart: true }, memory: { state: 'disabled', canRestart: false } };
   const page = harness([], [], false, { systemRead: system,
     abortSignal: { timeout(ms) { const controller = new AbortController(); deadlines.push({ due: now + ms, controller }); return controller.signal } },
     restartRead: (_url, options) => new Promise((resolve, reject) => {
       options.signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true });
-      restart.promise.then(resolve, reject);
+      legacyRestart.promise.then(resolve, reject);
     }) });
   await flush(); page.get('show-account').fire('click'); await flush(); await flush();
-  const button = page.get('system-services').children[0].children[1];
+  page.setNativeSystemRepair(id => { nativeCalls.push(id); return restart.promise; });
+  await page.core.refreshSystem(); await flush();
+  const modelRow = () => page.get('system-services').children.find(row => row.dataset.component === 'model')!;
+  const button = modelRow().children.find(node => node.getAttribute('aria-label') === '修复回复模型')!;
   button.fire('click'); await flush();
   now = 120_000; for (const entry of deadlines) if (entry.due <= now) entry.controller.abort();
-  await flush(); assert.equal(button.disabled, true); assert.equal(button.textContent, '重启中…');
+  await flush(); assert.equal(button.disabled, true); assert.equal(button.textContent, '修复中…');
+  assert.deepEqual(nativeCalls, ['model']);
+  assert.equal(page.requests.filter(row => row.url.endsWith('/system/model/restart')).length, 0);
+  system.model.state = 'ready'; restart.resolve(system); await flush(); await flush();
+  assert.equal(modelRow().dataset.state, 'healthy');
+  assert.equal(modelRow().children.some(node => node.getAttribute('aria-label') === '修复回复模型'), false);
+  assert.equal(page.get('system-notice').textContent, '');
+  // Preserve the existing six-minute maintenance window for older API clients.
+  let legacySettled = false;
+  const legacy = page.core.restartService('model').then(() => { legacySettled = true; }); await flush();
+  now = 240_000; for (const entry of deadlines) if (entry.due <= now) entry.controller.abort();
+  await flush(); assert.equal(legacySettled, false);
   assert.equal(page.requests.filter(row => row.url.endsWith('/system/model/restart')).length, 1);
-  restart.resolve(reply(system)); await flush(); await flush();
-  assert.equal(page.get('system-notice').textContent, '已更新');
-  assert.equal(page.get('system-services').children[0].children[1].disabled, false);
+  legacyRestart.resolve(reply(system)); await legacy;
 });

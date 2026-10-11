@@ -162,6 +162,7 @@ export async function createCertificateManager({ root, domain, identity, certFil
   }
   try { await inspect(); } catch { state.certificateErrorCode = 'CERTIFICATE_KEY_DOMAIN_MISMATCH'; }
   return { certFile, check, refresh: inspect,
+    async retry() { await running; state.nextCheckAt = 0; await check(); },
     start() { timer ??= setInterval(() => { void check().catch(() => {}); }, DAY); timer.unref(); },
     status: () => ({ certificateExpiresAt, certificateErrorCode: state.certificateErrorCode }),
     async close() { closed = true; clearInterval(timer); abort.abort(); await running; },

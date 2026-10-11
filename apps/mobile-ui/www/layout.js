@@ -37,9 +37,9 @@ const mobileMarkup = String.raw`
         <div id="login-view" class="cloud-auth-card"></div>
         <section id="cloud-wait-view" class="cloud-auth-card" hidden>
           <span class="auth-brand" aria-hidden="true"></span>
-          <h1 id="cloud-wait-title">在你已登录的设备上允许这台设备</h1>
+          <h1 id="cloud-wait-title">请重新登录</h1>
           <p id="cloud-wait-status" role="status"></p>
-          <button id="cloud-wait-retry" class="button primary" type="button">检查批准状态</button>
+          <button id="cloud-wait-retry" class="button primary" type="button">重新登录</button>
           <button id="cloud-wait-cancel" class="button quiet" type="button">取消并换账号</button>
         </section>
       </section>

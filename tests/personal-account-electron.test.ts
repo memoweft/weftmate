@@ -18,8 +18,13 @@ test('local setup, same-account devices, password rotation and logout work in th
   const profile = join(parent, 'profile')
   const processes: ChildProcess[] = []
   const launch = async () => {
-    const child = spawn(process.execPath, [launcher, '--user-data-dir', profile, '--access-port', '0'], {
-      cwd: repository, stdio: ['pipe', 'pipe', 'pipe'],
+    const env = { ...process.env }
+    for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key]
+    env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host'
+    // Keep all legacy API/CLI assertions in a real headless Electron host;
+    // opening a native window now creates the local profile without a password.
+    const child = spawn(process.execPath, [launcher, '--headless', '--user-data-dir', profile, '--access-port', '0'], {
+      cwd: repository, env, stdio: ['pipe', 'pipe', 'pipe'],
     })
     processes.push(child)
     let output = ''

@@ -34,7 +34,9 @@ test('two local devices use the same attached empty session across a real Electr
     const env = { ...process.env }
     for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key]
     env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host'
-    const { child } = evidence.spawn(process.execPath, [launcher, '--user-data-dir', profile, '--access-port', '0'], {
+    // This test owns legacy CLI tokens, not a window. A native window now
+    // establishes its local account automatically; its behavior is covered by AUTH-1.
+    const { child } = evidence.spawn(process.execPath, [launcher, '--headless', '--user-data-dir', profile, '--access-port', '0'], {
       cwd: repository, env, stdio: ['pipe', 'pipe', 'pipe'],
     })
     processes.push(child)

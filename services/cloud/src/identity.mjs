@@ -8,7 +8,8 @@ import { isIP } from 'node:net';
 import { sqliteAdapter } from './oidc-adapter.mjs';
 import { Accounts } from './accounts.mjs';
 import { loadKeys } from './keys.mjs';
-import { CloudError, digest, equalDigest, transaction } from './security.mjs';
+import { CloudError, FailureLimiter, digest, equalDigest, transaction } from './security.mjs';
+import { createFeedback } from './feedback.mjs';
 import { deviceProof } from './device-proof.mjs';
 import { appAuthorization, widenAppResumeCookies } from './app-authorization.mjs';
 import { accountLifecycle } from './account-lifecycle.mjs';
@@ -38,7 +39,7 @@ const field = (name, value) => `<input type="hidden" name="${name}" value="${esc
 function confirmationForm(uid, csrfToken, challengeId) {
   return `<p>请查看邮箱并输入新设备确认验证码。此确认仅授权云账号。</p><form method="post" action="${CLOUD_PATH}/auth/device/confirm">${field('interactionUid', uid)}${field('csrfToken', csrfToken)}${field('challengeId', challengeId)}<label>验证码 <input name="code" inputmode="numeric" required></label><button>确认登录</button></form>`;
 }
-async function bodyOf(req) {
+async function bodyOf(req, maxBytes = 16384) {
   const type = req.headers['content-type']?.split(';')[0];
   if (!['application/json', 'application/x-www-form-urlencoded'].includes(type))
     throw new CloudError(415, 'UNSUPPORTED_MEDIA_TYPE');
@@ -46,7 +47,7 @@ async function bodyOf(req) {
   let bytes = 0;
   for await (const chunk of req) {
     bytes += chunk.length;
-    if (bytes > 16384) throw new CloudError(413, 'BODY_TOO_LARGE');
+    if (bytes > maxBytes) throw new CloudError(413, 'BODY_TOO_LARGE');
     chunks.push(chunk);
   }
   try {
@@ -62,7 +63,7 @@ async function bodyOf(req) {
   }
 }
 
-export async function createIdentity({ database, config, mailer, logger, now = Date.now, relayDns = null }) {
+export async function createIdentity({ database, config, mailer, logger, now = Date.now, relayDns = null, feedbackFetch }) {
   const keys = await loadKeys(config.dataDir);
   const accounts = new Accounts(database, mailer, keys.cookieSecret, { now, logger });
   const policy = interactionPolicy.base();
@@ -174,11 +175,14 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       const account = binding ? accounts.get(binding.account_id) : undefined;
       if (!binding || !account?.active || account.auth_epoch !== binding.auth_epoch)
         throw new errors.InvalidGrant('grant revoked');
+      const device = database.prepare('SELECT public_jwk,confirmed_at FROM cloud_devices WHERE account_id=? AND fingerprint=?')
+        .get(account.id, binding.fingerprint);
+      // cloud_devices contains only keys admitted by a mailbox confirmation.
+      // Check the live row for every audience, including refreshed host tokens.
+      if (!device || !Number.isSafeInteger(device.confirmed_at)) throw new errors.InvalidGrant('device not verified');
       const hostId = token.resourceServer?.audience?.startsWith(`${config.audience}/hosts/`)
         ? token.resourceServer.audience.slice(`${config.audience}/hosts/`.length) : null;
       if (hostId || binding.app_login || token.jkt) {
-        const device = database.prepare('SELECT public_jwk FROM cloud_devices WHERE account_id=? AND fingerprint=?')
-          .get(account.id, binding.fingerprint);
         if (hostId && !database.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(hostId, account.id) ||
             !device?.public_jwk || !token.jkt || token.jkt !== await calculateJwkThumbprint(JSON.parse(device.public_jwk)))
           throw new errors.InvalidGrant('host or device not authorized');
@@ -188,6 +192,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       return {
         device_id: binding.device_id,
         device_fingerprint: binding.fingerprint,
+        device_verified: true,
         auth_epoch: binding.auth_epoch,
         ...(hostId ? { host_id: hostId } : {}),
       };
@@ -302,7 +307,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       req,
       res,
       {
-        login: { accountId: account.id, amr: ['pwd', 'email'], remember: false },
+        login: { accountId: account.id, amr: result.authMethod === 'email' ? ['email'] : result.emailConfirmed ? ['pwd', 'email'] : ['pwd'], remember: false },
         consent: { grantId },
       },
       { mergeWithLastSubmission: false },
@@ -319,6 +324,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     [`${CLOUD_PATH}/auth/register/resend`, 'resend'],
     [`${CLOUD_PATH}/auth/register/verify`, 'verify'],
     [`${CLOUD_PATH}/auth/login`, 'login'],
+    [`${CLOUD_PATH}/auth/login/code/request`, 'loginCodeRequest'],
+    [`${CLOUD_PATH}/auth/login/code/confirm`, 'loginCodeConfirm'],
     [`${CLOUD_PATH}/auth/device/confirm`, 'device'],
     [`${CLOUD_PATH}/auth/password/request`, 'resetRequest'],
     [`${CLOUD_PATH}/auth/password/reset`, 'reset'],
@@ -347,6 +354,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
   const relay = createRelay({ database, config, secret: keys.cookieSecret, now, dns: relayDns });
   const lifecycle = accountLifecycle({ database, accounts, relay });
   const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider });
+  const feedback = createFeedback({ config, limiter: new FailureLimiter(database, keys.cookieSecret, now), fetch: feedbackFetch });
   const authorizeInApp = appAuthorization({ config });
   const allowedOrigin = origin => origin === new URL(config.issuer).origin || config.clients
     .some(c => c.redirect_uris.some(uri => new URL(uri).origin !== 'null' && new URL(uri).origin === origin));
@@ -390,12 +398,19 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         return true;
       }
       const match = new RegExp(`^${CLOUD_PATH}/interactions/([A-Za-z0-9_-]+)$`).exec(url.pathname);
-      const route = routes.get(url.pathname);
+      const route = url.pathname === `${CLOUD_PATH}/feedback` ? 'feedback' : routes.get(url.pathname);
       const hostRoute = url.pathname.startsWith(`${CLOUD_PATH}/hosts/`);
       if (!route && !match && !hostRoute) return false;
       try {
         if (req.headers.origin && !allowedOrigin(req.headers.origin))
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
+        if (route === 'feedback') {
+          if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
+          if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
+          const account = await authenticate(req, true);
+          reply(res, 201, await feedback(account, await bodyOf(req, 262144)));
+          return true;
+        }
         if (hostRoute) {
           if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
           if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
@@ -446,6 +461,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           const devices = database.prepare('SELECT * FROM cloud_devices WHERE account_id=? ORDER BY confirmed_at').all(account.id)
             .map(d => ({ id: d.device_id, name: d.name, type: d.type,
               online: d.last_seen !== null && now() - d.last_seen < 60000,
+              firstUsedAt: new Date(d.confirmed_at).toISOString(),
               lastUsedAt: new Date(d.last_seen ?? d.confirmed_at).toISOString(),
               isCurrent: d.fingerprint === req.cloudToken.device_fingerprint }));
           const computers = database.prepare(`SELECT h.* FROM cloud_hosts h JOIN host_memberships m ON m.host_id=h.host_id
@@ -464,14 +480,14 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
         const body = await bodyOf(req);
         if (url.search) throw new CloudError(400, 'INVALID_REQUEST');
-        if (route === 'login' && typeof body.publicJwk === 'string') {
+        if (['login','loginCodeRequest'].includes(route) && typeof body.publicJwk === 'string') {
           try { body.publicJwk = JSON.parse(body.publicJwk); }
           catch { throw new CloudError(400, 'INVALID_DEVICE_KEY'); }
         }
         const from = source(req);
-        if (route === 'login' || route === 'device') {
+        if (['login','device','loginCodeRequest','loginCodeConfirm'].includes(route)) {
           const interaction = await checkedInteraction(req, res, body);
-          if (route === 'login' && interaction.params.wm_app === '1') {
+          if (['login','loginCodeRequest'].includes(route) && interaction.params.wm_app === '1') {
             await accounts.device(body);
             if (!body.publicJwk || body.deviceId !== interaction.params.wm_device_id ||
                 await calculateJwkThumbprint(body.publicJwk) !== await calculateJwkThumbprint(JSON.parse(interaction.params.wm_public_jwk)))
@@ -480,6 +496,10 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           const result =
             route === 'login'
               ? await accounts.login(body, from, interaction.uid)
+              : route === 'loginCodeRequest'
+                ? await accounts.requestLoginCode(body, from, interaction.uid)
+                : route === 'loginCodeConfirm'
+                  ? accounts.confirmLoginCode(body, from, interaction.uid)
               : accounts.confirmDevice(body, from, interaction.uid);
           if (result.confirmationRequired) {
             if (req.headers['content-type'].startsWith('application/x-www-form-urlencoded'))
@@ -591,6 +611,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           reply(res, route === 'register' ? 201 : 200, result);
         }
       } catch (error) {
+        if (route === 'loginCodeConfirm' && error instanceof CloudError && error.code === 'INTERACTION_INVALID')
+          error = new CloudError(400, 'INVALID_LOGIN_CODE');
         const known = error instanceof CloudError;
         if (!known) logger?.error('identity.error', { code: 'IDENTITY_UNAVAILABLE' });
         if (!res.headersSent)
