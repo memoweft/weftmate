@@ -1,0 +1,57 @@
+{
+  "comparisonBase": "73bf79066",
+  "protectedFiles": [
+    {
+      "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/RunLog.swift",
+      "unchanged": true,
+      "sha256": "89a964ec5db23ff4766db2758ce4361a9762705b61b2e7c44d349a9efa53aff6"
+    },
+    {
+      "file": "apps/apple/Packages/WeftMateCore/Tests/WeftMateCoreTests/RunLogTests.swift",
+      "unchanged": true,
+      "sha256": "744721d5e42c15a2169d79488e3ea456af558e4bd8ed637a223b11a08b5761f0"
+    },
+    {
+      "file": "apps/apple/UI/RunLogRuntime.swift",
+      "unchanged": true,
+      "sha256": "276cf77be48558b61806e0a04d5788de703e034193e05b51a0a45487368225aa"
+    },
+    {
+      "file": "apps/apple/UI/PhoneWatchTimelineBridge.swift",
+      "unchanged": true,
+      "sha256": "cc85e773cd3d102b4d1c51fe313873c4f16b37fee79fc439fa6e705924ff1050"
+    },
+    {
+      "file": "apps/apple/iOS/RunLogPhoneDelegate.swift",
+      "unchanged": true,
+      "sha256": "6517859143f6c6fcef4e173fd5a38773734ff8deb88920c7a0bc2d88d0e10f1a"
+    },
+    {
+      "file": "apps/apple/macOS/RunLogMacDelegate.swift",
+      "unchanged": true,
+      "sha256": "d6b4f07da8c1f9d9b7416dffba41d427297056c83de0130a5194101a99a1485d"
+    },
+    {
+      "file": "apps/apple/watchOS/WatchHomeView.swift",
+      "unchanged": true,
+      "sha256": "b911580404f0b0fd318519c9f364876ed01f710b8b1376ab1701c2f1b8a8c12c"
+    },
+    {
+      "file": "apps/apple/watchOS/WeftMateWatchApp.swift",
+      "unchanged": true,
+      "sha256": "9fec35d3d7a5413b8c03cd8469ac1105da1b9d8cd80dc07dc32288692970f067"
+    },
+    {
+      "file": "apps/apple/Tests/DIAG3WatchUITests.swift",
+      "unchanged": true,
+      "sha256": "6a10ac38e284b921bb7bb64906f4c67018a7e93ceb44ef4b3ea2788d0a103ab0"
+    },
+    {
+      "file": "apps/apple/Tests/Evidence/DIAG-3/fields.md",
+      "unchanged": true,
+      "sha256": "9648b60f3e8fe024491aec003e8c8ae673526d71522bcc1f120c79a13ccba26a"
+    }
+  ],
+  "passed": true,
+  "note": "DIAG-3b changes only UI and UI harness/evidence; approved log behavior, assertions, field table and capacity constants remain unchanged."
+}

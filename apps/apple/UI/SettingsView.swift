@@ -22,7 +22,7 @@ struct SettingsView: View {
         self.model = model
         self.onClose = onClose
         _settings = StateObject(wrappedValue: AppleSettingsModel(app: model))
-        _phonePath = State(initialValue: route.map { [$0] } ?? [])
+        _phonePath = State(initialValue: route.map { $0.categoryID == "run-log" ? [.init(categoryID: "about"), $0] : [$0] } ?? [])
     }
     private var categories: [AppleSettingsCategory] {
         #if os(macOS)
@@ -47,7 +47,7 @@ struct SettingsView: View {
                     VStack(spacing: AppleTokens.Space.p12) {
                         TextField("搜索设置", text: $search).weaveField()
                             .accessibilityIdentifier("settingsSearch").padding(.horizontal, AppleTokens.Space.p12).padding(.top, AppleTokens.Space.p12)
-                        List(selection: Binding<String?>(get: { model.settingsRoute.categoryID }, set: { if let id = $0 { model.settingsRoute = .init(categoryID: id) } })) {
+                        List(selection: Binding<String?>(get: { model.settingsRoute.categoryID == "run-log" ? "about" : model.settingsRoute.categoryID }, set: { if let id = $0 { model.settingsRoute = .init(categoryID: id) } })) {
                             ForEach(["设置", "助手", "此电脑", "关于"], id: \.self) { group in
                                 let rows = categories.filter { $0.group == group }
                                 if !rows.isEmpty {
@@ -66,7 +66,7 @@ struct SettingsView: View {
         }
         .background(MacViewWidthObserver { availableWidth = $0 })
         .onExitCommand { dismissWindow(id: "settings") }
-        .toolbar { Button { dismissWindow(id: "settings") } label: { WeftLabel("关闭设置", icon: "deny") }.keyboardShortcut(.cancelAction).accessibilityIdentifier("closeSettings") }
+        .toolbar { if model.settingsRoute.categoryID != "run-log" { Button { dismissWindow(id: "settings") } label: { WeftLabel("关闭设置", icon: "deny") }.keyboardShortcut(.cancelAction).accessibilityIdentifier("closeSettings") } }
         .background(Weave.canvas).accessibilityIdentifier("settingsRoot")
         .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme).tint(Weave.accent)
         #else
@@ -93,25 +93,42 @@ struct SettingsView: View {
                 if categories.isEmpty { Text("没有匹配的设置") }
             }.listStyle(.insetGrouped).navigationTitle("设置")
                 .searchable(text: $search, prompt: "搜索设置")
-                .navigationDestination(for: AppleSettingsRoute.self) { detail($0).toolbar { closeButton } }
+                .navigationDestination(for: AppleSettingsRoute.self) { route in detail(route).toolbar { if route.categoryID != "run-log" { closeButton } } }
                 .toolbar { closeButton }
                 .accessibilityIdentifier("settingsRoot")
         }
+        .persistentSystemOverlays(.visible)
+        .tint(Weave.accent)
+        .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme)
         #endif
     }
     @ToolbarContentBuilder private var closeButton: some ToolbarContent {
         ToolbarItem(placement: .confirmationAction) {
-            Button("完成") { if let onClose { onClose() } else { dismiss() } }
-                .accessibilityIdentifier("closeAuxiliarySheetButton")
+            SettingsDoneButton { if let onClose { onClose() } else { dismiss() } }
         }
     }
     #if os(macOS)
     private var selection: Binding<String> {
-        Binding(get: { model.settingsRoute.categoryID }, set: { model.settingsRoute = .init(categoryID: $0) })
+        Binding(get: { model.settingsRoute.categoryID == "run-log" ? "about" : model.settingsRoute.categoryID }, set: { model.settingsRoute = .init(categoryID: $0) })
     }
     #endif
-    private func detail(_ route: AppleSettingsRoute) -> some View {
-        SettingsCategoryView(app: model, settings: settings, route: route) { id in
+    @ViewBuilder private func detail(_ route: AppleSettingsRoute) -> some View {
+        if route.categoryID == "run-log" {
+            RunLogView(onBack: { model.settingsRoute = .init(categoryID: "about") }, onClose: {
+                #if os(macOS)
+                if let onClose { onClose() } else { dismissWindow(id: "settings") }
+                #else
+                if let onClose { onClose() } else { dismiss() }
+                #endif
+            })
+        } else {
+        SettingsCategoryView(app: model, settings: settings, route: route, openDiagnostics: {
+            #if os(macOS)
+            model.settingsRoute = .init(categoryID: "run-log")
+            #else
+            phonePath.append(.init(categoryID: "run-log"))
+            #endif
+        }) { id in
             model.openedSessionID = id
             #if os(macOS)
             dismissWindow(id: "settings"); openWindow(id: "main")
@@ -120,6 +137,7 @@ struct SettingsView: View {
             #endif
         }
             .id(route).id(model.accountEpoch)
+        }
     }
 }
 
@@ -127,9 +145,10 @@ private struct SettingsCategoryView: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var settings: AppleSettingsModel
     let route: AppleSettingsRoute
+    let openDiagnostics: @MainActor () -> Void
     let openConversation: @MainActor (String) -> Void
     @State private var legal: LegalDocument?
-    @State private var runLogOpen = false
+    @ObservedObject private var runLog = RunLogRuntime.shared
     @State private var deletingSchedule: ManagedSchedule?
     @State private var restoringBackup: HostBackup?
     @State private var restartingService: HostService?
@@ -161,11 +180,6 @@ private struct SettingsCategoryView: View {
                 }
                 #endif
             }
-            #if os(iOS)
-            .fullScreenCover(isPresented: $runLogOpen) { RunLogView(onClose: { runLogOpen = false }) }
-            #else
-            .sheet(isPresented: $runLogOpen) { RunLogView(onClose: { runLogOpen = false }) }
-            #endif
             .sheet(item: $legal) { LegalDocumentView(document: $0) }
             .confirmationDialog("删除这条提醒或定时任务？已启动的任务和历史记录保留。", isPresented: Binding(get: { deletingSchedule != nil }, set: { if !$0 { deletingSchedule = nil } }), titleVisibility: .visible) {
                 Button("删除", role: .destructive) { if let item = deletingSchedule { Task { await settings.schedule(item, action: .delete) } }; deletingSchedule = nil }
@@ -179,6 +193,10 @@ private struct SettingsCategoryView: View {
                 Button("恢复并重启", role: .destructive) { if let item = restoringBackup { Task { await settings.restore(item) } }; restoringBackup = nil }
                 Button("取消", role: .cancel) { restoringBackup = nil }
             }
+    }
+    private func openRunRecords() {
+        runLog.notify = false
+        openDiagnostics()
     }
     @ViewBuilder private var content: some View {
         switch route.categoryID {
@@ -205,6 +223,9 @@ private struct SettingsCategoryView: View {
             }
         default:
             Form {
+                if route.categoryID == "about" && runLog.notify {
+                    Section { PreviousRunNotice { openRunRecords() }.listRowSeparator(.hidden) }
+                }
                 fields
                 if settings.busy { ProgressView("正在读取…") }
                 if let error = settings.error { InlineNotice(message: error, isError: true) }
@@ -341,7 +362,6 @@ private struct SettingsCategoryView: View {
             }
             Button("刷新备份") { Task { await settings.refresh("backups") } }.disabled(settings.busy)
         case "about":
-            Button { runLogOpen = true } label: { WeftLabel("运行记录", icon: "info") }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("openRunLog")
             SettingsRow("App 版本", "当前安装的 WeftMate 版本与 build。") {
                 Text("\(settings.installedVersion) / \(settings.installedBuild)").accessibilityIdentifier("aboutNativeVersion")
             }
@@ -354,6 +374,17 @@ private struct SettingsCategoryView: View {
                     }.accessibilityIdentifier("aboutHostLayer." + layer)
                 }
             }
+            #if os(iOS)
+            NavigationLink(value: AppleSettingsRoute(categoryID: "run-log")) {
+                VStack(alignment: .leading, spacing: AppleTokens.Space.p5) {
+                    Text("运行记录").font(AppleTokens.Fonts.body).foregroundStyle(Weave.ink)
+                    Text(RunLogText.entry(runLog.snapshot)).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                }.padding(.vertical, AppleTokens.Space.p8).accessibilityIdentifier("runLogEntryStatus")
+            }.accessibilityIdentifier("openRunLog").listRowSeparator(.hidden)
+            #else
+            Button { openRunRecords() } label: { RunLogNavigationRow(title: "运行记录", subtitle: RunLogText.entry(runLog.snapshot)) }
+                .buttonStyle(RunLogRowStyle()).accessibilityIdentifier("openRunLog")
+            #endif
             if let notice = settings.compatibilityNotice {
                 InlineNotice(message: notice, isError: true).accessibilityIdentifier("aboutCompatibilityNotice")
             }
@@ -436,4 +467,10 @@ private struct LocalAccountSettingsView: View {
                 Button("退出并更换", role: .destructive) { Task { await app.signOut() } }; Button("取消", role: .cancel) {}
             } message: { Text("退出后在登录页更改服务器地址，草稿仍归原账户保留。") }
     }
+}
+
+/// The same Done capsule for every phone settings destination, including diagnostic details.
+struct SettingsDoneButton: View {
+    let action: () -> Void
+    var body: some View { Button("完成", action: action).accessibilityIdentifier("closeAuxiliarySheetButton") }
 }

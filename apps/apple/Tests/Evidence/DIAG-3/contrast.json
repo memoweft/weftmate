@@ -1,0 +1,26 @@
+{
+  "method": "WCAG relative luminance of existing token foregrounds and native/default surface colors",
+  "activeTextThreshold": 4.5,
+  "pairs": [
+    {
+      "role": "iPhone native grouped Form footer",
+      "foreground": "#55574F",
+      "background": "#F2F2F7",
+      "contrast": 6.5745951401
+    },
+    {
+      "role": "muted explanation on light cards",
+      "foreground": "#707268",
+      "background": "#FFFFFF",
+      "contrast": 4.888530269
+    },
+    {
+      "role": "muted text on dark page",
+      "foreground": "#A6A89B",
+      "background": "#000000",
+      "contrast": 8.6957624959
+    }
+  ],
+  "passed": true,
+  "disabledControls": "Explicit disabled appearance; excluded from active-text contrast requirement"
+}
