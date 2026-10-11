@@ -2379,10 +2379,6 @@ export class DshWebRuntime {
         catch { finish() }
       })
       if (this.closedChildren.has(child)) return
-      // The bootstrap intentionally retains IPC after draining Cordis. POSIX
-      // SIGTERM handlers only repeat that drain; the connected carrier would
-      // otherwise force every normal close through the one-second kill timer.
-      if (nativeDisposed && platform !== 'win32' && child.connected) child.disconnect()
     }
     const pid = child.pid
     if (platform === 'win32' && typeof pid === 'number') {
@@ -2396,7 +2392,16 @@ export class DshWebRuntime {
       return
     }
 
-    if (!nativeDisposed) { try { child.kill('SIGTERM') } catch { /* 已退出 */ } }
+    // Keep the carrier connected through collection, matching Windows. A
+    // bootstrap deliberately stays alive after its persistence acknowledgement;
+    // repeating SIGTERM would only consume the grace deadline. Root exit by
+    // disconnect also loses the carrier before inherited streams are collected.
+    if (nativeDisposed) {
+      try { child.kill('SIGKILL') } catch { /* 已退出 */ }
+      await this.waitForChildClose(child)
+      return
+    }
+    try { child.kill('SIGTERM') } catch { /* 已退出 */ }
     const exitedGracefully = await Promise.race([
       this.waitForChildClose(child).then(() => true),
       delay(1_000).then(() => false),

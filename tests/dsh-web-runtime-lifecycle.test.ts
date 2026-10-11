@@ -121,7 +121,7 @@ function runtime(checkoutPath: string, env: NodeJS.ProcessEnv): DshWebRuntime {
 }
 
 describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
-  test('POSIX acknowledged native drain releases the IPC carrier before the unchanged kill deadline', { timeout: 10000 }, async () => {
+  test('POSIX acknowledged native drain collects the connected carrier before the unchanged kill deadline', { timeout: 10000 }, async () => {
     const checkout = await makeCheckout('dispose-ipc-only')
     const web = runtime(checkout, {})
     const child: any = new EventEmitter(), actions: string[] = []
@@ -141,7 +141,8 @@ describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
       // The portable protocol probe runs on Windows too; real POSIX process
       // exit remains covered by the blocking Linux Electron vendor scenario.
       await web.close()
-      assert.deepEqual(actions, ['drain','drained','disconnect'])
+      assert.deepEqual(actions, ['drain','drained','SIGKILL'])
+      assert.equal(child.connected, true, 'collection keeps the IPC carrier until root close')
       assert.ok(Date.now() - at < 500, 'acknowledged disposal must not wait for the one-second fallback')
       assert.equal((web as any).children.size, 0)
     } finally { await web.close() }
