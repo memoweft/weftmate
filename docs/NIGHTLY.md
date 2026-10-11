@@ -24,11 +24,11 @@ Mac 子进程显式补 PATH（命令搜索路径） `/opt/homebrew/bin`、`/usr/
 
 `-SkipApple`／`-SkipAndroid` 可用于只验证 Windows／网页；跳过也会产生缺图报警，不作为五端通过。运行日志保存在本轮 `logs/`。
 
-设备空闲时可用 `-DevicesOnly -Scene login` 做安卓单场景浅深冒烟；该模式不拍 Windows／网页，仍保留缺图报警。模拟器有其它测试占用时仍跳过，不因冒烟模式抢占资源。缺图／旧时间／失败注入可对已完成批次执行 `node scripts/nightly/validate-alerts.mjs --run <批次目录> --out <证据目录>`；脚本只修改临时副本。
+设备空闲时可用 `-DevicesOnly -Scene login` 做安卓单场景浅深冒烟；该模式只做准备、安卓和清理，其它阶段明确未执行，仍保留缺图报警。`-DevicesOnly` 不传 `-Scene` 会跑全部安卓适用格；`-Phases vendor-tests,installed-smoke` 可验证指定阶段，准备与清理始终执行。模拟器有其它测试占用时仍跳过，不因冒烟模式抢占资源。缺图／旧时间／失败注入可对已完成批次执行 `node scripts/nightly/validate-alerts.mjs --run <批次目录> --out <证据目录>`；脚本只修改临时副本。
 
 ## 固定 DSH 测试
 
-准备完成后先执行 `node .github/scripts/ci-unit-tests.mjs vendor --report <批次目录>/vendor-test-results.json`，再拍各端界面。专用工作树首次没有 vendor（固定运行时依赖）时，运行器只读枚举本机既有 DSH 工作区登记的 Git worktree，选择已编译且匹配产品 pin（固定版本）的工作树，再调用 `scripts/vendor-dsh.mjs` 装配（共享主工作区可以在其它提交，不重置它）；缺少构建或 pin 不一致直接生成失败批次，继续收集其他证据。不会把未执行测试记为通过，不使用真实模型或日用数据。
+准备完成后先执行 `node .github/scripts/ci-unit-tests.mjs vendor --report <批次目录>/vendor-test-results.json`，再拍各端界面。专用工作树缺少 vendor（固定运行时依赖），或现有清单的固定提交／补丁身份与当前仓库不同，运行器自动调用 `npm run vendor:dsh`。装配器在独立 LF（单字符换行）检出副本中按文件名顺序打全部 `patches/dsh/*.patch` 并编译，只读使用共享 DSH 主检出的 Git 对象；不改变其工作区、分支或配置。固定提交与全部补丁的内容哈希共同标识缓存，Windows 工作树共享 `Worktrees/_shared/dsh-runtime-<提交前缀>-<补丁哈希前缀>`，各 `vendor/dsh-runtime` 用联接指向完整缓存。没有补丁身份的旧缓存明确过期，夜间重建，本机 vendor 测试直接报“运行时过期”。准备失败归为环境问题并继续收集其它阶段，不把未运行测试记为通过。详见 [VENDOR-PACKAGING.md](VENDOR-PACKAGING.md)。
 
 `nightly-status.json` 的 `phases[name=vendor-tests].tests` 含通过、失败、跳过数和失败名单；`nightly-report.md` 有独立测试段落，失败标红并触发既有汇总报警。完整输出在 `logs/vendor-tests.log`。新步骤沿用整晚截止时间和进程清理，不改计划任务；可以用 `tests/nightly-vendor-tests.test.ts` 的合成成功／失败结果验证报告。
 
@@ -46,7 +46,7 @@ Mac 子进程显式补 PATH（命令搜索路径） `/opt/homebrew/bin`、`/usr/
 
 ## 互斥、停止与清理
 
-夜间批次原子获取报告根目录的 `nightly.lock`，同机重入立即退出。设备运行前检查 Orchestrator（工作包编排目录）的 `lan.lock`、原子 `mumu.lock`，Mac 检查是否有开发包在用（正在运行的 `codex -m` 进程或 `xcodebuild`）、已启动模拟器与原子目录锁 `nightly.lock`。Mac 已有模拟器或任一锁存在时写「被占用，未拍」，保留他人的资源，不等待、不抢占、不删除开发锁。已启动 MuMu 可以复用：持有 `mumu.lock` 后，检查设备进程无运行中的 WeftMate／UI（界面）测试、无活动 instrumentation（仪器测试），Windows 无安卓构建／测试命令；构建后再查一次。正式包和其它已安装但未运行的包仅列清单，不卸载；预先已装 nightly 独立包则跳过。无法核实占用就失败，不猜空闲。不改系统主题、输入法或模拟器设置，不关闭复用的模拟器。拍图始终留在真实 HybridActivity（安卓网页容器）的 appassets（内置资源）来源，合成桥接在 Node（运行时）侧切换夹具，遵守原生导航限制；不把 WebView（网页视图）导航到被原生安全策略拒绝的随机 HTTP 页面。
+夜间批次原子获取报告根目录的 `nightly.lock`，同机重入立即退出。设备运行前检查 Orchestrator（工作包编排目录）的 `lan.lock`、原子 `mumu.lock`，Mac 检查是否有开发包在用（正在运行的 `codex -m` 进程或 `xcodebuild`）、已启动模拟器与原子目录锁 `nightly.lock`。Mac 已有模拟器或任一锁存在时写「被占用，未拍」，保留他人的资源，不等待、不抢占、不删除开发锁。安卓调试地址每轮从 `D:/Software/MuMuPlayer/nx_main/MuMuManager.exe info -v 0` 的 `adb_port` 读取，仅连接该地址，不枚举或试探端口。工具缺失、返回无效端口或模拟器未开启都记“环境问题：未拍”，不会替本人启动模拟器。占用检查、实拍、兜底清理共用本轮地址，用完立即 `adb disconnect` 并释放 `mumu.lock`。已启动 MuMu 可以复用：持有 `mumu.lock` 后，检查设备进程无运行中的 WeftMate／UI（界面）测试、无活动 instrumentation（仪器测试），Windows 无安卓构建／测试命令；构建后再查一次。正式包和其它已安装但未运行的包仅列清单，不卸载；预先已装 nightly 独立包则跳过。无法核实占用就失败，不猜空闲。不改系统主题、输入法或模拟器设置，不关闭复用的模拟器。拍图始终留在真实 HybridActivity（安卓网页容器）的 appassets（内置资源）来源，合成桥接在 Node（运行时）侧切换夹具，遵守原生导航限制；不把 WebView（网页视图）导航到被原生安全策略拒绝的随机 HTTP 页面。
 
 Mac 使用 A10／A15 App 自有 AX（辅助功能控件树）运行器，不依赖失败的 Mac XCUITest（Apple 原生界面测试）自动化初始化；iPhone 和 Watch 使用 XCUITest；某个主题或端的真实断言失败保留红灯及已拍图片，继续独立的其它主题／端，不因一处失败取消整批余项。编译 `-jobs 2`，关闭并行测试。iPhone 独立阶段只启动一台；Watch 阶段仅启动本次创建的配对手机和手表，这是 WatchConnectivity（手机手表通信）的必要伴随设备。用完关闭并删除本次创建的设备；只有所有启动设备均属于本轮时才允许 `shutdown all`。
 
@@ -72,3 +72,11 @@ pwsh -NoProfile -File scripts/nightly/unregister-task.ps1
 
 每晚收尾时运行 `scripts/nightly/prune-temp.ps1 -Hours 48 -Apply`（本人 2026-10-10 同意）：删除系统临时目录、`C:\Temp` 与 `C:\` 根下名字为 `weftmate-*`、创建和最后修改都早于 48 小时、没有被任何运行中进程的命令行引用、也不是已登记 git 工作树的目录。目录连接点只删除链接本身，不进入其目标。结果写入报告状态的 `cleanup.staleTemp`（找到 / 删除 / 保留各多少）。不带 `-Apply` 只预览；想停用就从 `run.mjs` 去掉这一步或把任务停掉。
 
+
+## 重活名额与临时目录（NIGHT-3a）
+
+每个实际执行的阶段原子取得 Orchestrator（工作包编排目录）的三个 `heavy-*.lock` 之一，阶段完成或失败清理后立即释放，下阶段重新排队；等待按两分钟重试。单阶段主动命令限制在占用的28分钟以内，为清理留一分钟，单次占用不超过30分钟。报告阶段记录名额、取得时间及占用秒数；超过45分钟的遗留名额按并行规则回收并写日志。专项跳过阶段不占名额。失败会保存退出码、最后阶段、提交内存与 TCP（传输控制协议）连接总数，并按创建时间、可执行文件和本轮目录三条件清掉本阶段进程。
+
+合成目录由 `tests/helpers/managed-temp.mjs` 统一创建：Windows 固定匿名父目录 `C:/weftmate-temp`，随机子目录一律 `weftmate-` 开头。CI（持续集成）与夜间为本次子进程设置独立范围，成功、失败和可处理的中断先停止并等待自己的进程，再删除该范围。强制结束来不及清理的目录，下次运行开头用同一安全清理器回收24小时以上、无活动所属进程或命令行引用的子目录。24小时远大于正常夜间两小时上限；父目录本身保留，联接根不遍历，删除前仍做路径边界、工作树和在用检查。`prune-temp.ps1` 默认24小时，可用 `-Prefixes` 仅选择获准的历史前缀。
+
+`tests/nightly-temp.test.ts` 在必过组内验证代表性成功、失败、中断后本次目录无遗留，以及强杀遗留的下次回收；夜间清理还记录 `cleanup.temp.removed`，删不掉时清理阶段失败。公开日志写入前去除本机用户名与机器名。

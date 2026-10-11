@@ -1,9 +1,10 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** STREAM-1b: real Electron and shipped mobile UI, isolated synthetic host. */
 import assert from 'node:assert/strict';
 import { _electron,chromium } from 'playwright';
 import { createRequire } from 'node:module';
-import { mkdirSync,mkdtempSync,writeFileSync,readFileSync,rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+
 import { join,resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';

@@ -1,7 +1,8 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile, rm } from 'node:fs/promises';
+
 import { join } from 'node:path';
 import { collectEvidence } from '../../scripts/review-gallery/evidence.mjs';
 import { assertPublicText, captureSummary, catalog, capturePlatforms, runScene } from '../../scripts/review-gallery/common.mjs';

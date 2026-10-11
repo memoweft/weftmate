@@ -24,7 +24,7 @@ npm run dist:win:candidate -- `
   --stage-root (Join-Path $candidateRoot 'staging')
 ```
 
-- `vendor:dsh` 只在 vendor 缺失、损坏或固定 DSH 版本被产品所有者明确升级时手动运行；候选构建不会隐式重建 vendor；
+- `vendor:dsh` 自动构建固定提交与随仓补丁，并把工作树的 `vendor/dsh-runtime` 联接到共享缓存；缺失、损坏、升级固定提交或增删改补丁后都运行同一条命令 `npm run vendor:dsh`；候选构建只校验已有运行时，夜间的 `vendor-tests` 阶段会重建缺失或过期运行时；
 - `vendor:verify` 检查版本、文件、依赖闭包和启动行为；
 - `dist:win` 把已验证的 DSH 运行时放入 Windows 安装包；
 - `dist:win:candidate` 先验证现有 vendor，再使用无 reparse point（重解析点）的隔离暂存目录构建，并审计安装包闭包、开发机路径、用户数据和凭据文件；
@@ -50,11 +50,15 @@ Windows 安装、更新、卸载、数据保留、诊断和恢复的当前边界
 
 发货用的固定 DSH = `tests/contract/dsh-pin.json` 的提交 **加上** `patches/dsh/*.patch`（文件名以固定提交前缀开头）。只按固定提交构建、不打这些补丁，得到的不是产品实际使用的运行时——例如首屏输入区依赖的 `data-weftmate-hero-composer` 布局接缝就来自 `…-stage3-hero-composer-carry.patch`。
 
-- 构建 vendor 前，在 DSH 检出目录按文件名顺序执行 `git apply patches/dsh/*.patch`，再编译、再 `npm run vendor:dsh`。云端的「Pinned DSH vendor unit tests」就是这样做的，并把补丁内容的哈希计入编译缓存键。
+- 一条命令：`npm run vendor:dsh`。脚本从 `WEFTMATE_DSH_CHECKOUT` 或本机惯例目录读取包含固定提交的 Git 对象，创建独立 clone（克隆副本），固定检出、按文件名顺序打全部补丁、安装锁定依赖并编译，再装配运行时。主检出的工作区、分支和配置均不改动；不再要求手工先打补丁或编译。
 - 升级固定提交时，每个补丁要么已被上游吸收后删除，要么改名为新提交前缀并重新生成；不允许留下打不上的补丁。
 - 新增补丁必须同时有一条依赖它的测试（如 `tests/weftmate-conversation-surface.test.ts`），这样漏打补丁会在 vendor 测试里变红。
 
 Windows 新检出应在 checkout（源码检出）前关闭 `core.autocrlf`，保留上游文件与补丁的 LF（单字符换行）。否则 `git apply` 的上下文及上游 `patchedDependencies` 的锁定哈希都可能因换行转换失配。使用检出根声明的 `pnpm@11.7.0`，从该根运行 `corepack pnpm install --frozen-lockfile` 和 `corepack pnpm run build`；在 WeftMate 根加 `--dir` 不保证 Corepack（包管理器版本选择器）先选中上游声明的版本。
+
+脚本在独立 clone 中设置 `core.autocrlf=false`；补丁若被 Windows 检出为 CRLF（双字符换行），仅将送入 `git apply` 与哈希计算的内容转成 LF，不修改仓库补丁文件。`VENDOR-MANIFEST.json.runtimeIdentity` 记录固定提交、版本、排序后的全部补丁文件名与各自 SHA-256（内容哈希），并以文件名和规范化为 LF 后的完整字节计算总补丁哈希；不同工作树的换行配置不会导致重复编译。校验发现缺身份或与当前 pin / 补丁不一致，明确报「运行时过期」，本机 `vendor` 测试失败并提示 `npm run vendor:dsh`；夜间先运行该命令重建。
+
+Windows 缓存默认位于 `D:\AIProjects\WeftMate\Worktrees\_shared\dsh-runtime-<commit12>-<patchhash16>`；可用 `WEFTMATE_DSH_CACHE_ROOT` 指定共享父目录，其它环境默认使用仓库 `.local/dsh-cache`。相同提交与补丁只编译一次，完成装配后才发布缓存，各工作树通过联接复用。构建中的同一身份由相邻 `.lock` 文件互斥；异常中断留下的锁须确认该构建进程已退出后才删除并重跑。正常失败会清理独立构建目录和锁。旧的 `…-p3` 缓存缺少可验证的完整补丁身份，不能凭名字自动认定有效或补签；保留旧目录，运行上述命令生成新缓存并接管工作树 vendor 联接。
 
 ## 包内容中的构建身份
 

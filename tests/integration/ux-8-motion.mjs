@@ -1,3 +1,4 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Production Electron and shipped mobile assets; isolated host, synthetic account, random ports. */
@@ -5,8 +6,8 @@ import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, rm, writeFile, readFile } from 'node:fs/promises';
+
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { startRenderingCandidate } from './ux-5-fixture.mjs';

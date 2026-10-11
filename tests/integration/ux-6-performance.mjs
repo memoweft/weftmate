@@ -1,9 +1,10 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** 500 synthetic native sessions, real isolated authenticated HTTP host. No model. */
 import assert from 'node:assert/strict';
-import {mkdtemp,rm,mkdir,writeFile} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
+import { rm, mkdir, writeFile } from 'node:fs/promises';
+
 import {join,resolve} from 'node:path';
 import {createPersonalAccessService} from '../../src/personal-access/index.mjs';
 import {servePersonalAccessUi} from '../../src/personal-access-ui/index.mjs';
