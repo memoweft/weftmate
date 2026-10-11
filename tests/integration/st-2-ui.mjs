@@ -15,9 +15,9 @@ async function select(page,label,value){const saved=page.waitForResponse(respons
 try{
  f=await startTimelineCandidate({inlineProgress:false,interactive:true,composer:true,composerMenu:true,riskApproval:true,historyCount:0,baseTime:Date.now()-15000});
  profile=mkdtempSync(join(tmpdir(),'weftmate-st2-ui-'));
- app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light'}});
- const desktop=await app.firstWindow();await localUiSession(desktop,f.credentials);desktop.setDefaultTimeout(15000);desktop.on('pageerror',e=>errors.push(e.message));
- await desktop.getByRole('button',{name:'以后这类都允许',exact:true}).waitFor();
+ app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:f.origin,REVIEW_THEME:'light',REVIEW_LIBRARY_TOKEN:f.libraryDesktopToken}});
+ const desktop=await app.firstWindow();await localUiSession(desktop,f.credentials,'ST-2 synthetic gallery',{interceptLegacyStatus:false});desktop.setDefaultTimeout(15000);desktop.on('pageerror',e=>errors.push(e.message));
+ await desktop.locator(`[data-session-id="${f.sessionId}"] > button:first-child`).first().click();await desktop.getByRole('button',{name:'以后这类都允许',exact:true}).waitFor();
  for(const width of [1200,480]){await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,width===480?780:800),width);for(const theme of ['light','dark']){await desktop.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await desktop.screenshot({path:join(out,`desktop-${width}-${theme}-approval.png`)});if(width===1200)await desktop.screenshot({path:join(out,`desktop-${theme}-approval.png`)});}}
  await desktop.getByRole('button',{name:'以后这类都允许',exact:true}).click();
  for(let i=0;i<50&&(await f.request('/settings/approvals')).rules.write!=='allow';i++)await new Promise(r=>setTimeout(r,100));
