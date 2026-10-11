@@ -2,9 +2,70 @@
 // Shared request cadence. Hidden surfaces keep only the presence probe; view
 // timers check foreground before reading. Native facts, rather than body
 // repainting, trigger task/approval/question refreshes.
-globalThis.WeftUiCore.polling = Object.freeze({stream:250,idle:1500,legacy:3000,overview:5500,presence:15000,background:60000,settings:30000,releaseRetry:30000,waitWeb:30000,waitNative:15000});
+globalThis.WeftUiCore.polling = Object.freeze({stream:250,idle:1500,legacy:3000,overview:4500,presence:15000,background:60000,settings:30000,configuration:30000,readRetryBase:1500,readRetryCap:1750,releaseRetry:30000,waitWeb:30000,waitNative:15000});
 globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
     let overviewRead, factsRead, factsScope, factsSignature;
+    let configurationRead, configurationAt = 0, configurationIdentity, accountSnapshot, historyRetryScope;
+    let historyRetryAt = 0;
+    let historyAuthorizationIdentity = null;
+    const historyBackoff = globalThis.WeftUiCore.Presence.create({ random: environment.random || Math.random });
+    const retryScope = () => [core.state.identityGeneration, core.state.historyGeneration, core.state.selectedChatId, core.state.selectedSessionId].join(':');
+    function historyReadAllowed() {
+        if (historyAuthorizationIdentity === core.state.identityGeneration) return false;
+        if (historyRetryScope !== retryScope()) { historyRetryScope = retryScope(); historyRetryAt = 0; historyBackoff.reset(); }
+        return Date.now() >= historyRetryAt;
+    }
+    function historyReadResult(kind, fields = {}) {
+        if (kind === 'failed' || kind === 'reset') {
+            if (fields.terminal) historyAuthorizationIdentity = core.state.identityGeneration;
+            // Share the connection strategy's bounded exponential jitter. The
+            // short read cap also lets a recovered endpoint resume within 2s.
+            historyRetryScope = retryScope();
+            const delay = historyBackoff.delay(false, { base: polling.readRetryBase, cap: polling.readRetryCap, floor: polling.idle });
+            historyRetryAt = Date.now() + delay;
+            return core.state.historyReadResult = { kind, retryAfter: delay, ...fields };
+        }
+        if (kind === 'changed' || kind === 'unchanged') { historyBackoff.reset(); historyRetryAt = 0; }
+        return core.state.historyReadResult = { kind, ...fields };
+    }
+    function historyPollDelay(result) {
+        if (!historyReadAllowed()) return Math.max(1, historyRetryAt - Date.now());
+        if (result?.immediateRenew && ['changed','unchanged'].includes(result.kind)) return 0;
+        return core.state.personalCapabilities?.replyStreaming === 1 && (core.mainReplyActive?.() || core.state.turnStatus === 'running' ||
+            environment.mobileState?.sharedRunning || environment.mobileState?.sharedPending || core.state.submitting || core.state.unresolvedSubmission)
+            ? polling.stream : core.state.personalCapabilities?.replyStreaming === 1 ? polling.idle : polling.legacy;
+    }
+    async function refreshConfiguration(changed) {
+        if (!foreground() || !core.state.csrfToken) return;
+        const identity = core.state.identityGeneration;
+        if (configurationIdentity !== identity) { configurationIdentity = identity; configurationAt = 0; accountSnapshot = null; }
+        if (!changed && Date.now() - configurationAt < polling.configuration) return;
+        if (configurationRead) { await configurationRead; if (changed) return refreshConfiguration(changed); return; }
+        configurationRead = (async () => {
+            const reads = [];
+            if (!changed || changed.models) reads.push(core.refreshModels());
+            else if (changed.modelSettings) reads.push(core.accessApi('/settings/models').then(value => {
+                if (identity === core.state.identityGeneration) { core.state.modelSettings = value; effects.paintModels(); }
+            }));
+            if (!changed || changed.personalization) reads.push(core.loadPersonalization());
+            await Promise.all(reads);
+            if (identity === core.state.identityGeneration) configurationAt = Date.now();
+        })().finally(() => { configurationRead = null; });
+        return configurationRead;
+    }
+    function acceptAccountChanges(snapshot) {
+        if (!snapshot) return;
+        if (configurationIdentity !== core.state.identityGeneration) { configurationIdentity = core.state.identityGeneration; accountSnapshot = null; configurationAt = Date.now(); }
+        const previous = accountSnapshot;
+        // Accept the revision before launching reads, avoiding repeat invalidation.
+        accountSnapshot = snapshot;
+        core.state.accountRevision = snapshot.revision;
+        core.state.accountRevisionIdentity = core.state.identityGeneration;
+        if (!previous) return;
+        const changed = Object.fromEntries(['models','modelSettings','personalization'].map(key => [key, previous[key] !== snapshot[key]]));
+        if (Object.values(changed).some(Boolean)) void refreshConfiguration(changed).catch(() => {});
+        if (previous.sessions !== snapshot.sessions) void (environment.mobileState ? core.listMobileSessions() : refreshAssistantOverview()).catch(() => {});
+    }
     const polling = globalThis.WeftUiCore.polling;
     const canWaitForReply=()=>core.state.personalCapabilities?.replyWait===1&&environment.canWaitForReply?.()!==false;
     const replyWaitMilliseconds=()=>environment.nativeMobile?polling.waitNative:polling.waitWeb;
@@ -14,7 +75,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         if(core.state.personalCapabilities?.replyStreaming!==1)return core.refreshAssistant();
         if(!core.state.online)return;
         if (overviewRead) return overviewRead;
-        overviewRead = Promise.all([core.refreshSessions(), core.refreshActivity?.()]).catch(() => {}).finally(() => { overviewRead = null; });
+        overviewRead = Promise.all([core.refreshSessions(), core.refreshActivity?.(), refreshConfiguration()]).catch(() => {}).finally(() => { overviewRead = null; });
         return overviewRead;
     }
     async function refreshConversationFacts(force = false) {
@@ -231,14 +292,15 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.liveRefreshTimer = null;
     }
     async function refreshLiveConversation() {
-        if (core.state.liveRefreshing || !core.state.csrfToken || !core.state.online) return;
+        if (core.state.liveRefreshing || !core.state.csrfToken || !core.state.online || !historyReadAllowed()) return;
         core.state.liveRefreshing = true;
         try {
             // Receipts and native history control the composer. Model settings,
             // host diagnostics and the complete session list must not delay them.
-            await Promise.all([core.refreshHistory(false,false,true), ...core.readMarkers()
+            const [result] = await Promise.all([core.refreshHistory(false,false,true), ...core.readMarkers()
                 .filter(marker => ['session.create', 'session.message', 'session.cancel', 'chat.message', 'session.side.create'].includes(marker.kind))
                 .map(marker => core.lookupRequest(marker))]);
+            return result;
         } finally { core.state.liveRefreshing = false; }
     }
     async function refreshAssistant(personalizationLoaded = false) {
@@ -451,5 +513,5 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         effects.paintScreen(view);
     }
-    return { polling, canWaitForReply, replyWaitMilliseconds, foreground, refreshAssistantOverview, refreshConversationFacts, failureMessage, requestJson, accessApi, acceptSession, accountToken, accountCurrent, setOnline, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
+    return { polling, historyReadAllowed, historyReadResult, historyPollDelay, refreshConfiguration, acceptAccountChanges, canWaitForReply, replyWaitMilliseconds, foreground, refreshAssistantOverview, refreshConversationFacts, failureMessage, requestJson, accessApi, acceptSession, accountToken, accountCurrent, setOnline, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
 };

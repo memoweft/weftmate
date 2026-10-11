@@ -57,7 +57,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     const owner = state.owner, epoch = state.authEpoch, generation = state.sharedGeneration, sessionId = state.sharedSessionId;
     syncMobileIdentity(); core.state.online = true;
     state.sharedLoading = true; state.sharedError = '';
-    await core.refreshHistory(loadedHistoryScope !== historyScope,false,wait);
+    const outcome = await core.refreshHistory(loadedHistoryScope !== historyScope,false,wait);
     if (!core.mobile.sharedViewCurrent(owner, epoch, generation, sessionId)) return;
     state.sharedEvents = [...core.state.historyEvents.values()].sort((a,b) => a.seq-b.seq);
     state.sharedNextSeq = core.state.afterSeq; state.sharedHasOlder = core.state.hasOlder;
@@ -65,6 +65,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     await core.mobile.reconcileSharedDelivery();
     if (!core.mobile.sharedViewCurrent(owner, epoch, generation, sessionId)) return;
     effects.renderSharedConversation(); void core.refreshConversationFacts();
+    return outcome;
   }
   function mobileOutput(item) {
     const output = {...item.artifact};
@@ -137,7 +138,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     core.state.capabilities = status.backend?.capabilities || null;
     if (environment.logicalChats && exact) {
       state.logicalChats = true; state.sharedHostAvailable = true; core.state.online = true;
-      if(!core.state.modelsKnown)await core.refreshThinkingModels();
+      await core.refreshConfiguration();
       core.state.modelProfileId ||= core.state.models[0]?.id;
       if (!core.state.mainChat) { core.state.selectedSessionId = null; core.state.selectedChatId = null; }
       await core.refreshLogicalSessions();

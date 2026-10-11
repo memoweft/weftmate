@@ -14,7 +14,7 @@ const stage = process.argv.includes('--before') ? 'before' : 'after';
 const latencyOnly=process.argv.includes('--latency');
 const logical=process.argv.includes('--logical'),reportName=latencyOnly?'responsiveness':stage+(logical?'-main':'');
 const baseline='ec3ab4996609a6d81181bc178f024d5e5158c577';
-const out = resolve('tests/evidence/bl-29'); mkdirSync(out,{recursive:true});
+const out = resolve(process.env.WEFTMATE_BL29_EVIDENCE_DIR || 'tests/evidence/bl-29'); mkdirSync(out,{recursive:true});
 const pause = ms => new Promise(done=>setTimeout(done,ms));
 const f = await startTimelineCandidate({interactive:true,daily:true,logicalMobile:logical,inlineProgress:true,sidebar:true,composerMenu:true,historyCount:0,baseTime:Date.now()});
 const profile = mkdtempSync(join(tmpdir(),'weftmate-bl29-'));

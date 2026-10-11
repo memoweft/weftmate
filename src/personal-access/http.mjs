@@ -1226,21 +1226,58 @@ export function createHttpHandler(context) {
       }
       const chatTimelineMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(events|changes|dates|locate|search)$/.exec(pathname);
       if (request.method === 'GET' && chatTimelineMatch) {
-        const revision=context.accountRevision,waitText=url.searchParams.get('waitMs'),liveText=url.searchParams.get('liveRevision');
-        if(waitText!==null&&(chatTimelineMatch[2]!=='changes'||!/^\d+$/.test(waitText)||Number(waitText)<1||Number(waitText)>30000||!/^\d+$/.test(liveText??'')||typeof context.backend.waitForEvents!=='function'))throw failure('INVALID_REQUEST');
-        if(waitText!==null){url.searchParams.delete('waitMs');url.searchParams.delete('liveRevision');}
-        if (chatTimelineMatch[1] === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
-        let result = await context.chatTimeline.query(ownerId, chatTimelineMatch[1], chatTimelineMatch[2], url.searchParams);
-        if(waitText!==null&&!result.hasMore&&!result.upserts.length&&!result.removals.length&&result.liveRevision===Number(liveText)){
-          const controller=new AbortController(),abort=()=>controller.abort();response.on('close',abort);
-          try{await context.chatTimeline.waitForChange(ownerId,chatTimelineMatch[1],revision,Number(waitText),controller.signal);}finally{response.off('close',abort);}
-          if(controller.signal.aborted)return;
-          if(chatTimelineMatch[1]===state.chatIdentity.mainChatId)await context.sideChats.reconcile(ownerId);
-          result=await context.chatTimeline.query(ownerId,chatTimelineMatch[1],chatTimelineMatch[2],url.searchParams);
+        const waitText = url.searchParams.get('waitMs'), liveText = url.searchParams.get('liveRevision');
+        const accountText = url.searchParams.get('accountRevision');
+        if (waitText !== null && (chatTimelineMatch[2] !== 'changes' || !/^\d+$/.test(waitText) ||
+            Number(waitText) < 1 || Number(waitText) > 30000 || !/^\d+$/.test(liveText ?? '') ||
+            typeof context.backend.waitForEvents !== 'function') ||
+            accountText !== null && (!/^\d+$/.test(accountText) || chatTimelineMatch[2] !== 'changes')) throw failure('INVALID_REQUEST');
+        url.searchParams.delete('accountRevision');
+        if (waitText !== null) { url.searchParams.delete('waitMs'); url.searchParams.delete('liveRevision'); }
+        // Register cancellation before reconcile/query: a close during the first
+        // native read must never create an ownerless waiter afterward.
+        const controller = new AbortController();
+        const abort = () => controller.abort();
+        response.on('close', abort);
+        context.closingSignal.addEventListener('abort', abort, { once: true });
+        try {
+          if (response.destroyed) return;
+          if (context.closing) throw failure('SERVICE_CLOSING', 503);
+          const revision = context.accountRevision;
+          const chatId = chatTimelineMatch[1], action = chatTimelineMatch[2];
+          if (chatId === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
+          // Query the response snapshot before deciding whether it can wait.
+          let result = await context.chatTimeline.query(ownerId, chatId, action, url.searchParams);
+          if (response.destroyed) return;
+          if (context.closing) throw failure('SERVICE_CLOSING', 503);
+          let waitOutcome = 'snapshot';
+          const accountChanged = accountText !== null && Number(accountText) !== revision;
+          // Only an unchanged response can enter a long wait; its own native
+          // watermarks and account revision are passed into the registration.
+          if (waitText !== null && !accountChanged && !result.hasMore && !result.upserts.length &&
+              !result.removals.length && result.liveRevision === Number(liveText) && !controller.signal.aborted) {
+            waitOutcome = await context.chatTimeline.waitForChange(ownerId, chatId, revision,
+              Number(waitText), controller.signal, result);
+            if (response.destroyed) return;
+            if (context.closing) throw failure('SERVICE_CLOSING', 503);
+            if (controller.signal.aborted) return;
+            // Requery facts after wake; never return pre-wait authorization.
+            if (chatId === state.chatIdentity.mainChatId) await context.sideChats.reconcile(ownerId);
+            result = await context.chatTimeline.query(ownerId, chatId, action, url.searchParams);
+          } else if (accountChanged) waitOutcome = 'changed';
+          const accountChanges = ['events', 'changes'].includes(action) ? await context.accountChanges(ownerId) : undefined;
+          if (response.destroyed) return;
+          if (context.closing) throw failure('SERVICE_CLOSING', 503);
+          const current = context.authenticate(request, 'sessions:read');
+          if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+          return context.json(response, 200, { ...result, ...(accountChanges ? { accountChanges } : {}),
+            ...(waitText !== null ? { waitOutcome } : {}) });
+        } finally {
+          // Clean both cancellation sources even if the first query rejects.
+          controller.abort();
+          response.off('close', abort);
+          context.closingSignal.removeEventListener('abort', abort);
         }
-        const current = context.authenticate(request, 'sessions:read');
-        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
-        return context.json(response, 200, result);
       }
       const sideResultMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/results$/.exec(pathname);
       if (request.method === 'POST' && sideResultMatch) {

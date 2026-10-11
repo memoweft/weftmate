@@ -1,5 +1,7 @@
 # 空闲请求计数与响应复验
 
+上文的原始预算与响应数字属于 BL-29 初次交付；BL-29b 的最终对照、完整门禁、失败追查和 Apple（苹果端）接线约定见 [返工证据](rework/README.md)。vendor（固定运行时集成组）日志与 JSON（结构化数据）已由同一次最终返工运行一起替换。
+
 使用真实 Electron（桌面程序框架）与远程手机网页，沿用 STREAM-1b 的隔离合成宿主／原生日志夹具。固定 DSH（助手运行时）实际宿主＋合成 SSE（分块传输）模型另由时间线运行器验证首字和30秒请求预算。真实模型请求0；随机端口、临时目录、合成账户、电脑名 synthetic-host；未使用 MuMu，未操作本人桌面和日用数据。
 
 改前资源固定在提交 ec3ab4996609a6d81181bc178f024d5e5158c577；改后为本分支。请求创建时计数：电脑统计 /personal/v1 的 HTTP（网页传输协议）请求，手机统计所有桥方法（包含本地方法），不把同一桥调用下游请求再计一次。注入读取调用栈，按路由／方法×调用方合并；JSON（结构化数据）保留完整调用链。前台空闲稳定61秒；流式30秒；hidden（不可见）30秒；真实Electron最小化另30秒；设置30秒，其他页各12秒。表中是实测次数换算成每分钟，短窗口可能某个低频定时器未到期。
@@ -154,13 +156,13 @@ phone首块→首字240毫秒；正文长度11种；结束呼吸点0。
 Apple（苹果端）清单：
 
 - 生成正文250毫秒；replyWait精确为1时现代主对话／旁聊用changes事件等待，网页最长30秒、原生桥15秒，携带已接纳liveRevision；旧宿主空闲1500毫秒。
-- 会话列表5500毫秒，动态徽标与当前页面读取避免重复；任务／审批／问题由原生事实变化触发，处理前和回执后保持来源核对。
+- 会话列表4500毫秒，账户列表失效标记立即触发补读，动态徽标与当前页面读取避免重复；任务／审批／问题由原生事实变化触发，处理前和回执后保持来源核对。
 - 后台停前台读取、取消未结束的事件等待；只允许低频连接探测（60秒）；恢复前台立即读取当前页、列表、正文、决策，目标1秒。
-- 配置入页／写回或低频读取；渲染不触发更新状态查询；订阅与定时器按账户／设备／会话清理。
-- 无新增路由；现有changes可选waitMs/liveRevision与replyWait能力要接线，身份变化与迟到返回继续丢弃。
+- 配置入页／写回、账户配置失效标记分项读取，另有30秒低频兜底；渲染不触发更新状态查询；订阅与定时器按账户／设备／会话清理。
+- 无新增路由；现有changes可选waitMs/liveRevision/accountRevision、accountChanges失效标记和waitOutcome结果需接线，水位按身份隔离。正文采用五类结果，正常长等待才立即续订，失败有界抖动退避；401／撤权停止、404清除来源、409一次重建。SERVICE_CLOSING走连接恢复，首次查询前建立取消域；身份变化与迟到返回继续丢弃。
 
 required结果见required.json与required.txt：{"mode":"required","files":275,"exitCode":0,"passed":1432,"failed":0,"skipped":14,"failures":[]}
 
-vendor结果见vendor.json与vendor.txt：{"mode":"vendor","files":28,"exitCode":1,"passed":201,"failed":1,"skipped":0,"failures":["真实 Core RPC：capability、精确 history、启动对账、完整 capture 与 stale model 过滤往返","two local devices use the same attached empty session across a real Electron restart"]}
+vendor最新返工结果见vendor.json与vendor.txt：{"mode":"vendor","files":30,"exitCode":0,"passed":205,"failed":0,"skipped":0,"failures":[]}
 
-合主线复验205通过／0失败，类型和卫生通过。PR的Windows打包门在vendor装配前发现主线新工作流缺少Landlock便携JavaScript入口：Windows根构建未生成该入口。仅补windows-package.yml的build:js与对应缓存目录，保留发货断言；YAML（工作流配置）解析和打包相关用例通过，云端重新执行中。
+旧打包判断已由主线#209缓存根因修复取代；BL-29b整文件采用主线windows-package.yml，删除额外Landlock JavaScript（程序语言）编译步骤。最新返工验证及关闭顺序见rework/README.md。

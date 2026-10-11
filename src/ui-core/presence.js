@@ -8,7 +8,7 @@
         login_required: '需要重新登录：草稿已保留。登录后才能发送消息和读取最新内容。',
         approval_required: '需要批准这台设备：请在已登录设备的「设置 → 设备」允许访问，批准前不能读取或发送电脑内容。',
     };
-    const transportFailure = error => ['NETWORK', 'NETWORK_UNAVAILABLE', 'HOST_OFFLINE', 'HOST_UNAVAILABLE', 'TIMEOUT', 'CONNECTION_FAILED'].includes(error?.code || error?.message);
+    const transportFailure = error => ['NETWORK', 'NETWORK_UNAVAILABLE', 'HOST_OFFLINE', 'HOST_UNAVAILABLE', 'TIMEOUT', 'CONNECTION_FAILED', 'SERVICE_CLOSING'].includes(error?.code || error?.message);
     const authState = error => ['DEVICE_NOT_TRUSTED', 'PAIRING_REQUIRED', 'PENDING_APPROVAL'].includes(error?.code || error?.message) ? 'approval_required'
         : ['UNAUTHORIZED', 'AUTH_REQUIRED', 'LOGIN_REQUIRED', 'CLOUD_TOKEN_INVALID', 'ACCOUNT_REVOKED'].includes(error?.code || error?.message) || error?.status === 401 ? 'login_required' : null;
     function create({ now = Date.now, random = Math.random, notify = () => {} } = {}) {
@@ -30,10 +30,10 @@
                 return update({ failures: count, firstFailureAt: first, lastFailureAt: count > value.failures ? time : value.lastFailureAt,
                     kind: value.kind === 'network_unavailable' ? value.kind : confirmed ? 'host_offline' : 'connecting' });
             },
-            delay(background = false) {
-                const cap = background ? 120000 : 30000, base = background ? 15000 : 1000;
+            delay(background = false, options = {}) {
+                const cap = options.cap ?? (background ? 120000 : 30000), base = options.base ?? (background ? 15000 : 1000);
                 const delay = Math.min(cap, base * 2 ** Math.min(value.attempt++, 10));
-                return Math.round(delay * (0.8 + random() * 0.2)); // Bounded jitter; never exceeds the cap.
+                return Math.max(options.floor ?? 0, Math.round(delay * (0.8 + random() * 0.2))); // Bounded jitter; never exceeds the cap.
             },
         };
     }

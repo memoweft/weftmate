@@ -442,6 +442,7 @@
     }
   ],
   "files": [
+    "tests/bl-29-runtime-close.test.ts",
     "tests/weftmod-service.test.ts",
     "tests/migration-first-message.test.ts",
     "tests/dsh-packaged-css-paths.test.ts"

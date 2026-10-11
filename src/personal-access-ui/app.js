@@ -45,7 +45,7 @@
     let nativeHidden=false;
     document.addEventListener('visibilitychange',()=>core.connectionVisibility(nativeHidden||document.visibilityState==='hidden'));
     native?.onVisibility(hidden=>{nativeHidden=hidden;core.connectionVisibility(hidden||document.visibilityState==='hidden');});
-    ui.foregroundRestored=async()=>{await core.refreshAssistantOverview();await core.refreshHistory();await core.refreshConversationFacts(true);
+    ui.foregroundRestored=async()=>{await Promise.all([core.refreshHistory(),core.refreshConversationFacts(true),core.refreshAssistantOverview()]);
         if(ui.activityVisible?.())await core.refreshActivity();
         if(document.body.classList.contains('goals-open'))await core.readGoals();
         if(document.body.classList.contains('library-open'))await core.readLibrary();};
