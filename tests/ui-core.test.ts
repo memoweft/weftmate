@@ -388,6 +388,18 @@ test('model form validation and durable request recovery stay in core and never 
   assert.ok([...f.values.values()].every(value => !value.includes(input.apiKey)))
 })
 
+test('model storage readiness failure keeps the original request and draft available for retry without persisting secrets', async () => {
+  const f=fixture(); f.core.state.currentView='account'; f.core.state.accountModelsCanManage=true;
+  const input={name:'Synthetic',baseUrl:'https://example.test/v1',modelId:'synthetic',modelTier:'auto',apiKey:'synthetic-not-a-real-key'};
+  f.core.accountModelReceipt=async()=>null;
+  f.core.saveAccountModel=async()=>{throw {code:'CREDENTIAL_STORAGE_NOT_READY'};};
+  await f.core.saveAccountModelDraft(input);
+  assert.ok(f.paints.some(p=>p.name==='accountModelFormNotice'&&p.args[0].includes('请稍后重新保存')));
+  assert.equal(f.core.state.accountModelBusy,false); assert.ok(f.core.savedAccountModelMarker());
+  assert.ok(!f.paints.some(p=>p.name==='resetAccountModelForm'));
+  assert.ok([...f.values.values()].every(value=>!value.includes(input.apiKey)));
+});
+
 test('appearance keeps unknown saved fields while the control defaults stay stable', () => {
   const f = fixture()
   f.core.appearance.set({ theme: 'dark', accent: 'blue', fontSize: '17', legacyField: true })

@@ -425,6 +425,7 @@ globalThis.WeftUiCore.factories.account = (core, effects, environment) => {
             if (core.accountCurrent(token))
                 effects.accountModelFormNotice(failure.code === 'NETWORK'
                     ? '送达结果不明，原请求编号与输入仍保留；请刷新核对。'
+                    : failure.code === 'CREDENTIAL_STORAGE_NOT_READY' ? '本机加密存储尚未准备好；密钥仍留在输入框中，请稍后重新保存。'
                     : failure.code === 'REQUEST_CONFLICT' ? '原请求内容或配置修订不同；请先核对原操作。'
                         : '配置未完成；密钥仍留在本页输入框中供你核对。');
         }
