@@ -1,0 +1,43 @@
+{
+  "swiftPackage": {
+    "swiftTesting": 426,
+    "xctest": 5,
+    "total": 431,
+    "passed": true
+  },
+  "runLogNewTests": 20,
+  "macXcodePackage": {
+    "total": 431,
+    "passed": true,
+    "scheme": "WeftMateCore-Package",
+    "macUITestAutomation": "Not attempted per task restriction"
+  },
+  "macNativeAX": {
+    "scenarios": 8,
+    "passed": true
+  },
+  "iphoneXcodeUI": {
+    "tests": 5,
+    "passed": true
+  },
+  "watchXcodeUI": {
+    "tests": 1,
+    "passed": true
+  },
+  "nodeStatic": {
+    "tests": 14,
+    "passed": true
+  },
+  "callbackInventorySites": 56,
+  "publicHygieneHits": 0,
+  "realModelRequests": 0,
+  "pairedWatchTransfer": {
+    "method": "Existing iPhone/Watch pair, both native apps, synthetic in-memory host; inspect phone local Watch inbox only. No pairing or system-settings changes.",
+    "passed": true,
+    "receivedRecords": 2,
+    "events": [
+      "app.start",
+      "app.state"
+    ]
+  }
+}

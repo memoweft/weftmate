@@ -1,0 +1,23 @@
+{
+  "baselineCount": 8,
+  "finalCount": 11,
+  "newReports": [
+    {
+      "name": "WeftMatePhone-2026-10-10-194737.ips",
+      "at": "2026-10-11T02:47:37.226174+00:00"
+    },
+    {
+      "name": "WeftMatePhone-2026-10-10-194818.ips",
+      "at": "2026-10-11T02:48:18.936173+00:00"
+    },
+    {
+      "name": "WeftMatePhone-2026-10-10-194808.ips",
+      "at": "2026-10-11T02:48:08.779808+00:00"
+    }
+  ],
+  "newMac": 0,
+  "newWatch": 0,
+  "newPhone": 3,
+  "finalStableBuildNewReports": 0,
+  "crashDialogsPreserved": true
+}
