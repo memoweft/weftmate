@@ -13,8 +13,12 @@ export async function startAndroid(out, deviceInfo) {
   const info = deviceInfo || readMuMuInfo(), serial = info.serial;
   if (!deviceInfo) execFileSync(adb, ['connect',serial], { windowsHide:true,timeout:10000 });
   const command = (...args) => {
-    try { verifyAndroidSerial(serial, execFileSync(adb, ['-s', serial, 'get-serialno'], {encoding:'utf8',windowsHide:true,timeout:5000})); }
-    catch (error) { if (error instanceof AndroidEnvironmentError) throw error; throw new AndroidEnvironmentError('本轮安卓设备连接已变化或不可核实'); }
+    try { verifyAndroidSerial(serial, execFileSync(adb, ['-s', serial, 'get-serialno'], {encoding:'utf8',windowsHide:true,timeout:10000})); }
+    catch (error) {
+      if (error instanceof AndroidEnvironmentError) throw error;
+      const detail = redactEvidenceText(String(error.stderr || error.code || error.message)).trim().slice(0,1000);
+      throw new AndroidEnvironmentError('本轮安卓设备连接不可核实：' + detail);
+    }
     return execFileSync(adb, ['-s', serial, ...args], { windowsHide: true, timeout: 10000, maxBuffer: 20 * 1024 * 1024 });
   };
   let uiMode = '';

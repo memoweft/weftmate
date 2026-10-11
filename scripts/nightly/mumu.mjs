@@ -45,7 +45,7 @@ export function verifyAndroidSerial(expected, actual) {
 // Confirm the existing connection, without another manager lookup or port probe.
 export async function assertAndroidDevice(serial, run) {
   try {
-    const result = await run(adbExecutable, ['-s', serial, 'get-serialno'], { name: 'android-device-identity', limit: 5000 });
+    const result = await run(adbExecutable, ['-s', serial, 'get-serialno'], { name: 'android-device-identity', limit: 10000 });
     verifyAndroidSerial(serial, result.output);
   } catch (error) {
     if (error instanceof AndroidEnvironmentError) throw error;
