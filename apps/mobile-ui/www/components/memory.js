@@ -227,7 +227,7 @@ function openMemoryConfirmation(choice,target,token){if(!memoryCurrent(token)||s
   if(['deleteItem','deleteEvidence'].includes(choice.operation))void uiCore.mobilePreviewMemoryForget(choice);
   requestAnimationFrame(()=>{if(memoryCurrent(token)&&state.memory.confirmation===choice)
     target.querySelector('.memory-confirm-panel')?.scrollIntoView?.({
-      behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})})}
+      behavior:(globalThis.WeftReplyMotion?.reduced??window.matchMedia('(prefers-reduced-motion: reduce)').matches)?'auto':'smooth',block:'start'})})}
 
 function renderMemoryActions(target,token){const memory=state.memory,detail=memory.detail;
   if(!detail||!memoryCurrent(token)||memory.view!=='detail')return;
