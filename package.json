@@ -35,6 +35,7 @@
     "productName": "WeftMate",
     "asar": true,
     "npmRebuild": false,
+    "beforePack": "scripts/release/installer-assets.cjs",
     "asarUnpack": [
       "node_modules/get-windows/**/*"
     ],
@@ -88,7 +89,6 @@
       "runAfterFinish": true,
       "artifactName": "WeftMate-Setup-${version}.${ext}",
       "deleteAppDataOnUninstall": false,
-      "license": "LICENSE",
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico"
     },
