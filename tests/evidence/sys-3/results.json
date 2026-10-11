@@ -4,6 +4,8 @@
   "realModelRequests": 0,
   "checks": [
     "per-user-installer-default-file-and-folder-verbs",
+    "native-owner-entry-without-password-login",
+    "custom-install-location-used-by-both-menu-verbs",
     "running-instance-files-preserve-draft-focus-and-one-window",
     "running-instance-folder-default-project-new-conversation",
     "cold-single",

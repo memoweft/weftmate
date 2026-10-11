@@ -1,0 +1,14 @@
+LIBRARY WeftInstaller
+EXPORTS
+  Ready=_Ready@24
+  Validate=_Validate@0
+  Directory=_Directory@0
+  Work=_Work@0
+  Failed=_Failed@0
+  Initialize=_Initialize@8
+  Attach=_Attach@8
+  Confirm=_Confirm@8
+  WaitForApp=_WaitForApp@4
+  CleanupWarning=_CleanupWarning@0
+  Shutdown=_Shutdown@0
+  Launch=_Launch@8

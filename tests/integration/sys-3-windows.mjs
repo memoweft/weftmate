@@ -5,8 +5,7 @@ import { join, resolve, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { _electron } from 'playwright';
-import { migrationHost, until } from '../helpers/migration-host.mjs';
-import { localUiSession } from '../helpers/local-ui-session.mjs';
+import { migrationHost, nativeOwnerSession, until } from '../helpers/migration-host.mjs';
 import { managedMkdtempSync } from '../helpers/managed-temp.mjs';
 import { createProcessEvidence, redactEvidenceText } from '../helpers/process-evidence.mjs';
 import { desktopConfigPath } from '../../src/desktop-config.mjs';
@@ -16,7 +15,7 @@ const option = (name, fallback) => { const i = process.argv.indexOf(name); retur
 const installer = resolve(option('--installer', '.local/sys3-release/0.1.1-preview.21/build/WeftMate-Setup-0.1.1-preview.21.exe'));
 const out = resolve(option('--out', 'tests/evidence/sys-3'));
 const identity = 'sys3qa', appId = 'com.memoweft.weftmate.sys3qa';
-const temp = managedMkdtempSync('weftmate-sys3-'), installation = join(temp, 'installed');
+const temp = managedMkdtempSync('weftmate-sys3-'), installation = join(temp, 'custom install 合成目录');
 const startedAt = Date.now();
 const runner = createProcessEvidence({outputDir:resolve('.local/sys3-processes'),commandRoots:[temp],executables:[process.execPath,installer],startedAt});
 const report = {realInstalledApp:true,syntheticAccount:true,realModelRequests:0,checks:[],launches:[],notifications:[],cleanup:{}};
@@ -50,8 +49,8 @@ async function reboot(paths) {
   catch(error) { runner.recordLaunchFailure(error); throw error; }
   runner.track(h.app.process(),{executable,label:'cold-installed-electron'});
   h.page=await h.app.firstWindow();h.page.setDefaultTimeout(15000);await h.page.waitForURL('**/personal/v1/ui*');
-  const authenticated=await h.page.evaluate(async()=> (await fetch('/personal/v1/auth/me')).status===200);
-  if(!authenticated)await localUiSession(h.page,h.credentials,'SYS3 synthetic desktop',{mainChat:true});
+  const me=await nativeOwnerSession(h.page);
+  assert.equal(me.account.ownerId,h.ownerId,'cold launch retains the original native owner');
   await h.page.locator('#assistant-view').waitFor({state:'visible'});h.origin=new URL(h.page.url()).origin;
 }
 async function captureNotifications() {
@@ -118,7 +117,14 @@ try {
   await run(installer,['--updated','/S','/currentuser',`/D=${installation}`]);installed=true;
   executable=join(installation,readdirSync(installation).find(n=>/^WeftMate-sys3qa\.exe$/.test(n)));assert.ok(existsSync(executable));
   assert.equal(registered(),true);report.checks.push('per-user-installer-default-file-and-folder-verbs');
-  h=await migrationHost({executable,tempRoot:temp,processEvidence:({root,profile,executable})=>createProcessEvidence({outputDir:resolve('.local/sys3-electron-processes'),profileDirectory:profile,commandRoots:[root],executables:[executable,process.execPath],startedAt})});
+  h=await migrationHost({nativeSession:true,executable,tempRoot:temp,processEvidence:({root,profile,executable})=>createProcessEvidence({outputDir:resolve('.local/sys3-electron-processes'),profileDirectory:profile,commandRoots:[root],executables:[executable,process.execPath],startedAt})});
+  h.ownerId=(await nativeOwnerSession(h.page)).account.ownerId;
+  report.checks.push('native-owner-entry-without-password-login');
+  for(const key of sendToRegistryKeys(appId)){
+    const value=reg(['query',key+'\\command','/ve']);
+    assert.equal(/REG_SZ\s+([^\r\n]+)/.exec(value.stdout)?.[1],`"${executable}" --send-to-weftmate "%1"`);
+  }
+  report.checks.push('custom-install-location-used-by-both-menu-verbs');
   const appData=await h.app.evaluate(({app})=>app.getPath('appData'));
   configFile=desktopConfigPath(join(appData,'WeftMate sys3qa'));
   priorConfig=existsSync(configFile)?readFileSync(configFile):null;mkdirSync(dirname(configFile),{recursive:true});writeFileSync(configFile,readFileSync(join(h.root,'desktop-config.json')));
@@ -153,7 +159,7 @@ try {
 finally{
   if(configFile){if(priorConfig)writeFileSync(configFile,priorConfig);else rmSync(configFile,{force:true});}
   try{await h?.close({failed:!report.passed});report.cleanup.electron=h?.processCleanup;
-    if(installed){const uninstall=join(installation,readdirSync(installation).find(n=>/^Uninstall WeftMate.*\.exe$/.test(n)));await run(uninstall,['/S',`_?=${installation}`]);assert.equal(registered(),false);assert.equal(existsSync(executable),false);report.cleanup.menuRemoved=true;
+    if(installed){const uninstall=join(installation,readdirSync(installation).find(n=>/^Uninstall WeftMate.*\.exe$/.test(n)));await run(uninstall,['/S','/currentuser']);await until(()=>!registered()&&!existsSync(executable),120000);assert.equal(registered(),false);assert.equal(existsSync(executable),false);report.cleanup.menuRemoved=true;
       assert.notEqual(reg(['query','HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run','/v','WeftMate sys3qa']).status,0);report.cleanup.startupRemoved=true;}
   }catch(error){report.cleanup.error=redactEvidenceText(error.stack,[temp]);report.passed=false;process.exitCode=1;}
   report.cleanup.runner=await runner.finalize({failed:!report.passed});
