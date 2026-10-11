@@ -44,8 +44,14 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
   const fileKey = file => process.platform === 'win32' ? resolve(file).toLowerCase() : resolve(file);
   const createdFiles = new Set([...(context.createdFiles ?? [])].map(fileKey));
   const analysisCwd = context.unknownScriptCwd ? undefined : cwd;
-  const overwrites = target => !target || context.unknownScriptCwd && !isAbsolute(target) || existsSync(resolve(cwd, target)) &&
-    !createdFiles.has(fileKey(resolve(cwd, target)));
+  const overwrites = target => {
+    context.operationTypes?.add('write');
+    return !target || context.unknownScriptCwd && !isAbsolute(target) || existsSync(resolve(cwd, target)) &&
+      !createdFiles.has(fileKey(resolve(cwd, target)));
+  };
+  if (/web_fetch|web_search|\b(?:curl|wget|Invoke-WebRequest|Invoke-RestMethod|fetch)\b/i.test(source)) context.operationTypes?.add('network');
+  if (/\b(?:Get-Content|readFile(?:Sync)?|cat|head|tail)\b/i.test(source)) context.operationTypes?.add('read');
+  if (/\b(?:exec(?:Sync|File|FileSync)?|spawn(?:Sync)?)\s*\(/.test(source)) context.operationTypes?.add('command');
   // Device/UI tools expose intent in their description even when the primitive
   // is a click or keypress. File content and fetched pages are not intent fields.
   const description = !args.command && !args.code && !args.script && typeof args.description === 'string' ? args.description : '';
@@ -118,7 +124,7 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
 
 export function approvalCategories(reason) {
   const prefix = /^\[weftmate:([a-z,\-]+)\]/.exec(reason ?? '');
-  return prefix ? prefix[1].split(',').filter(x => RISK_CATEGORIES.includes(x)) : [];
+  return prefix ? prefix[1].split(',').filter(x => [...RISK_CATEGORIES, 'read', 'network'].includes(x)) : [];
 }
 
 export function approvalRequired(mode, risks, allowed = []) {

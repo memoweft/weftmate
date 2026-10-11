@@ -396,6 +396,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-weftmod.mjs'), join(dir, 'plugins', 'weftmate-weftmod.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
     [join(PLUGINS_DIR, 'personal-approval-policy.mjs'), join(dir, 'plugins', 'personal-approval-policy.mjs')],
+    [join(PLUGINS_DIR, 'personal-permission-rules.mjs'), join(dir, 'plugins', 'personal-permission-rules.mjs')],
     [join(PLUGINS_DIR, 'personal-write-targets.mjs'), join(dir, 'plugins', 'personal-write-targets.mjs')],
     [join(PLUGINS_DIR, 'personal-web-fetch.mjs'), join(dir, 'plugins', 'personal-web-fetch.mjs')],
     [join(PLUGINS_DIR, 'personal-native-files.mjs'), join(dir, 'plugins', 'personal-native-files.mjs')],
@@ -767,7 +768,7 @@ export interface DshWebRuntimeOptions {
     { id: string, action: 'authorize_execution' | 'finish_execution' | 'observe_execution_job', sessionId: string, turn: number,
       callId: string, rootCallId: string, receiptId: string, messageHash: string, toolName: string,
       argumentsHash: string, runtimeId: string, executionId?: string, state?: 'completed' | 'failed' | 'cancelled' | 'uncertain', resultHash?: string,
-      jobId?: string, jobState?: string } |
+      jobId?: string, jobState?: string, permission?: { types: string[], decision: string, source: string, summary: string } } |
     { id: string, action: 'register_approval' | 'read_approval' | 'resolve_approval', sessionId: string, turn: number,
       callId: string, rootCallId: string, receiptId: string, messageHash: string, toolName: string,
       argumentsHash: string, approvalId: string, runtimeId: string, reason?: string,
@@ -1830,7 +1831,7 @@ export class DshWebRuntime {
           (row.jobId !== undefined && (typeof row.jobId !== 'string' || !TASK_STOP_RECEIPT.test(row.jobId) ||
             !['running', 'stopping', 'completed', 'killed', 'failed'].includes(row.jobState as string))) ||
           Object.keys(row).some(key => !['protocol', 'id', 'action', 'sessionId', 'turn', 'callId', 'rootCallId', 'receiptId',
-            'messageHash', 'toolName', 'argumentsHash', 'executionId', 'state', 'resultHash', 'jobId', 'jobState'].includes(key))) return
+            'messageHash', 'toolName', 'argumentsHash', 'executionId', 'state', 'resultHash', 'jobId', 'jobState', 'permission'].includes(key))) return
     } else if (nativeFile) {
       if (typeof row.receiptId !== 'string' || typeof row.filePath !== 'string' || !isAbsolute(row.filePath) ||
           typeof row.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(row.sha256)) return
@@ -1938,6 +1939,7 @@ export class DshWebRuntime {
       : genericExecution
       ? { ...identity, action: row.action as 'authorize_execution' | 'finish_execution' | 'observe_execution_job', rootCallId: row.rootCallId as string,
         receiptId: row.receiptId as string, toolName: row.toolName as string, argumentsHash: row.argumentsHash as string, runtimeId: runtimeId!,
+        ...(row.action === 'authorize_execution' && row.permission !== undefined ? { permission: row.permission as { types: string[], decision: string, source: string, summary: string } } : {}),
         ...(row.action === 'finish_execution' ? { executionId: row.executionId as string,
           state: row.state as 'completed' | 'failed' | 'cancelled' | 'uncertain',
           ...(row.state === 'uncertain' ? {} : { resultHash: row.resultHash as string }) } : {}),
@@ -1975,6 +1977,8 @@ export class DshWebRuntime {
             settle({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return
           }
           settle({ ok: true, command: { mode: value.mode, allowedCategories: value.allowedCategories,
+            ...(value.permissionRules ? { permissionRules: value.permissionRules } : {}),
+            ...(value.projectPermissionRules ? { projectPermissionRules: value.projectPermissionRules } : {}),
             ...(value.deepThinking === true ? {deepThinking:true} : {}),
             ...(value.personalization ? {personalization:value.personalization} : {}),
             ...(value.project ? { project: value.project } : {}),

@@ -263,14 +263,26 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 | GET `/sessions/{sessionId}/approval-mode` | 无 | 200 `{"mode":"auto","allowedCategories":[]}` | 404 `SESSION_UNAVAILABLE` | 桌；手机/Android/Apple 菜单另包，接口可用 |
 | PATCH `/sessions/{sessionId}/approval-mode` | `{"mode":"ask"}` | 200 同上；对话内持久保存，下次工具调用采用最新值 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE` | 桌 |
-| GET `/settings/approvals` | 无 | 200 `{"mode":"auto"}` | — | 桌 |
-| PATCH `/settings/approvals` | `{"mode":"auto"}` | 200 同上；按账户保存，只改变新对话默认值 | 400 `INVALID_REQUEST` | 桌 |
+| GET `/settings/approvals` | 无 | 200 `{mode,rules,types}`；`rules` 为账户自定义规则，缺项沿用当前模式；`types` 含九类及默认说明 | — | 桌 / 手机网页 |
+| PATCH `/settings/approvals` | `{mode?,rules?:{[type]:allow/ask/deny/null}}`，至少一项 | 200 同上；`mode` 只改新对话，`rules` 下次工具调用生效，`null` 恢复默认 | 400 `INVALID_REQUEST` | 桌 / 手机网页 |
 
 模式枚举：`auto` 自动（推荐，有风险才问）；`ask` 每次询问（普通读取/执行也询问）；`accept-edits` 自动接受文件修改（创建、编辑、覆盖文件直接做，删除和其它危险类别仍询问）；`plan` 先出计划（DSH 原生 `exit_plan_mode` 经本节提问接口确认后按自动执行）；`allow-all` 全部允许（客户端选中前必须明确提示删除/覆盖、系统修改、安装、发送/发布、付款可能直接执行且无法撤销）。口头检查点由系统提示让模型遵守，不改保存的模式。
 
 列表新到旧，返回所有状态：`pending / answered / resolved / unavailable`。审批记录另含 `sourceCommandId,sourceReceiptId,turn,callId,rootCallId`，可有 `riskCategories`，枚举为 `delete / overwrite / system / install / external / spend / execute`；处理后可有 `decisionScope,outcome,resolvedAt`。`conversation-category` 仅用于允许有类别的审批，把这张卡包含的类别授权给本对话后续操作，其它对话不继承；拒绝不能带 scope。重试使用原 requestId、outcome、scope，不同 scope 也报冲突。旧客户端省略 scope 仍为允许一次。列表读取会刷新实时状态；待答复超过十分钟变为 `unavailable`，原生工具收到 unavailable 并将失败返回模型，迟到答复报409。POST回执保持登记时的 `answered`，重放旧回执不能覆盖较新的 `resolved`。
 
 每批问题按原顺序完整作答：`answers` 数量与问题数量相同、`id` 对应；`selected` 选项标签不可重复，可带非空 `custom`。单选不能同时给选项与自定义；多选由 `multiSelect` 标记。问题可含 `header,detail,intent:{kind:"plan-review",approve:"<label>"}`；计划确认只退出原生计划状态，之后仍执行自动风险审批，不授予危险工具权限。`answerAcceptedAt` 才是个人入口答案被消费的确认，200/`outcome:"answered"` 本身不是。
+
+ST-2：操作类型为 `read/write/delete/command/network/external/spend/install/system`。删除、对外发送、花钱拒绝 `allow`；未自定义时完整保留 D12 现有审批模式和新建文件 / 覆盖文件的区别。项目 `permissionRules` 按类别覆盖账户设置，未设置的类别继承；`PATCH /projects/{id}` 与公开项目对象增加该可选字段，保存仍遵循原 `expectedRevision` 和运行中项目限制。
+
+审批公开行增加可选 `operationCategories:string[]`、`canAlwaysAllow:boolean`；POST 审批的 `scope` 可为 `global-category`（只允许 `outcome:allowed-once` 且 `canAlwaysAllow:true`），在提交原审批决定的同一次账户写入中设置对应全局类别为 `allow`。原 `once/conversation-category` 兼容，已决定的请求仍用原 ID 与原体重放。
+
+| 方法 / 路径 | 输入 | 返回 / 说明 |
+|---|---|---|
+| GET `/execution-records` | `type?,projectId?,since?,until?,before?,limit?`；`projectId=none` 为无项目，时间为可解析日期，`limit` 1–200 默认100 | `{items,hasMore,nextBefore,projects}`；按时间倒序，`before` 是同筛选上一页的末条 ID |
+
+记录字段：`id,at,sessionId,conversationId,conversationName,projectId,projectName,types,summary,result,executionState`，自动操作另有 `ruleSource:default/global/project`。`result` 为 `allowed/rejected/automatic/blocked/pending/unavailable`；允许表示许可，失败等实际执行状态由 `executionState` 提供。投影来自原命令的审批 / 工具记录；同一次操作有审批时只显示该审批，保留与删除沿用原会话 / 命令数据，不另建存储。身份验证为 `sessions:read`；规则写入沿用 `commands:write` 与 CSRF（跨站请求伪造）验证。旧客户端可忽略新增字段。
+
+手机网页可查看与修改全局规则，项目单独设置沿用电脑上的项目设置；安卓新增路由需要白名单放行 `/personal/v1/execution-records`（含以上查询）并支持审批 `global-category`，本包按边界未改原生壳。Apple（苹果客户端）需接九类设置、项目 `permissionRules`、审批快捷操作与执行记录入口。
 
 ### 3.8 成果下载（3）
 

@@ -1,0 +1,56 @@
+process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {execFileSync} from 'node:child_process';
+import {mkdir,writeFile,rm,open,readFile} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
+import {readMuMuInfo} from '../../scripts/nightly/mumu.mjs';
+const cloud=!!process.env.WEFTMATE_ST2_ANDROID_SERIAL,adb=process.env.WEFTMATE_ST2_ADB??'D:/Software/MuMuPlayer/nx_main/adb.exe',pkg=process.env.WEFTMATE_ST2_ANDROID_PACKAGE??'com.memoweft.weftmate.mobile.st4qa',out=resolve('tests/evidence/st-2'),lock=cloud?resolve('.local/st2-phone.lock'):'D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock';
+await mkdir(out,{recursive:true});const ownsLease=process.env.WEFTMATE_ST2_MUMU_LEASE!=='parent';if(ownsLease){const lease=await open(lock,'wx');await lease.writeFile(`ST-2 ${new Date().toISOString()} remote browser system bars`);await lease.close();}else assert.match(await readFile(lock,'utf8'),/^ST-2 fresh-navigation/);
+let f,proxy,browserOrigin,socket,forward,serial,originalNight,originalSize,originalDensity,resized=false,installed=false;const checks=[];
+function run(...args){return execFileSync(adb,['-s',serial,...args],{windowsHide:true,maxBuffer:16*1024*1024});}
+try{
+ serial=process.env.WEFTMATE_ST2_ANDROID_SERIAL??readMuMuInfo((exe,args,options)=>execFileSync(exe,args.map((value,index)=>index===2?process.env.WEFTMATE_ST2_MUMU_INDEX??value:value),options)).serial;
+ if(!cloud)execFileSync(adb,['connect',serial],{windowsHide:true});originalNight=/Night mode: (yes|no|auto)/i.exec(run('shell','cmd','uimode','night').toString())?.[1];
+ const packages=run('shell','pm','list','packages').toString().split('\n').filter(line=>/weftmate/.test(line));assert.ok(!packages.some(line=>line.includes(pkg)),'Another ST4 test browser is installed; wait until its owner finishes.');for(const entry of packages){const other=entry.replace(/^package:/,'').trim();if(!other)continue;let active='';try{active=run('shell','pidof',other).toString().trim();}catch{}assert.equal(active,'','Another WeftMate application is running; wait for its owner.');}
+ const apk=process.env.WEFTMATE_ST2_ANDROID_APK??'D:/AIProjects/WeftMate/Worktrees/w4/apps/android/app/build/outputs/apk/debug/app-debug.apk';
+ assert.match(execFileSync(process.env.WEFTMATE_ST2_AAPT??'D:/Software/leidian/LDPlayer14/aapt.exe',['dump','badging',apk],{windowsHide:true,encoding:'utf8'}),new RegExp("package: name='"+pkg+"'"));
+ f=await startTimelineCandidate({interactive:true,composer:true,riskApproval:true,historyCount:0});proxy=createServer(async(request,response)=>{try{const path=request.url==='/personal/v1/ui'?'/':request.url.replace(/^\/personal\/v1\//,'/');const body=request.method==='POST'?Buffer.concat(await Array.fromAsync(request)):undefined;const upstream=await fetch(new URL(path,f.mobileUrl),{method:request.method,body});response.writeHead(upstream.status,{'content-type':upstream.headers.get('content-type')??'application/octet-stream'});response.end(Buffer.from(await upstream.arrayBuffer()));}catch{response.writeHead(502);response.end();}});await new Promise(done=>proxy.listen(0,'127.0.0.1',done));browserOrigin=`http://127.0.0.1:${proxy.address().port}`;const hostPort=new URL(browserOrigin).port;run('reverse',`tcp:${hostPort}`,`tcp:${hostPort}`);run('install',apk);installed=true;
+ const hardwareKeys=run('shell','getprop','qemu.hw.mainkeys').toString().trim();assert.notEqual(hardwareKeys,'1','Bottom system navigation is hidden; this cannot pass system bar acceptance.');
+ const systemVersion=run('shell','getprop','ro.build.version.release').toString().trim();originalSize=/Override size: (\d+x\d+)/.exec(run('shell','wm','size').toString())?.[1]??'reset';originalDensity=/Override density: (\d+)/.exec(run('shell','wm','density').toString())?.[1]??'reset';
+ for(const width of [360,390]){const height=width===360?780:844;run('shell','wm','size',`${width*2}x${height*2}`);run('shell','wm','density','320');run('shell','wm','user-rotation','lock','0');resized=true;const physical=run('shell','wm','size').toString().trim();
+ for(const theme of ['light','dark']){
+  run('shell','cmd','uimode','night',theme==='dark'?'yes':'no');
+  run('shell','am','start','-n',pkg+'/'+(process.env.WEFTMATE_ST2_ANDROID_ACTIVITY??'com.memoweft.weftmate.mobile.St4RemoteBrowserActivity'),'-e','st4Url',browserOrigin+'/personal/v1/ui','-e','st4Theme',theme);
+  let pid;for(let n=0;n<100;n++){try{pid=run('shell','pidof',pkg+':st4remote').toString().trim();if(pid)break;}catch{}await new Promise(r=>setTimeout(r,100));}assert.ok(pid);
+  forward=run('forward','tcp:0',`localabstract:webview_devtools_remote_${pid}`).toString().trim();let target;for(let n=0;n<100;n++){try{target=(await(await fetch(`http://127.0.0.1:${forward}/json/list`)).json()).find(row=>row.url.startsWith(browserOrigin));if(target)break;}catch{}await new Promise(r=>setTimeout(r,100));}assert.ok(target);
+  socket=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>socket.addEventListener('open',r,{once:true}));let sequence=0;
+  const cdp=(method,params)=>new Promise((done,fail)=>{const id=++sequence,listener=event=>{const data=JSON.parse(event.data);if(data.id===id){socket.removeEventListener('message',listener);data.error?fail(data.error):done(data.result);}};socket.addEventListener('message',listener);socket.send(JSON.stringify({id,method,params}));});
+  const evaluate=async expression=>{const data=await cdp('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(data.exceptionDetails)throw Error(JSON.stringify(data.exceptionDetails));return data.result.value;};
+  async function until(expression){for(let n=0;n<150;n++){if(await evaluate(expression))return;await new Promise(r=>setTimeout(r,100));}throw Error('System bar view did not become ready: '+expression);}
+  await until("typeof page === 'function' && state.booted && state.loggedIn && !state.restorePending");
+  const insetsDump=run('shell','dumpsys','window','displays').toString();
+  const insetHeight=kind=>{const line=insetsDump.split('\n').find(line=>line.includes('type='+kind)&&line.includes('visible=true'));const frame=/frame=\[(\d+),(\d+)\]\[(\d+),(\d+)\]/.exec(line??'');return frame?Number(frame[4])-Number(frame[2]):0;};
+  const metrics=await evaluate('({height:innerHeight,dpr:devicePixelRatio})');const statusHeight=insetHeight('statusBars'),navigationHeight=insetHeight('navigationBars');assert.ok(statusHeight>0&&navigationHeight>0,'Both system bars must have real visible insets');
+  if(Math.abs(metrics.height*metrics.dpr-height*2)<3)await evaluate(`document.documentElement.dataset.nativeInsets='true';document.documentElement.style.setProperty('--native-safe-top','${statusHeight/metrics.dpr}px');document.documentElement.style.setProperty('--native-safe-bottom','${navigationHeight/metrics.dpr}px')`);
+
+  for(const category of ['approvals','executionRecords']){
+   await evaluate(`document.documentElement.dataset.theme='${theme}';state.settingsChild=true;page('${category}')`);await until(category==='approvals'?"!!document.querySelector('#permission-global-write')":"!!document.querySelector('.record-row')");await until(`state.page==='${category}' && document.getElementById('generic-page').classList.contains('active') && document.documentElement.dataset.theme==='${theme}'`);await evaluate('new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)))');await new Promise(r=>setTimeout(r,1000));
+   const navigationDump=run('shell','dumpsys','window','displays').toString();const navLines=navigationDump.split('\n').filter(line=>/navigationBars|NavigationBar/.test(line));await writeFile(resolve('.local/st2-nav-frames.txt'),navigationDump.split('\n').filter(line=>/navigationBars|statusBars|NavigationBar/.test(line)).join('\n'));assert.ok(navLines.some(line=>/visible=true|mVisible=true/.test(line)),'System navigation bar must be actually visible');
+   const file=`phone-system-${width}-${theme}-${category}.png`;await writeFile(join(out,file),run('exec-out','screencap','-p'));
+   checks.push({file,systemTheme:theme,pageTheme:theme,systemVersion,physicalScreen:physical,logicalScreen:{width,height},statusHeight,navigationHeight,insetsFromActualSystem:true,bottomNavigationVisible:true,fullSystemBars:true,surface:'mobile-web-in-existing-test-browser'});
+   await evaluate(`document.querySelector('[role=combobox][aria-label="${category==='approvals'?'写文件':'操作类型'}"]').click()`);await until("!!document.querySelector('.permission-select-menu:not([hidden])')");await evaluate('new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)))');await new Promise(r=>setTimeout(r,1000));const menuFile=`phone-system-${width}-${theme}-${category}-menu.png`;await writeFile(join(out,menuFile),run('exec-out','screencap','-p'));checks.push({file:menuFile,systemTheme:theme,pageTheme:theme,systemVersion,physicalScreen:physical,logicalScreen:{width,height},statusHeight,navigationHeight,insetsFromActualSystem:true,bottomNavigationVisible:true,fullSystemBars:true,surface:'mobile-web-in-existing-test-browser',menuOpen:true});await evaluate("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");
+  }
+  socket.close();socket=null;run('forward','--remove',`tcp:${forward}`);forward=null;run('shell','am','force-stop',pkg);
+ }}
+ await writeFile(join(out,'system-bar-checks.json'),JSON.stringify({remoteWeb:true,existingTestBrowser:!cloud,stockAndroidEmulator:cloud,nativeProductBridge:false,realModelRequests:0,checks},null,2)+'\n');console.log('ST2 system bar screenshots passed');
+}finally{
+ socket?.close();
+ if(serial){
+  const cleanup=[...(resized?[['shell','wm','size',originalSize],['shell','wm','density',originalDensity]]:[]),...(installed?[['shell','am','force-stop',pkg],['uninstall',pkg]]:[]),...(originalNight?[['shell','cmd','uimode','night',originalNight]]:[]),...(forward?[['forward','--remove',`tcp:${forward}`]]:[]),...(browserOrigin?[['reverse','--remove',`tcp:${new URL(browserOrigin).port}`]]:[])];
+  for(const args of cleanup){try{run(...args);}catch{console.log('ST2 Android cleanup requires review: '+args.slice(0,3).join(' '));}}
+  try{if(!cloud)execFileSync(adb,['disconnect',serial],{windowsHide:true});}catch{console.log('ST2 Android disconnect requires review');}
+ }
+ try{if(proxy){proxy.closeAllConnections();await new Promise(done=>proxy.close(done));}await f?.close();if(f)await rm(f.root,{recursive:true,force:true});}finally{if(ownsLease)await rm(lock,{force:true});}
+}

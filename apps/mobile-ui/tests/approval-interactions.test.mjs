@@ -1,3 +1,4 @@
+import {PERMISSION_TYPES} from '../../../src/plugins/personal-permission-rules.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -11,7 +12,7 @@ const evidence=fileURLToPath(new URL(process.env.WEFTMATE_APPROVAL_EVIDENCE==='1
   '../../../tests/evidence/ui-2a/':'../../../.local/ui-2a/',import.meta.url));
 const approval={approvalId:'12345678-1234-4234-8234-123456789abc',sessionId:'s1',taskId:'cmd-demo',
   sourceCommandId:'cmd-demo',sourceReceiptId:'rpc:demo.1',turn:1,callId:'call:demo.1',rootCallId:'root:demo.1',
-  toolName:'weftmod_script',reason:'运行整理脚本，删除临时目录中的三个合成文件。',riskCategories:['execute','delete'],
+  toolName:'weftmod_script',reason:'运行整理脚本，删除临时目录中的三个合成文件。',riskCategories:['execute','delete'],operationCategories:['command','delete'],canAlwaysAllow:false,
   createdAt:'2026-10-08T01:00:00.000Z',status:'pending'};
 
 test('UI-2a 390×844 modes, risk confirmation, settings and three approval decisions',async()=>{
@@ -28,9 +29,9 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
   const screenshot=async name=>{await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(animation=>animation.finished)));
     await page.screenshot({path:resolve(evidence,name)})};
   try{
-    await page.addInitScript(({approval})=>{
+    await page.addInitScript(({approval,permissionTypes})=>{
       const sessionModes={s1:'auto',s2:'ask'},requests=[];
-      window.fixture={sessionModes,defaultMode:'auto',requests,approval:null,history:[],failModeWrite:false};
+      window.fixture={sessionModes,defaultMode:'auto',rules:{},requests,approval:null,history:[],failModeWrite:false};
       window.weftNative={postMessage(json){const request=JSON.parse(json);requests.push(request);let result={},error;
         const {method,params}=request,f=window.fixture;
         if(method==='app.bootstrap')result={loggedIn:false,username:'',owner:'',model:null,busy:false};
@@ -42,12 +43,13 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
         if(method==='host.business'){
           const defaults=params.path==='/personal/v1/settings/approvals',session=/\/sessions\/([^/]+)\/approval-mode$/.exec(params.path)?.[1];
           if(defaults||session){if(params.method==='PATCH'){
-            if(f.failModeWrite)error='HOST_UNAVAILABLE';else if(defaults)f.defaultMode=params.body.mode;else f.sessionModes[session]=params.body.mode}
-            result={mode:defaults?f.defaultMode:f.sessionModes[session],allowedCategories:[]}}
+            if(f.failModeWrite)error='HOST_UNAVAILABLE';else if(defaults){if(params.body.mode)f.defaultMode=params.body.mode;if(params.body.rules)Object.assign(f.rules,params.body.rules);}else f.sessionModes[session]=params.body.mode}
+            result={mode:defaults?f.defaultMode:f.sessionModes[session],allowedCategories:[],...(defaults?{rules:f.rules,types:permissionTypes}:{})}}
           else if(params.path==='/personal/v1/system')result={host:{state:'ready'},model:{state:'ready'},memory:{state:'disabled'},canRestart:false};
         }
         if(method==='shared.approvals.list'){result={approvals:f.approval?[{...f.approval}]:[],nextBefore:null,hasMore:false};if(f.holdApprovalList){f.releaseApprovalList=()=>window.weftNative.onmessage({data:JSON.stringify({id:request.id,ok:true,result})});return}}
         if(method==='shared.approvals.decide'){
+          if(params.scope==='global-category')for(const type of f.approval.operationCategories)f.rules[type]='allow';
           f.approval={...f.approval,status:'answered',decisionOutcome:params.outcome,decisionRequestId:params.requestId,
             ...(params.scope?{decisionScope:params.scope}:{}),answeredAt:'2026-10-08T01:01:00.000Z'};
           result={approval:f.approval,requestId:params.requestId};
@@ -64,7 +66,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
         setTimeout(()=>window.weftNative.onmessage({data:JSON.stringify({id:request.id,ok:!error,result,...(error?{error:{code:error}}:{})})}),0);
       }};
       window.fixture.resetApproval=()=>{window.fixture.approval={...approval}};
-    },{approval});
+    },{approval,permissionTypes:PERMISSION_TYPES});
     await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForFunction(()=>state.booted);
     const seed=async(sessionId='s1')=>{await page.evaluate(id=>{
       stopSharedPoll();state.loggedIn=true;state.owner='synthetic-ui2a';state.deviceId='phone-synthetic';state.chatSource='host';
@@ -102,7 +104,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await page.evaluate(()=>fixture.failModeWrite=true);await menu.locator('[data-mode="ask"]').click();
     await page.waitForFunction(()=>!approvalModeState.loading);assert.equal(await page.evaluate(()=>fixture.sessionModes.s1),'auto');
     assert.equal(await label.innerText(),'审批');await page.evaluate(()=>fixture.failModeWrite=false);
-    await page.evaluate(()=>page('settings'));await page.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:/^审批 /}).click();const defaults=page.getByRole('button',{name:'设置默认审批模式'});
+    await page.evaluate(()=>page('settings'));await page.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:/^权限 /}).click();const defaults=page.getByRole('button',{name:'设置默认审批模式'});
     await defaults.click();await page.waitForFunction(()=>!approvalModeState.loading);
     await menu.locator('[data-mode="allow-all"]').click();assert.match(await page.locator('#approval-risk-scope').innerText(),/默认模式.*已有对话保持原模式/);
     await page.locator('#approval-risk-cancel').click();await defaults.click();await page.waitForFunction(()=>!approvalModeState.loading);
@@ -146,9 +148,12 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已允许 · 运行脚本');
     assert.equal(await card.isVisible(),false);await screenshot('04-resolved-line.png');
     assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params.scope),'once');
-    await showApproval();await card.getByText('详情',{exact:true}).click();await card.getByRole('button',{name:'总是允许此类',exact:true}).click();
-    await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已总是允许此类 · 运行脚本');
-    assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params.scope),'conversation-category');
+    await showApproval();assert.equal(await card.getByRole('button',{name:'以后这类都允许',exact:true}).count(),0);
+    await page.evaluate(()=>{fixture.approval={...fixture.approval,riskCategories:['overwrite','execute'],operationCategories:['write','command'],canAlwaysAllow:true};});await page.evaluate(()=>refreshToolApprovals(approvalContext(),{force:true}));
+    await card.getByRole('button',{name:'以后这类都允许',exact:true}).click();
+    await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已允许 · 运行脚本');
+    assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params.scope),'global-category');
+    assert.equal(await page.evaluate(()=>fixture.rules.write),'allow');
     await showApproval();await card.getByRole('button',{name:'拒绝',exact:true}).click();
     await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已拒绝 · 运行脚本');
     assert.equal(await page.evaluate(()=>Object.hasOwn(fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params,'scope')),false);

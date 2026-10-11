@@ -125,7 +125,7 @@ export const EXECUTION_STATES = new Set(['running', 'completed', 'failed', 'canc
 export const JOB_STATES = new Set(['running', 'stopping', 'completed', 'killed', 'failed', 'uncertain', 'unconfirmed']);
 
 export const EXECUTION_FIELDS = ['executionId', 'sourceCommandId', 'sourceReceiptId', 'rootCallId', 'callId',
-  'toolName', 'turn', 'state', 'argumentsHash', 'runtimeId', 'startedAt', 'updatedAt', 'finishedAt', 'resultHash', 'jobId', 'jobState', 'jobObservedAt'];
+  'permission', 'toolName', 'turn', 'state', 'argumentsHash', 'runtimeId', 'startedAt', 'updatedAt', 'finishedAt', 'resultHash', 'jobId', 'jobState', 'jobObservedAt'];
 
 export const APPROVAL_OUTCOMES = new Set(['allowed-once', 'rejected', 'cancelled', 'unavailable']);
 
@@ -135,7 +135,7 @@ export const APPROVAL_STATES = new Set(['pending', 'answered', 'resolved', 'unav
 
 export const APPROVAL_PUBLIC_FIELDS = ['approvalId', 'sessionId', 'taskId', 'sourceCommandId', 'sourceReceiptId',
   'turn', 'callId', 'rootCallId', 'toolName', 'reason', 'createdAt', 'status',
-  'decisionOutcome', 'decisionRequestId', 'decisionScope', 'riskCategories', 'answeredAt', 'outcome', 'resolvedAt'];
+  'operationCategories', 'canAlwaysAllow', 'decisionOutcome', 'decisionRequestId', 'decisionScope', 'riskCategories', 'answeredAt', 'outcome', 'resolvedAt'];
 
 export const APPROVAL_FIELDS = [...APPROVAL_PUBLIC_FIELDS, 'messageHash', 'argumentsHash', 'runtimeId',
   'invalidatedAt', 'invalidationReason'];
