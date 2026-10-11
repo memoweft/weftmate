@@ -11,6 +11,7 @@ test('settings taxonomy and multiword keyword search work without a DOM', () => 
   assert.equal(registry.list({ query: '费用 月度' })[0].id, 'usage');
   assert.equal(registry.list({ query: '   API  ' })[0].id, 'models');
   assert.equal(registry.list({ query: '不存在的设置' }).length, 0);
+  for (const query of ['输入时补全','灰色补全','Tab','下一步建议']) assert.equal(registry.list({query})[0].id,'assistant');
 });
 test('a single category registration supplies metadata, search and a renderer mount', () => {
   const registry = context.WeftUiCore.settingsRegistry();

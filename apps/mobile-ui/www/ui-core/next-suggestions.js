@@ -11,7 +11,7 @@
         const schedule = environment.setTimeout || globalThis.setTimeout, clear = environment.clearTimeout || globalThis.clearTimeout;
         // An optional timeout must not mark the whole conversation offline or show a connection banner.
         const optionalApi = (path, options) => core.requestJson ? core.requestJson(`${core.accessBase}${path}`, options) : core.accessApi(path, options);
-        const enabled = () => core.state.personalization?.nextSuggestionsEnabled !== false;
+        const enabled = kind => kind === 'completion' ? core.state.personalization?.inlineCompletionEnabled === true : core.state.personalization?.nextSuggestionsEnabled !== false;
         const context = () => {
             const sessionId = core.state.activeChatSource === 'phone' ? core.phoneBinding?.()?.sessionId : core.state.selectedSessionId;
             return { sessionId, ownerId: core.state.ownerId, identity: core.state.identityGeneration };
@@ -35,16 +35,16 @@
         }
         function nextSuggestionsView() {
             return { suggestions: [...runtime.suggestions], completion: runtime.completion, draft: runtime.draft,
-                enabled: enabled(), requestId: runtime.pending?.requestId || null };
+                enabled: enabled('replies'), inlineCompletionEnabled: enabled('completion'), requestId: runtime.pending?.requestId || null };
         }
-        function viable() {
+        function viable(kind) {
             const ctx = context();
-            return enabled() && !!ctx.ownerId && !!ctx.sessionId && core.state.online !== false &&
+            return (!kind || enabled(kind)) && !!ctx.ownerId && !!ctx.sessionId && core.state.online !== false &&
                 core.state.personalCapabilities?.nextSuggestions === 1 && !runtime.composing &&
                 !core.conversationRunning?.(ctx.sessionId) && !core.state.submitting && !core.state.sessionSelecting;
         }
         async function requestNextSuggestions(kind, draft = runtime.draft) {
-            if (!viable() || kind === 'replies' && (draft.trim() || runtime.dismissed === runtime.boundary)) return;
+            if (!viable(kind) || kind === 'replies' && (draft.trim() || runtime.dismissed === runtime.boundary)) return;
             cancelNextSuggestions();
             const ctx = context(), requestId = environment.crypto.randomUUID(), controller = new AbortController();
             const task = { context: ctx, requestId, controller, kind, draft, scope: scopeOf(ctx), boundary: runtime.boundary };
@@ -52,7 +52,7 @@
             try {
                 const result = await optionalApi(`/sessions/${encodeURIComponent(ctx.sessionId)}/suggestions`,
                     { method: 'POST', protectedWrite: true, signal: controller.signal, timeoutMs: 7000, body: { kind, ...(kind === 'completion' ? { draft } : {}), requestId } });
-                if (runtime.pending !== task || controller.signal.aborted || scopeOf(context()) !== task.scope || !viable() || runtime.draft !== draft || result.requestId !== requestId) return;
+                if (runtime.pending !== task || controller.signal.aborted || scopeOf(context()) !== task.scope || !viable(kind) || runtime.draft !== draft || result.requestId !== requestId) return;
                 if (kind === 'replies' && runtime.dismissed !== task.boundary)
                     runtime.suggestions = (result.suggestions || []).filter(text => typeof text === 'string' && text.trim()).slice(0, 3);
                 if (kind === 'completion' && !runtime.completionCancelled)
@@ -70,6 +70,10 @@
                 runtime.dismissed = null; runtime.draft = draft; runtime.completionCancelled = false;
             }
             if (!viable()) { cancelNextSuggestions(); runtime.boundary = key; runtime.attempted = key; return; }
+            if ((runtime.pending && !enabled(runtime.pending.kind)) || (runtime.timer != null && !enabled('completion')))
+                cancelNextSuggestions({ clearReplies: !enabled('replies') });
+            if (!enabled('replies')) runtime.suggestions = [];
+            if (!enabled('completion')) runtime.completion = '';
             if (draft !== runtime.draft) nextSuggestionsInput(draft);
             if (key !== runtime.boundary) {
                 cancelNextSuggestions(); runtime.boundary = key; runtime.dismissed = null;
@@ -82,7 +86,7 @@
         function nextSuggestionsInput(draft = effects.readMessageDraft?.() || '') {
             cancelNextSuggestions(); runtime.draft = draft;
             if (!draft.trim()) runtime.completionCancelled = false;
-            if (!runtime.completionCancelled && draft.trim() && viable()) runtime.timer = schedule(() => {
+            if (!runtime.completionCancelled && draft.trim() && viable('completion')) runtime.timer = schedule(() => {
                 runtime.timer = null; void requestNextSuggestions('completion', draft);
             }, 350);
         }
