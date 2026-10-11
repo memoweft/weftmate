@@ -27,7 +27,7 @@
     "skipped": 0
   },
   "weekly": {
-    "passed": 12,
+    "passed": 13,
     "failed": 0
   },
   "memoryUi": {
@@ -72,5 +72,25 @@
     "cleaned": 0,
     "remaining": 0,
     "normalShutdown": "Electron, browser, synthetic hosts, and test workers closed by their own runners."
+  },
+  "postMerge": {
+    "main": "8f1b5de5",
+    "related": {
+      "passed": 53,
+      "failed": 0
+    },
+    "mobile": {
+      "files": 5,
+      "passed": 109,
+      "failed": 0,
+      "skipped": 0
+    },
+    "realElectronAndPhone": "passed",
+    "generatedAssets": 53,
+    "typecheck": "passed",
+    "publicHygiene": {
+      "files": 7580,
+      "hits": 0
+    }
   }
 }

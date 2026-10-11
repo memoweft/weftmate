@@ -1,11 +1,12 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Isolated Stage 15.4 original file -> bounded DSH input -> model reply -> public history acceptance. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+
 import { basename, dirname, isAbsolute, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decryptStage12Dpapi } from './stage12-dpapi-loader.mjs';

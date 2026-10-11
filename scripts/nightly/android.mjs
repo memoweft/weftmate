@@ -4,29 +4,59 @@ import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
 import { assertSystemBars } from './system-bars.mjs';
+import { readMuMuInfo, verifyAndroidSerial, AndroidEnvironmentError, adbExecutable as adb } from './mumu.mjs';
+import { redactEvidenceText } from '../../tests/helpers/process-evidence.mjs';
 import { repository, option } from '../review-gallery/common.mjs';
-const adb = 'D:/Software/MuMuPlayer/nx_main/adb.exe', serial = '127.0.0.1:7555', pkg = 'com.memoweft.weftmate.mobile.nightly';
-const command = (...args) => execFileSync(adb, ['-s', serial, ...args], { windowsHide: true, timeout: 10000, maxBuffer: 20 * 1024 * 1024 });
+const pkg = 'com.memoweft.weftmate.mobile.nightly';
 async function until(fn) { for (let i = 0; i < 100; i++) { try { if (await fn()) return; } catch {} await new Promise(done => setTimeout(done, 300)); } throw Error('Android WebView readiness timed out'); }
-export async function startAndroid(out) {
-  const statePath = option('--state', join(out, '../android-state.json'));
-  const state = { installed: [], forward: [], reverse: [] }, persist = () => writeFile(statePath, JSON.stringify(state));
-  let browser, probe, probeLog = '';
-  const reverse = async port => { port = String(port); if (['8081', '18186'].includes(port)) throw Error('Forbidden personal port'); if (state.reverse.includes(port)) return; command('reverse', `tcp:${port}`, `tcp:${port}`); state.reverse.push(port); await persist(); };
-  const close = async () => {
-    if (probe) {
-      try { command('shell', 'run-as', pkg, 'touch', 'files/nightly-probe.done'); await until(() => probe.exitCode !== null); } catch { probe.kill(); }
+export async function startAndroid(out, deviceInfo) {
+  const info = deviceInfo || readMuMuInfo(), serial = info.serial;
+  if (!deviceInfo) execFileSync(adb, ['connect',serial], { windowsHide:true,timeout:10000 });
+  const command = (...args) => {
+    try { verifyAndroidSerial(serial, execFileSync(adb, ['-s', serial, 'get-serialno'], {encoding:'utf8',windowsHide:true,timeout:10000})); }
+    catch (error) {
+      if (error instanceof AndroidEnvironmentError) throw error;
+      const detail = redactEvidenceText(String(error.stderr || error.code || error.message)).trim().slice(0,1000);
+      throw new AndroidEnvironmentError('本轮安卓设备连接不可核实：' + detail);
     }
-    await browser?.close().catch(() => {});
-    for (const port of state.reverse) try { command('reverse', '--remove', `tcp:${port}`); } catch {}
-    for (const port of state.forward) try { command('forward', '--remove', `tcp:${port}`); } catch {}
-    const uninstalled = [];
-    for (const name of [...state.installed].reverse()) try { command('uninstall', name); uninstalled.push(name); state.installed = state.installed.filter(p=>p!==name); await persist(); } catch {}
-    state.reverse = state.reverse.filter(port=>command('reverse','--list').toString().includes(`tcp:${port}`));
-    state.forward = state.forward.filter(port=>command('forward','--list').toString().includes(`tcp:${port}`));
-    await persist();
-    const packages = command('shell', 'pm', 'list', 'packages', 'weftmate').toString();
-    await writeFile(join(statePath, '../android-cleanup.json'), JSON.stringify({ packageRemoved: !packages.includes(pkg), reverseRemoved: !command('reverse', '--list').toString().split('\n').some(line => state.reverse.some(port => line.includes(`tcp:${port}`))), forwardRemoved: !command('forward', '--list').toString().split('\n').some(line => state.forward.some(port => line.includes(`tcp:${port}`))), probePassed: /OK \(1 test\)/.test(probeLog), uninstalled, settingsChanged:false }, null, 2));
+    return execFileSync(adb, ['-s', serial, ...args], { windowsHide: true, timeout: 10000, maxBuffer: 20 * 1024 * 1024 });
+  };
+  let uiMode = '';
+  try { uiMode = command('shell','dumpsys','uimode').toString(); } catch { /* Metadata stays explicitly unknown; no settings changes. */ }
+  const systemTheme = /mComputedNightMode=true/.test(uiMode) ? 'dark' : /mComputedNightMode=false/.test(uiMode) ? 'light' : 'unknown';
+  const statePath = option('--state', join(out, '../android-state.json'));
+  try {
+    const previous = JSON.parse(await readFile(statePath, 'utf8'));
+    if (previous.serial !== serial) throw new AndroidEnvironmentError('采集状态中的安卓序列号与本轮不一致');
+  } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  const state = { serial, installed: [], forward: [], reverse: [] }, persist = () => writeFile(statePath, JSON.stringify(state));
+  let browser, probe, probeLog = '';
+  const reverse = async port => { port = String(port); if (['8080', '8081', '18186'].includes(port)) throw Error('Forbidden personal port'); if (state.reverse.includes(port)) return; command('reverse', `tcp:${port}`, `tcp:${port}`); state.reverse.push(port); await persist(); };
+  let closed = false;
+  const close = async () => {
+    if (closed) return; closed = true;
+    const errors = [], uninstalled = [];
+    const attempt = async (label, action) => { try { return await action(); } catch (error) { errors.push(label + ': ' + redactEvidenceText(error.message)); } };
+    try {
+      if (probe) await attempt('probe stop', async () => {
+        command('shell', 'run-as', pkg, 'touch', 'files/nightly-probe.done');
+        await until(() => probe.exitCode !== null);
+      });
+      if (probe && probe.exitCode === null) probe.kill();
+      await attempt('CDP close', () => browser?.close());
+      for (const port of [...state.reverse]) await attempt('reverse remove', async () => { command('reverse', '--remove', `tcp:${port}`); state.reverse = state.reverse.filter(p => p !== port); await persist(); });
+      for (const port of [...state.forward]) await attempt('forward remove', async () => { command('forward', '--remove', `tcp:${port}`); state.forward = state.forward.filter(p => p !== port); await persist(); });
+      for (const name of [...state.installed].reverse()) await attempt('uninstall ' + name, async () => {
+        if (!command('uninstall', name).toString().includes('Success')) throw Error('uninstall not confirmed');
+        uninstalled.push(name); state.installed = state.installed.filter(p => p !== name); await persist();
+      });
+      const packages = await attempt('package confirmation', () => command('shell','pm','list','packages',pkg).toString());
+      await persist();
+      await writeFile(join(statePath, '../android-probe.log'), redactEvidenceText(probeLog));
+      const result = { packageRemoved: typeof packages === 'string' && !packages.includes(pkg), reverseRemoved:state.reverse.length === 0, forwardRemoved:state.forward.length === 0, probePassed:/OK \(1 test\)/.test(probeLog), uninstalled, settingsChanged:false, errors };
+      await writeFile(join(statePath, '../android-cleanup.json'), JSON.stringify(result,null,2));
+      if (errors.length) throw Error('Android cleanup failed: ' + errors.join('; '));
+    } finally { execFileSync(adb,['disconnect',serial],{windowsHide:true,timeout:5000}); }
   };
   try {
     if (command('shell', 'pm', 'list', 'packages', pkg).toString().split(/\r?\n/).some(line=>line.trim() === 'package:'+pkg || line.trim() === 'package:'+pkg+'.test')) throw Error('被占用，未拍（已有 WeftMate 测试应用）');
@@ -53,14 +83,16 @@ export async function startAndroid(out) {
       for (const [side, value] of Object.entries(safe)) document.documentElement.style.setProperty(`--native-safe-${side}`, value);
       document.documentElement.dataset.nativeInsets = 'true';
     }), safe);
-    return { browser, page, entryUrl, reverse, theme: async () => {}, screenshot: async () => {
+    return { browser, page, entryUrl, reverse, theme: async () => {}, screenshot: async (scene, theme) => {
       const renderedTheme = await page.evaluate(() => document.documentElement.dataset.theme);
       await until(() => command('shell', 'run-as', pkg, 'cat', 'files/nightly-bars-theme.txt').toString().trim() === renderedTheme);
       await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
       const image = command('exec-out', 'screencap', '-p');
       const scale = await page.evaluate(() => devicePixelRatio);
-      assertSystemBars(image, { statusHeight: parseFloat(safe.top) * scale });
+      const bars = assertSystemBars(image, { statusHeight: parseFloat(safe.top) * scale });
+      const bottomInset = parseFloat(safe.bottom) * scale;
+      await writeFile(join(out, `system-bars-${scene}-${theme}.json`), JSON.stringify({ pageTheme:renderedTheme, systemTheme, systemSettingsChanged:false, systemVersion:info.androidVersion, nativeRenderedBarTheme:renderedTheme, statusBarIcons:renderedTheme === 'dark' ? 'light' : 'dark', bottomNavigationVisible:bottomInset > 0, bottomInset, fullScreen:true, ...bars },null,2));
       return image;
     }, close };
-  } catch (error) { await close().catch(() => {}); throw error; }
+  } catch (error) { console.error(redactEvidenceText(error.stack || error)); await close().catch(cleanupError => console.error(redactEvidenceText(cleanupError.stack))); throw error; }
 }

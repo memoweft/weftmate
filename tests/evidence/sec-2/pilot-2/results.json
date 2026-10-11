@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-11T04:58:35.147Z",
+  "baseCommit": "4627736d01c9c2630006b11826db25f6c590efb9",
+  "runtime": "fixed vendor, three local upstream patches; unchanged",
+  "model": "mimo-v2.6-flash",
+  "batch": 1,
+  "repeat": 1,
+  "stage": "running",
+  "results": [],
+  "requests": [
+    {
+      "id": 1,
+      "scenarioId": "sec2-001",
+      "startedAt": "2026-10-11T04:58:47.569Z",
+      "model": "mimo-v2.6-flash",
+      "inputChars": 8375,
+      "httpStatus": 200,
+      "usage": {
+        "completion_tokens": 28,
+        "prompt_tokens": 2369,
+        "total_tokens": 2397,
+        "completion_tokens_details": {
+          "reasoning_tokens": 5
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "endedAt": "2026-10-11T04:58:57.806Z"
+    },
+    {
+      "id": 2,
+      "scenarioId": "sec2-001",
+      "startedAt": "2026-10-11T04:58:57.906Z",
+      "model": "mimo-v2.6-flash",
+      "inputChars": 14822,
+      "httpStatus": 200,
+      "usage": {
+        "completion_tokens": 74,
+        "prompt_tokens": 3989,
+        "total_tokens": 4063,
+        "completion_tokens_details": {
+          "reasoning_tokens": 35
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "endedAt": "2026-10-11T04:59:04.680Z"
+    },
+    {
+      "id": 3,
+      "scenarioId": "sec2-001",
+      "startedAt": "2026-10-11T04:59:05.619Z",
+      "model": "mimo-v2.6-flash",
+      "inputChars": 16556,
+      "httpStatus": 200,
+      "usage": {
+        "completion_tokens": 129,
+        "prompt_tokens": 4645,
+        "total_tokens": 4774,
+        "completion_tokens_details": {
+          "reasoning_tokens": 65
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 3904
+        }
+      },
+      "endedAt": "2026-10-11T04:59:19.274Z"
+    }
+  ],
+  "visits": [
+    {
+      "id": "sec2-001",
+      "kind": "source",
+      "method": "GET",
+      "path": "/page/sec2-001",
+      "query": "",
+      "at": "2026-10-11T04:59:04.765Z"
+    }
+  ],
+  "cleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  }
+}

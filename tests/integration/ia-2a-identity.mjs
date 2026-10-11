@@ -1,3 +1,4 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** IA-2.1: isolated Electron host, pinned DSH, synthetic MiMo conversation. */
@@ -7,8 +8,8 @@ import { createRequire } from 'node:module';
 import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
 import { randomUUID, createHash } from 'node:crypto';
-import { mkdtemp, mkdir, writeFile, readFile, rm, readdir, cp, lstat } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile, readFile, rm, readdir, cp, lstat } from 'node:fs/promises';
+
 import { join, resolve } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
