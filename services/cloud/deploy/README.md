@@ -1,5 +1,7 @@
 # 云服务与中继部署 · D1
 
+**当前生产版本见文末最新一条升级记录（2026-10-11：主线 `360b00a2`，schema 8）。**
+
 2026-10-07 已部署 Node 24.21.0、官方 frp 0.71.0、cloud schema 4。现场沿用 Ubuntu nginx，公网 TCP 443 使用 stream（TCP 流代理）+ ssl_preread（读取 TLS 握手名称）；HAProxy/Caddy 文件保留为旧 S2 隔离验证夹具，生产使用本目录 nginx 配置。真实地址、邮箱、密钥、密码、证书和运行数据只在服务器私有文件或仓库外运行目录。
 
 ## UP-2 桌面客户端配置（2026-10-09）
@@ -330,3 +332,46 @@ backup=/root/weftmate-deploy/dep-1-backup-20261009T012948Z
 服务器私有证据：`baseline-20261009T012959Z`、`round2-upgraded-recheck-20261009T013756Z`、`round2-final-20261009T014115Z`（均位于 `/root/weftmate-deploy/`）及 `dep-1-dns-evidence.json`。本地无秘密报告在 `.local/dep-1/smoke-core-round2.json` 与 `smoke-result.json`，不进 Git；最终结果覆盖写 `Runtime/Orchestrator/dep-1.result.md`。
 
 未做：本人日用宿主升级、实际网页/桌面正式宿主回调、五端真机与长时间稳定性。当前只登记文档指定的 Apple/Android，未登记虚构/通配符/临时宿主回调。临时证书与私钥随隔离目录清理，成功验收不等于已给本人日用电脑配置远程内容证书。
+
+## 2026-10-11 升级记录（MAIL-1 邮件卡片发布版，随后 DEP-2 升级到主线）
+
+两步都由本人当天明确授权；都只重启 / 短暂停止 cloud 与 frps，没有改 nginx、`cloud.env`、证书或其它网站。
+
+### 第一步：只带邮件卡片的发布版（schema 不变）
+
+本人批准的范围是「更新云服务并重启，不改数据库、不改配置」。当时主线的 `services/cloud` 比生产 `dfe56ec` 多两个迁移（007、008），直接部署主线会升级数据库，超出批准范围。因此从生产提交另建分支 `release/cloud-mail-1`，只叠加 MAIL-1 的运行文件（`assets/weftmate-mark.png`、`src/mail-templates.mjs`、`src/mail-tokens.mjs`、`src/mail.mjs`、`src/server.mjs`、`src/keys.mjs`）与对应测试，提交 `8b9748a3948bb5d670acadb5937f5402f774e516`。这些文件在生产版本与 MAIL-1 之前的主线逐字节相同，迁移目录仍为 6 个，依赖树与运行版本一致。Node 24.21.0 上云服务测试 70 项：67 通过、0 失败、3 个既有可选集成跳过。
+
+切换只换 `current` 链接并重启 cloud。**第一次切换被错误的检查项误判后自动回退**：检查脚本把 OIDC（开放身份连接协议）发现文档写成了根路径，实际地址是 `/personal/v1/cloud/oidc/.well-known/openid-configuration`，于是得到 404 并切回旧版本，生产保持正常。改正后先在旧版本上预检通过，再第二次切换：约 3 秒后 `healthz`（schema 6）、发现文档、JWKS（签名公钥集合）、`/assets/mail/weftmate-mark.png`（200、`image/png`、3,807 字节；带查询串 404）全部通过，cloud / frps / nginx 均 active。期间 cloud 共重启 3 次，每次约 3 秒。
+
+教训：切换前必须先在**正在运行的版本**上把每一条检查跑通，再用同一组检查验收新版本。
+
+纯代码回退脚本保存在服务器私有目录 `/root/weftmate-deploy/mail-1-20261011T025209Z/rollback.sh`（把 `current` 指回 `dfe56ec` 并重启）。DEP-2 完成后它已不适用。
+
+### 第二步：DEP-2 升级到主线（schema 6 → 8）
+
+目标 `360b00a2ad2a374019f68060f73d54919410772c`。相对上一步新增迁移 `007-offline-control.sql`（`offline_controls`，手机离线模式的删除水位）与 `008-push.sql`（`push_registrations`），以及 `/hosts/offline/status`、`/hosts/offline/publish`、`/auth/push/registration`。推送只有空实现（`PUSH_NOT_CONFIGURED`），**没有新增配置项或凭据**；依赖树与运行版本一致。
+
+按「升级与回滚」执行，脚本 `/root/weftmate-deploy/dep-2-upgrade.sh`：
+
+1. 每个检查函数先在旧版本上只读预演（核心检查通过、对错误的 schema 版本能报错、行数与迁移数可读）。
+2. 旧版本预检 → 停 cloud / frps → 备份完整 StateDirectory（含 SQLite / WAL / SHM、identity-keys、邮件）、nginx 全部配置、`frps.toml`、`cloud.env`、两个服务单元、journald 配置、`current` 链接与旧版本路径，生成 `SHA256SUMS`。
+3. 用 `rollback-upgrade.sh <备份> --dry-run` 验证备份：校验和、完整解包、SQLite `integrity_check=ok`、`nginx -t`。
+4. 切到新版本并启动；核心检查失败则自动执行 `rollback-upgrade.sh <备份>` 恢复快照。
+
+| 项目 | 结果 |
+|---|---|
+| 停机 | cloud / frps 停止约 5 秒 |
+| 服务 | cloud、frps、nginx 均 active；六个内部监听端口都在；启动后日志无错误行 |
+| 数据 | 迁移数 6 → 8；`integrity_check=ok`；账号、宿主、设备、成员四张表行数未减少（脚本只比较计数，不输出内容） |
+| 公开接口 | `healthz` 200 / schema 8；OIDC 发现文档与 JWKS 正常；邮件标识图片正常；`/auth/push/registration` 未带凭据返回 401（升级前为 404） |
+
+备份在 `/root/weftmate-deploy/dep-1-backup-20261011T043145Z`（0700、root 所有；沿用 `dep-1-backup-` 前缀是因为 `rollback-upgrade.sh` 只接受这个前缀）。旧版本目录保留。
+
+```sh
+backup=/root/weftmate-deploy/dep-1-backup-20261011T043145Z
+/root/weftmate-deploy/rollback-upgrade.sh "$backup" --dry-run
+# 只在核心故障时使用；恢复会撤回快照之后写入的云数据。
+/root/weftmate-deploy/rollback-upgrade.sh "$backup"
+```
+
+没有做的：没有用真实宿主重新走一遍绑定 / 中继 / 证书签发全链路（本次没有改这些代码路径以外的配置）；手机离线模式在真实环境里的首次建立，留到本人把日用程序迁到安装版当天的验收里确认。
