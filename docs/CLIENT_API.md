@@ -500,6 +500,7 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 - `preferredName:""`（80 字）、`bio:""`（500 字）、`tone:"natural"`（`natural|concise|detailed|formal|casual`）、`toneInstructions:""`（500 字）。
 - `fixedInstructions:""`（4,000 字）；`useWritingStyle:false`、`writingStyle:""`（1,000 字）。长度按 Unicode（统一字符编码）码点计算，空文本合法；提炼结果可通过 PATCH 编辑／清空，清除不删除任何聊天记录。
 - `webSearch:true`、`researchSelfCheck:true`（FACT-1，查资料成文前核对关键断言；关闭仍须给出处及未确认说明）、`verbosity:"medium"`（`short|medium|thorough`）、`thinkingDisplay:"collapsed"`（`collapsed|expanded|hidden`）、`defaultDeepThinking:false`、`messageMode:"queue"`（`queue|steer`）。
+- `nextSuggestionsEnabled:true`：只控制回复结束后的下一步建议胶囊，点选填入草稿，不自动发送；`inlineCompletionEnabled:false`：独立控制输入时的灰色补全，按 Tab（制表键）或手机点灰字／右滑接受。两字段均只接受布尔值。存量账户缺少新字段时按 `false` 返回，不继承旧开关的值；升级后须明确开启才发补全请求。用云端模型时可能来不及显示。
 
 服务端串行合并字段，冲突按最后一次成功写入为准；`updatedAt` 为宿主保存时间，旧账户无已保存设置时为 `null` 并返回默认值。旧本设备的 D36 引导偏好在首次读取时迁入未配置账户；以后账户值优先。客户端仅成功回执后显示「已同步」，读取／保存失败保留可重试状态，切账户丢弃迟到回执。
 
@@ -1396,7 +1397,7 @@ Windows（视窗系统）与远程网页已有健康、动态、对应回合提�
 
 ## 12. UX-7 下一步建议（D51，能力版本 1）
 
-`GET /status.personalCapabilities.nextSuggestions` 精确为 `1` 时可调用；旧宿主没有该能力时客户端隐藏建议。账户设置沿 `GET/PATCH /settings/personalization` 增加 `nextSuggestionsEnabled:boolean`，默认 `true`，逐字段同步；关闭立即取消所有本账户正在生成的建议，宿主不再发建议模型请求。客户端身份变化丢弃迟到结果。
+`GET /status.personalCapabilities.nextSuggestions` 精确为 `1` 时可调用；旧宿主没有该能力时客户端隐藏建议。账户设置沿 `GET/PATCH /settings/personalization` 逐字段同步：`nextSuggestionsEnabled:boolean` 默认 `true`，仅控制 `kind:"replies"`；`inlineCompletionEnabled:boolean` 默认 `false`，仅控制 `kind:"completion"`，且只有精确 `true` 才开启。存量账户缺少新字段时补全关闭，不继承 `nextSuggestionsEnabled`。关闭某个开关立即取消本账户对应种类的生成，另一种保持原开关控制；客户端关闭补全时不发补全请求、不接受灰字，宿主对关闭的请求种类直接返回空结果，不调用模型、不申请模型租约。客户端身份变化丢弃迟到结果。快捷键面板沿用完整绑定表，关闭时仍列出「接受灰色补全」，实际按键只在开启且灰字可见时接受。
 
 | 路由 | 请求 | 响应与语义 |
 |---|---|---|
