@@ -1,7 +1,8 @@
 import { outputPath } from './evidence.mjs';
+import { cleanupOwnedProcesses } from '../../helpers/process-evidence.mjs';
 import {_electron,chromium} from 'playwright';import {createRequire} from 'node:module';import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';import {join,resolve} from 'node:path';import {tmpdir} from 'node:os';import {pathToFileURL} from 'node:url';import {randomUUID} from 'node:crypto';
 import {startTimelineCandidate} from './fixture.mjs';import {initializeDesktopSession} from './auth.mjs';
-const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate({daily:true,inlineProgress:true,logicalMobile:true,cloudMobile:true,sidebar:true,historyCount:0,baseTime:Date.now()});let app,browser;const report={rows:[],errors:[]};const profile=mkdtempSync(join(tmpdir(),'weftmate-bl29-latency-'));
+const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate({daily:true,inlineProgress:true,logicalMobile:true,cloudMobile:true,sidebar:true,historyCount:0,baseTime:Date.now()});let app,browser;const report={rows:[],errors:[]};const profile=mkdtempSync(join(tmpdir(),'weftmate-bl29-latency-')),startedAt=Date.now();
 try{
  const main=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
  const send=async text=>{const c=await f.request('/commands',{requestId:randomUUID(),kind:'chat.message',chatId:main.chatId,modelProfileId:'local',targetDeviceId:host,text});for(let i=0;i<100;i++){if((await f.request('/commands/'+c.command.commandId)).command.state==='accepted_by_dsh')return;await pause(10);}};
@@ -49,4 +50,13 @@ try{
  await waitBoth('modelRename',()=>{const core=globalThis.__revCore||uiCore;return core.state.models.some(m=>m.name==='Visible renamed');},()=>ctx.serial(()=>ctx.mutate(owner,next=>{next.accountModels[id].name='Visible renamed';next.accountModels[id].revision++;})),7000);
  await waitBoth('sessionList',()=>document.body.textContent.includes('Independent rename marker'),()=>f.request('/sessions/'+f.sessionId+'/metadata',{title:'Independent rename marker'},'PATCH'));
 
-}catch(e){report.failure=e.message;if(app){const p=await app.firstWindow();report.desktopDebug=await p.evaluate(()=>({models:__revCore.state.models.map(m=>m.id),personalization:__revCore.state.personalization,revision:__revCore.state.accountRevision,result:__revCore.state.historyReadResult}));}if(browser){const p=browser.contexts()[0]?.pages()[0];report.mobileDebug=await p?.evaluate(()=>({models:uiCore.state.models.map(m=>m.id),personalization:uiCore.state.personalization,revision:uiCore.state.accountRevision,result:uiCore.state.historyReadResult,connection:uiCore.connectionView(),main:uiCore.inMainChat()}));}}finally{writeFileSync(outputPath('ui-extra.json'),JSON.stringify(report,null,2));await browser?.close();await app?.close();await f.close();rmSync(f.root,{recursive:true,force:true});rmSync(profile,{recursive:true,force:true});}console.log(report);
+}catch(e){report.failure=e.message;if(app){const p=await app.firstWindow();report.desktopDebug=await p.evaluate(()=>({models:__revCore.state.models.map(m=>m.id),personalization:__revCore.state.personalization,revision:__revCore.state.accountRevision,result:__revCore.state.historyReadResult}));}if(browser){const p=browser.contexts()[0]?.pages()[0];report.mobileDebug=await p?.evaluate(()=>({models:uiCore.state.models.map(m=>m.id),personalization:uiCore.state.personalization,revision:uiCore.state.accountRevision,result:uiCore.state.historyReadResult,connection:uiCore.connectionView(),main:uiCore.inMainChat()}));}}finally{
+ writeFileSync(outputPath('ui-extra.json'),JSON.stringify(report,null,2));await browser?.close();
+ if(app) {
+  if(process.platform==='win32') {
+   const cleanup=cleanupOwnedProcesses({startedAt,executables:[createRequire(import.meta.url)('electron')],commandRoots:[profile]});
+   if(!cleanup.available||cleanup.failed)throw Error('synthetic desktop process cleanup failed');
+  } else if(app.process().exitCode===null&&app.process().signalCode===null)app.process().kill();
+ }
+ await app?.close();await f.close();rmSync(f.root,{recursive:true,force:true});rmSync(profile,{recursive:true,force:true});
+}console.log(report);
