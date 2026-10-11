@@ -8,6 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
+| Codex · Windows-3 | ROB-1b · 存储返工与命令期限 | [PR #214](https://github.com/memoweft/weftmate/pull/214) · `wp/rob-1-first-run-crash-and-timeouts`：删除主密钥恢复文件、启动改写 `Local State`（本机状态文件）与自动隔离密文；仅在磁盘主密钥验证并刷盘后允许原子提交密文。启动读不出只保留内存状态，每次读取重试，明确重新填写保存才留存一份 `.replaced-*`。备份及旧备份恢复均排除加密附属文件；命令超时结束整棵进程树，后台查询15秒、本机密钥读取5秒。M1/M2原脚本与固定回归、27格中断矩阵通过；21个提交全部可读，删主密钥9次保持原文件并可重新填写，旧版9次可读。浅深1200/480/360/390程序截图与固定头部/底栏通过；required（完整必过）1508/0失败/14既有跳过、vendor（固定运行时集成）204/0、手机109/0、备份补验25/0，类型和公开扫描通过；rob1qa最后打包版本七项冒烟及首次强杀/再启动原凭据可读，真实模型请求0。旧云端打包红灯同提交第三次已通过；最新提交检查待刷新；[证据与调用表](../tests/evidence/rob-1/README.md)。 |
 | Codex · Windows-6 | BL-28a · 灰色补全独立默认关 | [PR #212](https://github.com/memoweft/weftmate/pull/212) · `wp/bl-28a-completion-default-off`：新增 `inlineCompletionEnabled:false`，存量缺字段也默认关、不继承旧值；回复胶囊仍由默认开的 `nextSuggestionsEnabled` 控制。电脑／两类手机网页五入口默认补全请求0、开启后1，四组合与 Tab（制表键）接受均通过；关闭时宿主不调用模型／不占租约。required（完整必过）1441通过／0失败／14既有条件跳过、vendor（固定运行时集成）204／0／0、手机109与资源复验114／0、定向45／0，类型／公开扫描通过。12张设置＋6张快捷键图，手机关闭态滑块颜色回退修复；无新路由／原生壳／版本／算法／模型选择改动，Apple（苹果端）清单见交付报告。已清理进程：5，残留0；已合主线，相关／手机154／0、类型与公开扫描零命中复验通过；待Claude审查。[证据](../tests/evidence/bl-28a/README.md)。 |
 | Codex · Windows-5 | DIAG-2 · 安卓运行记录与统一摘要 | [PR #216](https://github.com/memoweft/weftmate/pull/216) · `wp/diag-2-android-run-log`：原生持久标记、历史退出、默认异常委托、内核恢复、连接／同步／审批／通知记录与手机本机栏已接；Windows／安卓／苹果摘要统一，序号去重、人话预览与 JSON（结构化数据格式）复制验证通过。required（完整必过）1513／0失败／14既有条件跳过、vendor（固定运行时集成）204、手机交互109、JVM（Java 虚拟机）71及相关64通过；安卓70任务强制构建、2仪器用例、MuMu（安卓模拟器）6场景／24浅深整屏、浏览器24检查／32图、实际Windows4图通过；类型／公开扫描0命中。**系统logcat（系统日志）私文检查未满足**：系统预处理器先于应用处理器，公开SDK（软件开发工具包）不可替换，严格失败保留、驱动非零；本机日志／摘要脱敏通过，未声称全项放行。需要新壳版本，无新权限／业务路由／版号或受限适配器改动；真机导航／厂商回收等另验。[证据](../tests/evidence/diag-2/README.md)，待审。 |
 | Codex · Windows-5 | MAIL-1 · 验证码邮件卡片 | [PR #207](https://github.com/memoweft/weftmate/pull/207) · `wp/mail-1-code-email`：六种邮件共用既有品牌卡片，提供文字／网页两版；验证码连续可复制、动态值转义、主题／预览不含验证码，自有云域名固定 PNG（位图）。云全套70通过／0失败／4既有跳过，required（完整必过）1429通过／0失败／14个既有跳过、vendor（固定运行时集成）203通过／0失败／0个跳过，相关23／手机交互109、类型检查／公开扫描通过；32图与25次选区／剪贴板检查、浅深／窄屏／退化通过。修复既有Windows（视窗系统）云测试兼容；无配置／数据库迁移／业务契约／版本号变更，未部署／未发真实邮件。已清理进程：11，残留0。已合主线，相关复验32/32、更新记录生成副本12/12、类型检查／公开身份扫描0命中通过；最新CI（持续集成）见PR检查。待Claude审查；[证据](../tests/evidence/mail-1/README.md)。 |
@@ -101,6 +102,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 ## 契约变更
 
+- ROB-1b：现有模型 POST（创建请求）/ PATCH（修改请求）在加密存储未就绪时返回503 `CREDENTIAL_STORAGE_NOT_READY`；保留输入和原请求编号供重试，无新增路由或原生壳要求。
 - **BL-28a / Windows-6**：既有 `GET/PATCH /settings/personalization` 增加 `inlineCompletionEnabled:boolean`（默认 `false`，存量缺字段不继承旧值）；`nextSuggestionsEnabled` 默认 `true` 仅管 `kind:"replies"`，新字段仅管 `kind:"completion"`。关闭只取消对应种类；补全关闭时客户端零补全请求、Tab（制表键）不接受，宿主空返回且不调用模型／不占模型租约。无新路由／权限／安卓壳要求；Apple（苹果端）需接新字段与独立开关，见本包交付清单。
 
 - **DIAG-2 / Windows-5**：现有 `GET /system` 的 `runRecord.summary` 改为统一 JSON 字符串，新增人话 `summaryPreview`；安卓新增本机 `diagnostics.status / diagnostics.record / diagnostics.share` 桥方法，沿通用 `call(method, params)`，无新增 `/personal/v1` 路由或权限。需要新壳版本；苹果摘要字段对齐 PR #210。

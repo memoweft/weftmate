@@ -1,10 +1,10 @@
 /** The monitor runs from a copy of the trusted old program, outside the install tree. */
 import { app } from 'electron';
-import { cp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { spawn } from 'node:child_process';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
+import { readUninstallRegistry } from './watchdog-commands.mjs';
+import { createHostLog } from '../host-log.mjs';
 import { randomUUID } from 'node:crypto';
 import { atomicJson } from './store.mjs';
 import { copyPhysicalTree, removePhysicalTree, copyPhysicalFile } from './physical-copy.mjs';
@@ -23,15 +23,15 @@ export async function prepareAppRollback({ configFile, nextVersion, appData = ap
     if (cacheDirectory) await copyPhysicalTree(cacheDirectory, join(snapshot, 'cache'));
     await writeFile(join(snapshot, 'monitor.mjs'), await readFile(new URL('./app-watchdog.mjs', import.meta.url)));
     await writeFile(join(snapshot, 'physical-copy.mjs'), await readFile(new URL('./physical-copy.mjs', import.meta.url)));
+    await writeFile(join(snapshot, 'watchdog-commands.mjs'), await readFile(new URL('./watchdog-commands.mjs', import.meta.url)));
+    await writeFile(join(snapshot, 'watchdog-host-log.mjs'), await readFile(new URL('../host-log.mjs', import.meta.url)));
     const recoveryExe = join(snapshot, 'program', 'WeftMateRecovery.exe');
     await copyPhysicalFile(process.execPath, recoveryExe);
-    const registryResult = await promisify(execFile)('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-      "$target=$env:WEFTMATE_RECOVERY_EXE; Get-ChildItem HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall | Where-Object { $value=$_.GetValue('UninstallString'); $value -and $value -match '^\"([^\"]+)\"' -and [IO.Path]::GetDirectoryName($matches[1]) -eq [IO.Path]::GetDirectoryName($target) } | ForEach-Object { @{key=$_.Name;version=$_.GetValue('DisplayVersion')} } | ConvertTo-Json -Compress"],
-    { windowsHide: true, env: { ...process.env, WEFTMATE_RECOVERY_EXE: process.execPath } });
-    const uninstallRegistry = registryResult.stdout.trim() ? JSON.parse(registryResult.stdout) : null;
+    const uninstallRegistry = await readUninstallRegistry(process.execPath);
     const state = { schemaVersion: 1, token: randomUUID(), oldVersion: app.getVersion(), nextVersion, installer, installerSha256, uninstallRegistry,
       installation, executable: process.execPath, configFile, snapshot, cacheDirectory, oldPid: process.pid,
       timeoutMs, phase: 'installing', createdAt: new Date().toISOString() };
+    state.dataDirectory = app.getPath('userData');
     await atomicJson(join(root, 'pending.json'), state);
     const child = spawn(recoveryExe, [join(snapshot, 'monitor.mjs'), root], {
       cwd: snapshot, detached: true, windowsHide: true, stdio: 'ignore', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
@@ -46,6 +46,7 @@ export async function prepareAppRollback({ configFile, nextVersion, appData = ap
     }
     throw new Error('APP_RECOVERY_MONITOR_NOT_READY');
   } catch (error) {
+    createHostLog(app.getPath('userData')).failure('app-rollback-prepare',error);
     await rm(join(root, 'pending.json'), { force: true });
     await new Promise(resolve => setTimeout(resolve, 300));
     await removePhysicalTree(snapshot).catch(() => {});
