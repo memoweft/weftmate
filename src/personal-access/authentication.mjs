@@ -58,6 +58,76 @@ export function createAuthenticationOperations(context) {
     return matched;
   }
 
+  // The same private capability used by native project/data actions. It is
+  // injected only by the validated main-window IPC bridge, never by a webpage.
+  function requireLocalDesktop(request) {
+    requireBrowserOrigin(request, true);
+    if (!['127.0.0.1', '::ffff:127.0.0.1', '::1'].includes(request.socket.remoteAddress) ||
+        typeof context.libraryDesktopToken !== 'string' ||
+        request.headers['x-weftmate-desktop'] !== context.libraryDesktopToken) {
+      throw failure('LOCAL_SESSION_REQUIRED', 403);
+    }
+  }
+
+  function requireDirectLocal(request, code = 'CLOUD_LOGIN_REQUIRED') {
+    if (requestAuthority(request) !== context.origin ||
+        !['127.0.0.1', '::ffff:127.0.0.1', '::1'].includes(request.socket.remoteAddress))
+      throw failure(code, 403);
+  }
+
+  function localAccounts(request) {
+    requireLocalDesktop(request);
+    return { accounts: Object.entries(context.rootState.accounts).filter(([, row]) => row.account)
+      .map(([ownerId, row]) => ({ ownerId, username: row.account.username,
+        displayName: row.account.displayName || row.account.username })),
+      selectedOwnerId: context.rootState.desktopOwnerId ?? null };
+  }
+
+  async function desktopSession(request, body) {
+    requireLocalDesktop(request);
+    exactKeys(body, ['ownerId', 'deviceName'], []);
+    const name = deviceName(body.deviceName ?? '这台电脑');
+    let ownerId = body.ownerId ?? context.rootState.desktopOwnerId;
+    const accounts = Object.entries(context.rootState.accounts).filter(([, row]) => row.account);
+    if (body.ownerId !== undefined && !accounts.some(([id]) => id === ownerId)) throw failure('NOT_FOUND', 404);
+    if (!accounts.some(([id]) => id === ownerId)) {
+      ownerId = accounts.find(([id]) => id === (context.rootState.executionOwnerId ?? context.rootState.legacyOwnerId))?.[0]
+        ?? accounts[0]?.[0] ?? context.rootState.legacyOwnerId;
+    }
+    // Create the first profile in the existing legacy owner, retaining its
+    // conversations/storage paths. No user password is requested or persisted.
+    const password = !context.accountState(ownerId).account
+      ? await hashWork(() => hashPassword(randomBytes(48).toString('base64url'))) : null;
+    const result = await context.serial(() => context.mutateRoot(nextRoot => {
+      requireLocalDesktop(request);
+      const next = nextRoot.accounts[ownerId];
+      if (!next) throw failure('NOT_FOUND', 404);
+      if (!next.account) {
+        next.account = { username: 'local-owner', usernameCanonical: 'local-owner',
+          password, authEpoch: 1, displayName: '我的账户', avatar: null, profileRevision: 0 };
+        for (const device of Object.values(next.devices)) if (device.authKind === 'legacy-local') {
+          device.revoked = true; device.revokedAt = new Date(context.timestamp()).toISOString();
+        }
+      }
+      next.setupGrant = null;
+      nextRoot.desktopOwnerId = ownerId;
+      const at = context.timestamp();
+      // Rotate the native session for this profile rather than appending one
+      // device on every launch. Its authority remains local on every request.
+      const existing = Object.entries(next.devices).find(([, d]) => d.authKind === 'desktop' && !d.revoked);
+      const deviceId = existing?.[0] ?? `device-${randomUUID()}`;
+      const token = randomBytes(32).toString('base64url'), csrfToken = csrfForToken(token);
+      next.devices[deviceId] = { name, tokenHash: digest(token), csrfHash: digest(csrfToken),
+        scopes: ['sessions:read', 'commands:write', 'account:manage'], authKind: 'desktop',
+        authEpoch: next.account.authEpoch, revoked: false,
+        enrolledAt: existing?.[1].enrolledAt ?? new Date(at).toISOString(),
+        lastSeenAt: new Date(at).toISOString(), expiresAt: new Date(at + SESSION_MS).toISOString() };
+      return { deviceId, token, csrfToken };
+    }));
+    return { ...publicAuth(ownerId, result.deviceId, context.accountState(ownerId).devices[result.deviceId], result.csrfToken),
+      ...localAccounts(request), token: result.token };
+  }
+
   function cookieToken(request) {
     const header = request.headers.cookie;
     if (typeof header !== 'string' || header.length > 4096) return null;
@@ -110,6 +180,11 @@ export function createAuthenticationOperations(context) {
     });
     if (!selected || selected[1].revoked) throw failure('UNAUTHORIZED', 401);
     const [deviceId, device] = selected;
+    if (device.authKind === 'desktop') {
+      requireLocalDesktop(request);
+      if (via !== 'cookie' || Date.parse(device.expiresAt) <= context.timestamp() ||
+          device.authEpoch !== state.account?.authEpoch) throw failure('UNAUTHORIZED', 401);
+    }
     if (device.authKind === 'cloud') {
       if (!context.cloudIdentity || Date.parse(device.expiresAt) <= context.timestamp() ||
           state.account === null || device.authEpoch !== state.account.authEpoch) throw failure('UNAUTHORIZED', 401);
@@ -118,6 +193,7 @@ export function createAuthenticationOperations(context) {
     if (device.authKind === 'password' &&
         (Date.parse(device.expiresAt) <= context.timestamp() || state.account === null ||
           device.authEpoch !== state.account.authEpoch)) throw failure('UNAUTHORIZED', 401);
+    if (device.authKind === 'password' || device.authKind === 'legacy-local') requireDirectLocal(request);
     if (!device.scopes.includes(scope) || (scope === 'account:manage' && via !== 'cookie')) {
       throw failure('FORBIDDEN', 403);
     }
@@ -186,7 +262,8 @@ export function createAuthenticationOperations(context) {
 
   function publicAuth(ownerId, deviceId, device, csrfToken) {
     return { account: { ...publicProfile(context.accountState(ownerId).account), ownerId },
-      device: { id: deviceId, name: device.name, expiresAt: device.expiresAt },
+      device: { id: deviceId, name: device.name, expiresAt: device.expiresAt, authKind: device.authKind },
+      ...(device.authKind === 'desktop' ? { local: true } : {}),
       csrfToken };
   }
 
@@ -423,6 +500,7 @@ export function createAuthenticationOperations(context) {
   }
 
   return {
+    requireLocalDesktop, requireDirectLocal, localAccounts, desktopSession,
     hashWork,
     requestAuthority,
     matchingOrigin,

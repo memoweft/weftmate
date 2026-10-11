@@ -9,6 +9,7 @@ import { promisify } from 'node:util';
 import { once } from 'node:events';
 import path from 'node:path';
 import { P, generateKeyPair, exportJWK, SignJWT } from './identity-helpers.mjs';
+import { appDevice, control, refresh, proof } from './app-helpers.mjs';
 import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
 import { publishMobileUi } from '../../../src/personal-access/mobile-ui-release.mjs';
 import { keyId } from '../../../src/personal-update/manifest.mjs';
@@ -20,7 +21,7 @@ import { relayFixture, freePort, waitFor, processChild } from './relay-fixture.m
 const run = promisify(execFile);
 test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth, SSE, history, attachments, reconnect, pin and revoke',
   { skip: !enabled && 'Run with WEFTMATE_RELAY_E2E=true and official frp + HAProxy paths', timeout: 120_000 }, async t => {
-    const { f, root, infra, frontPort, frpDir, procs, frps, close } = await relayFixture(t);
+    const { f, root, infra, frontPort, frpDir, procs, frps, close } = await relayFixture(t, { liveClock: true });
     const updatePair = generateKeyPairSync('ed25519');
     const updatePrivateKey = updatePair.privateKey.export({ type: 'pkcs8', format: 'pem' });
     const updatePublicKey = updatePair.publicKey.export({ type: 'spki', format: 'pem' });
@@ -87,8 +88,27 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
           req.end(raw??(body===undefined?undefined:JSON.stringify(body)));
         });
       }
-      const login = await request('/auth/login',{method:'POST',body:{username:'synthetic-relay',password,deviceName:'Remote Browser'}});
+      const passwordLogin = await request('/auth/login',{method:'POST',body:{username:'synthetic-relay',password,deviceName:'Remote Browser'}});
+      assert.equal(passwordLogin.status,403,JSON.stringify(passwordLogin.data));
+      assert.equal(passwordLogin.data.error.code,'CLOUD_LOGIN_REQUIRED'); assert.equal(passwordLogin.headers['set-cookie'],undefined);
+      const localReplay = await request('/status',{headers:{cookie:local.cookie}});
+      assert.equal(localReplay.status,403,JSON.stringify(localReplay.data));
+      assert.equal(localReplay.data.error.code,'CLOUD_LOGIN_REQUIRED');
+      assert.equal((await request('/status')).status,401,'unauthenticated TLS clients cannot see host content');
+      // The positive content session comes from real cloud email verification
+      // of this key, ordinary host-resource refresh, and nonce-bound DPoP over
+      // the existing validated/pinned TLS relay. No local password crosses it.
+      const remote = await appDevice(f,'synthetic-relay-browser');
+      const selected = (await control(remote,'/hosts/connect',{hostId:started.hostId})).data;
+      assert.equal(selected.approval,'trusted'); assert.equal(selected.pairingRequired,false);
+      await refresh(remote,selected.resource);
+      const nonce = await request('/auth/cloud-nonce',{method:'POST',body:{}}); assert.equal(nonce.status,200);
+      const dpop = await proof(remote,base+'/personal/v1/auth/cloud-session',remote.tokens.access_token,{nonce:nonce.data.nonce});
+      const login = await request('/auth/cloud-session',{method:'POST',headers:{dpop},
+        body:{accessToken:remote.tokens.access_token,deviceName:'Synthetic relay browser'}});
       assert.equal(login.status,200,JSON.stringify(login.data)); assert.match(login.headers['set-cookie'][0],/Secure/);
+      assert.match(login.headers['set-cookie'][0],/HttpOnly/); assert.ok(login.data.hostTrust?.trustToken);
+      assert.equal(login.data.account.ownerId,setup.data.account.ownerId,'cloud session retains the bound local owner');
       const cookie = login.headers['set-cookie'][0].split(';')[0], csrf = login.data.csrfToken;
       const auth = {cookie,'x-weftmate-csrf':csrf};
       assert.equal((await request('/status',{headers:auth})).data.relay.state,'online');
@@ -169,9 +189,11 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       const captured=Buffer.concat(wireChunks);
       assert.ok(captured.length>bytes.length); assert.equal(captured.includes(Buffer.from(marker)),false);
       assert.equal(captured.includes(Buffer.from(password)),false); assert.equal(captured.includes(Buffer.from(cookie)),false);
+      assert.equal(captured.includes(Buffer.from(remote.tokens.access_token)),false);
       assert.doesNotMatch(f.logs()+frps.logs(),new RegExp(marker+'|'+password));
       const proofReport={port:frontPort,frpVersion:'0.71.0',capturedTlsBytes:captured.length,plaintextMarkerFound:false,
-        login:true,sse:true,history2200:true,attachmentSha256:true,reconnect:true,foreignDomainRejected:true,
+        login:true,cloudVerifiedDpop:true,remotePasswordRejected:true,localCookieReplayRejected:true,
+        sse:true,history2200:true,attachmentSha256:true,reconnect:true,foreignDomainRejected:true,
         spkiReplacementRejected:true,forgedCertificateRejected:true,credentialRotation:true,revokeMs,loopbackOnly:true};
       if(process.env.WEFTMATE_RELAY_REPORT)await writeFile(process.env.WEFTMATE_RELAY_REPORT,JSON.stringify(proofReport,null,2)+'\n');
       t.diagnostic(JSON.stringify(proofReport));

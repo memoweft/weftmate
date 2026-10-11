@@ -40,8 +40,14 @@ export function createCloudVerifier(config, hostId, clock) {
           (scope === 'host:session' && (payload.host_id !== hostId || typeof payload.cnf?.jkt !== 'string'))) {
         throw new Error();
       }
+      // The cloud checked this device's mailbox before granting access. A valid
+      // password/token alone cannot bootstrap a previously unseen content key.
+      if (payload.device_verified !== true) throw failure('CLOUD_DEVICE_VERIFICATION_REQUIRED', 401);
       return payload;
-    } catch { throw failure('CLOUD_TOKEN_INVALID', 401); }
+    } catch (error) {
+      if (error?.code === 'CLOUD_DEVICE_VERIFICATION_REQUIRED') throw error;
+      throw failure('CLOUD_TOKEN_INVALID', 401);
+    }
   }
   async function proof(token, encoded, method, url) {
     try {

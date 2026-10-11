@@ -8,6 +8,7 @@ import { startTimelineCandidate } from './integration/bl29-rework/fixture.mjs';
 import { nativeTimelineLog } from '../src/runtime/dsh-adapter/timeline.mjs';
 import { getEventListeners } from 'node:events';
 import { runInNewContext } from 'node:vm';
+import { redactEvidenceText } from './helpers/process-evidence.mjs';
 
 function probe(name: string, output: string, timeout = 60000, args: string[] = []) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-bl29-regression-'));
@@ -166,7 +167,9 @@ test('BL-29c account commit after an early native approval frame invalidates the
     const run=spawnSync(process.execPath,['tests/integration/bl-29-requests.mjs','--logical','--latency','--approval-commit-delay'],{
       env,encoding:'utf8',windowsHide:true,timeout:25000,maxBuffer:4*1024*1024,
     });
-    assert.equal(run.status,0,run.stderr||run.error?.message||run.stdout);
+    assert.equal(run.status,0,JSON.stringify({status:run.status,signal:run.signal,
+      error:run.error?.message?redactEvidenceText(run.error.message):undefined,
+      stdout:redactEvidenceText(run.stdout||''),stderr:redactEvidenceText(run.stderr||'')},null,2));
     const r=JSON.parse(readFileSync(join(root,'responsiveness.json'),'utf8'));
     assert.equal(r.failure,undefined);
     for(const name of ['approval-visible','approval-accepted','question-visible','question-accepted']){

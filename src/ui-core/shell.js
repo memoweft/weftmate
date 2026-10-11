@@ -112,6 +112,8 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
     }
     function failureMessage(error, context) {
         switch (error?.code) {
+            case 'CLOUD_LOGIN_REQUIRED': return '请更新客户端并使用邮箱登录，远程访问需要云账号。';
+            case 'LOCAL_SESSION_REQUIRED': return '请在装着数据的电脑上操作。';
             case 'USAGE_LIMIT_REACHED': return '本月用量已达到上限，云端模型请求已暂停。请在设置 → 用量提高本月上限，或切换本地模型。';
             case 'INVALID_CREDENTIALS': return '账户名或密码不正确。';
             case 'LOGIN_RATE_LIMITED': return '登录尝试过于频繁，请稍后再试。';

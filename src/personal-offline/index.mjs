@@ -65,7 +65,10 @@ export async function createOfflineService(context) {
       const route = url.pathname.slice('/personal/v1/offline'.length);
       if (request.method !== 'POST' || url.search || !['/sync', '/turns'].includes(route)) throw failure('NOT_FOUND', 404);
       const current = context.authenticate(request, 'account:manage');
-      if (current.ownerId !== ownerId || current.via !== 'cookie' || !['cloud', 'password'].includes(current.device.authKind)) throw failure('FORBIDDEN', 403);
+      // authenticate() enforces the native desktop boundary on every request;
+      // offline publication must remain available when cloud login keeps the
+      // independently usable local desktop Cookie.
+      if (current.ownerId !== ownerId || current.via !== 'cookie' || !['cloud', 'password', 'desktop'].includes(current.device.authKind)) throw failure('FORBIDDEN', 403);
       const body = await context.readJson(request, 256 * 1024);
       if (!plainObject(body)) throw failure('INVALID_REQUEST');
       const result = await serial(async () => {
