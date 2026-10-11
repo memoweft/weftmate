@@ -1,0 +1,311 @@
+{
+  "fourWaiters": 4,
+  "fourResults": [
+    {
+      "status": 200,
+      "data": {
+        "upserts": [],
+        "liveEvents": [
+          {
+            "seq": 5,
+            "type": "assistant.delta",
+            "at": "2026-10-07T08:00:02.500Z",
+            "data": {
+              "text": "wake all",
+              "cursor": 5,
+              "turn": 1,
+              "step": 1,
+              "streaming": false
+            },
+            "eventId": "event-5e87f507566811e77264742fbe6c781afa8d3ada3f718540bf2ab2afd6ebafaa",
+            "chatId": "chat-3aaf9858-1955-4e09-9d7e-4721c2afe3d8",
+            "orderKey": "0000000000000000:segment-f3e48d9d-a35a-4585-907d-376269bb69ae:0000000000000005",
+            "revision": 5,
+            "sourceRef": {
+              "kind": "native",
+              "hostId": "host-adad6402-0204-4034-97f1-dada1b80182c",
+              "sessionId": "session-d49dbb95-09d9-4b1a-95e6-b44f30197d39",
+              "seq": 5
+            }
+          }
+        ],
+        "liveRevision": 1,
+        "removals": [],
+        "nextCursor": "WyJvd25lci03NGZhMDVmYi00N2MyLTQwM2QtYWNkMi05Mjc5NDM1ODM3NjIiLCJjaGF0LTNhYWY5ODU4LTE5NTUtNGUwOS05ZDdlLTQ3MjFjMmFmZTNkOCIsImM5Yzk2MDVjYjgzNDk3NzEwOTY1MzJkMmRmZjEwMzVkIiwic3luYyIsNSwiIl0.SC4Ty0qvlPxMBLjVBCxHb9_OrZiKkOfUsTuh8KcEYL0",
+        "hasMore": false,
+        "contentRevision": 1,
+        "chatRevision": 3,
+        "unread": false,
+        "indexState": "ready",
+        "timeZone": "Asia/Shanghai"
+      }
+    },
+    {
+      "status": 200,
+      "data": {
+        "upserts": [],
+        "liveEvents": [
+          {
+            "seq": 5,
+            "type": "assistant.delta",
+            "at": "2026-10-07T08:00:02.500Z",
+            "data": {
+              "text": "wake all",
+              "cursor": 5,
+              "turn": 1,
+              "step": 1,
+              "streaming": false
+            },
+            "eventId": "event-5e87f507566811e77264742fbe6c781afa8d3ada3f718540bf2ab2afd6ebafaa",
+            "chatId": "chat-3aaf9858-1955-4e09-9d7e-4721c2afe3d8",
+            "orderKey": "0000000000000000:segment-f3e48d9d-a35a-4585-907d-376269bb69ae:0000000000000005",
+            "revision": 5,
+            "sourceRef": {
+              "kind": "native",
+              "hostId": "host-adad6402-0204-4034-97f1-dada1b80182c",
+              "sessionId": "session-d49dbb95-09d9-4b1a-95e6-b44f30197d39",
+              "seq": 5
+            }
+          }
+        ],
+        "liveRevision": 1,
+        "removals": [],
+        "nextCursor": "WyJvd25lci03NGZhMDVmYi00N2MyLTQwM2QtYWNkMi05Mjc5NDM1ODM3NjIiLCJjaGF0LTNhYWY5ODU4LTE5NTUtNGUwOS05ZDdlLTQ3MjFjMmFmZTNkOCIsImM5Yzk2MDVjYjgzNDk3NzEwOTY1MzJkMmRmZjEwMzVkIiwic3luYyIsNSwiIl0.SC4Ty0qvlPxMBLjVBCxHb9_OrZiKkOfUsTuh8KcEYL0",
+        "hasMore": false,
+        "contentRevision": 1,
+        "chatRevision": 3,
+        "unread": false,
+        "indexState": "ready",
+        "timeZone": "Asia/Shanghai"
+      }
+    },
+    {
+      "status": 200,
+      "data": {
+        "upserts": [],
+        "liveEvents": [
+          {
+            "seq": 5,
+            "type": "assistant.delta",
+            "at": "2026-10-07T08:00:02.500Z",
+            "data": {
+              "text": "wake all",
+              "cursor": 5,
+              "turn": 1,
+              "step": 1,
+              "streaming": false
+            },
+            "eventId": "event-5e87f507566811e77264742fbe6c781afa8d3ada3f718540bf2ab2afd6ebafaa",
+            "chatId": "chat-3aaf9858-1955-4e09-9d7e-4721c2afe3d8",
+            "orderKey": "0000000000000000:segment-f3e48d9d-a35a-4585-907d-376269bb69ae:0000000000000005",
+            "revision": 5,
+            "sourceRef": {
+              "kind": "native",
+              "hostId": "host-adad6402-0204-4034-97f1-dada1b80182c",
+              "sessionId": "session-d49dbb95-09d9-4b1a-95e6-b44f30197d39",
+              "seq": 5
+            }
+          }
+        ],
+        "liveRevision": 1,
+        "removals": [],
+        "nextCursor": "WyJvd25lci03NGZhMDVmYi00N2MyLTQwM2QtYWNkMi05Mjc5NDM1ODM3NjIiLCJjaGF0LTNhYWY5ODU4LTE5NTUtNGUwOS05ZDdlLTQ3MjFjMmFmZTNkOCIsImM5Yzk2MDVjYjgzNDk3NzEwOTY1MzJkMmRmZjEwMzVkIiwic3luYyIsNSwiIl0.SC4Ty0qvlPxMBLjVBCxHb9_OrZiKkOfUsTuh8KcEYL0",
+        "hasMore": false,
+        "contentRevision": 1,
+        "chatRevision": 3,
+        "unread": false,
+        "indexState": "ready",
+        "timeZone": "Asia/Shanghai"
+      }
+    },
+    {
+      "status": 200,
+      "data": {
+        "upserts": [],
+        "liveEvents": [
+          {
+            "seq": 5,
+            "type": "assistant.delta",
+            "at": "2026-10-07T08:00:02.500Z",
+            "data": {
+              "text": "wake all",
+              "cursor": 5,
+              "turn": 1,
+              "step": 1,
+              "streaming": false
+            },
+            "eventId": "event-5e87f507566811e77264742fbe6c781afa8d3ada3f718540bf2ab2afd6ebafaa",
+            "chatId": "chat-3aaf9858-1955-4e09-9d7e-4721c2afe3d8",
+            "orderKey": "0000000000000000:segment-f3e48d9d-a35a-4585-907d-376269bb69ae:0000000000000005",
+            "revision": 5,
+            "sourceRef": {
+              "kind": "native",
+              "hostId": "host-adad6402-0204-4034-97f1-dada1b80182c",
+              "sessionId": "session-d49dbb95-09d9-4b1a-95e6-b44f30197d39",
+              "seq": 5
+            }
+          }
+        ],
+        "liveRevision": 1,
+        "removals": [],
+        "nextCursor": "WyJvd25lci03NGZhMDVmYi00N2MyLTQwM2QtYWNkMi05Mjc5NDM1ODM3NjIiLCJjaGF0LTNhYWY5ODU4LTE5NTUtNGUwOS05ZDdlLTQ3MjFjMmFmZTNkOCIsImM5Yzk2MDVjYjgzNDk3NzEwOTY1MzJkMmRmZjEwMzVkIiwic3luYyIsNSwiIl0.SC4Ty0qvlPxMBLjVBCxHb9_OrZiKkOfUsTuh8KcEYL0",
+        "hasMore": false,
+        "contentRevision": 1,
+        "chatRevision": 3,
+        "unread": false,
+        "indexState": "ready",
+        "timeZone": "Asia/Shanghai"
+      }
+    }
+  ],
+  "afterWakeWaiters": 0,
+  "switches": [
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    }
+  ],
+  "rejectedWait": {
+    "ms": 2,
+    "status": 503,
+    "body": {
+      "error": {
+        "code": "BACKEND_UNAVAILABLE"
+      }
+    },
+    "remaining": 0
+  },
+  "settingsWake": {
+    "ms": 117,
+    "status": 200,
+    "body": {
+      "upserts": [],
+      "liveEvents": [
+        {
+          "seq": 5,
+          "type": "assistant.delta",
+          "at": "2026-10-07T08:00:02.500Z",
+          "data": {
+            "text": "wake all",
+            "cursor": 5,
+            "turn": 1,
+            "step": 1,
+            "streaming": false
+          },
+          "eventId": "event-5e87f507566811e77264742fbe6c781afa8d3ada3f718540bf2ab2afd6ebafaa",
+          "chatId": "chat-3aaf9858-1955-4e09-9d7e-4721c2afe3d8",
+          "orderKey": "0000000000000000:segment-f3e48d9d-a35a-4585-907d-376269bb69ae:0000000000000005",
+          "revision": 5,
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-adad6402-0204-4034-97f1-dada1b80182c",
+            "sessionId": "session-d49dbb95-09d9-4b1a-95e6-b44f30197d39",
+            "seq": 5
+          }
+        }
+      ],
+      "liveRevision": 1,
+      "removals": [],
+      "nextCursor": "WyJvd25lci03NGZhMDVmYi00N2MyLTQwM2QtYWNkMi05Mjc5NDM1ODM3NjIiLCJjaGF0LTNhYWY5ODU4LTE5NTUtNGUwOS05ZDdlLTQ3MjFjMmFmZTNkOCIsImM5Yzk2MDVjYjgzNDk3NzEwOTY1MzJkMmRmZjEwMzVkIiwic3luYyIsNSwiIl0.SC4Ty0qvlPxMBLjVBCxHb9_OrZiKkOfUsTuh8KcEYL0",
+      "hasMore": false,
+      "contentRevision": 1,
+      "chatRevision": 3,
+      "unread": false,
+      "indexState": "ready",
+      "timeZone": "Asia/Shanghai"
+    }
+  },
+  "logoutAfterQuery": {
+    "gateStarted": true,
+    "logout": 200,
+    "response": 401,
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  },
+  "nativeDispose": {
+    "settledAfterDispose": false,
+    "abortListeners": 1,
+    "waitMs": 1200,
+    "listenersAfter": 0
+  },
+  "nativeAlreadyAbortedMs": 1
+}

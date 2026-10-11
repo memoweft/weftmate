@@ -1,0 +1,106 @@
+[
+  {
+    code: 'NOT_FOUND',
+    ms: 4501,
+    count: 3,
+    rps: 0.6665185514330149,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    }
+  },
+  {
+    code: 'SESSION_ARCHIVED',
+    ms: 4502,
+    count: 3,
+    rps: 0.6663705019991115,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    }
+  },
+  {
+    code: 'BACKEND_UNAVAILABLE',
+    ms: 4503,
+    count: 3,
+    rps: 0.6662225183211192,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    }
+  },
+  {
+    code: 'CURSOR_RESET_REQUIRED',
+    ms: 4502,
+    count: 3,
+    rps: 0.6663705019991115,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    }
+  },
+  {
+    code: 'UNAUTHORIZED',
+    ms: 4501,
+    count: 1,
+    rps: 0.2221728504776716,
+    debug: {
+      main: false,
+      view: 'login',
+      visible: 'visible',
+      background: false,
+      csrf: false
+    }
+  },
+  {
+    code: 'NETWORK',
+    ms: 4502,
+    count: 9,
+    rps: 1.9991115059973346,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    }
+  },
+  {
+    code: 'HTTP_502',
+    ms: 4502,
+    count: 3,
+    rps: 0.6663705019991115,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    }
+  },
+  {
+    code: 'HTTP_504',
+    ms: 4501,
+    count: 3,
+    rps: 0.6665185514330149,
+    debug: {
+      main: true,
+      view: 'assistant',
+      visible: 'visible',
+      background: false,
+      csrf: true
+    }
+  }
+]

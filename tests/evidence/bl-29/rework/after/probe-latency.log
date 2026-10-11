@@ -1,0 +1,38 @@
+{
+  rows: [
+    { kind: 'rename', delayMs: 50, desktop: 260, mobile: 194 },
+    {
+      kind: 'foreground',
+      surface: 'desktop',
+      delayMs: 50,
+      ms: 104,
+      error: undefined
+    },
+    {
+      kind: 'foreground',
+      surface: 'mobile',
+      delayMs: 50,
+      ms: 94,
+      error: undefined
+    },
+    { kind: 'rename', delayMs: 200, desktop: 265, mobile: 1327 },
+    {
+      kind: 'foreground',
+      surface: 'desktop',
+      delayMs: 200,
+      ms: 293,
+      error: undefined
+    },
+    {
+      kind: 'foreground',
+      surface: 'mobile',
+      delayMs: 200,
+      ms: 289,
+      error: undefined
+    }
+  ],
+  errors: [],
+  configurationTimes: [ { surface: 'desktop', ms: 932 }, { surface: 'mobile', ms: 1676 } ],
+  electronConfig: { models: [ 'local', 'added-electron' ], suggestions: false },
+  mobileConfig: { models: [ 'local', 'added-electron' ], suggestions: false }
+}
