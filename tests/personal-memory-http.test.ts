@@ -206,13 +206,13 @@ test('account memory routes keep health, list, source, search cursor and Trust r
     const deleted = await api(origin, 'DELETE', `/personal/v1/memory/evidence/e-${aOwner}`,
       { requestId: 'delete-one', expectedWorldRevision: 3 }, a)
     assert.equal(deleted.status, 200)
-    assert.equal(calls.at(-1)?.params.operation, 'delete_evidence')
-    assert.equal(calls.at(-1)?.params.subject_id, aOwner)
+    assert.equal(calls.findLast(call=>call.method==='submit_command')?.params.operation, 'delete_evidence')
+    assert.equal(calls.findLast(call=>call.method==='submit_command')?.params.subject_id, aOwner)
     assert.equal(deleted.body.receipt.storageCleanup.state, 'pending')
     const worldDelete = await api(origin, 'DELETE', `/personal/v1/memory/items/cognition/c-${aOwner}-one`,
       { requestId: 'world-delete-one', expectedWorldRevision: 3 }, a)
     assert.equal(worldDelete.status, 200)
-    assert.equal(calls.at(-1)?.params.operation, 'delete_world_item')
+    assert.equal(calls.findLast(call=>call.method==='submit_command')?.params.operation, 'delete_world_item')
     const sharedDelete = await api(origin, 'DELETE', '/personal/v1/memory/items/cognition/c-shared',
       { requestId: 'shared-delete', expectedWorldRevision: 3 }, a)
     assert.equal(sharedDelete.status, 409)
