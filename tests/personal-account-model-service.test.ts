@@ -27,10 +27,11 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
   const staged = new Map<string, string>(), credentials = new Map<string, string>()
   const profiles = new Map<string, any>(), sessions = new Map<string, string>()
   let sentCount = 0
+  let storageNotReady = true
   let secretWait: Promise<void> | null = null
   let enteredSecretRead: (() => void) | null = null
   const manager = {
-    stageSecret: async ({ stageRef, apiKey }: any) => { staged.set(stageRef, apiKey) },
+    stageSecret: async ({ stageRef, apiKey }: any) => { if(storageNotReady) throw Object.assign(new Error('private backend detail'),{code:'CREDENTIAL_STORAGE_NOT_READY'}); staged.set(stageRef, apiKey) },
     apply: async ({ target, stageRef, previousProfileId }: any) => {
       const key = stageRef ? staged.get(stageRef) : credentials.get(previousProfileId)
       if (!key) throw Object.assign(new Error('missing'), { code: 'ACCOUNT_MODEL_SECRET_REQUIRED', definite: true })
@@ -76,6 +77,12 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
     const ownerBody = await ownerSetup.json()
     const owner = { origin, cookie: ownerSetup.headers.get('set-cookie')!.split(';')[0],
       'x-weftmate-csrf': ownerBody.csrfToken }
+    const notReady = await api(origin, owner, 'POST', '/personal/v1/account/models', {
+      requestId: 'model-create', name: 'MiMo', baseUrl: 'https://api.example.test/v1/chat/completions',
+      modelId: 'mimo-v1', apiKey: 'synthetic-key-one' })
+    assert.equal(notReady.status,503); assert.deepEqual(notReady.body,{error:{code:'CREDENTIAL_STORAGE_NOT_READY'}})
+    assert.equal(staged.size,0); assert.equal((await api(origin,owner,'GET','/personal/v1/account/models')).body.models.length,0)
+    storageNotReady = false
     const create = await api(origin, owner, 'POST', '/personal/v1/account/models', {
       requestId: 'model-create', name: 'MiMo', baseUrl: 'https://api.example.test/v1/chat/completions',
       modelId: 'mimo-v1', apiKey: 'synthetic-key-one' })

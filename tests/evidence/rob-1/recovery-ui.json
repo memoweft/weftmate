@@ -1,7 +1,9 @@
 {
   "synthetic": true,
   "realElectron": true,
-  "mainRestoresLostLocalState": true,
+  "startupNeverMovesUnreadableCiphertext": true,
+  "retryAvailable": true,
+  "headerVisibleAfterScroll": true,
   "startupContinues": true,
   "profileMetadataPreserved": true,
   "refillEntryOpens": true,
@@ -14,6 +16,9 @@
     {
       "theme": "light",
       "width": 1200,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
       "viewportWidth": 1200,
       "viewportHeight": 844,
       "overflow": false,
@@ -23,6 +28,9 @@
     {
       "theme": "light",
       "width": 480,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
       "viewportWidth": 480,
       "viewportHeight": 844,
       "overflow": false,
@@ -32,8 +40,11 @@
     {
       "theme": "light",
       "width": 360,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
       "viewportWidth": 360,
-      "viewportHeight": 844,
+      "viewportHeight": 780,
       "overflow": false,
       "systemBars": false,
       "surface": "real Electron responsive window"
@@ -41,6 +52,9 @@
     {
       "theme": "light",
       "width": 390,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
       "viewportWidth": 390,
       "viewportHeight": 844,
       "overflow": false,
@@ -50,6 +64,9 @@
     {
       "theme": "dark",
       "width": 1200,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
       "viewportWidth": 1200,
       "viewportHeight": 844,
       "overflow": false,
@@ -59,6 +76,9 @@
     {
       "theme": "dark",
       "width": 480,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
       "viewportWidth": 480,
       "viewportHeight": 844,
       "overflow": false,
@@ -68,8 +88,11 @@
     {
       "theme": "dark",
       "width": 360,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
       "viewportWidth": 360,
-      "viewportHeight": 844,
+      "viewportHeight": 780,
       "overflow": false,
       "systemBars": false,
       "surface": "real Electron responsive window"
@@ -77,6 +100,9 @@
     {
       "theme": "dark",
       "width": 390,
+      "headVisible": true,
+      "closeVisible": true,
+      "bottomSpace": 18.6666259765625,
       "viewportWidth": 390,
       "viewportHeight": 844,
       "overflow": false,

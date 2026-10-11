@@ -16,13 +16,11 @@ try {
   assert.equal(cleanup.available,true);assert.equal(cleanup.failed,0);assert.ok(cleanup.cleaned>0,'fault injection must terminate owned packaged processes');
   await exited;await closed;
   h.app=null;
-  // The first run has never quit normally. Also discard Chromium's state to
-  // prove the independently durable protected key works in the packaged main.
-  rmSync(join(h.profile,'Local State'),{force:true});
+  // The first run never quit normally; Chromium's already-durable state is retained.
   try {await h.launch();} catch(error) {ev.recordLaunchFailure(error);throw error;}
   assert.equal((await h.api('/account/models')).body.models[0].configured,true);
   assert.equal(h.requests.length,0);
-  writeFileSync(join(output,'installed-first-run.json'),JSON.stringify({packaged:true,normalInitializationBeforeKill:false,firstRunSavedSyntheticCredential:true,forcedRestart:true,lostLocalStateRestored:true,credentialReadable:true,modelRequests:0,cleaned},null,2)+'\n');
+  writeFileSync(join(output,'installed-first-run.json'),JSON.stringify({packaged:true,normalInitializationBeforeKill:false,firstRunSavedSyntheticCredential:true,forcedRestart:true,durableLocalStateRetained:true,credentialReadable:true,modelRequests:0,cleaned},null,2)+'\n');
 } finally {
   await h?.close();const c=await ev?.finalize();cleaned+=c?.cleaned||0;
   if(!c?.stillRunning&&!c?.preservationError)rmSync(root,{recursive:true,force:true});console.log(`已清理进程：${cleaned}`);
