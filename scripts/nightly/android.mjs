@@ -13,6 +13,9 @@ export async function startAndroid(out) {
   const info = readMuMuInfo(), serial = info.serial;
   execFileSync(adb, ['connect',serial], { windowsHide:true,timeout:10000 });
   const command = (...args) => execFileSync(adb, ['-s', serial, ...args], { windowsHide: true, timeout: 10000, maxBuffer: 20 * 1024 * 1024 });
+  let uiMode = '';
+  try { uiMode = command('shell','dumpsys','uimode').toString(); } catch { /* Metadata stays explicitly unknown; no settings changes. */ }
+  const systemTheme = /mComputedNightMode=true/.test(uiMode) ? 'dark' : /mComputedNightMode=false/.test(uiMode) ? 'light' : 'unknown';
   const statePath = option('--state', join(out, '../android-state.json'));
   const state = { serial, installed: [], forward: [], reverse: [] }, persist = () => writeFile(statePath, JSON.stringify(state));
   let browser, probe, probeLog = '';
@@ -76,7 +79,7 @@ export async function startAndroid(out) {
       const scale = await page.evaluate(() => devicePixelRatio);
       const bars = assertSystemBars(image, { statusHeight: parseFloat(safe.top) * scale });
       const bottomInset = parseFloat(safe.bottom) * scale;
-      await writeFile(join(out, `system-bars-${scene}-${theme}.json`), JSON.stringify({ pageTheme:renderedTheme, systemTheme:'unchanged', systemVersion:info.androidVersion, nativeRenderedBarTheme:renderedTheme, statusBarIcons:renderedTheme === 'dark' ? 'light' : 'dark', bottomNavigationVisible:bottomInset > 0, bottomInset, fullScreen:true, ...bars },null,2));
+      await writeFile(join(out, `system-bars-${scene}-${theme}.json`), JSON.stringify({ pageTheme:renderedTheme, systemTheme, systemSettingsChanged:false, systemVersion:info.androidVersion, nativeRenderedBarTheme:renderedTheme, statusBarIcons:renderedTheme === 'dark' ? 'light' : 'dark', bottomNavigationVisible:bottomInset > 0, bottomInset, fullScreen:true, ...bars },null,2));
       return image;
     }, close };
   } catch (error) { console.error(redactEvidenceText(error.stack || error)); await close().catch(cleanupError => console.error(redactEvidenceText(cleanupError.stack))); throw error; }
