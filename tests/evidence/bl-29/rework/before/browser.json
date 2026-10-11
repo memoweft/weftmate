@@ -1,0 +1,366 @@
+{
+  "errors": [],
+  "cases": [
+    {
+      "client": "new",
+      "code": "NOT_FOUND",
+      "ms": 3001,
+      "requests": 2683,
+      "rps": 894.0353215594802,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [
+        2,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "client": "new",
+      "code": "CHAT_ARCHIVED",
+      "ms": 3002,
+      "requests": 2819,
+      "rps": 939.0406395736177,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [
+        2,
+        1,
+        2,
+        1,
+        1,
+        1,
+        1,
+        2,
+        1
+      ]
+    },
+    {
+      "client": "new",
+      "code": "BACKEND_UNAVAILABLE",
+      "ms": 3001,
+      "requests": 2835,
+      "rps": 944.6851049650116,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [
+        2,
+        1,
+        2,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "client": "new",
+      "code": "CURSOR_RESET_REQUIRED",
+      "ms": 3000,
+      "requests": 148,
+      "rps": 49.333333333333336,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [
+        11,
+        8,
+        9,
+        10,
+        9,
+        7,
+        8,
+        12,
+        9
+      ]
+    },
+    {
+      "client": "new",
+      "code": "UNAUTHORIZED",
+      "ms": 3002,
+      "requests": 1,
+      "rps": 0.33311125916055967,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": false
+      },
+      "intervals": []
+    },
+    {
+      "client": "new",
+      "code": "NETWORK",
+      "ms": 3002,
+      "requests": 5,
+      "rps": 1.6655562958027983,
+      "state": {
+        "connection": "connecting",
+        "loading": false,
+        "poll": false
+      },
+      "intervals": [
+        934,
+        567,
+        419,
+        991
+      ]
+    },
+    {
+      "client": "new",
+      "code": "HTTP_502",
+      "ms": 3001,
+      "requests": 2586,
+      "rps": 861.7127624125292,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [
+        2,
+        1,
+        1,
+        1,
+        2,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "client": "new",
+      "code": "HTTP_504",
+      "ms": 3000,
+      "requests": 2789,
+      "rps": 929.6666666666666,
+      "state": {
+        "connection": "online",
+        "loading": false,
+        "poll": true
+      },
+      "intervals": [
+        3,
+        2,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "client": "old",
+      "code": "NOT_FOUND",
+      "ms": 3001,
+      "requests": 2,
+      "rps": 0.6664445184938355
+    },
+    {
+      "client": "old",
+      "code": "CHAT_ARCHIVED",
+      "ms": 3004,
+      "requests": 2,
+      "rps": 0.6657789613848203
+    },
+    {
+      "client": "old",
+      "code": "BACKEND_UNAVAILABLE",
+      "ms": 3001,
+      "requests": 2,
+      "rps": 0.6664445184938355
+    },
+    {
+      "client": "old",
+      "code": "CURSOR_RESET_REQUIRED",
+      "ms": 3001,
+      "requests": 2,
+      "rps": 0.6664445184938355
+    },
+    {
+      "client": "old",
+      "code": "UNAUTHORIZED",
+      "ms": 3004,
+      "requests": 1,
+      "rps": 0.33288948069241014
+    },
+    {
+      "client": "old",
+      "code": "NETWORK",
+      "ms": 3000,
+      "requests": 3,
+      "rps": 1
+    },
+    {
+      "client": "old",
+      "code": "HTTP_502",
+      "ms": 3003,
+      "requests": 2,
+      "rps": 0.666000666000666
+    },
+    {
+      "client": "old",
+      "code": "HTTP_504",
+      "ms": 3001,
+      "requests": 2,
+      "rps": 0.6664445184938355
+    }
+  ],
+  "initial": {
+    "main": true,
+    "wait": true,
+    "caps": {
+      "replyWait": 1,
+      "replyStreaming": 1,
+      "sessionStatus": 1,
+      "nextSuggestions": 0,
+      "library": 1,
+      "libraryPreview": 1,
+      "libraryDesktopActions": 0,
+      "taskOverview": 1,
+      "scheduleEditing": 0,
+      "goals": 0,
+      "activity": 1,
+      "activityChanges": 1,
+      "activityRead": 1,
+      "activityNotification": 1,
+      "notificationSettings": 1,
+      "pushRegistration": 1,
+      "temporaryChats": 1,
+      "chats": 1,
+      "chatTimeline": 1,
+      "chatSearch": 1,
+      "sideChats": 1,
+      "creationReceipt": 1,
+      "chatSend": 1,
+      "chatLifecycle": 1,
+      "chatResources": 1
+    },
+    "loading": false
+  },
+  "idleMethods": {
+    "app.activity ": 1,
+    "host.business /personal/v1/chats/chat-265fae56-7a56-45c3-9596-74568ec02f93/changes?cursor=WyJvd25lci0zYmNjNDk2YS02Yzk5LTRmMzUtODdmMy1kZmVhNjEzMDRkNDAiLCJjaGF0LTI2NWZhZTU2LTdhNTYtNDVjMy05NTk2LTc0NTY4ZWMwMmY5MyIsIjYzNmJkODc1ZGYwZDY5ZmQxMTEwODBmMjBhNDZkOTU2Iiwic3luYyIsNSwiIl0.B9ddQ-5RIil7cqLsjfpL6M4TT2fEATcTY0vGleg4gm0&limit=200": 9,
+    "host.business /personal/v1/chats/main": 5,
+    "host.business /personal/v1/sessions?archived=all&limit=100": 5,
+    "host.business /personal/v1/chats?archived=all&limit=100": 5,
+    "shared.projects.list ": 5,
+    "shared.outbox.list ": 5,
+    "host.business /personal/v1/activity/unread": 5,
+    "host.status ": 2,
+    "cloud.pending ": 2,
+    "host.business /personal/v1/chats/chat-265fae56-7a56-45c3-9596-74568ec02f93/changes?cursor=WyJvd25lci0zYmNjNDk2YS02Yzk5LTRmMzUtODdmMy1kZmVhNjEzMDRkNDAiLCJjaGF0LTI2NWZhZTU2LTdhNTYtNDVjMy05NTk2LTc0NTY4ZWMwMmY5MyIsIjYzNmJkODc1ZGYwZDY5ZmQxMTEwODBmMjBhNDZkOTU2Iiwic3luYyIsNSwiIl0.B9ddQ-5RIil7cqLsjfpL6M4TT2fEATcTY0vGleg4gm0&limit=200&waitMs=15000&liveRevision=0": 2,
+    "updates.status ": 1
+  },
+  "background10s": [],
+  "latency": [
+    {
+      "kind": "rename",
+      "networkDelayMs": 50,
+      "visibleMs": 5674
+    },
+    {
+      "kind": "foreground",
+      "networkDelayMs": 50,
+      "visibleMs": 10025,
+      "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('foreground fresh 50', { exact: true }).first() to be visible\u001b[22m\n",
+      "debug": {
+        "main": true,
+        "background": false,
+        "visible": "visible",
+        "chat": "host",
+        "page": "chat",
+        "mainId": "chat-265fae56-7a56-45c3-9596-74568ec02f93",
+        "selected": "chat-265fae56-7a56-45c3-9596-74568ec02f93",
+        "events": [
+          null,
+          "synthetic browser",
+          null,
+          "synthetic finished",
+          null,
+          "foreground fresh 50",
+          null
+        ]
+      }
+    },
+    {
+      "kind": "rename",
+      "networkDelayMs": 200,
+      "visibleMs": 491
+    },
+    {
+      "kind": "foreground",
+      "networkDelayMs": 200,
+      "visibleMs": 10006,
+      "error": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('foreground fresh 200', { exact: true }).first() to be visible\u001b[22m\n",
+      "debug": {
+        "main": true,
+        "background": false,
+        "visible": "visible",
+        "chat": "host",
+        "page": "chat",
+        "mainId": "chat-265fae56-7a56-45c3-9596-74568ec02f93",
+        "selected": "chat-265fae56-7a56-45c3-9596-74568ec02f93",
+        "events": [
+          null,
+          "synthetic browser",
+          null,
+          "synthetic finished",
+          null,
+          "foreground fresh 50",
+          null,
+          "foreground fresh 200",
+          null
+        ]
+      }
+    }
+  ],
+  "config": [
+    {
+      "version": "main",
+      "reads": [
+        "/personal/v1/settings/personalization",
+        "/personal/v1/models",
+        "/personal/v1/settings/models"
+      ],
+      "state": {
+        "models": [
+          "local",
+          "added-model"
+        ],
+        "suggestions": false
+      }
+    },
+    {
+      "version": "head",
+      "reads": [],
+      "state": {
+        "models": [
+          "local"
+        ],
+        "suggestions": true
+      }
+    }
+  ]
+}

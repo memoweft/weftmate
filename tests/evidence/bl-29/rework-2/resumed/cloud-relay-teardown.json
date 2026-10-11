@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "durationMs": 86940,
+  "fileTask": {
+    "completed": true,
+    "approvals": 3,
+    "fileContent": "CI_R1_SYNTHETIC_FILE_CONTENT\n",
+    "libraryId": "artifact-917b4b1f-ce81-4c67-8b21-00b611c2f4c0",
+    "modelSteps": 5
+  },
+  "deviceApproval": true,
+  "runnerTimeoutMs": 330000,
+  "jobTimeoutMinutes": 6,
+  "note": "Scenario completed successfully; enclosing test timed out during teardown. Latest connected-carrier collection pending cloud verification."
+}

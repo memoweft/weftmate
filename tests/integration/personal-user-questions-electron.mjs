@@ -1,11 +1,12 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** One isolated native information question -> original tool result -> original approval/file task. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { tmpdir } from 'node:os';
+
 import { dirname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ensurePrivateFile } from '../../src/private-host-storage.mjs';

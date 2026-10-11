@@ -1,6 +1,7 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
+
 import { join, resolve } from 'node:path';
 
 export const baselineCommit = 'efce1451055271a66c5ba502ba153e55e79522b7';

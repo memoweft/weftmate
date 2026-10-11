@@ -33,55 +33,14 @@ jobs:
           ref: ${{ env.DSH_PIN }}
           path: .local/package-dsh
           persist-credentials: false
-      - name: Apply carried DSH patches
-        shell: bash
-        working-directory: .local/package-dsh
-        run: |
-          set -euo pipefail
-          for patch in "$GITHUB_WORKSPACE"/patches/dsh/*.patch; do
-            git apply --whitespace=nowarn "$patch"
-          done
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
-      # Keep this list in step with vendor-tests.yml: the launcher entry package
-      # (native/landlock-run/packages/entry) compiles into its own lib directory, and
-      # a cache hit skips compilation, so a missing path only fails on later runs.
-      - name: Cache pinned Windows DSH compilation
-        id: dsh-cache
-        uses: actions/cache/restore@v4
+      - name: Cache patched vendor runtime
+        uses: actions/cache@v4
         with:
-          path: |
-            .local/package-dsh/node_modules
-            .local/package-dsh/packages/*/*/lib
-            .local/package-dsh/vendor/*/lib
-            .local/package-dsh/apps/*/lib
-            .local/package-dsh/apps/web/dist
-            .local/package-dsh/native/landlock-run/lib
-            .local/package-dsh/native/landlock-run/packages/*/lib
-          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v2
-      - name: Link pinned DSH workspace dependencies
-        working-directory: .local/package-dsh
-        run: pnpm install --frozen-lockfile
-      - name: Compile pinned DSH
-        if: steps.dsh-cache.outputs.cache-hit != 'true'
-        working-directory: .local/package-dsh
-        run: pnpm run build
-      - name: Save compiled fixture before package assertions
-        if: steps.dsh-cache.outputs.cache-hit != 'true'
-        timeout-minutes: 2
-        continue-on-error: true
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            .local/package-dsh/node_modules
-            .local/package-dsh/packages/*/*/lib
-            .local/package-dsh/vendor/*/lib
-            .local/package-dsh/apps/*/lib
-            .local/package-dsh/apps/web/dist
-            .local/package-dsh/native/landlock-run/lib
-            .local/package-dsh/native/landlock-run/packages/*/lib
-          key: package-dsh-patched-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch') }}-v2
+          path: .local/dsh-cache
+          key: vendor-runtime-windows-node24-${{ env.DSH_PIN }}-${{ hashFiles('patches/dsh/*.patch', 'scripts/vendor-dsh.mjs', 'scripts/dsh-runtime-identity.mjs') }}-v1
       - name: Assemble and verify pinned vendor
         run: |
           npm run vendor:dsh

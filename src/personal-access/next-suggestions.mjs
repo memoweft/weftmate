@@ -53,17 +53,19 @@ export function parseSuggestions(text, kind, draft = '') {
 export function createNextSuggestions(context, { timeoutMs = 5000, watchMs = 150 } = {}) {
   const pending = new Map();
   const key = (ownerId, sessionId) => `${ownerId}/${sessionId}`;
-  const enabled = ownerId => accountPersonalization(context.accountState(ownerId)).nextSuggestionsEnabled !== false;
+  const enabled = (ownerId, kind) => {
+    const settings = accountPersonalization(context.accountState(ownerId));
+    return kind === 'completion' ? settings.inlineCompletionEnabled === true : settings.nextSuggestionsEnabled !== false;
+  };
   function cancel(ownerId, sessionId = null, requestId = null, deviceId = null) {
     for (const row of pending.values()) if (row.ownerId === ownerId && (!sessionId || row.sessionId === sessionId) &&
         (!requestId || row.requestId === requestId) && (!deviceId || row.deviceId === deviceId)) row.controller.abort();
   }
   function reconcile(ownerId) {
-    if (!enabled(ownerId)) { cancel(ownerId); return; }
     const account = context.accountState(ownerId);
     for (const row of pending.values()) if (row.ownerId === ownerId) {
       const session = account.sessions[row.sessionId];
-      if (!session || session.deleting || session.archived || !context.messageModelUsable(ownerId, session) || session.modelProfileId !== row.profileId ||
+      if (!enabled(ownerId, row.kind) || !session || session.deleting || session.archived || !context.messageModelUsable(ownerId, session) || session.modelProfileId !== row.profileId ||
           Object.values(account.commands).some(command => ['session.message', 'chat.message'].includes(command.kind) &&
             ['pending', 'dispatching'].includes(command.state))) row.controller.abort();
     }
@@ -84,12 +86,13 @@ export function createNextSuggestions(context, { timeoutMs = 5000, watchMs = 150
     if (!['replies', 'completion'].includes(body.kind) || !REQUEST_ID.test(body.requestId ?? '') ||
         body.draft !== undefined && (typeof body.draft !== 'string' || [...body.draft].length > 4000) ||
         body.kind === 'completion' && !body.draft?.trim()) throw failure('INVALID_REQUEST');
-    cancel(ownerId, sessionId);
     const result = empty(body.requestId);
-    if (!enabled(ownerId) || typeof context.backend.modelCompletion !== 'function' || body.kind === 'replies' && body.draft?.length ||
+    if (!enabled(ownerId, body.kind)) return context.json(response, 200, result);
+    cancel(ownerId, sessionId);
+    if (typeof context.backend.modelCompletion !== 'function' || body.kind === 'replies' && body.draft?.length ||
         !context.messageModelUsable(ownerId, session)) return context.json(response, 200, result);
     const controller = new AbortController();
-    const row = { ownerId, sessionId, profileId: session.modelProfileId, deviceId: auth.deviceId, requestId: body.requestId, controller };
+    const row = { ownerId, sessionId, kind: body.kind, profileId: session.modelProfileId, deviceId: auth.deviceId, requestId: body.requestId, controller };
     pending.set(key(ownerId, sessionId), row);
     const disconnect = () => controller.abort();
     response.once('close', disconnect);

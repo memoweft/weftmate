@@ -8,6 +8,6 @@ export const uiCoreAssets = Object.freeze([
 ])
 
 /** Shared content presentation is browser-only; feature factories remain DOM-free. */
-export const uiCorePresentationAssets = Object.freeze(['rendering.js', 'reply-motion.js']);
-export const uiCoreStyleAssets = Object.freeze(['reply-motion.css']);
+export const uiCorePresentationAssets = Object.freeze(['rendering.js', 'reply-motion.js', 'appearance-controls.js']);
+export const uiCoreStyleAssets = Object.freeze(['reply-motion.css', 'appearance.css']);
 export const uiCoreBrowserAssets = Object.freeze([uiCoreAssets[0], ...uiCorePresentationAssets, ...uiCoreAssets.slice(1), ...uiCoreStyleAssets]);

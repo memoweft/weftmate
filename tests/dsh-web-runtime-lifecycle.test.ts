@@ -1,5 +1,6 @@
 /** DshWebRuntime 阶段 0 生命周期回归：用隔离 fake CLI 覆盖真实 ChildProcess 边界。 */
 import assert from 'node:assert/strict'
+import { EventEmitter } from 'node:events'
 import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -120,6 +121,32 @@ function runtime(checkoutPath: string, env: NodeJS.ProcessEnv): DshWebRuntime {
 }
 
 describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
+  test('POSIX acknowledged native drain collects the connected carrier before the unchanged kill deadline', { timeout: 10000 }, async () => {
+    const checkout = await makeCheckout('dispose-ipc-only')
+    const web = runtime(checkout, {})
+    const child: any = new EventEmitter(), actions: string[] = []
+    child.connected = true
+    child.send = (frame, done) => {
+      assert.equal(frame.action, 'dispose');actions.push('drain')
+      queueMicrotask(() => {actions.push('drained');child.emit('message', {protocol:'weftmate.runtime-shutdown.v1',action:'disposed'});done?.()})
+    }
+    child.disconnect = () => {assert.equal(actions.at(-1), 'drained');actions.push('disconnect');child.connected=false;queueMicrotask(()=>child.emit('close',0))}
+    child.kill = signal => {actions.push(signal);queueMicrotask(()=>child.emit('close',0));return true}
+    ;(web as any).registerChild(child)
+    ;(web as any).secureChildren.add(child)
+    const terminate = (web as any).terminateChild.bind(web)
+    ;(web as any).terminateChild = carrier => terminate(carrier, 'linux')
+    try {
+      const at = Date.now()
+      // The portable protocol probe runs on Windows too; real POSIX process
+      // exit remains covered by the blocking Linux Electron vendor scenario.
+      await web.close()
+      assert.deepEqual(actions, ['drain','drained','SIGKILL'])
+      assert.equal(child.connected, true, 'collection keeps the IPC carrier until root close')
+      assert.ok(Date.now() - at < 500, 'acknowledged disposal must not wait for the one-second fallback')
+      assert.equal((web as any).children.size, 0)
+    } finally { await web.close() }
+  })
   test('Windows shutdown drains native persistence before collecting root and descendant', { skip: process.platform !== 'win32' }, async () => {
     const checkout = await makeCheckout('dispose-ack')
     const rootFile = join(root, 'dispose-root.pid'), descendantFile = join(root, 'dispose-descendant.pid'), shutdownFile = join(root, 'dispose.state')

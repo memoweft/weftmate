@@ -111,12 +111,21 @@ async function mobileSettingsLegal(kind){
 
 async function systemStatusSection(target){const owner=state.owner,epoch=state.authEpoch;
   const section=el('section','group');section.append(el('h2','','系统状态'));
-  const status=el('p','hint','正在读取…');section.append(status);target.append(section);
+  const status=el('p','hint','正在读取电脑状态…');section.append(status);target.append(section);
+  const localRecords=globalThis.WeftRunRecords?.mount(section,{core:uiCore,toast,retry:()=>page('general'),desktop:null,
+    title:window.weftNative?'本机（这部手机）':'本机（这个浏览器）',local:true,browser:!window.weftNative,
+    copySummary:text=>window.weftNative?call('clipboard.copy',{text}):navigator.clipboard.writeText(text),
+    shareLogs:window.weftNative?()=>call('diagnostics.share'):null});
+  const records=globalThis.WeftRunRecords?.mount(section,{core:uiCore,toast,retry:()=>page('general'),desktop:null,title:'已连接的电脑'});
   const current=()=>state.owner===owner&&state.authEpoch===epoch&&target.isConnected&&state.page==='general';
+  // Phone records belong to this device, independently of host or account state.
+  void Promise.resolve().then(()=>window.weftNative?call('diagnostics.status',{},5000):globalThis.WeftLocalDiagnostics.status())
+    .then(value=>{if(current())localRecords?.paint(value);}).catch(()=>{if(current())localRecords?.paint({state:'error'});});
   try{const [system,settings]=await Promise.all([
     uiCore.readMobileSystem(),
     uiCore.readMobileModelSettings()]);
     if(!current())return;
+    records?.paint(system.runRecord || {state:'error'});
     const labels={ready:'运行中',connected:'运行中',stopped:'已停止',starting:'启动中',disabled:'未启用',
       unavailable:'不可用',unconfigured:'尚未配置',degraded:'需要处理'};
     status.textContent=system.queue?.backgroundPending?`${system.queue.backgroundPending} 项后台请求排队中`:'';
@@ -137,7 +146,7 @@ async function systemStatusSection(target){const owner=state.owner,epoch=state.a
     }
     const background=el('p','hint',settings.backgroundModelProfileId?'后台模型已单独配置 · 在电脑设置中修改':'后台模型跟随主模型 · 在电脑设置中修改');section.append(background);
     const refresh=el('button','icon-button');refresh.type='button';refresh.setAttribute('aria-label','刷新系统状态');refresh.append(WeftIcons.create('sync',20));refresh.addEventListener('click',()=>page('general'));section.append(refresh);
-  }catch(e){if(current())status.textContent=state.loggedIn?'系统状态暂时无法读取，请重新连接电脑后刷新。':'登录并连接电脑后查看系统状态。'}
+  }catch(e){if(current())records?.paint({state:'error'});if(current())status.textContent=state.loggedIn?'系统状态暂时无法读取，请重新连接电脑后刷新。':'登录并连接电脑后查看系统状态。'}
 }
 
 function capabilitiesPage(target){target.append(heading('能力与扩展','手机能执行的动作与电脑已有组件清楚分开。'),
@@ -584,14 +593,15 @@ function syncPage(target){target.append(heading('离线与同步'),notice(state.
   }).catch(()=>{});
 }
 
+const mobileAppearanceStore = WeftUiCore.createAppearance(localStorage, 'weftmate.mobile.appearance.v1');
 function appearancePage(target){target.append(heading('外观','保存到这台设备。'));
-  const line=el('div','settings-row'),copy=el('div');copy.append(el('strong','','颜色模式'),el('p','hint','选择适合当前环境的颜色模式。'));
-  const select=el('select');select.setAttribute('aria-label','颜色模式');
-  for(const [value,label] of [['light','浅色'],['dark','深色'],['system','跟随系统']]){const option=el('option','',label);option.value=value;select.append(option)}
-  select.value=state.appearance;line.append(select);const segments=WeftSettingsControls.segmented(select);
-  select.addEventListener('change',async()=>{try{const saved=await uiCore.mobileAppearance(select.value);applyAppearancePreference(saved);page('appearance')}catch(e){toast(safeError(e),true)}});
-  line.append(copy,segments);target.append(line);
-  if (globalThis.WeftReplyMotion) {const control=WeftReplyMotion.preferenceControl();target.append(WeftSettingsControls.row('减少动态效果','跟随系统偏好；开启后所有状态与回复动效停止。',control));WeftSettingsControls.select(control);}
+  WeftAppearanceControls.mount(target, {
+    get:()=>({...mobileAppearanceStore.value,theme:state.appearance||'system'}),
+    async set(patch){
+      if(patch.theme){const saved=await uiCore.mobileAppearance(patch.theme);applyAppearancePreference(saved);}
+      mobileAppearanceStore.set({...mobileAppearanceStore.value,...patch});applyTheme(state.appearance||'system');
+    }, toast
+  });
 }
 
 async function updatesPage(target){target.append(heading('界面更新','常规界面可从个人服务端更新；新增原生能力仍需更新应用。'));

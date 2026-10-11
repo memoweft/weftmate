@@ -1,11 +1,12 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
+
 import { join,resolve } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
@@ -56,6 +57,7 @@ try{
     usage:{requests:after.requests-before.requests,inputTokens:after.inputTokens-before.inputTokens,cachedInputTokens:after.cachedInputTokens-before.cachedInputTokens,outputTokens:after.outputTokens-before.outputTokens,cost:after.cost-before.cost}});
   console.log('UX-7 MiMo round',ended,JSON.stringify(turns.at(-1)));
  }
+ assert.equal((await api('/settings/personalization',{inlineCompletionEnabled:true},'PATCH')).status,200);
  const completionStarted=Date.now(),completion=await api(`/sessions/${sessionId}/suggestions`,{kind:'completion',draft:'请把刚才的安排',requestId:'quality-completion'});
  const usage=(await api('/usage')).body;attemptUsage=usage;
  const wire=existsSync(wireFile)?readFileSync(wireFile,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse):[];

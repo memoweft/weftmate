@@ -1,0 +1,72 @@
+{
+  "base": {
+    "revision": 9,
+    "modelSettings": "9d8e3f46f8b09df3ad5e820dae4d575236479874e802f4ba03d88060fe4058f1",
+    "personalization": "e96c40f04a256f7c2b89e01de8a7280ee9c10c09eaec60981bd8232835a3f26b",
+    "sessions": "b58add163ec1fb72371d6e716791806e5a11304b57ee2b3c4f0a05b74d24b48a",
+    "models": "7112e51dd04403bf3b4109b90328382aac5694e23b43a1b8e5eae279ba1485c1"
+  },
+  "guess": {
+    "matches": false,
+    "modelSettingsMatches": false
+  },
+  "keyOrderOnly": {
+    "before": "e96c40f04a256f7c2b89e01de8a7280ee9c10c09eaec60981bd8232835a3f26b",
+    "after": "e96c40f04a256f7c2b89e01de8a7280ee9c10c09eaec60981bd8232835a3f26b"
+  },
+  "unrelatedFieldChangesSessions": false,
+  "cost": [
+    {
+      "count": 500,
+      "actual": 500,
+      "bytes": 481478,
+      "p50": 0.0009000000000014552,
+      "p95": 0.0018000000000029104,
+      "max": 0.013299999999844658,
+      "n": 250,
+      "cpuMs": 0
+    },
+    {
+      "count": 2000,
+      "actual": 2000,
+      "bytes": 1929974,
+      "p50": 0.0009999999999763531,
+      "p95": 0.001399999999875945,
+      "max": 0.1977999999999156,
+      "n": 250,
+      "cpuMs": 0
+    }
+  ],
+  "catalogFailure": {
+    "status": 200,
+    "body": {
+      "items": [],
+      "liveEvents": [],
+      "liveRevision": 0,
+      "olderCursor": null,
+      "newerCursor": null,
+      "hasOlder": false,
+      "hasNewer": false,
+      "syncCursor": "WyJvd25lci1kNzA1MzI0NS1mMmZiLTQxM2QtYjYzMi1iNWJlYmY2Zjk4YjAiLCJjaGF0LWExMjdlMTFkLWIxNGUtNDA0Zi1iZTEyLWQ3MjE0OGM0NzFkZiIsIjRkNjdmNjRmY2UwYmI1NmE1MzY2NDA5ZTRlN2Q1MDdjIiwic3luYyIsMCwiIl0.pqPbGA2JFUsQ-YYtD3HF5ueNG5ZNg18QEMQoR6cvAjk",
+      "deletedAnchor": false,
+      "contentRevision": 1,
+      "chatRevision": 1,
+      "unread": false,
+      "indexState": "ready",
+      "timeZone": "Asia/Shanghai",
+      "accountChanges": {
+        "revision": 12,
+        "modelSettings": "9d8e3f46f8b09df3ad5e820dae4d575236479874e802f4ba03d88060fe4058f1",
+        "personalization": "7a7a4de845ca8a91af88630f1ca9c2fecf4ab3236321c7576dee9e35393fcb52",
+        "sessions": "48c2c9d243278eb3925a1252c62dffe5353b86b0594d713453b0c88ab8db8863"
+      }
+    }
+  },
+  "mixedRevision": {
+    "oldRevision": 13,
+    "staleRevision": 13,
+    "currentRevision": 14,
+    "staleModels": "7112e51dd04403bf3b4109b90328382aac5694e23b43a1b8e5eae279ba1485c1",
+    "currentModels": "8effc39eeba008010fc997d598534b3cb931dfd53d6a1677573bfa601d39505a"
+  }
+}

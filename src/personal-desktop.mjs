@@ -1,6 +1,6 @@
 import { captureScreenRegion } from './personal-desktop-capture.mjs';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
+import { readNotificationPermission } from './personal-update/watchdog-commands.mjs';
+import { createHostLog } from './host-log.mjs';
 import packageInfo from '../package.json' with { type: 'json' };
 import { quoteWindowsLoginArgs, loginItemEnabled } from './desktop-autostart.mjs';
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
@@ -10,7 +10,7 @@ import { stat, realpath } from 'node:fs/promises';
 import { hostName } from './host-name.mjs';
 import { createHash, X509Certificate } from 'node:crypto';
 import { desktopAuthStorage } from './personal-desktop-auth.mjs';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdirSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createLatestFileWriter } from './latest-file-writer.mjs';
 import { join, basename } from 'node:path';
@@ -119,11 +119,7 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
     await jsonLocal('/auth/me');
     if(!Notification.isSupported())return {enabled:false};
     if(process.platform!=='win32')return {enabled:null};
-    try{
-      const {stdout}=await promisify(execFile)('powershell.exe',['-NoProfile','-NonInteractive','-Command',
-        "$globalEnabled=(Get-ItemProperty -LiteralPath 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications' -Name ToastEnabled -ErrorAction SilentlyContinue).ToastEnabled; $appEnabled=(Get-ItemProperty -LiteralPath 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings\\com.memoweft.weftmate' -Name Enabled -ErrorAction SilentlyContinue).Enabled; if($globalEnabled -eq 0 -or $appEnabled -eq 0){'disabled'}elseif($globalEnabled -eq 1){'enabled'}else{'unknown'}"],{windowsHide:true});
-      return {enabled:stdout.trim()==='disabled'?false:stdout.trim()==='enabled'?true:null};
-    }catch{return {enabled:null};}
+    return {enabled:await readNotificationPermission({onFailure:error=>createHostLog(app.getPath('userData')).failure('notification-permission',error)})};
   });
   handle('wm:desktop:notification-settings', async () => {await jsonLocal('/auth/me');if(process.platform!=='win32')throw new Error('UNAVAILABLE');await shell.openExternal('ms-settings:notifications');return {opened:true};});
   handle('wm:desktop:clipboard-image', async () => {

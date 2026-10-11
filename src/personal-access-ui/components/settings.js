@@ -1,6 +1,9 @@
 /* Desktop settings component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.settings = (core, ui) => {
+    let runRecords;
+    function records() { return runRecords ||= globalThis.WeftRunRecords?.mount(ui.byId('system-heading').closest('section'), {core,toast:ui.toast,retry:()=>core.refreshSystem()}); }
     function paintSystem(system, settings, catalog, token) {
+        records()?.paint(system.runRecord || {state:'error'});
         for (const [key, label] of [['model', '模型服务'], ['host', '宿主'], ['memory', '记忆']]) {
             const value = system[key], item = ui.element('li', 'system-service');
             const details = ui.element('div', 'system-service-detail');
@@ -56,11 +59,13 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
             ? `${system.queue.backgroundPending} 项后台请求排队中` : '已更新';
     }
     function systemLoading() {
+        records()?.paint(null);
         ui.byId('system-notice').textContent = '正在读取…';
         ui.byId('system-services').replaceChildren();
         ui.byId('background-model-select').disabled = true;
     }
     function systemNotice(message) {
+        records()?.paint({state:"error"});
         ui.byId('system-notice').textContent = message;
     }
     function updateOtherDeviceInstall() {

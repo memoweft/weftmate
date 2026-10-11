@@ -1,0 +1,47 @@
+[
+  {
+    "mode": "gateway-close",
+    "receivedAfterClose100ms": true,
+    "serverClosed100ms": false,
+    "response": {
+      "status": 503,
+      "body": {
+        "error": {
+          "code": "SERVICE_CLOSING"
+        }
+      }
+    },
+    "responseAfterCloseMs": 103,
+    "closeMs": 103
+  },
+  {
+    "mode": "cordis-dispose",
+    "receivedAfterClose100ms": true,
+    "serverClosed100ms": true,
+    "response": {
+      "status": 503,
+      "body": {
+        "error": {
+          "code": "SERVICE_CLOSING"
+        }
+      }
+    },
+    "responseAfterCloseMs": 102,
+    "closeMs": 102
+  },
+  {
+    "mode": "uncached-dispose",
+    "receivedAfterClose100ms": true,
+    "serverClosed100ms": true,
+    "response": {
+      "status": 503,
+      "body": {
+        "error": {
+          "code": "SERVICE_CLOSING"
+        }
+      }
+    },
+    "responseAfterCloseMs": 103,
+    "closeMs": 103
+  }
+]

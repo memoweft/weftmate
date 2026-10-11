@@ -1,8 +1,9 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Capture actual pinned DSH requests using a synthetic account and random loopback ports. */
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdtemp, writeFile, rm, mkdir } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile, rm, mkdir } from 'node:fs/promises';
+
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm, access, realpath } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile, readFile, rm, access, realpath } from 'node:fs/promises';
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from './helpers/managed-temp.mjs';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
@@ -237,7 +237,7 @@ test('synthetic artifact write is observed before exposing its task approval', a
   } finally { await fixture.close(); await rm(fixture.root, { recursive: true, force: true }); }
 });
 
-test('temp pruning removes only stale unused weftmate-* directories and never follows a junction', { skip: process.platform !== 'win32' }, async () => {
+test('temp pruning removes only registered stale leases and never follows a nested junction', { skip: process.platform !== 'win32' }, async () => {
   // Keep the caller's spelling of TEMP: the script must protect active roots
   // even when Windows enumerates a different (expanded 8.3) spelling.
   const root = await mkdtemp(join(tmpdir(), 'nightly-prune-root-'));
@@ -252,6 +252,11 @@ test('temp pruning removes only stale unused weftmate-* directories and never fo
     }
     // A junction inside a stale directory must be unlinked, not traversed.
     ps(`New-Item -ItemType Junction -Path '${join(root, 'weftmate-old', 'link')}' -Target '${outside}' | Out-Null`);
+    const live = JSON.parse(await readFile(join(root, '.weftmate-temp-owner.json'), 'utf8'));
+    const expired = { ...live, pid:2147483647, processStartedAt:new Date(Date.now()-90*3600000).toISOString(), createdAt:new Date(Date.now()-80*3600000).toISOString(), heartbeatAt:new Date(Date.now()-72*3600000).toISOString() };
+    await writeFile(join(root,'weftmate-old','.weftmate-temp-owner.json'),JSON.stringify(expired));
+    await writeFile(join(root,'weftmate-recent','.weftmate-temp-owner.json'),JSON.stringify({...live,pid:2147483647}));
+    await writeFile(join(root,'weftmate-in-use','.weftmate-temp-owner.json'),JSON.stringify(live));
     const old = "(Get-Date).AddDays(-3)";
     for (const name of ['weftmate-old', 'weftmate-in-use', 'other-old'])
       ps(`$d = Get-Item -LiteralPath '${join(root, name)}'; $d.CreationTime = ${old}; $d.LastWriteTime = ${old}`);
@@ -265,15 +270,6 @@ test('temp pruning removes only stale unused weftmate-* directories and never fo
     const run = extra => JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', script, '-Hours', '48', '-Roots', root, ...extra], { encoding: 'utf8' }).trim().split(/\r?\n/).pop());
     const preview = run([]);
     assert.deepEqual([preview.applied, preview.found, preview.selected, preview.deleted, preview.keptRecent, preview.keptInUse], [false, 3, 1, 0, 1, 1]);
-    // Reproduce the cloud's exact mismatch: the enumerator exposes a native
-    // path while CIM retains the supplied root alias. Keep the real holder
-    // above as the end-to-end in-use check; this harness isolates alias handling.
-    const alias = join(root, 'alias'), harness = join(root, 'alias-preview.ps1');
-    ps(`New-Item -ItemType Junction -Path '${alias}' -Target '${root}' | Out-Null`);
-    await writeFile(harness, `param($Script,$AliasRoot,$NativeRoot)\n$ErrorActionPreference='Stop'\nfunction Get-CimInstance { [pscustomobject]@{CommandLine="pwsh # $(Join-Path $AliasRoot 'weftmate-in-use')"} }\nfunction Get-ChildItem { param($LiteralPath,[switch]$Directory,$Filter,[switch]$Force,$ErrorAction) Microsoft.PowerShell.Management\\Get-ChildItem -LiteralPath $NativeRoot -Directory -Filter 'weftmate-*' -Force }\n& $Script -Roots $AliasRoot -Hours 48\n`);
-    const aliased = JSON.parse(execFileSync('pwsh', ['-NoProfile', '-File', harness, script, alias, root], {encoding:'utf8', windowsHide:true}).trim().split(/\r?\n/).pop());
-    assert.deepEqual([aliased.applied, aliased.found, aliased.selected, aliased.deleted, aliased.keptRecent, aliased.keptInUse], [false, 3, 1, 0, 1, 1]);
-    await rm(alias);
     await access(join(root, 'weftmate-old'));
     const applied = run(['-Apply']);
     assert.deepEqual([applied.applied, applied.selected, applied.deleted, applied.failed], [true, 1, 1, 0]);

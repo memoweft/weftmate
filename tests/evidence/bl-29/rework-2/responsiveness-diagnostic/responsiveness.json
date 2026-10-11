@@ -1,0 +1,87 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "stage": "after",
+  "logical": true,
+  "baseline": "ec3ab4996609a6d81181bc178f024d5e5158c577",
+  "surfaces": [
+    {
+      "surface": "electron",
+      "windows": []
+    },
+    {
+      "surface": "mobile",
+      "windows": []
+    }
+  ],
+  "checks": [
+    {
+      "name": "other-device-message",
+      "surface": "electron",
+      "ms": 94
+    },
+    {
+      "name": "other-device-message",
+      "surface": "mobile",
+      "ms": 108
+    },
+    {
+      "name": "approval-visible",
+      "surface": "mobile",
+      "ms": 56
+    },
+    {
+      "name": "approval-accepted",
+      "ms": 64
+    },
+    {
+      "name": "question-visible",
+      "surface": "mobile",
+      "ms": 83
+    },
+    {
+      "name": "question-accepted",
+      "ms": 68
+    },
+    {
+      "name": "new-session",
+      "surface": "electron",
+      "ms": 153
+    },
+    {
+      "name": "new-session",
+      "surface": "mobile",
+      "ms": 156
+    },
+    {
+      "name": "rename-session",
+      "surface": "electron",
+      "ms": 46
+    },
+    {
+      "name": "rename-session",
+      "surface": "mobile",
+      "ms": 49
+    },
+    {
+      "name": "foreground-recovery",
+      "surface": "electron",
+      "ms": 107
+    },
+    {
+      "name": "connection-recovery",
+      "surface": "electron",
+      "ms": 28
+    },
+    {
+      "name": "foreground-recovery",
+      "surface": "mobile",
+      "ms": 27
+    },
+    {
+      "name": "connection-recovery",
+      "surface": "mobile",
+      "ms": 30
+    }
+  ]
+}

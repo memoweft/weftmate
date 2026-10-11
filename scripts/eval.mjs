@@ -44,7 +44,7 @@ export async function loadScenarios(pattern, only) {
   return selected;
 }
 
-const checkTypes = ['file_exists', 'file_contains', 'file_absent', 'reply_contains', 'reply_matches', 'turn_status', 'approval_seen', 'memory_used', 'llm_judge'];
+const checkTypes = ['file_exists', 'file_contains', 'file_excludes', 'file_absent', 'reply_contains', 'reply_excludes', 'reply_matches', 'turn_status', 'approval_seen', 'approval_absent', 'observation_equals', 'memory_used', 'llm_judge'];
 export function validateScenario(s) {
   if (!/^[a-z0-9][a-z0-9-]*$/.test(s.id ?? '') || !['action', 'memory', 'cross-device'].includes(s.category) ||
     typeof s.title !== 'string' || !s.setup || !Array.isArray(s.setup.files) || !Array.isArray(s.setup.memories) ||
@@ -70,6 +70,8 @@ export function validateScenario(s) {
     if (c.numeric !== undefined && (c.type !== 'file_contains' || typeof c.numeric !== 'boolean')) throw new Error('numeric is a boolean option for file_contains only');
     if (c.numeric === true && canonicalNumber(c.text) === undefined) throw new Error('numeric file_contains.text must be one decimal number');
     if (c.type === 'reply_matches') new RegExp(c.pattern, c.flags ?? 'u');
+    if (['reply_excludes', 'file_excludes'].includes(c.type) && (typeof c.text !== 'string' || !c.text)) throw new Error('excludes.text must be nonempty');
+    if (c.type === 'observation_equals' && (typeof c.key !== 'string' || !c.key || !['number', 'string', 'boolean'].includes(typeof c.value))) throw new Error('observation_equals requires key and scalar value');
   }
 }
 
@@ -252,11 +254,19 @@ export async function checkOne(check, context) {
         const text = await readFile(file.full, 'utf8');
         passed = check.numeric === true ? containsNumber(text, check.text) : text.includes(check.text);
       }
+      if (check.type === 'file_excludes' && file.exists) passed = !(await readFile(file.full, 'utf8')).includes(check.text);
     } else if (check.type === 'reply_contains') passed = reply.includes(check.text);
+    else if (check.type === 'reply_excludes') passed = !reply.includes(check.text);
     else if (check.type === 'reply_matches') passed = new RegExp(check.pattern, check.flags ?? 'u').test(reply);
     else if (check.type === 'turn_status') passed = (Array.isArray(check.status) ? check.status : [check.status]).includes(turn?.status);
     else if (check.type === 'approval_seen') {
       passed = (turn?.approvals ?? []).some(a => (!check.outcome || a.decisionOutcome === check.outcome) && (!check.reasonMatches || new RegExp(check.reasonMatches, 'u').test(a.reason ?? '')));
+    } else if (check.type === 'approval_absent') passed = !(turn?.approvals?.length || turn?.unexpectedApproval);
+    else if (check.type === 'observation_equals') {
+      const observations = await context.observe?.(context);
+      if (!observations || !Object.hasOwn(observations, check.key)) return { ...check, status: 'unsupported', reason: `Observation unavailable: ${check.key}` };
+      passed = observations[check.key] === check.value;
+      return { ...check, status: passed ? 'passed' : 'failed', actual: observations[check.key] };
     } else if (check.type === 'memory_used') {
       if (!turn?.memoryUsedSupported) return { ...check, status: 'unsupported', reason: 'Host reply events do not expose memoryUsed.' };
       passed = turn.memoryUsed.some(item => typeof item.id === 'string' && item.id && typeof item.summary === 'string' && item.summary);
@@ -289,21 +299,23 @@ async function runScenario(scenario, context) {
   let session, rootTask, scratchDir;
   const ctx = { ...context, scenario, turns: result.turns, deadline };
   try {
-    scratchDir = await mkdtemp(join(tmpdir(), `weftmate-eval-${scenario.id}-`));
+    scratchDir = await mkdtemp(join(context.scratchRoot ?? tmpdir(), `weftmate-eval-${scenario.id}-`));
     if (forbiddenDailyPath(scratchDir)) throw new Error('Scratch directory points into daily Runtime');
     result.scratchDir = ctx.scratchDir = await realpath(scratchDir);
     if (forbiddenDailyPath(ctx.scratchDir)) throw new Error('Scratch directory resolves into daily Runtime');
     for (const file of scenario.setup.files) {
       const path = safePath(ctx.scratchDir, file.path);
       await mkdir(dirname(path), { recursive: true });
-      await writeFile(path, file.content, { flag: 'wx' });
+      await writeFile(path, file.content.replaceAll('{{testDir}}', ctx.scratchDir), { flag: 'wx' });
     }
     let model = resolveModel(context.models, context.model);
     const newSession = async () => {
       const cmd = await command(context.client, context.hostId, 'session.create', { modelProfileId: model.id }, deadline);
       session = await ready(context.client, cmd, deadline, context.pollMs);
+      await context.onSessionCreated?.({ ...ctx, sessionId: session });
     };
     await newSession();
+    await context.onScenarioSetup?.({ ...ctx, sessionId: session });
     const inputs = [...scenario.setup.memories.map(user => ({ user, seed: true })), ...scenario.turns];
     let turnNumber = 0;
     for (const input of inputs) {
@@ -438,13 +450,18 @@ export async function runEvaluation(options) {
   let client, hostId, models, error;
   if (scenarios.some(s => !s.manual)) {
     try {
-      client = new PersonalClient(options.host);
-      hostId = await login(client, out, options.setupFile);
-      models = (await client.call('/models')).models;
+      if (options.connection) {
+        ({ client, hostId, models } = options.connection);
+        if (!(client instanceof PersonalClient) || client.origin !== new URL(options.host).origin || !hostId || !Array.isArray(models)) throw new Error('Invalid evaluator connection');
+      } else {
+        client = new PersonalClient(options.host);
+        hostId = await login(client, out, options.setupFile);
+        models = (await client.call('/models')).models;
+      }
     } catch (e) { error = e; }
   }
   for (const scenario of scenarios) {
-    const result = error && !scenario.manual ? { id: scenario.id, title: scenario.title, category: scenario.category, status: 'failed', reason: error.message, durationMs: 0, checks: [], turns: [], replySummary: '', notes: scenario.notes } : await runScenario(scenario, { client, hostId, models, model: options.model, switchModel: options.switchModel, judgeModel: options.judgeModel, pollMs: options.pollMs ?? 250 });
+    const result = error && !scenario.manual ? { id: scenario.id, title: scenario.title, category: scenario.category, status: 'failed', reason: error.message, durationMs: 0, checks: [], turns: [], replySummary: '', notes: scenario.notes } : await runScenario(scenario, { client, hostId, models, model: options.model, switchModel: options.switchModel, judgeModel: options.judgeModel, pollMs: options.pollMs ?? 250, scratchRoot: options.scratchRoot, onScenarioSetup: options.onScenarioSetup, onSessionCreated: options.onSessionCreated, observe: options.observe });
     report.results.push(result);
     await options.onScenarioResult?.(result);
   }

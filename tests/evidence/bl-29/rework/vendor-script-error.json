@@ -1,0 +1,11 @@
+{
+  "mode": "vendor",
+  "files": 30,
+  "exitCode": 1,
+  "passed": 204,
+  "failed": 1,
+  "skipped": 0,
+  "failures": [
+    "BL-29b M5 real tray/update shutdown and both runtime orders drain protocol waits"
+  ]
+}

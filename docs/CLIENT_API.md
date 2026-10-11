@@ -187,7 +187,15 @@ UI-P4：每会话可选只读 `contextUsage:{usedTokens,contextWindow}`。`usedT
 
 STREAM-1：`GET /status.personalCapabilities.replyStreaming` 精确为 `1` 表示支持累计正文快照。现有 `/sessions/{id}/events` 的无游标尾页与正向页增加可选 `liveSeq`、`liveEvents`；向前翻页不带快照。`liveSeq` 是读取快照时的原生尾部水位，与历史 `nextSeq` 独立。`liveEvents` 是此次读取的完整暂态集合，形状为 `{seq,type:"assistant.delta",at?,data:{text,cursor,turn,step,streaming}}`：`text` 为累计可见正文，不能再次拼接；`seq` 是该次模型尝试的第一个原生分块锚点，`cursor` 为已纳入的最新分块序号，`streaming:false` 表示停止或失败后的暂态收尾。隐藏思考、工具参数和注入上下文不公开。完整 `assistant.message.data.streamSeq` 可选，用于将最终消息替换到同一展示节点；最终消息自己的 `seq` 和历史游标保持原契约。
 
-逻辑对话 `/chats/{id}/events|changes` 同样返回 `liveEvents`，每项增加既有 `eventId/orderKey/sourceRef`；`liveRevision` 为本索引代次内的快照水位，历史与增量游标均不因它改变。客户端在同一身份／内容代次内只接纳不低于当前水位的快照；以 `(sessionId,streamSeq)` 保持展示节点，以最终消息替换快照，不把暂态锚点当作历史详情／搜索／导出锚点。空快照清除暂态集合；历史翻页与迟到低水位响应不能倒退正文。内容修订变化、409游标重置、切账号／来源清空快照。前台打开对话的桌面与手机每250毫秒读取现有事件／变更接口，后台沿原暂停规则；JSON（结构化数据）轮询没有改成SSE（服务端推送事件），没有新增路由。
+逻辑对话 `/chats/{id}/events|changes` 同样返回 `liveEvents`，每项增加既有 `eventId/orderKey/sourceRef`；`liveRevision` 为本索引代次内的快照水位，历史与增量游标均不因它改变。客户端在同一身份／内容代次内只接纳不低于当前水位的快照；以 `(sessionId,streamSeq)` 保持展示节点，以最终消息替换快照，不把暂态锚点当作历史详情／搜索／导出锚点。空快照清除暂态集合；历史翻页与迟到低水位响应不能倒退正文。内容修订变化、409游标重置、切账号／来源清空快照。前台生成中的桌面与手机每250毫秒读取现有事件／变更接口，空闲与后台节奏见下方BL-29约定；JSON（结构化数据）轮询没有改成SSE（服务端推送事件），没有新增路由。
+
+BL-29：`personalCapabilities.replyWait:1` 表示现有 `GET /chats/{id}/changes` 可选 `waitMs`（整数 1–30000）及 `liveRevision`（客户端已接纳的非负快照水位）。先按原游标读取，有历史增量、移除或不同快照立即返回；无变化时等待账户提交或 DSH（助手运行时）原生会话事件，最长等待指定时间后返回现有响应形状。等待绑定该查询实际看到的各段原生水位，注册后重新检查索引变化，其他客户端推进索引不会吞掉唤醒。取消监听在首次查询之前注册；等待结束再次读取并重新核验登录与设备权限；取消请求解除等待，不确认任何写请求。`liveRevision` 只在累计正文集合变化时递增，空闲重读不制造新水位。安卓现有 `/chats` 业务白名单已接受这些查询参数，无新路由、权限或壳方法。
+
+BL-29c 在既有 `events|changes` 响应保留可选 `accountChanges:{revision,models,modelSettings,personalization,sessions}`：`revision` 是本宿主进程内、按账户隔离的提交水位，其他账户的私有提交不会唤醒或使本账户缓存失效。其余字段是使用进程随机密钥并加入账户／字段域的 HMAC（带密钥的消息认证码）失效标记；客户端仅比较相等性，不解析、不重算、不跨账户比较。`models` 对同一提交快照复用公开 `/models` 的完整可见投影，包含名称、可用状态、账户模型修订及全部公开目录字段。目录读取失败时正文仍可返回 200，此次通知省略 `models`；客户端保留此前该字段，其他通知照常处理，并按后续有效通知及既有 30 秒兜底刷新。目录快照和纯账户标记均绑定读取开始时的账户修订；目录完成后同步核对聊天存在、正文内容代次与当前设备鉴权，失效代次返回 409 `CURSOR_RESET_REQUIRED`。目录等待服从同一请求取消域及宿主关闭信号。
+
+`changes` 可携带最后接纳的非负整数 `accountRevision`；水位不同立即返回，避免本账户提交发生在两次订阅之间时漏掉配置或列表变化。宿主重启后接纳新水位及新标记，标记变化只重读对应模型目录／模型设置／个性化；列表标记变化立即补读列表。本账户提交水位推进时还重新核对当前对话的权威审批／提问及其源任务；原生请求事件先到、持久登记稍后完成时，不能沿用此前空读取结果。手机使用完整的决策读取链，不绕过源任务与身份核验。等待读的可选 `waitOutcome` 为 `snapshot`（初查已有结果）、`changed`（被唤醒）或 `timeout`（正常等满）；只有后两者可立即续订。401／撤权停止当前身份读取，404 清除所选来源，持续 409 最多重建一次尾页；失败复用共享连接策略，首轮及后续均直接在 1500–1750 毫秒区间抖动，独立状态探测区分连接故障与业务 503。正文端点恢复后至多 1750 毫秒加成功请求耗时（桌面另加最多 250 毫秒检查间隔）；全宿主不可用时仍由既有最长 30 秒连接探测发现，不能宣称无条件 2 秒恢复。关闭先撤销等待，再关闭监听，等待方收到 503 `SERVICE_CLOSING`，按宿主关闭走连接恢复。
+
+节奏集中在 `WeftUiCore.polling`：生成中正文 250 毫秒；支持 `replyWait` 的空闲现代对话等待事件（网页最长30秒、现有原生业务桥最长15秒）；兼容会话前台空闲 1500 毫秒；侧栏列表 4500 毫秒，并由账户列表变化立即触发，给 6 秒同步目标留出串行读取与传输时间；配置有 30 秒低频兜底，正常账户通知只重读变更项；正文失败重试至少 1500 毫秒、有抖动、最多 1750 毫秒，以便恢复后 2 秒内回到正常等待。后台暂停前台读取，只保留每 60 秒一次独立连接探测；恢复前台立即并行读取当前正文、决策和概览。原生业务桥的 HTTP（网络协议）超时为20秒，等待读限制在15秒；取消只终止界面等待，底层读返回前不再启动第二条等待读，给现有两个工作线程保留动作通道。无replyStreaming能力的旧宿主保留原全量刷新，以免漏掉状态。任务、审批、提问由原生事实变化触发，不由正文重绘触发。
 
 持久化取舍：固定DSH（助手运行时）本来就持久保存原始分块，按其原生序号／时间重建快照，接回不重生成。公开快照是易失展示数据，不进入公开历史SQLite（本地数据库）缓存、搜索、记忆、导出、离线副本或安卓历史缓存；完整消息仍是历史正文的权威来源。未形成完整消息的停止／失败片段只在最新回合的暂态展示中保留，不承诺成为正式历史消息。删除会话清除原生日志及索引；遗忘清除快照集合并核对来源，勾选删除原话时同时清空原生打包文字／思考的 `texts` 和工具参数 `args`，不从分块恢复被擦内容。安卓现有精确路由及JSON透传已支持这些追加字段，不需要新壳版本。Apple（苹果端）须按本段接累计替换、独立水位、同节点动效及内容代次清理，Watch（手表）可显示累计正文但不新增输入能力。
 
@@ -326,9 +334,9 @@ D33：`deleteConversationSnippets` 默认 `false`。桌面、手机网页及手�
 | POST `/models/{modelProfileId}/verify` | `{}` | 200 `{"configured":true,"reachable":true,"modelListed":true,"inferenceVerified":false}` | 422 `MODEL_UNAVAILABLE`；503 `CAPABILITY_UNAVAILABLE` | 手、安 |
 | POST `/models/{modelProfileId}/chat/completions` | `model,messages`；可选 `tools,tool_choice,stream,max_tokens,temperature`；≤256 KiB | 200 `{"choices":[{"message":{"role":"assistant","content":"你好"},"finish_reason":"stop"}],"usage":{"total_tokens":10}}`；`stream:true` 为 SSE `data: …`，以 `data: [DONE]` 结束 | 422 `MODEL_UNAVAILABLE`；503 `CAPABILITY_UNAVAILABLE / BACKEND_UNAVAILABLE` | 手、安 |
 | GET `/account/models` | 无 | 200 `{"models":[AccountModel],"canManage":true}` | — | 桌、手、安 |
-| POST `/account/models` | `requestId,name,baseUrl,modelId,apiKey`；可选 `modelTier`；≤12 KiB | 202 `ModelOperation`；重放完成请求可200 | 400 `ACCOUNT_MODEL_SECRET_REQUIRED`；409 `REQUEST_CONFLICT`；503 `ACCOUNT_MODEL_UNAVAILABLE` | 桌、手、安 |
+| POST `/account/models` | `requestId,name,baseUrl,modelId,apiKey`；可选 `modelTier`；≤12 KiB | 202 `ModelOperation`；重放完成请求可200 | 400 `ACCOUNT_MODEL_SECRET_REQUIRED`；409 `REQUEST_CONFLICT`；503 `ACCOUNT_MODEL_UNAVAILABLE / CREDENTIAL_STORAGE_NOT_READY`（稍后用原请求重试） | 桌、手、安 |
 | GET `/account/models/{accountModelId}` | 无 | 200 `{"model":AccountModel}` | 404 `NOT_FOUND` | 手（转移前核对）、安 |
-| PATCH `/account/models/{accountModelId}` | `requestId,expectedRevision`；至少一个 `name,baseUrl,modelId,apiKey,modelTier`；≤12 KiB | 202/200 `ModelOperation` | 409 `ACCOUNT_MODEL_REVISION_CHANGED / ACCOUNT_MODEL_BUSY / REQUEST_CONFLICT`；400 `ACCOUNT_MODEL_SECRET_REQUIRED` | 桌、安（能力） |
+| PATCH `/account/models/{accountModelId}` | `requestId,expectedRevision`；至少一个 `name,baseUrl,modelId,apiKey,modelTier`；≤12 KiB | 202/200 `ModelOperation` | 409 `ACCOUNT_MODEL_REVISION_CHANGED / ACCOUNT_MODEL_BUSY / REQUEST_CONFLICT`；400 `ACCOUNT_MODEL_SECRET_REQUIRED`；503 `CREDENTIAL_STORAGE_NOT_READY`（稍后用原请求重试） | 桌、安（能力） |
 | DELETE `/account/models/{accountModelId}` | `requestId,expectedRevision`（JSON体） | 202/200 `ModelOperation` | 409修订/忙/请求冲突 | 桌、安（能力） |
 | POST `/account/models/{accountModelId}/test` | `requestId,expectedRevision` | 202/200 `ModelOperation`，后续 `operation.testResult` | 409修订/忙/请求冲突 | 桌、手、安 |
 | POST `/account/models/{accountModelId}/stop-using` | `requestId,expectedRevision` | 202/200 `ModelOperation` | 409修订/忙/请求冲突 | 桌、安（能力） |
@@ -474,6 +482,9 @@ UPD-1：资源服务从当前已验证 `ui` 版本读取既有白名单中的路
 
 ### 3.15 系统状态与后台模型（M0-6，6）
 
+DIAG-2：既有 `GET /system` 保留可选只读 `runRecord:{state,runId,startedAt,previous,uncleanCount7Days,summary,summaryPreview}`。`state` 为 `ready|error`；`previous` 为 null 或 `{runId,startedAt,at,reason,normal,exitCode,lastAt,lastEvent,dumps:[{name,size,at}],dumpMatch:"time-window-inference"}`。没有上一轮退出记录时 `normal:false`，原因无法确定则 `unknown`，转储仅时间窗口推断。`summary` 是统一 JSON（结构化数据格式）对象的字符串：`platform/appVersion/osVersion/generatedAt/recentAbnormalRecords/abnormalCountsLast7Days/retentionPolicy`，最多二十条异常，记录白名单字段置于字符串字典 `fields`；`summaryPreview` 是可读文字，预览它并复制 `summary`。不带转储文件名或内容；详细字段见 DIAGNOSTICS.md。旧客户端可忽略新增字段，没有新增路由或权限；桌面打开日志沿既有 `openLogs` 本地接缝。安卓另经现有通用桥 `call(method, params)` 提供本机 `diagnostics.status/diagnostics.record/diagnostics.share`，需要新壳版本。苹果原生记录与统一摘要由 PR #210 接入。
+
+
 | 方法与路径 | 请求 | 成功响应 | 权限 / 错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/system` | 无查询 | 200 `{model,host,memory,queue,canRestart}` | `sessions:read`；未接入管理器为 503 `CAPABILITY_UNAVAILABLE` | 桌、手（Android code15 起） |
@@ -500,6 +511,7 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 - `preferredName:""`（80 字）、`bio:""`（500 字）、`tone:"natural"`（`natural|concise|detailed|formal|casual`）、`toneInstructions:""`（500 字）。
 - `fixedInstructions:""`（4,000 字）；`useWritingStyle:false`、`writingStyle:""`（1,000 字）。长度按 Unicode（统一字符编码）码点计算，空文本合法；提炼结果可通过 PATCH 编辑／清空，清除不删除任何聊天记录。
 - `webSearch:true`、`researchSelfCheck:true`（FACT-1，查资料成文前核对关键断言；关闭仍须给出处及未确认说明）、`verbosity:"medium"`（`short|medium|thorough`）、`thinkingDisplay:"collapsed"`（`collapsed|expanded|hidden`）、`defaultDeepThinking:false`、`messageMode:"queue"`（`queue|steer`）。
+- `nextSuggestionsEnabled:true`：只控制回复结束后的下一步建议胶囊，点选填入草稿，不自动发送；`inlineCompletionEnabled:false`：独立控制输入时的灰色补全，按 Tab（制表键）或手机点灰字／右滑接受。两字段均只接受布尔值。存量账户缺少新字段时按 `false` 返回，不继承旧开关的值；升级后须明确开启才发补全请求。用云端模型时可能来不及显示。
 
 服务端串行合并字段，冲突按最后一次成功写入为准；`updatedAt` 为宿主保存时间，旧账户无已保存设置时为 `null` 并返回默认值。旧本设备的 D36 引导偏好在首次读取时迁入未配置账户；以后账户值优先。客户端仅成功回执后显示「已同步」，读取／保存失败保留可重试状态，切账户丢弃迟到回执。
 
@@ -1396,7 +1408,7 @@ Windows（视窗系统）与远程网页已有健康、动态、对应回合提�
 
 ## 12. UX-7 下一步建议（D51，能力版本 1）
 
-`GET /status.personalCapabilities.nextSuggestions` 精确为 `1` 时可调用；旧宿主没有该能力时客户端隐藏建议。账户设置沿 `GET/PATCH /settings/personalization` 增加 `nextSuggestionsEnabled:boolean`，默认 `true`，逐字段同步；关闭立即取消所有本账户正在生成的建议，宿主不再发建议模型请求。客户端身份变化丢弃迟到结果。
+`GET /status.personalCapabilities.nextSuggestions` 精确为 `1` 时可调用；旧宿主没有该能力时客户端隐藏建议。账户设置沿 `GET/PATCH /settings/personalization` 逐字段同步：`nextSuggestionsEnabled:boolean` 默认 `true`，仅控制 `kind:"replies"`；`inlineCompletionEnabled:boolean` 默认 `false`，仅控制 `kind:"completion"`，且只有精确 `true` 才开启。存量账户缺少新字段时补全关闭，不继承 `nextSuggestionsEnabled`。关闭某个开关立即取消本账户对应种类的生成，另一种保持原开关控制；客户端关闭补全时不发补全请求、不接受灰字，宿主对关闭的请求种类直接返回空结果，不调用模型、不申请模型租约。客户端身份变化丢弃迟到结果。快捷键面板沿用完整绑定表，关闭时仍列出「接受灰色补全」，实际按键只在开启且灰字可见时接受。
 
 | 路由 | 请求 | 响应与语义 |
 |---|---|---|
