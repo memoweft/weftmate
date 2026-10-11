@@ -1,0 +1,122 @@
+[
+  {
+    "version": "main",
+    "method": "window-tray-exit",
+    "pendingWaitRequests": 0,
+    "hidden": true,
+    "ms": 357,
+    "exitCode": 0
+  },
+  {
+    "version": "main",
+    "method": "tray-exit",
+    "pendingWaitRequests": 0,
+    "ms": 399,
+    "exitCode": 0
+  },
+  {
+    "version": "main",
+    "method": "update-restart",
+    "pendingWaitRequests": 0,
+    "ms": 327,
+    "exitCode": 0
+  },
+  {
+    "version": "main",
+    "method": "runtime-first",
+    "pendingWaitRequests": 0,
+    "gatewayCreated": 201,
+    "waitSeq": 3,
+    "runtimeCloseMs": 228,
+    "gatewayWait": {
+      "status": 200,
+      "body": {
+        "events": [],
+        "nextSeq": 3,
+        "nextBeforeSeq": null,
+        "hasMore": false,
+        "hasOlder": false,
+        "latestSeq": 3,
+        "liveSeq": 3,
+        "liveEvents": []
+      }
+    },
+    "accessCloseMs": 2,
+    "ms": 128,
+    "exitCode": 0
+  },
+  {
+    "version": "main",
+    "method": "access-first",
+    "pendingWaitRequests": 0,
+    "gatewayCreated": 201,
+    "waitSeq": 3,
+    "accessCloseMs": 2,
+    "runtimeCloseMs": 246,
+    "gatewayWait": {
+      "status": 200,
+      "body": {
+        "events": [],
+        "nextSeq": 3,
+        "nextBeforeSeq": null,
+        "hasMore": false,
+        "hasOlder": false,
+        "latestSeq": 3,
+        "liveSeq": 3,
+        "liveEvents": []
+      }
+    },
+    "ms": 142,
+    "exitCode": 0
+  },
+  {
+    "version": "head",
+    "method": "window-tray-exit",
+    "pendingWaitRequests": 1,
+    "hidden": true,
+    "ms": 325,
+    "exitCode": 0
+  },
+  {
+    "version": "head",
+    "method": "tray-exit",
+    "pendingWaitRequests": 1,
+    "ms": 3362,
+    "exitCode": 0
+  },
+  {
+    "version": "head",
+    "method": "update-restart",
+    "pendingWaitRequests": 1,
+    "ms": 3336,
+    "exitCode": 0
+  },
+  {
+    "version": "head",
+    "method": "runtime-first",
+    "pendingWaitRequests": 1,
+    "gatewayCreated": 201,
+    "waitSeq": 3,
+    "runtimeCloseMs": 201,
+    "gatewayWait": {
+      "error": "fetch failed"
+    },
+    "accessCloseMs": 3002,
+    "ms": 128,
+    "exitCode": 0
+  },
+  {
+    "version": "head",
+    "method": "access-first",
+    "pendingWaitRequests": 1,
+    "gatewayCreated": 201,
+    "waitSeq": 3,
+    "accessCloseMs": 3002,
+    "runtimeCloseMs": 279,
+    "gatewayWait": {
+      "error": "fetch failed"
+    },
+    "ms": 145,
+    "exitCode": 0
+  }
+]

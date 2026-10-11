@@ -127,13 +127,54 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   let rootState;
   let dataControls = null;
   let freshInstallation = false;
-  const accountWaiters=new Set();let accountRevision=0;
+  const accountWaiters = new Set();
+  const closingController = new AbortController();
+  const configCatalogs = new Map();
+  let accountRevision = 0;
+  function publishAccountChange() {
+    accountRevision++;
+    for (const wake of [...accountWaiters]) wake();
+  }
+  async function accountChanges(ownerId) {
+    // Cache the native catalog per committed revision, including changes made
+    // outside account model settings. This is a read, never a model request.
+    let catalog = configCatalogs.get(ownerId);
+    if (!catalog || catalog.revision !== accountRevision) {
+      const revision = accountRevision;
+      const promise = context.callBackend(() => backend.listModels({ ownerId })).then(models =>
+        digest(JSON.stringify(models.map(({ id, name, model, configured, deepThinking }) =>
+          ({ id, name, model, configured, deepThinking })))));
+      catalog = { revision, promise };
+      configCatalogs.set(ownerId, catalog);
+      promise.catch(() => { if (configCatalogs.get(ownerId) === catalog) configCatalogs.delete(ownerId); });
+    }
+    const models = await catalog.promise;
+    const account = accountState(ownerId);
+    return { revision: accountRevision, models,
+      modelSettings: digest(JSON.stringify([account.defaultModelProfileId, account.backgroundModelProfileId])),
+      personalization: digest(JSON.stringify(account.personalization ?? {})),
+      sessions: digest(JSON.stringify([account.sessions, account.chatIdentity, account.projects])) };
+  }
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
-    get accountRevision(){return accountRevision;},
-    waitAccountChange(revision,signal){if(revision!==accountRevision||signal.aborted)return Promise.resolve();
-      return new Promise(resolve=>{const wake=()=>{accountWaiters.delete(wake);signal.removeEventListener('abort',wake);resolve();};accountWaiters.add(wake);signal.addEventListener('abort',wake,{once:true});});},
+    get accountRevision() { return accountRevision; },
+    closingSignal: closingController.signal,
+    accountChanges,
+    waitAccountChange(revision, signal) {
+      if (revision !== accountRevision || signal.aborted || closingController.signal.aborted) return Promise.resolve();
+      return new Promise(resolve => {
+        const wake = () => {
+          accountWaiters.delete(wake);
+          signal.removeEventListener('abort', wake);
+          resolve();
+        };
+        accountWaiters.add(wake);
+        signal.addEventListener('abort', wake, { once: true });
+        // Registration and this recheck run in the same JavaScript turn.
+        if (revision !== accountRevision || signal.aborted) wake();
+      });
+    },
     get dataControls() { return dataControls; },
     async clearRestoredCloudOwner(ownerId) {
       if (!Array.isArray(restoredCloudOwners) || !restoredCloudOwners.some(row=>row.ownerId===ownerId)) return;
@@ -607,7 +648,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       throw error;
     }
     rootState = next;
-    accountRevision++;for(const wake of [...accountWaiters])wake();
+    publishAccountChange();
     for (const ownerId of Object.keys(rootState.accounts)) {
       const previous = beforeDataAccounts?.[ownerId];
       if (['sessions','commands','projects','personalization','defaultApprovalMode','notificationSettings','account'].some(key=>!isDeepStrictEqual(previous?.[key],rootState.accounts[ownerId][key]))) dataControls?.invalidate(ownerId);
@@ -845,6 +886,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     close() {
       if (closePromise) return closePromise;
       closing = true;
+      // Revoke every pending read before awaiting storage or runtime cleanup.
+      closingController.abort();
+      for (const wake of [...accountWaiters]) wake();
+      chatTimeline.cancelWaits();
       tasks.cancelTaskStopRetries();
       for (const account of Object.values(rootState.accounts)) for (const command of Object.values(account.commands)) {
         for (const row of [...(command.toolApprovals ?? []), ...(command.toolExecutions ?? []), ...(command.userQuestions ?? [])]) {
@@ -876,6 +921,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             validateStore(next);
             await durableWrite(storeFile, next);
             rootState = next;
+            publishAccountChange();
           }
         });
         const current = server;

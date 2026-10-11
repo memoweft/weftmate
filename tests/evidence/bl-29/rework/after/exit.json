@@ -1,0 +1,132 @@
+[
+  {
+    "version": "main",
+    "method": "window-tray-exit",
+    "pendingWaitRequests": 0,
+    "hidden": true,
+    "ms": 346,
+    "exitCode": 0
+  },
+  {
+    "version": "main",
+    "method": "tray-exit",
+    "pendingWaitRequests": 0,
+    "ms": 325,
+    "exitCode": 0
+  },
+  {
+    "version": "main",
+    "method": "update-restart",
+    "pendingWaitRequests": 0,
+    "ms": 367,
+    "exitCode": 0
+  },
+  {
+    "version": "main",
+    "method": "runtime-first",
+    "pendingWaitRequests": 0,
+    "gatewayCreated": 201,
+    "waitSeq": 3,
+    "runtimeCloseMs": 174,
+    "gatewayWait": {
+      "status": 200,
+      "body": {
+        "events": [],
+        "nextSeq": 3,
+        "nextBeforeSeq": null,
+        "hasMore": false,
+        "hasOlder": false,
+        "latestSeq": 3,
+        "liveSeq": 3,
+        "liveEvents": []
+      }
+    },
+    "accessCloseMs": 2,
+    "ms": 130,
+    "exitCode": 0
+  },
+  {
+    "version": "main",
+    "method": "access-first",
+    "pendingWaitRequests": 0,
+    "gatewayCreated": 201,
+    "waitSeq": 3,
+    "accessCloseMs": 2,
+    "runtimeCloseMs": 187,
+    "gatewayWait": {
+      "status": 200,
+      "body": {
+        "events": [],
+        "nextSeq": 3,
+        "nextBeforeSeq": null,
+        "hasMore": false,
+        "hasOlder": false,
+        "latestSeq": 3,
+        "liveSeq": 3,
+        "liveEvents": []
+      }
+    },
+    "ms": 128,
+    "exitCode": 0
+  },
+  {
+    "version": "head",
+    "method": "window-tray-exit",
+    "pendingWaitRequests": 1,
+    "hidden": true,
+    "ms": 423,
+    "exitCode": 0
+  },
+  {
+    "version": "head",
+    "method": "tray-exit",
+    "pendingWaitRequests": 1,
+    "ms": 325,
+    "exitCode": 0
+  },
+  {
+    "version": "head",
+    "method": "update-restart",
+    "pendingWaitRequests": 1,
+    "ms": 389,
+    "exitCode": 0
+  },
+  {
+    "version": "head",
+    "method": "runtime-first",
+    "pendingWaitRequests": 1,
+    "gatewayCreated": 201,
+    "waitSeq": 3,
+    "runtimeCloseMs": 214,
+    "gatewayWait": {
+      "status": 503,
+      "body": {
+        "error": {
+          "code": "SERVICE_CLOSING"
+        }
+      }
+    },
+    "accessCloseMs": 3,
+    "ms": 135,
+    "exitCode": 0
+  },
+  {
+    "version": "head",
+    "method": "access-first",
+    "pendingWaitRequests": 1,
+    "gatewayCreated": 201,
+    "waitSeq": 3,
+    "accessCloseMs": 3,
+    "runtimeCloseMs": 217,
+    "gatewayWait": {
+      "status": 503,
+      "body": {
+        "error": {
+          "code": "SERVICE_CLOSING"
+        }
+      }
+    },
+    "ms": 143,
+    "exitCode": 0
+  }
+]

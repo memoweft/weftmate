@@ -49,8 +49,8 @@ const mobileEffects = {
   nativeCall: (...args) => call(...args),
   foregroundRestored: async () => {
     if(!state.loggedIn)return;
-    if(['chat','home'].includes(state.page))await listSharedSessions();
-    if(state.page==='chat'&&state.chatSource==='host'){await loadSharedHistory();await uiCore.refreshConversationFacts(true);scheduleSharedPoll();}
+    if(state.page==='chat'&&state.chatSource==='host'){await Promise.all([loadSharedHistory(),uiCore.refreshConversationFacts(true),listSharedSessions()]);scheduleSharedPoll();}
+    else if(['chat','home'].includes(state.page))await listSharedSessions();
     else if(state.page==='activity')await uiCore.refreshActivity();
     else if(state.page==='goals')await uiCore.readGoals();
     else if(state.page==='library')await uiCore.readLibrary();
@@ -104,6 +104,14 @@ function startMobileConnection() {
     await globalThis.WeftMobileCloud.core?.offlineConnectionRestored?.();
   });
 }
+// A verified recovery can come from status or another reachable host read.
+// Resume the stopped body timer once per transition and retain its retry floor.
+let previousConnectionKind = uiCore.connectionView().kind;
+uiCore.observeConnection(view => {
+  const recovered = view.kind === 'online' && previousConnectionKind !== 'online';
+  previousConnectionKind = view.kind;
+  if (recovered && state.chatSource === 'host' && state.page === 'chat') scheduleSharedPoll();
+});
 let mobileNextSuggestions = null;
 const mobileMessageActions = globalThis.WeftMessageActions?.create({core:uiCore, draft:()=>$('draft'),
   selectSession:async id=>{await listSharedSessions();await selectSharedSession(id)},

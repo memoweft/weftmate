@@ -1,0 +1,57 @@
+[
+  {
+    "name": "probe-race",
+    "code": 0,
+    "ms": 114
+  },
+  {
+    "name": "probe-http-race",
+    "code": 0,
+    "ms": 4640
+  },
+  {
+    "name": "probe-server",
+    "code": 0,
+    "ms": 2959
+  },
+  {
+    "name": "probe-gateway",
+    "code": 0,
+    "ms": 775
+  },
+  {
+    "name": "probe-browser",
+    "code": 0,
+    "ms": 123104
+  },
+  {
+    "name": "probe-desktop-errors",
+    "code": 0,
+    "ms": 53042
+  },
+  {
+    "name": "probe-latency",
+    "code": 0,
+    "ms": 12555
+  },
+  {
+    "name": "probe-exit",
+    "code": 0,
+    "ms": 85853
+  },
+  {
+    "name": "probe-events",
+    "code": 0,
+    "ms": 2994
+  },
+  {
+    "name": "probe-auth",
+    "code": 0,
+    "ms": 5625
+  },
+  {
+    "name": "probe-compat",
+    "code": 0,
+    "ms": 8145
+  }
+]

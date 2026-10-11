@@ -18,6 +18,15 @@ const searchable = type => ['user.message', 'assistant.message', 'side.result'].
 export function createChatTimeline(context) {
   const secret = randomBytes(32), indexes = new Map(), jobs = new Set(), segmentGroups = new WeakMap();
   let closed = false;
+  const snapshots = new WeakMap(), waiters = new Set();
+  function wakeIndex(index) {
+    for (const waiter of waiters) if (waiter.index === index) waiter.wake();
+  }
+  function bindSnapshot(index, result) {
+    snapshots.set(result, { index, revision: index.revision, liveRevision: index.liveRevision,
+      native: [...index.live].map(([sessionId, row]) => ({ sessionId, seq: row.seq })) });
+    return result;
+  }
   function token(index, kind, position, filter = '') {
     const body = Buffer.from(JSON.stringify([index.ownerId, index.chatId, index.generation, kind, position, filter])).toString('base64url');
     return `${body}.${createHmac('sha256', secret).update(body).digest('base64url')}`;
@@ -76,6 +85,7 @@ export function createChatTimeline(context) {
       index.ordered.splice(lo, 0, row);
     } else index.ordered[index.ordered.indexOf(old)] = row;
     index.changes.push({ revision: ++index.revision, eventId });
+    wakeIndex(index);
   }
   async function read(index, segment, options) {
     if (closed || context.accountState(index.ownerId).chatIdentity.segments[segment.segmentId]?.chatId !== index.chatId) return null;
@@ -85,7 +95,10 @@ export function createChatTimeline(context) {
     for (const event of page.events) put(index, segment, event);
     if (options.beforeSeq === undefined) {
       const events=context.publicLiveEvents?.(index.ownerId,segment.sessionId,page.liveEvents ?? []) ?? [];
-      if(JSON.stringify(index.live.get(segment.sessionId)?.events??[])!==JSON.stringify(events))index.liveRevision++;
+      if (JSON.stringify(index.live.get(segment.sessionId)?.events ?? []) !== JSON.stringify(events)) {
+        index.liveRevision++;
+        wakeIndex(index);
+      }
       index.live.set(segment.sessionId,{segment,events,seq:page.liveSeq??page.nextSeq});
     }
     return page;
@@ -231,12 +244,48 @@ export function createChatTimeline(context) {
       const index = current(ownerId, chatId);
       return serial(index, async () => { await seed(index); await refresh(index); return index.ordered.findLast(row => !row.product)?.orderKey ?? '!'; });
     },
-    async waitForChange(ownerId,chatId,revision,timeoutMs,signal){
-      const index=current(ownerId,chatId),controller=new AbortController(),abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});
-      const timer=setTimeout(abort,timeoutMs);
-      try {await Promise.race([context.waitAccountChange(revision,controller.signal),
-        ...[...index.live].map(([sessionId,row])=>context.backend.waitForEvents({sessionId,seq:row.seq,timeoutMs,signal:controller.signal}))]);}
-      finally{clearTimeout(timer);controller.abort();signal?.removeEventListener('abort',abort);}
+    async waitForChange(ownerId, chatId, revision, timeoutMs, signal, responseSnapshot) {
+      // Register cancellation before inspecting any asynchronous source.
+      if (signal?.aborted) return 'cancelled';
+      if (closed || context.closingSignal?.aborted) throw failure('SERVICE_CLOSING', 503);
+      const controller = new AbortController();
+      const abort = () => controller.abort();
+      signal?.addEventListener('abort', abort, { once: true });
+      context.closingSignal?.addEventListener('abort', abort, { once: true });
+      let timer, waiter;
+      try {
+        // Bind native watermarks to this response, never to another reader.
+        const index = current(ownerId, chatId);
+        const snapshot = snapshots.get(responseSnapshot);
+        let release;
+        const changed = new Promise(resolve => { release = resolve; });
+        waiter = { index, wake: () => release('changed') };
+        waiters.add(waiter);
+        // Recheck after registration so index advancement cannot be missed.
+        // Without a bound response, requery instead of borrowing a global
+        // watermark advanced by another caller (legacy in-process callers).
+        if (!snapshot || snapshot.index !== index || index.retired || snapshot.revision !== index.revision ||
+            snapshot.liveRevision !== index.liveRevision) return 'changed';
+        if (signal?.aborted) return 'cancelled';
+        const native = snapshot.native;
+        const cancelled = new Promise(resolve => controller.signal.addEventListener('abort', () => resolve('cancelled'), { once: true }));
+        // Wait on account commits, native facts, index advancement and timeout.
+        const timeout = new Promise(resolve => { timer = setTimeout(() => resolve('timeout'), timeoutMs); });
+        const result = await Promise.race([changed, timeout, cancelled,
+          context.waitAccountChange(revision, controller.signal).then(() => 'changed'),
+          ...native.map(({ sessionId, seq }) => context.backend.waitForEvents({ sessionId, seq,
+            timeoutMs, signal: controller.signal }).then(() => 'changed'))]);
+        // Closing is a protocol result; client disconnect is cancellation.
+        if (closed || context.closingSignal?.aborted) throw failure('SERVICE_CLOSING', 503);
+        return signal?.aborted ? 'cancelled' : result;
+      } finally {
+        // Abort losing sources and remove all registrations on every exit.
+        clearTimeout(timer);
+        if (waiter) waiters.delete(waiter);
+        controller.abort();
+        signal?.removeEventListener('abort', abort);
+        context.closingSignal?.removeEventListener('abort', abort);
+      }
     },
     async query(ownerId, chatId, action, params) {
       const keys = { events: ['before','after','around','limit'], changes: ['cursor','limit'],
@@ -263,10 +312,10 @@ export function createChatTimeline(context) {
           const since = decode(index, params.get('cursor'), 'sync');
           const changes = index.changes.slice(since, since + limit);
           const ids = [...new Set(changes.map(row => row.eventId))];
-          return { upserts: await hydrate(index, ids.map(id => index.rows.get(id)).filter(Boolean)), liveEvents: liveEvents(index), liveRevision: index.liveRevision,
+          return bindSnapshot(index, { upserts: await hydrate(index, ids.map(id => index.rows.get(id)).filter(Boolean)), liveEvents: liveEvents(index), liveRevision: index.liveRevision,
             removals: changes.filter(row => row.reason).map(({ eventId, revision, reason }) => ({ eventId, revision, reason })),
             nextCursor: token(index, 'sync', changes.at(-1)?.revision ?? index.revision),
-            hasMore: (changes.at(-1)?.revision ?? index.revision) < index.revision || [...index.segments.values()].some(s => s.more), ...info(index) };
+            hasMore: (changes.at(-1)?.revision ?? index.revision) < index.revision || [...index.segments.values()].some(s => s.more), ...info(index) });
         }
         if (action === 'dates' || action === 'locate') {
           const from = params.get(action === 'locate' ? 'date' : 'from'), to = action === 'locate' ? from : params.get('to');
@@ -309,6 +358,7 @@ export function createChatTimeline(context) {
       index.ordered = index.ordered.filter(row => !index.removed.has(row.eventId));
     },
     invalidate(ownerId, chatId) { context.chats.invalidateSearch?.(ownerId); segmentGroups.delete(context.accountState(ownerId).chatIdentity.segments); const key = `${ownerId}/${chatId}`; const index = indexes.get(key); if (index) { index.retired = true; index.live.clear(); } indexes.delete(key); },
-    async close() { closed = true; await Promise.all([...jobs, ...[...indexes.values()].map(index => index.queue)]); indexes.clear(); },
+    cancelWaits() { closed = true; for (const waiter of waiters) waiter.wake(); },
+    async close() { this.cancelWaits(); await Promise.all([...jobs, ...[...indexes.values()].map(index => index.queue)]); indexes.clear(); },
   };
 }

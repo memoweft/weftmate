@@ -108,9 +108,15 @@ async function mobileSessionProjects(session) {
 /* Mobile sessions presentation and named ui-core actions. */
 function stopSharedPoll(){clearTimeout(state.sharedPollTimer);state.sharedPollTimer=null;uiCore.historyWaitAbort?.abort()}
 
-function scheduleSharedPoll(){stopSharedPoll();if(state.chatSource!=='host'||state.page!=='chat'||document.visibilityState==='hidden'||!uiCore.state.online)return;
-  state.sharedPollTimer=setTimeout(async()=>{if(state.chatSource!=='host'||state.page!=='chat')return;
-    await loadSharedHistory(true);if(state.chatSource==='host')scheduleSharedPoll()},uiCore.state.personalCapabilities?.replyStreaming===1 && (state.sharedRunning||uiCore.mainReplyActive?.()||state.sharedPending||uiCore.state.submitting)?uiCore.polling.stream:uiCore.inMainChat?.()&&uiCore.canWaitForReply()?0:uiCore.state.personalCapabilities?.replyStreaming===1?uiCore.polling.idle:uiCore.polling.legacy)}
+function scheduleSharedPoll(result) {
+  stopSharedPoll();
+  if (state.chatSource !== 'host' || state.page !== 'chat' || document.visibilityState === 'hidden' || !uiCore.state.online) return;
+  state.sharedPollTimer = setTimeout(async () => {
+    if (state.chatSource !== 'host' || state.page !== 'chat') return;
+    const outcome = await loadSharedHistory(true);
+    if (state.chatSource === 'host') scheduleSharedPoll(outcome);
+  }, uiCore.historyPollDelay(result));
+}
 
 function selectSharedSession(sessionId){uiCore.cancelNextSuggestions?.();if(!state.sharedSessions.some(item=>item.sessionId===sessionId))return;
   uiCore.syncMobileIdentity();void uiCore.updateSession(sessionId,{unread:false}).catch(error=>toast(safeError(error),true));

@@ -96,6 +96,9 @@ const bootSnapshot = async (entries) => {
   const requestShutdown = (code) => {
     if (shutdownPromise !== undefined) return shutdownPromise
     shutdownPromise = Promise.resolve().then(async () => {
+      // Finish protocol shutdown responses while Cordis' web server still owns
+      // its sockets. Generic fiber disposal may stop that listener first.
+      await app.current?.get('weftmateRuntime')?.close?.()
       await app.current?.fiber.dispose()
       await removeRoot()
       process.exitCode = code

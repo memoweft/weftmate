@@ -241,12 +241,24 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
                 void core.refreshAssistantOverview();
         }, core.polling.overview);
         let lastLiveRead=0;
+        let ownedLiveTimer;
+        const readLive = () => {
+            lastLiveRead = Date.now();
+            void core.refreshLiveConversation().then(result => {
+                // A normal long wait renews without an idle gap. The timer
+                // identity prevents a stopped/replaced loop from renewing.
+                if (result?.immediateRenew && ['changed','unchanged'].includes(result.kind) &&
+                    core.state.liveRefreshTimer === ownedLiveTimer && core.foreground() &&
+                    document.visibilityState === 'visible' && core.state.currentView === 'assistant') readLive();
+            }).catch(() => {});
+        };
         core.state.liveRefreshTimer = setInterval(() => {
-            if (document.visibilityState === 'visible' && core.foreground() && core.state.currentView === 'assistant' && !ui.byId('conversation-pane').hidden && (core.state.personalCapabilities?.replyStreaming===1 && (core.mainReplyActive?.() || core.state.turnStatus==='running' || (core.state.selectedChatId||core.state.selectedSessionId)&&Date.now()-lastLiveRead>=core.polling.idle) || core.state.unresolvedSubmission ||
+            if (document.visibilityState === 'visible' && core.foreground() && core.historyReadAllowed() && core.state.currentView === 'assistant' && !ui.byId('conversation-pane').hidden && (core.state.personalCapabilities?.replyStreaming===1 && (core.mainReplyActive?.() || core.state.turnStatus==='running' || (core.state.selectedChatId||core.state.selectedSessionId)&&Date.now()-lastLiveRead>=core.polling.idle) || core.state.unresolvedSubmission ||
                 core.state.submitting || core.conversationRunning(core.state.selectedSessionId) ||
                 core.optimisticMessages().some(row => ['sending', 'accepted'].includes(row.status))))
-                {lastLiveRead=Date.now();void core.refreshLiveConversation().catch(() => {});}
+                readLive();
         }, core.polling.stream);
+        ownedLiveTimer = core.state.liveRefreshTimer;
     }
     function showRegistration() {
         ui.byId('setup-title').textContent = core.state.setupGrant ? '设置这台电脑的原账户' : '注册新账户';

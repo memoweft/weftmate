@@ -170,7 +170,12 @@ export async function startTimelineCandidate(options = {}) {
     if (method === 'clipboard.copy') return {}
     if (method === 'conversations.list') return { conversations: [] }
     if (method === 'models.list') return { models: [] }
-    if (method === 'models.host') return { models: [{ profileId: 'local', displayName: '合成会话', configured: true, ...(options.composerMenu?{deepThinking:{supported:true,effort:'high'}}:{}) }] }
+    if (method === 'models.host') {
+      // Match the real native bridge: each model refresh reads the host catalog.
+      const {models} = await request('/models');
+      return {models:models.map(({id,name,...model})=>({...model,profileId:id,displayName:name,
+        ...(options.composerMenu?{deepThinking:{supported:true,effort:'high'}}:{})}))};
+    }
     if (method === 'shared.sessions.list') return { source: 'host', hostAvailable: true, sessions: (await request('/sessions')).sessions.map(row=>({...row,source:'host'})) }
     if (options.sidebar && method === 'shared.projects.list') return request('/projects');
     if (options.sidebar && method === 'shared.sessions.lifecycle') return request(`/sessions/${params.sessionId}/${params.action}`, {});
