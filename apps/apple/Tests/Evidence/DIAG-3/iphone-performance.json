@@ -1,0 +1,35 @@
+{
+  "method" : "Same final Debug app; synthetic About, three isolated launches with logging disabled\/enabled. XCTest launch overhead included; termination is forced by XCTest, not an iOS normal exit callback.",
+  "runs" : [
+    {
+      "forcedTerminationMs" : 1071.349024772644,
+      "launchToAboutReadyMs" : 6296.8399524688721,
+      "logging" : false
+    },
+    {
+      "forcedTerminationMs" : 1064.2160177230835,
+      "launchToAboutReadyMs" : 6069.1390037536621,
+      "logging" : false
+    },
+    {
+      "forcedTerminationMs" : 1069.3299770355225,
+      "launchToAboutReadyMs" : 5906.425952911377,
+      "logging" : false
+    },
+    {
+      "forcedTerminationMs" : 1094.6340560913086,
+      "launchToAboutReadyMs" : 5909.9199771881104,
+      "logging" : true
+    },
+    {
+      "forcedTerminationMs" : 1061.0010623931885,
+      "launchToAboutReadyMs" : 5974.835991859436,
+      "logging" : true
+    },
+    {
+      "forcedTerminationMs" : 1063.3019208908081,
+      "launchToAboutReadyMs" : 6036.6650819778442,
+      "logging" : true
+    }
+  ]
+}

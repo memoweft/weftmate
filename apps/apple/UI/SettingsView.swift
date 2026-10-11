@@ -129,6 +129,7 @@ private struct SettingsCategoryView: View {
     let route: AppleSettingsRoute
     let openConversation: @MainActor (String) -> Void
     @State private var legal: LegalDocument?
+    @State private var runLogOpen = false
     @State private var deletingSchedule: ManagedSchedule?
     @State private var restoringBackup: HostBackup?
     @State private var restartingService: HostService?
@@ -160,6 +161,11 @@ private struct SettingsCategoryView: View {
                 }
                 #endif
             }
+            #if os(iOS)
+            .fullScreenCover(isPresented: $runLogOpen) { RunLogView(onClose: { runLogOpen = false }) }
+            #else
+            .sheet(isPresented: $runLogOpen) { RunLogView(onClose: { runLogOpen = false }) }
+            #endif
             .sheet(item: $legal) { LegalDocumentView(document: $0) }
             .confirmationDialog("删除这条提醒或定时任务？已启动的任务和历史记录保留。", isPresented: Binding(get: { deletingSchedule != nil }, set: { if !$0 { deletingSchedule = nil } }), titleVisibility: .visible) {
                 Button("删除", role: .destructive) { if let item = deletingSchedule { Task { await settings.schedule(item, action: .delete) } }; deletingSchedule = nil }
@@ -335,6 +341,7 @@ private struct SettingsCategoryView: View {
             }
             Button("刷新备份") { Task { await settings.refresh("backups") } }.disabled(settings.busy)
         case "about":
+            Button { runLogOpen = true } label: { WeftLabel("运行记录", icon: "info") }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("openRunLog")
             SettingsRow("App 版本", "当前安装的 WeftMate 版本与 build。") {
                 Text("\(settings.installedVersion) / \(settings.installedBuild)").accessibilityIdentifier("aboutNativeVersion")
             }

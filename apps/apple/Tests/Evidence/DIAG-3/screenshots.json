@@ -1,0 +1,107 @@
+{
+  "captures": [
+    {
+      "name": "iphone-banner-dark.png",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "name": "iphone-banner-light.png",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "name": "iphone-empty-dark.png",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "name": "iphone-empty-light.png",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "name": "iphone-read-failure-dark.png",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "name": "iphone-read-failure-light.png",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "name": "iphone-records-dark.png",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "name": "iphone-records-light.png",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "name": "mac-empty-dark-diag3-records.png",
+      "width": 1126,
+      "height": 857
+    },
+    {
+      "name": "mac-empty-light-diag3-records.png",
+      "width": 1126,
+      "height": 857
+    },
+    {
+      "name": "mac-normal-dark-diag3-records.png",
+      "width": 1126,
+      "height": 857
+    },
+    {
+      "name": "mac-normal-light-diag3-records.png",
+      "width": 1126,
+      "height": 857
+    },
+    {
+      "name": "mac-read-failure-dark-diag3-records.png",
+      "width": 1126,
+      "height": 857
+    },
+    {
+      "name": "mac-read-failure-light-diag3-records.png",
+      "width": 1126,
+      "height": 857
+    },
+    {
+      "name": "mac-records-dark-diag3-banner.png",
+      "width": 1126,
+      "height": 857
+    },
+    {
+      "name": "mac-records-dark-diag3-records.png",
+      "width": 1126,
+      "height": 857
+    },
+    {
+      "name": "mac-records-light-diag3-banner.png",
+      "width": 1126,
+      "height": 857
+    },
+    {
+      "name": "mac-records-light-diag3-records.png",
+      "width": 1126,
+      "height": 857
+    }
+  ],
+  "iphoneFullScreen": true,
+  "macOwnWindowsWithTitlebar": true,
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "states": [
+    "empty",
+    "records",
+    "read_failure",
+    "previous_unclean_notice"
+  ],
+  "review": "Native controls, generated icon assets, AppleTokens spacing/color; human date text without seconds. JSON/file preview intentionally preserves source ISO timestamps. All contents synthetic; failure attempts excluded from final list."
+}

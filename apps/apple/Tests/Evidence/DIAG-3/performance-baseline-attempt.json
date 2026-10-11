@@ -1,0 +1,22 @@
+{
+  "measurement": "Identical synthetic About page, app own window capture; includes fixed stabilization delay and screenshot work. Not pure first-frame or user-quit latency.",
+  "runs": [
+    {
+      "launchToCapturedWindowMs": 1888.37,
+      "captureToProcessExitMs": 0.0,
+      "exitCode": 1
+    },
+    {
+      "launchToCapturedWindowMs": 1262.21,
+      "captureToProcessExitMs": 0.0,
+      "exitCode": 1
+    },
+    {
+      "launchToCapturedWindowMs": 1249.04,
+      "captureToProcessExitMs": 0.0,
+      "exitCode": 1
+    }
+  ],
+  "validComparison": false,
+  "reason": "Legacy About capture authentication fixture returned INVALID_RESPONSE before reaching UI; exit=1. These attempts are not counted as startup/exit benchmarks."
+}
