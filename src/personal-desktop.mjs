@@ -6,9 +6,9 @@ import { quoteWindowsLoginArgs, loginItemEnabled } from './desktop-autostart.mjs
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
 import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage, dialog, clipboard } from 'electron';
 import { folderWarning } from './personal-projects/folder-choice.mjs';
-import { stat, realpath } from 'node:fs/promises';
+import { stat, realpath, readFile } from 'node:fs/promises';
 import { hostName } from './host-name.mjs';
-import { createHash, X509Certificate } from 'node:crypto';
+import { createHash, X509Certificate, randomUUID } from 'node:crypto';
 import { desktopAuthStorage } from './personal-desktop-auth.mjs';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -17,14 +17,20 @@ import { join, basename } from 'node:path';
 import { validArtifactFileName } from './personal-artifacts/index.mjs';
 import { windowIcon, notificationIcon } from './app-icons.mjs';
 import { nativeEventNotification } from './personal-access/notification-content.mjs';
+import { createWindowsSendTo, windowsApprovalNotification, actOnWindowsApproval } from './windows-system-integration.mjs';
 
 export function desktopNotification(event, taskTitle) {
+  if (process.platform === 'win32' && event.type === 'approval.requested') {
+    const { title, body } = windowsApprovalNotification({ ...event.data, status: 'pending' });
+    return { title, body };
+  }
   return nativeEventNotification(event, taskTitle);
 }
 
 export function desktopNotificationOptions(event, taskTitle) {
   const message = desktopNotification(event, taskTitle);
-  return message && { ...message, icon: notificationIcon };
+  return message && { ...message, icon: notificationIcon,
+    ...(process.platform === 'win32' && event.type === 'approval.requested' ? { actions: [{ type: 'button', text: '查看' }] } : {}) };
 }
 
 export function restoreDesktopBounds(saved, displays) {
@@ -112,9 +118,12 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
     ...process.argv.filter(arg => /^--(?:desktop-config|access-port|workspace-dir|public-origin|personal-memory-config|local-model-config|android-package-path|mobile-ui-dir)=/.test(arg) || arg === '--trust-loopback-proxy'),
   ];
   const loginOptions = { path: process.execPath, args: process.platform === 'win32' ? quoteWindowsLoginArgs(loginArgs) : loginArgs, name: packageInfo.desktopIdentity || 'WeftMate' };
-  const settings = () => ({ version: packageInfo.version, autoStart: loginItemEnabled(app.getLoginItemSettings(loginOptions), loginOptions.name, loginOptions.path),
+  const sendToRegistration = createWindowsSendTo({ appId: packageInfo.desktopAppId || 'com.memoweft.weftmate', executable: process.execPath,
+    args: app.isPackaged ? [] : [app.getAppPath(), ...loginArgs.slice(1).filter(arg => arg !== '--start-in-tray')] });
+  const settings = () => ({ version: packageInfo.version, sendToSupported: process.platform === 'win32', sendToEnabled: sendToRegistration.enabled(), autoStart: loginItemEnabled(app.getLoginItemSettings(loginOptions), loginOptions.name, loginOptions.path),
     autoStartSupported: process.platform === 'win32' || process.platform === 'darwin' });
   handle('wm:desktop:settings', settings);
+  handle('wm:desktop:send-to-setting', async enabled => { await jsonLocal('/auth/me'); sendToRegistration.setEnabled(enabled === true); return settings(); });
   handle('wm:desktop:notification-permission', async () => {
     await jsonLocal('/auth/me');
     if(!Notification.isSupported())return {enabled:false};
@@ -128,6 +137,32 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
   });
   handle('wm:desktop:capture-region', async () => { await jsonLocal('/auth/me'); return captureScreenRegion(win); });
   const selectedFolders = new Map();
+  const pendingSendTo = [];
+  const sendTo = paths => {
+    if (process.platform !== 'win32') return;
+    for (const path of paths) if (!pendingSendTo.includes(path)) pendingSendTo.push(path);
+    show();
+    if (clientReady) win.webContents.send('wm:desktop:send-to');
+  };
+  handle('wm:desktop:take-send-to', async () => {
+    if (!pendingSendTo.length) return { files: [], folders: [], failed: 0 };
+    const auth = await jsonLocal('/auth/me');
+    if (contentOrigin !== origin) throw new Error('SEND_TO_LOCAL_HOST_REQUIRED');
+    const paths = pendingSendTo.splice(0), files = [], folders = [];
+    let failed = 0;
+    for (const path of paths) {
+      try {
+        const info = await stat(path);
+        if (info.isDirectory()) { selectedFolders.set(path, auth.account.ownerId); folders.push(path); }
+        else if (info.isFile() && info.size > 0 && info.size <= 1024 ** 3 && files.length < 4) {
+          files.push({ name: basename(path), bytes: new Uint8Array(await readFile(path)), lastModified: info.mtimeMs });
+        } else failed++;
+      } catch { failed++; }
+    }
+    const current = await jsonLocal('/auth/me');
+    if (current.account.ownerId !== auth.account.ownerId) { pendingSendTo.unshift(...paths); throw new Error('ACCOUNT_CHANGED'); }
+    return { files, folders, failed };
+  });
   handle('wm:desktop:project-folder', async () => {
     const initialAuth = await jsonLocal('/auth/me'), initialOwner = initialAuth.ownerId || initialAuth.account?.ownerId;
     if (contentOrigin !== origin) throw new Error('Desktop project registration unavailable');
@@ -343,12 +378,49 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
   try { activityNotified = new Set(JSON.parse(readFileSync(activityNotifiedFile, 'utf8'))); } catch { activityNotified = new Set(); }
   const activityNotifications = new Map();
   let activityCursor = null;
+  async function approvalFor(item) {
+    const target = item.actions?.find(action => action.kind === 'respond_approval')?.target;
+    if (!target?.approvalId || !target.sessionId) return null;
+    const page = await jsonLocal(`/sessions/${encodeURIComponent(target.sessionId)}/approvals`);
+    return page.approvals?.find(row => row.approvalId === target.approvalId) || null;
+  }
+  function bindWindowsApproval(notification, item, original, identity) {
+    let acting = false;
+    notification.on('action', async (event, legacyIndex) => {
+      if (acting) return;
+      acting = true;
+      const open = () => show({ sessionId: original.sessionId, approvalId: original.approvalId });
+      try {
+        const me = await jsonLocal('/auth/me');
+        if (contentOrigin !== origin || `${me.account?.ownerId}:${me.device?.id}` !== identity) throw new Error('ACCOUNT_CHANGED');
+        const result = await actOnWindowsApproval({ index: event.actionIndex ?? legacyIndex, original, open,
+          read: () => approvalFor(item), decide: async outcome => {
+            const requestId = randomUUID();
+            const response = await fetchLocal(`/sessions/${encodeURIComponent(original.sessionId)}/approvals/${encodeURIComponent(original.approvalId)}`, {
+              method: 'POST', headers: { origin: contentOrigin, 'content-type': 'application/json', 'x-weftmate-csrf': me.csrfToken },
+              body: JSON.stringify({ requestId, outcome }) });
+            const receipt = await response.json();
+            if (!response.ok || receipt.requestId !== requestId || receipt.approval?.decisionOutcome !== outcome) throw new Error('APPROVAL_UNCONFIRMED');
+          } });
+        if (result?.viewed || !result) return;
+        notification.close();
+        const feedback = new Notification({ title: result.title, body: result.body, icon: notificationIcon, silent: true });
+        notifications.add(feedback); feedback.on('click', open); feedback.on('close', () => notifications.delete(feedback)); feedback.show();
+        app.emit('weftmate-windows-approval-result', { approvalId: original.approvalId, ...result });
+      } catch {
+        notification.close();
+        const feedback = new Notification({ title: '审批尚未确认', body: '请打开对话核对后重试', icon: notificationIcon, actions: [{ type: 'button', text: '查看' }], silent: true });
+        notifications.add(feedback); feedback.on('click', open); feedback.on('action', open); feedback.on('close', () => notifications.delete(feedback)); feedback.show();
+      } finally { acting = false; }
+    });
+  }
   async function pollActivity(me) {
     const page = await jsonLocal(`/activity?filter=unread&limit=200`);
     if (activityCursor) {
       try {
         const delta = await jsonLocal(`/activity/changes?cursor=${encodeURIComponent(activityCursor)}&limit=200`);
         for (const id of delta.removals) { activityNotifications.get(id)?.close(); activityNotifications.delete(id); }
+        for (const item of delta.upserts || []) if (item.type === 'approval.pending' && item.state !== 'pending') { activityNotifications.get(item.id)?.close(); activityNotifications.delete(item.id); }
         activityCursor = delta.nextCursor;
       } catch { activityCursor = page.syncCursor; }
     } else activityCursor = page.syncCursor;
@@ -357,11 +429,16 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
       for (const item of current.items) {
         const key = `${me.account?.ownerId}:${item.id}`;
         if (activityNotified.has(key) || item.notification.notify === false || item.notification.level === 'silent' || stopped || !Notification.isSupported()) continue;
-        const notification = new Notification({ title: item.notification.title ?? item.title, body: item.notification.body ?? item.summary, icon: notificationIcon,
+        const approval = process.platform === 'win32' && item.type === 'approval.pending' && item.state === 'pending' ? await approvalFor(item) : null;
+        if (process.platform === 'win32' && item.type === 'approval.pending' && !approval) continue;
+        const presentation = approval ? windowsApprovalNotification(approval) : null;
+        const notification = new Notification({ title: presentation?.title ?? item.notification.title ?? item.title, body: presentation?.body ?? item.notification.body ?? item.summary,
+          ...(presentation ? { actions: presentation.actions } : {}), icon: notificationIcon,
           silent: typeof item.notification.sound === 'boolean' ? !item.notification.sound : item.notification.level !== 'important' });
+        if (approval) bindWindowsApproval(notification, item, approval, `${me.account?.ownerId}:${me.device?.id}`);
         notifications.add(notification); activityNotifications.set(item.id, notification);
-        notification.on('click', () => show({ activityId: item.id, sessionId: item.source.sessionId }));
-        notification.on('close', () => { notifications.delete(notification); if (activityNotifications.get(item.id) === notification) activityNotifications.delete(item.id); });
+        notification.on('click', () => show(approval ? { sessionId: approval.sessionId, approvalId: approval.approvalId } : { activityId: item.id, sessionId: item.source.sessionId }));
+        notification.on('close', () => { notifications.delete(notification); if (!approval && activityNotifications.get(item.id) === notification) activityNotifications.delete(item.id); });
         const legacyType = { 'reminder.triggered':'assistant.message', 'approval.pending':'approval.requested', 'question.pending':'question.asked', 'task.completed':'turn.ended' }[item.type] ?? item.type;
         const event = { sessionId: item.source.sessionId, type: legacyType, activityType: item.type, activityId: item.id, attentionRevision: item.attentionRevision };
         notification.on('show', () => app.emit('weftmate-desktop-notification-shown', event));
@@ -379,7 +456,7 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
       if (!meResponse.ok) throw new Error('Session unavailable');
       const me = await meResponse.json();
       const identity = `${me.account?.ownerId}:${me.device?.id}`;
-      if (ownerId !== identity) { ownerId = identity; watermarks.clear(); initialized = false; activityCursor = null; for (const notification of notifications) notification.close(); }
+      if (ownerId !== identity) { ownerId = identity; watermarks.clear(); initialized = false; activityCursor = null; for (const notification of notifications) notification.close(); for (const notification of activityNotifications.values()) notification.close(); activityNotifications.clear(); }
       const capabilityStatus = await jsonLocal('/status');
       if (capabilityStatus.personalCapabilities?.activityNotification === 1) {
         await pollActivity(me);
@@ -404,6 +481,7 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
             const notification = new Notification(desktopNotificationOptions(event, row.title));
             notifications.add(notification);
             notification.on('click', () => show(row.sessionId));
+            if (process.platform === 'win32' && event.type === 'approval.requested') notification.on('action', () => show(row.sessionId));
             notification.on('close', () => notifications.delete(notification));
             notification.on('show', () => app.emit('weftmate-desktop-notification-shown', { sessionId: row.sessionId, type: event.type }));
             notification.show();
@@ -427,11 +505,13 @@ export function createPersonalDesktop({ dataManager = null, libraryDesktopToken 
   }
   void poll();
   const ready = win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : '')).then(() => { if (!startInTray) show(); });
-  return { window: win, show, ready, async close() {
+  return { window: win, show, sendTo, ready, async close() {
     stopped = true; clearTimeout(timer);
     for (const notification of notifications) notification.close();
+    for (const notification of activityNotifications.values()) notification.close(); activityNotifications.clear();
     nativeTheme.removeListener('updated', updatePalette);
     ipcMain.removeHandler('wm:desktop:conversation-export');
+    ipcMain.removeHandler('wm:desktop:take-send-to'); ipcMain.removeHandler('wm:desktop:send-to-setting');
     for(const channel of ['wm:desktop:data-export','wm:desktop:data-status','wm:desktop:data-show-export'])ipcMain.removeHandler(channel);
     for (const request of networkRequests.values()) request.abort();
     for (const channel of ['wm:desktop:notification-permission','wm:desktop:notification-settings','wm:desktop:capture-region', 'wm:desktop:clipboard-image', 'wm:desktop:project-choice', 'wm:desktop:project-create', 'wm:desktop:project-info', 'wm:desktop:project-show', 'wm:desktop:project-drop', 'wm:desktop:project-folder', 'wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);

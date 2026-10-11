@@ -105,6 +105,17 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
     }
     function mountComposer() {
         folderChoice=globalThis.WeftFolderChoice.create(core,{form:ui.byId('message-form'),tools:ui.byId('attachment-add').parentElement,toast:ui.toast,readDraft:ui.readMessageDraft});
+        ui.receiveWindowsSendTo = async payload => {
+            if (core.state.currentView !== 'assistant') await core.enterAssistant();
+            document.dispatchEvent(new CustomEvent('weftmate:fixed-page',{detail:'conversation'}));
+            ui.showConversation();
+            if(core.state.activeChatSource !== 'desktop')await core.startNewConversation();
+            if (payload.folders.length) await folderChoice.receivePath(payload.folders[0]);
+            if (payload.files.length) core.addAttachmentFiles(payload.files.map(file => new File([file.bytes], file.name, {lastModified:file.lastModified})));
+            if (payload.failed) ui.toast('部分文件未添加，请检查文件是否可读；每次最多添加 4 个附件。');
+            if (payload.folders.length > 1) ui.toast('已选择第一个文件夹，其余文件夹可以稍后添加。');
+            ui.byId('message-text').focus();
+        };
         ui.paintFolderChoice=folderChoice.paint;
         ui.nextSuggestions = globalThis.WeftNextSuggestionsView?.mount(core, {
             field:ui.byId('message-text'), area:ui.byId('message-form').parentElement,

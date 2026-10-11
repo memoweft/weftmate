@@ -19,7 +19,7 @@
     const permission=project=>project.permission==='write'?'可读写':'只读';
     const error=err=>err?.code==='SESSION_BUSY'?'请等当前操作结束后再换文件夹':core.failureMessage?.(err)||'文件夹未选择，请重试';
     function menu(trigger, entries) {popup?.close(false);popup=WeftPopover.openMenu(trigger,entries,{label:trigger.getAttribute('aria-label')});}
-    async function select(project) {try{if(onboarding)core.rememberFolder(project?.projectId||null);else await core.chooseFolderProject(project);paint();return true;}catch(err){toast(error(err));return false;}}
+    async function select(project, newConversation = false) {try{if(onboarding)core.rememberFolder(project?.projectId||null);else if(newConversation){const sessionId=await core.createProjectConversation(project,core.state.modelProfileId || core.state.models[0]?.id);await core.refreshSessions();if(sessionId)await core.selectSession(sessionId);}else await core.chooseFolderProject(project);paint();return true;}catch(err){toast(error(err));return false;}}
     async function open(trigger=choose) {
       if(blocked())return;
       const token=scope();
@@ -39,18 +39,23 @@
         menu(trigger,entries);
       } catch(err) {if(token===scope())menu(trigger,[{name:'文件夹暂时无法读取',icon:'warn',disabled:true},{name:'重试',icon:'refresh',action:()=>open(trigger)}]);}
     }
-    async function picked(path, token) {
+    async function picked(path, token, fromExplorer = false) {
       if(!path||token!==scope())return;
       const choice=await native.inspectProjectFolder(path);if(token!==scope())return;
-      if(choice.project)return select(choice.project);
-      confirm(choice,token);
+      if(choice.project)return select(choice.project,fromExplorer);
+      if(fromExplorer && !choice.warning) {
+        const result=await core.registerFolderChoice(fields=>native.createFolderProject(fields),{requestId:crypto.randomUUID(),name:choice.name,rootPath:choice.rootPath,permission:'read-only'});
+        if(token===scope() && result) return select(result.project,true);
+        return;
+      }
+      confirm(choice,token,fromExplorer);
     }
     async function pick() {
       if(blocked()||!native?.pickProjectFolder)return;
       const token=scope();busy=true;paint();
       try {const path=await native.pickProjectFolder();busy=false;if(token===scope())await picked(path,token);}catch(err){if(token===scope())toast('文件夹未选择，请重试');}finally{busy=false;paint();}
     }
-    function confirm(choice,token) {
+    function confirm(choice,token,fromExplorer = false) {
       card?.remove();card=node('section','folder-confirm card');card.setAttribute('aria-label','在文件夹里工作');card.dataset.scope=token;
       card.append(node('strong','',choice.name),node('p','folder-path',choice.rootPath));
       if(choice.warning){const warning=node('p','folder-warning',choice.warning);warning.setAttribute('role','alert');card.append(warning);}
@@ -63,7 +68,7 @@
       const save=button('在这个文件夹里工作','folder',()=>{});save.className='button primary';save.type='submit';actions.append(cancel,save);formCard.append(status,actions);card.append(formCard);form.before(card);WeftPopover.bindSettingsSelect(access);
       formCard.onsubmit=async event=>{event.preventDefault();if(token!==scope()||blocked())return;busy=true;save.disabled=cancel.disabled=true;paint();
         try{const result=await core.registerFolderChoice(fields=>native.createFolderProject(fields),{requestId:card.dataset.requestId||=crypto.randomUUID(),name:name.value.trim().normalize('NFC'),rootPath:choice.rootPath,permission:access.value});
-          if(token!==scope())return;busy=false;if(await select(result.project)){card?.remove();card=null;}else{status.textContent='项目已创建，对话尚未移入，请重试';save.disabled=cancel.disabled=false;}}
+          if(token!==scope())return;busy=false;if(await select(result.project,fromExplorer)){card?.remove();card=null;}else{status.textContent='项目已创建，对话尚未移入，请重试';save.disabled=cancel.disabled=false;}}
         catch(err){if(token===scope()){status.textContent='未完成，请核对文件夹和名称后重试';save.disabled=cancel.disabled=false;}}finally{busy=false;paint();}};
       name.focus();
     }
@@ -106,7 +111,7 @@
     const pane=form.closest('#conversation-pane')||form.parentElement;
     pane.addEventListener('drop',event=>{if(native&&event.dataTransfer?.files?.length){event.preventDefault();event.stopImmediatePropagation();void drop(event);}},true);
     pane.addEventListener('dragover',event=>{if(native&&[...event.dataTransfer?.items||[]].some(item=>item.kind==='file'))event.preventDefault();});
-    return {paint,open,pick,select, confirm, row, current};
+    return {paint,open,pick,select, confirm, receivePath:path=>picked(path,scope(),true), row, current};
   }
   globalThis.WeftFolderChoice={create};
 })();
