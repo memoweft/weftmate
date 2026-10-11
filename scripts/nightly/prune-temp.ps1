@@ -13,6 +13,8 @@ param(
     [switch]$Apply
 )
 $ErrorActionPreference = 'Stop'
+# Messages are Chinese; a redirected console on CI otherwise falls back to a code page that turns them into '?'.
+try { [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); $OutputEncoding = [Console]::OutputEncoding } catch {}
 $ownerName = '.weftmate-temp-owner.json'
 $cutoff = [DateTimeOffset]::UtcNow.AddHours(-$Hours)
 $Legacy = $Legacy -or $Plan -or [bool]$List
