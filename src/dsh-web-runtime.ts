@@ -2359,9 +2359,10 @@ export class DshWebRuntime {
    * 结束一个已登记根进程。Windows 使用 root PID 的 taskkill /T /F 结束整个树；
    * 非 Windows 先 SIGTERM 给正常退出机会，再在短暂有界等待后 SIGKILL。
    */
-  private async terminateChild(child: ChildProcess): Promise<void> {
+  private async terminateChild(child: ChildProcess, platform = process.platform): Promise<void> {
     this.invalidatePersonalRuntime(child)
     if (this.closedChildren.has(child)) return
+    let nativeDisposed = false
     // Drain native Cordis persistence before collecting the process tree.
     // Keep IPC connected until the acknowledgement: some child tools inherit
     // stdout, so root exit alone cannot confirm close or collect descendants.
@@ -2370,7 +2371,7 @@ export class DshWebRuntime {
         const finish = () => { clearTimeout(timer); child.off('message', onMessage); child.off('close', finish); resolve() }
         const onMessage = (frame: unknown) => {
           const value = frame as { protocol?: string; action?: string } | null
-          if (value?.protocol === 'weftmate.runtime-shutdown.v1' && value.action === 'disposed') finish()
+          if (value?.protocol === 'weftmate.runtime-shutdown.v1' && value.action === 'disposed') { nativeDisposed = true; finish() }
         }
         const timer = setTimeout(() => { this.opts.log('[dsh] native shutdown timed out; collecting process tree'); finish() }, 3_000)
         child.on('message', onMessage); child.once('close', finish)
@@ -2380,7 +2381,7 @@ export class DshWebRuntime {
       if (this.closedChildren.has(child)) return
     }
     const pid = child.pid
-    if (process.platform === 'win32' && typeof pid === 'number') {
+    if (platform === 'win32' && typeof pid === 'number') {
       try {
         await taskkillProcessTree(pid)
       } catch {
@@ -2391,6 +2392,15 @@ export class DshWebRuntime {
       return
     }
 
+    // Keep the carrier connected through collection, matching Windows. A
+    // bootstrap deliberately stays alive after its persistence acknowledgement;
+    // repeating SIGTERM would only consume the grace deadline. Root exit by
+    // disconnect also loses the carrier before inherited streams are collected.
+    if (nativeDisposed) {
+      try { child.kill('SIGKILL') } catch { /* 已退出 */ }
+      await this.waitForChildClose(child)
+      return
+    }
     try { child.kill('SIGTERM') } catch { /* 已退出 */ }
     const exitedGracefully = await Promise.race([
       this.waitForChildClose(child).then(() => true),

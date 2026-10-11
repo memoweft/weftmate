@@ -1,9 +1,10 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import test from 'node:test';
 
 import assert from 'node:assert/strict';
 import { zstdCompressSync } from 'node:zlib';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { rmSync } from 'node:fs';
+
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { forgetPreviewView } from '../../src/personal-memory/http.mjs';

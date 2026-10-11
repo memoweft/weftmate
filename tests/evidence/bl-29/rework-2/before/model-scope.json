@@ -1,0 +1,18 @@
+{
+  "scope": {
+    "hiddenVisible": false,
+    "visibleUnchanged": true,
+    "sameDigestAcrossAccounts": true,
+    "ownDigestChangedOnOtherModel": true,
+    "ownRevisionBefore": 9,
+    "ownRevisionAfter": 10
+  },
+  "rename": {
+    "oldName": "Visible old name",
+    "newName": "Visible new name",
+    "changedHashes": [],
+    "oldRevision": 11,
+    "newRevision": 12
+  },
+  "keyOrderOnlyChangesSessions": true
+}

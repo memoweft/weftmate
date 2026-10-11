@@ -74,13 +74,16 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         if(accepted.some(event=>!event.data?.live)||removedLive||accepted.some(event=>!previousLive.has(event.seq)))effects.updateAvailability();
         if (accepted.some(event => ['approval.requested', 'approval.resolved', 'question.asked', 'question.answered'].includes(event.type)))
             void Promise.all([core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
+        if (core.state.personalCapabilities?.replyStreaming===1 && accepted.some(event => !event.data?.live && /^(user\.|turn\.|task\.|step\.|tool\.|approval\.|question\.|artifact\.)/.test(event.type))) void core.refreshConversationFacts?.();
         return accepted.length>0||removedLive;
     }
-    async function refreshHistory(reset = false, legacy = false) {
-        if (!legacy && core.refreshLogicalHistory) return core.refreshLogicalHistory(reset);
+    let nativeResetScope, nativeResetAttempted = false;
+    async function refreshHistory(reset = false, legacy = false, waitForChange = false) {
+        if (!legacy && core.refreshLogicalHistory) return core.refreshLogicalHistory(reset,waitForChange);
+        if (!reset && !core.historyReadAllowed()) return core.state.historyReadResult;
         const sessionId = core.state.selectedSessionId;
         if (core.state.activeChatSource !== 'desktop' || !sessionId || !core.state.online)
-            return;
+            return core.historyReadResult('cancelled');
         if (reset) {
             core.state.historyGeneration++;
             core.state.afterSeq = -1;
@@ -98,18 +101,21 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         }
         const generation = core.state.historyGeneration;
         const ownerId = core.state.ownerId;
+        const resetScope = `${core.state.identityGeneration}:${ownerId}:${sessionId}`;
+        if (nativeResetScope !== resetScope) {nativeResetScope=resetScope;nativeResetAttempted=false;}
         if (!reset && core.state.historyInFlight?.generation === generation)
             return core.state.historyInFlight.promise;
         const stillCurrent = () => core.state.activeChatSource === 'desktop' && core.state.historyGeneration === generation && core.state.ownerId === ownerId &&
             core.state.selectedSessionId === sessionId && !!core.state.csrfToken;
         const run = async () => {
+            let changed = false;
             try {
                 const maxPages = reset ? 10 : 5;
                 for (let pageNo = 0; pageNo < maxPages; pageNo++) {
                     const cursor = core.state.afterSeq;
                     const page = await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/events?${reset && pageNo === 0 ? '' : `afterSeq=${cursor}&`}limit=100`);
                     if (!stillCurrent())
-                        return;
+                        return core.historyReadResult('cancelled');
                     if (!Array.isArray(page.events) || !Number.isSafeInteger(page.nextSeq) || page.nextSeq < cursor)
                         throw { code: 'REQUEST_FAILED' };
                     core.state.historyHasMore = page.hasMore === true;
@@ -118,7 +124,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                         core.state.hasOlder = page.hasOlder === true;
                         effects.renderOlderControl();
                     }
-                    core.appendHistory(page.events, page.liveEvents, page.liveSeq);
+                    changed = core.appendHistory(page.events, page.liveEvents, page.liveSeq) || changed;
                     core.state.afterSeq = page.nextSeq;
                     if (!page.hasMore) {
                         effects.renderTurnStatus();
@@ -127,23 +133,27 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                     if (pageNo === maxPages - 1)
                         effects.historyNotice('历史仍在补读，当前只显示已读取的一部分。');
                 }
+                if (!reset) nativeResetAttempted = false;
+                return core.historyReadResult(changed ? 'changed' : 'unchanged');
             }
             catch (error) {
                 if (!stillCurrent())
-                    return;
+                    return core.historyReadResult('cancelled');
                 if (error.code === 'CURSOR_RESET_REQUIRED' || error.status === 409) {
-                    await core.refreshHistory(true, true);
+                    if (!nativeResetAttempted) {nativeResetAttempted=true;await core.refreshHistory(true,true);}
+                    return core.historyReadResult('reset', {error});
                 }
                 else if (error.code === 'NETWORK')
                     effects.historyNotice('连接中断，稍后将从原位置续读。');
                 else if (error.code !== 'UNAUTHORIZED')
                     effects.historyNotice('历史暂时无法读取，请稍后重试。', 'read-failure');
+                return core.historyReadResult('failed', {error,terminal:!!globalThis.WeftUiCore.Presence.authState(error)});
             }
         };
         const promise = run();
         core.state.historyInFlight = { generation, promise };
         try {
-            await promise;
+            return await promise;
         }
         finally {
             if (core.state.historyInFlight?.promise === promise)

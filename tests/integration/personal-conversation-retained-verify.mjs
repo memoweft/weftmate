@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile, readdir, realpath } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import { basename, dirname, isAbsolute, join, sep } from 'node:path';
 
 const path = process.env.WEFTMATE_STAGE12_RETAINED_PROFILE;

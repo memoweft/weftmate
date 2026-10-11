@@ -1,12 +1,12 @@
 // Fault injection into a disposable copy of a real run; never edits the report.
 import assert from 'node:assert/strict';
-import { cp, mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { cp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
+import { managedMkdtemp } from '../../tests/helpers/managed-temp.mjs';
 import { join, resolve } from 'node:path';
 import { option, catalog } from '../review-gallery/common.mjs';
 import { report } from './report.mjs';
 const input = resolve(option('--run')), evidence = resolve(option('--out'));
-const root = await mkdtemp(join(tmpdir(), 'weftmate-nightly-faults-'));
+const root = await managedMkdtemp('weftmate-nightly-faults-');
 try {
   await mkdir(evidence, { recursive: true });
   await cp(join(input, 'gallery'), join(root, 'gallery'), { recursive: true });

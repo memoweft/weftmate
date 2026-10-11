@@ -23,7 +23,7 @@ function fixture() {
     setInterval() {}, clearInterval() {}, localStorage: { getItem: (k: string) => values.get(k), setItem: (k: string,v: string) => values.set(k,v) },
     WeftOffline: { browserVault: async () => ({}), create: async () => ({ view: () => view, sync: async () => { if (failure) throw failure; return true; }, check: async () => ({}), clear: async () => {}, close() {} }) } };
   runInNewContext(component, environment);
-  const core: any = { accessApi: async () => { throw {code:'NETWORK'}; } };
+  const core: any = { foreground:()=>true, accessApi: async () => { throw {code:'NETWORK'}; } };
   return { environment, body, core, fail(error: any) { failure = error; } };
 }
 test('sync errors distinguish connectivity from permission, request and replica errors', () => {

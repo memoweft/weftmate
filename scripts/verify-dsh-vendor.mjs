@@ -23,6 +23,7 @@ import { join, dirname, basename, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
 import { loadPin, isolatedEnv } from '../tests/contract/support/checkout.ts'
+import { assertRuntimeIdentity } from './dsh-runtime-identity.mjs'
 import {
   assertManifestClosureClosed,
   assertManifestScriptVersion,
@@ -132,6 +133,7 @@ function runNodeFixture(args, env, timeoutMs) {
 }
 
 async function main() {
+  await assertRuntimeIdentity(RUNTIME_DIR, repoRoot)
   if (!existsSync(join(RUNTIME_DIR, 'VENDOR-MANIFEST.json'))) {
     fail(`缺 ${RUNTIME_DIR}\\VENDOR-MANIFEST.json —— 先运行 npm run vendor:dsh`)
   }

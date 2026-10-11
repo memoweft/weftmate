@@ -1,3 +1,4 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
@@ -5,9 +6,9 @@ import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { tmpdir } from 'node:os';
+
 import { zstdDecompressSync } from 'node:zlib';
 import { DatabaseSync } from 'node:sqlite';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
