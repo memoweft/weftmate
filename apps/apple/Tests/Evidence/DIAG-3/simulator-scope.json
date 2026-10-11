@@ -1,0 +1,9 @@
+{
+  "package": "DIAG-3b",
+  "handoff": "DIAG-3c",
+  "iphoneTestsAndCaptures": "One iPhone at a time; all shut down before Mac/Watch steps.",
+  "watchInitialization": "Xcode automatically booted the existing paired iPhone for watchOS UI testing. A shutdown was requested upon observation, but the serial runner had already completed Watch testing and shutdown all devices. No pairing, creation, deletion, or settings changes.",
+  "singleSimulatorRequirementFullyMet": false,
+  "watchTestRanWithExistingPair": true,
+  "finalAllSimulatorsShutdown": true
+}
