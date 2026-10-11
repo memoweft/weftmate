@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { cleanupOwnedProcesses } from './process-evidence.mjs';
 
 /** Await termination before the caller removes its isolated temp scope. */
-export async function runManagedTestProcess(command, args, { env, commandRoots = [], executables = [command], maxBuffer = 64 * 1024 * 1024 } = {}) {
+export async function runManagedTestProcess(command, args, { env, commandRoots = [], executables = [command], maxBuffer = 64 * 1024 * 1024, onOutput } = {}) {
   const startedAt = Date.now();
   const child = spawn(command, args, { env, windowsHide: true, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] });
   let stdout = '', stderr = '', error, interrupted = null;
@@ -23,6 +23,7 @@ export async function runManagedTestProcess(command, args, { env, commandRoots =
   const collect = (stream, chunk) => {
     if (stream === 'stdout') stdout += chunk; else stderr += chunk;
     if (Buffer.byteLength(stdout) + Buffer.byteLength(stderr) > maxBuffer) { error = Error('Test output exceeded maxBuffer'); stop('SIGTERM'); }
+    onOutput?.(stream, chunk);
   };
   child.stdout.on('data', chunk => collect('stdout', chunk));
   child.stderr.on('data', chunk => collect('stderr', chunk));

@@ -52,7 +52,7 @@ export function createWorkspaceOperations(context) {
           (item.dshTurn !== undefined && item.dshTurn !== turn) ||
           !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
       const device = account.devices[item.sourceDeviceId];
-      return device?.authKind === 'password' && !device.revoked &&
+      return ['password', 'desktop'].includes(device?.authKind) && !device.revoked &&
         device.authEpoch === item.sourceAuthEpoch && (scheduledCommandSource(account, item) || Date.parse(device.expiresAt) > context.timestamp());
     });
     if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
@@ -100,7 +100,7 @@ export function createWorkspaceOperations(context) {
           (item.dshTurn !== undefined && item.dshTurn !== turn) ||
           !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
       const device = account.devices[item.sourceDeviceId];
-      return device?.authKind === 'password' && !device.revoked &&
+      return ['password', 'desktop'].includes(device?.authKind) && !device.revoked &&
         device.authEpoch === item.sourceAuthEpoch && (scheduledCommandSource(account, item) || Date.parse(device.expiresAt) > context.timestamp());
     });
     if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);

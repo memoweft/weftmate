@@ -66,7 +66,7 @@ function strictProxyRequest(port: number, method: string, pathname: string, opti
   })
 }
 
-test('real local Caddy preserves strict HTTPS owner authentication and keeps setup local',
+test('real local Caddy rejects remote local-password credentials and keeps setup and logout local',
   { skip: enabled ? false : 'Set WEFTMATE_TLS_PROXY_TEST=1 with explicit Caddy/certificate paths to run this non-default integration test', timeout: 90_000 },
   async () => {
     const caddy = process.env.WEFTMATE_TLS_CADDY_BIN
@@ -121,30 +121,67 @@ https://:${port} {
       const setupBody = { grant: grant.grant, username: 'synthetic-proxy-owner', password: PASSWORD, deviceName: 'local-fixture' }
       const rejectedSetup = await strictProxyRequest(port, 'POST', '/personal/v1/auth/setup', { body: setupBody, origin: PUBLIC_ORIGIN })
       assert.equal(rejectedSetup.status, 403, 'first setup must not be accepted through the proxy')
+      assert.equal(rejectedSetup.cookie, null)
       const localSetup = await fetch(`${origin}/personal/v1/auth/setup`, {
         method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(setupBody),
       })
       assert.equal(localSetup.status, 201)
+      const localSession = await localSetup.json()
+      const localCookie = localSetup.headers.get('set-cookie') ?? ''
+      assert.match(localCookie, /^wm_personal_session=/)
+      assert.match(localCookie, /; HttpOnly(?:;|$)/)
+      const browserCookie = localCookie.split(';')[0]
       const login = await strictProxyRequest(port, 'POST', '/personal/v1/auth/login', {
         body: { username: 'synthetic-proxy-owner', password: PASSWORD, deviceName: 'remote-fixture' }, origin: PUBLIC_ORIGIN,
       })
-      assert.equal(login.status, 200)
+      // AUTH-1: a local password does not grant remote authority, even over
+      // correctly verified TLS. Cloud login and a device-key proof are required.
+      assert.equal(login.status, 403)
       assert.equal(login.verified, true)
-      assert.match(login.cookie ?? '', /^wm_personal_session=/)
-      assert.match(login.cookie ?? '', /; Secure(?:;|$)/)
-      assert.match(login.cookie ?? '', /; HttpOnly(?:;|$)/)
-      const browserCookie = (login.cookie ?? '').split(';')[0]
+      assert.equal(login.body.error.code, 'CLOUD_LOGIN_REQUIRED')
+      assert.equal(login.cookie, null, 'a rejected remote password login must not issue a session')
+      const registration = await strictProxyRequest(port, 'POST', '/personal/v1/auth/register', {
+        body: { username: 'synthetic-proxy-new', password: PASSWORD, deviceName: 'remote-fixture' }, origin: PUBLIC_ORIGIN,
+      })
+      assert.equal(registration.status, 403)
+      assert.equal(registration.verified, true)
+      assert.equal(registration.body.error.code, 'CLOUD_LOGIN_REQUIRED')
+      assert.equal(registration.cookie, null)
       const me = await strictProxyRequest(port, 'GET', '/personal/v1/auth/me', { cookie: browserCookie })
-      assert.equal(me.status, 200)
-      assert.equal(me.body.account.username, 'synthetic-proxy-owner')
+      assert.equal(me.status, 403, 'a locally issued password cookie must not be replayed through the TLS proxy')
+      assert.equal(me.verified, true)
+      assert.equal(me.body.error.code, 'CLOUD_LOGIN_REQUIRED')
+      assert.equal(me.cookie, null)
+      const localMe = await fetch(`${origin}/personal/v1/auth/me`, { headers: { cookie: browserCookie } })
+      assert.equal(localMe.status, 200)
+      assert.equal((await localMe.json()).account.username, 'synthetic-proxy-owner')
       const crossOrigin = await strictProxyRequest(port, 'POST', '/personal/v1/auth/logout', {
-        cookie: browserCookie, csrf: login.body.csrfToken, origin: 'https://other.example',
+        cookie: browserCookie, csrf: localSession.csrfToken, origin: 'https://other.example',
       })
       assert.equal(crossOrigin.status, 403)
-      const logout = await strictProxyRequest(port, 'POST', '/personal/v1/auth/logout', {
-        cookie: browserCookie, csrf: login.body.csrfToken, origin: PUBLIC_ORIGIN,
+      const remoteLogout = await strictProxyRequest(port, 'POST', '/personal/v1/auth/logout', {
+        cookie: browserCookie, csrf: localSession.csrfToken, origin: PUBLIC_ORIGIN,
+      })
+      assert.equal(remoteLogout.status, 403)
+      assert.equal(remoteLogout.body.error.code, 'CLOUD_LOGIN_REQUIRED')
+      assert.equal((await fetch(`${origin}/personal/v1/auth/me`, { headers: { cookie: browserCookie } })).status, 200,
+        'rejected remote attempts must not invalidate the legitimate local session')
+      const localCrossOrigin = await fetch(`${origin}/personal/v1/auth/logout`, {
+        method: 'POST', headers: { cookie: browserCookie, 'X-WeftMate-CSRF': localSession.csrfToken, origin: 'https://other.example' },
+      })
+      assert.equal(localCrossOrigin.status, 403)
+      assert.equal((await localCrossOrigin.json()).error.code, 'ORIGIN_NOT_ALLOWED')
+      const missingCsrf = await fetch(`${origin}/personal/v1/auth/logout`, { method: 'POST', headers: { cookie: browserCookie, origin } })
+      assert.equal(missingCsrf.status, 403, 'a direct local cookie still requires CSRF protection for logout')
+      const invalidCsrf = await fetch(`${origin}/personal/v1/auth/logout`, {
+        method: 'POST', headers: { cookie: browserCookie, origin, 'X-WeftMate-CSRF': 'A'.repeat(48) },
+      })
+      assert.equal(invalidCsrf.status, 403)
+      const logout = await fetch(`${origin}/personal/v1/auth/logout`, {
+        method: 'POST', headers: { cookie: browserCookie, 'X-WeftMate-CSRF': localSession.csrfToken, origin },
       })
       assert.equal(logout.status, 200)
+      assert.equal((await fetch(`${origin}/personal/v1/auth/me`, { headers: { cookie: browserCookie } })).status, 401)
       assert.equal((await strictProxyRequest(port, 'GET', '/personal/v1/auth/me', { cookie: browserCookie })).status, 401)
     } finally {
       try { await service.close() } finally {

@@ -57,16 +57,18 @@ async function fixture(t: any, { fresh = false } = {}) {
       controller.enqueue(new TextEncoder().encode('data: {"choices":[]}\n\n'))
       signal.addEventListener('abort', () => controller.error(new Error('revoked')), { once: true })
     } }), { headers: { 'content-type': 'text/event-stream' } }) }
-  let service: any, origin: string, hostId: string, timeOffset = 0
+  let service: any, desktopAuth: any, origin: string, hostId: string, timeOffset = 0
   const requests = async (method: string, route: string, body?: any, auth?: any, headers: any = {}) => {
     const response = await fetch(`${origin}${P}${route}`, { method, headers: {
       ...(body !== undefined ? { origin, 'content-type': 'application/json' } : {}),
-      ...(auth ? { cookie: auth.cookie, 'x-weftmate-csrf': auth.csrfToken } : {}), ...headers },
+      ...(auth ? { cookie: auth.cookie, 'x-weftmate-csrf': auth.csrfToken,
+        ...(auth.local ? { origin, 'x-weftmate-desktop': service.libraryDesktopToken } : {}) } : {}), ...headers },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) })
     const value = await response.json()
     return { ...value, status: response.status, cookie: response.headers.get('set-cookie')?.split(';')[0] }
   }
   async function start(enabled = true) {
+    desktopAuth = null;
     service = await createPersonalAccessService({ root, port: 0, backend, clock: () => Date.now() + timeOffset,
       cloudIdentity: enabled ? { issuer, allowInsecureLoopback: true } : null })
     const started = await service.start(); origin = started.origin; hostId = started.hostId
@@ -97,14 +99,14 @@ async function fixture(t: any, { fresh = false } = {}) {
   }
   await start()
   async function access(sub: string, device: string, key: any, overrides: any = {}, audience?: string) {
-    return new SignJWT({ sub, device_id: device, auth_epoch: 0, host_id: hostId, scope: 'host:session',
+    return new SignJWT({ sub, device_id: device, auth_epoch: 0, device_verified: true, host_id: hostId, scope: 'host:session',
       cnf: { jkt: await calculateJwkThumbprint(await exportJWK(key.publicKey)) }, ...overrides })
       .setProtectedHeader({ alg: 'RS256', typ: 'at+jwt', kid: jwk.kid }).setIssuer(issuer)
       .setAudience(audience ?? `${cloudBase}/hosts/${hostId}`).setIssuedAt().setJti(randomUUID())
       .setExpirationTime(overrides.exp ?? '300s').sign(signing.privateKey)
   }
   async function control(sub = 'cloud-a', epoch = 0) {
-    return new SignJWT({ sub, device_id: 'test-control', auth_epoch: epoch, scope: 'cloud:account' })
+    return new SignJWT({ sub, device_id: 'test-control', auth_epoch: epoch, device_verified: true, scope: 'cloud:account' })
       .setProtectedHeader({ alg: 'RS256', typ: 'at+jwt', kid: jwk.kid }).setIssuer(issuer)
       .setAudience(cloudBase).setIssuedAt().setJti(randomUUID()).setExpirationTime('300s').sign(signing.privateKey)
   }
@@ -115,16 +117,36 @@ async function fixture(t: any, { fresh = false } = {}) {
     return { claim, result }
   }
   async function exchange(token: string, key: any, route = '/auth/cloud-session', extra: any = {}, proofOverrides: any = {}, cookieAuth: any = undefined) {
+    if (route === '/auth/cloud-desktop' && !cookieAuth) cookieAuth = desktopAuth ?? await desktop();
     const nonce = await requests('POST', '/auth/cloud-nonce', {})
     const proof = await new SignJWT({ htm: 'POST', htu: `${origin}${P}${route}`, ath: hash(token), nonce: nonce.nonce,
       ...proofOverrides }).setProtectedHeader({ alg: 'ES256', typ: 'dpop+jwt', jwk: await exportJWK(key.publicKey) })
       .setIssuedAt(Math.floor((Date.now() + timeOffset) / 1000)).setJti(proofOverrides.jti ?? randomUUID()).sign(key.privateKey)
-    return { result: await requests('POST', route, { accessToken: token, deviceName: 'New browser', ...extra }, cookieAuth, { dpop: proof }), proof }
+    const result = await requests('POST', route, { accessToken: token, deviceName: 'New browser', ...extra }, cookieAuth,
+      { dpop: proof, ...(route === '/auth/cloud-desktop' ? { 'x-weftmate-desktop': service.libraryDesktopToken } : {}) });
+    // Native cloud login keeps the independently usable local Cookie.
+    if (route === '/auth/cloud-desktop' && result.status === 200) result.cookie ??= cookieAuth.cookie;
+    return { result, proof }
   }
-  return { root, a, b, oldStore, oldSync, requests, access, control, bind, exchange, issuer, backend,
+  async function desktop(ownerId?: string) {
+    const result = await requests('POST', '/auth/desktop', { ...(ownerId ? {ownerId} : {}), deviceName:'Synthetic desktop' },
+      undefined, { 'x-weftmate-desktop': service.libraryDesktopToken });
+    assert.equal(result.status, 200, JSON.stringify(result)); desktopAuth = result; return result;
+  }
+  async function seedDevice(sub: string, deviceId: string, key: any, status: string, ownerId = a.account.ownerId) {
+    const file = join(root, 'cloud-identity', 'identity.json');
+    await service.close();
+    const state = JSON.parse(await readFile(file, 'utf8')), id = randomUUID(), publicJwk = await exportJWK(key.publicKey);
+    state.devices[id] = { ownerId, bindingKey: JSON.stringify([issuer,sub]), cloudDeviceId:deviceId,
+      jkt:await calculateJwkThumbprint(publicJwk), publicJwk, name:'Old synthetic device',
+      requestedAt:new Date().toISOString(), status };
+    await writeFile(file, JSON.stringify(state)); await start(); return id;
+  }
+  return { root, a, b, oldStore, oldSync, requests, access, control, bind, exchange, desktop, seedDevice, issuer, backend,
     stream: async (auth: any) => {
       const response = await fetch(`${origin}${P}/models/synthetic/chat/completions`, { method: 'POST',
-        headers: { cookie: auth.cookie, 'x-weftmate-csrf': auth.csrfToken, origin, 'content-type': 'application/json' },
+        headers: { cookie: auth.cookie, 'x-weftmate-csrf': auth.csrfToken, origin, 'content-type': 'application/json',
+          ...(auth.local ? { 'x-weftmate-desktop': service.libraryDesktopToken } : {}) },
         body: JSON.stringify({ model: 'synthetic', messages: [{ role: 'user', content: 'synthetic' }], stream: true }) })
       assert.equal(response.status, 200)
       const reader = response.body!.getReader()
@@ -143,7 +165,7 @@ async function fixture(t: any, { fresh = false } = {}) {
   }
 }
 
-test('BK-1 portable cloud ownership reconnects only after verified subject and fresh desktop claim', async t => {
+test('AUTH-1 restored local owner binds only through its native desktop session and fresh verified cloud claim', async t => {
   const f = await fixture(t);
   await writeFile(join(f.root, 'backup-cloud-owners.json'), JSON.stringify([{ issuer: f.issuer, sub: 'restored-cloud', ownerId: f.a.account.ownerId }]));
   await f.restart();
@@ -155,7 +177,9 @@ test('BK-1 portable cloud ownership reconnects only after verified subject and f
   const strangerKey = await generateKeyPair('ES256');
   const stranger = await f.access('other-cloud', 'other-desktop', strangerKey, { scope: 'cloud:account' }, f.issuer.slice(0, -5));
   const other = (await f.exchange(stranger, strangerKey, '/auth/cloud-desktop')).result;
-  assert.notEqual(other.account?.ownerId, f.a.account.ownerId);
+  assert.equal(other.status, 409, 'another cloud subject cannot replace the selected local owner');
+  const stored = JSON.parse(await readFile(join(f.root, 'store.json'), 'utf8'));
+  assert.equal(Object.values(stored.accounts).filter((row:any)=>row.account).length, 2, 'no replacement account is allocated');
 });
 
 test('claim interruption resumes the same claimId after restart; backup and all existing identifiers/passwords/cookies/sync/data remain intact', async t => {
@@ -201,16 +225,16 @@ test('binding requires local Cookie/CSRF; unknown subjects cannot select an owne
   assert.equal((await f.exchange(await f.access('stranger', 'unknown', key), key)).result.status, 403)
 })
 
-test('desktop login cannot bootstrap a key into a partially committed legacy binding', async t => {
+test('AUTH-1 native selected owner resumes a partially committed binding without another device approval', async t => {
   const f = await fixture(t)
   f.interrupt()
   assert.equal((await f.bind()).result.status, 503)
   const key = await generateKeyPair('ES256')
   const token = await f.access('cloud-a', 'desktop', key, { scope: 'cloud:account' }, f.issuer.slice(0, -5))
-  const pending = (await f.exchange(token, key, '/auth/cloud-desktop')).result
-  assert.equal(pending.status, 202)
-  assert.equal(pending.cookie, undefined)
-  assert.equal((await f.requests('POST', `/cloud/devices/${pending.requestId}/decision`, { decision: 'allow' }, f.a)).status, 200)
+  const resumed = (await f.exchange(token, key, '/auth/cloud-desktop')).result
+  assert.equal(resumed.status, 200)
+  assert.equal(resumed.account.ownerId, f.a.account.ownerId)
+  assert.equal(resumed.local, true)
   assert.equal((await f.bind()).result.status, 200)
   const trusted = (await f.exchange(token, key, '/auth/cloud-desktop')).result
   assert.equal(trusted.status, 200)
@@ -218,21 +242,60 @@ test('desktop login cannot bootstrap a key into a partially committed legacy bin
   assert.equal((await f.requests('GET', '/auth/me', undefined, f.b)).account.ownerId, f.b.account.ownerId)
 })
 
-test('two local accounts bind independently; pending devices cannot see content; only their own account can approve; deny is durable', { timeout: 60_000 }, async t => {
+test('AUTH-1 desktop cloud login keeps the selected owner and requires native capability, local origin and CSRF', async t => {
+  const f = await fixture(t)
+  await f.bind(); await f.bind(f.b, 'cloud-b')
+  const selected = await f.desktop(f.b.account.ownerId)
+  const key = await generateKeyPair('ES256')
+  const tokenA = await f.access('cloud-a', 'desktop-selected-b', key, {scope:'cloud:account'}, f.issuer.slice(0,-5))
+  const conflict = (await f.exchange(tokenA, key, '/auth/cloud-desktop', {}, {}, selected)).result
+  assert.equal(conflict.status, 409)
+  assert.equal((await f.requests('GET', '/auth/me', undefined, selected)).account.ownerId, f.b.account.ownerId)
+  const tokenB = await f.access('cloud-b', 'desktop-selected-b', key, {scope:'cloud:account'}, f.issuer.slice(0,-5))
+  const loggedIn = (await f.exchange(tokenB, key, '/auth/cloud-desktop', {}, {}, selected)).result
+  assert.equal(loggedIn.status, 200, JSON.stringify(loggedIn))
+  assert.equal(loggedIn.account.ownerId, f.b.account.ownerId)
+  assert.equal(loggedIn.cookie, selected.cookie, 'cloud login retains the independently usable local cookie')
+  assert.equal((await f.requests('GET', '/cloud/binding', undefined, loggedIn)).canManage, true)
+  const body = {accessToken:tokenB,deviceName:'Synthetic desktop'}
+  for (const headers of [
+    {'x-weftmate-desktop':'wrong'},
+    {'x-forwarded-for':'127.0.0.1'},
+    {'forwarded':'for=127.0.0.1'},
+    {origin:'https://public.synthetic.invalid'},
+    {'x-weftmate-csrf':'wrong'},
+  ]) {
+    const rejected = await f.requests('POST', '/auth/cloud-desktop', body, selected, headers)
+    assert.equal(rejected.status, 403, JSON.stringify(rejected))
+    assert.equal(rejected.cookie, undefined)
+  }
+  assert.equal((await f.requests('POST','/auth/cloud-desktop',body,f.a,
+    {'x-weftmate-desktop':f.service.libraryDesktopToken})).status,403,'password cookie does not establish native selected-owner authority')
+})
+
+test('AUTH-1 verified devices enter only their bound account; historical pending promotes on login; legacy deny remains durable', { timeout: 60_000 }, async t => {
   const f = await fixture(t)
   assert.equal((await f.bind()).result.status, 200)
   assert.equal((await f.bind(f.b, 'cloud-b', 1)).result.status, 200)
   const key = await generateKeyPair('ES256'), other = await generateKeyPair('ES256')
   const token = await f.access('cloud-a', 'phone-a', key)
-  const pending = (await f.exchange(token, key)).result
-  assert.equal(pending.status, 202); assert.equal(pending.cookie, undefined)
+  const pendingId = await f.seedDevice('cloud-a', 'phone-a', key, 'pending')
   assert.equal((await f.requests('GET', '/sessions', undefined, undefined, { authorization: `Bearer ${token}` })).status, 401)
   assert.equal((await f.requests('GET', '/cloud/devices/pending', undefined, f.a)).devices.length, 1)
   assert.equal((await f.requests('GET', '/cloud/devices/pending', undefined, f.b)).devices.length, 0)
-  assert.equal((await f.requests('POST', `/cloud/devices/${pending.requestId}/decision`, { decision: 'allow' }, f.b)).status, 404)
-  assert.equal((await f.requests('POST', `/cloud/devices/${pending.requestId}/decision`, { decision: 'allow' }, f.a)).status, 200)
+  assert.equal((await f.requests('POST', `/cloud/devices/${pendingId}/decision`, { decision: 'allow' }, f.b)).status, 404)
   const session = (await f.exchange(token, key)).result
   assert.equal(session.status, 200); assert.equal(session.account.ownerId, f.a.account.ownerId)
+  assert.ok(session.hostTrust?.trustToken, 'successful exchange delivers the host trust anchor under the content TLS boundary')
+  assert.equal((await f.requests('GET', '/cloud/devices/pending', undefined, f.a)).devices.length, 0)
+  const identity = JSON.parse(await readFile(join(f.root, 'cloud-identity', 'identity.json'), 'utf8'))
+  assert.equal(identity.devices[pendingId].status, 'trusted')
+  const notifications = (await f.requests('GET', '/activity', undefined, f.a)).items.filter((row:any)=>row.type==='system.device.signed_in')
+  assert.equal(notifications.length, 1)
+  assert.equal(notifications[0].actions[0].target.category, 'devices')
+  assert.equal((await f.exchange(token, key)).result.status, 200)
+  assert.equal((await f.requests('GET', '/activity', undefined, f.a)).items.filter((row:any)=>row.type==='system.device.signed_in').length, 1,
+    'the same already verified device does not create another new-device notification')
   assert.equal((await f.requests('GET', '/sessions', undefined, session)).status, 200)
   const aSync = await f.requests('GET', '/sync/events?afterSeq=0', undefined, session)
   assert.equal(aSync.status, 200)
@@ -258,8 +321,8 @@ test('two local accounts bind independently; pending devices cannot see content;
 
   assert.equal((await f.exchange(await f.access('cloud-b', 'phone-b', other), other)).result.status, 401, 'fresh binding checkpoints cloud epoch before the next revocation poll')
   const deniedToken = await f.access('cloud-b', 'phone-b', other, { auth_epoch: 1 })
-  const denied = (await f.exchange(deniedToken, other)).result
-  assert.equal((await f.requests('POST', `/cloud/devices/${denied.requestId}/decision`, { decision: 'deny' }, f.b)).status, 200)
+  const deniedId = await f.seedDevice('cloud-b', 'phone-b', other, 'pending', f.b.account.ownerId)
+  assert.equal((await f.requests('POST', `/cloud/devices/${deniedId}/decision`, { decision: 'deny' }, f.b)).status, 200)
   await f.restart()
   assert.equal((await f.exchange(deniedToken, other)).result.status, 403)
   assert.equal((await f.requests('GET', '/auth/me', undefined, session)).status, 200)
@@ -276,6 +339,13 @@ test('JWT signature/audience/algorithm/expiry/type and DPoP possession/method/UR
   const fake = await new SignJWT({ sub: 'cloud-a' }).setProtectedHeader({ alg: 'HS256', typ: 'at+jwt' })
     .sign(new TextEncoder().encode('synthetic secret with enough entropy 0000'))
   assert.equal((await f.exchange(fake, key)).result.status, 401)
+  for (const device_verified of [undefined, false, 'true']) {
+    const invalid = await f.access('cloud-a', 'phone-a', key, { device_verified })
+    const rejected = (await f.exchange(invalid, key)).result
+    assert.equal(rejected.status, 401)
+    assert.equal(rejected.error.code, 'CLOUD_DEVICE_VERIFICATION_REQUIRED')
+    assert.equal(rejected.cookie, undefined)
+  }
   assert.equal((await f.exchange(await f.control(), key)).result.status, 401)
   assert.equal((await f.requests('POST', '/auth/cloud-session', { accessToken: token, deviceName: 'No key' })).status, 401)
   assert.equal((await f.requests('POST', '/auth/cloud-session', { accessToken: token, deviceName: 'Cookie alone' }, f.a)).error.code, 'DPOP_INVALID')
@@ -283,7 +353,7 @@ test('JWT signature/audience/algorithm/expiry/type and DPoP possession/method/UR
   for (const override of [{ htm: 'GET' }, { htu: 'https://other.example.com/' }, { nonce: 'unknown' }, { ath: 'wrong' }])
     assert.equal((await f.exchange(token, key, '/auth/cloud-session', {}, override)).result.status, 401)
   const good = await f.exchange(token, key)
-  assert.equal(good.result.status, 202)
+  assert.equal(good.result.status, 200)
   assert.equal((await f.requests('POST', '/auth/cloud-session', { accessToken: token, deviceName: 'Repeat' }, undefined, { dpop: good.proof })).status, 401)
   await f.restart()
   assert.equal((await f.requests('POST', '/auth/cloud-session', { accessToken: token, deviceName: 'Repeat' }, undefined, { dpop: good.proof })).status, 401)
@@ -315,8 +385,6 @@ test('local device revoke closes active responses; signed cloud epoch/device rev
   const f = await fixture(t); await f.bind()
   const key = await generateKeyPair('ES256')
   const token = await f.access('cloud-a', 'phone', key)
-  const pending = (await f.exchange(token, key)).result
-  await f.requests('POST', `/cloud/devices/${pending.requestId}/decision`, { decision: 'allow' }, f.a)
   const session = (await f.exchange(token, key)).result
   const localStream = await f.stream(session)
   const localClosed = assert.rejects(localStream.read())
@@ -327,6 +395,12 @@ test('local device revoke closes active responses; signed cloud epoch/device rev
     'revoked stream without provider usage remains an unknown request')
   assert.equal((await f.requests('GET', '/sessions', undefined, session)).status, 401)
   assert.equal((await f.exchange(token, key)).result.status, 403)
+  const rotated = await generateKeyPair('ES256')
+  assert.equal((await f.exchange(await f.access('cloud-a', 'phone', rotated), rotated)).result.status, 403,
+    'a new proof key cannot revive the same revoked cloud device ID')
+  const revokedPair = await f.requests('POST', '/cloud/pairings', {}, f.a)
+  assert.equal((await f.exchange(token, key, '/cloud/pairings/redeem', {challenge:revokedPair.challenge})).result.status, 403,
+    'an old pairing path cannot revive an offlined device')
   const fresh = await generateKeyPair('ES256'), freshToken = await f.access('cloud-a', 'second-phone', fresh)
   const pair = await f.requests('POST', '/cloud/pairings', {}, f.a)
   const second = (await f.exchange(freshToken, fresh, '/cloud/pairings/redeem', { challenge: pair.challenge })).result
@@ -353,8 +427,6 @@ async function assertFreshOverlappingRevocation(t: any, oldStatus = 200) {
   const f = await fixture(t);
   await f.bind();
   const key = await generateKeyPair('ES256'), token = await f.access('cloud-a', 'phone', key);
-  const pending = (await f.exchange(token, key)).result;
-  await f.requests('POST', `/cloud/devices/${pending.requestId}/decision`, { decision: 'allow' }, f.a);
   const session = (await f.exchange(token, key)).result;
   assert.equal(session.status, 200);
   await f.service.syncCloudRevocations();
@@ -415,20 +487,23 @@ async function createdCloudSession(f: any, auth: any) {
   assert.equal(sent.status, 202, JSON.stringify(sent));
   for (let i = 0; i < 100; i++) {
     const found = await f.requests('GET', '/commands/' + sent.command.commandId, undefined, auth);
+    assert.equal(found.status, 200, JSON.stringify(found));
     if (found.command.state === 'accepted_by_dsh') return found.command.sessionId;
     await new Promise(resolve => setTimeout(resolve, 10));
   }
   assert.fail('session was not accepted');
 }
 
-test('FX-9 first cloud desktop on a fresh host becomes the durable execution account; a second identity stays isolated', async t => {
+test('AUTH-1 cloud login on a fresh native desktop keeps its durable local owner; another cloud identity cannot replace it', async t => {
   const f = await fixture(t, {fresh: true});
   const legacy = f.service.legacyOwnerId();
   const key = await generateKeyPair('ES256');
   const token = await f.access('first-cloud', 'desktop-first', key, {scope: 'cloud:account'}, f.issuer.slice(0, -5));
   const first = (await f.exchange(token, key, '/auth/cloud-desktop')).result;
   assert.equal(first.status, 200, JSON.stringify(first));
-  assert.notEqual(first.account.ownerId, legacy);
+  assert.equal(first.account.ownerId, legacy, 'first local profile preserves the legacy data owner');
+  assert.equal(first.device.authKind, 'desktop');
+  assert.equal(first.cloudAuthenticated, true);
   assert.equal(f.service.executionOwnerId(), first.account.ownerId);
   const sessionId = await createdCloudSession(f, first);
   assert.equal((await f.requests('PATCH', '/sessions/' + sessionId + '/approval-mode', {mode: 'ask'}, first)).status, 200);
@@ -441,15 +516,15 @@ test('FX-9 first cloud desktop on a fresh host becomes the durable execution acc
   const otherKey = await generateKeyPair('ES256');
   const otherToken = await f.access('second-cloud', 'desktop-second', otherKey, {scope: 'cloud:account'}, f.issuer.slice(0, -5));
   const second = (await f.exchange(otherToken, otherKey, '/auth/cloud-desktop')).result;
-  assert.equal(second.status, 200, JSON.stringify(second));
-  assert.notEqual(second.account.ownerId, first.account.ownerId);
+  assert.equal(second.status, 409, JSON.stringify(second));
   assert.equal(f.service.executionOwnerId(), first.account.ownerId);
-  assert.equal((await f.requests('GET', '/sessions/' + sessionId + '/events', undefined, second)).status, 404);
-  assert.equal((await f.requests('GET', '/status', undefined, second)).backend.capabilities.naturalLanguageDesktop.available, false);
-  assert.equal((await f.requests('POST', '/commands', {requestId:randomUUID(),kind:'desktop.open_app',targetDeviceId:f.hostId,appId:'notepad'},second)).status,403);
+  const localSessions = await f.requests('GET', '/sessions', undefined, again);
+  assert.equal(localSessions.status, 200, JSON.stringify(localSessions));
+  assert.ok(localSessions.sessions.some((row:any)=>row.sessionId===sessionId), 'the original conversation remains visible');
+  assert.equal(second.account, undefined, 'conflicting cloud identity receives neither a local owner nor capability context');
   const stored = JSON.parse(await readFile(join(f.root, 'store.json'), 'utf8'));
   assert.equal(stored.accounts[first.account.ownerId].sessions[sessionId].origin, 'personal-remote');
-  assert.deepEqual(stored.accounts[second.account.ownerId].sessions, {});
+  assert.equal(Object.values(stored.accounts).filter((row:any)=>row.account).length, 1, 'cloud subject conflict leaves no empty replacement owner');
 });
 
 test('FX-9 legacy account binding retains execution and data; another desktop identity cannot claim it', async t => {
@@ -462,8 +537,7 @@ test('FX-9 legacy account binding retains execution and data; another desktop id
   const key = await generateKeyPair('ES256');
   const token = await f.access('different-cloud', 'second-desktop', key, {scope:'cloud:account'}, f.issuer.slice(0,-5));
   const second = (await f.exchange(token,key,'/auth/cloud-desktop')).result;
-  assert.equal(second.status,200);
-  assert.notEqual(second.account.ownerId, owner);
+  assert.equal(second.status,409);
   assert.equal(f.service.executionOwnerId(), owner);
   assert.equal(await readFile(join(f.root,'sync','events.json'),'utf8'), f.oldSync);
   await f.restart();
@@ -484,9 +558,6 @@ for (const scenario of ['ordinary', 'project', 'phone'] as const) {
     if (scenario === 'phone') {
       const phoneKey = await generateKeyPair('ES256')
       const phoneToken = await f.access('fx11-owner', 'fx11-phone', phoneKey)
-      const pending = (await f.exchange(phoneToken, phoneKey)).result
-      assert.equal(pending.status, 202)
-      assert.equal((await f.requests('POST', `/cloud/devices/${pending.requestId}/decision`, {decision:'allow'}, desktop)).status, 200)
       caller = (await f.exchange(phoneToken, phoneKey)).result
       assert.equal(caller.status, 200)
       assert.notEqual(caller.device.id, desktop.device.id)
@@ -509,6 +580,7 @@ for (const scenario of ['ordinary', 'project', 'phone'] as const) {
       // Wait for the authoritative receipt; the test's signal bounds the wait.
       while (!t.signal.aborted) {
         const result = await f.requests('GET', `/commands/${id}`, undefined, caller)
+        assert.equal(result.status, 200, JSON.stringify(result))
         if (result.command.state === 'accepted_by_dsh') return result.command
         assert.ok(['pending','dispatching'].includes(result.command.state), JSON.stringify(result))
         await new Promise(resolve => setTimeout(resolve, 10))
@@ -549,12 +621,12 @@ for (const scenario of ['ordinary', 'project', 'phone'] as const) {
     assert.equal(detail.executionSteps[0].state,'completed')
     const stored = JSON.parse(await readFile(join(f.root,'store.json'),'utf8'))
     const account = stored.accounts[desktop.account.ownerId]
-    assert.equal(account.devices[account.commands[source.commandId].sourceDeviceId].authKind,'cloud')
+    assert.equal(account.devices[account.commands[source.commandId].sourceDeviceId].authKind,scenario==='phone'?'cloud':'desktop')
     const saved: any = Object.values(account.commands).find((row:any)=>row.artifactId===artifact.artifactId)
     assert.equal(saved.toolSource.sourceCommandId,source.commandId)
     assert.equal(saved.nativeFileObserved,true)
     assert.equal(saved.verification.method,'sha256_readback')
-    assert.deepEqual(stored.accounts[stored.legacyOwnerId].commands,{})
+    assert.equal(stored.legacyOwnerId, desktop.account.ownerId, 'native login retains the original account storage owner')
     await assert.rejects(f.service.registerNativeFile({...identity,receiptId:'foreign-receipt',filePath:join(workspace,'first.txt'),sha256:createHash('sha256').update('FX11_FIRST_WRITE').digest('hex')}), (error:any)=>error.code==='TOOL_SOURCE_UNAVAILABLE')
     assert.equal((await f.requests('DELETE', `/auth/devices/${caller.device.id}`, {}, desktop)).status, 200)
     await assert.rejects(f.service.registerNativeFile({...identity,filePath:join(workspace,'first.txt'),sha256:createHash('sha256').update('FX11_FIRST_WRITE').digest('hex')}), (error:any)=>error.code==='TOOL_SOURCE_UNAVAILABLE')

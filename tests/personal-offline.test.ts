@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { webcrypto } from 'node:crypto';
+import { webcrypto, randomBytes } from 'node:crypto';
 import { IDBFactory } from 'fake-indexeddb';
 import { createOfflineService } from '../src/personal-offline/index.mjs';
 import { sealReplica } from '../src/personal-offline/crypto.mjs';
 import { memorySnapshot, replicaDelta, offlineBoundary } from '../src/personal-offline/snapshot.mjs';
 import { assertOwnerBoundBoundary } from '../src/personal-memory/boundary.mjs';
+import { createAuthenticationOperations } from '../src/personal-access/authentication.mjs';
+import { csrfForToken, digest } from '../src/personal-access/common.mjs';
 import '../src/ui-core/offline.js';
 
 const W = (globalThis as any).WeftOffline;
@@ -82,6 +84,42 @@ test('temporary history never enters the encrypted replica, including a switch d
     assert.deepEqual(engine.view().snapshot.recent.map((row:any)=>row.id),['ordinary']);
     assert.ok(!JSON.stringify(await vault.load()).includes('PRIVATE_SENTINEL'));
   } finally {engine.close();}
+});
+
+test('AUTH-1 native desktop publishes encrypted offline memory; replaying its Cookie remotely is refused before publication', async t => {
+  const f = await fixture(t), vault = await W.browserVault('auth1-desktop', { indexedDB:new IDBFactory(), crypto:webcrypto });
+  const token = randomBytes(32).toString('base64url'), csrf = csrfForToken(token), origin = 'http://127.0.0.1';
+  const account = { account:{authEpoch:1}, sessions:{}, devices:{ [identity.deviceId]:{
+    authKind:'desktop',authEpoch:1,revoked:false,expiresAt:new Date(Date.now()+60_000).toISOString(),
+    tokenHash:digest(token),csrfHash:digest(csrf),scopes:['account:manage'] } } };
+  Object.assign(f.context,{origin,allowedOrigins:['https://relay.synthetic.invalid'],trustedProxy:true,
+    libraryDesktopToken:'synthetic-native-private-capability',accountState:()=>account,
+    rootState:{hostId:identity.hostId,accounts:{[identity.ownerId]:account}}});
+  f.context.authenticate = createAuthenticationOperations(f.context).authenticate;
+  let published = 0;
+  const publish = f.context.cloudIdentity.publishOffline;
+  f.context.cloudIdentity.publishOffline = async (...args:any[]) => { published++; return publish(...args); };
+  const body = {publicJwk:await vault.key(),generation:0};
+  const base = {method:'POST',body,headers:{host:'127.0.0.1',origin,cookie:'wm_personal_session='+token,
+    'x-weftmate-csrf':csrf,'x-weftmate-desktop':f.context.libraryDesktopToken},socket:{remoteAddress:'127.0.0.1'}};
+  const request = (changes:any={}) => f.service.handle({...base,...changes,headers:{...base.headers,...changes.headers}}, {},
+    new URL(origin+'/personal/v1/offline/sync'),identity.ownerId);
+  try {
+    const envelope = await request();
+    const content = await vault.open(envelope,identity);
+    assert.equal(content.items.length,2);
+    assert.equal(published,1);
+    for (const changes of [
+      {socket:{remoteAddress:'192.0.2.25'}},
+      {headers:{'x-forwarded-for':'127.0.0.1'}},
+      {headers:{forwarded:'for=127.0.0.1'}},
+      {headers:{origin:'https://public.synthetic.invalid'}},
+      {headers:{'x-weftmate-desktop':undefined}},
+      {headers:{host:'relay.synthetic.invalid',origin:'https://relay.synthetic.invalid',
+        'x-forwarded-proto':'https','x-forwarded-host':'relay.synthetic.invalid'}},
+    ]) await assert.rejects(request(changes),(error:any)=>error.status===403);
+    assert.equal(published,1,'remote replay does not reach publication or memory reads');
+  } finally {vault.close();}
 });
 
 test('online sync → cloud-only relevant recall → offline preference → idempotent import → forget cannot resurrect', async t => {
