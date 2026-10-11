@@ -69,6 +69,7 @@ test('registered host OIDC resource issues a DPoP access token only for a member
   const verified = await jwtVerify(result.data.access_token, createLocalJWKSet(f.identity.keys.publicJwks), {
     issuer: f.config.issuer, audience: `${f.config.audience}/hosts/${f.hostId}`, algorithms: ['RS256'], typ: 'at+jwt' });
   assert.equal(verified.payload.host_id, f.hostId); assert.ok(verified.payload.cnf.jkt);
+  assert.equal(verified.payload.device_verified, true);
   assert.equal(verified.payload.sub, f.account.cloudAccountId);
   assert.equal((await f.api(`${P}/account`, { headers: { authorization: `Bearer ${result.data.access_token}` } })).status, 401);
 });
@@ -89,7 +90,7 @@ test('installation-authenticated revocation feed carries only member device/epoc
 });
 
 
-test('real cloud OIDC → local-approved binding → pending device → approved host Cookie → cloud revoke → local login survives', async t => {
+test('real cloud OIDC → local binding → email-verified device gets host Cookie → cloud revoke → local login survives', async t => {
   const f = await fixture(t);
   await f.verified();
   const key = await generateKeyPair('ES256'), publicJwk = await exportJWK(key.publicKey);
@@ -135,12 +136,10 @@ test('real cloud OIDC → local-approved binding → pending device → approved
       .setJti(randomUUID()).setIssuedAt().sign(key.privateKey);
     return api('/auth/cloud-session', { accessToken: tokens.data.access_token, deviceName: 'New device' }, undefined, { dpop: proof });
   };
-  const pending = await exchange();
-  assert.equal(pending.status, 202, JSON.stringify(pending.data)); assert.equal(pending.cookie, undefined);
-  assert.equal((await api('/cloud/devices/pending', undefined, local)).data.devices.length, 1);
-  assert.equal((await api(`/cloud/devices/${pending.data.requestId}/decision`, { decision: 'allow' }, local)).status, 200);
   const session = await exchange();
   assert.equal(session.status, 200);
+  assert.ok(session.cookie);
+  assert.equal((await api('/cloud/devices/pending', undefined, local)).data.devices.length, 0);
   const trusted = { cookie: session.cookie, csrfToken: session.data.csrfToken };
   assert.equal((await api('/sessions', undefined, trusted)).status, 200);
   await f.api(`${P}/auth/devices/revoke`, { method: 'POST', body: { deviceId: 'test-device' }, headers: { authorization: `Bearer ${control.access_token}` }, status: 200 });

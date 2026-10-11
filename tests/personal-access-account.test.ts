@@ -414,8 +414,9 @@ test('configured HTTPS origin requires an explicit trusted loopback proxy and ma
       { grant: grant.grant, username: 'Owner', password: PASSWORD, deviceName: 'Browser' }, { origin })).status, 201)
     const login = await proxyApi(origin, 'POST', '/personal/v1/auth/login',
       { username: 'Owner', password: PASSWORD, deviceName: 'Phone' }, publicHeaders)
-    assert.equal(login.status, 200)
-    assert.match(login.cookie!, /; Secure(?:;|$)/)
+    assert.equal(login.status, 403)
+    assert.equal(login.body.error.code, 'CLOUD_LOGIN_REQUIRED')
+    assert.equal(login.cookie, null)
   } finally {
     await service.close()
     rmSync(root, { recursive: true, force: true })
@@ -486,15 +487,17 @@ test('direct first registration, bounded profile image and device rename preserv
     allowedOrigins: [publicOrigin], trustedProxy: true })
   try {
     let { origin } = await service.start()
-    const registered = await proxyApi(origin, 'POST', '/personal/v1/auth/register',
-      { username: 'Owner', password: PASSWORD, deviceName: 'First phone', displayName: '织语主人' }, publicHeaders)
+    assert.equal((await proxyApi(origin, 'POST', '/personal/v1/auth/register',
+      { username: 'Owner', password: PASSWORD, deviceName: 'Remote' }, publicHeaders)).status, 403)
+    const registered = await api(origin, 'POST', '/personal/v1/auth/register',
+      { username: 'Owner', password: PASSWORD, deviceName: 'First local window', displayName: '织语主人' }, { origin })
     assert.equal(registered.status, 201)
     assert.equal(registered.body.account.displayName, '织语主人')
     assert.deepEqual(registered.body.account.avatar, null)
     assert.equal(registered.body.account.profileRevision, 0)
-    assert.match(registered.cookie!, /; Secure(?:;|$)/)
-    const another = await proxyApi(origin, 'POST', '/personal/v1/auth/register',
-      { username: 'Another', password: PASSWORD, deviceName: 'Other' }, publicHeaders)
+    assert.match(registered.cookie!, /; HttpOnly(?:;|$)/)
+    const another = await api(origin, 'POST', '/personal/v1/auth/register',
+      { username: 'Another', password: PASSWORD, deviceName: 'Other' }, { origin })
     assert.equal(another.status, 201)
     assert.notEqual(another.body.account.ownerId, registered.body.account.ownerId)
     const first = browser(origin, registered.cookie!, registered.body.csrfToken)

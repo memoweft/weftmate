@@ -110,6 +110,10 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
       const account = await authenticate(req, true);
       if (!db.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(body.hostId, account.id))
         throw new CloudError(404, 'NOT_FOUND');
+      const device = db.prepare('SELECT status FROM host_device_status WHERE host_id=? AND account_id=? AND device_id=? AND jkt=?')
+        .get(body.hostId, account.id, req.cloudToken.device_id, req.cloudToken.cnf.jkt);
+      if (device?.status === 'revoked' || device?.status === 'denied')
+        throw new CloudError(403, device.status === 'revoked' ? 'DEVICE_REVOKED' : 'DEVICE_DENIED');
       const resource = `${config.audience}/hosts/${body.hostId}`;
       // Extend the existing provider grant, never mint a parallel token family.
       const grants = db.prepare('SELECT grant_id FROM grant_bindings WHERE account_id=? AND fingerprint=? AND auth_epoch=? AND app_login=1')
@@ -129,12 +133,12 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
           }
         }
       }
-      const device = db.prepare('SELECT status FROM host_device_status WHERE host_id=? AND account_id=? AND device_id=? AND jkt=?')
-        .get(body.hostId, account.id, req.cloudToken.device_id, req.cloudToken.cnf.jkt);
       let directory = { hostId: body.hostId, status: 'offline', baseUrl: null };
       if (config.relay) directory = relay.discover(body.hostId, account.id);
-      return { ...directory, resource, approval: device?.status ?? 'pending',
-        pairingRequired: device?.status !== 'trusted' };
+      // The signed login token has already bound mailbox verification to this
+      // key. Host content still requires membership, nonce and DPoP exchange;
+      // a second device's approval no longer supplies login authority.
+      return { ...directory, resource, approval: 'trusted', pairingRequired: false };
     }
     if (['/hosts/relay/discover', '/hosts/relay/account-revoke'].includes(route)) {
       requireFields(body, ['hostId']);

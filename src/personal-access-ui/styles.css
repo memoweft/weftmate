@@ -39,7 +39,7 @@ h2 { font-size: var(--wm-font-size-18); }
 .cloud-auth-active .site-header, .cloud-auth-active .footer { display: none; }
 .cloud-auth-active .main { width: 100%; margin: 0; display: grid; place-items: center; padding: var(--wm-space-32) var(--wm-space-24); }
 .auth-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--wm-space-8); margin-top: var(--wm-space-12); }
-.auth-links .button { padding-inline: 0; font-size: var(--wm-font-size-13); }
+.auth-links .button { font-size: var(--wm-font-size-13); }
 .auth-offline { display: block; margin: var(--wm-space-24) auto 0; font-size: var(--wm-font-size-13); }
 .auth-legal { margin-top: var(--wm-space-24); font-size: var(--wm-font-size-12); color: var(--ink-secondary); }
 .auth-legal .text-button { padding: 0; font-size: inherit; }
@@ -57,9 +57,27 @@ h2 { font-size: var(--wm-font-size-18); }
 .cloud-access-banner span { flex: 1; }
 #cloud-pairing-qr { width: var(--wm-size-324); max-width: 100%; }
 .cloud-settings textarea { width: 100%; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--wm-radius-10); padding: var(--wm-space-12); }
-.cloud-trust-dialog { max-width: var(--wm-size-700); }
-.cloud-trust-dialog img { display: block; max-width: 100%; margin: var(--wm-space-16) auto; }
-.cloud-trust-dialog textarea, #auth-trust-input { width: 100%; color: var(--ink); background: var(--surface); padding: var(--wm-space-12); border: 1px solid var(--line); border-radius: var(--wm-radius-10); }
+.cloud-auth-card .auth-code-login, .cloud-auth-card .auth-resend, .cloud-auth-card .auth-back { display: block; width: 100%; margin-top: var(--wm-space-12); }
+.auth-local-help, .auth-code-help { line-height: var(--wm-line-height-1_65); }
+.cloud-auth-card .auth-local-help { margin-bottom: var(--wm-space-20); }
+.dialog.cloud-login-dialog { width: min(480px, calc(100dvw - var(--wm-space-32))); height: auto; max-height: calc(100dvh - var(--wm-space-32) - var(--safe-top, env(safe-area-inset-top, 0px)) - var(--safe-bottom, env(safe-area-inset-bottom, 0px))); border-radius: var(--wm-radius-16); }
+.dialog.cloud-login-dialog[open] { display: flex; flex-direction: column; }
+.cloud-login-dialog .dialog-body { flex: 1; max-height: none; padding: var(--wm-space-24); }
+.cloud-login-dialog .auth-card { border: 0; padding: 0; box-shadow: none; }
+.cloud-login-dialog .auth-brand { width: var(--wm-space-48); height: var(--wm-space-48); }
+.cloud-login-dialog .dialog-head h2 { font-size: var(--wm-font-size-15); }
+.cloud-device-row { flex-wrap: nowrap !important; }
+.cloud-device-summary { display: flex; align-items: center; gap: var(--wm-space-14); flex: 1; min-width: 0; text-align: left; padding: var(--wm-space-8); border: 0; border-radius: var(--wm-radius-8); color: var(--ink); background: transparent; }
+.cloud-device-summary:hover { background: var(--surface-soft); }
+.cloud-device-summary:active { background: var(--accent-soft); }
+.cloud-device-summary .wm-icon { flex: none; }
+.cloud-device-summary .device-content { overflow-wrap: anywhere; }
+.cloud-settings .cloud-device-actions { flex: none; flex-wrap: nowrap; margin: 0; }
+.cloud-device-empty { display: flex; align-items: center; gap: var(--wm-space-12); padding-block: var(--wm-space-24); }
+.dialog.cloud-device-dialog { height: auto; max-height: calc(100dvh - var(--wm-space-32)); border-radius: var(--wm-radius-16); }
+.dialog.cloud-device-dialog form { height: auto; }
+.cloud-device-dialog .form-error { margin-top: var(--wm-space-12); }
+.cloud-device-dialog .form-error:empty { display: none; }
 .cloud-auth-card input { caret-color: var(--accent); }
 .cloud-auth-card ::selection, .cloud-settings ::selection { background: var(--accent-soft); color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { .cloud-auth-card, .cloud-settings { transition-duration: var(--wm-duration-0ms); } }
@@ -986,3 +1004,7 @@ html:not(.weftmate-desktop) .assistant-active .assistant-shell { height:var(--vi
   .session-rail{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px)}
   .timeline-preview{padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
 }
+/* Cloud confirmations keep their content height inside the shared modal shell. */
+.dialog.cloud-device-dialog { height: fit-content; margin: auto; max-height: calc(100dvh - var(--wm-space-32) - var(--safe-top, env(safe-area-inset-top, 0px)) - var(--safe-bottom, env(safe-area-inset-bottom, 0px))); }
+.cloud-device-dialog .button.danger { color: var(--danger); background: var(--surface-soft); border-color: var(--danger); }
+.cloud-device-dialog .button.danger:hover:not(:disabled), .cloud-device-dialog .button.danger:active { color: var(--danger); background: var(--danger-soft); }

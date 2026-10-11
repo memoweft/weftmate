@@ -37,7 +37,19 @@ npm start
 
 注册只建 pending 账号，验证码通过才 active；重发不替换 pending 密码。验证码为随机六位、10 分钟、最多 5 次错误、单次使用，数据库只存由独立服务秘密生成的 HMAC。purpose、账号 epoch、新设备登录 interaction 都绑定在 challenge 中；找回/重发对不存在账号返回同形随机 challenge，实际不会发邮件。登录失败、验证码失败均按账号与来源持久限速；小时窗口内第 5 次失败起 1 秒指数退避，上限 1 小时。邮件请求同样按账号/来源限制，第 5 次后退避 10 分钟；不限制账号的设备总数。
 
-每次授权要求密码交互，SSO Cookie 不能绕过当前设备确认。新标识或同标识下的新公钥均发确认邮件，确认后才产生授权码。设备公钥只登记公开 JWK，拒绝私钥字段。S1a 的标识/公钥来自调用方，此处没有设备私钥持有证明；不能当成宿主内容信任或 DPoP。
+每次授权可用邮箱与密码，或邮箱与验证码。SSO Cookie（单点登录会话信息）不能绕过当前设备确认。密码登录的新标识或同标识下的新公钥均发确认邮件，确认后才产生授权码；已经核对过的同一标识与公钥只需密码。纯验证码登录本身完成邮箱与设备核对。设备公钥只登记公开 JWK（JSON Web Key，JSON 密钥格式），拒绝私钥字段。旧 S1a 无持钥证明的路径仍只可用于云账号；App 登录、宿主资源与内容交换继续要求 DPoP（设备密钥持有证明）。
+
+### AUTH-1 登录与发布兼容
+
+新增 `POST /personal/v1/cloud/auth/login/code/request` 与 `/confirm`。request（请求）先验证现有 OIDC（开放身份连接）interaction（登录交互）、Cookie 与 CSRF（跨站请求伪造防护），App 模式还必须匹配启动交互时登记的 `deviceId / publicJwk`。请求体为 `{interactionUid,csrfToken,email,deviceId,publicJwk,deviceName?,deviceType?}`，统一返回 HTTP 202 `{confirmationRequired:true,challengeId,expiresIn:600}`。未注册或未激活邮箱不发信；邮件投递故障也返回同形响应，不能借此查询账号是否存在。真实账号的发信在后台进行，响应不等待邮件商；避免只有已注册账号暴露投递耗时。服务关闭会等待自己仍在发送的邮件，再关闭数据库；发送失败消费对应验证码。confirm 的请求体为 `{interactionUid,csrfToken,challengeId,code}`；成功与密码流程相同，返回 `{account,resumeUrl}`，后续继续走 provider（身份协议实现）的授权码、PKCE（授权码校验）与 DPoP 交换。错码、过期、次数耗尽或交互失效统一返回 HTTP 400 `INVALID_LOGIN_CODE`；限速返回 HTTP 429 `RATE_LIMITED` 与 `Retry-After`。
+
+登录码仍只存 HMAC（基于散列的消息认证码），六位随机数字、十分钟有效、五次错误上限、单次使用；账号与来源的验证退避、发送次数限制沿用持久限速器，假邮箱请求也消耗同样的发送限额。验证码上下文同时绑定账号 epoch（认证代次）、交互 UID（唯一标识）与具体设备标识及公钥。换密码、换邮箱、退出其它设备及注销账号会撤销或消费待用验证码；纯验证码登录不会绕过这些撤销。
+
+每一个 access token（访问令牌），包括云账号、宿主 audience（目标服务）和 refresh（刷新）产生的令牌，签入 `device_verified:true`。签发前实时核对 `cloud_devices.confirmed_at`、账号 epoch 和 DPoP 公钥；这条声明来自云端完成的邮箱核对，客户端输入同名字段不参与签发。宿主必须拒绝缺失或非 `true` 的声明。`/hosts/connect` 对已云核对且有 membership（宿主成员资格）的设备返回 `approval:'trusted',pairingRequired:false`，不再引导另一台设备允许；历史 `revoked / denied` 仍拒绝。内容实际读取仍由宿主完成，保留绑定、撤销、nonce（单次随机挑战）、DPoP、重放检查和设备会话校验。设备目录增加 `firstUsedAt`，保留 `lastUsedAt`。
+
+数据库仍为 schema（存储结构）8，无新增迁移、无历史数据批量改写。现有 `cloud_devices` 只在邮箱核对后写入，已确认设备可据此签新声明；旧注册流程刚完成的邮箱核对也可绑定本次交互的公钥。新登录码复用现有 `email_challenges` 的 `device` purpose（用途），上下文新增 `authMethod:'email'`；旧版云服务仍能读取这一用途，回滚不需降版本或数据迁移。原路由继续保留，旧客户端可使用密码与新设备邮箱确认流程，原 token 的五分钟寿命及旧刷新族保持原协议。
+
+上线顺序必须先云端，再宿主与客户端。先云端后，旧客户端忽略新增声明，行为保持兼容；新宿主收到升级前旧 token 时明确提示重新登录，也可通过原刷新族换得有声明的新 token。若先升级宿主，旧云端无法签声明，远程登录会被安全拒绝；本机免登录使用由宿主原生窗口独立提供。云端回滚后新版宿主继续拒绝不含声明的登录，不会降级放行。AUTH-1 不部署、不连接线上服务器、不发送真实邮箱；新测试只使用本机随机端口、临时数据库与 file（文件）邮件夹具。
 
 密码重置与换邮箱事务递增 `auth_epoch`，撤销该账号旧云会话、授权码、刷新族与 pending 验证码。已发 JWT 最多 5 分钟有效；本服务 `/account` 和邮箱变更接口还检查实时 epoch，因此重置立即拒绝旧 access token。本地宿主密码和数据不变。重置后尝试发送「密码已更改」；通知服务失败不回滚已提交的重置，响应 `notificationAccepted=false` 并记录无邮箱的操作错误。本包未实现通知补投递队列。
 
