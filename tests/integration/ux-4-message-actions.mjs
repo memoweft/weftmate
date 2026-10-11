@@ -8,23 +8,23 @@ import { mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 
 import { join, resolve } from 'node:path';
 import { startFixture } from './ux-4-fixture.mjs';
-import { localUiSession } from '../helpers/local-ui-session.mjs';
+import { feedbackUiSession } from '../helpers/feedback-ui-session.mjs';
 const evidence=resolve('tests/evidence/ux-p2/interaction');mkdirSync(evidence,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
 env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const checks=[],errors=[];
 for(const surface of process.argv.includes('--local-only') ? [] : (process.argv.includes('--android-only')?['android-ui']:['desktop','mobile-web','android-ui'])) {
-  const fixture=await startFixture(),profile=mkdtempSync(join(tmpdir(),'weftmate-ux4-electron-'));let app,browser,page;
+  const fixture=await startFixture({auth1:true}),profile=mkdtempSync(join(tmpdir(),'weftmate-ux4-electron-'));let app,browser,page;
   try {
     if(surface==='desktop') {
-      app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:fixture.origin,REVIEW_THEME:'light'}});
-      page=await app.firstWindow();await localUiSession(page,fixture.credentials);
+      app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['scripts/review-gallery/electron.mjs'],env:{...env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:fixture.origin,REVIEW_LIBRARY_TOKEN:fixture.libraryDesktopToken,REVIEW_THEME:'light'}});
+      page=await app.firstWindow();await feedbackUiSession(page,fixture,{native:true});
       await app.evaluate(({dialog},root)=>{globalThis.ux4Downloads=[];dialog.showSaveDialog=async(_win,options)=>{const file=root+'/export.'+options.filters[0].extensions[0];globalThis.ux4Downloads.push({file});return {canceled:false,filePath:file};};},profile.replaceAll('\\','/'));
     } else {
       browser=await chromium.launch({channel:'chrome',headless:true});page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
       await page.goto(surface==='mobile-web'?fixture.origin+'/personal/v1/ui':fixture.mobileUrl);
-      if(surface==='mobile-web')await localUiSession(page,fixture.credentials);
-      else {await page.waitForFunction(()=>state.booted);await page.evaluate(()=>listSharedSessions());await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:/^合成消息操作 /}).last().click();}
+      if(surface==='mobile-web')await feedbackUiSession(page,fixture);
+      else {await feedbackUiSession(page,fixture);await page.waitForFunction(()=>state.booted);await page.evaluate(()=>listSharedSessions());await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:'合成消息操作',exact:true}).last().click();}
     }
     page.setDefaultTimeout(20000);page.on('pageerror',error=>errors.push({surface,error:error.message}));
     await page.evaluate(()=>{window.__copies=[];Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>window.__copies.push(text)},configurable:true});});
@@ -34,10 +34,17 @@ for(const surface of process.argv.includes('--local-only') ? [] : (process.argv.
     await page.getByRole('button',{name:'复制回复',exact:true}).last().click();await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
     if(surface!=='android-ui')assert.match((await page.evaluate(()=>window.__copies))[0],/^合成回复/);
     await page.getByRole('button',{name:'有用',exact:true}).last().click();await page.getByRole('button',{name:'有用',exact:true,pressed:true}).last().waitFor();
-    await page.getByRole('button',{name:'没用',exact:true}).last().click();const feedback=page.getByRole('dialog',{name:'这条回复哪里需要改进？'});
-    await feedback.getByLabel('不准确',{exact:true}).check();await feedback.getByRole('textbox',{name:'备注（可选）'}).fill('请核对合成数据');await shot('feedback');
-    await feedback.getByRole('button',{name:'保存本机反馈'}).click();assert.equal(await page.getByRole('button',{name:'没用',exact:true}).last().getAttribute('aria-pressed'),'true');
-    const record=await page.evaluate(()=>{const key=Object.keys(localStorage).find(key=>key.startsWith('weftmate-message-feedback:'));return JSON.parse(localStorage.getItem(key));});assert.equal(record[0].note,'请核对合成数据');
+    await page.getByRole('button',{name:'没用',exact:true}).last().click();
+    await page.getByRole('button',{name:'没用',exact:true,pressed:true}).last().waitFor();
+    assert.equal(await page.getByRole('dialog',{name:'反馈问题'}).count(),0);
+    await page.getByRole('button',{name:'告诉我们哪里不对'}).last().click();const feedback=page.getByRole('dialog',{name:'反馈问题'});
+    await feedback.getByRole('textbox',{name:'哪里不对（必填）'}).fill('请核对合成数据');await shot('feedback');
+    await feedback.getByRole('button',{name:'查看完整预览'}).click();
+    const feedbackPreview=feedback.getByRole('region',{name:'反馈完整预览'});await feedbackPreview.waitFor();
+    assert.doesNotMatch(await feedbackPreview.innerText(),/合成回复|synthetic-secret-export/);
+    await feedback.getByRole('button',{name:'确认发送'}).click();await feedback.getByText(/请先登录云账号/).waitFor();
+    await feedback.getByRole('button',{name:'复制内容'}).click();await feedback.getByRole('button',{name:'关闭',exact:true}).click();
+    const record=await page.evaluate(()=>{const key=Object.keys(localStorage).find(key=>key.startsWith('weftmate-message-feedback:'));return JSON.parse(localStorage.getItem(key));});assert.equal(record[0].rating,'unhelpful');
     await page.getByRole('button',{name:'更多回复操作',exact:true}).last().evaluate(node=>{const row=node.closest('.message'),body=row.querySelector('.message-text,.markdown');const range=document.createRange();range.selectNodeContents(body);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);document.dispatchEvent(new MouseEvent('mouseup'));});
     await page.getByRole('button',{name:'引用选中文字',exact:true}).click();assert.match(await page.getByRole('textbox',{name:'输入消息',exact:true}).inputValue(),/^> /);await shot('quote');
     await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('');
@@ -74,11 +81,11 @@ for(const surface of process.argv.includes('--local-only') ? [] : (process.argv.
   finally {await app?.close();await browser?.close();await fixture.close();rmSync(profile,{recursive:true,force:true});}
 }
 async function shotFailure(page,surface){await page.screenshot({path:join(evidence,`${surface}-failure.png`)});}
-const phoneFixture=await startFixture({phone:true});let phoneBrowser;
+const phoneFixture=await startFixture({phone:true,auth1:true});let phoneBrowser;
 try {
   phoneBrowser=await chromium.launch({channel:'chrome',headless:true});const page=await phoneBrowser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   page.on('pageerror',error=>errors.push({surface:'phone-local',error:error.message}));await page.goto(phoneFixture.mobileUrl);
-  await page.waitForFunction(()=>state.booted);await page.evaluate(()=>listSharedSessions());await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:/^手机合成对话 /}).last().click();
+  await feedbackUiSession(page,phoneFixture);await page.waitForFunction(()=>state.booted);await page.evaluate(()=>listSharedSessions());await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:'手机合成对话',exact:true}).last().click();
   assert.equal(await page.getByRole('button',{name:/编辑并重发/,includeHidden:true}).count(),0);
   await page.getByRole('button',{name:'有用',exact:true}).click();const feedback=await page.evaluate(()=>{const key=Object.keys(localStorage).find(key=>key.startsWith('weftmate-message-feedback:'));return JSON.parse(localStorage.getItem(key))[0];});
   assert.equal(feedback.source,'phone');assert.equal(feedback.messageId,'local-reply');
@@ -90,10 +97,10 @@ try {
   checks.push({surface:'phone-local',feedbackLocal:true,sanitizedPreview:true,noInventedOfflineBranch:true});
 } catch(error) {const page=phoneBrowser?.contexts()[0]?.pages()[0];if(page){console.error(await page.locator('body').innerText());await page.screenshot({path:join(evidence,'phone-local-failure.png')});}throw error;}
 finally {await phoneBrowser?.close();await phoneFixture.close();}
-const longFixture=await startFixture({longReply:true});let longBrowser;
+const longFixture=await startFixture({longReply:true,auth1:true});let longBrowser;
 try {
   longBrowser=await chromium.launch({channel:'chrome',headless:true});const page=await longBrowser.newPage({acceptDownloads:true});
-  await page.goto(longFixture.origin+'/personal/v1/ui');await localUiSession(page,longFixture.credentials);
+  await page.goto(longFixture.origin+'/personal/v1/ui');await feedbackUiSession(page,longFixture);
   await page.evaluate(()=>{window.__copies=[];Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>window.__copies.push(text)},configurable:true});});
   await page.getByRole('button',{name:'复制回复',exact:true}).last().click();await page.getByRole('menuitem',{name:'复制 Markdown',exact:true}).click();
   await page.waitForFunction(()=>window.__copies.length>0);assert.match((await page.evaluate(()=>window.__copies))[0],/末尾完整标记/);

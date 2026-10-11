@@ -9,7 +9,7 @@ import { readFileSync, rmSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
-export async function startFixture({ phone = false, longReply = false } = {}) {
+export async function startFixture({ phone = false, longReply = false, auth1 = false, cloud, bindingDevice } = {}) {
   const root=mkdtempSync(join(tmpdir(),'weftmate-ux4-fixture-')),logs=new Map(),titles=new Map(),calls=[];
   const model={id:'synthetic',name:'合成模型',model:'synthetic',configured:true};
   const backend={getStatus:async()=>({runtime:'ready',referenceScan:'ready',capabilities:{chat:{available:true}}}),
@@ -29,36 +29,59 @@ export async function startFixture({ phone = false, longReply = false } = {}) {
       return {events:events.map(event=>event.type==='assistant.message'&&event.data.text.length>4000?{...event,data:{...event.data,text:event.data.text.slice(0,4000),truncated:true}}:event),nextSeq:forward?events.at(-1)?.seq??afterSeq:all.at(-1)?.seq??-1,nextBeforeSeq:events[0]?.seq??null,hasMore:forward&&eligible.length>limit,hasOlder:!forward&&eligible.length>limit}},
     readEventDetail:async({sessionId,seq})=>{const event=logs.get(sessionId).find(event=>event.seq===seq);return {seq,type:event.type,text:event.data.text}},
     cancelSession:async()=>({accepted:true})};
-  const service=await createPersonalAccessService({root,port:0,backend,uiHandler:servePersonalAccessUi});const {origin,hostId}=await service.start();
+  const cloudCleanups=[];
+  if(auth1 && !cloud){const {fixture}=await import('../../services/cloud/test/identity-helpers.mjs');const {registration,appDevice}=await import('../../services/cloud/test/app-helpers.mjs');cloud=await fixture({after:fn=>cloudCleanups.push(fn)});await registration(cloud);bindingDevice=await appDevice(cloud,'synthetic-ux4-desktop');}
+  const service=await createPersonalAccessService({root,port:0,backend,uiHandler:servePersonalAccessUi,...(auth1?{cloudIdentity:{issuer:cloud.config.issuer,clientId:'test-native',allowInsecureLoopback:true}}:{})});const {origin,hostId}=await service.start();
   const credentials={username:'MessageFixture',password:'synthetic-'+randomUUID()+'-password',deviceName:'消息操作隔离验收'};
-  const grant=await service.issueSetupGrant();const response=await fetch(origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({...credentials,grant:grant.grant})});
-  assert.equal(response.status,201);const auth=await response.json(),cookie=response.headers.get('set-cookie').split(';')[0];
-  async function request(path,body,method=body?'POST':'GET') {const response=await fetch(origin+'/personal/v1'+path,{method,headers:{cookie,origin,'content-type':'application/json','x-weftmate-csrf':auth.csrfToken},body:body?JSON.stringify(body):undefined});const value=await response.json();if(!response.ok)throw Object.assign(new Error(value.error?.code),{status:response.status});return value;}
+  const response=auth1?await fetch(origin+'/personal/v1/auth/desktop',{method:'POST',headers:{origin,'content-type':'application/json','x-weftmate-desktop':service.libraryDesktopToken},body:JSON.stringify({deviceName:credentials.deviceName})}):await (async()=>{const grant=await service.issueSetupGrant();return fetch(origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({...credentials,grant:grant.grant})})})();
+  assert.equal(response.status,auth1?200:201);const auth=await response.json(),cookie=response.headers.get('set-cookie').split(';')[0];
+  if(auth1){
+    assert.equal(auth.device.authKind,'desktop');
+    const denied=await fetch(origin+'/personal/v1/sessions',{headers:{origin,cookie}});
+    assert.equal(denied.status,403);assert.equal((await denied.json()).error.code,'LOCAL_SESSION_REQUIRED');
+  }
+  async function request(path,body,method=body?'POST':'GET') {const response=await fetch(origin+'/personal/v1'+path,{method,headers:{cookie,origin,...(auth1?{'x-weftmate-desktop':service.libraryDesktopToken}:{}),'content-type':'application/json','x-weftmate-csrf':auth.csrfToken},body:body?JSON.stringify(body):undefined});const value=await response.json();if(!response.ok)throw Object.assign(new Error(value.error?.code),{status:response.status});return value;}
   async function command(body){let {command}=await request('/commands',{targetDeviceId:hostId,...body});while(['pending','dispatching','preflight'].includes(command.state)){await new Promise(resolve=>setTimeout(resolve,20));command=(await request('/commands/'+command.commandId)).command;}assert.equal(command.state,'accepted_by_dsh');return command;}
   const source=(await command({requestId:'create',kind:'session.create',modelProfileId:'synthetic'})).sessionId;
   await command({requestId:'message',kind:'session.message',sessionId:source,text:'请给出一条合成答复。',mode:'queue'});
+  let mobileRequest=request,mobileAuth=auth,mobileCookie;
+  if(auth1){
+    const {appDevice,control,refresh,proof}=await import('../../services/cloud/test/app-helpers.mjs');
+    const claim=await request('/cloud/claims',{});await request('/cloud/binding',{claimId:claim.claimId,accessToken:bindingDevice.tokens.access_token});
+    const mobile=await appDevice(cloud,'synthetic-ux4-mobile-'+randomUUID());
+    const connection=(await control(mobile,'/hosts/connect',{hostId})).data;await refresh(mobile,connection.resource);
+    const nonce=await request('/auth/cloud-nonce',{}),url=origin+'/personal/v1/auth/cloud-session';
+    const connected=await fetch(url,{method:'POST',headers:{origin,'content-type':'application/json',dpop:await proof(mobile,url,mobile.tokens.access_token,{nonce:nonce.nonce})},body:JSON.stringify({accessToken:mobile.tokens.access_token,deviceName:'合成云登录手机'})});
+    mobileAuth=await connected.json();assert.equal(connected.status,200,JSON.stringify(mobileAuth));assert.equal(mobileAuth.device.authKind,'cloud');assert.equal(mobileAuth.account.ownerId,auth.account.ownerId);mobileCookie=connected.headers.get('set-cookie').split(';')[0];
+    mobileRequest=async(path,body,method=body?'POST':'GET')=>{const response=await fetch(origin+'/personal/v1'+path,{method,headers:{cookie:mobileCookie,origin,'content-type':'application/json','x-weftmate-csrf':mobileAuth.csrfToken},body:body?JSON.stringify(body):undefined});const value=await response.json();assert.ok(response.ok,JSON.stringify(value));return value;};
+  }
+  const cloudCredentials=new Map();
   const bridge=async(method,params)=>{
-    if(method==='host.status')return request('/status');
+    if(auth1 && method==='cloud.app.identity')return {hostOrigin:origin,clientId:'test-native',redirectUri:'com.example.weftmate:/callback',deviceName:'合成云登录手机'};
+    if(auth1 && method==='cloud.app.configure')return mobileRequest('/cloud/config');
+    if(auth1 && method==='cloud.app.credentials'){if(params.remove)cloudCredentials.delete(params.key);else if(params.value!==undefined)cloudCredentials.set(params.key,params.value);return {value:cloudCredentials.get(params.key)};}
+    if(auth1 && method==='cloud.adopt')return {...mobileAuth.account,owner:mobileAuth.account.ownerId,deviceId:mobileAuth.device.id,connectionVerified:true};
+    if(method==='host.status')return mobileRequest('/status');
     if(['app.ready','app.activity','events.subscribe','cloud.callback'].includes(method))return {};
-    if(method==='app.bootstrap')return {loggedIn:true,username:credentials.username,owner:auth.account.ownerId,busy:false,model:{source:'host',displayName:'合成模型'}};
-    if(method==='auth.me')return {device:auth.device,deviceId:auth.device.id,displayName:'合成账号',owner:auth.account.ownerId,connectionVerified:true};
+    if(method==='app.bootstrap')return {loggedIn:!auth1,cloudApp:auth1,authSource:'cloud',username:credentials.username,owner:mobileAuth.account.ownerId,busy:false,model:{source:'host',displayName:'合成模型'}};
+    if(method==='auth.me')return {device:mobileAuth.device,deviceId:mobileAuth.device.id,displayName:'合成账号',owner:mobileAuth.account.ownerId,connectionVerified:true};
     if(method==='settings.appearance')return {value:'light'};
     if(method==='attachments.list')return {attachments:[]};if(method==='conversations.list')return {conversations:phone?[{id:'phone-synthetic',title:'手机合成对话',createdAt:new Date().toISOString()}]:[]};
     if(method==='conversations.messages')return {source:'phone',turnStatus:'completed',messages:[{id:'local-user',role:'user',text:'手机合成目标'},{id:'local-reply',role:'assistant',text:'**手机合成回答**\napi_key="synthetic-phone-secret"'}],receipts:[]};
     if(method==='shared.conversations.get')return {source:'host',conversationId:params.conversationId,status:'unbound',canAdopt:false,reasonCode:'SOURCE_DEVICE_UPGRADE_REQUIRED'};
     if(method==='models.list')return {models:[]};if(method==='models.host')return {models:[{profileId:'synthetic',displayName:'合成模型',configured:true},{profileId:'alternate',displayName:'另一个合成模型',configured:true}]};
-    if(method==='shared.sessions.list')return {source:'host',hostAvailable:true,sessions:(await request('/sessions')).sessions.map(row=>({...row,source:'host'}))};
-    if(method==='shared.sessions.events')return {source:'host',hostAvailable:true,sessionId:params.sessionId,...await request(`/sessions/${params.sessionId}/events?limit=100${params.afterSeq===undefined?'':`&afterSeq=${params.afterSeq}`}${params.beforeSeq===undefined?'':`&beforeSeq=${params.beforeSeq}`}`)};
-    if(method==='shared.projects.list')return {...await request('/projects'),canManage:false};
-    if(method==='shared.commands.detail')return request('/commands/'+params.commandId);
-    if(method==='shared.sessions.eventDetail')return request(`/sessions/${params.sessionId}/events/${params.seq}/detail`);
-    if(method==='shared.commands.byRequest')return request('/commands/by-request/'+params.requestId);
+    if(method==='shared.sessions.list')return {source:'host',hostAvailable:true,sessions:(await mobileRequest('/sessions')).sessions.map(row=>({...row,source:'host'}))};
+    if(method==='shared.sessions.events')return {source:'host',hostAvailable:true,sessionId:params.sessionId,...await mobileRequest(`/sessions/${params.sessionId}/events?limit=100${params.afterSeq===undefined?'':`&afterSeq=${params.afterSeq}`}${params.beforeSeq===undefined?'':`&beforeSeq=${params.beforeSeq}`}`)};
+    if(method==='shared.projects.list')return {...await mobileRequest('/projects'),canManage:false};
+    if(method==='shared.commands.detail')return mobileRequest('/commands/'+params.commandId);
+    if(method==='shared.sessions.eventDetail')return mobileRequest(`/sessions/${params.sessionId}/events/${params.seq}/detail`);
+    if(method==='shared.commands.byRequest')return mobileRequest('/commands/by-request/'+params.requestId);
     if(method==='shared.outbox.list')return {commands:[],source:'host'};
     if(method==='activity.list')return {activities:[],hostAvailable:true};
-    if(method==='shared.tasks.detail')return request('/tasks/'+params.taskId);
+    if(method==='shared.tasks.detail')return mobileRequest('/tasks/'+params.taskId);
     if(method==='shared.approvals.list')return {approvals:[]};if(method==='shared.questions.list')return {questions:[]};
     if(method==='clipboard.copy')return {copied:true};if(method==='conversation.export')return {pending:true};
-    if(method==='host.business')return request(params.path.replace('/personal/v1',''),params.body,params.method);
+    if(method==='host.business')return mobileRequest(params.path.replace('/personal/v1',''),params.body,params.method);
     throw new Error('Unsupported fixture method '+method);
   };
   const mobileDir=new URL('../../apps/mobile-ui/www/',import.meta.url);
@@ -70,5 +93,5 @@ export async function startFixture({ phone = false, longReply = false } = {}) {
     res.setHeader('content-type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml'})[extname(path)]||'application/octet-stream');res.end(data);
   }catch(error){if(req.url==='/bridge.js'){res.setHeader('content-type','text/javascript');res.end(`window.weftNative={postMessage:raw=>fetch('/bridge',{method:'POST',body:raw}).then(r=>r.json()).then(message=>{function receive(){if(window.WeftUiCore&&typeof androidBridge!=='undefined')androidBridge.receive(message);else setTimeout(receive,20)}receive()})};`);}else{res.statusCode=404;res.end();}}});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  return {origin,libraryDesktopToken:service.libraryDesktopToken,credentials,source,hostId,request,logs,calls,mobileUrl:`http://127.0.0.1:${server.address().port}/`,close:async()=>{await service.close();await new Promise(resolve=>server.close(resolve));rmSync(root,{recursive:true,force:true})}};
+  return {origin,libraryDesktopToken:service.libraryDesktopToken,auth,mobileAuth,mobileCookie,credentials,source,hostId,request,logs,calls,mobileUrl:`http://127.0.0.1:${server.address().port}/`,close:async()=>{await service.close();await new Promise(resolve=>server.close(resolve));for(const fn of cloudCleanups.reverse())await fn();rmSync(root,{recursive:true,force:true})}};
 }

@@ -145,6 +145,10 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         const element = ui.byId(id);
         element.textContent = message;
         element.hidden = !message;
+        if (message && core.state.ownerId && ui.messageActions) {
+            const feedback = ui.element('button', 'button secondary small', '反馈问题'); feedback.type = 'button';
+            feedback.onclick = () => ui.messageActions.openFeedback(feedback); element.append(feedback);
+        }
     }
     function toast(message, undo) {
         const element = ui.byId('toast');
