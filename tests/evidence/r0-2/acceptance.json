@@ -1,0 +1,136 @@
+{
+  "passed": true,
+  "synthetic": true,
+  "componentAdapters": "actual random-port HTTP probes; signed synthetic X.509 certificate",
+  "realModelRequests": 0,
+  "checks": [
+    {
+      "name": "five healthy rows, semantic recall, three metrics",
+      "passed": true
+    },
+    {
+      "name": "previous unclean exit notice, detail entry and records visible",
+      "passed": true
+    },
+    {
+      "name": "host provider fault → scoped manual repair",
+      "passed": true,
+      "restored": true,
+      "nextStep": false
+    },
+    {
+      "name": "memory provider fault → scoped manual repair",
+      "passed": true,
+      "restored": true,
+      "nextStep": false
+    },
+    {
+      "name": "model provider fault → scoped manual repair",
+      "passed": true,
+      "restored": false,
+      "nextStep": true
+    },
+    {
+      "name": "relay provider fault → scoped manual repair",
+      "passed": true,
+      "restored": true,
+      "nextStep": false
+    },
+    {
+      "name": "certificate provider fault → scoped manual repair",
+      "passed": true,
+      "restored": true,
+      "nextStep": false
+    },
+    {
+      "name": "synthetic memory owner automatic reconnect before snapshot",
+      "passed": true
+    },
+    {
+      "name": "semantic recall four states and omitted legacy field",
+      "passed": true
+    },
+    {
+      "name": "native export with synthetic save dialog yields six allowed files",
+      "passed": true
+    },
+    {
+      "name": "synthetic dialogue, memory, key and token markers absent from every exported file",
+      "passed": true
+    },
+    {
+      "name": "mobile browser read-only five components and metrics",
+      "passed": true
+    }
+  ],
+  "mobileEvidence": "browser viewport only; native system bars pending",
+  "screenshots": [
+    "electron-1200-light-unclean-notice.png",
+    "electron-480-light-unclean-notice.png",
+    "electron-1200-dark-unclean-notice.png",
+    "electron-480-dark-unclean-notice.png",
+    "electron-1200-light-healthy.png",
+    "electron-480-light-healthy.png",
+    "electron-1200-dark-healthy.png",
+    "electron-480-dark-healthy.png",
+    "electron-1200-light-metrics-records.png",
+    "electron-480-light-metrics-records.png",
+    "electron-1200-dark-metrics-records.png",
+    "electron-480-dark-metrics-records.png",
+    "electron-1200-light-host-fault.png",
+    "electron-480-light-host-fault.png",
+    "electron-1200-dark-host-fault.png",
+    "electron-480-dark-host-fault.png",
+    "electron-1200-light-host-repaired.png",
+    "electron-480-light-host-repaired.png",
+    "electron-1200-dark-host-repaired.png",
+    "electron-480-dark-host-repaired.png",
+    "electron-1200-light-memory-fault.png",
+    "electron-480-light-memory-fault.png",
+    "electron-1200-dark-memory-fault.png",
+    "electron-480-dark-memory-fault.png",
+    "electron-1200-light-memory-repaired.png",
+    "electron-480-light-memory-repaired.png",
+    "electron-1200-dark-memory-repaired.png",
+    "electron-480-dark-memory-repaired.png",
+    "electron-1200-light-model-fault.png",
+    "electron-480-light-model-fault.png",
+    "electron-1200-dark-model-fault.png",
+    "electron-480-dark-model-fault.png",
+    "electron-1200-light-model-next-step.png",
+    "electron-480-light-model-next-step.png",
+    "electron-1200-dark-model-next-step.png",
+    "electron-480-dark-model-next-step.png",
+    "electron-1200-light-relay-fault.png",
+    "electron-480-light-relay-fault.png",
+    "electron-1200-dark-relay-fault.png",
+    "electron-480-dark-relay-fault.png",
+    "electron-1200-light-relay-repaired.png",
+    "electron-480-light-relay-repaired.png",
+    "electron-1200-dark-relay-repaired.png",
+    "electron-480-dark-relay-repaired.png",
+    "electron-1200-light-certificate-fault.png",
+    "electron-480-light-certificate-fault.png",
+    "electron-1200-dark-certificate-fault.png",
+    "electron-480-dark-certificate-fault.png",
+    "electron-1200-light-certificate-repaired.png",
+    "electron-480-light-certificate-repaired.png",
+    "electron-1200-dark-certificate-repaired.png",
+    "electron-480-dark-certificate-repaired.png",
+    "electron-1200-light-export-preview.png",
+    "electron-480-light-export-preview.png",
+    "electron-1200-dark-export-preview.png",
+    "electron-480-dark-export-preview.png",
+    "mobile-browser-360-light-status.png",
+    "mobile-browser-390-light-status.png",
+    "mobile-browser-360-dark-status.png",
+    "mobile-browser-390-dark-status.png",
+    "mobile-browser-360-light-metrics.png",
+    "mobile-browser-390-light-metrics.png",
+    "mobile-browser-360-dark-metrics.png",
+    "mobile-browser-390-dark-metrics.png"
+  ],
+  "sensitiveMarkerHits": 0,
+  "cleanupCount": 0,
+  "cleanupSafe": true
+}
