@@ -33,9 +33,11 @@ function Canonical-Root([string]$path) {
 function Safe-Target([string]$target, [string]$root) {
     $verified = Canonical-Root $root
     if ($verified -ine $root) { throw '清理根真实路径已变化' }
-    $item = Get-Item -LiteralPath $target -Force
+    try { $item = Get-Item -LiteralPath $target -Force }
+    catch { if ($_.CategoryInfo.Category -eq [Management.Automation.ErrorCategory]::ObjectNotFound) { return $null }; throw }
     if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw "拒绝目标：不是普通目录或自身是联接：$target" }
-    $real = [IO.Path]::GetFullPath((Resolve-Path -LiteralPath $target).ProviderPath)
+    try { $real = [IO.Path]::GetFullPath((Resolve-Path -LiteralPath $target).ProviderPath) }
+    catch { if ($_.CategoryInfo.Category -eq [Management.Automation.ErrorCategory]::ObjectNotFound) { return $null }; throw }
     if ([IO.Path]::GetDirectoryName($real) -ine $root -or $item.Name -ieq 'weftmate-temp' -or
         -not ($Prefixes | Where-Object { $item.Name.StartsWith($_, [StringComparison]::OrdinalIgnoreCase) })) { throw "拒绝目标：真实父目录越界：$target" }
     return $item
@@ -52,7 +54,8 @@ function Process-Table {
 function Iso([datetime]$time) { return $time.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ') }
 function Owner-Exists([string]$target) {
     # Enumeration also sees a dangling owner symlink; it is invalid, not absent.
-    return [bool]@(Get-ChildItem -LiteralPath $target -Force | Where-Object { $_.Name -ceq $ownerName }).Count
+    try { return [bool]@(Get-ChildItem -LiteralPath $target -Force | Where-Object { $_.Name -ceq $ownerName }).Count }
+    catch { if ($_.CategoryInfo.Category -eq [Management.Automation.ErrorCategory]::ObjectNotFound) { return $false }; throw }
 }
 function Read-Owner([string]$target) {
     $file = Join-Path $target $ownerName
@@ -160,10 +163,10 @@ try {
             if ($dir.Name -ieq 'weftmate-temp' -or -not ($Prefixes | Where-Object { $dir.Name.StartsWith($_, [StringComparison]::OrdinalIgnoreCase) })) { continue }
             $summary.found++
             if ($dir.Attributes -band [IO.FileAttributes]::ReparsePoint) { $summary.keptUnsafe++; continue }
-            $null = Safe-Target $dir.FullName $root
+            if (-not (Safe-Target $dir.FullName $root)) { $summary.keptUnsafe++; continue }
             if ($worktrees | Where-Object { $_ -ieq $dir.FullName -or $_.StartsWith($dir.FullName + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or $dir.FullName.StartsWith($_ + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) }) { $summary.keptWorktrees++; continue }
             $owner = Read-Owner $dir.FullName
-            $ownerExists = Owner-Exists $dir.FullName
+            $ownerExists = if ($owner) { $true } else { Owner-Exists $dir.FullName }
             if (-not $owner) {
                 $summary.keptUnowned++; $summary.unowned += @{directory=$dir.Name;root=$root;reason=if ($ownerExists) {'invalid ownership'} else {'missing ownership'}}
                 if (-not $Legacy -or $ownerExists) { continue }
@@ -197,6 +200,7 @@ try {
             $handles = [Collections.Generic.List[IO.FileStream]]::new()
             try {
                 $dir = Safe-Target $entry.path $entry.root
+                if (-not $dir) { $entry.result='keptGone'; $summary.keptUnsafe++; Audit $entry; continue }
                 $owner = Read-Owner $entry.path
                 if ($entry.owner) {
                     if (-not $owner -or (ConvertTo-Json -InputObject $owner -Compress) -cne (ConvertTo-Json -InputObject $entry.owner -Compress) -or (Owner-Live $owner $freshProcesses) -or [DateTimeOffset]$owner.heartbeatAt -ge $cutoff) {
@@ -213,7 +217,7 @@ try {
                     Hold-DeletionFiles $entry.path $handles
                 }
                 $entry.result='deleting'; Audit $entry
-                $null = Safe-Target $entry.path $entry.root
+                if (-not (Safe-Target $entry.path $entry.root)) { $entry.result='keptGone'; $summary.keptUnsafe++; Audit $entry; continue }
                 Remove-NoFollow $entry.path
                 $entry.result='deleted'; $summary.deleted++
             } catch {
