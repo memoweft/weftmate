@@ -1,36 +1,59 @@
 # WeftMate 安装窗口验收
 
-全部使用 `inst1qa` 测试身份、隔离的当前用户安装登记与合成数据，安装目录在系统盘随机的 `wi1-…` 目录中。合成根目录保持短路径：既有 NSIS 升级先把旧文件搬到临时目录，长测试根会把深层运行时文件的搬移目标推到 262 个字符；本次根目录下的最长搬移目标为 244 个字符。没有更换文件处理引擎或绕过它的失败检查。使用独立后台桌面，没有切换本人桌面，没有全局鼠标键盘输入，没有访问本人安装或日用数据。
+本目录记录 INST-1 与追加的自绘标题栏、单页安装位置。全部使用 `inst1qa` 测试身份、合成数据和独立后台桌面，通过 PrintWindow（按窗口句柄取图）捕获实际 NSIS（Windows 安装引擎）窗口。没有切换本人桌面、发送全局鼠标键盘、访问本人安装／数据或请求18186。截图未遮盖、拼接或替换；`raw/` 保留完整原图，JSON（结构化记录）保存窗口几何。
 
-安装器沿用 NSIS（Windows 安装器）与 electron-builder（桌面打包工具）的默认执行脚本，页面改为单页品牌绘制层。当前用户默认位置、静默参数、应用内更新与差分块图沿用原链路。交互卸载只有保留数据的确认与进度，继续调用 `--uninstall-cleanup`，不提供删除数据选项。未知发布者与 SmartScreen（系统下载信誉保护）由 Windows 显示，本包没有签名证书。
+首次安装显示位置、更改和安装按钮；默认位置点一次安装即可。顶部可拖动，只有自绘关闭按钮，没有系统标题栏或最大化。安装与卸载过程中关闭禁用；覆盖升级沿用已有登记的位置，直接显示正在更新。数据不跟随安装位置变化，卸载明确保留数据，继续调用 `--uninstall-cleanup`。未知发布者与 SmartScreen（系统下载信誉保护）仍由 Windows 显示。
 
-真实窗口由 `tests/helpers/installer-window.cs` 的 PrintWindow（按窗口句柄取图）保存。每次捕获采用目标窗口自己的 DPI awareness context（像素密度坐标上下文），按 DWM（桌面窗口管理器）报告的可见窗口边界取图；`raw/` 同时保留完整原始窗口，结果记录原始／可见尺寸与边界偏移，避免将原生窗口和 Electron（桌面程序框架）的坐标混用。程序通过测试包专属的随机 CDP（Chromium 调试协议）端口设置自身浅深色；正式包没有测试主题、调试端口、合成失败与错误记录入口。截图没有遮盖、拼接窗口或设计稿替代。
+| 过程 | 浅色截图 | 深色截图 |
+|---|---|---|
+| 默认位置准备安装 | [default-ready-light.png](default-ready-light.png) | [default-ready-dark.png](default-ready-dark.png) |
+| 默认位置安装进度 | [default-install-light.png](default-install-light.png) | [default-install-dark.png](default-install-dark.png) |
+| 默认位置自动打开 | [default-opened-light.png](default-opened-light.png) | [default-opened-dark.png](default-opened-dark.png) |
+| 默认位置运行中重试 | [default-running-retry-light.png](default-running-retry-light.png) | [default-running-retry-dark.png](default-running-retry-dark.png) |
+| 默认位置覆盖升级 | [default-update-light.png](default-update-light.png) | [default-update-dark.png](default-update-dark.png) |
+| 默认位置自动重开 | [default-reopened-light.png](default-reopened-light.png) | [default-reopened-dark.png](default-reopened-dark.png) |
+| 默认位置卸载确认 | [default-uninstall-confirm-light.png](default-uninstall-confirm-light.png) | [default-uninstall-confirm-dark.png](default-uninstall-confirm-dark.png) |
+| 默认位置卸载进度 | [default-uninstall-light.png](default-uninstall-light.png) | [default-uninstall-dark.png](default-uninstall-dark.png) |
+| 自定义位置准备安装 | [custom-ready-light.png](custom-ready-light.png) | [custom-ready-dark.png](custom-ready-dark.png) |
+| 自定义位置安装进度 | [custom-install-light.png](custom-install-light.png) | [custom-install-dark.png](custom-install-dark.png) |
+| 自定义位置自动打开 | [custom-opened-light.png](custom-opened-light.png) | [custom-opened-dark.png](custom-opened-dark.png) |
+| 自定义位置运行中重试 | [custom-running-retry-light.png](custom-running-retry-light.png) | [custom-running-retry-dark.png](custom-running-retry-dark.png) |
+| 自定义位置覆盖升级 | [custom-update-light.png](custom-update-light.png) | [custom-update-dark.png](custom-update-dark.png) |
+| 自定义位置自动重开 | [custom-reopened-light.png](custom-reopened-light.png) | [custom-reopened-dark.png](custom-reopened-dark.png) |
+| 自定义位置卸载确认 | [custom-uninstall-confirm-light.png](custom-uninstall-confirm-light.png) | [custom-uninstall-confirm-dark.png](custom-uninstall-confirm-dark.png) |
+| 自定义位置卸载进度 | [custom-uninstall-light.png](custom-uninstall-light.png) | [custom-uninstall-dark.png](custom-uninstall-dark.png) |
+| 选好自定义位置 | [custom-location-light.png](custom-location-light.png) | [custom-location-dark.png](custom-location-dark.png) |
+| 不可写位置留在原页 | [unwritable-light.png](unwritable-light.png) | [unwritable-dark.png](unwritable-dark.png) |
+| 合成执行段失败 | [failure-light.png](failure-light.png) | [failure-dark.png](failure-dark.png) |
+| 125% 原生窗口布局 | [ready-dpi-120-light.png](ready-dpi-120-light.png) | [ready-dpi-120-dark.png](ready-dpi-120-dark.png) |
+| 150% 原生窗口布局 | [ready-dpi-144-light.png](ready-dpi-144-light.png) | [ready-dpi-144-dark.png](ready-dpi-144-dark.png) |
+| 200% 原生窗口布局 | [ready-dpi-192-light.png](ready-dpi-192-light.png) | [ready-dpi-192-dark.png](ready-dpi-192-dark.png) |
 
-| 过程 | 浅色窗口 | 深色窗口 | 行为 |
-|---|---|---|---|
-| 初次安装 | [install-light.png](install-light.png) | [install-dark.png](install-dark.png) | 自动安装，品牌标志、说明、真实进度，无下一步 |
-| 自动打开程序 | [opened-light.png](opened-light.png) | [opened-dark.png](opened-dark.png) | 实际安装程序的首次引导窗口 |
-| 程序运行中覆盖 | [running-retry-light.png](running-retry-light.png) | [running-retry-dark.png](running-retry-dark.png) | 提示退出程序，重试与取消；没有强制结束程序 |
-| 手动升级 | [update-light.png](update-light.png) | [update-dark.png](update-dark.png) | 从 `0.1.1-preview.21` 到 `0.1.2-preview.22`，显示正在更新 |
-| 自动重新打开 | [reopened-light.png](reopened-light.png) | [reopened-dark.png](reopened-dark.png) | 更新后的实际程序窗口 |
-| 卸载确认 | [uninstall-confirm-light.png](uninstall-confirm-light.png) | [uninstall-confirm-dark.png](uninstall-confirm-dark.png) | 显示实际合成数据目录，明确不会删除数据 |
-| 卸载进度 | [uninstall-light.png](uninstall-light.png) | [uninstall-dark.png](uninstall-dark.png) | 删除程序、快捷方式与安装登记，保留数据 |
-| 合成执行段失败 | [failure-light.png](failure-light.png) | [failure-dark.png](failure-dark.png) | 实际安装器中止后显示排查说明，确认后返回失败码 2，不停在隐藏的完成页 |
+`interactive-position-default-results.json` 与 `interactive-position-custom-results.json` 记录实际安装、版本、自动打开／重开、未传 `/D` 的覆盖升级、图标哈希、开始菜单目标、开机项与卸载后的移除，以及合成数据保留。自定义目录含中文和空格；拒绝写入由合成目录的实际 ACL（访问权限）产生，不是伪造错误文案。路径选择替身只替换系统选择器的返回值，以便自动重试不可写和可写目录；目录解析与写入／空间校验均走真实代码。
 
-`interactive-results.json` 保存版本、两种主题、自动打开、运行中重试、数据保留与卸载的结果。合成 `keep-me.txt` 在升级后逐字一致，卸载后仍存在；正常程序启动会更新自己的日志和配置，因此不把整个数据目录称为零字节变化。测试结束再删除经过标记核验的合成目录、测试配置与安装器缓存。
+`silent-directory-results.json` 单独记录 `/S /currentuser /D=<路径>` 的真实安装与卸载，目标同样含中文和空格。按 NSIS 标准，`/D` 位于最后且不额外包引号；核对卸载登记、开始菜单目标、程序文件移除及合成数据保留。
+
+`frame-results.json` 另记录真实系统文件夹选择器的打开和确认、已有空 WeftMate 目录不重复嵌套、窗口样式、标题区域拖动命中、Tab（焦点切换）顺序及 Esc（退出键）取消。系统选择器保持 Windows 自己的界面；公开截图的测试入口把导航限制在合成目录，并隐藏真实固定位置，不修改系统设置。浅深主题以系统实际设置为准。安装器测试主题只影响自身窗口。
+
+本机实际窗口 DPI（像素密度）为144。120／144／192渲染密度通过测试包专属入口指定，因此照片是实际原生窗口的125%／150%／200%布局，而非缩放图片；记录同时保留实际144 DPI。没有改变本人系统缩放，不能把这称为真实跨显示器 `WM_DPICHANGED` 验收。字体与布局按新密度重建的代码已复审；真实跨显示器移动、Windows 10、英文长文案及人工读屏未实测。
+
+自定义位置的开机项核对实际 HKCU（当前用户注册表）命令，并在后台桌面重放该命令，检查合成数据目录中的真实宿主启动记录。更新测试调用既有 `prepareAppRollback`，由真实监护进程执行哈希核验、静默安装、重新启动与健康确认。迁移测试运行原样的 `migrate-installed-desktop.ps1`，每步都传自定义 `-InstalledExe`；只有计划任务操作替换为合成响应，不创建或操作本人任务，安装器／程序启动／随机端口验证／清理均实际执行。监护首次正常退出的关闭检测返回 SYSTEM_QUERY_FAILED，全部旧进程消失后重跑未经修改的快照监护才达到健康；新程序窗口起初隐藏，仅在隔离桌面显现。浅色再覆盖同一V2，深色由V1手动覆盖到V2。含空格路径的应用自启开关查询回报关闭，实际登记命令重放启动成功。这些是现有应用边界，不改启动／更新应用文件。详情与限制见验证汇总。
+
+图标沿用同一九尺寸 ICO（Windows 图标文件）：16、20、24、32、40、48、64、128、256。绘制层加载256像素图形，控件按当前密度绘制。后台桌面没有 Explorer（文件管理器）的任务栏，因此用实际登记、快捷方式、图标哈希和窗口标题检查名称／图标，没有接管本人任务栏取图。
 
 复验命令：
 
 ```powershell
-# 重活须先按 parallel-rules.md 占一个名额。
-node scripts/nightly/installed-smoke.mjs --test-identity inst1qa --out .local/inst-1-smoke
-node scripts/nightly/installed-smoke.mjs --test-identity inst1qa --install --out .local/inst-1-smoke-installed --installer <经过发布检查的测试安装包>
-# 本包的相邻合成版本，私钥完成即删除；不发布版本或标签。
-node tests/inst-1-upgrade-build.mjs .local/inst-1-first 0.1.1-preview.21 <固定运行时构建目录>
-node tests/inst-1-upgrade-build.mjs .local/inst-1-upgrade 0.1.2-preview.22 <固定运行时构建目录>
-powershell.exe -NoProfile -NonInteractive -File tests/inst-1-interactive.ps1 -Installer <0.1.1测试安装包> -UpgradeInstaller <0.1.2测试安装包>
+# Electron（桌面程序框架）、完整单测和打包按 parallel-rules.md 占名额。
+node tests/inst-1-upgrade-build.mjs <新输出目录> 0.1.1-preview.21 <已验证暂存目录>
+node tests/inst-1-upgrade-build.mjs <另一新输出目录> 0.1.2-preview.22 <已验证暂存目录>
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tests/inst-1-frame.ps1 -Installer <0.1.1测试安装包>
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tests/inst-1b-interactive.ps1 -Mode default -Installer <0.1.1测试安装包> -UpgradeInstaller <0.1.2测试安装包>
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tests/inst-1b-interactive.ps1 -Mode custom -Watchdog -Installer <0.1.1测试安装包> -UpgradeInstaller <0.1.2测试安装包>
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tests/inst-1-directory.ps1
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tests/inst-1-silent-directory.ps1 -Installer <测试安装包>
+node scripts/nightly/installed-smoke.mjs --test-identity inst1qa --out .local/inst-1b-smoke
+node scripts/nightly/installed-smoke.mjs --test-identity inst1qa --install --installer <测试安装包> --out .local/inst-1b-smoke-installed
 ```
 
-图标使用既有同一母版的品牌图形：安装器、程序 EXE（可执行文件）、卸载登记与快捷方式使用同一份九尺寸 ICO（Windows 图标文件），程序窗口与任务栏保留既有系统浅深色变体。尺寸为 16、20、24、32、40、48、64、128、256；新增绘制层明确加载 64 像素图形，避免将最小图标放大。测试验证每个图形载荷完整。后台桌面没有 Explorer（文件管理器）的任务栏，没有接管本人任务栏取图；安装登记、快捷方式名称与 ICO 资源检查用于这一项。
-
-本地结果见 [验证汇总](validation-results.json)，视觉范围与处置见 [独立审查](review.md)。相同程序载荷下，原样安装器为 184,455,855 字节（175.91 MiB，二进制兆字节），品牌安装器为 184,603,821 字节（176.05 MiB），增加 147,966 字节（144.5 KiB，二进制千字节），约 0.0802%。未增加安装框架或另一个网页运行时。原始窗口见 [raw](raw/)，与几何记录成对保留。云端结果与合主线后的复验在本包 result（结果文件）及 PR（拉取请求）中记录。
+成功后卸载测试身份，核对数据标记与配置归属再删除合成根、测试配置及更新缓存。原版 NSIS 目录搬移有 MAX_PATH（传统路径长度）限制，合成 TEMP（临时目录）使用短的 `wi1-…` 根；位置页也提供过长路径的解释。没有修改文件处理引擎或绕过失败检查。完整结果见 [验证汇总](validation-results.json) 与 [独立审查](review.md)，云端检查与收尾见 PR（拉取请求）#226 及调度方结果文件。

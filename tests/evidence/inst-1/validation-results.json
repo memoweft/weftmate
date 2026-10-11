@@ -1,55 +1,72 @@
 {
-  "task": "INST-1",
+  "task": "INST-1b",
   "testIdentity": "inst1qa",
   "ui": {
     "themes": [
       "light",
       "dark"
     ],
-    "dpi": 144,
+    "hostDpi": 144,
+    "renderDpis": [
+      120,
+      144,
+      192
+    ],
+    "renderScaleOverride": true,
     "windowsBuild": 26200,
-    "visibleScreenshots": 16,
-    "rawScreenshots": 16,
+    "visibleScreenshots": 46,
+    "rawScreenshots": 46,
     "privateDesktop": true,
     "globalInputUsed": false,
-    "review": "ship"
+    "review": "ship: installer windows and validated manual lifecycle; existing application limitations retained"
   },
   "required": {
     "mode": "required",
-    "files": 282,
+    "files": 296,
     "exitCode": 0,
-    "passed": 1523,
+    "passed": 1606,
     "failed": 0,
     "skipped": 14,
     "failures": []
   },
   "vendor": {
     "mode": "vendor",
-    "files": 29,
+    "files": 31,
     "exitCode": 0,
-    "passed": 204,
+    "passed": 219,
     "failed": 0,
     "skipped": 0,
     "failures": []
   },
+  "vendorRetry": {
+    "firstAttempt": {
+      "passed": 217,
+      "failed": 1,
+      "processExitCode": 3221226505,
+      "failingFile": "tests/model-budget-runtime.test.ts"
+    },
+    "targetedRetry": {
+      "passed": 2,
+      "failed": 0
+    },
+    "fullSuiteRepeated": true
+  },
   "cloudInteractions": {
     "files": 5,
-    "passed": 109,
+    "passed": 111,
     "failed": 0,
     "skipped": 0
   },
   "related": {
-    "releaseAndAssets": 14,
-    "updateAndInstallerContracts": 7
+    "releaseAndUpdateContracts": 14,
+    "nativeDirectoryChecks": 16
   },
   "typecheck": "passed",
   "publicHygiene": {
     "identityHits": 0
   },
   "smoke": {
-    "fullDefaultBuild": {
-      "passed": true,
-      "smokePassed": true,
+    "default": {
       "realInstall": false,
       "checks": [
         "packaged-local-diagnostic-paths-and-active-run",
@@ -60,26 +77,9 @@
         "assistant-switch-size-and-save-toast",
         "packaged-normal-close-recorded"
       ],
-      "installerSha256": "159352de5b2f0f986747a5c08418b649ec2fa907ed88a744f5f6b9085640343b",
       "buildPassed": true
     },
-    "finalVerifiedUnpacked": {
-      "passed": true,
-      "smokePassed": true,
-      "realInstall": false,
-      "checks": [
-        "packaged-local-diagnostic-paths-and-active-run",
-        "fresh-main-created-and-replied",
-        "native-folder-picker-substitute-registered-project",
-        "native-project-read-and-approved-write",
-        "native-conversation-export-written",
-        "assistant-switch-size-and-save-toast",
-        "packaged-normal-close-recorded"
-      ]
-    },
-    "finalInstalled": {
-      "passed": true,
-      "smokePassed": true,
+    "installed": {
       "realInstall": true,
       "checks": [
         "packaged-local-diagnostic-paths-and-active-run",
@@ -90,31 +90,54 @@
         "assistant-switch-size-and-save-toast",
         "packaged-normal-close-recorded"
       ],
-      "installationRegistered": true,
-      "uninstalled": true,
-      "installationRegistrationRemoved": true,
-      "installerSha256": "e15dd038c254a9d00488b73693e9f207239554b4c692b248e341db0a83fe34bf",
-      "buildPassed": true
+      "uninstalled": true
     }
   },
-  "packages": {
-    "sameUnpackedPayload": true,
-    "before": {
-      "file": "WeftMate-Setup-0.1.1-preview.21.exe",
-      "bytes": 184455855,
-      "sha256": "3ea4129cb7239edff36b3423c53b14cfdfd7cec4eea31b954f8f35184d4d5c3b",
-      "boundaries": {
-        "developmentPaths": 0,
-        "buildMachineIdentityHits": 0,
-        "userDataFiles": 0,
-        "dogfoodOrRepositoryTests": 0,
-        "credentialsFiles": 0
-      }
-    },
-    "after": {
-      "file": "WeftMate-Setup-0.1.1-preview.21.exe",
-      "bytes": 184603821,
-      "sha256": "e15dd038c254a9d00488b73693e9f207239554b4c692b248e341db0a83fe34bf",
+  "silentDirectory": {
+    "silentUninstallExit": 0,
+    "testIdentity": "inst1qa",
+    "uninstalled": true,
+    "standardDirectoryParameter": true,
+    "dataPreserved": true,
+    "silentInstallExit": 0,
+    "directoryContainsUnicodeAndSpace": true,
+    "startMenuTarget": true,
+    "synthetic": true,
+    "registeredTarget": true,
+    "privateDesktop": true,
+    "globalInputUsed": false,
+    "cleanedProcesses": 0
+  },
+  "packageChecks": {
+    "current": {
+      "schemaVersion": 1,
+      "installer": {
+        "file": "WeftMate-Setup-0.1.1-preview.21.exe",
+        "bytes": 184643041,
+        "sha256": "755830f8f8e60e2c14f7adb4d4e95ba486f5ed6f28265303c752faf0a97d8c26"
+      },
+      "appArchive": {
+        "entries": 5345,
+        "directories": 794,
+        "links": 0,
+        "scannedTextFiles": 4502,
+        "scannedBinaryFiles": 49,
+        "forbiddenEntries": 0,
+        "unsafeLinks": 0
+      },
+      "vendor": {
+        "packageVersion": "0.1.0-rc.5",
+        "commit": "47f943859bef60e4160492346772ded9b24f765a",
+        "closureCount": 197,
+        "carriedButNotMounted": 0,
+        "manifestSha256": "fd39566647e79ed0f8d30ec95841a3504e8e0320dae6f202be50030fb256a434",
+        "scannedTextFiles": 32792,
+        "reparsePoints": 0
+      },
+      "looseResources": {
+        "scannedTextFiles": 32801,
+        "scannedBinaryFiles": 168
+      },
       "boundaries": {
         "developmentPaths": 0,
         "buildMachineIdentityHits": 0,
@@ -124,9 +147,34 @@
       }
     },
     "upgrade": {
-      "file": "WeftMate-Setup-0.1.2-preview.22.exe",
-      "bytes": 184603839,
-      "sha256": "bd7336fc334d33688af9bc5f3c89848d9cfc079136ac1f5505550cb09a070d33",
+      "schemaVersion": 1,
+      "installer": {
+        "file": "WeftMate-Setup-0.1.2-preview.22.exe",
+        "bytes": 184642564,
+        "sha256": "5e7d23c03b46cfd07b1ec1124e6429859de46e1d4361ecd06985082b2b5ac96c"
+      },
+      "appArchive": {
+        "entries": 5345,
+        "directories": 794,
+        "links": 0,
+        "scannedTextFiles": 4502,
+        "scannedBinaryFiles": 49,
+        "forbiddenEntries": 0,
+        "unsafeLinks": 0
+      },
+      "vendor": {
+        "packageVersion": "0.1.0-rc.5",
+        "commit": "47f943859bef60e4160492346772ded9b24f765a",
+        "closureCount": 197,
+        "carriedButNotMounted": 0,
+        "manifestSha256": "fd39566647e79ed0f8d30ec95841a3504e8e0320dae6f202be50030fb256a434",
+        "scannedTextFiles": 32792,
+        "reparsePoints": 0
+      },
+      "looseResources": {
+        "scannedTextFiles": 32801,
+        "scannedBinaryFiles": 168
+      },
       "boundaries": {
         "developmentPaths": 0,
         "buildMachineIdentityHits": 0,
@@ -135,21 +183,86 @@
         "credentialsFiles": 0
       }
     },
-    "increaseBytes": 147966,
-    "increasePercent": 0.08021756750415973
+    "before": {
+      "schemaVersion": 1,
+      "installer": {
+        "file": "WeftMate-Setup-0.1.1-preview.21.exe",
+        "bytes": 184475248,
+        "sha256": "a1a25469bcd518721ffaaa75295675600ae7b5793d5084020f4ccb6c8d24b847"
+      },
+      "appArchive": {
+        "entries": 5345,
+        "directories": 794,
+        "links": 0,
+        "scannedTextFiles": 4502,
+        "scannedBinaryFiles": 49,
+        "forbiddenEntries": 0,
+        "unsafeLinks": 0
+      },
+      "vendor": {
+        "packageVersion": "0.1.0-rc.5",
+        "commit": "47f943859bef60e4160492346772ded9b24f765a",
+        "closureCount": 197,
+        "carriedButNotMounted": 0,
+        "manifestSha256": "fd39566647e79ed0f8d30ec95841a3504e8e0320dae6f202be50030fb256a434",
+        "scannedTextFiles": 32792,
+        "reparsePoints": 0
+      },
+      "looseResources": {
+        "scannedTextFiles": 32801,
+        "scannedBinaryFiles": 168
+      },
+      "boundaries": {
+        "developmentPaths": 0,
+        "buildMachineIdentityHits": 0,
+        "userDataFiles": 0,
+        "dogfoodOrRepositoryTests": 0,
+        "credentialsFiles": 0
+      }
+    }
+  },
+  "installerSize": {
+    "sameAppPayload": true,
+    "bytesBefore": 184475248,
+    "bytesAfter": 184643041,
+    "addedBytes": 167793,
+    "percentAdded": 0.0909569179709139
+  },
+  "customPath": {
+    "unicodeAndSpaces": true,
+    "manualUpgradeWithoutDirectoryArgument": true,
+    "startMenuAndUninstallRegistration": true,
+    "startupRegistryCommandReplay": true,
+    "startupSettingQueryReportsFalse": true,
+    "monitorFirstCloseQuery": "SYSTEM_QUERY_FAILED",
+    "monitorUnmodifiedRetryAfterAllOldProcessesExitHealthy": true,
+    "monitorNewWindowInitiallyHidden": true,
+    "monitorWindowShownOnlyOnPrivateDesktop": true,
+    "migrationFivePhasesWithExplicitInstalledExe": true,
+    "migrationSchedulerOperationsSynthetic": true,
+    "uninstallCleanupRetained": true,
+    "dataPreserved": true
   },
   "cleanup": {
-    "cleanedProcesses": 72,
-    "remainingOwnedProcesses": 0,
-    "remainingSyntheticRoots": 0,
-    "controlNamespaceRemaining": false,
-    "startMenuRemaining": false,
-    "startupItemRemaining": false
+    "interactiveProcesses": 17,
+    "testInstallationRemoved": true,
+    "testStartupRemoved": true,
+    "syntheticDirectoriesRemoved": true,
+    "verifiedRemainingProcesses": 0,
+    "testControlAndUpdateCacheRemoved": true,
+    "applicationLocationKeyRemoved": true,
+    "syntheticDirectoriesRemaining": 0
   },
-  "limits": [
-    "Chinese and 144 DPI tested; other DPI and cross-monitor movement not tested",
-    "Running-app retry and synthetic Abort tested; no separate physical disk-full or antivirus fault injection",
-    "Private desktop has no Explorer taskbar; icon resources, installed icon hash, registry and Start Menu verified",
-    "Windows publisher/SmartScreen dialogs remain system-owned; no code signing certificate"
-  ]
+  "limitations": [
+    "Normal update monitor close-query first attempt failed; unchanged monitor only succeeded after independently confirmed full process exit and a test-controlled retry.",
+    "The monitor started the new app with its window hidden; test showed it only on the private desktop. Manual installer launch opened normally.",
+    "Actual custom startup registry command worked; the existing app settings query reports disabled for executable paths containing spaces.",
+    "125% and 200% are actual native-window render-density overrides, not system-scale or cross-monitor tests. Windows 10, English long copy, human screen-reader, actual disk exhaustion and antivirus block were not tested.",
+    "No code signing certificate; Windows unknown-publisher UI remains the operating system UI."
+  ],
+  "nativeUi": {
+    "formalWithoutQaCompiled": true,
+    "warningLevel": "W4",
+    "warningsAsErrors": true
+  }
 }

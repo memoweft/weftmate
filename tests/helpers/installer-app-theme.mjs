@@ -1,7 +1,7 @@
 /** CDP attaches only to the explicitly allocated port of the QA app. */
 import assert from 'node:assert/strict';
 import WebSocket from 'ws';
-const [port,theme]=process.argv.slice(2);
+const [port,theme,autoStart]=process.argv.slice(2);
 assert.match(port,/^\d+$/);assert.ok(['light','dark'].includes(theme));
 const pages=await fetch(`http://127.0.0.1:${port}/json/list`).then(r=>r.json());
 const page=pages.find(p=>p.type==='page'&&p.url.includes('/personal/v1/ui'));
@@ -14,6 +14,7 @@ const send=(method,params)=>new Promise((resolve,reject)=>{const id=++sequence;p
 try {
   const applied=await send('Runtime.evaluate',{expression:`(async()=>{const theme=${JSON.stringify(theme)};localStorage.setItem('weftmate.desktop.appearance.v1',JSON.stringify({theme,accent:'neutral',fontSize:'15'}));await window.weftmateDesktop.setTheme(theme);document.documentElement.dataset.theme=theme;return true})()`,awaitPromise:true,returnByValue:true});
   assert.equal(applied.exceptionDetails,undefined);
+  if(autoStart==='on'){const r=await send('Runtime.evaluate',{expression:'window.weftmateDesktop.setAutoStart(true)',awaitPromise:true,returnByValue:true});assert.equal(r.exceptionDetails,undefined);console.log(`Auto-start settings response: ${JSON.stringify(r.result?.value)}`);}
   const end=Date.now()+20000;
   while(Date.now()<end){
     await new Promise(r=>setTimeout(r,200));

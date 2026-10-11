@@ -1,0 +1,217 @@
+﻿{
+    "failures":  [
+                     {
+                         "syntheticFailureExit":  2,
+                         "frameless":  true,
+                         "theme":  "light"
+                     },
+                     {
+                         "syntheticFailureExit":  2,
+                         "frameless":  true,
+                         "theme":  "dark"
+                     }
+                 ],
+    "renderScaleOverride":  true,
+    "hostDpi":  144,
+    "globalInputUsed":  false,
+    "privateDesktop":  true,
+    "captureGeometry":  [
+                            {
+                                "file":  "ready-dpi-120-light.png",
+                                "dpi":  144,
+                                "awareness":  2,
+                                "rawWidth":  600,
+                                "rawHeight":  490,
+                                "x":  0,
+                                "y":  0,
+                                "width":  600,
+                                "height":  490
+                            },
+                            {
+                                "file":  "ready-dpi-144-light.png",
+                                "dpi":  144,
+                                "awareness":  2,
+                                "rawWidth":  720,
+                                "rawHeight":  588,
+                                "x":  0,
+                                "y":  0,
+                                "width":  720,
+                                "height":  588
+                            },
+                            {
+                                "file":  "system-picker-light.png",
+                                "dpi":  144,
+                                "awareness":  2,
+                                "rawWidth":  1281,
+                                "rawHeight":  720,
+                                "x":  9,
+                                "y":  0,
+                                "width":  1263,
+                                "height":  711
+                            },
+                            {
+                                "file":  "ready-dpi-192-light.png",
+                                "dpi":  144,
+                                "awareness":  2,
+                                "rawWidth":  960,
+                                "rawHeight":  784,
+                                "x":  0,
+                                "y":  0,
+                                "width":  960,
+                                "height":  784
+                            },
+                            {
+                                "file":  "failure-light.png",
+                                "dpi":  144,
+                                "awareness":  2,
+                                "rawWidth":  720,
+                                "rawHeight":  588,
+                                "x":  0,
+                                "y":  0,
+                                "width":  720,
+                                "height":  588
+                            },
+                            {
+                                "file":  "ready-dpi-120-dark.png",
+                                "dpi":  144,
+                                "awareness":  2,
+                                "rawWidth":  600,
+                                "rawHeight":  490,
+                                "x":  0,
+                                "y":  0,
+                                "width":  600,
+                                "height":  490
+                            },
+                            {
+                                "file":  "ready-dpi-144-dark.png",
+                                "dpi":  144,
+                                "awareness":  2,
+                                "rawWidth":  720,
+                                "rawHeight":  588,
+                                "x":  0,
+                                "y":  0,
+                                "width":  720,
+                                "height":  588
+                            },
+                            {
+                                "file":  "system-picker-dark.png",
+                                "dpi":  144,
+                                "awareness":  2,
+                                "rawWidth":  1281,
+                                "rawHeight":  720,
+                                "x":  9,
+                                "y":  0,
+                                "width":  1263,
+                                "height":  711
+                            },
+                            {
+                                "file":  "ready-dpi-192-dark.png",
+                                "dpi":  144,
+                                "awareness":  2,
+                                "rawWidth":  960,
+                                "rawHeight":  784,
+                                "x":  0,
+                                "y":  0,
+                                "width":  960,
+                                "height":  784
+                            },
+                            {
+                                "file":  "failure-dark.png",
+                                "dpi":  144,
+                                "awareness":  2,
+                                "rawWidth":  720,
+                                "rawHeight":  588,
+                                "x":  0,
+                                "y":  0,
+                                "width":  720,
+                                "height":  588
+                            }
+                        ],
+    "cleanedProcesses":  0,
+    "checks":  [
+                   {
+                       "frameless":  true,
+                       "renderDpi":  120,
+                       "realSystemPicker":  false,
+                       "draggable":  true,
+                       "escapeCanceled":  true,
+                       "tabOrder":  [
+                                        80,
+                                        90,
+                                        81,
+                                        80
+                                    ],
+                       "theme":  "light"
+                   },
+                   {
+                       "frameless":  true,
+                       "renderDpi":  144,
+                       "realSystemPicker":  true,
+                       "draggable":  true,
+                       "escapeCanceled":  true,
+                       "tabOrder":  [
+                                        80,
+                                        90,
+                                        81,
+                                        80
+                                    ],
+                       "theme":  "light"
+                   },
+                   {
+                       "frameless":  true,
+                       "renderDpi":  192,
+                       "realSystemPicker":  false,
+                       "draggable":  true,
+                       "escapeCanceled":  true,
+                       "tabOrder":  [
+                                        80,
+                                        90,
+                                        81,
+                                        80
+                                    ],
+                       "theme":  "light"
+                   },
+                   {
+                       "frameless":  true,
+                       "renderDpi":  120,
+                       "realSystemPicker":  false,
+                       "draggable":  true,
+                       "escapeCanceled":  true,
+                       "tabOrder":  [
+                                        80,
+                                        90,
+                                        81,
+                                        80
+                                    ],
+                       "theme":  "dark"
+                   },
+                   {
+                       "frameless":  true,
+                       "renderDpi":  144,
+                       "realSystemPicker":  true,
+                       "draggable":  true,
+                       "escapeCanceled":  true,
+                       "tabOrder":  [
+                                        80,
+                                        90,
+                                        81,
+                                        80
+                                    ],
+                       "theme":  "dark"
+                   },
+                   {
+                       "frameless":  true,
+                       "renderDpi":  192,
+                       "realSystemPicker":  false,
+                       "draggable":  true,
+                       "escapeCanceled":  true,
+                       "tabOrder":  [
+                                        80,
+                                        90,
+                                        81,
+                                        80
+                                    ],
+                       "theme":  "dark"
+                   }
+               ]
+}

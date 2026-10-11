@@ -30,6 +30,9 @@
   StrCpy $isForceCurrentInstall "1"
   StrCpy $isForceMachineInstall "0"
 !macroend
+!macro customPageAfterChangeDir
+  Page custom WeftChoose WeftChooseLeave
+!macroend
 !macro WeftLoad
   InitPluginsDir
   File /oname=$PLUGINSDIR\WeftInstaller.dll "${BUILD_RESOURCES_DIR}\..\.local\installer-ui\WeftInstaller.dll"
@@ -111,6 +114,34 @@ Var pid
       ${EndIf}
     FunctionEnd
   !else
+    Function WeftChoose
+      ${If} ${Silent}
+        Abort
+      ${EndIf}
+      ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+      ${If} $0 != ""
+        ; Upstream already resolved the registered location and any explicit /D.
+        Abort
+      ${EndIf}
+      IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 +2
+      Abort
+      nsDialogs::Create 1018
+      Pop $0
+      !ifdef APP_64_UNPACKED_SIZE
+        System::Call '$PLUGINSDIR\WeftInstaller.dll::Ready(p $HWNDPARENT, w "$INSTDIR", i ${APP_64_UNPACKED_SIZE}, w "${APP_EXECUTABLE_FILENAME}", w "$APPDATA\${WEFT_CONTROL_NAMESPACE}WeftMate\desktop-config.json", w "%APPDATA%\${WEFT_CONTROL_NAMESPACE}com.memoweft.weftmate")'
+      !else
+        System::Call '$PLUGINSDIR\WeftInstaller.dll::Ready(p $HWNDPARENT, w "$INSTDIR", i 0, w "${APP_EXECUTABLE_FILENAME}", w "$APPDATA\${WEFT_CONTROL_NAMESPACE}WeftMate\desktop-config.json", w "%APPDATA%\${WEFT_CONTROL_NAMESPACE}com.memoweft.weftmate")'
+      !endif
+      nsDialogs::Show
+    FunctionEnd
+    Function WeftChooseLeave
+      System::Call '$PLUGINSDIR\WeftInstaller.dll::Validate() i.r0'
+      ${If} $0 != 1
+        Abort
+      ${EndIf}
+      System::Call '$PLUGINSDIR\WeftInstaller.dll::Directory() w.r0'
+      StrCpy $INSTDIR $0
+    FunctionEnd
     Function .onInstFailed
       ${IfNot} ${Silent}
         System::Call '$PLUGINSDIR\WeftInstaller.dll::Failed()'
