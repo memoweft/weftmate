@@ -1,0 +1,13 @@
+{
+  "macLegacyBinaryComparison": {
+    "before": {
+      "launchToCapturedWindowMedianMs": 10915.5,
+      "captureToForcedProcessExitMedianMs": 55.03
+    },
+    "after": {
+      "launchToCapturedWindowMedianMs": 10376.75,
+      "captureToForcedProcessExitMedianMs": 62.29
+    }
+  },
+  "limits": "Three isolated synthetic launches of pre-change and final binaries through identical existing About/capture workflow. Includes fixed stabilization and image processing; exit here is capture-runner forced exit, not user quit. Native user-quit control is performance.json. No pure first-frame or real-device claim."
+}

@@ -20,6 +20,8 @@ test('M3-1 delayed credential reads remain inside refresh rotation when host and
   client.verify=async()=>{};client.token=async(form:any)=>{used.push(form.refresh_token);assert.equal(form.refresh_token,record.refreshToken,'never replay a consumed rotating token');if(used.length===1)await delayedToken;return {access_token:'access-'+used.length,refresh_token:'synthetic-'+used.length,expires_in:60};};
   const host=client.access(client.base+'/hosts/host');for(let n=0;n<5;n++)await Promise.resolve();const presence=client.access();releaseToken();await host;releaseRead();await presence;assert.deepEqual(used,['synthetic-0','synthetic-1']);assert.equal(record.refreshToken,'synthetic-2');
 });
+
+
 const signing = await jose.generateKeyPair('RS256', { extractable: true })
 const publicJwk = { ...await jose.exportJWK(signing.publicKey), kid: 'synthetic-signing', alg: 'RS256', use: 'sig' }
 const issuer = 'https://api.example.com/personal/v1/cloud/oidc', base = issuer.replace('/oidc', '')
@@ -44,7 +46,7 @@ async function fixture() {
       const form = new URLSearchParams(options.body)
       if (rejectRefresh && form.get('grant_type') === 'refresh_token') return response({ error: 'invalid_grant' }, 400)
       const key = await client.key(), jkt = await jose.calculateJwkThumbprint(key.publicJwk)
-      const access = await new jose.SignJWT({ cnf: { jkt } }).setProtectedHeader({ alg: 'RS256', kid: publicJwk.kid, typ: 'at+jwt' })
+      const access = await new jose.SignJWT({ cnf: { jkt }, device_verified: true }).setProtectedHeader({ alg: 'RS256', kid: publicJwk.kid, typ: 'at+jwt' })
         .setIssuer(issuer).setAudience(audienceOverride || form.get('resource') || base).setSubject(subOverride || 'account-test').setIssuedAt().setExpirationTime('5m').sign(signing.privateKey)
       const id = await new jose.SignJWT({ nonce: nonceOverride || authorization?.nonce }).setProtectedHeader({ alg: 'RS256', kid: publicJwk.kid })
         .setIssuer(issuer).setAudience('weftmate-web').setSubject('account-test').setIssuedAt().setExpirationTime('5m').sign(signing.privateKey)
@@ -66,6 +68,61 @@ async function fixture() {
     callback: (value: string) => { callbackOverride = value }, rejectRefresh: () => { rejectRefresh = true }, allowRefresh: () => { rejectRefresh = false }, useClient: (value: any) => { client = value } }
 }
 const login = async (f: any) => f.client.begin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url'), deviceName: 'Synthetic browser' })
+
+test('AUTH-1 a delayed device rename cannot restore cloud credentials after logout', async () => {
+  const f = await fixture(); await login(f)
+  const snapshot = await f.client.saved(); let release: Function = () => {}, started: Function = () => {}
+  const pending = new Promise(resolve => { release = resolve }), read = new Promise(resolve => { started = resolve })
+  f.client.saved = async () => { started(); await pending; return snapshot }
+  const renamed = f.client.name('合成新名称'); await read
+  await f.client.forget(); release()
+  await assert.rejects(renamed, (error: any) => error.code === 'CLOUD_TOKEN_INVALID')
+  assert.equal(f.records.has(f.client.tokenId), false)
+})
+
+test('AUTH-1 cancelling a desktop exchange during its nonce request cannot bind the newly selected local owner', async () => {
+  const f = await fixture(); await login(f)
+  let csrf = 'owner-a-csrf', release: Function = () => {}, started: Function = () => {}
+  const pending = new Promise(resolve => { release = resolve }), read = new Promise(resolve => { started = resolve })
+  f.client.localCsrf = () => csrf
+  const original = f.client.fetch
+  f.client.fetch = async (...args: any[]) => { const reply = await original(...args); if (args[0].endsWith('/auth/cloud-nonce')) { started(); await pending } return reply }
+  const exchanged = f.client.exchange(true); await read
+  csrf = 'owner-b-csrf'; await f.client.forget(); release()
+  await assert.rejects(exchanged, (error: any) => error.code === 'CLOUD_TOKEN_INVALID')
+  assert.equal(f.calls.some(row => row.url.endsWith('/auth/cloud-desktop')), false)
+  assert.equal(f.records.has('trusted-host:host-test'), false)
+})
+
+test('AUTH-1 native startup never contacts cloud and optional login expiry keeps local account, content and settings', async () => {
+  const f = await fixture(), projections: string[] = [], notices: string[] = []
+  let cleared = 0, entered = 0
+  const local = { account: { ownerId: 'original-local-owner', username: 'synthetic-local' }, device: { id: 'native-session', authKind: 'desktop' }, csrfToken: 'local-csrf', local: true }
+  const core: any = { state: { currentView: 'loading' }, show: (view: string) => { core.state.currentView = view; projections.push(view) },
+    load: () => {}, clearSession: () => { cleared++; core.state.account = null }, sessionExpired: () => {},
+    acceptSession: (payload: any) => { Object.assign(core.state, { account: payload.account, device: payload.device, csrfToken: payload.csrfToken }) },
+    enterAssistant: async () => { entered++; core.state.currentView = 'assistant' }, refreshPendingDevices: async () => {},
+    api: async (path: string) => path === '/state' ? { configured: true } : path === '/desktop' ? local : assert.fail('Unexpected auth path ' + path) }
+  Object.assign(f.environment, { desktop: true, nativeIdentity: async () => ({ localOrigin: f.environment.hostOrigin, deviceName: 'synthetic-host' }) })
+  Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, { toast: (message: string) => notices.push(message) }, f.environment))
+  const client = core.initializeCloudAccount(); f.useClient(client)
+  const requests = f.calls.length
+  await core.load()
+  assert.equal(f.calls.length, requests, 'no configuration, JWKS, cloud login or refresh on local boot')
+  assert.equal(entered, 1); assert.equal(core.state.account.ownerId, local.account.ownerId)
+  core.state.currentView = 'account'; core.startCloudJourney()
+  assert.equal(core.cloudAuthView().modal, true); assert.equal(core.state.currentView, 'account')
+  core.dismissCloudLogin(); assert.equal(core.cloudAuthView().modal, false); assert.equal(core.state.currentView, 'account')
+  core.startCloudJourney(); await core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') })
+  assert.equal(core.cloudAuthView().mode, 'authenticated')
+  assert.equal(f.calls.findLast(row => row.url.endsWith('/auth/cloud-desktop')).options.headers['X-WeftMate-CSRF'], 'local-csrf')
+  assert.equal(core.state.account.ownerId, local.account.ownerId); assert.equal(core.state.csrfToken, 'local-csrf')
+  f.advance(400000); f.rejectRefresh(); await core.renewCloudSession()
+  assert.equal(core.cloudAuthView().mode, 'offline'); assert.equal(core.state.currentView, 'account')
+  assert.equal(core.state.account.ownerId, local.account.ownerId); assert.equal(core.state.csrfToken, 'local-csrf')
+  assert.equal(cleared, 0); assert.equal(projections.includes('login'), false)
+  assert.ok(notices.some(message => message.includes('继续使用')))
+})
 
 test('legacy local binding uses App login and preserves the current owner/session without desktop bootstrap', async () => {
   const f = await fixture(), writes: any[] = [], notices: string[] = []
@@ -188,22 +245,21 @@ test('registration state and 60 second resend deadline live in the shared core; 
   assert.equal(JSON.stringify([...f.records.values()]).includes('passwordTicket'), false)
   assert.equal(core.cloudPasswordHint('short'), '至少 8 位'); assert.ok(paints.length)
 })
-test('pending approval exchanges share one request and stop polling after success without leaving Settings', async () => {
+test('AUTH-1 older host approval response requests an update without polling or granting a session', async () => {
   const f = await fixture(), original = f.environment.fetch
-  let pending = true, entries = 0
-  f.environment.fetch = async (...args: any[]) => { const reply = await original(...args); return args[0].endsWith('/auth/cloud-session') && pending
+  let entries = 0
+  f.environment.fetch = async (...args: any[]) => { const reply = await original(...args); return args[0].endsWith('/auth/cloud-session')
     ? response({ status: 'pending_approval', requestId: 'request-test' }, 202) : reply }
   const core: any = { state: { currentView: 'login' }, show: (view: string) => { core.state.currentView = view }, load: () => {}, clearSession: () => {}, sessionExpired: () => {},
-    acceptSession: () => {}, enterAssistant: async () => { entries++; core.state.currentView = 'assistant' }, refreshPendingDevices: async () => {} }
+    acceptSession: () => assert.fail('An older host pending result grants no session'), enterAssistant: async () => { entries++ }, refreshPendingDevices: async () => {} }
   Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, {}, f.environment))
   const client = core.initializeCloudAccount(); f.useClient(client); await client.configure()
-  await core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') }); assert.equal(core.cloudAuthView().mode, 'waiting')
-  pending = false; await Promise.all([core.retryCloudApproval(), core.retryCloudApproval()])
-  assert.equal(entries, 1); assert.equal(f.calls.filter(row => row.url.endsWith('/auth/cloud-session')).length, 2)
-  assert.ok(f.cleared.includes(1), 'the pending timer was cancelled')
-  core.state.currentView = 'account'; await core.retryCloudApproval(); await f.timers[0]()
-  assert.equal(core.state.currentView, 'account'); assert.equal(entries, 1)
+  await core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') })
+  assert.equal(core.cloudAuthView().mode, 'login'); assert.match(core.cloudAuthView().error, /更新/)
+  assert.equal(entries, 0); assert.equal(f.calls.filter(row => row.url.endsWith('/auth/cloud-session')).length, 1)
+  assert.equal(f.timers.length, 0, 'no legacy approval polling')
 })
+
 test('another host is selected through trusted native data transport; a failed exchange preserves the previous host', async () => {
   const f = await fixture(), activated: any[] = [], requested: any[] = []
   const core: any = { state: {}, accessBase: '/personal/v1', authBase: '/personal/v1/auth', show: () => {}, load: () => {}, clearSession: () => {}, sessionExpired: () => {},

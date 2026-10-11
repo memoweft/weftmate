@@ -1,52 +1,45 @@
-# 宿主云身份（S1b）
+# 宿主云身份
 
-S1d / D29 新电脑无需先本地登录：App（应用）内账号流程完成后，带云控制面 token（令牌）与宿主 nonce/DPoP（设备密钥持有证明）调用直接回环 `/auth/cloud-desktop`，创建独立 owner 并自动认领/绑定。已有本地数据仍走下面的显式绑定；已有宿主的新 key 仍等待批准。自动绑定电脑 Cookie（会话凭据）可在直接地址管理绑定/展示二维码，普通手机云 Cookie 不可。可信 pin（证书公钥指纹）交付、可选应急密码和 LG-1 / LG-2 接线见 CLIENT_API 7.8；`trust.mjs` 要求调用者提供已受信设备通道取得的外部公钥锚，不允许云目录自举信任。
+AUTH-1 将本机使用与 cloud authentication（云登录）分开。原生桌面窗口先通过 `/auth/desktop` 进入已有本机账户，不需要本地密码或云令牌。桌面会话 `authKind=desktop` 每次请求都检查同一原生窗口边界：环回连接、宿主直接来源、没有转发头、由主进程注入的本次启动能力凭据。该凭据只通过经过窗口身份校验的 IPC（进程间通信）请求桥注入，不交给浏览器页面。
 
-`index.mjs` 处理认领/绑定事务、内容设备信任、Cookie 交换和撤销；`proofs.mjs` 用 jose 验证固定 issuer/JWKS/RS256 access token 与 ES256 DPoP；`storage.mjs` 管理私有安装/TLS 密钥、版本 1 身份日志与迁移前备份。客户端接口见 `docs/CLIENT_API.md` 7.4。
+`index.mjs` 处理认领、绑定、设备登录、宿主会话与撤销；`proofs.mjs` 用 jose 验证固定 issuer/JWKS（签发方及公钥集合）、RS256 access token（访问令牌）和 ES256 DPoP（设备密钥持有证明）；`storage.mjs` 管理私有安装/TLS（传输层安全）密钥、版本 1 身份日志与迁移前备份。客户端契约见 `docs/CLIENT_API.md`。
 
-宿主启用配置：`WEFTMATE_CLOUD_ISSUER=https://api.example.com/personal/v1/cloud/oidc`。Electron 与 `run-personal-host.mjs` 的子进程沿用此环境变量；未设置时本地认证不依赖云。工厂测试可显式提供 `cloudIdentity: { issuer, allowInsecureLoopback: true }`；隔离真实程序测试也可设置 `WEFTMATE_CLOUD_ALLOW_INSECURE_LOOPBACK=true`，HTTP 仍仅限 `127.0.0.1` / `[::1]`。issuer、JWKS 与 audience 从此配置确定，令牌内的 jku/x5u 不参与配置。
+## 配置与本机数据
 
-## 认领与恢复
+启用配置为 `WEFTMATE_CLOUD_ISSUER=https://api.example.com/personal/v1/cloud/oidc`。Electron 与宿主子进程沿用该环境变量；未设置时本机认证仍可使用。合成测试可提供 `cloudIdentity: { issuer, allowInsecureLoopback: true }`；HTTP（超文本传输协议）仅允许 `127.0.0.1` / `[::1]`。令牌中的 `jku` / `x5u` 不参与公钥配置。
 
-先用原本的本地账号 Cookie 登录电脑直接地址，再调用 `/cloud/claims` 与 `/cloud/binding`。云账号通过标准 Code+PKCE 登录得到短期控制面 access token；绑定 POST 本身是本地账号的批准，不能由云会话替代。尚无密码的 legacy 账号先使用原直接地址 setup grant；没有新增远程 setup。
+首次启用云模块时，先在原 access store（账户存储）迁移之前将根目录原有存储、同步、健康与附件等复制到 `cloud-identity/backup/`，再原子写入 `backup-complete.json`。备份只留在本机私有目录。复制失败不会进入云初始化；中断后可重入，完成标记存在后不覆盖最初快照。
 
-第一次启用云模块时，在原 access store 迁移之前将根目录已有 store、sync、账号/健康、附件等复制到 `cloud-identity/backup/`，完成后原子写入 `backup-complete.json`。备份仅留本机私有目录，包含原本机数据和凭据，不进 Git、不上传。复制失败不进入云初始化；中断后重新复制，完成标记存在后不覆盖最初快照。
+`cloud-identity/identity.json` 保留原 `hostId`、绑定、设备记录与撤销水位。AUTH-1 不提高该日志版本、不删除本地密码散列、不批量修改历史设备。历史 `pending` 仅在同设备重新完成云登录时转为 `trusted`；`denied` / `revoked` 保持拒绝，同云设备号更换密钥也不能恢复已下线设备。
 
-`cloud-identity/identity.json` 是原子写入的独立日志，保留原 `hostId`，分别生成安装 ES256 与内容 TLS EC 私钥。认领顺序为 pending claim → 云挑战 → 本地 pending `(issuer,sub,ownerId,hostId,claimId)` → 安装密钥签名/云幂等 membership → 本地 active。云确认后断网或关机，再以相同本地账号请求 claims 得到原 claimId，重新云登录并提交 binding 可续做；不将云 access/refresh token 持久化来自动重试。云 pending challenge 过期后相同 claimId 可取新挑战。激活时保存新鲜云证明的 epoch 基线，不等待首次轮询才拒绝绑定前的旧 epoch。已 active 的相同绑定也幂等。冲突返回 409，不建空内容账号、不改目录、密码、Cookie、同步/健康删除水位或记忆。
+## 认领与绑定
 
-## 内容授权与会话
+桌面 `/auth/cloud-desktop` 必须带现有本机原生会话、有效云控制面令牌、DPoP 和宿主 nonce（一次性随机挑战）。新绑定附着到原生窗口当前选择的已有 `ownerId`，不根据邮箱推断数据所有权，不新建空账户替代原数据。已有绑定必须属于当前选择的本机账户；不同账户或不同云身份冲突返回 409。成功后保留原本机 Cookie（会话凭据），云令牌过期不影响本机使用。
 
-云为已登记宿主/member 签发 host:session resource token，要求 token endpoint DPoP key 与本次邮件确认的云设备公钥相同。宿主再次检查 host_id、scope、aud、JWT 类型/算法/期限，并验证 DPoP htm/htu/ath/iat/nonce/jti。nonce 与重放记录在身份日志中持久化，重启不能复用已成功提交的证明。
+认领顺序仍为本地待完成绑定 → 云挑战 → 安装密钥签名 → 云幂等 membership（成员绑定）确认 → 本地激活。中断后复用原 `claimId` 续做，不持久化云令牌用于自动认领。激活保存云 epoch（认证代际）的最大已知值，旧证明不会降低撤销基线。
 
-陌生设备仅形成本账号的 pending 请求，返回 202，没有 Cookie。原本已认证的本地 Cookie 或已批准云设备 Cookie 可查看并决定；绑定和创建当面配对挑战只允许电脑直接地址的本地密码会话。拒绝不自动重新排队；如需重新配对，由电脑重新授权一次性挑战。配对材料含宿主安装公钥与本机 TLS SPKI，S1c/S2 负责实际二维码展示、扫码和 TLS 适配器/原生 pin 接入；本包桌面最小界面提供待批准列表、允许/拒绝与打开应用时提示。
+旧 `/cloud/claims` 与 `/cloud/binding` 仍支持直接地址本地密码会话及原生桌面会话。普通手机云会话不能认领宿主；合法 legacy Bearer（旧式持有令牌）也不能替代本机绑定授权。
 
-批准后的云会话仍是宿主生成的随机 `wm_personal_session` Cookie/CSRF，原 API 的账号、DSH 任务/审批和来源 epoch 语义一致。新增设备 authKind=cloud，authEpoch 使用原本地账号 epoch，云 auth_epoch 单独保存在身份日志；云事件不修改本地账号 authEpoch/密码。身份日志先记 session 引用，原 store 再保存 tokenHash：中断只留下无凭据的引用。交换忽略浏览器自动携带的旧 HttpOnly Cookie（包括已撤销 Cookie），只使用云 JWT/DPoP/本机信任；Cookie 本身不能批准交换。云未启用或日志缺失时 cloud 类型会话拒绝，原本地密码/legacy Bearer 照常。
+## 云设备登录与内容授权
 
-## 撤销与离线
+云端先核对邮箱与本次设备公钥：新设备密码登录追加一次邮箱验证码，纯邮箱验证码登录本身满足核对。宿主只接受签名令牌中的 `device_verified === true`；缺失、假值或其他类型返回 `CLOUD_DEVICE_VERIFICATION_REQUIRED`，提示重新登录，不能靠密码或旧客户端绕过。
 
-显式删除一个 cloud 会话设备会撤销同一账号/云 deviceId/公钥的本地内容信任，关闭其活跃内容响应，令全部相关宿主 Cookie 失效，并持久化云同步 outbox。logout 仅退出当前 Cookie，不撤销设备公钥。解绑撤销映射与云内容设备，保留账号/数据/本地登录；云 membership 删除带 claimId，旧 outbox 不会误删重新绑定的新 membership。
+云端为已登记宿主签发 `host:session` 受众令牌。宿主检查签名、`host_id`、scope（权限范围）、audience（受众）、类型、算法、有效期与代际，并验证 DPoP 的方法、完整 URL（统一资源定位符）、访问令牌散列、时刻、nonce 与 `jti`。nonce 与重放记录持久化，重启不能重用成功证明。
 
-宿主启动后及每 60 秒用安装密钥签名主动取 `/cloud/hosts/revocations`，先提交 outbox；`syncCloudRevocations()` 可主动同步，`receiveCloudRevocations(eventToken)` 供后续通道交付。云密码重置/换邮箱的 epoch 和设备撤销事件均用固定云 key 签名，宿主检查 audience 与递增水位后持久化，并把失效会话在 access store 标为 revoked，使排队任务也不能再派给 DSH。epoch 撤销保留已批准公钥，新 epoch 的合法登录可重新换 Cookie；本地账号 Cookie 不受影响。云服务只存宿主公钥/member/最小撤销元数据，不接收本地 ownerId 或内容。
+激活绑定下，已核对的新设备和历史 `pending` 设备直接成为 `trusted` 并得到宿主生成的随机 Cookie/CSRF（跨站请求伪造防护凭据），不再返回 `pending_approval`。成功交换附带 `hostTrust`：宿主安装公钥、TLS SPKI（证书公钥指纹）、设备与账户标识、短期宿主签名和连接信息。浏览器通过已接受的内容 TLS 来源取得并保存材料，不需要另一台设备交付；原生端仍须遵守其 TLS 校验边界。浏览器接受「域名或中继被完全控制时可能被冒充」的既有 D24 边界，云控制面不接收宿主内容私钥或备份钥匙。
 
-S2 中继/TLS 已在 `../personal-relay/` 实现，见 CLIENT_API 7.6；本模块继续负责身份。没有即时推送（S3）；在线轮询至多约一分钟加网络延迟，签名事件到达宿主后立即拒绝并关闭活跃流。云离线期间不能宣称收到最新撤权；仍有效的宿主 Cookie、本地密码与合法旧 Bearer 可直连，过期云 JWT 不延长。
+首次信任产生 `system.device.signed_in` 动态与通知，指向设备设置；重复登录同一已信任设备不重复通知。目录与云端下线接口沿用原路径。旧配对、决定和材料接口保留兼容，仍检查账户、期限和单次使用，且不能恢复拒绝或撤销的设备；它们不再是新界面登录前的必经步骤。
+
+云会话的 `authEpoch` 使用本地账户代际，云 `auth_epoch` 单独记录。身份日志先写会话引用，原账户存储再写随机凭据散列；中断只留下无凭据引用。交换忽略浏览器自动附带的旧 HttpOnly Cookie（脚本不可读会话），只以云令牌和设备证明授权。云模块关闭或日志缺失时云类型会话拒绝，本机原生会话继续可用。
+
+## 撤销与兼容
+
+删除云设备会话会撤销其同账户云设备身份，关闭活跃内容响应，使相关宿主 Cookie 失效，并持久化云同步 outbox（待发送记录）。退出只退出当前 Cookie；解绑撤销映射与云设备，保留本机账户与数据。解绑记录带 `claimId`，旧 outbox 不会删除后来建立的成员绑定。
+
+宿主启动及每 60 秒用安装密钥签名读取 `/cloud/hosts/revocations`。固定云公钥签名的密码重置、邮箱变更代际与设备撤销事件按受众和递增水位检查，再将失效云会话标记为撤销，阻止已排队命令进入 DSH（代理运行时）。本机原生会话不因云代际改变失效。云端离线时无法宣称已收到最新撤权；现有有效宿主会话的期限与轮询边界保持不变。
+
+先上线签发 `device_verified` 的云版本，再发布宿主与界面。云端旧令牌需要重新登录；宿主不接受缺少声明的令牌。旧本地密码、应急密码与配对接口保留兼容，密码散列不删除；新界面不再呈现这些登录入口。
 
 ## 验证
 
-- `node --test tests/personal-cloud.test.ts`：隔离 JWT/JWKS/cloud HTTP 夹具，事务中断/重启、备份与非零 sync 水位、账号隔离、绑定批准、DPoP、配对期限/单用、原 DSH session 来源与 SSE 撤销/离线本地登录。
-- `npm test --prefix services/cloud`：实际 OIDC provider/SQLite/开发 outbox，宿主认领、成员约束、设备 DPoP key、签名撤销与完整 cloud→host 流程。
-- `node --test --test-name-pattern=S1b tests/personal-access-ui-interaction.test.ts`：应用启动提示、允许/拒绝 CSRF 写入、退出清除。
-
-数据目录一律临时且规范化；不连服务器、不发送真实邮件、不部署。
-
-S2 的 `/cloud/pairings` 响应增添 relay 状态/baseUrl；原 tlsSpki 与实际 TLS adapter 复用同一内容 key。云目录不提供可替代配对 pin 的信任。
-
-
-## S1c-Web 登录接线
-
-`GET /cloud/config` 公开固定 issuer/hostId/clientId，`GET /cloud/binding` 只读当前 Cookie 的绑定状态与直接地址管理资格。浏览器界面在 `../personal-access-ui/cloud-login.js` / `cloud-ui.js`；Android 的共享 JS 与系统浏览器桥见 `apps/mobile-ui/www/cloud-native.js` 和 `apps/android/.../CloudLogin.kt`。CLIENT_API 7.7 是正式契约。
-
-宿主 `WEFTMATE_CLOUD_WEB_CLIENT_ID` 默认 weftmate-web。云端需预登记精确的直接地址/中继回调 `<origin>/personal/v1/ui/`，application_type=web；Android 另登记 weftmate-android 的 `com.memoweft.weftmate:/oauth`。没有注册回调的部署不能登录，不动态放开 origin。LG-1a 桌面程序可用 `WEFTMATE_CLOUD_DESKTOP_CLIENT_ID` 和 `WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI` 选择已经登记的固定程序回调；回调仅作为数据解析，注册、密码和设备确认均留在程序内。
-
-LG-1a 的共享登录、轮换与账户/设备动作在 `src/ui-core/cloud-auth.js` / `cloud-account.js`。云刷新凭据保留用于设置页，与宿主受众令牌共享单个轮换授权族；网页使用 IndexedDB（浏览器结构化存储）的不可导出密钥，Windows（桌面系统）使用系统加密存储与主进程签名。电脑连接保留本机打包的界面资产，主进程使用标准 CA（证书机构）验证与可信交付的 SPKI（证书公钥指纹）传递宿主请求；远端只提供数据。程序退出/账号注销清除本设备宿主 Cookie（会话凭据）与云令牌，独立应急密码和本地内容仍保留。`cloud-login.js` / `cloud-ui.js` 是 S1c 兼容资产，旧浏览器认证路径仍可供其他旧客户端使用。
-
-`WEFTMATE_WEB_E2E=true node --test services/cloud/test/web-login.test.mjs` 使用真实 Chromium、file 邮件、隔离宿主与 SQLite 云验证绑定、等待/批准、二维码自动刷新/输入码、拒绝、解绑与本地会话保留。合成截图在忽略的 `.local/s1c-web/`；完整根测试只交 CI。
+`node --test tests/personal-cloud.test.ts` 使用临时目录和随机端口，验证数据保留、绑定冲突、历史 pending 重登、缺失声明、DPoP、重放、配对期限与单用、设备下线、活跃流关闭、认证代际、通知和本机会话保持。`npm test --prefix services/cloud` 验证合成 OIDC（开放身份连接）服务与邮箱流程。真实程序与手机网页的合成链路证据在 `tests/evidence/auth-1/`，不连接真实云、不发送真实邮件、不请求真实模型。

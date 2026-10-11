@@ -140,7 +140,7 @@ export function createCommandOperations(context) {
           context.accountState(ownerId).devices[pending.sourceDeviceId]?.revoked ||
           (pending.sourceAuthEpoch !== undefined &&
             context.accountState(ownerId).devices[pending.sourceDeviceId]?.authEpoch !== pending.sourceAuthEpoch) ||
-          (['password', 'cloud'].includes(context.accountState(ownerId).devices[pending.sourceDeviceId]?.authKind) &&
+          (['password', 'cloud', 'desktop'].includes(context.accountState(ownerId).devices[pending.sourceDeviceId]?.authKind) &&
             !scheduledCommandSource(context.accountState(ownerId), pending) && Date.parse(context.accountState(ownerId).devices[pending.sourceDeviceId].expiresAt) <= context.timestamp())) {
         await context.serial(() => context.mutate(ownerId, (next) => {
           if (next.commands[commandId]?.state !== 'pending') return;
@@ -278,7 +278,7 @@ export function createCommandOperations(context) {
             context.accountState(ownerId).devices[command.sourceDeviceId]?.revoked ||
             (command.sourceAuthEpoch !== undefined &&
               context.accountState(ownerId).devices[command.sourceDeviceId]?.authEpoch !== command.sourceAuthEpoch) ||
-            (['password', 'cloud'].includes(context.accountState(ownerId).devices[command.sourceDeviceId]?.authKind) &&
+            (['password', 'cloud', 'desktop'].includes(context.accountState(ownerId).devices[command.sourceDeviceId]?.authKind) &&
               !scheduledCommandSource(context.accountState(ownerId), command) && Date.parse(context.accountState(ownerId).devices[command.sourceDeviceId].expiresAt) <= context.timestamp())) {
           await context.mutate(ownerId, (next) => {
             next.commands[commandId].state = 'rejected';
@@ -365,7 +365,7 @@ export function createCommandOperations(context) {
               approvalMode: next.defaultApprovalMode ?? 'auto',
               deepThinking: defaultThinking,
               ...initialMemorySettings(snapshot.payload, context.timestamp()),
-              origin: !['password', 'cloud'].includes(next.devices[snapshot.sourceDeviceId]?.authKind)
+              origin: !['password', 'cloud', 'desktop'].includes(next.devices[snapshot.sourceDeviceId]?.authKind)
                 ? 'legacy-local' : context.hostOwner(ownerId) ? 'personal-remote' : 'shared-chat',
               modelProfileId: snapshot.payload.modelProfileId,
               ...(snapshot.payload.sideChat ? { sideChat: snapshot.payload.sideChat,
@@ -497,7 +497,7 @@ export function createCommandOperations(context) {
               (item.dshTurn !== undefined && item.dshTurn !== turn) ||
               !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
           const device = next.devices[item.sourceDeviceId];
-          return ['password', 'cloud'].includes(device?.authKind) && !device.revoked &&
+          return ['password', 'cloud', 'desktop'].includes(device?.authKind) && !device.revoked &&
             device.authEpoch === item.sourceAuthEpoch && Date.parse(device.expiresAt) > context.timestamp();
         });
         if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);

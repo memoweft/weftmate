@@ -167,7 +167,7 @@ export function validateSingleStore(store) {
       ? device.scopes.includes('account:manage')
       : device.authKind === 'password'
         ? accountDeviceInvalid(device, store.account)
-        : device.authKind === 'cloud'
+        : ['cloud', 'desktop'].includes(device.authKind)
           ? accountDeviceInvalid(device, store.account)
         : true)) throw failure('STORE_CORRUPT', 500);
   }
@@ -572,7 +572,7 @@ export function validateSingleStore(store) {
           (command.scheduleSourceId !== undefined && !scheduledCommandSource(store, command)) ||
           (command.receiptId !== undefined && !validId(command.receiptId)) ||
           (command.sourceAuthEpoch !== undefined && (!Number.isSafeInteger(command.sourceAuthEpoch) ||
-            command.sourceAuthEpoch < 0 || !['password', 'cloud'].includes(store.devices[command.sourceDeviceId].authKind) ||
+            command.sourceAuthEpoch < 0 || !['password', 'cloud', 'desktop'].includes(store.devices[command.sourceDeviceId].authKind) ||
             command.sourceAuthEpoch > store.devices[command.sourceDeviceId].authEpoch)) ||
           (command.dshTurn !== undefined && (!Number.isSafeInteger(command.dshTurn) || command.dshTurn < 0 ||
             command.kind !== 'session.message')) ||
