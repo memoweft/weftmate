@@ -14,10 +14,12 @@ globalThis.WeftUiComponents.factories.attachments = (core, ui) => {
             const row = ui.element('div', 'attachment-draft');
             const copy = ui.element('span', 'attachment-draft-copy');
             copy.append(ui.element('strong', '', item.file.name), ui.element('small', '', `${core.originalFileSize(item.file.size)} · ${core.attachmentHint(item)}`));
-            const remove = ui.element('button', 'attachment-remove', '移除');
+            const remove = ui.element('button', 'attachment-remove icon-button');
+            remove.append(WeftIcons.create('deny', 16));
             remove.type = 'button';
             remove.disabled = !!core.state.attachmentUpload;
             remove.setAttribute('aria-label', `移除文件 ${item.file.name}`);
+            remove.title = `移除文件 ${item.file.name}`;
             remove.addEventListener('click', () => core.removeAttachmentDraft(item.attachmentId));
             row.append(copy, remove);
             list.append(row);
