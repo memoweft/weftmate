@@ -1,0 +1,54 @@
+approval-state {
+  owner: 'synthetic-ui2a',
+  page: 'chat',
+  generation: 12,
+  history: 7,
+  connection: {
+    kind: 'online',
+    failures: 0,
+    firstFailureAt: null,
+    lastFailureAt: null,
+    attempt: 0,
+    host: { runtime: 'ready' },
+    label: '在线',
+    description: '',
+    canSend: true
+  },
+  approval: null,
+  requests: [
+    { method: 'shared.sessions.events', path: undefined },
+    { method: 'shared.sessions.list', path: undefined },
+    { method: 'shared.projects.list', path: undefined },
+    { method: 'shared.sessions.events', path: undefined },
+    { method: 'shared.sessions.events', path: undefined },
+    { method: 'shared.sessions.events', path: undefined },
+    { method: 'shared.sessions.events', path: undefined },
+    { method: 'shared.sessions.events', path: undefined }
+  ],
+  toast: '连接已恢复，正在接续。'
+}
+✖ UI-2a 390×844 modes, risk confirmation, settings and three approval decisions (6019.8604ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6321.9819
+
+✖ failing tests:
+
+test at apps\mobile-ui\tests\approval-interactions.test.mjs:17:1
+✖ UI-2a 390×844 modes, risk confirmation, settings and three approval decisions (6019.8604ms)
+  AssertionError [ERR_ASSERTION]: at least ten live reads
+      at TestContext.<anonymous> (file:///D:/AIProjects/WeftMate/Worktrees/w4/apps/mobile-ui/tests/approval-interactions.test.mjs:120:12)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

@@ -1,0 +1,351 @@
+{
+  "fourWaiters": 4,
+  "fourResults": [
+    {
+      "status": 200,
+      "data": {
+        "upserts": [],
+        "liveEvents": [
+          {
+            "seq": 5,
+            "type": "assistant.delta",
+            "at": "2026-10-07T08:00:02.500Z",
+            "data": {
+              "text": "wake all",
+              "cursor": 5,
+              "turn": 1,
+              "step": 1,
+              "streaming": false
+            },
+            "eventId": "event-e7af181cf2bee580d659d4c8d3ee256e66b49e61cc293691b3678da9743c2bf4",
+            "chatId": "chat-5045890b-47a9-4d16-bc33-cd1f9f3dc77c",
+            "orderKey": "0000000000000000:segment-df4a5536-152d-44ea-a020-5200de241eb9:0000000000000005",
+            "revision": 5,
+            "sourceRef": {
+              "kind": "native",
+              "hostId": "host-97d70804-dc8f-439a-a489-c5352b1f2d6f",
+              "sessionId": "session-61e02c80-90c6-42e5-bd9b-cfb09e373143",
+              "seq": 5
+            }
+          }
+        ],
+        "liveRevision": 1,
+        "removals": [],
+        "nextCursor": "WyJvd25lci0xOTc1YzcwYi1mYWRlLTQzYzUtODQ2Yi1hNjY3YzVmNGQwZjAiLCJjaGF0LTUwNDU4OTBiLTQ3YTktNGQxNi1iYzMzLWNkMWY5ZjNkYzc3YyIsIjU2Y2E3NTgwODRjMTliODJiZDFlNTU2OTJlN2I5OTA5Iiwic3luYyIsNSwiIl0.egiRXcAgNEv-ei-7CCDKPZ_g1MMldhjJ2hVa60hLma4",
+        "hasMore": false,
+        "contentRevision": 1,
+        "chatRevision": 3,
+        "unread": false,
+        "indexState": "ready",
+        "timeZone": "Asia/Shanghai",
+        "accountChanges": {
+          "revision": 14,
+          "models": "3cf9a71368d8b160105b772e9c77dbf81c4f8819f8f04a202f3146fc4da1ee1a",
+          "modelSettings": "95cb9b4f84ceff132cc7a875d8c192bf4997016a939ee64141c1fd628c0e8738",
+          "personalization": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "sessions": "840c06142b56a2eae805e83272124bc4a2aad16a334e191e53a60ba830911d24"
+        },
+        "waitOutcome": "changed"
+      }
+    },
+    {
+      "status": 200,
+      "data": {
+        "upserts": [],
+        "liveEvents": [
+          {
+            "seq": 5,
+            "type": "assistant.delta",
+            "at": "2026-10-07T08:00:02.500Z",
+            "data": {
+              "text": "wake all",
+              "cursor": 5,
+              "turn": 1,
+              "step": 1,
+              "streaming": false
+            },
+            "eventId": "event-e7af181cf2bee580d659d4c8d3ee256e66b49e61cc293691b3678da9743c2bf4",
+            "chatId": "chat-5045890b-47a9-4d16-bc33-cd1f9f3dc77c",
+            "orderKey": "0000000000000000:segment-df4a5536-152d-44ea-a020-5200de241eb9:0000000000000005",
+            "revision": 5,
+            "sourceRef": {
+              "kind": "native",
+              "hostId": "host-97d70804-dc8f-439a-a489-c5352b1f2d6f",
+              "sessionId": "session-61e02c80-90c6-42e5-bd9b-cfb09e373143",
+              "seq": 5
+            }
+          }
+        ],
+        "liveRevision": 1,
+        "removals": [],
+        "nextCursor": "WyJvd25lci0xOTc1YzcwYi1mYWRlLTQzYzUtODQ2Yi1hNjY3YzVmNGQwZjAiLCJjaGF0LTUwNDU4OTBiLTQ3YTktNGQxNi1iYzMzLWNkMWY5ZjNkYzc3YyIsIjU2Y2E3NTgwODRjMTliODJiZDFlNTU2OTJlN2I5OTA5Iiwic3luYyIsNSwiIl0.egiRXcAgNEv-ei-7CCDKPZ_g1MMldhjJ2hVa60hLma4",
+        "hasMore": false,
+        "contentRevision": 1,
+        "chatRevision": 3,
+        "unread": false,
+        "indexState": "ready",
+        "timeZone": "Asia/Shanghai",
+        "accountChanges": {
+          "revision": 14,
+          "models": "3cf9a71368d8b160105b772e9c77dbf81c4f8819f8f04a202f3146fc4da1ee1a",
+          "modelSettings": "95cb9b4f84ceff132cc7a875d8c192bf4997016a939ee64141c1fd628c0e8738",
+          "personalization": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "sessions": "840c06142b56a2eae805e83272124bc4a2aad16a334e191e53a60ba830911d24"
+        },
+        "waitOutcome": "changed"
+      }
+    },
+    {
+      "status": 200,
+      "data": {
+        "upserts": [],
+        "liveEvents": [
+          {
+            "seq": 5,
+            "type": "assistant.delta",
+            "at": "2026-10-07T08:00:02.500Z",
+            "data": {
+              "text": "wake all",
+              "cursor": 5,
+              "turn": 1,
+              "step": 1,
+              "streaming": false
+            },
+            "eventId": "event-e7af181cf2bee580d659d4c8d3ee256e66b49e61cc293691b3678da9743c2bf4",
+            "chatId": "chat-5045890b-47a9-4d16-bc33-cd1f9f3dc77c",
+            "orderKey": "0000000000000000:segment-df4a5536-152d-44ea-a020-5200de241eb9:0000000000000005",
+            "revision": 5,
+            "sourceRef": {
+              "kind": "native",
+              "hostId": "host-97d70804-dc8f-439a-a489-c5352b1f2d6f",
+              "sessionId": "session-61e02c80-90c6-42e5-bd9b-cfb09e373143",
+              "seq": 5
+            }
+          }
+        ],
+        "liveRevision": 1,
+        "removals": [],
+        "nextCursor": "WyJvd25lci0xOTc1YzcwYi1mYWRlLTQzYzUtODQ2Yi1hNjY3YzVmNGQwZjAiLCJjaGF0LTUwNDU4OTBiLTQ3YTktNGQxNi1iYzMzLWNkMWY5ZjNkYzc3YyIsIjU2Y2E3NTgwODRjMTliODJiZDFlNTU2OTJlN2I5OTA5Iiwic3luYyIsNSwiIl0.egiRXcAgNEv-ei-7CCDKPZ_g1MMldhjJ2hVa60hLma4",
+        "hasMore": false,
+        "contentRevision": 1,
+        "chatRevision": 3,
+        "unread": false,
+        "indexState": "ready",
+        "timeZone": "Asia/Shanghai",
+        "accountChanges": {
+          "revision": 14,
+          "models": "3cf9a71368d8b160105b772e9c77dbf81c4f8819f8f04a202f3146fc4da1ee1a",
+          "modelSettings": "95cb9b4f84ceff132cc7a875d8c192bf4997016a939ee64141c1fd628c0e8738",
+          "personalization": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "sessions": "840c06142b56a2eae805e83272124bc4a2aad16a334e191e53a60ba830911d24"
+        },
+        "waitOutcome": "changed"
+      }
+    },
+    {
+      "status": 200,
+      "data": {
+        "upserts": [],
+        "liveEvents": [
+          {
+            "seq": 5,
+            "type": "assistant.delta",
+            "at": "2026-10-07T08:00:02.500Z",
+            "data": {
+              "text": "wake all",
+              "cursor": 5,
+              "turn": 1,
+              "step": 1,
+              "streaming": false
+            },
+            "eventId": "event-e7af181cf2bee580d659d4c8d3ee256e66b49e61cc293691b3678da9743c2bf4",
+            "chatId": "chat-5045890b-47a9-4d16-bc33-cd1f9f3dc77c",
+            "orderKey": "0000000000000000:segment-df4a5536-152d-44ea-a020-5200de241eb9:0000000000000005",
+            "revision": 5,
+            "sourceRef": {
+              "kind": "native",
+              "hostId": "host-97d70804-dc8f-439a-a489-c5352b1f2d6f",
+              "sessionId": "session-61e02c80-90c6-42e5-bd9b-cfb09e373143",
+              "seq": 5
+            }
+          }
+        ],
+        "liveRevision": 1,
+        "removals": [],
+        "nextCursor": "WyJvd25lci0xOTc1YzcwYi1mYWRlLTQzYzUtODQ2Yi1hNjY3YzVmNGQwZjAiLCJjaGF0LTUwNDU4OTBiLTQ3YTktNGQxNi1iYzMzLWNkMWY5ZjNkYzc3YyIsIjU2Y2E3NTgwODRjMTliODJiZDFlNTU2OTJlN2I5OTA5Iiwic3luYyIsNSwiIl0.egiRXcAgNEv-ei-7CCDKPZ_g1MMldhjJ2hVa60hLma4",
+        "hasMore": false,
+        "contentRevision": 1,
+        "chatRevision": 3,
+        "unread": false,
+        "indexState": "ready",
+        "timeZone": "Asia/Shanghai",
+        "accountChanges": {
+          "revision": 14,
+          "models": "3cf9a71368d8b160105b772e9c77dbf81c4f8819f8f04a202f3146fc4da1ee1a",
+          "modelSettings": "95cb9b4f84ceff132cc7a875d8c192bf4997016a939ee64141c1fd628c0e8738",
+          "personalization": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "sessions": "840c06142b56a2eae805e83272124bc4a2aad16a334e191e53a60ba830911d24"
+        },
+        "waitOutcome": "changed"
+      }
+    }
+  ],
+  "afterWakeWaiters": 0,
+  "switches": [
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    },
+    {
+      "before": 1,
+      "after": 0
+    }
+  ],
+  "rejectedWait": {
+    "ms": 2,
+    "status": 503,
+    "body": {
+      "error": {
+        "code": "BACKEND_UNAVAILABLE"
+      }
+    },
+    "remaining": 0
+  },
+  "settingsWake": {
+    "ms": 109,
+    "status": 200,
+    "body": {
+      "upserts": [],
+      "liveEvents": [
+        {
+          "seq": 5,
+          "type": "assistant.delta",
+          "at": "2026-10-07T08:00:02.500Z",
+          "data": {
+            "text": "wake all",
+            "cursor": 5,
+            "turn": 1,
+            "step": 1,
+            "streaming": false
+          },
+          "eventId": "event-e7af181cf2bee580d659d4c8d3ee256e66b49e61cc293691b3678da9743c2bf4",
+          "chatId": "chat-5045890b-47a9-4d16-bc33-cd1f9f3dc77c",
+          "orderKey": "0000000000000000:segment-df4a5536-152d-44ea-a020-5200de241eb9:0000000000000005",
+          "revision": 5,
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-97d70804-dc8f-439a-a489-c5352b1f2d6f",
+            "sessionId": "session-61e02c80-90c6-42e5-bd9b-cfb09e373143",
+            "seq": 5
+          }
+        }
+      ],
+      "liveRevision": 1,
+      "removals": [],
+      "nextCursor": "WyJvd25lci0xOTc1YzcwYi1mYWRlLTQzYzUtODQ2Yi1hNjY3YzVmNGQwZjAiLCJjaGF0LTUwNDU4OTBiLTQ3YTktNGQxNi1iYzMzLWNkMWY5ZjNkYzc3YyIsIjU2Y2E3NTgwODRjMTliODJiZDFlNTU2OTJlN2I5OTA5Iiwic3luYyIsNSwiIl0.egiRXcAgNEv-ei-7CCDKPZ_g1MMldhjJ2hVa60hLma4",
+      "hasMore": false,
+      "contentRevision": 1,
+      "chatRevision": 3,
+      "unread": false,
+      "indexState": "ready",
+      "timeZone": "Asia/Shanghai",
+      "accountChanges": {
+        "revision": 15,
+        "models": "3cf9a71368d8b160105b772e9c77dbf81c4f8819f8f04a202f3146fc4da1ee1a",
+        "modelSettings": "95cb9b4f84ceff132cc7a875d8c192bf4997016a939ee64141c1fd628c0e8738",
+        "personalization": "6e6b5e98411d77fb6839be0bb8081f68504833be2ec8767432916396a6c2c667",
+        "sessions": "840c06142b56a2eae805e83272124bc4a2aad16a334e191e53a60ba830911d24"
+      },
+      "waitOutcome": "changed"
+    }
+  },
+  "logoutAfterQuery": {
+    "gateStarted": true,
+    "logout": 200,
+    "response": 401,
+    "body": {
+      "error": {
+        "code": "UNAUTHORIZED"
+      }
+    }
+  },
+  "nativeDispose": {
+    "settledAfterDispose": true,
+    "abortListeners": 0,
+    "waitMs": 152,
+    "listenersAfter": 0
+  },
+  "nativeAlreadyAbortedMs": 0
+}

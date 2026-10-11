@@ -1,0 +1,50 @@
+[
+  {
+    kind: 'revoke',
+    mutationStatus: 200,
+    responseStatus: 401,
+    ms: 9,
+    body: { error: [Object] }
+  },
+  {
+    kind: 'password',
+    mutationStatus: 200,
+    responseStatus: 401,
+    ms: 440,
+    body: { error: [Object] }
+  },
+  {
+    kind: 'delete-account',
+    mutationStatus: 202,
+    responseStatus: 200,
+    ms: 15,
+    body: {
+      upserts: [],
+      liveEvents: [],
+      liveRevision: 0,
+      removals: [],
+      nextCursor: 'WyJvd25lci04ZDY0Y2I2OC0wNWIzLTQ5NzMtOGIwOC1kMmEzMGYzNGRlYmQiLCJjaGF0LTkzNGQ1NWNjLTI4NDYtNDc1Mi05YjU3LWFmZmViZGM1Y2EwNCIsIjk3MjAzZWYwYzBjYTAxZDk2YTVkZjU5N2QyMTVlMzkxIiwic3luYyIsMCwiIl0.u3W5VCl2xp7d_JrWHM3GU9wpOENSqdKFLF1IkNLHl3o',
+      hasMore: false,
+      contentRevision: 1,
+      chatRevision: 1,
+      unread: false,
+      indexState: 'ready',
+      timeZone: 'Asia/Shanghai',
+      accountChanges: [Object],
+      waitOutcome: 'changed'
+    },
+    operation: {
+      id: '17a313bf-86e6-410f-b259-754737f3e7f2',
+      kind: 'close-account',
+      state: 'completed',
+      category: 'memory',
+      bytes: 0,
+      completed: NaN,
+      createdAt: '2026-10-11T01:26:17.952Z',
+      error: undefined,
+      result: [Object],
+      canCancel: false
+    },
+    finalAuthStatus: 401
+  }
+]
