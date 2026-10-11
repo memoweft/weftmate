@@ -15,10 +15,10 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
   }
   function field(key,label,description,type,options){
     const el=node(type==='select'?'select':'input');el.id='notifications-'+key;el.setAttribute('aria-label',label);
-    if(type==='select'){for(const [value,title] of options)el.append(new Option(title,value));}
+    if(type==='select'){el.dataset.checkSelection='true';for(const [value,title] of options)el.append(new Option(title,value));}
     else{el.type=type;if(type==='checkbox')controls.toggle(el);}
     form.append(controls.row(label,description,el));fields.set(key,el);
-    el.addEventListener('change',()=>{if(el.reportValidity())void write({[key]:type==='checkbox'?el.checked:key==='dailyLimit'?(el.value==='null'?null:Number(el.value)):el.value});});
+    el.addEventListener('change',()=>{if(el.reportValidity())void write({[key]:type==='checkbox'?el.checked:key==='memoryDigestWeekday'?Number(el.value):key==='dailyLimit'?(el.value==='null'?null:Number(el.value)):el.value});});
     if(type==='select')globalThis.WeftPopover?.bindSettingsSelect(el);
     return el;
   }
@@ -29,10 +29,14 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
     ['task','任务完成 / 失败','你发起的任务结果不会计入每日主动提醒上限。'],
     ['reminder','提醒与定时任务','按你设定的时间提醒，使用同一套勿扰规则。'],
     ['memory','记忆状态','只在暂停、不可用等异常时提醒，正常更新只进动态。'],
-    ['memoryReport','每周记忆小结','每周小结尚未开放，开放后可在这里设置。'],
+    ['memoryReport','每周记忆小结','通知只提示周报已生成，具体内容在动态里查看。'],
     ['system','系统','有可用更新时提醒。']]){
-      const el=field(key,label,description,'select',modes);if(key==='memoryReport'){el.dataset.reserved='true';el.disabled=true;}
+      field(key,label,description,'select',modes);
   }
+  form.append(node('h2','记忆周报'));
+  field('memoryDigestEnabled','每周生成记忆周报','这一周有新记忆或变更时，在动态里整理一次。','checkbox');
+  field('memoryDigestWeekday','每周哪一天','按账户时区；关机错过后，下次启动补发最近一周。','select',[[1,'星期一'],[2,'星期二'],[3,'星期三'],[4,'星期四'],[5,'星期五'],[6,'星期六'],[0,'星期日']]);
+  field('memoryDigestTime','生成时间','默认星期日晚上 21:00；不调用模型整理周报。','time');
   form.append(node('h2','勿扰时段'));
   field('dndEnabled','启用勿扰','期间通知仍进动态，结束后只给一条汇总，不逐条补响。','checkbox');
   const zone=node('p','','muted');form.append(zone);

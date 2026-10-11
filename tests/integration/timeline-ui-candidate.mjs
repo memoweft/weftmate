@@ -122,12 +122,20 @@ export async function startTimelineCandidate(options = {}) {
     importBackup: async () => {backupOperations.push('import');return {backup:{id:'ui4-import'}}},
     restore: async id => {backupOperations.push('restore:'+id);return {accepted:true}},
   } : null;
-  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, libraryNativeActions:options.libraryNativeActions??null, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi })
+  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, libraryNativeActions:options.libraryNativeActions??null, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi, cloudIdentity:options.cloudIdentity })
   const started = await service.start(); let origin = started.origin;
-  const { hostId } = started, grant = await service.issueSetupGrant()
+  const { hostId } = started
   const credentials = { username: 'TimelineFixture', password: `isolated-${randomUUID()}`, deviceName: '隔离测试浏览器' }
-  const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: grant.grant, ...credentials }) })
-  assert.equal(setup.status, 201); const auth = await setup.json(), cookie = setup.headers.get('set-cookie').split(';')[0]
+  let auth, cookie;
+  if (options.authenticate) {
+    try { ({auth,cookie}=await options.authenticate({service,origin,hostId})); }
+    catch(error) { await service.close(); throw error; }
+    credentials.username=auth.account.username;
+  } else {
+    const grant=await service.issueSetupGrant();
+    const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: grant.grant, ...credentials }) });
+    assert.equal(setup.status,201);auth=await setup.json();cookie=setup.headers.get('set-cookie').split(';')[0];
+  }
   const request = async (path, body, method = body ? 'POST' : 'GET') => { const response = await fetch(origin + '/personal/v1' + path, { method, headers: { origin, cookie, 'content-type': 'application/json', 'x-weftmate-csrf': auth.csrfToken }, ...(body ? { body: JSON.stringify(body) } : {}) }); const data = await response.json(); assert.ok(response.ok, JSON.stringify(data)); return data }
   const command = async (body, route = '/commands') => { const value = await request(route, body); for (let i = 0; i < 100; i++) { const row = (await request(`/commands/${value.command.commandId}`)).command; if (row.state === 'accepted_by_dsh') return row; await new Promise(done => setTimeout(done, 20)) } throw Error('command not accepted') }
   const created = await command({ requestId: 'timeline-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId })

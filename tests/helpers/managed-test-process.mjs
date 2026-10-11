@@ -32,5 +32,11 @@ export async function runManagedTestProcess(command, args, { env, commandRoots =
     return { ...result, stdout, stderr, error, interrupted };
   } finally {
     for (const [signal, handler] of handlers) process.off(signal, handler);
+    // A successful test runner can still leave Electron grandchildren holding
+    // its isolated scope. Recheck all three ownership conditions before cleanup.
+    if (process.platform === 'win32' && commandRoots.length) {
+      const cleanup=cleanupOwnedProcesses({ startedAt, executables, commandRoots });
+      if(cleanup.cleaned||cleanup.failed)console.log(`Managed test cleanup: ${JSON.stringify(cleanup)}`);
+    }
   }
 }
