@@ -140,7 +140,7 @@ export function createArtifactOperations(context) {
           // Native write receipts belong to the authenticated source device, including
           // cloud desktops and phones. Restricting this to password devices rejects
           // registration after the file was already written (FX-11 / BL-14).
-          return ['password', 'cloud'].includes(device?.authKind) && !device.revoked &&
+          return ['password', 'cloud', 'desktop'].includes(device?.authKind) && !device.revoked &&
             device.authEpoch === item.sourceAuthEpoch && (scheduledCommandSource(next, item) || Date.parse(device.expiresAt) > context.timestamp());
         });
         if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
