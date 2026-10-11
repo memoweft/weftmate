@@ -1,0 +1,65 @@
+{
+  "main": "360b00a2ad2a374019f68060f73d54919410772c",
+  "passed": 154,
+  "failed": 0,
+  "typecheck": true,
+  "publicHygieneHits": 0,
+  "checks": [
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461083/job/114361080948",
+      "name": "Android debug and JVM tests",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461083/job/114361081166",
+      "name": "Web cloud login interactions",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461072/job/114361067130",
+      "name": "test (ubuntu-latest)",
+      "state": "IN_PROGRESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461104/job/114361066566",
+      "name": "Relay phone first input and file task",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461072/job/114361067113",
+      "name": "test (windows-latest)",
+      "state": "IN_PROGRESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461072/job/114361066949",
+      "name": "Observed bridge (real MemoWeft Core)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461104/job/114361066488",
+      "name": "Relay full chain (443)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461113/job/114361056705",
+      "name": "Windows package and startup smoke",
+      "state": "IN_PROGRESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461084/job/114361054567",
+      "name": "Host certificates (Pebble DNS-01)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461076/job/114361051497",
+      "name": "Synthetic multi-device review gallery",
+      "state": "IN_PROGRESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38102461089/job/114361048156",
+      "name": "Pinned DSH vendor unit tests",
+      "state": "IN_PROGRESS"
+    }
+  ],
+  "at": "2026-10-11T01:40:55.100Z"
+}
