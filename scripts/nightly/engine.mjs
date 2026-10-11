@@ -1,11 +1,12 @@
 import { spawn } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile, open, rm } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, open, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { report, retention, previousRun } from './report.mjs';
 import { androidBusyReason, nightlyPackage } from './android-packages.mjs';
 import { connectMuMu, adbExecutable as adb, AndroidEnvironmentError } from './mumu.mjs';
+import { managedMkdtemp, disposeManagedTemp } from '../../tests/helpers/managed-temp.mjs';
 import { acquireHeavySlot } from './heavy-slot.mjs';
 import { redactEvidenceText, systemCommitMemory, describeExit } from '../../tests/helpers/process-evidence.mjs';
 const scripts = fileURLToPath(new URL('.', import.meta.url));
@@ -34,12 +35,12 @@ process.on('SIGTERM', () => { cancelled = true; for (const child of children) ch
 
 async function run(command, args, { cwd = worktree, env = {}, name = 'command', limit = deadline - Date.now(), allowFailure = false } = {}) {
   if ((cancelled || Date.now() >= deadline) && !allowFailure) throw Error('整晚总时长超时或已停止');
-  limit = Math.min(limit, phaseDeadline - Date.now());
-  const logPath = join(out, 'logs', name + '.log'), log = await open(logPath, 'a'); let output = '', timedOut = false;
+  limit = Math.min(limit, phaseDeadline - Date.now() - (allowFailure ? 0 : 60000));
+  const logPath = join(out, 'logs', name + '.log'), log = await open(logPath, 'a'); let output = '', timedOut = false, writes = Promise.resolve();
   const child = spawn(command, args, { cwd, windowsHide: true, env: { ...process.env, ...env, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' }, stdio: ['ignore', 'pipe', 'pipe'] });
   children.add(child);
-  const completion = new Promise((done, reject) => { child.once('error', reject); child.once('exit', done); });
-  const consume = bytes => { const text = redactEvidenceText(bytes.toString()); output += text; void log.write(text); };
+  const completion = new Promise((done, reject) => { child.once('error', reject); child.once('close', done); });
+  const consume = bytes => { const text = redactEvidenceText(bytes.toString()); output += text; writes = writes.then(() => log.write(text)); };
   child.stdout.on('data', consume); child.stderr.on('data', consume);
   const timer = setTimeout(() => { timedOut = true; child.kill(); }, Math.max(100, limit));
   try {
@@ -51,7 +52,7 @@ async function run(command, args, { cwd = worktree, env = {}, name = 'command', 
     }
     if (!allowFailure && (timedOut || code !== 0)) throw Error(timedOut ? `${name} 超时（整晚截止时间或本命令时限）` : `${name} 运行失败（退出 ${code}；见 logs/${name}.log）`);
     return { output, code: timedOut ? -1 : code, timedOut };
-  } finally { clearTimeout(timer); children.delete(child); await log.close(); }
+  } finally { clearTimeout(timer); children.delete(child); await writes; await log.close(); }
 }
 async function phase(name, platforms, action) {
   const began = Date.now(), item = { name, platforms, status: 'passed' }; phases.push(item);
@@ -70,7 +71,12 @@ async function phase(name, platforms, action) {
       const result = await action(); if (result) Object.assign(item, result);
     }
   } catch (error) { item.status = error instanceof AndroidEnvironmentError ? 'environment' : 'failed'; item.reason = redactEvidenceText(error.message).replace(/[A-Z]:[\\/][^\s"']+/gi, '[local artifact]'); }
-  finally { phaseDeadline=deadline; if (slot) { item.slotSeconds=(Date.now()-slot.takenAt)/1000; await slot.release(); } }
+  finally {
+    if (slot && item.status === 'failed' && temp) {
+      try { item.processCleanup = JSON.parse((await run('pwsh', ['-NoProfile','-File',join(scripts,'cleanup.ps1'),'-Since',new Date(began).toISOString(),'-RootsJson',join(out,'cleanup-roots.json'),'-OwnerPid',String(process.pid),'-BootstrapPid',String(context.bootstrapPid)],{name:name+'-process-cleanup',allowFailure:true,limit:15000})).output); } catch(error) { item.processCleanup={error:redactEvidenceText(error.message)}; }
+    }
+    phaseDeadline=deadline; if (slot) { item.slotSeconds=(Date.now()-slot.takenAt)/1000; await slot.release(); }
+  }
   item.seconds = (Date.now() - began) / 1000;
   console.log(`${name}: ${item.status} (${item.seconds.toFixed(1)}s)${item.reason ? ' · ' + item.reason : ''}`);
   return item.status === 'passed';
@@ -97,11 +103,11 @@ async function cleanupAndroid() {
 const skip = reason => ({ status: 'skipped', reason });
 
 try {
-  temp = await mkdtemp('C:/weftmate-nightly-');
+  temp = await managedMkdtemp('weftmate-nightly-');
   await writeFile(join(out, 'cleanup-roots.json'), JSON.stringify([temp, worktree, out]));
   // Do not inherit real model, cloud, personal-host or relay configuration.
   for (const name of Object.keys(process.env)) if (/^(WEFTMATE_|MEMOWEFT_|MIMO_|MODEL_SWITCH_|CLOUD_|ELECTRON_RUN_AS_NODE)/.test(name)) delete process.env[name];
-  process.env.TEMP = temp; process.env.TMP = temp;
+  process.env.TEMP = temp; process.env.TMP = temp; process.env.WEFTMATE_TEST_TEMP_SCOPE = temp;
   const prepared = await phase('prepare', [], async () => {
     // npm ci only if the exact lockfile changed. Local dependencies are not shared
     // with developer trees and never point to another package's node_modules.
@@ -183,13 +189,16 @@ finally {
       cleanup.windows = JSON.parse((await run('pwsh', ['-NoProfile', '-File', join(scripts, 'cleanup.ps1'), '-Since', startedAt, '-RootsJson', join(out, 'cleanup-roots.json'), '-OwnerPid', String(process.pid), '-BootstrapPid', String(context.bootstrapPid)], { cwd: repository, name: 'cleanup', allowFailure: true, limit: 15000 })).output);
     } catch (error) { cleanup.windows = { error: error.message };  }
   }
-  if (temp) await rm(temp, { recursive: true, force: true }).catch(() => {});
+  if (temp) {
+    try { disposeManagedTemp(temp); cleanup.temp = {removed:true}; }
+    catch (error) { cleanup.temp = {removed:false,error:redactEvidenceText(error.message)}; }
+  }
   // Owner-approved housekeeping: prune synthetic test temp directories older than 24 hours.
   try {
     const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '24', '-Repository', repository, '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
     cleanup.staleTemp = JSON.parse(pruned.output.trim().split(/\r?\n/).pop());
   } catch (error) { cleanup.staleTemp = { error: error.message }; }
-  phases.push({ name: 'cleanup', status: cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.staleTemp?.failed || cleanup.android?.error || cleanup.android?.packageRemoved === false || cleanup.android?.reverseRemoved === false || cleanup.android?.forwardRemoved === false || cleanup.apple?.bootedOwnedRemaining?.length ? 'failed' : 'passed', reason: cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.android?.error || '', seconds: (Date.now()-cleanupStarted)/1000 });
+  phases.push({ name: 'cleanup', status: cleanup.temp?.removed === false || cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.staleTemp?.failed || cleanup.android?.error || cleanup.android?.packageRemoved === false || cleanup.android?.reverseRemoved === false || cleanup.android?.forwardRemoved === false || cleanup.apple?.bootedOwnedRemaining?.length ? 'failed' : 'passed', reason: cleanup.temp?.error || cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.android?.error || '', seconds: (Date.now()-cleanupStarted)/1000 });
   try {
     const baseline = await reporting.previousRun(reports, gallery);
     const result = await reporting.report(out, { ...baseline, threshold, phases, bootstrapCommit, commit: sourceCommit || 'unknown', startedAt, cleanup });
@@ -197,6 +206,8 @@ finally {
     await writeFile(join(reports, date, 'nightly-report.md'), (await readFile(join(out, 'nightly-report.md'), 'utf8')).replace('(gallery/index.html)', `(${runId}/gallery/index.html)`));
     await writeFile(join(reports, date, 'latest.json'), JSON.stringify({ runId, gallery: `${runId}/gallery/index.html`, report: `${runId}/nightly-report.md` }) + '\n');
     if (result.alerts.length) {
+      const notificationSlot=await acquireHeavySlot(orchestrator,`nightly ${runId} / notification`,{deadline:Date.now()+120000});
+      try {
       let electron = join(worktree, 'node_modules/electron/dist/electron.exe');
       try { await readFile(join(worktree, 'node_modules/electron/path.txt')); }
       catch { electron = join(repository, 'node_modules/electron/dist/electron.exe'); }
@@ -204,6 +215,7 @@ finally {
       let notification;
       try { notification = JSON.parse(await readFile(join(out, 'notification.json'), 'utf8')); } catch {}
       if (!notification?.supported) await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'notify.ps1'), '-StatusPath', join(out, 'nightly-status.json'), '-ReceiptPath', join(out, 'notification.json')], { cwd: repository, name: 'notification-fallback', allowFailure: true, limit: 10000 });
+      } finally { await notificationSlot.release(); }
     }
     await reporting.retention(reports);
     process.exitCode = result.alerts.length ? 1 : 0;

@@ -1,7 +1,8 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Real isolated Core workers, synthetic interpretation, no network model calls. */
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, realpathSync, rmSync } from 'node:fs';
+
 import { join, sep } from 'node:path';
 import { createPersonalMemoryManager } from '../../src/personal-memory/index.mjs';
 import { MemoWeftRpc } from '../../src/personal-memory/rpc.mjs';
