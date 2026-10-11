@@ -24,8 +24,8 @@
       "state": "disabled"
     }
   ],
-  "startupMs": 13912,
-  "memoryBytes": 553017344,
+  "startupMs": 16069,
+  "memoryBytes": 520384512,
   "firstTokenUnmeasured": true,
   "exportPreview": true
 }
