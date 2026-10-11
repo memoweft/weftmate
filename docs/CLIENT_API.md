@@ -1017,6 +1017,16 @@ devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近
 
 App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协议）会话 Cookie（会话凭据），再走原密码 / 验证码 / PKCE（授权码校验）流程；避免账号改变时进入提供方的 HTML（网页标记语言）自动注销表单。云 DPoP（设备密钥持有证明）凭据和其他客户端不随之撤权。
 
+### 7.9a 应用内反馈（R0-4）
+
+`POST /personal/v1/cloud/feedback` 只向云端发送，不经过本机业务代理。需要现有云账号登录与 DPoP（持有密钥证明）设备认证、允许的 `Origin`（请求来源），无查询参数。请求为 `{"title":"应用反馈：…","body":"完整预览正文"}`；标题非空、单行、最多120个 UTF-16（16位统一码编码）代码单元，正文非空、最多60,000 UTF-8（8位统一码编码）字节；传输 JSON（结构化数据格式）上限256 KiB。响应201 `{"number":42}` 为 GitHub 问题单编号。
+
+客户端在发送前展示最终标题和正文，确认后将同一份字符串发送。默认附上既有不含正文与密钥的诊断摘要，默认不附对话；主动勾选对话后还需一次明确确认。生成预览前沿用对话导出脱敏，并去掉控制字符、将 `<` / `>` / `@` 换成全角字符；云端不执行、不渲染内容，需要再清洗的请求返回400 `FEEDBACK_UNSAFE_TEXT`，不在发送时偷偷改字。回复「有用 / 没用」可换、可取消，仅按账户和消息存本机，无上传接口。发送成功后本机只保存时间、标题、编号，不保存反馈正文。
+
+沿用已有 `failure_limits` 表作账户限频：最多连续5次代发尝试，之后至少等待10分钟；一小时窗口重置，无新增表或反馈内容持久化。429 `RATE_LIMITED` 附 `Retry-After`（重试等待秒数）。其他错误：401 `UNAUTHORIZED`；400 `FEEDBACK_INVALID` / `FEEDBACK_UNSAFE_TEXT`；413 `FEEDBACK_TOO_LARGE` / `BODY_TOO_LARGE`；503 `FEEDBACK_NOT_CONFIGURED` 明确表示暂未开通；502 `FEEDBACK_GITHUB_<HTTP状态码>` / `FEEDBACK_NETWORK_FAILED` / `FEEDBACK_INVALID_RECEIPT` 如实表示代发失败。失败不产生本机成功记录；客户端保留完整预览及「复制内容」。本机未登录云账号直接提供同一复制路径，不伪装成功。
+
+原生配合：Android（安卓）`CloudAppCrypto.kt::cloudAppRouteAllowed` 需要允许云来源的精确 `/feedback` POST（提交请求）并加允许／拒绝测试；本包按任务边界不改壳，现有安卓发送会失败并保留复制路径，需要后续新壳。Apple（苹果端）需接本机评价、相同预览与确认、此云接口和本机元数据记录；本包不改 Apple。
+
 ### 7.9 账号生命周期（S1e / D30）
 
 本节接口由云提供，使用 **7.8 云 DPoP（设备密钥持有证明）授权**：`Authorization: DPoP <cloud audience access token>` + 本次精确 URL/方法/令牌摘要对应的 `DPoP` proof（证明）。不接受宿主 Cookie（会话凭据）、ID token（身份令牌）或无 proof 的 Bearer（未绑定设备密钥的令牌）。所有写操作要求已登记 Origin（来源地址）、JSON ≤16 KiB、无 query（查询参数）/多余字段；响应 `Cache-Control: no-store`。页面与确认文案由 LG-1 / LG-2 接线，本包不改界面。

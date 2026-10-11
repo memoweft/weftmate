@@ -28,7 +28,7 @@ export const PASSWORD = 'a test password with 20 chars';
 export const NEXT_PASSWORD = 'another test password 20 chars';
 export const EMAIL = 'account@example.com';
 export const P = '/personal/v1/cloud';
-export async function fixture(t, { env = {}, relayDns, realProcess = false, listenHost = '127.0.0.1' } = {}) {
+export async function fixture(t, { env = {}, relayDns, feedbackFetch, realProcess = false, listenHost = '127.0.0.1' } = {}) {
   const root = await mkdtemp(path.join(tmpdir(), 'weftmate-cloud-identity-'));
   let server,
     child,
@@ -88,6 +88,7 @@ export async function fixture(t, { env = {}, relayDns, realProcess = false, list
     }
     identity = await createIdentity({
       database: opened.database,
+      feedbackFetch,
       relayDns: typeof relayDns === 'function' ? relayDns(opened.database) : relayDns,
       config,
       mailer: createMailer(config, { logger }),

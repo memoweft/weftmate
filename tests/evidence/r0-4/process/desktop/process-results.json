@@ -1,0 +1,24 @@
+{
+  "localOnly": true,
+  "records": [
+    {
+      "label": "production-electron",
+      "decimal": 0,
+      "unsignedDecimal": 0,
+      "hexadecimal": "0x00000000",
+      "signal": null,
+      "meaning": "正常退出",
+      "spawnErrorCode": null,
+      "closedAt": "2026-10-11T15:34:01.016Z",
+      "stdoutTail": "",
+      "stderrTail": "Error occurred in handler for 'wm:desktop:update-state': Error: No handler registered for 'wm:desktop:update-state'\n    at Session.<anonymous> (node:electron/js2c/browser_init:2:120608)\n    at Session.emit (node:events:514:28)\nDebugger ending on ws://127.0.0.1:55679/64d16360-6a22-4008-80f0-efca34d8bd65\r\nFor help, see: https://nodejs.org/learn/getting-started/debugging\r\n",
+      "tailBytes": 1048576,
+      "systemCommit": {
+        "available": true,
+        "availableBytes": 28866404352,
+        "limitBytes": 97770655744,
+        "committedBytes": 68904251392
+      }
+    }
+  ]
+}
