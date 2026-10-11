@@ -149,5 +149,30 @@
     "startedAt": "2026-10-11T07:49:49.866Z",
     "passed": 111,
     "failed": 0
+  },
+  {
+    "name": "post-main",
+    "code": 0,
+    "ms": 35260,
+    "startedAt": "2026-10-11T07:54:48.858Z",
+    "passed": 22,
+    "failed": 0
+  },
+  {
+    "name": "stream-post-delivery",
+    "code": 0,
+    "ms": 182242,
+    "lock": "D:\\AIProjects\\WeftMate\\Runtime\\Orchestrator\\heavy-2.lock",
+    "startedAt": "2026-10-11T07:59:24.122Z",
+    "passed": 0,
+    "failed": 0
+  },
+  {
+    "name": "posix-collect-final",
+    "code": 0,
+    "ms": 12036,
+    "startedAt": "2026-10-11T08:07:24.652Z",
+    "passed": 13,
+    "failed": 0
   }
 ]
