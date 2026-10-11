@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { closeSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { release } from 'node:os';
-import { createHostLog } from './host-log.mjs';
+import { createHostLog, diagnosticAppVersion, diagnosticOsVersion, diagnosticPlatform } from './host-log.mjs';
 
 const dayMs = 86400000;
 const hostName = /^host-\d{4}-\d\d-\d\d(?:-\d+)?\.jsonl$/;
@@ -15,9 +14,20 @@ function humanDate(value) {
   const parts = Object.fromEntries(new Intl.DateTimeFormat('zh-CN', { year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23' }).formatToParts(new Date(value)).map(part => [part.type,part.value]));
   return `${parts.year} 年 ${parts.month} 月 ${parts.day} 日 ${parts.hour}:${parts.minute}`;
 }
-const humanSize = bytes => bytes >= 1048576 ? `${(bytes/1048576).toFixed(1)} MiB` : bytes >= 1024 ? `${(bytes/1024).toFixed(1)} KiB` : `${bytes} B`;
+const summaryEnums = {
+  reason: new Set([...reasons, 'clean-exit', 'abnormal-exit', 'killed', 'crashed', 'oom', 'launch-failed', 'integrity-failure', 'memory-eviction']),
+  action: new Set(['shutdown-confirmed', 'ui-rollback-requested', 'no-recovery-requested', 'window-reloaded', 'electron-managed',
+    'retry', 'restart', 'retry-started', 'restart-succeeded', 'restart-failed', 'give-up']),
+  processType: new Set(['renderer', 'GPU', 'Utility', 'Zygote', 'Sandbox-helper', 'Pepper-Plugin', 'Pepper-Plugin-Broker', 'auxiliary', 'runtime']),
+  source: new Set(['startup', 'uncaughtException', 'unhandledRejection', 'harness-startup', 'main-startup', 'model-migration',
+    'model-route-recovery', 'model-owner-backfill', 'personal-host-startup', 'harness-window-startup', 'crash-reporter',
+    'startup-error-dialog', 'host-state-write', 'host-request-poll', 'dsh-surface-navigation', 'diagnostics-export',
+    'shutdown', 'shutdown-backup', 'shutdown-desktop-session', 'shutdown-personal-access', 'shutdown-personal-browser',
+    'shutdown-account-memory', 'shutdown-managed-ai-game', 'shutdown-desktop-pet', 'shutdown-perception', 'shutdown-devices',
+    'shutdown-dsh-runtime', 'shutdown-model-observer', 'GPU', 'Utility', 'Zygote', 'Sandbox-helper', 'Pepper-Plugin', 'Pepper-Plugin-Broker', 'auxiliary']),
+};
 const isAnomaly = row => ['host.failure', 'host.previous_unclean_exit'].includes(row.event) ||
-  (row.event === 'host.process_gone' || row.event.endsWith('.process_gone')) && row.reason !== 'clean-exit' || row.event === 'host.exit' && !row.normal;
+  ['host.process_gone', 'renderer.process_gone', 'child.process_gone', 'runtime.process_gone'].includes(row.event) && row.reason !== 'clean-exit' || row.event === 'host.exit' && !row.normal;
 
 function atomicWrite(path, data) {
   const temporary = `${path}.${randomUUID()}.tmp`;
@@ -61,16 +71,26 @@ function crashDumps(directory, current) {
 
 export function createHostDiagnostics(root, { version = 'unknown', appRoot, now = () => new Date() } = {}) {
   const runId = randomUUID();
-  const log = createHostLog(root, { now, appRoot });
+  const log = createHostLog(root, { now, appRoot, version, runId });
   const marker = join(log.directory, 'current-run.json');
   const crashDirectory = join(root, 'Crashpad');
   let startedAt = null, previous = null, failed = false, begun = false, exited = false;
   let rows = [], recent = [], dumps = [];
   function readRows() {
     const result = [];
+    const legacyIndices = new Map();
     for (const name of readdirSync(log.directory).filter(name => hostName.test(name)).sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))) {
       for (const line of readFileSync(join(log.directory, name), 'utf8').split('\n')) {
-        try { const row = JSON.parse(line); if (iso(row.at) && /^[a-z][a-z0-9._-]{0,80}$/.test(row.event) && uuid.test(row.runId)) result.push(row); } catch { /* Truncated final line after power loss. */ }
+        try {
+          const row = JSON.parse(line);
+          if (iso(row.at) && /^[a-z][a-z0-9._-]{0,80}$/.test(row.event) && uuid.test(row.runId)) {
+            // Old runs have no sequence. Assign one in file order so same-second
+            // legacy failures survive the transition to the shared schema.
+            if (!Number.isSafeInteger(row.recordIndex) || row.recordIndex < 1) row.recordIndex = (legacyIndices.get(row.runId) ?? 0) + 1;
+            legacyIndices.set(row.runId, Math.max(legacyIndices.get(row.runId) ?? 0, row.recordIndex));
+            result.push(row);
+          }
+        } catch { /* Truncated final line after power loss. */ }
       }
     }
     return result;
@@ -140,29 +160,52 @@ export function createHostDiagnostics(root, { version = 'unknown', appRoot, now 
     return row;
   }
   function status() {
-    const cutoff = now().getTime() - 7 * dayMs;
-    const anomalies = recent.filter(row => Date.parse(row.at) >= cutoff).slice(-12);
-    const uncleanCount7Days = new Set(recent.filter(row => Date.parse(row.at) >= cutoff &&
+    const generatedAt = now().toISOString();
+    const cutoff = Date.parse(generatedAt) - 7 * dayMs;
+    const seen = new Set();
+    const sevenDayAnomalies = recent.filter(row => {
+      if (Date.parse(row.at) < cutoff) return false;
+      const key = `${row.runId}:${row.recordIndex}`;
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
+    const anomalies = sevenDayAnomalies.slice(-20);
+    const uncleanCount7Days = new Set(sevenDayAnomalies.filter(row =>
       (row.event === 'host.previous_unclean_exit' || row.event === 'host.exit' && !row.normal))
       .map(row => row.previousRunId ?? row.runId)).size;
     // Only the same strict metadata/error projection produced by this module is copied.
     const safe = anomalies.map(row => {
-      const result = { at: humanDate(row.at), event: row.event, runId: row.runId };
-      for (const key of ['exitCode', 'durationMs', 'dumpCount']) if (Number.isFinite(row[key])) result[key] = row[key];
+      const result = { at: row.at, event: row.event, runId: row.runId, recordIndex: row.recordIndex };
+      for (const key of ['exitCode', 'durationMs', 'shutdownDurationMs', 'dumpCount', 'dumpBytes']) if (Number.isFinite(row[key])) result[key] = row[key];
+      for (const key of ['normal', 'cleanupComplete']) if (typeof row[key] === 'boolean') result[key] = row[key];
       if (['SIGTERM','SIGINT','SIGKILL','SIGHUP','SIGABRT','SIGSEGV','SIGBREAK','SIGQUIT'].includes(row.signal)) result.signal=row.signal;
-      if (Number.isFinite(row.dumpBytes) && row.dumpBytes>=0) result.dumpSize=humanSize(row.dumpBytes);
-      if (Array.isArray(row.dumps)) result.dumps=row.dumps.slice(0,5).filter(item=>typeof item?.name==='string' && /\.dmp$/.test(item.name) && uuid.test(item.name.slice(0,-4)) && Number.isFinite(item.size) && item.size>=0).map(item=>({name:item.name,size:humanSize(item.size)}));
-      for (const key of ['reason', 'source', 'action', 'processType', 'code']) if (typeof row[key] === 'string' && /^[A-Za-z0-9._:-]{1,80}$/.test(row[key])) result[key] = row[key];
+      for (const [key, allowed] of Object.entries(summaryEnums)) if (allowed.has(row[key])) result[key] = row[key];
+      if (uuid.test(row.previousRunId)) result.previousRunId = row.previousRunId;
       if (row.event === 'host.failure') {
         // Re-sanitize persisted message/name/code and exclude all untrusted free text.
         Object.assign(result, log.sanitizeError({ name: row.name, code: row.code, message: row.message,
           stack: ['Error', ...(Array.isArray(row.stackFrames) ? row.stackFrames.slice(0, 8).map(frame => `    at ${frame}`) : [])].join('\n') }));
       }
-      return result;
+      const { at, event, runId, ...fields } = result;
+      // Apple uses a metadata envelope and a string-valued whitelist dictionary.
+      // Keep stack locations as individually addressable safe fields as well.
+      const projectedFields = {};
+      for (const [key, value] of Object.entries(fields)) {
+        if (key === 'stackFrames') value.forEach((frame, index) => { projectedFields[`stackFrame${index + 1}`] = frame; });
+        else projectedFields[key] = String(value);
+      }
+      return { at, event, runId, platform: diagnosticPlatform,
+        appVersion: diagnosticAppVersion(row.appVersion ?? row.version),
+        osVersion: typeof row.osVersion === 'string' && /^[0-9][0-9A-Za-z.+_-]{0,79}$/.test(row.osVersion) ? row.osVersion : 'unknown',
+        fields: projectedFields };
     });
+    const abnormalCountsLast7Days = {};
+    for (const row of sevenDayAnomalies) abnormalCountsLast7Days[row.event] = (abnormalCountsLast7Days[row.event] ?? 0) + 1;
     const lastReason = previous?.normal && previous.reason === 'unknown' ? '退出原因未记录' : reasonText[previous?.reason];
-    const summary = `WeftMate ${/^[A-Za-z0-9.+_-]{1,80}$/.test(version) ? version : 'unknown'}\n系统：${process.platform} ${release()}\n本次启动（电脑时间）：${humanDate(startedAt)}\n上次退出：${previous ? (previous.normal ? '正常 · ' : '异常 · ') + lastReason : '暂无记录'}\n最近 7 天异常退出：${uncleanCount7Days}\n${safe.map(row => JSON.stringify(row)).join('\n')}`;
-    return { state: failed ? 'error' : 'ready', runId, startedAt, previous, uncleanCount7Days, summary };
+    const summary = JSON.stringify({ platform: diagnosticPlatform, appVersion: diagnosticAppVersion(version), osVersion: diagnosticOsVersion,
+      generatedAt, recentAbnormalRecords: safe, abnormalCountsLast7Days, retentionPolicy: log.retentionPolicy }, null, 2);
+    const summaryPreview = `WeftMate ${diagnosticAppVersion(version)}\n系统：${diagnosticPlatform} ${diagnosticOsVersion}\n本次启动（电脑时间）：${humanDate(startedAt)}\n上次退出：${previous ? (previous.normal ? '正常 · ' : '异常 · ') + lastReason : '暂无记录'}\n最近 7 天异常退出：${uncleanCount7Days}\n运行记录：保留 7 天，总大小上限 32 MiB\n${safe.map(row => `${humanDate(row.at)} · ${row.event}${row.fields.reason ? ` · ${reasonText[row.fields.reason] ?? row.fields.reason}` : ''}${row.fields.code ? ` · ${row.fields.code}` : ''}`).join('\n')}`;
+    return { state: failed ? 'error' : 'ready', runId, startedAt, previous, uncleanCount7Days, summary, summaryPreview };
   }
   return { runId, directory: log.directory, crashDirectory, begin, write, failure, step, exit, status };
 }
