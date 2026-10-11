@@ -13,7 +13,7 @@ export const scrub = value => {
   return text.replaceAll(process.env.COMPUTERNAME || '\0','<host>');
 };
 const ps = (action, root, pid) => {
-  const output = execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', script,
+  const output = execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script,
     '-Action', action, '-Root', root, ...(pid ? ['-ProcessId', String(pid)] : [])], { encoding: 'utf8', windowsHide: true });
   return output.trim() ? JSON.parse(output) : null;
 };
