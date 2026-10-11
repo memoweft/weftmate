@@ -378,7 +378,7 @@ function page(name,{dataLoaded=false}={}){
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
     help:'帮助与小技巧',releases:'更新内容',goals:'目标',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
-    account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
+    account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑',system:'系统状态'
   }[name]||name;
   syncMobileTabs();
   if(['help','releases'].includes(name))$('header-title').textContent=name==='help'?'帮助与小技巧':'更新内容';
@@ -443,6 +443,7 @@ function page(name,{dataLoaded=false}={}){
 
 
 function processEvent(message){const {event,data}=message;if(state.page==='goals')void uiCore.readGoals();
+  if(state.page==='system'&&/^(system|host|connection|model|memory|relay|certificate)\./.test(event))refreshMobileSystemStatus();
   if(event==='conversation.exported')toast(data.saved?'对话已保存':'导出未完成，请重试',!data.saved);
   if(event==='cloud.callback')void resumeCloudLogin();if(event==='chat.started'){
     invalidateLiveProgress();
@@ -777,6 +778,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     openRunRecords:()=>page('general'),openLogin:()=>globalThis.WeftMobileCloud.core?.startCloudJourney(),openDevices:()=>page('devices'),
     readLocalDiagnostics:window.weftNative?()=>call('diagnostics.status',{},5000):null});
   uiCore.observeConnection(value=>{
+    if(state.page==='system')refreshMobileSystemStatus();
     if(value.kind!=='online')for(const notice of document.querySelectorAll('.chat-read-notice'))if(!notice.dataset.noticeKind||notice.dataset.noticeKind==='read-failure')notice.hidden=true;
     if(state.page==='chat'&&state.chatSource==='host'){
       if(state.logicalChats)renderOptimisticMessages();else renderSharedConversation();

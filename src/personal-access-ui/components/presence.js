@@ -106,6 +106,8 @@ globalThis.WeftRunRecords = {
             const fact=(label,text)=>{list.append(node('dt','',label),node('dd','',text));};
             fact('本次启动',core.dateText(value.startedAt));
             const previous=value.previous;
+            if (previous?.normal === false && !browser) body.append(node('p','muted run-record-unclean',
+                local ? '上次没有正常退出，记录已保存在这台设备上。' : '上次没有正常退出，记录已保存在电脑上。'));
             const exitKnown=previous && (previous.exitTimeKnown===true || Number.isFinite(previous.exitCode));
             if(!browser)fact('上次退出',previous ? `${exitKnown ? core.dateText(previous.at) : '结束时间未知'} · ${previous.normal ? '正常结束' : '未正常结束'}` : '首次启动，还没有上一轮记录');
             if (previous && !exitKnown && previous.lastAt) fact('最后记录',core.dateText(previous.lastAt));

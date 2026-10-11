@@ -18,7 +18,8 @@ import { createLatestFileWriter } from './latest-file-writer.mjs';
  * v2 的 SDK 聊天/桥/旧 UI 等主链路已随 R4 退役删除（见 docs/ARCHITECTURE.md §4 退役清单）。
  */
 import { createHostDiagnostics } from './host-diagnostics.mjs';
-import { createHostLog, redactSecretText } from './host-log.mjs';
+import { createSystemStatusManager } from './system-status-runtime.mjs';
+import { createHostLog, redactSecretText, diagnosticPlatform } from './host-log.mjs';
 import { readLocalServiceKey } from './local-service-key.mjs';
 import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
@@ -36,7 +37,7 @@ import { modelReasoning, prepareOfficialModelReasoning } from './model-reasoning
 import { readModelCapacity } from './model-budget.mjs';
 import { createModelScheduler } from './model-scheduler.mjs';
 import { scheduledModelFetch } from './model-scheduler-client.mjs';
-import { createLocalModelController } from './local-model-service.mjs';
+import { createLocalModelController, loadLocalModelConfig } from './local-model-service.mjs';
 import { buildRedactedDiagnostics } from './diagnostics-export.ts';
 import { restoreInternalSessionRoute } from './session-model-route-restore.ts';
 import { assertAuthoritativeSessionsIdle, assertModelProfileMutationAllowed, assertSessionReferenceScanReady, resolveSafeSessionBinding, scanSharedSessionBindings } from './stage2-session-guards.ts';
@@ -46,7 +47,7 @@ import { blocksUnexpectedRendererNavigation, isTrustedRendererInvocation } from 
 import { basename, isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { appendFileSync, writeFileSync, statSync, mkdirSync, readFileSync, existsSync, renameSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir, release } from 'node:os';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { loadPhoneExecutionConfig } from './phone-execution-config.mjs';
 import { isDeepStrictEqual } from 'node:util';
@@ -242,6 +243,7 @@ Menu.setApplicationMenu(null);
 if (process.platform === 'win32') app.setAppUserModelId(packageInfo.desktopAppId ?? packageInfo.build?.appId ?? 'com.memoweft.weftmate');
 
 // ── B4·崩溃/错误上报最小闭环（v2 遗产）──
+const bootStartedAt = performance.now() - process.uptime() * 1000;
 const hostLog = createHostDiagnostics(app.getPath('userData'), { version: app.getVersion(), appRoot: app.getAppPath() });
 let hostExitReason = 'unknown';
 let shutdownStep = null;
@@ -3375,8 +3377,69 @@ async function bootstrap() {
         const { createPersonalAccessService } = await import('./personal-access/index.mjs');
         const { relayFromEnvironment } = await import('./personal-relay/index.mjs');
         const relayConfig = relayFromEnvironment();
-        if (relayConfig) relayConfig.diagnostic = error => logCrash('relay-command', error);
+        if (relayConfig) {
+          relayConfig.diagnostic = error => logCrash('relay-command', error);
+          relayConfig.onRecovery = component => hostLog.write('component.recovery', { phase: component, status: 'completed', action: 'retry' });
+        }
         const { cloudIdentityFromEnvironment } = await import('./personal-cloud/index.mjs');
+        const systemModelProfile = ownerId => {
+          const profileId = personalAccessService?.currentChatModelProfile(ownerId);
+          const active = activeModelProfile();
+          const profile = settingsMod.listModelProfiles().profiles.find(item => item.id === profileId)
+            ?? (active && personalAccessService?.canUseModelProfile(ownerId, active.id, 'new') ? active : null);
+          return profile;
+        };
+        const readSystemModel = async ownerId => {
+          const profile = systemModelProfile(ownerId);
+          if (!profile) return { state: 'unconfigured', canRestart: false };
+          const check = await checkModelConnection({ baseUrl: profile.baseUrl, modelId: profile.model,
+            apiKey: credentialForModelProfile(profile) });
+          const ready = check.reachable && check.authentication !== 'rejected' &&
+            (check.modelListed || check.catalog === 'unsupported');
+          const managed = localModelFlag && await loadLocalModelConfig(localModelFlag.slice('--local-model-config='.length)).catch(() => null);
+          const local = localModelController && profile.baseUrl === managed?.baseUrl ? await localModelController.status() : {};
+          return { ...local, state: local.state === 'starting' ? 'starting' : ready ? 'ready' : 'unavailable',
+            canRestart: true, authentication: check.authentication, reachable: check.reachable,
+            catalog: check.catalog, modelListed: check.modelListed,
+            lastError: ready ? null : check.authentication === 'missing' || check.authentication === 'rejected'
+              ? 'MODEL_CREDENTIAL_UNAVAILABLE' : 'MODEL_UNAVAILABLE' };
+        };
+        const systemDiagnostics = createSystemStatusManager({
+          readHost: ownerId => ({ state: runtimeOrigin ? 'ready' : systemModelProfile(ownerId) ? 'unavailable' : 'unconfigured', version: appVersion,
+            lastError: sessionReferenceScan.state === 'failed' ? 'REFERENCE_SCAN_FAILED' : null, canRestart: true }),
+          readMemory: ownerId => personalMemoryManager ? personalMemoryManager.status(ownerId)
+            .then(memory => {
+              hostLog.write('memory.bridge', { phase: memory.state, code: memory.lastFailureCode ?? memory.reasonCode, configured: true });
+              return { ...memory, canRestart: true };
+            }) : { state: 'disabled', canRestart: false },
+          readModel: readSystemModel,
+          readRelay: () => personalAccessService?.relayStatus() ?? { state: 'disabled' },
+          readQueue: () => modelScheduler.queue.status(),
+          repairs: {
+            host: () => enqueueRouteMutation(() => replaceSharedRuntime()),
+            memory: ownerId => {
+              if (!personalMemoryManager) throw Object.assign(new Error('MEMORY_DISABLED'), { code: 'CAPABILITY_UNAVAILABLE' });
+              return personalMemoryManager.invalidateOwnerRoute(ownerId);
+            },
+            model: async ownerId => {
+              const profile = systemModelProfile(ownerId);
+              if (!profile) throw Object.assign(new Error('MODEL_UNCONFIGURED'), { code: 'CAPABILITY_UNAVAILABLE' });
+              const managed = localModelFlag && await loadLocalModelConfig(localModelFlag.slice('--local-model-config='.length));
+              if (localModelController && profile?.baseUrl === managed?.baseUrl && (await localModelController.status()).canRestart) await localModelController.control('restart');
+              if ((await readSystemModel(ownerId)).state !== 'ready') throw Object.assign(new Error('MODEL_UNAVAILABLE'), { code: 'MODEL_UNAVAILABLE' });
+            },
+            relay: () => personalAccessService.reconnectRelay(),
+            certificate: () => personalAccessService.reloadRelayCertificate(),
+          },
+          diagnostics: hostLog,
+          metrics: () => ({ ...hostLog.performance(),
+            rssBytes: app.getAppMetrics().reduce((sum, item) => sum + (item.memory?.workingSetSize ?? 0) * 1024, 0) }),
+          versions: () => {
+            let runtimeVersion;
+            try { runtimeVersion = JSON.parse(readFileSync(join(app.getAppPath(), 'vendor/dsh-runtime/VENDOR-MANIFEST.json'), 'utf8')).dsh.packageVersion; } catch {}
+            return { appVersion, runtimeVersion, platform: diagnosticPlatform, osVersion: release() };
+          },
+        });
         personalAccessService = await createPersonalAccessService({
           libraryNativeActions: async (action, file) => {
             if (action === 'show') shell.showItemInFolder(file);
@@ -3396,36 +3459,7 @@ async function bootstrap() {
           browserReader: personalBrowserReader,
           accountModelManager,
           backupManager: personalBackupManager,
-          systemManager: {
-            async status(ownerId) {
-              const model = localModelController ? await localModelController.status()
-                : { state: 'unconfigured', version: null, contextWindow: null, slots: null,
-                  currentModelId: null, lastSwitch: null, canRestart: false, lastError: null };
-              const memory = personalMemoryManager ? await personalMemoryManager.status(ownerId)
-                : { state: 'disabled', lastFailureCode: null };
-              hostLog.write('memory.bridge', { phase: memory.state, code: memory.lastFailureCode ?? memory.reasonCode ?? undefined, configured: !!personalMemoryManager });
-              return { model, runRecord: hostLog.status(),
-                host: { state: runtimeOrigin ? 'ready' : 'unavailable', version: appVersion,
-                  lastError: sessionReferenceScan.state === 'failed' ? 'REFERENCE_SCAN_FAILED' : null, canRestart: true },
-                memory: { state: memory.state, version: memory.version ?? null,
-                  reasonCode: memory.reasonCode ?? null, pendingBoundaryCount: memory.pendingBoundaryCount ?? null,
-                  pendingFormationCount: memory.pendingFormationCount ?? null, recoveringFormationCount: memory.recoveringFormationCount ?? 0, failedFormationCount: memory.failedFormationCount ?? null,
-                  failedCorrectionCount: memory.failedCorrectionCount ?? 0, formationIssues: memory.formationIssues ?? [],
-                  lastError: memory.lastFailureCode ?? memory.reasonCode ?? null, canRestart: !!personalMemoryManager },
-                queue: modelScheduler.queue.status() };
-            },
-            async restart(component, ownerId) {
-              if (component === 'model') {
-                if (!localModelController) throw Object.assign(new Error('unconfigured'), { code: 'CAPABILITY_UNAVAILABLE' });
-                await localModelController.control('restart');
-                // A restarted service may have a different n_ctx. Recreate the
-                // native adapter so its capacity cache is probed before inference.
-                await enqueueRouteMutation(() => replaceSharedRuntime());
-              } else if (component === 'host') await enqueueRouteMutation(() => replaceSharedRuntime());
-              else if (personalMemoryManager) await personalMemoryManager.invalidateOwnerRoute(ownerId);
-              else throw Object.assign(new Error('disabled'), { code: 'CAPABILITY_UNAVAILABLE' });
-            },
-          },
+          systemManager: systemDiagnostics,
            sharedProfileIsFormal: (marker) => {
              const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === marker.id);
              if (profile?.provider !== marker.provider || profile.baseUrl !== marker.baseUrl ||
@@ -3445,7 +3479,7 @@ async function bootstrap() {
           // Explicit legacy setup links remain valid; the default first page is account login.
           const setupGrant = null;
           await desktopUpdates.prepareWindow();
-          personalDesktop = createPersonalDesktop({ dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
+          personalDesktop = createPersonalDesktop({ systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
             startInTray: process.argv.includes('--start-in-tray'),
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
           win = personalDesktop.window;
@@ -3454,6 +3488,7 @@ async function bootstrap() {
           await personalDesktop.ready;
           if (await win.webContents.executeJavaScript('globalThis.__WeftUiStarted === true')) await appBootSignal('healthy', desktopControlAppData);
         }
+        hostLog.write('host.ready', { durationMs: Math.round(performance.now() - bootStartedAt) });
       }
     } else {
       // DSH is the complete first-run and conversation surface.
