@@ -1,0 +1,18 @@
+{
+  "newReports": [
+    {
+      "name": "WeftMatePhone-2026-10-10-194737.ips",
+      "at": "2026-10-11T02:47:37.226174+00:00"
+    },
+    {
+      "name": "WeftMatePhone-2026-10-10-194818.ips",
+      "at": "2026-10-11T02:48:18.936173+00:00"
+    },
+    {
+      "name": "WeftMatePhone-2026-10-10-194808.ips",
+      "at": "2026-10-11T02:48:08.779808+00:00"
+    }
+  ],
+  "causeUnderReview": "Initial native build overlapped edits to public snapshot layout. SwiftPM independently detected source modified during build. The first iPhone process crashed while copying RunLogSnapshot. No system settings changed; source will remain fixed during clean native rebuild and final validation.",
+  "passed": false
+}

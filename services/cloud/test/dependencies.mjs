@@ -48,10 +48,15 @@ if (!(await installed()) || (await locked())) {
     // The lock is outside node_modules, which npm ci replaces.
     try {
       if (!(await installed())) {
+        // Windows batch wrappers cannot be spawned directly by Node 24.
+        // Only this fixed npm command goes through cmd; no fixture/user input
+        // is interpolated into its command text, and the helper stays hidden.
+        const windows = process.platform === 'win32';
         const child = spawn(
-          process.platform === 'win32' ? 'npm.cmd' : 'npm',
-          ['ci', '--ignore-scripts', '--no-audit', '--no-fund'],
-          { cwd: root, stdio: 'pipe' },
+          windows ? (process.env.ComSpec || 'cmd.exe') : 'npm',
+          windows ? ['/d', '/s', '/c', 'npm.cmd ci --ignore-scripts --no-audit --no-fund']
+            : ['ci', '--ignore-scripts', '--no-audit', '--no-fund'],
+          { cwd: root, stdio: 'pipe', windowsHide: true },
         );
         let output = '';
         child.stdout.on('data', (c) => {

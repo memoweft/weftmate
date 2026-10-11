@@ -26,7 +26,7 @@ globalThis.WeftUiComponents.factories.activity=(core,ui)=>{
         if(target.eventId&&core.inMainChat?.())ui.focusMainEvent?.(target.eventId);
         if(Number.isSafeInteger(target.seq)){const step=ui.byId('transcript').querySelector(`[data-detail-seq="${target.seq}"]`)??(target.stepId?[...ui.byId('transcript').querySelectorAll(`[data-step="${CSS.escape(target.stepId)}"]`)].find(node=>Number(node.dataset.detailSeq)>=target.seq):null);if(step){for(let node=step;node;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;step.scrollIntoView({block:'center'});step.querySelector('summary')?.focus();}}if(kind==='answer_question')ui.byId('question-bar')?.querySelector('input,button')?.focus();},
     openActivityMemory:()=>{close();return core.openMemory();},
-    openActivitySettings:async()=>{close();await core.openAccount();ui.openSettings('about');},
+    openActivitySettings:async(category='about')=>{close();await core.openAccount();ui.openSettings(category);},
     paintSelectedSession(...args){const result=selected(...args);if(opened){chat().hidden=true;ui.byId('assistant-title').textContent='动态';}return result;},
     resetIdentityControls(...args){close();core.resetActivity();return reset(...args);}};
 };
