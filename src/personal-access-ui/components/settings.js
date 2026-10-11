@@ -4,38 +4,55 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
     function records() { return runRecords ||= globalThis.WeftRunRecords?.mount(ui.byId('system-heading').closest('section'), {core,toast:ui.toast,retry:()=>core.refreshSystem()}); }
     function paintSystem(system, settings, catalog, token) {
         records()?.paint(system.runRecord || {state:'error'});
-        for (const [key, label] of [['model', '模型服务'], ['host', '宿主'], ['memory', '记忆']]) {
-            const value = system[key], item = ui.element('li', 'system-service');
-            const details = ui.element('div', 'system-service-detail');
-            details.append(ui.element('strong', '', label), ui.element('span', '', key === 'memory' ? core.memoryHealthText(value) : core.serviceStateLabels[value.state] ?? '状态未知'));
-            const info = [value.currentModelId ? `当前模型 ${value.currentModelId}` : '',
-                value.version ? `版本 ${value.version}` : ['disabled', 'unconfigured', 'stopped'].includes(value.state) ? '' : '版本未知',
-                value.contextWindow ? `上下文 ${value.contextWindow.toLocaleString()}` : '',
-                value.slots ? `槽数 ${value.slots}` : '',
-                value.lastSwitch?.at ? `最近切换 ${core.dateText(value.lastSwitch.at)}${value.lastSwitch.ok ? '' : '（未成功）'}` : '',
-                value.lastError ? `最近错误：${value.lastError}` : ''].filter(Boolean).join(' · ');
-            details.append(ui.element('small', 'muted', info));
-            const restart = ui.element('button', 'button secondary small', '重启');
-            restart.disabled = !system.canRestart || !value.canRestart;
-            restart.addEventListener('click', async () => {
-                restart.disabled = true;
-                restart.textContent = '重启中…';
-                try {
-                    await core.restartService(key);
-                    if (core.accountCurrent(token))
-                        await core.refreshSystem();
+        const list = ui.byId('system-services'); list.replaceChildren();
+        const rows = system.components || [['host', '对话与工具'], ['memory', '记忆'], ['model', '回复模型'],
+            ['relay', '远程连接'], ['certificate', '安全连接']].map(([id, name]) => {
+            const value = system[id] || {state:'disabled'};
+            const state = ['ready','connected','online'].includes(value.state) ? 'healthy' :
+                ['disabled','unconfigured'].includes(value.state) ? 'disabled' : 'problem';
+            return {id,name,state,label:{healthy:'正常',problem:'有问题',disabled:'未启用'}[state],
+                description:state === 'healthy' ? '连接正常。' : state === 'disabled' ? '尚未启用。' : '暂时无法连接，请检查设置。',
+                repairable: !!value.canRestart, nextStep:{target:id === 'model' ? 'models' : id === 'memory' ? 'memory' : 'devices',label:'查看相关设置'}};
+        });
+        for (const value of rows) {
+            const item = ui.element('li', 'system-service'); item.dataset.component = value.id; item.dataset.state = value.state;
+            const details = ui.element('div', 'system-service-detail'), title = ui.element('div', 'system-service-title');
+            title.append(ui.element('strong', '', value.name), ui.element('span', 'system-status-label', value.label));
+            details.append(title, ui.element('small', 'muted', value.description));
+            if (value.semanticRecall) details.append(ui.element('small', 'muted system-semantic',
+                `按意思找 · ${value.semanticRecall.label} · ${value.semanticRecall.description}`));
+            item.append(details);
+            if (value.state === 'problem') {
+                const native = globalThis.weftmateDesktop;
+                const restart = ui.element('button', 'button secondary small', '修复'); restart.type = 'button';
+                restart.setAttribute('aria-label', `修复${value.name}`);
+                restart.disabled = !native?.repairSystem || !system.canRestart || value.repairable === false;
+                if (native?.repairSystem) {
+                    restart.addEventListener('click', async () => {
+                        restart.disabled = true; restart.textContent = '修复中…'; item.setAttribute('aria-busy', 'true');
+                        let repaired = false;
+                        try { await native.repairSystem(value.id); repaired = true; }
+                        catch { /* The next status read tells the actual result; retain the specific next step. */ }
+                        if (core.accountCurrent(token)) {
+                            await core.refreshSystem();
+                            const row = core.state.system?.components?.find(row => row.id === value.id);
+                            ui.toast(repaired && row?.state === 'healthy' ? `${value.name}已恢复` : '暂时没有恢复，请按说明检查相关设置。');
+                        }
+                    }); item.append(restart);
                 }
-                catch {
-                    if (core.accountCurrent(token)) {
-                        ui.byId('system-notice').textContent = '重启未确认，请刷新查看实际状态。';
-                        restart.disabled = false;
-                        restart.textContent = '重启';
-                    }
+                if (value.nextStep) {
+                    const next = ui.element('button', 'button secondary small system-next-step', value.nextStep.label); next.type = 'button';
+                    next.addEventListener('click', () => {
+                        const destination = {connections:'devices',diagnostics:'system'}[value.nextStep.target] || value.nextStep.target;
+                        if (destination === 'system') ui.byId('system-heading').closest('section').querySelector('.run-records')?.scrollIntoView({block:'center'});
+                        else ui.openSettings(destination);
+                    }); details.append(next);
                 }
-            });
-            item.append(details, restart);
-            ui.byId('system-services').append(item);
+            }
+            list.append(item);
         }
+        paintPerformance(system.metrics);
+        paintDiagnosticExport(system);
         const select = ui.byId('background-model-select');
         const currentId = settings.currentChatModelProfileId ?? core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.modelProfileId;
         const currentName = catalog.models.find(row => row.id === currentId)?.name;
@@ -56,7 +73,53 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
         select.value = settings.backgroundModelProfileId ?? '';
         select.disabled = false;
         ui.byId('system-notice').textContent = system.queue?.backgroundPending
-            ? `${system.queue.backgroundPending} 项后台请求排队中` : '已更新';
+            ? `${system.queue.backgroundPending} 项后台请求排队中` : '';
+    }
+    function paintPerformance(metrics) {
+        const section = ui.byId('system-metrics'); section.replaceChildren(ui.element('h3', '', '运行表现'));
+        for (const [id, name, help] of [['startup', '启动用时', '本次打开程序到界面就绪'],
+            ['firstToken', '回复首字', '最近 20 次回复的中位时间，包含等待与思考'], ['memory', '当前内存', '程序各进程正在使用的内存']]) {
+            const metric = metrics?.[id], value = metric?.value;
+            const formatted = typeof value !== 'number' ? '—' : id === 'memory' ? `${Math.round(value / 1024 ** 2)} MB` : `${(value / 1000).toFixed(1)} 秒`;
+            const row = ui.element('div', 'system-metric'); row.dataset.metric = id;
+            const text = ui.element('div'); text.append(ui.element('strong', '', name), ui.element('small', 'muted', help));
+            const figure = ui.element('div', 'system-metric-value'); figure.append(ui.element('strong', '', formatted),
+                ui.element('small', 'muted', metric?.reference || '尚未记录'));
+            row.append(text, figure); section.append(row);
+        }
+    }
+    function paintDiagnosticExport(system) {
+        const section = ui.byId('system-diagnostic-export');
+        section.hidden = !globalThis.weftmateDesktop?.exportSystemDiagnostics;
+        ui.byId('system-diagnostic-save').disabled = !system.canRestart;
+    }
+    function mountDiagnosticTools() {
+        const section = ui.byId('system-heading').closest('section');
+        const metrics = ui.element('section', 'system-metrics'); metrics.id = 'system-metrics'; section.append(metrics);
+        const exporter = ui.element('section', 'system-diagnostic-export'); exporter.id = 'system-diagnostic-export';
+        exporter.hidden = !globalThis.weftmateDesktop?.exportSystemDiagnostics;
+        exporter.append(ui.element('h3', '', '诊断包'), ui.element('p', 'muted', '遇到问题时，保存一份不含私人内容的诊断记录。'));
+        const open = ui.element('button', 'button secondary small', '导出诊断包…'); open.type = 'button';
+        const preview = ui.element('div', 'system-export-preview'); preview.id = 'system-export-preview'; preview.hidden = true;
+        preview.append(ui.element('p', '', '包含：脱敏运行记录、诊断摘要、连接状态、版本信息，以及启动、首字和内存指标。'),
+            ui.element('p', 'muted', '不包含：对话正文、记忆内容、密钥、登录凭据、账号信息、电脑名称或崩溃内存文件。'));
+        const actions = ui.element('div', 'actions'), save = ui.element('button', 'button primary small', '选择保存位置');
+        save.id = 'system-diagnostic-save'; save.type = 'button';
+        const cancel = ui.element('button', 'button secondary small', '取消'); cancel.type = 'button';
+        cancel.addEventListener('click', () => { preview.hidden = true; open.hidden = false; open.focus(); });
+        open.addEventListener('click', () => { preview.hidden = false; open.hidden = true; save.focus(); });
+        save.addEventListener('click', async () => {
+            save.disabled = true; save.textContent = '正在导出…';
+            try { const result = await globalThis.weftmateDesktop.exportSystemDiagnostics();
+                if (result.saved) { ui.toast('诊断包已保存'); preview.hidden = true; open.hidden = false; }
+            } catch { ui.toast('诊断包未保存，请重新选择一个可写的位置。'); }
+            finally { save.disabled = false; save.textContent = '选择保存位置'; }
+        });
+        actions.append(save, cancel); preview.append(actions); exporter.append(open, preview); section.append(exporter);
+    }
+    function systemVisible() {
+        const panel = ui.byId('system-heading').closest('.settings-category');
+        return panel?.hidden === false && ui.byId('settings-dialog')?.open;
     }
     function systemLoading() {
         records()?.paint(null);
@@ -109,6 +172,7 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
         return node;
     }
     function mountSettings() {
+        mountDiagnosticTools();
         ui.mountBackup();
         ui.mountUsage();
         ui.mountSchedules();
@@ -177,5 +241,5 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
     function resetProjectDraft() { ui.byId('project-name').value = ''; ui.byId('project-root').value = ''; }
     function browserDraftBusy(busy) { ui.byId('browser-workspace-form').querySelector('button[type="submit"]').disabled = busy; }
     function showBrowserNotice() { ui.byId('browser-workspace-status').hidden = false; }
-    return { modelDraftCheckResult, paintSystem, systemLoading, systemNotice, updateOtherDeviceInstall, resetOtherDeviceInstall, element, mountSettings, accountModelFormNotice, accountModelFormBusy, resetAccountModelForm, projectDraftNotice, projectDraftBusy, resetProjectDraft, browserDraftBusy, showBrowserNotice };
+    return { modelDraftCheckResult, paintSystem, systemVisible, systemLoading, systemNotice, updateOtherDeviceInstall, resetOtherDeviceInstall, element, mountSettings, accountModelFormNotice, accountModelFormBusy, resetAccountModelForm, projectDraftNotice, projectDraftBusy, resetProjectDraft, browserDraftBusy, showBrowserNotice };
 };
