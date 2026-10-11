@@ -95,6 +95,7 @@ import { createPersonalDesktop } from './personal-desktop.mjs';
 import { loadPersonalMemoryConfig } from './personal-memory/config.mjs';
 import { createPersonalMemoryManager } from './personal-memory/index.mjs';
 import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
+import { parseWindowsSendTo, forwardWindowsSendTo } from './windows-system-integration.mjs';
 import { memoryRecallDestination, memoryRecallModelTier, memorySessionPolicy } from './personal-memory/policy.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
@@ -308,12 +309,16 @@ if (!app.requestSingleInstanceLock()) {
       source: ['GPU', 'Utility', 'Zygote', 'Sandbox helper', 'Pepper Plugin', 'Pepper Plugin Broker'].includes(details.type) ? details.type.replaceAll(' ', '-') : 'auxiliary', action: 'electron-managed' });
   });
   // 第二个实例被拉起(用户又点了图标):把已在跑的窗口唤到前台。
-  app.on('second-instance', () => { if (!headless) showWindow(); });
+  app.on('second-instance', (_event, argv) => {
+    if (!headless) showWindow();
+    if (process.platform === 'win32') forwardWindowsSendTo(argv, personalDesktop, pendingWindowsSendTo);
+  });
   console.log(`[weftmate] startup mode=${personalHostMode ? 'personal-host' : 'desktop'}`);
   app.whenReady().then(bootstrap).catch((error) => failBootstrap(error));
 }
 
 let win = null;
+const pendingWindowsSendTo = process.platform === 'win32' ? parseWindowsSendTo(process.argv) : [];
 let tray = null;
 let settingsMod = null; // settings.ts 模块(宠物窗口状态——本机显示偏好)
 let configStoreMod = null; // config-store.ts 模块(模型档 safeStorage 存取;DSH 凭据接缝从这里取)
@@ -3487,6 +3492,7 @@ async function bootstrap() {
           desktopUpdates.attach(win);
           setupTray();
           await personalDesktop.ready;
+          if (pendingWindowsSendTo.length) personalDesktop.sendTo(pendingWindowsSendTo.splice(0));
           if (await win.webContents.executeJavaScript('globalThis.__WeftUiStarted === true')) await appBootSignal('healthy', desktopControlAppData);
         }
         hostLog.write('host.ready', { durationMs: Math.round(performance.now() - bootStartedAt) });

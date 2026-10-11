@@ -18,7 +18,18 @@ export async function until(fn, timeout = 45000) {
   while (Date.now() < end) { const value = await fn(); if (value) return value; await new Promise(r => setTimeout(r, 100)); }
   throw new Error('MIGRATION_SMOKE_TIMEOUT');
 }
-export async function migrationHost({ executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir(), processEvidence } = {}) {
+/** Exercise AUTH-1's actual native owner entry, without password login or API interception. */
+export async function nativeOwnerSession(page) {
+  const me = await until(() => page.evaluate(async () => {
+    const response = await fetch('/personal/v1/auth/me');
+    return response.ok && await response.json();
+  }));
+  assert.equal(me.local, true);
+  assert.equal(me.device?.authKind, 'desktop');
+  assert.ok(me.account?.ownerId);
+  return me;
+}
+export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir(), processEvidence } = {}) {
   const root = realpathSync.native(mkdtempSync(join(tempRoot, 'weftmate-fx21-'))), profile = join(root, 'profile');
   mkdirSync(profile); writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
   const h = { root, profile, app: null, requests: [], source, executable, old };
@@ -36,12 +47,14 @@ export async function migrationHost({ executable, source = resolve(process.env.F
     } else res.writeHead(200, {'content-type':'application/json'}).end(JSON.stringify({id:randomUUID(),choices:[{index:0,message,finish_reason:'stop'}],usage}));
   });
   await new Promise(r => server.listen(0, '127.0.0.1', r));
-  h.credentials = {username:'fx21-'+randomUUID(),password:'synthetic-'+randomUUID(),deviceName:'FX21 synthetic desktop'};
-  const factory = old ? (await import(pathToFileURL(join(source,'src/personal-access/index.mjs')))).createPersonalAccessService : createPersonalAccessService;
-  const prep = await factory({root:join(profile,'personal-access'),port:0,backend:Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(k=>[k,async()=>({})]))});
-  const prepared = await prep.start(), grant = await prep.issueSetupGrant();
-  try { assert.equal((await fetch(prepared.origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin:prepared.origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,...h.credentials})})).status,201); }
-  finally { await prep.close(); }
+  if (!nativeSession) {
+    h.credentials = {username:'fx21-'+randomUUID(),password:'synthetic-'+randomUUID(),deviceName:'FX21 synthetic desktop'};
+    const factory = old ? (await import(pathToFileURL(join(source,'src/personal-access/index.mjs')))).createPersonalAccessService : createPersonalAccessService;
+    const prep = await factory({root:join(profile,'personal-access'),port:0,backend:Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(k=>[k,async()=>({})]))});
+    const prepared = await prep.start(), grant = await prep.issueSetupGrant();
+    try { assert.equal((await fetch(prepared.origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin:prepared.origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,...h.credentials})})).status,201); }
+    finally { await prep.close(); }
+  }
   const config = join(root,'desktop-config.json');
   writeFileSync(config,JSON.stringify({schemaVersion:1,dataDirectory:profile,accessPort:0,updates:{channel:'preview'}}));
   h.launch = async () => {
@@ -55,8 +68,11 @@ export async function migrationHost({ executable, source = resolve(process.env.F
     h.stderr = []; h.app.process().stderr?.on('data', chunk => { h.stderr.push(String(chunk)); if (h.stderr.length > 200) h.stderr.shift(); });
     h.page = await h.app.firstWindow(); h.page.setDefaultTimeout(15000);
     await h.page.waitForURL('**/personal/v1/ui*');
-    await localUiSession(h.page,h.credentials,'FX21',{mainChat:!h.old});
-    await h.page.locator('#assistant-view').waitFor({state:'visible'});
+    if (nativeSession) await nativeOwnerSession(h.page);
+    else await localUiSession(h.page,h.credentials,'FX21',{mainChat:!h.old});
+    // A fresh native owner sees model setup until the synthetic model below exists.
+    // Existing/legacy fixtures retain their original ready-view assertion here.
+    if (!nativeSession) await h.page.locator('#assistant-view').waitFor({state:'visible'});
     h.origin = new URL(h.page.url()).origin;
   };
   h.api = (path,body,method=body?'POST':'GET') => h.page.evaluate(async ({path,body,method}) => {
@@ -102,6 +118,16 @@ export async function migrationHost({ executable, source = resolve(process.env.F
     h.modelId=(await h.api('/models')).body.models.find(m=>m.name==='FX21 合成模型').id;
     h.hostId=(await h.api('/status')).body.hostId;
     await h.page.reload(); await h.page.locator('#assistant-view').waitFor({state:'visible'});
+    if (nativeSession) {
+      // These feature fixtures represent an owner who has already seen the
+      // separate onboarding journey; use its existing account API, not DOM edits.
+      const completed = await h.api('/onboarding', {step:'first',completed:true}, 'PATCH');
+      assert.equal(completed.status, 200);
+      assert.equal(completed.body.onboarding.completed, true);
+      await h.page.reload();
+      await h.page.locator('#assistant-view').waitFor({state:'visible'});
+      assert.equal(await h.page.locator('section.onboarding').isVisible(), false);
+    }
     return h;
   } catch(error) { if (!h.app) evidence?.recordLaunchFailure(error); await h.close({ failed: true }); if (error && typeof error === 'object') error.processCleanup = h.processCleanup; throw error; }
 }

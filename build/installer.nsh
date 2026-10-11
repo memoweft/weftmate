@@ -1,6 +1,7 @@
 ; Retain electron-builder's default script, archive, blockmap and uninstaller.
 !include LogicLib.nsh
 !include MUI2.nsh
+!include "${BUILD_RESOURCES_DIR}\windows-send-to.nsh"
 !include "${BUILD_RESOURCES_DIR}\..\.local\installer-ui\identity.nsh"
 !macroundef MUI_UNPAGE_WELCOME
 !macro MUI_UNPAGE_WELCOME
@@ -167,6 +168,7 @@ Var pid
 ; Finish at the end of the actual file/registration section, as the upstream
 ; one-click path does. There is no hidden Close button to wait for.
 !macro customInstall
+  !insertmacro WeftSendToInstall
   ${IfNot} ${Silent}
     HideWindow
     StrCpy $1 ""
@@ -201,6 +203,7 @@ Var pid
 !macroend
 !macro customUnInstall
   ${IfNot} ${isUpdated}
+    !insertmacro WeftSendToUninstall
     ExecWait '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --uninstall-cleanup' $0
     ${If} $0 != 0
       ${IfNot} ${Silent}

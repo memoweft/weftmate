@@ -62,14 +62,26 @@ function blendDesktopColor(base, scrim) {
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
   updateTheme();
   globalThis.WeftDesktopUI = {
-    init({ openConversation, error }) {
+    init({ openConversation, error, readyForFiles, receiveFiles }) {
+      if (native.platform === 'win32' && native.takeSendTo) {
+        let taking = false, debounce;
+        const take = async () => {
+          if (taking || !readyForFiles?.()) return;
+          taking = true;
+          try { const payload = await native.takeSendTo(); if (payload.files.length || payload.folders.length || payload.failed) await receiveFiles(payload); }
+          catch { error('文件未添加，请登录这台电脑后重试发送。'); }
+          finally { taking = false; }
+        };
+        native.onSendTo(() => { clearTimeout(debounce); debounce = setTimeout(take, 350); });
+        setInterval(take, 1500);
+      }
       const modelLabel = document.getElementById('model-label');
       const updateModel = () => { void native.setModelName(modelLabel.textContent).catch(() => {}); };
       new MutationObserver(updateModel).observe(modelLabel, { childList: true, subtree: true, characterData: true });
       updateModel();
       native.onConversation(target => {
         if (target?.activityId) document.dispatchEvent(new CustomEvent('weftmate:activity', { detail: target.activityId }));
-        else void openConversation(target).catch(() => error('无法打开对话，请重新登录后重试。'));
+        else void openConversation(target?.sessionId || target, target?.approvalId).catch(() => error('无法打开对话，请重新登录后重试。'));
       });
       const account = document.getElementById('account-view');
       const section = document.createElement('section'); section.className = 'card group';
@@ -78,6 +90,18 @@ function blendDesktopColor(base, scrim) {
       const toggle = document.createElement('input'); toggle.type = 'checkbox'; toggle.id = 'desktop-auto-start';
       label.append(toggle, document.createTextNode(' 开机自启（启动到托盘）'));
       section.append(heading, label); account.append(section);
+      if (native.platform === 'win32' && native.setSendToEnabled) {
+        const sendTo = document.createElement('input'); sendTo.type = 'checkbox'; sendTo.className = 'settings-switch'; sendTo.id = 'desktop-send-to';
+        WeftSettingsControls.toggle(sendTo);
+        section.append(WeftSettingsControls.row('资源管理器右键', '显示“发送到 WeftMate”；Windows 11 中位于“显示更多选项”。', sendTo));
+        void native.settings().then(value => { sendTo.checked = value.sendToEnabled; }).catch(() => error('右键菜单状态暂时无法读取，请重新打开设置。'));
+        sendTo.addEventListener('change', async () => {
+          const enabled = sendTo.checked; sendTo.disabled = true;
+          try { sendTo.checked = (await native.setSendToEnabled(enabled)).sendToEnabled; }
+          catch { sendTo.checked = !enabled; error('右键菜单未修改，请重试；仍可在对话中添加附件。'); }
+          finally { sendTo.disabled = false; }
+        });
+      }
       void native.settings().then(settings => { toggle.checked = settings.autoStart; toggle.disabled = !settings.autoStartSupported; });
       toggle.addEventListener('change', async () => {
         const enabled = toggle.checked; toggle.disabled = true;
