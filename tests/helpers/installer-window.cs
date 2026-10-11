@@ -17,6 +17,7 @@ public sealed class InstallerDesktop : IDisposable {
   [StructLayout(LayoutKind.Sequential)] struct ProcessInfo { public IntPtr process,thread;public int pid,tid; }
   [StructLayout(LayoutKind.Sequential)] struct Rect { public int left,top,right,bottom; }
   [StructLayout(LayoutKind.Sequential)] struct Point {public int x,y;}
+  [StructLayout(LayoutKind.Sequential)] struct GuiInfo {public int size,flags;public IntPtr active,focus,capture,menu,move,caret;public Rect caretRect;}
   delegate bool EnumProc(IntPtr hwnd,IntPtr arg);
   [DllImport("user32",CharSet=CharSet.Unicode,SetLastError=true)] static extern IntPtr CreateDesktop(string name,IntPtr device,IntPtr mode,int flags,uint access,IntPtr security);
   [DllImport("user32")] static extern bool SetThreadDesktop(IntPtr desktop);
@@ -31,7 +32,13 @@ public sealed class InstallerDesktop : IDisposable {
   [DllImport("user32")] static extern bool EnumDesktopWindows(IntPtr desktop,EnumProc cb,IntPtr arg);
   [DllImport("user32")] static extern bool EnumChildWindows(IntPtr hwnd,EnumProc cb,IntPtr arg);
   [DllImport("user32")] static extern uint GetWindowThreadProcessId(IntPtr hwnd,out int pid);
+  [DllImport("user32")] static extern bool GetGUIThreadInfo(uint tid,ref GuiInfo info);
   [DllImport("user32")] static extern bool IsWindowVisible(IntPtr hwnd);
+  [DllImport("user32")] static extern bool ShowWindow(IntPtr hwnd,int command);
+  [DllImport("user32")] static extern bool IsWindowEnabled(IntPtr hwnd);
+  [DllImport("user32")] static extern int GetDlgCtrlID(IntPtr hwnd);
+  [DllImport("user32")] static extern IntPtr GetParent(IntPtr hwnd);
+  [DllImport("user32",EntryPoint="GetWindowLongPtrW")] static extern IntPtr GetWindowLongPtr(IntPtr hwnd,int index);
   [DllImport("user32",CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr hwnd,StringBuilder text,int length);
   [DllImport("user32",CharSet=CharSet.Unicode)] static extern int GetWindowText(IntPtr hwnd,StringBuilder text,int length);
   [DllImport("user32")] static extern bool GetWindowRect(IntPtr hwnd,out Rect rect);
@@ -67,7 +74,7 @@ public sealed class InstallerDesktop : IDisposable {
   public string[] DetailText(long handle) {return Run(()=>{var rows=new List<string>();rows.Add(Class(new IntPtr(handle))+" "+Title(new IntPtr(handle)));EnumChildWindows(new IntPtr(handle),(h,p)=>{rows.Add(Class(h)+" "+Title(h));if(Class(h)=="SysListView32")rows.AddRange(ListRows(h));return true;},IntPtr.Zero);return rows.ToArray();});}
   static string Class(IntPtr h){var b=new StringBuilder(256);GetClassName(h,b,256);return b.ToString();}
   static string Title(IntPtr h){var b=new StringBuilder(1024);GetWindowText(h,b,1024);return b.ToString();}
-  public long Find(string kind,string title) {return Run(()=>{IntPtr found=IntPtr.Zero;EnumDesktopWindows(desktop,(h,p)=>{if(!IsWindowVisible(h))return true;if(kind=="dialog"&&Class(h)=="#32770"){found=h;return false;}if(kind=="prompt"&&Class(h)=="WeftMateInstallerPrompt"){found=h;return false;}if(kind=="app"&&Class(h).StartsWith("Chrome_WidgetWin")&&Title(h).Contains("WeftMate")){found=h;return false;}if(kind=="progress"){bool has=false;EnumChildWindows(h,(c,q)=>{if(Class(c)=="WeftMateInstallerSurface"&&(title.Length==0||Title(c)==title))has=true;return true;},IntPtr.Zero);if(has){found=h;return false;}}return true;},IntPtr.Zero);return found.ToInt64();});}
+  public long Find(string kind,string title) {return Run(()=>{IntPtr found=IntPtr.Zero;EnumDesktopWindows(desktop,(h,p)=>{if(!IsWindowVisible(h)&&kind!="app-hidden")return true;if(kind=="picker"&&Class(h)=="#32770"&&Title(h)!="WeftMate"){found=h;return false;}if(kind=="dialog"&&Class(h)=="#32770"){found=h;return false;}if(kind=="prompt"&&Class(h)=="WeftMateInstallerPrompt"){found=h;return false;}if((kind=="app"||kind=="app-hidden")&&Class(h).StartsWith("Chrome_WidgetWin")&&Title(h).Contains("WeftMate")){found=h;return false;}if(kind=="progress"){bool has=false;EnumChildWindows(h,(c,q)=>{if(Class(c)=="WeftMateInstallerSurface"&&(title.Length==0||Title(c)==title))has=true;return true;},IntPtr.Zero);if(has){found=h;return false;}}return true;},IntPtr.Zero);return found.ToInt64();});}
   public string[] Windows() {return Run(()=>{var rows=new List<string>();EnumDesktopWindows(desktop,(h,p)=>{if(IsWindowVisible(h)){int pid;GetWindowThreadProcessId(h,out pid);rows.Add(pid+" "+Class(h)+" "+Title(h));}return true;},IntPtr.Zero);return rows.ToArray();});}
   public string[] CaptureMeasurements(){return Run(()=>captureMeasurements.ToArray());}
   public void Capture(long handle,string file) {Run(()=>{
@@ -96,6 +103,14 @@ public sealed class InstallerDesktop : IDisposable {
       captureMeasurements.Add("{\"file\":\""+System.IO.Path.GetFileName(file)+"\",\"dpi\":"+GetDpiForWindow(hwnd)+",\"awareness\":"+GetAwarenessFromDpiAwarenessContext(context)+",\"rawWidth\":"+fullWidth+",\"rawHeight\":"+fullHeight+",\"x\":"+x+",\"y\":"+y+",\"width\":"+w+",\"height\":"+h+"}");
     } finally {SetThreadDpiAwarenessContext(prior);}return true;
   });}
-  public void Button(long handle,int id) {Run(()=>{if(!PostMessage(new IntPtr(handle),0x111,new IntPtr(id),IntPtr.Zero))throw new System.ComponentModel.Win32Exception();return true;});}
+  public void Show(long handle){Run(()=>{ShowWindow(new IntPtr(handle),4);return true;});}
+  public bool Frameless(long handle){return Run(()=>(GetWindowLongPtr(new IntPtr(handle),-16).ToInt64()&0x00c10000)==0);}
+  public bool Enabled(long handle,int id){return Run(()=>{bool enabled=false;EnumChildWindows(new IntPtr(handle),(h,p)=>{if(GetDlgCtrlID(h)==id&&IsWindowVisible(h)){enabled=IsWindowEnabled(h);return false;}return true;},IntPtr.Zero);return enabled;});}
+  public long HeaderHit(long handle){return Run(()=>{Rect r;GetWindowRect(new IntPtr(handle),out r);return SendMessage(new IntPtr(handle),0x84,IntPtr.Zero,new IntPtr(((r.top+50)<<16)|((r.left+100)&65535))).ToInt64();});}
+  public void Escape(long handle){Run(()=>{PostMessage(new IntPtr(handle),0x100,new IntPtr(27),IntPtr.Zero);return true;});}
+  public int FocusId(long handle){return Run(()=>{int pid;var info=new GuiInfo();info.size=Marshal.SizeOf(typeof(GuiInfo));if(!GetGUIThreadInfo(GetWindowThreadProcessId(new IntPtr(handle),out pid),ref info))throw new System.ComponentModel.Win32Exception();return GetDlgCtrlID(info.focus);});}
+  public void Key(long handle,int key){Run(()=>{int pid;var info=new GuiInfo();info.size=Marshal.SizeOf(typeof(GuiInfo));if(!GetGUIThreadInfo(GetWindowThreadProcessId(new IntPtr(handle),out pid),ref info))throw new System.ComponentModel.Win32Exception();if(!PostMessage(info.focus,0x100,new IntPtr(key),IntPtr.Zero))throw new System.ComponentModel.Win32Exception();return true;});}
+  public void Close(long handle){Run(()=>{PostMessage(new IntPtr(handle),0x10,IntPtr.Zero,IntPtr.Zero);return true;});}
+  public void Button(long handle,int id) {Run(()=>{var target=new IntPtr(handle);var control=IntPtr.Zero;EnumChildWindows(target,(h,p)=>{if(GetDlgCtrlID(h)==id&&Class(h).Equals("Button",StringComparison.OrdinalIgnoreCase)&&IsWindowVisible(h)){target=GetParent(h);control=h;return false;}return true;},IntPtr.Zero);if(!PostMessage(target,0x111,new IntPtr(id),control))throw new System.ComponentModel.Win32Exception();return true;});}
   public void Dispose(){Run(()=>{foreach(var handle in processHandles.Values)CloseHandle(handle);processHandles.Clear();return true;});queue.CompleteAdding();worker.Join();queue.Dispose();}
 }

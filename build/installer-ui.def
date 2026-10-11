@@ -1,5 +1,8 @@
 LIBRARY WeftInstaller
 EXPORTS
+  Ready=_Ready@24
+  Validate=_Validate@0
+  Directory=_Directory@0
   Work=_Work@0
   Failed=_Failed@0
   Initialize=_Initialize@8
