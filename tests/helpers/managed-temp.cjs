@@ -156,10 +156,10 @@ function startManagedTempLease(directory, { intervalMs = 60000 } = {}) {
   leases.add(stop);
   return stop;
 }
-function initialize() {
+function initialize({ prune = true } = {}) {
   if (initialized) return;
-  if (!process.env.WEFTMATE_TEST_TEMP_SCOPE) pruneManagedTemps();
-  else startManagedTempLease(managedTempRoot());
+  if (process.env.WEFTMATE_TEST_TEMP_SCOPE) startManagedTempLease(managedTempRoot());
+  else if (prune) pruneManagedTemps();
   initialized = true;
   process.once('exit', cleanupManagedTemps);
   for (const [signal, code] of [['SIGINT', 130], ['SIGTERM', 143], ['SIGHUP', 129]]) {
@@ -169,8 +169,8 @@ function initialize() {
     });
   }
 }
-function managedMkdtempSync(prefix = 'weftmate-test-') {
-  initialize();
+function managedMkdtempSync(prefix = 'weftmate-test-', options) {
+  initialize(options);
   const startedAt = ownProcessStart(); // No unregistered directory if querying our identity fails.
   const root = managedTempRoot(); ensureRoot(root);
   let name = path.basename(String(prefix).replaceAll('\\', '/'));
@@ -182,7 +182,7 @@ function managedMkdtempSync(prefix = 'weftmate-test-') {
   owned.set(directory, { id: owner.id, stop: startManagedTempLease(directory), root });
   return directory;
 }
-async function managedMkdtemp(prefix) { return managedMkdtempSync(prefix); }
+async function managedMkdtemp(prefix, options) { return managedMkdtempSync(prefix, options); }
 function disposeManagedTemp(directory, { log = console.log } = {}) {
   const registration = owned.get(directory);
   if (!registration) throw Error('Cannot remove a temp directory not owned by this process');

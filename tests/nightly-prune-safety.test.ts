@@ -145,6 +145,21 @@ test('a concurrently disposed directory is skipped without deleting or reporting
   } finally {disposeManagedTemp(root);}
 });
 
+test('nightly scope creation can skip startup reclamation while still disposing only its own scope', () => {
+  const root=managedMkdtempSync('weftmate-prune-preview-');
+  try {
+    const parent=join(root,'managed');mkdirSync(parent);
+    const stale=fixture(parent,'weftmate-expired-owned',owner());
+    const driver=join(root,'preview-driver.mjs');
+    writeFileSync(driver,`import {managedMkdtempSync} from ${JSON.stringify(new URL('./helpers/managed-temp.mjs',import.meta.url).href)};
+      managedMkdtempSync('weftmate-nightly-',{prune:false});`);
+    const env={...process.env,WEFTMATE_MANAGED_TEMP_ROOT:parent};delete env.WEFTMATE_TEST_TEMP_SCOPE;
+    const result=spawnSync(process.execPath,[driver],{encoding:'utf8',windowsHide:true,env});
+    assert.equal(result.status,0,result.stderr);assert.ok(existsSync(stale));
+    assert.deepEqual(fs.readdirSync(parent),['weftmate-expired-owned']);
+  } finally {disposeManagedTemp(root);}
+});
+
 test('legacy plan requires an explicit list; apply only removes unchanged listed paths and rejects open files', windows, () => {
   const root=managedMkdtempSync('weftmate-prune-list-');
   let fd;

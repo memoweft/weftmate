@@ -109,7 +109,8 @@ const skip = reason => ({ status: 'skipped', reason });
 
 try {
   tempParent = managedTempParent();
-  temp = await managedMkdtemp('weftmate-nightly-');
+  // The owner paused nightly reclamation; startup must not bypass the final preview.
+  temp = await managedMkdtemp('weftmate-nightly-', {prune:false});
   stopLease = startManagedTempLease(temp);
   await writeFile(join(out, 'cleanup-roots.json'), JSON.stringify([temp, worktree, out]));
   // Do not inherit real model, cloud, personal-host or relay configuration.
