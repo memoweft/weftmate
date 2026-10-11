@@ -1,0 +1,11 @@
+{
+  "mode": "required",
+  "files": 279,
+  "exitCode": 1,
+  "passed": 1458,
+  "failed": 1,
+  "skipped": 14,
+  "failures": [
+    "BL-29c N4 real Electron and mobile independently sync catalog, settings, personalization, rename and list within 7s"
+  ]
+}

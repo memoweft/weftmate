@@ -1,0 +1,6 @@
+{
+  "stopped": 2,
+  "additionalFound": 0,
+  "checkedAt": "2026-10-11T01:40:55.5325183Z",
+  "method": "Get-Process + NtQueryInformationProcess; creation time + executable path + exact workspace command line"
+}

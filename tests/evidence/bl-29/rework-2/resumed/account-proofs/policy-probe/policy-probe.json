@@ -1,0 +1,78 @@
+{
+  "firstRetry": [
+    {
+      "random": 0,
+      "ms": 1500
+    },
+    {
+      "random": 0.1,
+      "ms": 1525
+    },
+    {
+      "random": 0.3,
+      "ms": 1575
+    },
+    {
+      "random": 0.5,
+      "ms": 1625
+    },
+    {
+      "random": 0.7,
+      "ms": 1675
+    },
+    {
+      "random": 0.9,
+      "ms": 1725
+    },
+    {
+      "random": 1,
+      "ms": 1750
+    }
+  ],
+  "secondRetry": [
+    {
+      "random": 0,
+      "ms": 1500
+    },
+    {
+      "random": 0.1,
+      "ms": 1525
+    },
+    {
+      "random": 0.3,
+      "ms": 1575
+    },
+    {
+      "random": 0.5,
+      "ms": 1625
+    },
+    {
+      "random": 0.7,
+      "ms": 1675
+    },
+    {
+      "random": 0.9,
+      "ms": 1725
+    },
+    {
+      "random": 1,
+      "ms": 1750
+    }
+  ],
+  "fullHostRecovery": {
+    "probeTimes": [
+      0,
+      1000,
+      3000,
+      7000,
+      15000,
+      31000,
+      61000,
+      91000
+    ],
+    "restoredAt": 61001,
+    "recoveredAt": 91000,
+    "delay": 29999,
+    "state": "online"
+  }
+}
