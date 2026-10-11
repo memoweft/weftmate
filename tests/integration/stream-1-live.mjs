@@ -60,7 +60,7 @@ try{
  }
  assert.ok(new Set(report.desktop.frames.map(x=>x.length)).size>4,'desktop must grow');assert.ok(new Set(report.phone.frames.map(x=>x.length)).size>4,'phone must grow');assert.ok(report.desktop.frames.some(x=>x.dot));assert.equal(report.desktop.remainingDots,0);assert.equal(report.phone.remainingDots,0);
  if(long){const events=(await api(`/sessions/${session}/events?limit=200`)).events;const last=events.findLast(e=>e.type==='assistant.message');if(last)report.finalText=(await api(`/sessions/${session}/events/${last.seq}/detail`)).text;}
- if(mimo&&!long&&!process.argv.includes('--motion')){await api('/settings/personalization',{nextSuggestionsEnabled:true},'PATCH');
+ if(mimo&&!long&&!process.argv.includes('--motion')){await api('/settings/personalization',{nextSuggestionsEnabled:true,inlineCompletionEnabled:true},'PATCH');
   const drafts=['请把刚才的整理建议','把照片分类方案','请给证件备份','把命名规则','请把维护步骤','帮我把账单','请把这套方案','把备份注意事项','请给我一份','把刚才的例子'];
   for(const draft of drafts){const started=Date.now(),v=await api(`/sessions/${session}/suggestions`,{kind:'completion',draft,requestId:randomUUID()});report.completions.push({draft,durationMs:Date.now()-started,completion:v.completion});console.log(JSON.stringify(report.completions.at(-1)));}
   await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('请把刚才的整理建议');await until(async()=>page.locator('.composer-completion').count()?await page.locator('.composer-completion').isVisible():false,18000).catch(()=>{});await page.screenshot({path:join(out,'gray-completion.png')});
