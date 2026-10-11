@@ -1,9 +1,10 @@
+import { managedMkdtempSync as mkdtempSync } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron} from 'playwright';
 import {createRequire} from 'node:module';
-import {mkdtempSync,mkdirSync,rmSync,writeFileSync} from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import {resolve,join} from 'node:path';
 import {startFixture} from './ux-4-fixture.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';

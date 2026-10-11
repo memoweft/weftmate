@@ -1,9 +1,10 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Explicit real MemoWeft RPC v2, two private owner roots, with no model requests. */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { once } from 'node:events';
-import { existsSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, realpathSync, rmSync } from 'node:fs';
+
 import { join, sep } from 'node:path';
 import { createPersonalMemoryManager } from '../../src/personal-memory/index.mjs';
 import { MemoWeftRpc } from '../../src/personal-memory/rpc.mjs';

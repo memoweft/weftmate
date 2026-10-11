@@ -1,3 +1,4 @@
+import { managedMkdtempSync as mkdtempSync } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** EX-2 repeatable M2 exit. Real Electron/DSH/Core, synthetic account per baseline.
@@ -14,7 +15,7 @@ import { createRequire } from 'node:module';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { randomUUID, createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, readdirSync, lstatSync, rmSync, openSync, closeSync, statSync, utimesSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, readdirSync, lstatSync, rmSync, openSync, closeSync, statSync, utimesSync } from 'node:fs';
 import { join, resolve, relative } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';

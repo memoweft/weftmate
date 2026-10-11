@@ -1,9 +1,10 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Fast visual/interaction regression of the Android bundle; synthetic backend, real authenticated HTTP. */
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, rm } from 'node:fs/promises';
+
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';

@@ -1,8 +1,9 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Opt-in real DSH account-memory turn acceptance; follows one already-loaded formal local model. */
 import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+
 import { dirname, join, sep } from 'node:path';
 import { zstdDecompressSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';

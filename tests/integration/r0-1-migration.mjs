@@ -1,3 +1,4 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Private backup is read-only; only its disposable copy is started, then restored and hashed. */
@@ -5,9 +6,9 @@ import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdtemp, cp, readdir, lstat, readFile, writeFile, rm, mkdir, readlink } from 'node:fs/promises';
+import { cp, readdir, lstat, readFile, writeFile, rm, mkdir, readlink } from 'node:fs/promises';
 import { join, resolve, relative } from 'node:path';
-import { tmpdir } from 'node:os';
+
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { productionConfigFromTask } from '../../scripts/migrate-desktop-config.mjs';
