@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { chmod, mkdir, open, rm, readdir, readFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 
-// Provider implementations implement send({ to, subject, text }) -> { id }.
+export const MAX_MAIL_HTML_BYTES = 64 * 1024;
+
+// Provider implementations implement send({ to, subject, text, html? }) -> { id }.
 export function createMailer(config, { logger, fetchImpl = fetch } = {}) {
   if (!['file', 'resend'].includes(config.mailTransport))
     throw new Error('Mail provider is not implemented');
@@ -31,7 +33,7 @@ export function createMailer(config, { logger, fetchImpl = fetch } = {}) {
         if (mail.accountId === accountId || !mail.accountId && emails.includes(mail.to)) await rm(file, { force: true });
       }
     },
-    async send({ to, subject, text, accountId }) {
+    async send({ to, subject, text, html, accountId }) {
       if (
         typeof to !== 'string' ||
         !to.trim() ||
@@ -43,6 +45,10 @@ export function createMailer(config, { logger, fetchImpl = fetch } = {}) {
       ) {
         throw new TypeError('Mail requires a recipient, single-line subject, and text body');
       }
+      if (html !== undefined && (typeof html !== 'string' || Buffer.byteLength(html, 'utf8') > MAX_MAIL_HTML_BYTES)) {
+        throw new TypeError('Mail HTML must be a string of at most 65536 UTF-8 bytes');
+      }
+      const htmlBody = html === undefined ? {} : { html };
       if (config.mailTransport === 'resend') {
         const id = randomUUID();
         const response = await fetchImpl('https://api.resend.com/emails', {
@@ -52,7 +58,7 @@ export function createMailer(config, { logger, fetchImpl = fetch } = {}) {
             'content-type': 'application/json',
             'idempotency-key': id,
           },
-          body: JSON.stringify({ from: config.mailFrom, to: [to], subject, text }),
+          body: JSON.stringify({ from: config.mailFrom, to: [to], subject, text, ...htmlBody }),
           signal: AbortSignal.timeout(10000),
         });
         if (!response.ok) {
@@ -73,7 +79,7 @@ export function createMailer(config, { logger, fetchImpl = fetch } = {}) {
       try {
         await handle.writeFile(
           JSON.stringify(
-            { id, from: config.mailFrom, to, subject, text, ...(accountId ? { accountId } : {}), createdAt: new Date().toISOString() },
+            { id, from: config.mailFrom, to, subject, text, ...htmlBody, ...(accountId ? { accountId } : {}), createdAt: new Date().toISOString() },
             null,
             2,
           ) + '\n',

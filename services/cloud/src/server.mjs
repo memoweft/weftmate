@@ -1,13 +1,30 @@
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
+import { readFileSync } from 'node:fs';
+import { MAIL_MARK_PATH } from './mail-templates.mjs';
+
+const mailMark = readFileSync(new URL('../assets/weftmate-mark.png', import.meta.url));
 
 export function createCloudServer({ database, schemaVersion, logger, identity }) {
   return createServer(async (request, response) => {
     const requestId = randomUUID();
     const started = performance.now();
     // Do not log raw paths/query strings: future auth URLs may contain codes.
-    const route = request.url === '/healthz' ? '/healthz' : 'unmatched';
+    const route = request.url === '/healthz' ? '/healthz' : request.url === MAIL_MARK_PATH ? 'mail-mark' : 'unmatched';
+    if (route === 'mail-mark') {
+      const allowed = request.method === 'GET' || request.method === 'HEAD';
+      response.writeHead(allowed ? 200 : 405, {
+        'content-type': 'image/png',
+        'content-length': allowed ? mailMark.length : 0,
+        'cache-control': 'public, max-age=86400',
+        'x-content-type-options': 'nosniff',
+        ...(allowed ? {} : { allow: 'GET, HEAD' }),
+      });
+      response.end(allowed && request.method === 'GET' ? mailMark : undefined);
+      // This shared public brand asset carries no per-message identifier or access log.
+      return;
+    }
     if (identity && request.url.startsWith('/personal/v1/cloud/')) {
       response.setHeader('cache-control', 'no-store');
       response.setHeader('x-content-type-options', 'nosniff');
