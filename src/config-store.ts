@@ -8,19 +8,53 @@
  * before future writes use the v2 shape.
  */
 import { app, safeStorage } from 'electron';
-import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, renameSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { prepareLegacyVaultMigration, type LegacyVaultPayload } from './legacy-vault-migration.ts';
 import type { LegacyCompatibilityEvidence } from './legacy-compatibility-backfill.ts';
 import type { PublicModelProfile } from './stage2-config.ts';
 import { createEncryptedCredentialVaultStore, validateCredentialVaultDocument } from './credential-vault-document.ts';
+import { durableReplace, persistWrappedStorageKey, persistedWindowsStorageKey } from './windows-vault-storage.mjs';
 
 export interface ModelGroup { baseUrl: string; apiKey: string; model: string; }
 export type LegacyPublicProfile = PublicModelProfile;
 interface SecretDocument { schemaVersion: 2; credentials: Record<string, string>; legacyPayload?: LegacyVaultPayload; }
 
 function configPath(): string { return join(app.getPath('userData'), 'weftmate-model.enc'); }
+let wrappedStorageKey: string | null = null;
+let initialization: Promise<void> | null = null;
+let initializationFailed = false;
+export function credentialRecoveryRequired(): boolean { return existsSync(`${configPath()}.recovery.json`); }
+export async function initializeCredentialStorage(onFailure: (error: Error) => void = () => {}): Promise<void> {
+  if (initialization) return initialization;
+  initialization = (async () => {
+    if (process.platform === 'win32' && !wrappedStorageKey) {
+      const key = await persistedWindowsStorageKey(safeStorage, app.getPath('sessionData'));
+      persistWrappedStorageKey(app.getPath('userData'), key);
+      wrappedStorageKey = key; // Writes become possible only after the protected key is flushed.
+    }
+    initializationFailed = false;
+    if (!existsSync(configPath())) return;
+    try { const raw = decryptRaw(); if (!(raw && prepareLegacyVaultMigration(raw))) validateSecretDocument(raw); }
+    catch {
+      // Preserve the exact unreadable bytes. Persist the recovery state BEFORE
+      // retiring the vault; interruption here repeats the safe startup check.
+      durableReplace(`${configPath()}.recovery.json`, Buffer.from('{"needsRefill":true}'));
+      renameSync(configPath(), `${configPath()}.unreadable-${randomUUID()}`);
+      onFailure(Object.assign(new Error('模型凭据需要重新填写。'), { code: 'CREDENTIAL_VAULT_UNREADABLE' }));
+    }
+  })();
+  try { await initialization; } catch (error) { initializationFailed = true; initialization = null; throw error; }
+}
+function decryptVaultBytes(bytes: Buffer): string {
+  return safeStorage.decryptString(bytes);
+}
+function encryptVaultText(text: string): Buffer {
+  if (process.platform === 'win32' && !wrappedStorageKey) throw Object.assign(new Error('本机加密存储尚未准备好，请稍后重新保存密钥。'), { code: 'CREDENTIAL_STORAGE_NOT_READY' });
+  const ciphertext = safeStorage.encryptString(text);
+  return ciphertext;
+}
 function validId(value: unknown): value is string { return typeof value === 'string' && value.length > 0 && value.length <= 160; }
 function validKey(value: unknown): value is string { return typeof value === 'string' && value.length > 0 && value.length <= 4096; }
 
@@ -47,7 +81,7 @@ function decryptRaw(): unknown {
   const file = configPath();
   if (!existsSync(file)) return null;
   if (!safeStorage.isEncryptionAvailable()) throw new Error('本机没有可用的加密后端，无法读取模型凭据。');
-  return JSON.parse(safeStorage.decryptString(readFileSync(file)));
+  return JSON.parse(decryptVaultBytes(readFileSync(file)));
 }
 
 function readSecrets(): SecretDocument {
@@ -56,18 +90,11 @@ function readSecrets(): SecretDocument {
 
 function writeSecrets(document: SecretDocument): void {
   if (!safeStorage.isEncryptionAvailable()) throw new Error('本机没有可用的加密后端，无法安全保存模型凭据。');
-  writeVaultCiphertext(safeStorage.encryptString(JSON.stringify(document)));
+  writeVaultCiphertext(encryptVaultText(JSON.stringify(document)));
 }
 
 function writeVaultCiphertext(ciphertext: Buffer): void {
-  const target = configPath(); const temporary = `${target}.${process.pid}.${randomUUID()}.tmp`;
-  try {
-    writeFileSync(temporary, ciphertext, { mode: 0o600 });
-    renameSync(temporary, target);
-  } catch (error) {
-    try { rmSync(temporary, { force: true }); } catch { /* keep last known-good vault */ }
-    throw error;
-  }
+  durableReplace(configPath(), ciphertext);
 }
 
 function encryptedVault() {
@@ -77,11 +104,11 @@ function encryptedVault() {
     writeBytes: writeVaultCiphertext,
     decrypt: (bytes) => {
       if (!safeStorage.isEncryptionAvailable()) throw new Error('本机没有可用的加密后端，无法读取模型凭据。');
-      return safeStorage.decryptString(bytes);
+      return decryptVaultBytes(bytes);
     },
     encrypt: (text) => {
       if (!safeStorage.isEncryptionAvailable()) throw new Error('本机没有可用的加密后端，无法安全保存模型凭据。');
-      return safeStorage.encryptString(text);
+      return encryptVaultText(text);
     },
     validateLegacyPayload: validLegacyPayload,
   });
@@ -99,6 +126,9 @@ function readLegacyProfiles() {
  * encrypted document intact rather than losing the profile/key association.
  */
 export function migrateLegacyProfiles(): { pending: boolean; profiles: LegacyPublicProfile[]; activeId: string | null } {
+  // A deferred/unavailable crypto backend must not turn migration's optional
+  // startup probe into a fatal exit. Keep every old byte until initialization can retry.
+  if (initializationFailed) return { pending: false, profiles: [], activeId: null };
   const legacy = readLegacyProfiles();
   return legacy ? { pending: true, profiles: legacy.publicProfiles, activeId: legacy.activeId } : { pending: false, profiles: [], activeId: null };
 }
@@ -130,9 +160,7 @@ export function snapshotVaultBytes(): Buffer | null { return existsSync(configPa
 export function restoreVaultBytes(snapshot: Buffer | null): void {
   const target = configPath();
   if (snapshot === null) { if (existsSync(target)) rmSync(target, { force: true }); return; }
-  const temporary = `${target}.${process.pid}.${randomUUID()}.rollback.tmp`;
-  try { writeFileSync(temporary, snapshot, { mode: 0o600 }); renameSync(temporary, target); }
-  catch (error) { try { rmSync(temporary, { force: true }); } catch {} throw error; }
+  durableReplace(target, snapshot);
 }
 export function getCredential(id: string): string | null {
   if (!validId(id)) return null;

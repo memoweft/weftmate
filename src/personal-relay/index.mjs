@@ -1,6 +1,6 @@
-import { fork, execFile } from 'node:child_process';
+import { fork } from 'node:child_process';
+import { boundedCommand } from '../personal-update/watchdog-commands.mjs';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
 import { createServer } from 'node:net';
 import { randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -49,10 +49,12 @@ localPort = ${localPort}
 customDomains = [${str(new URL(c.baseUrl).hostname)}]
 `;
 }
-export async function createHostRelay({ root, identity, options, setPublicOrigin }) {
+export async function createHostRelay({ root, identity, options, setPublicOrigin, executeCommand=boundedCommand }) {
   if (!identity || !options?.binary || !options?.transportCaFile || (!options.certFile && !options.developmentTls && !options.acme))
     throw new Error('Relay requires cloud identity, frpc, transport CA and host certificate');
-  const { stdout } = await promisify(execFile)(options.binary, ['-v']);
+  let stdout;
+  try { ({stdout}=await executeCommand(options.binary,['-v'],{timeoutMs:5000})); }
+  catch(error) { options.diagnostic?.(error); throw error; }
   if (stdout.trim() !== '0.71.0') throw new Error('Relay requires official frpc 0.71.0');
   const dir = path.join(root, 'relay'); await ensurePrivateDirectory(dir);
   let origin, child, adapter, timer, polling, closed = false, state = 'stopped', publicOrigin = null, failure = null;
@@ -81,7 +83,7 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
         await certificates.check();
       }
       const certificate = options.developmentTls
-        ? await developmentCertificate({ root, domain, privateJwk: tls.privateJwk }) : { certFile: certificates?.certFile ?? options.certFile };
+        ? await developmentCertificate({ root, domain, privateJwk: tls.privateJwk, diagnostic:options.diagnostic }) : { certFile: certificates?.certFile ?? options.certFile };
       activeCertFile = certificate.certFile;
       certificateExpiresAt = certificateInfo(await readFile(certificate.certFile), { domain, spki: tls.spki }).certificateExpiresAt;
       if (closed) return;

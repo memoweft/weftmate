@@ -1,0 +1,10 @@
+{
+  "packaged": true,
+  "normalInitializationBeforeKill": false,
+  "firstRunSavedSyntheticCredential": true,
+  "forcedRestart": true,
+  "lostLocalStateRestored": true,
+  "credentialReadable": true,
+  "modelRequests": 0,
+  "cleaned": 2
+}

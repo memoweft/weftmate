@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "buildPassed": true,
+  "testIdentity": "rob1qa",
+  "packaged": true,
+  "realSystemInstall": false,
+  "checks": [
+    "packaged-local-diagnostic-paths-and-active-run",
+    "fresh-main-created-and-replied",
+    "native-folder-picker-substitute-registered-project",
+    "native-project-read-and-approved-write",
+    "native-conversation-export-written",
+    "assistant-switch-size-and-save-toast",
+    "packaged-normal-close-recorded"
+  ],
+  "boundaries": {
+    "developmentPaths": 0,
+    "buildMachineIdentityHits": 0,
+    "userDataFiles": 0,
+    "dogfoodOrRepositoryTests": 0,
+    "credentialsFiles": 0
+  },
+  "appArchive": {
+    "entries": 5343,
+    "directories": 794,
+    "links": 0,
+    "scannedTextFiles": 4500,
+    "scannedBinaryFiles": 49,
+    "forbiddenEntries": 0,
+    "unsafeLinks": 0
+  },
+  "cleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0,
+    "preservationError": false,
+    "stillRunning": false
+  },
+  "realProviderRequests": 0
+}
