@@ -341,8 +341,8 @@ test('memory reads discard a response for another account and reset authenticate
 test('appearance persistence and session sorting work without a window or DOM', () => {
   const f = fixture(), prefs = f.core.appearance
   assert.equal(prefs.value.theme, 'system')
-  prefs.set({ theme: 'dark', accent: 'purple', fontSize: '19' })
-  assert.deepEqual(plain(f.api.createAppearance(f.environment.storage).value), { theme: 'dark', accent: 'purple', fontSize: '19' })
+  prefs.set({ theme: 'dark', accent: 'purple', fontSize: '19', accentLight: 'purple', accentDark: 'purple', codeFontSize: '13' })
+  assert.deepEqual(plain(f.api.createAppearance(f.environment.storage).value), { theme: 'dark', accent: 'purple', fontSize: '19', accentLight: 'purple', accentDark: 'purple', codeFontSize: '13' })
   const sessions = [{ sessionId: 'old', updatedAt: '2026-10-07T08:00:00Z' }, { sessionId: 'new', updatedAt: '2026-10-08T08:00:00Z' }]
   assert.deepEqual(plain(f.core.sortSessions(sessions)).map((s: any) => s.sessionId), ['new', 'old'])
   assert.equal(sessions[0].sessionId, 'old')
@@ -388,11 +388,23 @@ test('model form validation and durable request recovery stay in core and never 
   assert.ok([...f.values.values()].every(value => !value.includes(input.apiKey)))
 })
 
+test('model storage readiness failure keeps the original request and draft available for retry without persisting secrets', async () => {
+  const f=fixture(); f.core.state.currentView='account'; f.core.state.accountModelsCanManage=true;
+  const input={name:'Synthetic',baseUrl:'https://example.test/v1',modelId:'synthetic',modelTier:'auto',apiKey:'synthetic-not-a-real-key'};
+  f.core.accountModelReceipt=async()=>null;
+  f.core.saveAccountModel=async()=>{throw {code:'CREDENTIAL_STORAGE_NOT_READY'};};
+  await f.core.saveAccountModelDraft(input);
+  assert.ok(f.paints.some(p=>p.name==='accountModelFormNotice'&&p.args[0].includes('请稍后重新保存')));
+  assert.equal(f.core.state.accountModelBusy,false); assert.ok(f.core.savedAccountModelMarker());
+  assert.ok(!f.paints.some(p=>p.name==='resetAccountModelForm'));
+  assert.ok([...f.values.values()].every(value=>!value.includes(input.apiKey)));
+});
+
 test('appearance keeps unknown saved fields while the control defaults stay stable', () => {
   const f = fixture()
   f.core.appearance.set({ theme: 'dark', accent: 'blue', fontSize: '17', legacyField: true })
   assert.equal(f.api.createAppearance(f.environment.storage).value.legacyField, true)
-  assert.deepEqual(Object.keys(f.api.appearanceDefaults), ['theme', 'accent', 'fontSize'])
+  assert.deepEqual(Object.keys(f.api.appearanceDefaults), ['theme', 'accent', 'fontSize', 'accentLight', 'accentDark', 'codeFontSize'])
 })
 
 

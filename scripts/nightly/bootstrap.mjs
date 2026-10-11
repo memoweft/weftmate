@@ -3,6 +3,7 @@ import { mkdir, open, readFile, writeFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { report } from './report.mjs';
+import { redactEvidenceText } from '../../tests/helpers/process-evidence.mjs';
 
 export async function launchEngine(context, args, execute) {
   const entry = join(context.worktree, 'scripts/nightly/run.mjs');
@@ -32,9 +33,9 @@ export async function bootstrap(args, { execute: injectedExecute } = {}) {
   const stop = () => { if (delegated) void writeFile(join(out,'cancel.request'),'stop'); else child?.kill('SIGTERM'); };
   process.on('SIGINT', stop); process.on('SIGTERM', stop);
   const execute = injectedExecute || (async (command, commandArgs, { cwd = worktree, name, engine = false } = {}) => {
-    const log = await open(join(out, 'logs', name + '.log'), 'a'); let output = '';
+    const log = await open(join(out, 'logs', name + '.log'), 'a'); let output = '', writes = Promise.resolve();
     const p = spawn(command, commandArgs, { cwd, windowsHide: true, stdio: ['ignore','pipe','pipe'] }); child = p;
-    const consume = data => { output += data; void log.write(data); if (engine) process.stdout.write(data); };
+    const consume = data => { const text=redactEvidenceText(data.toString()); output += text; writes = writes.then(() => log.write(text)); if (engine) process.stdout.write(text); };
     p.stdout.on('data', consume); p.stderr.on('data', consume);
     // The delegated engine applies the shared deadline and owns all cleanup.
     const timer = engine ? null : setTimeout(() => p.kill(), Math.max(1, context.deadline-Date.now()));
@@ -42,7 +43,7 @@ export async function bootstrap(args, { execute: injectedExecute } = {}) {
       const code = await new Promise((done,reject) => { p.once('error',reject); p.once('close',done); });
       if (!engine && code !== 0) throw Error(`${name} 失败（退出 ${code}；见 logs/${name}.log）`);
       return { code, output };
-    } finally { clearTimeout(timer); child = null; await log.close(); }
+    } finally { clearTimeout(timer); child = null; await writes; await log.close(); }
   });
   try {
     await mkdir(join(out,'logs'), { recursive: true }); await mkdir(join(out,'gallery'));

@@ -1,11 +1,12 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Synthetic desktop diagnosis acceptance. One Electron at a time; no model calls. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve, parse, basename } from 'node:path';
-import { tmpdir } from 'node:os';
+
 import { once } from 'node:events';
 import { randomInt } from 'node:crypto';
 import { createServer } from 'node:net';

@@ -593,14 +593,15 @@ function syncPage(target){target.append(heading('离线与同步'),notice(state.
   }).catch(()=>{});
 }
 
+const mobileAppearanceStore = WeftUiCore.createAppearance(localStorage, 'weftmate.mobile.appearance.v1');
 function appearancePage(target){target.append(heading('外观','保存到这台设备。'));
-  const line=el('div','settings-row'),copy=el('div');copy.append(el('strong','','颜色模式'),el('p','hint','选择适合当前环境的颜色模式。'));
-  const select=el('select');select.setAttribute('aria-label','颜色模式');
-  for(const [value,label] of [['light','浅色'],['dark','深色'],['system','跟随系统']]){const option=el('option','',label);option.value=value;select.append(option)}
-  select.value=state.appearance;line.append(select);const segments=WeftSettingsControls.segmented(select);
-  select.addEventListener('change',async()=>{try{const saved=await uiCore.mobileAppearance(select.value);applyAppearancePreference(saved);page('appearance')}catch(e){toast(safeError(e),true)}});
-  line.append(copy,segments);target.append(line);
-  if (globalThis.WeftReplyMotion) {const control=WeftReplyMotion.preferenceControl();target.append(WeftSettingsControls.row('减少动态效果','跟随系统偏好；开启后所有状态与回复动效停止。',control));WeftSettingsControls.select(control);}
+  WeftAppearanceControls.mount(target, {
+    get:()=>({...mobileAppearanceStore.value,theme:state.appearance||'system'}),
+    async set(patch){
+      if(patch.theme){const saved=await uiCore.mobileAppearance(patch.theme);applyAppearancePreference(saved);}
+      mobileAppearanceStore.set({...mobileAppearanceStore.value,...patch});applyTheme(state.appearance||'system');
+    }, toast
+  });
 }
 
 async function updatesPage(target){target.append(heading('界面更新','常规界面可从个人服务端更新；新增原生能力仍需更新应用。'));

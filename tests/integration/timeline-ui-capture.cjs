@@ -1,3 +1,4 @@
+const { managedMkdtempSync:mkdtempSync, managedTempRoot:tmpdir } = require('../helpers/managed-temp.cjs');
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Hidden Electron browser capture; independent temp profile and synthetic host. */
@@ -5,8 +6,8 @@ const { app, BrowserWindow } = require('electron')
 const { mkdirSync, writeFileSync } = require('node:fs')
 const { join, resolve } = require('node:path')
 const { pathToFileURL } = require('node:url')
-const { mkdtempSync } = require('node:fs')
-const { tmpdir } = require('node:os')
+
+
 app.setPath('userData', mkdtempSync(join(tmpdir(), 'weftmate-timeline-browser-')))
 app.disableHardwareAcceleration()
 const delay = ms => new Promise(done => setTimeout(done, ms))
