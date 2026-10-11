@@ -29,6 +29,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         return core.state.historyReadResult = { kind, ...fields };
     }
     function historyPollDelay(result) {
+        if (historyAuthorizationIdentity === core.state.identityGeneration) return polling.idle;
         if (!historyReadAllowed()) return Math.max(1, historyRetryAt - Date.now());
         if (result?.immediateRenew && ['changed','unchanged'].includes(result.kind)) return 0;
         return core.state.personalCapabilities?.replyStreaming === 1 && (core.mainReplyActive?.() || core.state.turnStatus === 'running' ||
@@ -58,11 +59,25 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         if (configurationIdentity !== core.state.identityGeneration) { configurationIdentity = core.state.identityGeneration; accountSnapshot = null; configurationAt = Date.now(); }
         const previous = accountSnapshot;
         // Accept the revision before launching reads, avoiding repeat invalidation.
-        accountSnapshot = snapshot;
+        accountSnapshot = { ...previous, ...snapshot };
         core.state.accountRevision = snapshot.revision;
         core.state.accountRevisionIdentity = core.state.identityGeneration;
         if (!previous) return;
-        const changed = Object.fromEntries(['models','modelSettings','personalization'].map(key => [key, previous[key] !== snapshot[key]]));
+        // A native approval/question frame can arrive before its durable
+        // registration. An account commit invalidates that earlier empty read
+        // even when the next timeline response has no new native entries.
+        if (previous.revision !== snapshot.revision && foreground()) {
+            if (core.mobileDecisions) {
+                const context = core.mobileDecisions.context();
+                void Promise.all([core.mobileDecisions.refresh(context, true),
+                    core.mobileDecisions.refresh(context, true, true)]).catch(() => {});
+            } else {
+                const context = core.approvalContext?.();
+                void Promise.all([core.refreshConversationApprovals?.(context, true),
+                    core.refreshConversationQuestions?.(context, true)]).catch(() => {});
+            }
+        }
+        const changed = Object.fromEntries(['models','modelSettings','personalization'].map(key => [key, snapshot[key] !== undefined && previous[key] !== snapshot[key]]));
         if (Object.values(changed).some(Boolean)) void refreshConfiguration(changed).catch(() => {});
         if (previous.sessions !== snapshot.sessions) void (environment.mobileState ? core.listMobileSessions() : refreshAssistantOverview()).catch(() => {});
     }

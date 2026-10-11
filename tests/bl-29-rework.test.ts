@@ -10,7 +10,7 @@ import { getEventListeners } from 'node:events';
 import { runInNewContext } from 'node:vm';
 
 function probe(name: string, output: string, timeout = 60000, args: string[] = []) {
-  const root = mkdtempSync(join(tmpdir(), 'bl29-regression-'));
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-bl29-regression-'));
   try {
     const env = { ...process.env, BL29_EVIDENCE_DIR:root, WEFTMATE_TEST_HOST_NAME:'synthetic-host' };
     delete env.ELECTRON_RUN_AS_NODE;
@@ -138,4 +138,33 @@ test('BL-29b M4/S1 real Electron and mobile synchronize settings and regain fore
   assert.equal(r.electronConfig.suggestions, false); assert.equal(r.mobileConfig.suggestions, false);
   assert.ok(r.electronConfig.models.includes('added-electron')); assert.ok(r.mobileConfig.models.includes('added-electron'));
   for (const row of r.configurationTimes) assert.ok(row.ms<=7000, JSON.stringify(row));
+});
+
+test('BL-29c N4 real Electron and mobile independently sync catalog, settings, personalization, rename and list within 7s', {timeout:60000}, () => {
+  const r=probe('ui-extra','ui-extra.json',55000);
+  assert.equal(r.failure,undefined,JSON.stringify(r));assert.deepEqual(r.errors,[]);
+  assert.deepEqual(r.individualChanges.map(row=>row.kind),['modelSettings','personalization','modelCatalog','modelRename','sessionList']);
+  for(const change of r.individualChanges)for(const row of change.rows){
+    assert.equal(row.error,undefined,JSON.stringify(change));assert.ok(row.ms<=7000,JSON.stringify(change));
+  }
+  for(const row of r.rows)if(row.kind==='rename'){
+    assert.ok(row.desktop<=6000,JSON.stringify(row));assert.ok(row.mobile<=6000,JSON.stringify(row));
+  }else {assert.equal(row.error,undefined);assert.ok(row.ms<=1000,JSON.stringify(row));}
+});
+
+test('BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s', {timeout:30000}, () => {
+  const root=mkdtempSync(join(tmpdir(),'weftmate-bl29-decision-'));
+  try {
+    const env={...process.env,WEFTMATE_TEST_HOST_NAME:'synthetic-host',WEFTMATE_BL29_EVIDENCE_DIR:root};
+    delete env.ELECTRON_RUN_AS_NODE;
+    const run=spawnSync(process.execPath,['tests/integration/bl-29-requests.mjs','--logical','--latency','--approval-commit-delay'],{
+      env,encoding:'utf8',windowsHide:true,timeout:25000,maxBuffer:4*1024*1024,
+    });
+    assert.equal(run.status,0,run.stderr||run.error?.message||run.stdout);
+    const r=JSON.parse(readFileSync(join(root,'responsiveness.json'),'utf8'));
+    assert.equal(r.failure,undefined);
+    for(const name of ['approval-visible','approval-accepted','question-visible','question-accepted']){
+      const check=r.checks.find(row=>row.name===name);assert.ok(check,`${name} really ran`);assert.ok(check.ms<=2000,JSON.stringify(check));
+    }
+  } finally {rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});}
 });

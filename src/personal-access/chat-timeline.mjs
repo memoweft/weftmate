@@ -272,7 +272,7 @@ export function createChatTimeline(context) {
         // Wait on account commits, native facts, index advancement and timeout.
         const timeout = new Promise(resolve => { timer = setTimeout(() => resolve('timeout'), timeoutMs); });
         const result = await Promise.race([changed, timeout, cancelled,
-          context.waitAccountChange(revision, controller.signal).then(() => 'changed'),
+          context.waitAccountChange(revision, controller.signal, ownerId).then(() => 'changed'),
           ...native.map(({ sessionId, seq }) => context.backend.waitForEvents({ sessionId, seq,
             timeoutMs, signal: controller.signal }).then(() => 'changed'))]);
         // Closing is a protocol result; client disconnect is cancellation.

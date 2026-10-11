@@ -1,0 +1,11 @@
+{
+  "mode": "vendor",
+  "files": 30,
+  "exitCode": 1,
+  "passed": 206,
+  "failed": 1,
+  "skipped": 0,
+  "failures": [
+    "tests\\\\weftmod-plugin.test.ts"
+  ]
+}

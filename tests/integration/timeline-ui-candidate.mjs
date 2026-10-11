@@ -151,7 +151,9 @@ export async function startTimelineCandidate(options = {}) {
   const bridge = async (method, params) => {
     if (method === 'host.status') { const status=await request('/status'); return options.logicalMobile?status:{...status,personalCapabilities:{...status.personalCapabilities,chats:0}}; }
     if (options.logicalMobile && method === 'shared.send' && params.chatId) {
-      const result = await request('/commands', {kind:'chat.message',targetDeviceId:hostId,...params}, 'POST');
+      const {intent,attachmentIds,...fields}=params;
+      const result = await request('/commands', {kind:'chat.message',targetDeviceId:hostId,...fields,
+        ...(intent ? {mode:intent} : {}),...(attachmentIds?.length ? {attachmentIds} : {})}, 'POST');
       return {command:result.command};
     }
     if (method === 'cloud.callback') return {};
