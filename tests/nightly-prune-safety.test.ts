@@ -35,17 +35,20 @@ function age(target: string) {
 
 test('automatic pruning retains similar prefixes, missing ownership, malformed records and open nested files', windows, () => {
   const root=managedMkdtempSync('weftmate-prune-unowned-');
-  let fd;
+  let fd, registeredFd;
   try {
     const backup=fixture(root,'weftmate-backup-important'), dotted=fixture(root,'weftmate-..-data'), malformed=fixture(root,'weftmate-invalid', {pid:process.pid});
     const active=fixture(root,'weftmate-open-file');
     mkdirSync(join(active,'sub'));const opened=join(active,'sub/open.txt');writeFileSync(opened,'synthetic active data');fd=openSync(opened,'r');
+    const expiredOpen=fixture(root,'weftmate-expired-open-file',owner());
+    registeredFd=openSync(join(expiredOpen,'keep.txt'),'r');
     for(const target of [backup,dotted,malformed,active]) age(target);
     const result=prune(root);
     assert.equal(result.code,0,result.stderr);assert.equal(result.summary.deleted,0);assert.equal(result.summary.keptUnowned,4);
+    assert.equal(result.summary.keptInUse,1);assert.ok(existsSync(expiredOpen));
     assert.deepEqual(result.summary.unowned.map((r: any)=>r.directory).sort(),['weftmate-backup-important','weftmate-..-data','weftmate-invalid','weftmate-open-file'].sort());
     for(const target of [backup,dotted,malformed,active,opened]) assert.ok(existsSync(target));
-  } finally {if(fd!==undefined)closeSync(fd);disposeManagedTemp(root);}
+  } finally {if(fd!==undefined)closeSync(fd);if(registeredFd!==undefined)closeSync(registeredFd);disposeManagedTemp(root);}
 });
 
 test('automatic pruning rejects a root junction and an ancestor junction before deleting any candidate', windows, () => {

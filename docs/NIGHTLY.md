@@ -72,7 +72,7 @@ pwsh -NoProfile -File scripts/nightly/unregister-task.ps1
 
 夜间收尾与测试开头的自动回收只枚举受管父目录：Windows 为 `C:\weftmate-temp`，Linux 为 `/tmp/weftmate-temp`，macOS 使用解析真实路径后的 `/tmp/weftmate-temp`（通常为 `/private/tmp/weftmate-temp`）。不会扫描系统 TEMP（临时目录）、`C:\Temp` 或 `C:\`。目录名只是筛选条件；没有有效归属记录的目录一律保留，输出 `keptUnowned` 数量和逐项名称。
 
-自动删除必须同时满足：`.weftmate-temp-owner.json` 格式有效、创建者 PID（进程编号）与进程创建时间对应的属主已经不存在、heartbeat（心跳）超过默认24小时。有效属主仍活着、心跳未过期、归属缺失／无效或无法判断，均保留。进程查询报错、超时或连清理器自身都不在进程表里时，非零退出，停止删除。每个根及其全部祖先必须是普通目录，目标删前重新校验真实父目录；目标联接保留，递归遇到内部联接只删除链接自身。
+自动删除必须同时满足：`.weftmate-temp-owner.json` 格式有效、创建者 PID（进程编号）与进程创建时间对应的属主已经不存在、heartbeat（心跳）超过默认24小时。有效属主仍活着、心跳未过期、归属缺失／无效或无法判断，均保留。Windows 删除前还对目录里的普通文件持有排他读写检查，已打开的文件会让自动回收保留该目录，覆盖属主已死但使用进程仍活着的情况。进程查询报错、超时或连清理器自身都不在进程表里时，非零退出，停止删除。每个根及其全部祖先必须是普通目录，目标删前重新校验真实父目录；目标联接保留，递归遇到内部联接只删除链接自身。
 
 `prune-temp.ps1 -Apply` 是自动模式；不带 `-Apply` 预览符合租约条件的受管目录。每次实际删除前后输出目录名、完整路径与根、字节数、最后修改时间、归属摘要及结果。夜间保存原输出 `logs/prune-temp.log` 和逐项 `logs/prune-temp-audit.jsonl`，汇总仍在 `cleanup.staleTemp`；清理器非零退出会让 cleanup（清理）阶段失败。
 

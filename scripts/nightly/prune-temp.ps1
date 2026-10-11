@@ -100,10 +100,10 @@ function Remove-NoFollow([string]$target) {
     }
     Remove-Item -LiteralPath $target -Force
 }
-function Hold-LegacyFiles([string]$target, $handles) {
+function Hold-DeletionFiles([string]$target, $handles) {
     foreach ($item in Get-ChildItem -LiteralPath $target -Force) {
         if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
-        if ($item.PSIsContainer) { Hold-LegacyFiles $item.FullName $handles }
+        if ($item.PSIsContainer) { Hold-DeletionFiles $item.FullName $handles }
         else {
             # Keep exclusive read/write exclusion through deletion, permitting only delete sharing.
             $handle = [IO.File]::Open($item.FullName, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Delete)
@@ -202,11 +202,15 @@ try {
                     if (-not $owner -or (ConvertTo-Json -InputObject $owner -Compress) -cne (ConvertTo-Json -InputObject $entry.owner -Compress) -or (Owner-Live $owner $freshProcesses) -or [DateTimeOffset]$owner.heartbeatAt -ge $cutoff) {
                         $entry.result='keptChanged'; $summary.keptInUse++; Audit $entry; continue
                     }
+                    # An orphan consumer may outlive its lease writer. The observed open-file
+                    # counterexample must stay safe even for an expired registered directory.
+                    try { Hold-DeletionFiles $entry.path $handles }
+                    catch { $entry.result='keptOpenHandles'; $summary.keptInUse++; Audit $entry; continue }
                 } else {
                     if (Owner-Exists $entry.path) { throw '历史目标现在已有归属记录，保留' }
                     if ((Iso $dir.CreationTimeUtc) -cne $entry.createdAt -or (Iso $dir.LastWriteTimeUtc) -cne $entry.lastWriteTime -or (Bytes-NoFollow $entry.path) -ne $entry.bytes) { throw '历史目标在清单之后发生变化，保留' }
                     if ($freshProcesses | Where-Object { $_.CommandLine -and ($_.CommandLine.Contains($entry.path) -or $_.CommandLine.Contains(($entry.path -replace '\\','/'))) }) { throw '历史目标有活动进程引用，保留' }
-                    Hold-LegacyFiles $entry.path $handles
+                    Hold-DeletionFiles $entry.path $handles
                 }
                 $entry.result='deleting'; Audit $entry
                 $null = Safe-Target $entry.path $entry.root
