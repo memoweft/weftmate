@@ -26,7 +26,7 @@ class NightlyWebViewProbeTest {
                 // Gallery fixtures replace business transport. Feed the rendered theme
                 // into the same native controller used by the production bridge.
                 instrumentation.runOnMainSync {
-                    web.evaluateJavascript("document.documentElement.dataset.theme") { value ->
+                    web.evaluateJavascript("document.documentElement?.dataset?.theme") { value ->
                         if (value == "\"dark\"" || value == "\"light\"") {
                             val dark = value == "\"dark\""
                             activity.reportRenderedSystemBars(dark)

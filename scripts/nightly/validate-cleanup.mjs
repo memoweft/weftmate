@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile, mkdir, rm } from 'node:fs/promises';
+import { managedMkdtemp } from '../../tests/helpers/managed-temp.mjs';
 import { join, resolve } from 'node:path';
 import { once } from 'node:events';
 import { option } from '../review-gallery/common.mjs';
-const out = resolve(option('--out')), root = await mkdtemp(join(tmpdir(), 'weftmate-nightly-clean-test-'));
+const out = resolve(option('--out')), root = await managedMkdtemp('weftmate-nightly-clean-test-');
 const children = [];
 async function child(marker) {
   const process = spawn(processExec, ['--input-type=module', '-e', 'console.log("ready");setInterval(()=>{},1000)', marker], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });

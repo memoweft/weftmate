@@ -1,3 +1,4 @@
+import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Real NSIS install + packaged Electron/DSH + range downloads + native rollback; synthetic account only. */
@@ -5,9 +6,9 @@ import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { mkdtemp, mkdir, readFile, writeFile, copyFile, cp, rm, readdir } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, copyFile, cp, rm, readdir } from 'node:fs/promises';
 import { join, resolve, relative } from 'node:path';
-import { tmpdir } from 'node:os';
+
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { existsSync } from 'node:fs';

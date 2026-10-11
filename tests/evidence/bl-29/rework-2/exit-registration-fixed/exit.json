@@ -1,0 +1,9 @@
+[
+  {
+    "version": "head",
+    "method": "tray-exit",
+    "pendingWaitRequests": 1,
+    "ms": 313,
+    "exitCode": 0
+  }
+]

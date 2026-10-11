@@ -2,11 +2,13 @@
 import { execFileSync } from 'node:child_process';
 import { open, rm, writeFile } from 'node:fs/promises';
 import { androidBusyReason } from './android-packages.mjs';
-const adb='D:/Software/MuMuPlayer/nx_main/adb.exe', serial='127.0.0.1:7555';
+import { readMuMuInfo, adbExecutable as adb } from './mumu.mjs';
+let serial;
 const lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock';
 const handle=await open(lock,'wx'); await handle.writeFile('NIGHT-2 legacy package cleanup'); await handle.close();
 const command=(...args)=>execFileSync(adb,['-s',serial,...args],{encoding:'utf8',windowsHide:true,timeout:15000});
 try {
+  serial=readMuMuInfo().serial; execFileSync(adb,['connect',serial],{windowsHide:true,timeout:10000});
   const packages=command('shell','pm','list','packages','weftmate');
   const processes=command('shell','ps','-A','-o','NAME');
   const instrumentation=command('shell','dumpsys','activity');
@@ -21,4 +23,4 @@ try {
   }
   const result={removed,occupancy:'持有 MuMu 锁；设备无 WeftMate 进程 / 活动仪器测试；Windows 无安卓测试命令',at:new Date().toISOString()};
   await writeFile('.local/night-2/legacy-cleanup.json',JSON.stringify(result,null,2)); console.log(JSON.stringify(result));
-} finally { await rm(lock,{force:true}); }
+} finally { if(serial) try {execFileSync(adb,['disconnect',serial],{windowsHide:true,timeout:5000});} catch {} await rm(lock,{force:true}); }

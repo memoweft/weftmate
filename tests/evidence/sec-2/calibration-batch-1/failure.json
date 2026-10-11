@@ -1,0 +1,10 @@
+{
+  "stage": "init",
+  "message": "HEAVY_SLOTS_OCCUPIED: retry after two minutes",
+  "memory": {
+    "available": true,
+    "availableBytes": 27736522752,
+    "limitBytes": 97770655744,
+    "committedBytes": 70034132992
+  }
+}

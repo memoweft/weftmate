@@ -204,7 +204,7 @@ async function testAccountModel(item){const owner=state.owner,epoch=state.authEp
    createMobileBrowserSession:body=>{core.syncMobileIdentity();return core.accessApi('/workspaces/browser/sessions',{method:'POST',protectedWrite:true,body})},
    async mobileAppearance(value) {
      const saved=await core.android.call('settings.appearance', value===undefined?{}:{value});
-     core.appearance.set({theme:saved.value},false);
+     core.appearance.set({...core.appearance.value,theme:saved.value},false);
      return saved;
    },
  };

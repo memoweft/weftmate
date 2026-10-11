@@ -1,0 +1,59 @@
+[
+  {
+    "order": "native-first",
+    "ms": 13,
+    "upserts": [
+      1,
+      1,
+      1
+    ],
+    "live": [
+      0,
+      0,
+      0
+    ],
+    "counts": {
+      "accountWaiters": 0,
+      "accountRevision": 15
+    },
+    "native": 0
+  },
+  {
+    "order": "commit-first",
+    "ms": 12,
+    "upserts": [
+      1,
+      0,
+      1
+    ],
+    "live": [
+      0,
+      0,
+      0
+    ],
+    "counts": {
+      "accountWaiters": 0,
+      "accountRevision": 15
+    },
+    "native": 0
+  },
+  {
+    "order": "same-turn",
+    "ms": 11,
+    "upserts": [
+      1,
+      1,
+      1
+    ],
+    "live": [
+      0,
+      0,
+      0
+    ],
+    "counts": {
+      "accountWaiters": 0,
+      "accountRevision": 15
+    },
+    "native": 0
+  }
+]

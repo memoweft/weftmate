@@ -1,11 +1,12 @@
+import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Explicit isolated Android WebView bridge acceptance against real account-scoped MemoWeft Core. */
 import assert from 'node:assert/strict';
 import { execFile, execFileSync } from 'node:child_process';
 import { promisify } from 'node:util';
-import { existsSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, realpathSync, rmSync } from 'node:fs';
+
 import { join, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
