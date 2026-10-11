@@ -861,6 +861,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     relayStatus: () => hostRelay?.status() ?? { state: 'disabled', baseUrl: null },
     rotateRelayCredential: (requestId) => hostRelay?.rotate(requestId),
     reloadRelayCertificate: () => hostRelay?.reloadCertificate(),
+    reconnectRelay: () => hostRelay?.reconnect(),
     legacyOwnerId() { return rootState.legacyOwnerId; },
     executionOwnerId,
     canUseModelProfile: accountModels.canUseModelProfile,

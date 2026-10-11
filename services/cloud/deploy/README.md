@@ -375,3 +375,12 @@ backup=/root/weftmate-deploy/dep-1-backup-20261011T043145Z
 ```
 
 没有做的：没有用真实宿主重新走一遍绑定 / 中继 / 证书签发全链路（本次没有改这些代码路径以外的配置）；手机离线模式在真实环境里的首次建立，留到本人把日用程序迁到安装版当天的验收里确认。
+
+
+## 应用内反馈代发（R0-4，上线配合，尚未部署）
+
+服务器私有环境文件新增两个环境变量即可开通：`CLOUD_FEEDBACK_REPOSITORY=owner/repo` 为目标仓库，`CLOUD_FEEDBACK_TOKEN` 为服务器专用令牌；不把令牌写进客户端、仓库、证据或日志。两者未配置或仓库名无效时服务仍正常启动，反馈接口明确返回 `FEEDBACK_NOT_CONFIGURED`，使用者可复制预览自行保存；恢复方式是补齐服务器配置后按现有发布流程重启服务。反馈失败不影响聊天。
+
+使用 fine-grained personal access token（细粒度个人访问令牌），只选择目标仓库，只授予 Issues（问题单）写入权限及 GitHub 自动附带的 Metadata（仓库元数据）读取权限；不需要 Contents（仓库内容）或 Actions（自动工作流）权限。依据 [GitHub 创建问题单官方接口说明](https://docs.github.com/en/rest/issues/issues#create-an-issue)。服务使用固定 GitHub 接口，不能由客户端指定仓库、令牌或转发地址。服务器须能访问 `api.github.com:443`，目标仓库须启用问题单；15秒请求超时和 GitHub HTTP（网络协议）失败码会返回给客户端。
+
+没有数据库迁移，没有反馈正文留存；沿现有登录与设备证明、来源校验和限频表，每账户连续最多5次尝试，此后至少等待10分钟，一小时重置。上线由维护者执行，本工作包不部署。Android（安卓）还需允许精确云 `/feedback` POST（提交请求）的原生白名单并发布新壳；Apple（苹果端）需后续原生界面接线。

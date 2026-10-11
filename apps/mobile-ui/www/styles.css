@@ -665,3 +665,14 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 .icon-bell {mask-image:url(icons/bell.svg);-webkit-mask-image:url(icons/bell.svg);}
 .memory-title-row {display:flex;align-items:center;justify-content:space-between;gap:var(--wm-space-12);}
 .memory-title-row .page-title {margin:0;}
+/* System status shares the settings list, with room for an explanation on phones. */
+.mobile-system-toolbar {display:flex;align-items:center;gap:var(--wm-space-12);padding-block:var(--wm-space-8);}
+.mobile-system-toolbar .hint {flex:1;margin:0;}
+.mobile-system-toolbar .icon-button {flex:none;}
+.mobile-system-component,.mobile-system-metric {align-items:flex-start;padding-block:var(--wm-space-16);}
+.mobile-system-component>span:first-child,.mobile-system-metric>span:first-child {min-width:0;overflow-wrap:anywhere;}
+.mobile-system-component small {line-height:var(--wm-line-height-1_6);}
+.mobile-system-label,.mobile-system-number {flex:none;white-space:nowrap;font-size:var(--wm-font-size-13);line-height:var(--wm-line-height-1_6);font-variant-numeric:tabular-nums;}
+.mobile-system-component[data-state="healthy"] .mobile-system-label {color:var(--success);}
+.mobile-system-component[data-state="problem"] .mobile-system-label {color:var(--danger);}
+.mobile-system-component[data-state="disabled"] .mobile-system-label {color:var(--muted);}

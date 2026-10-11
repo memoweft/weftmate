@@ -7,6 +7,7 @@ import { MemoWeftRpc } from './rpc.mjs';
 import { processingRouteIdentity } from './config.mjs';
 import { createMemoryCommandJournal } from './journal.mjs';
 import { createPersonalHealthStore, OBSERVED_PENDING } from '../personal-health/index.mjs';
+import { semanticRecallStatus } from '../system-diagnostics.mjs';
 import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
 
@@ -572,6 +573,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           const recovering = recoveringFormationCount > 0 && entry.routeReady && routeState === 'ready'
             && !backlog.pendingBoundaryCount && !failedFormationCount && !formationIssues.length;
           return { state: ready ? 'ready' : recovering ? 'recovering' : 'degraded',
+            ...(health?.runtime && Object.hasOwn(health.runtime, 'semantic_recall')
+              ? { semanticRecall: semanticRecallStatus(health.runtime.semantic_recall) } : {}),
             version: health?.version ?? health?.runtime?.version ?? await readSourceVersion(),
             worldRevision: Number.isSafeInteger(revision) ? revision : null,
             capabilities: { ...capabilities(entry), inject: entry.routeReady && backlog.pendingBoundaryCount === 0 }, ...backlog,

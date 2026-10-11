@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   setUpdateChannel: channel => ipcRenderer.invoke('wm:desktop:update-channel', channel),
   restartForUpdate: () => ipcRenderer.invoke('wm:desktop:update-restart'),
   openLogs: () => ipcRenderer.invoke('wm:desktop:open-logs'),
+  repairSystem: id => ipcRenderer.invoke('wm:desktop:system-repair', id),
+  exportSystemDiagnostics: () => ipcRenderer.invoke('wm:desktop:system-export'),
   notificationPermission: () => ipcRenderer.invoke('wm:desktop:notification-permission'),
   openNotificationSettings: () => ipcRenderer.invoke('wm:desktop:notification-settings'),
   settings: () => ipcRenderer.invoke('wm:desktop:settings'),

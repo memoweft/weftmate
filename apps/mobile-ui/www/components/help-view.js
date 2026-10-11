@@ -9,6 +9,8 @@ globalThis.WeftHelpView={mount({target,core,kind,back,run,mobile=false}){
   const content=el('div','help-content');
   function empty(text,action,label){content.replaceChildren();const box=el('div','help-empty');box.append(WeftIcons.create('info',32),el('p','',text));if(action)box.append(button(label,action));content.append(box);}
   if(kind==='help'){
+    const feedback=el('div','message-dialog-actions');
+    feedback.append(button('反馈问题',event=>run('feedback',event.currentTarget)),button('我发过的反馈',event=>run('sentFeedback',event.currentTarget)));target.append(feedback);
     target.append(el('p','help-intro','找到一个小技巧，马上试试。'));
     const search=el('input','help-search');search.type='search';search.placeholder='搜索帮助，如“记忆”或“离线”';search.setAttribute('aria-label','搜索帮助');target.append(search,content);
     const count=el('p','help-result-count');count.setAttribute('role','status');target.append(count);
