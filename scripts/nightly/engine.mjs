@@ -182,9 +182,10 @@ finally {
   }
   }
   if (temp) await rm(temp, { recursive: true, force: true }).catch(() => {});
-  // Owner-approved housekeeping: prune synthetic test temp directories older than 48 hours.
+  // Paused by the owner (2026-10-11): report stale synthetic temp directories, delete nothing.
+  // The prefix-only selection cannot prove a directory is ours; deletion returns with owned, leased directories.
   try {
-    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '48', '-Repository', repository, '-Apply'], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
+    const pruned = await run('pwsh', ['-NoProfile', '-File', join(engineScripts, 'prune-temp.ps1'), '-Hours', '48', '-Repository', repository], { cwd: repository, name: 'prune-temp', allowFailure: true, limit: 600000 });
     cleanup.staleTemp = JSON.parse(pruned.output.trim().split(/\r?\n/).pop());
   } catch (error) { cleanup.staleTemp = { error: error.message }; }
   phases.push({ name: 'cleanup', status: cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.staleTemp?.failed || cleanup.android?.error || cleanup.android?.packageRemoved === false || cleanup.android?.reverseRemoved === false || cleanup.android?.forwardRemoved === false || cleanup.apple?.bootedOwnedRemaining?.length ? 'failed' : 'passed', reason: cleanup.windows?.error || cleanup.staleTemp?.error || cleanup.android?.error || '', seconds: (Date.now()-cleanupStarted)/1000 });
