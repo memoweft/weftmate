@@ -19,6 +19,7 @@ import { createLatestFileWriter } from './latest-file-writer.mjs';
  */
 import { createHostDiagnostics } from './host-diagnostics.mjs';
 import { createHostLog, redactSecretText } from './host-log.mjs';
+import { readLocalServiceKey } from './local-service-key.mjs';
 import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, crashReporter } from 'electron';
@@ -48,8 +49,7 @@ import { appendFileSync, writeFileSync, statSync, mkdirSync, readFileSync, exist
 import { tmpdir } from 'node:os';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { loadPhoneExecutionConfig } from './phone-execution-config.mjs';
-import { execFile } from 'node:child_process';
-import { isDeepStrictEqual, promisify } from 'node:util';
+import { isDeepStrictEqual } from 'node:util';
 import {
   createLocalDataWipeMarker,
   localDataWipeLaunchRequest,
@@ -385,9 +385,9 @@ let exclusiveMainQueue = null;
 // scan is a safety boundary: until it has completed, profile mutation must not
 // be allowed to orphan a session merely because the gateway was unavailable.
 let sessionReferenceScan = { state: 'pending', error: null };
-const execFileAsync = promisify(execFile);
 
 function stageOneFailure(error) {
+  if (['SYSTEM_QUERY_TIMEOUT', 'SYSTEM_QUERY_FAILED', 'CREDENTIAL_STORAGE_NOT_READY'].includes(error?.code)) return { ok: false, error: error.message };
   if (error?.code === 'approval-not-pending') {
     return { ok: false, error: '该工具许可已经失效，请重新发起这项操作。' };
   }
@@ -456,22 +456,7 @@ async function validateStageOneModel({ baseUrl, apiKey, model }) {
  * 普通配置、日志或错误对象。调用方不得保留返回值。
  */
 async function readCurrentLocalServiceKey() {
-  const script = [
-    "$ErrorActionPreference = 'Stop'",
-    "$items = @(Get-CimInstance Win32_Process -Filter \"Name = 'llama-server.exe'\" | Where-Object { $_.CommandLine -match '--api[-_]key' })",
-    'if ($items.Count -ne 1) { exit 41 }',
-    "$match = [regex]::Match($items[0].CommandLine, '(?i)--api[-_]key\\s+(?:\\\"(?<key>[^\\\"]+)\\\"|(?<key>[^\\s]+))')",
-    'if (!$match.Success) { exit 42 }',
-    '[Console]::Out.Write($match.Groups[\'key\'].Value)',
-  ].join('; ');
-  try {
-    const { stdout } = await execFileAsync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { windowsHide: true, maxBuffer: 8 * 1024 });
-    const apiKey = String(stdout).trim();
-    if (!apiKey || apiKey.length > 4096) throw new Error('local service credential is unavailable');
-    return apiKey;
-  } catch {
-    throw new Error('local service credential is unavailable');
-  }
+  return readLocalServiceKey({ onFailure: error => logCrash('local-service-key', error) });
 }
 
 async function activateStageOneConfig(clean) {
@@ -1397,9 +1382,10 @@ async function bootstrap() {
   // 先加载 safeStorage vault；现有密钥只在 DSH 受管 child IPC 按 ref 请求时解密。
   try {
     configStoreMod = await import('./config-store.ts');
+    await configStoreMod.initializeCredentialStorage(error => logCrash('credential-storage', error));
     console.log('[weftmate] ✓ 模型凭据保险库已就绪');
   } catch (e) {
-    console.error('[weftmate] 读模型配置失败(当作未配,官方 Models 页可配):', e && e.message ? e.message : e);
+    logCrash('credential-storage', e);
   }
 
   // Stage 4A development seam: an operator may seed the AI-Game capability
@@ -1691,6 +1677,7 @@ async function bootstrap() {
     }
     if (operation === 'set') {
       if (typeof value !== 'string' || value.length === 0 || value.length > 4096) throw new Error('invalid credential value');
+      await configStoreMod.initializeCredentialStorage(error => logCrash('credential-storage', error));
       configStoreMod.saveCredential(ref, value);
       // If a legacy profile-id entry remains, the ref is now authoritative.
       const profile = profileForCredentialRef(ref);
@@ -3170,13 +3157,13 @@ async function bootstrap() {
           typeof apiKey !== 'string' || !apiKey || apiKey.length > 4096) {
         throw Object.assign(new Error('invalid staged model secret'), { code: 'INVALID_REQUEST' });
       }
-      return enqueueRouteMutation(() => {
-        configStoreMod.preflightVault();
+      return enqueueRouteMutation(async () => {
+        await configStoreMod.initializeCredentialStorage(error => logCrash('credential-storage', error));
         const existing = configStoreMod.getCredential(stageRef);
         if (existing && existing !== apiKey) {
           throw Object.assign(new Error('staged secret conflict'), { code: 'REQUEST_CONFLICT' });
         }
-        if (!existing) configStoreMod.saveCredential(stageRef, apiKey);
+        if (!existing) configStoreMod.saveSubmittedCredential(stageRef, apiKey);
       });
     },
     async apply({ target, stageRef, previousProfileId }) {
@@ -3387,6 +3374,8 @@ async function bootstrap() {
         } });
         const { createPersonalAccessService } = await import('./personal-access/index.mjs');
         const { relayFromEnvironment } = await import('./personal-relay/index.mjs');
+        const relayConfig = relayFromEnvironment();
+        if (relayConfig) relayConfig.diagnostic = error => logCrash('relay-command', error);
         const { cloudIdentityFromEnvironment } = await import('./personal-cloud/index.mjs');
         personalAccessService = await createPersonalAccessService({
           libraryNativeActions: async (action, file) => {
@@ -3395,7 +3384,7 @@ async function bootstrap() {
           },
           root: join(userDataDir, 'personal-access'), port: accessPort, backend: accessBackend,
           cloudIdentity: cloudIdentityFromEnvironment(),
-          relay: relayFromEnvironment(),
+          relay: relayConfig,
           verifyToolResult: (input) => accessBackend.verifyToolResult(input),
           uiHandler: servePersonalAccessUi,
           androidPackagePath,

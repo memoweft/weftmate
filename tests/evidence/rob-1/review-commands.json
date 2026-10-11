@@ -1,0 +1,65 @@
+{
+  "report": [
+    {
+      "repeat": 0,
+      "code": "EXTERNAL_COMMAND_TIMEOUT",
+      "elapsedMs": 2332,
+      "parentAlive": false,
+      "childCreated": true,
+      "childAlive": false
+    },
+    {
+      "cleanup": {
+        "available": true,
+        "failed": 0,
+        "cleaned": 0
+      }
+    },
+    {
+      "repeat": 1,
+      "code": "EXTERNAL_COMMAND_TIMEOUT",
+      "elapsedMs": 2315,
+      "parentAlive": false,
+      "childCreated": true,
+      "childAlive": false
+    },
+    {
+      "cleanup": {
+        "available": true,
+        "failed": 0,
+        "cleaned": 0
+      }
+    },
+    {
+      "repeat": 2,
+      "code": "EXTERNAL_COMMAND_TIMEOUT",
+      "elapsedMs": 2376,
+      "parentAlive": false,
+      "childCreated": true,
+      "childAlive": false
+    },
+    {
+      "cleanup": {
+        "available": true,
+        "failed": 0,
+        "cleaned": 0
+      }
+    },
+    {
+      "delayMs": 3000,
+      "code": "OK",
+      "elapsedMs": 3002
+    },
+    {
+      "delayMs": 6000,
+      "code": "OK",
+      "elapsedMs": 6000
+    },
+    {
+      "delayMs": 8000,
+      "code": "OK",
+      "elapsedMs": 8002
+    }
+  ],
+  "cleaned": 0
+}

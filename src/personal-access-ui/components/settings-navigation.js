@@ -136,7 +136,10 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         form.querySelector('.actions').prepend(test); form.classList.add('model-editor-form');
         ui.byId('account-model-cancel').hidden = false; ui.byId('account-model-cancel').textContent = '取消';
         const checks = node('div', 'model-check-result'); checks.id = 'account-model-draft-result'; checks.setAttribute('aria-live', 'polite');
-        editor.append(editorHead, form, checks); document.body.append(editor);
+        const actions = form.querySelector('.actions'), editorBody = node('div', 'model-editor-body');
+        for (const child of [...form.children]) if (child !== actions) editorBody.append(child);
+        editorBody.append(checks); actions.classList.add('dialog-footer'); form.append(editorBody, actions);
+        editor.append(editorHead, form); document.body.append(editor);
         editor.addEventListener('close', () => { ui.byId('account-model-key').value = ''; core.state.accountModelEditing = null; });
         const tools = account.querySelector('.tool-settings');
         for (const section of [...tools.querySelectorAll('section')]) move('resources', section);

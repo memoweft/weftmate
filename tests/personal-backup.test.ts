@@ -4,8 +4,9 @@ import { mkdtemp, mkdir, writeFile, readFile, rm, readdir } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { gunzipSync, zstdCompressSync, zstdDecompressSync } from 'node:zlib';
-import { snapshot, verify, retainedBackups, sqliteSnapshot } from '../src/personal-backup/archive.mjs';
+import { gunzipSync, gzipSync, zstdCompressSync, zstdDecompressSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
+import { snapshot, verify, listBackups, retainedBackups, sqliteSnapshot } from '../src/personal-backup/archive.mjs';
 import { beginRestore, rollbackRestore, commitRestore } from '../src/personal-backup/restore.mjs';
 import { createBackupManager } from '../src/personal-backup/index.mjs';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
@@ -17,6 +18,34 @@ import { once } from 'node:events';
 import { enterProfileWrite } from '../src/personal-backup/write-barrier.mjs';
 import { durableWrite } from '../src/personal-access/store.mjs';
 import { rehomeSessions } from '../src/personal-backup/rehome.mjs';
+
+const storageAttachments = ['weftmate-storage-key.json','weftmate-storage-key.json.previous-synthetic',
+  'weftmate-model.enc.unreadable-synthetic','weftmate-model.enc.recovery.json',
+  'weftmate-model.enc.replaced-synthetic','weftmate-model.enc.123.synthetic.tmp',
+  'conversations/synthetic/model.enc.previous-synthetic','dsh-home/weftmate-stage2-model-routes.recovery.json'];
+test('ROB-1b personal snapshot excludes all encrypted storage attachments including residual recovery material', async t => {
+  const f=await fixture(t);
+  for(const name of storageAttachments) {await mkdir(path.dirname(path.join(f.root,name)),{recursive:true});await writeFile(path.join(f.root,name),'synthetic opaque storage material');}
+  const row=await snapshot(f), manifest=await verify(path.join(f.directory,row.id));
+  for(const name of storageAttachments) assert.ok(!manifest.files.some(file=>file.path===name),name);
+});
+test('ROB-1b restoring a valid old archive hashes but never installs its encrypted storage attachments', async t => {
+  const f=await fixture(t), row=await snapshot(f), file=path.join(f.directory,row.id);
+  const raw=gunzipSync(await readFile(file)), first=raw.indexOf(10), end=raw.indexOf(10,first+1);
+  const manifest=JSON.parse(raw.subarray(first+1,end).toString()), opaque=Buffer.from('synthetic obsolete protected material');
+  const sha=value=>createHash('sha256').update(value).digest('hex');
+  for(const name of storageAttachments) manifest.files.push({path:name,size:opaque.length,sha256:sha(opaque)});
+  const header=JSON.stringify(manifest);
+  await writeFile(file,gzipSync(Buffer.concat([Buffer.from(`WMB1 ${sha(header)}\n${header}\n`),raw.subarray(end+1),...storageAttachments.map(()=>opaque)])));
+  assert.equal((await verify(file)).files.length,manifest.files.length,'manager preflight accepts the intact old archive');
+  assert.equal((await listBackups(f.directory)).find(item=>item.id===row.id)?.verification,'valid','old archives remain selectable for restore');
+  await writeFile(path.join(f.root,'weftmate-model.enc'),'synthetic target ciphertext');
+  await writeFile(path.join(f.root,'Local State'),'synthetic target Chromium state');
+  await beginRestore({...f,file}); await commitRestore(f);
+  for(const name of storageAttachments) await assert.rejects(readFile(path.join(f.root,name)),{code:'ENOENT'});
+  assert.equal(await readFile(path.join(f.root,'weftmate-model.enc'),'utf8'),'synthetic target ciphertext');
+  assert.equal(await readFile(path.join(f.root,'Local State'),'utf8'),'synthetic target Chromium state');
+});
 
 async function fixture(t) {
   const base = await mkdtemp(path.join(tmpdir(), 'weftmate-backup-')), root = path.join(base, 'profile'), directory = path.join(base, 'Backups');
