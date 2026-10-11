@@ -20,7 +20,21 @@
     "Initial shutdown fixture attached its census after native startup and did not wait for hydration; corrected preparation and observation of real requests.",
     "First full vendor run failed temp cleanup with three owned Electron remnants, masking the test summary. Exactly those three were stopped; residual synthetic files were privately archived. Same canonical-scope approval test passed under its original 25-second budget. Complete vendor retry passed and cleaned its scope."
   ],
-  "extraManuallyCleanedProcesses": 3,
+  "extraManuallyCleanedProcesses": 28,
+  "failedGallerySupervisedCleanupProcesses": 9,
+  "followup": {
+    "windowsFreshCloudDependencyInstall": {"exitCode": 0, "fixedCommandArgumentsUnchanged": true},
+    "windowsFailedCasesRecheck": {"passed": 2, "failed": 0, "skipped": 0},
+    "ciOutputAndBaselineRecheck": {"passed": 5, "failed": 0, "skipped": 0},
+    "gallery": {"freshDesktopCaptures": 42, "freshMobileWebCaptures": 42, "failed": 0, "viewportThemeVerificationCombinations": 4, "textAndMetadataScan": "passed"},
+    "galleryCleanupFocused": {"normalElectronExits": 6, "exitCodes": [0, 0, 0, 0, 0, 0], "forcedSignals": 0, "pageErrors": 0},
+    "galleryEvidenceTests": {"passed": 4, "failed": 0},
+    "nightlyRegressionTests": {"passed": 18, "failed": 0},
+    "typecheck": "passed",
+    "publicHygiene": {"textFilesAtCheck": 7862, "localIdentityHits": 0},
+    "ciProgress": "Live output is forwarded without changing complete collection, selection, budgets, cleanup or final counts; final checks are recorded in PR #223 and auth-1.result.md.",
+    "galleryCleanup": "Unload completed capture documents before production desktop cleanup and normal Playwright quit. Native OS notification delivery is isolated only in the screenshot entry; application activity and dedicated notification/shutdown tests stay unchanged."
+  },
   "productionCodeChangesInThisFix": 0,
   "realModelRequests": 0,
   "realEmailDeliveries": 0,
