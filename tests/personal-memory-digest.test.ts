@@ -4,6 +4,7 @@ import { createMemoryDigest,digestWindow,digestLocalInstant,projectDigest,memory
 import { notificationDefaults,validateNotificationSettings } from '../src/personal-access/notification-policy.mjs';
 import { handlePersonalMemoryHttp } from '../src/personal-memory/http.mjs';
 import { memoryItemsFormedInWindow } from '../src/personal-memory/world-projection.mjs';
+import { createMemoryHttpHandler } from '../src/personal-access/memory-http.mjs';
 const at=Date.parse('2026-10-11T13:00:00Z');
 const row=(id:string,created='2026-10-09T00:00:00Z',text=`合成记忆 ${id}`)=>({item_id:id,object_kind:'cognition',created_at:created,updated_at:created,current_state:'current',value:{content:text},lifecycle:{}});
 function fixture(rows:any[]=[row('new')]){
@@ -97,4 +98,9 @@ test('a deletion during a snapshot invalidates it before it can restore forgotte
   const f=fixture();await f.refresh();const service=createMemoryDigest(f.context),item:any=Object.values(f.account.activity.items)[0],query=f.context.memoryManager.query;let raced=false;
   f.context.memoryManager.query=async(...args:any[])=>{const result=await query(...args);if(args[2].operation==='revision'&&!raced){raced=true;recordDigestMutation(f.account,{requestId:'racing-delete',operation:'delete',keys:['cognition:new'],at:new Date(at).toISOString()});service.invalidate('owner');}return result;};
   await service.refresh('owner',f.status());assert.equal(item.memoryDigest.added[0].status,'forgotten');assert.equal(item.memoryDigest.added[0].text,'');
+});
+test('digest bookkeeping preserves the existing invalid-request response for a null command body',async()=>{
+  const url=new URL('http://synthetic/personal/v1/memory/items/cognition/new/correct');
+  const context:any={authenticate:()=>({ownerId:'owner',deviceId:'device'}),readJson:async()=>null,memoryManager:{},timestamp:()=>at};
+  await assert.rejects(createMemoryHttpHandler(context).handleMemoryHttp({method:'POST'},{},url,url.pathname,'owner','device'),{code:'INVALID_REQUEST',status:400});
 });

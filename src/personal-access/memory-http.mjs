@@ -32,11 +32,11 @@ export function createMemoryHttpHandler(context) {
       if(request.method==='DELETE')try{const preview=await context.memoryManager.query(ownerId,'preview_forget',{target_kind:target.kind,target_id:decodeURIComponent(target.id)});
         if(Array.isArray(preview.items))keys.push(...preview.items.map(row=>`${row.object_kind}:${row.item_id}`));
       }catch{/* The established command path decides availability. */}
-      pending={requestId:body.requestId,operation:request.method==='DELETE'?'delete':'correct',keys,at:new Date(context.timestamp()).toISOString()};
+      pending={requestId:body?.requestId,operation:request.method==='DELETE'?'delete':'correct',keys,at:new Date(context.timestamp()).toISOString()};
     }
     let result;
     try{result = await handlePersonalMemoryHttp({ manager: context.memoryManager,
-      ownerId, request, pathname, url, readJson:body?async()=>body:context.readJson });}
+      ownerId, request, pathname, url, readJson:pending?async()=>body:context.readJson });}
     finally{if(pending&&typeof pending.requestId==='string'&&/^[A-Za-z0-9_.:-]{1,128}$/.test(pending.requestId))await context.serial(()=>context.mutate(ownerId,next=>{
       const state=memoryDigestState(next);state.pending??={};state.pending[pending.requestId]??=pending;
     }));}
