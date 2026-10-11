@@ -6,6 +6,8 @@ import { readFileSync, appendFileSync, realpathSync, lstatSync } from 'node:fs';
 import { resolve, relative, isAbsolute, join } from 'node:path';
 export function inside(root, path) {
   if (typeof path !== 'string' || !path) return false;
+  // A drive-letter path is relative on POSIX; it still names a place outside the scratch root.
+  if (/^[A-Za-z]:/.test(path) && !isAbsolute(path)) return false;
   const full = resolve(root, path), rel = relative(root, full);
   if (rel.startsWith('..') || isAbsolute(rel)) return false;
   let at = root;
