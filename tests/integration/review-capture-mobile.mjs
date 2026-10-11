@@ -31,7 +31,7 @@ try { android = device ? await startAndroid(out) : null; }
 catch (error) { server.closeAllConnections(); await new Promise(done=>server.close(done)); throw error; }
 const browser = android?.browser || await chromium.launch({ headless: true });
 let currentBridge;
-const themeErrors = [];
+const themeErrors = [], captureFailures = [];
 if (android) {
   await android.page.exposeFunction('__reviewNative', async payload => {
     try { return { id: payload.id, ok: true, result: await currentBridge(payload) }; }
@@ -81,6 +81,7 @@ try {
             await writeFile(join(out,`review-android-${scene}-${theme}.json`),JSON.stringify(record,null,2)+'\n');
           }
         }
+        if(record.status === 'failed') captureFailures.push({scene,theme,reason:record.reason});
         return record;
       };
       // LG-1b account-first login; authentication below remains independent.
@@ -157,5 +158,6 @@ try {
     } finally { if (!android) await context.close(); await fixture.close(); await candidate.close();await mainFixture?.close();await suggestionFixture?.close();await renderingFixture?.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});if(suggestionFixture)await rm(suggestionFixture.root,{recursive:true,force:true}); }
   }
   if(themeErrors.length) throw Error('Mobile renderer failed: ' + JSON.stringify(themeErrors));
+  if(captureFailures.length) throw Error('Mobile scenes failed: ' + JSON.stringify(captureFailures));
 } catch (error) { console.error('Primary mobile capture failure:', error.stack, error.cause?.stack || ''); throw error; }
 finally { try { if (android) await android.close(); else await browser.close(); } finally { server.closeAllConnections(); await new Promise(done => server.close(done)); } }
