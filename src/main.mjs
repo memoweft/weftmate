@@ -17,10 +17,11 @@ import { createLatestFileWriter } from './latest-file-writer.mjs';
  *
  * v2 的 SDK 聊天/桥/旧 UI 等主链路已随 R4 退役删除（见 docs/ARCHITECTURE.md §4 退役清单）。
  */
-import { createHostLog } from './host-log.mjs';
+import { createHostDiagnostics } from './host-diagnostics.mjs';
+import { createHostLog, redactSecretText } from './host-log.mjs';
 import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, crashReporter } from 'electron';
 import packageInfo from '../package.json' with { type: 'json' };
 import { createBackupManager } from './personal-backup/index.mjs';
 import { windowIcon, trayIcon } from './app-icons.mjs';
@@ -98,6 +99,19 @@ import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storag
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
 const desktopControlAppData = packageInfo.desktopIdentity ? join(app.getPath('appData'), packageInfo.desktopIdentity) : app.getPath('appData');
+// Argument/configuration failures precede the instance lock. Record them only in
+// an already validated profile, without replacing a possibly running host's marker.
+function recordEarlyStartupFailure(source, error, exitCode) {
+  try {
+    const candidate = process.argv.find(arg => arg.startsWith('--user-data-dir='))?.slice('--user-data-dir='.length)
+      || process.env.WEFTMATE_USER_DATA?.trim();
+    const root = validatePersonalHostProfile(candidate), runId = randomUUID();
+    const log = createHostLog(root, { appRoot: app.getAppPath() });
+    log.write('host.start', { runId, version: app.getVersion(), mode: 'startup-validation', pid: process.pid });
+    log.failure(source, error, { runId });
+    log.write('host.exit', { runId, reason: 'startup-failure', exitCode, normal: false, cleanupComplete: false, durationMs: 0 });
+  } catch { /* No validated destination, or an unavailable disk: keep original exit behavior. */ }
+}
 if (process.argv.includes('--uninstall-cleanup')) {
   try {
     if (!app.isPackaged) throw new Error('UNINSTALL_REQUIRES_INSTALLED_PROGRAM');
@@ -107,7 +121,9 @@ if (process.argv.includes('--uninstall-cleanup')) {
     app.exit(0);
   } catch { app.exit(1); }
 }
-const installedDesktopConfig = applyDesktopConfig({ appData: desktopControlAppData, packaged: app.isPackaged });
+let installedDesktopConfig;
+try { installedDesktopConfig = applyDesktopConfig({ appData: desktopControlAppData, packaged: app.isPackaged }); }
+catch (error) { recordEarlyStartupFailure('desktop-config', error, 1); throw error; }
 if (app.isPackaged && process.env.WEFTMATE_RELAY_ENABLED === 'true') {
   process.env.WEFTMATE_FRPC_FILE = join(process.resourcesPath, 'relay', 'frpc.exe');
   process.env.WEFTMATE_RELAY_CA_FILE = join(process.resourcesPath, 'relay', 'transport-ca.pem');
@@ -123,15 +139,16 @@ const headless = process.argv.includes('--headless');
 const desktopRequested = personalHostMode && !headless;
 if (personalHostMode && process.env.WEFTMATE_MEMOWEFT_ENABLED === '1') {
   console.error('[weftmate] personal-host refused: account-scoped memory is not connected');
+  recordEarlyStartupFailure('startup-memory', new Error('Account-scoped memory is not connected'), 2);
   process.exit(2);
 }
 let accessPort = null;
 try { accessPort = personalAccessPort(process.argv, personalHostMode); }
-catch (error) { console.error('[weftmate] personal access refused:', error.message); process.exit(2); }
+catch (error) { console.error('[weftmate] personal access refused:', error.message); recordEarlyStartupFailure('startup-access', error, 2); process.exit(2); }
 if (desktopRequested && accessPort === null) accessPort = 0;
 let personalPublicOrigin = null;
 try { personalPublicOrigin = parsePersonalPublicOrigin(process.argv, personalHostMode, accessPort); }
-catch (error) { console.error('[weftmate] public access refused:', error.message); process.exit(2); }
+catch (error) { console.error('[weftmate] public access refused:', error.message); recordEarlyStartupFailure('startup-public-access', error, 2); process.exit(2); }
 const androidPackageArgs = process.argv.filter((arg) => arg.startsWith('--android-package-path'));
 let androidPackagePath = null;
 if (androidPackageArgs.length) {
@@ -140,6 +157,7 @@ if (androidPackageArgs.length) {
   if (!personalHostMode || accessPort === null || !isAbsolute(value) ||
       basename(value).toLowerCase() !== 'android-candidate.apk') {
     console.error('[weftmate] Android package path refused');
+    recordEarlyStartupFailure('startup-android-package', new Error('Invalid package configuration'), 2);
     process.exit(2);
   }
   androidPackagePath = resolve(value);
@@ -151,6 +169,7 @@ if (mobileUiArgs.length) {
     ? mobileUiArgs[0].slice('--mobile-ui-dir='.length) : '';
   if (!personalHostMode || accessPort === null || !isAbsolute(value)) {
     console.error('[weftmate] mobile UI release directory refused');
+    recordEarlyStartupFailure('startup-mobile-ui', new Error('Invalid UI configuration'), 2);
     process.exit(2);
   }
   mobileUiDir = resolve(value);
@@ -162,6 +181,7 @@ if (memoryArgs.length) {
     ? memoryArgs[0].slice('--personal-memory-config='.length) : '';
   if (!personalHostMode || accessPort === null || !isAbsolute(value)) {
     console.error('[weftmate] account memory configuration refused');
+    recordEarlyStartupFailure('startup-memory-config', new Error('Invalid memory configuration'), 2);
     process.exit(2);
   }
   personalMemoryConfigPath = resolve(value);
@@ -181,6 +201,7 @@ if (personalHostMode) {
   }
   catch (error) {
     console.error('[weftmate] personal-host refused:', error.message);
+    recordEarlyStartupFailure('startup-profile', error, 2);
     process.exit(2);
   }
 }
@@ -210,6 +231,7 @@ if (wipeLaunch) {
     console.log('[weftmate] ✓ 已删除全部 WeftMate 本机数据，开始全新初始化');
   } catch (error) {
     console.error('[weftmate] ✗ 删除全部本机数据失败:', error && error.message ? error.message : error);
+    recordEarlyStartupFailure('startup-data-wipe', error, 1);
     process.exit(1);
   }
 }
@@ -220,19 +242,23 @@ Menu.setApplicationMenu(null);
 if (process.platform === 'win32') app.setAppUserModelId(packageInfo.desktopAppId ?? packageInfo.build?.appId ?? 'com.memoweft.weftmate');
 
 // ── B4·崩溃/错误上报最小闭环（v2 遗产）──
-function redactSecretText(value) {
-  return String(value ?? '')
-    .replace(/(authorization\s*[:=]\s*bearer\s+)[^\s,;"'}]+/gi, '$1[REDACTED]')
-    .replace(/((?:api[_-]?key|token|secret|password)\s*[=:]\s*["']?)[^\s,;"'}]+/gi, '$1[REDACTED]');
+const hostLog = createHostDiagnostics(app.getPath('userData'), { version: app.getVersion(), appRoot: app.getAppPath() });
+let hostExitReason = 'unknown';
+let shutdownStep = null;
+let shutdownComplete = false;
+let shutdownStartedAt = null;
+let shutdownFailed = false;
+function nextShutdownStep(name = null) {
+  if (shutdownStep) hostLog.step(shutdownStep.name, shutdownStep.failed ? 'failed' : 'completed', Math.round(performance.now() - shutdownStep.at));
+  shutdownStep = name ? { name, at: performance.now(), failed: false } : null;
 }
-
-const hostLog = createHostLog(app.getPath('userData'));
-hostLog.write('host.start', { mode: personalHostMode ? 'personal-host' : 'desktop', pid: process.pid,
-  version: app.getVersion(), headless: process.argv.includes('--headless'),
-  memoryEnabled: process.argv.some(arg => arg.startsWith('--personal-memory-config=')),
-  localModelConfigured: process.argv.some(arg => arg.startsWith('--local-model-config=')) });
 function logCrash(kind, err) {
-  hostLog.write('host.failure', { source: kind, code: /^[A-Z_]{2,64}$/.test(err?.code) ? err.code : 'HOST_ERROR' });
+  if (shutdownStep && String(kind).startsWith('shutdown')) { shutdownStep.failed = true; shutdownFailed = true; }
+  const source = { 'Harness 启动失败': 'harness-startup', '主进程启动失败': 'main-startup',
+    '旧模型迁移失败': 'model-migration', '模型路由恢复失败': 'model-route-recovery',
+    '旧模型兼容归属回填失败': 'model-owner-backfill', 'Personal host 启动失败': 'personal-host-startup',
+    'Harness 前端加载失败': 'harness-window-startup' }[kind] ?? kind;
+  hostLog.failure(source, err);
 }
 process.on('uncaughtException', (err) => { logCrash('uncaughtException', err); });
 process.on('unhandledRejection', (reason) => { logCrash('unhandledRejection', reason); });
@@ -241,11 +267,44 @@ process.on('unhandledRejection', (reason) => { logCrash('unhandledRejection', re
 
 // 单实例锁:桌面常驻防开多份进程抢同一个数据目录。抢不到 = 已有一个在跑,退出自己,让那个把窗口唤前台。
 if (!app.requestSingleInstanceLock()) {
+  // A second instance must not overwrite the active instance's durable marker.
+  hostLog.write('host.start', { mode: 'single-instance', pid: process.pid });
+  hostLog.write('host.exit', { reason: 'single-instance', exitCode: personalHostMode && headless ? 2 : 0,
+    normal: !(personalHostMode && headless), durationMs: 0, cleanupComplete: true });
   if (personalHostMode && headless) {
     console.error('[weftmate] personal-host refused: this userData already has a WeftMate instance');
     app.exit(2);
   } else app.quit();
 } else {
+  hostLog.begin({ mode: personalHostMode ? 'personal-host' : 'desktop', pid: process.pid,
+    version: app.getVersion(), headless, memoryEnabled: !!personalMemoryConfigPath,
+    localModelConfigured: process.argv.some(arg => arg.startsWith('--local-model-config=')) });
+  try {
+    mkdirSync(hostLog.crashDirectory, { recursive: true });
+    app.setPath('crashDumps', hostLog.crashDirectory);
+    crashReporter.start({ uploadToServer: false, extra: { runId: hostLog.runId } });
+    hostLog.write('host.crash_reporter', { configured: true });
+  } catch (error) { logCrash('crash-reporter', error); }
+  app.on('web-contents-created', (_event, contents) => {
+    contents.on('render-process-gone', (_gone, details) => {
+      const action = details.reason === 'clean-exit' ? 'shutdown-confirmed'
+        : contents === win?.webContents && desktopUpdates?.store?.pointer?.trial ? 'ui-rollback-requested' : 'no-recovery-requested';
+      hostLog.write('renderer.process_gone', { reason: details.reason, exitCode: details.exitCode, action });
+      if (details.reason !== 'clean-exit') contents.once('did-start-loading', () => {
+        hostLog.write('renderer.recovery', { action: 'window-reloaded' });
+      });
+    });
+  });
+  app.on('browser-window-created', (_event, window) => {
+    window.on('session-end', () => {
+      hostExitReason = 'system-shutdown';
+      hostLog.write('host.session_end', { reason: hostExitReason });
+    });
+  });
+  app.on('child-process-gone', (_event, details) => {
+    hostLog.write('child.process_gone', { reason: details.reason, exitCode: details.exitCode,
+      source: ['GPU', 'Utility', 'Zygote', 'Sandbox helper', 'Pepper Plugin', 'Pepper Plugin Broker'].includes(details.type) ? details.type.replaceAll(' ', '-') : 'auxiliary', action: 'electron-managed' });
+  });
   // 第二个实例被拉起(用户又点了图标):把已在跑的窗口唤到前台。
   app.on('second-instance', () => { if (!headless) showWindow(); });
   console.log(`[weftmate] startup mode=${personalHostMode ? 'personal-host' : 'desktop'}`);
@@ -463,6 +522,7 @@ function requestFatalStartupExit(kind, error, view) {
   if (startupFailureReported) return;
   startupFailureReported = true;
   startupExitCode = 1;
+  hostExitReason = 'startup-failure';
   logCrash(kind, error);
   console.error(`[weftmate] ✗ ${kind}:`, redactSecretText(error && error.message ? error.message : error));
   if (!personalHostMode) {
@@ -493,6 +553,7 @@ process.on('message', (message) => {
     || !process.connected || !message || typeof message !== 'object') return;
   if (message.type === 'weftmate:quit') {
     console.log('[weftmate] 收到 dogfood 退出请求');
+    hostExitReason = 'user-quit';
     isQuitting = true;
     app.quit();
     return;
@@ -1213,6 +1274,7 @@ async function bootstrap() {
   if (personalHostMode) await ensurePrivateDirectory(userDataDir);
   if (personalHostMode) personalBackupManager = await createBackupManager({
     root: userDataDir, appVersion: app.getVersion(),
+    onShutdownFailure: error => logCrash('shutdown-backup', error),
     isIdle: async () => !isQuitting && !personalAccessService?.hasUnissuedDshCommands?.() &&
       (await webRuntime?.personalModelQueueIdle?.())?.idle === true,
     requestRestart: () => { backupRestartRequested = true; setTimeout(() => app.quit(), 250); },
@@ -1842,6 +1904,7 @@ async function bootstrap() {
         turn: request.turn, step: request.step, receiptId: request.receiptId,
         messageHash: request.messageHash });
     } : undefined,
+    onProcessEvent: event => hostLog.write('runtime.process_gone', event),
     log: (line) => { hostLog.write('runtime.event', { source: 'dsh', code: /error|failed|失败/i.test(line) ? 'RUNTIME_FAILURE' : 'RUNTIME_STATE' }); console.log(`[weftmate] ${redactSecretText(line)}`); },
   });
   async function replaceSharedRuntime() {
@@ -3309,6 +3372,7 @@ async function bootstrap() {
       });
       if (accessPort !== null) {
         desktopUpdates = await createDesktopUpdates({ getWindow: () => win, mobileUiDir, desktopConfig: installedDesktopConfig,
+          onAppInstall: () => { hostExitReason = 'update-restart'; },
           beforeAppInstall: async () => {
             if (personalBackupManager) await personalBackupManager.request('before-upgrade');
             if (app.isPackaged) await prepareAppRollback({ configFile: installedDesktopConfig.file, nextVersion: updateState().version, appData: desktopControlAppData,
@@ -3351,7 +3415,7 @@ async function bootstrap() {
               const memory = personalMemoryManager ? await personalMemoryManager.status(ownerId)
                 : { state: 'disabled', lastFailureCode: null };
               hostLog.write('memory.bridge', { phase: memory.state, code: memory.lastFailureCode ?? memory.reasonCode ?? undefined, configured: !!personalMemoryManager });
-              return { model,
+              return { model, runRecord: hostLog.status(),
                 host: { state: runtimeOrigin ? 'ready' : 'unavailable', version: appVersion,
                   lastError: sessionReferenceScan.state === 'failed' ? 'REFERENCE_SCAN_FAILED' : null, canRestart: true },
                 memory: { state: memory.state, version: memory.version ?? null,
@@ -3483,7 +3547,10 @@ async function installPreviewUpdateFromTray() {
     if (desktopUpdates) installed = await desktopUpdates.restart();
     else {
       if (personalBackupManager && updateState().status === 'downloaded') await personalBackupManager.request('before-upgrade');
+      const previousReason = hostExitReason;
+      hostExitReason = 'update-restart';
       installed = quitAndInstall();
+      if (!installed) hostExitReason = previousReason;
     }
   } catch (error) { logCrash('backup-before-upgrade', error); }
   if (!installed) {
@@ -3534,7 +3601,7 @@ function refreshTrayMenu() {
       void toggleDesktopPet(latest).catch((error) => logCrash('desktop-pet-tray', error));
     } },
     { type: 'separator' },
-    { label: '退出', click: () => { isQuitting = true; app.quit(); } },
+    { label: '退出', click: () => { hostExitReason = 'user-quit'; isQuitting = true; app.quit(); } },
   ]));
 }
 
@@ -3544,16 +3611,20 @@ app.on('before-quit', (e) => {
   if (cleanupDone) return; // 已清理完 → 放行真正退出
   e.preventDefault();
   if (shutdownPromise) return;
+  shutdownStartedAt = performance.now();
   hostLifecycleState = 'stopping';
   runtimeOrigin = null;
   writeHostStateForLifecycle?.();
 
   shutdownPromise = (async () => {
     let backupSafe = true;
+    nextShutdownStep('backup-online-stop');
     await personalBackupManager?.stopOnline();
+    nextShutdownStep('desktop-session');
     try { await personalDesktop?.close(); }
     catch (error) { logCrash('shutdown-desktop-session', error); }
     finally { desktopUpdates?.close(); }
+    nextShutdownStep('host-service');
     let accessClosing = null;
     try { accessClosing = personalAccessService?.close?.() ?? null; }
     catch (error) { backupSafe = false; logCrash('shutdown-personal-access', error); }
@@ -3572,6 +3643,7 @@ app.on('before-quit', (e) => {
     }
     personalAccessOrigin = null;
     writeHostStateForLifecycle?.();
+    nextShutdownStep('browser-reader');
     if (personalBrowserReader) {
       let timer;
       try {
@@ -3581,6 +3653,7 @@ app.on('before-quit', (e) => {
       } catch (error) { backupSafe = false; logCrash('shutdown-personal-browser', error); }
       finally { if (timer) clearTimeout(timer); personalBrowserReader = null; }
     }
+    nextShutdownStep('account-memory');
     if (personalMemoryManager) {
       let timer;
       try {
@@ -3590,34 +3663,40 @@ app.on('before-quit', (e) => {
       } catch (error) { backupSafe = false; logCrash('shutdown-account-memory', error); }
       finally { if (timer) clearTimeout(timer); }
     }
+    nextShutdownStep('mod-windows');
     await modWindowManager?.dispose?.();
     // Revoking manager admission happens synchronously at close entry; wait a
     // bounded manager close before ending DSH, but never let a failed child
     // confirmation block application exit forever.
+    nextShutdownStep('ai-game');
     try {
       await aiGameRuntime?.close?.();
     } catch (err) {
       logCrash('shutdown-managed-ai-game', new Error('managed AI-GAME shutdown could not be confirmed'));
       console.error('[weftmate] AI-GAME 受管子进程未确认退出(继续关闭 DSH):', err && err.message ? err.message : err);
     }
+    nextShutdownStep('desktop-pet');
     try {
       disposeDesktopPetRuntime();
     } catch (err) {
       logCrash('shutdown-desktop-pet', err);
       console.error('[weftmate] 桌宠退出收尾出错(继续关闭 DSH):', err && err.message ? err.message : err);
     }
+    nextShutdownStep('perception');
     try {
       await perceptionRuntime?.dispose?.(); // R6-01：停感知采集
     } catch (err) {
       logCrash('shutdown-perception', err);
       console.error('[weftmate] 感知退出收尾出错(继续关闭 DSH):', err && err.message ? err.message : err);
     }
+    nextShutdownStep('devices');
     try {
       await devicesRuntime?.dispose?.(); // R8-01：停设备接缝
     } catch (err) {
       logCrash('shutdown-devices', err);
       console.error('[weftmate] 设备退出收尾出错(继续关闭 DSH):', err && err.message ? err.message : err);
     }
+    nextShutdownStep('dsh-runtime');
     try {
       if (exclusiveMainQueue) {
         await exclusiveMainQueue.stopAcceptingAndDrain(async () => {
@@ -3634,28 +3713,39 @@ app.on('before-quit', (e) => {
       logCrash('shutdown-dsh-runtime', err);
       console.error('[weftmate] DSH 退出收尾出错(仍继续退出):', err && err.message ? err.message : err);
     }
+    nextShutdownStep('model-observers');
     for (const observer of ownedModelObservationProxies) {
       try { await observer.close(); ownedModelObservationProxies.delete(observer); }
-      catch { /* Preserve host shutdown; owned sockets were destroyed by close entry. */ }
+      catch (error) { logCrash('shutdown-model-observer', error); /* Preserve host shutdown; owned sockets were destroyed by close entry. */ }
     }
+    nextShutdownStep('model-scheduler');
     await modelScheduler?.close(); modelScheduler = null;
     modelObservationProxy = null;
     modelObservationRecorder?.close?.();
     modelObservationRecorder = null;
+    nextShutdownStep('backup-final');
     if (startupFailureReported && await personalBackupManager?.startupFailed()) backupRestartRequested = true;
     else await personalBackupManager?.finishShutdown({ safe: backupSafe });
+    shutdownComplete = !shutdownFailed;
   })();
   void shutdownPromise.catch(error => logCrash('shutdown', error)).then(async () => {
+    nextShutdownStep('host-snapshot');
     hostLifecycleState = 'stopped';
     runtimeOrigin = null;
     // app.exit() does not drain asynchronous filesystem work. Wait for the
     // final snapshot, including any older write already in this writer's lane.
     await writeHostStateForLifecycle?.();
+    nextShutdownStep();
     cleanupDone = true;
     if (backupRestartRequested) app.relaunch();
+    hostLog.exit(hostExitReason, startupExitCode, { cleanupComplete: shutdownComplete,
+      shutdownDurationMs: Math.round(performance.now() - shutdownStartedAt) });
     app.exit(startupExitCode); // cleanup 完成后一次性退出；启动失败必须保留非零码。
   });
 });
+
+// Forced/native termination leaves the durable start marker for the next launch.
+process.on('exit', code => hostLog.exit(hostExitReason, code, { cleanupComplete: cleanupDone && shutdownComplete }));
 
 // 托盘常驻:窗口全关也不退出(关窗已被 hide 兜住,这里是双保险)。真退只走托盘"退出"→ before-quit。
 app.on('window-all-closed', () => {

@@ -19,7 +19,7 @@ export async function updateTrustedKeys({ development = false, feed = null } = {
 
 export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion(), getWindow = () => null,
   root = join(app.getPath('userData'), 'updates', 'ui'), feed = process.env.WEFTMATE_UI_UPDATE_FEED,
-  trustedKeys = null, selfCheckTimeout = 10000, mobileUiDir = null, beforeAppInstall = async () => {}, desktopConfig = null } = {}) {
+  trustedKeys = null, selfCheckTimeout = 10000, mobileUiDir = null, beforeAppInstall = async () => {}, onAppInstall = () => {}, desktopConfig = null } = {}) {
   let channel = process.env.WEFTMATE_UPDATE_CHANNEL || 'stable';
   const store = await new UpdateStore({ root, trustedKeys: trustedKeys || await updateTrustedKeys({ development: !app.isPackaged, feed }),
     versions: { app: appVersion, host: appVersion, bridge: 1 }, channel, builtInVersion: appVersion,
@@ -88,7 +88,7 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
     event.senderFrame.url === window.webContents.getURL() && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
   async function restart() {
     const result = await installPreparedUpdate({ ready: () => updateState().status === 'downloaded', idle: isIdle,
-      beforeInstall: beforeAppInstall, install: quitAndInstall });
+      beforeInstall: beforeAppInstall, install: () => { try { onAppInstall(); } catch { /* diagnostics cannot block installation */ } return quitAndInstall(); } });
     if (!result && app.isPackaged) await cancelAppRollback();
     return result;
   }

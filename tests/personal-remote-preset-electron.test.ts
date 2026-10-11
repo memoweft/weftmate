@@ -16,8 +16,11 @@ test('real rc.5 keeps a personal-remote preset on a new empty session across res
     const profile = join(parent, 'profile')
     const processes: ChildProcess[] = []
     const launch = async () => {
+      const env = { ...process.env }
+      for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE|MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY)/.test(key)) delete env[key]
+      env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host'
       const child = spawn(process.execPath, [launcher, '--user-data-dir', profile, '--access-port', '0'],
-        { cwd: repository, stdio: ['pipe', 'pipe', 'pipe'] })
+        { cwd: repository, env, stdio: ['pipe', 'pipe', 'pipe'] })
       processes.push(child)
       let output = ''
       const listeners = new Set<() => void>()
@@ -28,7 +31,7 @@ test('real rc.5 keeps a personal-remote preset on a new empty session across res
       const origin = await new Promise<string>((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error(`startup timeout: ${output.slice(-500)}`)), 35_000)
         const inspect = () => {
-          const match = /dsh web: (http:\/\/127\.0\.0\.1:\d+)/.exec(output)
+          const match = /personal-host (?:ready|degraded) origin=(http:\/\/127\.0\.0\.1:\d+)/.exec(output)
           if (!match || !output.includes('personal-access listening')) return
           listeners.delete(inspect); clearTimeout(timer); resolve(match[1])
         }

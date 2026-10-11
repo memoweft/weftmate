@@ -718,6 +718,14 @@ export async function writeWebProfile(
   return result
 }
 
+/** Fixed lifecycle metadata only; never child output, credential values or paths. */
+export interface DshProcessEvent {
+  reason: string
+  exitCode: number | null
+  signal: string | null
+  action: string
+}
+
 export interface DshWebRuntimeOptions {
   /** 运行时 home（DSH_HOME）：profiles/、sessions/、settings.yaml、.credentials.yaml 都在这下面。 */
   homeDir: string
@@ -804,6 +812,8 @@ export interface DshWebRuntimeOptions {
   patchFiles?: readonly string[]
   /** 子进程输出透传（main 打日志；绝不打印凭据）。 */
   log?: (line: string) => void
+  /** Observes process failures/recovery without affecting runtime lifecycle. */
+  onProcessEvent?: (event: Readonly<DshProcessEvent>) => void
   /** 就绪等待上限（缺省 120s）。 */
   readyTimeoutMs?: number
 }
@@ -1154,6 +1164,7 @@ export class DshWebRuntime {
     credentialRequestTimeoutMs: number
     patchFiles: readonly string[]
     log: (line: string) => void
+    onProcessEvent: DshWebRuntimeOptions['onProcessEvent']
     readyTimeoutMs: number
   }
 
@@ -1164,6 +1175,7 @@ export class DshWebRuntime {
   private closeInFlight: Promise<void> | undefined
   private respawnTimer: NodeJS.Timeout | undefined
   private respawnBackoffMs = 1000
+  private lastUnexpectedExit: Omit<DshProcessEvent, 'action'> | undefined
   private logTail: string[] = []
   /** 所有 spawn 过的 child 都登记到 close 事件为止，close 不得只杀当前引用。 */
   private readonly children = new Set<ChildProcess>()
@@ -1215,6 +1227,7 @@ export class DshWebRuntime {
       credentialRequestTimeoutMs: options.credentialRequestTimeoutMs ?? 10_000,
       patchFiles: [...(options.patchFiles ?? [])],
       log: options.log ?? (() => {}),
+      onProcessEvent: options.onProcessEvent,
       readyTimeoutMs: options.readyTimeoutMs ?? 120_000,
     }
   }
@@ -1412,6 +1425,18 @@ export class DshWebRuntime {
 
   private ensureOpen(): void {
     if (this.closed) throw closedRuntimeError()
+  }
+
+  private reportProcessEvent(event: DshProcessEvent): void {
+    try {
+      const result: unknown = this.opts.onProcessEvent?.(Object.freeze(event))
+      void Promise.resolve(result).catch(() => {})
+    }
+    catch { /* Diagnostics are best-effort and must never affect process cleanup/recovery. */ }
+  }
+
+  private reportRespawn(action: string): void {
+    if (this.lastUnexpectedExit) this.reportProcessEvent({ ...this.lastUnexpectedExit, action })
   }
 
   private registerChild(child: ChildProcess): void {
@@ -2436,6 +2461,15 @@ export class DshWebRuntime {
         this.handleReplyEvidenceMessage(child, message)
       })
       let state: 'starting' | 'ready' | 'failed' | 'stopped' = 'starting'
+      // `exit` precedes stdio `close`: a descendant can keep an inherited pipe
+      // open after the runtime root has died. Record immediately, but leave the
+      // existing close-driven cleanup/recovery behavior unchanged.
+      child.on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
+        this.reportProcessEvent({
+          reason: this.closed ? 'clean-exit' : state === 'ready' ? 'unexpected-exit' : 'startup-failed',
+          exitCode: code, signal: signal ?? null, action: 'awaiting-close',
+        })
+      })
       let buffer = ''
       const feed = (chunk: string, stream: 'stdout' | 'stderr'): void => {
         if (state === 'failed' || state === 'stopped') return
@@ -2470,6 +2504,7 @@ export class DshWebRuntime {
       }
       if (child.stdout === null || child.stderr === null) {
         state = 'failed'
+        this.reportProcessEvent({ reason: 'startup-failed', exitCode: null, signal: null, action: 'startup-failed' })
         try { child.kill() } catch { /* 已亡 */ }
         reject(new Error('spawn 官方 CLI 失败：stdio pipe 不可用'))
         return
@@ -2512,22 +2547,31 @@ export class DshWebRuntime {
         state = 'failed'
         reject(new Error(`spawn 官方 CLI 失败：${error.message}`))
       })
-      child.on('close', (code) => {
+      child.on('close', (code: number | null, signal: NodeJS.Signals | null) => {
         clearTimeout(timer)
         if (this.child === child) this.child = undefined
         if (this.closed) {
+          this.reportProcessEvent({ reason: 'clean-exit', exitCode: code, signal: signal ?? null,
+            action: 'shutdown-confirmed' })
           if (state === 'starting') {
             state = 'stopped'
             reject(closedRuntimeError())
           }
           return
         }
-        if (state === 'stopped' || state === 'failed') return
+        if (state === 'stopped' || state === 'failed') {
+          this.reportProcessEvent({ reason: 'startup-failed', exitCode: code, signal: signal ?? null,
+            action: 'startup-failed' })
+          return
+        }
         if (state === 'starting') {
+          this.reportProcessEvent({ reason: 'startup-failed', exitCode: code, signal: signal ?? null,
+            action: 'startup-failed' })
           reject(new Error(`官方 web 运行时启动即退出（exit ${code}）。日志尾部：\n${this.tail()}`))
           return
         }
         // 就绪后意外退出 → 后台退避重拉（端口会换 → onOrigin 通知换源）。
+        this.lastUnexpectedExit = { reason: 'unexpected-exit', exitCode: code, signal: signal ?? null }
         this.originValue = null
         this.onOrigin?.(null)
         this.scheduleRespawn()
@@ -2551,15 +2595,21 @@ export class DshWebRuntime {
     if (this.closed || this.respawnTimer !== undefined) return
     const backoff = this.respawnBackoffMs
     this.respawnBackoffMs = Math.min(15_000, this.respawnBackoffMs * 2)
+    this.reportRespawn('respawn-scheduled')
     this.respawnTimer = setTimeout(() => {
       this.respawnTimer = undefined
       if (this.closed) return
       void this.preflightThenSpawn().then(
         (origin) => {
-          if (!this.closed) this.onOrigin?.(origin)
+          if (!this.closed) {
+            this.reportRespawn('respawn-succeeded')
+            this.lastUnexpectedExit = undefined
+            this.onOrigin?.(origin)
+          }
         },
         (error: unknown) => {
           if (this.closed) return
+          this.reportRespawn('respawn-failed')
           this.opts.log(`[dsh] 重拉失败：${error instanceof Error ? error.message : String(error)}`)
           this.scheduleRespawn()
         },
@@ -2591,8 +2641,12 @@ export class DshWebRuntime {
         return await this.preflightThenSpawn()
       } catch (error) {
         if (error instanceof DshCheckoutPreflightError || attempt >= 3 || this.closed) {
+          this.reportProcessEvent({ reason: 'startup-failed', exitCode: null, signal: null,
+            action: 'startup-abandoned' })
           throw (this.closed ? closedRuntimeError() : error)
         }
+        this.reportProcessEvent({ reason: 'startup-failed', exitCode: null, signal: null,
+          action: 'startup-retry-scheduled' })
         this.opts.log(`[dsh] 启动失败（第 ${attempt} 次），1s 后重试：${error instanceof Error ? error.message : String(error)}`)
         await delay(1000)
         this.ensureOpen()
@@ -2607,6 +2661,8 @@ export class DshWebRuntime {
   close(): Promise<void> {
     if (this.closeInFlight !== undefined) return this.closeInFlight
     this.closed = true
+    this.reportRespawn('respawn-abandoned')
+    this.lastUnexpectedExit = undefined
     if (this.respawnTimer !== undefined) {
       clearTimeout(this.respawnTimer)
       this.respawnTimer = undefined

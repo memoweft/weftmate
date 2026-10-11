@@ -1,0 +1,254 @@
+{
+  "unit": "ms",
+  "measurement": "quit request until main process close; same synthetic account, one process at a time",
+  "baseline": [
+    433
+  ],
+  "diagnostics": [
+    444,
+    464
+  ],
+  "shutdownSteps": [
+    {
+      "at": "2026-10-11T04:00:54.223Z",
+      "event": "host.shutdown_step",
+      "step": "backup-online-stop",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.235Z",
+      "event": "host.shutdown_step",
+      "step": "desktop-session",
+      "status": "completed",
+      "durationMs": 11,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.238Z",
+      "event": "host.shutdown_step",
+      "step": "host-service",
+      "status": "completed",
+      "durationMs": 2,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.238Z",
+      "event": "host.shutdown_step",
+      "step": "browser-reader",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.239Z",
+      "event": "host.shutdown_step",
+      "step": "account-memory",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.239Z",
+      "event": "host.shutdown_step",
+      "step": "mod-windows",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.240Z",
+      "event": "host.shutdown_step",
+      "step": "ai-game",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.241Z",
+      "event": "host.shutdown_step",
+      "step": "desktop-pet",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.241Z",
+      "event": "host.shutdown_step",
+      "step": "perception",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.242Z",
+      "event": "host.shutdown_step",
+      "step": "devices",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.522Z",
+      "event": "host.shutdown_step",
+      "step": "dsh-runtime",
+      "status": "completed",
+      "durationMs": 280,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.522Z",
+      "event": "host.shutdown_step",
+      "step": "model-observers",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.523Z",
+      "event": "host.shutdown_step",
+      "step": "model-scheduler",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.524Z",
+      "event": "host.shutdown_step",
+      "step": "backup-final",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:00:54.525Z",
+      "event": "host.shutdown_step",
+      "step": "host-snapshot",
+      "status": "completed",
+      "durationMs": 1,
+      "runId": "5681444b-3901-4986-a5bf-0e85f08259c0"
+    },
+    {
+      "at": "2026-10-11T04:01:07.579Z",
+      "event": "host.shutdown_step",
+      "step": "backup-online-stop",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.600Z",
+      "event": "host.shutdown_step",
+      "step": "desktop-session",
+      "status": "completed",
+      "durationMs": 20,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.602Z",
+      "event": "host.shutdown_step",
+      "step": "host-service",
+      "status": "completed",
+      "durationMs": 2,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.603Z",
+      "event": "host.shutdown_step",
+      "step": "browser-reader",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.603Z",
+      "event": "host.shutdown_step",
+      "step": "account-memory",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.603Z",
+      "event": "host.shutdown_step",
+      "step": "mod-windows",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.604Z",
+      "event": "host.shutdown_step",
+      "step": "ai-game",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.605Z",
+      "event": "host.shutdown_step",
+      "step": "desktop-pet",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.605Z",
+      "event": "host.shutdown_step",
+      "step": "perception",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.606Z",
+      "event": "host.shutdown_step",
+      "step": "devices",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.907Z",
+      "event": "host.shutdown_step",
+      "step": "dsh-runtime",
+      "status": "completed",
+      "durationMs": 301,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.908Z",
+      "event": "host.shutdown_step",
+      "step": "model-observers",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.908Z",
+      "event": "host.shutdown_step",
+      "step": "model-scheduler",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.909Z",
+      "event": "host.shutdown_step",
+      "step": "backup-final",
+      "status": "completed",
+      "durationMs": 0,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    },
+    {
+      "at": "2026-10-11T04:01:07.911Z",
+      "event": "host.shutdown_step",
+      "step": "host-snapshot",
+      "status": "completed",
+      "durationMs": 1,
+      "runId": "cb7236a5-23c7-422c-a93d-e105ac04fca5"
+    }
+  ],
+  "warning": "Single samples show observation overhead only; not a soak benchmark."
+}
