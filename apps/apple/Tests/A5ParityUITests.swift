@@ -178,11 +178,11 @@ final class A5ParityUITests: XCTestCase {
         reveal(app,allow)
         try expect(allow);keep(app,"approval",theme)
         if behavior {
-            XCTAssertTrue(app.staticTexts["删除合成草稿文件"].exists);allow.tap()
+            XCTAssertTrue(app.staticTexts["删除合成草稿文件"].exists);allow.tap(); if app.buttons["approvalConfirm."+String(allow.identifier.dropFirst("approveOnce.".count))].exists { app.buttons["approvalConfirm."+String(allow.identifier.dropFirst("approveOnce.".count))].tap() }
             let deny=try await get("/a5/deny");try tap(app,"refreshHistoryButton")
             let reject=app.buttons["rejectApproval." + (deny["approvalId"] as! String)]
             reveal(app,reject)
-            try expect(reject);reject.tap()
+            try expect(reject);reject.tap(); if app.buttons["approvalConfirm."+String(reject.identifier.dropFirst("rejectApproval.".count))].exists { app.buttons["approvalConfirm."+String(reject.identifier.dropFirst("rejectApproval.".count))].tap() }
         }
         let question=app.staticTexts["报告要采用哪种格式？"]
         reveal(app,question)

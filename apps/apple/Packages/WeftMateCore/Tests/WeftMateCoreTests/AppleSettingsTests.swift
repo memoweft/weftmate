@@ -4,7 +4,7 @@ import Testing
 
 @Test func a6RegistryMatchesD31OrderAndPlatformScope() {
     #expect(AppleSettingsRegistry.list(desktop: true).map(\.name) == ["常规", "外观", "账户", "设备", "用量", "已归档", "模型", "审批", "记忆", "提醒与定时任务", "系统状态", "备份与恢复", "关于"])
-    #expect(AppleSettingsRegistry.list(desktop: false).count == 11)
+    #expect(AppleSettingsRegistry.list(desktop: false).count == 13)
     #expect(AppleSettingsRegistry.list(desktop: false).allSatisfy { !$0.desktopOnly })
     #expect(Set(AppleSettingsRegistry.categories.map(\.id)).count == 13)
     #expect(AppleSettingsRegistry.category("appearance")?.icon == "palette")
