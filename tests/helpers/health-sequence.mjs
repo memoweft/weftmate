@@ -13,7 +13,7 @@ export function generateHealthSequence({seed=24017,days=90,to='2026-10-12',timeZ
     if(health.workouts.length){const w=health.workouts[0];w.zoneMinutes[0]=one(w.minutes-w.zoneMinutes.slice(1).reduce((a,b)=>a+b,0));}
     if(version===3){
       health.version=3;
-      health.hrvSamples=missing?null:['08:30','12:30','16:30','20:30'].map((time,j)=>({time:new Date(digestLocalInstant(day,time,timeZone)).toISOString(),sdnnMs:one(48+jitter(8)-(late?17:0)),rmssdMs:one(40+jitter(6)-(late?12:0)),stressIndex:j%2===0?one(100+jitter(24)+(late?130:0)):null,meanHeartRateBpm:one(66+jitter(6)+(late?17:0))}));
+      health.hrvSamples=missing?null:['08:30','12:30','16:30','20:30'].map((time,j)=>({time:new Date(digestLocalInstant(day,time,timeZone)).toISOString(),sdnnMs:one(48+jitter(8)-(late?17:0)),rmssdMs:j%2===0?one(40+jitter(6)-(late?12:0)):null,stressIndex:j%2===0?one(100+jitter(24)+(late?130:0)):null,meanHeartRateBpm:j%2===0?one(66+jitter(6)+(late?17:0)):null}));
       health.heartRateQuarterHourly=missing?null:Array.from({length:96},(_,q)=>({avg:one((q<28?55:q>32&&q<76?76:64)+jitter(4)+(late?14:0)),min:48,max:120}));
       if(health.sleep)health.sleep.stages=[{start:new Date(start).toISOString(),end:new Date(start+deep*60000).toISOString(),stage:'deep'},{start:new Date(start+deep*60000).toISOString(),end:new Date(start+(deep+core)*60000).toISOString(),stage:'core'},{start:new Date(start+(deep+core)*60000).toISOString(),end:new Date(end).toISOString(),stage:'rem'}];
     }

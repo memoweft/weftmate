@@ -4,11 +4,12 @@ import {_electron} from 'playwright';
 import {createRequire} from 'node:module';
 import {execFileSync} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
-import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
+import {mkdir,writeFile,readFile,rm} from 'node:fs/promises';
+import {managedMkdtemp as mkdtemp,managedTempRoot as tmpdir} from '../helpers/managed-temp.mjs';
 import {join,resolve} from 'node:path';
 import {createPersonalAccessService} from '../../src/personal-access/index.mjs';
 import {PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT} from '../../src/host-mode.mjs';
+import {disposeHealthFixture} from '../helpers/health-5-temp.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 import {generateHealthV3Sequence} from '../helpers/health-sequence.mjs';
 import {redactEvidenceText,systemCommitMemory,describeExit} from '../helpers/process-evidence.mjs';
@@ -59,5 +60,5 @@ try{
 }catch(error){report.completed=false;report.failure=redactEvidenceText(String(error.message).replaceAll(key,'[private]'),[root]);report.lastCompletion=app?await app.evaluate(()=>globalThis.health5LastCompletion??null).catch(()=>null):null;report.lastStage=stage;report.commitMemory=systemCommitMemory();report.electronExit=app?describeExit(app.process().exitCode,app.process().signalCode):null;report.logTail=log.slice(-5000);if(page&&!page.isClosed())await shot('failure-electron.png');throw error;}
 finally{
  const trace=await readFile(join(root,'requests.jsonl'),'utf8').catch(()=> '');report.mimoRequests=trace.split('\n').filter(Boolean).map(JSON.parse).filter(r=>r.kind==='model'&&r.phase==='start'&&r.origin==='https://api.xiaomimimo.com').length;
- if(app){report.itemAnalysisRequests=await app.evaluate(()=>globalThis.health5ItemCalls??0).catch(()=>report.itemAnalysisRequests);await app.close();report.cleanedProcesses++;}await rm(root,{recursive:true,force:true});await writeFile(join(out,'verification.json'),JSON.stringify(report,null,2)+'\n');
+ if(app){report.itemAnalysisRequests=await app.evaluate(()=>globalThis.health5ItemCalls??0).catch(()=>report.itemAnalysisRequests);await app.close();report.cleanedProcesses++;}await disposeHealthFixture(root);await writeFile(join(out,'verification.json'),JSON.stringify(report,null,2)+'\n');
 }

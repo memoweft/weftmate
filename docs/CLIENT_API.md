@@ -1666,3 +1666,5 @@ POST analysis仅接受上述scope和合法day（非未来、保留范围内）�
 16.4增量：`energy.sleepPeriods`是曲线上的睡眠区间，按当地`HH:mm`返回；跨零点时start晚于end，无可定位的睡眠时段为`[]`。优先合并相邻非awake分期，否则使用sleep.start/end。`fitnessAge.referenceRange`是本人性别／实际年龄十岁分组的VO₂max第25–75百分位（单位mL/kg/min，同参考表）；缺性别／birthYear、未成年人时null，80岁以上使用最后70–79岁组并在依据中说明适用边界。
 
 DATA-1日摘要usage可增量返回`lastUserMessageAt`（ISO或null），仅取已允许的用户消息来源，供健康页夜间结束时刻投影；原使用分钟估算法和字段不变。分析生成期间若健康输入清空／替换导致资料代次变化，返回409 `HEALTH_DATA_CHANGED`，要求重新展开读取当前数据；两个模型开关互改不触发该代次冲突。
+
+压力的sdnnHeartRate降级：无同次meanHeartRateBpm时优先取测量所在15分钟心率桶avg，再退到同小时avg；这符合v3无逐搏数据时同次心率为null的采集约定。沿用原method字段，`missing:["measurementHeartRate"]`说明所用心率为时间桶估计；两种桶都缺则不给压力值。

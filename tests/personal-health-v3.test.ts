@@ -134,3 +134,10 @@ test('HTTP item switch leaves top model weekly paragraph and pending top jobs un
  f.context.healthInsights={cancel:()=>cancels++};f.context.activity={dailyDigest:{cancel:()=>cancels++}};f.context.mutate=(_owner:any,fn:any)=>fn(f.account);f.context.authenticate=()=>({ownerId:owner});f.context.readJson=async()=>({itemAnalysisEnabled:true});f.context.json=()=>{};
  const ops=createHealthOperations(f.context);try{assert.equal(await ops.handleHttp({method:'PATCH'}, {},new URL('http://synthetic.invalid/personal/v1/settings/health'),owner),true);assert.equal(cancels,0);assert.deepEqual(f.account.dailyDigest.weeks[day],week);assert.equal((await f.store.read(owner)).settings.modelInsightsEnabled,true);}finally{await ops.close();}
 });
+
+test('ordinary no-RR phone samples use timestamp-matched quarter/hour heart rate without renaming method or inventing missing HR',()=>{
+ const s:any=constant();for(const [d,row]of Object.entries(s.days) as any){row.health.hrvSamples=[{...sample(d,null),meanHeartRateBpm:null}];row.health.heartRateQuarterHourly=Array(96).fill({avg:70,min:60,max:80});}
+ const q=healthStress(s,day,zone);assert.equal(q.score,50);assert.equal(q.samples[0].method,'sdnnHeartRate');assert.deepEqual(q.missing,['measurementHeartRate']);
+ const hourly=structuredClone(s);for(const row of Object.values(hourly.days) as any){row.health.heartRateQuarterHourly=null;row.health.heartRateHourly=Array(24).fill({avg:70,min:60,max:80});}assert.equal(healthStress(hourly,day,zone).score,50);
+ const absent=structuredClone(s);delete absent.days[day].health.heartRateQuarterHourly;assert.equal(healthStress(absent,day,zone).score,null);
+});
