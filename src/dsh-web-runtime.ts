@@ -397,6 +397,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
     [join(PLUGINS_DIR, 'personal-approval-policy.mjs'), join(dir, 'plugins', 'personal-approval-policy.mjs')],
     [join(PLUGINS_DIR, 'personal-permission-rules.mjs'), join(dir, 'plugins', 'personal-permission-rules.mjs')],
+    [join(PLUGINS_DIR, 'personal-review-sources.mjs'), join(dir, 'plugins', 'personal-review-sources.mjs')],
     [join(PLUGINS_DIR, 'personal-write-targets.mjs'), join(dir, 'plugins', 'personal-write-targets.mjs')],
     [join(PLUGINS_DIR, 'personal-web-fetch.mjs'), join(dir, 'plugins', 'personal-web-fetch.mjs')],
     [join(PLUGINS_DIR, 'personal-native-files.mjs'), join(dir, 'plugins', 'personal-native-files.mjs')],
@@ -772,6 +773,7 @@ export interface DshWebRuntimeOptions {
     { id: string, action: 'register_approval' | 'read_approval' | 'resolve_approval', sessionId: string, turn: number,
       callId: string, rootCallId: string, receiptId: string, messageHash: string, toolName: string,
       argumentsHash: string, approvalId: string, runtimeId: string, reason?: string,
+      reviewEvidence?: { arguments: unknown, risks: string[], sources: string[] },
       outcome?: 'allowed-once' | 'rejected' | 'cancelled' | 'unavailable' } |
     { id: string, sessionId: string, turn: number, callId: string, messageHash: string,
       receiptId?: string, appId: 'notepad' } |
@@ -1804,7 +1806,7 @@ export class DshWebRuntime {
     } else if (toolApproval) {
       const fields = ['protocol', 'id', 'action', 'sessionId', 'turn', 'callId', 'rootCallId', 'receiptId',
         'messageHash', 'toolName', 'argumentsHash', 'approvalId',
-        ...(row.action === 'register_approval' ? ['reason'] : []),
+        ...(row.action === 'register_approval' ? ['reason', 'reviewEvidence'] : []),
         ...(row.action === 'resolve_approval' ? ['outcome'] : [])]
       if ((row.turn as number) < 1 || typeof row.receiptId !== 'string' ||
           typeof row.rootCallId !== 'string' || !TASK_STOP_RECEIPT.test(row.rootCallId) ||
@@ -1934,7 +1936,8 @@ export class DshWebRuntime {
       ? { ...identity, action: row.action as 'register_approval' | 'read_approval' | 'resolve_approval', runtimeId: runtimeId!,
         rootCallId: row.rootCallId as string, receiptId: row.receiptId as string, toolName: row.toolName as string,
         argumentsHash: row.argumentsHash as string, approvalId: row.approvalId as string,
-        ...(row.action === 'register_approval' ? { reason: row.reason as string } : {}),
+        ...(row.action === 'register_approval' ? { reason: row.reason as string,
+          ...(row.reviewEvidence === undefined ? {} : { reviewEvidence: row.reviewEvidence as { arguments: unknown, risks: string[], sources: string[] } }) } : {}),
         ...(row.action === 'resolve_approval' ? { outcome: row.outcome as 'allowed-once' | 'rejected' | 'cancelled' | 'unavailable' } : {}) }
       : genericExecution
       ? { ...identity, action: row.action as 'authorize_execution' | 'finish_execution' | 'observe_execution_job', rootCallId: row.rootCallId as string,

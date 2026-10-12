@@ -1,0 +1,36 @@
+{
+  "required": {
+    "mode": "required",
+    "files": 306,
+    "exitCode": 0,
+    "passed": 1702,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 32,
+    "exitCode": 0,
+    "passed": 230,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "mobile": {
+    "files": 5,
+    "passed": 113,
+    "failed": 0,
+    "skipped": 0,
+    "generatedUiCoreAssets": 54
+  },
+  "nativeChecks": 33,
+  "secondOpinionUnitTests": 7,
+  "approvalUnitTests": 22,
+  "typecheck": "passed",
+  "publicHygieneLocalIdentities": 0,
+  "screenshots": 50,
+  "phoneSystemScreenshots": 16,
+  "sourceCommit": "4e091f34",
+  "note": "required/vendor reports precede the final CSS-only narrow layout repair; mobile/native/typecheck/hygiene and related fixed tests were repeated after it."
+}
