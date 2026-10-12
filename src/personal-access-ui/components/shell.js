@@ -375,8 +375,8 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             dialog.onclose = () => { dialog.remove(); ui.byId('account-menu-trigger').focus(); }; document.body.append(dialog); dialog.showModal(); cancel.focus();
         });
         ui.byId('account-menu-trigger').addEventListener('click', async () => {
-            name.textContent = core.state.account?.displayName || core.state.account?.username || '我的账户';
-            email.textContent = (core.state.cloudAuth?.mode === 'authenticated' ? core.state.cloudAuth.email : '') || core.state.account?.email || `本机账户：${core.state.account?.username || ''}`;
+            name.textContent = core.profileName();
+            email.textContent = WeftUiCore.accountLabel(core.state.account || {},core.state.cloudAuth?.mode === 'authenticated' ? core.state.cloudAuth.email : '');
             usage.textContent = '正在读取本月用量…';
             const token = core.accountToken();
             try { const text = await core.loadUsageStrip(); if (text && core.accountIdentityCurrent(token) && !menu.hidden) usage.textContent = text; }

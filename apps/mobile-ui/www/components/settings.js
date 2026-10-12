@@ -584,9 +584,9 @@ function accountPage(target){target.append(heading('我的资料'));
   call('auth.me').then(profile=>{if(state.page!=='account'||state.generation!==gen)return;loading.remove();state.profile=profile;
     if(profile.connectionVerified===false)target.append(notice('电脑暂时不可达，以下是此账户保存在手机上的资料。'));
     const avatar=el('div','profile-large');if(profile.avatar?.dataBase64){const img=el('img');img.src=`data:${profile.avatar.mimeType};base64,${profile.avatar.dataBase64}`;
-      img.alt='当前头像';avatar.append(img)}else avatar.textContent=(profile.displayName||profile.username||'我').slice(0,1);
-    target.append(avatar);const nickname=field('昵称','text',profile.displayName||profile.username||state.username||'');const groupNode=group('账户资料',[]);
-    const body=groupNode.querySelector('.group-body');body.append(nickname.box,el('p','muted',`账户名：${profile.username||state.username||'暂时无法读取'}`));
+      img.alt='当前头像';avatar.append(img)}else avatar.textContent=([profile.displayName,profile.username].find(v=>v&&v!=='local-owner')||'我').slice(0,1);
+    target.append(avatar);const nickname=field('昵称','text',[profile.displayName,profile.username,state.username].find(v=>v&&v!=='local-owner')||'我的账户');const groupNode=group('账户资料',[]);
+    const body=groupNode.querySelector('.group-body');body.append(nickname.box,el('p','muted',`账户：${mobileAccountLabel()}`));
     body.append(action('保存昵称',async()=>{try{const updated=await call('auth.profile',{expectedRevision:profile.profileRevision,displayName:nickname.input.value});
       state.profile=updated;showProfile(updated);toast(updated.localCacheSaved===false?'昵称已在电脑保存，本机离线副本未保存':'昵称已更新');page('account')}
       catch(e){toast(safeError(e),true)}}));
@@ -626,8 +626,8 @@ function syncPage(target){target.append(heading('离线与同步'),notice(state.
   const gen=state.generation;call('records.unboundSummary').then(info=>{
     if(state.page!=='sync'||state.generation!==gen||!info.eligible||info.conversationCount<1)return;
     const box=group('旧本机对话',[row(`${info.conversationCount} 个待认领的旧对话`,
-      `仅升级前已确认属于 ${state.username} 的本机资料可归入当前账户`,()=>{
-        const detail=notice(`将这 ${info.conversationCount} 个旧对话归入账户 ${state.username}。此操作会让它们进入该账户的同步队列。`,'确认归属');
+      `仅升级前已确认属于 ${mobileAccountLabel()} 的本机资料可归入当前账户`,()=>{
+        const detail=notice(`将这 ${info.conversationCount} 个旧对话归入账户 ${mobileAccountLabel()}。此操作会让它们进入该账户的同步队列。`,'确认归属');
         const confirmActions=el('div','form-actions');confirmActions.append(action('暂不认领',()=>{detail.remove();confirmActions.remove()},false),
           action('确认归入当前账户',async()=>{try{await call('records.claimUnbound',{expectedCount:info.conversationCount,
             confirmAccountName:state.username});toast('旧对话已归入当前账户');page('sync');await listConversations()}

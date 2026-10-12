@@ -268,7 +268,8 @@
             if (event.type === 'task.queued') {
                 const data = event.data || {}, queued = data.tasks || [data];
                 const pending = queued.filter(task => !ordered.some(next => {
-                    if (next.seq <= event.seq || next.sessionId && event.sessionId && next.sessionId !== event.sessionId) return false;
+                    const session = event.sessionId || event.sourceRef?.sessionId, nextSession = next.sessionId || next.sourceRef?.sessionId;
+                    if (next.seq <= event.seq || nextSession && session && nextSession !== session) return false;
                     const id = task.receiptId || task.taskId;
                     if (!id) return false;
                     return ['user.message','task.started','task.ended','step.started','step.completed'].includes(next.type) &&
