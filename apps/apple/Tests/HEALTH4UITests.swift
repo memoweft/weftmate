@@ -38,6 +38,12 @@ final class HEALTH4UITests: XCTestCase {
         }
         if required { XCTFail("Expected simulator HealthKit authorization") }
     }
+    @MainActor func testTwoHealthModelsShareOneLaunchRegistration() {
+        let app=XCUIApplication(); app.launchArguments=["--ui-testing","--health4-double-model","--ui-testing-namespace","health4-registration-"+UUID().uuidString]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["PASS: two models, one launch registration"].waitForExistence(timeout:20))
+        app.terminate()
+    }
     @MainActor func testLightHealthJourney() async throws { try await journey("light") }
     @MainActor func testDarkHealthJourney() async throws { try await journey("dark") }
     @MainActor private func journey(_ theme: String) async throws {

@@ -1,6 +1,7 @@
 // Test-only contract service; all numbers are synthetic and no cloud is contacted.
 import http from 'node:http';
 import assert from 'node:assert/strict';
+import {validateHealthRecord} from './health4_validate_record.mjs';
 let version=2, scenario='data', enabled=false, topEnabled=true, offline=false, failBatch=0, requests=[], reminders=0, issues=[], reads=[], analyses=new Map(), records=new Map(), profiles=[];
 const day=new Intl.DateTimeFormat('en-CA',{timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const score=(value,label='正常')=>({score:value,state:scenario==='insufficient'?'insufficient':'normal',label:scenario==='insufficient'?'再戴几天就有对比了':label,reasons:[{text:'昨晚的睡眠和你平时差不多',inputs:['sleepMinutes']}],missing:[],baseline:70,low:50,high:90});
@@ -13,17 +14,7 @@ function overview() {
  activity:{steps:1234,activeEnergyKcal:200,exerciseMinutes:5,workouts:[{type:'跑步',minutes:5}]},usage:{activeMinutes:240,lateNightMinutes:20,lastActiveAt:null},
  ...(scenario==='extras'?{stress:{score:35,label:'比较平静',measuredAt:new Date().toISOString()},energy:{score:72,label:'还有余力',points:Array.from({length:20},(_,i)=>({value:90-i*2,time:i}))},fitnessAge:{value:34,label:'相对你自己的体能估计'}}:{})};
 }
-function checkRecord(h) {
- const v2=['version','status','steps','sleepMinutes','restingHeartRateBpm','exerciseMinutes','workouts','activeEnergyKcal','sleep','hrvSdnnMs','respiratoryRateBrpm','spo2Pct','wristTempC','vo2Max','heartRateHourly'];
- const v3=[...v2,'hrvSamples','heartRateQuarterHourly'];
- assert([1,2,3].includes(h.version)); assert(h.version<=version);
- for(const key of Object.keys(h))assert((h.version===3?v3:v2).includes(key),'Unknown health field');
- if(h.version===2){assert(!('hrvSamples'in h));assert(!('heartRateQuarterHourly'in h));assert(!h.sleep?.stages);}
- if(h.heartRateHourly)assert.equal(h.heartRateHourly.length,24);
- if(h.heartRateQuarterHourly)assert.equal(h.heartRateQuarterHourly.length,96);
- for(const w of h.workouts){assert(Object.keys(w).every(k=>['type','minutes','start','kcal','avgHeartRateBpm','maxHeartRateBpm','zoneMinutes'].includes(k)));if(w.zoneMinutes)assert(w.zoneMinutes.reduce((a,b)=>a+(b??0),0)<=w.minutes+0.00001);}
- if(h.sleep){assert((h.sleep.deepMinutes??0)+(h.sleep.coreMinutes??0)+(h.sleep.remMinutes??0)<=(h.sleepMinutes??0)+0.0001);}
-}
+function checkRecord(h) { validateHealthRecord(h,version); }
 const server=http.createServer(async(req,res)=>{
  let body='';for await(const chunk of req)body+=chunk;
  const url=new URL(req.url,'http://127.0.0.1'),path=url.pathname.replace('/personal/v1',''),data=body?JSON.parse(body):{};
@@ -52,7 +43,7 @@ const server=http.createServer(async(req,res)=>{
  const values={steps:1234,sleepMinutes:450,deepMinutes:60,remMinutes:60,hrvSdnnMs:50,restingHeartRateBpm:60,respiratoryRateBrpm:16,spo2Pct:98,wristTempC:36.5,usageLateNightMinutes:20};const center=values[id]??70;
  return send(200,{id,days,timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,average:center,points:Array.from({length:days},(_,i)=>{let d=new Date();d.setDate(d.getDate()-days+1+i);const key=new Intl.DateTimeFormat('en-CA').format(d);return {day:key,value:center+(i%5-2)*center*0.015,baseline:center,low:scenario==='insufficient'?null:center*0.9,high:scenario==='insufficient'?null:center*1.1,state:scenario==='insufficient'?'insufficient':'normal',label:scenario==='insufficient'?'再戴几天就有对比了':'和你平时差不多'};})});
  }
- if(path==='/health/calendar'){const month=url.searchParams.get('month');return send(200,{month,days:Array.from({length:28},(_,i)=>({day:month+'-'+String(i+1).padStart(2,'0'),hasWorkout:i%3===0,sleepScore:70,recoveryScore:70}))});}
+ if(path==='/health/calendar'){const month=url.searchParams.get('month');return send(200,{month,days:Array.from({length:new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).getDate()},(_,i)=>({day:month+'-'+String(i+1).padStart(2,'0'),hasWorkout:i%3===0,sleepScore:70,recoveryScore:70}))});}
  if(path.startsWith('/health/suggestions/')){assert.deepEqual(Object.keys(data).sort(),['requestId','sessionId']);reminders++;return send(200,{item:{id:'health4-reminder'}});}
  if(path==='/health/analysis'){
  if(req.method==='GET')return send(200,{items:[...analyses.values()]});

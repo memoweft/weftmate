@@ -16,20 +16,13 @@ import WeftMateCore
     private var operation: Task<Void, Never>?
     private var activationPending = false
     static let refreshID = "com.weftmate.apple.daily-health"
-    init() {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.refreshID, using: nil) { [weak self] task in
-            Task { @MainActor in
-                guard let self, let app = self.app else { task.setTaskCompleted(success: false); return }
-                let work = Task { await self.activate(app: app); task.setTaskCompleted(success: !Task.isCancelled) }
-                task.expirationHandler = {
-                    work.cancel()
-                    Task { @MainActor in self.operation?.cancel() }
-                }
-            }
-        }
+    func runBackgroundRefresh() async -> Bool {
+        guard let app else { return false }
+        await activate(app:app); return !Task.isCancelled
     }
+    func cancelBackgroundRead() { operation?.cancel() }
     private func prepare(_ app: AppleAppModel) throws -> Bool {
-        self.app = app
+        self.app = app; DailyHealthBackground.attach(self)
         guard let session = app.session else {
             operation?.cancel(); reader.stop(); local = nil; scope = nil; epoch = nil; generation = UUID(); state = .init(); return false
         }

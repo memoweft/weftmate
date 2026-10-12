@@ -15,3 +15,12 @@ test('AI switches remain independent and no overview analysis scope is authored'
  const view=read('iOS/HealthPageView.swift');assert(!view.includes('analysis("overview")'));assert.match(view,/if expanded && page.analysisEnabled/);
  const model=read('iOS/HealthPageModel.swift');assert.match(model,/itemAnalysisEnabled != nil/);assert.match(model,/AI_ANALYSIS_OFF/);assert.match(model,/cache\.cachedAnalyses=Array\(analyses.values\)/);
 });
+test('Background registration is launch-owned and model initialization contains no SDK registration',()=>{
+ const model=read('iOS/DailyHealthModel.swift'),app=read('iOS/WeftMatePhoneApp.swift'),background=read('iOS/DailyHealthBackground.swift');
+ assert(!model.includes('BGTaskScheduler.shared.register'));
+ assert.match(app,/@MainActor init\(\) \{ DailyHealthBackground.register\(\) \}/);
+ assert.match(background,/guard !registered else \{ return \}/);
+ assert.match(background,/registered=true; registrationCount \+= 1/);
+ assert.match(background,/nonisolated static func launch\(\) -> @Sendable/);
+ assert.match(background,/nonisolated static func expiration/);
+});
