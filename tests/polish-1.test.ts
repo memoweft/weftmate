@@ -41,6 +41,8 @@ test('w: started, completed and canceled turns remove their own queue state with
  }
  const events=[event(1,'task.queued',{receiptId:'rpc:a',taskId:'rpc:a'}),event(2,'task.ended',{receiptId:'rpc:a',reason:'canceled'},'other')];
  assert.equal(api.projectTimeline(events).cards.filter((r:any)=>r.type==='task.queued').length,1);
+ const segments=[{seq:1,type:'task.queued',sourceRef:{sessionId:'one'},data:{receiptId:'rpc:a'}},{seq:2,type:'task.started',sourceRef:{sessionId:'two'},data:{receiptId:'rpc:a'}}];
+ assert.equal(api.projectTimeline(segments).cards.filter((r:any)=>r.type==='task.queued').length,1);
 });
 test('s: gallery conversation fixture can mark a record read and load its message versions',async()=>{
  const f=await startFe1bFixture();try{
