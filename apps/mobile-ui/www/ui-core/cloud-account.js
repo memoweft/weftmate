@@ -212,8 +212,8 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     try { await client.access(); if (auth.mode === 'authenticated') scheduleRenewal(); }
     catch (error) { if (error.code === 'NETWORK') { scheduleRenewal(); return; } await expireCloudSession(); }
   }
-  async function expireCloudSession(email = auth.email) {
-    if (environment.retainNativeCache && auth.cachedSession) {
+  async function expireCloudSession(email = auth.email, { retainCached = true } = {}) {
+    if (retainCached && environment.retainNativeCache && auth.cachedSession) {
       clearTimeout(renewalTimer); clearTimeout(waitTimer); journey++; await client.forget();
       Object.assign(auth, { mode: 'offline', modal: false, busy: false, email, error: '', cloudExpired: true });
       effects.nativeSessionExpired?.(); paint(); return;
@@ -230,7 +230,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     // Clear the host cookie as well as the in-memory projection.
     try { await core.api('/logout', { method: 'POST', protectedWrite: true, body: {} }); } catch { /* revoked cookies are already unusable */ }
     await effects.clearNativeHostSessions?.();
-    core.clearSession(); auth.email = email; startCloudJourney();
+    auth.cachedSession = false; core.clearSession(); auth.email = email; startCloudJourney();
   }
   async function cancelCloudJourney() { if (auth.localSession) { dismissCloudLogin(); return; } bindingClaim = null; await client.forget(); await client.resetKey(); startCloudJourney(); }
   async function cloudOfflineLogin({ password, cloudAccountId, username }) {
@@ -307,14 +307,14 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     } catch { throw { code: 'HOST_TRUST_INVALID' }; }
   }
   async function cloudEmailRequest(email) { const result = await client.authorized('/auth/email/change/request', { method: 'POST', body: { email } }); auth.emailChange = { email, challengeId: result.challengeId, resendAt: now() + 60000 }; return result; }
-  async function cloudEmailConfirm(code) { const result = await client.authorized('/auth/email/change/confirm', { method: 'POST', body: { challengeId: auth.emailChange.challengeId, code } }); auth.emailChange = null; await expireCloudSession(result.account.email); return result; }
-  async function cloudChangePassword(currentPassword, password, confirmation) { validPassword(password, confirmation); const result = await client.authorized('/auth/password/change', { method: 'POST', body: { currentPassword, password } }); await expireCloudSession(); return result; }
+  async function cloudEmailConfirm(code) { const result = await client.authorized('/auth/email/change/confirm', { method: 'POST', body: { challengeId: auth.emailChange.challengeId, code } }); auth.emailChange = null; await expireCloudSession(result.account.email, {retainCached:false}); return result; }
+  async function cloudChangePassword(currentPassword, password, confirmation) { validPassword(password, confirmation); const result = await client.authorized('/auth/password/change', { method: 'POST', body: { currentPassword, password } }); await expireCloudSession(auth.email, {retainCached:false}); return result; }
   async function cloudLogout() {
     if (auth.mode !== 'offline') { await client.authorized('/auth/logout', { method: 'POST', body: {} }); await client.resetKey(); }
-    await expireCloudSession();
+    await expireCloudSession(auth.email, {retainCached:false});
   }
   async function cloudLogoutOthers() { return client.authorized('/auth/logout/others', { method: 'POST', body: {} }); }
-  async function cloudDeleteAccount(password, { prepareBackup = true } = {}) { if (auth.localDesktop && prepareBackup) await core.prepareAccountDeletionBackup(); const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } }); await expireCloudSession(''); return result; }
+  async function cloudDeleteAccount(password, { prepareBackup = true } = {}) { if (auth.localDesktop && prepareBackup) await core.prepareAccountDeletionBackup(); const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } }); await expireCloudSession('', {retainCached:false}); return result; }
   async function cloudEmergencyPassword(password, confirmation) {
     if (Array.from(password).length < 15 || Array.from(password).length > 128) throw { code: 'EMERGENCY_PASSWORD_INVALID' };
     if (password !== confirmation) throw { code: 'PASSWORD_MISMATCH' };
