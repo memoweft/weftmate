@@ -501,7 +501,8 @@ struct PhoneChatWorkspace: View {
                     VStack(spacing: AppleTokens.Space.p0) {
                         HStack {
                             BrandMark(size: AppleTokens.Space.p28)
-                            Text("WeftMate").font(AppleTokens.Fonts.title3.weight(.semibold)); Spacer()
+                            Text("WeftMate").font(AppleTokens.Fonts.headline); Spacer()
+                            PhoneAccountMenu(model: model)
                             Button { showingSidebar = false } label: { WeftIcon("deny") }.phoneIcon().accessibilityLabel("关闭侧栏").accessibilityIdentifier("phone.sidebar.close")
                         }.padding(AppleTokens.Space.p16)
                         sideList
@@ -514,7 +515,7 @@ struct PhoneChatWorkspace: View {
                                 .phoneIcon(primary: true).disabled(!model.mainChat.capabilities.supports("sideChats")).accessibilityLabel("新建旁聊").accessibilityIdentifier("phone.sidebar.new")
                         }.padding(AppleTokens.Space.p12)
                     }.frame(maxWidth: AppleTokens.Space.p64 * 5).background(Weave.canvas)
-                        .accessibilityIdentifier("phone.sidebar.panel")
+                        .accessibilityElement(children: .contain).accessibilityIdentifier("phone.sidebar.panel")
                 }
             }
         }
@@ -544,16 +545,15 @@ struct PhoneChatWorkspace: View {
     }
 
     private var sideList: some View {
-                List {
-                    Section {
+                VStack(spacing: AppleTokens.Space.p12) {
+                    VStack(spacing: AppleTokens.Space.p4) {
                         ForEach(PhoneTab.allCases) { item in
                             Button { tab = item; path = []; showingSidebar = false } label: {
                                 WeftLabel(item.title, icon: item.icon).font(AppleTokens.Fonts.body).frame(maxWidth: .infinity, alignment: .leading)
-                            }.buttonStyle(PhoneActionStyle(selected: tab == item)).listRowSeparator(.hidden).listRowBackground(AppleTokens.Colors.clear)
+                            }.buttonStyle(PhoneActionStyle(selected: tab == item))
                         }
-                        PhoneAccountMenu(model: model).frame(maxWidth: .infinity, alignment: .leading).listRowSeparator(.hidden)
-                    }
-
+                    }.padding(.horizontal, AppleTokens.Space.p12)
+                List {
                     if let error = model.lifecycleError { InlineNotice(message: error, isError: true) }
                     ConversationListContent(model: model, search: $search)
                     ForEach(model.sections(query: search)) { section in
@@ -563,7 +563,7 @@ struct PhoneChatWorkspace: View {
                                     if model.renamingSessionID == conversation.id {
                                         EditableSessionRow(app: model, conversation: conversation)
                                     } else {
-                                        NavigationLink(value: conversation.id) { ConversationRow(conversation: conversation) }.listRowSeparator(.hidden).listRowBackground(AppleTokens.Colors.clear)
+                                        Button { path.append(conversation.id) } label: { ConversationRow(conversation: conversation, selected: path.last == conversation.id) }.buttonStyle(.plain).listRowSeparator(.hidden).listRowBackground(AppleTokens.Colors.clear)
                                             .contextMenu { SessionActions(app: model, conversation: conversation) }
                                             .swipeActions(allowsFullSwipe: false) { Button("对话操作") { model.sessionMenuCandidate = conversation }.tint(Weave.accent) }
                                             .accessibilityIdentifier("conversationRow.\(conversation.id)")
@@ -578,7 +578,7 @@ struct PhoneChatWorkspace: View {
                             ProjectHeading(app: model, project: project)
                             if !model.collapsedProjects.contains(project.id) || !search.isEmpty {
                                 ForEach(model.projectRows(project, query: search)) { conversation in
-                                    NavigationLink(value: conversation.id) { ConversationRow(conversation: conversation) }.listRowSeparator(.hidden).listRowBackground(AppleTokens.Colors.clear)
+                                    Button { path.append(conversation.id) } label: { ConversationRow(conversation: conversation, selected: path.last == conversation.id) }.buttonStyle(.plain).listRowSeparator(.hidden).listRowBackground(AppleTokens.Colors.clear)
                                         .contextMenu { SessionActions(app: model, conversation: conversation) }
                                         .swipeActions(allowsFullSwipe: false) { Button("对话操作") { model.sessionMenuCandidate = conversation }.tint(Weave.accent) }
                                         .accessibilityIdentifier("conversationRow." + conversation.id)
@@ -594,6 +594,7 @@ struct PhoneChatWorkspace: View {
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationBarTitleDisplayMode(.inline)
                 .accessibilityElement(children: .contain).accessibilityIdentifier("conversationList")
+                }
     }
 
     private var filteredConversations: [WeftMateCore.ConversationSummary] {

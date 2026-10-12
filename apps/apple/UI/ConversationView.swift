@@ -58,6 +58,10 @@ struct ConversationRow: View {
                 Circle().fill(Weave.accent).frame(width: AppleTokens.Space.p6, height: AppleTokens.Space.p6).accessibilityLabel("未读")
             }
         }.padding(.vertical, AppleTokens.Space.p5)
+        #if os(iOS)
+        .padding(.horizontal, AppleTokens.Space.p8).frame(minHeight: AppleTokens.Space.p44)
+        .background(selected ? Weave.soft : AppleTokens.Colors.clear, in: Capsule())
+        #endif
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("conversationRow.\(conversation.id)")
     }
@@ -644,7 +648,7 @@ struct ConversationView: View {
                     #if os(macOS)
                     .menuIndicator(.hidden).menuStyle(.borderlessButton)
                     #endif
-                    .phoneIcon().disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
+                    .phoneIcon().phoneComposerControl(circle: true).disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
                     .accessibilityIdentifier("addAttachmentButton")
                     if !dynamicTypeSize.isAccessibilitySize { composerApprovalMode(accountEpoch: accountEpoch) }
                     if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
@@ -678,7 +682,7 @@ struct ConversationView: View {
                     .menuStyle(.borderlessButton)
                     #endif
                     #if os(iOS)
-                    .buttonStyle(PhoneActionStyle())
+                    .buttonStyle(PhoneActionStyle()).phoneComposerControl()
                     #endif
                     .font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择").accessibilityIdentifier("composerModel")
                     Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic", size: AppleTokens.Space.p16).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44) }

@@ -103,7 +103,7 @@ struct PhoneBottomTabs: View {
             if typeSize.isAccessibilitySize { ScrollView(.horizontal) { items }.scrollIndicators(.hidden) }
             else { items }
         }.padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, AppleTokens.Space.p8)
-            .accessibilityIdentifier("phone.bottomTabs")
+            .accessibilityElement(children: .contain).accessibilityIdentifier("phone.bottomTabs")
     }
 }
 private struct PhoneTabStyle: ButtonStyle {
@@ -126,6 +126,14 @@ extension AppleAppModel {
 }
 #endif
 extension View {
+    @ViewBuilder func phoneComposerControl(circle: Bool = false) -> some View {
+        #if os(iOS)
+        if circle { self.background(Weave.surface, in: Circle()) }
+        else { self.background(Weave.surface, in: Capsule()) }
+        #else
+        self
+        #endif
+    }
     @ViewBuilder func phoneFixedActionLabel() -> some View {
         #if os(iOS)
         self.fixedSize(horizontal: true, vertical: false)
