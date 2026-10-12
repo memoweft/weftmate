@@ -15,6 +15,7 @@ struct HealthPageView: View {
                 if page.offline { Text("电脑不在线 · "+page.updatedText).font(.footnote).foregroundStyle(.secondary).accessibilityIdentifier("health.offline") }
                 if page.loading && page.cache.overview == nil { ProgressView("正在看看今天的状态…") }
                 if let error=page.error { Text(error); Button("重试") { Task { await page.refresh(app:app) } } }
+                if let notice=page.notice { Text(notice).font(.callout).accessibilityIdentifier("health.notice") }
                 if let overview=page.cache.overview, overview.connected {
                     today(overview)
                 } else if !page.loading {
@@ -24,7 +25,6 @@ struct HealthPageView: View {
                         Button("接上") { Task { await health.expand(app:app); await page.refresh(app:app) } }.buttonStyle(PrimaryActionStyle(fillsWidth:false)).accessibilityIdentifier("health.connect")
                     }.accessibilityIdentifier("health.disconnected")
                 }
-                if let notice=page.notice { Text(notice).font(.callout).accessibilityIdentifier("health.notice") }
             }.padding(AppleTokens.Space.p20)
         }.background(Weave.canvas).navigationTitle("健康")
             .toolbar {

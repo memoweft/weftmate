@@ -446,5 +446,12 @@
     "api": "register",
     "sha256": "8d15c55ee6854444857608bd0a8068afc312e0a3e9bbdd0013946932d17c8379",
     "reason": "App.init calls MainActor register before launch completes. A process-level flag is set before touching BGTaskScheduler and prevents a second SDK registration. The SDK launch handler comes from the reviewed nonisolated Sendable launch factory; model construction never registers."
+  },
+  {
+    "file": "apps/apple/iOS/DailyHealthReader.swift",
+    "line": 50,
+    "api": "detached",
+    "sha256": "99ea2d3fd3a0ce471dbbc64b00b0edd58343e665e864f15e5768dc3c2972f1bc",
+    "reason": "Detached utility calculation is created inside a nonisolated factory with an explicit Sendable closure. It captures only immutable Sendable dates, calendar and local typed numeric/sleep inputs, and returns a Sendable aggregation. It never captures the HealthKit store, samples, model, UI or account state; UI assignment occurs after awaiting on MainActor."
   }
 ]

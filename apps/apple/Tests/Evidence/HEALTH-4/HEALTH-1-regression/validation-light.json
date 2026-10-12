@@ -1,0 +1,15 @@
+{
+  "theme": "light",
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "simulatorsAtOnce": 1,
+  "realCloud": true,
+  "realHost": true,
+  "realHostAuthentication": true,
+  "healthRecordService": "synthetic-v2-contract",
+  "realHealthStorage": false,
+  "fileMail": true,
+  "syntheticRelayRoute": true,
+  "systemStatusBar": true
+}

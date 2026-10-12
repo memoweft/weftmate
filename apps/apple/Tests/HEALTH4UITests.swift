@@ -27,6 +27,13 @@ final class HEALTH4UITests: XCTestCase {
         for _ in 0..<8 where !e.isHittable { app.swipeUp() }
         e.tap()
     }
+    @MainActor private func top(_ app: XCUIApplication, marker: String = "health.remind.walk") {
+        let target=app.descendants(matching:.any).matching(identifier:marker).firstMatch
+        for _ in 0..<12 {
+            if target.exists && target.isHittable { return }
+            app.scrollViews.firstMatch.swipeDown()
+        }
+    }
     @MainActor private func capture(_ app: XCUIApplication,_ theme: String,_ name: String) {
         let a=XCTAttachment(screenshot:app.screenshot());a.name="health4-"+theme+"-"+name;a.lifetime = .keepAlways;add(a)
     }
@@ -67,7 +74,7 @@ final class HEALTH4UITests: XCTestCase {
         try tap(app,"health.analysisEnable.recovery");capture(app,theme,"analysis-generating")
         XCTAssertTrue(app.buttons["health.analysisAsk.recovery"].waitForExistence(timeout:30));capture(app,theme,"analysis-expanded")
         try tap(app,"health.analysis.recovery");capture(app,theme,"analysis-collapsed")
-        app.swipeDown();app.swipeDown()
+        top(app)
         try tap(app,"health.remind.walk");XCTAssertTrue(app.staticTexts["已经替你记下提醒。"].waitForExistence(timeout:20))
         try tap(app,"health.ask");XCTAssertTrue(app.textFields["health4.draft"].waitForExistence(timeout:15)||app.textViews["health4.draft"].waitForExistence(timeout:15));capture(app,theme,"ask-draft")
         app.buttons["返回健康"].tap()
@@ -75,10 +82,10 @@ final class HEALTH4UITests: XCTestCase {
         app.segmentedControls.buttons["60 天"].tap();try tap(app,"health.overlay");try await Task.sleep(for:.seconds(3));capture(app,theme,"metric-sixty-day-overlay")
         app.navigationBars.buttons.element(boundBy:0).tap()
         try await control(["version":3,"scenario":"extras"])
-        try tap(app,"health.refresh");try await waitRecords(3)
-        try tap(app,"health.extra.stress");app.navigationBars.buttons.element(boundBy:0).tap();app.swipeUp();capture(app,theme,"today-new-cards")
+        try tap(app,"health.refresh");try await waitRecords(3);top(app)
+        try tap(app,"health.extra.stress");app.navigationBars.buttons.element(boundBy:0).tap();capture(app,theme,"today-new-cards");app.swipeUp();capture(app,theme,"today-new-cards-lower")
         for scenario in ["insufficient","disconnected"] {
-            try await control(["scenario":scenario]);try tap(app,"health.refresh");try await Task.sleep(for:.seconds(3));capture(app,theme,"today-"+scenario)
+            try await control(["scenario":scenario]);try tap(app,"health.refresh");try await Task.sleep(for:.seconds(3));top(app,marker:scenario == "disconnected" ? "health.connect" : "health.remind.walk");capture(app,theme,"today-"+scenario)
         }
         let final=try await report();XCTAssertGreaterThan(final["reminders"] as? Int ?? 0,0)
         app.terminate();seed.launch();try tap(seed,"health4.cleanup");XCTAssertTrue(seed.staticTexts["CLEAN"].waitForExistence(timeout:20));seed.terminate()
