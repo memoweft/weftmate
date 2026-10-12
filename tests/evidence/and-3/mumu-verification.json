@@ -18,6 +18,7 @@
     "native-page-executionRecords",
     "native-page-system",
     "native-page-notifications",
+    "native-page-reviewHealth",
     "native-approval-second-opinion-visible",
     "offline-native-process-reopen-reads-cached-content-without-login",
     "native-computer-offline-retry-preserves-cache-and-draft",
@@ -74,7 +75,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "b53fd256653589a2a627be3b452b9520adf85af46ff86a9d9d7a50c025e9449d"
+      "sha256": "4a98273d81bba5c170d3d89a07543bd405985f098197c66a9e04062cd774b6b8"
     },
     {
       "file": "mumu-390-dark-password-login.png",
@@ -124,7 +125,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "e25d902c21b387bea96b3dc7c7ec35b54038d38bae55c1f6d0887f2e00ee9271"
+      "sha256": "28bbf560b4f8ceae84fbfe5a8bd04456c1a17b176f10b0082dbf8a68e043b1e5"
     },
     {
       "file": "mumu-360-light-password-login.png",
@@ -174,7 +175,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "18c4f62e65bdce138175137c161c3536f2f1734af1d181480edbafb879b2b0cc"
+      "sha256": "ef6e5bb54b5873ae877fa8a08350ada02f796f67070441a4ebf3cd3a79ea0dad"
     },
     {
       "file": "mumu-360-dark-password-login.png",
@@ -224,7 +225,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "250d16669bed3cd707f5240dcee8585402fad4be7c1ab2eacb0f37b00a1fd977"
+      "sha256": "fa60c096d197d65b7dc55aa9f7af70b69b23821bc2e152b43fa6de6acf92933e"
     },
     {
       "file": "mumu-390-light-password-email-confirm.png",
@@ -274,7 +275,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "39fecb24fe3b81f894253a9483db353be0229684e538e4500626dbc7b6f9dbf6"
+      "sha256": "7498102d25de1d60a7d25d4c824e473f4d9ff6285981af926d812a96a43c77b2"
     },
     {
       "file": "mumu-390-dark-password-email-confirm.png",
@@ -324,7 +325,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "21d36e5521d20d8acbe7fe8649d9969ed81c7445d433eaa79e99da4e0c75d0d6"
+      "sha256": "d7cea0faf3c8b46f10f3570f66cf5aa5cbb6335c46c268d3196d24f07ed6a5de"
     },
     {
       "file": "mumu-360-light-password-email-confirm.png",
@@ -374,7 +375,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "a22ba3276bc6de6c8034cfce5501d8d55e07b24c488655bdbbaec20793112518"
+      "sha256": "98867171fc861d43463b614c96146706d9bdc93f442b7eea4ec0494f173bccf2"
     },
     {
       "file": "mumu-360-dark-password-email-confirm.png",
@@ -424,7 +425,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "4750ae96e0eb24fb4a3eeabca9f42c959259c4094a95dd05fdd508f9f568ffae"
+      "sha256": "d9d17c3cf01abc132e1dd7e3abd6de1632d43a44d5a58f2c9b5e430b553d1e9f"
     },
     {
       "file": "mumu-390-light-chat.png",
@@ -437,7 +438,7 @@
       "overflow": false,
       "tabs": [
         "聊天",
-        "动态，7 条未读",
+        "动态，8 条未读",
         "健康",
         "目标，有进行中或待处理任务",
         "成果库"
@@ -474,7 +475,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "a91d062cbaed89d8f0671d438506461ac5b4bf72fa3a692c3913972abe38c265"
+      "sha256": "a2703b5408582f08de2ba415e6b26bf7397ba20021e3a320a8db9b8ad6c019e1"
     },
     {
       "file": "mumu-390-dark-chat.png",
@@ -487,7 +488,7 @@
       "overflow": false,
       "tabs": [
         "聊天",
-        "动态，7 条未读",
+        "动态，8 条未读",
         "健康",
         "目标，有进行中或待处理任务",
         "成果库"
@@ -524,7 +525,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "f67a8b2f4a2f5874a8dd92d3e93b8991314c92736f5b6a02fc425a5f434618c4"
+      "sha256": "98e28ec7da676f818d4d9fd3941a0e22965c7dad6317c8932389ef1deb4116ac"
     },
     {
       "file": "mumu-360-light-chat.png",
@@ -537,7 +538,7 @@
       "overflow": false,
       "tabs": [
         "聊天",
-        "动态，7 条未读",
+        "动态，8 条未读",
         "健康",
         "目标，有进行中或待处理任务",
         "成果库"
@@ -574,7 +575,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "0215b0fa207730d65d01b110ad0f59dbc74480e82e1d1b0f115328fcf7e8edf2"
+      "sha256": "c62acc8f2007f2408bfd5dcf0827ab124256316b967dc2c4991d840a92795f5a"
     },
     {
       "file": "mumu-360-dark-chat.png",
@@ -587,7 +588,7 @@
       "overflow": false,
       "tabs": [
         "聊天",
-        "动态，7 条未读",
+        "动态，8 条未读",
         "健康",
         "目标，有进行中或待处理任务",
         "成果库"
@@ -624,7 +625,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "79bced1d351d4702cd59fe8b5b7e44a8fa3f247c6a3eceea0f7265e9894a5ef5"
+      "sha256": "f9d770e919de832c2d6f8121db7c5962a2674f541718afc15c1fa3d94ee3dcb1"
     },
     {
       "file": "mumu-390-light-activity.png",
@@ -674,7 +675,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "cc3ce6b983c80919d288f468923306a052ffebc87f1acc34cb872ca96c4d22cf"
+      "sha256": "1722fe8baf568bf0816668290a7b4ca22279754cbcdf6da1545cff7c2db7d6ae"
     },
     {
       "file": "mumu-390-dark-activity.png",
@@ -724,7 +725,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "593088ff1b8f3ce544593442f1321cd006d7445da78b797ce5f0224872cf499e"
+      "sha256": "1122c6deeab52b99d31c440c1f35e3ffa7cc4654b39a70c5d1ff9b6681ff29db"
     },
     {
       "file": "mumu-360-light-activity.png",
@@ -774,7 +775,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "0fcc92089482f526e4a521c106fa24e395055bb7ccedc4fc8c68e3eec4b6442c"
+      "sha256": "635e1982ccbf82cb7e5c7bd0bcb0662bc587c4df34d13826d21a1c4c24ce410f"
     },
     {
       "file": "mumu-360-dark-activity.png",
@@ -824,7 +825,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "61ba90b0f42e39819d56ef36a855c19321076a1eaf23aaa3fc692fc500f7a85e"
+      "sha256": "98d74f4df66500f5cac53042869e190ee130b87d143d7a810f489b0b869ef61c"
     },
     {
       "file": "mumu-390-light-weekly-review.png",
@@ -874,7 +875,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "7f953c5c13aae51b38e3dc41bd5d13f854b5fd4308c5a99539c18d0a06ef2819"
+      "sha256": "e3e41f7701bb95ecfc3df02dd33527bdc82265f8b26b9fc63e14cb7ce372fc10"
     },
     {
       "file": "mumu-390-dark-weekly-review.png",
@@ -924,7 +925,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "ad104f64c98a35ae7d956f662e03f97e9970f98efb8254fbf7f64b66b7406f0c"
+      "sha256": "44d1b406bf52d2c9089517b87074613f35c8457e9fb7582d24ac906e6fa94a0d"
     },
     {
       "file": "mumu-360-light-weekly-review.png",
@@ -974,7 +975,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "048fc757aa0e1b6e0f35ec95f4e29a0dfd82749daf8f7451ea4c5f9fe219f7b7"
+      "sha256": "f733bf063bcf347e06159a8babaf5fcfb15d6f96716b8235d3367ed6082fc5ef"
     },
     {
       "file": "mumu-360-dark-weekly-review.png",
@@ -1024,7 +1025,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "de4ff02a11eb04f139b8841d07d4d26f0a15b83b27373623ea5e470b93f5d40a"
+      "sha256": "c6fad95191184fbd7cbe21239c9c014ba8f9bc51c1c750c9fecacb6d58c24147"
     },
     {
       "file": "mumu-390-light-health.png",
@@ -1074,7 +1075,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "deedeb8106deac6573067c8ba93dfd44afba64c8c66d4a42cfb8628ae0643e33"
+      "sha256": "a096e49c6f1662aa50322cde2b757adffd2e172cd7a32638f52176d0da580e76"
     },
     {
       "file": "mumu-390-dark-health.png",
@@ -1124,7 +1125,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "a80489f70a61035a3b14d20153eb8339482ef8cfa5d5e21022081409fad0f3f5"
+      "sha256": "b5ae670ee2e76d164b0838351854c2793175fa58d4835ced525d1e69aa642743"
     },
     {
       "file": "mumu-360-light-health.png",
@@ -1174,7 +1175,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "8b1cc82edc77a13fc75a8294ea9b9f33c1b93461039fec5a390c854c3a26112f"
+      "sha256": "726412b77dd131dfe56b40309ae0ada6dfe5bf3bad72de798fbd416fd014a8a9"
     },
     {
       "file": "mumu-360-dark-health.png",
@@ -1224,7 +1225,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "31dde436f1ea6f4122fac34338387232529b9dc62132621cebd526f7fd46ef02"
+      "sha256": "dbc6f8e56979c09ce235f34d897298a9a8295e6aadfad0968a2d6be114c36d58"
     },
     {
       "file": "mumu-390-light-goals.png",
@@ -1274,7 +1275,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "21dcbdbd185af4fc93886541f1b530d7cc9f4277de6ea504d3cc0f5ca1db66ca"
+      "sha256": "9a169df4d3b0811f6c9a9a16792bf906f1ade60a6e7bd5268c0d18c4e7eff3b8"
     },
     {
       "file": "mumu-390-dark-goals.png",
@@ -1324,7 +1325,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "4bf706f918a36e3706832c0da19bfd5a519f63c043e831d47821c51d6045e0d6"
+      "sha256": "473396fa23667dfe86689ed2424ec75ce11958586eaccbf42e7f07c92a47700a"
     },
     {
       "file": "mumu-360-light-goals.png",
@@ -1374,7 +1375,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "357f5355150c2318e9fe66c5be40c371622b76516d83df71fc1469d0c50e1085"
+      "sha256": "444ca131bdc7ea4ac42e0306a3d85abd747af1c91c656fd4f485f301ce7cb685"
     },
     {
       "file": "mumu-360-dark-goals.png",
@@ -1424,7 +1425,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "2bfa5d30f590bd19fe6657424b707cb909ebcc7ade26e3d2070c1b3186bd3730"
+      "sha256": "e8b57655fe280c8a2ca51b8252b9d78fffecd6a0855c0ca2f1410c62b88cfc33"
     },
     {
       "file": "mumu-390-light-library.png",
@@ -1474,7 +1475,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "e0c3e6236c241add666b4f0eaaed4f43a34dc3cc1f01ef30c3ab9984444c5e82"
+      "sha256": "412005932b20bef040cc4017dbece7a750f5cf866dd798a9f5839f09a2e040fb"
     },
     {
       "file": "mumu-390-dark-library.png",
@@ -1524,7 +1525,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "48ba5fb252df241c915ad7a0723d1197235ddb3666290d30830259c8c1e4fded"
+      "sha256": "57461a935d31821cdbbe7449d15923e1442008044a2b4d9e69fc53b607efc1e2"
     },
     {
       "file": "mumu-360-light-library.png",
@@ -1574,7 +1575,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "5da0299f110234072727dbb6a82ea0e95ee5c82362a260d104d1fdc8b89f7325"
+      "sha256": "43742f46f30f3b93c50964a389a75b5691e0bb6b8d073c07692db683dd9835f4"
     },
     {
       "file": "mumu-360-dark-library.png",
@@ -1624,7 +1625,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "d5ada8f965a09420698e9f062c4bbbfc15e044b102867d6f9496633d13110ea5"
+      "sha256": "0f3c668161e76be086e6e62d1247879ac7d3ecbd18d2d7422fbff3b0425bcdb3"
     },
     {
       "file": "mumu-390-light-settings.png",
@@ -1674,7 +1675,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "55fb4cfb27ecf2f2a6a3204b5b2fa7a07bdfab30a9943a63796b34cf78e5e7b5"
+      "sha256": "0e38ed3b97ec8b4d78b4297d6e0dcd668691e45649a6ee2edb5773b377f28b31"
     },
     {
       "file": "mumu-390-dark-settings.png",
@@ -1724,7 +1725,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "bb557d6ffeecf4582e3925bf6f701349156bf330daa7f4882bb5bbc4af9e0db2"
+      "sha256": "61c23c53726ba9683e6a023c2192ad61f00095a474608acf33820707d9756ef2"
     },
     {
       "file": "mumu-360-light-settings.png",
@@ -1774,7 +1775,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "996f7a0148f1417defb7610db94c59c9d576f013704131653d21d0021f5bb332"
+      "sha256": "a1ab58974bac6df2b94e2e55fdd1f1ea6693d2a0f6023440f28b402e7a1f84a0"
     },
     {
       "file": "mumu-360-dark-settings.png",
@@ -1824,7 +1825,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "485a2f7f0c06022b8e11f58d4ddaef50f17fe16bfd0544a3957d06e8c87c7397"
+      "sha256": "3fabd91d5b0df1c5a16c104f643a705c41722e56e5c75f21c9e884a00029935f"
     },
     {
       "file": "mumu-390-light-approvals.png",
@@ -1874,7 +1875,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "75831fc2ef77de903da4e9caf4820fdbda5242edff3c7a1d292c1066feae3481"
+      "sha256": "3335f145e1ab2ef68b1f59de04bd03c4e138d19d5f35e45f94994a3f0f1949d7"
     },
     {
       "file": "mumu-390-dark-approvals.png",
@@ -1924,7 +1925,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "5cb9d0e479508a0454317bc897d92b6fd7d9d09955133bc6f43ce7e14d9c8ce1"
+      "sha256": "a028749f5a08e553c6623447ecd48521360fc18afd5eb15ac6df0c604704f054"
     },
     {
       "file": "mumu-360-light-approvals.png",
@@ -1974,7 +1975,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "771aa7fc6d71daf32ca98adab6601fe38b5530deef35cb765c271be1a7da7c62"
+      "sha256": "197f6284349ba760078f92095a1ce4de4098429aed82067e19c4a6b3a0e62ccc"
     },
     {
       "file": "mumu-360-dark-approvals.png",
@@ -2024,7 +2025,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "7e8e00af4d444065cb6584fe65caaf9fb2378d04b64a0e2b74eb10e9bf6b911d"
+      "sha256": "de09bbf73d35c804a6c4c7f9e264e86e57a58ec0082f11d0f990625de4b609b7"
     },
     {
       "file": "mumu-390-light-executionRecords.png",
@@ -2074,7 +2075,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "f70a3cf77464caa1947544ef54060881d144b7d2a91caf052d051b5921986e82"
+      "sha256": "aa7f15495b3ebbb8b7253007ee7f624b696b1e6825dfee7ef7835c0a9f7178ab"
     },
     {
       "file": "mumu-390-dark-executionRecords.png",
@@ -2124,7 +2125,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "bb2a57b3005fef1cfa86add04cdb49f9326c907b5cc001cfea81f7b63ecada52"
+      "sha256": "ae82da2b1fa5446962bccc3fb5dd518ec6c8efd50c6d8c3a2712f0c818fe992e"
     },
     {
       "file": "mumu-360-light-executionRecords.png",
@@ -2174,7 +2175,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "ddb9b49c537a2623276af224cd1df31ed655d3849d64731c858d8754d1bbe642"
+      "sha256": "2ed6141fb4357b1248ba0fdf135d68f1c19650a3fac5bf2b7f856ac2184c84ec"
     },
     {
       "file": "mumu-360-dark-executionRecords.png",
@@ -2224,7 +2225,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "7ec13526aafdc44f32b2939cacb2fa23993cf65941f1fb3abe690a38097dec81"
+      "sha256": "1d449799aed8af8e0706002c5e22c4d63f464c08cc67adac2b2db43484706a9f"
     },
     {
       "file": "mumu-390-light-system.png",
@@ -2274,7 +2275,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "c04a9eee3a2e3334d227a0008ba6d957589c418710a2ab7aa1d56e8e0ebc56c0"
+      "sha256": "a7ab4c94cbc7c438accb65eef3c5cdf4ca1ba476518f2ecef27b386b4aee5a39"
     },
     {
       "file": "mumu-390-dark-system.png",
@@ -2324,7 +2325,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "dd8b280117d073427759f51ebae7629bbace3f7100502fd068dd48f2fa6345ee"
+      "sha256": "d661cb0a7aaaaa9ec587015f5665ef89415b3e99dc963da3ced404450330454b"
     },
     {
       "file": "mumu-360-light-system.png",
@@ -2374,7 +2375,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "c2d544633a710b3f4954629d0d464dfcc01625c52edae4162433dff91f76b09d"
+      "sha256": "74e03b9fad7d3a230103189d403637b1a2ce8aba444d095610b63fccbe882277"
     },
     {
       "file": "mumu-360-dark-system.png",
@@ -2424,7 +2425,207 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "1f397d62668d7b88f3a331e1a02bb7f313ef33a4dcc77c160f78f219b30244a4"
+      "sha256": "84c98dce1bea8909bb9b64ce24b0f3c4d571a53f6241c6710aaec4f4d5b156e2"
+    },
+    {
+      "file": "mumu-390-light-notifications.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "2303fac18b3288c387184c5693405b828f038564ea00423b1ac6bd48d09e0c35"
+    },
+    {
+      "file": "mumu-390-dark-notifications.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "a4d3816ef3fe166277e9cc4bfc86562d27c55a8948c40719a42f896ec68d2aac"
+    },
+    {
+      "file": "mumu-360-light-notifications.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "6b374a42637ffdb9802f5e9f70da5e7cca02b0b689247b028bfeb2e487301dac"
+    },
+    {
+      "file": "mumu-360-dark-notifications.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "df206b1a5e4044258f8f6c1d25825f0602d9a6550574c7f0b18cad4171953749"
     },
     {
       "file": "mumu-390-light-review-settings.png",
@@ -2474,7 +2675,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "39e0d32b1d9c110682183862ede45edacf3291ce48c29059eff90b8b31bbe001"
+      "sha256": "a013fd5827690506fcccf45b44efa5ae8f4fe20080fa5ae8f34295d40a25ed9f"
     },
     {
       "file": "mumu-390-dark-review-settings.png",
@@ -2524,7 +2725,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "2d6d5d6ab72efa7178125d8efcac0c10adce6aae86b113877a66d0cb88b8494d"
+      "sha256": "253d6afbdbcecb323c4859d520fb5aeb308eb51751352b14fe025eada8f0bbb3"
     },
     {
       "file": "mumu-360-light-review-settings.png",
@@ -2574,7 +2775,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "cc8e12915b7a34efdf08c2372d1c7bee6a550bed9ed7460cd301cc580a8c3d01"
+      "sha256": "883066892734fa47c9f1b02c251b7f3038d4deddb140db78ecfda698d455e395"
     },
     {
       "file": "mumu-360-dark-review-settings.png",
@@ -2624,7 +2825,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "b64f0bd8c1400fc87b21d089d891dcfc29213daaeafa48347c344536003b8abd"
+      "sha256": "d9289bd0342f8a04f92f9d44b43f9f22f56034287135c376a3d025c71b6f3e43"
     },
     {
       "file": "mumu-390-light-health-settings.png",
@@ -2674,7 +2875,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "eb269bfb7b329439e2872939c55030e7bbf3c801ce872a013a28b51e412423e4"
+      "sha256": "49484bbd584e48477c47fc0af1673ede6d55b286663a559ef56251a3d0d8e864"
     },
     {
       "file": "mumu-390-dark-health-settings.png",
@@ -2724,7 +2925,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "19350b4268eb48da8d66e64e1dd18710723a8dc9682640d59ac785b75640806b"
+      "sha256": "d95477e58820e9b8e53a47912f2393ccc48bfb31436f9cf45e165c6504a65427"
     },
     {
       "file": "mumu-360-light-health-settings.png",
@@ -2774,7 +2975,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "88d098c92c038ae788f02e4754d0a951e4972ad1f081b2e28ff0e5fd62dab513"
+      "sha256": "eb7e3688cc3ddb7f0976017d1150ce9a3d8ce8d1823f9c4650a1c9528cf77648"
     },
     {
       "file": "mumu-360-dark-health-settings.png",
@@ -2824,7 +3025,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "a6cd576c63bc4fb5b9c60ad58ba9aa946578e33617d449e1d4aa187607aa86bd"
+      "sha256": "a5bd1f281276f727ea7e6f8ffcffa994eb8e255c82e7748597d8ee30adc94937"
     },
     {
       "file": "mumu-390-light-approval-second-opinion.png",
@@ -2874,7 +3075,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "adfc763c0194ca8b8373454c8b92b690e1faa5e28b9aa31eb5f0006dc837ce46"
+      "sha256": "1bef4fd02afb8ce6436b9cfb18eb251ef09fe9f7dd950b62e7f238cd48f693dd"
     },
     {
       "file": "mumu-390-dark-approval-second-opinion.png",
@@ -2924,7 +3125,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "2dd0abb2f86e94d190e546f83932efc847cc95ad8bdf926fd0fb9a711eb5cc41"
+      "sha256": "8a3386c2114c45a736af7dd4306e4f2a9b1e505b3f8f17c5085c8228b1642db7"
     },
     {
       "file": "mumu-360-light-approval-second-opinion.png",
@@ -2974,7 +3175,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "01cc6a908fe4c0e5ab61653ab739a4117b1a1f664a61e727058a6efd2aba7529"
+      "sha256": "ad30ad100f2f57d037f156e4209719f42a5df75f0da5c62bba53caaf7dc0e8d5"
     },
     {
       "file": "mumu-360-dark-approval-second-opinion.png",
@@ -3024,7 +3225,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "6123cd7f772c1c41abcbe3e574493c22670713987bf0c845e624b2966dc9fd09"
+      "sha256": "64329e34a04227e5f76dbacfd0101cbd4ba76fc04889ee40c61144f726d097d7"
     },
     {
       "file": "mumu-390-light-computer-offline.png",
@@ -3074,7 +3275,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "1f47df49c0eb0ee23d548b181d90e44333e8b3aabf4989fd1a4518888a77e5dc"
+      "sha256": "a70982fec2b9b7fcfda082cb5c9eb447323692dba2c5815ba3ecfe8a8e70b646"
     },
     {
       "file": "mumu-390-dark-computer-offline.png",
@@ -3124,7 +3325,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "13708499297152ca2113a93b70fd9b7152ed03630119021173eb853cda61e017"
+      "sha256": "fc0b2cc56a3e7f8a0c5796ffd4d857222f1c8eedcee4b1848e1d32d94ab5401f"
     },
     {
       "file": "mumu-360-light-computer-offline.png",
@@ -3174,7 +3375,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "798c067f6a00aecfba91b49bd4d064549924d521e7a07f73f639f00fc45b0011"
+      "sha256": "b9d94286f942617d85c73410e3b36d3766d517dad0676f5d4a07a89a64dbb107"
     },
     {
       "file": "mumu-360-dark-computer-offline.png",
@@ -3224,7 +3425,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "fc8b3528a7470aba3d91861575285b479934699e2a36b01228a7e53c4812f22f"
+      "sha256": "bbf00eface641ffe1c1d99e60f847ca525c50efdbc17fb639888996ee71e59fa"
     },
     {
       "file": "mumu-390-light-offline-process-reopen-cache.png",
@@ -3274,7 +3475,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "c97ced54121d1d7021de4b1c7f80c09e24cd467b2f31367db9673553b639c9af"
+      "sha256": "ded942a62ffc719023da5a6f6e8778342633f05b4a955714e43dc9075ce04254"
     },
     {
       "file": "mumu-390-dark-offline-process-reopen-cache.png",
@@ -3324,7 +3525,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "3e1adff50d5d33ca48bdffc8a7a928a4e8c418aa08a282244769aa2f9c62bafe"
+      "sha256": "ec9ba1258e28889ed58f9da419ce81598b32c2a76bb3a1d3e3b73b785064d779"
     },
     {
       "file": "mumu-360-light-offline-process-reopen-cache.png",
@@ -3374,7 +3575,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "12118fd783b7c02d852031d7b3f66de6dc5cae6a18196132626f7e066e8b4782"
+      "sha256": "ca49964a558c1061ab3386835e551b634cfe8e7e6a864ee8f6842dfe517696a4"
     },
     {
       "file": "mumu-360-dark-offline-process-reopen-cache.png",
@@ -3424,7 +3625,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "ec5e7f3a2f7da7cf48900e6fe7fd35eb987d91cd5e51b9e97ad1374a9c5266cc"
+      "sha256": "b986c2882e1bd34184e86a9efd166d5add7037b6f1e9ec763f176cbbad94ad32"
     },
     {
       "file": "mumu-390-light-computer-retry-restored.png",
@@ -3474,7 +3675,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "13d8994210fe88665ed62139a4b716dd5487998ddf354f8e65b9bd5e53050370"
+      "sha256": "09d3659a26d206d497eee606aee474efca1141ef9796d7ff55e6d29c2c77c96f"
     },
     {
       "file": "mumu-390-dark-computer-retry-restored.png",
@@ -3524,7 +3725,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "72da01b38e4b848f31e1493752a69ab647aad27072f6705019f902f35493fa40"
+      "sha256": "c7d84a17d8a077160faa4db85be049174244d006a3e24b66dcdcd5a30b476796"
     },
     {
       "file": "mumu-360-light-computer-retry-restored.png",
@@ -3574,7 +3775,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "515771430b61e261e71307d5dbed38cea2a0d60455264536d1960962d155085e"
+      "sha256": "753e5c41a87ebcc35258eb77502fed213731a52be7abedd8346eb2aa3516b49e"
     },
     {
       "file": "mumu-360-dark-computer-retry-restored.png",
@@ -3624,7 +3825,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "e1bcb96b2e311ebb53df42bcf26c9d266eefe28c7f985f4904b16e0defc646b1"
+      "sha256": "664faeba9e6b4680b1051a389459cca09ed4f56c9bb634bb29484c27b0c51dae"
     },
     {
       "file": "mumu-390-light-expired-cache-readable.png",
@@ -3674,7 +3875,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "1b29356544d15cc04373410f4b5bd0a6d283fdb156b8f17721e5159a4639236e"
+      "sha256": "83d353f9051fed5e8ba83d3d9d83bfa3e642ccb05a5715749e60997990b9f0cd"
     },
     {
       "file": "mumu-390-dark-expired-cache-readable.png",
@@ -3724,7 +3925,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "e78ff71dafb8387b29d1ec93c3f23eb8543947e31d3d29be319f19d9ae9ef500"
+      "sha256": "1c48b75de18eed481024db7d3e4766008033a9adf310345f48bbb8c70b53956e"
     },
     {
       "file": "mumu-360-light-expired-cache-readable.png",
@@ -3774,7 +3975,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "3bf42c0eb8302a2dc68277c002fe9fdf5d7b57cebf3d509b1d0d6ce25a66d13b"
+      "sha256": "c6f44fd39a5f27438865858873ddf393e7e8fc8c7f98fb217596ad74afe9bebb"
     },
     {
       "file": "mumu-360-dark-expired-cache-readable.png",
@@ -3824,7 +4025,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "5860f9b2958e699e8f3c6efec5a7903e6602690f66b85ae9964532d612375d0d"
+      "sha256": "68524ab10765f834e347007db24d76262641c6959333c92076186d836c56f08f"
     },
     {
       "file": "mumu-390-light-server-use-login-prompt.png",
@@ -3874,7 +4075,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "3f5781e65754ad2586e854192935580c96899e66993613af17312d31bad620cc"
+      "sha256": "d6ed493b6ad4947911d6d4a24cb8b2e8c035a33115ca3a901816ae8b2e05d401"
     },
     {
       "file": "mumu-390-dark-server-use-login-prompt.png",
@@ -3924,7 +4125,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "30649507addd50c66b19b11a5979454b1c2547f050359f5383e607d178d38ab8"
+      "sha256": "4f407923c415bdb6fa8c5660a882513e8667eedfde2d3196ade53e451b55bc5a"
     },
     {
       "file": "mumu-360-light-server-use-login-prompt.png",
@@ -3974,7 +4175,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "b8b7c3450b3a0d62aa5ce3d297818590aed3465a0ffdc4714ebe4893872c650c"
+      "sha256": "b2b8bd336228f0b3a087a5a8a3b89c0cd3da11bd934b83a8ae94c9373911a8d8"
     },
     {
       "file": "mumu-360-dark-server-use-login-prompt.png",
@@ -4024,7 +4225,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "b536d3866baaca448b3c832269bd4c1685880098e50f13ed4abb8a86ce167c23"
+      "sha256": "68baf96b29084b37c5fa83665f7deee62e6a1fe56cb143f0dbd63c151cebe6e5"
     },
     {
       "file": "mumu-390-light-code-login.png",
@@ -4074,7 +4275,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "80f244102656d6986a69a44fdba3727cb1d090d287a8af3f72a89f13ad9b4db1"
+      "sha256": "65fde2c8f9af610905f3a0a7b31bbbbd22f5e2552672507d5006556aa708ed04"
     },
     {
       "file": "mumu-390-dark-code-login.png",
@@ -4124,7 +4325,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "70d6460744255d9557b7981bc1d1d16a917ececa05ed7e02ca5976e6d1dffd3e"
+      "sha256": "336b4fffe400bf4a1192703bd97f76248c13dd17f5bc2302181f6794efb4109d"
     },
     {
       "file": "mumu-360-light-code-login.png",
@@ -4174,7 +4375,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "14a5e94b77c957843994fac091c1f7af15fe20e9c125f54540ad507feb6901ee"
+      "sha256": "340a9ea4562018bd870d8d2455fee6ed690344de5a7515f3b08c6abcf0d90315"
     },
     {
       "file": "mumu-360-dark-code-login.png",
@@ -4224,7 +4425,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "5afb87bd73cc4e43add81091cc2c84bd9a0ca05a91be64bfc926f5c6798d4448"
+      "sha256": "7564c82ac1f7c96a38e9c51005cffa10ba3a678c5f5bff7b8d780da3bd953b2a"
     },
     {
       "file": "mumu-390-light-email-code-entry.png",
@@ -4274,7 +4475,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "6787d888b73039898c0f76d7089da710eac69e92dfcf6f8e0bd06deee72670e9"
+      "sha256": "830c287acadf4687299b5be95371740002e122994e3da50893d18e3501a79b00"
     },
     {
       "file": "mumu-390-dark-email-code-entry.png",
@@ -4324,7 +4525,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "3b6bdf2d8e4b2f5669fea00ac17cf3c86e45c546775b4c2a070a8b86a2392e0a"
+      "sha256": "f36ac33ba921decaa7b8822d3fe11bb5010e4f57574909460c4101b39f96d353"
     },
     {
       "file": "mumu-360-light-email-code-entry.png",
@@ -4374,7 +4575,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "b6d410c7af367e7a51f9dcf05bb7a9334313274030dc2f425bb4f47b4c8658e3"
+      "sha256": "8407f088b2d3e8f6603e2a6e94f75d664e3e25eee5bfebc9e4578a4d6c07041e"
     },
     {
       "file": "mumu-360-dark-email-code-entry.png",
@@ -4424,7 +4625,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "f93f915ddad5914dc2a0cb81dbb07734dbb1668f509936c51553323b46c52030"
+      "sha256": "7f84b7a2274ea8fcda62519166d83159ffdc0f1f09e92f7a8c9e2bc2f03ed8c1"
     },
     {
       "file": "mumu-390-light-code-email-confirm.png",
@@ -4474,7 +4675,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "845de54878ac802d6f48199affcf89109ba586482e8f478a79af301b8b54749c"
+      "sha256": "f8b5a4a2f77667b0a5f70173e350f85bf823951c72a39333458775d2dc7a7981"
     },
     {
       "file": "mumu-390-dark-code-email-confirm.png",
@@ -4524,7 +4725,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "02ae46df17506b4eb27cbf54587a4877ed6ac3e78fdac6a65f1deb4fe5b83652"
+      "sha256": "1328e011862d813501c395a586ce21dbd6edde195e5cc9d4d7d0f6bac407d3c6"
     },
     {
       "file": "mumu-360-light-code-email-confirm.png",
@@ -4574,7 +4775,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "79b66284a67369e796c6a2a3f565dc1e803475cd53e5c5283c441a6493f49ad8"
+      "sha256": "1a96d586fa6cf51d006a7765fec27438e724334115371dbe318d74ea335ef1f4"
     },
     {
       "file": "mumu-360-dark-code-email-confirm.png",
@@ -4624,7 +4825,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "56aecd6becddbb080f687e8d94859e2d4249e7bc078584665bc803f7e46f740a"
+      "sha256": "b3d3b37c8a3dda2caea68ed3c55acc05c63c54f23c5e0c250e02ed552a0d1bdd"
     },
     {
       "file": "mumu-390-light-code-signed-in.png",
@@ -4674,7 +4875,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "86ac60779247368db1c8a98ef0c9cce48369cf25c18a94946d3357261aaeecc2"
+      "sha256": "091912f3f5d0bc7b538a22672a1d79db5b545b52a45300c65b03fd37cfd7da72"
     },
     {
       "file": "mumu-390-dark-code-signed-in.png",
@@ -4724,7 +4925,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "664c91be4829a344fd66823f89c6897bb8223137f3f773b8fc0907cd86e17a1d"
+      "sha256": "0ee0bcff056eeb71381d2477f04f27f8b6f36355addd097e01ba50ac6813d7af"
     },
     {
       "file": "mumu-360-light-code-signed-in.png",
@@ -4737,7 +4938,7 @@
       "overflow": false,
       "tabs": [
         "聊天",
-        "动态，9 条未读",
+        "动态",
         "健康",
         "目标",
         "成果库"
@@ -4774,7 +4975,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "19621ee77106869604d8e6b327d5fd5c5cdaa4ada6fff405b924e54cd696637a"
+      "sha256": "c714be40c4aa708a06ca44ab0bb8028c97a1c35cb7bf36d6e83e5101a7c40da5"
     },
     {
       "file": "mumu-360-dark-code-signed-in.png",
@@ -4824,7 +5025,7 @@
         "passed": true
       },
       "navigation": null,
-      "sha256": "972a49a2139adb4b20a9d5e426c7171d4799cb5f1f87f6359e11ed5779241a03"
+      "sha256": "e5fe09641074b3362c29485b08880662ae7c969ca4086b11c9c428f01e4ef47a"
     }
   ],
   "cleanup": {
@@ -4836,21 +5037,21 @@
   "errors": [],
   "osVersion": "15",
   "mainReply": {
-    "selected": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
-    "session": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+    "selected": "chat-67cd8bdf-6326-407d-912f-ce880930e5f4",
+    "session": "session-fbca90a5-a8da-4766-a96f-9f2ca5a33f08",
     "reply": {
       "items": [
         {
-          "eventId": "event-d276961aa43816b93e08c2349045cb494554e2dc37b00806ae469ffb642109ad",
-          "chatId": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
-          "orderKey": "0000000000000000:segment-d1238d6c-af36-4d50-9e41-07a41818be6b:0000000000000000",
+          "eventId": "event-f3ea5f90b2374e41a49aa5191dba131b73a629f2700f0eb8708e09165f86429e",
+          "chatId": "chat-67cd8bdf-6326-407d-912f-ce880930e5f4",
+          "orderKey": "0000000000000000:segment-22f0e09f-e45a-46a6-a9cb-94805ac47c63:0000000000000000",
           "revision": 1,
           "type": "turn.started",
-          "at": "2026-10-12T18:18:45.228Z",
+          "at": "2026-10-12T19:09:42.768Z",
           "sourceRef": {
             "kind": "native",
-            "hostId": "host-9c0c97a6-49ab-4838-90a4-ee484279f9f6",
-            "sessionId": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+            "hostId": "host-81c10e6a-9a21-4b1d-bc8e-702a51ae598a",
+            "sessionId": "session-fbca90a5-a8da-4766-a96f-9f2ca5a33f08",
             "seq": 0
           },
           "data": {
@@ -4858,57 +5059,57 @@
           }
         },
         {
-          "eventId": "event-0ad349802a0776825fab89a10e76ed029a5bda37411114233069803725f0097c",
-          "chatId": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
-          "orderKey": "0000000000000000:segment-d1238d6c-af36-4d50-9e41-07a41818be6b:0000000000000001",
+          "eventId": "event-6fe3fffe3274b4c8f50dff60efc77267076b730f8a97b6c019f1838ba0330d78",
+          "chatId": "chat-67cd8bdf-6326-407d-912f-ce880930e5f4",
+          "orderKey": "0000000000000000:segment-22f0e09f-e45a-46a6-a9cb-94805ac47c63:0000000000000001",
           "revision": 1,
           "type": "user.message",
-          "at": "2026-10-12T18:18:45.728Z",
+          "at": "2026-10-12T19:09:43.268Z",
           "sourceRef": {
             "kind": "native",
-            "hostId": "host-9c0c97a6-49ab-4838-90a4-ee484279f9f6",
-            "sessionId": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+            "hostId": "host-81c10e6a-9a21-4b1d-bc8e-702a51ae598a",
+            "sessionId": "session-fbca90a5-a8da-4766-a96f-9f2ca5a33f08",
             "seq": 1
           },
           "data": {
             "text": "原生壳里的合成问候",
-            "receiptId": "synthetic-24b0a66b-d5f7-465f-bf0a-401e352f70a8",
+            "receiptId": "synthetic-298446e3-9658-4722-a552-8285cc44a37c",
             "truncated": false
           }
         },
         {
-          "eventId": "event-ecf153ab289674447951a2f56228c506e91af84b548656f9e354912cc98072d3",
-          "chatId": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
-          "orderKey": "0000000000000000:segment-d1238d6c-af36-4d50-9e41-07a41818be6b:0000000000000002",
+          "eventId": "event-c82ab5da1b3a227aa273f1af43655681961b67b962005c270ba16c1ff3cf2cd9",
+          "chatId": "chat-67cd8bdf-6326-407d-912f-ce880930e5f4",
+          "orderKey": "0000000000000000:segment-22f0e09f-e45a-46a6-a9cb-94805ac47c63:0000000000000002",
           "revision": 1,
           "type": "task.started",
-          "at": "2026-10-12T18:18:46.228Z",
+          "at": "2026-10-12T19:09:43.768Z",
           "sourceRef": {
             "kind": "native",
-            "hostId": "host-9c0c97a6-49ab-4838-90a4-ee484279f9f6",
-            "sessionId": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+            "hostId": "host-81c10e6a-9a21-4b1d-bc8e-702a51ae598a",
+            "sessionId": "session-fbca90a5-a8da-4766-a96f-9f2ca5a33f08",
             "seq": 2
           },
           "data": {
-            "taskId": "cmd-b106e47f-a680-408e-88f8-cca6bd22dee5",
+            "taskId": "cmd-6177bbe0-2def-42f8-addd-66fb78b2fb9b",
             "turn": 1,
-            "receiptId": "synthetic-24b0a66b-d5f7-465f-bf0a-401e352f70a8",
-            "commandId": "cmd-b106e47f-a680-408e-88f8-cca6bd22dee5",
-            "requestId": "f9b53108-2ba1-4737-a73a-16d7998feb90",
+            "receiptId": "synthetic-298446e3-9658-4722-a552-8285cc44a37c",
+            "commandId": "cmd-6177bbe0-2def-42f8-addd-66fb78b2fb9b",
+            "requestId": "69aea2d8-c425-49f6-becc-77a2bb4a4611",
             "turnTaskId": "turn-1"
           }
         },
         {
-          "eventId": "event-2cf9fd96392038dd081204f3991b6ab4c82fe6a1802eddf658d018198b545b3b",
-          "chatId": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
-          "orderKey": "0000000000000000:segment-d1238d6c-af36-4d50-9e41-07a41818be6b:0000000000000003",
+          "eventId": "event-f12abc7857f7d916b329c68c306262b7a35e09db8397a3c71619c87681cea46a",
+          "chatId": "chat-67cd8bdf-6326-407d-912f-ce880930e5f4",
+          "orderKey": "0000000000000000:segment-22f0e09f-e45a-46a6-a9cb-94805ac47c63:0000000000000003",
           "revision": 1,
           "type": "assistant.message",
-          "at": "2026-10-12T18:18:46.728Z",
+          "at": "2026-10-12T19:09:44.268Z",
           "sourceRef": {
             "kind": "native",
-            "hostId": "host-9c0c97a6-49ab-4838-90a4-ee484279f9f6",
-            "sessionId": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+            "hostId": "host-81c10e6a-9a21-4b1d-bc8e-702a51ae598a",
+            "sessionId": "session-fbca90a5-a8da-4766-a96f-9f2ca5a33f08",
             "seq": 3
           },
           "data": {
@@ -4916,16 +5117,16 @@
           }
         },
         {
-          "eventId": "event-640fb4f3da3f874d7f46e1601f8316cfc4ad690e4798f354c18cc5bd61d68833",
-          "chatId": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
-          "orderKey": "0000000000000000:segment-d1238d6c-af36-4d50-9e41-07a41818be6b:0000000000000004",
+          "eventId": "event-0fdef0ac35a60df2325aa7165d1b611bdce2e24e2cd07eb289a0c5cb78c9d666",
+          "chatId": "chat-67cd8bdf-6326-407d-912f-ce880930e5f4",
+          "orderKey": "0000000000000000:segment-22f0e09f-e45a-46a6-a9cb-94805ac47c63:0000000000000004",
           "revision": 1,
           "type": "turn.ended",
-          "at": "2026-10-12T18:18:47.228Z",
+          "at": "2026-10-12T19:09:44.768Z",
           "sourceRef": {
             "kind": "native",
-            "hostId": "host-9c0c97a6-49ab-4838-90a4-ee484279f9f6",
-            "sessionId": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+            "hostId": "host-81c10e6a-9a21-4b1d-bc8e-702a51ae598a",
+            "sessionId": "session-fbca90a5-a8da-4766-a96f-9f2ca5a33f08",
             "seq": 4
           },
           "data": {
@@ -4936,11 +5137,11 @@
       ],
       "liveEvents": [],
       "liveRevision": 0,
-      "olderCursor": "WyJvd25lci1lZTkxYzg2NC0zM2U0LTRmOTItODY4MS05NGQyOWNlOTJhYTkiLCJjaGF0LWQzMzZlMTg1LTVkOWUtNDY2OC1hM2EwLTBhN2RlNzE2MGE1OSIsIjgwNjg5ODc5NDdiMjhmYjIwMjYxYzNhYzgzNTc1NmZkIiwiaGlzdG9yeSIsIjAwMDAwMDAwMDAwMDAwMDA6c2VnbWVudC1kMTIzOGQ2Yy1hZjM2LTRkNTAtOWU0MS0wN2E0MTgxOGJlNmI6MDAwMDAwMDAwMDAwMDAwMCIsIiJd.yCmRzcWSxboMseXa_bwDmBSI6WMhqnFDzlAJECFpo9g",
-      "newerCursor": "WyJvd25lci1lZTkxYzg2NC0zM2U0LTRmOTItODY4MS05NGQyOWNlOTJhYTkiLCJjaGF0LWQzMzZlMTg1LTVkOWUtNDY2OC1hM2EwLTBhN2RlNzE2MGE1OSIsIjgwNjg5ODc5NDdiMjhmYjIwMjYxYzNhYzgzNTc1NmZkIiwiaGlzdG9yeSIsIjAwMDAwMDAwMDAwMDAwMDA6c2VnbWVudC1kMTIzOGQ2Yy1hZjM2LTRkNTAtOWU0MS0wN2E0MTgxOGJlNmI6MDAwMDAwMDAwMDAwMDAwNCIsIiJd.P0rFCMFb0Bad3xoZbWPpkCCeQI5-_amBmXlVbkVkRB8",
+      "olderCursor": "WyJvd25lci1kYmUzZjhkMi1iNjNmLTQxNmMtYjgxYi1jNWVlNGQzMGE1OTkiLCJjaGF0LTY3Y2Q4YmRmLTYzMjYtNDA3ZC05MTJmLWNlODgwOTMwZTVmNCIsIjg4ODhlYTFhYjk0ZWRiZWU3ZWYyNjA1YmVhY2EwYWYyIiwiaGlzdG9yeSIsIjAwMDAwMDAwMDAwMDAwMDA6c2VnbWVudC0yMmYwZTA5Zi1lNDVhLTQ2YTYtYTljYi05NDgwNWFjNDdjNjM6MDAwMDAwMDAwMDAwMDAwMCIsIiJd.4kGr353t2Ak8rFyXLgxgNJXlwJZFz_mCdXJfsJ_vSDE",
+      "newerCursor": "WyJvd25lci1kYmUzZjhkMi1iNjNmLTQxNmMtYjgxYi1jNWVlNGQzMGE1OTkiLCJjaGF0LTY3Y2Q4YmRmLTYzMjYtNDA3ZC05MTJmLWNlODgwOTMwZTVmNCIsIjg4ODhlYTFhYjk0ZWRiZWU3ZWYyNjA1YmVhY2EwYWYyIiwiaGlzdG9yeSIsIjAwMDAwMDAwMDAwMDAwMDA6c2VnbWVudC0yMmYwZTA5Zi1lNDVhLTQ2YTYtYTljYi05NDgwNWFjNDdjNjM6MDAwMDAwMDAwMDAwMDAwNCIsIiJd.Pex6CSpoZtLQK189Jnz_h_UfeY23B3nJCqLveNXuuGA",
       "hasOlder": false,
       "hasNewer": false,
-      "syncCursor": "WyJvd25lci1lZTkxYzg2NC0zM2U0LTRmOTItODY4MS05NGQyOWNlOTJhYTkiLCJjaGF0LWQzMzZlMTg1LTVkOWUtNDY2OC1hM2EwLTBhN2RlNzE2MGE1OSIsIjgwNjg5ODc5NDdiMjhmYjIwMjYxYzNhYzgzNTc1NmZkIiwic3luYyIsNSwiIl0.9HPO8dOgO_NM3ptk7Ay8kSysmWulpSbgBRCgfBQTZlA",
+      "syncCursor": "WyJvd25lci1kYmUzZjhkMi1iNjNmLTQxNmMtYjgxYi1jNWVlNGQzMGE1OTkiLCJjaGF0LTY3Y2Q4YmRmLTYzMjYtNDA3ZC05MTJmLWNlODgwOTMwZTVmNCIsIjg4ODhlYTFhYjk0ZWRiZWU3ZWYyNjA1YmVhY2EwYWYyIiwic3luYyIsNSwiIl0.I9LZIj9eeTJDbXCFUDLDhD7sPso7Az-BpiUgKk1DooU",
       "deletedAnchor": false,
       "contentRevision": 1,
       "chatRevision": 3,
@@ -4948,11 +5149,11 @@
       "indexState": "ready",
       "timeZone": "Asia/Shanghai",
       "accountChanges": {
-        "revision": 32,
-        "modelSettings": "7a977f9931d0f29babeb438ebe22483b4fdd36b46cadc136e956ced767fc5918",
-        "personalization": "8df1e6bd753c6ec585bf88e2fccfc1129218b24767bc1d7751d3b240a3302821",
-        "sessions": "8d977f0001706b1af397e236f070482da074f5c45bb3ce0330bb8d6473bc0a83",
-        "models": "4c879b41c5993fed6e8d9ee1e527ec05c8ca2576b1d596101d35c71f53b2f5f3"
+        "revision": 30,
+        "modelSettings": "88f83308f80bbc5d4280f591e928cfcf6a8a55f80ee4abaff72d4cfd9da799b4",
+        "personalization": "d058a8f4bc389781b5e529d33a5cf8e2ae8bae92ee258f4ffc49de92ff7e97ad",
+        "sessions": "85dde56861e4225d2641b6076d8d1b19fc35c880c239ff26cf8992ab66bee7d8",
+        "models": "fbc922b9d953d4f7071b62606118fe2305eb00a0e9a2aceb7623860444e5035e"
       }
     }
   },

@@ -13,5 +13,17 @@
     "skipped": 0,
     "debugApkBuilt": true,
     "instrumentationApkBuilt": true
+  },
+  "postMain": {
+    "main": "ca6c3d18969dba8a31ad86e6e163c8ffa1787e49",
+    "local": {
+      "tests": 77,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cloudWorkflow": "https://github.com/memoweft/weftmate/actions/runs/38294644178",
+    "debugApkBuilt": true,
+    "instrumentationApkBuilt": true
   }
 }
