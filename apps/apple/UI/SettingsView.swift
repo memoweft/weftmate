@@ -10,6 +10,7 @@ struct SettingsView: View {
     @ObservedObject var model: AppleAppModel
     @StateObject private var settings: AppleSettingsModel
     @State private var search = ""
+    @State private var confirmingLogout = false
     @State private var availableWidth: CGFloat = 1000
     @State private var phonePath: [AppleSettingsRoute]
     #if os(macOS)
@@ -71,32 +72,65 @@ struct SettingsView: View {
         .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme).tint(Weave.accent)
         #else
         NavigationStack(path: $phonePath) {
-            List {
-                Section { AccountUsageBar(app: model) }
-                ForEach(["设置", "助手", "关于"], id: \.self) { group in
-                    let rows = categories.filter { $0.group == group }
-                    if !rows.isEmpty {
-                        Section(group) {
-                            ForEach(rows) { category in
-                                NavigationLink(value: AppleSettingsRoute(categoryID: category.id)) {
-                                    HStack(spacing: AppleTokens.Space.p12) {
-                                        WeftIcon(category.icon).foregroundStyle(Weave.accent)
-                                        Text(category.name)
-                                        Spacer()
-                                        Text(settings.summary(category.id)).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineLimit(1)
+            ScrollView {
+                VStack(alignment: .leading, spacing: AppleTokens.Space.p24) {
+                    NavigationLink(value: AppleSettingsRoute(categoryID: "account")) {
+                        HStack(spacing: AppleTokens.Space.p16) {
+                            WeftIcon("account", size: AppleTokens.Space.p28).foregroundStyle(Weave.accent)
+                                .frame(width: AppleTokens.Space.p56, height: AppleTokens.Space.p56).background(Weave.surface, in: Circle())
+                            VStack(alignment: .leading, spacing: AppleTokens.Space.p6) {
+                                Text(model.accountName).font(AppleTokens.Fonts.headline).foregroundStyle(Weave.ink)
+                                Text(model.cloudLogin.authenticated ? model.cloudLogin.email : "本机账户")
+                                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                                AccountUsageBar(app: model)
+                            }.frame(maxWidth: .infinity, alignment: .leading)
+                            WeftIcon("right", size: AppleTokens.Space.p16).foregroundStyle(Weave.muted)
+                        }.phoneCard()
+                    }.buttonStyle(.plain).accessibilityIdentifier("settings.accountCard")
+                    HStack(spacing: AppleTokens.Space.p8) {
+                        WeftIcon("search", size: AppleTokens.Space.p16).foregroundStyle(Weave.muted)
+                        TextField("搜索设置", text: $search).textFieldStyle(.plain).accessibilityIdentifier("settingsSearch")
+                    }.padding(.horizontal, AppleTokens.Space.p16).frame(minHeight: AppleTokens.Space.p44).background(Weave.soft, in: Capsule())
+                    ForEach(["设置", "助手", "关于"], id: \.self) { group in
+                        let rows = categories.filter { $0.group == group }
+                        if !rows.isEmpty {
+                            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+                                Text(group).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal, AppleTokens.Space.p12)
+                                VStack(spacing: AppleTokens.Space.p4) {
+                                    ForEach(rows) { category in
+                                        NavigationLink(value: AppleSettingsRoute(categoryID: category.id)) {
+                                            HStack(spacing: AppleTokens.Space.p12) {
+                                                WeftIcon(category.icon).foregroundStyle(Weave.accent)
+                                                Text(category.name).foregroundStyle(Weave.ink)
+                                                Spacer(minLength: AppleTokens.Space.p4)
+                                                Text(settings.summary(category.id)).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineLimit(1)
+                                                WeftIcon("right", size: AppleTokens.Space.p12).foregroundStyle(Weave.muted)
+                                            }.font(AppleTokens.Fonts.body).frame(minHeight: AppleTokens.Space.p56)
+                                                .padding(.horizontal, AppleTokens.Space.p8).contentShape(Rectangle())
+                                        }.buttonStyle(.plain).accessibilityIdentifier("settingsCategory." + category.id)
                                     }
-                                }.accessibilityIdentifier("settingsCategory." + category.id)
+                                }.phoneCard()
                             }
                         }
                     }
-                }
-                if categories.isEmpty { Text("没有匹配的设置") }
-            }.listStyle(.insetGrouped).navigationTitle("设置")
-                .searchable(text: $search, prompt: "搜索设置")
+                    if categories.isEmpty { Text("没有匹配的设置").foregroundStyle(Weave.muted) }
+                    Button { confirmingLogout = true } label: {
+                        HStack(spacing: AppleTokens.Space.p12) {
+                            WeftIcon("logout"); Text("退出登录"); Spacer()
+                        }.frame(minHeight: AppleTokens.Space.p44).phoneCard().foregroundStyle(Weave.danger)
+                    }.buttonStyle(.plain).accessibilityIdentifier("settings.logout")
+                }.padding(AppleTokens.Space.p16)
+            }.background(Weave.canvas).navigationTitle("设置").navigationBarTitleDisplayMode(.inline)
                 .navigationDestination(for: AppleSettingsRoute.self) { route in detail(route).toolbar { if route.categoryID != "run-log" { closeButton } } }
                 .toolbar { closeButton }
-                .accessibilityIdentifier("settingsRoot")
+                .accessibilityElement(children: .contain).accessibilityIdentifier("settingsRoot")
         }
+        .confirmationDialog("退出登录？本机对话与记忆保留。", isPresented: $confirmingLogout, titleVisibility: .visible) {
+            Button("退出登录", role: .destructive) { Task { await model.signOut() } }
+            Button("取消", role: .cancel) {}
+        }
+        .buttonStyle(PhoneActionStyle())
+        .presentationDragIndicator(.visible).presentationCornerRadius(AppleTokens.Radius.r32)
         .persistentSystemOverlays(.visible)
         .tint(Weave.accent)
         .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme)
@@ -242,6 +276,7 @@ private struct SettingsCategoryView: View {
         case "general":
             #if os(iOS)
             DailyHealthSettingsRow(app: app)
+            HealthAISettingsRow(app:app)
             #endif
             SettingsRow("回复进行中时发送的消息", "按账户保存在这台设备。") {
                 Picker("回复进行中时发送的消息", selection: Binding(get: { app.runningMessageMode }, set: { app.runningMessageMode = $0 })) {
@@ -279,6 +314,12 @@ private struct SettingsCategoryView: View {
             SettingsRow("默认审批模式", "按账户保存，只影响新建对话；已有对话在输入区切换。") {
                 ApprovalModeControl(model: app, sessionID: nil).id(app.accountEpoch)
             }
+            #if os(iOS)
+            if let approvals = settings.approvals {
+                Toggle("动手前多看一眼", isOn: Binding(get: { settings.approvals?.effectiveSecondOpinionEnabled ?? approvals.effectiveSecondOpinionEnabled }, set: { value in Task { await settings.saveSecondOpinion(value) } }))
+                    .tint(Weave.accent).disabled(settings.busy).accessibilityIdentifier("settings.secondOpinionEnabled")
+            }
+            #endif
         case "memory":
             SettingsRow("记忆管理", "查看它记得什么、从哪里来，并进行纠正。") {
                 NavigationLink("管理记忆") { MemoryWorkspaceView(appModel: app).id(app.accountEpoch) }
@@ -325,7 +366,7 @@ private struct SettingsCategoryView: View {
                                 Button { Task { await settings.schedule(item, action: item.state == "paused" ? .resume : .pause) } } label: { Label(item.state == "paused" ? "恢复" : "暂停", image: item.state == "paused" ? "wm-play" : "wm-pause") }.disabled(item.state == "completed")
                                 Button { Task { await settings.schedule(item, action: .run) } } label: { Label("立即运行", image: "wm-play") }
                                 Button(role: .destructive) { deletingSchedule = item } label: { Label("删除", image: "wm-trash") }
-                            } label: { WeftIcon("more").frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44) }
+                            } label: { WeftIcon("more").frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44) }.phoneIcon()
                                 .disabled(settings.busy).accessibilityLabel("提醒操作").accessibilityIdentifier("scheduleActions." + item.identity)
                             #endif
                         }
@@ -478,5 +519,11 @@ private struct LocalAccountSettingsView: View {
 /// The same Done capsule for every phone settings destination, including diagnostic details.
 struct SettingsDoneButton: View {
     let action: () -> Void
-    var body: some View { Button("完成", action: action).accessibilityIdentifier("closeAuxiliarySheetButton") }
+    var body: some View {
+        #if os(iOS)
+        Button(action: action) { WeftIcon("deny") }.phoneIcon().accessibilityLabel("完成").accessibilityIdentifier("closeAuxiliarySheetButton")
+        #else
+        Button("完成", action: action).accessibilityIdentifier("closeAuxiliarySheetButton")
+        #endif
+    }
 }

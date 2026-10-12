@@ -1,0 +1,13 @@
+{
+  "scannedTextFiles": 50,
+  "realPrivateIdentityHits": 0,
+  "reviewedPatternMatches": [
+    {
+      "file": "apps/apple/UI/MessageActionsPresentation.swift",
+      "classification": "Existing redaction regex matches generic user-home path patterns; contains no actual private path."
+    }
+  ],
+  "accountsAndHostNames": "synthetic",
+  "secrets": "fixture-only dummy authentication strings; no production credentials",
+  "rawLogsAndXcresultCommitted": false
+}

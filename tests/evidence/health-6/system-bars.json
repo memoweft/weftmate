@@ -1,0 +1,60 @@
+[
+  {
+    "file": "phone-system-360-light-today.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "把今天的节奏放轻松",
+        "inkPixels": 2224
+      },
+      {
+        "text": "81",
+        "inkPixels": 966
+      },
+      {
+        "text": "85",
+        "inkPixels": 1067
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 1,
+    "sha256": "b80969a64a66ba813c60045d90ea4291e826130bdc03fc5674c64da548b63ea3",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38256450521"
+  },
+  {
+    "file": "phone-system-360-dark-today.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "把今天的节奏放轻松",
+        "inkPixels": 2466
+      },
+      {
+        "text": "81",
+        "inkPixels": 996
+      },
+      {
+        "text": "85",
+        "inkPixels": 1109
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "282a7a956c80d6470ab01dcbd62e672779d9183507e4d85cd49128bbef5c7831",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38256450521"
+  }
+]

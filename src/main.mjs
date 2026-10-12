@@ -23,7 +23,7 @@ import { createHostDiagnostics } from './host-diagnostics.mjs';
 import { createSystemStatusManager } from './system-status-runtime.mjs';
 import { createHostLog, redactSecretText, diagnosticPlatform } from './host-log.mjs';
 import { readLocalServiceKey } from './local-service-key.mjs';
-import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady } from './background-model-selection.mjs';
+import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady, createBackgroundRouteRecorder } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, crashReporter } from 'electron';
 import packageInfo from '../package.json' with { type: 'json' };
@@ -1794,10 +1794,11 @@ async function bootstrap() {
           ? { ...proof, credential: true } : null;
       } };
   }
+  const backgroundRoutes = createBackgroundRouteRecorder((event, data) => hostLog.write(event, data));
   function memoryBackgroundProfile(ownerId, boundProfileId = null) {
     if (!personalAccessService || !personalMemoryRuntimeConfig) return null;
     const profiles = settingsMod.listModelProfiles().profiles;
-    return selectBackgroundProfile({ explicit: personalAccessService.backgroundModelProfile(ownerId), bound: boundProfileId,
+    return selectBackgroundProfile({ explicit: personalAccessService.backgroundModelProfile(ownerId, id => profiles.some(row => row.id === id)), bound: boundProfileId,
       current: personalAccessService.currentChatModelProfile(ownerId), profiles,
       allowed: id => personalAccessService.canUseModelProfile(ownerId, id, 'new') });
   }
@@ -1805,7 +1806,7 @@ async function bootstrap() {
     const binding = sessionId === null ? null : personalAccessService?.ownerForSession(sessionId);
     if (binding && binding.ownerId !== ownerId) return null;
     const selected = memoryBackgroundProfile(ownerId, binding?.modelProfileId);
-    hostLog.write('background.route', { profileId: selected?.id, sessionId: sessionId ?? undefined, configured: !!selected });
+    backgroundRoutes.record(ownerId, { profileId: selected?.id, configured: !!selected });
     if (!selected) return null;
     const key = credentialForModelProfile(selected);
     if (!key) return null;
@@ -1824,12 +1825,14 @@ async function bootstrap() {
   const localModelController = localModelFlag
     ? createLocalModelController(localModelFlag.slice('--local-model-config='.length)) : null;
   modelScheduler = await createModelScheduler({
+    onBackgroundResult: ({ ownerId, profileId, ...result }) => personalAccessService?.reportBackgroundModel(ownerId, profileId, result),
     onEvent: (event, data) => hostLog.write(event, data),
     memoryProfileFor: ownerId => {
       const profile = memoryBackgroundProfile(ownerId);
       return profile && memoryRecallModelTier(profile) === 'local' ? profile : null;
     },
-    backgroundReady: profile => backgroundModelReady(profile, { credentialFor: credentialForModelProfile }),
+    backgroundReady: (profile, scope = {}) => backgroundModelReady(profile, { credentialFor: credentialForModelProfile,
+      onUnavailable: result => personalAccessService?.reportBackgroundModel(scope.ownerId ?? personalAccessService?.ownerForSession(scope.sessionId)?.ownerId, profile.id, result) }),
     suggestionReady: (profile, { signal }) => suggestionModelReady(profile, { credentialFor: credentialForModelProfile, signal }),
     beginUsage: input => input.sessionId && !input.ownerId && !personalAccessService?.ownerForSession(input.sessionId)
       ? null : personalAccessService?.beginUsage(input),
@@ -1841,7 +1844,7 @@ async function bootstrap() {
     credentialFor: credentialForModelProfile,
     backgroundRoute: async (sessionId, profileId) => {
       const binding = personalAccessService?.ownerForSession(sessionId);
-      const selectedId = binding ? personalAccessService.backgroundModelProfile(binding.ownerId) ?? personalAccessService.currentChatModelProfile(binding.ownerId) : null;
+      const selectedId = binding ? await personalAccessService.resolveBackgroundModel(binding.ownerId, settingsMod.listModelProfiles().profiles) : null;
       const profile = settingsMod.listModelProfiles().profiles.find(row => selectedId
         ? row.id === selectedId : row.id === profileId || routeForProfile(row.id).provider === profileId);
       if (!profile || binding && !personalAccessService.canUseModelProfile(binding.ownerId, profile.id, 'new')) {
@@ -3135,7 +3138,9 @@ async function bootstrap() {
         const route = memoryProcessingRouteForSession(ownerId, null);
         if (!route) return 'unavailable';
         const profile = memoryBackgroundProfile(ownerId);
-        return await backgroundModelReady(profile, { credentialFor: credentialForModelProfile }) ? 'ready' : 'waiting';
+        if (!profile) return 'unavailable';
+        return await backgroundModelReady(profile, { credentialFor: credentialForModelProfile,
+          onUnavailable: result => personalAccessService.reportBackgroundModel(ownerId, profile.id, result) }) ? 'ready' : 'waiting';
       },
     });
   }

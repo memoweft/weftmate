@@ -16,7 +16,31 @@ export function selectBackgroundProfile({ explicit, bound, current, profiles, al
   return profiles.find(row => row.id === id && allowed(row.id)) ?? null;
 }
 
-export async function backgroundModelReady(profile, { credentialFor, fetchImpl = fetch }) {
+/** Record decisions per owner, rather than every session/health poll. */
+export function createBackgroundRouteRecorder(write, { clock = Date.now, intervalMs = 3_600_000 } = {}) {
+  const routes = new Map();
+  function flush() {
+    const now = clock();
+    for (const row of routes.values()) {
+      if (row.count) write('background.route', { ...row.data, phase: 'summary', ahead: row.count });
+      row.count = 0; row.at = now;
+    }
+  }
+  const timer = setInterval(flush, intervalMs); timer.unref();
+  return { record(ownerId, data) {
+    const signature = JSON.stringify([data.profileId ?? null, data.configured]);
+    const previous = routes.get(ownerId), now = clock();
+    if (!previous || previous.signature !== signature) {
+      write('background.route', { ...data, phase: 'changed' });
+      routes.set(ownerId, { signature, data, count: 0, at: now });
+    } else {
+      previous.count++;
+      if (now - previous.at >= intervalMs) { flush(); previous.at = now; }
+    }
+  }, flush, close() { clearInterval(timer); } };
+}
+
+export async function backgroundModelReady(profile, { credentialFor, fetchImpl = fetch, onUnavailable = null }) {
   const base = new URL(profile.baseUrl);
   if (!['127.0.0.1', 'localhost', '[::1]'].includes(base.hostname)) return true;
   const headers = { authorization: `Bearer ${credentialFor(profile)}` };
@@ -31,6 +55,18 @@ export async function backgroundModelReady(profile, { credentialFor, fetchImpl =
     const response = await fetchImpl(`${root}/switch/status`, { headers, signal: AbortSignal.timeout(2000), redirect: 'error' });
     if (response.ok) status = await response.json();
   } catch { /* Non-switching services have no status endpoint. */ }
+  if (onUnavailable && status?.switching !== true &&
+      (!props || status && (status.current_model ?? status.currentModelId ?? status.current_model_id) !== profile.model)) {
+    try {
+      const response = await fetchImpl(`${profile.baseUrl.replace(/\/$/, '')}/models`, { headers, signal: AbortSignal.timeout(2000), redirect: 'error' });
+      if (response.ok) {
+        const catalog = await response.json();
+        if (Array.isArray(catalog.data) && !catalog.data.some(row => row.id === profile.model)) {
+          await onUnavailable({ unavailable: true }); return false;
+        }
+      } else if (response.status >= 500) await onUnavailable({ failed: true });
+    } catch { await onUnavailable({ failed: true }); }
+  }
   if (props?.total_slots > 1) return true;
   if (status) return status.switching !== true && (status.current_model ?? status.currentModelId ?? status.current_model_id) === profile.model;
   // A single-slot service with no observable model cannot safely load a background model.

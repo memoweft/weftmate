@@ -1,0 +1,41 @@
+{
+  "package": {
+    "xctestPassed": 13,
+    "swiftTestingPassed": 462,
+    "failed": 0,
+    "skipped": 0,
+    "jobs": 2
+  },
+  "designTokens": {
+    "passed": 5,
+    "failed": 0
+  },
+  "copyRegression": {
+    "passed": 3,
+    "failed": 0
+  },
+  "callbackIsolation": {
+    "reviewedSites": 65,
+    "failed": 0
+  },
+  "nativeBuild": {
+    "scheme": "WeftMatePhone",
+    "architecture": "x86_64",
+    "runtime": "iOS 26.2",
+    "jobs": 4,
+    "passed": true
+  },
+  "health4TokensFix": {
+    "commit": "7b0e4702f",
+    "samePR": 246,
+    "designTestsPassed": 5,
+    "swiftBuildPassed": true
+  },
+  "healthFeedback": {
+    "swiftPassed": 2,
+    "presentationRegressionPassed": 1,
+    "nativeBuildPassed": true,
+    "simulatorRevalidated": false,
+    "reason": "Five simulator boots were already used; final health feedback needs device review."
+  }
+}

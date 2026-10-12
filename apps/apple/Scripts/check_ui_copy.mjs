@@ -2,6 +2,7 @@
 import {readFile,readdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {checkPhoneStyle} from './check_phone_style.mjs';
 import {checkVisibleCopy} from '../../../scripts/check-ui-copy.mjs';
 // Catch broken substitutions in current authored copy, including error messages.
 // Historical screenshot OCR remains an unchanged record of its original build.
@@ -29,6 +30,7 @@ export function swiftCopy(source) {
 }
 async function files(root){const result=[];for(const e of await readdir(root,{withFileTypes:true})){const path=join(root,e.name);if(e.isDirectory())result.push(...await files(path));else if(/\.(swift|xcstrings|strings)$/.test(e.name))result.push(path);}return result;}
 export async function scanAppleCopy(root=resolve(import.meta.dirname,'../../..'), evidence=join(root,'apps/apple/Tests/Evidence/A13')) {
+ const phoneStyle = checkPhoneStyle(join(root, 'apps/apple'));
  const found=[];let count=0;
  for(const dir of ['UI','iOS','macOS','watchOS','Resources','Packages/WeftMateCore/Sources/WeftMateCore'])for(const path of await files(join(root,'apps/apple',dir))){
   // Generated metadata dictionary is verified separately against ui-core.
@@ -40,6 +42,6 @@ export async function scanAppleCopy(root=resolve(import.meta.dirname,'../../..')
  const frames=JSON.parse(await readFile(join(evidence,'screenshot-text.json'),'utf8'));
  if(frames.syntheticOnly!==true||!frames.frames.length)throw Error('Missing Apple synthetic screenshot text');
  for(const frame of frames.frames)try{checkVisibleCopy(frame.text,`${frame.surface}/${frame.theme}/${frame.scene}`);}catch(e){found.push(e.message);}
- if(found.length)throw Error(found.join('\n'));return {authoredStrings:count,screenshotFrames:frames.frames.length};
+ if(found.length)throw Error(found.join('\n'));return {authoredStrings:count,screenshotFrames:frames.frames.length, ...phoneStyle};
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url)console.log(await scanAppleCopy());

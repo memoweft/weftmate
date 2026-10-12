@@ -3,6 +3,7 @@ import { canonicalCommand, publicCommand } from './command-policy.mjs';
 import { digest, failure, modelTextWithAttachments, safeCode } from './common.mjs';
 import { MAX_COMMANDS, MAX_UNRECONCILED_TEXT_BYTES } from './constants.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
+import {currentChatProfile} from '../background-model-selection.mjs';
 
 /** Only coordinates native lifecycle. Durable commands, receipts and dispatch
  * continue to belong to the existing command queue. */
@@ -18,6 +19,25 @@ export function createMainChat(context) {
      command.toolExecutions?.some(row => row.jobId && !['completed','failed','killed'].includes(row.jobState))));
   return {
     async drain(ownerId) { await flights.get(ownerId); },
+    async prepareReminder(ownerId,authorize=()=>{}) {
+      await flights.get(ownerId);
+      return context.serial(async()=>{
+        const auth=authorize(),account=context.accountState(ownerId),row=chat(ownerId),existing=active(ownerId);if(!context.hostOwner(ownerId))throw failure('FORBIDDEN',403);if(auth&&!['password','cloud','desktop'].includes(account.devices[auth.deviceId]?.authKind))throw failure('SESSION_READ_ONLY',409);
+        if(existing&&!account.sessions[existing.sessionId]?.deleting)return existing.sessionId;
+        if(account.memoryCleanupPending||row.relay)throw failure('SESSION_BUSY',409);
+        const profile=currentChatProfile(account,id=>context.modelSelectable(ownerId,id))??context.visibleModels(ownerId,await context.callBackend(()=>context.backend.listModels({ownerId}))).find(p=>context.modelSelectable(ownerId,p.id))?.id;
+        if(!profile)throw failure('MODEL_UNAVAILABLE',422);
+        const sessionId=`session-${randomUUID()}`,segmentId=`segment-${randomUUID()}`,at=new Date(context.timestamp()).toISOString();
+        // Native session creation does not start a model turn or send a message.
+        await context.callBackend(()=>context.backend.createSession({ownerId,sessionId,modelProfileId:profile,workspaceChatId:row.chatId,title:'WeftMate'}));
+        await context.mutate(ownerId,next=>{
+          authorize();const identity=next.chatIdentity,main=identity.chats[identity.mainChatId];
+          next.sessions[sessionId]={ownerId,origin:'personal-remote',attachedAt:at,modelProfileId:profile,approvalMode:next.defaultApprovalMode??'auto',workspaceChatId:main.chatId};
+          identity.segments[segmentId]={segmentId,chatId:main.chatId,sessionId,hostId:next.hostId,ordinal:0,state:'active',startedAt:at};
+          identity.sessionSegments[sessionId]=segmentId;main.activeSegmentId=segmentId;main.revision++;
+        });return sessionId;
+      });
+    },
     async submit(ownerId, deviceId, body, authorize) {
       const payload = canonicalCommand(body, context.accountState(ownerId).hostId), hash = digest(JSON.stringify(payload));
       return context.serial(async () => {

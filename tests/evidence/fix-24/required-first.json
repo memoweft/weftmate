@@ -1,0 +1,12 @@
+{
+  "mode": "required",
+  "files": 320,
+  "exitCode": 1,
+  "passed": 1800,
+  "failed": 2,
+  "skipped": 14,
+  "failures": [
+    "tests\\\\ia-2b-relay.test.ts",
+    "weekly statistics and model health paragraph use aggregates; disabling keeps health numeric inputs out of model"
+  ]
+}
