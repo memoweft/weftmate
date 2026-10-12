@@ -2,6 +2,7 @@
 import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 import { assertRuntimeIdentity } from '../../scripts/dsh-runtime-identity.mjs';
 import { managedMkdtempSync, disposeManagedTemp, startManagedTempLease } from '../../tests/helpers/managed-temp.mjs';
 import { runManagedTestProcess } from '../../tests/helpers/managed-test-process.mjs';
@@ -41,7 +42,7 @@ const args = ['--test', '--test-concurrency=1'];
 // A pure existing module makes the shortened Windows worker command lines
 // attributable too; --import is inherited by Node's test workers.
 const attributionImport = process.platform === 'win32' ? resolve('src/host-mode.mjs') : null;
-if (attributionImport) args.unshift('--import', attributionImport);
+if (attributionImport) args.unshift('--import', pathToFileURL(attributionImport).href);
 if (mode === 'required') {
   const excluded = [...exceptions.knownFailures, ...suite.tests, ...platformTests];
   if (excluded.length) args.push(`--test-skip-pattern=${pattern(excluded)}`);
@@ -82,7 +83,7 @@ let result;
 const streamingOutput = process.env.CI === 'true';
 try {
   result = await runManagedTestProcess(process.execPath, [...args, ...selected.map((file, index) => process.platform === 'win32' && index > 0 ? file : resolve(file))],
-    { env, commandRoots: [temp, ...(attributionImport ? [attributionImport] : []), ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')],
+    { env, commandRoots: [temp, ...(attributionImport ? [attributionImport, attributionImport.replaceAll('\\', '/')] : []), ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')],
       onOutput: streamingOutput ? (stream, chunk) => process[stream].write(chunk) : undefined });
 } finally {
   stopLease();
