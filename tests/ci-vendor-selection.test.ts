@@ -18,13 +18,16 @@ test('CI modes fail loudly without the pin and run complete vendor files without
     mkdirSync(join(root, '.github/scripts'), { recursive: true })
     mkdirSync(join(root, 'tests/contract'), { recursive: true })
     writeFileSync(join(root, '.github/scripts/ci-unit-tests.mjs'), readFileSync(new URL('../.github/scripts/ci-unit-tests.mjs', import.meta.url)))
-    for (const file of ['scripts/dsh-runtime-identity.mjs','scripts/dsh-vendor-closure.mjs','scripts/nightly/prune-temp.ps1','tests/helpers/managed-temp.mjs','tests/helpers/managed-temp.cjs','tests/helpers/managed-test-process.mjs','tests/helpers/process-evidence.mjs']) {
+    for (const file of ['.github/scripts/ci-test-policy.mjs','scripts/dsh-runtime-identity.mjs','scripts/dsh-vendor-closure.mjs','scripts/nightly/prune-temp.ps1','tests/helpers/managed-temp.mjs','tests/helpers/managed-temp.cjs','tests/helpers/managed-test-process.mjs','tests/helpers/process-evidence.mjs']) {
       mkdirSync(join(root,file,'..'),{recursive:true});
       writeFileSync(join(root,file),readFileSync(new URL('../'+file,import.meta.url)));
     }
     // The synthetic suite has no Electron tests; supply its executable dependency.
     mkdirSync(join(root,'node_modules/electron'),{recursive:true});
     writeFileSync(join(root,'node_modules/electron/index.js'),'module.exports=process.execPath;');
+    mkdirSync(join(root,'node_modules/playwright'),{recursive:true});
+    writeFileSync(join(root,'node_modules/playwright/index.js'),'module.exports={chromium:{executablePath:()=>process.execPath}};');
+    json('.github/timing-sensitive-tests.json', {tests:[]})
     json('.github/ci-test-exceptions.json', { knownFailures: [], vendorTests: [], unavailableFiles: [], platformTests: [] })
     json('.github/vendor-test-suite.json', { tests: [{ file: 'tests/mixed.test.ts', name: 'vendor protected' }], files: ['tests/vendor-only.test.ts'] })
     json('tests/contract/dsh-pin.json', { commit: 'synthetic-pin', packageVersion:'synthetic-version' })

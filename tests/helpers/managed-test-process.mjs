@@ -1,11 +1,11 @@
 import { spawn } from 'node:child_process';
-import { cleanupOwnedProcesses } from './process-evidence.mjs';
+import { cleanupOwnedProcesses, describeExit, redactEvidenceText, systemCommitMemory } from './process-evidence.mjs';
 
 /** Await termination before the caller removes its isolated temp scope. */
-export async function runManagedTestProcess(command, args, { env, commandRoots = [], executables = [command], maxBuffer = 64 * 1024 * 1024, onOutput } = {}) {
+export async function runManagedTestProcess(command, args, { env, commandRoots = [], executables = [command], maxBuffer = 64 * 1024 * 1024, onOutput, timeoutMs } = {}) {
   const startedAt = Date.now();
   const child = spawn(command, args, { env, windowsHide: true, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] });
-  let stdout = '', stderr = '', error, interrupted = null;
+  let stdout = '', stderr = '', error, interrupted = null, timedOut = false, escalation;
   const stop = signal => {
     if (interrupted) return;
     interrupted = signal;
@@ -13,10 +13,22 @@ export async function runManagedTestProcess(command, args, { env, commandRoots =
       // Creation time + executable + explicit suite paths, never a reused parent PID.
       cleanupOwnedProcesses({ startedAt, executables, commandRoots });
       if (child.exitCode === null && child.signalCode === null) child.kill();
+      // An exited root can leave inherited pipes open in an owned descendant.
+      // Close our readers after cleanup so the deadline also bounds `close`.
+      child.stdout.destroy(); child.stderr.destroy();
     } else {
       try { process.kill(-child.pid, signal); } catch { child.kill(signal); }
+      escalation = setTimeout(() => { try { process.kill(-child.pid, 'SIGKILL'); } catch { child.kill('SIGKILL'); }
+        child.stdout.destroy(); child.stderr.destroy(); }, 2000);
     }
   };
+  const deadline = timeoutMs ? setTimeout(() => {
+    timedOut = true;
+    console.error(`Test file deadline exceeded (${timeoutMs}ms): ${redactEvidenceText(args.join(' '), commandRoots)}`);
+    console.error(`Process evidence: ${JSON.stringify({ phase: 'file-timeout', systemCommit: systemCommitMemory(),
+      stdoutTail: redactEvidenceText(stdout.slice(-8192), commandRoots), stderrTail: redactEvidenceText(stderr.slice(-8192), commandRoots) })}`);
+    stop('SIGTERM');
+  }, timeoutMs) : undefined;
   const handlers = new Map(['SIGINT', 'SIGTERM', 'SIGHUP'].map(signal => [signal, () => stop(signal)]));
   for (const [signal, handler] of handlers) process.on(signal, handler);
   child.on('error', failure => { error = failure; });
@@ -29,8 +41,10 @@ export async function runManagedTestProcess(command, args, { env, commandRoots =
   child.stderr.on('data', chunk => collect('stderr', chunk));
   try {
     const result = await new Promise(resolve => child.once('close', (status, signal) => resolve({ status, signal })));
-    return { ...result, stdout, stderr, error, interrupted };
+    if (timedOut) console.error(`Timed-out process exit: ${JSON.stringify(describeExit(result.status, result.signal))}`);
+    return { ...result, stdout, stderr, error, interrupted, timedOut };
   } finally {
+    clearTimeout(deadline); clearTimeout(escalation);
     for (const [signal, handler] of handlers) process.off(signal, handler);
     // A successful test runner can still leave Electron grandchildren holding
     // its isolated scope. Recheck all three ownership conditions before cleanup.
