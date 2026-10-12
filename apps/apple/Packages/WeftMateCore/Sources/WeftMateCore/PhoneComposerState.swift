@@ -32,3 +32,11 @@ public enum PhoneApprovalChoice: String, CaseIterable, Sendable {
         switch self { case .once: .once; case .category: global ? .globalCategory : .conversationCategory; case .reject: nil }
     }
 }
+
+public enum PhoneDecisionReceiptPolicy {
+    public static func approval(status: SessionInteractionStatus, summary: String, registered: Bool, savedOutcome: ApprovalDecisionOutcome?) -> String? {
+        if status == .answered || status.isTerminal { return summary }
+        guard registered,let savedOutcome else { return nil }
+        return savedOutcome == .rejected ? "已拒绝 · 等待电脑确认" : "已允许 · 等待电脑确认"
+    }
+}

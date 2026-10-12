@@ -71,16 +71,25 @@ final class A4aApprovalUITests: XCTestCase {
         XCTAssertTrue(app.buttons["rejectApproval." + ids[0]].exists)
         screenshot(app, "04-approval-three-buttons")
         activate(once)
+        #if os(iOS)
+        if app.buttons["approvalConfirm."+ids[0]].exists { activate(app.buttons["approvalConfirm."+ids[0]]) }
+        #endif
         let category = app.buttons["approveCategory." + ids[1]]
         XCTAssertTrue(category.waitForExistence(timeout: 20))
         XCTAssertTrue(app.staticTexts["已允许 · 运行脚本"].exists)
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "可能无法撤销")).firstMatch.exists)
         screenshot(app, "05-delete-risk")
         activate(category)
+        #if os(iOS)
+        if app.buttons["approvalConfirm."+ids[1]].exists { activate(app.buttons["approvalConfirm."+ids[1]]) }
+        #endif
         let reject = app.buttons["rejectApproval." + ids[2]]
         XCTAssertTrue(reject.waitForExistence(timeout: 20))
         XCTAssertTrue(app.staticTexts["已允许 · 删除文件、覆盖文件 · 本对话总是允许此类"].exists)
         activate(reject)
+        #if os(iOS)
+        if app.buttons["approvalConfirm."+ids[2]].exists { activate(app.buttons["approvalConfirm."+ids[2]]) }
+        #endif
         XCTAssertTrue(app.staticTexts["已拒绝 · 发送或发布、付款"].waitForExistence(timeout: 20))
         screenshot(app, "06-processed-rows")
         let data = try await report()
