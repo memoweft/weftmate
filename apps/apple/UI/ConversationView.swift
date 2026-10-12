@@ -177,7 +177,7 @@ struct ConversationView: View {
             }.ignoresSafeArea()
         }
         .fullScreenCover(isPresented: $showingPreview) { attachmentPreview }
-        .fullScreenCover(isPresented: $resources.visible) { ConversationResourcesPanel(app: model, resources: resources) }
+        .sheet(isPresented: $resources.visible) { ConversationResourcesPanel(app: model, resources: resources).phoneSheet("输出与来源", close: { resources.visible = false }) }
         #endif
         .onChange(of: model.accountEpoch) { _, _ in importingAttachments = false; showingCamera = false; showingPhotos = false; importScope = nil; cancelScreenshot(); closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
         .onChange(of: conversation.id) { _, _ in cancelScreenshot(); closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
@@ -232,7 +232,7 @@ struct ConversationView: View {
     private var conversationContent: some View {
         VStack(spacing: AppleTokens.Space.p0) {
         #if os(iOS)
-        PhoneChatHeader(title: PhonePresentation.title(main: false, conversation: conversation.title), status: model.serverLoginExpired ? "请重新登录" : model.offline.hostOffline ? "电脑离线" : "已连接") {
+        PhoneChatHeader(title: PhonePresentation.title(main: false, conversation: conversation.title), status: model.phoneConnectionStatus) {
             Menu {
                 Button { showingUsage = true } label: { Label("本对话用量", image: "wm-chart") }.accessibilityIdentifier("conversationUsage")
                 Button { endDraftFocus(); resources.showingList = true; resources.visible = true } label: { Label("输出与来源", image: "wm-outputs") }.accessibilityIdentifier("openConversationResources")

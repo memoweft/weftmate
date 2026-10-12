@@ -30,11 +30,16 @@ struct WeaveCard<Content: View>: View {
     let padding: CGFloat
     init(padding: CGFloat = AppleTokens.Space.p20, @ViewBuilder content: () -> Content) { self.padding = padding; self.content = content() }
     var body: some View {
+        #if os(iOS)
+        content.frame(maxWidth: .infinity, alignment: .leading).padding(padding)
+            .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24, style: .continuous))
+        #else
         content
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(padding)
             .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r14, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r14).strokeBorder(Weave.line, lineWidth: AppleTokens.Space.p1))
+        #endif
     }
 }
 
@@ -119,13 +124,20 @@ struct EmptyState: View {
 }
 
 extension View {
-    func weaveField() -> some View {
+    @ViewBuilder func weaveField() -> some View {
+        #if os(iOS)
+        self.textFieldStyle(.plain).font(AppleTokens.Fonts.body)
+            .padding(.horizontal, AppleTokens.Space.p16).padding(.vertical, AppleTokens.Space.p12)
+            .frame(minHeight: AppleTokens.Space.p44)
+            .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24))
+        #else
         self.textFieldStyle(.plain)
             .font(AppleTokens.Fonts.body)
             .padding(.horizontal, AppleTokens.Space.p13)
             .padding(.vertical, AppleTokens.Space.p12)
             .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r11))
             .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r11).strokeBorder(Weave.line))
+        #endif
     }
 
     @ViewBuilder func accountInput() -> some View {
