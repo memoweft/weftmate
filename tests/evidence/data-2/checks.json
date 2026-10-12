@@ -68,5 +68,33 @@
       "operation": "five-exit-paths-final",
       "slot": "heavy-1.lock"
     }
-  ]
+  ],
+  "mergeVerification": {
+    "related": {
+      "passed": 108,
+      "failed": 0
+    },
+    "waitProtocol": {
+      "passed": 3,
+      "failed": 0
+    },
+    "mobile": {
+      "files": 5,
+      "passed": 114,
+      "failed": 0,
+      "slot": "heavy-2.lock",
+      "released": true
+    },
+    "mobileBuildAssets": 58,
+    "typecheck": true,
+    "publicHygiene": {
+      "textFiles": 8532,
+      "hits": 0
+    },
+    "finalCleanup": {
+      "available": true,
+      "failed": 0,
+      "cleaned": 0
+    }
+  }
 }
