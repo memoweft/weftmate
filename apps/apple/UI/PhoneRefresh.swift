@@ -8,11 +8,12 @@ struct PhoneActionStyle: ButtonStyle {
     var destructive = false
     var selected = false
     var onCard = false
+    var horizontalPadding = AppleTokens.Space.p12
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         let state = PhonePresentation.controlState(selected: selected, pressed: configuration.isPressed, enabled: enabled)
         configuration.label.font(AppleTokens.Fonts.callout.weight(.medium))
-            .padding(.horizontal, AppleTokens.Space.p12)
+            .padding(.horizontal, horizontalPadding)
             .frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44)
             .foregroundStyle(primary ? Weave.onAccent : destructive ? Weave.danger : Weave.accent)
             .background(primary ? Weave.accent : selected ? Weave.accentSoft : onCard ? Weave.surface : Weave.soft, in: Capsule())
