@@ -83,6 +83,7 @@ struct ConversationView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var draftFocused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var visibleMessageID: String?
     @State private var follow = ConversationFollowState()
     @State private var viewportHeight: CGFloat = 0
@@ -511,6 +512,19 @@ struct ConversationView: View {
         }
     }
 
+    private var composerExpanded: Bool {
+        #if os(iOS)
+        PhoneComposerState(focused: draftFocused, draft: model.draftText(for: conversation, accountEpoch: model.accountEpoch), attachmentCount: (model.attachmentDrafts[AppleAppModel.draftKey(for: conversation)] ?? []).count).expanded
+        #else
+        true
+        #endif
+    }
+    private var phoneDraftInput: some View {
+        TextField(conversation.running ? (model.runningMessageMode == .queue ? "排队到下一条…" : "引导当前回复…") : "向 WeftMate 说说你的目标",
+            text: draft, axis: .vertical)
+            .lineLimit(composerExpanded ? 1...6 : 1...1).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
+            .focused($draftFocused).disabled(!model.canEditDraft(for: conversation)).accessibilityIdentifier("conversationDraft")
+    }
     private var composer: some View {
         let accountEpoch = model.accountEpoch
         let key = AppleAppModel.draftKey(for: conversation)
@@ -572,6 +586,9 @@ struct ConversationView: View {
                 Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("projectNotice")
             }
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+                #if os(iOS)
+                if composerExpanded { phoneDraftInput }
+                #else
                 HStack(alignment: .top, spacing: AppleTokens.Space.p8) {
                 TextField(conversation.running ? (model.runningMessageMode == .queue ? "排队到下一条…" : "引导当前回复…") : "向 WeftMate 说说你的目标", text: draft, axis: .vertical)
                     .lineLimit(2...6).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
@@ -598,6 +615,7 @@ struct ConversationView: View {
                     }
                 #endif
                 }
+                #endif
                 if let files = model.attachmentDrafts[key], !files.isEmpty {
                     ScrollView(.horizontal) {
                         HStack(spacing: AppleTokens.Space.p10) {
@@ -612,7 +630,7 @@ struct ConversationView: View {
                         }
                     }
                 }
-                if dynamicTypeSize.isAccessibilitySize {
+                if dynamicTypeSize.isAccessibilitySize && composerExpanded {
                     composerApprovalMode(accountEpoch: accountEpoch)
                 }
                 HStack(spacing: AppleTokens.Space.p4) {
@@ -663,7 +681,10 @@ struct ConversationView: View {
                     #endif
                     .phoneIcon().phoneComposerControl(circle: true).disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
                     .accessibilityIdentifier("addAttachmentButton")
-                    if !dynamicTypeSize.isAccessibilitySize { composerApprovalMode(accountEpoch: accountEpoch) }
+                    #if os(iOS)
+                    if !composerExpanded { phoneDraftInput }
+                    #endif
+                    if !dynamicTypeSize.isAccessibilitySize && composerExpanded { composerApprovalMode(accountEpoch: accountEpoch) }
                     if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
                     Spacer(minLength: AppleTokens.Space.p4)
                     #if os(macOS)
@@ -677,6 +698,7 @@ struct ConversationView: View {
                             .help(usage.label).popover(isPresented: $contextPopover) { Text(usage.label).font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
                     }
                     #endif
+                    if composerExpanded {
                     Menu {
                         Text(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型")
                         Button("配置模型") {
@@ -700,6 +722,7 @@ struct ConversationView: View {
                     .buttonStyle(PhoneActionStyle()).phoneComposerControl()
                     #endif
                     .font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择").accessibilityIdentifier("composerModel")
+                    }
                     Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic", size: AppleTokens.Space.p16).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44) }
                         .buttonStyle(.plain).phoneIcon(quiet: true).accessibilityLabel("语音输入").popover(isPresented: $dictationPopover) {
                             Text("使用系统听写输入文字").font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover)
@@ -718,7 +741,9 @@ struct ConversationView: View {
                 }
             }
             #if os(iOS)
-            .phoneCard()
+            .phoneComposerCard(expanded: composerExpanded)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: composerExpanded)
+            .accessibilityValue(composerExpanded ? "输入区已展开" : "输入区已收起")
             #else
             .padding(AppleTokens.Space.p9)
             .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r16))
