@@ -1,0 +1,7 @@
+{
+  "startedAt": "2026-10-12T09:26:03.920Z",
+  "completed": false,
+  "mimoRequests": 3,
+  "healthBackgroundRequests": 1,
+  "failure": "[{\"type\":\"task.queued\"},{\"type\":\"turn.started\"},{\"type\":\"task.started\"},{\"type\":\"user.message\"},{\"type\":\"assistant.message\"},{\"type\":\"task.ended\"},{\"type\":\"turn.ended\"}]"
+}

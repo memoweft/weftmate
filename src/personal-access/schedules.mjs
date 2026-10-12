@@ -19,6 +19,12 @@ export function createScheduleOperations(context) {
     const ownerId = context.sessionOperations.ownerForSession(input.sessionId)?.ownerId;
     if (!ownerId || !context.hostOwner(ownerId)) throw failure('SESSION_UNAVAILABLE', 404);
     const row = session(ownerId, input.sessionId);
+    if(input.action==='health_query') {
+      const source=Object.values(context.accountState(ownerId).commands).find(c=>c.sessionId===input.sessionId&&c.receiptId===input.sourceReceiptId&&c.state==='accepted_by_dsh');
+      const device=source&&context.accountState(ownerId).devices[source.sourceDeviceId];
+      if(!source||!device||device.revoked||device.expiresAt&&Date.parse(device.expiresAt)<=context.timestamp()||!device.scopes.includes('sessions:read')||source.sourceAuthEpoch!==undefined&&source.sourceAuthEpoch!==device.authEpoch||context.dataControls?.isLocked(ownerId))throw failure('FORBIDDEN',403);
+      return context.healthOperations.query(ownerId,input.query);
+    }
     if(input.action==='memory_digest'){const status=await context.memoryManager?.status(ownerId);if(status)await context.activity.memoryDigest.refresh(ownerId,status,{arm:false});return {accepted:true};}
     if (input.action === 'context') return { timeZone: context.usage.settings(ownerId).timeZone,
       approvalMode: row.approvalMode ?? context.accountState(ownerId).defaultApprovalMode ?? 'auto' };
@@ -53,6 +59,37 @@ export function createScheduleOperations(context) {
     context.schedule(ownerId, commandId);
     return { accepted: true, commandId };
   }
+  async function createUI(ownerId, auth, body, authorize = () => {}, match = null, request = {method:'POST'}) {
+    if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN',403);
+    if (typeof context.backend.schedules !== 'function') throw failure('CAPABILITY_UNAVAILABLE',503);
+    exactKeys(body, ['requestId', 'sessionId', 'text', 'kind', 'at', 'repeat', 'expectedRevision'], ['requestId', 'text', 'kind']);
+    if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId) || typeof body.text !== 'string' || !body.text.trim() || body.text.length > 32000 || !['reminder','task'].includes(body.kind)) throw failure('INVALID_REQUEST');
+    const sessionId = match?.[1] ?? body.sessionId; session(ownerId, sessionId);
+    if (context.accountState(ownerId).memoryCleanupPending) throw failure('SESSION_BUSY', 409);
+    let repeat;
+    if (body.repeat) {
+      const fields = { daily:['kind','time'], weekly:['kind','time','weekday'], monthly:['kind','time','day'], interval:['kind','seconds'] }[body.repeat.kind];
+      if (!fields) throw failure('INVALID_REQUEST');
+      exactKeys(body.repeat, fields, fields); repeat = Object.fromEntries(fields.map(key => [key,body.repeat[key]]));
+    }
+    if (body.at) { exactKeys(body.at, ['date','time'], ['date','time']); if (!/^\d{4}-\d{2}-\d{2}$/.test(body.at.date) || !/^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(body.at.time)) throw failure('INVALID_REQUEST'); }
+    if (!body.at && !body.repeat || request.method === 'PATCH' && (!Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 1)) throw failure('INVALID_REQUEST');
+    const prompt = JSON.stringify({ weftmate: 1, kind: body.kind, text: body.text.trim(), ...(repeat ? { repeat } : {}) }); scheduleContent(prompt);
+    const sourceReceiptId = `ui-schedule-${body.requestId}`;
+    await context.serial(() => context.mutate(ownerId, next => {
+      authorize();
+      next.scheduleAuthorizations ??= {}; const prior = next.scheduleAuthorizations[sourceReceiptId];
+      const fingerprint = digest(JSON.stringify({ sessionId, id: match?.[2], action: request.method, text: body.text.trim(),kind:body.kind,
+        at:body.at ? {date:body.at.date,time:body.at.time} : null,repeat:repeat??null,expectedRevision:body.expectedRevision }));
+      if (prior && prior.fingerprint !== fingerprint) throw failure('REQUEST_CONFLICT', 409);
+      const chat = chatForSession(next,sessionId);
+      next.scheduleAuthorizations[sourceReceiptId] ??= { sessionId, fingerprint, ...(chat?.kind==='main'?{chatId:chat.chatId}:{}), sourceDeviceId: auth.deviceId, sourceAuthEpoch: next.devices[auth.deviceId].authEpoch };
+    }));
+    const value = await context.backend.schedules({ ownerId, sessionId, action: request.method === 'POST' ? 'create' : 'edit', id: match?.[2], requestId: body.requestId,
+      expectedRevision: body.expectedRevision, prompt, sourceReceiptId, ...(body.at ? { at: { ...body.at, time_zone: context.usage.settings(ownerId).timeZone } } : {}) });
+    if (value.item && hasPrivateContent(context.accountState(ownerId).sessions[sessionId])) value.item = { ...value.item, text: '临时对话中的定时任务', temporary: true };
+    return value;
+  }
   async function handleHttp(request, response, url, ownerId) {
     const match = /^\/personal\/v1\/schedules(?:\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)(?:\/(pause|resume|run))?)?$/.exec(url.pathname);
     const notifications = url.pathname === '/personal/v1/notifications';
@@ -64,31 +101,7 @@ export function createScheduleOperations(context) {
     if (write && (!match?.[1] && request.method === 'POST' || match?.[1] && request.method === 'PATCH' && !match[3])) {
       if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
       const body = await context.readJson(request);
-      exactKeys(body, ['requestId', 'sessionId', 'text', 'kind', 'at', 'repeat', 'expectedRevision'], ['requestId', 'text', 'kind']);
-      if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId) || typeof body.text !== 'string' || !body.text.trim() || body.text.length > 32000 || !['reminder','task'].includes(body.kind)) throw failure('INVALID_REQUEST');
-      const sessionId = match?.[1] ?? body.sessionId; session(ownerId, sessionId);
-      if (context.accountState(ownerId).memoryCleanupPending) throw failure('SESSION_BUSY', 409);
-      let repeat;
-      if (body.repeat) {
-        const fields = { daily:['kind','time'], weekly:['kind','time','weekday'], monthly:['kind','time','day'], interval:['kind','seconds'] }[body.repeat.kind];
-        if (!fields) throw failure('INVALID_REQUEST');
-        exactKeys(body.repeat, fields, fields); repeat = Object.fromEntries(fields.map(key => [key,body.repeat[key]]));
-      }
-      if (body.at) { exactKeys(body.at, ['date','time'], ['date','time']); if (!/^\d{4}-\d{2}-\d{2}$/.test(body.at.date) || !/^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(body.at.time)) throw failure('INVALID_REQUEST'); }
-      if (!body.at && !body.repeat || request.method === 'PATCH' && (!Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 1)) throw failure('INVALID_REQUEST');
-      const prompt = JSON.stringify({ weftmate: 1, kind: body.kind, text: body.text.trim(), ...(repeat ? { repeat } : {}) }); scheduleContent(prompt);
-      const sourceReceiptId = `ui-schedule-${body.requestId}`;
-      await context.serial(() => context.mutate(ownerId, next => {
-        next.scheduleAuthorizations ??= {}; const prior = next.scheduleAuthorizations[sourceReceiptId];
-        const fingerprint = digest(JSON.stringify({ sessionId, id: match?.[2], action: request.method, text: body.text.trim(),kind:body.kind,
-          at:body.at ? {date:body.at.date,time:body.at.time} : null,repeat:repeat??null,expectedRevision:body.expectedRevision }));
-        if (prior && prior.fingerprint !== fingerprint) throw failure('REQUEST_CONFLICT', 409);
-        const chat = chatForSession(next,sessionId);
-        next.scheduleAuthorizations[sourceReceiptId] ??= { sessionId, fingerprint, ...(chat?.kind==='main'?{chatId:chat.chatId}:{}), sourceDeviceId: auth.deviceId, sourceAuthEpoch: next.devices[auth.deviceId].authEpoch };
-      }));
-      const value = await context.backend.schedules({ ownerId, sessionId, action: request.method === 'POST' ? 'create' : 'edit', id: match?.[2], requestId: body.requestId,
-        expectedRevision: body.expectedRevision, prompt, sourceReceiptId, ...(body.at ? { at: { ...body.at, time_zone: context.usage.settings(ownerId).timeZone } } : {}) });
-      if (value.item && hasPrivateContent(context.accountState(ownerId).sessions[sessionId])) value.item = { ...value.item, text: '临时对话中的定时任务', temporary: true };
+      const value = await createUI(ownerId, auth, body, () => context.authenticate(request,'commands:write'), match, request);
       context.json(response, request.method === 'POST' ? 201 : 200, value); return true;
     }
     if (!match?.[1]) {
@@ -120,5 +133,5 @@ export function createScheduleOperations(context) {
     const value = await context.backend.schedules({ sessionId, ownerId, id, action: action ?? 'delete', ...input });
     context.json(response, 200, value); return true;
   }
-  return { handleRuntime, handleHttp };
+  return { handleRuntime, handleHttp, createUI };
 }
