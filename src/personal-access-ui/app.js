@@ -35,7 +35,7 @@
     ui.cloudUi = globalThis.WeftCloudUi.create({ acceptSession: core.acceptSession, enterAssistant: core.enterAssistant,
         openAccount: core.openAccount, show: core.show, accessApi: core.accessApi, toast: ui.toast,
         bindDesktop: core.cloudBindDesktop });
-    for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation", "mountMainChat", "mountActivity", "mountGoals", "mountLibrary", "mountSearch"])
+    for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation", "mountMainChat", "mountActivity", "mountGoals", "mountHealth", "mountLibrary", "mountSearch"])
         ui[mount]();
     ui.mountHelp();
     ui.mountOnboarding();
@@ -50,7 +50,8 @@
     ui.foregroundRestored=async()=>{await Promise.all([core.refreshHistory(),core.refreshConversationFacts(true),core.refreshAssistantOverview()]);
         if(ui.activityVisible?.())await core.refreshActivity();
         if(document.body.classList.contains('goals-open'))await core.readGoals();
-        if(document.body.classList.contains('library-open'))await core.readLibrary();};
+        if(document.body.classList.contains('library-open'))await core.readLibrary();
+        if(document.body.classList.contains('health-open'))await core.readHealth();};
     const restoreForeground=ui.foregroundRestored;
     ui.foregroundRestored=async()=>{await restoreForeground();await document.querySelector('[data-category="data"]')?.dataView?.refresh();};
     window.addEventListener('offline',()=>core.connectionNetwork(false));
