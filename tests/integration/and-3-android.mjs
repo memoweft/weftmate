@@ -76,7 +76,7 @@ function bottomDifference(png, height) {
   const image = pixels(png), average = (y0, y1) => {
     const sum = [0, 0, 0]; let count = 0;
     // Exclude the real gesture handle / navigation button glyphs.
-    for (let y = y0; y < y1; y++) for (let x = 2; x < image.width * .16; x++) {
+    for (let y = y0; y < y1; y++) for (let x = 2; x < Math.min(10,image.width*.02); x++) {
       for (let c = 0; c < 3; c++) sum[c] += image.rgba[(y * image.width + x) * 4 + c]; count++;
     }
     return sum.map(value => value / count);
