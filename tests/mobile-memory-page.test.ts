@@ -68,6 +68,7 @@ class FakeElement {
   remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter((x) => x !== this); this.parentNode = null }
   cloneNode(deep = false) { const node = new FakeElement(this.tagName,this.id);node.className=this.className;node._text=this._text;node.attributes=new Map(this.attributes);node.dataset={...this.dataset};if(deep)node.append(...this.children.map(child=>child.cloneNode(true)));return node; }
   setAttribute(name: string, value: string) { this.attributes.set(name, value) }
+  removeAttribute(name: string) { this.attributes.delete(name) }
   getAttribute(name: string) { return this.attributes.get(name) ?? null }
   focus() {}
   blur() {}

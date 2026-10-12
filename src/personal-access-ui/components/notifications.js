@@ -1,10 +1,11 @@
 /* One notification settings form for desktop, remote web and Android UI. */
 globalThis.WeftNotificationsView = (core,target,device={}) => {
+  const review=device.section==='reviewHealth';
   const controls=globalThis.WeftSettingsControls, identity=core.state.identityGeneration;
   const current=()=>target.isConnected&&identity===core.state.identityGeneration;
   const node=(tag,text='',cls='')=>{const el=document.createElement(tag);el.textContent=text;el.className=cls;return el;};
   const form=node('form','','personalization-form notification-settings'),notice=node('p','正在读取…','muted');notice.setAttribute('role','status');
-  const fields=new Map(),healthFields=new Map();let ready=false,saved,localDelivery=false,healthReady=false,healthSaved;
+  const fields=new Map(),healthFields=new Map();let ready=false,saved,localDelivery=false,healthReady=false,healthSaved,healthNotice;
   target.replaceChildren(form);form.append(notice);
   const busy=value=>{for(const el of form.querySelectorAll('input,select,button'))el.disabled=value||el.dataset.reserved==='true';};
   const fill=settings=>{for(const [key,el] of fields){if(el.type==='checkbox')el.checked=settings[key];else el.value=String(settings[key]);el.dispatchEvent(new Event('weft:sync'));}};
@@ -24,6 +25,7 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
     if(type==='select')globalThis.WeftPopover?.bindSettingsSelect(el);
     return el;
   }
+  if(!review){
   const modes=[['sound','通知 + 声音'],['notify','只通知'],['activity','只进动态不通知']];
   for(const [key,label,description] of [
     ['approval','待审批','需要你批准后才能继续的事项，默认重要提醒。'],
@@ -35,6 +37,8 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
     ['system','系统','有可用更新时提醒。']]){
       field(key,label,description,'select',modes);
   }
+  }
+  if(review){
   form.append(node('h2','回顾与洞察'));
   field('reviewEnabled','回顾与洞察','每天在这台电脑整理使用摘要；每周在动态里回顾，聊天时可接续最近的事情。','checkbox');
   field('reviewRetentionDays','保留多久','只保存在这台电脑，清空后不再用于聊天背景。','select',[[7,'7 天'],[30,'30 天'],[90,'90 天'],[180,'180 天'],[365,'365 天']]);
@@ -43,7 +47,7 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
     const cancel=node('button','取消','button secondary'),confirm=node('button','确认清空','button danger');cancel.type=confirm.type='button';cancel.onclick=()=>box.close();confirm.onclick=async()=>{box.close();if(await write({reviewClear:true}))device.toast?.('回顾已清空。');};const actions=node('div','','actions');actions.append(cancel,confirm);box.append(actions);box.addEventListener('close',()=>{box.remove();focus?.focus();});document.body.append(box);globalThis.WeftPopover?.bindSettings(box);box.showModal();cancel.focus();};
   form.append(controls.row('已保存的回顾','清空后，助手不再引用这些摘要。',clear));
   form.append(node('h2','健康数据'));
-  const healthNotice=node('p','正在读取健康设置…','muted');healthNotice.setAttribute('role','status');form.append(healthNotice);
+  healthNotice=node('p','正在读取健康设置…','muted');healthNotice.setAttribute('role','status');form.append(healthNotice);
   field('modelInsightsEnabled','用模型解读','会把每天的汇总数字发给你设置的模型，不发明细。','checkbox',undefined,true);
   field('itemAnalysisEnabled','各项 AI 分析','展开时才分析这一项；会把每天的汇总数字发给你设置的模型，不发明细。','checkbox',undefined,true);
   field('sleepTargetMinutes','睡眠目标','用来比较自己的睡眠时长。','select',[[360,'6 小时'],[390,'6.5 小时'],[420,'7 小时'],[450,'7.5 小时'],[480,'8 小时'],[510,'8.5 小时'],[540,'9 小时']],true);
@@ -53,13 +57,16 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
   form.append(controls.row('已保存的健康数据','清空后，助手不再引用这些健康记录。',healthClear));
   async function loadHealth(){try{const value=await core.loadHealthSettings();if(!current())return;healthSaved=value.settings;fillHealth(healthSaved);const item=healthFields.get('itemAnalysisEnabled');if(!Object.hasOwn(healthSaved,'itemAnalysisEnabled')){item.closest?.('.settings-row')?.remove();item.disabled=true;healthFields.delete('itemAnalysisEnabled');}healthReady=true;for(const el of [...healthFields.values(),healthClear]){el.dataset.reserved='false';el.disabled=false;}healthNotice.textContent='';}catch{if(!current())return;healthNotice.textContent='无法读取健康设置，请连接电脑后重试。';const retry=node('button','重试健康设置','button secondary');retry.type='button';retry.onclick=()=>{retry.remove();void loadHealth();};healthNotice.append(retry);}}
   void loadHealth();
+  }
+  let zone;
+  if(!review){
   form.append(node('h2','记忆周报'));
   field('memoryDigestEnabled','每周生成记忆周报','这一周有新记忆或变更时，在动态里整理一次。','checkbox');
   field('memoryDigestWeekday','每周哪一天','按账户时区；关机错过后，下次启动补发最近一周。','select',[[1,'星期一'],[2,'星期二'],[3,'星期三'],[4,'星期四'],[5,'星期五'],[6,'星期六'],[0,'星期日']]);
   field('memoryDigestTime','生成时间','默认星期日晚上 21:00；不调用模型整理周报。','time');
   form.append(node('h2','勿扰时段'));
   field('dndEnabled','启用勿扰','期间通知仍进动态，结束后只给一条汇总，不逐条补响。','checkbox');
-  const zone=node('p','','muted');form.append(zone);
+  zone=node('p','','muted');form.append(zone);
   field('dndStart','开始时间','可跨午夜；开始和结束相同时表示全天勿扰。','time');
   field('dndEnd','结束时间','按账户时区计算，结束后恢复提醒。','time');
   field('approvalException','需要我批准的事仍然通知','只放行待审批；待回答和任务结果仍按勿扰规则处理。','checkbox');
@@ -90,6 +97,7 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
     void check.onclick();
   } else if(globalThis.weftNative){permission.textContent='安卓：在系统设置 → 应用 → WeftMate → 通知中开启。后台通知可能延迟约 15 分钟以上。';}
   else{permission.textContent='网页中的规则会同步到同一账户。系统通知由连接的 WeftMate 程序或手机应用发送，请在相应设备的系统设置中开启通知。';}
+  }
   form.onsubmit=event=>event.preventDefault();busy(true);
-  void core.loadNotificationSettings().then(value=>{if(current()){saved=value.settings;fill(saved);zone.textContent='按账户时区安排勿扰时段。';ready=true;busy(false);notice.textContent='';}}).catch(()=>{if(!current())return;notice.textContent='无法读取通知设置，请连接电脑后重试。';const retry=node('button','重试读取','button secondary');retry.type='button';retry.onclick=()=>globalThis.WeftNotificationsView(core,target,device);form.append(retry);});
+  void core.loadNotificationSettings().then(value=>{if(current()){saved=value.settings;fill(saved);if(!review)zone.textContent='按账户时区安排勿扰时段。';ready=true;busy(false);notice.textContent='';}}).catch(()=>{if(!current())return;notice.textContent='无法读取通知设置，请连接电脑后重试。';const retry=node('button','重试读取','button secondary');retry.type='button';retry.onclick=()=>globalThis.WeftNotificationsView(core,target,device);form.append(retry);});
 };

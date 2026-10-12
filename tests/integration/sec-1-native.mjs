@@ -2,6 +2,7 @@
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
+import {execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {createServer} from 'node:http';
 import {randomUUID} from 'node:crypto';
@@ -14,7 +15,7 @@ import {fixture as cloudFixture} from '../helpers/auth-1-https-cloud.mjs';
 import {registration,appDevice,control,refresh,proof} from '../../services/cloud/test/app-helpers.mjs';
 import {sec1SystemBars} from './sec-1-system-bars.mjs';
 
-const repo=resolve('.'),out=resolve('tests/evidence/sec-1');mkdirSync(out,{recursive:true});
+const polish=process.argv.includes('--polish'),before=process.argv.includes('--before');const repo=resolve('.'),out=resolve(polish?before?'tests/evidence/polish-1/sec-native/before':'tests/evidence/polish-1/sec-native/after':'tests/evidence/sec-1');mkdirSync(out,{recursive:true});
 const root=managedMkdtempSync(join(managedTempRoot(),'weftmate-sec1-native-')),profile=join(root,'profile');mkdirSync(profile);
 writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const projectRoot=join(root,'project');mkdirSync(projectRoot);const victim=join(projectRoot,'notes.txt'),source=join(projectRoot,'source.txt');writeFileSync(victim,'original synthetic content');
@@ -37,7 +38,7 @@ const model=createServer(async(req,res)=>{
   if(body.messages?.length===1&&!body.tools?.length){res.setHeader('content-type','application/json');return res.end(JSON.stringify({choices:[{message:{content:'OK'}}],usage:{prompt_tokens:5,completion_tokens:1}}));}
   const text=JSON.stringify(body.messages),tag=body.tools?.length?[...tasks.keys()].findLast(key=>text.includes(key)):null;
   const n=counts.get(tag)??0;counts.set(tag,n+1);let action=tasks.get(tag)?.[n],name=action?.name,args=action?.args;
-  if(name&&(body.tools??[]).some(tool=>tool.function?.name==='run_code')){args={code:`return await tools.${name}(${JSON.stringify(args)});`,description:tag};name='run_code';}
+  if(name&&(body.tools??[]).some(tool=>tool.function?.name==='run_code')){args={code:`return await tools.${name}(${JSON.stringify(args)});`,description:({read:'读取合成资料',write:'写入合成记录',pwsh:'清理合成测试文件'})[name]||'处理合成测试资料'};name='run_code';}
   res.writeHead(200,{'content-type':'text/event-stream'});
   const frame=delta=>res.write(`data: ${JSON.stringify({id:randomUUID(),model:body.model,choices:[{index:0,delta,finish_reason:null}]})}\n\n`);
   frame(name?{role:'assistant',tool_calls:[{index:0,id:'call-'+randomUUID(),type:'function',function:{name,arguments:JSON.stringify(args)}}]}:{role:'assistant',content:tag?`已处理：${tag}`:'合成标题'});
@@ -49,11 +50,13 @@ async function api(path,body,method=body?'POST':'GET',headers={}){return page.ev
 async function configure(modelId,requestId){const created=await api('/account/models',{requestId,name:modelId==='sec1-main'?'合成对话模型':'合成后台模型',baseUrl:`http://127.0.0.1:${model.address().port}/v1`,modelId,apiKey:'synthetic-no-secret'});assert.equal(created.status,202,JSON.stringify(created));const operation=await until(async()=>{const row=(await api('/account/models/by-request/'+requestId)).body.operation;return row?.status==='succeeded'&&row;});return(await api('/models')).body.models.find(row=>row.accountModelId===operation.accountModelId).id;}
 async function conversation(){stage='create conversation';await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1200,800));const accepted=await api('/projects/'+project.projectId+'/sessions',{requestId:randomUUID(),modelProfileId});assert.equal(accepted.status,202,JSON.stringify(accepted));const row=await until(async()=>{const row=(await api('/commands/'+accepted.body.command.commandId)).body.command;return row.state==='accepted_by_dsh'&&row;});await page.reload();await page.waitForFunction(()=>globalThis.sec1Entered===true);await page.evaluate(async()=>{await sec1Core.refreshStatus();await sec1Core.refreshSessions();});await page.locator(`[data-session-id="${row.sessionId}"] > button:first-child`).first().click();return row.sessionId;}
 async function capture(label,phone,sessionId){
+  if(before){const source=execFileSync('git',['show','54e7739505ee09248a71291a5025edbdae6d7210:src/ui-core/timeline-model.js'],{encoding:'utf8'});await page.evaluate(source);await page.evaluate(()=>{sec1Core.projectTimeline=WeftUiCore.projectTimeline;WeftTimeline.render([...sec1Core.state.historyEvents.values()],document.querySelector('#transcript'));});}
   for(const [surface,target,widths]of [['desktop',page,[1200,480]],['phone-web',phone,[360,390]]])for(const width of widths)for(const theme of ['light','dark']){
     if(surface==='desktop')await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,width===480?780:800),width);else await target.setViewportSize({width,height:width===360?780:844});
     await target.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
     await target.locator('.approval-review').first().waitFor({state:label==='timeout'||label==='unavailable'?'hidden':'visible'});
     await target.waitForFunction(()=>{const detail=document.querySelector('#approval-bar .approval-detail'),bar=document.querySelector('#approval-bar');return detail?.getBoundingClientRect().width>=140&&bar.getBoundingClientRect().bottom<=innerHeight;});
+    if(polish&&label==='warning'&&surface==='desktop'&&width===1200&&theme==='dark'){const history=(await api('/sessions/'+sessionId+'/events?limit=100')).body;const dom=await target.evaluate(()=>[...document.querySelector('#transcript').children].map(row=>({cls:row.className,seq:row.dataset.seq,optimistic:row.dataset.optimistic,timeline:row.dataset.timeline,html:row.outerHTML,text:row.innerText})));writeFileSync(join(out,'warning-diagnostic.json'),redactEvidenceText(JSON.stringify({history,dom},null,2),[root]));}
     await target.screenshot({path:join(out,`${surface}-${width}-${theme}-${label}.png`)});
     assert.equal(await target.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     checks.push(`${surface} ${width} ${theme} ${label}`);
@@ -69,6 +72,7 @@ try{
   nativeProcess=app.process();for(const stream of [nativeProcess.stdout,nativeProcess.stderr])stream?.on('data',part=>output=(output+part).slice(-100000));
   page=await app.firstWindow();page.setDefaultTimeout(30000);await page.waitForURL('**/personal/v1/ui');origin=new URL(page.url()).origin;
   await page.addInitScript(()=>{let api;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>api,set:value=>{api=value;const create=value.create;value.create=(...args)=>{const core=create(...args),enter=core.enterAssistant;core.enterAssistant=async(...values)=>{globalThis.sec1Entered=false;try{return await enter(...values);}finally{globalThis.sec1Entered=true;}};return globalThis.sec1Core=core;};}});});
+  if(before)await page.route('**/personal/v1/ui/ui-core/timeline-model.js',route=>route.fulfill({contentType:'text/javascript',body:execFileSync('git',['show','54e7739505ee09248a71291a5025edbdae6d7210:src/ui-core/timeline-model.js'])}));
   await page.reload();await page.waitForFunction(()=>sec1Core?.state.device?.authKind==='desktop');page.on('pageerror',error=>errors.push(error.message));
   assert.equal((await api('/auth/me')).body.device.authKind,'desktop');
   stage='configure models';modelProfileId=await configure('sec1-main','sec1-main-config');const background=await configure('sec1-background','sec1-background-config');

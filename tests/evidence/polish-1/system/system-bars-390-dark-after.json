@@ -1,0 +1,296 @@
+[
+  {
+    "file": "phone-system-390-dark-after-l-composer.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "项目进度报告",
+        "inkPixels": 1558
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "fc23e7e1366b2d7c9da5732745b300e46af00671f70d2a77123807406f2d590c",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  },
+  {
+    "file": "phone-system-390-dark-after-m-sidebar.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "WeftMate",
+        "inkPixels": 115
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "25f78e311e616203c35e84bc8fd4afb1f5822f0b2f0d1691ea4cc127e8d4f374",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  },
+  {
+    "file": "phone-system-390-dark-after-n-account.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "设置",
+        "inkPixels": 494
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 10,
+    "sha256": "4b52abea4d798581ea0a262e1631721419e4671b80a1cfedf167598e4dd5deba",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  },
+  {
+    "file": "phone-system-390-dark-after-ab-appearance.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "外观",
+        "inkPixels": 436
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 10,
+    "sha256": "112438b764b3e00d84ff494bd465c803951f0eb2528b34bc976ce1e9b4f606ef",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  },
+  {
+    "file": "phone-system-390-dark-after-b-colors.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "外观",
+        "inkPixels": 436
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 10,
+    "sha256": "077f1fac989b2a4826118c2353a97ef103d5583bbde10da94f5091c9d181ae6b",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  },
+  {
+    "file": "phone-system-390-dark-after-u-notifications.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "通知",
+        "inkPixels": 548
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "dc2ecbffcd183be39c40daeb30c89d46ef62b4907669b2e52dca456570046b77",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  },
+  {
+    "file": "phone-system-390-dark-after-u-review-health.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "回顾与健康",
+        "inkPixels": 1298
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "b945dd0f98c00fa83def3ca207926c63e1ecd3f30480c6a6b21ac5687a534d99",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  },
+  {
+    "file": "phone-system-390-dark-after-u-clear-open.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "回顾与健康",
+        "inkPixels": 1298
+      },
+      {
+        "text": "清空回顾与洞察",
+        "inkPixels": 2156
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "63ae6ae53d2252c97d9d6289b011d06a9a878ceceaacdeb1abff26cdd4e5548f",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  },
+  {
+    "file": "phone-system-390-dark-after-s-notice.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "项目进度报告",
+        "inkPixels": 1558
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "dc835ecc6cf99c4b19d5df7f042db247692a3ff355275d0de9db890ac7690db6",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  },
+  {
+    "file": "phone-system-390-dark-after-s-details-open.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "项目进度报告",
+        "inkPixels": 1558
+      },
+      {
+        "text": "提示详情",
+        "inkPixels": 1074
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "dad1bf35420b6b17ee5baf34a9365ddc039233d8b09fe158b54c31dd94a44905",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  },
+  {
+    "file": "phone-system-390-dark-after-r-weekly.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 96,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "动态",
+        "inkPixels": 431
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "9373b7259c02c693f85c1e54c78363daeb039cd8ac946919bc396ad3d32a57dd",
+    "pixelSize": [
+      780,
+      1688
+    ],
+    "runId": 38277447409,
+    "phase": "after"
+  }
+]
