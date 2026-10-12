@@ -20,6 +20,8 @@ final class Apple4UITests: XCTestCase {
                 "--ui-testing-namespace", "apple4-" + UUID().uuidString, "--a5-theme", theme, theme]
             app.launch()
             XCTAssertTrue(app.staticTexts["这一段正在生成，这是最终完整回复。"].waitForExistence(timeout: 35))
+            let banner = XCUIApplication(bundleIdentifier: "com.apple.springboard").descendants(matching: .any)["NotificationShortLookView"]
+            if banner.exists { XCTAssertTrue(banner.waitForNonExistence(timeout: 15)) }
             XCTAssertTrue(app.buttons["mainChat.plus"].frame.width >= 44)
             capture(app, theme, "content")
             try choose(app, "empty")
@@ -47,7 +49,8 @@ final class Apple4UITests: XCTestCase {
             try choose(app, "final")
             XCTAssertTrue(app.buttons["phone.sidebar"].waitForExistence(timeout: 20)); app.buttons["phone.sidebar"].tap()
             XCTAssertTrue(app.textFields["phone.sidebar.search"].waitForExistence(timeout: 10)); capture(app, theme, "sidebar")
-            app.buttons["phoneAccountMenu"].firstMatch.tap()
+            let sidebar = app.descendants(matching: .any)["phone.sidebar.panel"]
+            sidebar.buttons["phoneAccountMenu"].firstMatch.tap()
             XCTAssertTrue(app.buttons["settings.accountCard"].waitForExistence(timeout: 20)); capture(app, theme, "settings")
             app.buttons["closeAuxiliarySheetButton"].firstMatch.tap()
             app.buttons["phone.sidebar.close"].tap()

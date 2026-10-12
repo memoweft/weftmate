@@ -123,7 +123,7 @@ struct SettingsView: View {
             }.background(Weave.canvas).navigationTitle("设置").navigationBarTitleDisplayMode(.inline)
                 .navigationDestination(for: AppleSettingsRoute.self) { route in detail(route).toolbar { if route.categoryID != "run-log" { closeButton } } }
                 .toolbar { closeButton }
-                .accessibilityIdentifier("settingsRoot")
+                .accessibilityElement(children: .contain).accessibilityIdentifier("settingsRoot")
         }
         .confirmationDialog("退出登录？本机对话与记忆保留。", isPresented: $confirmingLogout, titleVisibility: .visible) {
             Button("退出登录", role: .destructive) { Task { await model.signOut() } }

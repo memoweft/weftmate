@@ -317,11 +317,15 @@ struct MainChatView: View {
                 }
             }
             ConversationApprovalBar(model: interactions, events: model.nativeEvents)
+                #if os(iOS)
+                .padding(.horizontal, AppleTokens.Space.p12)
+                #endif
             if model.chat?.contextOrganizing == true { Text("正在整理上下文，消息将排队发送。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             if model.chat?.relayError != nil { Text("上下文整理未完成，草稿已保留。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             ForEach(model.attachments) { file in
                 HStack { Text(file.original.name); Button("移除") { file.removeTemporaryFiles(); model.attachments.removeAll { $0.id == file.id } } }.buttonStyle(OutlineActionStyle()).font(AppleTokens.Fonts.caption)
             }
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
             TextField(composerPlaceholder, text: Binding(get: { model.draft }, set: { model.setDraft($0) }), axis: .vertical).lineLimit(1...6)
                 .textFieldStyle(.plain).focused($draftFocused).disabled(!model.models.contains(where: \.configured)).accessibilityIdentifier("mainChat.draft")
             if dynamicTypeSize.isAccessibilitySize { modelSelection }
@@ -357,7 +361,7 @@ struct MainChatView: View {
                 #if os(macOS)
                 .menuStyle(.borderlessButton).fixedSize()
                 #endif
-                .phoneIcon().menuOrder(.fixed).disabled(!model.models.contains(where: \.configured)).accessibilityLabel("添加").accessibilityIdentifier("mainChat.plus")
+                .phoneIcon().phoneComposerControl(circle: true).menuOrder(.fixed).disabled(!model.models.contains(where: \.configured)).accessibilityLabel("添加").accessibilityIdentifier("mainChat.plus")
                 if !dynamicTypeSize.isAccessibilitySize { modelSelection }
                 Spacer(minLength: AppleTokens.Space.p0)
                 #if os(iOS)
@@ -381,7 +385,16 @@ struct MainChatView: View {
                     .disabled(model.sending || stopping || (!stop && ((model.draft.isEmpty && model.attachments.isEmpty) || model.pending != nil || model.chat?.sendAvailable != true || (model.chat?.activeSessionId == nil && model.modelID.isEmpty) || !model.capabilities.supports("chatSend"))))
                     .accessibilityLabel(stop ? "停止" : "发送").accessibilityIdentifier("mainChat.send")
             }
-        }.phoneComposerCard()
+            }
+            #if os(iOS)
+            .phoneComposerCard()
+            #endif
+        }
+        #if os(iOS)
+        .padding(.top, AppleTokens.Space.p8)
+        #else
+        .padding(AppleTokens.Space.p16).background(Weave.soft)
+        #endif
     }
     @ViewBuilder private var modelSelection: some View {
         #if os(iOS)
@@ -396,7 +409,7 @@ struct MainChatView: View {
                     Text(model.models.first(where: { $0.id == (model.chat?.modelProfileId ?? model.modelID) })?.name ?? "模型").font(AppleTokens.Fonts.caption).lineLimit(1)
                     WeftIcon("chevron", size: AppleTokens.Space.p12)
                 }
-            }.buttonStyle(PhoneActionStyle()).accessibilityLabel("模型选择").accessibilityIdentifier("mainChat.model")
+            }.buttonStyle(PhoneActionStyle()).phoneComposerControl().accessibilityLabel("模型选择").accessibilityIdentifier("mainChat.model")
         }
         #else
         if model.models.contains(where: \.configured) {
