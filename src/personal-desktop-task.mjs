@@ -55,6 +55,8 @@ export function createPersonalDesktopTask({
     const before = (await listWindows()).filter((window) => isNotepadWindow(window, systemRoot, programFilesRoot));
     if (before.length) return { accepted: true, observed: true, outcome: 'already_open' };
     const child = spawnProcess(executable, [], {
+      // This verified GUI action intentionally opens Notepad. SW_HIDE would
+      // hide its requested application window; notepad.exe has no console.
       shell: false, detached: true, stdio: 'ignore', windowsHide: false,
     });
     try {

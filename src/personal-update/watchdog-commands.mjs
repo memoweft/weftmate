@@ -33,7 +33,7 @@ export async function boundedCommand(command, args, { exec=execute, timeoutMs, t
   try {
     // Own the deadline: execFile's timer would kill the root before taskkill
     // can enumerate descendants. Unix commands own a cancellable process group.
-    task=exec(command,args,{...options,detached:process.platform!=='win32'});
+    task=exec(command,args,{...options,windowsHide:true,detached:process.platform!=='win32'});
     return await Promise.race([task,new Promise((_,reject)=>{
       timer=setTimeout(()=>{
         timedOut = true;

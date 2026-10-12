@@ -146,8 +146,8 @@ public actor PersonalClient {
             return updated.session
         } catch {
             try check(generation)
-            if shouldForget(error) { try store.delete(key: credentialKey(server: server, platform: platform)) }
-            else if transient(error) {
+            if (error as? APIFailure) == .identityMismatch { try store.delete(key: credentialKey(server: server, platform: platform)) }
+            else if shouldForget(error) || transient(error) {
                 // Retain identity for a retry without minting another server device. This is not fresh authentication.
                 credential = Credential(session: AccountSession(server: server, account: saved.session.account,
                     device: saved.session.device, hostId: saved.session.hostId, verification: .unverifiedOffline),
@@ -221,7 +221,7 @@ public actor PersonalClient {
     }
     /// Cloud tokens only enter the dedicated exchange endpoints. Pending never creates a content identity.
     public func exchangeCloudSession(server: ServerConfiguration, hostID: String, accessToken: String,
-                                    deviceName: String, key: CloudDeviceKey, pairing: HostPairing? = nil) async throws -> CloudSessionExchange {
+                                    deviceName: String, key: CloudDeviceKey, pairing: HostPairing? = nil, trustSubject: String? = nil, hostPins: HostPinStore? = nil) async throws -> CloudSessionExchange {
         let generation = try transition(server: server, clearSaved: true)
         struct Nonce: Decodable { let nonce: String }
         let nonceResponse = try await rawRequest(server: server, path: "/auth/cloud-nonce", method: "POST", body: Data("{}".utf8))
@@ -244,6 +244,23 @@ public actor PersonalClient {
             return .pending(requestID: pending.requestId)
         }
         guard response.status == 200 else { throw APIFailure.invalidResponse }
+        if let trustSubject, let hostPins {
+            struct Delivery: Decodable { let hostTrust: Material }
+            struct Material: Decodable { let trustToken: String; let publicJwk: [String: String] }
+            let material = try decode(response.body) as Delivery
+            let anchorKey = "installation-key:" + hostID
+            let old = try store.load(key: anchorKey).map { try JSONDecoder().decode([String: String].self, from: $0) }
+            if let old, old != material.hostTrust.publicJwk { throw APIFailure.identityMismatch }
+            // First contact has passed system CA + hostname verification. After saving the
+            // signed pin, /status below must pass the pin too before a content session persists.
+            let pin = try HostTrustDelivery.verify(token: material.hostTrust.trustToken,
+                trustedPublicJwk: old ?? material.hostTrust.publicJwk, hostID: hostID, subject: trustSubject,
+                deviceID: "apple-" + key.thumbprint, thumbprint: key.thumbprint,
+                allowLoopbackHTTP: server.origin.scheme == "http" && ["127.0.0.1", "localhost"].contains(server.origin.host))
+            guard pin.origin == server.originString || pin.relay?.baseUrl == server.originString else { throw APIFailure.identityMismatch }
+            if server.origin.scheme == "https" { try hostPins.save(pin.tlsSpki, for: server.originString) }
+            try store.save(JSONEncoder().encode(material.hostTrust.publicJwk), key: anchorKey)
+        }
         let reply: AuthReply = try decode(response.body)
         let cookie = response.headers.first { $0.key.lowercased() == "set-cookie" }?.value.components(separatedBy: ";").first ?? ""
         guard validCookie(cookie), validCSRF(reply.csrfToken), validID(reply.account.ownerId), validID(reply.device.id) else { throw APIFailure.invalidResponse }
@@ -1238,10 +1255,7 @@ public actor PersonalClient {
             return response
         } catch {
             try check(generation)
-            if shouldForget(error) {
-                credential = nil; clearCaches(); epoch &+= 1
-                try store.delete(key: credentialKey(server: auth.session.server, platform: platform))
-            }
+            if shouldForget(error) { try retainReadingIdentity(auth, failure: error) }
             throw error
         }
     }
@@ -1283,10 +1297,7 @@ public actor PersonalClient {
             return response
         } catch {
             try check(generation)
-            if shouldForget(error) {
-                credential = nil; clearCaches(); epoch &+= 1
-                try store.delete(key: credentialKey(server: auth.session.server, platform: platform))
-            }
+            if shouldForget(error) { try retainReadingIdentity(auth, failure: error) }
             throw error
         }
     }
@@ -1512,11 +1523,17 @@ public actor PersonalClient {
             try check(generation); return result
         } catch {
             try check(generation)
-            if shouldForget(error) {
-                credential = nil; clearCaches(); epoch &+= 1
-                try store.delete(key: credentialKey(server: auth.session.server, platform: platform))
-            }
+            if shouldForget(error) { try retainReadingIdentity(auth, failure: error) }
             throw error
+        }
+    }
+    private func retainReadingIdentity(_ auth: Credential, failure: Error) throws {
+        if case APIFailure.server(401, _) = failure {
+            let retained = Credential(session: auth.session.retainedForReading(), cookie: auth.cookie, csrf: auth.csrf)
+            credential = retained; try persist(retained)
+        } else {
+            credential = nil; clearCaches(); epoch &+= 1
+            try store.delete(key: credentialKey(server: auth.session.server, platform: platform))
         }
     }
     private func shouldForget(_ error: any Error) -> Bool {

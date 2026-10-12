@@ -3,11 +3,11 @@ import Security
 import CryptoKit
 import JOSESwift
 
-/// The caller obtains the anchor through an existing pinned channel or a physically scanned QR.
+/// The caller obtains the anchor through authenticated TLS, an existing pinned channel or a physical QR.
 /// This verifier never takes an anchor from the token header or cloud directory.
 public enum HostTrustDelivery {
     public static func verify(token: String, trustedPublicJwk: [String: String], hostID: String,
-                              subject: String, deviceID: String, thumbprint: String, now: Date = Date()) throws -> HostTrustPin {
+                              subject: String, deviceID: String, thumbprint: String, now: Date = Date(), allowLoopbackHTTP: Bool = false) throws -> HostTrustPin {
         do {
             let jws = try JWS(compactSerialization: token)
             guard jws.header.algorithm == .ES256, jws.header.typ == "wm-host-trust+jwt",
@@ -23,8 +23,8 @@ public enum HostTrustDelivery {
                   payload.tlsSpki.range(of: "^[A-Za-z0-9_-]{43}$", options: .regularExpression) != nil else { throw CloudLoginFailure.pairing }
             let members = ["kty", "crv", "x", "y"]
             guard members.allSatisfy({ payload.publicJwk[$0] == trustedPublicJwk[$0] }) else { throw CloudLoginFailure.pairing }
-            _ = try ServerConfiguration(input: payload.origin)
-            if let base = payload.relay?.baseUrl { _ = try ServerConfiguration(input: base) }
+            _ = try ServerConfiguration(input: payload.origin, allowLoopbackHTTP: allowLoopbackHTTP)
+            if let base = payload.relay?.baseUrl { _ = try ServerConfiguration(input: base, allowLoopbackHTTP: allowLoopbackHTTP) }
             return payload
         } catch { throw CloudLoginFailure.pairing }
     }

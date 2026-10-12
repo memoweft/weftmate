@@ -1,0 +1,34 @@
+{
+  "iphoneLive": {
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0
+  },
+  "iphoneEntryRegression": {
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0
+  },
+  "macPackage": {
+    "passed": 100,
+    "failed": 0
+  },
+  "watchState": {
+    "passed": 6,
+    "failed": 0
+  },
+  "nodeCopyAndCallbacks": {
+    "passed": 9,
+    "failed": 0
+  },
+  "builds": [
+    "iPhone",
+    "Mac",
+    "Watch"
+  ],
+  "publicIdentityScan": {
+    "files": 8027,
+    "violations": 0
+  },
+  "watchBoundary": "Standalone synthetic display and shared state tests; paired live delivery requires concurrent devices and was not run."
+}

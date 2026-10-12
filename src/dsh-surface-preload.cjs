@@ -1,4 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const pendingNotices = [];
+let noticeListener;
+ipcRenderer.on('wm:ui:notice', (_event, notice) => { if (noticeListener) noticeListener(notice); else pendingNotices.push(notice); });
+function onNotice(callback) { noticeListener = callback; for (const notice of pendingNotices.splice(0)) callback(notice); return () => { if (noticeListener === callback) noticeListener = null; }; }
 
 // The official DSH document is intentionally not given the legacy WeftMate
 // renderer bridge. Its capabilities are bounded theme reporting and managed
@@ -16,6 +20,8 @@ function normalizeSurfaceColor(value) {
 }
 
 contextBridge.exposeInMainWorld('weftmateSurface', Object.freeze({
+  onNotice,
+  closeNotice: id => ipcRenderer.send('wm:ui:notice-closed', id),
   syncTheme: (theme, color) => ipcRenderer.invoke('wm:dsh-surface:theme', {
     theme: theme === 'dark' ? 'dark' : 'light',
     color: normalizeSurfaceColor(color),

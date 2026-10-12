@@ -82,6 +82,9 @@ public struct AccountSession: Codable, Sendable, Equatable {
     public let device: DeviceRecord
     public let hostId: String
     public let verification: SessionVerification
+    public func retainedForReading() -> AccountSession {
+        AccountSession(server: server, account: account, device: device, hostId: hostId, verification: .unverifiedOffline)
+    }
 }
 
 public enum SessionVerification: String, Codable, Sendable {

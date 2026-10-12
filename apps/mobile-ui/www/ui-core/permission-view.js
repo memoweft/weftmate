@@ -19,6 +19,16 @@
       body.replaceChildren();
       if (!project) rules = { ...saved.rules };
       body.append(node('p','muted',project ? '未单独设置的操作沿用通用设置。' : '选择助手动手前是否询问你。未调整的操作继续沿用现在的做法。'));
+      if (!project) {
+        const toggle=node('input');toggle.type='checkbox';toggle.id='second-opinion-enabled';toggle.checked=saved.secondOpinionEnabled!==false;
+        WeftSettingsControls.toggle(toggle);
+        body.append(WeftSettingsControls.row('动手前多看一眼','涉及删除、覆盖、发送等操作时，请另一个模型核对你的要求。仍由你批准。',toggle));
+        toggle.addEventListener('change',async()=>{const enabled=toggle.checked;toggle.disabled=true;
+          try{const next=await core.saveSecondOpinion(enabled);if(current()){saved=next;toast('已保存');}}
+          catch{if(current()){toggle.checked=saved.secondOpinionEnabled!==false;toast('保存未完成，请重试。');}}
+          finally{if(current())toggle.disabled=false;}
+        });
+      }
       for (const type of saved.types) {
         const select = node('select'); select.setAttribute('aria-label', type.label); select.id=`permission-${project?.projectId ?? 'global'}-${type.id}`;
         const options = project ? [['','继承通用设置'],...values] : values;
