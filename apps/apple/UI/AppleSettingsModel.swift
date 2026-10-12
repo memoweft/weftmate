@@ -11,6 +11,7 @@ import WeftMateCore
     @Published var prices: [WeftMateCore.UsageModel] = []
     @Published var status: HostSystemSnapshot?
     @Published var backgroundModelID = ""
+    @Published var approvals: ApprovalModeSettings?
     @Published var busy = false
     @Published var error: String?
     @Published var notice: String?
@@ -22,6 +23,9 @@ import WeftMateCore
         await perform {
             guard let app = self.app else { return }
             switch category {
+            case "approvals":
+                let reply = try await app.assistantClient.approvalMode()
+                if self.current { self.approvals = reply }
             case "about":
                 let reply = try await app.assistantClient.nativeUpdateStatus()
                 if self.current { self.hostUpdates = reply }
@@ -41,6 +45,12 @@ import WeftMateCore
                 if self.current { self.status = reply }
             default: break
             }
+        }
+    }
+    func saveSecondOpinion(_ enabled: Bool) async {
+        await perform {
+            let reply = try await self.app?.assistantClient.setSecondOpinionEnabled(enabled)
+            if self.current { self.approvals = reply }
         }
     }
     func saveBackgroundModel(_ id: String) async {

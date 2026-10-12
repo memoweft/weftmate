@@ -242,6 +242,7 @@ private struct SettingsCategoryView: View {
         case "general":
             #if os(iOS)
             DailyHealthSettingsRow(app: app)
+            HealthAISettingsRow(app:app)
             #endif
             SettingsRow("回复进行中时发送的消息", "按账户保存在这台设备。") {
                 Picker("回复进行中时发送的消息", selection: Binding(get: { app.runningMessageMode }, set: { app.runningMessageMode = $0 })) {
@@ -279,6 +280,12 @@ private struct SettingsCategoryView: View {
             SettingsRow("默认审批模式", "按账户保存，只影响新建对话；已有对话在输入区切换。") {
                 ApprovalModeControl(model: app, sessionID: nil).id(app.accountEpoch)
             }
+            #if os(iOS)
+            if let approvals = settings.approvals {
+                Toggle("动手前多看一眼", isOn: Binding(get: { settings.approvals?.effectiveSecondOpinionEnabled ?? approvals.effectiveSecondOpinionEnabled }, set: { value in Task { await settings.saveSecondOpinion(value) } }))
+                    .tint(Weave.accent).disabled(settings.busy).accessibilityIdentifier("settings.secondOpinionEnabled")
+            }
+            #endif
         case "memory":
             SettingsRow("记忆管理", "查看它记得什么、从哪里来，并进行纠正。") {
                 NavigationLink("管理记忆") { MemoryWorkspaceView(appModel: app).id(app.accountEpoch) }

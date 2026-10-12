@@ -1,0 +1,54 @@
+{
+  "required": {
+    "mode": "required",
+    "files": 316,
+    "exitCode": 0,
+    "passed": 1776,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 33,
+    "exitCode": 0,
+    "passed": 232,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "mobileFive": {
+    "pass": 114,
+    "fail": 0,
+    "skipped": 0
+  },
+  "healthRelated": {
+    "passed": 17,
+    "failed": 0
+  },
+  "sharedAssets": {
+    "passed": 5,
+    "failed": 0
+  },
+  "typecheck": true,
+  "publicHygieneHits": 0,
+  "realModelRequests": 0,
+  "syntheticOnly": true,
+  "localScreenshots": 194,
+  "androidScreenshots": 2,
+  "uiErrors": [],
+  "phoneEvidenceRun": "https://github.com/memoweft/weftmate/actions/runs/38256450521",
+  "interruptedVendorWorkersCleaned": 1,
+  "nativeBarDifferences": [
+    {
+      "pageTheme": "light",
+      "statusPageDifference": 0,
+      "navigationPageDifference": 1
+    },
+    {
+      "pageTheme": "dark",
+      "statusPageDifference": 0,
+      "navigationPageDifference": 0
+    }
+  ]
+}

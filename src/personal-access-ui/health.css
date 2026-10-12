@@ -105,3 +105,52 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 @media(max-width:600px) { .health-page .health-calendar { margin-inline:calc(-1 * var(--wm-space-8)); padding:var(--wm-space-8); }.health-calendar-grid { gap:var(--wm-space-2); } }
 
 .health-page.is-compact .health-reading:not(.is-expanded) { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }.health-trend-panel[data-score=false] .health-status.is-high,.health-dimension .health-status.is-high { color:var(--health-warning); }
+
+/* Same navigation geometry as the other fixed pages, in both selection states. */
+.health-entry { display:flex; align-items:center; gap:var(--wm-space-8); width:100%; }
+.health-entry .wm-icon { flex:none; }
+.health-entry[aria-current=page] { background:var(--accent-soft); color:var(--ink); }
+.health-page>.health-heading { justify-content:flex-start; gap:var(--wm-space-16); margin-bottom:var(--wm-space-20); }
+.health-date-nav { flex:1; flex-wrap:nowrap; min-width:0; margin:0; }
+.health-date-nav>.health-icon:last-child { margin-left:auto; }
+.health-page.is-compact>.health-heading { height:auto; }
+.health-page.is-compact .health-date-nav { gap:var(--wm-space-4); }
+.health-page.is-compact .health-date-nav>button { padding-inline:var(--wm-space-8); flex-shrink:0; }
+.health-page.is-compact .health-date-nav>.health-icon { width:var(--wm-space-32); min-height:var(--wm-space-44); padding:0; }
+.health-score { display:flex; flex-direction:column; background:var(--health-card); border:1px solid var(--line); border-radius:var(--wm-radius-20); min-width:0; overflow:hidden; }
+.health-score>.health-card { flex:1; border:0; border-radius:0; }
+.health-method { padding:0 var(--wm-space-12) var(--wm-space-8); }
+.health-method-toggle { font-size:var(--wm-font-size-11); color:var(--health-muted); border-radius:var(--wm-radius-8); text-align:left; justify-content:flex-start; padding:var(--wm-space-6); min-height:var(--wm-space-32); background:transparent; line-height:1.5; }
+.health-method .health-muted { padding:var(--wm-space-6); }
+.health-detail .health-method { margin-top:var(--wm-space-16); padding:0; }
+.health-sleep-band { fill:var(--accent); opacity:.12; }
+.health-measurements { display:flex; flex-wrap:wrap; gap:var(--wm-space-12); color:var(--health-muted); font-size:var(--wm-font-size-12); }
+.health-analysis:empty { display:none; }
+.health-analysis { margin-top:var(--wm-space-16); padding-top:var(--wm-space-12); border-top:1px solid var(--line); }
+.health-analysis-toggle { width:100%; border-radius:var(--wm-radius-12); justify-content:space-between; text-align:left; line-height:1.5; }
+.health-analysis-toggle .wm-icon { flex:none; }
+.health-analysis-body { padding-top:var(--wm-space-12); }
+.health-analysis-body>.health-muted { margin-block:var(--wm-space-8); }
+.health-analysis .health-skeleton>div { height:var(--wm-space-16); }
+.health-analysis .health-skeleton>div:last-child { width:65%; }
+@media(max-width:600px) {
+  .health-scores { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--wm-space-12); }
+  .health-scores>:last-child:nth-child(odd) { grid-column:1/-1; }
+  .health-metric .health-muted { line-height:1.6; }
+  .health-vitals { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--wm-space-12); }
+  .health-vital { align-items:flex-start; text-align:left; padding:var(--wm-space-12); background:var(--surface-soft,var(--soft)); }
+  .health-vital-name { min-height:0; }
+  .health-vital:last-child { grid-column:1/-1; }
+  .health-sleep-summary { grid-template-columns:1fr; }
+  .health-sleep-usage { border-left:0; border-top:1px solid var(--line); padding:var(--wm-space-12) 0 0; }
+}
+
+.health-mid-zone { fill:var(--health-warning); opacity:.7; }
+.health-high-zone { fill:var(--danger); opacity:.7; }
+
+:is(.health-estimate,.health-detail .health-card)[data-metric=stress] .health-status.is-high { color:var(--health-warning); }
+.health-detail .health-card[data-metric=fitnessAge] .health-status.is-high { color:var(--health-warning); }
+@media(max-width:600px) { .health-method-toggle { min-height:var(--wm-space-44); } }
+
+.health-method-toggle { border:1px solid var(--line); }
+.health-method-toggle .wm-icon { flex:none; }

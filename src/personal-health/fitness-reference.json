@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "unit": "mL/kg/min",
+  "population": "FRIEND US apparently healthy adults, directly measured treadmill CPX, 2015",
+  "source": "Kaminsky LA et al. Reference Standards for Cardiorespiratory Fitness Measured With Cardiopulmonary Exercise Testing: Data From the Fitness Registry and the Importance of Exercise National Database. Mayo Clin Proc. 2015;90:1515-1523. Table 3, 50th percentile.",
+  "doi": "https://doi.org/10.1016/j.mayocp.2015.07.026",
+  "tableUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4919021/",
+  "openReproduction": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0209897",
+  "ageAnchors": [24.5,34.5,44.5,54.5,64.5,74.5],
+  "male": [48.0,42.4,37.8,32.6,28.2,24.4],
+  "female": [37.6,30.2,26.7,23.4,20.0,18.3],
+  "percentiles": {
+    "male": {"25": [40.1,35.9,31.9,27.1,23.7,20.4], "75": [55.2,49.2,45.0,39.7,34.5,30.4]},
+    "female": {"25": [30.5,25.3,22.1,19.9,17.2,15.6], "75": [44.7,36.1,32.4,27.6,23.8,20.8]}
+  }
+}
