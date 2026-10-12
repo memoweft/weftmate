@@ -241,7 +241,7 @@ globalThis.WeftHealthView.settings=(core,target,{toast}={})=>{
       ['itemAnalysisEnabled','各项的 AI 分析','默认关闭。打开后，只在你展开某一项时分析其每日汇总，不发明细；不影响今日解读。']]){
       if(key==='itemAnalysisEnabled'&&!Object.hasOwn(settings,key))continue;
       const input=el('input');input.id=`health-setting-${key}`;input.type='checkbox';input.checked=settings[key]===true;input.disabled=busy;input.setAttribute('aria-label',label);controls.toggle(input);inputs.set(key,input);form.append(controls.row(label,description,input));
-      input.onchange=async()=>{if(busy)return;busy=true;for(const n of inputs.values())n.disabled=true;const before=settings[key];try{await core.saveHealthSettings({[key]:input.checked});if(current())toast?.('健康设置已保存');}catch(error){if(current()){input.checked=before;toast?.(core.failureMessage(error));}}finally{busy=false;paint();inputs.get(key)?.focus();}};
+      input.onchange=async()=>{if(busy)return;busy=true;for(const n of inputs.values())n.disabled=true;const before=settings[key];try{await core.saveHealthViewSettings({[key]:input.checked});if(current())toast?.('健康设置已保存');}catch(error){if(current()){input.checked=before;toast?.(core.failureMessage(error));}}finally{busy=false;paint();inputs.get(key)?.focus();}};
     }
     form.append(el('p','按公开方法做的估计，不是医学结论','muted health-settings-notice'));
   }

@@ -60,6 +60,8 @@ for(const theme of mode==='recovery'?['dark']:['dark','light']){
    const boxes=await page.locator('.health-scores').evaluate(n=>[...n.children].map(c=>{const r=c.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,width:r.width};}));
    if(width<600){assert.equal(boxes[0].y,boxes[1].y);assert.ok(boxes[2].y>boxes[0].y);assert.ok(boxes.every(b=>b.right<=width));}
    if(mode==='after'){
+    if(mobile&&width===390){await page.setViewportSize({width,height:4000});await top(page);await shot(page,`${prefix}-today-content`,page.locator('.health-today'));await page.setViewportSize({width,height});}
+    if(!mobile&&width===1200){await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,1100),width);await top(page);await shot(page,`${prefix}-today-six-tall`);}
     if(mobile)await page.setViewportSize({width,height:1100});else await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,1100),width);await page.locator('.health-scores').evaluate(n=>n.scrollIntoView({block:'start'}));await shot(page,`${prefix}-all-six-cards`,page.locator('.health-scores'));if(mobile)await page.setViewportSize({width,height});else await app.evaluate(({BrowserWindow},{width,height})=>BrowserWindow.getAllWindows()[0].setContentSize(width,height),{width,height});
     for(const [selector,scene]of [['.health-scores','scores'],['.health-scores>:last-child','scores-lower'],['.health-sleep-summary','sleep-summary'],['.health-vitals','vitals'],['.health-activity-numbers','activity']]){await page.locator(selector).evaluate(n=>n.scrollIntoView({block:'center'}));await shot(page,`${prefix}-${scene}`);}
     await top(page);
@@ -97,4 +99,4 @@ for(const theme of mode==='recovery'?['dark']:['dark','light']){
   }
  }finally{await browser?.close();await app?.close();await host.close();await rm(profile,{recursive:true,force:true});await rm(host.root,{recursive:true,force:true});}
 }
-assert.deepEqual(report.errors,[]);if(mode==='cards')report.componentCrop='Six cards only; width unchanged, capture window height 1100. Canonical device viewports and native system-bar evidence are separate.';await writeFile(join(out,mode==='cards'?'cards-verification.json':'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({mode,screenshots:report.screenshots.length,checks:report.checks,errors:report.errors}));
+assert.deepEqual(report.errors,[]);report.componentCrop='Six-card groups: capture window height 1100. Complete 390-width today content: capture window height 4000, cropped to the actual component. These component crops complement canonical device viewports and native system-bar evidence.';await writeFile(join(out,mode==='cards'?'cards-verification.json':'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({mode,screenshots:report.screenshots.length,checks:report.checks,errors:report.errors}));
