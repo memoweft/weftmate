@@ -1,0 +1,46 @@
+{
+  "reportedCrashes": [
+    {
+      "time": "2026-10-12 03:20:00 US/Pacific",
+      "process": "WeftMateHealth4Seed",
+      "cause": "HealthKit rejected write authorization for sleeping wrist temperature",
+      "fix": "Readonly type removed from write authorization and sample seeding; synthetic simulator-only input is documented."
+    },
+    {
+      "time": "2026-10-12 03:21:44 US/Pacific",
+      "process": "WeftMatePhone",
+      "cause": "Duplicate BGTaskScheduler launch registration from model initialization",
+      "fix": "Registration moved to App.init with process-wide MainActor once flag; model construction does not register."
+    },
+    {
+      "time": "2026-10-12 03:25:56 US/Pacific",
+      "process": "WeftMatePhone",
+      "cause": "Duplicate BGTaskScheduler launch registration from model initialization",
+      "fix": "Same launch-owned registration fix; two-model UI regression passed."
+    }
+  ],
+  "twoModelRegression": {
+    "passed": 1,
+    "failed": 0,
+    "sdkRegistrations": 1
+  },
+  "kernelRestartReportedByOrchestrator": "2026-10-12 03:52 US/Pacific",
+  "headlessValidation": true,
+  "newCrashesAfterFix": [],
+  "kernelRestarts": [
+    {
+      "time": "2026-10-12 03:52 US/Pacific",
+      "symptom": "GPU reset, WindowServer stopped responding, watchdog kernel restart",
+      "operation": "Simulator validation after HealthKit authorization and native health page work",
+      "reportedBy": "orchestrator"
+    },
+    {
+      "time": "2026-10-12 05:28 US/Pacific",
+      "symptom": "GPU reset, WindowServer stopped responding, watchdog kernel restart",
+      "operation": "HEALTH4UITests changes and preparation for the health-page simulator journey",
+      "reportedBy": "orchestrator"
+    }
+  ],
+  "graphicsLimitation": "Full HealthKit-to-page simulator journey will not be repeated unchanged. Pure tests and a smaller headless device are used; unavailable GPU-sensitive acceptance is reported explicitly.",
+  "postGpuRestartSimulatorBoots": 3
+}
