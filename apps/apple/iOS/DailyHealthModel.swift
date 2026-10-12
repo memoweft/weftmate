@@ -174,7 +174,7 @@ import WeftMateCore
                     state.acknowledgeHistory(keys); try save()
                     await Task.yield()
                 }
-                if overview?.capabilities?.profile == true {
+                if HealthUploadPolicy.sendsProfile(overview?.capabilities) {
                     let profile = await reader.profile()
                     guard matches(app, token), state.enabled, !Task.isCancelled else { return }
                     if state.profileDelivered != profile {
@@ -186,10 +186,9 @@ import WeftMateCore
             }
             // A downgraded computer must never receive persisted v3 fields.
             let current = try? await app.assistantClient.healthOverview()
-            let wireVersion = HealthPagePolicy.recordVersion(current?.capabilities)
             guard matches(app, token), !Task.isCancelled else { return }
             for (day, queued) in state.pending.sorted(by: { $0.key < $1.key }) {
-                var value = queued; if value.version > wireVersion { value.version = wireVersion; value.sleep?.stages = nil; value.hrvSamples = nil; value.heartRateQuarterHourly = nil }
+                let value = HealthUploadPolicy.wireRecord(queued,capabilities:current?.capabilities)
                 guard matches(app, token), !Task.isCancelled else { return }
                 try await app.assistantClient.putDailyHealth(day: day, health: value, account: scope)
                 guard matches(app, token), !Task.isCancelled else { return }

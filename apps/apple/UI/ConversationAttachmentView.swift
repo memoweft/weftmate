@@ -49,6 +49,9 @@ struct ConversationAttachmentTile: View {
     @State private var directory: URL?
     var body: some View {
         Button(action: open) {
+            #if os(iOS)
+            PhoneAttachmentBlock(name:reference.name,image:thumbnail,isImage:reference.isImage,status:nil,remove:nil)
+            #else
             HStack(spacing: AppleTokens.Space.p10) {
                 AttachmentThumbnail(file: thumbnail, isImage: reference.isImage)
                 Text(reference.name).lineLimit(2).font(AppleTokens.Fonts.callout)
@@ -56,6 +59,7 @@ struct ConversationAttachmentTile: View {
                 WeftIcon("open", size: 16).font(AppleTokens.Fonts.caption)
             }.padding(AppleTokens.Space.p10).frame(maxWidth: .infinity, alignment: .leading)
                 .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
+            #endif
         }
         .buttonStyle(.plain).accessibilityLabel("预览 " + reference.name)
         .accessibilityIdentifier("attachmentPreview.\(reference.id)")
@@ -106,9 +110,31 @@ struct ConversationAttachmentPreview: View {
     let loading: Bool
     let error: String?
     let close: () -> Void
+    var sourceAction: (() -> Void)? = nil
     @State private var exporting = false
     @State private var exportError: String?
     var body: some View {
+        Group {
+            #if os(iOS)
+        VStack(spacing:AppleTokens.Space.p0) {
+            HStack(spacing:AppleTokens.Space.p8) {
+                Button(action:close) { WeftIcon("deny") }.buttonStyle(PhoneIconStyle()).accessibilityLabel("关闭预览").accessibilityIdentifier("filePreview.close")
+                Text(name).font(AppleTokens.Fonts.headline).lineLimit(1).truncationMode(.middle).frame(maxWidth:.infinity,alignment:.leading)
+                Menu {
+                    if let file {
+                        ShareLink(item:file) { WeftLabel("分享",icon:"open") }.accessibilityIdentifier("filePreview.share")
+                        Button("保存到文件") { exporting=true }.accessibilityIdentifier("filePreview.save")
+                    }
+                    if let sourceAction { Button("来自哪个对话",action:sourceAction).accessibilityIdentifier("library.source") }
+                } label: { WeftIcon("more").phoneMenuLabel(circle:true) }.accessibilityLabel("文件操作").accessibilityIdentifier("filePreview.more")
+            }.padding(AppleTokens.Space.p12)
+            if loading { ProgressView("正在下载…").padding(AppleTokens.Space.p20) }
+            if let error { Text(error).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.danger).padding(AppleTokens.Space.p16) }
+            if let file { NativeAttachmentPreview(file:file).frame(maxWidth:.infinity,maxHeight:.infinity) }
+            else { Spacer() }
+            if let exportError { Text(exportError).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger).padding(AppleTokens.Space.p12) }
+        }.background(Weave.surface)
+            #else
         VStack(spacing: AppleTokens.Space.p12) {
             HStack {
                 Text(name).font(AppleTokens.Fonts.headline).lineLimit(2)
@@ -127,6 +153,8 @@ struct ConversationAttachmentPreview: View {
             if let exportError { Text(exportError).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         }
         .padding(AppleTokens.Space.p16).background(Weave.surface)
+            #endif
+        }
         .fileExporter(isPresented: $exporting, item: file.map { AttachmentExport(file: $0) },
             contentTypes: [.data], defaultFilename: name, onCompletion: { @Sendable result in
                 Task { @MainActor in if case .failure = result { exportError = "文件未保存，请重试。" } }

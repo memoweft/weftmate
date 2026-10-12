@@ -1,0 +1,25 @@
+{
+  "xctestPassed": 13,
+  "swiftTestingPassed": 483,
+  "externalEnvironmentTestsSkipped": 2,
+  "realSyntheticPersonalHostHTTPPassed": true,
+  "stateChecksPassed": [
+    "TaskInteractionChecks",
+    "ToolProgressChecks"
+  ],
+  "designTokenTestsPassed": 5,
+  "callbackSitesReviewed": 68,
+  "callbackFailures": 0,
+  "uiCopyStringsChecked": 2456,
+  "genericIPhoneSimulatorBuildForTestingPassed": true,
+  "simulatorBoots": 2,
+  "firstBatchUITestsPassed": 0,
+  "firstBatchUITestsFailed": 2,
+  "firstBatchFailedAssertions": 4,
+  "firstBatchScreenshots": 14,
+  "secondBatchCompleted": false,
+  "wholeMachineRestartsObserved": 1,
+  "gpuResetReportsAddedBeforeSecondBatch": 1,
+  "newWeftMateCrashReports": 0,
+  "finalUIAcceptanceComplete": false
+}
