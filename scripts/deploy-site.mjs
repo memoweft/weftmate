@@ -28,7 +28,7 @@ export function planDeployment(o,stamp=timestamp()) {
  const shellFlags=rsyncArgs().map(quote).join(' ');
  const rollback=`rsync ${shellFlags} -- ${quote(backup+'/')} ${quote(o.root+'/')}`;
  const prepare=`set -eu; test -d ${quote(o.root)}; test ! -L ${quote(o.root)}; mkdir -m 700 -- ${quote(staging)}`;
- const upload=`set -eu; tar -xf - -C ${quote(staging)}`;
+ const upload=`set -eu; tar --no-same-owner -xf - -C ${quote(staging)}`;
  // Excluded paths are also protected from deletion by rsync's default receiver
  // filter semantics. Do not add --delete-excluded or follow directory symlinks.
  let publish=`set -eu; trap ${quote('rm -rf -- '+quote(staging))} EXIT; `;
