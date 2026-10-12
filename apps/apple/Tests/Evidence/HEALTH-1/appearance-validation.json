@@ -19,11 +19,11 @@
       "file": "health1-dark-system-authorization.png"
     },
     {
-      "darkPixelFraction": 0.986328125,
+      "darkPixelFraction": 0.97607421875,
       "file": "health1-dark-weekly-hint.png"
     },
     {
-      "darkPixelFraction": 0.0126953125,
+      "darkPixelFraction": 0.02978515625,
       "file": "health1-light-settings-connected.png"
     },
     {
@@ -39,7 +39,7 @@
       "file": "health1-light-system-authorization.png"
     },
     {
-      "darkPixelFraction": 0.00732421875,
+      "darkPixelFraction": 0.0146484375,
       "file": "health1-light-weekly-hint.png"
     }
   ]

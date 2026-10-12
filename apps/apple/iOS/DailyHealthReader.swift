@@ -8,6 +8,37 @@ private final class HealthObserverAcknowledgement: @unchecked Sendable {
     let finish: () -> Void
     init(_ finish: @escaping () -> Void) { self.finish = finish }
 }
+/// Nonisolated factories prevent HealthKit from inheriting the reader's MainActor executor.
+/// Every returned SDK closure is Sendable and touches only its immutable arguments/continuation.
+private enum DailyHealthCallbacks {
+    nonisolated static func samples(_ continuation: CheckedContinuation<[HKSample], any Error>)
+        -> @Sendable (HKSampleQuery, [HKSample]?, (any Error)?) -> Void {
+        { @Sendable _, values, error in
+            if let error { continuation.resume(throwing: error) }
+            else { continuation.resume(returning: values ?? []) }
+        }
+    }
+    nonisolated static func statistic(_ continuation: CheckedContinuation<Double?, any Error>, unit: HKUnit, options: HKStatisticsOptions)
+        -> @Sendable (HKStatisticsQuery, HKStatistics?, (any Error)?) -> Void {
+        { @Sendable _, result, error in
+            if let error = error as? HKError, error.code == .errorNoData { continuation.resume(returning: nil) }
+            else if let error { continuation.resume(throwing: error) }
+            else { continuation.resume(returning: (options == .discreteAverage ? result?.averageQuantity() : result?.sumQuantity())?.doubleValue(for: unit)) }
+        }
+    }
+    nonisolated static func observer(_ update: @escaping @Sendable () async -> Void)
+        -> @Sendable (HKObserverQuery, @escaping HKObserverQueryCompletionHandler, (any Error)?) -> Void {
+        { @Sendable _, completion, error in
+            let acknowledgement = HealthObserverAcknowledgement(completion)
+            let changed = error == nil
+            Task {
+                // One task owns one acknowledgement. Defer covers successful, skipped and cancelled work.
+                defer { acknowledgement.finish() }
+                if changed { await update() }
+            }
+        }
+    }
+}
 @MainActor final class DailyHealthReader {
     let store = HKHealthStore()
     var available: Bool { HKHealthStore.isHealthDataAvailable() }
@@ -70,11 +101,8 @@ private final class HealthObserverAcknowledgement: @unchecked Sendable {
         guard end > day else { return nil }
         return try await withCheckedThrowingContinuation { continuation in
             let query = HKStatisticsQuery(quantityType: HKObjectType.quantityType(forIdentifier: id)!,
-                quantitySamplePredicate: HKQuery.predicateForSamples(withStart: day, end: end, options: .strictStartDate), options: options) { _, result, error in
-                if let error = error as? HKError, error.code == .errorNoData { continuation.resume(returning: nil) }
-                else if let error { continuation.resume(throwing: error) }
-                else { continuation.resume(returning: (options == .discreteAverage ? result?.averageQuantity() : result?.sumQuantity())?.doubleValue(for: unit)) }
-            }
+                quantitySamplePredicate: HKQuery.predicateForSamples(withStart: day, end: end, options: .strictStartDate),
+                options: options, completionHandler: DailyHealthCallbacks.statistic(continuation, unit: unit, options: options))
             store.execute(query)
         }
     }
@@ -82,23 +110,14 @@ private final class HealthObserverAcknowledgement: @unchecked Sendable {
         try Task.checkCancellation()
         return try await withCheckedThrowingContinuation { continuation in
             store.execute(HKSampleQuery(sampleType: type, predicate: HKQuery.predicateForSamples(withStart: start, end: end),
-                limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, values, error in
-                if let error { continuation.resume(throwing: error) } else { continuation.resume(returning: values ?? []) }
-            })
+                limit: HKObjectQueryNoLimit, sortDescriptors: nil, resultsHandler: DailyHealthCallbacks.samples(continuation)))
         }
     }
-    func observe(update: @escaping @MainActor @Sendable () async -> Void) async {
+    func observe(update: @escaping @Sendable () async -> Void) async {
         guard observers.isEmpty else { return }
         for type in Self.types {
             guard !Task.isCancelled else { return }
-            let query = HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
-                // Completion is required on every path, including locked-store and disabled-account paths.
-                let acknowledgement = HealthObserverAcknowledgement(completion)
-                Task { @MainActor in
-                    if error == nil { await update() }
-                    acknowledgement.finish()
-                }
-            }
+            let query = HKObserverQuery(sampleType: type, predicate: nil, updateHandler: DailyHealthCallbacks.observer(update))
             observers.append(query); store.execute(query)
             // Unsupported signing/background execution quietly falls back to foreground reads.
             try? await store.enableBackgroundDelivery(for: type, frequency: .hourly)

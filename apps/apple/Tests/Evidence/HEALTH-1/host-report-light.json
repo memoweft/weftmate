@@ -58,8 +58,8 @@
       "status": 200
     }
   ],
-  "failures": 4,
-  "remoteChecks": 13,
+  "failures": 5,
+  "remoteChecks": 11,
   "contractOnly": true,
   "available": 7,
   "unavailable": 7,

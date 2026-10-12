@@ -45,3 +45,14 @@ test('HEALTH-1 fixture observation preserves request bytes across delayed authen
     const parts=[];for await (const chunk of request)parts.push(chunk);
     assert.deepEqual(Buffer.concat(parts),body);assert.deepEqual(recorded,body);
 });
+test('HEALTH-1 nonisolated callback factories retain their reviewed exact bodies',async()=>{
+    const crypto=await import('node:crypto');
+    const review=JSON.parse(await source('./Evidence/HEALTH-1/callback-review-bodies.json'));
+    assert.equal(review.reviewed,true);
+    for(const factory of review.factories) {
+        const current=(await readFile(factory.file,'utf8')).replaceAll('\r\n','\n');
+        assert.ok(current.includes(factory.body),factory.factory+' requires a new executor review after body changes');
+        assert.equal(crypto.createHash('sha256').update(factory.body).digest('hex'),factory.sha256);
+        assert.match(factory.body,/nonisolated/);assert.match(factory.body,/@Sendable/);
+    }
+});
