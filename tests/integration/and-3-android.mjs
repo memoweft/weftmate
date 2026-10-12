@@ -233,7 +233,9 @@ try {
   fixture.restoreClock();
   run('shell', 'pm', 'grant', pkg, 'android.permission.POST_NOTIFICATIONS');
   await startProbe(); await both('code-login'); await login('code'); await both('code-signed-in');
-  await finishProbe(); report.completed = true;
+  await finishProbe();
+  assert.deepEqual(report.errors, [], 'Native pages must not throw during navigation or authentication');
+  report.completed = true;
 } catch (error) {
   report.completed = false; report.failure = String(error).replace(/C:[\\/]Users[\\/][^\\/\s]+/gi, 'C:/Users/<user>');
   try { if (page) report.visibleFailure = await page.locator('body').innerText(); } catch {}
