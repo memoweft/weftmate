@@ -36,6 +36,11 @@ async function attach() {
   await page.waitForFunction(() => typeof state !== 'undefined' && state.booted);
   await page.evaluate(() => {
     globalThis.and3AuthErrors=[];
+    const nativeCall=androidBridge.call;
+    androidBridge.call=async function(method,params,...rest){try{const result=await nativeCall(method,params,...rest);
+      if(method==='cloud.app.request'&&result.status>=400)and3AuthErrors.push({stage:method,path:new URL(params.url).pathname,status:result.status,code:result.body?.error?.code});
+      return result;
+    }catch(error){and3AuthErrors.push({stage:method,code:error.message,status:error.status});throw error;}};
     for(const method of ['request','verify','finish','exchange']){
       const original=WeftUiCore.CloudAuthClient.prototype[method];
       WeftUiCore.CloudAuthClient.prototype[method]=async function(...args){try{return await original.apply(this,args);}catch(error){
