@@ -31,6 +31,8 @@ const androidBridge = WeftUiCore.createAndroidBridge({
 });
 const mobileWebBridge=window.weftNative?null:WeftUiCore.createMobileWebBridge();
 const mobileEffects = {
+  renderHealth:()=>healthView?.render(),healthNotice:toast,
+  quoteHealth:text=>{page('chat');const draft=$('draft');draft.value=(draft.value?draft.value+'\n\n':'')+text;draft.dispatchEvent(new Event('input',{bubbles:true}));draft.focus();},
   syncLibraryIdentity:()=>uiCore.syncMobileIdentity(),
   renderLibrary:()=>{libraryView?.render();},
   clearLibraryPreview:()=>{if(state.resourceView?.context?.kind==='library')closeResourcePage();},
@@ -54,6 +56,7 @@ const mobileEffects = {
     else if(['chat','home'].includes(state.page))await listSharedSessions();
     else if(state.page==='activity')await uiCore.refreshActivity();
     else if(state.page==='goals')await uiCore.readGoals();
+    else if(state.page==='health')await uiCore.readHealth();
     else if(state.page==='library')await uiCore.readLibrary();
     else if(state.page==='data')await $('page-content').dataView?.refresh();
   },
@@ -149,7 +152,7 @@ function mountMobileSearch(){
   searchView=WeftSearchView.mount({core:uiCore,mobile:true,notice:toast,open:async row=>{
     if(row.type==='actions'){
       const actions={new:()=>selectConversation(null),temporary:()=>mobileNewTemporaryConversation(),settings:()=>page('settings'),memory:()=>page('memory'),
-        activity:()=>page('activity'),goals:()=>page('goals'),library:()=>page('library'),help:()=>page('help'),releases:()=>page('releases'),
+        activity:()=>page('activity'),health:()=>page('health'),goals:()=>page('goals'),library:()=>page('library'),help:()=>page('help'),releases:()=>page('releases'),
         start:async()=>{const owner=state.owner,epoch=state.authEpoch;await selectConversation(null);if(owner!==state.owner||epoch!==state.authEpoch)return;$('draft').value=row.query;updateComposer();$('draft').focus();await send();}};
       return actions[row.id]?.();
     }
@@ -242,11 +245,16 @@ async function activityPage(target){
 
 // The four page models and their mounted controls live for the signed-in identity.
 const mobileTabPages=new Map(),mobileTabScroll=new Map();
-const mobileTabNames={chat:'聊天',activity:'动态',goals:'目标',library:'成果库'};
+// One switch controls whether health joins the floating bottom navigation.
+const SHOW_HEALTH_BOTTOM_TAB=true;
+const mobilePageNames={chat:'聊天',activity:'动态',health:'健康',goals:'目标',library:'成果库'};
+const mobileTabNames=Object.fromEntries(Object.entries(mobilePageNames).filter(([id])=>id!=='health'||SHOW_HEALTH_BOTTOM_TAB));
+let healthView=null,healthTimer=null;
+async function healthPage(target){uiCore.syncMobileIdentity();healthView??=WeftHealthView.mount({target,core:uiCore,mobile:true,toast});healthView.render();await uiCore.readHealth();clearInterval(healthTimer);healthTimer=setInterval(()=>{if(state.page==='health'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.readHealth();},uiCore.polling.overview);}
 let mobileTabIdentity='',mobileBadgeTimer,keyboardShown=false,viewportRestHeight=0;
-function rememberTabSource(){if(['activity','goals','library'].includes(state.page)){state.tabSource=state.page;mobileTabScroll.set(state.page,$('generic-page').scrollTop);}}
+function rememberTabSource(){if(['activity','health','goals','library'].includes(state.page)){state.tabSource=state.page;mobileTabScroll.set(state.page,$('generic-page').scrollTop);}}
 function resetMobileTabPages(){
-  libraryView?.dispose();activityView?.destroy();goalsView?.close();libraryView=activityView=goalsView=null;
+  libraryView?.dispose();activityView?.destroy();goalsView?.close();healthView?.destroy();healthView=null;clearInterval(healthTimer);uiCore.resetHealth();libraryView=activityView=goalsView=null;
   mobileTabPages.clear();mobileTabScroll.clear();state.tabSource=null;state.activeTab='chat';
 }
 function syncMobileTabs(){
@@ -254,7 +262,7 @@ function syncMobileTabs(){
   const identity=state.loggedIn?`${state.owner}:${state.authEpoch}`:'';
   if(identity!==mobileTabIdentity){mobileTabIdentity=identity;resetMobileTabPages();}
   const rootChat=state.page==='chat'&&!state.tabSource&&(!state.logicalChats||uiCore.inMainChat());
-  const visible=!!identity&&!document.body.classList.contains('cloud-auth-active')&&(rootChat||['activity','goals','library'].includes(state.page))&&!keyboardShown;
+  const visible=!!identity&&!document.body.classList.contains('cloud-auth-active')&&(rootChat||['activity','health','goals','library'].includes(state.page))&&!keyboardShown;
   tabs.hidden=!visible;document.body.classList.toggle('mobile-tabs-visible',visible);
   const active=rootChat?'chat':state.page; if(mobileTabNames[active])state.activeTab=active;
   const unread=uiCore.activity.unreadCount||0,pending=(uiCore.goalsPage.tasks||[]).some(row=>!['completed','failed','stopped'].includes(row.status))||uiCore.activity.actionableCount>0;
@@ -267,12 +275,12 @@ function syncMobileTabs(){
   document.body.classList.toggle('mobile-chat-visible',state.page==='chat');
   const profile=$('header-profile');if(profile){profile.hidden=!identity||state.page==='chat';const avatar=$('drawer-avatar');if(avatar){const copy=avatar.cloneNode(true);copy.removeAttribute('id');profile.replaceChildren(copy);}}
   if(visible&&state.page!=='chat'){
-    $('header-title').textContent=mobileTabNames[state.page];$('header-subtitle').hidden=true;$('page-back').hidden=true;$('menu-button').hidden=false;
+    $('header-title').textContent=mobilePageNames[state.page];$('header-subtitle').hidden=true;$('page-back').hidden=true;$('menu-button').hidden=false;
     $('outputs-button').hidden=true;$('conversation-usage').hidden=true;$('conversation-more').hidden=true;document.querySelector('.main-chat-tools')?.setAttribute('hidden','');
   }
 }
 async function selectMobileTab(name){
-  if(!state.loggedIn||!mobileTabNames[name])return;
+  if(!state.loggedIn||!mobilePageNames[name])return;
   state.tabSource=null;state.settingsChild=false;
   if(name==='chat'&&state.logicalChats&&!uiCore.inMainChat()){
     state.selectingMainTab=true;try{await uiCore.selectMainChat();}finally{state.selectingMainTab=false;}
@@ -281,14 +289,14 @@ async function selectMobileTab(name){
 }
 function mountMobileTabs(){
   const tabs=$('mobile-bottom-tabs');if(!tabs)return; $('app').append(tabs);$('chat-page').setAttribute('role','tabpanel');$('chat-page').setAttribute('aria-labelledby','mobile-tab-chat');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','手机主导航');
-  const icons={chat:'chat',activity:'bell',goals:'approval',library:'folder'};
+  const icons={chat:'chat',activity:'bell',health:'health',goals:'approval',library:'folder'};
   for(const [id,name]of Object.entries(mobileTabNames)){
     const tab=el('button','mobile-tab');tab.type='button';tab.id=`mobile-tab-${id}`;tab.dataset.tab=id;tab.setAttribute('role','tab');
     tab.setAttribute('aria-controls',id==='chat'?'chat-page':`mobile-panel-${id}`);
     const icon=el('span','mobile-tab-icon');icon.append(WeftIcons.create(icons[id],22));const badge=el('span',`mobile-tab-badge${id==='goals'?' is-dot':''}`);badge.setAttribute('aria-hidden','true');badge.hidden=true;icon.append(badge);
     tab.append(icon,el('span','mobile-tab-label',name));tab.onclick=()=>void selectMobileTab(id);tabs.append(tab);
   }
-  tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.querySelectorAll('[role=tab]')],index=buttons.indexOf(document.activeElement),next=buttons[event.key==='Home'?0:event.key==='End'?3:(index+(event.key==='ArrowLeft'?-1:1)+4)%4];next.focus();void selectMobileTab(next.dataset.tab);});
+  tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.querySelectorAll('[role=tab]')],index=buttons.indexOf(document.activeElement),next=buttons[event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+(event.key==='ArrowLeft'?-1:1)+buttons.length)%buttons.length];next.focus();void selectMobileTab(next.dataset.tab);});
   const refresh=async()=>{if(!state.loggedIn||document.visibilityState==='hidden')return;
     if(['chat','home'].includes(state.page))await listSharedSessions();
     if(state.page!=='activity')await uiCore.refreshActivity();syncMobileTabs();};
@@ -298,7 +306,7 @@ function mountMobileTabs(){
 function renderMobileTab(name){
   let target=mobileTabPages.get(name);if(!target){target=el('section','mobile-tab-panel');target.id=`mobile-panel-${name}`;target.setAttribute('role','tabpanel');target.setAttribute('aria-labelledby',`mobile-tab-${name}`);mobileTabPages.set(name,target);}
   $('page-content').className='mobile-tab-content';$('page-content').replaceChildren(target);
-  const work={activity:activityPage,goals:goalsPage,library:libraryPage}[name](target);
+  const work={activity:activityPage,health:healthPage,goals:goalsPage,library:libraryPage}[name](target);
   $('generic-page').scrollTop=mobileTabScroll.get(name)||0;
   Promise.resolve(work).finally(()=>{if(state.page===name){$('generic-page').scrollTop=mobileTabScroll.get(name)||0;syncMobileTabs();}});
 }
@@ -371,6 +379,7 @@ globalThis.WeftLocalDiagnostics?.configure((method,params)=>call(method,params,5
 function page(name,{dataLoaded=false}={}){
   if(mobileTabNames[state.page]&&state.page!=='chat')mobileTabScroll.set(state.page,$('generic-page').scrollTop);
   WeftPopover.closeMenu();libraryView?.deactivate();
+  if(name!=='health'){clearInterval(healthTimer);healthTimer=null;}
   if(name!=='goals'){if(goalsTimer)clearInterval(goalsTimer);goalsTimer=null;}
   if(name!=='activity'){if(activityTimer)clearInterval(activityTimer);activityTimer=null;}
   if(name==='memory')state.settingsChild=true;
@@ -387,7 +396,7 @@ function page(name,{dataLoaded=false}={}){
   if(previousPage!==name)globalThis.WeftMobileMotion?.push($(name==='chat'?'chat-page':name==='home'?'home-page':'generic-page'),name==='home'||name==='settings'&&previousPage!=='settings');
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
-    help:'帮助与小技巧',releases:'更新内容',goals:'目标',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'权限',executionRecords:'执行记录',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
+    help:'帮助与小技巧',releases:'更新内容',goals:'目标',health:'健康',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'权限',executionRecords:'执行记录',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
     account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑',system:'系统状态'
   }[name]||name;
   syncMobileTabs();
@@ -452,7 +461,7 @@ function page(name,{dataLoaded=false}={}){
 
 
 
-function processEvent(message){const {event,data}=message;if(state.page==='goals')void uiCore.readGoals();
+function processEvent(message){const {event,data}=message;if(state.page==='health')void uiCore.readHealth();if(state.page==='goals')void uiCore.readGoals();
   if(state.page==='system'&&/^(system|host|connection|model|memory|relay|certificate)\./.test(event))refreshMobileSystemStatus();
   if(event==='conversation.exported')toast(data.saved?'对话已保存':'导出未完成，请重试',!data.saved);
   if(event==='cloud.callback')void resumeCloudLogin();if(event==='chat.started'){
@@ -597,7 +606,7 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 
-function renderPage(name){if(['activity','goals','library'].includes(name))return renderMobileTab(name);const target=$('page-content');target.className='';clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+function renderPage(name){if(['activity','health','goals','library'].includes(name))return renderMobileTab(name);const target=$('page-content');target.className='';clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
   case 'help':return mobileHelpPage('help',target);
   case 'releases':return mobileHelpPage('releases',target);
   case 'library':return libraryPage(target);
@@ -802,7 +811,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
   $('page-back').addEventListener('click',()=>{if(state.page==='chat'&&!state.logicalChats&&!state.tabSource)page('home');else handleBack()});
   $('header-profile').addEventListener('click',()=>mobileProfileMenu($('header-profile')));
-  $('generic-page').addEventListener('scroll',()=>{if(['activity','goals','library'].includes(state.page))mobileTabScroll.set(state.page,$('generic-page').scrollTop);},{passive:true});
+  $('generic-page').addEventListener('scroll',()=>{if(['activity','health','goals','library'].includes(state.page))mobileTabScroll.set(state.page,$('generic-page').scrollTop);},{passive:true});
   document.querySelector('[data-action="temporary-chat"]').addEventListener('click', () => { void mobileNewTemporaryConversation(); });
   $('home-new-chat').addEventListener('click',()=>selectConversation(null));
   $('home-settings').addEventListener('click',()=>page('settings'));
