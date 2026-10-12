@@ -3,7 +3,7 @@
 import argparse,json,os,plistlib,shutil,subprocess,tempfile,time
 from pathlib import Path
 root=Path(__file__).resolve().parents[3]
-p=argparse.ArgumentParser();p.add_argument('--xctestrun',type=Path,required=True);p.add_argument('--simulator',required=True);p.add_argument('--result',type=Path,required=True);p.add_argument('--boot-number',type=int,required=True);a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--xctestrun',type=Path,required=True);p.add_argument('--simulator',required=True);p.add_argument('--result',type=Path,required=True);p.add_argument('--boot-number',type=int,required=True);p.add_argument('--layout-only',action='store_true');a=p.parse_args()
 evidence=root/'apps/apple/Tests/Evidence/APPLE-3';evidence.mkdir(parents=True,exist_ok=True)
 # Respect both system and per-user reports without recording machine-identifying report names.
 reports=list(Path('/Library/Logs/DiagnosticReports').glob('*gpuRestart*'))+list((Path.home()/'Library/Logs/DiagnosticReports').glob('*gpuRestart*'))
@@ -25,7 +25,7 @@ try:
     subprocess.run(['xcrun','simctl','bootstatus',a.simulator,'-b'],check=True,stdout=subprocess.DEVNULL)
     with tempfile.NamedTemporaryFile(suffix='.xctestrun',dir=a.xctestrun.parent) as f:
         f.write(plistlib.dumps(config));f.flush()
-        result=subprocess.run(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',f.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/Apple3UITests/testSmallScreenEvidenceBatch','-resultBundlePath',str(a.result)],stdout=open('/private/tmp/apple3-logs/ui.log','w'),stderr=subprocess.STDOUT)
+        result=subprocess.run(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',f.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/Apple3UITests/'+('testLayoutEvidenceBatch' if a.layout_only else 'testSmallScreenEvidenceBatch'),'-resultBundlePath',str(a.result)],stdout=open('/private/tmp/apple3-logs/ui.log','w'),stderr=subprocess.STDOUT)
     summary=json.loads(subprocess.check_output(['xcrun','xcresulttool','get','test-results','summary','--path',str(a.result)],text=True))
     with tempfile.TemporaryDirectory() as out:
         subprocess.run(['xcrun','xcresulttool','export','attachments','--path',str(a.result),'--output-path',out],check=True,stdout=subprocess.DEVNULL)
@@ -36,7 +36,7 @@ try:
     import urllib.request
     with urllib.request.urlopen(meta['origin']+'/fixture/apple3-report') as r:report=json.load(r)
     (evidence/'host-report.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n')
-    info={'passed':summary['passedTests'],'failed':summary['failedTests'],'skipped':summary['skippedTests'],'syntheticOnly':True,'realCloud':False,'realHealthKit':False,'systemStatusBar':True,'boots':a.boot_number}
+    info={'passed':summary['passedTests'],'failed':summary['failedTests'],'skipped':summary['skippedTests'],'syntheticOnly':True,'realCloud':False,'realHealthKit':False,'systemStatusBar':True,'boots':a.boot_number,'layoutOnly':a.layout_only}
     (evidence/'ui-validation.json').write_text(json.dumps(info,indent=2)+'\n');print(json.dumps(info),flush=True)
     if result.returncode or info['passed']!=1 or info['failed'] or info['skipped']:raise RuntimeError('Native evidence test failed; see private log')
 finally:

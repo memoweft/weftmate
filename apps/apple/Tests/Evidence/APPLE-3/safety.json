@@ -1,0 +1,12 @@
+{
+  "simulatorWindowOpened": false,
+  "boots": 4,
+  "gpuRestartsDuringPackage": 0,
+  "systemRebootsDuringPackage": 0,
+  "newWeftMateCrashReports": 0,
+  "temporaryOCRHelperCrash": 1,
+  "syntheticAccountsOnly": true,
+  "realHealthSamplesRead": false,
+  "productionCloudContacted": false,
+  "personalComputerContacted": false
+}
