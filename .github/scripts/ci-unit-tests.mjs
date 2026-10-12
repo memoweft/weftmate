@@ -38,6 +38,10 @@ const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // leaf names are exempt; another failing test in the same file still blocks CI.
 const pattern = entries => `(?:^| )(?:(?:${entries.map(entry => escape(entry.name)).join(')|(?:')}))$`;
 const args = ['--test', '--test-concurrency=1'];
+// A pure existing module makes the shortened Windows worker command lines
+// attributable too; --import is inherited by Node's test workers.
+const attributionImport = process.platform === 'win32' ? resolve('src/host-mode.mjs') : null;
+if (attributionImport) args.unshift('--import', attributionImport);
 if (mode === 'required') {
   const excluded = [...exceptions.knownFailures, ...suite.tests, ...platformTests];
   if (excluded.length) args.push(`--test-skip-pattern=${pattern(excluded)}`);
@@ -78,7 +82,7 @@ let result;
 const streamingOutput = process.env.CI === 'true';
 try {
   result = await runManagedTestProcess(process.execPath, [...args, ...selected.map((file, index) => process.platform === 'win32' && index > 0 ? file : resolve(file))],
-    { env, commandRoots: [temp, ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')],
+    { env, commandRoots: [temp, ...(attributionImport ? [attributionImport] : []), ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')],
       onOutput: streamingOutput ? (stream, chunk) => process[stream].write(chunk) : undefined });
 } finally {
   stopLease();

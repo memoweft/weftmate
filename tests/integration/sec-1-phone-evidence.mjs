@@ -33,8 +33,8 @@ try{
   const risk=mode==='warning'?'delete':'overwrite',identity={sessionId,turn:1,callId:'call-'+randomUUID(),rootCallId:'call-'+randomUUID(),receiptId:source.receiptId,messageHash:hash(text),toolName:'pwsh',argumentsHash:hash(JSON.stringify(args)),runtimeId:randomUUID(),approvalId:randomUUID()};identity.rootCallId=identity.callId;
   const row=await service.trackToolApproval({...identity,action:'register_approval',reason:`[weftmate:${risk}] ${mode==='warning'?'删除已有文件':'覆盖已有文件'}\n${JSON.stringify(args)}`,reviewEvidence:{arguments:args,risks:[risk],sources:mode==='warning'?['source.txt']:['notes.txt']}});
   assert.equal(row.status,'pending');assert.equal(!!row.secondOpinion,['agree','warning'].includes(mode));
-  sessions.get(sessionId).push({seq:2,type:'step.started',data:{turn:1,stepId:identity.callId,callId:identity.callId,toolName:'pwsh',summary:mode==='warning'?'删除 notes.txt':'覆盖 notes.txt'}},
-    {seq:3,type:'approval.requested',data:{turn:1,callId:identity.callId,approvalId:identity.approvalId,reason:row.reason}});
+  sessions.get(sessionId).push({seq:2,type:'step.started',data:{turn:1,stepId:identity.callId,callId:identity.callId,toolName:'pwsh',state:'running',summary:mode==='warning'?'删除 notes.txt':'覆盖 notes.txt'}},
+    {seq:3,type:'approval.requested',data:{turn:1,stepId:identity.callId,toolName:'pwsh',approvalId:identity.approvalId,summary:row.reason}});
   await bars.capture(mode,sessionId);
   await api(`/sessions/${sessionId}/approvals/${row.approvalId}`,{requestId:randomUUID(),outcome:'rejected'});
   await service.trackToolApproval({...identity,action:'resolve_approval',outcome:'rejected'});
