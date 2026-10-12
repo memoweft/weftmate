@@ -1532,7 +1532,7 @@ Android（安卓）白名单与JVM（Java虚拟机）测试同步上述精确路
 | `usage` | `estimatedActiveMinutes` 是每条用户消息后五分钟区间的并集，并裁到当日；不是屏幕时间。HEALTH-2补可选 `lateNightMinutes`，为同并集中的账号当地01:00–06:00分钟，旧摘要未知可省略。`hourlyTurns` 为24个当地小时的用户消息数；`models` 按模型档案含 `requests,inputTokens,outputTokens,unknownRequests`，未知用量保留未知，不能伪造零用量。 |
 | `memory` | `topics:string[]`，复用记忆周报的本机一致性快照，按实际形成日期只取新增记忆主题，不复制记忆原文。 |
 | `health` | 见下方接收契约；无数据时完整空字段。 |
-| `devices` | 预留 `{version:1,status:"unavailable",items:[]}`；后续项期望 `{deviceId,label,platform,activeMinutes}`，时间为当日汇总；本包不采集、不提供设备写入路由。 |
+| `devices` | DATA-2：`{version:1,status:"available"|"unavailable",items:[ComputerDay]}`；有本机观察时一项，无记录时空数组。不提供设备写入路由。 |
 
 `PUT /personal/v1/daily-summaries/:day/health`（`account:manage`，沿用认证与防伪请求）以当天或保留范围内历史日期替换健康分区，重复同一内容幂等。不创建健康样本或运动记录，不接受逐点数据或额外字段。可以先于当日使用摘要写入；下次日摘要生成时汇入。日期不可在未来、不可超出保留期。请求／回执：
 
@@ -1555,6 +1555,18 @@ Android（安卓）白名单与JVM（Java虚拟机）测试同步上述精确路
 动态仍使用已有 `/activity` 路由和 `type:"memory.report"`，增加可选 `weeklyInsight:{from,to,timeZone,text,mode,sources}`；`mode` 为 `statistics` 或 `model`，来源包含短标题、会话引用与可选 `artifactId`，可点回原对话／成果来源。默认静默、不弹系统通知。后台模型仅获最近完整七天的结构化摘要，调用现有后台优先级；无配置、请求失败或重启中断均保留统计版，周内不重试生成。摘要本机持久化；使用用户配置的云模型整理周回顾／聊天时，相关摘要随模型输入发送到该模型提供方，与正常聊天相同。
 
 助手通过现有会话上下文 IPC（进程间通信）获得最近七天最多3600字符的背景，每轮更新，与记忆召回并列；无关问题仍回答当前问题。引用使用 `#weftmate:session:<id>` 或 `#weftmate:library:<id>`，共用内容呈现器在两端打开来源。后台错误不阻塞本机聊天；关闭／清空后下一轮立即停止引用。安卓网页读取和设置沿用已允许的路由；健康新路由用于后续原生接线，本包按边界不改安卓壳。苹果原生需消费 `weeklyInsight` 展示与健康 PUT 接口。
+
+### 15.1 这台电脑的使用时段（DATA-2）
+
+Windows（视窗系统）桌面程序每分钟读一次 Electron（桌面程序框架）`powerMonitor.getSystemIdleTime()`；最后一次输入后五分钟以内算使用，之后算空闲。锁屏观察为零，睡眠／关机／程序没运行的区间为未知。程序在托盘仍采样，不安装输入钩子，不读取输入内容，不阻止睡眠。每十五分钟合并写盘，概况／查询以已合并观察为准、最多滞后十五分钟；正常退出与睡眠前保存不足一格的已观察分钟；退出时不再请求登录或补采样，最后不到一分钟的未观察尾部保持未知；异常退出可能丢失尚未写盘的最后十五分钟。
+
+**隐私底线：默认只记什么时候在用，不记在用什么。** 持久化只保存十五分钟格子的开始时间、使用与已观察分钟，以及格子内首次／最后使用时刻；不保存应用名、进程名、窗口标题、文件名、网址、按键内容或截图。记录仅存在这台电脑，按当前桌面登录账号隔离，不采集其它设备。
+
+`ComputerDay={deviceId:"this-computer",label:"这台电脑",platform:"windows",source:"computer",activeMinutes,observedMinutes,lateNightMinutes,firstUsedAt,lastUsedAt,hourly,quarterHours,buckets}`。分钟可以有小数；`firstUsedAt/lastUsedAt` 为 UTC（协调世界时）ISO（国际标准日期格式）或 `null`。`hourly` 为24项、`quarterHours` 为96项，每项为已观察的使用分钟／`null`；未观察不是0，部分观察的格子只累计已知分钟。`buckets` 每项 `{start,activeMinutes,observedMinutes,firstUsedAt,lastUsedAt}`，按真实时刻区分夏令时重复的格子；当日日视图把同名重复小时相加（可超过60分钟），跳过的小时为 `null`。深夜仍定义为当地01:00–06:00。
+
+既有通知设置新增 `computerUsageEnabled:true`（布尔），与 `reviewEnabled` 同时开启才记录。设置「回顾与洞察」组提供「记录这台电脑的使用时段」，说明「只记什么时候在用，不记在用什么」。关闭停止采样，不删除已落盘记录；使用同一 `reviewRetentionDays` 与 `reviewClear:true`，清空也废弃待写盘数据。远程客户端可以改同一电脑的偏好，不在手机采集。无新路由，不需要安卓新壳。
+
+模型只收到每天分钟总数、深夜分钟、来源与首次／最后时刻；不给格子、小时分布或任何本机内容。每日摘要原 `usage.estimatedActiveMinutes` 保持聊天估算兼容，真实电脑数据在 `devices`；健康与每周回顾优先使用后者。可选应用类别采集未实现，默认没有该采集能力。
 
 ## 16. 健康（HEALTH-2）
 
@@ -1594,7 +1606,7 @@ v2 是 v1 的超集：原来的七个字段仍必填，`version:2`；下面新�
 
 `recovery/sleep/load` 共用 `{score,state,label,reasons:[{text,inputs:[指标id]}],missing:[指标id],baseline,low,high}`，最多3条主要原因；全缺或历史不足时 score=null、insufficient。恢复／睡眠状态 `normal|low|high|insufficient`；负荷状态 `more|balanced|less|insufficient`，词「练多了／刚好／练少了／再戴几天就有对比了」。`sleep` 另含 `minutes,targetMinutes,start,end`；`load` 另含 `daily,average7,average42,difference`（近7／42天平均原始负荷与两者差，缺测不补0；与当天使用相同可用分量，避免缺能量被误判为负荷下降）。
 
-`activity:{steps,activeEnergyKcal,exerciseMinutes,workouts}`；`usage:{activeMinutes,lateNightMinutes}` 来自 DATA-1（每日摘要）估算活动分钟，凌晨1–5点为深夜区间，不是系统屏幕时间；无摘要为 `null`。`updatedAt` 是该日记录内容最后改变的时刻。`connected` 表示账号曾收到 available 记录；指定日无测量仍保留空指标结构。
+`activity:{steps,activeEnergyKcal,exerciseMinutes,workouts}`；`usage:{activeMinutes,lateNightMinutes,source}` 优先使用 DATA-2 本机已观察的使用分钟（`source:"computer"`）；当天没有本机观察时退回 DATA-1 消息活动估算（`source:"chat"`），无摘要为 `null`。观察到空闲为0，不触发估算回退。凌晨01:00–06:00为深夜区间。`updatedAt` 是该日记录内容最后改变的时刻。`connected` 表示账号曾收到 available 记录；指定日无测量仍保留空指标结构。
 
 指标 `id` 可用：五项身体指标、`vo2Max,activeEnergyKcal,exerciseMinutes,steps,sleepMinutes,inBedMinutes,deepMinutes,coreMinutes,remMinutes,awakeMinutes,recovery,sleep,load,usageActiveMinutes,usageLateNightMinutes`。小时心率通过 `heartRateAvgBpm,heartRateMinBpm,heartRateMaxBpm` 读取每日平均／最低／最高汇总，运动通过 `workoutMinutes` 读取总分钟。睡眠时刻仅 overview 的 sleep.start/end 返回，不作为数值序列。
 
@@ -1662,7 +1674,7 @@ overview新增 `capabilities:{record:3,profile:true}` 与三项可空对象；�
 - `energy:{score,current,curve:[{time,value}],sleepPeriods:[{start,end}],highest,lowest,nightCharged,dayDrained,degraded,state,label,missing,disclaimer}`。curve固定96个当地15分钟格，time是当地`HH:mm`，value可为null；不投射今天尚未到来的时段。current／score取最后已完成桶的值。缺15分钟心率用对应小时桶并标degraded；两者都缺则该桶null，不能当安静。初值缺睡眠／恢复或静息心率时insufficient。
 - `fitnessAge:{fitnessAge,actualAge,difference,referenceRange:{low,high}|null,vo2Max,vo2MaxDay,trend:[{day,value}],bounded,state,label,missing,disclaimer}`。最大摄氧量取截至目标日60天内最近有效值，trend为连续60天。actualAge=目标年−birthYear（只知年份的近似），difference=fitnessAge−actualAge。sex为other／null时不套用male／female表；missing含`sex`。范围外饱和并标bounded。
 
-metrics新增`stress|energy|fitnessAge`（vo2Max原已支持），value分别为日平均压力、最后有效电能、体能年龄。所有metrics允许`to=YYYY-MM-DD`结束日期（默认今天，不能未来），原days口径不变。usage新增`lastUsedAt`（昨夜18:00至目标日12:00之前最后一条用户消息时刻，ISO或null，不是屏幕关闭时刻）；load新增`recommendedRange:{low,high,unit:"relative"}`或null（近42天平均±15%，用于活动安排参考）。
+metrics新增`stress|energy|fitnessAge`（vo2Max原已支持），value分别为日平均压力、最后有效电能、体能年龄。所有metrics允许`to=YYYY-MM-DD`结束日期（默认今天，不能未来），原days口径不变。usage新增`lastUsedAt`（昨夜18:00至目标日12:00之前最后一次已观察使用的结束时刻；该夜没有电脑观察时才退到最后用户消息时刻，ISO或null）与`lastUsedAtSource:"computer"|"chat"`（该时刻的独立来源）；load新增`recommendedRange:{low,high,unit:"relative"}`或null（近42天平均±15%，用于活动安排参考）。
 
 GET `/health/weekly?to=YYYY-MM-DD`独立返回`{from,to,health}`；to为不包含的周结束日，默认明天，health沿用周回顾中的健康对象或null。建议remind请求sessionId改为可选；缺省时在主对话准备原生会话锚点，不发送模型消息，沿用原定时任务授权和幂等。
 
@@ -1673,3 +1685,7 @@ POST analysis仅接受上述scope和合法day（非未来、保留范围内）�
 DATA-1日摘要usage可增量返回`lastUserMessageAt`（ISO或null），仅取已允许的用户消息来源，供健康页夜间结束时刻投影；原使用分钟估算法和字段不变。分析生成期间若健康输入清空／替换导致资料代次变化，返回409 `HEALTH_DATA_CHANGED`，要求重新展开读取当前数据；两个模型开关互改不触发该代次冲突。
 
 压力的sdnnHeartRate降级：无同次meanHeartRateBpm时优先取测量所在15分钟心率桶avg，再退到同小时avg；这符合v3无逐搏数据时同次心率为null的采集约定。沿用原method字段，`missing:["measurementHeartRate"]`说明所用心率为时间桶估计；两种桶都缺则不给压力值。
+
+DATA-2增量：`usageActiveMinutes/usageLateNightMinutes` 的每个趋势点附 `source:"computer"|"chat"`，来源和概况相同；今日解读、周回顾与原生 `health_query` 同用这份汇总，不传采样明细。
+
+DATA-2原生查询补充：未接入身体测量、但查询范围（含目标日的昨夜窗口）有本机使用观察时，`health_query` 的 overview／usage 两项仍返回汇总 `items`，并附 `connected:false,usageConnected:true`；有效查询增量带 `timeZone` 与 overview 的 `usage.lastUsedAtLocal`（账号当地 `YYYY-MM-DD HH:mm`／null）供模型直接引用钟点，避免误换算 UTC（协调世界时）使用时刻；身体指标仍为空。完全没数据时保留原「还没接上」回执。

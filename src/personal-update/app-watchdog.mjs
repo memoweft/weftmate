@@ -1,3 +1,4 @@
+import { setProcessWarningLog } from './process-output.mjs';
 import { readFile, writeFile, rename, rm, mkdir } from 'node:fs/promises';
 import { join, isAbsolute } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -22,6 +23,7 @@ async function save(name, value) { const file = join(root, name), temp = file + 
 const state = await json('pending.json');
 if (!state || !isAbsolute(root) || !isAbsolute(state.installation) || state.snapshot !== join(root, state.snapshot.split(/[\\/]/).at(-1))) process.exit(2);
 const hostLog = state.dataDirectory ? createHostLog(state.dataDirectory) : null;
+setProcessWarningLog((event, data) => hostLog?.write(event, data));
 const recordFailure = error => hostLog?.failure('app-watchdog', error);
 async function relevantProcesses() { return queryProcesses([state.executable,state.installer]); }
 await save('monitor-ready.json', { token: state.token, pid: process.pid });
