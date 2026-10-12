@@ -52,6 +52,16 @@ import WeftMateCore
             return TimelineEvent(seq: seq, type: row.type, at: row.at, data: row.data)
         }
     }
+    func sessionEvents(_ sessionID: String) -> [TimelineEvent] {
+        window.events.compactMap { row in
+            guard row.sessionID == sessionID, let seq = row.sourceRef["seq"]?.int else { return nil }
+            return .init(seq: seq, type: row.type, at: row.at, data: row.data)
+        }
+    }
+    func artifactBundle(_ event: ChatEvent) -> ReplyArtifactBundle? {
+        guard let sessionID = event.sessionID, let seq = event.sourceRef["seq"]?.int else { return nil }
+        return ReplyArtifacts.bundles(sessionEvents(sessionID)).first { $0.anchorSeq == seq }
+    }
     func clear() {
         window.reset(); visibleAnchor = nil; dayCounts = [:]; chat = nil; hits = []; query = ""; resources = []; resourceVisible = false; target = nil
         sideSource = nil; searchGeneration = UUID(); resourceGeneration = UUID(); command = nil; pending = nil
