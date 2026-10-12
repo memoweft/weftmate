@@ -7,19 +7,19 @@ final class Apple5AddendumUITests: XCTestCase {
     @MainActor private func choose(_ app: XCUIApplication,_ name: String) {
         app.buttons["apple5add.scenarios"].tap(); app.buttons["apple5add."+name].tap()
     }
-    @MainActor func testAddendumBatch() throws {
+    @MainActor func testNavigationAndMediaBatch() throws {
         let env=ProcessInfo.processInfo.environment
         for theme in ["light","dark"] {
             let app=XCUIApplication(); app.launchArguments=["--ui-testing","--apple5-addendum","--health4-render-only","--a5-local-server","--server-url",try XCTUnwrap(env["WEFTMATE_APPLE5_ORIGIN"]),"--ui-testing-namespace","apple5add-"+UUID().uuidString,theme]
             app.launchEnvironment=["WEFTMATE_APPLE5_USERNAME":try XCTUnwrap(env["WEFTMATE_APPLE5_USERNAME"]),"WEFTMATE_APPLE5_PASSWORD":try XCTUnwrap(env["WEFTMATE_APPLE5_PASSWORD"])];app.launch()
             XCTAssertTrue(app.buttons["apple5add.scenarios"].waitForExistence(timeout:35))
             for label in ["聊天","动态","健康","目标","成果库"] {
-                let tab=app.buttons[label]; XCTAssertTrue(tab.exists); XCTAssertGreaterThanOrEqual(tab.frame.width,44);XCTAssertGreaterThanOrEqual(tab.frame.height,44)
-                XCTAssertFalse(app.staticTexts[label].exists)
+                let tab=app.otherElements["phone.bottomTabs"].buttons[label]; XCTAssertTrue(tab.exists); XCTAssertGreaterThanOrEqual(tab.frame.width,44);XCTAssertGreaterThanOrEqual(tab.frame.height,44)
+                XCTAssertFalse(app.otherElements["phone.bottomTabs"].staticTexts[label].exists)
             }
             XCTAssertEqual(app.buttons["mainChat.send"].label,"语音输入");capture(app,theme,"navigation")
-            choose(app,"narrow");XCTAssertTrue(app.buttons["成果库"].exists);capture(app,theme,"navigation-320")
-            choose(app,"large");XCTAssertTrue(app.buttons["成果库"].exists);capture(app,theme,"navigation-large")
+            choose(app,"narrow");XCTAssertTrue(app.otherElements["phone.bottomTabs"].buttons["成果库"].exists);capture(app,theme,"navigation-320")
+            choose(app,"large");XCTAssertTrue(app.otherElements["phone.bottomTabs"].buttons["成果库"].exists);capture(app,theme,"navigation-large")
             choose(app,"normal")
             XCUIDevice.shared.orientation = .landscapeLeft;capture(app,theme,"navigation-landscape");XCUIDevice.shared.orientation = .portrait
             choose(app,"attachments")
@@ -28,10 +28,15 @@ final class Apple5AddendumUITests: XCTestCase {
             app.descendants(matching:.any)["mainChat.draft"].tap();XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout:10));capture(app,theme,"attachments-keyboard")
             app.buttons["mainChat.menu"].tap();app.buttons["输出与来源"].firstMatch.tap();XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout:15));app.buttons["phoneSheet.close"].tap()
             remove.tap();app.buttons["attachment.remove.合成计划.pdf"].tap();XCTAssertEqual(app.buttons["mainChat.send"].label,"语音输入")
-            choose(app,"pdf");XCTAssertTrue(app.buttons["filePreview.close"].waitForExistence(timeout:10));XCTAssertFalse(app.descendants(matching:.any)["mainChat.draft"].exists);capture(app,theme,"pdf-fullscreen")
+            choose(app,"pdf");XCTAssertTrue(app.buttons["filePreview.close"].waitForExistence(timeout:10));XCTAssertFalse(app.otherElements["attachmentPreviewPanel"].descendants(matching:.any)["mainChat.draft"].exists);capture(app,theme,"pdf-fullscreen")
             app.buttons["filePreview.more"].tap();XCTAssertTrue(app.buttons["filePreview.save"].waitForExistence(timeout:10));capture(app,theme,"pdf-menu")
             app.terminate()
-            let card=XCUIApplication();card.launchArguments=["--ui-testing","--apple4-fixture","--health4-render-only","--a5-local-server","--server-url",try XCTUnwrap(env["WEFTMATE_APPLE3_ORIGIN"]),"--ui-testing-namespace","apple5add-cards-"+UUID().uuidString,theme]
+        }
+    }
+    @MainActor func testDecisionCardsBatch() throws {
+        let env=ProcessInfo.processInfo.environment
+        for theme in ["light","dark"] {
+            let card=XCUIApplication();card.launchArguments=["--ui-testing","--apple4-fixture","--apple5-reset-presentation","--health4-render-only","--a5-local-server","--server-url",try XCTUnwrap(env["WEFTMATE_APPLE3_ORIGIN"]),"--ui-testing-namespace","apple5add-cards-"+UUID().uuidString,theme]
             card.launch();XCTAssertTrue(card.buttons["apple4.scenarios"].waitForExistence(timeout:30))
             card.buttons["apple4.scenarios"].tap();card.buttons["two"].tap();XCTAssertTrue(card.buttons["approveOnce.apple3-two"].waitForExistence(timeout:20));capture(card,theme,"approval-two-actions")
             card.buttons["apple4.scenarios"].tap();card.buttons["aligned"].tap();XCTAssertTrue(card.buttons["approvalConfirm.apple3-aligned"].waitForExistence(timeout:20));capture(card,theme,"approval-choices")

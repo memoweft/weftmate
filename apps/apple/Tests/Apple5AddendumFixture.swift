@@ -30,7 +30,7 @@ struct Apple5AddendumFixture: View {
                 await app.authenticate(username:environment["WEFTMATE_APPLE5_USERNAME"] ?? "",password:environment["WEFTMATE_APPLE5_PASSWORD"] ?? "",displayName:"合成账号",register:false)
                 guard app.session != nil else { return }; await app.mainChat.configure(); await app.mainChat.read(replace:true); await app.refresh()
                 do { images=try Apple5MediaFixture.make(); pdf=images.last; ready=true } catch { self.error="合成文件没能准备好。" }
-            }.onDisappear { images.forEach { try? FileManager.default.removeItem(at:$0) } }
+            }.onDisappear { if !preview,let file=images.first { try? FileManager.default.removeItem(at:file.deletingLastPathComponent()) } }
     }
     private func select(_ value: String) {
         if value == "pdf" { preview=true; return }

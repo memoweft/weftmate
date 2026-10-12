@@ -88,6 +88,7 @@ struct PhonePendingDecision: View {
     var body: some View {
         if let approval=model.pendingApprovals.first { PhoneApprovalCard(model:model,approval:approval,events:events) }
         else if let question=model.pendingQuestions.first { PhoneQuestionCard(model:model,batch:question) }
+        else if let question=model.questions.first(where:{$0.status == .answered || $0.status == .resolved}),let receipt=model.answeredSummary(question) { Text(receipt).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("answeredQuestion."+question.id) }
         else if let approval=model.approvals.first(where:{$0.status == .answered}) { WeftLabel(approval.decisionSummary,icon:"approval").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("approvalSummary."+approval.id) }
     }
 }

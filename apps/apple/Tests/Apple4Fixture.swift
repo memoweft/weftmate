@@ -26,7 +26,12 @@ struct Apple4Fixture: View {
             .dynamicTypeSize(ProcessInfo.processInfo.arguments.contains("--apple5-large") ? .accessibility3 : .large)
             .task {
                 await app.authenticate(username: "health4_synthetic", password: "synthetic-only-A1!", displayName: "合成账号", register: false)
-                if app.session != nil { await select("final"); ready = true }
+                if app.session != nil {
+                    if ProcessInfo.processInfo.arguments.contains("--apple5-reset-presentation"),let origin=app.session?.server.origin {
+                        var request=URLRequest(url:origin.appendingPathComponent("fixture/apple3"));request.httpMethod="POST";request.httpBody=try? JSONSerialization.data(withJSONObject:["reset":true]);_=try? await URLSession.shared.data(for:request)
+                    }
+                    await select("final"); ready = true
+                }
             }
     }
     private func select(_ value: String) async {

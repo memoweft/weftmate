@@ -443,9 +443,16 @@ struct MainChatView: View {
         true
         #endif
     }
+    private var composerLines: ClosedRange<Int> {
+        #if os(iOS)
+        1...PhoneComposerState(focused:draftFocused,draft:model.draft,attachmentCount:model.attachments.count).maximumLines
+        #else
+        1...6
+        #endif
+    }
     private var draftInput: some View {
         TextField(composerPlaceholder, text: Binding(get: { model.draft }, set: { model.setDraft($0) }), axis: .vertical)
-            .lineLimit(1...PhoneComposerState(focused:draftFocused,draft:model.draft,attachmentCount:model.attachments.count).maximumLines).textFieldStyle(.plain).focused($draftFocused)
+            .lineLimit(composerLines).textFieldStyle(.plain).focused($draftFocused)
             .disabled(!model.models.contains(where: \.configured)).accessibilityIdentifier("mainChat.draft")
     }
     @ViewBuilder private var modelSelection: some View {
