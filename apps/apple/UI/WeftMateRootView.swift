@@ -59,6 +59,12 @@ struct WeftMateRootView: View {
             #endif
         })
         .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
+        .sheet(isPresented: $model.cloudLogin.showDevices) {
+            NavigationStack {
+                CloudDevicesView(app: model, cloud: model.cloudLogin)
+                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { model.cloudLogin.showDevices = false } } }
+            }
+        }
         .sheet(item: Binding(get: { model.deletionInSettings ? nil : model.deletionCandidate }, set: { model.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: model) }
         #if os(iOS)
         .sheet(item: $model.temporaryExpiryCandidate) { row in
@@ -253,8 +259,8 @@ private struct AccountEntry: View {
     @ObservedObject var cloud: CloudLoginModel
     var body: some View {
         Group {
-            if cloud.authenticated { CloudAccountHome(app: app, cloud: cloud) }
-            else { AuthView(model: cloud).safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) } }
+            if cloud.authenticated && !cloud.useLocalWorkspace { CloudAccountHome(app: app, cloud: cloud) }
+            else { LocalAccountWorkspace(app: app, cloud: cloud) }
         }.task {
             while !Task.isCancelled {
                 await cloud.poll()

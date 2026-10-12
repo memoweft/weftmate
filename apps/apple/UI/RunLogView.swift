@@ -92,7 +92,7 @@ struct RunLogView: View {
                                 row("结束状态", RunLogText.previous(value.previous, platform: value.summary.platform))
                             }
                             row(peer ? "最近 7 天收到的异常" : "最近 7 天异常", "\(value.summary.abnormalCountsLast7Days.values.reduce(0, +)) 次")
-                            Text(peer ? "通过配对手机接收，仅保存在这两台设备。" : "只在本机保存，复制或分享由你选择。")
+                            Text(peer ? "通过iPhone接收，仅保存在这两台设备。" : "只在本机保存，复制或分享由你选择。")
                                 .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
                         }.padding(.vertical, AppleTokens.Space.p8)
                     }

@@ -1,3 +1,5 @@
+> APPLE-2 / AUTH-1 后，本文的系统浏览器、二维码和待批准流程只描述历史版本。当前原生主路与重放入口见 `Evidence/APPLE-2/README.md`；S1cCloudUITests 已改为本机免登、两种登录入口和取消返回的规则回归，底层密码／PKCE／DPoP／签名拒绝仍由共享包与 APPLE2 实服务测试覆盖。
+
 # S1c Apple 云账号与内容设备验收
 
 开发只跑相关测试；三目标构建与 CI 结果在 STATE/PR 中记录。

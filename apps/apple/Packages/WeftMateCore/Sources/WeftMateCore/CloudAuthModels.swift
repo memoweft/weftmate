@@ -6,12 +6,12 @@ public enum CloudLoginFailure: Error, LocalizedError, Sendable, Equatable {
     public var errorDescription: String? {
         switch self {
         case .callback: "云登录回调校验失败，请重新登录。"
-        case .token: "云登录凭据校验失败；请确认云端已登记此客户端和设备公钥。"
+        case .token: "未能核对登录信息，请稍后重新登录。"
         case .busy: "云登录正在处理，请稍候。"
-        case .pinChanged: "电脑的安全密钥与配对记录不同，请在电脑上核对。"
-        case .pairing: "配对二维码无效或已过期，请在电脑上重新生成。"
-        case .hostOffline: "宿主离线 / 连接不可用。云账号仍已登录，可稍后重试。"
-        case .needsPairing: "请先从电脑取得配对信息，固定电脑的安全密钥。"
+        case .pinChanged: "电脑的连接信息发生变化，请在电脑上检查 WeftMate。"
+        case .pairing: "未能核对电脑的连接信息，请稍后重试。"
+        case .hostOffline: "电脑离线 / 连接不可用。云账号仍已登录，可稍后重试。"
+        case .needsPairing: "暂时无法连接电脑，请稍后重试。"
         case .browserCancelled: "已取消云登录。"
         }
     }
@@ -111,7 +111,8 @@ public struct HostPairing: Codable, Sendable, Equatable {
 /// Host names use a 128 UTF-16 unit contract; preserve whole characters (including emoji).
 public func cloudDeviceName(_ name: String, platform: ApplePlatform = .current) -> String {
     var result = ""
-    for character in platform.deviceLabel + " · " + name {
+    let prefix = platform.deviceLabel + " · "
+    for character in name.hasPrefix(prefix) ? name : prefix + name {
         if result.utf16.count + String(character).utf16.count > 128 { break }
         result.append(character)
     }

@@ -1,0 +1,272 @@
+{
+  "syntheticOnly": true,
+  "fullScreen": true,
+  "frames": [
+    {
+      "file": "apple2-dark-about.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "ff60e3b7c6ae5d3e28a4635412457a38842d9fd57eaec4a957f84aa142c76416"
+    },
+    {
+      "file": "apple2-dark-cached-content.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "52e32ba852a9e739fdbcc4d71856ff154cdfd28c249891886176905c934e0a8a"
+    },
+    {
+      "file": "apple2-dark-code-error.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "2e27c973a1757a69a443090ac898b2869ec1cc693c958a38606b426b9e712825"
+    },
+    {
+      "file": "apple2-dark-code-resent.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "538f172e81a052b5e928db99f41becee77ccac359dc65e229ea6d3487f199500"
+    },
+    {
+      "file": "apple2-dark-computer-offline.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "1a3ff360409a0e04b62cc594e62bae39dd8c2a45ad43378b986424c15343ec13"
+    },
+    {
+      "file": "apple2-dark-devices.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "8180284ecd4fea4045f17a1b7bde3123991bfcdc35b8688fe3f3c1f7238d57cd"
+    },
+    {
+      "file": "apple2-dark-email-code-connected.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "2c04ad5394acdb2d5f8c394fb30f2b91e9c3b1b3c56706e0751961f5bc13c3a8"
+    },
+    {
+      "file": "apple2-dark-email-code-login.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "926d9c7768ed94deba46d525b84651f4771d6ecd5db96936c4d9670943beda57"
+    },
+    {
+      "file": "apple2-dark-email-code-step.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "1e42234b3be1a91c4155de6b7b13b97e114c2ceada784e6737edb99c43ddaa8b"
+    },
+    {
+      "file": "apple2-dark-expired-code.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "c32d106ec2efcd5e92d19c292c5ae6fd889b613a33a7f510eaaaf8931367a7ab"
+    },
+    {
+      "file": "apple2-dark-expired-local-content.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "813d08076da7d173ce7d3c5d869463d1fd531f6d3a8c6a83e1604052e4e8d171"
+    },
+    {
+      "file": "apple2-dark-local-no-login.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "4317aa6c058902d807fb900b25c272c724a857098e6afb28f248614593116856"
+    },
+    {
+      "file": "apple2-dark-new-device-code.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "106be8da5c04cc2bf380e2f4a362fd9fda918a7b339a2b1bc124cc823ccb72a4"
+    },
+    {
+      "file": "apple2-dark-new-device-notice.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "95cf92a922594d8e3db4f6860d07d662c6dc2a62af3246167907ef1f60f119e5"
+    },
+    {
+      "file": "apple2-dark-password-connected.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "7320e1037c2c80aa41ea311505e67716958158253a32a13159115d4a769c2963"
+    },
+    {
+      "file": "apple2-dark-password-error.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "a413a9d8d49ed1514e175d720ae3c2f210030fbd8a5d0e55e19d0f18a2398f1b"
+    },
+    {
+      "file": "apple2-dark-password-login.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "bfd508760d640b8db55def343b4e3e9284be1942a3f35dd06786f0c6cbe5a4bb"
+    },
+    {
+      "file": "apple2-dark-server-relogin.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "8adf4ca8084dc999e42d910f5762b436229e4b6587720e0d75002d55af396e06"
+    },
+    {
+      "file": "apple2-light-about.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "b9ebeef0d1602b2d9131f274a68989ca6b4e19849b722af12985c16a978eb09a"
+    },
+    {
+      "file": "apple2-light-cached-content.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "79cfc3f8bf9465467f58ebcad70b04dc2b82249273c10a2552eaa484c6e9f045"
+    },
+    {
+      "file": "apple2-light-code-error.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "3951902b5dab224012acefe1bf00f2d29f774873b7dc85b088c2376e0f62c4aa"
+    },
+    {
+      "file": "apple2-light-code-resent.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "d48cdeb4503666ff0f332be70d4c781fb5e983fc736e37b62b44a21ac2cf0e49"
+    },
+    {
+      "file": "apple2-light-computer-offline.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "606bc3c5b923f05ca6de0646be9d03da9204edad1c26cd03234ec7f04ff3e6fe"
+    },
+    {
+      "file": "apple2-light-devices.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "f8df5b9da394769757c0bdd79108ff5850b72a4696bde58577348c0988a11c1e"
+    },
+    {
+      "file": "apple2-light-email-code-connected.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "78717d82c5e88b3e22629252b0e091630c4339d5abdc17508175351865bffaf1"
+    },
+    {
+      "file": "apple2-light-email-code-login.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "88429e6493588a7e41f0876949917e85ae81982fcf981d521c5f96626346c23c"
+    },
+    {
+      "file": "apple2-light-email-code-step.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "9430cbe16f0210119011e9eb495db2d04587e828951690df68ebb60315c696ca"
+    },
+    {
+      "file": "apple2-light-expired-code.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "7566a1b71a9439f79ef0746affb9b58083c67d3bdc9ca90fcec96640775ab1e0"
+    },
+    {
+      "file": "apple2-light-expired-local-content.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "6859aaaaff643b53a84255e94708ee8344ef371358e812e2df36b8f5f03db0d6"
+    },
+    {
+      "file": "apple2-light-local-no-login.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "b4418b294f40d901f216f608f20d348bca3d753a94710907dfe2740775890ba3"
+    },
+    {
+      "file": "apple2-light-new-device-code.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "e1026c4f23b5402aadecd360266d06d97b683fb037614931db60f8fa06e83524"
+    },
+    {
+      "file": "apple2-light-new-device-notice.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "6af4a5392de0a009b6b4a52a31e0f57abc2ee3b22d7de3e2cb067937dfb9ab92"
+    },
+    {
+      "file": "apple2-light-password-connected.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "5ee725b1ba45bf9e67e9cd329578fbe937081393184b32f7cfb3a16f3fcec299"
+    },
+    {
+      "file": "apple2-light-password-error.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "6c7e40442df98366b60047666848ddede9364e5483c59905e12aaa24fb7190be"
+    },
+    {
+      "file": "apple2-light-password-login.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "9dc506fefcd2a96ac1b0c55a1b39bc46f8bdafe3c07df6d66fd13533f99940fa"
+    },
+    {
+      "file": "apple2-light-rate-limited.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "077b62f1566cbdbe38942278d1da30dbbfe01afc9ed4955315bb45e79e8f8350"
+    },
+    {
+      "file": "apple2-light-server-relogin.png",
+      "surface": "iphone",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "8bbb80c86cf2067853bbcf4cdcdef1cab883341d06bab3b7f1b8fcae81365181"
+    },
+    {
+      "file": "watch-approval-synthetic.png",
+      "surface": "watch",
+      "width": 416,
+      "height": 496,
+      "sha256": "58dd10381ecc2a3c425fb16fc29f99a9625701a66635da5d15355c6ea8b40abe"
+    }
+  ]
+}
