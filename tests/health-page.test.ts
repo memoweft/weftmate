@@ -14,7 +14,7 @@ test('health model keeps every contract state and missing value without zero fil
 });
 test('health chart breaks at missing days and remains finite for empty, zero and one point',async()=>{
   const {H}=await setup();for(const points of [[],[{value:null}],[{value:0}],[{value:12}],[{value:12},{value:null},{value:17}]]){const chart=H.chart(points);assert.ok(!/NaN|Infinity/.test(chart.path));assert.equal(chart.empty,!points.some(p=>p.value!==null));}
-  assert.equal((H.chart([{value:1},{value:null},{value:2}]).path.match(/M/g)||[]).length,2);assert.equal(H.value(0),'0');
+  assert.equal((H.chart([{value:1},{value:null},{value:2}]).path.match(/M/g)||[]).length,2);assert.equal(H.value(0),'0');assert.equal(H.duration(59.8),'1小时0分钟');
 });
 test('health overlay joins independent series and days respect selected history date',async()=>{
   const {core}=await setup();await core.readHealth();await core.healthOverlay(true);assert.equal(core.health.usage.id,'usageLateNightMinutes');await core.readHealth('2026-10-10');assert.ok(core.health.trend.points.every((p:any)=>p.day<='2026-10-10'));await core.openHealthMetric('sleep','detail');assert.equal(core.health.view,'detail');assert.equal(core.health.metric,'sleep');await core.readHealthTrend('sleep',14);assert.equal(core.health.days,14);await core.readHealthCalendar('2026-09');assert.equal(core.health.calendar.days.length,30);
@@ -35,4 +35,13 @@ test('personal low/high and more/less states preserve the server labels and meas
   for(const [state,label]of [['low','比平时低'],['high','比平时高'],['normal','正常'],['insufficient','再戴几天就有对比了']]){
     const {core,fixture}=await setup();core.accessApi=async(path:string)=>{const result=fixture.reply(path);if(path.includes('/overview')){result.vitals.hrvSdnnMs={...result.vitals.hrvSdnnMs,state,label};result.load={...result.load,state:state==='low'?'less':state==='high'?'more':'balanced',label:state==='low'?'练少了':state==='high'?'练多了':'刚好'};}return result;};await core.readHealth();assert.equal(core.health.overview.vitals.hrvSdnnMs.state,state);assert.equal(core.health.overview.vitals.hrvSdnnMs.label,label);assert.equal(core.health.overview.load.state,state==='low'?'less':state==='high'?'more':'balanced');
   }
+});
+
+test('sleep stages use existing metric reads and the 14 day comparison survives a 7 day chart selection',async()=>{
+  const {core,fixture}=await setup();await core.readHealth();assert.equal(core.health.overview.sleep.deepMinutes,undefined);assert.equal(core.health.sleepStages.deepMinutes,fixture.metric('deepMinutes',7).points.at(-1).value);
+  const average=core.health.scoreAverages.sleep;assert.equal(average,fixture.metric('sleep',14).average);await core.openHealthMetric('sleep','detail');await core.readHealthTrend('sleep',7);assert.equal(core.health.scoreAverages.sleep,average);
+});
+
+test('a missing stage or failed stage read never blanks the rest of the overview',async()=>{
+  const {core,fixture}=await setup();core.accessApi=async(path:string)=>{if(path.includes('/metrics/deepMinutes'))throw Error('unavailable');return fixture.reply(path);};await core.readHealth();assert.equal(core.health.error,'');assert.equal(core.health.sleepStages.deepMinutes,null);assert.equal(core.health.stageError,'连接暂时中断');assert.ok(core.health.sleepStages.remMinutes>0);assert.ok(core.health.overview.sleep.minutes>0);
 });
