@@ -27,5 +27,9 @@ final class Apple3OutcomeTests: XCTestCase {
         XCTAssertEqual(bundles[0].visible(expanded:false).count,3)
         XCTAssertEqual(bundles[0].visible(expanded:true).count,4)
         XCTAssertEqual(bundles[1].files.count,1)
+        let multi = TimelineEvent(seq:8,type:"artifact.created",data:.object(["taskId":.string("t3"),"artifacts":.array([.object(["artifactId":.string("one"),"fileName":.string("一.txt")]),.object(["artifactId":.string("two"),"fileName":.string("二.txt")])])]))
+        let multiple=ReplyArtifacts.bundles([multi])
+        XCTAssertEqual(multiple.first?.files.count,2)
+        XCTAssertEqual(Set(multiple[0].files.map(\.artifactPresentationID)).count,2)
     }
 }

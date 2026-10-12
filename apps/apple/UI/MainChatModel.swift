@@ -156,7 +156,7 @@ import WeftMateCore
             let latest = try await app.assistantClient.logicalChat()
             guard current(token, generation) else { return }
             try window.requireRevision(latest.contentRevision)
-            window.anchor = visibleAnchor; try window.apply(page); self.chat = latest
+            window.anchor = visibleAnchor; try window.apply(page); self.chat = latest; error = nil
             if let bound = latest.modelProfileId, latest.activeSessionId != nil { modelID = bound }
             indexState = page.indexState; timeZone = page.timeZone
             if page.hasMore { await changes() }
