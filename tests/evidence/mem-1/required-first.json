@@ -1,0 +1,12 @@
+{
+  "mode": "required",
+  "files": 323,
+  "exitCode": 1,
+  "passed": 1840,
+  "failed": 1,
+  "skipped": 14,
+  "failures": [
+    "core registers distinct actions, constructs independent stores and has no DOM dependency"
+  ],
+  "resolution": "Merged main ca6c3d18 containing the health action duplicate-registration correction; targeted ui-core 59 passed. Full final required rerun pending."
+}

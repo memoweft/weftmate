@@ -1,0 +1,93 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realMemoryCore": true,
+  "syntheticAccount": true,
+  "checks": [
+    "preview-zero-model-requests",
+    "pause-and-restart-preserves-progress",
+    "real-core-source-and-memory-formed",
+    "resumed-completed-world-without-reimport"
+  ],
+  "screenshots": [
+    "electron-1200-light-source-menu.png",
+    "electron-480-light-source-menu.png",
+    "electron-1200-dark-source-menu.png",
+    "electron-480-dark-source-menu.png",
+    "electron-1200-light-preview.png",
+    "electron-480-light-preview.png",
+    "electron-1200-dark-preview.png",
+    "electron-480-dark-preview.png",
+    "electron-1200-light-running.png",
+    "electron-480-light-running.png",
+    "electron-1200-dark-running.png",
+    "electron-480-dark-running.png",
+    "phone-web-360-light-progress.png",
+    "phone-web-390-light-progress.png",
+    "phone-web-360-dark-progress.png",
+    "phone-web-390-dark-progress.png",
+    "electron-1200-light-paused.png",
+    "electron-480-light-paused.png",
+    "electron-1200-dark-paused.png",
+    "electron-480-dark-paused.png",
+    "electron-1200-light-completed.png",
+    "electron-480-light-completed.png",
+    "electron-1200-dark-completed.png",
+    "electron-480-dark-completed.png",
+    "electron-1200-light-records.png",
+    "electron-480-light-records.png",
+    "electron-1200-dark-records.png",
+    "electron-480-dark-records.png",
+    "phone-web-360-light-records.png",
+    "phone-web-390-light-records.png",
+    "phone-web-360-dark-records.png",
+    "phone-web-390-dark-records.png",
+    "electron-1200-light-record-detail.png",
+    "electron-480-light-record-detail.png",
+    "electron-1200-dark-record-detail.png",
+    "electron-480-dark-record-detail.png",
+    "electron-1200-light-memory-source.png",
+    "electron-480-light-memory-source.png",
+    "electron-1200-dark-memory-source.png",
+    "electron-480-dark-memory-source.png"
+  ],
+  "requests": 39,
+  "phoneScope": "Phone web viewport content only; OS/browser chrome was not captured. Native Android/Apple changes excluded.",
+  "importComplete": true,
+  "jobUsage": {
+    "requests": 31,
+    "inputTokens": 271170,
+    "outputTokens": 10194,
+    "cost": 0.1589052,
+    "unpricedRequests": 0,
+    "unknownRequests": 0
+  },
+  "result": "failed",
+  "startupStage": "personal-access listening origin=http://127.0.0.1:57384",
+  "exit": {
+    "decimal": null,
+    "unsignedDecimal": null,
+    "hexadecimal": null,
+    "signal": null,
+    "meaning": "未取得退出码"
+  },
+  "commitMemory": {
+    "available": true,
+    "availableBytes": 15999131648,
+    "limitBytes": 97770655744,
+    "committedBytes": 81771524096
+  },
+  "categories": {
+    "with-tools": 1,
+    "without-tools": 2
+  },
+  "residualCleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  },
+  "resumedAcceptance": true,
+  "newRequests": 3,
+  "testTransportMetadataCorrected": true,
+  "failure": "main conversation recalls import"
+}
