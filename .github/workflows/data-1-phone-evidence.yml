@@ -37,6 +37,15 @@ jobs:
       - run: |
           node tests/integration/st-2-phone-container.mjs
           node --input-type=module -e 'import fs from "node:fs";const p=".local/st2-phone-container/AndroidManifest.xml";fs.writeFileSync(p,fs.readFileSync(p,"utf8").replace("android:exported=\"true\"", "android:exported=\"true\" android:launchMode=\"singleTask\""));'
+          cat > .local/data1-phone-screen.py <<'PY'
+          import os
+          from pathlib import Path
+          width=int(os.environ['WEFTMATE_DATA1_PHONE_WIDTH'])
+          config=Path.home()/'.android/avd/test.avd/config.ini'
+          fields={'hw.lcd.width':str(width*2),'hw.lcd.height':str((780 if width==360 else 844)*2),'hw.lcd.density':'320'}
+          lines=[line for line in config.read_text().splitlines() if line.split('=',1)[0].strip() not in fields]
+          config.write_text('\n'.join(lines+[f'{key}={value}' for key,value in fields.items()])+'\n')
+          PY
           cat > .local/data1-phone-capture.sh <<'SH'
           #!/usr/bin/env bash
           set -euo pipefail
@@ -63,16 +72,7 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          pre-emulator-launch-script: |
-            python3 - <<'PY'
-            import os
-            from pathlib import Path
-            width=int(os.environ['WEFTMATE_DATA1_PHONE_WIDTH'])
-            config=Path.home()/'.android/avd/test.avd/config.ini'
-            fields={'hw.lcd.width':str(width*2),'hw.lcd.height':str((780 if width==360 else 844)*2),'hw.lcd.density':'320'}
-            lines=[line for line in config.read_text().splitlines() if line.split('=',1)[0].strip() not in fields]
-            config.write_text('\n'.join(lines+[f'{key}={value}' for key,value in fields.items()])+'\n')
-            PY
+          pre-emulator-launch-script: python3 .local/data1-phone-screen.py
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -skin ${{ matrix.width == 390 && '780x1688' || '720x1560' }} -dpi-device 320 -memory 3072 -cores 4
           script: bash .local/data1-phone-capture.sh
       - uses: actions/upload-artifact@v4
