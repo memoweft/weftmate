@@ -6,7 +6,7 @@ import {weeklyDayPhrase,statisticalInsight} from '../src/personal-access/daily-d
 import {startFe1bFixture} from './integration/fe-1b-fixture.mjs';
 import {createDshSessionAdapter} from '../src/runtime/dsh-adapter/sessions.mjs';
 const context:any={WeftUiCore:{factories:{}}};
-for(const file of ['timeline-model','account','settings-registry'])runInNewContext(readFileSync(new URL(`../src/ui-core/${file}.js`,import.meta.url),'utf8'),context);
+for(const file of ['timeline-model','account','settings-registry','composer'])runInNewContext(readFileSync(new URL(`../src/ui-core/${file}.js`,import.meta.url),'utf8'),context);
 const api=context.WeftUiCore;
 test('n: local account identity is readable and cloud email or custom nickname is preserved',()=>{
  assert.equal(api.accountLabel({username:'local-owner',displayName:'我的账户'}),'只在这台电脑上用');
@@ -30,6 +30,21 @@ test('u: review and health have one searchable entry next to notifications',()=>
  assert.equal(registry.list({query:'勿扰'})[0].id,'notifications');
 });
 const event=(seq:number,type:string,data:any,sessionId='side')=>({seq,type,data,sessionId});
+test('o: history before the send acknowledgement consumes the exact placeholder before repaint',()=>{
+ const native=event(2,'user.message',{receiptId:'rpc:a',text:'相同文字'});
+ const core:any={state:{ownerId:'owner',identityGeneration:1,selectedSessionId:'side',historyEvents:new Map([[2,native]])}};
+ let painted=-1;
+ const actions=api.factories.composer(core,{readMessageDraft:()=>'',renderOptimisticMessages:()=>{painted=actions.optimisticMessages(true).length;}},{});
+ actions.beginOptimistic({requestId:'request-a',sessionId:'side',text:'相同文字'});
+ actions.reconcileOptimistic({requestId:'request-a',receiptId:'rpc:a',state:'accepted_by_dsh'});
+ assert.equal(painted,0);assert.equal(actions.optimisticMessages(true).length,0);
+ actions.beginOptimistic({requestId:'request-b',sessionId:'side',text:'相同文字'});
+ actions.observeOptimistic([event(3,'task.queued',{requestId:'request-b',receiptId:'rpc:b'}),event(4,'user.message',{receiptId:'rpc:b',text:'相同文字'})],true);
+ assert.equal(actions.optimisticMessages(true).length,0);
+ actions.beginOptimistic({requestId:'request-c',sessionId:'side',text:'相同文字'});
+ actions.observeOptimistic([event(5,'task.queued',{requestId:'request-c',receiptId:'rpc:c'},'other'),event(6,'user.message',{receiptId:'rpc:c',text:'相同文字'},'other')],true);
+ assert.equal(actions.optimisticMessages(true).length,1);
+});
 test('o: claimed native receipt has one user message without its queue echo',()=>{
  const events=[event(1,'task.queued',{receiptId:'rpc:a',taskId:'rpc:a',text:'做同一件事'}),event(2,'user.message',{receiptId:'rpc:a',text:'做同一件事'}),event(3,'task.started',{receiptId:'rpc:a',taskId:'turn-1'})];
  const cards=api.projectTimeline(events).cards;assert.equal(cards.filter((r:any)=>r.type==='task.queued').length,0);assert.equal(cards.filter((r:any)=>r.type==='user.message').length,1);

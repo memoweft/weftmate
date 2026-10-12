@@ -51,12 +51,21 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             ['failed', 'rejected', 'blocked', 'uncertain'].includes(command.state) ? 'failed' : 'sending';
         if (row.status === 'accepted' && row.sessionId === core.state.selectedSessionId && effects.readMessageDraft() === row.text)
             effects.clearMessageDraft();
+        // History can arrive before the send receipt. Consume the placeholder
+        // before repainting, rather than waiting for another history request.
+        observeOptimistic([...core.state.historyEvents.values()], true);
         effects.renderOptimisticMessages?.();
     }
     function observeOptimistic(events, legacy = false) {
         if (!legacy && core.observeMainOptimistic) return core.observeMainOptimistic(events);
+        for (const event of events) if (event.type === 'task.queued') for (const data of event.data?.tasks || [event.data || {}]) {
+            const row = messages.get(data.requestId);
+            if (row && row.ownerId === core.state.ownerId && row.identity === core.state.identityGeneration &&
+                row.sessionId === (event.sessionId || event.sourceRef?.sessionId || core.state.selectedSessionId) && data.receiptId)
+                row.receiptId = data.receiptId;
+        }
         for (const event of events) if (event.type === 'user.message' && event.data?.receiptId) {
-            for (const row of optimisticMessages()) if (row.receiptId === event.data.receiptId) {
+            for (const row of optimisticMessages(true)) if (row.receiptId === event.data.receiptId) {
                 row.status = 'accepted';
                 if (effects.readMessageDraft() === row.text) effects.clearMessageDraft();
                 messages.delete(row.requestId);

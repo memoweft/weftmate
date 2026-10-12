@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFile, writeFile, rm } from 'node:fs/promises';
 import { resolve, extname, join, sep } from 'node:path';
@@ -107,7 +108,7 @@ try {
         onboarding: async () => { await settings(); await button(/^设备 /).click(); await page.getByRole('heading', { name: '连接你的电脑', exact: true }).waitFor(); },
         sessions: async()=>{await home();await button('打开导航').click();await page.getByRole('navigation',{name:'主导航',exact:true}).waitFor();},
         'composer-menu': async()=>{await report();await button('添加图片或文件').click();await page.getByRole('menu',{name:'添加附件'}).waitFor();await page.getByRole('menuitem',{name:'相机'}).waitFor();},
-        'composer-context': async()=>{await report();await button('背景信息窗口：86% 已用').click();await page.getByRole('tooltip').waitFor();},
+        'composer-context': async()=>{await report();await button('对话操作').click();await page.getByRole('menuitem',{name:'背景信息',exact:true}).click();await page.getByRole('dialog',{name:'背景信息',exact:true}).waitFor();assert.match(await page.getByRole('dialog',{name:'背景信息',exact:true}).innerText(),/86%/);},
         conversation: async () => { await report(); await page.getByText(/读取了 1 个文件/).click(); await page.getByText(/^读取(?: 1 个文件|项目记录)/).waitFor(); await page.waitForFunction(()=>document.getElementById('toast').hidden); assert.equal(await page.getByText(/这条记录已不可查看/).count(),0); assert.deepEqual(fixture.missingRequests,[]); },
         'outputs-sources': async () => { await report(); await button('对话操作').click(); await page.getByRole('menuitem', { name:'输出与来源', exact:true }).click(); await button(/^notes.md 1 次使用$/).waitFor(); },
         approval: async () => { await home(); await conversation('整理临时文件').click(); await button('批准').waitFor(); },
