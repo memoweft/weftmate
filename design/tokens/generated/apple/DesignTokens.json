@@ -52,7 +52,95 @@
       "attention-light": "#B85B00",
       "attention-dark": "#FFA544",
       "failure-light": "#C93648",
-      "failure-dark": "#FF7182"
+      "failure-dark": "#FF7182",
+      "health-recovery-light": "#006E60",
+      "health-recovery-dark": "#53DEC0",
+      "health-recovery-soft-light": "#E5F5EF",
+      "health-recovery-soft-dark": "#173C35",
+      "health-sleep-light": "#6846BA",
+      "health-sleep-dark": "#B7A0FA",
+      "health-sleep-soft-light": "#F0EBFC",
+      "health-sleep-soft-dark": "#302543",
+      "health-load-light": "#235FC1",
+      "health-load-dark": "#7AAEFF",
+      "health-load-soft-light": "#EAF1FC",
+      "health-load-soft-dark": "#1E304A",
+      "health-stress-calm-light": "#006E60",
+      "health-stress-calm-dark": "#53DEC0",
+      "health-stress-calm-soft-light": "#E5F5EF",
+      "health-stress-calm-soft-dark": "#173C35",
+      "health-stress-moderate-light": "#936000",
+      "health-stress-moderate-dark": "#E7BA60",
+      "health-stress-moderate-soft-light": "#FCF2D8",
+      "health-stress-moderate-soft-dark": "#3C3320",
+      "health-stress-high-light": "#B24A12",
+      "health-stress-high-dark": "#FFAC75",
+      "health-stress-high-soft-light": "#FFF0E4",
+      "health-stress-high-soft-dark": "#432E23",
+      "health-stress-extreme-light": "#BA364C",
+      "health-stress-extreme-dark": "#FF8195",
+      "health-stress-extreme-soft-light": "#FCE9ED",
+      "health-stress-extreme-soft-dark": "#44252E",
+      "health-energy-low-light": "#B24A12",
+      "health-energy-low-dark": "#FFAC75",
+      "health-energy-low-soft-light": "#FFF0E4",
+      "health-energy-low-soft-dark": "#432E23",
+      "health-energy-mid-light": "#936000",
+      "health-energy-mid-dark": "#E7BA60",
+      "health-energy-mid-soft-light": "#FCF2D8",
+      "health-energy-mid-soft-dark": "#3C3320",
+      "health-energy-high-light": "#557316",
+      "health-energy-high-dark": "#C1DA77",
+      "health-energy-high-soft-light": "#F1F5DE",
+      "health-energy-high-soft-dark": "#333C23",
+      "health-fitness-age-light": "#8B650C",
+      "health-fitness-age-dark": "#E5C676",
+      "health-fitness-age-soft-light": "#FAF1D9",
+      "health-fitness-age-soft-dark": "#3D3420",
+      "health-hrv-light": "#AF376D",
+      "health-hrv-dark": "#EF93BF",
+      "health-hrv-soft-light": "#FCEBF3",
+      "health-hrv-soft-dark": "#402B39",
+      "health-resting-heart-rate-light": "#B7334D",
+      "health-resting-heart-rate-dark": "#FF8F9E",
+      "health-resting-heart-rate-soft-light": "#FCECF0",
+      "health-resting-heart-rate-soft-dark": "#422A31",
+      "health-respiratory-light": "#235FC1",
+      "health-respiratory-dark": "#7AAEFF",
+      "health-respiratory-soft-light": "#EAF1FC",
+      "health-respiratory-soft-dark": "#1E304A",
+      "health-oxygen-light": "#A93694",
+      "health-oxygen-dark": "#EAA0DD",
+      "health-oxygen-soft-light": "#FBEFF8",
+      "health-oxygen-soft-dark": "#3D2C3C",
+      "health-temperature-light": "#B24A12",
+      "health-temperature-dark": "#FFAC75",
+      "health-temperature-soft-light": "#FFF0E4",
+      "health-temperature-soft-dark": "#432E23",
+      "health-sleep-deep-light": "#4D2B90",
+      "health-sleep-deep-dark": "#8062D4",
+      "health-sleep-deep-soft-light": "#F0EBFC",
+      "health-sleep-deep-soft-dark": "#302543",
+      "health-sleep-core-light": "#7656C5",
+      "health-sleep-core-dark": "#AE94ED",
+      "health-sleep-core-soft-light": "#F0EBFC",
+      "health-sleep-core-soft-dark": "#302543",
+      "health-sleep-rem-light": "#9C61BC",
+      "health-sleep-rem-dark": "#DAB0EF",
+      "health-sleep-rem-soft-light": "#F0EBFC",
+      "health-sleep-rem-soft-dark": "#302543",
+      "health-sleep-awake-light": "#69756F",
+      "health-sleep-awake-dark": "#B4BDB8",
+      "health-sleep-awake-soft-light": "#F0F3F1",
+      "health-sleep-awake-soft-dark": "#343D37",
+      "health-card-light": "#FFFFFF",
+      "health-card-dark": "#292E2B",
+      "health-track-light": "#DFE6E2",
+      "health-track-dark": "#48534D",
+      "health-ink-light": "#202D26",
+      "health-ink-dark": "#F1F5F2",
+      "health-muted-light": "#58665D",
+      "health-muted-dark": "#B5C0B9"
     },
     "space": {
       "1": "1px",
@@ -700,6 +788,182 @@
       "danger": {
         "light": "#B93248",
         "dark": "#FF8EA0"
+      },
+      "healthRecovery": {
+        "light": "#006E60",
+        "dark": "#53DEC0"
+      },
+      "healthRecoverySoft": {
+        "light": "#E5F5EF",
+        "dark": "#173C35"
+      },
+      "healthSleep": {
+        "light": "#6846BA",
+        "dark": "#B7A0FA"
+      },
+      "healthSleepSoft": {
+        "light": "#F0EBFC",
+        "dark": "#302543"
+      },
+      "healthLoad": {
+        "light": "#235FC1",
+        "dark": "#7AAEFF"
+      },
+      "healthLoadSoft": {
+        "light": "#EAF1FC",
+        "dark": "#1E304A"
+      },
+      "healthStressCalm": {
+        "light": "#006E60",
+        "dark": "#53DEC0"
+      },
+      "healthStressCalmSoft": {
+        "light": "#E5F5EF",
+        "dark": "#173C35"
+      },
+      "healthStressModerate": {
+        "light": "#936000",
+        "dark": "#E7BA60"
+      },
+      "healthStressModerateSoft": {
+        "light": "#FCF2D8",
+        "dark": "#3C3320"
+      },
+      "healthStressHigh": {
+        "light": "#B24A12",
+        "dark": "#FFAC75"
+      },
+      "healthStressHighSoft": {
+        "light": "#FFF0E4",
+        "dark": "#432E23"
+      },
+      "healthStressExtreme": {
+        "light": "#BA364C",
+        "dark": "#FF8195"
+      },
+      "healthStressExtremeSoft": {
+        "light": "#FCE9ED",
+        "dark": "#44252E"
+      },
+      "healthEnergyLow": {
+        "light": "#B24A12",
+        "dark": "#FFAC75"
+      },
+      "healthEnergyLowSoft": {
+        "light": "#FFF0E4",
+        "dark": "#432E23"
+      },
+      "healthEnergyMid": {
+        "light": "#936000",
+        "dark": "#E7BA60"
+      },
+      "healthEnergyMidSoft": {
+        "light": "#FCF2D8",
+        "dark": "#3C3320"
+      },
+      "healthEnergyHigh": {
+        "light": "#557316",
+        "dark": "#C1DA77"
+      },
+      "healthEnergyHighSoft": {
+        "light": "#F1F5DE",
+        "dark": "#333C23"
+      },
+      "healthFitnessAge": {
+        "light": "#8B650C",
+        "dark": "#E5C676"
+      },
+      "healthFitnessAgeSoft": {
+        "light": "#FAF1D9",
+        "dark": "#3D3420"
+      },
+      "healthHrv": {
+        "light": "#AF376D",
+        "dark": "#EF93BF"
+      },
+      "healthHrvSoft": {
+        "light": "#FCEBF3",
+        "dark": "#402B39"
+      },
+      "healthRestingHeartRate": {
+        "light": "#B7334D",
+        "dark": "#FF8F9E"
+      },
+      "healthRestingHeartRateSoft": {
+        "light": "#FCECF0",
+        "dark": "#422A31"
+      },
+      "healthRespiratory": {
+        "light": "#235FC1",
+        "dark": "#7AAEFF"
+      },
+      "healthRespiratorySoft": {
+        "light": "#EAF1FC",
+        "dark": "#1E304A"
+      },
+      "healthOxygen": {
+        "light": "#A93694",
+        "dark": "#EAA0DD"
+      },
+      "healthOxygenSoft": {
+        "light": "#FBEFF8",
+        "dark": "#3D2C3C"
+      },
+      "healthTemperature": {
+        "light": "#B24A12",
+        "dark": "#FFAC75"
+      },
+      "healthTemperatureSoft": {
+        "light": "#FFF0E4",
+        "dark": "#432E23"
+      },
+      "healthSleepDeep": {
+        "light": "#4D2B90",
+        "dark": "#8062D4"
+      },
+      "healthSleepDeepSoft": {
+        "light": "#F0EBFC",
+        "dark": "#302543"
+      },
+      "healthSleepCore": {
+        "light": "#7656C5",
+        "dark": "#AE94ED"
+      },
+      "healthSleepCoreSoft": {
+        "light": "#F0EBFC",
+        "dark": "#302543"
+      },
+      "healthSleepRem": {
+        "light": "#9C61BC",
+        "dark": "#DAB0EF"
+      },
+      "healthSleepRemSoft": {
+        "light": "#F0EBFC",
+        "dark": "#302543"
+      },
+      "healthSleepAwake": {
+        "light": "#69756F",
+        "dark": "#B4BDB8"
+      },
+      "healthSleepAwakeSoft": {
+        "light": "#F0F3F1",
+        "dark": "#343D37"
+      },
+      "healthCard": {
+        "light": "#FFFFFF",
+        "dark": "#292E2B"
+      },
+      "healthTrack": {
+        "light": "#DFE6E2",
+        "dark": "#48534D"
+      },
+      "healthInk": {
+        "light": "#202D26",
+        "dark": "#F1F5F2"
+      },
+      "healthMuted": {
+        "light": "#58665D",
+        "dark": "#B5C0B9"
       }
     },
     "systemColors": {
