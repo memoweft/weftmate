@@ -24,9 +24,10 @@ if ($Action -eq 'worker') {
 if ($Action -eq 'start') {
   New-Item -ItemType Directory -Path $Scope -Force | Out-Null
   $exe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-  $arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$PSCommandPath`" -Action worker -Scope `"$Scope`""
-  $child = Start-Process -FilePath $exe -ArgumentList $arguments -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $Scope 'stdout.log') -RedirectStandardError (Join-Path $Scope 'stderr.log')
-  $info = @{pid=$child.Id;createdAt=$child.StartTime.ToUniversalTime().ToString('o');executable=$exe;script=$PSCommandPath}
+  & node (Join-Path $PSScriptRoot 'ci-windows-media-start.mjs') $exe $PSCommandPath $Scope
+  if ($LASTEXITCODE -ne 0) { throw 'Windows UI dependency worker could not start' }
+  $child = Get-Process -Id ([int](Get-Content -LiteralPath (Join-Path $Scope 'worker.pid')))
+  $info = @{pid=$child.Id;createdTicks=$child.StartTime.ToUniversalTime().Ticks.ToString();executable=$exe;script=$PSCommandPath}
   [IO.File]::WriteAllText($infoFile, ($info | ConvertTo-Json -Compress), $utf8)
   Write-Output 'Windows UI system dependency install started in background.'
   exit 0
@@ -37,13 +38,13 @@ if ($Action -eq 'wait') {
     try {
       $child = Get-Process -Id $info.pid -ErrorAction SilentlyContinue
       $line = if ($child) { (Get-CimInstance Win32_Process -Filter ('ProcessId='+$child.Id)).CommandLine } else { $null }
-      if (-not $child -or $child.StartTime.ToUniversalTime().ToString('o') -ne $info.createdAt -or $child.Path -ne $info.executable -or -not $line.Contains($info.script)) {
+      if (-not $child -or $child.StartTime.ToUniversalTime().Ticks.ToString() -ne $info.createdTicks -or $child.Path -ne $info.executable -or -not $line.Contains($info.script)) {
         throw 'Windows UI dependency worker exited without its completion result'
       }
     } catch {
       # Completion can be committed between the file check and process query.
       if (Test-Path -LiteralPath $resultFile) { break }
-      Write-Output "Windows media worker evidence: present=$([bool]$child); expectedCreated=$($info.createdAt); observedCreated=$(if($child){$child.StartTime.ToUniversalTime().ToString('o')}); executableMatches=$(if($child){$child.Path -eq $info.executable}); scriptMatches=$(if($line){$line.Contains($info.script)})"
+      Write-Output "Windows media worker evidence: present=$([bool]$child); creationMatches=$(if($child){$child.StartTime.ToUniversalTime().Ticks.ToString() -eq $info.createdTicks}); executableMatches=$(if($child){$child.Path -eq $info.executable}); scriptMatches=$(if($line){$line.Contains($info.script)})"
       foreach ($stream in 'stdout.log','stderr.log') {
         $log = Join-Path $Scope $stream
         if (Test-Path -LiteralPath $log) { Get-Content -LiteralPath $log -Tail 12 }

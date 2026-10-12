@@ -12,6 +12,7 @@ test('Windows media setup runs in background, waits for completion and propagate
   const exe=join(process.env.SystemRoot,'System32/WindowsPowerShell/v1.0/powershell.exe');
   const pwsh=execFileSync('pwsh',['-NoProfile','-Command','(Get-Process -Id $PID).Path'],{encoding:'utf8',windowsHide:true}).trim();
   const source=readFileSync('.github/scripts/ci-windows-media.ps1','utf8').replace('$os = Get-CimInstance Win32_OperatingSystem','$os = @{ProductType=3}');
+  writeFileSync(join(root,'ci-windows-media-start.mjs'),readFileSync('.github/scripts/ci-windows-media-start.mjs'));
   try {
     for(const shell of [exe,pwsh]) for(const success of [true,false]) {
       const label=(shell===pwsh?'pwsh-':'powershell-')+(success?'success':'failure');
