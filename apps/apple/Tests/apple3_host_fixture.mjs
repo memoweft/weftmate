@@ -10,6 +10,7 @@ const native=(seq,type,data)=>({seq,type,at,data});
 const row=e=>({eventId:'native-'+e.seq,chatId:chatID,orderKey:String(e.seq).padStart(8,'0'),revision:1,type:e.type,at:e.at,sourceRef:{sessionId:sessionID,seq:e.seq},data:e.data});
 function events(){if(scenario==='empty')return [];const rows=[native(1,'user.message',{text:'整理我的合成笔记',turn:1}),native(2,'turn.started',{turn:1})];
  if(scenario==='stream')return rows;
+ if(scenario==='long')rows.push(native(5,'assistant.message',{text:Array.from({length:24},(_,i)=>`第 ${i+1} 条合成笔记：留出时间整理计划，再慢慢完成下一件事。`).join('\n\n'),turn:1}));
  if(['files','recovered'].includes(scenario)){
  if(scenario==='recovered')rows.push(native(3,'step.completed',{taskId:taskID,stepId:'retry-1',state:'failed',summary:'读取合成笔记',toolName:'read'}));
  for(let i=0;i<5;i++)rows.push(native(10+i,'artifact.created',{artifactId:'file-'+i,fileName:'合成成果-'+(i+1)+'.txt',taskId:taskID,contentType:'text/plain',size:8}));
@@ -50,7 +51,7 @@ const server=http.createServer(async(req,res)=>{let body='';for await(const c of
  if(path===`/chats/${chatID}/events`||path===`/chats/${chatID}/changes`){const items=events().map(row),liveEvents=live();reads.push({kind:'reply',scenario});return send(path.endsWith('/changes')?{upserts:items,removals:[],nextCursor:'history',hasMore:false,contentRevision:1,indexState:'ready',timeZone:'UTC',liveRevision:tick,liveEvents}:{items,olderCursor:null,newerCursor:null,hasOlder:false,hasNewer:false,syncCursor:'history',contentRevision:1,indexState:'ready',timeZone:'UTC',liveRevision:tick,liveEvents});}
  if(path===`/chats/${chatID}/dates`)return send({days:[],contentRevision:1,indexState:'ready',timeZone:'UTC'});
  if(path===`/sessions/${sessionID}/events`)return send({events:events(),nextSeq:30,hasMore:false,liveSeq:tick,liveEvents:live().map(x=>native(x.sourceRef.seq,x.type,x.data))});
- if(path===`/sessions/${sessionID}/approvals`)return send({approvals:['aligned','warning','two'].includes(scenario)&&!decisions.some(x=>x.approvalId==='apple3-'+scenario)?[approval()]:[],hasMore:false,nextBefore:null});
+ if(path===`/sessions/${sessionID}/approvals`)return send({approvals:['aligned','warning','two','long'].includes(scenario)&&!decisions.some(x=>x.approvalId==='apple3-'+scenario)?[approval()]:[],hasMore:false,nextBefore:null});
  if(path.startsWith(`/sessions/${sessionID}/approvals/`)){decisions.push({approvalId:path.split('/').at(-1),...data});return send({approval:{...approval(),status:'answered',decisionOutcome:data.outcome,decisionScope:data.scope??'once',decisionRequestId:data.requestId,answeredAt:at},requestId:data.requestId});}
  if(path===`/sessions/${sessionID}/questions`)return send({questions:scenario==='question'?[question()]:[],hasMore:false,nextBefore:null});
  if(path===`/sessions/${sessionID}/questions/apple5-question/answer`){questionAnswer={requestId:data.requestId,answer:data.answer??{answers:data.answers}};return send({question:question(),requestId:data.requestId});}

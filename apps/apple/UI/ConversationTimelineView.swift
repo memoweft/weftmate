@@ -9,12 +9,13 @@ struct ConversationTimelineView: View {
     let openArtifact: (TimelineEvent) -> Void
     let openMemory: (TimelineEvent) -> Void
     let openSources: () -> Void
+    let onDecisionPosition: (@MainActor (String,CGRect?,CGFloat,Bool) -> Void)?
     @ObservedObject var interactions: TaskInteractionModel
     @StateObject private var commands: TaskDirectoryModel
     @Environment(\.scenePhase) private var scenePhase
     init(appModel: AppleAppModel, conversation: ConversationSummary, sessionID: String, interactions: TaskInteractionModel,
-         openAttachment: @escaping (ConversationAttachmentReference) -> Void, openArtifact: @escaping (TimelineEvent) -> Void, openMemory: @escaping (TimelineEvent) -> Void, openSources: @escaping () -> Void) {
-        self.appModel = appModel; self.conversation = conversation; self.sessionID = sessionID; self.openAttachment = openAttachment; self.openArtifact = openArtifact; self.openMemory = openMemory; self.openSources = openSources
+         openAttachment: @escaping (ConversationAttachmentReference) -> Void, openArtifact: @escaping (TimelineEvent) -> Void, openMemory: @escaping (TimelineEvent) -> Void, openSources: @escaping () -> Void, onDecisionPosition: (@MainActor (String,CGRect?,CGFloat,Bool) -> Void)? = nil) {
+        self.appModel = appModel; self.conversation = conversation; self.sessionID = sessionID; self.openAttachment = openAttachment; self.openArtifact = openArtifact; self.openMemory = openMemory; self.openSources = openSources; self.onDecisionPosition=onDecisionPosition
         self.interactions = interactions
         _commands = StateObject(wrappedValue: TaskDirectoryModel(client: appModel.assistantClient, sessionId: sessionID,
             expectedHostId: appModel.session?.hostId ?? "", accountEpoch: appModel.accountEpoch,
@@ -75,6 +76,13 @@ struct ConversationTimelineView: View {
                     #endif
                 } else if entry.event.type == "task.queued" { Text("排队中").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             }.id(entry.id)
+                .background {
+                    #if os(iOS)
+                    if let onDecisionPosition,entry.event.data["approvalId"]?.string == interactions.pendingApprovals.first?.id && interactions.pendingApprovals.first != nil || entry.event.type.hasPrefix("question.") && !interactions.pendingQuestions.isEmpty {
+                        MainChatEventPosition(eventID:"phone.pendingDecision",onPosition:onDecisionPosition)
+                    }
+                    #endif
+                }
         }
         // Original sync messages are outside the DSH sequence space.
         ForEach(appModel.messages.filter { !$0.id.hasPrefix("host|") && $0.pendingContext }) { message in

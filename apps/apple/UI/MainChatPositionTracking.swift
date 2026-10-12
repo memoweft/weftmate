@@ -65,6 +65,7 @@ struct MainChatEventPosition: UIViewRepresentable {
         var report: (@MainActor (String, CGRect?, CGFloat, Bool) -> Void)?
         weak var scroll: UIScrollView?
         var observation: NSKeyValueObservation?
+        var boundsObservation: NSKeyValueObservation?
         var scheduled = false
         override func didMoveToWindow() { super.didMoveToWindow(); schedule() }
         override func layoutSubviews() { super.layoutSubviews(); schedule() }
@@ -82,11 +83,16 @@ struct MainChatEventPosition: UIViewRepresentable {
                 observation = scroll?.observe(\.contentOffset, options: [.new]) { @Sendable [weak self] _, _ in
                     Task { @MainActor [weak self] in self?.schedule() }
                 }
+                boundsObservation = scroll?.observe(\.bounds, options: [.new]) { @Sendable [weak self] _, _ in
+                    Task { @MainActor [weak self] in self?.schedule() }
+                }
             }
             guard let scroll else { return }; let rect = convert(bounds, to: scroll)
-            report?(eventID, CGRect(x: rect.minX, y: rect.minY - scroll.bounds.minY, width: rect.width, height: rect.height), scroll.bounds.height, scroll.isDragging || scroll.isTracking || scroll.isDecelerating)
+            let inset=scroll.adjustedContentInset
+            let height=max(0,scroll.bounds.height-inset.top-inset.bottom)
+            report?(eventID, CGRect(x: rect.minX, y: rect.minY-scroll.bounds.minY-inset.top, width: rect.width, height: rect.height), height, scroll.isDragging || scroll.isTracking || scroll.isDecelerating)
         }
-        func disconnect() { observation?.invalidate(); observation = nil; report?(eventID, nil, 0, false); report = nil; scroll = nil }
+        func disconnect() { observation?.invalidate(); observation = nil; boundsObservation?.invalidate(); boundsObservation=nil; report?(eventID, nil, 0, false); report = nil; scroll = nil }
     }
 }
 #endif
