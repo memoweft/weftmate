@@ -138,11 +138,26 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
                 throw { code: 'UNAUTHORIZED' };
             headers['X-WeftMate-CSRF'] = core.state.csrfToken;
         }
+        const deadline = AbortSignal.timeout(timeoutMs);
+        let requestSignal = deadline, releaseSignal = () => {};
+        if (signal) {
+            if (typeof AbortSignal.any === 'function') requestSignal = AbortSignal.any([signal, deadline]);
+            else {
+                // Older Android WebViews support cancellation and deadlines,
+                // but not AbortSignal.any. Keep both without blocking requests.
+                const controller = new AbortController(), abort = () => controller.abort();
+                if (signal.aborted || deadline.aborted) abort();
+                else { signal.addEventListener('abort', abort, {once:true}); deadline.addEventListener('abort', abort, {once:true}); }
+                requestSignal = controller.signal;
+                releaseSignal = () => { signal.removeEventListener('abort', abort); deadline.removeEventListener('abort', abort); };
+            }
+        }
+        try {
         let response;
         try {
             response = await environment.fetch(url, {
                 method, headers, credentials: 'same-origin', cache: 'no-store',
-                signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
+                signal: requestSignal,
                 ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
             });
         }
@@ -154,6 +169,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         if (!response.ok)
             throw { code: payload?.error?.code || 'REQUEST_FAILED', status: response.status };
         return payload;
+        } finally { releaseSignal(); }
     }
     async function accessApi(path, options) {
         const identityAtStart = core.state.csrfToken;

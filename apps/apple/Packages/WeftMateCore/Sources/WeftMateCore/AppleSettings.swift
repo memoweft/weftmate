@@ -26,15 +26,20 @@ public enum AppleSettingsRegistry {
         .init(id: "backups", group: "此电脑", name: "备份与恢复", icon: "archive", keywords: ["备份", "恢复", "自动", "保留"], desktopOnly: true),
         .init(id: "about", group: "关于", name: "关于", icon: "info", keywords: ["版本", "条款", "隐私", "反馈", "更新"], desktopOnly: false)
     ]
+    private static let phoneCategories: [AppleSettingsCategory] = [
+        .init(id:"healthData",group:"设置",name:"健康数据",icon:"health",keywords:["今日解读","AI 分析","睡眠","恢复","压力","电能","体能年龄"],desktopOnly:false),
+        .init(id:"system",group:"此电脑",name:"系统状态",icon:"tool",keywords:["服务","电脑","后台模型"],desktopOnly:false)
+    ]
     public static func list(desktop: Bool, query: String = "") -> [AppleSettingsCategory] {
         let terms = query.lowercased().split(whereSeparator: \.isWhitespace)
-        return categories.filter { category in
+        let entries=desktop ? categories : [categories[0]] + phoneCategories + Array(categories.dropFirst())
+        return entries.filter { category in
             (!category.desktopOnly || desktop) && terms.allSatisfy {
                 ([category.name, category.group] + category.keywords).joined(separator: " ").lowercased().contains($0)
             }
         }
     }
-    public static func category(_ id: String) -> AppleSettingsCategory? { categories.first { $0.id == id } }
+    public static func category(_ id: String) -> AppleSettingsCategory? { (categories+phoneCategories).first { $0.id == id } }
 }
 
 public struct AppleSettingsRoute: Hashable, Sendable {
@@ -50,6 +55,8 @@ public struct AppleSettingsRoute: Hashable, Sendable {
 public struct ManagedSchedule: Decodable, Identifiable, Sendable {
     public let id: String; public let sessionId: String; public let text: String; public let kind: String
     public let state: String; public let timeZone: String; public let nextRunAt: String?
+    public struct LastResult: Decodable, Sendable { public let state: String; public let commandId: String? }
+    public let lastResult: LastResult?
     public var identity: String { sessionId + "/" + id }
 }
 public struct ScheduleList: Decodable, Sendable { public let items: [ManagedSchedule] }
@@ -69,7 +76,8 @@ public struct BackupActionReply: Decodable, Sendable {
     public let state: String; public let restartsHost: Bool; public let requiresLogin: Bool
 }
 
-public struct BackgroundModelPreference: Decodable, Sendable { public let backgroundModelProfileId: String? }
+public struct BackgroundModelFallback: Codable, Sendable { public var profileId: String; public var at: String }
+public struct BackgroundModelPreference: Decodable, Sendable { public let backgroundModelProfileId: String?; public let backgroundModelFallback: BackgroundModelFallback? }
 public enum HostService: String, CaseIterable, Identifiable, Sendable {
     case model, host, memory
     public var id: String { rawValue }
@@ -89,6 +97,7 @@ public struct HostServiceState: Decodable, Sendable {
 }
 public struct HostSystemSnapshot: Decodable, Sendable {
     public let model: HostServiceState; public let host: HostServiceState; public let memory: HostServiceState
+    public let backgroundModelFallback: BackgroundModelFallback?
     public func service(_ key: HostService) -> HostServiceState {
         switch key { case .model: model; case .host: host; case .memory: memory }
     }

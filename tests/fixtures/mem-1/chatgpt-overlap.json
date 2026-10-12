@@ -1,0 +1,158 @@
+[
+  {
+    "id": "synthetic-0",
+    "title": "合成对话 synthetic-0",
+    "create_time": 1710234000,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我的虚构鹦鹉叫青瓷，最喜欢的零食是荞麦。"
+            ]
+          },
+          "create_time": 1710234000,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234001
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234002
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "new",
+    "title": "合成对话 new",
+    "create_time": 1741770000,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我的虚构自行车是琥珀色。"
+            ]
+          },
+          "create_time": 1741770000,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1741770001
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1741770002
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  }
+]

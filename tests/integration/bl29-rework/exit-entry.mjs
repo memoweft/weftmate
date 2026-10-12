@@ -4,13 +4,13 @@ import fsp from 'node:fs/promises';
 import {registerHooks,syncBuiltinESMExports} from 'node:module';
 import {resolve,join} from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
-import {recordProcess} from './exit-supervisor.mjs';
+import {recordProcessDuringStartup} from './exit-supervisor.mjs';
 // Playwright launches a quoted shell command on Windows; its immediate child
 // PID belongs to cmd.exe. Register the actual Electron PID at entry instead.
 if(process.env.BL29_OWNED_ROOT){
  const profile=process.argv.find(arg=>arg.startsWith('--user-data-dir='))?.slice(16);
  if(!profile)throw Error('Owned profile missing');
- recordProcess(process.env.BL29_OWNED_ROOT,process.pid,profile);
+ globalThis.revProcessRegistration=recordProcessDuringStartup(process.env.BL29_OWNED_ROOT,process.pid,profile);
  fs.appendFileSync(join(process.env.BL29_OWNED_ROOT,'stages.jsonl'),JSON.stringify({at:new Date().toISOString(),stage:'launch',method:process.env.BL29_EXIT_METHOD,pid:process.pid,rss:process.memoryUsage().rss})+'\n');
 }
 app.getAppPath=()=>process.cwd();

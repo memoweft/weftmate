@@ -40,7 +40,9 @@ if (!process.env.BL29_OWNED_ROOT) {
 }
 const ownedRoot=resolve(process.env.BL29_OWNED_ROOT);
 const {_electron}=await import('playwright');
-const baseline=createBl29Baseline().changedSources(['src','apps/mobile-ui/www']);writeFileSync(outputPath('baseline.json'),JSON.stringify(baseline));process.env.BL29_BASELINE_FILE=outputPath('baseline.json');
+if (!process.argv.includes('--head-only')) {
+ const baseline=createBl29Baseline().changedSources(['src','apps/mobile-ui/www']);writeFileSync(outputPath('baseline.json'),JSON.stringify(baseline));process.env.BL29_BASELINE_FILE=outputPath('baseline.json');
+}
 const report=[];
 const methods=process.argv.find(arg=>arg.startsWith('--methods='))?.slice(10).split(',') ?? (process.argv.includes('--orders-only')?['runtime-first','access-first']:['window-tray-exit','tray-exit','update-restart','runtime-first','access-first']);
 async function runCase(version,method){
@@ -54,6 +56,7 @@ async function runCase(version,method){
  try{
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['tests/integration/bl29-rework/exit-entry.mjs',`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],env,timeout:90000});
   const p=await app.firstWindow(),pending=new Set(),waitCounts={started:0,finished:0,failed:0};
+  await app.evaluate(()=>globalThis.revProcessRegistration);
   // Native startup owns login and can start its first wait before /auth/me.
   // Observe real requests from the first window, not only after login; request
   // identity also avoids negative counts when startup is reloaded/cancelled.
@@ -77,7 +80,10 @@ async function runCase(version,method){
    row.nativeReadiness=await nativeReadiness(p);
   }
   stage('login');
-  await pause(2500);row.pendingWaitRequests=pending.size;row.waitRequestCounts={...waitCounts};
+  // Observe the actual pending read, rather than spending the entire setup
+  // budget again after native readiness has already been established.
+  const waitReadyBy=Date.now()+2500;while(!pending.size&&Date.now()<waitReadyBy)await pause(25);
+  row.pendingWaitRequests=pending.size;row.waitRequestCounts={...waitCounts};
   if(version==='head')row.beforeCloseReadiness=await nativeReadiness(p);
   const child=app.process();const closed=new Promise(r=>child.once('close',()=>r()));
   if(['runtime-first','access-first'].includes(method)){

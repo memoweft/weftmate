@@ -1,5 +1,12 @@
 import XCTest
 final class A16ChatUITests: XCTestCase {
+    @MainActor private func pendingApprovalElement(_ app: XCUIApplication) -> XCUIElement {
+        #if os(iOS)
+        app.descendants(matching:.any).matching(NSPredicate(format:"identifier BEGINSWITH %@","approvalCard.")).firstMatch
+        #else
+        app.descendants(matching:.any)["approvalBar"]
+        #endif
+    }
     @MainActor private func get(_ path:String) async throws -> Any {
         let driver=ProcessInfo.processInfo.environment["WEFTMATE_A16_DRIVER"]!
         let(data,response)=try await URLSession.shared.data(from:URL(string:driver+path)!)
@@ -192,10 +199,10 @@ final class A16ChatUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["A16-synthetic.txt"].waitForExistence(timeout:10))
         let draft=element(app,"mainChat.draft");try tap(draft);draft.typeText("A16 合成主对话发送")
         try tap(element(app,"mainChat.send"));keep(app,"sent",theme)
-        XCTAssertTrue(element(app,"approvalBar").waitForExistence(timeout:30));keep(app,"approval",theme)
+        XCTAssertTrue(pendingApprovalElement(app).waitForExistence(timeout:30));keep(app,"approval",theme)
         let report=try await get("/report") as! [String:Any]
         if let approval=(report["approvals"] as? [[String:Any]])?.first(where:{$0["resolved"] as? Bool==false})?["id"] as? String{
-            try tap(element(app,"approveOnce."+approval));_=try await get("/consume")
+            try tap(element(app,"approveOnce."+approval)); if app.buttons["approvalConfirm."+approval].exists { try tap(app.buttons["approvalConfirm."+approval]) };_=try await get("/consume")
         }
         let previousPolicies = try await get("/temporary") as! [[String: Any]]
         let previousTemporaryIDs = Set(previousPolicies.compactMap { $0["chatId"] as? String })

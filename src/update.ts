@@ -8,7 +8,8 @@
  *  - 签名：下载前验证 Ed25519 清单，下载后核对安装包 SHA-256；正式发布仍需可信签名证书。
  *  - 状态机只保留 UI 需要的极简叶子，绝不 log 任何路径/凭据。
  */
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, shell } from 'electron'
+import { installationScope, manualUpdateMessage } from './desktop-installation.mjs'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { sanitizeUpdateFailure } from './update-policy.ts'
@@ -125,7 +126,7 @@ export async function initUpdater(getWindow: () => BrowserWindow | null, onState
         if (!signedAppManifest || info.version !== signedAppManifest.version) throw new Error('signature version mismatch')
         await verifyDownloadedApp(signedAppManifest, info.downloadedFile)
         downloadedInstaller = info.downloadedFile
-        state.status = 'downloaded'; state.version = info.version; state.error = null
+        state.status = 'downloaded'; state.version = info.version; state.error = requiresManualAppInstall() ? manualUpdateMessage : null
       } catch (error) { state.status = 'error'; state.error = sanitizeUpdateFailure(error) }
       publishState(getWindow)
     })
@@ -175,12 +176,20 @@ export async function checkForUpdates(getWindow: () => BrowserWindow | null): Pr
 /** 用户确认「重启安装」——只有已下载完成时可用。 */
 export function quitAndInstall(): boolean {
   if (!state.enabled || autoUpdater === null || state.status !== 'downloaded') return false
+  if (requiresManualAppInstall()) { showPreparedInstaller(); return false }
   try {
     // The recovery monitor owns the reviewed NSIS installer. Main's shutdown
     // deliberately calls app.exit(), which does not emit will-quit.
     app.quit()
     return true
   } catch { return false }
+}
+
+export const requiresManualAppInstall = (): boolean => app.isPackaged && installationScope() === 'all'
+export function showPreparedInstaller(): boolean {
+  if (!downloadedInstaller || state.status !== 'downloaded') return false
+  shell.showItemInFolder(downloadedInstaller)
+  return true
 }
 
 /** Channel changes discard authorization for the previous feed and its downloaded installer. */

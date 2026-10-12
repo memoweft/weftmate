@@ -2,6 +2,7 @@
 #define NOMINMAX
 #include "installer-directory.h"
 #include <shobjidl.h>
+#include <shlobj.h>
 #include <shlwapi.h>
 #include <vector>
 static thread_local bool pickerOpen=false;
@@ -37,7 +38,8 @@ std::wstring validateInstallFolder(const std::wstring& path,const std::wstring& 
   wchar_t windows[32768]{};GetWindowsDirectory(windows,32768);
   auto local=environment(L"LOCALAPPDATA");
   auto physicalData=physicalDataPath(dataDirectory);
-  if(within(path,windows)||within(path,environment(L"ProgramFiles"))||within(path,environment(L"ProgramFiles(x86)"))||within(path,environment(L"ProgramW6432"))||within(path,environment(L"ProgramData"))||within(path,environment(L"APPDATA"))||(within(path,local)&&!within(path,local+L"\\Programs"))||within(path,physicalData)||(!physicalData.empty()&&within(physicalData,path)))
+  bool protectedProgram=within(path,environment(L"ProgramFiles"))||within(path,environment(L"ProgramFiles(x86)"))||within(path,environment(L"ProgramW6432"));
+  if(within(path,windows)||(protectedProgram&&!IsUserAnAdmin())||within(path,environment(L"ProgramData"))||within(path,environment(L"APPDATA"))||(within(path,local)&&!within(path,local+L"\\Programs"))||within(path,physicalData)||(!physicalData.empty()&&within(physicalData,path)))
     return tr(L"这里是系统或数据目录。请选择其他文件夹。",L"This is a system or data folder. Choose another folder.");
   if(path.empty()||path.size()+192>=260)
     return tr(L"这个位置的路径太长。请选择更靠近磁盘根目录的文件夹。",L"This path is too long for the app files. Choose a folder closer to the drive root.");

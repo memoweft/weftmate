@@ -90,5 +90,5 @@ test('the fifth mobile tab opens health, keeps other tabs reachable and quotes w
     await page.getByRole('button',{name:'提醒我',exact:true}).click();await page.getByRole('button',{name:'已设提醒',exact:true}).waitFor();assert.equal(reminders,1);
     await page.getByRole('button',{name:'接着问它',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#draft').value.includes('把今天的节奏放轻松'));assert.match(await page.locator('#draft').inputValue(),/^> /);
     await page.getByRole('tab',{name:'健康',exact:true}).click();await page.getByRole('button',{name:'恢复，查看详情',exact:true}).click();await page.locator('.health-detail').waitFor();await page.getByRole('button',{name:'返回今日',exact:true}).click();await page.getByRole('tab',{name:'健康',exact:true}).focus();await page.keyboard.press('End');assert.equal(await page.getByRole('tab',{name:'成果库',exact:true}).getAttribute('aria-selected'),'true');
-  }finally{await browser.close();await f.close();}
+  }finally{await Promise.all(browser.contexts().flatMap(context=>context.pages()).map(page=>page.unrouteAll({behavior:'wait'})));await browser.close();await f.close();}
 });

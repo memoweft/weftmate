@@ -4,7 +4,8 @@ import { createHostLog } from './host-log.mjs';
 import packageInfo from '../package.json' with { type: 'json' };
 import { quoteWindowsLoginArgs, loginItemEnabled } from './desktop-autostart.mjs';
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
-import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage, dialog, clipboard } from 'electron';
+import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage, dialog, clipboard, powerMonitor } from 'electron';
+import { createComputerUsageSampler } from './computer-usage-sampler.mjs';
 import { folderWarning } from './personal-projects/folder-choice.mjs';
 import { stat, realpath, readFile } from 'node:fs/promises';
 import { hostName } from './host-name.mjs';
@@ -47,7 +48,7 @@ export function restoreDesktopBounds(saved, displays) {
     y: Math.max(area.y, Math.min(bounds.y, area.y + area.height - height)) };
 }
 
-export function createPersonalDesktop({ systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
+export function createPersonalDesktop({ computerUsageService, systemManager = null, dataManager = null, libraryDesktopToken = null, origin, setupGrant = null, isQuitting, startInTray = false, onStatus = () => {} }) {
   const stateFile = join(app.getPath('userData'), 'desktop-window.json');
   let saved = {};
   try { saved = JSON.parse(readFileSync(stateFile, 'utf8')); } catch { /* first launch */ }
@@ -200,6 +201,22 @@ export function createPersonalDesktop({ systemManager = null, dataManager = null
       if (owner !== initialOwner) throw new Error('PROJECT_NATIVE_SELECTION_REQUIRED');
       selectedFolders.set(rootPath, owner); }
     return rootPath;
+  });
+  handle('wm:desktop:history-import', async appName => {
+    if (contentOrigin !== origin || !['chatgpt', 'claude', 'codex', 'claude-code'].includes(appName)) throw new Error('IMPORT_NATIVE_SELECTION_REQUIRED');
+    const initial = await jsonLocal('/auth/me'), owner = initial.account?.ownerId;
+    const local = ['codex', 'claude-code'].includes(appName);
+    const selection = await dialog.showOpenDialog(win, { title: local ? '选择会话记录目录' : '选择聊天记录导出文件',
+      ...(local ? { defaultPath: join(app.getPath('home'), appName === 'codex' ? '.codex' : '.claude', appName === 'codex' ? 'sessions' : 'projects') } : { filters: [{ name: '聊天记录', extensions: ['zip', 'json'] }] }),
+      properties: local ? ['openDirectory'] : ['openFile', 'multiSelections'] });
+    if (selection.canceled) return null;
+    const current = await jsonLocal('/auth/me');
+    if (current.account?.ownerId !== owner) throw new Error('ACCOUNT_CHANGED');
+    const response = await fetchLocal('/memory/backfill', { method: 'POST', headers: { 'content-type': 'application/json', 'x-weftmate-csrf': current.csrfToken },
+      body: JSON.stringify({ action: 'import-preview', app: appName, paths: selection.filePaths }) });
+    const body = await response.json(); if (!response.ok) throw new Error(body.error?.code ?? body.code ?? 'IMPORT_FORMAT_UNKNOWN');
+    if ((await jsonLocal('/auth/me')).account?.ownerId !== owner) throw new Error('ACCOUNT_CHANGED');
+    return body;
   });
   const nativeProjects = async () => {
     if (contentOrigin !== origin) throw new Error('Desktop project registration unavailable');
@@ -532,9 +549,17 @@ export function createPersonalDesktop({ systemManager = null, dataManager = null
     finally { if (!stopped) timer = setTimeout(poll, 2000); }
   }
   void poll();
+  const computerUsage = process.platform === 'win32' && computerUsageService ? createComputerUsageSampler({
+    powerMonitor, owner: async () => (await jsonLocal('/auth/me').catch(() => null))?.account?.ownerId ?? null,
+    policy: owner => computerUsageService.computerUsagePolicy(owner),
+    persist: (owner, generation, buckets) => computerUsageService.recordComputerUsage(owner, generation, buckets),
+  }) : null;
+  if (computerUsage) computerUsageService.setComputerUsageCheckpoint(owner => computerUsage.checkpoint(owner));
   const ready = win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : '')).then(() => { if (!startInTray) show(); });
   return { window: win, show, sendTo, ready, async close() {
     stopped = true; clearTimeout(timer);
+    await computerUsage?.close();
+    if (computerUsage) computerUsageService.setComputerUsageCheckpoint(null);
     for (const notification of notifications) notification.close();
     for (const notification of activityNotifications.values()) notification.close(); activityNotifications.clear();
     nativeTheme.removeListener('updated', updatePalette);
