@@ -99,6 +99,8 @@
       if(known&&!link.classList.contains('render-link-card')){link.classList.add('render-link-card');link.replaceChildren(node('strong','',known.title),node('small','',new URL(link.href).hostname));}
       if (link.dataset.enhanced) continue; link.dataset.enhanced = 'true';
       const href = link.getAttribute('href') || '';
+      const daily=/^#weftmate:(session|library):([A-Za-z0-9_-]+)$/.exec(href);
+      if(daily){link.addEventListener('click',event=>{event.preventDefault();Promise.resolve(globalThis.WeftOpenDailySource?.(daily[1],daily[2])).catch(()=>{link.setAttribute('aria-label','来源暂时无法打开，请在对话或成果库中查看');});});continue;}
       if (href.startsWith('#')) {
         link.addEventListener('click', event => { event.preventDefault(); const target = content.querySelector(`[id="${href.slice(1).replace(/[^\w:.-]/g,'')}"]`); target?.scrollIntoView({block:'nearest'}); }); continue;
       }

@@ -24,7 +24,7 @@ export async function startTimelineCandidate(options = {}) {
   const approvalReason = `${options.riskApproval ? '[weftmate:overwrite] ' : ''}覆盖项目中的 progress.md。原文件将被替换，可从 Git 恢复。`
   const operations = [], baseTime = options.baseTime || Date.parse('2026-10-07T08:00:00Z')
   const eventWaiters=new Set();
-  const append = (type, data) => { const event = { seq: events.length, time: baseTime + events.length * 500, type, data }; events.push(event);for(const wake of eventWaiters)wake(sessionId,event.seq); return event }
+  const append = (type, data) => { const event = { seq: events.length, time: options.digest ? options.clock() + events.length * 500 : baseTime + events.length * 500, type, data }; events.push(event);for(const wake of eventWaiters)wake(sessionId,event.seq); return event }
   const call = (name, id, args) => append('tool/call', { turn: 1, callId: id, name, arguments: JSON.stringify(args) })
   const result = (id, text, isError = false) => append('tool/result', { turn: 1, message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError, content: [{ type: 'text', text }] }] } })
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
@@ -55,7 +55,7 @@ export async function startTimelineCandidate(options = {}) {
       if(action==='delete')scheduleRows.splice(scheduleRows.indexOf(row),1);else row.state=action==='pause'?'paused':action==='resume'?'scheduled':'completed';
       return {ok:true};
     }} : {}),
-    ...(options.s3a ? { schedules: async ({action}) => ({items: action==='notifications'?notificationRows:[]}) } : {}),
+    ...(options.s3a ? { schedules: async ({action,sessionId}) => ({items: action==='notifications'?notificationRows.filter(row=>!options.digest||row.sessionId===sessionId):[]}) } : {}),
     ...(options.goals?{goals:async({sessionId:id,action,objective,ref})=>{
       if(action==='list')return {goal:goalRows.get(id)??null};
       if(action==='erase'||action==='forget'||action==='archive'){goalRows.delete(id);return {archived:true};}
@@ -100,7 +100,7 @@ export async function startTimelineCandidate(options = {}) {
       return { accepted: true, receiptId }
     },
     stopTask: async ({ sessionId:id, receiptIds, queuedOnly }) => { operations.push({ kind: 'cancel' });
-      if(options.daily){const row=dailySessions.get(id);assert.ok(row);if(!queuedOnly&&row.running){for(const [type,data]of [['step/end',{turn:1,step:1}],['turn/end',{turn:1,reason:{kind:'aborted'}}]])row.events.push({seq:row.events.length,time:baseTime+row.events.length*500,type,data});row.running=false;if(id===sessionId)running=false;}
+      if(options.daily){const row=dailySessions.get(id);assert.ok(row);if(!queuedOnly&&row.running){for(const [type,data]of [['step/end',{turn:1,step:1}],['turn/end',{turn:1,reason:{kind:'aborted'}}]])row.events.push({seq:row.events.length,time:options.digest?options.clock()+row.events.length*500:baseTime+row.events.length*500,type,data});row.running=false;if(id===sessionId)running=false;}
         return {outcomes:receiptIds.map(receiptId=>({receiptId,status:queuedOnly?'queue_removed':'cancel_requested',backgroundJobs:[]}))};}
       if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false; } return { status: 'stopped', receiptIds, jobs: [], executionCancelled: true }; },
     cancelSession: async () => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false } return { accepted: true } },
@@ -113,6 +113,7 @@ export async function startTimelineCandidate(options = {}) {
     listUserQuestions: async () => ({ runtimeId, questions: setupComplete ? [...(questionFrame ? [questionFrame] : []), ...questionFrames.map(({callId, ...frame}) => frame)] : [] }),
     respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; result(frame.callId || 'question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
   }
+  if(options.digestModel)backend.modelCompletion=options.digestModel;
   const backupSettings = { enabled: true, directory: 'D:/Synthetic/UI-4-Backups', dailyDays: 7, weeklyCopies: 4 }, backupRows = [], backupOperations = [];
   const backupManager = options.backups ? {
     isPending: () => false,
@@ -229,7 +230,7 @@ export async function startTimelineCandidate(options = {}) {
         argumentsHash: hash('write report'), outcome });
       append('approval/decided', { id: approvalId, outcome });
     },
-    deliverReminder: text => notificationRows.push({id:randomUUID(),messageId:randomUUID(),text,kind:"reminder",createdAt:new Date().toISOString()}),
+    deliverReminder: text => notificationRows.push({...(options.digest?{sessionId}:{}),id:randomUUID(),messageId:randomUUID(),text,kind:"reminder",createdAt:new Date(options.digest?options.clock():Date.now()).toISOString()}),
     recordActivity: input => service.recordActivity(auth.account.ownerId,input),
     relayNextMain: () => {relayPending=true;running=false;if(dailySessions.has(sessionId))dailySessions.get(sessionId).running=false;},
     seedMainHistory: (id, count = 10000, {offset=0,total=count,mixed=false} = {}) => {
@@ -275,7 +276,9 @@ export async function startTimelineCandidate(options = {}) {
       const sent = await command({requestId:'library-message-'+randomUUID(),kind:'session.message',sessionId:created.sessionId,targetDeviceId:hostId,text});
       return {sessionId:created.sessionId,text,receiptId:sent.receiptId};
     },
-    finishOutputSource: source => {const row=dailySessions.get(source.sessionId);row.events.push({seq:row.events.length,time:baseTime+row.events.length*500,type:'turn/end',data:{turn:1,reason:{kind:'completed'}}});row.running=false;if(sessionId===source.sessionId)running=false;},
+    finishOutputSource: source => {const row=dailySessions.get(source.sessionId);row.events.push({seq:row.events.length,time:options.digest?options.clock()+row.events.length*500:baseTime+row.events.length*500,type:'turn/end',data:{turn:1,reason:{kind:'completed'}}});row.running=false;if(sessionId===source.sessionId)running=false;},
+    digestContext:input=>service.getConversationContext(input),
+    digestService:()=>service,
     libraryDesktopToken:service.libraryDesktopToken,
     registerOutput: async (filePath, provenance = {sessionId:source.sessionId, text:goal, receiptId:source.receiptId}) => {
       const callId=`library-${randomUUID()}`;

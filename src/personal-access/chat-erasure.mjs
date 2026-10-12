@@ -4,6 +4,18 @@ import { removeActivity } from './activity-store.mjs';
 /** Erasure owns all derived chat copies. Unknown/mixed provenance is discarded.
  * Source identities remain only as tombstones, never as a reconstruction source. */
 export function eraseChatCopies(account, { sessionId = null, forgotten = false } = {}) {
+  if(forgotten&&account.dailyDigest){
+    for(const report of Object.values(account.dailyDigest.days))report.memory.topics=[];
+    for(const week of Object.keys(account.dailyDigest.weeks))account.dailyDigest.weeks[week]={mode:'statistics'};
+    account.dailyDigest.generation++;
+  }
+  else if(account.dailyDigest){
+    delete account.dailyDigest.sources[sessionId];
+    for(const [day,report]of Object.entries(account.dailyDigest.days))if(['conversations','tasks','outputs','schedule'].some(section=>report[section].items.some(row=>row.source.sessionId===sessionId)))delete account.dailyDigest.days[day];
+    removeActivity(account,row=>row.weeklyInsight?.sources.some(ref=>ref.source.sessionId===sessionId));
+    for(const [key,report]of Object.entries(account.dailyDigest.weeks))if(report.sources?.some(ref=>ref.source.sessionId===sessionId))account.dailyDigest.weeks[key]={mode:'statistics'};
+    account.dailyDigest.generation++;
+  }
   for (const command of Object.values(account.commands)) {
     if (command.artifactId && (forgotten || command.sessionId === sessionId)) {
       command.libraryErased = true;
