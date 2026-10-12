@@ -76,8 +76,8 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const topbar = new Node(); topbar.className = 'topbar';
   topbar.append(document.getElementById('header-title')); document.body.append(topbar);
   const bridge=[];
-  let observed=null;
-  class ResizeObserver{observe(node){assert.ok(node instanceof Node);assert.ok(htmlIds.has(node.id));observed=node}unobserve(){}disconnect(){}}
+  const observed=[];
+  class ResizeObserver{observe(node){assert.ok(node instanceof Node);assert.ok(htmlIds.has(node.id));observed.push(node)}unobserve(){}disconnect(){}}
   const window={innerHeight:700,matchMedia:()=>({matches:reduced,addEventListener(){}}),addEventListener:()=>{},ResizeObserver,
     weftNative:{postMessage(json){const request=JSON.parse(json);bridge.push(request);
       if(!autoBoot&&request.method==='host.status')queueMicrotask(()=>vm.runInContext(`androidBridge.receive({data:${JSON.stringify(JSON.stringify({id:request.id,ok:true,result:{}}))}})`,context));
@@ -223,7 +223,7 @@ test('real HTML IDs support bootstrap and ResizeObserver without app.failed',asy
   assert.equal(h.node('missing-composer'),null);
   h.domReady();
   for(let i=0;i<20&&!h.bridge.some(request=>request.method==='app.ready');i++)await h.flush();
-  assert.equal(h.observed(),h.node('composer-dock'));
+  assert.ok(h.observed().includes(h.node('composer-dock')));assert.ok(h.observed().includes(h.node('model-label')));
   assert.equal(h.bridge.some(request=>request.method==='app.ready'),true,JSON.stringify(h.bridge));
   assert.equal(h.bridge.some(request=>request.method==='app.failed'),false);
 });
@@ -264,7 +264,7 @@ test('error toast is tappable, visibly fades, and reentry cancels an older hide'
   assert.equal(h.node('toast').classList.contains('leaving'),true);
   const oldHide=[...h.timers.values()].find(t=>t.delay===420);
   h.run('toast("第二次失败",true)');oldHide.fn();
-  assert.equal(h.node('toast').hidden,false);assert.equal(h.node('toast').textContent,'第二次失败');
+  assert.equal(h.node('toast').hidden,false);assert.equal(h.node('toast').textContent,'第二次失败 · 详情');
   h.run('closeToast()');[...h.timers.values()].find(t=>t.delay===420).fn();
   assert.equal(h.node('toast').hidden,true);
   const reduced=harness({reduced:true});reduced.run('toast("失败",true);closeToast()');
@@ -277,7 +277,7 @@ test('transient chat errors use only the toast while ordinary progress stays inl
   h.run('status("请先配置手机模型",true)');
   assert.equal(h.node('chat-status').textContent,'');
   assert.equal(h.node('chat-status').classList.contains('error'),false);
-  assert.equal(h.node('toast').textContent,'请先配置手机模型');
+  assert.equal(h.node('toast').textContent,'请先配置手机模型 · 详情');
   assert.equal(h.node('toast').classList.contains('error'),true);
   h.run('closeToast()');
   assert.equal(h.node('toast').classList.contains('leaving'),true);
@@ -293,7 +293,7 @@ test('M3-1c ordinary computer submission and acceptance remain progress, without
   }
   // Text alone must never classify or swallow an ordinary status.
   h.run('status("离线副本同步未完成",true)');
-  assert.equal(h.node('toast').textContent,'离线副本同步未完成');
+  assert.equal(h.node('toast').textContent,'离线副本同步未完成 · 详情');
   assert.equal(h.node('toast').classList.contains('error'),true);
 });
 
@@ -457,7 +457,8 @@ test('accepted send followed by upstream failure restores private attachments wi
   h.reply(1,{attachments:[{attachmentId:'attachment-00000000-0000-4000-8000-0000000000a1',kind:'file',name:'a.txt'}]});await h.flush();
   assert.equal(h.node('attachment-drafts').hidden,false);
   assert.equal(h.node('send-button').disabled,false);
-  assert.match(h.node('toast').textContent,/模型 ID/);
+  h.run('WeftDialogs.request=async value=>{globalThis.toastDetails=value;return false}');await h.run('toast.detail()');
+  assert.match(h.run('toastDetails.message'),/模型 ID/);
   assert.equal(h.node('chat-status').textContent,'');
   assert.equal(h.bridge.filter(request=>request.method==='chat.send').length,1);
 });

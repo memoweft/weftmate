@@ -939,6 +939,7 @@ final class AppleAppModel: ObservableObject {
     @Published var sessionGroups: [SessionGroup] = []
     @Published var collapsedSessionGroups = Set<String>()
     @Published var openedSessionID: String?
+    @Published var phoneLibrarySelection: String?
     @Published var renamingSessionID: String?
     @Published var sessionTitleDraft = ""
     @Published var groupCandidate: ConversationSummary?
@@ -2189,7 +2190,7 @@ final class AppleAppModel: ObservableObject {
         timelineRootCommands = []; stoppingActiveTask = false
         subtaskStepTarget = nil; thinking = .init(); thinkingConversation = nil; thinkingError = nil; archiveUndo = nil; hoveredSession = nil; expandedProjectRows = []; projectThinking = false; projectCreatedSessionID = nil
         projects = []; projectCanManage = false; projectsError = nil; projectEditor = nil; projectConversation = nil; projectModels = []; projectBusy = false; projectError = nil; executionAccount = nil; sessionProjectNotices = [:]; collapsedProjects = []
-        sessionGroups = []; collapsedSessionGroups = []; openedSessionID = nil; renamingSessionID = nil; groupCandidate = nil; sessionMenuCandidate = nil; deletionInSettings = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
+        sessionGroups = []; collapsedSessionGroups = []; openedSessionID = nil; phoneLibrarySelection = nil; renamingSessionID = nil; groupCandidate = nil; sessionMenuCandidate = nil; deletionInSettings = false; conversationForget = .init(); conversationPreviewToken = UUID(); conversationPreviewLoading = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
         #if os(iOS)
         temporaryExpiryCandidate = nil
         #endif

@@ -6,29 +6,36 @@ struct PhoneWorkspace: View {
     @State private var tab: PhoneTab = .chat
     @State private var chatRoot = UUID()
     @State private var keyboardVisible = false
+    @State private var visited: Set<PhoneTab> = [.chat]
     var body: some View {
-        TabView(selection: $tab) {
-            Group {
-                if model.offline.hostOffline || model.offline.showHistory { OfflineChatView(app: model, model: model.offline) }
-                else { PhoneChatWorkspace(model: model, tab: $tab) }
-            }.id(chatRoot).tabItem { WeftLabel("聊天", icon: "chat") }.tag(PhoneTab.chat)
-            NavigationStack { DailyReviewView(app: model).toolbar { PhoneAccountMenu(model: model) } }
-                .tabItem { WeftLabel("动态", icon: "bell") }.tag(PhoneTab.activity)
-            NavigationStack { HealthPageView(app: model, ask: { text in Task { await ask(text) } }).toolbar { PhoneAccountMenu(model: model) } }
-                .tabItem { WeftLabel("健康", icon: "health") }.tag(PhoneTab.health)
-            NavigationStack { Text("目标会出现在这里。").navigationTitle("目标").toolbar { PhoneAccountMenu(model: model) } }
-                .tabItem { WeftLabel("目标", icon: "plan") }.tag(PhoneTab.goals)
-            MainChatResourcesView(app: model, model: model.mainChat, embedded: true)
-                .tabItem { WeftLabel("成果库", icon: "outputs") }.tag(PhoneTab.resources)
+        VStack(spacing:AppleTokens.Space.p0) {
+            ZStack {
+                ForEach(PhoneTab.allCases.filter { visited.contains($0) }) { item in
+                    page(item).opacity(tab == item ? 1 : 0).allowsHitTesting(tab == item).accessibilityHidden(tab != item)
+                }
+            }.frame(maxWidth:.infinity,maxHeight:.infinity)
+            if !keyboardVisible { PhoneBottomTabs(selection:$tab).background(Weave.canvas) }
         }
-        .toolbar(.hidden, for: .tabBar)
-        .safeAreaInset(edge: .bottom, spacing: AppleTokens.Space.p0) {
-            if !keyboardVisible { PhoneBottomTabs(selection: $tab).background(Weave.canvas) }
-        }
+        .onChange(of:tab) { _,value in visited.insert(value) }
         // UIKit notifications are delivered as values; only the explicit MainActor task changes UI state.
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = true } }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = false } }
+        .onChange(of:model.openedSessionID) { _,id in if id != nil { tab = .chat } }
+        .onChange(of:model.phoneLibrarySelection) { _,id in if id != nil { tab = .resources } }
         .background(Weave.canvas).tint(Weave.accent).buttonStyle(PhoneActionStyle())
+    }
+    @ViewBuilder private func page(_ item: PhoneTab) -> some View {
+        switch item {
+        case .chat:
+            Group {
+                if model.offline.hostOffline || model.offline.showHistory { OfflineChatView(app:model,model:model.offline) }
+                else { PhoneChatWorkspace(model:model,tab:$tab) }
+            }.id(chatRoot)
+        case .activity: NavigationStack { PhoneActivityView(app:model) }
+        case .health: NavigationStack { HealthPageView(app:model,ask:{text in Task { await ask(text) }}).toolbar { PhoneAccountMenu(model:model) } }
+        case .goals: NavigationStack { PhoneGoalsView(app:model) }
+        case .resources: PhoneLibraryView(app:model)
+        }
     }
     private func ask(_ text: String) async {
         let token = model.accountEpoch

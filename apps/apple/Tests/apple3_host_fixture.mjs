@@ -4,12 +4,13 @@ import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 const child=spawn(process.execPath,['apps/apple/Tests/health4_host_fixture.mjs'],{stdio:['ignore','pipe','inherit']});
 const [chunk]=await once(child.stdout,'data');const healthOrigin=JSON.parse(chunk.toString()).origin;
-let scenario='stream', tick=0,secondOpinionEnabled=true,decisions=[],reads=[],settingWrites=[],routes=[];
+let scenario='stream', tick=0,secondOpinionEnabled=true,decisions=[],reads=[],settingWrites=[],routes=[],questionAnswer=null;
 const at=new Date().toISOString(),sessionID='apple3-session',taskID='turn-1',chatID='apple3-main';
 const native=(seq,type,data)=>({seq,type,at,data});
 const row=e=>({eventId:'native-'+e.seq,chatId:chatID,orderKey:String(e.seq).padStart(8,'0'),revision:1,type:e.type,at:e.at,sourceRef:{sessionId:sessionID,seq:e.seq},data:e.data});
 function events(){if(scenario==='empty')return [];const rows=[native(1,'user.message',{text:'整理我的合成笔记',turn:1}),native(2,'turn.started',{turn:1})];
  if(scenario==='stream')return rows;
+ if(scenario==='long')rows.push(native(5,'assistant.message',{text:Array.from({length:24},(_,i)=>`第 ${i+1} 条合成笔记：留出时间整理计划，再慢慢完成下一件事。`).join('\n\n'),turn:1}));
  if(['files','recovered'].includes(scenario)){
  if(scenario==='recovered')rows.push(native(3,'step.completed',{taskId:taskID,stepId:'retry-1',state:'failed',summary:'读取合成笔记',toolName:'read'}));
  for(let i=0;i<5;i++)rows.push(native(10+i,'artifact.created',{artifactId:'file-'+i,fileName:'合成成果-'+(i+1)+'.txt',taskId:taskID,contentType:'text/plain',size:8}));
@@ -18,9 +19,10 @@ function events(){if(scenario==='empty')return [];const rows=[native(1,'user.mes
  if(['interrupted','recovered','files','failed','final'].includes(scenario))rows.push(native(30,'turn.ended',{turn:1,reason:scenario==='interrupted'?'aborted':scenario==='failed'?'error':'completed'}));
  return rows;}
 function live(){if(scenario!=='stream')return [];tick++;return [row(native(3,'assistant.delta',{text:tick<4?'这一段正在生成':'这一段正在生成，文字正在继续。',cursor:tick+3,streaming:true,turn:1,step:1}))];}
-function approval(){return {approvalId:'apple3-'+scenario,sessionId:sessionID,taskId:taskID,sourceCommandId:'cmd-1',sourceReceiptId:'receipt-1',turn:1,callId:'call-1',toolName:'shell',reason:'运行合成命令',createdAt:at,status:'pending',operationCategories:['command'],canAlwaysAllow:true,riskCategories:['execute'],secondOpinion:{alignment:scenario==='warning'?'对不上':'对得上',externalInfluence:'没有',reason:scenario==='warning'?'这条命令超出了你的要求，请先核对。':'符合要求'}};}
+function approval(){return {approvalId:'apple3-'+scenario,sessionId:sessionID,taskId:taskID,sourceCommandId:'cmd-1',sourceReceiptId:'receipt-1',turn:1,callId:'call-1',toolName:'shell',reason:'运行合成命令',createdAt:at,status:'pending',operationCategories:scenario==='two'?[]:['command'],canAlwaysAllow:scenario!=='two',riskCategories:scenario==='two'?[]:['execute'],secondOpinion:{alignment:scenario==='warning'?'对不上':'对得上',externalInfluence:'没有',reason:scenario==='warning'?'这条命令超出了你的要求，请先核对。':'符合要求'}};}
+function question(){return {questionRpcId:'apple5-question',observedSeq:7,sessionId:sessionID,taskId:taskID,sourceCommandId:'cmd-1',sourceReceiptId:'receipt-1',turn:1,createdAt:at,status:questionAnswer?'answered':'pending',questions:[{id:'plan',question:'周末想先做什么？',options:[{label:'散步'},{label:'读书'},{label:'整理计划'}],multiSelect:false}],...(questionAnswer?{answer:questionAnswer.answer,answerRequestId:questionAnswer.requestId,answeredAt:at}:{})};}
 const server=http.createServer(async(req,res)=>{let body='';for await(const c of req)body+=c;const data=body?JSON.parse(body):{},url=new URL(req.url,'http://localhost'),path=url.pathname.replace('/personal/v1','');routes.push({method:req.method,path});const send=(v,status=200)=>{res.writeHead(status,{'content-type':'application/json'});res.end(JSON.stringify(v));};
- if(url.pathname==='/fixture/apple3'){scenario=data.scenario??scenario;tick=0;if(scenario==='health')await fetch(healthOrigin+'/fixture/control',{method:'POST',body:JSON.stringify({version:3,scenario:'data',enabled:false,resetAnalysis:true})});return send({ok:true});}
+ if(url.pathname==='/fixture/apple3'){if(data.reset){decisions=[];questionAnswer=null;}scenario=data.scenario??scenario;tick=0;if(scenario==='health')await fetch(healthOrigin+'/fixture/control',{method:'POST',body:JSON.stringify({version:3,scenario:'data',enabled:false,resetAnalysis:true})});return send({ok:true});}
  if(url.pathname==='/fixture/apple3-report')return send({syntheticOnly:true,scenario,decisions,reads,settingWrites,routes});
  if(path==='/status')return send({ownerId:'health4-owner',hostId:'health4-host',personalCapabilities:{chats:1,chatTimeline:1,chatSend:1,replyStreaming:1,chatResources:1,chatSearch:1,sideChats:1}});
  if(path==='/sessions')return send({sessions:[{sessionId:'apple4-side-session',title:'周末的合成计划',running:false,sendAvailable:true,modelProfileId:'synthetic-model',taskAvailable:true},{sessionId:'apple4-recent-session',title:'整理读书清单',running:false,sendAvailable:true,modelProfileId:'synthetic-model',taskAvailable:true}]});
@@ -49,9 +51,10 @@ const server=http.createServer(async(req,res)=>{let body='';for await(const c of
  if(path===`/chats/${chatID}/events`||path===`/chats/${chatID}/changes`){const items=events().map(row),liveEvents=live();reads.push({kind:'reply',scenario});return send(path.endsWith('/changes')?{upserts:items,removals:[],nextCursor:'history',hasMore:false,contentRevision:1,indexState:'ready',timeZone:'UTC',liveRevision:tick,liveEvents}:{items,olderCursor:null,newerCursor:null,hasOlder:false,hasNewer:false,syncCursor:'history',contentRevision:1,indexState:'ready',timeZone:'UTC',liveRevision:tick,liveEvents});}
  if(path===`/chats/${chatID}/dates`)return send({days:[],contentRevision:1,indexState:'ready',timeZone:'UTC'});
  if(path===`/sessions/${sessionID}/events`)return send({events:events(),nextSeq:30,hasMore:false,liveSeq:tick,liveEvents:live().map(x=>native(x.sourceRef.seq,x.type,x.data))});
- if(path===`/sessions/${sessionID}/approvals`)return send({approvals:['aligned','warning'].includes(scenario)&&!decisions.some(x=>x.approvalId==='apple3-'+scenario)?[approval()]:[],hasMore:false,nextBefore:null});
+ if(path===`/sessions/${sessionID}/approvals`)return send({approvals:['aligned','warning','two','long'].includes(scenario)&&!decisions.some(x=>x.approvalId==='apple3-'+scenario)?[approval()]:[],hasMore:false,nextBefore:null});
  if(path.startsWith(`/sessions/${sessionID}/approvals/`)){decisions.push({approvalId:path.split('/').at(-1),...data});return send({approval:{...approval(),status:'answered',decisionOutcome:data.outcome,decisionScope:data.scope??'once',decisionRequestId:data.requestId,answeredAt:at},requestId:data.requestId});}
- if(path===`/sessions/${sessionID}/questions`)return send({questions:[],hasMore:false,nextBefore:null});
+ if(path===`/sessions/${sessionID}/questions`)return send({questions:scenario==='question'?[question()]:[],hasMore:false,nextBefore:null});
+ if(path===`/sessions/${sessionID}/questions/apple5-question/answer`){questionAnswer={requestId:data.requestId,answer:data.answer??{answers:data.answers}};return send({question:question(),requestId:data.requestId});}
  if(path==='/settings/approvals'){if(req.method==='PATCH'){secondOpinionEnabled=data.secondOpinionEnabled??secondOpinionEnabled;settingWrites.push(data);}return send({mode:'auto',secondOpinionEnabled});}
  if(path===`/sessions/${sessionID}/approval-mode`)return send({mode:'auto',allowedCategories:[]});
  // Forward health, authentication and unknown routes to the existing synthetic health service.

@@ -53,6 +53,7 @@ public struct ConversationFollowState: Equatable, Sendable {
 }
 public enum ToolProgressSummary {
     public static func readable(tool: String, raw: String) -> String {
+        if tool == "health_query" { return "查询健康数据" }
         if ["load_tools", "ask_user_question", "get_goal", "create_goal", "update_goal", "run_code", "weftmod", "weftmod_script", "todo", "todo_write", "enter_plan_mode", "exit_plan_mode"].contains(tool) { return OperationNames.tool(tool) }
         if let bytes = raw.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any] {
             var args = object["arguments"] as? [String: Any] ?? object["parameters"] as? [String: Any] ?? object
@@ -76,6 +77,7 @@ public enum ToolProgressSummary {
             let tool = (step.data["toolName"]?.string ?? "").lowercased()
             let kind: String
             switch tool {
+            case "health_query": kind = "health"
             case "shell", "bash", "exec", "exec_command", "run_command", "pwsh", "powershell": kind = "command"
             case "read", "read_file": kind = "read"
             case "write", "edit", "write_file", "edit_file": kind = "write"
@@ -90,6 +92,7 @@ public enum ToolProgressSummary {
         return kinds.map { kind in
             let count = counts[kind]!
             switch kind {
+            case "health": return count == 1 ? "查了健康数据" : "查了 \(count) 次健康数据"
             case "command": return "已运行 \(count) 个命令"
             case "read": return "读取了 \(count) 个文件"
             case "write": return "修改了 \(count) 个文件"
