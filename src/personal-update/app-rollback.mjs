@@ -3,7 +3,7 @@ import { app } from 'electron';
 import { mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { spawn } from 'node:child_process';
-import { readUninstallRegistry } from './watchdog-commands.mjs';
+import { readUninstallRegistry, recoveryEnvironment } from './watchdog-commands.mjs';
 import { createHostLog } from '../host-log.mjs';
 import { randomUUID } from 'node:crypto';
 import { atomicJson } from './store.mjs';
@@ -36,7 +36,7 @@ export async function prepareAppRollback({ configFile, nextVersion, appData = ap
     state.dataDirectory = app.getPath('userData');
     await atomicJson(join(root, 'pending.json'), state);
     const child = spawn(recoveryExe, [join(snapshot, 'monitor.mjs'), root], {
-      cwd: snapshot, detached: true, windowsHide: true, stdio: 'ignore', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+      cwd: snapshot, detached: true, windowsHide: true, stdio: 'ignore', env: recoveryEnvironment(),
     });
     await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject); });
     child.unref();

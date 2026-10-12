@@ -114,6 +114,8 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 ## 契约变更
 
+- **INST-2 / Windows-6**：桌面更新 IPC（进程间通信）状态兼容新增可选 `manualInstall`，全用户范围下载后提供安装包入口；既有重启动作返回具体原因。无新增 `/personal/v1` 路由、远程安装权限或原生壳要求，详见 CLIENT_API。
+
 - **HEALTH-2 / Windows-4**：CLIENT_API第16节新增独立健康v2／100天批量、overview／metrics／calendar、健康设置及建议转提醒；v1原请求与回执不变。沿sessions:read与account:manage，默认400天，DATA-1清空不删健康库；Android（安卓）精确路由／健康PUT方法与拒绝用例已补，需要新壳版本，Apple（苹果端）按16节接线。
 
 - **SEC-1 / Windows-4**：现有审批读取可选 `secondOpinion:{alignment,externalInfluence,reason}`，现有 GET/PATCH `/settings/approvals` 可选 `secondOpinionEnabled`，缺字段默认开启；不新增路由，不授予执行权限。Apple 需呈现与开关接线，安卓界面包更新即可。详见 CLIENT_API。

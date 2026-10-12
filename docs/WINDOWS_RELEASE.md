@@ -202,3 +202,6 @@ Windows 安装仍使用 NSIS（Windows 安装引擎）与既有卸载登记。`/
 测试身份的安装包使用 `--test-identity inst2qa --isolate-test-executable true`；默认安装目录也带测试身份，避免默认路径碰到正式安装。需要核对桌面快捷方式时再带 `--test-desktop-shortcut true`，其余测试默认不创建桌面快捷方式。实际验证结果与管理员环境限制见 `tests/evidence/inst-2/README.md`。
 
 监护传给 NSIS 的 `/D` 使用原样的末尾参数：Node（运行环境）的默认命令行编码会给含空格的整个 `/D=…` 加引号，违反安装引擎约定；监护现在只为安装器执行路径加引号，目标位置保留完整尾部。关闭检测还会等待最多5秒的已识别辅助进程退出；真正未知的查询仍直接失败，保持原安装树，并尝试用原配置重新打开旧程序。
+监护系统查询固定输出 UTF-8（字符编码）。从无控制台的程序启动 Windows PowerShell（Windows 命令解释器）时，其默认代码页可能不能与 Node（运行环境）的UTF-8读取一致；退出瞬间返回一条中文路径就会校验失败，而再次查询已无该进程时得到空数组，从而出现“第一次失败、重跑通过”。固定回归用系统936代码页与中文执行路径复现旧失败，修后保留原路径，不把真正未知的进程放行。
+
+首次监护的持续阻塞另有已确认根因：监护继承旧程序的 `CHROME_CRASHPAD_PIPE_NAME`，自身连到旧 Crashpad（崩溃记录）处理进程，导致主进程已经正常结束，但该处理进程仍持有旧程序文件。`crash-handler-before-fix.json` 保存了实际进程分类与父进程关系。现在仅从独立监护的环境移除崩溃处理管道及服务器变量，正常程序仍启用原来的本地崩溃记录。Electron（桌面程序框架）的 Node模式会初始化崩溃记录，Windows 子进程按继承的管道连接处理器，见 [固定版本 Node启动源码](https://raw.githubusercontent.com/electron/electron/v43.7.8/shell/app/node_main.cc) 与 [Chromium管道继承源码](https://raw.githubusercontent.com/chromium/chromium/main/components/crash/core/app/crashpad_win.cc)。

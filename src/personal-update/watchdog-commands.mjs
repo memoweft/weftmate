@@ -5,6 +5,13 @@ export const SYSTEM_QUERY_TIMEOUT_MS = 15000;
 export const STOP_PROCESS_TIMEOUT_MS = 5000;
 export const REGISTRY_TIMEOUT_MS = 15000;
 export const NOTIFICATION_QUERY_TIMEOUT_MS = 5000;
+export function recoveryEnvironment(env = process.env) {
+  const detached = { ...env, ELECTRON_RUN_AS_NODE: '1' };
+  // The monitor must outlive the app without keeping its crash handler alive.
+  delete detached.CHROME_CRASHPAD_PIPE_NAME;
+  delete detached.CHROME_CRASHPAD_SERVER_URL;
+  return detached;
+}
 async function cancelCommandTree(child) {
   if (!Number.isInteger(child?.pid) || child.pid < 1) return;
   try {
@@ -49,7 +56,7 @@ export async function boundedCommand(command, args, { exec=execute, timeoutMs, t
 // Get-Process uses native process enumeration, not the CIM/WMI service.
 // A candidate with an unreadable path is UNKNOWN, never an absent process.
 export async function relevantProcesses(targets, { exec, timeoutMs=SYSTEM_QUERY_TIMEOUT_MS, env=process.env }={}) {
-  const script="$ErrorActionPreference='Stop'; $targets=ConvertFrom-Json $env:WEFTMATE_RECOVERY_TARGETS; $names=@($targets | ForEach-Object {[IO.Path]::GetFileNameWithoutExtension($_)}); $rows=@(Get-Process | Where-Object {$_.ProcessName -in $names} | ForEach-Object { $candidate=$_; if(-not $candidate.HasExited){ $path=$null; try { $path=$candidate.Path } catch { if(-not $candidate.HasExited){throw} }; if($path -in $targets -and -not $candidate.HasExited){@{ProcessId=$candidate.Id; ExecutablePath=$path}} elseif(-not $path -and -not $candidate.HasExited){throw 'PROCESS_PATH_UNKNOWN'} } }); ConvertTo-Json -InputObject $rows -Compress";
+  const script="[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false); $ErrorActionPreference='Stop'; $targets=ConvertFrom-Json $env:WEFTMATE_RECOVERY_TARGETS; $names=@($targets | ForEach-Object {[IO.Path]::GetFileNameWithoutExtension($_)}); $rows=@(Get-Process | Where-Object {$_.ProcessName -in $names} | ForEach-Object { $candidate=$_; if(-not $candidate.HasExited){ $path=$null; try { $path=$candidate.Path } catch { if(-not $candidate.HasExited){throw} }; if($path -in $targets -and -not $candidate.HasExited){@{ProcessId=$candidate.Id; ExecutablePath=$path}} elseif(-not $path -and -not $candidate.HasExited){throw 'PROCESS_PATH_UNKNOWN'} } }); ConvertTo-Json -InputObject $rows -Compress";
   const result=await boundedCommand('powershell.exe',['-NoProfile','-NonInteractive','-Command',script],
     {exec,timeoutMs,timeoutCode:'SYSTEM_QUERY_TIMEOUT',failureCode:'SYSTEM_QUERY_FAILED',windowsHide:true,maxBuffer:64*1024,env:{...env,WEFTMATE_RECOVERY_TARGETS:JSON.stringify(targets.filter(Boolean))}});
   try {
