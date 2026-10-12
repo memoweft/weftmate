@@ -1,0 +1,2258 @@
+{
+  "baselineCommit": "e70f1427318db8aca66dc09777b65c743ffbc8d4",
+  "filesystem": "real isolated directories and Windows junctions",
+  "externalCommands": "synthetic Git and pnpm; filesystem code unchanged",
+  "historicalIncidentReproduced": false,
+  "rows": [
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "success",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "success",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "success",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 86,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "success",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "success",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "node",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "node",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "node",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 86,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "PowerShell 5.1",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "PowerShell 5.1",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "PowerShell 5.1",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "legacy",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "39eed88e7364a7c7091763d4c294cf91cc537f00cc63af4d4090a8bf7b9996e3",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "matching",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "incomplete",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 86,
+      "protectedFiles": 5,
+      "protectedSha256": "305dd2aa20b2aaa8b0d1bbcddcf72a239cb43170ef0c8a199814416002f15c45",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "directory",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "good",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "invalid",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "success",
+      "shell": "PowerShell 7",
+      "status": 0,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "compile",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "assemble",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "verify",
+      "shell": "PowerShell 7",
+      "status": 1,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    },
+    {
+      "pointer": "absent",
+      "cached": "absent",
+      "phase": "interrupt",
+      "shell": "PowerShell 7",
+      "status": 86,
+      "protectedFiles": 6,
+      "protectedSha256": "2f09c28c91553ea25b0fae734b101b87eecf0d71c951fac64748c5f94d5c86ca",
+      "unchanged": true
+    }
+  ]
+}

@@ -14,6 +14,19 @@ export async function freePort() {
   const s = tcpServer(); s.listen(0, '127.0.0.1'); await once(s, 'listening');
   const port = s.address().port; await new Promise(r => s.close(r)); return port;
 }
+export async function distinctPorts(names) {
+  const reservations = names.map(() => tcpServer());
+  try {
+    // Reserve the whole set together. Closing each listener before asking for
+    // the next port lets the kernel return the same ephemeral port twice.
+    await Promise.all(reservations.map(async server => {
+      server.listen(0, '127.0.0.1'); await once(server, 'listening');
+    }));
+    return Object.fromEntries(names.map((name, index) => [name, reservations[index].address().port]));
+  } finally {
+    await Promise.all(reservations.map(server => new Promise(resolve => server.close(resolve))));
+  }
+}
 export async function waitFor(fn, message, timeout = 30_000) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) { if (await fn()) return; await pause(200); }
@@ -31,8 +44,7 @@ export function processChild(binary, args) {
 
 export async function relayFixture(t, { liveClock = false } = {}) {
     const frontPort = Number(process.env.WEFTMATE_RELAY_FRONT_PORT ?? '443');
-    const ports = {};
-    for (const name of ['frps','https','control','content','plugin','api']) ports[name] = await freePort();
+    const ports = await distinctPorts(['frps','https','control','content','plugin','api']);
     const f = await fixture(t, { env: { CLOUD_RELAY_DOMAIN: 'hosts.example.com', CLOUD_RELAY_SERVER_NAME: 'relay.example.com',
       CLOUD_RELAY_FRPS_PORT: String(ports.frps), CLOUD_RELAY_FRPS_HTTPS_PORT: String(ports.https),
       CLOUD_RELAY_CONTROL_PORT: String(ports.control), CLOUD_RELAY_CONTENT_PORT: String(ports.content), CLOUD_RELAY_PLUGIN_PORT: String(ports.plugin) } });

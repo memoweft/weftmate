@@ -16,7 +16,7 @@ test('background query budgets are 15 seconds while local key query remains shor
 test('review command trees leave no descendants in three runs and 6/8-second background successes remain usable',{skip:process.platform!=='win32',timeout:60000},async()=>{
   const evidence=createProcessEvidence({outputDir:resolve('.local/rob-1-command-runner'),executables:[process.execPath],commandRoots:[resolve('tests/integration')],startedAt:Date.now()});
   const {done}=evidence.spawn(process.execPath,[resolve('tests/integration/rob-1-command-probe.mjs')]);
-  try {assert.equal((await done).decimal,0);} finally {assert.equal((await evidence.finalize()).stillRunning,false);}
+  try {const result=await done;assert.equal(result.decimal,0,result.stderrTail);} finally {assert.equal((await evidence.finalize()).stillRunning,false);}
 });
 test('notification query timeout preserves unknown permission and logs the fixed failure',async()=>{
   const failures=[];
