@@ -174,6 +174,8 @@ export function saveCredential(id: string, apiKey: string): void {
   if (!validId(id) || !validKey(apiKey)) throw new TypeError('credential input is invalid');
   encryptedVault().save(id, apiKey);
 }
+/** Main-process-only metadata listing for the shared security vault. */
+export function listCredentialIds(): string[] { return Object.keys(readSecrets().credentials); }
 /** Only the explicit model form submission may replace a currently unreadable
  * vault. Encrypt first; failed encryption never moves the original. A failed
  * commit restores its original path. Keep one prior ciphertext after success. */

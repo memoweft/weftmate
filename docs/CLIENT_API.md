@@ -1671,3 +1671,27 @@ POST analysis仅接受上述scope和合法day（非未来、保留范围内）�
 DATA-1日摘要usage可增量返回`lastUserMessageAt`（ISO或null），仅取已允许的用户消息来源，供健康页夜间结束时刻投影；原使用分钟估算法和字段不变。分析生成期间若健康输入清空／替换导致资料代次变化，返回409 `HEALTH_DATA_CHANGED`，要求重新展开读取当前数据；两个模型开关互改不触发该代次冲突。
 
 压力的sdnnHeartRate降级：无同次meanHeartRateBpm时优先取测量所在15分钟心率桶avg，再退到同小时avg；这符合v3无逐搏数据时同次心率为null的采集约定。沿用原method字段，`missing:["measurementHeartRate"]`说明所用心率为时间桶估计；两种桶都缺则不给压力值。
+
+## ST-7a：连接器（复用现有设置契约）
+
+`GET /personal/v1/settings/approvals` 新增可选字段 `connectors`、`builtinConnectors`、`canManageConnectors`；旧字段与审批模式保持兼容。未配置连接器服务时返回空列表及 `false`。不新增业务路由，Android（安卓）现有精确路由白名单与 Apple（苹果）原生网络层可直接读取。手机网页提供只读列表／详情与总开关；完整添加、测试、凭据轮换、移除和单工具规则仅在电脑程序提供。
+
+连接器投影：`{id,name,enabled,builtinId?,status,message,tools,credentials,activeToolCount,totalToolCount}`。`status` 为 `idle | starting | ready | recovering | failed | disabled`，`message` 是不含地址、凭据和原始服务器错误的原因／恢复说明。工具投影为 `{name,rawName,description,category,rule,defaultRule}`；`category` 使用 ST-2 既有操作类型。凭据投影仅 `{name,saved,last4}`，任何响应都不返回值。内置目录为 `{id,name,description,fields}`，表单字段支持 `name,label,secret,required,default`；秘密字段没有明文默认值。
+
+`PATCH /personal/v1/settings/approvals` 新增独占请求体 `{connector: operation}`（不能与 `mode / rules / secondOpinionEnabled` 混用）：
+
+| action | 请求字段 | 回执 |
+| --- | --- | --- |
+| `add` | 自定义：`name,transport,command,args?,credentials?` 或 `name,transport,url,credentials?`；内置：`builtinId,fields?,credentials?` | 测试连接成功后保存，返回最新列表投影 |
+| `test` | 现有 `id` 或与添加相同的草稿字段 | `{connectionTest:{ok,tools,code?,message?}}`；草稿不保存凭据与配置 |
+| `toggle` | `id,enabled` | 最新列表；停用立即收掉连接器并撤回工具 |
+| `rotate` | `id,credentials` | 新值替换同名凭据；`null` 删除该项，连接重新按需启动 |
+| `remove` | `id` | 最新列表；删除凭据及该名称空间的已保存规则 |
+
+`transport` 是客户端内部枚举 `stdio | streamable-http`，界面称「启动程序／连接地址」。`command` 是程序名或完整路径，`args` 是直接参数数组；凭据不能放入命令、参数或地址。HTTP（网页传输协议）地址只允许加密地址或本机回环的测试地址，不接受地址里的用户名、密码、查询参数或片段；认证用 `credentials` 请求头。程序启动时把 `credentials` 作为明确名称的环境变量。此字段只在当前请求和进程内出现，不写入配置、记录或明文备份。
+
+沿用 `commands:write`、同源 Cookie（会话凭据）、CSRF（跨站请求伪造保护）与既有账号鉴权。`add / test / rotate / remove` 必须有原生桌面会话；手机只可 `toggle`。单工具规则沿用 `{rules:{[nativeToolName]:"allow"|"ask"|"deny"|null}}`，`nativeToolName` 是固定 DSH 生成的 `mcp__...` 名称，最多 64 字符。修改单工具规则也只接受原生桌面会话；删除／发送／付款的类型级长期放行限制仍保留。连接器副作用默认每次问，明确单工具放行才覆盖默认；类型／项目禁止仍优先。
+
+原生桌面内部增加 `connector_call` 进程通信动作，绑定原生执行记录、账号、原始用户回执和参数摘要；不向客户端开放工具执行或凭据读取路由。SEC-1 第二模型复核、批准／拒绝和执行记录仍使用原接口。服务器返回内容被标为外部资料，原生资源和提示词能力未增加。
+
+连接器工具还携带可选 `network`：远程地址以及明确标注会联网的工具同时遵守通用／项目的联网规则。类型和项目的禁止优先，项目「每次问」不会被全局单工具放行覆盖。连接器审批只接受 `scope:"once"`，不提供类型级长期放行捷径；长期选择在连接器的单工具规则中保存。`last4` 对不超过四个字符的凭据返回空串，界面仅显示「已保存」，避免把整个短凭据展示出来。

@@ -397,6 +397,8 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
     [join(PLUGINS_DIR, 'personal-approval-policy.mjs'), join(dir, 'plugins', 'personal-approval-policy.mjs')],
     [join(PLUGINS_DIR, 'personal-permission-rules.mjs'), join(dir, 'plugins', 'personal-permission-rules.mjs')],
+    [join(PLUGINS_DIR, 'personal-connectors.mjs'), join(dir, 'plugins', 'personal-connectors.mjs')],
+    [join(PLUGINS_DIR, '../personal-connectors/policy.mjs'), join(dir, 'personal-connectors', 'policy.mjs')],
     [join(PLUGINS_DIR, 'personal-review-sources.mjs'), join(dir, 'plugins', 'personal-review-sources.mjs')],
     [join(PLUGINS_DIR, 'personal-write-targets.mjs'), join(dir, 'plugins', 'personal-write-targets.mjs')],
     [join(PLUGINS_DIR, 'personal-web-fetch.mjs'), join(dir, 'plugins', 'personal-web-fetch.mjs')],
@@ -776,6 +778,8 @@ export interface DshWebRuntimeOptions {
   /** Restricted personal desktop tool requests from this exact managed DSH child. */
   personalDesktopRequestHandler?: (request: Readonly<
     { id: string, action: 'approval_policy', sessionId: string, turn: number, callId: string, messageHash: string } |
+    { id: string, action: 'connector_call', sessionId: string, turn: number, callId: string, rootCallId: string,
+      receiptId: string, messageHash: string, connectorId: string, toolName: string, arguments: unknown, runtimeId: string } |
     { id: string, action: 'authorize_execution' | 'finish_execution' | 'observe_execution_job', sessionId: string, turn: number,
       callId: string, rootCallId: string, receiptId: string, messageHash: string, toolName: string,
       argumentsHash: string, runtimeId: string, executionId?: string, state?: 'completed' | 'failed' | 'cancelled' | 'uncertain', resultHash?: string,
@@ -1797,6 +1801,7 @@ export class DshWebRuntime {
         typeof row.callId !== 'string' || !/^[A-Za-z0-9._:-]{1,160}$/.test(row.callId) ||
         typeof row.messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(row.messageHash)) return
     const approvalPolicy = row.action === 'approval_policy'
+    const connectorCall = row.action === 'connector_call'
     const nativeFile = row.action === 'register_file'
     const nativeBrowser = row.action === 'browse'
     const writeDocument = row.action === 'write_document'
@@ -1813,6 +1818,13 @@ export class DshWebRuntime {
         typeof row.receiptId !== 'string') return
     if (approvalPolicy) {
       if (Object.keys(row).some(key => !['protocol', 'id', 'action', 'sessionId', 'turn', 'callId', 'messageHash'].includes(key))) return
+    } else if (connectorCall) {
+      if ((row.turn as number) < 1 || typeof row.receiptId !== 'string' ||
+          typeof row.rootCallId !== 'string' || !TASK_STOP_RECEIPT.test(row.rootCallId) ||
+          typeof row.connectorId !== 'string' || !/^c_[a-f0-9]{24}$/.test(row.connectorId) ||
+          typeof row.toolName !== 'string' || !/^mcp__[A-Za-z0-9_-]{1,58}$/.test(row.toolName) ||
+          !row.arguments || typeof row.arguments !== 'object' || Array.isArray(row.arguments) ||
+          Object.keys(row).some(key => !['protocol','id','action','sessionId','turn','callId','rootCallId','receiptId','messageHash','connectorId','toolName','arguments'].includes(key))) return
     } else if (toolApproval) {
       const fields = ['protocol', 'id', 'action', 'sessionId', 'turn', 'callId', 'rootCallId', 'receiptId',
         'messageHash', 'toolName', 'argumentsHash', 'approvalId',
@@ -1906,7 +1918,7 @@ export class DshWebRuntime {
       respond({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return
     }
     const runtimeId = this.personalRuntimeIds.get(child)
-    if ((toolApproval || genericExecution) && !runtimeId) {
+    if ((toolApproval || genericExecution || connectorCall) && !runtimeId) {
       respond({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return
     }
     const entry = { timer: undefined as unknown as NodeJS.Timeout, settled: false }
@@ -1922,7 +1934,7 @@ export class DshWebRuntime {
       if (!this.closed && !this.closedChildren.has(child) && !this.invalidatedPersonalChildren.has(child) && this.child === child) respond(value)
     }
     entry.timer = setTimeout(() => settle({ ok: false, error: 'PERSONAL_TOOL_TIMEOUT' }),
-      nativeBrowser || listProject || readProject || browserOpen || browserFollow || browserSegment ||
+      connectorCall || nativeBrowser || listProject || readProject || browserOpen || browserFollow || browserSegment ||
         writeDocument && Array.isArray(row.sourceSnapshotIds) &&
         row.sourceSnapshotIds.length > 0 ? 20_000 : 12_000)
     entry.timer.unref?.()
@@ -1931,6 +1943,9 @@ export class DshWebRuntime {
       ...(typeof row.receiptId === 'string' ? { receiptId: row.receiptId } : {}) }
     const request = Object.freeze(approvalPolicy
       ? { ...identity, action: 'approval_policy' as const }
+      : connectorCall
+      ? { ...identity, action: 'connector_call' as const, rootCallId: row.rootCallId as string, receiptId: row.receiptId as string,
+        connectorId: row.connectorId as string, toolName: row.toolName as string, arguments: row.arguments, runtimeId: runtimeId! }
       : nativeFile
       ? { ...identity, action: 'register_file' as const, receiptId: row.receiptId as string,
         filePath: row.filePath as string, sha256: row.sha256 as string }
@@ -1991,6 +2006,7 @@ export class DshWebRuntime {
           }
           settle({ ok: true, command: { mode: value.mode, allowedCategories: value.allowedCategories,
             ...(value.permissionRules ? { permissionRules: value.permissionRules } : {}),
+            ...(Array.isArray(value.connectorTools) ? { connectorTools: value.connectorTools } : {}),
             ...(value.projectPermissionRules ? { projectPermissionRules: value.projectPermissionRules } : {}),
             ...(value.deepThinking === true ? {deepThinking:true} : {}),
             ...(value.personalization ? {personalization:value.personalization} : {}),
@@ -2005,6 +2021,10 @@ export class DshWebRuntime {
             : ['snapshotId', 'url', 'title', 'capturedAt', 'capturedFragment', 'requestedSectionComplete', 'text', 'links', 'outline', 'segmentIndex', 'segmentCount', 'truncated', 'captureTruncated', 'httpStatus', 'query', 'excerpts', 'sourcePath', 'previewTruncated']
           settle({ ok: true, command: Object.fromEntries(fields.filter(key => value[key] !== undefined).map(key => [key, value[key]])) })
           return
+        }
+        if (connectorCall) {
+          if (!value || !Array.isArray(value.content)) { settle({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return }
+          settle({ ok: true, command: { content: value.content, ...(value.structuredContent === undefined ? {} : { structuredContent: value.structuredContent }) } }); return
         }
         if (toolApproval) {
           const approval = personalApprovalReceipt(value, row)

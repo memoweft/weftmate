@@ -1,0 +1,19 @@
+{
+  "realElectron": true,
+  "pinnedDsh": true,
+  "realModel": false,
+  "scenarios": [
+    "visible custom add, real test failure/success, vault masking and individual rule controls",
+    "phone webpage lists and toggles, does not expose add/remove or credential input",
+    "disabled tools disappeared, removal erased credentials and tool rules"
+  ],
+  "errors": [],
+  "modelRequests": 0,
+  "requestCountSource": "authenticated usage ledger",
+  "ok": true,
+  "cleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  }
+}
