@@ -459,5 +459,9 @@
   "notificationApprovedTitle": "WeftMate · 已批准",
   "notificationDoneTitle": "WeftMate · 已完成",
   "watchWorking": "进行中",
-  "watchSaving": "正在保存"
+  "watchSaving": "正在保存",
+  "watchQuestion": "要覆盖旧版 PDF 吗？",
+  "watchIdle": "电脑正在导出季度总结",
+  "watchApprovedLine": "已批准，电脑接着做",
+  "watchDoneLine": "季度总结已放进共享文件夹"
 }
