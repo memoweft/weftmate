@@ -1,10 +1,18 @@
 package com.memoweft.weftmate.mobile
 
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun catchupAccountRecordsAndForgetPreviewsKeepExactPaths() {
+        for (path in listOf("/personal/v1/execution-records?type=write&projectId=none&limit=100", "/personal/v1/account/models", "/personal/v1/account/models/check", "/personal/v1/account/models/model-one/test", "/personal/v1/chats/chat-one/forget-preview", "/personal/v1/sessions/session-one/forget-preview", "/personal/v1/usage?timeZone=Asia%2FShanghai&month=2026-10")) assertTrue(path, validBusinessPath(path))
+        for (path in listOf("/personal/v1/execution-records/raw", "/personal/v1/execution-records?type=<script>", "/personal/v1/account/models/model-one/secret", "/personal/v1/account/models%2Fcheck", "/personal/v1/auth/desktop", "/personal/v1/sessions/../forget-preview", "/personal/v1/chats/chat-one/forget-preview/raw")) assertFalse(path, validBusinessPath(path))
+        assertEquals("/personal/v1/sessions/session-one/approvals/00000000-0000-4000-8000-000000000001", approvalDecisionPath("session-one", "00000000-0000-4000-8000-000000000001", "request-one", "allowed-once", "global-category"))
+        assertThrows(IllegalArgumentException::class.java) { approvalDecisionPath("session-one", "00000000-0000-4000-8000-000000000001", "request-one", "rejected", "global-category") }
+    }
     @Test fun healthAggregateRoutesRejectRawDataOwnersUnknownMetricsAndEncodedPaths() {
         assertTrue(validBusinessMethod("/personal/v1/health/records/batch", "PUT"))
         assertTrue(validBusinessMethod("/personal/v1/daily-summaries/2026-10-12/health", "PUT"))

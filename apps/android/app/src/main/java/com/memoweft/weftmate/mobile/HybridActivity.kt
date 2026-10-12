@@ -1620,8 +1620,9 @@ class HybridActivity : Activity() {
             savedIdentityView(identity).put("backgroundSync", SyncJobService.status(this))
         }
         "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
+            .put("nativeEmailCodeLogin", true)
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
-            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
+            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
                 else secrets.host()?.takeIf { it.authSource == "local" }?.origin ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
         "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))
@@ -1656,6 +1657,12 @@ class HybridActivity : Activity() {
         }
         "cloud.pending" -> api.cloudPending(requireHost())
         "cloud.decision" -> api.cloudDecision(requireHost(), params.getString("id"), params.getString("decision"))
+        "auth.cached" -> secrets.host()?.let { host ->
+            (secrets.cachedProfile(owner(host)!!) ?: JSONObject().put("loggedIn", true)
+                .put("username", host.username).put("displayName", host.username))
+                .put("owner", owner(host)).put("deviceId", host.deviceId).put("connectionVerified", false)
+                .put("device", JSONObject().put("id", host.deviceId))
+        } ?: throw ApiFailure(401, "LOGIN_REQUIRED")
         "auth.me" -> secrets.host()?.let { profileFor(it).put("owner", owner(it)) }
             ?: JSONObject().put("loggedIn", false)
         "auth.profile" -> {

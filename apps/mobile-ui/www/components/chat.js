@@ -376,7 +376,7 @@ function updateComposer(){uiCore.syncMobileIdentity();
   renderQueuedTasks();
   const button=$('send-button'), stop=view.sendHidden;
   globalThis.WeftMobileMotion?.changed(button,String(stop),'160ms');
-  button.hidden=false;button.disabled=stop?!!state.sharedStopping||state.transitionPending:coreFolderPending()||!view.ready;
+  button.hidden=false;button.disabled=stop?!!state.sharedStopping||state.transitionPending:coreFolderPending()||(!view.ready&&!(window.weftNative&&state.loggedIn&&state.connection==='expired'&&$('draft').value.trim()));
   button.classList.toggle('ready',stop||view.ready);button.classList.toggle('is-stop',stop);button.dataset.action=stop?'stop':'send';
   button.setAttribute('aria-label',stop?'停止回复':'发送');button.replaceChildren(el('span',`icon icon-${stop?'stop':'send'}`));
   $('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
@@ -497,7 +497,12 @@ function sendShared(...args){return uiCore.mobile.sendShared(...args)}
 
 function sendLinked(...args){return uiCore.mobile.sendLinked(...args)}
 
-function send(...args){return uiCore.mobile.send(...args)}
+function send(...args){
+  if(window.weftNative&&state.connection==='expired'){
+    globalThis.WeftMobileCloud.core?.startCloudJourney();return;
+  }
+  return uiCore.mobile.send(...args)
+}
 
 function stop(...args){return uiCore.mobile.stop(...args)}
 

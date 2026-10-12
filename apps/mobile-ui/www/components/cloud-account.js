@@ -30,6 +30,7 @@
     const account = native ? await nativeAdoption : { ...core.state.account, owner: core.state.account.ownerId, deviceId: core.state.device.id, connectionVerified: true };
     state.authEpoch++; state.loggedIn = true; state.username = account.username; state.owner = account.owner || account.ownerId || '';
     state.deviceId = account.deviceId || account.device?.id || ''; state.profile = account; state.connection = account.connectionVerified === false ? 'checking' : 'connected';
+    if (native) core.state.cloudAuth.cachedSession = true;
     if (native) await syncAccountAppearance();
     resetMemoryForAuthBoundary('请重新读取当前账户的记忆。'); showProfile(account);
     document.body.classList.remove('cloud-auth-active'); byId('cloud-auth-page').classList.remove('active');
@@ -92,9 +93,13 @@
       clearNativeHostSessions: async () => { if (native) await call('auth.logout'); },
       openCloudHost: async connection => { if (native) await call('cloud.app.configure', { origin: connection.baseUrl }); return connection; },
       activateCloudHost: noop,
+      nativeSessionExpired: () => { state.connection = 'expired'; uiCore.state.online = false; updateComposer(); },
+      enterCloudOnly: () => { document.body.classList.remove('cloud-auth-active'); page('devices'); },
     }, { get: (target, key) => target[key] || noop });
     core = WeftUiCore.create({ effects, ...transport, hostOrigin, initialPairing, crypto: globalThis.crypto, storage: localStorage,
-      cloudVendor: WeftCloudVendor, desktop: false, bindDesktop: false, deviceType: native ? 'android' : 'web', deviceName: identity.deviceName });
+      cloudVendor: WeftCloudVendor, desktop: false, bindDesktop: false, retainNativeCache: native, automaticHostTrust: native,
+      nativeEmailCodeLogin: identity.nativeEmailCodeLogin,
+      deviceType: native ? 'android' : 'web', deviceName: identity.deviceName });
     const accept = core.acceptSession;
     core.acceptSession = payload => {
       if (!native) return accept(payload);
@@ -107,7 +112,10 @@
     const clear = core.clearSession; core.clearSession = () => { clear(); clearIdentity(); };
     core.enterAssistant = enterAssistant;
     core.authBase = hostOrigin + '/personal/v1/auth'; core.accessBase = hostOrigin + '/personal/v1';
-    const client = WeftUiCore.adaptMobileCloudClient(core.initializeCloudAccount());
+    const client = WeftUiCore.adaptMobileCloudClient(core.initializeCloudAccount(), connection => {
+      core.accessBase = connection.baseUrl + '/personal/v1'; core.authBase = core.accessBase + '/auth';
+    });
+    if (native) core.sessionExpired = effects.nativeSessionExpired;
     const connect = core.cloudConnect; core.cloudConnect = async hostId => WeftUiCore.resolveMobileCloudConnection(client, await connect(hostId));
     if (identity.clientId) client.clientId = identity.clientId;
     if (identity.redirectUri) client.redirectUri = identity.redirectUri;
@@ -127,13 +135,15 @@
       host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });
     uiCore.openOfflineMode=()=>core.openOfflineMode?.();
     if (native && restoreNativeSession) {
-      // A local host cookie is already owned by Kotlin. It has no cloud refresh
-      // family or pending cloud.adopt result; verify it without cloud exchange.
+      // Kotlin owns the saved identity and cached content. Restore them before
+      // requesting any server login; background reads never replace this view.
       try {
         core.state.cloudAuth.mode = 'offline';
-        nativeAdoption = WeftUiCore.restoreMobileHostSession(androidBridge, accept);
+        core.state.cloudAuth.cachedSession = true;
+        nativeAdoption = WeftUiCore.restoreCachedMobileHostSession(androidBridge, accept);
         await nativeAdoption;
         await enterAssistant();
+        core.sessionExpired = effects.nativeSessionExpired;
         return;
       } catch (error) {
         if (error.status !== 401) throw error;
