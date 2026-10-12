@@ -16,8 +16,14 @@ try{
  await p.route(/\/personal\/v1\/chats\/[^/]+\/changes\?/,route=>{count++;if(!failure){if(recovering)healthyAt??=Date.now();return route.continue();}if(failure==='NETWORK')return route.abort('internetdisconnected');const status=failure==='UNAUTHORIZED'?401:failure==='NOT_FOUND'?404:failure==='CURSOR_RESET_REQUIRED'?409:failure==='HTTP_502'?502:failure==='HTTP_504'?504:503;return route.fulfill({status,contentType:'application/json',body:JSON.stringify({error:{code:failure}})});});
  for(const code of ['NOT_FOUND','SESSION_ARCHIVED','BACKEND_UNAVAILABLE','CURSOR_RESET_REQUIRED','UNAUTHORIZED','NETWORK','HTTP_502','HTTP_504']){
   failure=null;await initializeDesktopSession(p,f);await p.waitForFunction(()=>globalThis.__revCore?.state.mainChat&&!__revCore.state.refreshing);await p.evaluate(()=>__revCore.selectMainChat());
-  await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.restore();w.show();});await p.evaluate(()=>__revCore.connectionVisibility(false));await pause(150);
-  await p.evaluate(()=>__revCore.stopAssistantRefresh());await pause(100);failure=code;count=0;recovering=false;healthyAt=null;
+  // A reload can deliver the previous native hidden frame after a direct core
+  // override. Publish the actual window state and await the production bridge
+  // before starting a foreground recovery measurement.
+  await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.restore();w.show();w.webContents.send('wm:desktop:visibility',w.isMinimized()||!w.isVisible());});
+  await p.waitForFunction(()=>__revCore.foreground()&&document.visibilityState==='visible');
+  await p.evaluate(()=>__revCore.stopAssistantRefresh());
+  await p.waitForFunction(()=>!__revCore.state.liveRefreshing&&!__revCore.state.refreshing&&!__revCore.state.sessionSelecting);
+  failure=code;count=0;recovering=false;healthyAt=null;
   await p.evaluate(()=>{__revCore.presence.success({runtime:'ready'});__revUi.startAssistantRefresh();});const at=Date.now();await pause(4500);
   const row={code,ms:Date.now()-at,count,rps:count/((Date.now()-at)/1000),debug:await p.evaluate(()=>({main:__revCore.inMainChat(),view:__revCore.state.currentView,visible:document.visibilityState,background:__revCore.state.background,csrf:!!__revCore.state.csrfToken}))};report.push(row);
   if(!['NOT_FOUND','UNAUTHORIZED'].includes(code)){

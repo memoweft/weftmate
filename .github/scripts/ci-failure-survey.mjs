@@ -28,7 +28,7 @@ export function parseFailures(log, sources = []) {
     const file = /(?:tests|apps\/[^\s:]+\/tests)[\\/][^\s:'"]+\.(?:test|integration\.test)\.(?:ts|mjs)/.exec(diagnostic)?.[0]?.replace(/[\\/]+/g, '/')
       || sources.find(source => source.text.includes(name))?.file || /tests[\\/][^\s]+\.test\.(?:ts|mjs)/.exec(name)?.[0]?.replaceAll('\\', '/') || 'unresolved';
     const type = /testTimeoutFailure|ETIMEDOUT|timed out|TimeoutError|timeout of/i.test(diagnostic) ? 'timeout'
-      : /0xC000|exitCode:|signal:|SIGABRT|process exited|Aborted/.test(diagnostic) ? 'process-exit' : 'assertion';
+      : /0xC000|exitCode:|signal:|SIGABRT|process exited|Aborted|Error: spawn E[A-Z]+/.test(diagnostic) ? 'process-exit' : 'assertion';
     failures.push({ job: lines[i].job, file, name, type, diagnostic: redactEvidenceText(diagnostic) });
   }
   return failures;
@@ -61,7 +61,18 @@ export async function survey({ workflow = 'ci.yml', limit = 80, destination = 't
           const relevant = /windows-latest|ubuntu-latest|Windows package and startup smoke/.test(job.name);
           if (!relevant) continue;
           const cases = failures.filter(item => item.job === job.name);
-          if (job.conclusion === 'failure' && !cases.length) cases.push({ job: job.name, file: 'workflow', name: job.steps.find(step => step.conclusion === 'failure')?.name || 'unknown step', type: 'step-failure', diagnostic: 'No TAP leaf failure in failed log.' });
+          if (job.conclusion === 'failure' && !cases.length) {
+            if (workflow === 'windows-package.yml') {
+              // This smoke writes its error into the sanitized artifact rather than stdout.
+              const artifact = resolve(cache, `${run.databaseId}-artifacts`);
+              mkdirSync(artifact, {recursive:true});
+              if (!existsSync(resolve(artifact, 'results.json'))) await gh(['run','download',String(run.databaseId),'--name','windows-package-smoke','--dir',artifact]);
+              const detail = JSON.parse(readFileSync(resolve(artifact,'results.json'),'utf8'));
+              const diagnostic = redactEvidenceText(detail.error ?? 'No smoke error recorded');
+              cases.push({job:job.name, file:/(?:scripts|tests)[\\/][^\s:]+\.mjs/.exec(diagnostic)?.[0]?.replace(/[\\/]+/g,'/') ?? 'workflow',
+                name:diagnostic.split('\n')[0],type:/Timeout|TIMEDOUT/.test(diagnostic)?'timeout':'step-failure',diagnostic});
+            } else cases.push({ job: job.name, file: 'workflow', name: job.steps.find(step => step.conclusion === 'failure')?.name || 'unknown step', type: 'step-failure', diagnostic: 'No TAP leaf failure in failed log.' });
+          }
           if (job.conclusion === 'cancelled' && seconds > 3600) cases.push({ job: job.name, file: 'workflow', name: 'cancelled after >60 minutes (suspected hang; not proven)', type: 'hang-suspected', diagnostic: `Job ran ${seconds}s before cancellation.` });
           observations.push({ runId: run.databaseId, url: run.url, sha: run.headSha, createdAt: run.createdAt, job: job.name, conclusion: job.conclusion, seconds, requiredSeconds, failures: cases });
         }

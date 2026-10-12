@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import ts from 'typescript';
+import { createRequire } from 'node:module';
+let ts;
 
 export function shardForFile(file, count) {
   if (!Number.isInteger(count) || count < 1) throw Error('Shard count must be a positive integer');
-  // Fixed seed measured against CI-1/file-durations.json; new files never move existing files.
-  return createHash('sha256').update('required-v23\n' + file.replaceAll('\\', '/')).digest().readUInt32BE(0) % count;
+  // Fixed seed measured against CI-1's first complete cloud file reports; new files never move existing files.
+  return createHash('sha256').update('required-v5190\n' + file.replaceAll('\\', '/')).digest().readUInt32BE(0) % count;
 }
 export function selectShard(files, value) {
   if (!value) return files;
@@ -15,6 +16,7 @@ export function selectShard(files, value) {
   return files.filter(file => shardForFile(file, count) === index - 1);
 }
 export function declaredTests(source, file = 'test.ts') {
+  ts ??= createRequire(import.meta.url)('typescript');
   const names = new Set();
   const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
   const visit = node => {

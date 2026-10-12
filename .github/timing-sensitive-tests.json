@@ -36,12 +36,6 @@
       "name": "desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists",
       "reason": "Observed real Electron performance assertion: zero main-thread tasks exceeding the wall-clock 50ms budget (panel-open-close). Functional motion/accessibility assertions remain unchanged.",
       "failureCount": 1
-    },
-    {
-      "file": "tests/bl-29-rework.test.ts",
-      "name": "BL-29b M1 real Electron empty main keeps eight immediate errors within old changes budget",
-      "reason": "Observed Linux NETWORK recovery at 2924ms against the unchanged 2000ms real Electron recovery budget.",
-      "failureCount": 1
     }
   ]
 }

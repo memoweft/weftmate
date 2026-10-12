@@ -98,7 +98,7 @@ try {
         try {
           const fileEnv = { ...env, TMPDIR: scope, TMP: scope, TEMP: scope, WEFTMATE_TEST_TEMP_SCOPE: scope };
           const run = await runManagedTestProcess(process.execPath, [...args, `--report-directory=${scope}`, file],
-            { env: fileEnv, timeoutMs: 600000, commandRoots: [scope, resolve(file)], executables: [process.execPath, createRequire(import.meta.url)('electron')],
+            { env: fileEnv, timeoutMs: 600000, commandRoots: [scope, resolve(file)], executables: [process.execPath, createRequire(import.meta.url)('electron'), createRequire(import.meta.url)('playwright').chromium.executablePath()],
               onOutput: (stream, chunk) => process[stream].write(chunk) });
           return { ...parseTap(run.stdout + run.stderr), status: run.status ?? 1, signal: run.signal,
             error: run.error?.message, timedOut: run.timedOut, seconds: (Date.now() - started) / 1000 };

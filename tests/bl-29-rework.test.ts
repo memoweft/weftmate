@@ -176,7 +176,7 @@ test('BL-29c account commit after an early native approval frame invalidates the
   try {
     const env={...process.env,TMPDIR:root,TMP:root,TEMP:root,WEFTMATE_TEST_HOST_NAME:'synthetic-host',WEFTMATE_BL29_EVIDENCE_DIR:root};
     delete env.ELECTRON_RUN_AS_NODE;
-    const run=spawnSync(process.execPath,['tests/integration/bl-29-requests.mjs','--logical','--latency','--approval-commit-delay'],{
+    const run=spawnSync(process.execPath,[`--report-directory=${root}`,'tests/integration/bl-29-requests.mjs','--logical','--latency','--approval-commit-delay'],{
       env,encoding:'utf8',windowsHide:true,timeout:25000,maxBuffer:4*1024*1024,
     });
     assert.equal(run.status,0,JSON.stringify({status:run.status,signal:run.signal,
