@@ -5,6 +5,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun healthAggregateRoutesRejectRawDataOwnersUnknownMetricsAndEncodedPaths() {
+        assertTrue(validBusinessMethod("/personal/v1/health/records/batch", "PUT"))
+        assertTrue(validBusinessMethod("/personal/v1/daily-summaries/2026-10-12/health", "PUT"))
+        for (path in listOf("/personal/v1/settings/health", "/personal/v1/chats/main", "/personal/v1/health/records/batch?ownerId=other", "/personal/v1/daily-summaries/2026-10-12/health/raw")) assertFalse(validBusinessMethod(path, "PUT"))
+        assertFalse(validBusinessMethod("/personal/v1/health/records/batch", "TRACE"))
+        for (route in listOf("/personal/v1/health/overview", "/personal/v1/health/overview?day=2026-10-12", "/personal/v1/health/calendar?month=2026-10", "/personal/v1/health/metrics/hrvSdnnMs?days=30", "/personal/v1/health/metrics/recovery?days=90", "/personal/v1/health/metrics/usageLateNightMinutes?days=7", "/personal/v1/settings/health", "/personal/v1/health/records/batch", "/personal/v1/daily-summaries", "/personal/v1/daily-summaries/2026-10-12/health", "/personal/v1/health/suggestions/health-" + "a".repeat(32) + "/remind")) assertTrue(route, validBusinessPath(route))
+        for (route in listOf("/personal/v1/health/raw", "/personal/v1/health/overview?ownerId=other", "/personal/v1/health/overview?day=2026-10-12&day=2026-10-11", "/personal/v1/health/metrics/unknown?days=7", "/personal/v1/health/metrics/sleep?days=365", "/personal/v1/health/metrics/sleep?days=7&ownerId=other", "/personal/v1/health/metrics%2Fsleep", "/personal/v1/health/calendar?month=2026-99", "/personal/v1/settings/health?raw=1", "/personal/v1/health/records/batch/all", "/personal/v1/health/suggestions/../remind", "/personal/v1/daily-summaries/2026-10-12/health/raw")) assertFalse(route, validBusinessPath(route))
+    }
     @Test fun accountDataControlsUseOnlyExactRoutesWithoutQueries() {
         for (suffix in listOf("", "/operations", "/scan", "/clean", "/export", "/delete", "/close-account", "/cancel", "/confirm")) assertTrue(validBusinessPath("/personal/v1/data$suffix"))
         for (route in listOf("/personal/v1/data/all", "/personal/v1/data/../delete", "/personal/v1/data?ownerId=other", "/personal/v1/data/export?destination=C%3A%2F", "/personal/v1/data%2Fdelete")) assertFalse(route, validBusinessPath(route))

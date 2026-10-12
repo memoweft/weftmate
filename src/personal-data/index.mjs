@@ -152,6 +152,7 @@ export function createDataControls(context) {
     yield { name: 'usage/ledger.json', content: context.usage.exportAccount(owner), category: 'memory' };
     const healthFile=path.join(accountRoot(owner),'health','daily-summaries.json');await assertAccountPath(accountRoot(owner),healthFile);
     const health=await readFile(healthFile,'utf8').catch(error=>{if(error.code==='ENOENT')return null;throw error;});if(health)yield{name:'health/daily-summaries.json',content:JSON.parse(health),category:'memory'};
+    if(context.healthRecords)yield{name:'health/daily-records.json',content:await context.healthRecords.read(owner),category:'memory'};
     let cursor;
     do {
       const params = new URLSearchParams({ limit: '200', ...(cursor ? { cursor } : {}) }), page = await context.library.list(owner, params);
@@ -185,6 +186,7 @@ export function createDataControls(context) {
     const hasMemoryFile=await lstat(path.join(accountRoot(owner),'memory-home','memoweft','memoweft.sqlite3')).catch(error=>{if(error.code==='ENOENT')return null;throw error;});
     if(hasMemoryFile && (!context.memoryManager?.enabled || typeof context.memoryManager.eraseAccount!=='function')){op.category='memory';throw failure('MEMORY_DELETE_UNAVAILABLE',503);}
     signal.throwIfAborted(); op.committed=true;erasing.add(owner);
+    await context.healthInsights?.drain(owner);
     await context.serial(() => context.mutate(owner, next => {
       next.dataErasure = { operationId: op.id, kind, startedAt: new Date(context.timestamp()).toISOString() };
       if (next.memoryBackfillJob) next.memoryBackfillJob.state = 'cancelled';

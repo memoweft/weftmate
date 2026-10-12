@@ -135,6 +135,6 @@ export function describeTool(name, value) {
     ask_user_question: '请求补充信息', load_tools: '准备可用工具',
     get_goal: '查看任务目标', create_goal: '建立任务目标', update_goal: '更新任务目标',
     run_code: '运行脚本', job_output: '查看后台命令输出', job_list: '查看后台命令', job_kill: '结束后台命令',
-    schedule_create: '建立定时安排', schedule_list: '查看定时安排', schedule_delete: '删除定时安排', schedule_manage: '管理定时安排',
+    schedule_create: '建立定时安排', schedule_list: '查看定时安排', schedule_delete: '删除定时安排', schedule_manage: '管理定时安排', health_query: '查看健康趋势',
     enter_plan_mode: '开始规划', exit_plan_mode: '提交执行计划', weftmod_script: '操作电脑应用' })[name] ?? '调用扩展服务'
 }
