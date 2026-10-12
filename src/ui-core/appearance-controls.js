@@ -12,10 +12,12 @@
     function mount(target, options) {
         target.classList.add('appearance-page');
         const controls = new Map();
+        let motion, reset, motionHelp;
         const sync = () => {
             const value = options.get();
             for (const [key, control] of controls) { control.value = value[key]; control.dispatchEvent(new Event('weft:sync')); }
             for (const button of modes.children) button.setAttribute('aria-pressed', String(button.dataset.value === value.theme));
+            if (options.onlyTheme) return;
             motion.checked = !!globalThis.WeftReplyMotion?.reduced;
             reset.disabled = globalThis.WeftReplyMotion?.preference === 'system';
             motionHelp.textContent = reset.disabled ? '跟随系统；手动切换后以你的选择为准。' : '使用你的选择；可恢复跟随系统。';
@@ -39,11 +41,12 @@
             buttons[next].focus(); buttons[next].click();
         });
         const modeRow = WeftSettingsControls.row('颜色模式', '选择适合当前环境的颜色模式。', modes); modeRow.classList.add('appearance-mode-row'); target.append(modeRow);
-        const motion = node('input'); motion.type = 'checkbox'; motion.id = 'appearance-reduced-motion'; motion.setAttribute('aria-label', '减少动态效果'); WeftSettingsControls.toggle(motion);
+        if (options.onlyTheme) { sync(); mounted.add({target,sync,connected:target.isConnected}); return; }
+        motion = node('input'); motion.type = 'checkbox'; motion.id = 'appearance-reduced-motion'; motion.setAttribute('aria-label', '减少动态效果'); WeftSettingsControls.toggle(motion);
         const motionTarget = node('label', 'appearance-switch-target'); motionTarget.htmlFor = motion.id; motionTarget.append(motion);
-        const motionRow = WeftSettingsControls.row('减少动态效果', '', motionTarget), motionHelp = motionRow.querySelector('p'); motionRow.querySelector('label').htmlFor = motion.id;
+        const motionRow = WeftSettingsControls.row('减少动态效果', '', motionTarget); motionHelp = motionRow.querySelector('p'); motionRow.querySelector('label').htmlFor = motion.id;
         motion.addEventListener('change', () => { globalThis.WeftReplyMotion.setPreference(motion.checked ? 'reduce' : 'full'); sync(); });
-        const reset = node('button', 'button secondary appearance-motion-reset', '恢复跟随系统'); reset.type = 'button';
+        reset = node('button', 'button secondary appearance-motion-reset', '恢复跟随系统'); reset.type = 'button';
         reset.addEventListener('click', () => { globalThis.WeftReplyMotion.setPreference('system'); sync(); }); motionRow.firstChild.append(reset); target.append(motionRow);
         function select(key, label, help, values) {
             const control = node('select'); control.id = 'appearance-' + key; control.setAttribute('aria-label', label);
