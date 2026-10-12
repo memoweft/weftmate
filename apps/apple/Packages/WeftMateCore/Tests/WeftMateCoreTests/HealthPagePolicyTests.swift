@@ -3,7 +3,7 @@ import Testing
 @testable import WeftMateCore
 
 private func pageOverview(_ extras: String = "") throws -> HealthOverview {
-    try JSONDecoder().decode(HealthOverview.self,from:Data(("{\"day\":\"2026-10-12\",\"connected\":true,\"vitals\":{}"+extras+"}").utf8))
+    try JSONDecoder().decode(HealthOverview.self,from:Data(("{\"day\":\"2026-10-12\",\"connected\":true,\"vitals\":[]"+extras+"}").utf8))
 }
 @Test func health4PageVersionAndOptionalCardsFollowHostFields() throws {
     let old=try pageOverview()
