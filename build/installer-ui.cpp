@@ -37,12 +37,23 @@ struct Surface {
   HWND window{}, progress{}, primary{}, secondary{}, headingLabel{}, bodyLabel{}, close{}, change{}, pathLabel{};
   std::wstring title, body;
   int result{}, operation{}, percent{}, focus{};
-  bool prompt{}, message{}, ready{}, hoverPrimary{}, hoverSecondary{}, hoverClose{};
+  bool prompt{}, message{}, ready{}, hoverPrimary{}, hoverSecondary{}, hoverClose{}, fullPathHover{};
   UINT dpi{96};
   HBRUSH background{};
   HFONT heading{}, text{}, small{};
   int px(int x) const { return MulDiv(x, static_cast<int>(dpi), 96); }
 };
+// Reveal the full location in the existing explanatory area: same palette,
+// no native tooltip, extra popup or clipped text over the action buttons.
+static LRESULT CALLBACK pathProc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp,UINT_PTR,DWORD_PTR ref) {
+  auto s=reinterpret_cast<Surface*>(ref);
+  if(msg==WM_MOUSEMOVE) {
+    s->fullPathHover=true;
+    TRACKMOUSEEVENT tracking{sizeof(TRACKMOUSEEVENT),TME_LEAVE,hwnd,0};TrackMouseEvent(&tracking);
+    SetWindowText(s->bodyLabel,selectedDirectory.c_str());
+  } else if(msg==WM_MOUSELEAVE){s->fullPathHover=false;SetWindowText(s->bodyLabel,s->body.c_str());}
+  return DefSubclassProc(hwnd,msg,wp,lp);
+}
 static Surface* progressSurface;
 static UINT surfaceDpi(HWND hwnd) {
   UINT dpi=GetDpiForWindow(hwnd);
@@ -84,7 +95,7 @@ static void drawButton(Surface* s, const DRAWITEMSTRUCT* item) {
     bool heading=item->hwndItem==s->headingLabel, path=item->hwndItem==s->pathLabel;
     auto old=SelectObject(item->hDC,heading?s->heading:s->text);
     SetTextColor(item->hDC,heading?palette().ink:palette().secondary);SetBkMode(item->hDC,TRANSPARENT);
-    RECT r=item->rcItem;std::wstring caption=heading?s->title:s->body;
+    RECT r=item->rcItem;std::wstring caption=heading?s->title:s->fullPathHover?selectedDirectory:s->body;
     if(path){wchar_t value[32768]{};GetWindowText(s->pathLabel,value,32768);caption=value;}
     DrawText(item->hDC,caption.c_str(),-1,&r,path?DT_LEFT|DT_SINGLELINE|DT_PATH_ELLIPSIS|DT_NOPREFIX:DT_LEFT|DT_WORDBREAK|DT_NOPREFIX);SelectObject(item->hDC,old);return;
   }
@@ -378,7 +389,8 @@ extern "C" void __stdcall Ready(HWND parent,const wchar_t* directory,unsigned in
 #ifdef WEFT_QA
   wchar_t local[32768]{};GetEnvironmentVariable(L"LOCALAPPDATA",local,32768);if(_wcsnicmp(display.c_str(),local,wcslen(local))==0)display=L"%LOCALAPPDATA%"+display.substr(wcslen(local));
 #endif
-  s->pathLabel=CreateWindow(L"STATIC",display.c_str(),WS_CHILD|WS_VISIBLE|SS_OWNERDRAW,0,0,0,0,s->window,nullptr,module,nullptr);
+  s->pathLabel=CreateWindow(L"STATIC",display.c_str(),WS_CHILD|WS_VISIBLE|SS_OWNERDRAW|SS_NOTIFY,0,0,0,0,s->window,nullptr,module,nullptr);
+  SetWindowSubclass(s->pathLabel,pathProc,1,reinterpret_cast<DWORD_PTR>(s));
   s->change=CreateWindow(L"BUTTON",tr(L"更改",L"Change"),WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,s->window,reinterpret_cast<HMENU>(81),module,nullptr);
   s->primary=CreateWindow(L"BUTTON",tr(L"安装",L"Install"),WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,s->window,reinterpret_cast<HMENU>(80),module,nullptr);
   SetWindowSubclass(s->primary,buttonProc,1,reinterpret_cast<DWORD_PTR>(s));
@@ -427,6 +439,24 @@ static bool runningIn(const wchar_t* directory) {
 extern "C" int __stdcall WaitForApp(const wchar_t* directory) {
   while(runningIn(directory)) { if(prompt(tr(L"先关闭正在运行的 WeftMate",L"Close WeftMate to continue"),tr(L"WeftMate 还在使用程序文件。请保存正在做的事情并退出程序，然后点“重试”。对话和数据会保留。",L"WeftMate is still using its program files. Save your work and quit the app, then choose Retry. Conversations and data are kept."),true)!=IDRETRY)return 0; }
   return 1;
+}
+extern "C" int __stdcall QuitApp(const wchar_t* directory,const wchar_t* executable,int) {
+  if(!runningIn(directory))return 1;
+  // Older versions do not understand --quit; launching them would show a window.
+  if(GetFileAttributes((std::wstring(directory)+L"\\resources\\weftmate-install.json").c_str())==INVALID_FILE_ATTRIBUTES)return 0;
+  std::wstring file=std::wstring(directory)+L"\\"+executable;
+  std::wstring command=L"\""+file+L"\" --quit";
+  STARTUPINFO startup{};startup.cb=sizeof(startup);startup.dwFlags=STARTF_USESHOWWINDOW;startup.wShowWindow=SW_HIDE;
+  PROCESS_INFORMATION process{};
+  if(!CreateProcess(file.c_str(),command.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW,nullptr,nullptr,&startup,&process))return 0;
+  CloseHandle(process.hThread);
+  DWORD waited=WaitForSingleObject(process.hProcess,21000),code=1;
+  if(waited==WAIT_OBJECT_0)GetExitCodeProcess(process.hProcess,&code);
+  CloseHandle(process.hProcess);
+  if(code!=0)return 0;
+  // Electron's auxiliary processes can finish just after the durable reply.
+  for(int i=0;i<20&&runningIn(directory);i++)Sleep(100);
+  return runningIn(directory)?0:1;
 }
 extern "C" void __stdcall CleanupWarning() {
   prompt(tr(L"程序清理未完成",L"App cleanup could not finish"),tr(L"你的数据已保留。请关闭 WeftMate 后重新安装，再尝试卸载；也可以在设置里关闭开机自启。",L"Your data is kept. Close WeftMate, reinstall and retry uninstalling. You can also disable launch at login in Settings."),false,false);

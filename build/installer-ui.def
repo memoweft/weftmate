@@ -9,6 +9,7 @@ EXPORTS
   Attach=_Attach@8
   Confirm=_Confirm@8
   WaitForApp=_WaitForApp@4
+  QuitApp=_QuitApp@12
   CleanupWarning=_CleanupWarning@0
   Shutdown=_Shutdown@0
   Launch=_Launch@8

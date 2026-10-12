@@ -9,12 +9,14 @@ import { randomUUID } from 'node:crypto';
 import { atomicJson } from './store.mjs';
 import { copyPhysicalTree, removePhysicalTree, copyPhysicalFile } from './physical-copy.mjs';
 import packageInfo from '../../package.json' with { type: 'json' };
+import { installationScope } from '../desktop-installation.mjs';
 const controlAppData = () => packageInfo.desktopIdentity ? join(app.getPath('appData'), packageInfo.desktopIdentity) : app.getPath('appData');
 
 export const rollbackRoot = appData => join(appData, 'WeftMate', 'app-recovery');
 export async function prepareAppRollback({ configFile, nextVersion, appData = app.getPath('appData'),
   timeoutMs = 180000, cacheDirectory, installer, installerSha256 }) {
   if (!app.isPackaged || process.platform !== 'win32') throw new Error('APP_RECOVERY_REQUIRES_WINDOWS_PACKAGE');
+  if (installationScope() === 'all') throw new Error('APP_UPDATE_REQUIRES_INTERACTIVE_INSTALLER');
   const root = rollbackRoot(appData), snapshot = join(root, randomUUID());
   await mkdir(snapshot, { recursive: true });
   const installation = dirname(process.execPath);

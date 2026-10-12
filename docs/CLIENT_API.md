@@ -459,7 +459,7 @@ UPD-1 / D32：新版 `/app/manifest` 在上述兼容字段上增加统一签名�
 
 下载按本设备的逐文件大小 / 哈希复用内置或活动版本；全部验证后才更新待应用指针，不留下部分更新。桌面下次打开窗口且任务空闲、无未发送草稿时切换，启动自检失败 / 崩溃恢复上一完整版本并记录失败身份。手机沿用原生下载、暂存、空闲切换和启动失败回退机制。版本目录属于 `userData`（用户数据目录）或手机私有目录，业务数据和凭据不进入版本包。
 
-桌面“关于”接入 `src/ui-core/update.js` 的 `readUpdateState()`、`checkUpdates()`、`restartForUpdate()`；这些是本机窗口的 IPC（进程间通信）动作，不新增远程安装权限或业务 HTTP（网络协议）路由。响应 `{layers:[{layer,currentVersion,availableVersion,status,error,channel}],canRestart}`；`status` 包含检查 / 下载 / 就绪 / 失败状态，手机宿主发布版本标 `scope=host-published`，手机设备本身的安装版本由原生状态返回。程序本体须先核签清单、再核对下载的安装包，用户明确重启且任务空闲才安装；正式发布源与代码签名交 UPD-3。
+桌面“关于”接入 `src/ui-core/update.js` 的 `readUpdateState()`、`checkUpdates()`、`restartForUpdate()`；这些是本机窗口的 IPC（进程间通信）动作，不新增远程安装权限或业务 HTTP（网络协议）路由。响应 `{layers:[{layer,currentVersion,availableVersion,status,error,channel}],canRestart,manualInstall?}`；`status` 包含检查 / 下载 / 就绪 / 失败状态，手机宿主发布版本标 `scope=host-published`，手机设备本身的安装版本由原生状态返回。程序本体须先核签清单、再核对下载的安装包，用户明确重启且任务空闲才安装；正式发布源与代码签名交 UPD-3。Windows 所有用户安装返回 `manualInstall:true`，已下载状态提供“打开安装包”；调用既有更新动作定位已核验的安装包并返回 `{restarted:false,reason}`，提示按安装包完成更新，不关闭程序或启动自动更新监护。旧客户端可忽略此可选字段；没有新增 HTTP 路由。
 
 #### UPD-2 Apple 关于页只读版本状态
 
