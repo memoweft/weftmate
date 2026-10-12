@@ -271,12 +271,34 @@ private struct SettingsCategoryView: View {
             .formStyle(.grouped)
         }
     }
+    private var systemDescription: String {
+        #if os(iOS)
+        "电脑上的 WeftMate 报告的状态。"
+        #else
+        "电脑上的 WeftMate 报告的状态；重启可能中断当前任务。"
+        #endif
+    }
+    @ViewBuilder private var backgroundFallbackRow: some View {
+        #if os(iOS)
+        if let fallback=settings.backgroundModelFallback {
+            HStack {
+                Text("后台模型不可用，已改用聊天模型").fixedSize(horizontal:false,vertical:true)
+                Spacer()
+                Button("改回") { Task { await settings.saveBackgroundModel(fallback.profileId) } }.disabled(settings.busy).accessibilityIdentifier("settings.backgroundModel.restore")
+            }.accessibilityIdentifier("settings.backgroundModel.fallback")
+        }
+        #endif
+    }
     @ViewBuilder private var fields: some View {
         switch route.categoryID {
+        case "healthData":
+            #if os(iOS)
+            DailyHealthSettingsRow(app:app,showsReview:false)
+            HealthAISettingsRow(app:app)
+            #endif
         case "general":
             #if os(iOS)
-            DailyHealthSettingsRow(app: app)
-            HealthAISettingsRow(app:app)
+            DailyHealthSettingsRow(app: app,showsHealth:false)
             #endif
             SettingsRow("回复进行中时发送的消息", "按账户保存在这台设备。") {
                 Picker("回复进行中时发送的消息", selection: Binding(get: { app.runningMessageMode }, set: { app.runningMessageMode = $0 })) {
@@ -328,6 +350,7 @@ private struct SettingsCategoryView: View {
             SettingsRow("主模型", "新对话创建时选择，已有对话保留原模型。") { Text("按对话选择").foregroundStyle(Weave.muted) }
             SettingsRow("后台模型", "标题与记忆整理等后续后台请求使用此模型。") {
                 #if os(macOS)
+                backgroundFallbackRow
                 Picker("后台模型", selection: Binding(get: { settings.backgroundModelID }, set: { id in Task { await settings.saveBackgroundModel(id) } })) {
                     Text("跟随主模型").tag("")
                     ForEach(settings.models.filter(\.configured)) { Text($0.name).tag($0.id) }
@@ -377,14 +400,17 @@ private struct SettingsCategoryView: View {
             Button { Task { await settings.refresh("schedules") } } label: { WeftIcon("sync") }.accessibilityLabel("刷新提醒").buttonStyle(.borderless).disabled(settings.busy)
         case "system":
             ForEach(HostService.allCases) { service in
-                SettingsRow(service.title, "电脑上的 WeftMate 报告的状态；重启可能中断当前任务。") {
+                SettingsRow(service.title, systemDescription) {
                     VStack(alignment: .trailing, spacing: AppleTokens.Space.p5) {
                         Text(settings.status?.service(service).title ?? "尚未读取")
                         if let version = settings.status?.service(service).version { Text(version).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+                        #if os(macOS)
                         Button("重启修复") { restartingService = service }.disabled(settings.busy || settings.status?.service(service).canRestart != true)
+                        #endif
                     }
                 }
             }
+            backgroundFallbackRow
             Button("刷新系统状态") { Task { await settings.refresh("system") } }.disabled(settings.busy)
         case "backups":
             if let preferences = settings.backupPreferences {

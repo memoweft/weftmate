@@ -1,0 +1,6 @@
+{
+  "newGpuRestartReports": 1,
+  "wholeMachineRestartObserved": false,
+  "reportedAfterFirstBatch": true,
+  "secondBatchWaitsAtLeastTenMinutes": true
+}

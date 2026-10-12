@@ -3,13 +3,13 @@ import Testing
 @testable import WeftMateCore
 
 private func pageOverview(_ extras: String = "") throws -> HealthOverview {
-    try JSONDecoder().decode(HealthOverview.self,from:Data(("{\"day\":\"2026-10-12\",\"connected\":true,\"vitals\":{}"+extras+"}").utf8))
+    try JSONDecoder().decode(HealthOverview.self,from:Data(("{\"day\":\"2026-10-12\",\"connected\":true,\"vitals\":[]"+extras+"}").utf8))
 }
 @Test func health4PageVersionAndOptionalCardsFollowHostFields() throws {
     let old=try pageOverview()
     #expect(HealthPagePolicy.recordVersion(old.capabilities)==2)
     #expect(HealthPagePolicy.visibleOptionalCards(old).isEmpty)
-    let current=try pageOverview(",\"capabilities\":{\"record\":3,\"profile\":true},\"stress\":{\"score\":35},\"energy\":{\"score\":72},\"fitnessAge\":{\"value\":34}")
+    let current=try pageOverview(",\"capabilities\":{\"record\":3,\"profile\":true},\"stress\":{\"score\":35},\"energy\":{\"score\":72},\"fitnessAge\":{\"fitnessAge\":34}")
     #expect(HealthPagePolicy.recordVersion(current.capabilities)==3)
     #expect(HealthPagePolicy.visibleOptionalCards(current)==["stress","energy","fitnessAge"])
     #expect(HealthPagePolicy.visibleOptionalCards(try pageOverview(",\"stress\":null,\"energy\":null,\"fitnessAge\":null")).isEmpty)
