@@ -12,17 +12,17 @@ globalThis.WeftUiComponents.factories.mobileRefresh=(core,ui)=>({mountMobileRefr
     ui.paintConnection=(...args)=>{const result=paintConnection(...args);const view=core.connectionView();status.textContent=view.kind==='online'?'已连接':view.label;return result;};
     status.textContent=core.connectionView().kind==='online'?'已连接':core.connectionView().label;
     const tabs=ui.element('nav','remote-mobile-tabs');tabs.setAttribute('aria-label','手机主导航');tabs.setAttribute('role','tablist');
-    const actions={chat:()=>core.selectMainChat(),activity:()=>ui.openActivity(),goals:()=>ui.openGoals(),library:()=>ui.openLibrary()};
-    for(const [id,name,icon] of [['chat','聊天','chat'],['activity','动态','bell'],['goals','目标','approval'],['library','成果库','folder']]){
+    const actions={health:()=>ui.openHealth(),chat:()=>core.selectMainChat(),activity:()=>ui.openActivity(),goals:()=>ui.openGoals(),library:()=>ui.openLibrary()};
+    for(const [id,name,icon] of [['chat','聊天','chat'],['activity','动态','bell'],...(WeftHealth.showHealthBottomTab?[['health','健康','health']]:[]),['goals','目标','approval'],['library','成果库','folder']]){
         const button=ui.element('button','remote-mobile-tab');button.type='button';button.id=`remote-tab-${id}`;button.dataset.tab=id;button.setAttribute('role','tab');button.setAttribute('aria-label',name);
         const panel=id==='chat'?ui.byId('conversation-pane'):document.querySelector(`.${id}-surface`);if(panel){panel.id ||= `remote-panel-${id}`;button.setAttribute('aria-controls',panel.id);}
         button.append(WeftIcons.create(icon,22),ui.element('span','',name));button.onclick=()=>{void actions[id]();};tabs.append(button);
     }
-    ui.byId('assistant-view').querySelector('.assistant-main').append(tabs);
-    tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.children],i=buttons.indexOf(document.activeElement),next=buttons[event.key==='Home'?0:event.key==='End'?3:(i+(event.key==='ArrowLeft'?-1:1)+4)%4];next.focus();next.click();});
+    tabs.style.setProperty('--mobile-tab-count',String(tabs.children.length));ui.byId('assistant-view').querySelector('.assistant-main').append(tabs);
+    tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.children],i=buttons.indexOf(document.activeElement),next=buttons[event.key==='Home'?0:event.key==='End'?buttons.length-1:(i+(event.key==='ArrowLeft'?-1:1)+buttons.length)%buttons.length];next.focus();next.click();});
     let restHeight=innerHeight;
     const sync=()=>{
-        const name=document.body.classList.contains('activity-open')?'activity':document.body.classList.contains('goals-open')?'goals':document.body.classList.contains('library-open')?'library':'chat';
+        const name=document.body.classList.contains('health-open')?'health':document.body.classList.contains('activity-open')?'activity':document.body.classList.contains('goals-open')?'goals':document.body.classList.contains('library-open')?'library':'chat';
         const height=visualViewport?.height||innerHeight,editing=/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName);
         if(!editing)restHeight=height;
         tabs.hidden=ui.byId('assistant-view').hidden||editing&&height<restHeight-100||name==='chat'&&!core.inMainChat();
