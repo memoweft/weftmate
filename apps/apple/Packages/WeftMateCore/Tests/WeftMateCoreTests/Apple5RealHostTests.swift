@@ -41,6 +41,19 @@ func apple5RealPersonalHostHealthAndFeatureHTTP() async throws {
     let suggestion=try #require(changed.insight?.suggestions.first { $0.reminder != nil })
     try await client.remindHealthSuggestion(suggestion.id,requestID:"apple5-no-conversation")
     try await client.remindHealthSuggestion(suggestion.id,requestID:"apple5-no-conversation")
+    _=try await client.healthPageSettings(enabled:true)
+    let pending=Task { try await client.healthAnalysis(scope:"vital:hrvSdnnMs",day:config.day) }
+    try await Task.sleep(for:.milliseconds(200))
+    today.steps=(today.steps ?? 0)+1
+    try await client.putDailyHealth(day:config.day,health:today,account:account)
+    await #expect(throws:APIFailure.server(status:409,code:"HEALTH_DATA_CHANGED")) { _=try await pending.value }
+    var limitReached=false
+    for record in config.records.suffix(45) {
+        do { _=try await client.healthAnalysis(scope:"vital:restingHeartRateBpm",day:record.day) }
+        catch APIFailure.server(status:429,code:"AI_ANALYSIS_LIMIT") { limitReached=true; break }
+    }
+    #expect(limitReached)
+    _=try await client.healthPageSettings(enabled:false)
     // Dynamic read/mark-read is handled by the real account activity store.
     let activity=try await client.phoneActivity()
     let unread=try #require(activity.items.first { !$0.read })
@@ -75,7 +88,6 @@ private actor Apple5HTTPTransport: HTTPTransport {
     func send(_ request: URLRequest) async throws -> HTTPResponse {
         let result=try await base.send(request)
         print("APPLE5_HTTP", request.httpMethod ?? "GET", request.url?.path ?? "", result.status)
-        if request.url?.path.hasSuffix("/health/overview") == true { do { _ = try JSONDecoder().decode(HealthOverview.self,from:result.body) } catch { print("APPLE5_DECODE",error) } }
         return result
     }
 }

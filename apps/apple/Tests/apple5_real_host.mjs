@@ -33,7 +33,7 @@ const backend={
         if(input.action==='create'){const prompt=JSON.parse(input.prompt);const item={id:'apple5-health-reminder-'+(++scheduleCreates),sessionId:input.sessionId,text:prompt.text,kind:prompt.kind,timeZone:'UTC',state:'active',createdAt:day+'T08:00:00.000Z',nextRunAt:day+'T15:00:00Z',revision:1,lastResult:{state:'delivered'}};schedules.set(item.id,item);return {item};}
         const item=schedules.get(input.id);if(item&&input.action==='pause')item.state='paused';if(item&&input.action==='resume')item.state='active';if(input.action==='delete')schedules.delete(input.id);return {ok:true};
     },
-    modelCompletion:async input=>{modelCalls++;return Response.json({choices:[{message:{content:JSON.stringify({text:'汇总数字已整理，可以按自己的节奏安排。',points:[],basis:JSON.parse(input.body.messages[1].content).basis})}}]});},
+    modelCompletion:async input=>{modelCalls++;if(JSON.parse(input.body.messages[1].content).scope==='vital:hrvSdnnMs')await new Promise(resolve=>setTimeout(resolve,800));return Response.json({choices:[{message:{content:JSON.stringify({text:'汇总数字已整理，可以按自己的节奏安排。',points:[],basis:JSON.parse(input.body.messages[1].content).basis})}}]});},
 };
 let service=await createPersonalAccessService({root,port:0,backend,clock:()=>now});
 let {origin}=await service.start();const grant=await service.issueSetupGrant();
