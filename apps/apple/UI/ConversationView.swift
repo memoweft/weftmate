@@ -83,6 +83,7 @@ struct ConversationView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var draftFocused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var visibleMessageID: String?
     @State private var follow = ConversationFollowState()
     @State private var viewportHeight: CGFloat = 0
@@ -92,6 +93,12 @@ struct ConversationView: View {
     @State private var dictationPopover = false
     @State private var previousTailID: String?
     @State private var composerIdentity = UUID()
+    @State private var decisionJump = 0
+    @State private var latestJump = 0
+    @State private var decisionVisible = false
+    @State private var atBottom = true
+    @State private var revealDecision = false
+    @StateObject private var phonePositions = MainChatPositionTracker()
     @State private var resourcePopover = false
     @State private var showingUsage = false
     @State private var showingModels = false
@@ -246,6 +253,7 @@ struct ConversationView: View {
         }
         #endif
         ScrollViewReader { proxy in
+            VStack(spacing:AppleTokens.Space.p0) {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
                     SideChatSourceView(app: model, conversation: conversation)
@@ -283,7 +291,7 @@ struct ConversationView: View {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
                         ConversationTimelineView(appModel: model, conversation: conversation, sessionID: sessionID, interactions: interactions, openAttachment: openAttachment, openArtifact: openArtifact, openMemory: { event in
                             endDraftFocus(); closePreview(); resources.open(.memory(event.seq, UsedMemory.references(in: event)))
-                        }, openSources: { resources.visible = true; resources.showingList = true })
+                        }, openSources: { resources.visible = true; resources.showingList = true },onDecisionPosition:trackPhonePosition)
                             .id(sessionID + model.accountEpoch.uuidString)
                         }
                     } else {
@@ -298,9 +306,14 @@ struct ConversationView: View {
                                 .font(AppleTokens.Fonts.body).foregroundStyle(Weave.muted).accessibilityIdentifier("processingLine")
                         }
                     }
+                    #if os(iOS)
+                    if !model.timeline.events.contains(where: { $0.type.hasPrefix("approval.") || $0.type.hasPrefix("question.") }) { PhonePendingDecision(model:interactions,events:model.timeline.events).id("phone.pendingDecision")
+                        .background(MainChatEventPosition(eventID:"phone.pendingDecision",onPosition:trackPhonePosition)) }
+                    #endif
                     commandStatusCards
                     adoptionStatusCards
                     AppleTokens.Colors.clear.frame(height: 1).id("latest")
+                        .background(MainChatEventPosition(eventID:"phone.end",onPosition:trackPhonePosition))
                 }
                 .background(MainChatEventPosition(eventID: "conversation-content") { _, rect, height, _ in
                     guard let rect, contentHeight != rect.height || viewportHeight != height else { return }
@@ -317,6 +330,7 @@ struct ConversationView: View {
         }
             .onChange(of: model.preparingMessages) { _, _ in if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) } }
             .onChange(of: conversation.processing) { _, _ in waitingSince = Date() }
+            #if os(macOS)
             .overlay(alignment: .bottomTrailing) {
                 if !follow.following {
                     Button { follow.returnToBottom(); proxy.scrollTo("latest", anchor: .bottom) } label: {
@@ -329,6 +343,17 @@ struct ConversationView: View {
                         .buttonStyle(OutlineActionStyle()).phoneIcon().padding(AppleTokens.Space.p12).accessibilityIdentifier("returnToBottom")
                 }
             }
+            #endif
+            .onChange(of:decisionJump) { _,_ in
+                let id=interactions.pendingApprovals.first?.id
+                if let entry=TimelineProjection.entries(model.timeline.events).first(where:{$0.event.data["approvalId"]?.string == id && id != nil || $0.event.type.hasPrefix("question.") && !interactions.pendingQuestions.isEmpty}) { proxy.scrollTo(entry.id,anchor:.bottom) }
+                else { proxy.scrollTo("phone.pendingDecision",anchor:.bottom) }
+            }
+            #if os(iOS)
+            .onChange(of:latestJump) { _,_ in follow.returnToBottom(); proxy.scrollTo("latest",anchor:.bottom) }
+            .task(id:pendingDecisionID) { guard pendingDecisionID != nil else { return }; draftFocused=false; follow.returnToBottom(); revealDecision=true; await Task.yield(); await Task.yield(); decisionJump += 1 }
+            .onChange(of:viewportHeight) { _,_ in if revealDecision { decisionJump += 1; revealDecision=false } else if follow.following { proxy.scrollTo("latest",anchor:.bottom) } }
+            #endif
             .onChange(of: model.sourceMessageTarget) { _, seq in
                 if let seq { follow.userScrolled(distanceFromBottom: 100); proxy.scrollTo("event-\(seq)", anchor: .center) }
             }
@@ -338,7 +363,9 @@ struct ConversationView: View {
             #if os(iOS)
             .scrollDismissesKeyboard(.interactively)
             #endif
+            #if os(macOS)
             .safeAreaInset(edge: .bottom, spacing: AppleTokens.Space.p0) { composer.id(composerIdentity) }
+            #endif
             #if DEBUG
             .onChange(of: model.timeline.events.count) { _, _ in
                 let args = ProcessInfo.processInfo.arguments
@@ -356,6 +383,10 @@ struct ConversationView: View {
                 #endif
                 previousTailID = TimelineProjection.entries(model.timeline.events).last?.id ?? model.messages.last?.id
                 if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) }
+            }
+            #if os(iOS)
+            composer.id(composerIdentity)
+            #endif
             }
         }
         }
@@ -511,6 +542,165 @@ struct ConversationView: View {
         }
     }
 
+    private var composerTools: some View {
+        let accountEpoch=model.accountEpoch
+        let key=AppleAppModel.draftKey(for:conversation)
+        return
+                HStack(spacing: AppleTokens.Space.p4) {
+                    Menu {
+                        if model.mainChat.capabilities.supports("sideChats") {
+                            Button("开旁聊", image: ImageResource(name: "wm-chat", bundle: .main)) { Task { await model.mainChat.createSide(sourceConversation: conversation) } }
+                                .disabled(conversation.temporaryState.hasTemporaryContent)
+                        }
+                        if model.mainChat.capabilities.supports("temporaryChats") {
+                            Toggle(isOn: Binding(get: { conversation.temporaryState.memoryMode == "off" }, set: { enabled in
+                                Task {
+                                    if enabled { await model.mainChat.createSide(temporary: true, sourceConversation: conversation) }
+                                    else { await model.mainChat.temporarySetting(conversation, fields: ["memoryMode": .string("on")]) }
+                                }
+                            })) { Label("这次别记", image: "wm-memory") }
+                        }
+                        #if os(macOS)
+                        Button("添加文件", image: ImageResource(name: "wm-file", bundle: .main)) { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
+                        Button("区域截图", image: ImageResource(name: "wm-desktop", bundle: .main)) { addNativeMedia(screenshot: true) }.accessibilityIdentifier("composer.screenshot")
+                        Button("粘贴剪贴板图片", image: ImageResource(name: "wm-copy", bundle: .main)) { addNativeMedia(screenshot: false) }.accessibilityIdentifier("composer.clipboard")
+                        #else
+                        Button("相机", image: ImageResource(name: "wm-camera", bundle: .main)) {
+                            importScope = model.uxScope
+                            if UIImagePickerController.isSourceTypeAvailable(.camera) { showingCamera = true }
+                            else { attachmentInputError = "相机暂不可用，可从照片或文件添加。" }
+                        }.accessibilityIdentifier("composer.camera")
+                        Button("照片", image: ImageResource(name: "wm-image", bundle: .main)) { importScope = model.uxScope; showingPhotos = true }.accessibilityIdentifier("composer.photos")
+                        Button("文件", image: ImageResource(name: "wm-file", bundle: .main)) { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
+                        #endif
+                        #if DEBUG
+                        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--a15-synthetic-media") {
+                            Button("添加合成文件", image: ImageResource(name: "wm-file", bundle: .main)) {
+                                let scope = model.uxScope
+                                if let file = try? AppleContractUIFixture.selectedFile() { Task { await model.addAttachments([file], to: conversation, accountEpoch: scope.epoch) } }
+                            }.accessibilityIdentifier("composer.syntheticFile")
+                        }
+                        #endif
+                        if model.thinking.confirmed?.supported == true {
+                            Toggle(isOn: Binding(get: { model.thinking.confirmed?.enabled == true }, set: { value in
+                                Task { await model.refreshThinking(conversation, enabled: value) }
+                            })) { Label("深入思考", image: "wm-model") }
+                                .disabled(model.thinking.pending).accessibilityValue(model.thinking.confirmed?.enabled == true ? "已开启" : "已关闭")
+                                .accessibilityIdentifier("composer.thinking")
+                        }
+                    } label: { WeftIcon("plus").frame(width: 44, height: 44).phoneMenuLabel(circle: true, onCard: true) }
+                    #if os(macOS)
+                    .menuIndicator(.hidden).menuStyle(.borderlessButton)
+                    #endif
+                    .phoneIcon().phoneComposerControl(circle: true).disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
+                    .accessibilityIdentifier("addAttachmentButton")
+                    if !dynamicTypeSize.isAccessibilitySize && composerExpanded { composerApprovalMode(accountEpoch: accountEpoch) }
+                    if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
+                    Spacer(minLength: AppleTokens.Space.p4)
+                    #if os(macOS)
+                    if let usage = conversation.contextUsage {
+                        Button { contextPopover.toggle() } label: {
+                            ZStack {
+                                Circle().stroke(Weave.line, lineWidth: AppleTokens.Space.p2)
+                                if let value = usage.fraction { Circle().trim(from: 0, to: min(1, value)).stroke(usage.warning ? Weave.danger : Weave.muted, style: StrokeStyle(lineWidth: AppleTokens.Space.p2, lineCap: .round)).rotationEffect(.degrees(-90)) }
+                            }.frame(width: AppleTokens.Space.p18, height: AppleTokens.Space.p18).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44)
+                        }.buttonStyle(.plain).accessibilityLabel(usage.label).accessibilityIdentifier("contextUsage")
+                            .help(usage.label).popover(isPresented: $contextPopover) { Text(usage.label).font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
+                    }
+                    #endif
+                    if composerExpanded {
+                    Menu {
+                        Text(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型")
+                        Button("配置模型") {
+                            #if os(macOS)
+                            model.settingsRoute = .init(categoryID: "models"); openWindow(id: "settings")
+                            #else
+                            showingModels = true
+                            #endif
+                        }
+                    } label: {
+                        #if os(macOS)
+                        Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1)
+                        #else
+                        HStack(spacing: AppleTokens.Space.p3) { Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1); WeftIcon("chevron", size: 12) }.phoneMenuLabel(onCard: true)
+                        #endif
+                    }
+                    #if os(macOS)
+                    .menuStyle(.borderlessButton)
+                    #endif
+                    #if os(iOS)
+                    .buttonStyle(PhoneActionStyle()).phoneComposerControl()
+                    #endif
+                    .font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择").accessibilityIdentifier("composerModel")
+                    }
+                    if showsSmallMic {
+                    Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic", size: AppleTokens.Space.p16).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44) }
+                        .buttonStyle(.plain).phoneIcon(quiet: true).accessibilityLabel("语音输入")
+                    }
+                #if os(iOS)
+                    if composerExpanded, let usage = conversation.contextUsage {
+                        Button { contextPopover.toggle() } label: {
+                            ZStack {
+                                Circle().stroke(Weave.line, lineWidth: AppleTokens.Space.p2)
+                                if let value = usage.fraction { Circle().trim(from: 0, to: min(1, value)).stroke(usage.warning ? Weave.danger : Weave.muted, style: StrokeStyle(lineWidth: AppleTokens.Space.p2, lineCap: .round)).rotationEffect(.degrees(-90)) }
+                            }.frame(width: AppleTokens.Space.p18, height: AppleTokens.Space.p18).phoneMenuLabel(circle: true, onCard: true)
+                        }.buttonStyle(.plain).phoneIcon(quiet: true).accessibilityLabel(usage.label).accessibilityIdentifier("contextUsage")
+                            .help(usage.label).popover(isPresented: $contextPopover) { Text(usage.label).font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
+                    }
+                #endif
+                    let action = ComposerAction.resolve(running: model.tasksAvailable(conversation) && conversation.running, text: draft.wrappedValue, attachments: !(model.attachmentDrafts[key] ?? []).isEmpty)
+                    #if os(iOS)
+                    let voice=PhoneComposerPrimaryAction.resolve(running:conversation.running,draft:draft.wrappedValue,attachmentCount:(model.attachmentDrafts[key] ?? []).count) == .voice
+                    #else
+                    let voice=false
+                    #endif
+                    Button {
+                        if voice { draftFocused=true; dictationPopover=true } else if action == .stop { Task { await model.stopActiveTask() } }
+                        else { Task { await model.send(conversation, accountEpoch: accountEpoch) } }
+                    } label: { WeftIcon(action == .stop ? "stop" : voice ? "mic" : "send").frame(width: AppleTokens.Space.p20, height: AppleTokens.Space.p44) }
+                        .buttonStyle(PrimaryActionStyle(fillsWidth: false)).phoneIcon(primary: true).tint(Weave.accent)
+                        .disabled(action == .stop ? model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil : !voice && !model.canSend(conversation))
+                        .accessibilityLabel(action == .stop ? "停止" : voice ? "语音输入" : "发送").accessibilityIdentifier("sendButton")
+                        .popover(isPresented:$dictationPopover) { Text("使用系统听写输入文字").font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
+                    #if os(macOS)
+                    if model.tasksAvailable(conversation) { Button("停止") { Task { await model.stopActiveTask() } }.keyboardShortcut(.escape, modifiers: []).hidden().frame(width: 0, height: 0) }
+                    #endif
+                }
+    }
+    private var showsSmallMic: Bool {
+        #if os(iOS)
+        !draft.wrappedValue.isEmpty || !(model.attachmentDrafts[AppleAppModel.draftKey(for:conversation)] ?? []).isEmpty
+        #else
+        true
+        #endif
+    }
+    private var pendingDecisionID: String? { interactions.pendingApprovals.first?.id ?? interactions.pendingQuestions.first?.id }
+    private func trackPhonePosition(_ id: String,_ frame: CGRect?,_ height: CGFloat,_ userScrolling: Bool) {
+        #if os(iOS)
+        phonePositions.frames[id]=frame
+        let actualHeight=height>0 ? height : viewportHeight
+        if actualHeight != viewportHeight { viewportHeight=actualHeight }
+        let card=phonePositions.frames["phone.pendingDecision"]
+        let visible=card.map { PhoneChatViewport.intersects(top:Double($0.minY),bottom:Double($0.maxY),height:Double(actualHeight)) } ?? false
+        if visible != decisionVisible { decisionVisible=visible }
+        let end=phonePositions.frames["phone.end"]
+        let bottom=PhoneChatViewport.atBottom(lastTop:card.map { Double($0.minY) },lastBottom:card.map { Double($0.maxY) },endTop:end.map { Double($0.minY) },endBottom:end.map { Double($0.maxY) },height:Double(actualHeight))
+        if bottom != atBottom { atBottom=bottom }
+        #endif
+    }
+    private var composerExpanded: Bool {
+        #if os(iOS)
+        PhoneComposerState(focused: draftFocused, draft: model.draftText(for: conversation, accountEpoch: model.accountEpoch), attachmentCount: (model.attachmentDrafts[AppleAppModel.draftKey(for: conversation)] ?? []).count).expanded
+        #else
+        true
+        #endif
+    }
+    private var phoneDraftInput: some View {
+        TextField(conversation.running ? (model.runningMessageMode == .queue ? "排队到下一条…" : "引导当前回复…") : "向 WeftMate 说说你的目标",
+            text: draft, axis: .vertical)
+            .lineLimit(1...PhoneComposerState(focused:draftFocused,draft:draft.wrappedValue,attachmentCount:(model.attachmentDrafts[AppleAppModel.draftKey(for:conversation)] ?? []).count).maximumLines).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
+            .focused($draftFocused).disabled(!model.canEditDraft(for: conversation)).accessibilityIdentifier("conversationDraft")
+    }
     private var composer: some View {
         let accountEpoch = model.accountEpoch
         let key = AppleAppModel.draftKey(for: conversation)
@@ -566,12 +756,34 @@ struct ConversationView: View {
                 WeftLabel("深入思考已开启", icon: "model", size: 16).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("thinkingMarker")
             }
             if let error = model.thinkingError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
-            if model.tasksAvailable(conversation) { ConversationApprovalBar(model: interactions, events: model.timeline.events) }
+            if model.tasksAvailable(conversation) {
+                #if os(iOS)
+                if pendingDecisionID != nil && !decisionVisible || !atBottom {
+                    HStack {
+                        if !decisionVisible { PhonePendingDecisionNotice(model:interactions) { draftFocused=false; decisionJump += 1 } }
+                        Spacer()
+                        if !atBottom { Button { draftFocused=false; latestJump += 1 } label: { WeftIcon("chevron") }.phoneIcon().accessibilityLabel("回到底部").accessibilityIdentifier("returnToBottom") }
+                    }
+                }
+                #else
+                ConversationApprovalBar(model: interactions, events: model.timeline.events)
+                #endif
+            }
             else { Text(ProjectPresentation.restrictedNotice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("restrictedSessionNotice") }
             if let notice = conversation.projectNotice ?? model.sessionProjectNotices[conversation.id] ?? conversation.projectName.map({ "项目：" + $0 }) {
                 Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("projectNotice")
             }
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+                #if os(iOS)
+                if let files=model.attachmentDrafts[key],!files.isEmpty {
+                    ScrollView(.horizontal) { HStack(alignment:.top,spacing:AppleTokens.Space.p8) {
+                        ForEach(files) { file in PhoneAttachmentBlock(name:file.original.name,image:file.display,isImage:file.original.isImage,status:model.preparingConversations.contains(key) ? "正在发送…" : attachmentInputError == nil ? nil : "发送未完成",remove:{ model.removeAttachment(file.id,from:conversation,accountEpoch:accountEpoch) }) }
+                    } }.scrollIndicators(.hidden).accessibilityIdentifier("sideChat.attachmentBlocks")
+                }
+                phoneDraftInput.frame(minHeight:AppleTokens.Space.p44)
+                    .padding(.leading,composerExpanded ? AppleTokens.Space.p0 : AppleTokens.Space.p56)
+                    .padding(.trailing,composerExpanded ? AppleTokens.Space.p0 : (!draft.wrappedValue.isEmpty || !(model.attachmentDrafts[key] ?? []).isEmpty ? AppleTokens.Space.p44 * 2 + AppleTokens.Space.p16 : AppleTokens.Space.p44 + AppleTokens.Space.p8))
+                #else
                 HStack(alignment: .top, spacing: AppleTokens.Space.p8) {
                 TextField(conversation.running ? (model.runningMessageMode == .queue ? "排队到下一条…" : "引导当前回复…") : "向 WeftMate 说说你的目标", text: draft, axis: .vertical)
                     .lineLimit(2...6).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
@@ -598,6 +810,8 @@ struct ConversationView: View {
                     }
                 #endif
                 }
+                #endif
+                #if os(macOS)
                 if let files = model.attachmentDrafts[key], !files.isEmpty {
                     ScrollView(.horizontal) {
                         HStack(spacing: AppleTokens.Space.p10) {
@@ -612,113 +826,21 @@ struct ConversationView: View {
                         }
                     }
                 }
-                if dynamicTypeSize.isAccessibilitySize {
+                #endif
+                if dynamicTypeSize.isAccessibilitySize && composerExpanded {
                     composerApprovalMode(accountEpoch: accountEpoch)
                 }
-                HStack(spacing: AppleTokens.Space.p4) {
-                    Menu {
-                        if model.mainChat.capabilities.supports("sideChats") {
-                            Button("开旁聊", image: ImageResource(name: "wm-chat", bundle: .main)) { Task { await model.mainChat.createSide(sourceConversation: conversation) } }
-                                .disabled(conversation.temporaryState.hasTemporaryContent)
-                        }
-                        if model.mainChat.capabilities.supports("temporaryChats") {
-                            Toggle(isOn: Binding(get: { conversation.temporaryState.memoryMode == "off" }, set: { enabled in
-                                Task {
-                                    if enabled { await model.mainChat.createSide(temporary: true, sourceConversation: conversation) }
-                                    else { await model.mainChat.temporarySetting(conversation, fields: ["memoryMode": .string("on")]) }
-                                }
-                            })) { Label("这次别记", image: "wm-memory") }
-                        }
-                        #if os(macOS)
-                        Button("添加文件", image: ImageResource(name: "wm-file", bundle: .main)) { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
-                        Button("区域截图", image: ImageResource(name: "wm-desktop", bundle: .main)) { addNativeMedia(screenshot: true) }.accessibilityIdentifier("composer.screenshot")
-                        Button("粘贴剪贴板图片", image: ImageResource(name: "wm-copy", bundle: .main)) { addNativeMedia(screenshot: false) }.accessibilityIdentifier("composer.clipboard")
-                        #else
-                        Button("相机", image: ImageResource(name: "wm-camera", bundle: .main)) {
-                            importScope = model.uxScope
-                            if UIImagePickerController.isSourceTypeAvailable(.camera) { showingCamera = true }
-                            else { attachmentInputError = "相机暂不可用，可从照片或文件添加。" }
-                        }.accessibilityIdentifier("composer.camera")
-                        Button("照片", image: ImageResource(name: "wm-image", bundle: .main)) { importScope = model.uxScope; showingPhotos = true }.accessibilityIdentifier("composer.photos")
-                        Button("文件", image: ImageResource(name: "wm-file", bundle: .main)) { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
-                        #endif
-                        #if DEBUG
-                        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--a15-synthetic-media") {
-                            Button("添加合成文件", image: ImageResource(name: "wm-file", bundle: .main)) {
-                                let scope = model.uxScope
-                                if let file = try? AppleContractUIFixture.selectedFile() { Task { await model.addAttachments([file], to: conversation, accountEpoch: scope.epoch) } }
-                            }.accessibilityIdentifier("composer.syntheticFile")
-                        }
-                        #endif
-                        if model.thinking.confirmed?.supported == true {
-                            Toggle(isOn: Binding(get: { model.thinking.confirmed?.enabled == true }, set: { value in
-                                Task { await model.refreshThinking(conversation, enabled: value) }
-                            })) { Label("深入思考", image: "wm-model") }
-                                .disabled(model.thinking.pending).accessibilityValue(model.thinking.confirmed?.enabled == true ? "已开启" : "已关闭")
-                                .accessibilityIdentifier("composer.thinking")
-                        }
-                    } label: { WeftIcon("plus").frame(width: 44, height: 44).phoneMenuLabel(circle: true, onCard: true) }
-                    #if os(macOS)
-                    .menuIndicator(.hidden).menuStyle(.borderlessButton)
-                    #endif
-                    .phoneIcon().phoneComposerControl(circle: true).disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
-                    .accessibilityIdentifier("addAttachmentButton")
-                    if !dynamicTypeSize.isAccessibilitySize { composerApprovalMode(accountEpoch: accountEpoch) }
-                    if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
-                    Spacer(minLength: AppleTokens.Space.p4)
-                    #if os(macOS)
-                    if let usage = conversation.contextUsage {
-                        Button { contextPopover.toggle() } label: {
-                            ZStack {
-                                Circle().stroke(Weave.line, lineWidth: AppleTokens.Space.p2)
-                                if let value = usage.fraction { Circle().trim(from: 0, to: min(1, value)).stroke(usage.warning ? Weave.danger : Weave.muted, style: StrokeStyle(lineWidth: AppleTokens.Space.p2, lineCap: .round)).rotationEffect(.degrees(-90)) }
-                            }.frame(width: AppleTokens.Space.p18, height: AppleTokens.Space.p18).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44)
-                        }.buttonStyle(.plain).accessibilityLabel(usage.label).accessibilityIdentifier("contextUsage")
-                            .help(usage.label).popover(isPresented: $contextPopover) { Text(usage.label).font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
-                    }
-                    #endif
-                    Menu {
-                        Text(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型")
-                        Button("配置模型") {
-                            #if os(macOS)
-                            model.settingsRoute = .init(categoryID: "models"); openWindow(id: "settings")
-                            #else
-                            showingModels = true
-                            #endif
-                        }
-                    } label: {
-                        #if os(macOS)
-                        Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1)
-                        #else
-                        HStack(spacing: AppleTokens.Space.p3) { Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1); WeftIcon("chevron", size: 12) }.phoneMenuLabel(onCard: true)
-                        #endif
-                    }
-                    #if os(macOS)
-                    .menuStyle(.borderlessButton)
-                    #endif
-                    #if os(iOS)
-                    .buttonStyle(PhoneActionStyle()).phoneComposerControl()
-                    #endif
-                    .font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择").accessibilityIdentifier("composerModel")
-                    Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic", size: AppleTokens.Space.p16).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44) }
-                        .buttonStyle(.plain).phoneIcon(quiet: true).accessibilityLabel("语音输入").popover(isPresented: $dictationPopover) {
-                            Text("使用系统听写输入文字").font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover)
-                        }
-                    let action = ComposerAction.resolve(running: model.tasksAvailable(conversation) && conversation.running, text: draft.wrappedValue, attachments: !(model.attachmentDrafts[key] ?? []).isEmpty)
-                    Button {
-                        if action == .stop { Task { await model.stopActiveTask() } }
-                        else { Task { await model.send(conversation, accountEpoch: accountEpoch) } }
-                    } label: { WeftIcon(action == .stop ? "stop" : "send").frame(width: AppleTokens.Space.p20, height: AppleTokens.Space.p44) }
-                        .buttonStyle(PrimaryActionStyle(fillsWidth: false)).phoneIcon(primary: true).tint(Weave.accent)
-                        .disabled(action == .stop ? model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil : !model.canSend(conversation))
-                        .accessibilityLabel(action == .stop ? "停止" : "发送").accessibilityIdentifier("sendButton")
-                    #if os(macOS)
-                    if model.tasksAvailable(conversation) { Button("停止") { Task { await model.stopActiveTask() } }.keyboardShortcut(.escape, modifiers: []).hidden().frame(width: 0, height: 0) }
-                    #endif
-                }
+                #if os(macOS)
+                composerTools
+                #endif
             }
             #if os(iOS)
-            .phoneCard()
+            .padding(.bottom,composerExpanded ? AppleTokens.Space.p56 : AppleTokens.Space.p0)
+            .overlay(alignment:.bottom) { composerTools }
+            .phoneComposerCard(expanded: composerExpanded)
+            .animation(reduceMotion ? nil : .easeOut(duration: AppleTokens.Motion.d160ms), value: composerExpanded)
+            .accessibilityElement(children:.contain).accessibilityIdentifier("sideChat.composer")
+            .accessibilityValue(composerExpanded ? "输入区已展开" : "输入区已收起")
             #else
             .padding(AppleTokens.Space.p9)
             .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r16))
@@ -846,6 +968,9 @@ struct MessageView: View {
                 MessageBodyView(text: message.text, messageID: message.id)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            #if os(iOS)
+            if !message.originalAttachments.isEmpty || !message.images.isEmpty {
+            ScrollView(.horizontal) { HStack(alignment:.top,spacing:AppleTokens.Space.p8) {
             ForEach(message.originalAttachments) { attachment in
                 ConversationAttachmentTile(model: model, reference: .original(attachment)) { openAttachment(.original(attachment)) }
             }
@@ -857,6 +982,21 @@ struct MessageView: View {
                     }
                 }
             }
+            } }.scrollIndicators(.hidden)
+            }
+            #else
+            ForEach(message.originalAttachments) { attachment in
+                ConversationAttachmentTile(model: model, reference: .original(attachment)) { openAttachment(.original(attachment)) }
+            }
+            if message.originalAttachments.isEmpty,
+               let sessionID = message.id.split(separator: "|").dropFirst().first.map(String.init), message.id.hasPrefix("host|") {
+                ForEach(message.images, id: \.attachmentId) { image in
+                    ConversationAttachmentTile(model: model, reference: .sessionImage(image, sessionID)) {
+                        openAttachment(.sessionImage(image, sessionID))
+                    }
+                }
+            }
+            #endif
             let remainingAttachments = max(0, message.attachmentCount - max(message.originalAttachments.count, message.images.count))
             if remainingAttachments > 0 {
                 WeftLabel("\(remainingAttachments) 个附件 · 此版本尚未展开", icon: "attach", size: 16)

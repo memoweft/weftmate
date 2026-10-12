@@ -1,6 +1,11 @@
 /* Shared account state, data and actions. Presentation is supplied through named effects. */
+globalThis.WeftUiCore.accountLabel = (account = {}, email = '') => {
+    if (email || account.email) return email || account.email;
+    if (account.username === 'local-owner') return '只在这台电脑上用';
+    return [account.displayName, account.username].find(value => value && value !== 'local-owner') || '我的账户';
+};
 globalThis.WeftUiCore.factories.account = (core, effects, environment) => {
-    function profileName() { return core.state.account?.displayName ?? core.state.account?.username ?? ''; }
+    function profileName() { return [core.state.account?.displayName, core.state.account?.username].find(value => value && value !== 'local-owner') || '我的账户'; }
     function avatarSignature(bytes, mimeType) {
         const png = bytes.length >= 16 && [137, 80, 78, 71, 13, 10, 26, 10].every((byte, index) => bytes[index] === byte);
         const jpeg = bytes.length >= 16 && bytes[0] === 255 && bytes[1] === 216 && bytes.at(-2) === 255 && bytes.at(-1) === 217;

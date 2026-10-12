@@ -21,7 +21,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         trigger.title = core.approvalModes.find(row => row[0] === currentMode)?.[2] ?? '选择新对话的审批模式';
         trigger.classList.toggle('is-warning', currentMode === 'allow-all');
         const shield = trigger.querySelector('.approval-shield');
-        if (shield) shield.toggleAttribute('hidden', currentMode !== 'allow-all');
+        if (shield) shield.toggleAttribute('hidden', currentMode !== 'allow-all' && !globalThis.matchMedia?.('(max-width:640px)').matches);
         menu.replaceChildren();
         core.approvalModes.forEach(([mode, label, description], index) => {
             const button = ui.element('button', 'approval-mode-option');

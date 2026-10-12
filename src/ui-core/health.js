@@ -45,17 +45,18 @@
     async function readHealth(day=model.day){sync();const token=scope(),id=++readId;model.loading=true;model.error='';emit();
       try{const requestedDay=day===model.today?'':day;const overview=await core.accessApi(`/health/overview${requestedDay?`?day=${encodeURIComponent(requestedDay)}`:''}`);if(token!==scope()||id!==readId)return;
         const dayChanged=model.day!==overview.day;if(dayChanged){model.analyses.clear();model.analysisOpen.clear();model.analysisBusy.clear();model.analysisErrors.clear();}model.overview=overview;model.day=overview.day;Object.assign(model,{...(dayChanged?{sleepStages:{},scoreAverages:{},dimensionMetrics:{},dimensionLoading:false,recoveryWeek:null,weekSleep:null,weekUsage:null}:{}),supplementLoading:overview.connected,stageError:''});if(!requestedDay||!model.today)model.today=overview.day;
-        model.loading=false;emit();await readHealthSettings();if(token!==scope()||id!==readId)return;if(overview.connected){await Promise.all([readHealthAnalyses(),readHealthTrend(),readWeek(token,id),...(model.view==='detail'&&model.metric==='load'?[readDimensions()]:[])]);}
+        model.loading=false;emit();await readHealthSettings();if(token!==scope()||id!==readId)return;if(overview.connected){await Promise.all([readHealthAnalyses(),readHealthTrend(),readWeek(token,id),readHealthCalendar(model.day.slice(0,7)),...(model.view==='detail'&&model.metric==='load'?[readDimensions()]:[])]);}
       }catch(error){if(token===scope()&&id===readId){model.error=core.failureMessage(error);}}
       finally{if(token===scope()&&id===readId){model.loading=false;emit();}}
     }
     async function readWeek(token,id){
-      const specs=[['weekSleep','sleepMinutes',7],['weekUsage','usageLateNightMinutes',7],['average:recovery','recovery',14],['average:sleep','sleep',14],['average:load','load',14],...['stress','energy','fitnessAge'].filter(id=>model.overview?.[id]).map(id=>[`average:${id}`,id,14]),...['deepMinutes','remMinutes','awakeMinutes','inBedMinutes'].map(metric=>[`stage:${metric}`,metric,7])];
+      const specs=[['weekSleep','sleepMinutes',7],['weekUsage','usageLateNightMinutes',7],['average:recovery','recovery',14],['average:sleep','sleep',14],['average:load','load',14],...['stress','energy','fitnessAge'].filter(id=>model.overview?.[id]).map(id=>[`average:${id}`,id,14]),...['deepMinutes','remMinutes','awakeMinutes','inBedMinutes'].map(metric=>[`stage:${metric}`,metric,7]),...['steps','activeEnergyKcal','exerciseMinutes'].map(metric=>[`dimension:${metric}`,metric,7])];
       const results=await Promise.allSettled(specs.map(([,metric,days])=>series(metric,days)));
       if(token!==scope()||id!==readId)return;
       for(const [i,[key]]of specs.entries()){const result=results[i],data=result.status==='fulfilled'?result.value:null;
         if(key.startsWith('average:')){const metric=key.slice(8);model.scoreAverages[metric]=data?.average??null;if(metric==='recovery')model.recoveryWeek=data?{...data,points:data.points.slice(-7),average:null}:null;}
         else if(key.startsWith('stage:')){const point=data?.points.find(p=>p.day===model.day);model.sleepStages[key.slice(6)]=point?.value??null;model.dimensionMetrics[key.slice(6)]=point??null;if(result.status==='rejected')model.stageError=core.failureMessage(result.reason);}
+        else if(key.startsWith('dimension:'))model.dimensionMetrics[key.slice(10)]=data?.points.find(p=>p.day===model.day)??null;
         else {model[key]=data;if(key==='weekSleep')model.dimensionMetrics.sleepMinutes=data?.points.find(p=>p.day===model.day)??null;}
       }model.supplementLoading=false;emit();
     }
@@ -92,7 +93,7 @@
       catch(error){if(token===scope()){model.settings=null;model.settingsError=core.failureMessage(error);}return null;}
       finally{if(token===scope()){model.settingsLoading=false;emit();}}
     }
-    async function saveHealthSettings(patch){sync();const token=scope();const result=await (priorSaveHealthSettings?priorSaveHealthSettings(patch):core.accessApi('/settings/health',{method:'PATCH',protectedWrite:true,body:patch}));
+    async function saveHealthViewSettings(patch){sync();const token=scope();const result=await (priorSaveHealthSettings?priorSaveHealthSettings(patch):core.accessApi('/settings/health',{method:'PATCH',protectedWrite:true,body:patch}));
       if(token===scope()){model.settings=result.settings;emit();}return result;
     }
     async function readHealthAnalyses(){if(!Object.hasOwn(model.settings??{},'itemAnalysisEnabled'))return;const token=scope(),day=model.day;
@@ -115,7 +116,7 @@
       if(model.analysisOpen.has(itemScope)){model.analysisOpen.delete(itemScope);emit();return;}model.analysisOpen.add(itemScope);emit();
       if(model.settings.itemAnalysisEnabled&&!model.analyses.has(itemScope))await generateHealthAnalysis(itemScope);
     }
-    async function enableHealthAnalysis(itemScope){const token=scope(),day=model.day;await saveHealthSettings({itemAnalysisEnabled:true});
+    async function enableHealthAnalysis(itemScope){const token=scope(),day=model.day;await saveHealthViewSettings({itemAnalysisEnabled:true});
       if(token===scope()&&day===model.day){model.analysisOpen.add(itemScope);if(!model.analyses.has(itemScope))await generateHealthAnalysis(itemScope);}
     }
     async function askHealthAnalysis(itemScope){const token=scope(),item=model.analyses.get(itemScope);if(!item)return;await core.selectMainChat();if(token!==scope())return;
@@ -124,6 +125,6 @@
     async function askHealth(){const token=scope(),insight=model.overview?.insight;if(!insight)return;await core.selectMainChat();if(token!==scope())return;
       const quote=`> ${model.day} · ${insight.headline}\n> ${insight.text.replace(/\n/g,'\n> ')}\n\n`;
       effects.quoteHealth?.(quote);}
-    return {health:model,resetHealth,readHealth,readHealthTrend,readHealthCalendar,openHealthMetric,healthOverlay,remindHealth,askHealth,readHealthSettings,saveHealthSettings,readHealthAnalyses,toggleHealthAnalysis,enableHealthAnalysis,generateHealthAnalysis,askHealthAnalysis};
+    return {health:model,resetHealth,readHealth,readHealthTrend,readHealthCalendar,openHealthMetric,healthOverlay,remindHealth,askHealth,readHealthSettings,saveHealthViewSettings,readHealthAnalyses,toggleHealthAnalysis,enableHealthAnalysis,generateHealthAnalysis,askHealthAnalysis};
   };
 })();

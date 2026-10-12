@@ -43,7 +43,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
             container.replaceChildren();
             if (value.accounts.length < 2) return;
             const select = ui.element('select'); select.id = 'cloud-local-account-select'; select.setAttribute('aria-label', '切换本机账户');
-            for (const account of value.accounts) { const option = ui.element('option', '', account.displayName || account.username); option.value = account.ownerId; select.append(option); }
+            for (const account of value.accounts) { const option = ui.element('option', '', WeftUiCore.accountLabel(account)); option.value = account.ownerId; select.append(option); }
             select.value = value.selectedOwnerId;
             const label = ui.element('label', '', '本机账户'); label.append(select); container.append(label, ui.element('p', 'field-help', '在这台电脑上切换账户，继续使用各自的对话和设置。'));
             select.addEventListener('change', () => { select.disabled = true; void act(async () => { await core.switchLocalAccount(select.value); ui.toast('已切换本机账户。'); }).finally(() => { select.disabled = false; }); });
