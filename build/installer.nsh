@@ -199,6 +199,9 @@ Var weftOldMachine
 !macroend
 
 !macro customUnInstallCheck
+  ${If} ${Errors}
+    !insertmacro WeftFail 2 "UNINSTALL_FAILED: previous uninstaller could not be started"
+  ${EndIf}
   ${If} $R0 != 0
     !insertmacro WeftFail 2 "UNINSTALL_FAILED: previous installation could not be removed"
   ${EndIf}
