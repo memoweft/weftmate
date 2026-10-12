@@ -246,9 +246,8 @@ async function activityPage(target){
 // The four page models and their mounted controls live for the signed-in identity.
 const mobileTabPages=new Map(),mobileTabScroll=new Map();
 // One switch controls whether health joins the floating bottom navigation.
-const SHOW_HEALTH_BOTTOM_TAB=true;
 const mobilePageNames={chat:'聊天',activity:'动态',health:'健康',goals:'目标',library:'成果库'};
-const mobileTabNames=Object.fromEntries(Object.entries(mobilePageNames).filter(([id])=>id!=='health'||SHOW_HEALTH_BOTTOM_TAB));
+const mobileTabNames=Object.fromEntries(Object.entries(mobilePageNames).filter(([id])=>id!=='health'||WeftHealth.showHealthBottomTab));
 let healthView=null,healthTimer=null;
 async function healthPage(target){uiCore.syncMobileIdentity();healthView??=WeftHealthView.mount({target,core:uiCore,mobile:true,toast});healthView.render();await uiCore.readHealth();clearInterval(healthTimer);healthTimer=setInterval(()=>{if(state.page==='health'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.readHealth();},uiCore.polling.overview);}
 let mobileTabIdentity='',mobileBadgeTimer,keyboardShown=false,viewportRestHeight=0;
@@ -264,7 +263,7 @@ function syncMobileTabs(){
   const rootChat=state.page==='chat'&&!state.tabSource&&(!state.logicalChats||uiCore.inMainChat());
   const visible=!!identity&&!document.body.classList.contains('cloud-auth-active')&&(rootChat||['activity','health','goals','library'].includes(state.page))&&!keyboardShown;
   tabs.hidden=!visible;document.body.classList.toggle('mobile-tabs-visible',visible);
-  const active=rootChat?'chat':state.page; if(mobileTabNames[active])state.activeTab=active;
+  const active=rootChat?'chat':state.page; if(mobilePageNames[active])state.activeTab=active;
   const unread=uiCore.activity.unreadCount||0,pending=(uiCore.goalsPage.tasks||[]).some(row=>!['completed','failed','stopped'].includes(row.status))||uiCore.activity.actionableCount>0;
   for(const tab of tabs.querySelectorAll('[role=tab]')){
     const id=tab.dataset.tab,selected=id===state.activeTab;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;
@@ -288,7 +287,7 @@ async function selectMobileTab(name){
   syncMobileTabs();
 }
 function mountMobileTabs(){
-  const tabs=$('mobile-bottom-tabs');if(!tabs)return; $('app').append(tabs);$('chat-page').setAttribute('role','tabpanel');$('chat-page').setAttribute('aria-labelledby','mobile-tab-chat');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','手机主导航');
+  const tabs=$('mobile-bottom-tabs');if(!tabs)return;tabs.style.setProperty('--mobile-tab-count',String(Object.keys(mobileTabNames).length)); $('app').append(tabs);$('chat-page').setAttribute('role','tabpanel');$('chat-page').setAttribute('aria-labelledby','mobile-tab-chat');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','手机主导航');
   const icons={chat:'chat',activity:'bell',health:'health',goals:'approval',library:'folder'};
   for(const [id,name]of Object.entries(mobileTabNames)){
     const tab=el('button','mobile-tab');tab.type='button';tab.id=`mobile-tab-${id}`;tab.dataset.tab=id;tab.setAttribute('role','tab');
