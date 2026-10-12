@@ -1,0 +1,9 @@
+{
+  "passed": 2,
+  "failed": 0,
+  "skipped": 0,
+  "syntheticOnly": true,
+  "realCloud": false,
+  "realHealthKit": false,
+  "boots": 4
+}

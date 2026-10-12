@@ -467,5 +467,19 @@
     "api": "GeometryReader",
     "sha256": "5596b3f020bc69e3fa32588b80cf664fb92e0ece829e26402aa829bfdc9e4d57",
     "reason": "Explicit @Sendable geometry builder captures only immutable Sendable score fractions and Color values computed by the UI body. It reads geometry and constructs primitive shapes without reading or changing model or actor state."
+  },
+  {
+    "file": "apps/apple/iOS/HealthPageNavigation.swift",
+    "line": 29,
+    "api": "onReceive",
+    "sha256": "4cc86f85c92179e4ce0d79599706a39c68ac13b78c798177fa472d98e988e82a",
+    "reason": "UIKit keyboard notification value is ignored by an explicitly @Sendable callback. Only a nested Task isolated to MainActor updates the keyboard visibility presentation state; no UI or mutable actor state is read on the callback executor."
+  },
+  {
+    "file": "apps/apple/iOS/HealthPageNavigation.swift",
+    "line": 30,
+    "api": "onReceive",
+    "sha256": "0c48c5c905572de58183954c76fc96812887dc9d6e84029873b74a0767426b1a",
+    "reason": "UIKit keyboard notification value is ignored by an explicitly @Sendable callback. Only a nested Task isolated to MainActor updates the keyboard visibility presentation state; no UI or mutable actor state is read on the callback executor."
   }
 ]

@@ -7,6 +7,7 @@ import { accountPersonalization } from './personalization.mjs';
 import { createMemoryIngestion } from './memory-ingestion.mjs';
 import { modelTierFor } from '../model-tier.ts';
 import { currentChatProfile } from '../background-model-selection.mjs';
+import { createBackgroundModels } from './background-model.mjs';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { digest, failure, plainObject, withDeadline } from './common.mjs';
@@ -393,6 +394,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   };
   const sessions = createSessionOperations(context);
   const nativeBackend = backend;
+  const backgroundModels = createBackgroundModels(context);
   const observeNativeEvents = async input => {
     const page = await nativeBackend.readEvents(input);
     if (input.ownerId && Array.isArray(page?.events)) sessions.observe(input.ownerId,input.sessionId,page.events);
@@ -400,6 +402,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   };
   backend = new Proxy(nativeBackend,{get(target,name) {
     if(name==='readEvents')return observeNativeEvents;
+    if(name==='modelCompletion' && typeof target.modelCompletion === 'function') return input => input.priority === 'background'
+      ? backgroundModels.completion(target.modelCompletion.bind(target), input) : target.modelCompletion(input);
     const value=Reflect.get(target,name,target);return typeof value==='function'?value.bind(target):value;
   }});
   const chats = createChatOperations(context);
@@ -808,11 +812,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     currentChatModelProfile(ownerId) {
       return currentChatProfile(accountState(ownerId), id => modelSelectable(ownerId, id));
     },
-    backgroundModelProfile(ownerId) {
-      const selected = accountState(ownerId).backgroundModelProfileId ?? null;
-      if (selected && !modelSelectable(ownerId, selected)) throw failure('MODEL_UNAVAILABLE', 503);
-      return selected;
-    },
+    backgroundModelProfile: backgroundModels.selected,
+    resolveBackgroundModel: backgroundModels.resolve,
+    reportBackgroundModel: backgroundModels.report,
+    resetBackgroundFailures: backgroundModels.reset,
     async start() {
       if (closing) throw failure('SERVICE_CLOSING', 503);
       if (server) return { origin, hostId: rootState.hostId, ownerId: rootState.legacyOwnerId };
