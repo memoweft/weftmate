@@ -3,6 +3,7 @@
  * ordinary cooperative code, not a security sandbox for hostile code.
  */
 import { createHash, randomUUID } from 'node:crypto'
+import { createHostLog } from '../../host-log.mjs'
 import { fork } from 'node:child_process'
 import { lstat, mkdir, readFile, readdir } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
@@ -105,6 +106,7 @@ export class ModProjectRuntime {
   constructor({ root, model = null, validationModel = null, emit = null, assertValidation = null, stopTimeoutMs = 1500, validationTimeoutMs = 5000 } = {}) {
     if (typeof root !== 'string' || !root) throw new Error('A durable Mod project root is required')
     this.store = new ModProjectStore(root)
+    this.hostLog = createHostLog(root)
     this.model = model
     this.validationModel = validationModel
     this.emit = emit
@@ -472,7 +474,7 @@ export class ModProjectRuntime {
   async #spawn(project, version, run, { mode, stateRoot }) {
     await mkdir(stateRoot, { recursive: true })
     const source = this.store.source(project.project_id, version.version_id)
-    const child = fork(runner, [join(source, version.manifest.entry), stateRoot, mode, JSON.stringify(version.manifest.behaviorChecks ?? null)], { windowsHide: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'], env: { PATH: process.env.PATH ?? '', NODE_OPTIONS: '' }, execArgv: ['--permission', `--allow-fs-read=${source}`, `--allow-fs-read=${runner}`] })
+    const child = fork(runner, [join(source, version.manifest.entry), stateRoot, mode, JSON.stringify(version.manifest.behaviorChecks ?? null)], { windowsHide: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'], env: { PATH: process.env.PATH ?? '', NODE_OPTIONS: '' }, execArgv: ['--permission', `--allow-fs-read=${source}`, `--allow-fs-read=${runner}`, `--allow-fs-read=${join(dirname(runner), '../../process-output.mjs')}`] })
     let resolveStarted, rejectStarted, resolveValidated, rejectValidated
     let resolveExited, rejectExited
     const active = { child, project, version, run, stateRoot, closed: false, accepting: true, invocations: new Map(), stateQueue: Promise.resolve(), lifecycleQueue: Promise.resolve(), abort: new AbortController(),
@@ -516,6 +518,7 @@ export class ModProjectRuntime {
     try { active.child.kill('SIGKILL') } catch { /* The child may already have exited. */ }
   }
   async #childMessage(active, message) {
+    if (message?.type === 'process-warning') { this.hostLog.write('process.warning', { name: message.name, code: message.code }); return }
     if (!message || typeof message !== 'object') return
     if (message.type === 'started') { active.resolveStarted(); return }
     if (message.type === 'validated') { clearTimeout(active.timeout); active.resolveValidated(message.receipt); return }

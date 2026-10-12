@@ -1,0 +1,54 @@
+{
+  "realElectron": true,
+  "parentExitedBeforeWarnings": true,
+  "warningEvents": [
+    {
+      "at": "2026-10-12T19:48:18.257Z",
+      "event": "process.warning",
+      "name": "Data2Warning",
+      "code": "DATA2_PIPE",
+      "runId": "f2db634e-d422-4126-96db-1bdf1f4aff8d",
+      "recordIndex": 3,
+      "platform": "windows",
+      "appVersion": "43.7.8",
+      "osVersion": "10.0.26200"
+    }
+  ],
+  "errorDialogs": 0,
+  "cleanedProcesses": 0,
+  "alive": {
+    "alive": true,
+    "parentExited": true,
+    "streamErrors": [
+      {
+        "stream": "stderr",
+        "code": "EPIPE"
+      },
+      {
+        "stream": "stdout",
+        "code": "EPIPE"
+      }
+    ],
+    "applicationUncaughtHandlers": 2
+  },
+  "hostReady": true,
+  "deviceContract": {
+    "deviceId": "this-computer",
+    "label": "这台电脑",
+    "platform": "windows",
+    "activeMinutes": 15
+  },
+  "baseline": {
+    "process": "Electron GUI main",
+    "registeredApplicationHandler": false,
+    "electronHandlerCount": 1,
+    "defaultErrorBoxCalls": 1,
+    "handlerSource": "function(e){process.listenerCount(\"uncaughtException\")>1||t.resolve().then(()=>__webpack_require__(\"./lib/browser/api/exports/electron.ts\")).then(({dialog:t})=>{const r=\"Uncaught Exception:\\n\"+(e.stack?e.stack:`${e.name}: ${e.message}`);t.showErrorBox(\"A JavaScript error occurred in the main process\",r)})}"
+  },
+  "completed": true,
+  "cleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  }
+}
