@@ -1,0 +1,65 @@
+{
+  "syntheticOnly": true,
+  "frames": [
+    {
+      "surface": "iPhone",
+      "theme": "dark",
+      "scene": "settings-connected",
+      "text": "02:04\n•00a\n完成\n常规\n回顾与洞察\n回顾与洞察\n健康数据\n已接上．最近一次送出 今天 2:04\n读取步数、睡眠、静息心率和运动，只把每天的汇总送到你\n自己的电脑，随时可以关。\n回复进行中时发送的消息\n按账户保存在这台设备。\n排队\n引导\n排队\n等当前回复结束后作为下一条处理。\n引导\n插入当前回复，引导它调整方向。\n电脑连接\n更换电脑需退出当前连接，在设备分类\n重新连接。\n已连接\n"
+    },
+    {
+      "surface": "iPhone",
+      "theme": "dark",
+      "scene": "settings-disabled",
+      "text": "02:04\n•00a\n完成\n常规\n回顾与洞察\n回顾与洞察\n健康数据\n还没接上\n读取步数、睡眠、静息心率和运动，只把每天的汇总送到你\n自己的电脑，随时可以关。\n回复进行中时发送的消息\n按账户保存在这台设备。\n排队\n引导\n排队\n等当前回复结束后作为下一条处理。\n引导\n插入当前回复，引导它调整方向。\n电脑连接\n更换电脑需退出当前连接，在设备分类\n重新连接。\n已连接\n"
+    },
+    {
+      "surface": "iPhone",
+      "theme": "dark",
+      "scene": "settings-disconnected",
+      "text": "02:03\n• WeftMate\n•00a\n完成\n常规\n回顾与洞察\n回顾与洞察\n健康数据\n接上\n还没接上\n读取步数、睡眠、静息心率和运动，只把每天的汇总送到你\n自己的电脑，随时可以关。\n回复进行中时发送的消息\n按账户保存在这台设备。\n排队\n引导\n排队\n等当前回复结束后作为下一条处理。\n引导\n插入当前回复，引导它调整方向。\n电脑连接\n更换电脑需退出当前连接，在设备分类\n重新连接。\n已连接\n"
+    },
+    {
+      "surface": "iPhone",
+      "theme": "dark",
+      "scene": "system-authorization",
+      "text": "02:03\n• WeftMate\n•00a\n访问健康数据\n健康\n“WeftMate” 想要访问并更新你的\n健康数据。\n全部打开\n允许“WeftMate”读取\n步数\n锻炼分钟数\n静息心率\n允许\n不允许\n"
+    },
+    {
+      "surface": "iPhone",
+      "theme": "dark",
+      "scene": "weekly-hint",
+      "text": "02:03\n• WeftMate\n完成\n动态\n这周回顾\n这周聊过日常安排，也整理了几份资料。\n接上健康数据后，这里还会有睡眠和运动\n接上 不用\n"
+    },
+    {
+      "surface": "iPhone",
+      "theme": "light",
+      "scene": "settings-connected",
+      "text": "01:59\n<\n常规\n回顾与洞察\n回顾与洞察\n完成\n健康数据\n已接上•最近一次送出 今天 1:59\n读取步数、睡眠、静息心率和运动，只把每天的汇总送到你\n自己的电脑，随时可以关。\n回复进行中时发送的消息\n按账户保存在这台设备。\n排队\n引导\n排队\n等当前回复结束后作为下一条处理。\n引导\n插入当前回复，引导它调整方向。\n电脑连接\n更换电脑需退出当前连接，在设备分类\n重新连接。\n已连接\n"
+    },
+    {
+      "surface": "iPhone",
+      "theme": "light",
+      "scene": "settings-disabled",
+      "text": "01:59\n<\n常规\n回顾与洞察\n回顾与洞察\n完成\n健康数据\n还没接上\n读取步数、睡眠、静息心率和运动，只把每天的汇总送到你\n自己的电脑，随时可以关。\n回复进行中时发送的消息\n按账户保存在这台设备。\n排队\n引导\n排队\n等当前回复结束后作为下一条处理。\n引导\n插入当前回复，引导它调整方向。\n电脑连接\n更换电脑需退出当前连接，在设备分类\n重新连接。\n已连接\n"
+    },
+    {
+      "surface": "iPhone",
+      "theme": "light",
+      "scene": "settings-disconnected",
+      "text": "01:59\n• WeftMate\n<\n常规\n回顾与洞察\n回顾与洞察\n完成\n健康数据\n接上\n还没接上\n读取步数、睡眠、静息心率和运动，只把每天的汇总送到你\n自己的电脑，随时可以关。\n回复进行中时发送的消息\n按账户保存在这台设备。\n排队\n引导\n排队\n等当前回复结束后作为下一条处理。\n引导\n插入当前回复，引导它调整方向。\n电脑连接\n更换电脑需退出当前连接，在设备分类\n重新连接。\n已连接\n"
+    },
+    {
+      "surface": "iPhone",
+      "theme": "light",
+      "scene": "system-authorization",
+      "text": "01:59\n• WeftMate\n访问健康数据\n健康\n“WeftMate” 想要访问并更新你的\n健康数据。\n全部打开\n允许“WeftMate”读取\n步数\n锻炼分钟数\n静息心率\n允许\n不允许\n"
+    },
+    {
+      "surface": "iPhone",
+      "theme": "light",
+      "scene": "weekly-hint",
+      "text": "01:58\n• WeftMate\n完成\n动态\n这周回顾\n这周聊过日常安排，也整理了几份资料。\n接上健康数据后，这里还会有睡眠和运动\n接上 不用\n"
+    }
+  ]
+}

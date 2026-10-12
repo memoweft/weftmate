@@ -380,29 +380,22 @@ final class WeftMateUITests: XCTestCase {
 extension WeftMateUITests {
     @MainActor func testHealthSettingsDefaultsAndReturnToConversation() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "h1-settings-" + UUID().uuidString,
+        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "health1-settings-" + UUID().uuidString,
             "--apple-contract-fixture", "--server-url", "https://a2-ui.unit.example"]
         app.launch()
         XCTAssertTrue(app.buttons["phoneAccountMenu"].waitForExistence(timeout: 20))
-        app.buttons["phoneAccountMenu"].tap()
-        app.buttons["phoneMenu.health"].tap()
-        XCTAssertTrue(app.buttons["healthAuthorize"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label == %@", "尚未请求读取权限")).firstMatch.exists)
-        let cloud = app.descendants(matching: .any).matching(identifier: "healthCloudAllowed").firstMatch
-        for _ in 0..<4 {
-            if cloud.exists && cloud.isHittable { break }
-            app.swipeUp()
-        }
-        XCTAssertTrue(cloud.exists)
-        XCTAssertEqual(cloud.value as? String, "0")
-        let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.name = "h1-health-settings-defaults"
+        app.buttons["phoneAccountMenu"].tap(); app.buttons["phoneMenu.settings"].tap()
+        XCTAssertTrue(app.buttons["settingsCategory.general"].waitForExistence(timeout: 10))
+        app.buttons["settingsCategory.general"].tap()
+        XCTAssertTrue(app.buttons["dailyHealthConnect"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts["dailyHealthStatus"].label, "还没接上")
+        XCTAssertFalse(app.switches["dailyHealthToggle"].exists)
+        XCTAssertFalse(app.buttons["UIA.Health.Allow.Button"].exists)
+        let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.name = "health1-settings-defaults"
         screenshot.lifetime = .keepAlways; add(screenshot)
         app.buttons["closeAuxiliarySheetButton"].tap()
         XCTAssertTrue(app.buttons["phoneAccountMenu"].waitForExistence(timeout: 10))
-        app.buttons["phoneAccountMenu"].tap(); app.buttons["phoneMenu.health"].tap()
-        app.buttons["healthAuthorize"].tap()
-        XCTAssertTrue(app.buttons["仅供本地模型使用（默认）"].waitForExistence(timeout: 5))
-        app.terminate() // Dismiss the consent prompt without requesting any system authorization.
+        app.terminate()
     }
 
     @MainActor func testHealthKitSyntheticDailySummary() throws {

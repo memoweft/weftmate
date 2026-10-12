@@ -112,6 +112,15 @@ await host.syncCloudRevocations();
 await synthetic.backend.createSession({sessionId:'session-apple2-cache',ownerId:started.ownerId});
 await host.attachSession('session-apple2-cache');
 await synthetic.backend.sendMessage({sessionId:'session-apple2-cache',text:'这是一条已保存在手机上的合成内容。',mode:'queue'});
+if (process.env.WEFTMATE_HEALTH1_FIXTURE === '1') {
+    // UI fixture only: insert one synthetic weekly review through the real activity store.
+    // Avoid depending on the machine's weekday or the 03:00 digest cutoff.
+    await host.recordActivity(local.account.ownerId, {key:'health1-synthetic-week',
+        type:'memory.report', title:'这周回顾', summary:'完成了几件日常小事', level:'silent',
+        weeklyInsight:{from:'2026-10-05',to:'2026-10-12',timeZone:'America/Los_Angeles',text:'这周聊过日常安排，也整理了几份资料。',mode:'statistics',sources:[]},
+        source:{usageWeek:'2026-10-05'},actions:[]});
+}
+
 
 const driver = createServer(async(req,res)=>{
     try {

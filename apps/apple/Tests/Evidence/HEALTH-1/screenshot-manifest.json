@@ -1,0 +1,75 @@
+{
+  "syntheticOnly": true,
+  "frames": [
+    {
+      "file": "health1-dark-settings-connected.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "a5d1301c394de42532d612222627333f530597348180612eeda656493d394219",
+      "systemStatusBar": true
+    },
+    {
+      "file": "health1-dark-settings-disabled.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "d57b13323cddb9b496a14c5c0406664d6a6a45a8ed537e5e8ffcaf5c9357fdd0",
+      "systemStatusBar": true
+    },
+    {
+      "file": "health1-dark-settings-disconnected.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "d9a53949e53a15711a64f91d5fea5a1e4c8270e39eb866b986333b3a677caa50",
+      "systemStatusBar": true
+    },
+    {
+      "file": "health1-dark-system-authorization.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "5d3247176e263a5f5ff489dda7ee850dd199e84b5a7191244eb0b11981ee58f1",
+      "systemStatusBar": true
+    },
+    {
+      "file": "health1-dark-weekly-hint.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "343717ff22b17c881d16d2ffb82e7cdf25c1b4f02d122173ff21fa2205225dfc",
+      "systemStatusBar": true
+    },
+    {
+      "file": "health1-light-settings-connected.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "c3f27e855e0ee14a3f6505fd1d47fae4391c70e432dfcdbb7bd1fa0f13200ece",
+      "systemStatusBar": true
+    },
+    {
+      "file": "health1-light-settings-disabled.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "930662aae8e53e684c097eaf5e0992f18f39eb841ed14e614b48ebeb69066f09",
+      "systemStatusBar": true
+    },
+    {
+      "file": "health1-light-settings-disconnected.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "fcecf26e1776562a638954ac25ff1d8e7a836bf078440f585a8deaf3499bd8f7",
+      "systemStatusBar": true
+    },
+    {
+      "file": "health1-light-system-authorization.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "3ea54332dad3b69b1d8b6559e0781244fade813c31072fca2d27dd197c2fe278",
+      "systemStatusBar": true
+    },
+    {
+      "file": "health1-light-weekly-hint.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "c0fb105d596c2e4e94ebebb692fa380d77b119a4950c96ec119135736a994069",
+      "systemStatusBar": true
+    }
+  ]
+}
