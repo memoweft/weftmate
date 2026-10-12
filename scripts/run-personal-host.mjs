@@ -1,4 +1,6 @@
 /** Launch the existing Electron host with an explicitly isolated profile. */
+import { setProcessWarningLog } from '../src/process-output.mjs';
+import { createHostLog } from '../src/host-log.mjs';
 import { spawn } from 'node:child_process';
 import { closeSync, existsSync, mkdirSync, openSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -94,6 +96,7 @@ try {
   console.error('[personal-host] refusing profile:', error.message);
   process.exit(2);
 }
+setProcessWarningLog((event, data) => createHostLog(profile).write(event, data));
 console.log(`[personal-host] profile=${profile}`);
 console.log(`[personal-host] workspace=${workspaceDir}`);
 console.log('[personal-host] mode=personal-host; DSH address will be OS-assigned loopback');
