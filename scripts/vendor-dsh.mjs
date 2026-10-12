@@ -17,7 +17,7 @@
  *   3. closure：从直接行（§发货子集）按 dependencies/peerDependencies/optionalDependencies 推导
  *      @deepseek-ai 传递闭包（workspace 扫描含 packages/vendor/apps 与 native/landlock-run/packages）；
  *   4. pack：逐包 `pnpm pack`（pnpm 会把 workspace: 协议替换为具体版本）；
- *   5. assemble：vendor/dsh-runtime/{package.json, tarballs/, bin/} → `pnpm install` 产出闭包 node_modules；
+ *   5. assemble：本次创建的临时 runtime/{package.json, tarballs/, bin/} → `pnpm install` 产出闭包 node_modules；
  *      package.json 带 pnpm.overrides 把闭包内全部 @deepseek-ai 包锁到逐包精确版本——
  *      上游发布包的依赖区间是 `^0.1.0-rc.N`，按 semver 会匹配到同 tuple 的新 rc（rc.N+1），
  *      若无 override 会在 `dsh/node_modules` 下嵌套漂移出一整棵新版本世界；双实例会使
@@ -35,12 +35,13 @@
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
-import { lstat, mkdir, mkdtemp, readdir, rm, symlink, unlink, writeFile, open } from 'node:fs/promises'
+import { mkdir, readdir, realpath, unlink, writeFile, open } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { basename, delimiter, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadPin } from '../tests/contract/support/checkout.ts'
 import { assertRuntimeIdentity, runtimeIdentity } from './dsh-runtime-identity.mjs'
+import { DEFAULT_WINDOWS_CACHE_ROOT, assertRuntimeDestination, createRuntimeScratch, pathStat, pointRuntime } from './dsh-runtime-storage.mjs'
 import {
   VENDOR_SCRIPT_VERSION,
   assertPackageEntrypoints,
@@ -61,8 +62,6 @@ const repoRoot = resolve(here, '..')
 const REQUESTED_RUNTIME_DIR = process.env.WEFTMATE_DSH_RUNTIME_DIR === undefined || process.env.WEFTMATE_DSH_RUNTIME_DIR === ''
   ? join(repoRoot, 'vendor', 'dsh-runtime')
   : resolve(repoRoot, process.env.WEFTMATE_DSH_RUNTIME_DIR)
-let RUNTIME_DIR
-let TARBALLS_DIR
 
 /** 发货子集·直接行（行集合变更需 owner 拍板；R1 起 = 官方 web 运行时 + v2 直接行保留）。 */
 const LEGACY_SUBSET = [
@@ -216,6 +215,14 @@ function runtimeInstallEnv() {
   }
 }
 
+// pnpm inherits npm_config_* from npm/PowerShell and reads user .npmrc. A
+// relative modules-dir can escape even a fresh cwd and purge a linked cache.
+// CLI options take precedence over both sources; install output paths stay
+// within the owned checkout/runtime workspace.
+export function isolatedInstallArgs(directory) {
+  return ['--global=false', '--modules-dir=node_modules', `--virtual-store-dir=${join(directory, 'node_modules/.pnpm')}`, `--lockfile-dir=${directory}`]
+}
+
 /**
  * 收集 node_modules 树内所有物理 `node_modules/@deepseek-ai/<pkg>` 目录（含任意深度嵌套）。
  * 只沿 `node_modules` / `@deepseek-ai` 目录下钻，代价有界。
@@ -267,7 +274,7 @@ async function assertSingleInstance(nodeModulesDir) {
   }
 }
 
-async function assemble(checkout, pin, identity) {
+async function assemble(checkout, pin, identity, scratch) {
   const dryRun = process.argv.includes('--dry-run')
   const subset = LEGACY_SUBSET
   const packageManager = checkoutPackageManager(checkout)
@@ -290,8 +297,11 @@ async function assemble(checkout, pin, identity) {
   await assertWorkspaceClosureEntrypoints(closure)
   console.log('[vendor-dsh] 独立固定检出的补丁编译入口检查通过')
 
-  await rm(RUNTIME_DIR, { recursive: true, force: true })
-  await mkdir(TARBALLS_DIR, { recursive: true })
+  await scratch.assertOwned(scratch.runtime)
+  const RUNTIME_DIR = scratch.runtime
+  const TARBALLS_DIR = join(RUNTIME_DIR, 'tarballs')
+  if ((await readdir(RUNTIME_DIR)).length !== 0) throw Error('装配必须从本次新建的空临时目录开始')
+  await mkdir(TARBALLS_DIR)
 
   console.log('[vendor-dsh] pack：逐包 pnpm pack')
   const packed = []
@@ -338,7 +348,8 @@ async function assemble(checkout, pin, identity) {
   // M5-01：--node-linker=hoisted——pnpm 默认布局用 junction 链接 node_modules/@deepseek-ai/*，
   // electron-builder 的 extraResources 不跟随 junction，打包会丢整个闭包；hoisted 布局是真实目录，
   // 复制语义可靠（运行时解析行为不变，contract/T8/verify 冒烟锁行为）。
-  run(resolvePnpm(), ['install', '--ignore-scripts', '--node-linker=hoisted'], RUNTIME_DIR, 'runtime pnpm install', install.env)
+  await scratch.assertOwned(RUNTIME_DIR)
+  run(resolvePnpm(), ['install', '--ignore-scripts', '--node-linker=hoisted', ...isolatedInstallArgs(RUNTIME_DIR)], RUNTIME_DIR, 'runtime pnpm install', install.env)
 
   // 单实例结构检查：任何 @deepseek-ai 包出现嵌套第二副本即失败（见 runtimePkg.pnpm.overrides 注释）。
   await assertSingleInstance(join(RUNTIME_DIR, 'node_modules'))
@@ -391,17 +402,6 @@ async function assemble(checkout, pin, identity) {
   console.log(`[vendor-dsh] 完成：${packed.length} 包 → ${RUNTIME_DIR}`)
 }
 
-/** Only remove the vendor pointer, never recursively traverse a shared junction. */
-async function pointVendor(cache) {
-  await mkdir(dirname(REQUESTED_RUNTIME_DIR), { recursive: true })
-  try {
-    const stat = await lstat(REQUESTED_RUNTIME_DIR)
-    if (stat.isSymbolicLink()) await unlink(REQUESTED_RUNTIME_DIR)
-    else await rm(REQUESTED_RUNTIME_DIR, { recursive: true, force: true })
-  } catch (error) { if (error.code !== 'ENOENT') throw error }
-  await symlink(cache, REQUESTED_RUNTIME_DIR, process.platform === 'win32' ? 'junction' : 'dir')
-}
-
 function sourceRepository(pin) {
   for (const candidate of [process.env.WEFTMATE_DSH_CHECKOUT, 'D:/AIProjects/Shared/Dependencies/DeepSeekHarness', join(homedir(), 'deepseek-harness'), resolve(repoRoot, '..', 'deepseek-harness')].filter(Boolean)) {
     const root = resolve(repoRoot, candidate)
@@ -424,21 +424,36 @@ async function main() {
   const pin = await loadPin()
   const identity = await runtimeIdentity(repoRoot)
   const shared = resolve(process.env.WEFTMATE_DSH_CACHE_ROOT || (process.platform === 'win32' && existsSync('D:/AIProjects/WeftMate/Worktrees')
-    ? 'D:/AIProjects/WeftMate/Worktrees/_shared' : join(repoRoot, '.local/dsh-cache')))
+    ? DEFAULT_WINDOWS_CACHE_ROOT : join(repoRoot, '.local/dsh-cache')))
   const cache = join(shared, `dsh-runtime-${pin.commit.slice(0, 12)}-${identity.patchesSha256.slice(0, 16)}`)
   if (process.argv.includes('--dry-run')) {
-    RUNTIME_DIR = cache; TARBALLS_DIR = join(cache, 'tarballs')
     return assemble(sourceRepository(pin), pin, identity)
   }
+  // A normal invocation preserves an already valid pointer, even if it was
+  // established using an isolated cache root. Explicit isolation never reuses it.
+  if (!process.env.WEFTMATE_DSH_CACHE_ROOT && (await pathStat(REQUESTED_RUNTIME_DIR))?.isSymbolicLink()) {
+    try {
+      await assertRuntimeIdentity(REQUESTED_RUNTIME_DIR, repoRoot)
+      console.log(`[vendor-dsh] 复用固定提交 + 补丁哈希缓存 ${await realpath(REQUESTED_RUNTIME_DIR)}`)
+      return
+    } catch (error) {
+      if (error.code !== 'ENOENT' && !error.message.startsWith('运行时过期：')) throw error
+    }
+  }
+  // Read-only reuse is safe through a linked vendor parent; any mutation is not.
+  await assertRuntimeDestination(REQUESTED_RUNTIME_DIR, shared)
   const cacheReady = async () => {
-    try { await assertRuntimeIdentity(cache, repoRoot); return true }
+    try {
+      if ((await pathStat(cache))?.isSymbolicLink()) throw Error(`已发布缓存不能是联接或符号链接：${cache}`)
+      await assertRuntimeIdentity(cache, repoRoot); return true
+    }
     catch (error) {
       if (error.code === 'ENOENT' || error.message.startsWith('运行时过期：')) return false
       throw error
     }
   }
   const reuse = async () => {
-    await pointVendor(cache)
+    await pointRuntime(REQUESTED_RUNTIME_DIR, cache, shared)
     console.log(`[vendor-dsh] 复用固定提交 + 补丁哈希缓存 ${cache}`)
   }
   if (await cacheReady()) return reuse()
@@ -448,39 +463,38 @@ async function main() {
   try { lock = await open(lockPath, 'wx') }
   catch (error) { if (error.code === 'EEXIST') throw new Error('同一 DSH 运行时正在编译；等该构建完成后重跑 npm run vendor:dsh'); throw error }
   await lock.writeFile(JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString(), identity: identity.key }))
-  let buildRoot
+  let scratch
   try {
     // A contender may have published a complete cache while we acquired the lock.
     if (await cacheReady()) return await reuse()
     // Same-identity directories are immutable, including incomplete/stale ones.
     // An operator must diagnose them; building must never delete a cache in use.
-    if (existsSync(cache)) throw new Error(`同身份缓存已存在但校验失败；保留缓存，拒绝重新发布：${cache}`)
-    buildRoot = await mkdtemp(join(shared, 'weftmate-dsh-build-'))
-    const checkout = join(buildRoot, 'checkout')
-    RUNTIME_DIR = join(buildRoot, 'runtime'); TARBALLS_DIR = join(RUNTIME_DIR, 'tarballs')
+    if (await pathStat(cache)) throw new Error(`同身份缓存已存在但校验失败；保留缓存，拒绝重新发布：${cache}`)
+    scratch = await createRuntimeScratch(shared)
+    const checkout = join(scratch.root, 'checkout')
     // --shared shares immutable objects only; branch, index, config and working files are independent.
     preparePatchedCheckout(repoRoot, sourceRepository(pin), checkout, pin, identity)
     const actualVersion = JSON.parse(readFileSync(join(checkout, 'package.json'), 'utf8')).version
     if (actualVersion !== pin.packageVersion) throw new Error('固定 DSH 提交的 packageVersion 与 pin 不一致')
     console.log(`[vendor-dsh] 编译 ${identity.key}（隔离检出，主仓只读）`)
-    run(resolvePnpm(), ['install', '--frozen-lockfile'], checkout, 'DSH frozen install')
+    await scratch.assertOwned(checkout)
+    run(resolvePnpm(), ['install', '--frozen-lockfile', ...isolatedInstallArgs(checkout)], checkout, 'DSH frozen install')
     run(resolvePnpm(), ['run', 'build'], checkout, 'DSH patched build')
     if (process.platform === 'linux') {
       run(resolvePnpm(), ['run', 'build:native'], join(checkout, 'native/landlock-run'), 'DSH Linux launcher build')
     }
-    await assemble(checkout, pin, identity)
-    await assertRuntimeIdentity(RUNTIME_DIR, repoRoot)
+    await assemble(checkout, pin, identity, scratch)
+    await assertRuntimeIdentity(scratch.runtime, repoRoot)
     // Publish only a complete assembly; readers never see partially built cache content.
-    const { rename } = await import('node:fs/promises')
-    if (existsSync(cache)) {
+    if (await pathStat(cache)) {
       if (await cacheReady()) return await reuse()
       throw new Error(`同身份缓存已存在；保留缓存，拒绝重新发布：${cache}`)
     }
-    await rename(RUNTIME_DIR, cache)
-    await pointVendor(cache)
+    await scratch.publish(cache)
+    await pointRuntime(REQUESTED_RUNTIME_DIR, cache, shared)
   } finally {
     try {
-      if (buildRoot) await rm(buildRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 })
+      if (scratch) await scratch.dispose()
     } finally {
       await lock.close()
       await unlink(lockPath)
