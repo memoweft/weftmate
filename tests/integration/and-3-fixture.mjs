@@ -20,6 +20,7 @@ export async function startAnd3Fixture() {
   ]) } });
   const clock = setInterval(() => cloud.advance(Math.max(0, Date.now() - cloud.now)), 100);
   let candidate, desktop;
+  let hostClockOffset = 0;
   const diagnosticsRoot = await mkdtemp(join(tmpdir(), 'wm-and3-diagnostics-'));
   const diagnostics = createHostDiagnostics(diagnosticsRoot, {version:'synthetic'}); diagnostics.begin({mode:'personal-host'});
   const systemManager = createSystemStatusManager({ readHost:()=>({state:'ready',version:'synthetic'}), readMemory:()=>({state:'disabled'}),
@@ -27,7 +28,7 @@ export async function startAnd3Fixture() {
     metrics:()=>({startupMs:800,firstTokenMs:[900],rssBytes:100*1024**2}), versions:()=>({appVersion:'synthetic'}) });
   try {
     await registration(cloud); desktop = await appDevice(cloud, 'synthetic-desktop');
-    candidate = await startTimelineCandidate({ logicalMobile: true, daily: true, interactive: true, goals: true, baseTime:Date.now(), historyCount: 0, riskApproval: true, secondOpinion: true,
+    candidate = await startTimelineCandidate({ logicalMobile: true, daily: true, interactive: true, goals: true, clock:()=>Date.now()+hostClockOffset, baseTime:Date.now(), historyCount: 0, riskApproval: true, secondOpinion: true,
       systemManager,
       verifyModelProfile:async()=>({configured:true,reachable:true,modelListed:true,inferenceVerified:false}),
       digestModel: async input => { assert.equal(input.purpose, 'second-opinion'); return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ alignment:'对得上', externalInfluence:'没有', reason:'这一步用于保存本人要的进度报告。' }) } }] }), { headers: { 'content-type':'application/json' } }); },
@@ -56,7 +57,8 @@ export async function startAnd3Fixture() {
       weeklyInsight: { from: '2026-10-05', to: '2026-10-11', timeZone: 'Asia/Shanghai', mode: 'statistics',
         text: '这周整理了项目资料，也保存了一份进度报告。', sources: [] } });
     return { cloud, candidate, email: EMAIL, password: PASSWORD, origin: candidate.origin,
-      expire: async deviceId => { await candidate.request('/auth/devices/' + deviceId, {}, 'DELETE'); },
+      expire: async () => { hostClockOffset = 60*24*60*60*1000; },
+      restoreClock: () => { hostClockOffset = 0; },
       close: async () => { await candidate.close(); await rm(candidate.root, { recursive: true, force: true }); await rm(diagnosticsRoot,{recursive:true,force:true}); clearInterval(clock); for (const fn of cleanups.reverse()) await fn(); } };
   } catch (error) { clearInterval(clock); await candidate?.close(); await rm(diagnosticsRoot,{recursive:true,force:true}); for (const fn of cleanups.reverse()) await fn(); throw error; }
 }

@@ -168,15 +168,23 @@ try {
   for (let n = 0; n < 4; n++) { await page.evaluate(() => { void uiCore.retryConnection(); }); await pause(1200); }
   await page.waitForFunction(() => uiCore.connectionView().kind === 'host_offline', null, { timeout: 55000 });
   assert.equal(await page.evaluate(() => state.loggedIn), true); assert.equal(await page.locator('#draft').inputValue(), '保留的合成草稿'); await both('computer-offline');
+  await finishProbe(); run('shell','am','force-stop',pkg); await startProbe();
+  assert.equal(await page.evaluate(()=>state.loggedIn),true);
+  assert.equal(await page.locator('#cloud-auth-page.active').count(),0);
+  await page.evaluate(id=>selectSharedSession(id),fixture.candidate.sessionId);
+  await page.getByText('我会先读取资料并运行测试', {exact:false}).first().waitFor();
+  await both('offline-process-reopen-cache'); report.checks.push('offline-native-process-reopen-reads-cached-content-without-login');
   offline = false; await page.evaluate(() => uiCore.retryConnection()); await page.waitForFunction(() => uiCore.connectionView().kind === 'online');
   await both('computer-retry-restored'); report.checks.push('native-computer-offline-retry-preserves-cache-and-draft');
   await finishProbe(); run('shell', 'am', 'force-stop', pkg); await startProbe();
   assert.equal(await page.evaluate(() => state.loggedIn), true); report.checks.push('native-process-reopen-cached-account-without-login');
-  // Expire only the synthetic phone session; its cached content stays readable.
+  // Advance only the isolated host clock beyond its Cookie lifetime. The real
+  // authentication expiry path returns 401; no device is revoked or user data edited.
   const device = await page.evaluate(() => state.deviceId); await fixture.expire(device);
   await page.evaluate(async () => { try { await uiCore.readMobileSystem(); } catch {} });
   await page.waitForFunction(() => state.connection === 'expired');
   assert.equal(await page.locator('#cloud-login-dialog').count(), 0); assert.equal(await page.evaluate(() => state.loggedIn), true);
+  await page.getByText('合成回复：原生壳里的合成问候',{exact:true}).first().waitFor();
   await both('expired-cache-readable'); await page.evaluate(() => { state.connection = 'expired'; send(); });
   report.expiredPrompt = await page.evaluate(() => ({ native:!!window.weftNative, cloudView:WeftMobileCloud.core.cloudAuthView(),
     dialogCount:document.querySelectorAll('#cloud-login-dialog').length, dialogOpen:document.getElementById('cloud-login-dialog')?.open,
@@ -185,6 +193,7 @@ try {
   await page.getByRole('button', { name: '关闭登录', exact: true }).click();
   assert.equal(await page.evaluate(() => state.loggedIn), true); report.checks.push('expired-native-cache-readable-server-use-dismissible-login');
   await finishProbe(); run('shell', 'am', 'force-stop', pkg); run('shell', 'pm', 'clear', pkg);
+  fixture.restoreClock();
   run('shell', 'pm', 'grant', pkg, 'android.permission.POST_NOTIFICATIONS');
   await startProbe(); await both('code-login'); await login('code'); await both('code-signed-in');
   await finishProbe(); report.completed = true;
