@@ -2,6 +2,8 @@ import { setProcessWarningLog } from './process-output.mjs';
 import { usageResponse } from './personal-access/usage-response.mjs';
 import { readFile as readFileAsync, rm as rmAsync, writeFile as writeFileAsync } from 'node:fs/promises';
 import { createLatestFileWriter } from './latest-file-writer.mjs';
+import { requestDesktopQuit, desktopQuitReply } from './desktop-quit.mjs';
+import { repairWindowsLoginItem } from './desktop-autostart.mjs';
 /**
  * WeftMate · Electron 主进程：个人宿主 + 原生桌面窗口。
  *
@@ -77,7 +79,8 @@ import {
   verifyLegacyRouteMigration,
 } from './dsh-settings-migration.ts';
 import { formatHarnessStartupError } from './harness-startup-error.ts';
-import { checkForUpdates, initUpdater, quitAndInstall, updateState, preparedInstallerPath, preparedInstallerHash } from './update.ts';
+import { checkForUpdates, initUpdater, quitAndInstall, updateState, preparedInstallerPath, preparedInstallerHash, requiresManualAppInstall } from './update.ts';
+import { manualUpdateMessage } from './desktop-installation.mjs';
 import { createDesktopUpdates } from './personal-update/desktop.mjs';
 import { applyDesktopConfig } from './desktop-config.mjs';
 import { appBootSignal, prepareAppRollback } from './personal-update/app-rollback.mjs';
@@ -102,6 +105,20 @@ import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storag
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
 const desktopControlAppData = packageInfo.desktopIdentity ? join(app.getPath('appData'), packageInfo.desktopIdentity) : app.getPath('appData');
+// Maintenance commands must not boot a host, rewrite its run marker or show UI.
+if (process.argv.includes('--quit')) {
+  try {
+    const configFile = process.argv.find(arg => arg.startsWith('--desktop-config='))?.slice(17) || join(desktopControlAppData, 'WeftMate', 'desktop-config.json');
+    const config = existsSync(configFile) ? JSON.parse(readFileSync(configFile, 'utf8')) : null;
+    const profile = process.argv.find(arg => arg.startsWith('--user-data-dir='))?.slice(16) || config?.dataDirectory || join(desktopControlAppData, 'com.memoweft.weftmate');
+    app.setPath('userData', resolve(profile));
+    app.exit(await requestDesktopQuit(app));
+  } catch { app.exit(4); }
+}
+if (process.argv.includes('--repair-installation')) {
+  repairWindowsLoginItem({ name: packageInfo.desktopIdentity || 'WeftMate', executable: process.execPath, force: true });
+  app.exit(0);
+}
 // Argument/configuration failures precede the instance lock. Record them only in
 // an already validated profile, without replacing a possibly running host's marker.
 function recordEarlyStartupFailure(source, error, exitCode) {
@@ -128,6 +145,7 @@ if (process.argv.includes('--uninstall-cleanup')) {
 let installedDesktopConfig;
 try { installedDesktopConfig = applyDesktopConfig({ appData: desktopControlAppData, packaged: app.isPackaged }); }
 catch (error) { recordEarlyStartupFailure('desktop-config', error, 1); throw error; }
+if (app.isPackaged) repairWindowsLoginItem({ name: packageInfo.desktopIdentity || 'WeftMate', executable: process.execPath });
 if (app.isPackaged && process.env.WEFTMATE_RELAY_ENABLED === 'true') {
   process.env.WEFTMATE_FRPC_FILE = join(process.resourcesPath, 'relay', 'frpc.exe');
   process.env.WEFTMATE_RELAY_CA_FILE = join(process.resourcesPath, 'relay', 'transport-ca.pem');
@@ -254,6 +272,7 @@ let shutdownStep = null;
 let shutdownComplete = false;
 let shutdownStartedAt = null;
 let shutdownFailed = false;
+const quitReplies = [];
 function nextShutdownStep(name = null) {
   if (shutdownStep) hostLog.step(shutdownStep.name, shutdownStep.failed ? 'failed' : 'completed', Math.round(performance.now() - shutdownStep.at));
   shutdownStep = name ? { name, at: performance.now(), failed: false } : null;
@@ -312,7 +331,15 @@ if (!app.requestSingleInstanceLock()) {
       source: ['GPU', 'Utility', 'Zygote', 'Sandbox helper', 'Pepper Plugin', 'Pepper Plugin Broker'].includes(details.type) ? details.type.replaceAll(' ', '-') : 'auxiliary', action: 'electron-managed' });
   });
   // 第二个实例被拉起(用户又点了图标):把已在跑的窗口唤到前台。
-  app.on('second-instance', (_event, argv) => {
+  app.on('second-instance', (_event, argv, _cwd, data) => {
+    const reply = desktopQuitReply(data);
+    if (reply) {
+      quitReplies.push(reply);
+      hostExitReason = 'user-quit';
+      isQuitting = true;
+      app.quit();
+      return;
+    }
     if (!headless) showWindow();
     if (process.platform === 'win32') forwardWindowsSendTo(argv, personalDesktop, pendingWindowsSendTo);
   });
@@ -3628,7 +3655,7 @@ async function installPreviewUpdateFromTray() {
     const options = {
       type: 'info',
       title: 'WeftMate 更新尚未就绪',
-      message: '更新尚未就绪或任务仍在运行。请等待下载与任务完成后重试。',
+      message: requiresManualAppInstall() && updateState().status === 'downloaded' ? manualUpdateMessage : '更新尚未就绪或任务仍在运行。请等待下载与任务完成后重试。',
       buttons: ['知道了'],
     };
     showProgramNotice(options);
@@ -3654,7 +3681,7 @@ function refreshTrayMenu() {
   const updateBusy = update.status === 'checking' || update.status === 'available';
   const updateReady = update.status === 'downloaded';
   const updateLabel = updateReady
-    ? `安装更新${update.version ? ` v${update.version}` : ''}…`
+    ? requiresManualAppInstall() ? '打开已下载的安装包…' : `安装更新${update.version ? ` v${update.version}` : ''}…`
     : updateBusy
       ? '正在检查或下载更新…'
       : update.enabled
@@ -3686,6 +3713,10 @@ app.on('before-quit', (e) => {
   hostLifecycleState = 'stopping';
   runtimeOrigin = null;
   writeHostStateForLifecycle?.();
+  exclusiveMainQueue?.stopAcceptingAndDrain();
+  let accessClosing = null;
+  try { accessClosing = personalAccessService?.close?.() ?? null; }
+  catch (error) { shutdownFailed = true; logCrash('shutdown-personal-access', error); }
 
   shutdownPromise = (async () => {
     let backupSafe = true;
@@ -3696,13 +3727,9 @@ app.on('before-quit', (e) => {
     catch (error) { logCrash('shutdown-desktop-session', error); }
     finally { desktopUpdates?.close(); }
     nextShutdownStep('host-service');
-    let accessClosing = null;
-    try { accessClosing = personalAccessService?.close?.() ?? null; }
-    catch (error) { backupSafe = false; logCrash('shutdown-personal-access', error); }
     // Stop admission before any asynchronous cleanup.  A mutation already in
     // this lane may finish/compensate, but no new session/settings/model work
     // can cross the shutdown fence.
-    exclusiveMainQueue?.stopAcceptingAndDrain();
     if (accessClosing) {
       let timer;
       try {
@@ -3811,6 +3838,7 @@ app.on('before-quit', (e) => {
     if (backupRestartRequested) app.relaunch();
     hostLog.exit(hostExitReason, startupExitCode, { cleanupComplete: shutdownComplete,
       shutdownDurationMs: Math.round(performance.now() - shutdownStartedAt) });
+    await Promise.all(quitReplies.map(reply => reply(shutdownComplete && startupExitCode === 0 ? 0 : 4)));
     app.exit(startupExitCode); // cleanup 完成后一次性退出；启动失败必须保留非零码。
   });
 });
