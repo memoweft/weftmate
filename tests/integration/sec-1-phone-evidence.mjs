@@ -17,7 +17,7 @@ const backend={getStatus:async()=>({runtime:'ready',capabilities:{chat:{availabl
  createSession:async({sessionId})=>{sessions.set(sessionId,[]);return{sessionId};},cancelSession:async()=>({accepted:true}),
  sendMessage:async({sessionId,text})=>{const receiptId=randomUUID();sessions.set(sessionId,[{seq:0,type:'turn.started',data:{turn:1}},{seq:1,type:'user.message',data:{receiptId,messageHash:hash(text),text}}]);return{accepted:true,receiptId};},
  describeSession:async sessionId=>sessions.has(sessionId)?{sessionId,running:true,agentPreset:'personal-remote',modelProfileId:'local',title:'合成审批'}:null,
- readEvents:async({sessionId,afterSeq=-1})=>({events:(sessions.get(sessionId)??[]).filter(row=>row.seq>afterSeq),nextSeq:1,hasMore:false}),
+ readEvents:async({sessionId,afterSeq=-1})=>({events:(sessions.get(sessionId)??[]).filter(row=>row.seq>afterSeq),nextSeq:(sessions.get(sessionId)??[]).length-1,hasMore:false}),
  readSourceEvents:async({sessionId})=>({current:true,events:sessions.get(sessionId)??[]}),
  modelCompletion:async({onStart,signal})=>{await onStart();if(mode==='timeout'){await new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(Error('timeout')),{once:true}));}if(mode==='unavailable')throw Error('offline');return Response.json({choices:[{message:{content:JSON.stringify(mode==='warning'?{alignment:'对不上',externalInfluence:'有',reason:'你让它总结这份文件，但这一步要删除另一个文件。'}:{alignment:'对得上',externalInfluence:'没有',reason:'本人明确要求覆盖文件。'})}}],usage:{prompt_tokens:20,completion_tokens:10}});}};
 try{
@@ -33,6 +33,8 @@ try{
   const risk=mode==='warning'?'delete':'overwrite',identity={sessionId,turn:1,callId:'call-'+randomUUID(),rootCallId:'call-'+randomUUID(),receiptId:source.receiptId,messageHash:hash(text),toolName:'pwsh',argumentsHash:hash(JSON.stringify(args)),runtimeId:randomUUID(),approvalId:randomUUID()};identity.rootCallId=identity.callId;
   const row=await service.trackToolApproval({...identity,action:'register_approval',reason:`[weftmate:${risk}] ${mode==='warning'?'删除已有文件':'覆盖已有文件'}\n${JSON.stringify(args)}`,reviewEvidence:{arguments:args,risks:[risk],sources:mode==='warning'?['source.txt']:['notes.txt']}});
   assert.equal(row.status,'pending');assert.equal(!!row.secondOpinion,['agree','warning'].includes(mode));
+  sessions.get(sessionId).push({seq:2,type:'step.started',data:{turn:1,stepId:identity.callId,callId:identity.callId,toolName:'pwsh',summary:mode==='warning'?'删除 notes.txt':'覆盖 notes.txt'}},
+    {seq:3,type:'approval.requested',data:{turn:1,callId:identity.callId,approvalId:identity.approvalId,reason:row.reason}});
   await bars.capture(mode,sessionId);
   await api(`/sessions/${sessionId}/approvals/${row.approvalId}`,{requestId:randomUUID(),outcome:'rejected'});
   await service.trackToolApproval({...identity,action:'resolve_approval',outcome:'rejected'});
