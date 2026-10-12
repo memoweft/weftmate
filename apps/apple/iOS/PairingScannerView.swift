@@ -13,23 +13,23 @@ struct PairingScannerView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: AppleTokens.Space.p18) {
-                Text("扫描电脑上刚生成的 WeftMate 配对二维码").padding()
+                Text("扫描电脑上刚生成的 WeftMate 二维码").padding()
                 if DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
                     CameraScanner(receive: receive)
                 } else {
-                    EmptyState(symbol: "camera", title: "相机扫描暂不可用", message: "可选择二维码图片，或返回输入配对码。")
+                    EmptyState(symbol: "camera", title: "相机扫描暂不可用", message: "可选择二维码图片，或返回输入连接码。")
                 }
                 PhotosPicker("选择二维码图片", selection: $image, matching: .images).accessibilityIdentifier("pairingImagePicker")
                 if let error { Text(error).foregroundStyle(AppleTokens.Colors.red) }
             }
-            .navigationTitle("扫码配对")
+            .navigationTitle("扫描二维码")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } } }
             .onChange(of: image) { _, value in
                 Task {
                     do {
                         guard let bytes = try await value?.loadTransferable(type: Data.self) else { return }
                         receive(try PairingQRDecoder.decode(bytes))
-                    } catch { self.error = "没有找到有效的配对二维码，请重新选择。" }
+                    } catch { self.error = "没有找到有效的二维码，请重新选择。" }
                 }
             }
         }

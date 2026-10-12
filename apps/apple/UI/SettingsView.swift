@@ -167,7 +167,7 @@ private struct SettingsCategoryView: View {
             #endif
             content
         }.background(Weave.canvas).navigationTitle(title)
-            .accessibilityIdentifier("settingsPage." + route.categoryID)
+            .accessibilityElement(children: .contain).accessibilityIdentifier("settingsPage." + route.categoryID)
             .task(id: route.categoryID) {
                 await settings.refresh(route.categoryID)
                 #if DEBUG && os(macOS)
@@ -290,7 +290,7 @@ private struct SettingsCategoryView: View {
                 Text(settings.models.first { $0.id == settings.backgroundModelID }?.name ?? (settings.backgroundModelID.isEmpty ? "跟随主模型" : "原后台模型不可用")).foregroundStyle(Weave.muted)
                 #endif
             }
-            Section("模型档案与单价 · 元 / 百万令牌") {
+            Section("模型档案与单价 · 元 / 百万字元") {
                 ForEach(settings.models) { model in
                     SettingsRow(model.name, (model.configured ? "已配置 · " + model.model : "未配置") + (model.deepThinking?.supported == true ? " · 支持深入思考" : " · 不支持深入思考")) {
                         if let price = settings.prices.first(where: { $0.id == model.id })?.price {
@@ -330,7 +330,7 @@ private struct SettingsCategoryView: View {
             Button { Task { await settings.refresh("schedules") } } label: { WeftIcon("sync") }.accessibilityLabel("刷新提醒").buttonStyle(.borderless).disabled(settings.busy)
         case "system":
             ForEach(HostService.allCases) { service in
-                SettingsRow(service.title, "电脑宿主报告的实际状态；重启可能中断当前任务。") {
+                SettingsRow(service.title, "电脑上的 WeftMate 报告的实际状态；重启可能中断当前任务。") {
                     VStack(alignment: .trailing, spacing: AppleTokens.Space.p5) {
                         Text(settings.status?.service(service).title ?? "尚未读取")
                         if let version = settings.status?.service(service).version { Text(version).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
@@ -367,9 +367,9 @@ private struct SettingsCategoryView: View {
             }
             ForEach(["ui", "app", "mobile-ui"], id: \.self) { layer in
                 let value = settings.hostUpdates?.updates?.layers.first { $0.layer == layer }
-                SettingsRow("所连电脑 · " + (value?.title ?? (layer == "ui" ? "界面与功能包" : layer == "app" ? "程序本体" : "手机界面包")), "宿主版本与更新状态（" + layer + "）。") {
+                SettingsRow(layer == "ui" ? "电脑上的 WeftMate" : layer == "app" ? "电脑程序" : "手机访问", "电脑上的版本与更新状态。") {
                     VStack(alignment: .trailing, spacing: AppleTokens.Space.p4) {
-                        Text(value?.currentVersion ?? "宿主未提供版本")
+                        Text(value?.currentVersion ?? "还没连上电脑")
                         Text(value?.statusText ?? "等待连接").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                     }.accessibilityIdentifier("aboutHostLayer." + layer)
                 }
@@ -395,7 +395,7 @@ private struct SettingsCategoryView: View {
             #else
             SettingsRow("更新状态", "App 由 TestFlight / App Store 自动更新。") { Text(settings.compatibilityNotice == nil ? "在手机上检查" : "有新版本可在 TestFlight 更新") }
             #endif
-            Button("刷新宿主版本") { Task { await settings.refresh("about") } }.disabled(settings.busy)
+            Button("重新检查") { Task { await settings.refresh("about") } }.disabled(settings.busy)
             Button("服务条款") { legal = .terms }
             Button("隐私政策") { legal = .privacy }
             Link("反馈", destination: URL(string: "https://github.com/memoweft/weftmate/issues")!)

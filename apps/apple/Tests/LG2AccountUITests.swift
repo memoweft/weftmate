@@ -46,12 +46,13 @@ final class LG2AccountUITests: XCTestCase {
     @MainActor private func keep(_ app: XCUIApplication, _ name: String) {
         let image = XCTAttachment(screenshot: app.screenshot()); image.name = name; image.lifetime = .keepAlways; add(image)
     }
-    @MainActor func testRealRegistrationApprovalConnectionRecoveryErrorAndLogout() async throws {
+    @MainActor func testRealRegistrationRecoveryAndLogout() async throws {
         let ready = try await get("/ready"), credentials = try await get("/credentials")
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "lg2-" + UUID().uuidString.prefix(8),
-            "--lg2-cloud", "--server-url", ready["host"]!, "--s1c-cloud-url", ready["cloud"]!, "--s1c-qr-url", driver + "/pairing.png"]
+            "--lg2-cloud", "--a5-theme", "light", "--server-url", ready["host"]!, "--s1c-cloud-url", ready["cloud"]!, "--s1c-qr-url", driver + "/pairing.png"]
         app.launch()
+        try tap(app, "openAccountLogin")
         try expect(app.staticTexts["登录 WeftMate"], timeout: 30)
         XCTAssertFalse(app.buttons["cloudScan"].exists)
         XCTAssertFalse(app.textFields["serverURL"].exists)
@@ -78,32 +79,25 @@ final class LG2AccountUITests: XCTestCase {
         try expect(app.textFields["accountCode"], timeout: 20)
         try fill(app, "accountCode", try await get("/code")["code"]!)
         try tap(app, "accountSubmit")
-        try expect(app.staticTexts["已登录 WeftMate"], timeout: 30)
+        try expect(app.buttons["retryComputer"], timeout: 30)
         keep(app, "ios-registered")
         _ = try await get("/bootstrap")
         try tap(app, "设置 → 设备")
         try tap(app, "刷新设备")
         try expect(app.staticTexts["LG2 测试电脑"], timeout: 20)
         keep(app, "ios-devices")
-        try tap(app, "connectHost." + ready["hostId"]!)
-        try expect(app.descendants(matching: .any)["cloudPairingReady"].firstMatch, timeout: 30)
-        try tap(app, "cloudRequestApproval")
-        try expect(app.staticTexts["cloudWaiting"], timeout: 30)
-        keep(app, "ios-waiting-approval")
-        _ = try await get("/approve")
-        try expect(app.descendants(matching: .any)["conversationList"].firstMatch, timeout: 30)
-        keep(app, "ios-connected")
-        // Keychain restore uses the same rotating family without asking for a password again.
-        app.terminate(); app.launch()
-        try expect(app.descendants(matching: .any)["conversationList"].firstMatch, timeout: 30)
-        try tap(app, "phoneAccountMenu"); try tap(app, "phoneMenu.settings")
-        try tap(app, "settingsCategory.account")
+        // AUTH-1 has no scan/approval UI. Direct connection is covered by APPLE2LoginUITests.
+        XCTAssertFalse(app.buttons["cloudRequestApproval"].exists)
+        XCTAssertFalse(app.staticTexts["cloudWaiting"].exists)
+        try tap(app, "closeAuxiliarySheetButton")
+        try tap(app, "设置 → 账户")
         try expect(app.staticTexts["signedInEmail"], timeout: 15)
         XCTAssertTrue(app.staticTexts["signedInEmail"].label.contains(credentials["email"]!))
         keep(app, "ios-account")
         try tap(app, "accountLogout")
         let logout = app.sheets.buttons.matching(NSPredicate(format: "label == %@ AND identifier != %@", "退出登录", "accountLogout")).firstMatch
         try expect(logout, timeout: 5); logout.tap()
+        try tap(app, "openAccountLogin")
         try expect(app.staticTexts["登录 WeftMate"], timeout: 30)
         try tap(app, "accountRecovery")
         // Successful logout retains only this form's email, never the password/code/ticket.
@@ -129,8 +123,9 @@ final class LG2AccountUITests: XCTestCase {
         let ready = try await get("/ready"), credentials = try await get("/credentials")
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "lg2-life-" + UUID().uuidString.prefix(8),
-            "--lg2-cloud", "--server-url", ready["host"]!, "--s1c-cloud-url", ready["cloud"]!]
+            "--lg2-cloud", "--a5-theme", "light", "--server-url", ready["host"]!, "--s1c-cloud-url", ready["cloud"]!]
         app.launch()
+        try tap(app, "openAccountLogin")
         try expect(app.staticTexts["登录 WeftMate"], timeout: 30)
         try tap(app, "accountRegistration")
         try fill(app, "accountEmail", credentials["email"]!)
@@ -154,7 +149,7 @@ final class LG2AccountUITests: XCTestCase {
         try expect(app.staticTexts[renamed].firstMatch, timeout: 20)
         keep(app, "ios-device-renamed")
         try tap(app, "removeDevice." + ready["computerDeviceId"]!)
-        app.sheets.buttons["移除设备"].firstMatch.tap()
+        app.sheets.buttons["将设备下线"].firstMatch.tap()
         let removed = NSPredicate { _, _ in !app.buttons["removeDevice." + ready["computerDeviceId"]!].exists }
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: removed, object: nil)], timeout: 20), .completed)
         try tap(app, "closeAuxiliarySheetButton")
@@ -169,6 +164,7 @@ final class LG2AccountUITests: XCTestCase {
         try expect(app.textFields["新邮箱验证码"], timeout: 20)
         try fill(app, "新邮箱验证码", try await get("/code")["code"]!)
         try tap(app, "确认换绑邮箱")
+        try tap(app, "openAccountLogin")
         try expect(app.staticTexts["邮箱已更新，请用新邮箱登录。"], timeout: 20)
         XCTAssertEqual(app.textFields["accountEmail"].value as? String, changedEmail)
         try fill(app, "accountPassword", credentials["password"]!, secure: true)
@@ -180,6 +176,7 @@ final class LG2AccountUITests: XCTestCase {
         try tap(app, "注销账号")
         let delete = app.sheets.buttons["永久注销账号"].firstMatch
         try expect(delete, timeout: 10); delete.tap()
+        try tap(app, "openAccountLogin")
         try expect(app.staticTexts["账号已注销，本机对话与记忆保留。"], timeout: 30)
         keep(app, "ios-account-deleted")
         app.terminate()

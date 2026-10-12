@@ -260,6 +260,7 @@ import WeftMateCore
         if body["kind"]?.string == "chat.message", draft.isEmpty { draft = body["text"]?.string ?? "" }
     }
     func send() async {
+        guard app?.beginServerOperation() == true else { return }
         guard let app, let chat, pending == nil, !sending, capabilities.supports("chatSend") else { return }
         var body: [String: JSONValue] = ["requestId": .string("apple-chat-" + UUID().uuidString.lowercased()), "kind": .string("chat.message"), "targetDeviceId": .string(app.session?.hostId ?? ""), "chatId": .string(chat.id), "text": .string(draft), "mode": .string(app.runningMessageMode.rawValue)]
         if chat.activeSessionId == nil { body["modelProfileId"] = .string(modelID) }
@@ -307,11 +308,12 @@ import WeftMateCore
         } catch { self.error = "原草稿未能恢复，请核对附件后重试。" }
     }
     func createSide(event: ChatEvent? = nil, temporary: Bool = false, sourceConversation: ConversationSummary? = nil) async {
+        guard app?.beginServerOperation() == true else { return }
         guard let app, pending == nil, !sending, let chat, !modelID.isEmpty else { return }
         if temporary && !capabilities.supports("temporaryChats") { return }
         if !temporary && !capabilities.supports("sideChats") { return }
         let origin = sourceConversation ?? event.flatMap { event in app.conversations.first { $0.chatId == event.chatId } }
-        if !temporary, origin?.temporaryState.cacheAllowed == false { error = "临时内容需要明确分享，当前请在临时对话中继续。"; return }
+        if !temporary, origin?.temporaryState.cacheAllowed == false { error = "临时内容需要明确分享，当前请在临时对话远程连接续。"; return }
         var body: [String: JSONValue] = ["requestId": .string("apple-side-" + UUID().uuidString.lowercased()), "modelProfileId": .string(modelID)]
         if !temporary {
             body["kind"] = .string("session.side.create"); body["targetDeviceId"] = .string(app.session?.hostId ?? "")

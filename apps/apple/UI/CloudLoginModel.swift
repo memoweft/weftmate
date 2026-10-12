@@ -12,51 +12,37 @@ final class CloudLoginModel: ObservableObject {
     @Published private(set) var hosts: [CloudDirectoryDevice] = []
     @Published private(set) var authenticated = false
     @Published private(set) var notice: String?
-    @Published private(set) var pairingCode: String?
-    @Published var showTrustDelivery = false
     @Published private(set) var retryAt = Date.distantPast
     @Published var showAccount = false
     @Published var showDevices = false
+    @Published private(set) var newDeviceNotice: String?
+    private var directoryLoaded = false
+    private var directorySubject: String?
+    private var seenDeviceIDs = Set<String>()
     private var selectedHost: CloudHostConnection?
-    private var directServer: ServerConfiguration?
     @Published var showLogin = false
+    @Published var useLocalWorkspace = false
     @Published var cloudAddress = "https://api.weftmate.com"
-    @Published var pairingText = ""
-    @Published private(set) var hasPairing = false
     @Published private(set) var busy = false
     @Published private(set) var waiting = false
     @Published private(set) var cloudSignedIn = false
     @Published private(set) var error: String?
-    @Published private(set) var pending: [PendingCloudDevice] = []
-    @Published var showPending = false
-    @Published var showScanner = false
     private weak var app: AppleAppModel?
     private let namespace: String
     private let pins: HostPinStore
     private let store: KeychainCredentialStore
-    private let browser = CloudBrowser()
     private var client: CloudAccountClient?
     private var key: CloudDeviceKey?
-    private var pairing: HostPairing?
-    private var pairingReceived: Date?
     private var hostID: String?
-    private var trustedPin: String?
-    #if DEBUG
-    private var debugDirectOrigin: String?
-    #endif
     private var operation: UUID = UUID()
     private var task: Task<Void, Never>?
-    private var pendingBusy = false
 
     init(app: AppleAppModel, namespace: String) {
         self.app = app; self.namespace = namespace; deviceName = app.deviceName
         store = KeychainCredentialStore(service: namespace)
         pins = HostPinStore(store: KeychainCredentialStore(service: namespace + ".pins"))
         if let data = try? store.load(key: "trusted-host"), let ref = try? JSONDecoder().decode([String: String].self, from: data) {
-            hostID = ref["hostId"]; trustedPin = ref["pin"]; cloudAddress = ref["cloud"] ?? cloudAddress
-            #if DEBUG
-            debugDirectOrigin = ref["debugDirectOrigin"]
-            #endif
+            hostID = ref["hostId"]; cloudAddress = ref["cloud"] ?? cloudAddress
         }
         #if DEBUG
         let args = ProcessInfo.processInfo.arguments
@@ -83,7 +69,7 @@ final class CloudLoginModel: ObservableObject {
             guard try await account.savedSubject() != nil else { return }
             authenticated = true; cloudSignedIn = true
             await refreshDirectory()
-            if let hostID, trustedPin != nil, app?.session == nil { await connectHost(id: hostID) }
+            if let hostID, app?.session == nil { await connectHost(id: hostID) }
         } catch { await sessionFailure(error) }
     }
     func changePage(_ page: AppAccountForm.Page) { form.reset(to: page); error = nil; notice = nil }
@@ -97,14 +83,19 @@ final class CloudLoginModel: ObservableObject {
             switch form.page {
             case .login:
                 try await account.beginAppLogin()
-                let reply = try await account.appLogin(email: form.email.trimmingCharacters(in: .whitespacesAndNewlines), password: form.password,
-                    name: deviceName, type: ApplePlatform.current.rawValue.lowercased())
+                let address = form.email.trimmingCharacters(in: .whitespacesAndNewlines)
+                let reply: AppLoginReply
+                if form.loginMethod == .emailCode {
+                    reply = try await account.requestLoginCode(email: address, name: deviceName, type: ApplePlatform.current.rawValue.lowercased())
+                } else {
+                    reply = try await account.appLogin(email: address, password: form.password, name: deviceName, type: ApplePlatform.current.rawValue.lowercased())
+                }
                 guard operation == id else { return }
-                if let challenge = reply.challengeId { form.password = ""; form.page = .deviceConfirmation; form.challenge = challenge; form.code = "" }
+                if let challenge = reply.challengeId { form.password = ""; form.page = .deviceConfirmation; form.challenge = challenge; form.code = ""; form.resendAt = Date().addingTimeInterval(60) }
                 else if let resume = reply.resumeUrl { try await finishLogin(account, resume: resume, id: id) }
                 else { throw APIFailure.invalidResponse }
             case .deviceConfirmation:
-                let reply = try await account.confirmAppDevice(challenge: form.challenge, code: form.code)
+                let reply = try await (form.loginMethod == .emailCode ? account.confirmLoginCode(challenge: form.challenge, code: form.code) : account.confirmAppDevice(challenge: form.challenge, code: form.code))
                 guard let resume = reply.resumeUrl else { throw APIFailure.invalidResponse }
                 try await finishLogin(account, resume: resume, id: id)
             case .registration, .recovery:
@@ -117,7 +108,7 @@ final class CloudLoginModel: ObservableObject {
                     form.ticket = try await account.verifyEmail(challenge: form.challenge, code: form.code, recovery: recovery)
                     form.code = ""; form.step = .password
                 case .password:
-                    guard form.validPassword else { error = "密码至少 8 位，两次输入需一致。"; return }
+                    guard form.validPassword else { error = "密码至少 15 位，两次输入需一致。"; return }
                     if !recovery { form.step = .deviceName; return }
                     try await account.completeEmail(ticket: form.ticket, password: form.password, recovery: true)
                     form.reset(to: .login); notice = "密码已更新，请登录。"
@@ -140,16 +131,29 @@ final class CloudLoginModel: ObservableObject {
         guard id == operation else { return }
         email = form.email; form.reset(to: .login)
         authenticated = true; cloudSignedIn = true; showLogin = false
+        busy = false
         await refreshDirectory()
-        waiting = !hosts.isEmpty
+        await retryConnection()
     }
     func resend() async {
-        guard !busy, form.resendSeconds() == 0, form.page != .deviceConfirmation else { return }
+        guard !busy, form.resendSeconds() == 0, Date() >= retryAt else { return }
         busy = true; defer { busy = false }
         do {
-            form.challenge = try await accountClient().requestEmail(email: form.email, recovery: form.page == .recovery)
+            let account = try accountClient()
+            if form.page == .deviceConfirmation {
+                // A fresh email-only challenge also confirms a new password-login device.
+                try await account.beginAppLogin()
+                let reply = try await account.requestLoginCode(email: form.email, name: deviceName, type: ApplePlatform.current.rawValue.lowercased())
+                guard let challenge = reply.challengeId else { throw APIFailure.invalidResponse }
+                form.challenge = challenge; form.loginMethod = .emailCode; form.code = ""
+            } else { form.challenge = try await account.requestEmail(email: form.email, recovery: form.page == .recovery) }
             form.resendAt = Date().addingTimeInterval(60); error = nil
-        } catch { self.error = accountMessage(error) }
+        } catch {
+            self.error = accountMessage(error)
+            if let limited = error as? AppAccountError, limited.code == "RATE_LIMITED" {
+                retryAt = Date().addingTimeInterval(Double(limited.retryAfter ?? 60)); form.resendAt = retryAt
+            }
+        }
     }
     func offlineAuthorization(hostID: String) async throws -> OfflineAuthorization {
         try await accountClient().offlineStatus(hostID: hostID)
@@ -158,7 +162,19 @@ final class CloudLoginModel: ObservableObject {
         guard authenticated else { return }
         do {
             let account = try accountClient()
+            let subject = try await account.savedSubject()
+            if subject != directorySubject {
+                directorySubject = subject
+                let saved = try store.load(key: "seen-devices:" + (subject ?? ""))
+                seenDeviceIDs = saved.flatMap { try? JSONDecoder().decode(Set<String>.self, from: $0) } ?? []
+                directoryLoaded = saved != nil
+            }
             let directory = try await account.directory()
+            if directoryLoaded, let newDevice = directory.devices.first(where: { !$0.isCurrent && !seenDeviceIDs.contains($0.id) }) {
+                newDeviceNotice = newDevice.name + " 已登录。若不是你使用的设备，可以将它下线。"
+            }
+            seenDeviceIDs.formUnion(directory.devices.map(\.id)); directoryLoaded = true
+            try store.save(JSONEncoder().encode(seenDeviceIDs), key: "seen-devices:" + (subject ?? ""))
             devices = directory.devices; hosts = directory.hosts
             if let current = devices.first(where: { $0.isCurrent }) { deviceName = current.name }
             email = try await account.accountEmail()
@@ -171,10 +187,9 @@ final class CloudLoginModel: ObservableObject {
         else { error = accountMessage(failure) }
     }
     private func expireSession() async {
-        // AppleAppModel saves account-scoped drafts before clearing the host identity.
-        await app?.signOut()
         authenticated = false; cloudSignedIn = false; form.reset(to: .login)
-        error = "登录已过期，请重新登录。草稿已保留。"
+        await app?.retainLocalContentAfterExpiry()
+        error = "登录已过期。手机上的内容仍可查看，需要联网时请重新登录。"
     }
     func connectHost(id: String) async {
         guard !busy else { return }
@@ -184,35 +199,28 @@ final class CloudLoginModel: ObservableObject {
             let connection = try await account.connect(hostID: id)
             guard connection.hostId == id else { throw APIFailure.identityMismatch }
             selectedHost = connection
-            if hostID != id {
-                directServer = nil
-                if let reference = try await account.savedHostReference(hostID: id), reference["cloud"] == cloudAddress {
-                    hostID = id; trustedPin = reference["pin"]
-                    try store.save(JSONEncoder().encode(reference), key: "trusted-host")
-                    #if DEBUG
-                    debugDirectOrigin = reference["debugDirectOrigin"]
-                    #endif
-                }
-            }
-            guard hostID == id, trustedPin != nil else { showLogin = true; return }
-            try await exchange(id: operation, redeem: false)
-        } catch { await sessionFailure(error) }
+            hostID = id
+            try await exchange(id: operation)
+        } catch {
+            waiting = true
+            if case CloudLoginFailure.hostOffline = error { self.error = connectionMessage(error) }
+            else if case APIFailure.transport(_) = error { self.error = connectionMessage(error) }
+            else { await sessionFailure(error) }
+        }
     }
-    func connectDirect(address: String) async {
-        do {
-            directServer = try ServerConfiguration(input: address, allowLoopbackHTTP: allowLoopback)
-            guard let hostID, trustedPin != nil else { showLogin = true; return }
-            await connectHost(id: hostID)
-        } catch { self.error = accountMessage(error) }
+    private func connectionMessage(_ error: Error) -> String {
+        if case CloudLoginFailure.hostOffline = error { return "电脑没开或没联网。打开电脑上的 WeftMate 后再试一次。" }
+        if case APIFailure.transport(_) = error { return "电脑没开或没联网。请检查后再试一次。" }
+        return accountMessage(error)
     }
     func poll() async {
         await refreshDirectory()
-        if waiting && hostID != nil && trustedPin != nil && !busy { retry() }
-        await checkPending()
+        if waiting && authenticated && !busy { await retryConnection() }
     }
+    func dismissNewDeviceNotice() { newDeviceNotice = nil }
     func changePassword(current: String, password: String, repeatPassword: String) async {
         guard !busy else { return }
-        guard password.count >= 8 && password == repeatPassword else { error = "密码至少 8 位，两次输入需一致。"; return }
+        guard password.count >= 15 && password == repeatPassword else { error = "密码至少 15 位，两次输入需一致。"; return }
         busy = true; defer { busy = false }
         do {
             try await accountClient().changePassword(current: current, password: password)
@@ -253,7 +261,7 @@ final class CloudLoginModel: ObservableObject {
         busy = true; defer { busy = false }
         do {
             try await accountClient().revokeDevice(id: device.id)
-            if device.isCurrent { await app?.signOut() } else { await refreshDirectory() }
+            if device.isCurrent { await expireSession() } else { await refreshDirectory() }
         } catch { await sessionFailure(error) }
     }
     func deleteAccount(password: String) async {
@@ -269,178 +277,44 @@ final class CloudLoginModel: ObservableObject {
         await app?.signOut()
         if !authenticated { showAccount = false; showDevices = false }
     }
-    func generatePairing() async {
-        guard let app else { return }
-        do {
-            let pair = try await app.assistantClient.createCloudPairing()
-            pairingCode = "wm1." + encodeQR(try JSONEncoder().encode(pair)); error = nil
-        } catch { self.error = accountMessage(error) }
-    }
-    func createTrustDelivery(for device: PendingCloudDevice) async {
-        guard let app else { return }
-        do {
-            let bytes = try await app.assistantClient.trustedHostDelivery(requestID: device.id)
-            guard let reply = try JSONSerialization.jsonObject(with: bytes) as? [String: Any],
-                  let token = reply["trustToken"] as? String, let anchor = reply["publicJwk"] as? [String: String],
-                  let host = reply["hostId"] as? String else { throw APIFailure.invalidResponse }
-            let qr = try JSONSerialization.data(withJSONObject: ["trustToken": token, "publicJwk": anchor, "hostId": host])
-            pairingCode = "wmtrust1." + encodeQR(qr); showTrustDelivery = true; error = nil
-        } catch { self.error = accountMessage(error) }
-    }
-    private func encodeQR(_ data: Data) -> String {
-        data.base64EncodedString().replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
-    }
-    private func receiveTrustQR(_ text: String) async throws {
-        let encoded = String(text.dropFirst("wmtrust1.".count)).replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
-        guard let data = Data(base64Encoded: encoded + String(repeating: "=", count: (4 - encoded.count % 4) % 4)),
-              let qr = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let anchor = qr["publicJwk"] as? [String: String], let token = qr["trustToken"] as? String,
-              let host = qr["hostId"] as? String, let selectedHost, selectedHost.hostId == host,
-              let key, let client, let sub = try await client.savedSubject() else { throw CloudLoginFailure.pairing }
-        // Explicit physical QR/code input supplies the anchor, never a directory response.
-        let pin = try HostTrustDelivery.verify(token: token, trustedPublicJwk: anchor, hostID: host, subject: sub,
-            deviceID: "apple-" + key.thumbprint, thumbprint: key.thumbprint)
-        try pins.save(pin.tlsSpki, for: pin.origin)
-        if let base = pin.relay?.baseUrl { try pins.save(pin.tlsSpki, for: base) }
-        hostID = host; trustedPin = pin.tlsSpki
-        let reference = ["hostId": host, "pin": pin.tlsSpki, "cloud": cloudAddress]
-        try store.save(JSONEncoder().encode(reference), key: "trusted-host")
-        try await client.rememberHost(hostID: host, reference: reference)
-        try await exchange(id: operation, redeem: false)
-    }
     private func accountMessage(_ error: Error) -> String {
         if let error = error as? AppAccountError { return error.localizedDescription }
-        if let error = error as? CloudLoginFailure { return error.localizedDescription }
+        if let error = error as? CloudLoginFailure { return error == .hostOffline ? "电脑没开或没联网。打开电脑上的 WeftMate 后再试一次。" : error.localizedDescription }
+        if case APIFailure.server(_, "LOGIN_UPGRADE_REQUIRED") = error { return "请更新电脑上的 WeftMate 后再连接。" }
         if let error = error as? APIFailure { return error.localizedDescription }
         return "网络不通，请检查连接后重试。"
     }
-    func begin(redeem: Bool = false) {
-        guard !busy else { return }
-        let id = UUID(); operation = id; busy = true; error = nil
-        task = Task {
-            defer { if operation == id { busy = false } }
-            do {
-                if !pairingText.isEmpty { try receivePairing(Data(pairingText.utf8)) }
-                let server = try ServerConfiguration(input: cloudAddress, allowLoopbackHTTP: allowLoopback)
-                let configuration = CloudConfiguration(server: server)
-                let deviceKey = try CloudDeviceKey(namespace: namespace)
-                key = deviceKey
-                let account = CloudAccountClient(configuration: configuration, key: deviceKey, store: store)
-                client = account
-                let browser = self.browser
-                try await account.authorize(hostID: hostID) { flow, jwk in try await browser.open(flow, publicJwk: jwk) }
-                guard operation == id else { return }
-                cloudSignedIn = true
-                guard hostID != nil else { error = CloudLoginFailure.needsPairing.localizedDescription; return }
-                try await exchange(id: id, redeem: redeem)
-            } catch { if operation == id { self.error = message(error) } }
-        }
+    func retryConnection() async {
+        guard !busy, authenticated else { return }
+        if let host = hosts.first(where: { $0.hostId == hostID }) ?? hosts.first {
+            await connectHost(id: host.hostId ?? host.id)
+        } else { await refreshDirectory() }
     }
-    func retry(redeem: Bool = false) {
-        guard !busy else { return }
-        let id = UUID(); operation = id; busy = true; error = nil
-        task = Task {
-            defer { if operation == id { busy = false } }
-            do { try await exchange(id: id, redeem: redeem) }
-            catch { if operation == id { self.error = message(error) } }
-        }
-    }
-    func receivePairing(_ bytes: Data) throws {
-        let pair = try HostPairing.parse(bytes, allowLoopbackHTTP: allowLoopback)
-        // New QR may renew a challenge, but never silently replace a saved host key.
-        if let selectedHost, selectedHost.hostId != pair.hostId { throw CloudLoginFailure.pairing }
-        if let base = pair.relay?.baseUrl { try pins.save(pair.tlsSpki, for: base) }
-        if pair.origin.hasPrefix("https://") { try pins.save(pair.tlsSpki, for: pair.origin) }
-        pairing = pair; pairingReceived = Date(); hostID = pair.hostId; trustedPin = pair.tlsSpki
-        var reference = ["hostId": pair.hostId, "pin": pair.tlsSpki, "cloud": cloudAddress]
-        #if DEBUG
-        if allowLoopback, pair.origin.hasPrefix("http://") { debugDirectOrigin = pair.origin; reference["debugDirectOrigin"] = pair.origin }
-        #endif
-        try store.save(JSONEncoder().encode(reference), key: "trusted-host")
-        pairingText = String(data: bytes, encoding: .utf8) ?? ""; hasPairing = true
-    }
-    func editPairing() { pairingText = ""; hasPairing = false }
-    func scan(_ bytes: Data) {
-        showScanner = false
-        do {
-            let text = String(data: bytes, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if text.hasPrefix("wmtrust1.") {
-                task = Task { do { try await receiveTrustQR(text) } catch { self.error = accountMessage(error) } }
-                return
-            }
-            let priorHost = hostID
-            try receivePairing(bytes)
-            if authenticated, let hostID {
-                task = Task {
-                    do {
-                        let account = try accountClient()
-                        if let bytes = try store.load(key: "trusted-host"), let reference = try? JSONDecoder().decode([String: String].self, from: bytes) {
-                            try await account.rememberHost(hostID: hostID, reference: reference)
-                        }
-                        _ = try await account.connect(hostID: hostID); retry(redeem: false)
-                    }
-                    catch { self.error = accountMessage(error) }
-                }
-            } else if cloudSignedIn && priorHost == hostID { retry(redeem: true) }
-        } catch { self.error = message(error) }
-    }
-    #if DEBUG && os(iOS)
-    func loadSyntheticQR() async {
-        let args = ProcessInfo.processInfo.arguments
-        guard allowLoopback, let i = args.firstIndex(of: "--s1c-qr-url"), args.indices.contains(i + 1),
-              let url = URL(string: args[i + 1]), url.scheme == "http", ["127.0.0.1", "localhost"].contains(url.host) else { return }
-        do {
-            let (bytes, response) = try await URLSession.shared.data(from: url)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw CloudLoginFailure.pairing }
-            try receivePairing(PairingQRDecoder.decode(bytes))
-        } catch {
-            let code = error as NSError
-            self.error = "测试二维码读取失败（\(code.domain)/\(code.code)）"
-        }
-    }
-    #endif
-    private func exchange(id: UUID, redeem: Bool) async throws {
-        guard let client, let key, let hostID, let app else { throw CloudLoginFailure.needsPairing }
-        let server: ServerConfiguration
-        #if DEBUG
-        if let directServer { server = directServer }
-        else if allowLoopback, let direct = pairing?.origin ?? debugDirectOrigin, direct.hasPrefix("http://") {
-            // Isolated local cloud/host XCTest; no production directory or TLS bypass.
-            server = try ServerConfiguration(input: direct, allowLoopbackHTTP: true)
-        } else if authenticated, let selectedHost, selectedHost.status == "online", let base = selectedHost.baseUrl {
-            server = try ServerConfiguration(input: base)
-        } else { server = try await client.relay(hostID: hostID) }
-        #else
-        if let directServer { server = directServer }
-        else if authenticated, let selectedHost, selectedHost.status == "online", let base = selectedHost.baseUrl {
-            server = try ServerConfiguration(input: base)
-        } else { throw CloudLoginFailure.hostOffline }
-        #endif
-        guard operation == id else { throw APIFailure.accountChanged }
-        // Discover supplies only the route. The pin must already have come from pairing.
-        if server.origin.scheme == "https" {
-            guard let expected = try pins.pin(for: server.originString), expected == trustedPin else { throw CloudLoginFailure.needsPairing }
-        }
+    func requireLogin() { showLogin = true }
+    private func exchange(id: UUID) async throws {
+        guard let client, let key, let hostID, let app, let selectedHost,
+              selectedHost.status == "online", let base = selectedHost.baseUrl else { throw CloudLoginFailure.hostOffline }
+        let server = try ServerConfiguration(input: base, allowLoopbackHTTP: allowLoopback)
         let token = try await client.accessToken(hostID: hostID)
         guard operation == id else { throw APIFailure.accountChanged }
-        if redeem {
-            guard let pairing, let received = pairingReceived, Date().timeIntervalSince(received) < Double(pairing.expiresIn) else { throw CloudLoginFailure.pairing }
-        }
+        guard let subject = try await client.savedSubject() else { throw APIFailure.notAuthenticated }
         let result = try await app.assistantClient.exchangeCloudSession(server: server, hostID: hostID, accessToken: token,
-            deviceName: cloudDeviceName(deviceName), key: key, pairing: redeem ? pairing : nil)
+            deviceName: cloudDeviceName(deviceName), key: key, trustSubject: subject, hostPins: pins)
         guard operation == id else {
             if case .authenticated(let session) = result { await app.assistantClient.discardCloudSession(session) }
             return
         }
         switch result {
-        case .pending: waiting = true
+        case .pending: throw APIFailure.server(status: 409, code: "LOGIN_UPGRADE_REQUIRED")
         case .authenticated(let session):
             waiting = false; showLogin = false
+            let reference = ["hostId": hostID, "cloud": cloudAddress]
+            try store.save(JSONEncoder().encode(reference), key: "trusted-host")
             await app.acceptCloudSession(session)
         }
     }
     func cancel() {
-        operation = UUID(); task?.cancel(); browser.cancel(); busy = false; waiting = false; error = nil; showLogin = false
+        operation = UUID(); task?.cancel(); busy = false; error = nil; showLogin = false; form.reset(to: .login)
         if let client { Task { await client.cancel() } }
     }
     func signOut() async throws {
@@ -454,40 +328,9 @@ final class CloudLoginModel: ObservableObject {
             let config = CloudConfiguration(server: try ServerConfiguration(input: cloud, allowLoopbackHTTP: allowLoopback))
             try store.delete(key: CloudAccountClient.credentialKey(configuration: config))
         }
-        client = nil; key = nil; cloudSignedIn = false; authenticated = false; devices = []; hosts = []; email = ""; emailChangeChallenge = nil; showTrustDelivery = false; pairingCode = nil; selectedHost = nil; directServer = nil; form.reset(to: .login)
-        pairing = nil; pairingText = ""; hasPairing = false; hostID = nil; trustedPin = nil; pending = []; showPending = false
+        client = nil; key = nil; cloudSignedIn = false; authenticated = false; devices = []; hosts = []; email = ""; emailChangeChallenge = nil; selectedHost = nil; form.reset(to: .login)
+        hostID = nil; newDeviceNotice = nil; directoryLoaded = false; seenDeviceIDs = []
         try store.delete(key: "trusted-host")
     }
-    func checkPending() async {
-        guard !pendingBusy, let app, app.session?.verification == .verified else { return }
-        pendingBusy = true; defer { pendingBusy = false }
-        let epoch = app.accountEpoch
-        do {
-            let devices = try await app.assistantClient.pendingCloudDevices()
-            guard app.accountEpoch == epoch else { return }
-            pending = devices; showPending = false
-        } catch {
-            // Older/unbound hosts may have no cloud device requests. Keep local login available.
-        }
-    }
-    func decide(_ device: PendingCloudDevice, allow: Bool) async {
-        guard let app else { return }
-        let epoch = app.accountEpoch
-        do {
-            try await app.assistantClient.decideCloudDevice(id: device.id, allow: allow)
-            guard epoch == app.accountEpoch else { return }
-            pending.removeAll { $0.id == device.id }; showPending = false; error = nil
-            if allow { await createTrustDelivery(for: device) }
-        } catch { self.error = message(error) }
-    }
-    private func message(_ error: Error) -> String {
-        if let cloud = error as? CloudLoginFailure { return cloud.localizedDescription }
-        if let api = error as? APIFailure {
-            if case .server(401, "PAIRING_INVALID") = api { return CloudLoginFailure.pairing.localizedDescription }
-            if case .server(403, "DEVICE_NOT_TRUSTED") = api { return "这台设备的授权已被拒绝或撤销，请在电脑上重新配对。" }
-            if case .server(400, "invalid_grant") = api { return "云端未能确认此设备，请检查客户端登记与云服务版本后重新登录。" }
-            return api.localizedDescription
-        }
-        return "连接不可用，请检查云端与电脑连接后重试。"
-    }
+    private func message(_ error: Error) -> String { accountMessage(error) }
 }

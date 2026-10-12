@@ -6,6 +6,13 @@ struct OfflineWorkspace: View {
     @ObservedObject var model: OfflineChatModel
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
+            if app.serverLoginExpired {
+                HStack {
+                    Text("已保存的内容仍可查看").font(AppleTokens.Fonts.callout)
+                    Spacer()
+                    Button("联网使用") { app.cloudLogin.requireLogin() }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("expiredLogin")
+                }.padding(AppleTokens.Space.p12)
+            }
             if model.hostOffline || model.showHistory {
                 OfflineChatView(app: app, model: model)
             } else {

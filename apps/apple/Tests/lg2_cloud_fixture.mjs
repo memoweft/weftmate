@@ -65,8 +65,8 @@ async function desktopLogin() {
 }
 async function direct(path,body,auth=local,headers={}) {
     const response = await fetch(started.origin+'/personal/v1'+path,{method:body===undefined?'GET':'POST',headers:{origin:started.origin,
-        ...(body===undefined?{}:{'content-type':'application/json'}),...(auth?{cookie:auth.cookie,'x-weftmate-csrf':auth.csrfToken}:{}),...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});
-    const data=await response.json();return {...data,status:response.status,cookie:response.headers.get('set-cookie')?.split(';')[0]};
+        ...(body===undefined?{}:{'content-type':'application/json'}),...(auth?{cookie:auth.cookie,'x-weftmate-csrf':auth.csrfToken,'x-weftmate-desktop':host.libraryDesktopToken}:{}),...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});
+    const data=await response.json();return {...data,status:response.status,cookie:response.headers.get('set-cookie')?.split(';')[0] ?? auth?.cookie};
 }
 const qrBinary=join(root,'qr'); await run('swiftc',['apps/apple/Tests/s1c_qr_image.swift','-o',qrBinary]);
 const driver = createServer(async(req,res)=>{
@@ -80,9 +80,10 @@ const driver = createServer(async(req,res)=>{
             result={code:await mailCode(challenge.id)};
         } else if(path==='/bootstrap'){
             await desktopLogin();
+            local=await direct('/auth/desktop',{deviceName:'LG2 测试电脑'},null,{'x-weftmate-desktop':host.libraryDesktopToken});
             const nonce=await direct('/auth/cloud-nonce',{},null);
-            local=await direct('/auth/cloud-desktop',{accessToken:desktopTokens.access_token,deviceName:'LG2 测试电脑'},null,
-                {dpop:await proof(started.origin+'/personal/v1/auth/cloud-desktop',desktopTokens.access_token,nonce.nonce)});
+            local=await direct('/auth/cloud-desktop',{accessToken:desktopTokens.access_token,deviceName:'LG2 测试电脑'},local,
+                {'x-weftmate-desktop':host.libraryDesktopToken,dpop:await proof(started.origin+'/personal/v1/auth/cloud-desktop',desktopTokens.access_token,nonce.nonce)});
             if(local.status!==200)throw new Error('desktop binding failed');
             await host.syncCloudRevocations(); result={ok:true};
         } else if(path==='/pairing.png'){
