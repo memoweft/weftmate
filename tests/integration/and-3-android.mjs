@@ -197,7 +197,8 @@ try {
   report.checks.push('native-weekly-review-visible');
   await scene('health', '接上后，这里会显示你自己的记录'); await scene('goals', '目标'); await scene('library', '成果');
   await scene('settings', '设置'); await scene('approvals', '权限'); await scene('executionRecords', '执行记录'); await scene('system', '系统状态');
-  await scene('notifications', '回顾与洞察', 'review-settings');
+  await scene('notifications', '通知');
+  await scene('reviewHealth', '回顾与洞察', 'review-settings');
   await page.getByText('健康数据', { exact: true }).first().scrollIntoViewIfNeeded(); await both('health-settings');
   await page.evaluate(async id => { await selectSharedSession(id); page('chat'); }, fixture.candidate.sessionId);
   await page.getByText('另一个模型看过', { exact: false }).first().waitFor(); await both('approval-second-opinion');
