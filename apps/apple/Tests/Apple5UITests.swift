@@ -26,9 +26,9 @@ final class Apple5UITests: XCTestCase {
             let send=app.buttons["mainChat.send"]
             XCTAssertLessThanOrEqual(send.frame.maxY,app.keyboards.firstMatch.frame.minY+2)
             capture(app,theme,"composer-multiline-above-keyboard")
-            // Opening the existing date control ends input focus without changing simulator settings.
-            app.buttons["mainChat.menu"].tap(); app.buttons["mainChat.date"].tap()
-            XCTAssertTrue(app.buttons["mainChat.jump"].waitForExistence(timeout:10)); app.buttons["mainChat.jump"].tap()
+            // Use the existing bounded resource sheet to finish input; the SE date popover is taller than the screen.
+            app.buttons["mainChat.menu"].tap(); app.buttons["输出与来源"].firstMatch.tap()
+            XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout:15)); app.buttons["phoneSheet.close"].tap()
             XCTAssertTrue(app.buttons["phone.tab.health"].waitForExistence(timeout:15))
             app.buttons["phone.tab.health"].tap()
             XCTAssertTrue(app.descendants(matching:.any)["health.scoreGrid"].waitForExistence(timeout:20))

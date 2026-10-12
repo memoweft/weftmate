@@ -1,0 +1,43 @@
+{
+  "xctestPassed": 13,
+  "swiftTestingPassed": 477,
+  "environmentTestsSkipped": 2,
+  "realPersonalHostHTTP": true,
+  "analysisOffConflictLimitVerified": true,
+  "stateChecksPassed": [
+    "AppleSettingsSummaryChecks",
+    "ToolProgressChecks"
+  ],
+  "designTokensPassed": 5,
+  "callbackSitesReviewed": 67,
+  "callbackFailures": 0,
+  "uiCopyPassed": true,
+  "nativeBuildPassed": true,
+  "originalBoots": 4,
+  "gpuResetsAdded": 0,
+  "weftmateCrashesAdded": 0,
+  "finalScreenshots": [
+    "apple5-dark-activity-detail.png",
+    "apple5-dark-activity-list.png",
+    "apple5-dark-composer-collapsed.png",
+    "apple5-dark-composer-focused.png",
+    "apple5-dark-composer-multiline-above-keyboard.png",
+    "apple5-dark-goals-detail.png",
+    "apple5-dark-goals-list.png",
+    "apple5-dark-health-today-lower.png",
+    "apple5-dark-health-today-upper.png",
+    "apple5-dark-library-list.png",
+    "apple5-dark-library-preview.png",
+    "apple5-light-activity-detail.png",
+    "apple5-light-activity-list.png",
+    "apple5-light-composer-collapsed.png",
+    "apple5-light-composer-focused.png",
+    "apple5-light-composer-multiline-above-keyboard.png",
+    "apple5-light-goals-detail.png",
+    "apple5-light-goals-list.png",
+    "apple5-light-health-today-lower.png",
+    "apple5-light-health-today-upper.png",
+    "apple5-light-library-list.png",
+    "apple5-light-library-preview.png"
+  ]
+}
