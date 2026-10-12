@@ -50,12 +50,13 @@
       finally{if(token===scope()&&id===readId){model.loading=false;emit();}}
     }
     async function readWeek(token,id){
-      const specs=[['weekSleep','sleepMinutes',7],['weekUsage','usageLateNightMinutes',7],['average:recovery','recovery',14],['average:sleep','sleep',14],['average:load','load',14],...['stress','energy','fitnessAge'].filter(id=>model.overview?.[id]).map(id=>[`average:${id}`,id,14]),...['deepMinutes','remMinutes','awakeMinutes','inBedMinutes'].map(metric=>[`stage:${metric}`,metric,7])];
+      const specs=[['weekSleep','sleepMinutes',7],['weekUsage','usageLateNightMinutes',7],['average:recovery','recovery',14],['average:sleep','sleep',14],['average:load','load',14],...['stress','energy','fitnessAge'].filter(id=>model.overview?.[id]).map(id=>[`average:${id}`,id,14]),...['deepMinutes','remMinutes','awakeMinutes','inBedMinutes'].map(metric=>[`stage:${metric}`,metric,7]),...['steps','activeEnergyKcal','exerciseMinutes'].map(metric=>[`dimension:${metric}`,metric,7])];
       const results=await Promise.allSettled(specs.map(([,metric,days])=>series(metric,days)));
       if(token!==scope()||id!==readId)return;
       for(const [i,[key]]of specs.entries()){const result=results[i],data=result.status==='fulfilled'?result.value:null;
         if(key.startsWith('average:')){const metric=key.slice(8);model.scoreAverages[metric]=data?.average??null;if(metric==='recovery')model.recoveryWeek=data?{...data,points:data.points.slice(-7),average:null}:null;}
         else if(key.startsWith('stage:')){const point=data?.points.find(p=>p.day===model.day);model.sleepStages[key.slice(6)]=point?.value??null;model.dimensionMetrics[key.slice(6)]=point??null;if(result.status==='rejected')model.stageError=core.failureMessage(result.reason);}
+        else if(key.startsWith('dimension:'))model.dimensionMetrics[key.slice(10)]=data?.points.find(p=>p.day===model.day)??null;
         else {model[key]=data;if(key==='weekSleep')model.dimensionMetrics.sleepMinutes=data?.points.find(p=>p.day===model.day)??null;}
       }model.supplementLoading=false;emit();
     }

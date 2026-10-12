@@ -292,3 +292,8 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 @media(prefers-reduced-motion:reduce) { .health-date-out .health-layout { opacity:1; } }
 .health-page { --health-canvas:var(--wm-color-health-canvas-light); background:var(--health-canvas); }
 [data-theme=dark] .health-page { --health-canvas:var(--wm-color-health-canvas-dark); }
+.health-card[data-metric=sleep]>.health-duration { margin-block:var(--wm-space-16); }
+.health-card[data-metric=sleep]>.health-duration .health-big { font-size:calc(var(--wm-font-size-22) * 2); }
+[data-reduced-motion] .health-page * { animation:none!important; transition:none!important; }
+[data-reduced-motion] .health-date-out .health-layout { opacity:1; }
+[data-motion-paused] .health-page * { animation-play-state:paused!important; }

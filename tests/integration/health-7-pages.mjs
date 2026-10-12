@@ -35,6 +35,7 @@ for(const theme of mode==='recovery'?['dark']:['dark','light']){
     if(path.includes('/health/overview')){if(delay)await delay;if(fail)return route.fulfill(mobile?{json:{error:{code:'SYNTHETIC_UNAVAILABLE'}}}:{status:503,json:{error:{code:'SYNTHETIC_UNAVAILABLE'}}});}
     const method=mobile?input.params.method??'GET':route.request().method(),body=mobile?input.params.body:method==='GET'?undefined:route.request().postDataJSON();
     const result=fixtures.get(page).reply(path,{method,body});
+    if(variant==='suggestion'&&path.includes('/health/overview'))result.insight.suggestions=[{id:'health7-synthetic-rest',text:'今晚给自己留一点放松的时间',reminder:{title:'留一点放松的时间',time:'2026-10-13T13:30:00Z'}}];
     if(variant==='disconnected'&&path.includes('/health/overview'))result.connected=false;
     if(variant==='short'){
      const u=new URL(path,'http://synthetic.invalid');
@@ -72,7 +73,7 @@ for(const theme of mode==='recovery'?['dark']:['dark','light']){
     }
     await page.getByRole('button',{name:'返回今日',exact:true}).click();
    }
-   await page.locator('.health-vital').first().click();await settled(page);await page.getByRole('switch',{name:'叠加：深夜使用时长'}).click();await settled(page);await page.locator('.health-trend-panel').evaluate(n=>n.scrollIntoView({block:'center'}));await shot(page,`${prefix}-trend-overlay`);
+   await page.locator('.health-vital').first().click();await settled(page);await page.getByRole('switch',{name:'叠加：深夜使用时长'}).click();await settled(page);await page.locator('.health-trend-panel').evaluate(n=>n.scrollIntoView({block:'start'}));await shot(page,`${prefix}-trend-overlay`);
    const chart=page.getByRole('application',{name:/趋势图/}).first();await chart.evaluate(n=>n.scrollIntoView({block:'center'}));const box=await chart.boundingBox(),x=box.x+box.width*.65,y=box.y+box.height*.5;let touch;
    if(mobile){touch=await page.context().newCDPSession(page);await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});}else {await page.mouse.move(x,y);await page.mouse.down();}
    await page.locator('.health-chart-tip:not([hidden])').first().waitFor();await shot(page,`${prefix}-trend-point-open`);
@@ -86,6 +87,10 @@ for(const theme of mode==='recovery'?['dark']:['dark','light']){
     if(!mobile)await page.getByRole('button',{name:'关闭设置',exact:true}).click();await enter(page,mobile);await top(page);
     await page.emulateMedia({reducedMotion:'reduce'});await page.getByRole('button',{name:'前一天',exact:true}).click();await settled(page);const animations=await page.locator('.health-page').evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.playState==='running').length);assert.equal(animations,0);await shot(page,`${prefix}-reduced-motion`);await page.emulateMedia({reducedMotion:'no-preference'});
     assert.doesNotMatch(await page.locator('.health-page').textContent(),/医学结论|趋势估计|免责声明/);
+    if(width===360){const geometry=await page.evaluate(()=>{const root=document.querySelector('.health-page'),panel=document.createElement('div');panel.style.width='32px';root.append(panel);let count=0;for(const value of [null,42,-900,900]){const G=WeftHealthGraphics;for(const svg of [G.band(value),G.dualBars(value,450),G.range(value,30,65),G.halfGauge(value),G.area(value===null?[]:[{value}]),G.comparison(value,34),G.progress(value,60),G.stages({deepMinutes:value,remMinutes:null,awakeMinutes:null},value)]){panel.replaceChildren(svg);if(panel.scrollWidth>32)throw Error('Narrow graphic overflow');if([...svg.querySelectorAll('*')].some(n=>[...n.attributes].some(a=>/NaN|Infinity/.test(a.value))))throw Error('Non-finite SVG geometry');count++;}}panel.remove();return {width:32,componentCases:count};});report.checks.push({theme,renderedGraphics:geometry});}
+    let release;delay=new Promise(r=>release=r);await page.evaluate(()=>{const core=globalThis.__health7Core??uiCore;core.resetHealth();void core.readHealth();});await page.getByRole('status',{name:'正在读取健康',exact:true}).waitFor();await shot(page,`${prefix}-loading`);release();delay=null;await settled(page);
+    fail=true;await page.getByRole('button',{name:'刷新健康',exact:true}).click();await page.getByRole('alert').first().waitFor();await shot(page,`${prefix}-error`);fail=false;await page.getByRole('button',{name:'重试',exact:true}).click();await settled(page);
+    variant='suggestion';await page.getByRole('button',{name:'刷新健康',exact:true}).click();await settled(page);await top(page);await page.getByRole('button',{name:'提醒我',exact:true}).waitFor();await shot(page,`${prefix}-insight-reminder`);variant='six';
     report.checks.push(`${prefix}-${theme}: two-column narrow scores, six details, sleep stages, colored SVGs, overlay, touch/keyboard point, method/analysis/calendar open, unique settings notice, reduced motion, no overflow`);
    }
   }
