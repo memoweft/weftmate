@@ -260,6 +260,7 @@ import WeftMateCore
         if body["kind"]?.string == "chat.message", draft.isEmpty { draft = body["text"]?.string ?? "" }
     }
     func send() async {
+        guard app?.beginServerOperation() == true else { return }
         guard let app, let chat, pending == nil, !sending, capabilities.supports("chatSend") else { return }
         var body: [String: JSONValue] = ["requestId": .string("apple-chat-" + UUID().uuidString.lowercased()), "kind": .string("chat.message"), "targetDeviceId": .string(app.session?.hostId ?? ""), "chatId": .string(chat.id), "text": .string(draft), "mode": .string(app.runningMessageMode.rawValue)]
         if chat.activeSessionId == nil { body["modelProfileId"] = .string(modelID) }
@@ -307,6 +308,7 @@ import WeftMateCore
         } catch { self.error = "原草稿未能恢复，请核对附件后重试。" }
     }
     func createSide(event: ChatEvent? = nil, temporary: Bool = false, sourceConversation: ConversationSummary? = nil) async {
+        guard app?.beginServerOperation() == true else { return }
         guard let app, pending == nil, !sending, let chat, !modelID.isEmpty else { return }
         if temporary && !capabilities.supports("temporaryChats") { return }
         if !temporary && !capabilities.supports("sideChats") { return }

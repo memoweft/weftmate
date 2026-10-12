@@ -318,6 +318,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 let win = null;
+let userInterfaceReady = false;
 const pendingWindowsSendTo = process.platform === 'win32' ? parseWindowsSendTo(process.argv) : [];
 let tray = null;
 let settingsMod = null; // settings.ts 模块(宠物窗口状态——本机显示偏好)
@@ -518,7 +519,12 @@ function requestFatalStartupExit(kind, error, view) {
   logCrash(kind, error);
   console.error(`[weftmate] ✗ ${kind}:`, redactSecretText(error && error.message ? error.message : error));
   if (!personalHostMode) {
+    if (win && !win.isDestroyed() && userInterfaceReady && !win.webContents.isLoadingMainFrame()) {
+      showProgramNotice(view, () => app.quit());
+      return;
+    }
     try {
+      // Only a fatal startup failure before a usable renderer exists uses the OS dialog.
       dialog.showErrorBox(view.title, view.message);
     } catch (dialogError) {
       // Windows 原生对话框若不可用，崩溃日志和 stderr 仍保留完整诊断。
@@ -526,6 +532,30 @@ function requestFatalStartupExit(kind, error, view) {
     }
   }
   app.quit();
+}
+
+function showProgramNotice(view, onClosed) {
+  if (!win || win.isDestroyed()) { if (onClosed) onClosed(); return; }
+  const target = win.webContents, id = randomUUID();
+  if (onClosed) {
+    const closed = (event, noticeId) => {
+      if (event.sender !== target || event.senderFrame !== target.mainFrame || noticeId !== id) return;
+      ipcMain.removeListener('wm:ui:notice-closed', closed); onClosed();
+    };
+    ipcMain.on('wm:ui:notice-closed', closed);
+    target.once('destroyed', () => ipcMain.removeListener('wm:ui:notice-closed', closed));
+  }
+  const send = () => { if (!target.isDestroyed()) target.send('wm:ui:notice', { id, title: view.title, message: view.message }); };
+  if (target.isLoadingMainFrame()) target.once('did-finish-load', send); else send();
+  showWindow();
+}
+
+function trackUserInterfaceReady(window) {
+  userInterfaceReady = false;
+  window.webContents.on('did-start-navigation', (_event, _url, isInPlace, isMainFrame) => { if (isMainFrame && !isInPlace) userInterfaceReady = false; });
+  window.webContents.on('did-finish-load', () => { userInterfaceReady = true; });
+  window.webContents.on('did-fail-load', (_event, _code, _description, _url, isMainFrame) => { if (isMainFrame) userInterfaceReady = false; });
+  window.webContents.on('render-process-gone', () => { userInterfaceReady = false; });
 }
 
 function failHarnessStartup(error) {
@@ -2213,6 +2243,7 @@ async function bootstrap() {
       webSecurity: true,
     },
   });
+  trackUserInterfaceReady(win);
   // DSH owns the document body, but its browser title must not replace the
   // product name in the native frame/taskbar. This only changes Electron's
   // outer shell identity and does not alter the official DSH page title/DOM.
@@ -3489,6 +3520,7 @@ async function bootstrap() {
             startInTray: process.argv.includes('--start-in-tray'),
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
           win = personalDesktop.window;
+          trackUserInterfaceReady(win);
           desktopUpdates.attach(win);
           setupTray();
           await personalDesktop.ready;
@@ -3567,8 +3599,7 @@ async function checkPreviewUpdateFromTray() {
       message: state.error ?? '更新未完成。当前版本保持不变，请稍后重试。',
       buttons: ['知道了'],
     };
-    if (win && !win.isDestroyed()) await dialog.showMessageBox(win, options);
-    else await dialog.showMessageBox(options);
+    showProgramNotice(options);
   }
 }
 
@@ -3591,7 +3622,7 @@ async function installPreviewUpdateFromTray() {
       message: '更新尚未就绪或任务仍在运行。请等待下载与任务完成后重试。',
       buttons: ['知道了'],
     };
-    void (win && !win.isDestroyed() ? dialog.showMessageBox(win, options) : dialog.showMessageBox(options));
+    showProgramNotice(options);
   }
 }
 

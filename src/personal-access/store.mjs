@@ -103,6 +103,7 @@ export function validateSingleStore(store) {
       throw failure('STORE_CORRUPT', 500);
   }
   if (store.defaultApprovalMode !== undefined && !APPROVAL_MODES.includes(store.defaultApprovalMode)) throw failure('STORE_CORRUPT', 500);
+  if (store.secondOpinionEnabled !== undefined && typeof store.secondOpinionEnabled !== 'boolean') throw failure('STORE_CORRUPT', 500);
   for (const session of Object.values(store.sessions ?? {})) {
     if (!plainObject(session)) throw failure('STORE_CORRUPT', 500);
     try { validateMemorySettings(session); } catch { throw failure('STORE_CORRUPT', 500); }

@@ -397,6 +397,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
     [join(PLUGINS_DIR, 'personal-approval-policy.mjs'), join(dir, 'plugins', 'personal-approval-policy.mjs')],
     [join(PLUGINS_DIR, 'personal-permission-rules.mjs'), join(dir, 'plugins', 'personal-permission-rules.mjs')],
+    [join(PLUGINS_DIR, 'personal-review-sources.mjs'), join(dir, 'plugins', 'personal-review-sources.mjs')],
     [join(PLUGINS_DIR, 'personal-write-targets.mjs'), join(dir, 'plugins', 'personal-write-targets.mjs')],
     [join(PLUGINS_DIR, 'personal-web-fetch.mjs'), join(dir, 'plugins', 'personal-web-fetch.mjs')],
     [join(PLUGINS_DIR, 'personal-native-files.mjs'), join(dir, 'plugins', 'personal-native-files.mjs')],
@@ -425,6 +426,16 @@ async function writePluginAssets(dir: string): Promise<boolean> {
   ]
   let changed = false
   for (const [src, dest] of tasks) {
+    if (src === join(CLIENT_PLUGIN_SRC, 'client.js')) {
+      // The legacy DSH plugin receives the same program-drawn dialogs as /personal/v1.
+      const dialogs = await readFile(join(here, 'ui-core', 'dialogs.js'), 'utf8')
+      const tokens = await readFile(join(here, 'personal-access-ui', 'tokens.css'), 'utf8')
+      const scopedTokens = [...tokens.matchAll(/--wm-[\w-]+:[^;]+;/g)].map(match => match[0]).join('\n')
+      const css = `.weft-confirm { ${scopedTokens} }\n${await readFile(join(here, 'ui-core', 'dialogs.css'), 'utf8')}`
+      const content = `${dialogs}\n{ const style = document.createElement('style'); style.textContent = ${JSON.stringify(css)}; document.head.append(style); }\n${await readFile(src, 'utf8')}`
+      if (await readFile(dest, 'utf8').catch(() => '') !== content) { await mkdir(dirname(dest), { recursive: true }); await writeFile(dest, content); changed = true }
+      continue
+    }
     if (await copyFileIfChanged(src, dest)) changed = true
   }
   if (await copyDirIfChanged(join(GATEWAY_SRC, 'legacy'), join(gatewayDest, 'legacy'))) changed = true
@@ -772,6 +783,7 @@ export interface DshWebRuntimeOptions {
     { id: string, action: 'register_approval' | 'read_approval' | 'resolve_approval', sessionId: string, turn: number,
       callId: string, rootCallId: string, receiptId: string, messageHash: string, toolName: string,
       argumentsHash: string, approvalId: string, runtimeId: string, reason?: string,
+      reviewEvidence?: { arguments: unknown, risks: string[], sources: string[] },
       outcome?: 'allowed-once' | 'rejected' | 'cancelled' | 'unavailable' } |
     { id: string, sessionId: string, turn: number, callId: string, messageHash: string,
       receiptId?: string, appId: 'notepad' } |
@@ -1804,7 +1816,7 @@ export class DshWebRuntime {
     } else if (toolApproval) {
       const fields = ['protocol', 'id', 'action', 'sessionId', 'turn', 'callId', 'rootCallId', 'receiptId',
         'messageHash', 'toolName', 'argumentsHash', 'approvalId',
-        ...(row.action === 'register_approval' ? ['reason'] : []),
+        ...(row.action === 'register_approval' ? ['reason', 'reviewEvidence'] : []),
         ...(row.action === 'resolve_approval' ? ['outcome'] : [])]
       if ((row.turn as number) < 1 || typeof row.receiptId !== 'string' ||
           typeof row.rootCallId !== 'string' || !TASK_STOP_RECEIPT.test(row.rootCallId) ||
@@ -1934,7 +1946,8 @@ export class DshWebRuntime {
       ? { ...identity, action: row.action as 'register_approval' | 'read_approval' | 'resolve_approval', runtimeId: runtimeId!,
         rootCallId: row.rootCallId as string, receiptId: row.receiptId as string, toolName: row.toolName as string,
         argumentsHash: row.argumentsHash as string, approvalId: row.approvalId as string,
-        ...(row.action === 'register_approval' ? { reason: row.reason as string } : {}),
+        ...(row.action === 'register_approval' ? { reason: row.reason as string,
+          ...(row.reviewEvidence === undefined ? {} : { reviewEvidence: row.reviewEvidence as { arguments: unknown, risks: string[], sources: string[] } }) } : {}),
         ...(row.action === 'resolve_approval' ? { outcome: row.outcome as 'allowed-once' | 'rejected' | 'cancelled' | 'unavailable' } : {}) }
       : genericExecution
       ? { ...identity, action: row.action as 'authorize_execution' | 'finish_execution' | 'observe_execution_job', rootCallId: row.rootCallId as string,

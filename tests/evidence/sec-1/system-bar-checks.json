@@ -1,0 +1,694 @@
+{
+  "surface": "synthetic cloud webpage in isolated test WebView",
+  "productionNativeShell": false,
+  "runs": [
+    {
+      "runId": "38200523104",
+      "runUrl": "https://github.com/memoweft/weftmate/actions/runs/38200523104",
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85",
+      "conclusion": "cancelled"
+    },
+    {
+      "runId": "38202894170",
+      "runUrl": "https://github.com/memoweft/weftmate/actions/runs/38202894170",
+      "sourceCommit": "db32eb54242a8b74ad4d6099f905cae9c6716b6b",
+      "conclusion": "success"
+    }
+  ],
+  "frontendSourceCommit": "4e091f34",
+  "realModelRequests": 0,
+  "checks": [
+    {
+      "file": "phone-system-360-dark-agree.png",
+      "width": 360,
+      "height": 780,
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725868202,
+      "runId": "38200523104",
+      "imageSha256": "8826a759cd4733e713e981efbcd5d300d5a7279dadbd32d3c8222e9c91023bca",
+      "physicalScreen": {
+        "width": 720,
+        "height": 1560
+      },
+      "statusRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageTopRgb": [
+        38,
+        39,
+        36
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageBottomRgb": [
+        38,
+        39,
+        36
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-360-dark-timeout.png",
+      "width": 360,
+      "height": 780,
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725821194,
+      "runId": "38200523104",
+      "imageSha256": "3904727d94266919dd0801137b062bdd6ae3a989d8fdad6a3c2d97b56425144b",
+      "physicalScreen": {
+        "width": 720,
+        "height": 1560
+      },
+      "statusRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageTopRgb": [
+        38,
+        39,
+        36
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageBottomRgb": [
+        38,
+        39,
+        36
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-360-dark-unavailable.png",
+      "width": 360,
+      "height": 780,
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11726235164,
+      "runId": "38200523104",
+      "imageSha256": "99c067d2d59795ee64ed996273880db974986960baf79ce1d718bb3d810dfaac",
+      "physicalScreen": {
+        "width": 720,
+        "height": 1560
+      },
+      "statusRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageTopRgb": [
+        38,
+        39,
+        36
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageBottomRgb": [
+        38,
+        39,
+        36
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-360-dark-warning.png",
+      "width": 360,
+      "height": 780,
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725907047,
+      "runId": "38200523104",
+      "imageSha256": "a8def2a127436e9f25ee1ace5df1e0b7def002e53f63bd9a7140627d403fc3bf",
+      "physicalScreen": {
+        "width": 720,
+        "height": 1560
+      },
+      "statusRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageTopRgb": [
+        38,
+        39,
+        36
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageBottomRgb": [
+        38,
+        39,
+        36
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-360-light-agree.png",
+      "width": 360,
+      "height": 780,
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11726005013,
+      "runId": "38200523104",
+      "imageSha256": "07923b7726fb60913503254ecd38c2a2e70014743304f5add3c9f09b53518eb1",
+      "physicalScreen": {
+        "width": 720,
+        "height": 1560
+      },
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRgb": [
+        255,
+        255,
+        255
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageBottomRgb": [
+        255,
+        255,
+        255
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-360-light-timeout.png",
+      "width": 360,
+      "height": 780,
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725830280,
+      "runId": "38200523104",
+      "imageSha256": "8fcf3dd5fd7098aaac0cd08d51bf38a94cbda2e02a5e2e6370d6174c56fad5ec",
+      "physicalScreen": {
+        "width": 720,
+        "height": 1560
+      },
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRgb": [
+        255,
+        255,
+        255
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageBottomRgb": [
+        255,
+        255,
+        255
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-360-light-unavailable.png",
+      "width": 360,
+      "height": 780,
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725686153,
+      "runId": "38200523104",
+      "imageSha256": "9c181528fcb606fa438c60f3ed739706b7d13c266313c55d47d3fd7531b85c11",
+      "physicalScreen": {
+        "width": 720,
+        "height": 1560
+      },
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRgb": [
+        255,
+        255,
+        255
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageBottomRgb": [
+        255,
+        255,
+        255
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-360-light-warning.png",
+      "width": 360,
+      "height": 780,
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "statusHeight": 128,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725695402,
+      "runId": "38200523104",
+      "imageSha256": "27c019c2a29ccdd7cf03758ffd7991fc15f42da216fd877042f8efacfb397758",
+      "physicalScreen": {
+        "width": 720,
+        "height": 1560
+      },
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRgb": [
+        255,
+        255,
+        255
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageBottomRgb": [
+        255,
+        255,
+        255
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-390-dark-agree.png",
+      "width": 390,
+      "height": 844,
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11726210620,
+      "runId": "38200523104",
+      "imageSha256": "b3dc6cadd8b9dd3078c9d561a2982d338bb202ea43cbf41059cdaa834a80c19f",
+      "physicalScreen": {
+        "width": 780,
+        "height": 1688
+      },
+      "statusRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageTopRgb": [
+        38,
+        39,
+        36
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageBottomRgb": [
+        38,
+        39,
+        36
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-390-dark-timeout.png",
+      "width": 390,
+      "height": 844,
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725112673,
+      "runId": "38200523104",
+      "imageSha256": "be1caabe5f2600411fb8278c5cf6d8a9af74df23186dd093dd8167afa8ecb459",
+      "physicalScreen": {
+        "width": 780,
+        "height": 1688
+      },
+      "statusRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageTopRgb": [
+        38,
+        39,
+        36
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageBottomRgb": [
+        38,
+        39,
+        36
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-390-dark-unavailable.png",
+      "width": 390,
+      "height": 844,
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725254134,
+      "runId": "38202894170",
+      "sourceCommit": "db32eb54242a8b74ad4d6099f905cae9c6716b6b",
+      "imageSha256": "99fa49120c76f7f7450a3752dad3f03009514e4ced7b1acb41db99e344dbf06f",
+      "physicalScreen": {
+        "width": 780,
+        "height": 1688
+      },
+      "statusRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageTopRgb": [
+        38,
+        39,
+        36
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageBottomRgb": [
+        38,
+        39,
+        36
+      ],
+      "navigationMaxChannelDifference": 0
+    },
+    {
+      "file": "phone-system-390-dark-warning.png",
+      "width": 390,
+      "height": 844,
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "14",
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11726200334,
+      "runId": "38200523104",
+      "imageSha256": "257ecaa6b014b4bd35a4aa6a1249aa7610b4a1ee51188e4e7d427644d0222048",
+      "physicalScreen": {
+        "width": 780,
+        "height": 1688
+      },
+      "statusRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageTopRgb": [
+        38,
+        39,
+        36
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        38,
+        39,
+        36
+      ],
+      "pageBottomRgb": [
+        38,
+        39,
+        36
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-390-light-agree.png",
+      "width": 390,
+      "height": 844,
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725791701,
+      "runId": "38200523104",
+      "imageSha256": "2fe7a473721f750b24d9da2dc388615e3e1d1ed7420825207573564dae01552b",
+      "physicalScreen": {
+        "width": 780,
+        "height": 1688
+      },
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRgb": [
+        255,
+        255,
+        255
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageBottomRgb": [
+        255,
+        255,
+        255
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-390-light-timeout.png",
+      "width": 390,
+      "height": 844,
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725921935,
+      "runId": "38200523104",
+      "imageSha256": "982df25f37f8e9f255afd94205241d8bf0efe9566ba083ef72ffa1c78ad9a5c9",
+      "physicalScreen": {
+        "width": 780,
+        "height": 1688
+      },
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRgb": [
+        255,
+        255,
+        255
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageBottomRgb": [
+        255,
+        255,
+        255
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-390-light-unavailable.png",
+      "width": 390,
+      "height": 844,
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725646538,
+      "runId": "38200523104",
+      "imageSha256": "acb07d4e97050643ed4b1bb919c73540c1c1ba26b9be2680edc6cc0daaf4c18c",
+      "physicalScreen": {
+        "width": 780,
+        "height": 1688
+      },
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRgb": [
+        255,
+        255,
+        255
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageBottomRgb": [
+        255,
+        255,
+        255
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    },
+    {
+      "file": "phone-system-390-light-warning.png",
+      "width": 390,
+      "height": 844,
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "14",
+      "statusHeight": 139,
+      "navigationHeight": 48,
+      "bottomNavigationVisible": true,
+      "fullSystemScreen": true,
+      "artifactId": 11725527161,
+      "runId": "38200523104",
+      "imageSha256": "f598ef0bb7b47cfb38e69bf699e0cd9247513b3f61e859de039a9c2d842d9c6e",
+      "physicalScreen": {
+        "width": 780,
+        "height": 1688
+      },
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRgb": [
+        255,
+        255,
+        255
+      ],
+      "statusMaxChannelDifference": 0,
+      "navigationRgb": [
+        255,
+        255,
+        255
+      ],
+      "pageBottomRgb": [
+        255,
+        255,
+        255
+      ],
+      "navigationMaxChannelDifference": 0,
+      "sourceCommit": "4e091f34cc1f0f7bd95b5461d051c4ed7d6f3d85"
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "realAndroid": true,
+  "syntheticAccount": true,
+  "syntheticHost": "synthetic-host",
+  "modelRequests": 0,
+  "packageName": "com.memoweft.weftmate.mobile.ux2qa",
+  "initialEmulatorRunning": true,
+  "emulatorCreatedByThisPackage": false,
+  "records": [
+    {
+      "file": "no-native-mobile-android-light.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "systemVersion": "15",
+      "native": {
+        "statusHeight": 48,
+        "navigationHeight": 0,
+        "navigationVisible": false,
+        "hasWindowFocus": true,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true,
+        "width": 720,
+        "height": 1560,
+        "sdk": 35
+      },
+      "dom": {
+        "theme": "light",
+        "viewport": {
+          "width": 360,
+          "height": 780,
+          "dpr": 2
+        },
+        "dialog": {
+          "x": 12,
+          "y": 419.6953125,
+          "width": 336,
+          "height": 348.3046875,
+          "top": 419.6953125,
+          "right": 348,
+          "bottom": 768,
+          "left": 12
+        },
+        "bodyOverflow": false,
+        "activeId": "approval-risk-cancel",
+        "warningButtonColor": "rgb(169, 38, 64)",
+        "safe": {
+          "top": "max(0px,24px)",
+          "bottom": "0px"
+        }
+      },
+      "difference": {
+        "width": 720,
+        "height": 1560,
+        "statusHeight": 48,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          161,
+          165,
+          173
+        ],
+        "header": [
+          161,
+          165,
+          173
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigationEvidenceAccepted": false,
+      "navigationLimitation": "Existing MuMu hides the navigation area; this capture cannot certify a visible bottom system bar."
+    },
+    {
+      "file": "no-native-mobile-android-dark.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "systemVersion": "15",
+      "native": {
+        "statusHeight": 48,
+        "navigationHeight": 0,
+        "navigationVisible": false,
+        "hasWindowFocus": true,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false,
+        "width": 720,
+        "height": 1560,
+        "sdk": 35
+      },
+      "dom": {
+        "theme": "dark",
+        "viewport": {
+          "width": 360,
+          "height": 780,
+          "dpr": 2
+        },
+        "dialog": {
+          "x": 12,
+          "y": 419.6953125,
+          "width": 336,
+          "height": 348.3046875,
+          "top": 419.6953125,
+          "right": 348,
+          "bottom": 768,
+          "left": 12
+        },
+        "bodyOverflow": false,
+        "activeId": "approval-risk-cancel",
+        "warningButtonColor": "rgb(169, 38, 64)",
+        "safe": {
+          "top": "max(0px,24px)",
+          "bottom": "0px"
+        }
+      },
+      "difference": {
+        "width": 720,
+        "height": 1560,
+        "statusHeight": 48,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          31,
+          35,
+          41
+        ],
+        "header": [
+          31,
+          35,
+          41
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigationEvidenceAccepted": false,
+      "navigationLimitation": "Existing MuMu hides the navigation area; this capture cannot certify a visible bottom system bar."
+    }
+  ],
+  "checks": [
+    "fresh-native-debug-app-and-probe-built-in-owned-temporary-output",
+    "light-and-dark-real-full-screen-captures",
+    "cancel-initial-focus-tab-trap-escape-cancel",
+    "no-horizontal-overflow",
+    "native-status-icons-match-theme"
+  ],
+  "cleanup": {
+    "instrumentationExited": true,
+    "restoredOverrides": {
+      "size": "720x1280",
+      "density": "204"
+    },
+    "screenOverridesRestored": true,
+    "testUninstalled": true,
+    "appUninstalled": true,
+    "appProcessExited": true,
+    "adbDisconnected": true,
+    "temporaryBuildRemoved": true,
+    "emulatorStopped": false,
+    "emulatorRetainedReason": "It was running before this package, so it is not owned by UX-2.",
+    "processesCleaned": 1,
+    "temporaryBytesRemaining": 0
+  },
+  "emulatorHardwareNavigationFlag": "1",
+  "preexistingInactivePackages": [],
+  "originalOverrides": {
+    "size": "720x1280",
+    "density": "204"
+  },
+  "instrumentation": {
+    "passed": true,
+    "failed": false
+  },
+  "alternateEmulatorAvailability": [
+    {
+      "kind": "portable-sdk",
+      "emulatorInstalled": false,
+      "avdDirectoryExists": true,
+      "avdIniCount": 0
+    },
+    {
+      "kind": "standard-local-sdk",
+      "emulatorInstalled": false,
+      "avdDirectoryExists": false,
+      "avdIniCount": 0
+    }
+  ]
+}

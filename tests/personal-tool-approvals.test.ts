@@ -15,6 +15,41 @@ const deferred = () => {
   const promise = new Promise<void>(done => { resolve = done })
   return { promise, resolve }
 }
+
+test('SEC-1 advice never grants native approval; setting persists and reported review usage is charged', async () => {
+  const f = await fixture();
+  try {
+    let requests=0;
+    f.backend.listModels=async()=>[{id:'local',model:'synthetic-review',configured:true}];
+    f.backend.modelCompletion=async input=>{requests++;await input.onStart();return Response.json({choices:[{message:{content:JSON.stringify({alignment:'对得上',externalInfluence:'没有',reason:'本人明确要求覆盖。'})}}],usage:{prompt_tokens:12,completion_tokens:8}});};
+    const args={file_path:'synthetic.txt',content:'replace'};
+    f.input.argumentsHash=hash(JSON.stringify(args));
+    const row=await f.register({reason:'[weftmate:overwrite] 覆盖文件',reviewEvidence:{arguments:args,risks:['overwrite'],sources:['report.txt']}});
+    assert.equal(row.secondOpinion.alignment,'对得上');assert.equal(row.status,'pending');assert.equal(row.decisionOutcome,undefined);
+    await assert.rejects(f.resolve('allowed-once'),code('REQUEST_CONFLICT'));
+    const usage=(await f.request('usage')).body;
+    assert.ok(JSON.stringify(usage).includes('second-opinion'),JSON.stringify(usage));
+    assert.equal((await f.request('settings/approvals')).body.secondOpinionEnabled,true);
+    assert.equal((await f.request('settings/approvals',{secondOpinionEnabled:false},{},'PATCH')).status,200);
+    assert.equal((await f.request('settings/approvals',{secondOpinionEnabled:'false'},{},'PATCH')).status,400);
+    const answer=await f.request(`${f.approvalsPath}/${f.input.approvalId}`,{requestId:'review-user-answer',outcome:'allowed-once'});assert.equal(answer.status,200);
+    assert.equal((await f.resolve('allowed-once')).outcome,'allowed-once');
+    await f.restart();assert.equal((await f.request('settings/approvals')).body.secondOpinionEnabled,false);assert.equal(requests,1);
+  } finally { await f.close(); }
+});
+
+test('SEC-1 the first HTTP approval read waits for the in-flight review registration', async () => {
+  const f=await fixture(),ready=deferred(),release=deferred();
+  try {
+    f.backend.listModels=async()=>[{id:'local',model:'synthetic-review',configured:true}];
+    f.backend.modelCompletion=async input=>{await input.onStart();ready.resolve();await release.promise;return Response.json({choices:[{message:{content:JSON.stringify({alignment:'对得上',externalInfluence:'没有',reason:'本人授权覆盖。'})}}]});};
+    const args={file_path:'synthetic.txt',content:'replace'};f.input.argumentsHash=hash(JSON.stringify(args));
+    const registration=f.register({reason:'[weftmate:overwrite] 覆盖文件',reviewEvidence:{arguments:args,risks:['overwrite'],sources:[]}});
+    await ready.promise;let settled=false;const reading=f.request(f.approvalsPath).then(value=>{settled=true;return value;});
+    await new Promise(resolve=>setTimeout(resolve,40));assert.equal(settled,false);
+    release.resolve();await registration;const result=await reading;assert.equal(result.status,200);assert.equal(result.body.approvals[0].secondOpinion.alignment,'对得上');assert.equal(result.body.approvals[0].status,'pending');
+  } finally {release.resolve();await f.close();}
+});
 const code = (expected: string) => (error: any) => error.code === expected
 
 async function fixture({ useReplyEvidence = true, clockFn = Date.now, newExecutionOwner = false } = {}) {

@@ -53,7 +53,7 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
   if (!identity || !options?.binary || !options?.transportCaFile || (!options.certFile && !options.developmentTls && !options.acme))
     throw new Error('Relay requires cloud identity, frpc, transport CA and host certificate');
   let stdout;
-  try { ({stdout}=await executeCommand(options.binary,['-v'],{timeoutMs:15000})); }
+  try { ({stdout}=await executeCommand(options.binary,['-v'],{timeoutMs:15000,windowsHide:true})); }
   catch(error) { options.diagnostic?.(error); throw error; }
   if (stdout.trim() !== '0.71.0') throw new Error('Relay requires official frpc 0.71.0');
   const dir = path.join(root, 'relay'); await ensurePrivateDirectory(dir);

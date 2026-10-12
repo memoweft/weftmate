@@ -39,6 +39,16 @@ private actor NativeAccountTransport: HTTPTransport {
             nonce = body["nonce"] as! String; state = body["state"] as! String
             return try reply(["appLogin": true, "deviceId": body["deviceId"]!, "interactionUid": "native", "csrfToken": "csrf"], headers: ["set-cookie": "interaction=private; Path=/personal/v1/cloud; HttpOnly, resume=private-resume; Path=/personal/v1/cloud/oidc/auth; HttpOnly"])
         }
+        if path.hasSuffix("/auth/login/code/request") {
+            let fields = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
+            #expect(fields["password"] == nil && fields["publicJwk"] != nil && fields["interactionUid"] != nil)
+            return try reply(["challengeId": "email-only", "confirmationRequired": true], status: 202)
+        }
+        if path.hasSuffix("/auth/login/code/confirm") {
+            let fields = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
+            #expect(fields["challengeId"] as? String == "email-only" && fields["code"] as? String == "123456")
+            return try reply(["resumeUrl": configuration.issuer + "/auth/native"])
+        }
         if path.hasSuffix("auth/login") {
             #expect(request.value(forHTTPHeaderField: "Cookie") == "interaction=private")
             return try reply(["resumeUrl": configuration.issuer + "/auth/native"])
@@ -60,7 +70,7 @@ private actor NativeAccountTransport: HTTPTransport {
             var access: [String: Any] = ["iss": configuration.issuer, "sub": subject, "aud": resource,
                 "iat": Date().timeIntervalSince1970, "exp": Date().timeIntervalSince1970 + 15, "scope": "cloud:account host:session",
                 "cnf": ["jkt": fault == "key" ? "wrong" : thumbprint]]
-            if resource.contains("/hosts/") { access["host_id"] = "host-one" }
+            if resource.contains("/hosts/") { access["device_verified"] = fault != "unverified"; access["host_id"] = "host-one" }
             var id = access; id["aud"] = configuration.clientID; id["nonce"] = fault == "nonce" ? "wrong" : nonce
             return try reply(["access_token": token(access, type: "at+jwt"), "id_token": token(id),
                 "refresh_token": "rotation-\(rotation)", "token_type": fault == "bearer" ? "Bearer" : "DPoP"])
@@ -150,6 +160,31 @@ private actor NativeAccountTransport: HTTPTransport {
         let b = try await login(subject: "account-b")
         #expect(try await b.savedHostReference(hostID: "host-one") == nil)
         #expect(try await b.savedHostReference(hostID: "host-two") == nil)
+    }
+    @Test func emailOnlyLoginUsesProviderPKCEAndDPoPWithoutPassword() async throws {
+        let config = CloudConfiguration(server: try ServerConfiguration(input: "https://cloud.example.com"))
+        let store = MemoryStore(), key = try CloudDeviceKey(softwareStore: MemoryStore())
+        let fixture = try NativeAccountTransport(configuration: config, thumbprint: key.thumbprint)
+        let client = CloudAccountClient(configuration: config, key: key, store: store, transport: fixture)
+        try await client.beginAppLogin()
+        let challenge = try await client.requestLoginCode(email: "synthetic@example.com", name: "Synthetic", type: "ios")
+        let reply = try await client.confirmLoginCode(challenge: challenge.challengeId!, code: "123456")
+        try await client.finishAppLogin(resumeURL: reply.resumeUrl!)
+        #expect(try await client.savedSubject() == "synthetic-sub")
+        _ = try await client.accessToken(hostID: "host-one")
+        let requests = await fixture.recorded()
+        #expect(!requests.contains { $0.url?.path.hasSuffix("/auth/login") == true })
+        #expect(requests.filter { $0.url?.path.hasSuffix("/token") == true }.allSatisfy { $0.value(forHTTPHeaderField: "DPoP") != nil })
+    }
+    @Test func unverifiedHostResourceCannotAuthorizeContent() async throws {
+        let config = CloudConfiguration(server: try ServerConfiguration(input: "https://cloud.example.com"))
+        let store = MemoryStore(), key = try CloudDeviceKey(softwareStore: MemoryStore())
+        let fixture = try NativeAccountTransport(configuration: config, thumbprint: key.thumbprint, fault: "unverified")
+        let client = CloudAccountClient(configuration: config, key: key, store: store, transport: fixture)
+        try await client.beginAppLogin()
+        let reply = try await client.appLogin(email: "synthetic@example.com", password: UUID().uuidString, name: "Synthetic", type: "ios")
+        try await client.finishAppLogin(resumeURL: reply.resumeUrl!)
+        await #expect(throws: CloudLoginFailure.token) { try await client.accessToken(hostID: "host-one") }
     }
     @Test func nativeRotationSavesOneFamilyAndRestoresDPoP() async throws {
         let config = CloudConfiguration(server: try ServerConfiguration(input: "https://cloud.example.com"))

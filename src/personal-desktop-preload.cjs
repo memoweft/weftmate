@@ -1,7 +1,13 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
+const pendingNotices = [];
+let noticeListener;
+ipcRenderer.on('wm:ui:notice', (_event, notice) => { if (noticeListener) noticeListener(notice); else pendingNotices.push(notice); });
+function onNotice(callback) { noticeListener = callback; for (const notice of pendingNotices.splice(0)) callback(notice); return () => { if (noticeListener === callback) noticeListener = null; }; }
 
 contextBridge.exposeInMainWorld('weftmateDesktop', {
   platform: process.platform,
+  onNotice,
+  closeNotice: id => ipcRenderer.send('wm:ui:notice-closed', id),
   clipboardImage: () => ipcRenderer.invoke('wm:desktop:clipboard-image'),
   captureRegion: () => ipcRenderer.invoke('wm:desktop:capture-region'),
   updateState: () => ipcRenderer.invoke('wm:desktop:update-state'),
