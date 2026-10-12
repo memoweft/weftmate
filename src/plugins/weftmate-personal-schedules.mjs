@@ -8,6 +8,7 @@ import { createNativeScheduleManager, scheduleSourceReceipt } from '../personal-
 import { scheduleContent } from '../personal-access/schedules-calendar.mjs';
 import { foldGoal } from '@deepseek-ai/dsh-goal';
 import { createNativeGoalManager } from '../personal-access/goals-native.mjs';
+import { isHealthQuestion } from './personal-prompt.mjs';
 
 export const name = 'weftmate-personal-schedules';
 export const inject = ['agents', 'sessions', 'tools', 'sessionPersistence', 'webServer', 'weftmateSessionLifecycle'];
@@ -50,6 +51,12 @@ export async function apply(ctx) {
   });
   ctx.on('agent/created', ({ agent }) => {
     if (!personal(agent)) return;
+    agent.ctx.tools.register(defineTool({name:'health_query',
+      description:'查询本人健康汇总。问睡眠、恢复、负荷、熬夜关联时先查再答；只比较自己平时，不诊断，不提疾病名或建议用药。未接上或缺测就明确说明。',
+      parameters:{metric:{type:'string',required:true,enum:['overview','restingHeartRateBpm','hrvSdnnMs','respiratoryRateBrpm','spo2Pct','wristTempC','vo2Max','activeEnergyKcal','exerciseMinutes','steps','sleepMinutes','inBedMinutes','deepMinutes','coreMinutes','remMinutes','awakeMinutes','recovery','sleep','load','usageActiveMinutes','usageLateNightMinutes','heartRateAvgBpm','heartRateMinBpm','heartRateMaxBpm','workoutMinutes'],description:'overview 或指定指标'},from:{type:'string',description:'账号时区 YYYY-MM-DD，默认最近7天'},to:{type:'string',description:'账号时区 YYYY-MM-DD，最多90天'}},
+      output:{schema:{type:'json'},render:(_args,value)=>[{type:'text',text:JSON.stringify(value)}]},
+      execute:(args,exec)=>request({action:'health_query',sessionId:exec.agent.id,sourceReceiptId:scheduleSourceReceipt(exec),query:args}),
+      presentCall:()=>({card:'generic',title:'查看健康趋势',kind:'other'})}));
     agent.ctx.tools.register(defineTool({ name: 'schedule_manage',
       description: 'List all reminders/tasks (including paused), or pause, resume, delete, or run one now in this conversation. Use the returned stable id.',
       parameters: { action: { type: 'string', enum: ['list', 'pause', 'resume', 'delete', 'run'], required: true }, id: { type: 'string' } },
@@ -68,9 +75,11 @@ export async function apply(ctx) {
       return { kind: 'enter', messages: decision.messages.filter(m => m.source?.kind === 'user') };
     }
     if (!payload.messages?.some(m => m.source?.kind === 'user')) return decision;
+    const latest=payload.messages.findLast(m=>m.source?.kind==='user'),question=(latest?.content??[]).filter(p=>p.type==='text').map(p=>p.text).join('\n');
+    const healthGuidance=isHealthQuestion(question)?'\n本人正在查询自己的健康记录：必须先调用 load_tools 加载 health_query，再调用 health_query（metric=overview，默认最近7天）取得最新数据后回答。不要只根据背景摘要回答；工具返回还没接上／缺测就照实说。只比本人平时，不诊断、不提疾病名、不建议用药，使用与睡眠的同时变化不能说成因果。':'';
     const policy = await request({ action: 'context', sessionId: payload.agent.id });
     const guidance = `当前时间 ${new Date().toISOString()}；账号时区 ${policy.timeZone}；账号本地时间 ${new Date().toLocaleString('sv-SE', { timeZone: policy.timeZone })}。每天、每周、每月的安排优先用账号本地 at 指定下一次日期与时间，不用 after_seconds 计算时差（除非用户明确要求延迟后开始）。消息以“现在执行定时任务”开头时，这是已到点的任务，直接执行内容；只有用户明确指定时间或周期的提醒/定时执行才调用 schedule_create；“以后想组队时提醒我找某人”“以后喝这种茶时提醒加某物”属于情境记忆，由 MemoWeft 自动形成，不调用 load_tools、ask_user_question 或调度工具，也不追问时间频率；首次人物介绍的提醒提议与邀请确认按 shared-decisions 指引处理。用户交代有明确时间的提醒/定时执行时直接调用 schedule_create，WeftMate 的日历重复和定时执行适配已安装，不需要读源码或编写调度脚本。prompt 是完整 JSON 字符串，例如 {"weftmate":1,"kind":"reminder","text":"交报告"}；定时工作示例 {"weftmate":1,"kind":"task","text":"生成周报文件","repeat":{"kind":"weekly","time":"08:00:00","weekday":1}}。纯提醒 kind=reminder，届时执行 kind=task；daily 不填 weekday。首次时间由 at 或 after_seconds 指定，后续日历规则在 repeat 中，二者可以不同。at 的 time_zone 用账号时区。固定间隔用 every_seconds。一次性不填 repeat。成功后一句话复述本地时间、规则、内容；失败不能说已建立。取消/暂停/恢复先 schedule_manage list，再操作准确 id。`;
-    return { ...decision, messages: [...decision.messages, createUserMessage({ source: { kind: 'plugin', plugin: name }, content: [{ type: 'text', text: guidance }] })] };
+    return { ...decision, messages: [...decision.messages, createUserMessage({ source: { kind: 'plugin', plugin: name }, content: [{ type: 'text', text: guidance+healthGuidance }] })] };
   }, { prepend: true });
   const lifecycle = ctx.get('weftmateSessionLifecycle');
   ctx.effect(() => ctx.webServer.register({ kind: 'prefix', path: '/weftmate/schedules', handler: async (req, res) => {

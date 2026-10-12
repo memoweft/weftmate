@@ -49,6 +49,9 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
     }
     let notificationWrites=Promise.resolve();
     async function loadNotificationSettings(){return core.accessApi('/settings/notifications');}
+    let healthWrites=Promise.resolve();
+    const loadHealthSettings=()=>core.accessApi('/settings/health');
+    function saveHealthSettings(patch){const identity=core.state.identityGeneration,account=owner();const action=healthWrites.catch(()=>{}).then(()=>{if(identity!==core.state.identityGeneration||account!==owner())throw new Error('ACCOUNT_CHANGED');return core.accessApi('/settings/health',{method:'PATCH',protectedWrite:true,body:patch});});healthWrites=action;return action;}
     function saveNotificationSettings(patch){
         const identity=core.state.identityGeneration,account=owner();
         const action=notificationWrites.catch(()=>{}).then(()=>{
@@ -102,5 +105,5 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
         void core.refreshModels();
         void core.refreshBrowserWorkspace();
     }
-    return { saveSecondOpinion: secondOpinionEnabled => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { secondOpinionEnabled } }), readPermissionRules: () => core.accessApi('/settings/approvals'), savePermissionRules: rules => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { rules } }), readExecutionRecords: params => core.accessApi('/execution-records?' + params), loadNotificationSettings, saveNotificationSettings, sendTestNotification, loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
+    return { saveSecondOpinion: secondOpinionEnabled => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { secondOpinionEnabled } }), readPermissionRules: () => core.accessApi('/settings/approvals'), savePermissionRules: rules => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { rules } }), readExecutionRecords: params => core.accessApi('/execution-records?' + params), loadNotificationSettings, saveNotificationSettings, loadHealthSettings, saveHealthSettings, sendTestNotification, loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
 };

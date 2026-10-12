@@ -45,6 +45,9 @@ import { createNativeBrowserOperations } from './native-browser.mjs';
 import { createHttpHandler } from './http.mjs';
 import { createMemoryHttpHandler } from './memory-http.mjs';
 import { createPersonalHealthStore } from '../personal-health/index.mjs';
+import { createHealthRecordsStore } from '../personal-health/records-store.mjs';
+import { createHealthOperations } from '../personal-health/records-http.mjs';
+import { createHealthInsights } from '../personal-health/insight.mjs';
 import { createHostCloudIdentity } from '../personal-cloud/index.mjs';
 import { createHostRelay } from '../personal-relay/index.mjs';
 import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
@@ -316,6 +319,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get memoryIngestion() { return memoryIngestion; },
     get memoryManager() { return memoryManager; },
     get healthStore() { return healthStore; },
+    get healthRecords() { return healthRecords; },
+    get healthOperations() { return healthOperations; },
+    get healthInsights() { return healthInsights; },
     get messageModelUsable() { return messageModelUsable; },
     get mobileUi() { return mobileUi; },
     get modelOperationResponse() { return modelOperationResponse; },
@@ -532,6 +538,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     return { version: SINGLE_ACCOUNT_VERSION, hostId: rootState.hostId, ownerId, ...account };
   };
   const healthStore = memoryManager?.healthStore ?? createPersonalHealthStore({ root, clock });
+  const healthRecords = createHealthRecordsStore({root,clock,timeZone:owner=>usage.settings(owner).timeZone});
   const libraryDesktopToken = randomUUID();
   const library = createLibrary(context, libraryNativeActions);
   const artifactStore = createPersonalArtifactStore(path.join(root, 'artifacts'));
@@ -726,12 +733,18 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   }
 
   const scheduleOperations = createScheduleOperations(context);
+  const healthOperations = createHealthOperations(context);
+  const healthInsights = createHealthInsights(context);
   const goalOperations = createGoalOperations(context);
   const activity = createActivity(context);
   const offline = await createOfflineService(context);
   const temporaryChats = createTemporaryChats(context);
   const memoryIngestion = createMemoryIngestion(context);
   dataControls = createDataControls(context);
+  for(const ownerId of Object.keys(rootState.accounts)){
+    const legacy=accountState(ownerId).dailyDigest?.healthDays;
+    if(Object.keys(legacy??{}).length){await healthRecords.migrate(ownerId,legacy);await serial(()=>mutate(ownerId,next=>{next.dailyDigest.healthDays={};}));}
+  }
   const service = {
     pushActivity: (ownerId, eventId) => sendHostPush(context, ownerId, eventId),
     recordActivity: activity.record,
@@ -960,6 +973,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         await memoryIngestion.close();
         await temporaryChats.close();
         await activity.close();
+        await healthInsights.close();
+        await healthRecords.close();
         await sideChats.close();
         await chatTimeline.close();
         await offline.close();
