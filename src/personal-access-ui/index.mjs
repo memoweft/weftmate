@@ -7,6 +7,7 @@ import renderAssets from './render-assets.json' with {type: 'json'};
 const files = new Map([
   ['/personal/v1/ui/mobile-refresh.css', ['mobile-refresh.css','text/css; charset=utf-8']],
   ['/personal/v1/ui/mobile-refresh.js', ['mobile-refresh.js','text/javascript; charset=utf-8']],
+  ...['phone-unify.js','phone-files.js','phone-pdf.js','phone-unify.css','phone-files.css'].map(name => [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/permission.css', ['permission.css','text/css; charset=utf-8']],
   ['/personal/v1/ui/components/data.js', ['components/data.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/data.css', ['data.css', 'text/css; charset=utf-8']],
@@ -17,7 +18,7 @@ const files = new Map([
   ...['components/search-view.js','components/search.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/folder-choice.js', ['folder-choice.js','text/javascript; charset=utf-8']],
   ['/personal/v1/ui/folder-choice.css', ['folder-choice.css','text/css; charset=utf-8']],
-  ...renderAssets.map(name => [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : name.endsWith('.woff2') ? 'font/woff2' : name.endsWith('.woff') ? 'font/woff' : name.endsWith('.ttf') ? 'font/ttf' : 'text/javascript; charset=utf-8']]),
+  ...renderAssets.map(name => [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : name.endsWith('.woff2') ? 'font/woff2' : name.endsWith('.woff') ? 'font/woff' : name.endsWith('.ttf') ? 'font/ttf' : name.endsWith('.wasm') ? 'application/wasm' : name.endsWith('.js') ? 'text/javascript; charset=utf-8' : 'application/octet-stream']]),
   ['/personal/v1/ui/library.css', ['library.css', 'text/css; charset=utf-8']],
   ...['components/library-view.js','components/library.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/goals.css', ['goals.css', 'text/css; charset=utf-8']],

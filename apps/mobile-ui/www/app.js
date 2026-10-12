@@ -1,4 +1,6 @@
-const $ = id => document.getElementById(id);
+// Decision controls can briefly be detached while the transcript is rebuilt.
+const decisionElements = new Map();
+const $ = id => { const found=document.getElementById(id);if(['approval-bar','question-bar'].includes(id)){if(found)decisionElements.set(id,found);return found||decisionElements.get(id);}return found; };
 const systemThemeMedia=window.matchMedia('(prefers-color-scheme: dark)');
 const state = { page:'chat', conversationId:null, conversations:[], model:null, busy:false, modelSwitching:false, transitionPending:false,
   phase:'idle', progressText:'', loggedIn:false, connection:'local',backgroundSync:'unknown',authEpoch:0,booted:false,
@@ -198,7 +200,7 @@ async function openMobileLibrarySource(source){
 }
 async function libraryPage(target){
   uiCore.syncMobileIdentity();
-  libraryView??=WeftLibraryView.mount({target,core:uiCore,notice:toast,openPreview:(item,trigger)=>{
+  libraryView??=WeftLibraryView.mount({target,core:uiCore,notice:toast,configurePreview:item=>configureResourceFile(item),openPreview:(item,trigger)=>{
     showResourcePage(item.fileName,{kind:'library',owner:state.owner},trigger);
     return $('resource-content');
   }});libraryView.render();
@@ -268,7 +270,8 @@ function syncMobileTabs(){
   const unread=uiCore.activity.unreadCount||0,pending=(uiCore.goalsPage.tasks||[]).some(row=>!['completed','failed','stopped'].includes(row.status))||uiCore.activity.actionableCount>0;
   for(const tab of tabs.querySelectorAll('[role=tab]')){
     const id=tab.dataset.tab,selected=id===state.activeTab;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;
-    tab.setAttribute('aria-label',id==='activity'&&unread?`动态，${unread} 条未读`:id==='goals'&&pending?'目标，有进行中或待处理任务':mobileTabNames[id]);
+    tab.setAttribute('aria-label',mobileTabNames[id]);
+    tab.setAttribute('aria-description',id==='activity'&&unread?`${unread} 条未读`:id==='goals'&&pending?'有进行中或待处理任务':'');
     const badge=tab.querySelector('.mobile-tab-badge');badge.hidden=id==='activity'?!unread:id==='goals'?!pending:true;badge.textContent=id==='activity'?(unread>99?'99+':String(unread)):'';
   }
   if(releaseNotice)void releaseNotice.check();
@@ -294,7 +297,7 @@ function mountMobileTabs(){
     const tab=el('button','mobile-tab');tab.type='button';tab.id=`mobile-tab-${id}`;tab.dataset.tab=id;tab.setAttribute('role','tab');
     tab.setAttribute('aria-controls',id==='chat'?'chat-page':`mobile-panel-${id}`);
     const icon=el('span','mobile-tab-icon');icon.append(WeftIcons.create(icons[id],22));const badge=el('span',`mobile-tab-badge${id==='goals'?' is-dot':''}`);badge.setAttribute('aria-hidden','true');badge.hidden=true;icon.append(badge);
-    tab.append(icon,el('span','mobile-tab-label',name));tab.onclick=()=>void selectMobileTab(id);tabs.append(tab);
+    tab.append(icon);tab.onclick=()=>void selectMobileTab(id);tabs.append(tab);
   }
   tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.querySelectorAll('[role=tab]')],index=buttons.indexOf(document.activeElement),next=buttons[event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+(event.key==='ArrowLeft'?-1:1)+buttons.length)%buttons.length];next.focus();void selectMobileTab(next.dataset.tab);});
   const refresh=async()=>{if(!state.loggedIn||document.visibilityState==='hidden')return;
@@ -314,8 +317,11 @@ function syncMobileKeyboard(nativeShown){
   const height=window.visualViewport?.height||innerHeight;
   const editing=/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName);
   if(!editing)viewportRestHeight=height;
+  const previous=keyboardShown;
   keyboardShown=typeof nativeShown==='boolean'?nativeShown:editing&&height<viewportRestHeight-100;
-  document.body.classList.toggle('mobile-keyboard-visible',keyboardShown);syncMobileTabs();syncChatInsets();
+  if(nativeShown===false||previous&&!keyboardShown)composerKeyboardDismissed=true;
+  if(keyboardShown)composerKeyboardDismissed=false;
+  document.body.classList.toggle('mobile-keyboard-visible',keyboardShown);syncComposerExpansion();syncMobileTabs();syncChatInsets();
 }
 
 
@@ -780,7 +786,7 @@ const approvalRequestPattern=/^[A-Za-z0-9_.:-]{1,128}$/;
 
 
 
-function handleBack(){if(uiCore.search?.open){uiCore.closeSearch();return;}if(globalThis.WeftContent?.isGalleryOpen()){closeImagePreview();return;}if(document.querySelector('.session-menu[role=menu]')){WeftPopover.closeMenu();return;}if(mobileMessageActions?.dismiss())return;if(!$('resource-page').hidden){closeResourcePage();return}
+function handleBack(){if(globalThis.WeftPhoneFiles?.isOpen()){WeftPhoneFiles.close();return;}if(uiCore.search?.open){uiCore.closeSearch();return;}if(globalThis.WeftContent?.isGalleryOpen()){closeImagePreview();return;}if(document.querySelector('.session-menu[role=menu]')){WeftPopover.closeMenu();return;}if(mobileMessageActions?.dismiss())return;if(!$('resource-page').hidden){closeResourcePage();return}
   if(!$('image-preview').hidden){closeImagePreview();return}
   if(approvalModeState.confirmation){closeApprovalRisk();return}if(approvalModeState.menu){closeApprovalModeMenu({restoreFocus:true});return}
   if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}if(state.attachmentPick){cancelAttachmentPick({announce:true});return}if(state.menu){closeModelMenu();$('model-button').focus();return}
@@ -830,7 +836,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>page(button.dataset.page)));
   document.querySelector('[data-action="new-chat"]').addEventListener('click',()=>selectConversation(null));
 
-  $('draft').addEventListener('input',updateComposer);$('send-button').addEventListener('click',()=> $('send-button').dataset.action==='stop'?stop():send());
+  $('draft').addEventListener('input',updateComposer);
+  $('draft').addEventListener('focus',()=>{composerKeyboardDismissed=false;syncComposerExpansion();});
+  $('draft').addEventListener('blur',()=>requestAnimationFrame(syncComposerExpansion));
+  $('send-button').addEventListener('click',()=> $('send-button').dataset.action==='stop'?stop():$('send-button').dataset.action==='voice'?$('voice-button').click():send());
+  $('pending-decision').addEventListener('click',()=>{const target=pendingDecisionTarget();if(!target)return;const scroll=$('chat-scroll');ensureConversationScroll().hold();scroll.scrollTo({top:scroll.scrollTop+target.getBoundingClientRect().top-scroll.getBoundingClientRect().top-16,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});
   $('draft').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){
     event.preventDefault();if(!$('send-button').disabled)void send({intent:event.ctrlKey||event.metaKey?'queue':undefined});}});
   $('model-button').addEventListener('click',openModels);$('plus-button').addEventListener('click',openAttachmentMenu);
@@ -854,6 +864,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('voice-button').addEventListener('click',async()=>{try{await call('voice.start',{conversationId:state.chatSource==='host'?'':state.conversationId||'',viewGeneration:state.generation});
       status('等待系统语音输入；识别结果只会填入草稿')}catch(e){status(safeError(e),true)}});
   ensureConversationScroll();
+  $('jump-latest').replaceChildren(WeftIcons.create('down',24));
   const context=$('context-usage'),tooltip=$('context-tooltip');
   const showContext=()=>{tooltip.hidden=false;globalThis.WeftPopover.position(tooltip,context)};
   context.addEventListener('mouseenter',showContext);context.addEventListener('mouseleave',()=>tooltip.hidden=true);

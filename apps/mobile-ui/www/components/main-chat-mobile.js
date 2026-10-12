@@ -117,7 +117,7 @@
   renderSharedConversation=function(){if(main()){ensureList();mobileEffects.renderMainChat();updateComposer();return;}return oldRender();};
   loadSharedHistory=function(wait=false){return main()?uiCore.refreshLogicalHistory(false,wait):oldLoad(wait);};
   loadOlderHistory=function(){return main()?uiCore.loadOlderLogicalHistory():oldOlder();};
-  handleChatScroll=function(){if(main())ensureConversationScroll().scrolled();else oldScroll();};
+  handleChatScroll=function(){if(main()){ensureConversationScroll().scrolled();syncPendingDecision();}else oldScroll();};
   send=function(options={}){return main()?uiCore.sendMainDraft($('draft').value,options.intent):state.logicalChats&&!window.weftNative?uiCore.sendDraft($('draft').value,options.intent):oldSend(options);};
   selectSharedSession=function(id){return state.logicalChats?uiCore.selectLogicalSession(id):nativeSides(id);};
   updatePageHeader=function(){oldHeader();if(state.logicalChats&&state.page==='chat'){$('menu-button').hidden=false;$('page-back').hidden=main();}
