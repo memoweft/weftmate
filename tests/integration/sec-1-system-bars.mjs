@@ -51,7 +51,12 @@ export async function sec1SystemBars({origin,cookie,out}) {
         await new Promise(done=>setTimeout(done,200));
         console.log(run('shell','am','start','-W','-f','0x10020000','-n',pkg+'/'+(process.env.WEFTMATE_SEC1_ANDROID_ACTIVITY??'com.memoweft.weftmate.mobile.St4RemoteBrowserActivity'),'-e','st4Url',origin+'/personal/v1/ui','-e','st4Theme',theme).toString());
         await new Promise(done=>setTimeout(done,300));
-        const focus=run('shell','dumpsys','window').toString().split('\n').find(line=>line.includes('mCurrentFocus'));
+        let focus;
+        for(let attempt=0;attempt<20;attempt++){
+          focus=run('shell','dumpsys','window').toString().split('\n').find(line=>line.includes('mCurrentFocus'));
+          if(focus?.includes(pkg))break;
+          await new Promise(done=>setTimeout(done,250));
+        }
         if(!focus?.includes(pkg))console.log(run('logcat','-d','-s','AndroidRuntime:E').toString().slice(-6000));
         assert.ok(focus?.includes(pkg), 'Screenshot must show the test browser, without a system error dialog: '+(focus??'focus unavailable'));
         const dump=run('shell','dumpsys','window','displays').toString();
