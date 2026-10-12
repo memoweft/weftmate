@@ -93,6 +93,7 @@ struct ConversationView: View {
     @State private var dictationPopover = false
     @State private var previousTailID: String?
     @State private var composerIdentity = UUID()
+    @State private var decisionJump = 0
     @State private var resourcePopover = false
     @State private var showingUsage = false
     @State private var showingModels = false
@@ -299,6 +300,9 @@ struct ConversationView: View {
                                 .font(AppleTokens.Fonts.body).foregroundStyle(Weave.muted).accessibilityIdentifier("processingLine")
                         }
                     }
+                    #if os(iOS)
+                    if !model.timeline.events.contains(where: { $0.type.hasPrefix("approval.") || $0.type.hasPrefix("question.") }) { PhonePendingDecision(model:interactions,events:model.timeline.events).id("phone.pendingDecision") }
+                    #endif
                     commandStatusCards
                     adoptionStatusCards
                     AppleTokens.Colors.clear.frame(height: 1).id("latest")
@@ -329,6 +333,11 @@ struct ConversationView: View {
                     }.accessibilityLabel(follow.hasNewContent ? "有新内容 · 回到底部" : "回到底部")
                         .buttonStyle(OutlineActionStyle()).phoneIcon().padding(AppleTokens.Space.p12).accessibilityIdentifier("returnToBottom")
                 }
+            }
+            .onChange(of:decisionJump) { _,_ in
+                let id=interactions.pendingApprovals.first?.id
+                if let entry=TimelineProjection.entries(model.timeline.events).first(where:{$0.event.data["approvalId"]?.string == id && id != nil || $0.event.type.hasPrefix("question.") && !interactions.pendingQuestions.isEmpty}) { proxy.scrollTo(entry.id,anchor:.center) }
+                else { proxy.scrollTo("phone.pendingDecision",anchor:.center) }
             }
             .onChange(of: model.sourceMessageTarget) { _, seq in
                 if let seq { follow.userScrolled(distanceFromBottom: 100); proxy.scrollTo("event-\(seq)", anchor: .center) }
@@ -619,13 +628,18 @@ struct ConversationView: View {
                     }
                 #endif
                     let action = ComposerAction.resolve(running: model.tasksAvailable(conversation) && conversation.running, text: draft.wrappedValue, attachments: !(model.attachmentDrafts[key] ?? []).isEmpty)
+                    #if os(iOS)
+                    let voice=PhoneComposerPrimaryAction.resolve(running:conversation.running,draft:draft.wrappedValue,attachmentCount:(model.attachmentDrafts[key] ?? []).count) == .voice
+                    #else
+                    let voice=false
+                    #endif
                     Button {
-                        if action == .stop { Task { await model.stopActiveTask() } }
+                        if voice { draftFocused=true; dictationPopover=true } else if action == .stop { Task { await model.stopActiveTask() } }
                         else { Task { await model.send(conversation, accountEpoch: accountEpoch) } }
-                    } label: { WeftIcon(action == .stop ? "stop" : "send").frame(width: AppleTokens.Space.p20, height: AppleTokens.Space.p44) }
+                    } label: { WeftIcon(action == .stop ? "stop" : voice ? "mic" : "send").frame(width: AppleTokens.Space.p20, height: AppleTokens.Space.p44) }
                         .buttonStyle(PrimaryActionStyle(fillsWidth: false)).phoneIcon(primary: true).tint(Weave.accent)
-                        .disabled(action == .stop ? model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil : !model.canSend(conversation))
-                        .accessibilityLabel(action == .stop ? "停止" : "发送").accessibilityIdentifier("sendButton")
+                        .disabled(action == .stop ? model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil : !voice && !model.canSend(conversation))
+                        .accessibilityLabel(action == .stop ? "停止" : voice ? "语音输入" : "发送").accessibilityIdentifier("sendButton")
                     #if os(macOS)
                     if model.tasksAvailable(conversation) { Button("停止") { Task { await model.stopActiveTask() } }.keyboardShortcut(.escape, modifiers: []).hidden().frame(width: 0, height: 0) }
                     #endif
@@ -641,7 +655,7 @@ struct ConversationView: View {
     private var phoneDraftInput: some View {
         TextField(conversation.running ? (model.runningMessageMode == .queue ? "排队到下一条…" : "引导当前回复…") : "向 WeftMate 说说你的目标",
             text: draft, axis: .vertical)
-            .lineLimit(composerExpanded ? 1...6 : 1...1).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
+            .lineLimit(1...PhoneComposerState(focused:draftFocused,draft:draft.wrappedValue,attachmentCount:(model.attachmentDrafts[AppleAppModel.draftKey(for:conversation)] ?? []).count).maximumLines).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
             .focused($draftFocused).disabled(!model.canEditDraft(for: conversation)).accessibilityIdentifier("conversationDraft")
     }
     private var composer: some View {
@@ -699,13 +713,24 @@ struct ConversationView: View {
                 WeftLabel("深入思考已开启", icon: "model", size: 16).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("thinkingMarker")
             }
             if let error = model.thinkingError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
-            if model.tasksAvailable(conversation) { ConversationApprovalBar(model: interactions, events: model.timeline.events) }
+            if model.tasksAvailable(conversation) {
+                #if os(iOS)
+                PhonePendingDecisionNotice(model:interactions) { draftFocused=false; decisionJump += 1 }
+                #else
+                ConversationApprovalBar(model: interactions, events: model.timeline.events)
+                #endif
+            }
             else { Text(ProjectPresentation.restrictedNotice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("restrictedSessionNotice") }
             if let notice = conversation.projectNotice ?? model.sessionProjectNotices[conversation.id] ?? conversation.projectName.map({ "项目：" + $0 }) {
                 Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("projectNotice")
             }
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 #if os(iOS)
+                if let files=model.attachmentDrafts[key],!files.isEmpty {
+                    ScrollView(.horizontal) { HStack(alignment:.top,spacing:AppleTokens.Space.p8) {
+                        ForEach(files) { file in PhoneAttachmentBlock(name:file.original.name,image:file.display,isImage:file.original.isImage,status:model.preparingConversations.contains(key) ? "正在发送…" : attachmentInputError == nil ? nil : "发送未完成",remove:{ model.removeAttachment(file.id,from:conversation,accountEpoch:accountEpoch) }) }
+                    } }.scrollIndicators(.hidden).accessibilityIdentifier("sideChat.attachmentBlocks")
+                }
                 phoneDraftInput.frame(minHeight:AppleTokens.Space.p44)
                     .padding(.leading,composerExpanded ? AppleTokens.Space.p0 : AppleTokens.Space.p56)
                     .padding(.trailing,composerExpanded ? AppleTokens.Space.p0 : AppleTokens.Space.p44 * 2 + AppleTokens.Space.p16)
@@ -737,6 +762,7 @@ struct ConversationView: View {
                 #endif
                 }
                 #endif
+                #if os(macOS)
                 if let files = model.attachmentDrafts[key], !files.isEmpty {
                     ScrollView(.horizontal) {
                         HStack(spacing: AppleTokens.Space.p10) {
@@ -751,6 +777,7 @@ struct ConversationView: View {
                         }
                     }
                 }
+                #endif
                 if dynamicTypeSize.isAccessibilitySize && composerExpanded {
                     composerApprovalMode(accountEpoch: accountEpoch)
                 }
@@ -892,6 +919,9 @@ struct MessageView: View {
                 MessageBodyView(text: message.text, messageID: message.id)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            #if os(iOS)
+            if !message.originalAttachments.isEmpty || !message.images.isEmpty {
+            ScrollView(.horizontal) { HStack(alignment:.top,spacing:AppleTokens.Space.p8) {
             ForEach(message.originalAttachments) { attachment in
                 ConversationAttachmentTile(model: model, reference: .original(attachment)) { openAttachment(.original(attachment)) }
             }
@@ -903,6 +933,21 @@ struct MessageView: View {
                     }
                 }
             }
+            } }.scrollIndicators(.hidden)
+            }
+            #else
+            ForEach(message.originalAttachments) { attachment in
+                ConversationAttachmentTile(model: model, reference: .original(attachment)) { openAttachment(.original(attachment)) }
+            }
+            if message.originalAttachments.isEmpty,
+               let sessionID = message.id.split(separator: "|").dropFirst().first.map(String.init), message.id.hasPrefix("host|") {
+                ForEach(message.images, id: \.attachmentId) { image in
+                    ConversationAttachmentTile(model: model, reference: .sessionImage(image, sessionID)) {
+                        openAttachment(.sessionImage(image, sessionID))
+                    }
+                }
+            }
+            #endif
             let remainingAttachments = max(0, message.attachmentCount - max(message.originalAttachments.count, message.images.count))
             if remainingAttachments > 0 {
                 WeftLabel("\(remainingAttachments) 个附件 · 此版本尚未展开", icon: "attach", size: 16)

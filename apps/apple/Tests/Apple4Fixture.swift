@@ -8,7 +8,7 @@ struct Apple4Fixture: View {
     @ObservedObject var health: DailyHealthModel
     @State private var ready = false
     @State private var scenario = "final"
-    private let scenarios = ["empty", "final", "stream", "aligned", "warning", "files", "side"]
+    private let scenarios = ["empty", "final", "stream", "aligned", "warning", "two", "question", "files", "side"]
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
             if ready {
@@ -23,6 +23,7 @@ struct Apple4Fixture: View {
             } else { Text(app.authError ?? "正在连接合成账号…") }
         }.environmentObject(health).tint(Weave.accent).buttonStyle(PhoneActionStyle())
             .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("dark") ? .dark : .light)
+            .dynamicTypeSize(ProcessInfo.processInfo.arguments.contains("--apple5-large") ? .accessibility3 : .large)
             .task {
                 await app.authenticate(username: "health4_synthetic", password: "synthetic-only-A1!", displayName: "合成账号", register: false)
                 if app.session != nil { await select("final"); ready = true }

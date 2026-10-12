@@ -46,8 +46,8 @@ final class Apple5UITests: XCTestCase {
             app.buttons["phone.tab.resources"].tap()
             let file=app.buttons["library.row.apple5-file"]
             XCTAssertTrue(file.waitForExistence(timeout:20)); capture(app,theme,"library-list"); file.tap()
-            XCTAssertTrue(app.staticTexts["library.preview.text"].waitForExistence(timeout:15)); XCTAssertTrue(app.buttons["library.share"].exists)
-            capture(app,theme,"library-preview"); app.buttons["phoneSheet.close"].tap()
+            XCTAssertTrue(app.descendants(matching:.any)["attachmentPreviewPanel"].waitForExistence(timeout:15)); XCTAssertTrue(app.buttons["filePreview.more"].exists)
+            capture(app,theme,"library-preview"); app.buttons["filePreview.close"].tap()
             app.terminate()
         }
     }

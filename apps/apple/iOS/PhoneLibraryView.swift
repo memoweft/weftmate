@@ -36,7 +36,7 @@ struct PhoneLibraryView: View {
                     if let result=try? await app.assistantClient.phoneLibraryDetail(id), epoch == app.accountEpoch { selected=result.item }
                     if epoch == app.accountEpoch { app.phoneLibrarySelection=nil }
                 }
-                .sheet(item:$selected) { row in PhoneLibraryPreviewView(app:app,item:row,openSource:{ Task { await openSource(row) }; selected=nil }) }
+                .fullScreenCover(item:$selected) { row in PhoneLibraryPreviewView(app:app,item:row,openSource:{ Task { await openSource(row) }; selected=nil }) }
         }
     }
     private func reload() { Task { await model.read("library",app:app) } }
@@ -56,24 +56,8 @@ private struct PhoneLibraryPreviewView: View {
     @State private var error: String?
     @State private var loading=true
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment:.leading,spacing:AppleTokens.Space.p16) {
-                    Text(item.fileName).font(AppleTokens.Fonts.title2)
-                    Text(PhoneFeaturePolicy.fileType(item.type)+" · "+PhoneFeaturePolicy.size(item.size)).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                    if loading { ProgressView("正在读取预览…") }
-                    if let error { InlineNotice(message:error,isError:true) }
-                    if let preview {
-                        if let text=preview.text { Text(text).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading).accessibilityIdentifier("library.preview.text") }
-                        else if preview.kind == "image", let bytes=preview.exportData, let image=UIImage(data:bytes) { Image(uiImage:image).resizable().scaledToFit().accessibilityLabel(item.fileName) }
-                        else if preview.kind == "pdf", let bytes=preview.exportData { PhonePDFPreview(data:bytes).frame(height:440).accessibilityLabel("PDF 预览") }
-                        else { Text(preview.kind == "missing" ? "文件已不在原位置，可以回到来源对话查看。" : preview.reason == "too_large" ? "文件较大，请在电脑上打开完整内容。" : "这种文件暂时无法在手机预览，请在电脑上打开。") }
-                        if let file { ShareLink(item:file) { WeftLabel("分享或存到文件",icon:"share") }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("library.share") }
-                    }
-                    Button("来自哪个对话",action:openSource).buttonStyle(OutlineActionStyle()).accessibilityIdentifier("library.source")
-                }.padding(AppleTokens.Space.p20)
-            }.phoneSheet("成果预览",close:{ dismiss() })
-        }.task(id:app.accountEpoch) {
+        ConversationAttachmentPreview(file:file,name:item.fileName,contentType:preview?.contentType ?? "text/plain",loading:loading,error:error,close:{ dismiss() },sourceAction:openSource)
+.task(id:app.accountEpoch) {
             cleanup(); loading=true; let epoch=app.accountEpoch
             do {
                 let value=try await app.assistantClient.phoneLibraryPreview(item.id)
@@ -84,15 +68,12 @@ private struct PhoneLibraryPreviewView: View {
                     let name=URL(fileURLWithPath:item.fileName).lastPathComponent
                     let path=directory.appendingPathComponent(name.isEmpty ? "成果" : name)
                     try data.write(to:path,options:[.atomic,.completeFileProtectionUntilFirstUserAuthentication]); file=path
+                } else {
+                    error=value.kind == "missing" ? "文件已不在原位置，可以回到来源对话查看。" : "这种文件暂时无法在手机预览，请在电脑上打开。"
                 }
             } catch { if epoch == app.accountEpoch { self.error=PhoneFeaturePolicy.failure(error) } }
             if epoch == app.accountEpoch { loading=false }
         }.onDisappear { cleanup() }
     }
     private func cleanup() { if let file { try? FileManager.default.removeItem(at:file.deletingLastPathComponent()) }; file=nil; preview=nil; error=nil }
-}
-private struct PhonePDFPreview: UIViewRepresentable {
-    var data: Data
-    func makeUIView(context: Context) -> PDFView { let view=PDFView(); view.autoScales=true; return view }
-    func updateUIView(_ view: PDFView,context: Context) { if view.document == nil { view.document=PDFDocument(data:data) } }
 }
