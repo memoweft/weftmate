@@ -1256,7 +1256,7 @@ test('task15-question-client sequential single, multiple and free answers preser
   for(const name of ['文字记录','源文件'])questionControl(h,'button',name).fire('click');
   const mixed=questionControl(h,'textbox','其他回答');mixed.value='保留一份简短目录';mixed.fire('input');questionControl(h,'button','下一题').fire('click');
   const free=questionControl(h,'textbox','你的回答');free.value='按这段原话填写';free.fire('input');
-  h.node('draft').value='聊天草稿仍在';h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=163;questionControl(h,'button','确认').fire('click');
+  h.node('draft').value='聊天草稿仍在';h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=163;questionControl(h,'button','提交回答').fire('click');
   const request=h.bridge.findLastIndex(item=>item.method==='shared.questions.answer'),params=h.bridge[request].params;
   assert.deepEqual(Object.keys(params).sort(),['answer','questionRpcId','requestId','sessionId']);assert.deepEqual(params.answer,{answers:[{id:'plan',selected:['同意']},{id:'repeated-id',selected:['文字记录','源文件'],custom:'保留一份简短目录'},{id:'repeated-id',selected:[],custom:'按这段原话填写'}]});
   assert.equal(h.bridge.some(item=>item.method==='shared.approvals.decide'),false);

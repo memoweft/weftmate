@@ -57,6 +57,9 @@
 .phone-unified .approval-detail .timeline-raw { font-size:var(--wm-font-size-12); max-height:var(--phone-textarea-max); overflow:auto; white-space:pre-wrap; }
 .phone-unified .approval-bar-actions { display:flex; align-self:stretch; justify-content:flex-end; gap:var(--wm-space-8); margin-top:var(--wm-space-8); }
 .phone-unified .approval-bar-actions .button { min-height:var(--wm-space-44); border-radius:var(--wm-radius-999); padding-inline:var(--wm-space-20); }
+.phone-unified .approval-bar-actions [data-conversation-approval-action=rejected] { background:transparent; border:1px solid var(--line); }
+.phone-unified .approval-bar-actions [data-conversation-approval-action=rejected]:hover { background:var(--soft); }
+.phone-unified .approval-bar-actions [data-conversation-approval-action=rejected]:active { background:var(--accent-soft); }
 .phone-unified .phone-approval-choices { display:flex; flex-direction:column; gap:var(--wm-space-4); }
 .phone-unified .phone-approval-option { display:flex; align-items:center; gap:var(--wm-space-12); min-height:var(--wm-space-44); width:100%; padding:var(--wm-space-8) 0; text-align:left; border:0; background:transparent; color:var(--ink); font:inherit; cursor:pointer; }
 .phone-unified .phone-radio { display:inline-flex; align-items:center; justify-content:center; flex:none; width:var(--wm-space-24); height:var(--wm-space-24); border:var(--wm-space-2) solid var(--ink-muted); border-radius:var(--wm-radius-circle); }

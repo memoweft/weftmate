@@ -67,7 +67,7 @@
         const status = node('p', notice || '', 'question-status'); status.setAttribute('role', 'status'); status.hidden = !notice; body.append(status);
         const actions = node('div', '', 'question-actions');
         if (index > 0) { const back = node('button', '上一题', 'button secondary'); back.type = 'button'; back.disabled = locked; back.addEventListener('click', () => { cursors.set(key, index - 1); delete bar.dataset.signature; paint(bar, config); }); actions.append(back); }
-        const next = node('button', index < row.questions.length - 1 ? '下一题' : config.retry ? '重试原回答' : config.mobile ? '确认' : '提交回答', 'button primary'); next.type = 'button'; next.disabled = locked; next.dataset.questionControl = 'submit';
+        const next = node('button', index < row.questions.length - 1 ? '下一题' : config.retry ? '重试原回答' : config.mobile && question.options?.length ? '确认' : '提交回答', 'button primary'); next.type = 'button'; next.disabled = locked; next.dataset.questionControl = 'submit';
         next.hidden = !!quickChoice && !draft.answers[index].custom.trim();
         next.addEventListener('click', () => {
             if (!bar.questionConfig.current() || bar.questionConfig.locked) return;

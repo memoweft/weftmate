@@ -40,6 +40,7 @@ function appendTimelineArtifact(parent,artifact,context=conversationTaskContext(
   wrap.append(open,el('small','',`${artifact.contentType||'文件'} · ${attachmentSize(artifact.size||0)}`),save);parent.append(wrap)}
 
 function closeResourcePage({restoreFocus=true}={}){const view=state.resourceView;state.resourceView=null;
+  WeftPopover.closeMenu();clear($('resource-content'));
   if($('mobile-bottom-tabs'))$('mobile-bottom-tabs').inert=false;
   if(!$('resource-page').hidden) { if(globalThis.WeftMobileMotion) WeftMobileMotion.hide($('resource-page'),true); else $('resource-page').hidden=true; }$('chat-page').removeAttribute?.('inert');
   $('main').removeAttribute?.('inert');document.querySelector('.topbar')?.removeAttribute?.('inert');
@@ -69,7 +70,7 @@ async function openAttachmentFile(file,trigger,{sessionId=state.sharedSessionId,
   target.append(el('p','muted','正在读取…'));configureResourceFile(file,{blob:file.file instanceof Blob?file.file:undefined,sessionId,original:!draft});
   try{if(window.weftNative&&!(file.file instanceof Blob)){target.replaceChildren(el('p','render-status','这份文件暂时无法在手机里预览，可保存后查看。'));return;}
     const blob=file.file instanceof Blob?file.file:await WeftPhoneFiles.readBlob(uiCore.syncAttachmentUrl(file.attachmentId));
-    if(state.resourceView!==view||!conversationTaskCurrent(context))return;const data=await WeftPhoneFiles.fromBlob(blob,file.name);target.replaceChildren();WeftContent.preview(target,data,{name:file.name});
+    if(state.resourceView!==view||!conversationTaskCurrent(context))return;const data=await WeftPhoneFiles.fromBlob(blob,file.name);if(state.resourceView!==view||!conversationTaskCurrent(context))return;target.replaceChildren();WeftContent.preview(target,data,{name:file.name});
   }catch{if(state.resourceView!==view)return;const retry=el('button','secondary','重试');retry.onclick=()=>openAttachmentFile(file,trigger,{sessionId,draft});target.replaceChildren(el('p','render-status','暂时无法读取，请重试。'),retry);}
 }
 
