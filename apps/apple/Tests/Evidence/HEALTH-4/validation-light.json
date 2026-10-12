@@ -1,9 +1,10 @@
 {
   "theme": "light",
-  "passed": 0,
-  "failed": 1,
+  "passed": 1,
+  "failed": 0,
   "skipped": 0,
-  "realHealthKit": true,
+  "realHealthKit": false,
+  "gpuConstrainedVisualOnly": true,
   "fakeHost": true,
   "realCloud": false,
   "simulatorsAtOnce": 1,

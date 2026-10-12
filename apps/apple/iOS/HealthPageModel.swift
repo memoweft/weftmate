@@ -27,7 +27,7 @@ import WeftMateCore
                 cache = loaded; analysisEnabled=loaded.itemAnalysisEnabled == true; analysisSupported=loaded.analysisSupported == true
                 var calendar=Calendar(identifier:.gregorian); if let zone=loaded.series.values.first?.timeZone,let timeZone=TimeZone(identifier:zone) { calendar.timeZone=timeZone }
                 let today=DailyHealthCalendar.key(Date(),calendar:calendar)
-                analyses=Dictionary((loaded.cachedAnalyses ?? []).filter { $0.day == today }.map { ($0.scope,$0) },uniquingKeysWith:{ _,b in b })
+                analyses=HealthPagePolicy.restoredAnalysis(loaded.cachedAnalyses ?? [],day:today)
             }
         }
         return true
@@ -51,14 +51,15 @@ import WeftMateCore
             cache.overview=overview; cache.fetchedAt=Date(); offline=false; error=nil; try save()
             let month=String(overview.day.prefix(7))
             if let calendar=try? await app.assistantClient.healthCalendar(month:month), matches(app,token) { cache.calendar=calendar; try save() }
-            if let settings=try? await app.assistantClient.healthPageSettings(), matches(app,token) { analysisSupported=settings.settings.itemAnalysisEnabled != nil; analysisEnabled=settings.settings.itemAnalysisEnabled == true }
+            if let settings=try? await app.assistantClient.healthPageSettings(), matches(app,token) { let policy=HealthPagePolicy.itemAnalysis(settings.settings); analysisSupported=policy.supported; analysisEnabled=policy.enabled }
             if let existing=try? await app.assistantClient.healthAnalysisCache(day:overview.day), matches(app,token) {
-                analyses=Dictionary(existing.items.filter { $0.day == overview.day }.map { ($0.scope,$0) },uniquingKeysWith: { _,b in b })
+                analyses=HealthPagePolicy.restoredAnalysis(existing.items,day:overview.day)
             }
+            var series: [String:HealthMetricSeries]=[:]
             for id in ["recovery","sleep","load","deepMinutes","remMinutes"] {
-                if let series=try? await app.assistantClient.healthMetrics(id,days:7), matches(app,token) { cache.series[id+"-7"]=series }
+                if let value=try? await app.assistantClient.healthMetrics(id,days:7), matches(app,token) { series[id+"-7"]=value }
             }
-            if matches(app,token) { try save() }
+            if matches(app,token) { cache.series.merge(series,uniquingKeysWith:{ _,b in b }); try save() }
         } catch { if matches(app,token) { offline=true; self.error=cache.overview == nil ? "电脑暂时连不上，请稍后重试。" : nil } }
     }
     func metric(_ id: String, days: Int, app: AppleAppModel) async -> HealthMetricSeries? {
@@ -71,7 +72,7 @@ import WeftMateCore
     }
     func setAI(_ enabled: Bool, app: AppleAppModel) async -> Bool {
         let token=epoch
-        do { let result=try await app.assistantClient.healthPageSettings(enabled:enabled); guard matches(app,token) else { return false }; analysisSupported=result.settings.itemAnalysisEnabled != nil; analysisEnabled=result.settings.itemAnalysisEnabled == true; try save(); return analysisEnabled == enabled }
+        do { let result=try await app.assistantClient.healthPageSettings(enabled:enabled); guard matches(app,token) else { return false }; let policy=HealthPagePolicy.itemAnalysis(result.settings); analysisSupported=policy.supported; analysisEnabled=policy.enabled; try save(); return analysisEnabled == enabled }
         catch { if matches(app,token) { notice="暂时没能改变设置，连接电脑后再试。" }; return false }
     }
     func analyze(_ scope: String, enable: Bool = false, app: AppleAppModel) async {
@@ -84,8 +85,9 @@ import WeftMateCore
         do { let result=try await app.assistantClient.healthAnalysis(scope:scope,day:day); guard matches(app,token),cache.overview?.day == day else { return }; analyses[scope]=result; try save() }
         catch {
             guard matches(app,token) else { return }
-            if case APIFailure.server(409,"AI_ANALYSIS_OFF") = error { analysisEnabled=false; analysisErrors[scope]="AI 分析已关闭，可以重新打开。" }
-            else { analysisErrors[scope]=offline || error is URLError ? "电脑不在线，连接后再来看看。" : "这次没能分析好，点一下再试。" }
+            let failure=HealthPagePolicy.analysisFailure(error,offline:offline)
+            if failure.disabled { analysisEnabled=false }
+            analysisErrors[scope]=failure.message
         }
     }
     func remind(_ suggestion: HealthInsight.Suggestion, app: AppleAppModel) async {

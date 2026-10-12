@@ -26,5 +26,21 @@
   },
   "kernelRestartReportedByOrchestrator": "2026-10-12 03:52 US/Pacific",
   "headlessValidation": true,
-  "newCrashesAfterFix": []
+  "newCrashesAfterFix": [],
+  "kernelRestarts": [
+    {
+      "time": "2026-10-12 03:52 US/Pacific",
+      "symptom": "GPU reset, WindowServer stopped responding, watchdog kernel restart",
+      "operation": "Simulator validation after HealthKit authorization and native health page work",
+      "reportedBy": "orchestrator"
+    },
+    {
+      "time": "2026-10-12 05:28 US/Pacific",
+      "symptom": "GPU reset, WindowServer stopped responding, watchdog kernel restart",
+      "operation": "HEALTH4UITests changes and preparation for the health-page simulator journey",
+      "reportedBy": "orchestrator"
+    }
+  ],
+  "graphicsLimitation": "Full HealthKit-to-page simulator journey will not be repeated unchanged. Pure tests and a smaller headless device are used; unavailable GPU-sensitive acceptance is reported explicitly.",
+  "postGpuRestartSimulatorBoots": 3
 }

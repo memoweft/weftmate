@@ -9,6 +9,7 @@ struct Health4Fixture: View {
     @State private var ready=false
     @State private var message="准备好合成样本后，连接测试账号"
     @State private var asking=false
+    @State private var information=false
     var body: some View {
         NavigationStack {
             if ready {
@@ -28,16 +29,17 @@ struct Health4Fixture: View {
                         if app.session != nil {
                             health.reader.fixtureTemperature=36.5
                             health.reader.fixtureProfile=HealthProfile(birthYear:1986,sex:"male",heightCm:175,weightKg:70)
-                            await health.connect(app:app)
+                            if !ProcessInfo.processInfo.arguments.contains("--health4-render-only") { await health.connect(app:app) }
                             await app.mainChat.configure()
                             if let data=try? JSONSerialization.data(withJSONObject:["chatId":"health4-main","revision":1,"running":false,"sendAvailable":true,"pinned":true,"archived":false,"unread":false,"activeSessionId":"health4-session","createdAt":"2026-10-01T00:00:00Z","updatedAt":"2026-10-01T00:00:00Z","title":"主对话","kind":"main","timeZone":TimeZone.current.identifier,"contentRevision":1]), let chat=try? JSONDecoder().decode(LogicalChat.self,from:data) { app.mainChat.chat=chat }
                             ready=true
+                            if ProcessInfo.processInfo.arguments.contains("--health4-additional-info") { information=true }
                         } else { message="FAILED" }
                     } }.accessibilityIdentifier("health4.connectLegacy")
                     Text(message)
                 }
             }
-        }.environmentObject(health)
+        }.sheet(isPresented:$information) { HealthAdditionalAuthorizationView(authorize:{ information=false },later:{ information=false }) }.environmentObject(health)
             .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("dark") ? .dark : .light)
     }
 }

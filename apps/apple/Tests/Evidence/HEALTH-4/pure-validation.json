@@ -1,0 +1,24 @@
+{
+  "fullPackage": {
+    "passed": 458,
+    "failed": 0,
+    "suites": 24
+  },
+  "focusedHealth": {
+    "passed": 28,
+    "failed": 0
+  },
+  "ninetyDayFixture": {
+    "v2Days": 90,
+    "v3Days": 90,
+    "batchAttempts": 19,
+    "acknowledgedBatches": 18,
+    "injectedFailure": 1,
+    "persistedResume": true,
+    "duplicatesAfterAcknowledgement": 0,
+    "knownStressIndex": true,
+    "noV3KeysToV2": true,
+    "transport": "real PersonalClient with in-process synthetic HTTP transport"
+  },
+  "simulatorRequired": false
+}

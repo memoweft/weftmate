@@ -1,0 +1,424 @@
+{
+  "syntheticOnly": true,
+  "version": 3,
+  "issues": [],
+  "reads": [
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "hrvSdnnMs",
+      "days": 7
+    },
+    {
+      "id": "hrvSdnnMs",
+      "days": 60
+    },
+    {
+      "id": "hrvSdnnMs",
+      "days": 60
+    },
+    {
+      "id": "usageLateNightMinutes",
+      "days": 60
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "stress",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "hrvSdnnMs",
+      "days": 7
+    },
+    {
+      "id": "hrvSdnnMs",
+      "days": 60
+    },
+    {
+      "id": "hrvSdnnMs",
+      "days": 60
+    },
+    {
+      "id": "usageLateNightMinutes",
+      "days": 60
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "stress",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    },
+    {
+      "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
+      "days": 7
+    }
+  ],
+  "requests": [],
+  "records": [],
+  "profiles": [],
+  "reminders": 2,
+  "analysisScopes": [
+    "recovery"
+  ],
+  "modelInsightsEnabled": true,
+  "itemAnalysisEnabled": true
+}
