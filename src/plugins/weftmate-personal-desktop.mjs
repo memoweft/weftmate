@@ -7,12 +7,14 @@ import { defineTool } from '@deepseek-ai/dsh-tools';
 import { installModelSelection } from '@deepseek-ai/dsh-agent';
 import { installConversationReasoning } from './personal-reasoning.mjs';
 import { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy';
-import { selectProjectContext, inheritProjectContext, routeProjectTool, installProjectSandbox, projectToolDecision, projectContextNotice, executionDirectory } from './personal-project-context.mjs';
+import { selectProjectContext, inheritProjectContext, routeProjectTool, installProjectSandbox, projectToolDecision, projectContextNotice, executionDirectory, insideProject } from './personal-project-context.mjs';
+import { shellWriteTargets } from './personal-write-targets.mjs';
 import { trackNativeFiles, appendNativeArtifacts, conversationCreatedFiles, createNativeFileProvenance } from './personal-native-files.mjs';
 import { personalWebFetchProvider } from './personal-web-fetch.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
 import PlanModeController, { foldPlanMode } from '@deepseek-ai/dsh-plan-mode';
 import { approvalRequired, approvalPrompt, classifyPersonalRisk, RISK_LABELS } from './personal-approval-policy.mjs';
+import { reviewSourceLocations } from './personal-review-sources.mjs';
 
 export const name = 'weftmate-personal-desktop';
 export const PERSONAL_DESKTOP_PROTOCOL = 'weftmate.personal-desktop.v1';
@@ -125,14 +127,24 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
         .every(key => current[key] === binding.payload[key]);
     } catch { return false; }
   };
-  disposers.push(ctx.on('tools/pre-execute', (exec, next) => {
+  disposers.push(ctx.on('tools/pre-execute', async (exec, next) => {
     if (liveAgent(exec.agent)) {
       try {
         const identity = personalExecutionIdentity(exec);
         let calls = callsByAgent.get(exec.agent);
         if (!calls) { calls = new Map(); callsByAgent.set(exec.agent, calls); }
-        calls.set(exec.callId, { ...identity, toolName: exec.name,
-          argumentsHash: executionHash(exec.arguments), types: permissionCategories(exec.name, exec.arguments) });
+        const call = { ...identity, toolName: exec.name, argumentsHash: executionHash(exec.arguments), types: permissionCategories(exec.name, exec.arguments) };
+        calls.set(exec.callId, call);
+        try {
+          const folder = executionDirectory(exec.agent.session) ?? process.cwd();
+          const cwd = resolve(folder, exec.arguments?.workdir ?? '.');
+          call.reviewArguments = structuredClone(exec.arguments);
+          call.reviewRisks = classifyPersonalRisk(exec.name, exec.arguments, cwd, new Set(), { createdFiles: conversationCreatedFiles(exec.agent.session) });
+          call.outsideProjectWrite = false;
+          if (['pwsh','bash','shell'].includes(exec.name)) for (const write of shellWriteTargets(exec.arguments?.command ?? '', cwd, exec.name !== 'bash')) {
+            if (!write.target || !await insideProject(folder, write.target)) { call.outsideProjectWrite = true; break; }
+          }
+        } catch { /* Advisory evidence cannot break the original approval identity. */ }
       } catch { /* Missing real tool/receipt identity cannot become an approval request. */ }
     }
     return next();
@@ -167,7 +179,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     const approvalId = asked[0].data.id;
     const key = keyOf(identity.sessionId, approvalId);
     if (bindings.has(key)) return 'unavailable';
-    const { types: _operationTypes, ...approvalIdentity } = identity;
+    const { types: _operationTypes, reviewArguments, reviewRisks, outsideProjectWrite, ...approvalIdentity } = identity;
     const payload = { ...approvalIdentity, approvalId };
     const controller = new AbortController();
     const onAbort = () => controller.abort();
@@ -178,6 +190,8 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     bindings.set(key, binding);
     try {
       binding.registration = bridge.request({ ...payload, action: 'register_approval',
+        reviewEvidence: { arguments: reviewArguments, risks: reviewRisks, outsideProjectWrite,
+          sources: reviewSourceLocations(events, identity.rootCallId) },
         reason: typeof request.reason === 'string' ? request.reason.slice(0, 1000) : '' }, controller.signal);
       let state = await binding.registration;
       while (!closed && !controller.signal.aborted) {

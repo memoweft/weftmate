@@ -56,3 +56,9 @@ html[data-reduced-motion] :is(button,.popover button,.send-button,.nav-primary):
 .appearance-page .settings-row .appearance-switch-target { display:grid; place-items:center; min-height:var(--wm-space-44); min-width:var(--wm-space-44); margin:0; cursor:pointer; }
 .appearance-page input.settings-switch:not(:checked) { background:var(--surface-soft,var(--soft)); }
 @media(max-width:719px) { .appearance-page .settings-row>.settings-select { width:100%; } }
+/* Advisory text uses the existing approval surface and attention palette. */
+.approval-review { grid-column: 1 / -1; margin: var(--wm-space-4) 0 0; font-size: var(--wm-font-size-12); line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
+.is-review-warning { --review-attention: var(--wm-color-attention-light); }
+:root[data-theme="dark"] .is-review-warning { --review-attention: var(--wm-color-attention-dark); }
+.approval-bar.is-review-warning, .approval-bar .is-review-warning { background: color-mix(in srgb, var(--review-attention) 10%, var(--surface)); outline: 1px solid color-mix(in srgb, var(--review-attention) 65%, transparent); border-radius: var(--wm-radius-12); }
+.is-review-warning .approval-review { color: var(--review-attention); }

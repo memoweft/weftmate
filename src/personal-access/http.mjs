@@ -727,12 +727,14 @@ export function createHttpHandler(context) {
         if (sessionId && account.sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_UNAVAILABLE', 404);
         if (request.method === 'PATCH') {
           const body = await context.readJson(request);
-          exactKeys(body, sessionId ? ['mode'] : ['mode', 'rules'], sessionId ? ['mode'] : []);
+          exactKeys(body, sessionId ? ['mode'] : ['mode', 'rules', 'secondOpinionEnabled'], sessionId ? ['mode'] : []);
+          if (body.secondOpinionEnabled !== undefined && typeof body.secondOpinionEnabled !== 'boolean') throw failure('INVALID_REQUEST');
           if (!Object.keys(body).length || body.mode !== undefined && !APPROVAL_MODES.includes(body.mode) || body.rules !== undefined && !validPermissionRules(body.rules, { patch: true })) throw failure('INVALID_REQUEST');
           await context.serial(() => context.mutate(ownerId, next => {
             context.authenticate(request, 'commands:write');
             if (sessionId) next.sessions[sessionId].approvalMode = body.mode;
             else {
+              if (body.secondOpinionEnabled !== undefined) next.secondOpinionEnabled = body.secondOpinionEnabled;
               if (body.rules !== undefined) next.permissionRules = mergePermissionRules(next.permissionRules, body.rules);
               if (body.mode === undefined) return;
               for (const session of Object.values(next.sessions)) session.approvalMode ??= next.defaultApprovalMode ?? 'auto';
@@ -742,7 +744,7 @@ export function createHttpHandler(context) {
         }
         const saved = context.accountState(ownerId);
         return context.json(response, 200, { mode: sessionId ? saved.sessions[sessionId].approvalMode ?? saved.defaultApprovalMode ?? 'auto'
-          : saved.defaultApprovalMode ?? 'auto', ...(!sessionId ? { rules: saved.permissionRules ?? {}, types: PERMISSION_TYPES } : {}), ...(sessionId ? { allowedCategories: saved.sessions[sessionId].allowedApprovalCategories ?? [] } : {}) });
+          : saved.defaultApprovalMode ?? 'auto', ...(!sessionId ? { rules: saved.permissionRules ?? {}, types: PERMISSION_TYPES, secondOpinionEnabled: saved.secondOpinionEnabled !== false } : {}), ...(sessionId ? { allowedCategories: saved.sessions[sessionId].allowedApprovalCategories ?? [] } : {}) });
       }
       if (['/personal/v1/usage', '/personal/v1/settings/usage'].includes(pathname) && ['GET', 'PATCH'].includes(request.method)) {
         const settingsRoute = pathname.endsWith('/settings/usage');
@@ -1513,6 +1515,7 @@ export function createHttpHandler(context) {
         const before = url.searchParams.get('before'), limitText = url.searchParams.get('limit') ?? '50';
         if (!/^\d+$/.test(limitText) || !Number.isSafeInteger(Number(limitText)) || Number(limitText) < 1 || Number(limitText) > 100 ||
             before !== null && !TOOL_RUNTIME_ID.test(before)) throw failure('INVALID_REQUEST');
+        await context.waitToolApprovalRegistration(sessionId);
         await context.refreshToolApprovals(ownerId, sessionId);
         const current = context.authenticate(request, 'sessions:read');
         if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
