@@ -129,18 +129,21 @@ try {
     for (const [, page] of surfaces) await page.getByRole('region',{name:'待批准操作'}).waitFor({state:'hidden'});
     await fixture.progress.resolve(approvalC,'allowed-once');fixture.progress.result('p3-approval-c','Synthetic single approval accepted.');
     await shot('10c-approved-bar-removed');
-    await fixture.progress.artifact(); await see('已读回核验'); await shot('11-artifact');
+    await fixture.progress.artifact(); await see('文件已做好'); await shot('11-artifact');
     fixture.progress.call('pwsh', 'p3-failure', { command: 'node synthetic-failure.mjs' });
     fixture.progress.result('p3-failure', 'Synthetic failure: file unavailable.', true);
-    await see('第 9 步失败');
+    await see('第 9 步遇到问题，正在继续');
     for (const [, page] of surfaces) {
+      await page.getByText('第 9 步遇到问题，正在继续',{exact:true}).click();
+      await page.locator('.execution-step').filter({has:page.getByText(/synthetic-failure.mjs/)}).locator('summary').first().click();
       await page.getByText(/Synthetic failure: file unavailable/).waitFor();
+      assert.equal(await page.locator('.has-failure').count(),0);
       assert.equal(await page.getByRole('region', { name: '待批准操作' }).isVisible(), false);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       await page.emulateMedia({ reducedMotion: 'reduce' });
       assert.equal(await page.locator('.inline-progress-text.is-running').evaluateAll(nodes => nodes.every(node => getComputedStyle(node).animationName === 'none')), true);
     }
-    for (const [, page] of surfaces) await page.getByText('第 9 步失败', {exact:true}).scrollIntoViewIfNeeded();
+    for (const [, page] of surfaces) await page.getByText('第 9 步遇到问题，正在继续', {exact:true}).scrollIntoViewIfNeeded();
     await shot('11-failure-artifact');
     fixture.progress.finish('aborted'); await desktop.getByText('本轮已停止。如需继续，请重新发送。',{exact:true}).waitFor();await mobile.getByText('电脑回合已停止',{exact:true}).waitFor(); await shot('12-stopped');
     checks.push({ theme, surfaces: ['production Electron', 'mobile bundle 390×844', 'remote mobile web 390×844'], liveFrames: 3, order: true, keyboard: true, preservedExpansion: true, approvals: ['approved', 'rejected'], failure: true, artifactReadback: true, reducedMotion: true });

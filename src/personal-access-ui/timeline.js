@@ -25,28 +25,31 @@
       if(globalThis.WeftReplyMotion) WeftReplyMotion.status(text,options.waiting,true); else text.textContent=options.waiting
     })
     for (const block of groups) put(`steps-${block.seq}`, block.seq, row => {
+      block.steps = block.steps.map(step=>globalThis.WeftUiCore.executionPresentation(step,options.executions))
       const expandedForObjects = row.querySelector('details')?.open === true
       const currentForObjects = block.steps.filter(step => step.state === 'running').at(-1)
       row.progressDetails ||= new Map()
       for (const step of block.steps) {
         const seq = step.detailRef?.seq, cached = row.progressDetails.get(seq)
         if (cached && cached !== 'loading') {
-          step.summary = cached.summary; step.arguments = cached.arguments
-        } else if (Number.isSafeInteger(seq) && !cached && options.readDetail && (expandedForObjects || step === currentForObjects)) {
+          step.summary = cached.summary; step.arguments = cached.arguments; step.interrupted = cached.interrupted
+        } else if (Number.isSafeInteger(seq) && !cached && options.readDetail && (expandedForObjects || step === currentForObjects || step.state === 'failed')) {
           row.progressDetails.set(seq, 'loading')
           void options.readDetail(seq).then(data => {
             const args = globalThis.WeftUiCore.toolArguments(data.text)
-            row.progressDetails.set(seq, Object.keys(args).length ? {summary: globalThis.WeftUiCore.toolSummary(step.toolName, args), arguments: args} : {summary: step.summary})
+            row.progressDetails.set(seq, Object.keys(args).length ? {summary: globalThis.WeftUiCore.toolSummary(step.toolName, args), arguments: args, interrupted: globalThis.WeftUiCore.interruptionFromDetail(data.text,step)} : {summary: step.summary})
             if (row.isConnected && row.dataset.signature === signature) { delete row.dataset.signature; renderCurrent() }
           }).catch(() => { row.progressDetails.set(seq, {summary: step.summary}) })
         }
       }
       const previous = row.querySelector('details')
       const stopView = options.stopViews?.[block.taskId]
-      const terminal = stopView?.terminal || ordered.some(e => (e.type === 'task.ended' && e.data?.taskId === block.taskId) ||
-        e.type === 'turn.ended' && block.taskId === `turn-${e.data?.turn}`)
-      const view = globalThis.WeftUiCore.progressText(block.steps, terminal)
-      if (stopView) { view.text = `${view.text} · ${stopView.text}`; view.running = !stopView.terminal; }
+      const outcome = globalThis.WeftUiCore.turnOutcome(ordered, block.taskId,stopView)
+      const terminal = outcome.terminal || stopView?.terminal
+      const lastBlock = groups.filter(group=>group.taskId===block.taskId).at(-1) === block
+      const displayOutcome = (!lastBlock || options.quietFailure) && ['error','failed','blocked'].includes(outcome.reason) ? {...outcome,reason:'ended'} : outcome
+      const view = globalThis.WeftUiCore.progressText(block.steps, displayOutcome)
+      if (stopView && !stopView.terminal) { view.text = `${view.text} · ${stopView.text}`; view.running = true }
       // Keep completed work visible while a real native turn waits for its
       // next model/tool result. The stage comes from host state, not a timer
       // pretending that another tool is still running.
@@ -56,7 +59,7 @@
         view.text += ` · ${options.waiting}`; view.running = true
       }
       const running = view.running
-      const signature = JSON.stringify([block, terminal, stopView])
+      const signature = JSON.stringify([block, outcome, stopView])
       row.dataset.running = String(running)
       if (row.dataset.signature === signature) {
         // A stage/timer update must not detach a focused or scrolling summary.
@@ -70,7 +73,7 @@
       const focused = document.activeElement, focusStep = focused?.closest?.('.execution-step')?.dataset.step
       const hadFocus = row.contains?.(focused)
       const savedSteps = new Map([...row.querySelectorAll('.execution-step')].map(detail => [detail.dataset.step, detail]))
-      const newFailure = block.steps.some(step => step.state === 'failed' && savedSteps.get(String(step.stepId))?.dataset.state !== 'failed')
+      const newFailure = view.failed && row.dataset.failed !== 'true'; row.dataset.failed = String(!!view.failed)
       const details = previous || node('details', 'execution-block')
       details.open = newFailure || previous?.open === true
       row.dataset.running = String(running)
@@ -92,7 +95,7 @@
       const records = details.querySelector('.execution-records') || node('div', 'execution-records')
       if (!summary.parentNode) details.append(summary)
       if (!records.parentNode) details.append(records)
-      records.replaceChildren(...block.steps.map(step => globalThis.WeftTimelineCards.step(step, savedSteps.get(String(step.stepId)), running, options)))
+      records.replaceChildren(...block.steps.map(step => globalThis.WeftTimelineCards.step(globalThis.WeftUiCore.stepPresentation(step,displayOutcome), savedSteps.get(String(step.stepId)), running, options)))
       const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
       if (!previous) row.replaceChildren(details)
       if (hadFocus) (focusStep ? [...records.querySelectorAll('.execution-step')].find(detail => detail.dataset.step === focusStep)?.querySelector('summary') : summary)?.focus({ preventScroll: true })
@@ -125,10 +128,28 @@
           if (!row.hidden) row.append(node('span', '', question && globalThis.WeftQuestionBar ? WeftQuestionBar.record(question) : '已回答'));
           return;
         }
+        if (family === 'artifact') {
+          row.classList.add('artifact-bundle')
+          row.artifactStatus ||= new Map()
+          const files = (data.artifacts || [data]).map(file => ({...file,...options.artifacts?.find(item => item.artifactId === file.artifactId),...row.artifactStatus.get(file.artifactId)}))
+          const outcome = globalThis.WeftUiCore.turnOutcome(ordered,data.taskId || data.completedStep?.taskId)
+          if(outcome.terminal && options.readArtifact) for(const file of files) if(!row.artifactStatus.has(file.artifactId)) {
+            row.artifactStatus.set(file.artifactId,{})
+            void options.readArtifact(file.artifactId).then(result=>{
+              if(!row.isConnected || result.item?.exists === undefined)return
+              row.artifactStatus.set(file.artifactId,{exists:result.item.exists,...((result.item.location||result.item.path)?{path:result.item.location||result.item.path}:{})})
+              delete row.dataset.artifactSignature;renderCurrent()
+            }).catch(()=>{})
+          }
+          const signature = JSON.stringify(files)
+          if (row.dataset.artifactSignature === signature) return
+          row.dataset.artifactSignature = signature
+          const saved = {expanded:row.querySelector('.artifact-summary')?.dataset.expanded === 'true'}
+          row.replaceChildren(globalThis.WeftContent.artifactSummary(files,options,saved)); return
+        }
         row.replaceChildren(node('strong', '', family === 'approval' ? resolved ? '审批已处理' : '需要审批'
           : family === 'question' ? resolved ? '已回答' : '需要补充信息' : family === 'artifact' ? data.fileName || '成果文件' : '排队中'))
-        if (family === 'artifact') globalThis.WeftTimelineCards.artifact(row, data, options)
-        else row.append(node('p', '', ({ 'allowed-once': '已允许本次', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[resolved?.data?.outcome] || (family === 'question' ? data.questions?.map(q => q.question).join('\n') : '') || data.summary || ''))
+        row.append(node('p', '', ({ 'allowed-once': '已允许本次', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[resolved?.data?.outcome] || (family === 'question' ? data.questions?.map(q => q.question).join('\n') : '') || data.summary || ''))
       })
     }
     for (const [key, row] of existing) if (!seen.has(key)) row.remove()

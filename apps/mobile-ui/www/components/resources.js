@@ -112,12 +112,14 @@ async function openConversationResources(filter=null){const context=conversation
 }
 
 function renderTimeline(events=state.sharedEvents){if(!window.WeftTimeline)return;const context=conversationTaskContext();
-  window.WeftTimeline.render(events,$('chat-content'),{tag:'section',mobile:true,artifacts:[...conversationTasks.entries.values()].flatMap(entry=>entry.task?.artifacts||[]),approvals:uiCore.mobileDecisions.rows(approvalContext()),questions:uiCore.mobileDecisions.rows(approvalContext(),true),
+  window.WeftTimeline.render(events,$('chat-content'),{tag:'section',mobile:true,stopViews:Object.fromEntries([...conversationTasks.entries.values()].filter(entry=>entry.sessionId===context.sessionId&&(entry.task?.control?.state==='stopped'||entry.task?.control?.stopStatus==='stopped')).map(entry=>[`turn-${entry.task?.source?.dshTurn??entry.task?.replyEvidence?.turn}`,{terminal:true,text:'已停止'}])),executions:[...conversationTasks.entries.values()].flatMap(entry=>entry.task?relatedExecutionSteps(entry.task).map(row=>({...row,sessionId:entry.sessionId})):[]),artifacts:[...conversationTasks.entries.values()].flatMap(entry=>entry.task?.artifacts||[]),approvals:uiCore.mobileDecisions.rows(approvalContext()),questions:uiCore.mobileDecisions.rows(approvalContext(),true),
     waiting:state.chatSource==='host'&&state.sharedRunning?uiCore.processingStageLabel(state.sharedSessions.find(row=>row.sessionId===context.sessionId)?.processing, state.sharedEvents):'',copyText:text=>call('clipboard.copy',{text}),
     openStep:step=>openConversationResources(item=>item.uses?.some(use=>use.id===`${step.taskId}/${step.stepId}`)),
     openReference:key=>openConversationResources(item=>item.key===key),
     readDetail:seq=>uiCore.readTimelineDetail(context.sessionId,seq),
     fileLabel:artifact=>`${({'text/markdown':'Markdown','text/plain':'文本','application/pdf':'PDF','text/html':'网页'})[artifact.contentType]||'文件'} · ${attachmentSize(artifact.size||0)}`,
+    readArtifact:id=>uiCore.accessApi(`/library/${encodeURIComponent(id)}`),
+    openAllArtifacts:()=>selectMobileTab('library'),onError:()=>toast('文件操作未完成，请重试。'),
     openArtifact:artifact=>openTimelinePreview(context,()=>uiCore.readResource(uiCore.artifactPreviewPath(artifact.artifactId)),artifact.fileName||'成果',artifact),
     downloadArtifact:artifact=>call('shared.artifacts.save',{artifactId:artifact.artifactId})});focusGoalStep()}
 
