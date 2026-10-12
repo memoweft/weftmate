@@ -177,7 +177,8 @@ function el(tag, cls='', text='') {const n=document.createElement(tag); if(cls)n
 
 function logo(){const mark=el('span','logo');mark.setAttribute('aria-label','WeftMate');return mark}
 
-function showProfile(profile){const display=profile?.displayName||profile?.username||'本机个人空间';
+function mobileAccountLabel(){return WeftUiCore.accountLabel({...state.profile,username:state.username},globalThis.WeftMobileCloud?.core?.cloudAuthView?.().email);}
+function showProfile(profile){const display=[profile?.displayName,profile?.username].find(value=>value&&value!=='local-owner')||'我的账户';
   $('drawer-name').textContent=display;const avatar=$('drawer-avatar');clear(avatar);
   if(profile?.avatar?.dataBase64&&['image/png','image/jpeg','image/webp'].includes(profile.avatar.mimeType)){
     const image=el('img');image.alt='';image.src=`data:${profile.avatar.mimeType};base64,${profile.avatar.dataBase64}`;avatar.append(image)}
@@ -203,10 +204,11 @@ function closeToast(){const box=$('toast');clearTimeout(toast.timer);clearTimeou
     window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:420)}
 
 function toast(text,issue=false,undo){const box=$('toast');clearTimeout(toast.timer);clearTimeout(toast.hideTimer);
-  box.textContent=text;box.classList.toggle('error',issue);box.classList.remove('leaving');box.hidden=false;
-  if(issue&&state.loggedIn&&globalThis.WeftProblemFeedback){const report=el('button','button secondary small','反馈问题');report.type='button';report.onclick=event=>{event.stopPropagation();globalThis.WeftProblemFeedback(report)};box.append(report)}
+  toast.detail=null;box.removeAttribute('aria-label');box.setAttribute('aria-description','轻点关闭');
+  box.textContent=issue?`${String(text).split(/[，。\n]/)[0]} · 详情`:text;box.classList.toggle('error',issue);box.classList.remove('leaving');box.hidden=false;
+  if(issue){box.setAttribute('aria-label','查看提示详情');box.setAttribute('aria-description','轻点查看完整提示');toast.detail=async()=>{closeToast();const feedback=state.loggedIn&&globalThis.WeftProblemFeedback;const accepted=await WeftDialogs.request({title:'提示详情',message:text,confirmLabel:feedback?'反馈问题':'知道了',cancelLabel:'关闭提示详情'});if(accepted&&feedback)globalThis.WeftProblemFeedback($('header-profile'));};}
   if(undo){const button=el('button','toast-undo','撤销归档');button.type='button';button.onclick=async event=>{event.stopPropagation();button.disabled=true;try{await undo();closeToast()}catch(error){toast(safeError(error),true)}};box.append(button)}
-  toast.timer=setTimeout(closeToast,undo?10000:issue?5200:3500)}
+  toast.timer=setTimeout(closeToast,undo?10000:4500)}
 
 function status(text,issue=false,kind='ordinary'){const line=$('chat-status');
   // Pending shared sends already explain the outcome on their original message,
@@ -383,7 +385,7 @@ function updateComposer(){uiCore.syncMobileIdentity();
   renderContextUsage();
   paintMobileThinking();
   globalThis.WeftComposerSubtasks?.paint($('composer-subtasks'),globalThis.WeftUiCore.composerSubtasks([...uiCore.state.historyEvents.values()]),{scope:`${state.owner}/${state.authEpoch}/${state.sharedSessionId}`,root:$('chat-content')});
-  $('device-line').hidden=!uiCore.state.online||!view.processingHint;$('device-line').textContent=view.processingHint||'';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
+  $('device-line').hidden=!uiCore.state.online||!view.processingHint;$('device-line').textContent=view.processingHint||'';$('device-line').setAttribute('role','status');WeftModelLabel($('model-label'),view.modelName);$('model-button').setAttribute('aria-label',view.modelLabel);
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;

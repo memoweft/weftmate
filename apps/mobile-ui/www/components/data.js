@@ -3,7 +3,7 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
     if (target.dataView) { target.dataView.refresh(); return; }
     const node = (tag, cls, text) => { const item = document.createElement(tag); item.className = cls || ''; if (text !== undefined) item.textContent = text; return item; };
     const button = (text, action, cls = 'secondary') => { const item = node('button', `button ${cls}`, text); item.type = 'button'; item.addEventListener('click', () => void action()); return item; };
-    let snapshot, operation, accountName = '', canManage = false, timer, generation = 0, completionId, trackedOperation, cloudPassword;
+    let snapshot, operation, accountName = '', accountTitle = '', canManage = false, timer, generation = 0, completionId, trackedOperation, cloudPassword;
     const header = node('div','data-heading'), refreshButton = button('', () => refresh(true)); refreshButton.className = 'icon-button'; refreshButton.setAttribute('aria-label','重新统计占用'); refreshButton.title = '重新统计占用'; refreshButton.append(WeftIcons.create('sync',18));
     const measured = node('p','muted'), total = node('p','data-total'), bar = node('div','data-storage-bar'), list = node('div','data-categories'), progress = node('div','data-progress'), actions = node('div','data-actions');
     const accounting=node('p','muted data-accounting');
@@ -30,7 +30,7 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
     function confirmDanger(kind, pendingId) {
         cloudPassword=undefined;
         const title = kind === 'delete' ? '删除本账户的全部数据' : '注销账号';
-        const box = dialog(title); box.append(node('p','',`仅处理账户「${accountName}」。会先停止正在运行的任务，再逐类删除。`));
+        const box = dialog(title); box.append(node('p','',`仅处理账户「${accountTitle}」。会先停止正在运行的任务，再逐类删除。`));
         const rows = node('div','data-delete-list');
         for (const row of snapshot?.categories || []) rows.append(node('p','',`${row.name} · ${core.dataSize(row.bytes)}`));
         box.append(rows,node('p','muted','还包括设置、用量和设备上的离线副本。其他设备下次连接时退出并清理；电脑无法擦除关机设备、整机备份或你已导出的文件。项目原始文件只解除登记。'));
@@ -39,9 +39,9 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
         box.append(button('先导出全部数据',async () => { box.close(); await perform(() => core.exportAllData(undefined,desktop)); }));
         const label = node('label','','输入账户名确认'), input = node('input'); input.setAttribute('aria-label','输入账户名确认'); input.autocomplete = 'off'; label.append(input); box.append(label);
         const next = button('继续',() => {
-            box.close(); const final = dialog('最后确认'); final.append(node('p','',`确定${kind === 'delete' ? '删除' : '注销'}「${accountName}」？删除开始后无法恢复。${desktop ? '' : '还需要在电脑上再次确认。'}`));
+            box.close(); const final = dialog('最后确认'); final.append(node('p','',`确定${kind === 'delete' ? '删除' : '注销'}「${accountTitle}」？删除开始后无法恢复。${desktop ? '' : '还需要在电脑上再次确认。'}`));
             final.append(button('取消',() => {cloudPassword=undefined;final.close();}),button(desktop ? kind === 'close-account' ? '确认注销' : '确认删除' : '请求电脑确认',async () => { final.close(); await perform(() => core.deleteAllData(kind,accountName,pendingId)); },'danger')); open(final);
-        },'danger'); next.disabled = true; input.addEventListener('input',() => { next.disabled = input.value !== accountName; });
+        },'danger'); next.disabled = true; input.addEventListener('input',() => { next.disabled = input.value !== accountTitle; });
         box.append(button('取消',() => {cloudPassword=undefined;box.close();}),next); open(box);
     }
     async function perform(action) { error.textContent = ''; try { const result = await action(); if (result?.operation) { trackedOperation=result.operation.id; operation=result.operation; } if (current()) await refresh(); } catch (failure) { if (current()) error.textContent = failure.code === 'FORBIDDEN' ? '请用这台电脑的账户所有者操作。受限设备不能执行。' : '操作未完成，请检查电脑连接和磁盘后重试。'; } }
@@ -91,7 +91,7 @@ globalThis.WeftDataView = (core, target, { toast = () => {}, desktop = !!globalT
         if(document.visibilityState==='hidden'||core.foreground?.()===false)return;
         const ticket = ++generation; clearTimeout(timer);
         try { if (trackedOperation && desktop && globalThis.weftmateDesktop?.dataOperation) { const native=await globalThis.weftmateDesktop.dataOperation(trackedOperation); if(native && ['close-account','delete'].includes(native.kind)) { operation=native; if(operation.state==='completed'){paint();return;} } } if (force) await core.scanData(); const value = await core.readData(); if (!current() || ticket !== generation) return;
-            desktop = value.desktop && !!globalThis.weftmateDesktop; snapshot = value.statistics; operation = value.operation; canManage = value.canManage; accountName = value.accountName; error.textContent = ''; paint();
+            desktop = value.desktop && !!globalThis.weftmateDesktop; snapshot = value.statistics; operation = value.operation; canManage = value.canManage; accountName = value.accountName; accountTitle = accountName==='local-owner'?'我的账户':accountName; error.textContent = ''; paint();
             timer = setTimeout(() => { if (current() && !target.hidden && !target.closest('[hidden]')) void refresh(); }, ['running','pending_confirmation'].includes(operation?.state) ? 700 : 5000);
         } catch { if (!current() || ticket !== generation) return; total.textContent='占用暂时无法读取'; error.replaceChildren(node('span','','检查电脑连接后重试。'),button('重试',() => refresh())); }
     }

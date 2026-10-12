@@ -1,0 +1,102 @@
+[
+  {
+    "file": "phone-system-360-dark-today.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "把今天的节奏放轻松",
+        "inkPixels": 3767
+      },
+      {
+        "text": "79",
+        "inkPixels": 1592
+      },
+      {
+        "text": "89",
+        "inkPixels": 2010
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0
+  },
+  {
+    "file": "phone-system-360-dark-recovery-detail.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "恢复状态平稳",
+        "inkPixels": 4339
+      },
+      {
+        "text": "79",
+        "inkPixels": 3572
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0
+  },
+  {
+    "file": "phone-system-360-light-today.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "把今天的节奏放轻松",
+        "inkPixels": 3464
+      },
+      {
+        "text": "79",
+        "inkPixels": 1557
+      },
+      {
+        "text": "89",
+        "inkPixels": 1953
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 1
+  },
+  {
+    "file": "phone-system-360-light-recovery-detail.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "恢复状态平稳",
+        "inkPixels": 4065
+      },
+      {
+        "text": "79",
+        "inkPixels": 3475
+      }
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 1
+  }
+]

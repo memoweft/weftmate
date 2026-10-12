@@ -40,7 +40,7 @@ export async function startFe1bFixture() {
     { seq: 4, type: 'artifact.created', at: now, data: artifact }, { seq: 5, type: 'assistant.message', at: now, data: { text: '# 项目进展\n\n已整理本周的记录。\n\n- 完成手机审批模式\n- 统一会话与来源阅读\n\n报告已保存，点文件即可查看。' } }],
     [ids.running]: [{ seq: 1, type: 'user.message', at: now, data: { text: '帮我安排下周的工作，先整理现有的计划。' } }, { seq: 2, type: 'turn.started', at: now, data: { turn: 1 } }, step('running')],
     [ids.approve]: [{ seq: 1, type: 'user.message', at: now, data: { text: '整理临时文件，删除之前让我确认。' } }, { seq: 2, type: 'approval.requested', at: now, data: { approvalId: approval.approvalId, taskId: 'cmd-demo', summary: approval.reason } }] };
-  const requests = [], commands = new Map(); let mode = 'auto';
+  const requests = [], missingRequests = [], commands = new Map(); let mode = 'auto';
   const json = (res, value, status = 200) => { res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(value)); };
   const proxy = createServer(async (req, res) => { try {
     const url = new URL(req.url, 'http://localhost'), path = url.pathname;
@@ -69,6 +69,12 @@ export async function startFe1bFixture() {
       if (path.endsWith('/sources')) return json(res, { ownerId, worldRevision: 10, sources: [{ evidenceId: 'fe1b-evidence', relation: '形成来源', currentnessState: 'current', contentAvailable: true, recordedAt: now, rawContent: '合成偏好：使用中文解释。' }] });
       if (path.startsWith('/personal/v1/memory/items/')) return json(res, { ownerId, worldRevision: 10, item: memoryItem, capabilities: {} });
       if (path.endsWith('/attachments')) return json(res, { attachments: [] });
+      if (path.endsWith('/metadata') && req.method === 'PATCH') {
+        const session=sessions.find(row=>row.sessionId===id);
+        if(!session)return json(res,{error:{code:'NOT_FOUND'}},404);
+        Object.assign(session,body);return json(res,{sessionId:id,...body});
+      }
+      if (path.endsWith('/message-branches') && req.method === 'GET') return json(res, {groups:[]});
       if (path.endsWith('/approval-mode') || path === '/personal/v1/settings/approvals') { if (body) mode = body.mode; return json(res, { mode, defaultMode: mode, allowedCategories: [] }); }
       if (path.endsWith('/events')) { const events = histories[id] || [], after = Number(url.searchParams.get('afterSeq') ?? -1); return json(res, { events: events.filter(event => event.seq > after), nextSeq: events.at(-1)?.seq ?? -1, hasMore: false, hasOlder: false }); }
       if (path.endsWith('/detail')) return json(res, { text: JSON.stringify({ arguments: { file_path: 'notes.md' }, output: '本周已经完成两项界面工作。' }, null, 2) });
@@ -78,18 +84,19 @@ export async function startFe1bFixture() {
       if (path.endsWith('/questions')) return json(res, { questions: [], hasMore: false, nextBefore: null });
       if (path.startsWith('/personal/v1/tasks/')) return json(res, { taskId: 'cmd-demo', sessionId: ids.approve, source: { commandId: 'cmd-demo', kind: 'session.message', sessionId: ids.approve, receiptId: 'rpc:demo.1' }, artifacts: [], control: { state: 'active', canStop: false, canSupplement: false } });
       if (path.endsWith('/preview')) return json(res, { text: '# 项目进展\n\n两项界面工作已完成。\n\n| 工作 | 状态 |\n| --- | --- |\n| 审批模式 | 完成 |\n| 来源阅读 | 完成 |' });
-      return json(res, { error: { code: 'NOT_FOUND' } }, 404);
+      missingRequests.push(path);return json(res, { error: { code: 'NOT_FOUND' } }, 404);
     }
     const headers = new Headers(); for (const [key, value] of Object.entries(req.headers)) if (typeof value === 'string' && !['host', 'connection', 'content-length', 'origin'].includes(key)) headers.set(key, value);
     headers.set('origin', upstreamOrigin);
     const upstream = await fetch(new URL(req.url, upstreamOrigin), { method: req.method, headers, ...(!['GET', 'HEAD'].includes(req.method) ? { body: Readable.toWeb(req), duplex: 'half' } : {}), redirect: 'manual' });
+    if(upstream.status===404)missingRequests.push(path);
     const forwarded = Object.fromEntries(upstream.headers); delete forwarded['content-length']; delete forwarded['content-encoding'];
     const cookies = upstream.headers.getSetCookie(); if (cookies.length) forwarded['set-cookie'] = cookies;
     res.writeHead(upstream.status, forwarded); if (upstream.body) Readable.fromWeb(upstream.body).pipe(res); else res.end();
   } catch (error) { console.error(error.message); if (!res.headersSent) json(res, { error: { code: 'FIXTURE_FAILURE' } }, 500); else res.end(); } });
   await new Promise(done => proxy.listen(0, '127.0.0.1', done));
   const origin = `http://127.0.0.1:${proxy.address().port}`;
-  return { root, origin, ownerId, ids, requests, commands, credentials: { origin, username: 'Fe1bFixture', password }, async close() { proxy.closeAllConnections(); await new Promise(done => proxy.close(done)); await service.close(); } };
+  return { root, origin, ownerId, ids, requests, missingRequests, commands, credentials: { origin, username: 'Fe1bFixture', password }, async close() { proxy.closeAllConnections(); await new Promise(done => proxy.close(done)); await service.close(); } };
 }
 if (process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.filename)) {
   const fixture = await startFe1bFixture();
