@@ -3,6 +3,7 @@ import WeftMateCore
 struct MainChatResourcesView: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var model: MainChatModel
+    var embedded = false
     @State private var selected: JSONValue?
     @State private var use: ResourceUse?
     @State private var file: URL?
@@ -12,7 +13,15 @@ struct MainChatResourcesView: View {
     @State private var error: String?
     private var outputs: [JSONValue] { model.resources.filter { $0["artifactId"] != nil } }
     private var sources: [JSONValue] { model.resources.filter { $0["artifactId"] == nil } }
-    var body: some View {
+    @ViewBuilder var body: some View {
+        #if os(iOS)
+        if embedded { navigationContent }
+        else { navigationContent.toolbar(.hidden, for: .navigationBar).phoneSheet("输出与来源", close: { model.resourceVisible = false }) }
+        #else
+        navigationContent
+        #endif
+    }
+    private var navigationContent: some View {
         NavigationStack {
             Group {
                 if let selected, let artifact = selected["artifactId"]?.string {
@@ -48,10 +57,16 @@ struct MainChatResourcesView: View {
                                 }
                             }
                         }
-                        }.padding(AppleTokens.Space.p16).frame(maxWidth: .infinity, alignment: .leading).buttonStyle(OutlineActionStyle())
+                        }.phoneCard().padding(AppleTokens.Space.p16).frame(maxWidth: .infinity, alignment: .leading).buttonStyle(OutlineActionStyle())
                     }
                 }
-            }.navigationTitle("输出与来源").toolbar { Button("完成") { model.resourceVisible = false } }
+            }.navigationTitle("输出与来源").toolbar {
+                #if os(iOS)
+                if embedded { PhoneAccountMenu(model: app) }
+                #else
+                Button("完成") { model.resourceVisible = false }
+                #endif
+            }
         }.onDisappear { clear() }.onChange(of: model.window.generation) { _, _ in clear() }
     }
     private func decodeSource(_ value: JSONValue) -> ConversationSource? {

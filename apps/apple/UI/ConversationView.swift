@@ -49,6 +49,9 @@ struct ConversationRow: View {
             Text((conversation.temporaryState.notice().isEmpty ? "" : "临时对话 · ") + (conversation.title.isEmpty ? "未命名对话" : conversation.title))
                 .font(AppleTokens.Fonts.body).foregroundStyle(Weave.ink).lineLimit(1)
             Spacer(minLength: AppleTokens.Space.p4)
+            #if os(iOS)
+            if conversation.pinned { WeftIcon("pin", size: AppleTokens.Space.p12).foregroundStyle(Weave.muted).accessibilityLabel("已置顶") }
+            #endif
             if conversation.running {
                 ProgressView().controlSize(.mini).accessibilityLabel("正在处理")
             } else if conversation.unread {
@@ -227,6 +230,17 @@ struct ConversationView: View {
     }
 
     private var conversationContent: some View {
+        VStack(spacing: AppleTokens.Space.p0) {
+        #if os(iOS)
+        PhoneChatHeader(title: PhonePresentation.title(main: false, conversation: conversation.title), status: model.serverLoginExpired ? "请重新登录" : model.offline.hostOffline ? "电脑离线" : "已连接") {
+            Menu {
+                Button { showingUsage = true } label: { Label("本对话用量", image: "wm-chart") }.accessibilityIdentifier("conversationUsage")
+                Button { endDraftFocus(); resources.showingList = true; resources.visible = true } label: { Label("输出与来源", image: "wm-outputs") }.accessibilityIdentifier("openConversationResources")
+                Button { Task { await model.open(conversation) } } label: { Label("刷新记录", image: "wm-sync") }.disabled(model.historyBusy)
+                SessionActions(app: model, conversation: conversation)
+            } label: { WeftIcon("more") }.accessibilityLabel("对话菜单").accessibilityIdentifier("conversationMenu")
+        }
+        #endif
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
@@ -301,8 +315,14 @@ struct ConversationView: View {
             .onChange(of: conversation.processing) { _, _ in waitingSince = Date() }
             .overlay(alignment: .bottomTrailing) {
                 if !follow.following {
-                    Button(follow.hasNewContent ? "有新内容 · 回到底部" : "回到底部") { follow.returnToBottom(); proxy.scrollTo("latest", anchor: .bottom) }
-                        .buttonStyle(OutlineActionStyle()).padding(AppleTokens.Space.p12).accessibilityIdentifier("returnToBottom")
+                    Button { follow.returnToBottom(); proxy.scrollTo("latest", anchor: .bottom) } label: {
+                        #if os(iOS)
+                        WeftIcon("chevron")
+                        #else
+                        Text(follow.hasNewContent ? "有新内容 · 回到底部" : "回到底部")
+                        #endif
+                    }.accessibilityLabel(follow.hasNewContent ? "有新内容 · 回到底部" : "回到底部")
+                        .buttonStyle(OutlineActionStyle()).phoneIcon().padding(AppleTokens.Space.p12).accessibilityIdentifier("returnToBottom")
                 }
             }
             .onChange(of: model.sourceMessageTarget) { _, seq in
@@ -334,11 +354,14 @@ struct ConversationView: View {
                 if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) }
             }
         }
+        }
         .background(Weave.surface)
         .navigationTitle(conversation.temporaryState.notice().isEmpty ? (conversation.title.isEmpty ? "对话" : conversation.title) : "临时对话")
         #if os(iOS)
+        .toolbar(.hidden, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+        #if os(macOS)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 #if os(macOS)
@@ -387,6 +410,7 @@ struct ConversationView: View {
                 .accessibilityIdentifier("refreshHistoryButton")
             }
         }
+        #endif
         .task(id: conversation.id) {
             await model.open(conversation)
             await model.refreshThinking(conversation)
@@ -620,11 +644,9 @@ struct ConversationView: View {
                     #if os(macOS)
                     .menuIndicator(.hidden).menuStyle(.borderlessButton)
                     #endif
-                    .disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
+                    .phoneIcon().disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
                     .accessibilityIdentifier("addAttachmentButton")
-                    if !dynamicTypeSize.isAccessibilitySize {
-                        composerApprovalMode(accountEpoch: accountEpoch)
-                    }
+                    if !dynamicTypeSize.isAccessibilitySize { composerApprovalMode(accountEpoch: accountEpoch) }
                     if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
                     Spacer(minLength: AppleTokens.Space.p4)
                     if let usage = conversation.contextUsage {
@@ -655,9 +677,12 @@ struct ConversationView: View {
                     #if os(macOS)
                     .menuStyle(.borderlessButton)
                     #endif
+                    #if os(iOS)
+                    .buttonStyle(PhoneActionStyle())
+                    #endif
                     .font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择").accessibilityIdentifier("composerModel")
                     Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic", size: AppleTokens.Space.p16).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44) }
-                        .buttonStyle(.plain).accessibilityLabel("语音输入").popover(isPresented: $dictationPopover) {
+                        .buttonStyle(.plain).phoneIcon(quiet: true).accessibilityLabel("语音输入").popover(isPresented: $dictationPopover) {
                             Text("使用系统听写输入文字").font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover)
                         }
                     let action = ComposerAction.resolve(running: model.tasksAvailable(conversation) && conversation.running, text: draft.wrappedValue, attachments: !(model.attachmentDrafts[key] ?? []).isEmpty)
@@ -665,7 +690,7 @@ struct ConversationView: View {
                         if action == .stop { Task { await model.stopActiveTask() } }
                         else { Task { await model.send(conversation, accountEpoch: accountEpoch) } }
                     } label: { WeftIcon(action == .stop ? "stop" : "send").frame(width: AppleTokens.Space.p20, height: AppleTokens.Space.p44) }
-                        .buttonStyle(PrimaryActionStyle(fillsWidth: false)).tint(Weave.accent)
+                        .buttonStyle(PrimaryActionStyle(fillsWidth: false)).phoneIcon(primary: true).tint(Weave.accent)
                         .disabled(action == .stop ? model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil : !model.canSend(conversation))
                         .accessibilityLabel(action == .stop ? "停止" : "发送").accessibilityIdentifier("sendButton")
                     #if os(macOS)
@@ -673,9 +698,13 @@ struct ConversationView: View {
                     #endif
                 }
             }
+            #if os(iOS)
+            .phoneCard()
+            #else
             .padding(AppleTokens.Space.p9)
             .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r16))
             .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r16).strokeBorder(Weave.line))
+            #endif
 
             if !conversation.temporaryState.notice().isEmpty { Text(conversation.temporaryState.notice()).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("temporaryChat.composer") }
             if let attachmentInputError { Text(attachmentInputError).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
