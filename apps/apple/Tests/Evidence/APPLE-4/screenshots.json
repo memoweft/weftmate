@@ -1,0 +1,226 @@
+{
+  "syntheticOnly": true,
+  "displayScreenshots": [
+    "apple4-dark-aligned.png",
+    "apple4-dark-composer-focus.png",
+    "apple4-dark-content.png",
+    "apple4-dark-empty.png",
+    "apple4-dark-overflow-menu.png",
+    "apple4-dark-settings-bottom.png",
+    "apple4-dark-settings.png",
+    "apple4-dark-sheet.png",
+    "apple4-dark-side-chat.png",
+    "apple4-dark-side-sheet.png",
+    "apple4-dark-sidebar.png",
+    "apple4-dark-stream.png",
+    "apple4-dark-tab-activity.png",
+    "apple4-dark-tab-chat.png",
+    "apple4-dark-tab-goals.png",
+    "apple4-dark-tab-health.png",
+    "apple4-dark-tab-resources.png",
+    "apple4-dark-warning.png",
+    "apple4-light-aligned.png",
+    "apple4-light-composer-focus.png",
+    "apple4-light-content.png",
+    "apple4-light-empty.png",
+    "apple4-light-files-collapsed.png",
+    "apple4-light-overflow-menu.png",
+    "apple4-light-settings-bottom.png",
+    "apple4-light-settings.png",
+    "apple4-light-sheet.png",
+    "apple4-light-side-chat.png",
+    "apple4-light-side-sheet.png",
+    "apple4-light-sidebar.png",
+    "apple4-light-stream.png",
+    "apple4-light-tab-activity.png",
+    "apple4-light-tab-chat.png",
+    "apple4-light-tab-goals.png",
+    "apple4-light-tab-health.png",
+    "apple4-light-tab-resources.png",
+    "apple4-light-warning.png"
+  ],
+  "displayCount": 37,
+  "comparisonCount": 13,
+  "allScenesMatchFinalSource": false,
+  "sourceByScreenshot": {
+    "apple4-light-tab-chat.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-empty.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-overflow-menu.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-stream.png": {
+      "boot": 4,
+      "note": "完整走查通过，但在原生菜单标签修正之前拍摄。"
+    },
+    "apple4-light-warning.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-tab-resources.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-tab-activity.png": {
+      "boot": 5,
+      "method": "testPanelAndSideChatPolishBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-content.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-sheet.png": {
+      "boot": 5,
+      "method": "testPanelAndSideChatPolishBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-content.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-warning.png": {
+      "boot": 4,
+      "note": "完整走查通过，但在原生菜单标签修正之前拍摄。"
+    },
+    "apple4-light-settings.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-side-sheet.png": {
+      "boot": 5,
+      "method": "testPanelAndSideChatPolishBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-tab-activity.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-side-sheet.png": {
+      "boot": 5,
+      "method": "testPanelAndSideChatPolishBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-composer-focus.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-tab-resources.png": {
+      "boot": 5,
+      "method": "testPanelAndSideChatPolishBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-sheet.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-settings.png": {
+      "boot": 4,
+      "note": "完整走查通过，但在原生菜单标签修正之前拍摄。"
+    },
+    "apple4-dark-aligned.png": {
+      "boot": 4,
+      "note": "完整走查通过，但在原生菜单标签修正之前拍摄。"
+    },
+    "apple4-dark-settings-bottom.png": {
+      "boot": 5,
+      "method": "testPanelAndSideChatPolishBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-side-chat.png": {
+      "boot": 5,
+      "method": "testPanelAndSideChatPolishBatch",
+      "note": "第5批截图；上下文圈可访问性框为20pt；最后44pt圆形标签及模式胶囊收窄修正未重拍。"
+    },
+    "apple4-light-empty.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-sidebar.png": {
+      "boot": 4,
+      "note": "完整走查通过，但在原生菜单标签修正之前拍摄。"
+    },
+    "apple4-dark-overflow-menu.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-settings-bottom.png": {
+      "boot": 5,
+      "method": "testPanelAndSideChatPolishBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-tab-goals.png": {
+      "boot": 4,
+      "note": "完整走查通过，但在原生菜单标签修正之前拍摄。"
+    },
+    "apple4-light-tab-health.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-tab-chat.png": {
+      "boot": 4,
+      "note": "完整走查通过，但在原生菜单标签修正之前拍摄。"
+    },
+    "apple4-light-sidebar.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-composer-focus.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-dark-side-chat.png": {
+      "boot": 5,
+      "method": "testPanelAndSideChatPolishBatch",
+      "note": "第5批截图；上下文圈可访问性框为20pt；最后44pt圆形标签及模式胶囊收窄修正未重拍。"
+    },
+    "apple4-dark-tab-health.png": {
+      "boot": 4,
+      "note": "完整走查通过，但在原生菜单标签修正之前拍摄。"
+    },
+    "apple4-light-stream.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-aligned.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-tab-goals.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    },
+    "apple4-light-files-collapsed.png": {
+      "boot": 5,
+      "method": "testSmallScreenRefreshBatch",
+      "note": "第5批实际截图；该场景相关断言通过，整条测试未全绿。"
+    }
+  },
+  "beforeSource": "APPLE-3",
+  "healthComparisonCaveat": "APPLE-3 health images predate its last feedback; compare navigation only."
+}

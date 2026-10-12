@@ -26,7 +26,7 @@ struct ReplyArtifactList: View {
                     Menu {
                         Button("保存") { Task { await load(row); if file != nil { exporting = true } } }
                         Button("分享") { Task { await load(row); if file != nil { sharing = true } } }
-                    } label: { WeftIcon("more", size: AppleTokens.Space.p16) }
+                    } label: { WeftIcon("more", size: AppleTokens.Space.p16).phoneMenuLabel(circle: true) }.phoneIcon().accessibilityIdentifier("replyFileMenu.\(row.seq)")
                         .accessibilityLabel("成果操作").accessibilityIdentifier("replyFileMenu.\(row.seq)")
                 }.frame(minHeight: AppleTokens.Space.p44).disabled(loading || app.historyCachedAt != nil)
             }
@@ -38,7 +38,7 @@ struct ReplyArtifactList: View {
             if let error { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         }.font(AppleTokens.Fonts.callout).accessibilityElement(children: .contain).accessibilityIdentifier("replyFiles." + bundle.id)
             .sheet(isPresented: $previewing) {
-                ConversationAttachmentPreview(file: file, name: selected?.data["fileName"]?.string ?? "成果", contentType: selected?.data["contentType"]?.string ?? "application/octet-stream", loading: loading, error: error, close: { previewing = false })
+                ConversationAttachmentPreview(file: file, name: selected?.data["fileName"]?.string ?? "成果", contentType: selected?.data["contentType"]?.string ?? "application/octet-stream", loading: loading, error: error, close: { previewing = false }).phoneSheet("成果预览", close: { previewing = false })
             }
             .fileExporter(isPresented: $exporting, item: file.map { AttachmentExport(file: $0) }, contentTypes: [.data], defaultFilename: selected?.data["fileName"]?.string ?? "成果",
                 onCompletion: { @Sendable result in Task { @MainActor in if case .failure = result { error = "文件未保存，请重试。" } } }, onCancellation: {})
