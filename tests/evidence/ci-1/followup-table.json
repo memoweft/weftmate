@@ -9,5 +9,52 @@
       "type": "assertion",
       "diagnostic": "not ok 4 - activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes\n  ---\n  duration_ms: 4619.3729\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-activity.test.ts:46:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The expression evaluated to a falsy value:\n    \n      assert.ok(initial.unreadCount>=3)\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/personal-activity.test.ts:50:88)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
     }
+  ],
+  "observations": [
+    {
+      "runId": 38228051085,
+      "rows": [
+        {
+          "job": "test (windows-latest, shard 3/3)",
+          "file": "tests/personal-activity.test.ts",
+          "name": "activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes",
+          "type": "assertion",
+          "diagnostic": "not ok 4 - activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes\n  ---\n  duration_ms: 4619.3729\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-activity.test.ts:46:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The expression evaluated to a falsy value:\n    \n      assert.ok(initial.unreadCount>=3)\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/personal-activity.test.ts:50:88)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38236573397,
+      "rows": [
+        {
+          "job": "test (windows-latest, shard 3/3)",
+          "file": "tests/bl-29-timing-approval.test.ts",
+          "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+          "type": "timeout",
+          "diagnostic": "not ok 1 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 26623.773\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-timing-approval.test.ts:11:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\n      \"status\": null,\n      \"signal\": \"SIGTERM\",\n      \"error\": \"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\n      \"stdout\": \"BL-29 lifecycle: startup / synthetic cloud authentication started (0ms)\\nBL-29 lifecycle: fixture / verified synthetic cloud authentication ready (11607ms)\\nBL-29 lifecycle: main warmup started (11608ms)\\nBL-29 lifecycle: main warmup ready (11811ms)\\nBL-29 lifecycle: desktop launch started (11812ms)\\nBL-29 lifecycle: desktop window ready (12923ms)\\nBL-29 lifecycle: desktop native initialization started (13029ms)\\ndesktop logged in\\nBL-29 lifecycle: desktop ready / mobile launch started (15503ms)\\nBL-29 lifecycle: mobile verified session / desktop and mobile ready (16752ms)\\nBL-29 lifecycle: approval-visible check started (18861ms)\\nBL-29 lifecycle: approval-visible check passed (19445ms)\\nBL-29 lifecycle: approval-accepted check started (19446ms)\\nBL-29 lifecycle: approval-accepted check passed (19566ms)\\nBL-29 lifecycle: question-visible check started (19634ms)\\nBL-29 lifecycle: question-visible check passed (19789ms)\\nBL-29 lifecycle: question-accepted check started (19820ms)\\nBL-29 lifecycle: question-accepted check passed (20027ms)\\n\",\n      \"stderr\": \"\"\n    }\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-timing-approval.test.ts:19:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ..."
+        },
+        {
+          "job": "test (windows-latest, shard 3/3)",
+          "file": "tests/bl-29-timing-approval.test.ts",
+          "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+          "type": "timeout",
+          "diagnostic": "not ok 1 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 25951.9483\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-timing-approval.test.ts:11:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\n      \"status\": null,\n      \"signal\": \"SIGTERM\",\n      \"error\": \"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\n      \"stdout\": \"BL-29 lifecycle: startup / synthetic cloud authentication started (0ms)\\nBL-29 lifecycle: fixture / verified synthetic cloud authentication ready (6472ms)\\nBL-29 lifecycle: main warmup started (6473ms)\\nBL-29 lifecycle: main warmup ready (6732ms)\\nBL-29 lifecycle: desktop launch started (6733ms)\\nBL-29 lifecycle: desktop window ready (7332ms)\\nBL-29 lifecycle: desktop native initialization started (7604ms)\\ndesktop logged in\\nBL-29 lifecycle: desktop ready / mobile launch started (9168ms)\\nBL-29 lifecycle: mobile verified session / desktop and mobile ready (10108ms)\\nBL-29 lifecycle: approval-visible check started (12270ms)\\nBL-29 lifecycle: approval-visible check passed (13697ms)\\nBL-29 lifecycle: approval-accepted check started (13697ms)\\nBL-29 lifecycle: approval-accepted check passed (14041ms)\\nBL-29 lifecycle: question-visible check started (14401ms)\\nBL-29 lifecycle: question-visible check passed (15790ms)\\nBL-29 lifecycle: question-accepted check started (15813ms)\\nBL-29 lifecycle: question-accepted check passed (15951ms)\\n\",\n      \"stderr\": \"\"\n    }\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-timing-approval.test.ts:19:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ..."
+        },
+        {
+          "job": "test (windows-latest, shard 3/3)",
+          "file": "tests/packaged-project-reader.test.ts",
+          "name": "bundled project reader runs from a real ASAR without extracting an executable script",
+          "type": "assertion",
+          "diagnostic": "not ok 1 - bundled project reader runs from a real ASAR without extracting an executable script\n  ---\n  duration_ms: 17794.4096\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\packaged-project-reader.test.ts:11:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    electronApplication.evaluate: Error: PROJECT_READER_TIMEOUT\n        at issue (file:///C:/weftmate-temp/weftmate-ci-file-eeKSwz/weftmate-fx21-asar-94piVj/app.asar/index.mjs:16:24)\n        at Timeout.<anonymous> (file:///C:/weftmate-temp/weftmate-ci-file-eeKSwz/weftmate-fx21-asar-94piVj/app.asar/index.mjs:38:59)\n        at listOnTimeout (node:internal/timers:685:17)\n        at process.processTimers (node:internal/timers:618:7)\n  code: 'ERR_TEST_FAILURE'\n  stack: |-\n    issue (file:///C:/weftmate-temp/weftmate-ci-file-eeKSwz/weftmate-fx21-asar-94piVj/app.asar/index.mjs:16:24)\n    Timeout.<anonymous> (file:///C:/weftmate-temp/weftmate-ci-file-eeKSwz/weftmate-fx21-asar-94piVj/app.asar/index.mjs:38:59)\n    listOnTimeout (node:internal/timers:685:17)\n    process.processTimers (node:internal/timers:618:7)\n    TestContext.<anonymous> (D:\\a\\weftmate\\weftmate\\tests\\packaged-project-reader.test.ts:22:28)\n  ..."
+        },
+        {
+          "job": "test (windows-latest, shard 2/3)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29b M3/S2 native dispose removes listeners and wait reauthorization prevents logout leakage",
+          "type": "assertion",
+          "diagnostic": "not ok 6 - BL-29b M3/S2 native dispose removes listeners and wait reauthorization prevents logout leakage\n  ---\n  duration_ms: 5751.1392\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:75:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    200 !== 401\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 401\n  actual: 200\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:80:62)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    }
   ]
 }

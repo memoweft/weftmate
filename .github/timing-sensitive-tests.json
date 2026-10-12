@@ -2,6 +2,13 @@
   "evidence": "tests/evidence/ci-1/flaky-table.json",
   "tests": [
     {
+      "file": "tests/packaged-project-reader.test.ts",
+      "name": "bundled project reader runs from a real ASAR without extracting an executable script",
+      "evidence": "tests/evidence/ci-1/followup-table.json",
+      "reason": "Observed PROJECT_READER_TIMEOUT inside the real Electron ASAR read, with a 30000ms outer test and a bounded native reader. Follow-up run 38236573397; budgets and exact returned-text assertion unchanged.",
+      "failureCount": 1
+    },
+    {
       "file": "tests/bl-29-timing-sync.test.ts",
       "evidenceFile": "tests/bl-29-rework.test.ts",
       "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
