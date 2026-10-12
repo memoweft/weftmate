@@ -42,6 +42,13 @@ jobs:
       - run: |
           node tests/integration/st-2-phone-container.mjs
           node --input-type=module -e 'import fs from "node:fs";const p=".local/st2-phone-container/AndroidManifest.xml";fs.writeFileSync(p,fs.readFileSync(p,"utf8").replace("android:exported=\"true\"", "android:exported=\"true\" android:launchMode=\"singleTask\""));'
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const manifest='.local/st2-phone-container/AndroidManifest.xml';
+          fs.writeFileSync(manifest,fs.readFileSync(manifest,'utf8').replace('<manifest ', '<manifest xmlns:tools="http://schemas.android.com/tools" ').replace('<application ', '<application android:name="android.app.Application" tools:replace="android:name" '));
+          const activity='.local/st2-phone-container/java/com/memoweft/weftmate/mobile/St2PhoneBrowserActivity.java';
+          fs.writeFileSync(activity,fs.readFileSync(activity,'utf8').replace('getWindow().setNavigationBarColor(Color.parseColor(bottom));', 'getWindow().setNavigationBarColor(Color.parseColor(bottom));if(android.os.Build.VERSION.SDK_INT>=29){getWindow().setNavigationBarContrastEnforced(false);getWindow().setStatusBarContrastEnforced(false);}'));
+          JS
           cat > .local/polish1-phone-screen.py <<'PY'
           import os
           from pathlib import Path

@@ -2,6 +2,7 @@
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
+import {execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {createServer} from 'node:http';
 import {randomUUID} from 'node:crypto';
@@ -14,7 +15,7 @@ import {fixture as cloudFixture} from '../helpers/auth-1-https-cloud.mjs';
 import {registration,appDevice,control,refresh,proof} from '../../services/cloud/test/app-helpers.mjs';
 import {sec1SystemBars} from './sec-1-system-bars.mjs';
 
-const polish=process.argv.includes('--polish');const repo=resolve('.'),out=resolve(polish?'tests/evidence/polish-1/sec-native':'tests/evidence/sec-1');mkdirSync(out,{recursive:true});
+const polish=process.argv.includes('--polish'),before=process.argv.includes('--before');const repo=resolve('.'),out=resolve(polish?before?'tests/evidence/polish-1/sec-native/before':'tests/evidence/polish-1/sec-native/after':'tests/evidence/sec-1');mkdirSync(out,{recursive:true});
 const root=managedMkdtempSync(join(managedTempRoot(),'weftmate-sec1-native-')),profile=join(root,'profile');mkdirSync(profile);
 writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const projectRoot=join(root,'project');mkdirSync(projectRoot);const victim=join(projectRoot,'notes.txt'),source=join(projectRoot,'source.txt');writeFileSync(victim,'original synthetic content');
@@ -70,6 +71,7 @@ try{
   nativeProcess=app.process();for(const stream of [nativeProcess.stdout,nativeProcess.stderr])stream?.on('data',part=>output=(output+part).slice(-100000));
   page=await app.firstWindow();page.setDefaultTimeout(30000);await page.waitForURL('**/personal/v1/ui');origin=new URL(page.url()).origin;
   await page.addInitScript(()=>{let api;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>api,set:value=>{api=value;const create=value.create;value.create=(...args)=>{const core=create(...args),enter=core.enterAssistant;core.enterAssistant=async(...values)=>{globalThis.sec1Entered=false;try{return await enter(...values);}finally{globalThis.sec1Entered=true;}};return globalThis.sec1Core=core;};}});});
+  if(before)await page.route('**/personal/v1/ui/ui-core/timeline-model.js',route=>route.fulfill({contentType:'text/javascript',body:execFileSync('git',['show','54e7739505ee09248a71291a5025edbdae6d7210:src/ui-core/timeline-model.js'])}));
   await page.reload();await page.waitForFunction(()=>sec1Core?.state.device?.authKind==='desktop');page.on('pageerror',error=>errors.push(error.message));
   assert.equal((await api('/auth/me')).body.device.authKind,'desktop');
   stage='configure models';modelProfileId=await configure('sec1-main','sec1-main-config');const background=await configure('sec1-background','sec1-background-config');
