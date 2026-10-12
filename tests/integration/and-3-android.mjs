@@ -34,6 +34,15 @@ async function attach() {
   page.setDefaultTimeout(35000);
   page.on('pageerror', error => report.errors.push(error.message));
   await page.waitForFunction(() => typeof state !== 'undefined' && state.booted);
+  await page.evaluate(() => {
+    globalThis.and3AuthErrors=[];
+    for(const method of ['request','verify','finish','exchange']){
+      const original=WeftUiCore.CloudAuthClient.prototype[method];
+      WeftUiCore.CloudAuthClient.prototype[method]=async function(...args){try{return await original.apply(this,args);}catch(error){
+        and3AuthErrors.push({stage:method,path:method==='request'?new URL(args[0],location.href).pathname:undefined,
+          code:error.code,name:error.name,status:error.status,message:String(error.message||'').replace(/eyJ[A-Za-z0-9._-]+/g,'<token>').slice(0,200)});throw error;}};
+    }
+  });
 }
 async function finishProbe() {
   if (probe?.exitCode === null) { run('shell', 'run-as', pkg, 'touch', 'files/and3-probe.done'); await until(() => probe.exitCode !== null, 'probe exit', 15000); }
@@ -202,6 +211,7 @@ try {
   report.completed = false; report.failure = String(error).replace(/C:[\\/]Users[\\/][^\\/\s]+/gi, 'C:/Users/<user>');
   try { if (page) report.visibleFailure = await page.locator('body').innerText(); } catch {}
   try { if (page) report.uiFailure = await page.evaluate(() => ({ page:state.page,chatSource:state.chatSource,logical:state.logicalChats,
+    authErrors:globalThis.and3AuthErrors,
     connection:uiCore.connectionView(),main:uiCore.state.mainChat,selected:uiCore.state.selectedChatId,identity:uiCore.state.identityGeneration,
     historyResult:uiCore.state.historyReadResult,historyGeneration:uiCore.state.historyGeneration,refreshing:uiCore.mainChatRefreshing,
     events:[...(uiCore.state.chatWindow?.events?.values?.() || [])],pollActive:!!state.sharedPollTimer,
