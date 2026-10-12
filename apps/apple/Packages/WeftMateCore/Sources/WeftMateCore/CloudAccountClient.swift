@@ -117,6 +117,17 @@ public actor CloudAccountClient {
                     "deviceName": cloudDeviceName(name), "deviceType": type]) { _, value in value }
         return try JSONDecoder().decode(AppLoginReply.self, from: await appJSON("/auth/login", body: body).body)
     }
+    public func requestLoginCode(email: String, name: String, type: String) async throws -> AppLoginReply {
+        guard flow != nil, !interaction.isEmpty else { throw CloudLoginFailure.callback }
+        var body: [String: Any] = interaction
+        body.merge(["email": email, "deviceId": deviceID, "publicJwk": key.publicJwk,
+                    "deviceName": cloudDeviceName(name), "deviceType": type]) { _, value in value }
+        return try JSONDecoder().decode(AppLoginReply.self, from: await appJSON("/auth/login/code/request", body: body).body)
+    }
+    public func confirmLoginCode(challenge: String, code: String) async throws -> AppLoginReply {
+        var body = interaction; body["challengeId"] = challenge; body["code"] = code
+        return try JSONDecoder().decode(AppLoginReply.self, from: await appJSON("/auth/login/code/confirm", body: body).body)
+    }
     public func confirmAppDevice(challenge: String, code: String) async throws -> AppLoginReply {
         var body = interaction; body["challengeId"] = challenge; body["code"] = code
         return try JSONDecoder().decode(AppLoginReply.self, from: await appJSON("/auth/device/confirm", body: body).body)
@@ -294,7 +305,7 @@ public actor CloudAccountClient {
         if let hostID {
             guard tokens.token_type.lowercased() == "dpop", payload["host_id"] as? String == hostID,
                   (payload["cnf"] as? [String: String])?["jkt"] == key.thumbprint,
-                  (payload["scope"] as? String)?.split(separator: " ").contains("host:session") == true else { throw CloudLoginFailure.token }
+                  (payload["scope"] as? String)?.split(separator: " ").contains("host:session") == true, payload["device_verified"] as? Bool == true else { throw CloudLoginFailure.token }
             hostExpiry = payload["exp"] as? Double ?? 0
         } else {
             guard tokens.token_type.lowercased() == (saved.appGrant == true ? "dpop" : "bearer"),

@@ -40,7 +40,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         });
     }
     function acceptApprovalRisk(mode) {
-        return mode !== 'allow-all' || window.confirm('全部允许会直接执行删除或覆盖文件、修改系统、安装软件、对外发送或发布和付款等操作，可能无法撤销。确定启用？');
+        return mode !== 'allow-all' || globalThis.WeftDialogs.allowAll();
     }
     function renderConversationApprovals() {
         const context = core.approvalContext(), bar = ui.byId('approval-bar');
@@ -58,6 +58,8 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             ui.renderTimeline(); return;
         }
         const entry = rows[0], row = entry.row, marker = core.approvalMarker(context, row);
+        const review = core.approvalReview?.(row);
+        bar.classList.toggle('is-review-warning', !!review?.warning);
         const operation = core.conversationApprovals.operations.get(row.approvalId);
         const notice = entry.notice || (core.conversationTasks.entries.get(row.taskId)?.notice ? '原任务暂时无法核对，请重新核对答复。' : '');
         const identity = Object.fromEntries(['ownerId','identity','deviceId','source','sessionId','conversationId'].map(key => [key, context[key]]));
@@ -103,8 +105,15 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             check.addEventListener('click', () => { if (core.approvalContextCurrent(context)) { void core.refreshConversationTasks(); void core.refreshConversationApprovals(context, true); } }); card.append(check);
         }
         card.append(actions); bar.append(card);
-        if (hadFocus) { const replacement = [...card.querySelectorAll('[data-conversation-approval-action]')].find(node => node.dataset.conversationApprovalAction === action); if (sameApproval && replacement && !replacement.disabled) replacement.focus({ preventScroll: true }); else ui.byId('message-text').focus({ preventScroll: true }); }
+        if (review) { const note = ui.element('p', 'approval-review', review.text); note.setAttribute('role', review.warning ? 'alert' : 'note'); card.append(note); }
         ui.renderTimeline();
+        if (hadFocus) { const replacement = [...bar.querySelectorAll('[data-conversation-approval-action]')].find(node => node.dataset.conversationApprovalAction === action); if (sameApproval && replacement && !replacement.disabled) replacement.focus({ preventScroll: true }); else ui.byId('message-text').focus({ preventScroll: true }); }
+        if (review?.warning && bar.dataset.reviewFocusId !== row.approvalId) queueMicrotask(() => {
+            const reject = bar.querySelector('[data-conversation-approval-action="rejected"]');
+            if (core.approvalContextCurrent(context) && !bar.hidden && bar.dataset.approvalId === row.approvalId && reject && !reject.disabled) {
+                reject.focus({ preventScroll: true }); bar.dataset.reviewFocusId = row.approvalId;
+            }
+        });
     }
     function defaultApprovalBusy(busy) {
         ui.byId('default-approval-mode').disabled = busy;
@@ -152,10 +161,11 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         ui.byId('default-approval-mode')?.addEventListener('change', async (event) => {
             const token = core.accountToken();
             const mode = event.target.value;
-            if (!ui.acceptApprovalRisk(mode)) {
+            if (!await ui.acceptApprovalRisk(mode)) {
                 void core.refreshApprovalSettings();
                 return;
             }
+            if (!core.accountCurrent(token)) return;
             event.target.disabled = true;
             try {
                 await core.saveDefaultApprovalMode(mode);

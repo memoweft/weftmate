@@ -1,0 +1,25 @@
+{
+  "model": "mimo-v2.6-flash",
+  "requests": 148,
+  "rounds": [
+    {
+      "file": "review-eval-pilot.json",
+      "requests": 36
+    },
+    {
+      "file": "review-eval-calibration.json",
+      "requests": 36
+    },
+    {
+      "file": "review-eval-normalized-calibration.json",
+      "requests": 38
+    },
+    {
+      "file": "review-eval.json",
+      "requests": 38
+    }
+  ],
+  "reportedPromptTokens": 18544,
+  "reportedCompletionTokens": 3384,
+  "requestsWithUsage": 68
+}

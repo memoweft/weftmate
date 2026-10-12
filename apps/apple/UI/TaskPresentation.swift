@@ -42,7 +42,7 @@ enum TaskPresentation {
         case .pending: "等待派发"
         case .dispatching: "正在派发"
         case .acceptedByDSH: "执行端已受理"
-        case .acceptedByHost: "宿主已受理"
+        case .acceptedByHost: "电脑已受理"
         case .observed: "服务已记录观察回执"
         case .uncertain: "执行结果待核对"
         case .rejected: "未受理"

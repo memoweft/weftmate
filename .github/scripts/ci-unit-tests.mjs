@@ -37,7 +37,10 @@ const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // Node matches both leaf names and suite-qualified names. Only exact recorded
 // leaf names are exempt; another failing test in the same file still blocks CI.
 const pattern = entries => `(?:^| )(?:(?:${entries.map(entry => escape(entry.name)).join(')|(?:')}))$`;
-const args = ['--test', '--test-concurrency=1'];
+// Only the local Windows required gate uses two file workers to fit its heavy-slot budget.
+// CI keeps one worker: real Windows timing checks must retain their sequential execution.
+const concurrency = process.platform === 'win32' && mode === 'required' && process.env.CI !== 'true' ? 2 : 1;
+const args = ['--test', `--test-concurrency=${concurrency}`];
 if (mode === 'required') {
   const excluded = [...exceptions.knownFailures, ...suite.tests, ...platformTests];
   if (excluded.length) args.push(`--test-skip-pattern=${pattern(excluded)}`);

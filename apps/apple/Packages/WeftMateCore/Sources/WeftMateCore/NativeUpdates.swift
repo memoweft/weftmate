@@ -48,7 +48,7 @@ public struct HostUpdateLayer: Codable, Sendable, Identifiable {
     public let status: String
     public let channel: String?
     public var id: String { layer }
-    public var title: String { switch layer { case "ui": "界面与功能包"; case "app": "程序本体"; case "mobile-ui": "手机界面包"; default: layer } }
+    public var title: String { switch layer { case "ui": "电脑上的 WeftMate"; case "app": "电脑程序"; case "mobile-ui": "电脑上的 WeftMate"; default: "WeftMate" } }
     public var statusText: String {
         switch status {
         case "disabled": "尚未配置"
@@ -61,7 +61,7 @@ public struct HostUpdateLayer: Codable, Sendable, Identifiable {
         case "current", "not-available": "已是最新版本"
         case "failed", "error": "更新失败"
         case "device-managed": "在手机上检查"
-        default: "宿主未提供版本状态"
+        default: "还没连上电脑"
         }
     }
 }

@@ -11,7 +11,7 @@ import AppKit
     static func choose(app: AppleAppModel) {
         let picker = NSOpenPanel()
         picker.canChooseDirectories = true; picker.canChooseFiles = false; picker.allowsMultipleSelection = false
-        picker.prompt = "选择文件夹"; picker.message = "选择这台宿主电脑上的项目文件夹。"
+        picker.prompt = "选择文件夹"; picker.message = "选择这台电脑上的项目文件夹。"
         picker.identifier = NSUserInterfaceItemIdentifier("projectFolderPanel")
         #if DEBUG
         let args = ProcessInfo.processInfo.arguments

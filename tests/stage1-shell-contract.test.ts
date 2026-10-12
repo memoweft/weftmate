@@ -21,7 +21,8 @@ describe('阶段 1 的 DSH 产品面收敛', () => {
     for (const forbidden of ['wm:stage1:', 'wm:stage2:', 'runtimeOrigin', 'apiKey', "require('node:"]) {
       assert.doesNotMatch(preload, new RegExp(forbidden.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }
-    assert.deepEqual([...preload.matchAll(/ipcRenderer\.on\('([^']+)'/g)].map(match => match[1]), ['wm:mod-window:open-project']);
+    assert.deepEqual([...preload.matchAll(/ipcRenderer\.on\('([^']+)'/g)].map(match => match[1]), ['wm:ui:notice', 'wm:mod-window:open-project']);
+    assert.deepEqual([...preload.matchAll(/ipcRenderer\.send\('([^']+)'/g)].map(match => match[1]), ['wm:ui:notice-closed']);
     assert.match(preload, /removeListener\('wm:mod-window:open-project', listener\)/);
     assert.match(main, /dshSurfaceTrusted\(event\)/);
   });

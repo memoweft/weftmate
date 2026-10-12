@@ -1,5 +1,12 @@
 /* Shared approvals state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
+    function approvalReview(row) {
+        const review = row.secondOpinion;
+        if (!review || !['对得上','对不上','拿不准'].includes(review.alignment) || !['有','没有'].includes(review.externalInfluence) || typeof review.reason !== 'string') return null;
+        const warning = review.alignment === '对不上' || review.externalInfluence === '有';
+        return { warning, text: warning ? `另一个模型提醒：${review.reason}` : review.alignment === '对得上'
+            ? '另一个模型看过：和你的要求一致' : `另一个模型暂时拿不准：${review.reason}` };
+    }
     function approvalPresentation(row, detail) {
         const fullReason = (row.reason || '').replace(/^\[weftmate:[a-z,\-]+\]\s*/, '').trim();
         const offset = fullReason.indexOf('\n{');
@@ -40,10 +47,10 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }
     }
     async function saveApprovalMode(mode) {
-        if (!effects.acceptApprovalRisk(mode))
-            return;
         const sessionId = core.state.selectedSessionId;
         const generation = core.state.identityGeneration;
+        if (!await effects.acceptApprovalRisk(mode)) return;
+        if (core.state.identityGeneration !== generation || core.state.selectedSessionId !== sessionId) return;
         if(!sessionId&&core.state.newConversation){
             core.state.newConversationApprovalMode=mode;core.currentApprovalMode=mode;
             effects.renderApprovalMode();effects.closeApprovalMenu();effects.focusApprovalMode();return;
@@ -376,5 +383,5 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
                 effects.defaultApprovalNotice('无法读取默认模式，请刷新设置。');
         }
     }
-    return { refreshNewConversationApprovalMode, approvalPresentation, readApprovalPresentation, refreshApprovalMode, saveApprovalMode, selectSession, resetConversationApprovals, approvalContext, approvalContextCurrent, approvalIdentity, sameApproval, validApproval, approvalMarkerKey, approvalMarkers, approvalMarker, saveApprovalMarker, clearApprovalMarker, approvalSource, mergeApproval, refreshConversationApprovals, approvalStatusText, submitApproval, refreshApprovalSettings };
+    return { approvalReview, refreshNewConversationApprovalMode, approvalPresentation, readApprovalPresentation, refreshApprovalMode, saveApprovalMode, selectSession, resetConversationApprovals, approvalContext, approvalContextCurrent, approvalIdentity, sameApproval, validApproval, approvalMarkerKey, approvalMarkers, approvalMarker, saveApprovalMarker, clearApprovalMarker, approvalSource, mergeApproval, refreshConversationApprovals, approvalStatusText, submitApproval, refreshApprovalSettings };
 };
