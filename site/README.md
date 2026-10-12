@@ -14,6 +14,29 @@ node --test tests/site.test.ts tests/site-deploy.test.ts tests/licensing-contrac
 
 旧 `memoweft.html` 保留，正式输出逐字节相同；仅预览构建把原有 robots（搜索抓取规则）改为 `noindex,nofollow`。它原有内联代码保持兼容。新建的全部页面使用严格 CSP（内容安全策略），没有内联脚本或样式。`404.html` 的资源使用 `./assets/`，从根 `/404.html` 或预览目录 `/preview-web-1/404.html` 打开都正确；如服务器把任意深层错误地址内部转交此文件，应由已有错误页配置将公开地址规范到对应的 `404.html`，本包不修改站点配置。
 
+## 以后怎么更新（改哪里、怎么看、怎么上线）
+
+官网的内容几乎都在两份文案里，改完重新构建即可，不用动模板。
+
+| 想改什么 | 改哪个文件 |
+|---|---|
+| 页面上的任何一句话（中文 / 英文） | `site/src/copy/zh.json`、`site/src/copy/en.json`，两份的键必须一一对应 |
+| 「已经能做到」的细节卡片 | 两份文案里的 `details`：每项是 `[标题, 一句话, 图标名]` |
+| 「即将推出」清单 | 两份文案里的 `future`，格式同上；功能做成后把那一项从 `future` 挪到 `details` |
+| 演示里的对话、数字、成果内容 | 同样在两份文案里（`work*`、`memory*`、`quarter*`、`watch*` 等键）；三段演示每一步出什么的顺序在 `site/src/app.js` |
+| 版式与样式 | `site/src/templates.mjs`（页面结构）、`site/src/site.css` |
+| 图标 | 直接用 `design/icons/ui/` 里的图标名，和程序共用同一套 |
+| 条款、隐私、更新记录页 | 不在这里改：构建时从 `docs/legal/` 与 `docs/changelog/` 生成 |
+
+每次把一句话从「即将推出」改成「已有」，或新增一条「已经能做到」的说法，同时在 `site/CLAIMS.md` 补上依据（STATE 的哪一行、哪条更新记录）。
+
+改完之后：
+
+1. `npm run site:preview`：本机看效果（控制台给出地址）。
+2. 改了演示或三屏画面时运行 `node scripts/capture-site.mjs --assets`，重新生成禁用脚本时显示的静态图与分享图。
+3. `npm run site:check` 和 `node --test tests/site.test.ts tests/site-deploy.test.ts tests/licensing-contract.test.ts`。
+4. 先放到预览地址给负责人看：`node scripts/deploy-site.mjs --host <ssh 别名> --root <服务器站点根目录> --mode preview --path preview-<随便起个名>`；确认后把 `--mode preview --path …` 换成 `--mode production`。脚本会先备份、永远不碰 `downloads/` 与 `updates/`，结束时打印回退命令。在 Git Bash 里运行时先执行 `export MSYS_NO_PATHCONV=1`，否则服务器路径会被改写。
+
 ## 演示与图像
 
 三段合成场景：整理文件并等访客批准、跨周记忆及来源的更正/遗忘、手机批准电脑上的操作。没有模型请求，拒绝不会生成成果。播放暂停、下一步、重来、键盘分段切换和电脑/手机外观都可操作。离开视口或切到后台暂停；减少动态效果时不做位移动画；禁用脚本时显示关键帧。主题跟随系统，手动选择只存在浏览器本机。
