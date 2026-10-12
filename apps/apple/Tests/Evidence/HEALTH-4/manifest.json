@@ -1,0 +1,280 @@
+{
+  "syntheticOnly": true,
+  "nativeFullScreen": true,
+  "device": "iPhone SE third generation",
+  "headless": true,
+  "frames": [
+    {
+      "file": "health4-dark-additional-authorization.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "1e150559a8b5bf1c07551cfb0f263f4304fcbbcb5ef7e259a862b76d16dfdc05",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-analysis-collapsed.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "a18718869590023460663f51e36fe05b4c6f56a63e067e3a60219f6591e4f46f",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-analysis-expanded.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "3800db3e552fe54a29a5ea8fc325f9899c1b300077b843096dd8dd5f0adc90da",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-analysis-generating.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "556adf86ebc54f22dfc54189b409edb001f9c8a4e4f4f63cb5176e207903f1d6",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-analysis-off-explanation.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "6294a86da3bc1f151160f78dc14c8374f06d2d93618c998ebe2f414bb2e8e4fd",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-ask-draft.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "c3e34d519ce290dd7434ccc69356eba3c8c3d5452d083393691a9a0a867b6270",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-metric-sixty-day-overlay.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "8231912b87cc015cb12ee5064bff7e99feced3b2a4ea51eeea185ae10445fc2f",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-offline-cache.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "b8636b7e98f350315acdedf861460e6a509d309660a4e5aa9d330e4c9a61a043",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-score-detail.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "a539a4e2cce531bb0c6a2cfd017dcb443b12aec68e416bdebb001b2512f54bf8",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-today-card-energy.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "1b42c21407989838da732e5c515daa31ec44aa2795596f4eb98d40c871405a69",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-today-card-fitnessAge.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "b448f40be6367187cae6ac2696c5c366cbbecdd1f3ed5c210b6c7d94f0ccf29c",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-today-card-stress.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "21d91c484a905d04e0f598102bfedac682c430f64efc92128b65c588759cc116",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-today-data.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "5ded15d261b2ea09efef04dc5fe8bd7267ec86d123f62ae8442266e60f0e2737",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-today-disconnected.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "7a42bf00ff6c5a1d1a0e041d8946696aea907ed61701323beee132c0af15d8d9",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-today-insufficient.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "3a51dfa8b56991302497e6a07f9798ccca7b57526fddee9d242d874d6f47be53",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-today-new-cards-lower.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "6f416ad579038cb1db4e19cc1f5704cdee3335d772ac622871cd6e535faef6f5",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-dark-today-new-cards.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "292adf2be3778ee7ced6af93ceca58d3226d15a07a27d6feb1fbf912061cede2",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-additional-authorization.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "16fea70dcda9b7e9eb67b909711b4dd28905778471403984048b28103b1402ab",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-analysis-collapsed.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "3b08e5ff02ae5319e10e7fefc86b88b4e617bdd4914183a7b3fb3c945bebdd08",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-analysis-expanded.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "e3a3aa460598bc721fd4b2069b92b0c997f91eec43b8b09afa329c913541414d",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-analysis-generating.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "013d18aede89c6bf564585e81ffaaffcf9438bd50ba8d75b604f951ad3501f91",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-analysis-off-explanation.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "d43bde960b0c9238cc77be52635d1f9141e624e32e13b7a80942a84c87527589",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-ask-draft.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "6e0b0402fba42feed6da6ad4a8806d14ca586b688674253ba3556c3347b99331",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-metric-sixty-day-overlay.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "2d8e4cf99a61dbe3a24db57f756f04c9502e4c4231ab1e78dbdb6c02b7e6c1b0",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-offline-cache.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "590cb96ff974e9ad73b5da849d69ad382b6b34f4bc57bc732219fbcb022fb515",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-score-detail.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "3c2192ca76d586c06d00e57524c516490c27c525a15fcf9077fb122802b91e27",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-today-card-energy.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "f5af4dbfade995cf29409560747224f03565406cade4cfc7c33c0c3f9a2555c3",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-today-card-fitnessAge.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "43ce230ab2401d05218a36f32af6dbc574c3f96594d22b62a98bd13ddb43cd03",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-today-card-stress.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "4cad70e04a4b340e6122f942732d8e08813a81746215efddb0a4d3996c01c6fb",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-today-data.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "f36c006b0224841f985a1552078dd9dfe057735093a6e6d3eca3242f9fd6f39c",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-today-disconnected.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "41f85b013679c5a2ebcb61d10abdd53d825d3bb2e32023441495065fbac2603a",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-today-insufficient.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "13a1b28ea32957eb7c9cee771c87e40a7892599bf8f155773cc639a604f23db2",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-today-new-cards-lower.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "6a2600012b3d97addb0970d0fc436bc4575feeb210630f71ac5c0474921f20f9",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    },
+    {
+      "file": "health4-light-today-new-cards.png",
+      "width": 750,
+      "height": 1334,
+      "sha256": "3e8334d09e8a32a5f7c4567fcd6c077822ee308d18674783b5e7ea631b2acaf8",
+      "systemStatusBar": true,
+      "syntheticOnly": true
+    }
+  ]
+}

@@ -408,3 +408,25 @@ struct AppleApprovalModeTests {
         #expect(await transport.requests().count == 2)
     }
 }
+
+extension ApprovalQuestionSDKTests {
+    @Test func apple3SettingsPatchPreservesModeAndGlobalIntentReplaysExactScope() async throws {
+        let transport = InteractionScriptTransport(interactionLoginSteps() + [
+            .init(path:"/settings/approvals",response:interactionJSON(["mode":"ask","secondOpinionEnabled":false]),method:"PATCH")])
+        let client = PersonalClient(credentialStore:MemoryStore(),transport:transport)
+        _ = try await interactionLogin(client)
+        let value = try await client.setSecondOpinionEnabled(false)
+        #expect(value.mode == .ask && !value.effectiveSecondOpinionEnabled)
+        let requests = await transport.requests()
+        let body = try #require(requests.last?.httpBody)
+        #expect(try JSONSerialization.jsonObject(with:body) as? [String:Bool] == ["secondOpinionEnabled":false])
+        let row = try approvalRecord(["operationCategories":["command"],"canAlwaysAllow":true])
+        let intent = try ApprovalDecisionIntent(scope:interactionScope(),approval:row,outcome:.allowedOnce,requestID:"global-request",decisionScope:.globalCategory)
+        #expect(String(decoding:intent.payload,as:UTF8.self).contains("\"scope\":\"global-category\""))
+        #expect(try JSONDecoder().decode(ApprovalDecisionIntent.self,from:JSONEncoder().encode(intent)) == intent)
+        for category in ["delete","external","spend"] {
+            let dangerous = try approvalRecord(["operationCategories":[category],"canAlwaysAllow":true])
+            #expect(throws:APIFailure.invalidResponse) { try ApprovalDecisionIntent(scope:interactionScope(),approval:dangerous,outcome:.allowedOnce,requestID:"dangerous",decisionScope:.globalCategory) }
+        }
+    }
+}

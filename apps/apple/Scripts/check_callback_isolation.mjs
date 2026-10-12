@@ -7,7 +7,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-const pattern = /\b(visualEffect|alignmentGuide|onGeometryChange|onScrollGeometryChange|onScrollTargetVisibilityChange|onScrollPhaseChange|GeometryReader|onPreferenceChange|anchorPreference|transformAnchorPreference|overlayPreferenceValue|backgroundPreferenceValue|Canvas|addObserver|observe|sendMessage|dataTask|downloadTask|uploadTask|fileImporter|fileExporter|ASWebAuthenticationSession|withTaskCancellationHandler|HKSampleQuery|enumerateStatistics|detached)\s*(?:\(|\{)|\b(?:struct|class|extension)\s+\w+[^\n{]*:\s*[^\n{]*\b(Shape|Layout|AnimatableModifier)\b|\b(initialResultsHandler)\s*=\s*\{|\bfunc\s+(urlSession|session|sessionReachabilityDidChange|track|styleMenu|applyMenu|menuNeedsUpdate|menu|invoke|path|sizeThatFits|placeSubviews|dataScanner|imagePickerController|imagePickerControllerDidCancel)\s*\(|\b(begin)\s*\{/g;
+const pattern = /\b(visualEffect|alignmentGuide|onGeometryChange|onScrollGeometryChange|onScrollTargetVisibilityChange|onScrollPhaseChange|GeometryReader|onPreferenceChange|anchorPreference|transformAnchorPreference|overlayPreferenceValue|backgroundPreferenceValue|Canvas|addObserver|observe|sendMessage|dataTask|downloadTask|uploadTask|fileImporter|fileExporter|ASWebAuthenticationSession|withTaskCancellationHandler|HKSampleQuery|enumerateStatistics|detached)\s*(?:\(|\{)|\b(?:struct|class|extension)\s+\w+[^\n{]*:\s*[^\n{]*\b(Shape|Layout|AnimatableModifier)\b|\b(initialResultsHandler)\s*=\s*\{|\bfunc\s+(urlSession|session|sessionReachabilityDidChange|track|styleMenu|applyMenu|menuNeedsUpdate|menu|invoke|path|sizeThatFits|placeSubviews|dataScanner|imagePickerController|imagePickerControllerDidCancel)\s*\(|\b(begin)\s*\{|\b(register)\s*\(forTaskWithIdentifier:|\bnonisolated\s+static\s+func\s+(launch|expiration)\s*\(/g;
 function files(dir) { return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e => ['Build','.build','Tests','.git'].includes(e.name) ? [] : e.isDirectory() ? files(path.join(dir,e.name)) : e.name.endsWith('.swift') ? [path.join(dir,e.name)] : []); }
 // Keep offsets while masking comments and literals, so braces inside strings do not
 // terminate a callback. Inventory hashes use the original source, not masked text.
@@ -16,7 +16,7 @@ export function scan(text, file='fixture.swift') {
  text=text.replace(/\r\n/g,'\n');
  const source = mask(text), rows=[];
  for (const match of source.matchAll(pattern)) {
-  const api=match[1]||match[2]||match[3]||match[4]||match[5], start=match.index;
+  const api=match[1]||match[2]||match[3]||match[4]||match[5]||match[6]||match[7], start=match.index;
   const consume=(open,left,right)=>{let depth=0;for(let i=open;i<source.length;i++){if(source[i]===left)depth++;if(source[i]===right&&--depth===0)return i+1;}return source.length;};
   const first=source.indexOf('(',start), brace=source.indexOf('{',start);
   let end;
