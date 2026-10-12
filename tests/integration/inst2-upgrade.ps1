@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Installer1,[Parameter(Mandatory=$true)][string]$Installer2,[string]$Evidence='tests/evidence/inst-2')
+param([Parameter(Mandatory=$true)][string]$Installer1,[Parameter(Mandatory=$true)][string]$Installer2,[string]$Evidence='tests/evidence/inst-2',[switch]$StartAtCustom,[switch]$MonitorOnly,[switch]$InteractiveOnly)
 $ErrorActionPreference='Stop'
 $started=Get-Date
 $identity='WeftMate inst2qa'
@@ -15,6 +15,7 @@ New-Item -ItemType Directory -Path $profile,(Split-Path $config) -Force | Out-Nu
 $env:WEFTMATE_TEST_HOST_NAME='synthetic-host'
 $env:WEFTMATE_INSTALLER_TEST_PICK_FOLDER=Join-Path $root 'custom 中文 space'
 $env:WEFTMATE_INSTALLER_TEST_THEME='light'
+$env:WEFTMATE_INSTALLER_TEST_HOVER='1'
 $report=[ordered]@{identity='inst2qa';realModelRequests=0;scenarios=@();allUsers=@{adminToken=$false;installed=$false};cleanup=@{}}
 $references=@((Get-ChildItem -LiteralPath (Join-Path $PSHOME 'ref') -Filter '*.dll').FullName)+@(Get-ChildItem -LiteralPath $PSHOME -Filter 'System.Private.Windows.*.dll' | ForEach-Object FullName)+(Join-Path $PSHOME 'System.Drawing.Common.dll')
 Add-Type -Path (Join-Path $PSScriptRoot '../helpers/installer-window.cs') -ReferencedAssemblies $references
@@ -41,7 +42,7 @@ function Silent($installer,$arguments,$label,$expected=0) {
 }
 function Quit($location) { $pid2=$desktop.Launch((Join-Path $location $exeName),'--quit',$root);Until {if($desktop.ExitCode($pid2)-ne 259){$true}} 25|Out-Null;Assert ($desktop.ExitCode($pid2)-eq 0) 'normal quit failed';Until {if(!(Get-Process -Name WeftMate-inst2qa -ErrorAction SilentlyContinue|Where-Object {$_.Path-eq (Join-Path $location $exeName)})){$true}} 10|Out-Null }
 function Open($location,$extra='') { $script:appPid=$desktop.Launch((Join-Path $location $exeName),'--disable-gpu '+$extra,$root);$stateFile=Join-Path $profile 'dsh-home\weftmate-host-state.json';Until {if(Test-Path $stateFile){try{$s=Get-Content $stateFile -Raw|ConvertFrom-Json;if($s.runtime.state-eq 'listening'){$s}}catch{}}} 120|Out-Null;return (Until {$desktop.Find('app-hidden','')} 60) }
-function Uninstall { $s=State;if($s.registry.Count){$location=$s.registry[0].location;Quit $location;$uninstaller=Get-ChildItem -LiteralPath $location -Filter 'Uninstall*.exe'|Select-Object -First 1;Silent $uninstaller.FullName '/S /currentuser' 'uninstall'|Out-Null;Assert (!(Test-Path (Join-Path $location $exeName))) 'installed files remain'} }
+function Uninstall { $s=State;if($s.registry.Count){$location=$s.registry[0].location;if(Test-Path (Join-Path $location $exeName)){Quit $location;$uninstaller=Get-ChildItem -LiteralPath $location -Filter 'Uninstall*.exe'|Select-Object -First 1;Silent $uninstaller.FullName '/S /currentuser' 'uninstall'|Out-Null};Until {if(!(Test-Path (Join-Path $location $exeName)) -and (State).registry.Count-eq 0){$true}} 30|Out-Null;$report.scenarios[-1].after=State;Assert (!(Test-Path (Join-Path $location $exeName))) 'installed files remain'} }
 function SafeRemove($directory) {
  $full=[IO.Path]::GetFullPath($directory);Assert ($full-eq $root -or $full-eq $configRoot) 'cleanup target ownership'
  if(Test-Path $full){Get-ChildItem -LiteralPath $full -Recurse -Force -Attributes ReparsePoint -ErrorAction SilentlyContinue | Sort-Object { $_.FullName.Length } -Descending | ForEach-Object {if($_.PSIsContainer){[IO.Directory]::Delete($_.FullName)}else{[IO.File]::Delete($_.FullName)}};Remove-Item -LiteralPath $full -Recurse -Force}
@@ -49,18 +50,38 @@ function SafeRemove($directory) {
 try {
  if((State).registry.Count){Uninstall}
  Assert ((State).registry.Count-eq 0) 'preexisting inst2qa installation'
+ if(!$StartAtCustom -and !$MonitorOnly -and !$InteractiveOnly) {
  # Native /S default path, then preserve it without an explicit /D.
  $fresh=Silent $Installer2 '/S' 'silent-fresh-default';$default=$fresh.registry[0].location
  Assert ($default-match '\\WeftMate[- ]inst2qa$') 'test identity default path isolation'
  Assert ($fresh.processes.Count-eq 0) 'silent setup launched app'
  $covered=Silent $Installer2 '/S' 'silent-user-upgrade';Assert ($covered.registry[0].location-eq $default) 'registered path changed'
  Uninstall
+ }
  # Current-user custom path, upgrade while running: installer must please quit.
  $custom=Join-Path $root 'custom 中文 space\WeftMate'
  $s=Silent $Installer1 ('/S /currentuser /D='+$custom) 'silent-custom-fresh'
+ if($MonitorOnly) {
+   $listener=[Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,0);$listener.Start();$debugPort=$listener.LocalEndpoint.Port;$listener.Stop()
+   $open=Open $custom ("--start-in-tray --inspect=$debugPort")
+   $recovery=Join-Path $configRoot 'WeftMate\app-recovery'
+   $before=State
+   $prepared=& node (Join-Path $PSScriptRoot '../helpers/inst2-monitor.mjs') $debugPort $Installer2 $config $configRoot
+   Assert ($LASTEXITCODE-eq 0) 'monitor preparation failed'
+   $result=Until { $file=Join-Path $recovery 'last-result.json';if(Test-Path $file){$r=Get-Content $file -Raw|ConvertFrom-Json;if($r.phase -in 'healthy','recovery-failed','rolled-back'){$r}} } 600
+   $report.monitorResult=$result
+   Assert ($result.phase-eq 'healthy') 'first monitor failed'
+   $after=State;Assert ($after.registry[0].location-eq $custom) 'monitor lost installation path'
+   Assert ($after.registry[0].version-eq '0.2.1-preview.2') 'monitor did not upgrade'
+   $open=Until {$desktop.Find('app-hidden','')} 90;$desktop.Show($open);$desktop.Capture($open,(Join-Path $Evidence 'monitor-first-upgrade.png'))
+   $report.scenarios+=@{name='first-custom-monitor-upgrade';before=$before;after=$after;result=$result;prepared=($prepared|ConvertFrom-Json);originalConfigRetained=$true}
+   Quit $custom;Uninstall;$report.success=$true
+   return
+ }
+ if(!$InteractiveOnly) {
  $open=Open $custom;Quit $custom
  $report.scenarios+=@{name='external-quit';after=State;normalExit=$true}
- $open=Open $custom
+ $open=Open $custom '--start-in-tray'
  $s=Silent $Installer2 '/S' 'silent-running-custom-upgrade'
  Assert ($s.registry[0].location-eq $custom) 'custom path not inherited'
  $open=Open $custom
@@ -68,7 +89,13 @@ try {
  $logFiles=Get-ChildItem (Join-Path $profile 'logs') -Filter '*.jsonl' -Recurse
  $exitRecords=@($logFiles|ForEach-Object {Get-Content -LiteralPath $_.FullName|ForEach-Object {try{$row=$_|ConvertFrom-Json;if($row.event-eq 'host.exit' -or $row.type-eq 'host.exit'){$row}}catch{}}})
  $report.exitRecords=$exitRecords
+ $unclean=@($logFiles|ForEach-Object {Get-Content -LiteralPath $_.FullName|ForEach-Object {try{$row=$_|ConvertFrom-Json;if($row.event-eq 'host.previous_unclean_exit'){$row}}catch{}}})
+ Assert ($unclean.Count-eq 0) 'normal quit was recorded as an unclean exit';$report.previousUncleanExits=$unclean.Count
  Quit $custom
+ } else {
+   $initial='"'+(Join-Path $custom $exeName)+'" --start-in-tray "--desktop-config='+$config+'"'
+   New-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name $identity -Value $initial -PropertyType String -Force|Out-Null
+ }
  # Start repairs the historical missing executable without enabling new startup.
  $stale='"C:\synthetic-gone\WeftMate-inst2qa.exe" --start-in-tray "--desktop-config='+$config+'"'
  New-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name $identity -Value $stale -PropertyType String -Force|Out-Null
@@ -94,16 +121,23 @@ try {
  $env:WEFTMATE_INSTALLER_TEST_THEME='dark';$pid2=$desktop.Launch($Installer2,'',$root);$window=Until {$desktop.Find('progress','准备安装 WeftMate')};$desktop.HoverPath($window);$desktop.Capture($window,(Join-Path $Evidence 'location-hover-dark.png'));$desktop.Close($window);Until {if($desktop.ExitCode($pid2)-ne 259){$true}} 15|Out-Null
  # The current session has no admin token. The all-user attempt must fail without UI or UAC.
  $report.allUsers.denied=Silent $Installer2 '/S /allusers' 'silent-all-users-no-admin' 740
+ $report.allUsers.logLine=Get-Content -LiteralPath (Join-Path $env:TEMP 'WeftMate-inst2qa-setup.log') -Tail 1
  $s=Silent $Installer2 '--silent' 'long-option-silent';Assert ($s.registry[0].location-eq $moved) 'long option lost location'
  Uninstall
  $report.cleanup.registryCount=(State).registry.Count;$report.cleanup.startupRemoved=!(State).login;$report.cleanup.sendToRemoved=!(State).sendTo
  Assert ($report.cleanup.registryCount-eq 0 -and $report.cleanup.startupRemoved -and $report.cleanup.sendToRemoved) 'registration cleanup incomplete'
  $report.success=$true
 } catch { $report.success=$false;$report.failure=$_.Exception.Message;throw } finally {
+ $ownedSetup=@(Get-CimInstance Win32_Process|Where-Object {$_.CreationDate-gt $started -and $_.ExecutablePath-in @($Installer1,$Installer2) -and ($_.CommandLine.Contains($Installer1)-or $_.CommandLine.Contains($Installer2))})
+ foreach($process in $ownedSetup){Stop-Process -Id $process.ProcessId -ErrorAction SilentlyContinue}
+ $report.cleanup.stoppedSetup=$ownedSetup.Count
  try{Uninstall}catch{$report.cleanup.failure=$_.Exception.Message}
+ $ownedApp=@(Get-CimInstance Win32_Process|Where-Object {$_.CreationDate-gt $started -and $_.Name-eq $exeName -and $_.ExecutablePath.StartsWith($root+'\',[StringComparison]::OrdinalIgnoreCase) -and $_.CommandLine.Contains($root)})
+ foreach($process in $ownedApp){Stop-Process -Id $process.ProcessId -ErrorAction SilentlyContinue}
+ $report.cleanup.stoppedApp=$ownedApp.Count
  $desktop.Dispose()
  $report.finishedAt=(Get-Date).ToString('o')
- $json=$report|ConvertTo-Json -Depth 20;$json=$json -replace 'C:\\\\Users\\\\[^\\]+','C:\\Users\\<user>'
- $json|Set-Content -LiteralPath (Join-Path $Evidence 'installed-upgrade.json')
+ $json=$report|ConvertTo-Json -Depth 20;$json=$json -replace ('C:'+ [regex]::Escape('\\Users\\')+'[^\\]+'),'C:\\Users\\<user>'
+ $json|Set-Content -LiteralPath (Join-Path $Evidence $(if($MonitorOnly){'monitor-upgrade.json'}elseif($InteractiveOnly){'interactive-upgrade.json'}else{'installed-upgrade.json'}))
  SafeRemove $root;SafeRemove $configRoot
 }

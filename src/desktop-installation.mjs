@@ -10,9 +10,12 @@ export function installationScope({ executable = process.execPath, platform = pr
   } catch {}
   // Existing releases predate install metadata. Match the exact registered folder.
   try {
-    const result = run('reg.exe', ['query', 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall', '/s', '/v', 'InstallLocation', '/reg:64'], { encoding: 'utf8', windowsHide: true });
+    const result = run('reg.exe', ['query', 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall', '/s', '/v', 'UninstallString', '/reg:64'], { encoding: 'utf8', windowsHide: true });
     const folder = windowsPath.dirname(executable).replace(/[\\/]+$/, '').toLowerCase();
-    if (result.status === 0 && result.stdout.split(/\r?\n/).some(line => /REG_SZ\s+(.*)$/.exec(line)?.[1]?.replace(/[\\/]+$/, '').toLowerCase() === folder)) return 'all';
+    if (result.status === 0 && result.stdout.split(/\r?\n/).some(line => {
+      const uninstaller = /REG_SZ\s+"([^"]+)"/.exec(line)?.[1];
+      return uninstaller && windowsPath.dirname(uninstaller).toLowerCase() === folder;
+    })) return 'all';
   } catch {}
   return 'CurrentUser';
 }
