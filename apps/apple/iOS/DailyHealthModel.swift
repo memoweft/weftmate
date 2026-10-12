@@ -57,6 +57,25 @@ import WeftMateCore
             await activate(app: app)
         } catch { busy = false; log(0, success: false, category: "api") }
     }
+    var needsExpansion: Bool { state.connected && state.enabled && state.expandedAuthorization != true }
+    func checkExpansion(app: AppleAppModel) async -> Bool {
+        guard needsExpansion else { return false }
+        if await reader.needsExpandedAuthorization() { return true }
+        do { guard try prepare(app) else { return false }; state.expandedAuthorization = true; try save(); await activate(app: app) } catch { }
+        return false
+    }
+    func expand(app: AppleAppModel) async {
+        do {
+            guard try prepare(app) else { return }
+            let token = generation
+            try await reader.authorizeExpanded()
+            guard matches(app, token) else { return }
+            // HealthKit deliberately does not reveal read denial. An attempted request is sufficient;
+            // absent measurements remain missing and existing authorized content still works.
+            state.expandedAuthorization = true; state.connected = true; state.enabled = true; try save()
+            await activate(app: app)
+        } catch { log(0, success: false, category: "api") }
+    }
     func setEnabled(_ enabled: Bool, app: AppleAppModel) async {
         do {
             guard try prepare(app) else { return }
@@ -111,7 +130,7 @@ import WeftMateCore
             do {
                 let reply = try await app.assistantClient.dailyReviewSettings()
                 guard matches(app, token), !Task.isCancelled else { return }
-                review = reply.settings; state.retentionDays = reply.settings.reviewRetentionDays
+                review = reply.settings; state.retentionDays = 90
                 state.timeZone = reply.timeZone
                 try save()
             } catch {
@@ -136,16 +155,52 @@ import WeftMateCore
                 state.acknowledge(day: day, value: value, now: Date()); try save(); sent += 1
             }
             if state.enabled, state.connected, reader.available {
-                let values = try await reader.read(calendar: calendar)
+                let overview = try? await app.assistantClient.healthOverview()
+                guard matches(app, token), !Task.isCancelled else { return }
+                let version = (overview?.capabilities?.record ?? 2) >= 3 ? 3 : 2
+                if state.expandedAuthorization == true { state.beginHistory(version: version, now: Date(), calendar: calendar); try save() }
+                let values = try await reader.read(calendar: calendar,version: version)
                 guard matches(app, token), state.enabled, !Task.isCancelled else { return }
-                state.enqueue(values); try save()
-                schedule()
+                state.enqueue(values); try save(); schedule()
+                // Persist one small batch at a time. iOS may suspend this task at any await.
+                while !state.nextHistoryDays.isEmpty {
+                    let keys = state.nextHistoryDays
+                    let dates = keys.compactMap { key -> Date? in
+                        let f = DateFormatter(); f.calendar = calendar; f.timeZone = calendar.timeZone; f.dateFormat = "yyyy-MM-dd"; return f.date(from: key)
+                    }
+                    let history = try await reader.read(days: dates,calendar: calendar,version: version)
+                    guard matches(app, token), state.enabled, !Task.isCancelled else { return }
+                    state.enqueue(history); try save()
+                    let items = keys.compactMap { key in state.pending[key].map { HealthBatchItem(day:key,health:$0) } }
+                    if !items.isEmpty {
+                        let reply = try await app.assistantClient.putHealthBatch(items,account: scope)
+                        guard matches(app, token), state.enabled, !Task.isCancelled else { return }
+                        guard Set(reply.items.map(\.day)) == Set(items.map(\.day)) else { throw APIFailure.invalidResponse }
+                        for item in items { state.acknowledge(day:item.day,value:item.health,now:Date()) }; sent += items.count
+                    }
+                    state.acknowledgeHistory(keys); try save()
+                    await Task.yield()
+                }
+                if overview?.capabilities?.profile == true {
+                    let profile = await reader.profile()
+                    guard matches(app, token), state.enabled, !Task.isCancelled else { return }
+                    if state.profileDelivered != profile {
+                        try await app.assistantClient.putHealthProfile(profile,account: scope)
+                        guard matches(app, token), state.enabled, !Task.isCancelled else { return }
+                        state.profileDelivered = profile; try save()
+                    }
+                }
             }
-            for (day, value) in state.pending.sorted(by: { $0.key < $1.key }) {
+            // A downgraded computer must never receive persisted v3 fields.
+            let current = try? await app.assistantClient.healthOverview()
+            let wireVersion = (current?.capabilities?.record ?? 2) >= 3 ? 3 : 2
+            guard matches(app, token), !Task.isCancelled else { return }
+            for (day, queued) in state.pending.sorted(by: { $0.key < $1.key }) {
+                var value = queued; if value.version > wireVersion { value.version = wireVersion; value.sleep?.stages = nil; value.hrvSamples = nil; value.heartRateQuarterHourly = nil }
                 guard matches(app, token), !Task.isCancelled else { return }
                 try await app.assistantClient.putDailyHealth(day: day, health: value, account: scope)
                 guard matches(app, token), !Task.isCancelled else { return }
-                state.acknowledge(day: day, value: value, now: Date()); try save(); sent += 1
+                state.acknowledge(day: day, value: queued, now: Date()); try save(); sent += 1
             }
             if sent > 0 { log(sent, success: true) }
         } catch {
