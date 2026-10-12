@@ -179,8 +179,6 @@ function fillApprovalCard(card,row,context,cache){card.decisionContext=context;c
     if(cache.error||attempt?.unknown)add('检查审批状态','check',()=>refreshToolApprovals(context,{force:true}));
     card.append(controls);
     if(review){const note=el('p','approval-review',review.text);note.setAttribute('role',review.warning?'alert':'note');card.append(note)}
-    const reject=controls.querySelector('[data-approval-choice="rejected"]');
-    if(review?.warning&&card.dataset.reviewFocusId!==row.approvalId&&reject&&!reject.disabled){reject.focus({preventScroll:true});card.dataset.reviewFocusId=row.approvalId;}
     const parameters=card.querySelector('.approval-detail');
     if(parameters)for(const child of [...card.children])if(child.className==='approval-risk-copy')parameters.append(child);
     if(hadFocus){const next=[...controls.children].find(button=>button.dataset.approvalChoice===focusChoice);next?.focus({preventScroll:true})}}
@@ -192,14 +190,17 @@ function renderConversationApprovals(){const context=approvalContext(),bar=$('ap
   const cache=approvalViewCurrent(context)&&approvalScopeCurrent(context)?toolApprovals.sessions.get(context.sessionId):null;
   const rows=cache?[...cache.rows.values()].filter(row=>row.status==='pending'&&relatedTaskApproval(conversationTasks.entries.get(row.taskId)?.task,row))
     .sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.approvalId.localeCompare(b.approvalId)):[];
-  const focused=bar.contains?.(document.activeElement),wasHidden=bar.hidden;
+  const focused=bar.contains?.(document.activeElement),focusChoice=document.activeElement?.dataset?.approvalChoice,wasHidden=bar.hidden;
   bar.hidden=!rows.length;$('device-line').hidden=!bar.hidden;
   if(!rows.length){clear(bar);if(focused)$('draft').focus({preventScroll:true});renderTimeline();syncChatInsets();return}
   let card=bar.firstElementChild;
   if(!card||card.dataset.approvalId!==rows[0].approvalId){clear(bar);card=el('section','tool-approval approval-bar-content');bar.append(card);if(focused)$('draft').focus({preventScroll:true})}
   fillApprovalCard(card,rows[0],context,cache);
   let remaining=card.querySelector('.approval-remaining');if(rows.length>1){if(!remaining){remaining=el('small','approval-remaining');card.append(remaining)}remaining.textContent=`还有 ${rows.length-1} 个待批准`}else remaining?.remove();
-  if(wasHidden)globalThis.WeftMobileMotion?.reveal(bar,'base');renderTimeline();syncChatInsets()}
+  if(wasHidden)globalThis.WeftMobileMotion?.reveal(bar,'base');renderTimeline();syncChatInsets();
+  const review=uiCore.approvalReview?.(rows[0]),shown=bar.firstElementChild,reject=shown?.querySelector('[data-approval-choice="rejected"]');
+  if(focused&&focusChoice){const replacement=[...shown.querySelectorAll('button')].find(button=>button.dataset.approvalChoice===focusChoice);if(replacement&&!replacement.disabled)replacement.focus({preventScroll:true});}
+  if(review?.warning&&shown.dataset.reviewFocusId!==rows[0].approvalId)queueMicrotask(()=>{const shown=bar.firstElementChild,reject=shown?.querySelector('[data-approval-choice="rejected"]');if(approvalViewCurrent(context)&&!bar.hidden&&shown.dataset.approvalId===rows[0].approvalId&&reject&&!reject.disabled){reject.focus({preventScroll:true});shown.dataset.reviewFocusId=rows[0].approvalId;}});}
 
 function renderApprovalView(context){if(approvalViewCurrent(context))renderConversationApprovals()}
 
