@@ -129,6 +129,20 @@ extension AppleAppModel {
 }
 #endif
 extension View {
+    @ViewBuilder func phoneAction() -> some View {
+        #if os(iOS)
+        self.buttonStyle(PhoneActionStyle())
+        #else
+        self
+        #endif
+    }
+    @ViewBuilder func phoneCardIdentifier(_ value: String) -> some View {
+        #if os(iOS)
+        self.accessibilityElement(children: .contain).accessibilityIdentifier(value)
+        #else
+        self
+        #endif
+    }
     @ViewBuilder func phoneComposerControl(circle: Bool = false) -> some View {
         #if os(iOS)
         if circle { self.buttonStyle(PhoneIconStyle(onCard: true)).tint(Weave.accent) }
