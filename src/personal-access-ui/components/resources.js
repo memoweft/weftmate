@@ -22,6 +22,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         window.WeftDesktop?.closePreview(false);
     }
     function removeResourcePreview() {
+        if(globalThis.WeftPhoneUnify?.isPhone())globalThis.WeftPhoneFiles?.close(false);
         document.querySelector('.timeline-preview')?.remove();
     }
     function inlineTaskInfo(taskId, button) {
@@ -94,18 +95,24 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             return;
         if (window.WeftDesktop) {
             const preview = window.WeftDesktop.openPreview(title, document.activeElement, path);
+            const phone=globalThis.WeftPhoneUnify?.isPhone();
+            const configurePhoneFile=artifact=>{if(!phone)return;const menu=preview.panel.querySelector('.phone-file-topbar button:last-child'),id=artifact?.artifactId||artifact?.id||String(path).match(/\/(?:artifacts|library)\/([^/]+)\/preview$/)?.[1];
+                if(menu)WeftPhoneFiles.attach({menu,name:title,getBlob:id?()=>WeftPhoneFiles.readBlob(core.artifactDownloadUrl(id)):undefined,
+                    library:id?()=>{WeftPhoneFiles.close(false);ui.openLibrary();}:undefined,
+                    versions:versions.filter(version=>version.artifactId!==id).map(version=>({...version,open:()=>ui.openTimelinePreview(core.conversationTaskContext(),core.artifactPreviewPath(version.artifactId),version.fileName,version.versions||[])}))});};
             try {
                 const data = await core.readResource(path);
                 if (!core.conversationTaskCurrent(context) || !preview.content.isConnected)
                     return;
-                if(data.kind){preview.content.replaceChildren();WeftContent.preview(preview.content,data,{name:title,artifactId:data.item?.id,desktop:core.state.personalCapabilities?.libraryDesktopActions===1});return;}
+                if(data.kind){preview.content.replaceChildren();configurePhoneFile(data.item);WeftContent.preview(preview.content,data,{name:title,artifactId:data.item?.id,desktop:core.state.personalCapabilities?.libraryDesktopActions===1});return;}
                 const text = data.text || data.preview?.text || data.source?.text || '暂时没有可预览内容';
                 preview.content.replaceChildren();
                 const artifact = data.artifact || data.preview?.artifact;
-                if (artifact?.artifactId)
+                configurePhoneFile(artifact);
+                if (artifact?.artifactId&&!phone)
                     ui.appendResourceArtifactActions(preview.content, artifact);
                 preview.content.append(window.WeftDesktop.markdown(text));
-                if (versions.length) {
+                if (versions.length&&!phone) {
                     const older = ui.element('details', 'resource-usage');
                     older.append(ui.element('summary', '', `旧版 · ${versions.length} 个`));
                     for (const artifact of versions) ui.appendTimelineArtifact(older, artifact, context);

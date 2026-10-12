@@ -25,7 +25,8 @@
         const editLocked = locked || config.retry;
         const key = `${bar.dataset.scope}:${row.questionRpcId}`;
         const index = Math.min(cursors.get(key) || 0, row.questions.length - 1), question = row.questions[index];
-        const signature = signatureOf([key, row, index, locked, notice, remaining]);
+        const quickChoice = config.mobile && !question.multiSelect && question.options?.length === 2;
+        const signature = signatureOf([key, row, index, locked, notice, remaining, config.mobile]);
         if (bar.dataset.signature === signature) return;
         if (config.submitting && bar.dataset.questionId === row.questionRpcId) {
             for (const control of bar.querySelectorAll('button,input')) control.disabled = true;
@@ -45,28 +46,29 @@
         details.append(node('summary', question.intent?.kind === 'plan-review' ? '查看执行计划' : '查看完整说明'), node('p', question.detail || question.question));
         for (const option of question.options || []) if (option.description) details.append(node('p', `${option.label}：${option.description}`));
         body.append(details);
-        const choices = node('div', '', 'question-bar-options');
-        choices.setAttribute('role', question.multiSelect ? 'group' : 'radiogroup'); choices.setAttribute('aria-label', question.question || question.header || '补充信息');
+        const choices = node('div', '', `question-bar-options${config.mobile ? quickChoice ? ' decision-quick-choices' : ' decision-options' : ''}`);
+        choices.setAttribute('role', question.multiSelect || quickChoice ? 'group' : 'radiogroup'); choices.setAttribute('aria-label', question.question || question.header || '补充信息');
         const controls = [];
         const update = answer => { if (!answer) return; input.value = answer.custom || ''; for (const button of controls) { const selected = answer.selected.includes(button.dataset.value); button.setAttribute(question.multiSelect ? 'aria-pressed' : 'aria-checked', String(selected)); button.choiceCheck.hidden = !selected; } };
         for (const [at, option] of (question.options || []).entries()) {
             const button = node('button', option.label || '空白选项', 'button secondary question-choice'); button.type = 'button';
             button.dataset.value = option.label; button.dataset.questionControl = `option-${at}`;
-            if (!question.multiSelect) button.setAttribute('role', 'radio');
+            if (!question.multiSelect && !quickChoice) button.setAttribute('role', 'radio');
             button.setAttribute(question.multiSelect ? 'aria-pressed' : 'aria-checked', String(draft.answers[index].selected.includes(option.label))); button.disabled = editLocked;
             const check = globalThis.WeftIcons?.create('check', 16) || node('span', '', 'icon icon-check'); check.setAttribute('aria-hidden', 'true'); check.hidden = !draft.answers[index].selected.includes(option.label); button.choiceCheck = check; button.append(check);
-            button.addEventListener('click', () => { if (bar.questionConfig.current()) update(bar.questionConfig.choose(index, option.label, question.multiSelect ? button.getAttribute('aria-pressed') !== 'true' : true)); });
+            button.addEventListener('click', () => { if (bar.questionConfig.current()) { update(bar.questionConfig.choose(index, option.label, question.multiSelect ? button.getAttribute('aria-pressed') !== 'true' : true)); if (quickChoice && !bar.questionConfig.locked) next.click(); } });
             controls.push(button); choices.append(button);
         }
         body.append(choices);
         const label = node('label', question.options?.length ? '其他…' : '你的回答', 'question-bar-custom');
         const input = node('input'); input.className = 'question-custom'; input.type = 'text'; input.value = draft.answers[index].custom || ''; input.disabled = editLocked;
         input.setAttribute('aria-label', question.options?.length ? '其他回答' : '你的回答'); input.dataset.questionControl = 'custom';
-        input.addEventListener('input', () => { if (bar.questionConfig.current()) update(bar.questionConfig.custom(index, input.value)); }); label.append(input); body.append(label);
+        input.addEventListener('input', () => { if (bar.questionConfig.current()) { update(bar.questionConfig.custom(index, input.value)); if (quickChoice) next.hidden = !input.value.trim(); } }); label.append(input); body.append(label);
         const status = node('p', notice || '', 'question-status'); status.setAttribute('role', 'status'); status.hidden = !notice; body.append(status);
         const actions = node('div', '', 'question-actions');
         if (index > 0) { const back = node('button', '上一题', 'button secondary'); back.type = 'button'; back.disabled = locked; back.addEventListener('click', () => { cursors.set(key, index - 1); delete bar.dataset.signature; paint(bar, config); }); actions.append(back); }
-        const next = node('button', index < row.questions.length - 1 ? '下一题' : config.retry ? '重试原回答' : '提交回答', 'button primary'); next.type = 'button'; next.disabled = locked; next.dataset.questionControl = 'submit';
+        const next = node('button', index < row.questions.length - 1 ? '下一题' : config.retry ? '重试原回答' : config.mobile ? '确认' : '提交回答', 'button primary'); next.type = 'button'; next.disabled = locked; next.dataset.questionControl = 'submit';
+        next.hidden = !!quickChoice && !draft.answers[index].custom.trim();
         next.addEventListener('click', () => {
             if (!bar.questionConfig.current() || bar.questionConfig.locked) return;
             if (index < row.questions.length - 1) { cursors.set(key, index + 1); delete bar.dataset.signature; paint(bar, config); bar.querySelector('[data-question-control]')?.focus({ preventScroll: true }); }
@@ -78,7 +80,7 @@
             if (!question.multiSelect && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key)) {
                 event.preventDefault(); const at = controls.indexOf(document.activeElement);
                 const button = controls[event.key === 'Home' ? 0 : event.key === 'End' ? controls.length - 1 : (at + (/Right|Down/.test(event.key) ? 1 : -1) + controls.length) % controls.length];
-                button?.focus(); button?.click();
+                button?.focus(); if (quickChoice) update(bar.questionConfig.choose(index, button.dataset.value, true)); else button?.click();
             }
         };
         // Prevent implicit Enter submission through the surrounding message form.

@@ -51,7 +51,8 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     before(...children){if(!this.parent)return;const i=this.parent.children.indexOf(this);this.parent.children.splice(i,0,...children);for(const child of children)child.parent=this.parent}
     after(...children){if(!this.parent)return;const i=this.parent.children.indexOf(this);this.parent.children.splice(i+1,0,...children);for(const child of children)child.parent=this.parent}
     replaceChildren(...children){for(const child of this.children)child.parent=null;this.children=[];this._text="";this._html="";this.append(...children)}
-    remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this)}
+    remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this);this.parent=null}
+    click(){this.fire('click');this.onclick?.({target:this,currentTarget:this,preventDefault(){},stopPropagation(){}})}
     setAttribute(key,value){this.attrs[key]=value}
     getAttribute(key){return this.attrs[key]??null}
     removeAttribute(key){delete this.attrs[key];if(key==='id')this.id='';if(key==='src')this.src='';}
@@ -1237,7 +1238,7 @@ test('dedicated approvals and questions stay actionable when the general activit
   assert.ok(details.length>0,'exact source is checked through its dedicated task endpoint');
   for(const {index} of details)h.reply(index,fixture.task);await h.flush();
   assert.match(allText(approvalCard(h)),/批准.*拒绝/);
-  assert.equal(h.node('question-bar').hidden,true);assert.match(allText(h.node('question-bar')),/是否按这份计划继续.*下一题/);
+  assert.equal(h.node('question-bar').hidden,false);assert.match(allText(h.node('question-bar')),/是否按这份计划继续.*下一题/);
   assert.equal(h.run("conversationTasks.entries.get('root-inline').notice"),'');
   const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once')");
   const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide');
@@ -1251,11 +1252,11 @@ test('dedicated approvals and questions stay actionable when the general activit
 test('task15-question-client sequential single, multiple and free answers preserve exact labels without granting a tool permission',async()=>{
   const h=harness();prepareApprovalChat(h);const row=syntheticQuestionBatch();await readQuestions(h,[row,syntheticQuestionBatch({questionRpcId:'62345678-1234-4234-8234-123456789abc',sourceReceiptId:'rpc:other.2',questions:[{id:'foreign',question:'错误来源不应出现'}]})]);
   assert.match(allText(questionCard(h)),/还有 2 个问题/);assert.doesNotMatch(allText(h.node('question-bar')),/错误来源|永久允许|允许一次/);assert.equal(h.node('chat-content').children.filter(node=>node.dataset.questionRpcId).length,0);
-  questionControl(h,'radio','同意').fire('click');questionControl(h,'button','下一题').fire('click');
+  questionControl(h,'button','同意').fire('click');
   for(const name of ['文字记录','源文件'])questionControl(h,'button',name).fire('click');
   const mixed=questionControl(h,'textbox','其他回答');mixed.value='保留一份简短目录';mixed.fire('input');questionControl(h,'button','下一题').fire('click');
   const free=questionControl(h,'textbox','你的回答');free.value='按这段原话填写';free.fire('input');
-  h.node('draft').value='聊天草稿仍在';h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=163;questionControl(h,'button','提交回答').fire('click');
+  h.node('draft').value='聊天草稿仍在';h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=163;questionControl(h,'button','确认').fire('click');
   const request=h.bridge.findLastIndex(item=>item.method==='shared.questions.answer'),params=h.bridge[request].params;
   assert.deepEqual(Object.keys(params).sort(),['answer','questionRpcId','requestId','sessionId']);assert.deepEqual(params.answer,{answers:[{id:'plan',selected:['同意']},{id:'repeated-id',selected:['文字记录','源文件'],custom:'保留一份简短目录'},{id:'repeated-id',selected:[],custom:'按这段原话填写'}]});
   assert.equal(h.bridge.some(item=>item.method==='shared.approvals.decide'),false);
@@ -1358,8 +1359,8 @@ test('task15-approval-client pending approvals follow exact root and supplement 
     sourceCommandId:'foreign-source',reason:'错误来源不应可审批'}),syntheticApproval({approvalId:'42345678-1234-4234-8234-123456789abc',
     sourceReceiptId:'rpc:other.2',reason:'错误回执不应可审批'})]);
   const cards=h.node('approval-bar').children.filter(node=>node.dataset.approvalId);
-  assert.equal(cards.length,1);assert.match(allText(cards[0]),/需要执行这次命令.*批准.*拒绝/);
-  assert.match(allText(cards[0]),/还有 1 个待批准/);
+  assert.equal(cards.length,2);assert.match(allText(cards[0]),/需要执行这次命令.*拒绝.*批准/);
+  assert.equal(cards[1].dataset.approvalId,supplement.approvalId);
   assert.equal(h.run("toolApprovals.sessions.get('s1').rows.get('22345678-1234-4234-8234-123456789abc').sourceReceiptId"),supplement.sourceReceiptId);
   assert.equal(h.node('chat-content').children.some(node=>node.dataset.approvalId),false);
   assert.doesNotMatch(allText(h.node('approval-bar')),/错误来源|错误回执|永久允许|长期偏好/);
@@ -1422,7 +1423,7 @@ test('task15-approval-client replayed answered receipts cannot regress an alread
     assert.equal(h.run("toolApprovals.sessions.get('s1').rows.values().next().value.status"),terminal);
     h.reply(h.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[final],nextBefore:null,hasMore:false});await deciding;
     assert.equal(approvalCard(h),undefined);assert.equal(h.node('approval-bar').hidden,true);assert.doesNotMatch(approvalRecordText(h),/等待执行端处理/);
-  }
+}
 });
 
 test('task15-approval-client task cancellation and other invalidation have different messages and no decision buttons',async()=>{
@@ -1443,7 +1444,7 @@ test('task15-approval-client paging omits the first cursor and loads older pendi
   h.reply(request,{approvals:[second],nextBefore:null,hasMore:false});await h.flush();
   request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');assert.deepEqual(h.bridge[request].params,{taskId:'root-inline'});
   h.reply(request,fixture.task);await reading;
-  assert.equal(h.node('approval-bar').children.filter(node=>node.dataset.approvalId).length,1);assert.match(allText(h.node('approval-bar')),/还有 1 个待批准/);
+  assert.equal(h.node('approval-bar').children.filter(node=>node.dataset.approvalId).length,2);assert.deepEqual(h.node('approval-bar').children.map(node=>node.dataset.approvalId),[first.approvalId,second.approvalId]);
 });
 
 test('task15-approval-client a changed call tuple cannot update a known approval and late account/device/session results stay out of the new view',async()=>{
@@ -1698,6 +1699,22 @@ test('switching chat source clears transient acceptance and matching turn end cl
   assert.equal(h.node('chat-status').textContent,'');
 });
 
+
+test('MOB-3 two choices answer in one tap and a custom answer retains its explicit confirmation',async()=>{
+  const row=syntheticQuestionBatch({questions:[{id:'two',question:'先看哪一份？',options:[{label:'周报'},{label:'计划'}]}]});
+  const direct=harness();prepareApprovalChat(direct);await readQuestions(direct,[row]);
+  assert.equal(questionControl(direct,'button','确认').hidden,true);
+  questionControl(direct,'button','周报').fire('click');await direct.flush();
+  const request=direct.bridge.findLast(item=>item.method==='shared.questions.answer');
+  assert.deepEqual(request.params.answer.answers,[{id:'two',selected:['周报']}]);
+  assert.equal(direct.bridge.some(item=>item.method==='shared.approvals.decide'),false);
+  const custom=harness();prepareApprovalChat(custom);await readQuestions(custom,[row]);
+  const input=questionControl(custom,'textbox','其他回答');input.value='只看今天的安排';input.fire('input');
+  assert.equal(questionControl(custom,'button','确认').hidden,false);
+  assert.equal(custom.bridge.some(item=>item.method==='shared.questions.answer'),false);
+  questionControl(custom,'button','确认').fire('click');await custom.flush();
+  assert.deepEqual(custom.bridge.findLast(item=>item.method==='shared.questions.answer').params.answer.answers,[{id:'two',selected:[],custom:'只看今天的安排'}]);
+});
 
 test('M1-0 mobile execution is collapsed by default, groups calls once, and ends across a card boundary',()=>{
   const h=harness();prepareSyntheticTaskChat(h);
