@@ -62,6 +62,12 @@ const settingsListPosition = { scroll: 0, query: '' };
 function settingsPage(target){
   target.append(heading('设置'));
   if(state.loggedIn){
+    const card=el('button','settings-account-card');card.type='button';card.setAttribute('aria-label','账户资料');
+    const avatar=el('span','avatar',(state.profile?.displayName||state.username||'我').slice(0,1));
+    const copy=el('span','settings-account-copy');copy.append(el('strong','',state.profile?.displayName||state.username||'我的账户'),el('small','',state.profile?.email||globalThis.WeftMobileCloud?.core?.cloudAuthView?.().email||'个人账户'));
+    card.append(avatar,copy,WeftIcons.create('right',20));card.onclick=()=>{state.settingsChild=true;page('account');};target.append(card);
+  }
+  if(state.loggedIn){
     const strip=el('button','settings-usage-strip','正在读取本月用量…');strip.type='button';strip.setAttribute('aria-label','用量详情');strip.onclick=()=>{state.settingsChild=true;page('usage')};target.append(strip);
     void uiCore.loadUsageStrip().then(text=>{if(text&&strip.isConnected)strip.textContent=text}).catch(()=>{if(strip.isConnected)strip.textContent='本月用量暂时无法读取，点此重试。'});
   }
@@ -74,10 +80,18 @@ function settingsPage(target){
       const item=row(category.name,summaries[category.id]||'',()=>{
         settingsListPosition.scroll=$('generic-page').scrollTop;settingsListPosition.query=search.value;state.settingsChild=true;page(category.id)});
       const icon=el('img','settings-category-icon');icon.src='icons/'+category.icon+'.svg';icon.alt='';item.prepend(icon);section.querySelector('.group-body').append(item);
+      const current={appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.username,models:state.model?.displayName,about:state.ui?.activeVersion}[category.id];
+      if(current){const value=el('span','settings-current',current);item.querySelector('.row-action').before(value);}
     }
     if(!list.children.length)list.append(el('p','muted','没有匹配的设置，试试“主题”或“费用”。'));
   };
   search.addEventListener('input',()=>{settingsListPosition.query=search.value;draw()});draw();
+  const appearance=el('section','appearance-home');appearance.append(el('h2','','外观'));target.append(appearance);
+  WeftAppearanceControls.mount(appearance,{onlyTheme:true,get:()=>({...mobileAppearanceStore.value,theme:state.appearance||'system'}),async set(patch){
+    if(patch.theme){const saved=await uiCore.mobileAppearance(patch.theme);applyAppearancePreference(saved);}mobileAppearanceStore.set({...mobileAppearanceStore.value,...patch});applyTheme(state.appearance||'system');},toast});
+  const modes=appearance.querySelector('.appearance-modes');appearance.replaceChildren(el('h2','','外观'),modes);
+  if(state.loggedIn){const logout=el('button','settings-logout-card','退出登录');logout.type='button';logout.prepend(WeftIcons.create('logout',20));
+    logout.onclick=async()=>{try{await globalThis.WeftMobileCloud.core.cloudLogout();}catch(error){toast(safeError(error),true);}};target.append(logout);}
   $('generic-page').scrollTop=settingsListPosition.scroll;
 }
 function generalSettingsPage(target){target.append(heading('常规'),group('此设备',[
@@ -85,8 +99,8 @@ function generalSettingsPage(target){target.append(heading('常规'),group('此�
   row('通知','按类型提醒、勿扰与声音',()=>page('notifications')),
   row('离线与同步',state.loggedIn?'当前账户的记录与状态':'登录后查看本机与同步状态',()=>page('sync')),
   ...(!globalThis.WeftMobileCloud?.active?[row('电脑账户与连接',connectionLabel(),()=>page('connect'))]:[]),
-  row('界面更新',state.ui?.activeVersion||'内置页面',()=>page('updates')),
-  row('原生兼容界面','排查系统网页组件',()=>call('compat.openNative').catch(e=>toast(safeError(e),true)))]));
+  row('检查更新',state.ui?.activeVersion||'当前版本',()=>page('updates')),
+  row('打开备用界面','页面无法正常显示时使用',()=>call('compat.openNative').catch(e=>toast(safeError(e),true)))]));
   uiCore.syncMobileIdentity();
   void systemStatusSection(target,{localOnly:true});
 }
@@ -632,7 +646,7 @@ function appearancePage(target){target.append(heading('外观','保存到这台�
   });
 }
 
-async function updatesPage(target){target.append(heading('界面更新','常规界面可从个人服务端更新；新增原生能力仍需更新应用。'));
+async function updatesPage(target){target.append(heading('检查更新','页面会自动更新；应用有新版时，可到官网下载。'));
   let details;try{details=await call('updates.status')}catch(e){target.append(notice(safeError(e)));return}
   target.append(group('版本',[row('当前界面',details.activeVersion,()=>{}),row('原生应用',details.nativeVersion,()=>{})]));
   const install=group('本设备安装',[]),installBody=install.querySelector('.group-body'),
@@ -660,7 +674,7 @@ async function updatesPage(target){target.append(heading('界面更新','常规�
     catch(e){toast(safeError(e),true)}}));
   if(details.stagedVersion)controls.append(action('应用新界面',async()=>{try{await call('updates.apply',{hasDraft:!!$('draft').value.trim()});toast('界面已更新')}
     catch(e){toast(safeError(e),true)}},false));target.append(controls);
-  if(details.previousAvailable)target.append(group('恢复',[row('退回上一版','已保存的上一个完整界面包',async()=>{
+  if(details.previousAvailable)target.append(group('恢复',[row('退回上一版','恢复之前保存的页面版本',async()=>{
     try{await call('updates.rollback',{hasDraft:!!$('draft').value.trim()})}catch(e){toast(safeError(e),true)}})]));
   if(details.lastError)target.append(el('p','inline-error',/^[A-Z_]+$/.test(details.lastError)?
     safeError(new Error(details.lastError)):details.lastError));
@@ -673,7 +687,7 @@ async function phoneAction(kind){if(kind==='settings'){
     try{const result=await call('tools.execute',{name:'open_settings',conversationId:state.conversationId||''});
       selectConversation(result.conversationId);toast(`系统设置：${receiptStatus(result.status)}`);await listConversations();await renderConversation()}
     catch(e){toast(safeError(e),true)}return}
-  const target=$('page-content');clear(target);target.append(heading('打开手机应用','从系统可启动应用中选择，不需要填写包名。'));
+  const target=$('page-content');clear(target);target.append(heading('打开手机应用','选择你想打开的应用。'));
   const loading=notice('正在读取这台手机的应用…');target.append(loading);
   try{const result=await call('tools.apps');loading.remove();const apps=(result.apps||[]).sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));
     target.append(group('可启动应用',apps.map(app=>row(app.name,'在这台手机打开',async()=>{
