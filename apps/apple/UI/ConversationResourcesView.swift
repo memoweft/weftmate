@@ -38,7 +38,7 @@ struct ConversationResourceList: View {
                 }
                 if resources.loading { ProgressView("正在读取…") }
                 if let error = resources.error { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
-                Button("查看全部") { Task { await resources.refresh() } }.disabled(resources.loading)
+                Button("查看全部") { Task { await resources.refresh() } }.buttonStyle(OutlineActionStyle()).disabled(resources.loading)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(AppleTokens.Space.p18)
         }.buttonStyle(.plain).frame(idealWidth: 360)
             .task { await resources.refresh() }

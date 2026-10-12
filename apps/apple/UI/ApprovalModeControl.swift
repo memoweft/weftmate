@@ -130,7 +130,7 @@ private struct ApprovalModeButtonStyle: ButtonStyle {
     let compact: Bool
     func makeBody(configuration: Configuration) -> some View {
         #if os(iOS)
-        PhoneActionStyle().makeBody(configuration: configuration)
+        PhoneActionStyle(onCard: compact).makeBody(configuration: configuration)
         #else
         if compact {
             configuration.label.frame(minHeight: AppleTokens.Space.p44).opacity(configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
