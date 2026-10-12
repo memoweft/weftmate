@@ -195,7 +195,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         }
         ui.byId('model-select').disabled = value.modelDisabled;
         ui.byId('model-trigger').disabled = value.modelDisabled;
-        ui.byId('model-label').textContent = value.modelName;
+        WeftUiCore.fitModelLabel(ui.byId('model-label'), value.modelName);
         if (value.modelDisabled)
             ui.closeModelMenu();
         ui.byId('message-text').disabled = value.messageDisabled;
