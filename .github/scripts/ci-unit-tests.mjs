@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import { assertRuntimeIdentity } from '../../scripts/dsh-runtime-identity.mjs';
 import { managedMkdtempSync, disposeManagedTemp, startManagedTempLease } from '../../tests/helpers/managed-temp.mjs';
 import { runManagedTestProcess } from '../../tests/helpers/managed-test-process.mjs';
+import { parseTap, recoveredSummary, runFileGate, selectShard, validateTimingTests } from './ci-test-policy.mjs';
 
 const mode = process.argv[2];
 if (!['required', 'known', 'vendor'].includes(mode)) throw new Error('Use required, known or vendor');
@@ -25,7 +26,12 @@ const files = readdirSync('tests').filter(file => file.endsWith('.test.ts')).map
 const unavailable = new Set(exceptions.unavailableFiles.map(entry => entry.file));
 const knownFiles = new Set(exceptions.knownFailures.map(entry => entry.file));
 const platformTests = exceptions.platformTests.filter(entry => entry.platforms.includes(process.platform));
-const selected = files.filter(file => !unavailable.has(file) && (mode === 'vendor' ? vendorFiles.has(file) : !suite.files.includes(file) && (mode === 'required' || knownFiles.has(file))));
+const shardIndex = process.argv.indexOf('--shard');
+const shard = shardIndex >= 0 ? process.argv[shardIndex + 1] : undefined;
+if (shard && mode !== 'required') throw Error('Shards apply only to required mode');
+const selected = selectShard(files.filter(file => !unavailable.has(file) && (mode === 'vendor' ? vendorFiles.has(file) : !suite.files.includes(file) && (mode === 'required' || knownFiles.has(file)))), shard);
+const timingTests = JSON.parse(readFileSync('.github/timing-sensitive-tests.json', 'utf8')).tests;
+validateTimingTests(timingTests);
 if (mode === 'known' && selected.length === 0) {
   // Without explicit files, node --test discovers the entire repository.
   const message = '### Unit tests (known)\nNo known failures remain; no baseline tests to run.\n';
@@ -62,7 +68,7 @@ const stopLease = startManagedTempLease(temp);
 const env = { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp, WEFTMATE_TEST_TEMP_SCOPE: temp, WEFTMATE_TEST_HOST_NAME: 'synthetic-host' };
 const lines = [
   `### Unit tests (${mode})`,
-  `${selected.length} test files; isolated canonical temp: ${temp}.`,
+  `${selected.length} test files${shard ? `; shard ${shard}` : ''}; isolated canonical temp: %TEMP%.`,
 ];
 if (mode === 'required') {
   lines.push('', 'The following checks are explicitly **not verified** on clean CI runners:',
@@ -79,10 +85,35 @@ if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMM
 // file arguments and an inherited absolute report path for owned-worker cleanup.
 let result;
 const streamingOutput = process.env.CI === 'true';
+let summary;
 try {
+  if (streamingOutput && mode === 'required') {
+    const gate = await runFileGate(selected, { entries: timingTests,
+      policy: { ci: process.env.CI, mode, event: process.env.GITHUB_EVENT_NAME, strict: process.env.CI_TEST_STRICT },
+      execute: async (file, attempt) => {
+        console.log(`CI file: ${file}; attempt ${attempt}; deadline 600000ms`);
+        // A separate owned scope prevents timeout/retry cleanup from reaching another file.
+        const scope = managedMkdtempSync('weftmate-ci-file-');
+        const stopFileLease = startManagedTempLease(scope), started = Date.now();
+        try {
+          const fileEnv = { ...env, TMPDIR: scope, TMP: scope, TEMP: scope, WEFTMATE_TEST_TEMP_SCOPE: scope };
+          const run = await runManagedTestProcess(process.execPath, [...args, `--report-directory=${scope}`, file],
+            { env: fileEnv, timeoutMs: 600000, commandRoots: [scope, resolve(file)], executables: [process.execPath, createRequire(import.meta.url)('electron')],
+              onOutput: (stream, chunk) => process[stream].write(chunk) });
+          return { ...parseTap(run.stdout + run.stderr), status: run.status ?? 1, signal: run.signal,
+            error: run.error?.message, timedOut: run.timedOut, seconds: (Date.now() - started) / 1000 };
+        } finally { stopFileLease(); disposeManagedTemp(scope); if (existsSync(scope)) throw Error('File test temp cleanup failed'); }
+      },
+      onRecovered: row => console.log(`PASSED ONLY ON RETRY: ${JSON.stringify(row)}`),
+    });
+    summary = { mode, files: selected.length, os: process.env.CI_TEST_OS ?? process.platform, shard: shard ?? null, ...gate };
+    result = { status: gate.exitCode };
+    if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, recoveredSummary(gate.recovered));
+  } else {
   result = await runManagedTestProcess(process.execPath, [...args, ...(process.platform === 'win32' ? [`--report-directory=${temp}`, ...selected] : selected.map(file => resolve(file)))],
     { env, commandRoots: [temp, ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')],
       onOutput: streamingOutput ? (stream, chunk) => process[stream].write(chunk) : undefined });
+  }
 } finally {
   stopLease();
   disposeManagedTemp(temp);
@@ -95,7 +126,7 @@ const count = name => Number(new RegExp(`^# ${name} (\\d+)$`, 'm').exec(output)?
 // the failing-name list agrees with Node's failed-test count.
 const failures = [...output.matchAll(/^\s*not ok \d+ - ([^\r\n]+)\r?\n([\s\S]*?)^\s*\.\.\.$/gm)]
   .filter(match => /^\s*type: 'test'\s*$/m.test(match[2])).map(match => match[1]);
-const summary = { mode, files: selected.length, exitCode: result.status ?? 1, passed: count('pass'), failed: count('fail'), skipped: count('skipped'), failures };
+summary ??= { mode, files: selected.length, exitCode: result.status ?? 1, passed: count('pass'), failed: count('fail'), skipped: count('skipped'), failures };
 console.log(`Test result: ${JSON.stringify(summary)}`);
 const reportIndex = process.argv.indexOf('--report');
 if (reportIndex >= 0) writeFileSync(process.argv[reportIndex + 1], JSON.stringify(summary, null, 2) + '\n');
