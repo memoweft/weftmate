@@ -147,6 +147,7 @@ struct WatchHomeView: View {
                         ForEach(model.pendingApprovals) { approval in
                             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                                 WeftLabel(approval.summary, icon: "approval", size: AppleTokens.Space.p16).font(AppleTokens.Fonts.caption)
+                                if let opinion = approval.secondOpinion { Text(opinion).font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary) }
                                 HStack {
                                     Button { model.decide(approval, allowed: true) } label: { WeftLabel("批准", icon: "allow", size: AppleTokens.Space.p16) }.disabled(!model.canDecide(approval, allowed: true)).accessibilityIdentifier("watchApprove")
                                     Button { model.decide(approval, allowed: false) } label: { WeftLabel("拒绝", icon: "deny", size: AppleTokens.Space.p16) }.disabled(!model.canDecide(approval, allowed: false)).accessibilityIdentifier("watchReject")

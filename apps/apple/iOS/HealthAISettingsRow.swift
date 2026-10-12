@@ -8,11 +8,11 @@ struct HealthAISettingsRow: View {
     @State private var updating=false
     var body: some View {
         if let settings {
-            Toggle("今日解读使用 AI",isOn:Binding(get:{self.settings?.modelInsightsEnabled == true},set:{value in Task { await change(top:value) } })).disabled(updating)
+            Toggle("今日解读用模型写",isOn:Binding(get:{self.settings?.modelInsightsEnabled == true},set:{value in Task { await change(top:value) } })).disabled(updating).accessibilityIdentifier("health.modelInsightsEnabled")
             if settings.itemAnalysisEnabled != nil {
                 Toggle("各项 AI 分析",isOn:Binding(get:{self.settings?.itemAnalysisEnabled == true},set:{value in Task { await change(item:value) } })).disabled(updating)
             }
-            Text("会把每天的汇总数字发给你设置的模型，不发明细。各项分析只有展开时才生成。") .font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
+            Text("汇总和模型解读用于了解趋势，不是医学结论；模型只接收汇总数字，各项分析展开时才生成。") .font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
         }
         if let message { Text(message).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
         Color.clear.frame(height:0).task(id:app.accountEpoch) {

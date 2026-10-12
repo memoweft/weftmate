@@ -53,22 +53,22 @@ struct HealthPageView: View {
             ForEach(o.insight?.suggestions ?? []) { suggestion in
                 HStack(alignment:.top) {
                     Text(suggestion.text); Spacer()
-                    if suggestion.reminder != nil { Button("提醒我") { Task { await page.remind(suggestion,app:app) } }.accessibilityIdentifier("health.remind."+suggestion.id) }
+                    if suggestion.reminder != nil { Button("提醒我") { Task { await page.remind(suggestion,app:app) } }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("health.remind."+suggestion.id) }
                 }
             }
-            HStack { Spacer(); Button("接着问它") { ask(o.insight?.text ?? "帮我看看今天的健康变化") }.accessibilityIdentifier("health.ask") }
+            HStack { Spacer(); Button("接着问它") { ask(o.insight?.text ?? "帮我看看今天的健康变化") }.buttonStyle(PrimaryActionStyle(fillsWidth:false)).accessibilityIdentifier("health.ask") }
         }.accessibilityElement(children:.contain).accessibilityIdentifier("health.insight")
-        ForEach(["recovery","sleep","load"],id:\.self) { id in
-            score(id,o)
-        }
-        if HealthPagePolicy.visibleOptionalCards(o).contains("stress"),let value=o.stress { extra("stress","压力",value) }
-        if HealthPagePolicy.visibleOptionalCards(o).contains("energy"),let value=o.energy { extra("energy","电能",value) }
-        if HealthPagePolicy.visibleOptionalCards(o).contains("fitnessAge"),let value=o.fitnessAge { extra("fitnessAge","体能年龄",value) }
+        LazyVGrid(columns:Array(repeating:GridItem(.flexible(),alignment:.top),count:HealthPagePolicy.scoreColumns(width:0)),alignment:.leading,spacing:AppleTokens.Space.p12) {
+            ForEach(["recovery","sleep","load"],id:\.self) { id in score(id,o) }
+            if HealthPagePolicy.visibleOptionalCards(o).contains("stress"),let value=o.stress { extra("stress","压力",value) }
+            if HealthPagePolicy.visibleOptionalCards(o).contains("energy"),let value=o.energy { extra("energy","电能",value) }
+            if HealthPagePolicy.visibleOptionalCards(o).contains("fitnessAge"),let value=o.fitnessAge { extra("fitnessAge","体能年龄",value) }
+        }.accessibilityIdentifier("health.scoreGrid")
         card {
             NavigationLink { detail("sleepMinutes","睡眠时长") } label: {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                     Text("昨晚睡眠").font(AppleTokens.Fonts.title2.bold())
-                    Text(minutes(o.sleep?.minutes)).font(AppleTokens.Fonts.largeTitle.bold())
+                    HealthScoreNumber(text:minutes(o.sleep?.minutes))
                     Text("深睡 "+minutes(o.sleep?.deepMinutes ?? page.cache.series["deepMinutes-7"]?.points.last?.value)+" · 快速眼动 "+minutes(o.sleep?.remMinutes ?? page.cache.series["remMinutes-7"]?.points.last?.value))
                     Text(time(o.sleep?.start)+" — "+time(o.sleep?.end)).foregroundStyle(.secondary)
                     Text(o.usage?.lastActiveAt == nil ? "深夜使用电脑 "+minutes(o.usage?.lateNightMinutes) : "昨晚用电脑到 "+time(o.usage?.lastActiveAt)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
@@ -84,11 +84,10 @@ struct HealthPageView: View {
                         NavigationLink { detail(id,title(id)) } label: {
                             VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
                                 Text(title(id)).font(AppleTokens.Fonts.headline)
-                                Text(number(metric?.value)+unit(id)).font(AppleTokens.Fonts.title.bold())
-                                HStack { Circle().fill(stateColor(metric?.state)).frame(width:8,height:8); Text(metric?.value == nil ? "暂时没有测量" : metric?.label ?? "再戴几天就有对比了").font(AppleTokens.Fonts.footnote) }
+                                HealthScoreNumber(text:number(metric?.value)+unit(id))
+                                HStack { Circle().fill(stateColor(metric?.state)).frame(width:8,height:8); Text(metric?.value == nil ? "暂时没有测量" : metric?.label ?? "再戴几天就有对比了").font(AppleTokens.Fonts.footnote).foregroundStyle(stateColor(metric?.state)) }
                             }.contentShape(Rectangle())
                         }.buttonStyle(.plain).accessibilityIdentifier("health.vital."+id)
-                        analysis("vital:"+id)
                     }.frame(width:210)
                 }
             }
@@ -97,13 +96,12 @@ struct HealthPageView: View {
             NavigationLink { detail("steps","步数") } label: {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                     Text("今天的活动").font(AppleTokens.Fonts.title2.bold())
-                    Text(o.activity?.steps.map { "\($0) 步" } ?? "—").font(AppleTokens.Fonts.largeTitle.bold())
+                    HealthScoreNumber(text:o.activity?.steps.map { "\($0) 步" } ?? "—")
                     Text("活动能量 "+number(o.activity?.activeEnergyKcal)+" 千卡 · 运动 "+minutes(o.activity?.exerciseMinutes))
                     if o.activity?.steps == nil { Text("还没有读到今天的活动测量。") }
                     ForEach(Array((o.activity?.workouts ?? []).enumerated()),id:\.offset) { _, workout in Text(workout.type+" · "+minutes(workout.minutes)) }
                 }.contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("health.activity")
-            analysis("activity")
         }
         if let calendar=page.cache.calendar {
             card {
@@ -116,20 +114,18 @@ struct HealthPageView: View {
                 }
             }
         }
-        Text("这些变化帮你了解自己，不是医学结论。").font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
     }
     private func score(_ id: String, _ o: HealthOverview) -> some View {
         let value=id == "recovery" ? o.recovery : id == "sleep" ? o.sleep : o.load
         return card {
             NavigationLink { detail(id,title(id)) } label: {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
-                    HStack { Text(title(id)).font(AppleTokens.Fonts.title2.bold()); Spacer(); Text(value?.label ?? "再戴几天就有对比了").foregroundStyle(stateColor(value?.state)).font(AppleTokens.Fonts.callout.bold()) }
-                    Text(number(value?.score)).font(AppleTokens.Fonts.largeTitle.bold())
-                    HealthTrendChart(series:page.cache.series[id+"-7"],overlay:nil,compact:true)
-                    Text(value?.reasons?.first.map { "主要因为："+$0.text } ?? "再戴几天就有对比了").font(AppleTokens.Fonts.callout).foregroundStyle(.secondary)
+                    Text(title(id)).font(AppleTokens.Fonts.headline)
+                    Text(value?.label ?? "再戴几天就有对比了").foregroundStyle(stateColor(value?.state)).font(AppleTokens.Fonts.caption)
+                    HealthScoreNumber(text:number(value?.score))
+                    HealthScoreRangeBar(score:value?.score,low:value?.low,high:value?.high,state:value?.state)
                 }.contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("health.score."+id)
-            analysis(id)
         }
     }
     private func extra(_ id: String,_ name: String,_ value: JSONValue) -> some View {
@@ -137,25 +133,26 @@ struct HealthPageView: View {
             NavigationLink { detail(id,name) } label: {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                     Text(name).font(AppleTokens.Fonts.title2.bold())
-                    Text(number(value["score"]?.healthNumber ?? value["value"]?.healthNumber)).font(AppleTokens.Fonts.largeTitle.bold())
-                    Text(value["label"]?.string ?? "根据你平时的变化估计")
+                    HealthScoreNumber(text:number(value["score"]?.healthNumber ?? value["value"]?.healthNumber))
+                    if let score=value["score"]?.healthNumber {
+                        HealthScoreRangeBar(score:score,low:value["low"]?.healthNumber,high:value["high"]?.healthNumber,state:value["state"]?.string)
+                    }
+                    Text(value["label"]?.string ?? "根据你平时的变化估计").foregroundStyle(stateColor(value["state"]?.string))
                     if id == "stress" { Text("最近一次测量 "+time(value["measuredAt"]?.string ?? value["updatedAt"]?.string)).font(AppleTokens.Fonts.footnote) }
                     if id == "energy", case .array(let points)=value["points"] {
                         Chart(Array(points.enumerated()),id:\.offset) { i,p in
-                            if let v=p["value"]?.healthNumber { LineMark(x:.value("时刻",i),y:.value("电能",v)) }
+                            if let v=p["value"]?.healthNumber { LineMark(x:.value("时刻",i),y:.value("电能",v)).lineStyle(StrokeStyle(lineWidth:AppleTokens.Space.p4,lineCap:.round,lineJoin:.round)) }
                         }.frame(height:80).accessibilityLabel("当日电能曲线")
                     }
-                    Text("趋势估计，不是医学结论").font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
                 }.contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("health.extra."+id)
-            analysis(id)
         }
     }
     private func detail(_ id: String,_ name: String) -> some View { HealthDetailView(app:app,page:page,id:id,name:name,ask:ask) }
     private func analysis(_ scope: String) -> some View { HealthAnalysisRow(app:app,page:page,scope:scope,ask:ask) }
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment:.leading,spacing:AppleTokens.Space.p16,content:content).frame(maxWidth:.infinity,alignment:.leading)
-            .padding(AppleTokens.Space.p20).background(Weave.surface,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r24))
+            .padding(AppleTokens.Space.p16).background(Weave.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r24))
     }
 }
 private let vitalIDs=["restingHeartRateBpm","hrvSdnnMs","respiratoryRateBrpm","spo2Pct","wristTempC"]
@@ -166,7 +163,7 @@ private func unit(_ id: String) -> String { ["restingHeartRateBpm":" 次/分","h
 private func number(_ value: Double?) -> String { value.map { $0.formatted(.number.precision(.fractionLength(0...1))) } ?? "—" }
 private func minutes(_ value: Double?) -> String { value.map { $0 >= 60 ? "\(Int($0)/60) 小时 \(Int($0)%60) 分" : "\(Int($0)) 分钟" } ?? "—" }
 private func time(_ value: String?) -> String { guard let value,let date=HealthInputMath.parseISO(value) else { return "—" }; let f=DateFormatter(); f.dateFormat="H:mm"; return f.string(from:date) }
-private func stateColor(_ state: String?) -> Color { switch state { case "normal","balanced": .green; case "high","more","low": .orange; default: .secondary } }
+private func stateColor(_ state: String?) -> Color { switch HealthPagePolicy.statusTint(state) { case .green: .green; case .amber: .orange; case .muted: Weave.muted } }
 extension JSONValue { var healthNumber: Double? { if case .number(let v)=self { v } else { nil } } }
 
 struct HealthAnalysisRow: View {
@@ -186,7 +183,7 @@ struct HealthAnalysisRow: View {
                         VStack(alignment:.leading,spacing:AppleTokens.Space.p6) {
                             Text("AI 分析").font(AppleTokens.Fonts.caption).foregroundStyle(.secondary)
                             Text(page.analyses[scope]?.text.components(separatedBy:"。").first ?? "让 AI 分析这一项").font(AppleTokens.Fonts.callout)
-                        }; Spacer(); Image(systemName:expanded ? "chevron.up" : "chevron.down")
+                        }; Spacer(); WeftIcon("chevron",size:AppleTokens.Space.p16).rotationEffect(.degrees(expanded ? 180 : 0))
                     }.contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityIdentifier("health.analysis."+scope)
                 if expanded {
@@ -194,11 +191,10 @@ struct HealthAnalysisRow: View {
                         Text(result.text)
                         ForEach(result.points,id:\.self) { Text($0) }
                         Text("参考了："+result.basis.joined(separator:"、")).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
-                        Button("接着问它") { ask(result.text) }.accessibilityIdentifier("health.analysisAsk."+scope)
+                        Button("接着问它") { ask(result.text) }.buttonStyle(PrimaryActionStyle(fillsWidth:false)).accessibilityIdentifier("health.analysisAsk."+scope)
                     } else if page.generating.contains(scope) { ProgressView("正在看看这一项的变化…").accessibilityIdentifier("health.analysisLoading") }
                     else if !page.analysisEnabled {
-                        Text("会把这一项每天的汇总数字发给你设置的模型，不发明细；随时可以在设置里关掉").font(AppleTokens.Fonts.footnote)
-                        Button("打开 AI 分析") { Task { await page.analyze(scope,enable:true,app:app) } }.accessibilityIdentifier("health.analysisEnable."+scope)
+                        Button("打开 AI 分析") { Task { await page.analyze(scope,enable:true,app:app) } }.buttonStyle(PrimaryActionStyle(fillsWidth:false)).accessibilityIdentifier("health.analysisEnable."+scope)
                     }
                     if let error=page.analysisErrors[scope] {
                         Text(error).font(AppleTokens.Fonts.footnote)
@@ -223,11 +219,16 @@ struct HealthDetailView: View {
         ScrollView {
             VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
                 Text(series?.points.last?.label ?? "看看它相对你平时的变化").font(AppleTokens.Fonts.title2.bold())
-                Text(number(series?.points.last?.value)+unit(id)).font(AppleTokens.Fonts.largeTitle.bold())
+                HealthScoreNumber(text:number(series?.points.last?.value)+unit(id))
                 if let low=series?.points.last?.low, let high=series?.points.last?.high {
                     Text("你平时的范围 "+number(low)+" — "+number(high)).foregroundStyle(.secondary)
                     Gauge(value:series?.points.last?.value ?? low,in:min(low,series?.points.last?.value ?? low)...max(high,low+0.1,series?.points.last?.value ?? high)) { Text("相对平时的位置") }.tint(Weave.accent)
                 } else { Text("再戴几天就有对比了").foregroundStyle(.secondary) }
+                if let overview=page.cache.overview,let score=HealthPagePolicy.score(id,in:overview),let reasons=score.reasons,!reasons.isEmpty {
+                    DisclosureGroup("依据") {
+                        ForEach(Array(reasons.enumerated()),id:\.offset) { _,reason in Text(reason.text).font(AppleTokens.Fonts.callout) }
+                    }.tint(Weave.accent).accessibilityIdentifier("health.basis."+id)
+                }
                 Picker("时间范围",selection:$days) { ForEach([7,14,30,60],id:\.self) { Text("\($0) 天").tag($0) } }.pickerStyle(.segmented).accessibilityIdentifier("health.range")
                 if loading { ProgressView("正在读取变化…") }
                 HealthTrendChart(series:series,overlay:overlays ? overlay : nil,compact:false).accessibilityIdentifier("health.trend")
@@ -257,7 +258,7 @@ struct HealthTrendChart: View {
                 ForEach(Array(points.enumerated()),id:\.offset) { i,p in
                     if let low=p.low,let high=p.high { AreaMark(x:.value("日期",i),yStart:.value("常见范围下界",low),yEnd:.value("常见范围上界",high)).foregroundStyle(Color.gray.opacity(0.15)) }
                     if let v=p.value {
-                        LineMark(x:.value("日期",i),y:.value("数值",v)).foregroundStyle(Weave.accent)
+                        LineMark(x:.value("日期",i),y:.value("数值",v)).lineStyle(StrokeStyle(lineWidth:AppleTokens.Space.p4,lineCap:.round,lineJoin:.round)).foregroundStyle(Weave.accent)
                         PointMark(x:.value("日期",i),y:.value("数值",v)).foregroundStyle(Weave.accent)
                     }
                 }

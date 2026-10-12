@@ -56,3 +56,26 @@ private func pageOverview(_ extras: String = "") throws -> HealthOverview {
     }
     #expect(HealthInputMath.dailyMean([],day:day,calendar:calendar)==nil)
 }
+
+@Test func apple3HealthStatusAndScoreRangeRespectHostFacts() throws {
+    #expect(HealthPagePolicy.statusTint("normal") == .green)
+    #expect(HealthPagePolicy.statusTint("balanced") == .green)
+    for state in ["high","low","more","less"] { #expect(HealthPagePolicy.statusTint(state) == .amber) }
+    #expect(HealthPagePolicy.statusTint(nil) == .muted)
+    #expect(HealthPagePolicy.statusTint("insufficient") == .muted)
+    #expect(HealthPagePolicy.scorePosition(78) == 0.78)
+    #expect(HealthPagePolicy.scorePosition(-20) == 0)
+    #expect(HealthPagePolicy.scorePosition(120) == 1)
+    #expect(HealthPagePolicy.scorePosition(nil) == nil)
+    #expect(HealthPagePolicy.scorePosition(.nan) == nil)
+    let overview=try pageOverview(",\"recovery\":{\"score\":78,\"reasons\":[{\"text\":\"昨晚休息接近平时\",\"inputs\":[\"sleepMinutes\"]}]}")
+    #expect(HealthPagePolicy.score("recovery",in:overview)?.reasons?.first?.text == "昨晚休息接近平时")
+    #expect(HealthPagePolicy.score("sleep",in:overview) == nil)
+}
+@Test func apple3HealthHostDisclaimerNeverBecomesRenderedContractContent() throws {
+    let bytes=Data(#"{"scope":"recovery","day":"2026-10-12","mode":"statistics","text":"保持自己的节奏","points":[],"basis":[],"generatedAt":"2026-10-12T00:00:00Z","disclaimer":"不是医学结论"}"#.utf8)
+    let value=try JSONDecoder().decode(HealthAnalysis.self,from:bytes)
+    #expect(value.text == "保持自己的节奏")
+    let wire=try #require(JSONSerialization.jsonObject(with:JSONEncoder().encode(value)) as? [String:Any])
+    #expect(wire["disclaimer"] == nil)
+}

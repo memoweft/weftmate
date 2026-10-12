@@ -1,0 +1,39 @@
+// Synthetic contract service for native UI evidence. No real host, model, cloud or health samples.
+import http from 'node:http';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
+const child=spawn(process.execPath,['apps/apple/Tests/health4_host_fixture.mjs'],{stdio:['ignore','pipe','inherit']});
+const [chunk]=await once(child.stdout,'data');const healthOrigin=JSON.parse(chunk.toString()).origin;
+let scenario='stream', tick=0,secondOpinionEnabled=true,decisions=[],reads=[],settingWrites=[],routes=[];
+const at=new Date().toISOString(),sessionID='apple3-session',taskID='turn-1',chatID='apple3-main';
+const native=(seq,type,data)=>({seq,type,at,data});
+const row=e=>({eventId:'native-'+e.seq,chatId:chatID,orderKey:String(e.seq).padStart(8,'0'),revision:1,type:e.type,at:e.at,sourceRef:{sessionId:sessionID,seq:e.seq},data:e.data});
+function events(){const rows=[native(1,'user.message',{text:'整理我的合成笔记',turn:1}),native(2,'turn.started',{turn:1})];
+ if(scenario==='stream')return rows;
+ if(['files','recovered'].includes(scenario)){
+ if(scenario==='recovered')rows.push(native(3,'step.completed',{taskId:taskID,stepId:'retry-1',state:'failed',summary:'读取合成笔记',toolName:'read'}));
+ for(let i=0;i<5;i++)rows.push(native(10+i,'artifact.created',{artifactId:'file-'+i,fileName:'合成成果-'+(i+1)+'.txt',taskId:taskID,contentType:'text/plain',size:8}));
+ }
+ if(scenario==='final')rows.push(native(5,'assistant.message',{text:'这一段正在生成，这是最终完整回复。',streamSeq:3,turn:1}));
+ if(['interrupted','recovered','files','failed','final'].includes(scenario))rows.push(native(30,'turn.ended',{turn:1,reason:scenario==='interrupted'?'aborted':scenario==='failed'?'error':'completed'}));
+ return rows;}
+function live(){if(scenario!=='stream')return [];tick++;return [row(native(3,'assistant.delta',{text:tick<4?'这一段正在生成':'这一段正在生成，文字正在继续。',cursor:tick+3,streaming:true,turn:1,step:1}))];}
+function approval(){return {approvalId:'apple3-'+scenario,sessionId:sessionID,taskId:taskID,sourceCommandId:'cmd-1',sourceReceiptId:'receipt-1',turn:1,callId:'call-1',toolName:'shell',reason:'运行合成命令',createdAt:at,status:'pending',operationCategories:['command'],canAlwaysAllow:true,riskCategories:['execute'],secondOpinion:{alignment:scenario==='warning'?'对不上':'对得上',externalInfluence:'没有',reason:scenario==='warning'?'这条命令超出了你的要求，请先核对。':'符合要求'}};}
+const server=http.createServer(async(req,res)=>{let body='';for await(const c of req)body+=c;const data=body?JSON.parse(body):{},url=new URL(req.url,'http://localhost'),path=url.pathname.replace('/personal/v1','');routes.push({method:req.method,path});const send=(v,status=200)=>{res.writeHead(status,{'content-type':'application/json'});res.end(JSON.stringify(v));};
+ if(url.pathname==='/fixture/apple3'){scenario=data.scenario??scenario;tick=0;if(scenario==='health')await fetch(healthOrigin+'/fixture/control',{method:'POST',body:JSON.stringify({version:3,scenario:'data',enabled:false,resetAnalysis:true})});return send({ok:true});}
+ if(url.pathname==='/fixture/apple3-report')return send({syntheticOnly:true,scenario,decisions,reads,settingWrites,routes});
+ if(path==='/status')return send({ownerId:'health4-owner',hostId:'health4-host',personalCapabilities:{chats:1,chatTimeline:1,chatSend:1,replyStreaming:1,chatResources:1}});
+ if(path==='/models')return send({models:[{id:'synthetic-model',name:'合成模型',provider:'synthetic',model:'synthetic',configured:true}]});
+ if(path==='/chats/main')return send({chat:{chatId:chatID,kind:'main',title:'合成对话',activeSessionId:sessionID,modelProfileId:'synthetic-model',timeZone:'UTC',revision:1,contentRevision:1,running:scenario==='stream',sendAvailable:true,taskAvailable:true,pinned:true,archived:false,unread:false}});
+ if(path===`/chats/${chatID}/events`||path===`/chats/${chatID}/changes`){const items=events().map(row),liveEvents=live();reads.push({kind:'reply',scenario});return send(path.endsWith('/changes')?{upserts:items,removals:[],nextCursor:'history',hasMore:false,contentRevision:1,indexState:'ready',timeZone:'UTC',liveRevision:tick,liveEvents}:{items,olderCursor:null,newerCursor:null,hasOlder:false,hasNewer:false,syncCursor:'history',contentRevision:1,indexState:'ready',timeZone:'UTC',liveRevision:tick,liveEvents});}
+ if(path===`/chats/${chatID}/dates`)return send({days:[],contentRevision:1,indexState:'ready',timeZone:'UTC'});
+ if(path===`/sessions/${sessionID}/events`)return send({events:events(),nextSeq:30,hasMore:false,liveSeq:tick,liveEvents:live().map(x=>native(x.sourceRef.seq,x.type,x.data))});
+ if(path===`/sessions/${sessionID}/approvals`)return send({approvals:['aligned','warning'].includes(scenario)&&!decisions.some(x=>x.approvalId==='apple3-'+scenario)?[approval()]:[],hasMore:false,nextBefore:null});
+ if(path.startsWith(`/sessions/${sessionID}/approvals/`)){decisions.push({approvalId:path.split('/').at(-1),...data});return send({approval:{...approval(),status:'answered',decisionOutcome:data.outcome,decisionScope:data.scope??'once',decisionRequestId:data.requestId,answeredAt:at},requestId:data.requestId});}
+ if(path===`/sessions/${sessionID}/questions`)return send({questions:[],hasMore:false,nextBefore:null});
+ if(path==='/settings/approvals'){if(req.method==='PATCH'){secondOpinionEnabled=data.secondOpinionEnabled??secondOpinionEnabled;settingWrites.push(data);}return send({mode:'auto',secondOpinionEnabled});}
+ if(path===`/sessions/${sessionID}/approval-mode`)return send({mode:'auto',allowedCategories:[]});
+ // Forward health, authentication and unknown routes to the existing synthetic health service.
+ const response=await fetch(healthOrigin+req.url,{method:req.method,headers:{'content-type':'application/json',...(req.headers.cookie?{cookie:req.headers.cookie}:{}),...(req.headers['x-weftmate-csrf']?{'x-weftmate-csrf':req.headers['x-weftmate-csrf']}:{})},...(body?{body}: {})});res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));
+});
+server.listen(0,'127.0.0.1',()=>console.log(JSON.stringify({origin:'http://127.0.0.1:'+server.address().port})));process.on('SIGTERM',()=>{server.close();child.kill();});

@@ -453,5 +453,19 @@
     "api": "detached",
     "sha256": "99ea2d3fd3a0ce471dbbc64b00b0edd58343e665e864f15e5768dc3c2972f1bc",
     "reason": "Detached utility calculation is created inside a nonisolated factory with an explicit Sendable closure. It captures only immutable Sendable dates, calendar and local typed numeric/sleep inputs, and returns a Sendable aggregation. It never captures the HealthKit store, samples, model, UI or account state; UI assignment occurs after awaiting on MainActor."
+  },
+  {
+    "file": "apps/apple/UI/ReplyArtifactList.swift",
+    "line": 43,
+    "api": "fileExporter",
+    "sha256": "ab18ac72c3392568fcc51c6ebd9f9a0fc59fc6802a8362c69efbdc96fdb38f86",
+    "reason": "Explicit @Sendable file export completion only inspects the Sendable result; UI error assignment hops explicitly to MainActor. Cancellation captures no actor state."
+  },
+  {
+    "file": "apps/apple/iOS/HealthScoreRangeBar.swift",
+    "line": 23,
+    "api": "GeometryReader",
+    "sha256": "5596b3f020bc69e3fa32588b80cf664fb92e0ece829e26402aa829bfdc9e4d57",
+    "reason": "Explicit @Sendable geometry builder captures only immutable Sendable score fractions and Color values computed by the UI body. It reads geometry and constructs primitive shapes without reading or changing model or actor state."
   }
 ]
