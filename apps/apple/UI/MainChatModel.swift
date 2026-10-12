@@ -47,7 +47,7 @@ import WeftMateCore
     private var transferFiles: [ConversationAttachmentDraft] = []
     init(app: AppleAppModel) { self.app = app }
     var nativeEvents: [TimelineEvent] {
-        window.events.compactMap { row in
+        window.displayEvents.compactMap { row in
             guard row.sessionID == chat?.activeSessionId, let seq = row.sourceRef["seq"]?.int else { return nil }
             return TimelineEvent(seq: seq, type: row.type, at: row.at, data: row.data)
         }

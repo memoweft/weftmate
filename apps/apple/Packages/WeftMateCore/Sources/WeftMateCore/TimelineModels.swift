@@ -52,6 +52,8 @@ public struct TimelinePage: Codable, Equatable, Sendable {
     public let hasOlder: Bool?
     public let latestSeq: Int?
     public var cacheAllowed: Bool? = nil
+    public var liveSeq: Int? = nil
+    public var liveEvents: [TimelineEvent]? = nil
     public static func query(beforeSeq: Int?, afterSeq: Int?, limit: Int) throws -> String {
         guard (1...200).contains(limit), beforeSeq == nil || afterSeq == nil,
               beforeSeq.map({ (0...SharedValidation.maximumSequence).contains($0) }) ?? true,
@@ -87,8 +89,16 @@ public struct TimelineWindow: Codable, Equatable, Sendable {
     public private(set) var nextSeq = -1
     public private(set) var beforeSeq: Int?
     public private(set) var hasOlder = false
+    public private(set) var liveSeq = -1
+    public private(set) var liveEvents: [TimelineEvent] = []
+    private enum CodingKeys: String, CodingKey { case events, nextSeq, beforeSeq, hasOlder }
+    public var displayEvents: [TimelineEvent] { ReplySnapshots.timeline(history: events, live: liveEvents) }
     public init() {}
     public mutating func apply(_ page: TimelinePage, older: Bool = false, replace: Bool = false) {
+        if replace { liveSeq = -1; liveEvents = [] }
+        if !older, let watermark = page.liveSeq, watermark >= liveSeq, let snapshots = page.liveEvents {
+            liveSeq = watermark; liveEvents = snapshots
+        }
         var bySeq = Dictionary(uniqueKeysWithValues: (replace ? [] : events).map { ($0.seq, $0) })
         for event in page.events { bySeq[event.seq] = event }
         events = bySeq.values.sorted { $0.seq < $1.seq }
@@ -190,8 +200,8 @@ public enum TimelineProjection {
                 if let index = cards[key] { result[index].resolved = raw }
                 else { cards[key] = result.count; result.append(.init(id: key, seq: raw.seq, event: raw,
                     resolved: raw.type.hasSuffix("resolved") || raw.type.hasSuffix("answered") ? raw : nil)) }
-            } else if ["user.message", "assistant.message", "artifact.created", "task.queued"].contains(raw.type) {
-                result.append(.init(id: "event-\(raw.seq)", seq: raw.seq, event: raw))
+            } else if ["user.message", "assistant.message", "assistant.delta", "artifact.created", "task.queued"].contains(raw.type) {
+                result.append(.init(id: (raw.type.hasPrefix("assistant.") ? "reply-\(raw.data["streamSeq"]?.int ?? raw.seq)" : "event-\(raw.seq)"), seq: raw.seq, event: raw))
             }
         }
         for index in result.indices where !result[index].steps.isEmpty {

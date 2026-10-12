@@ -33,7 +33,7 @@ struct MainChatView: View {
             epoch: app.accountEpoch, stateDirectory: app.assistantStateDirectory,
             currentEpoch: { [weak app] in app?.accountEpoch ?? UUID() }, currentSession: { [weak app] in app?.session }))
     }
-    private var days: [ChatDaySection] { ChatDay.sections(model.window.events, timeZone: model.timeZone) }
+    private var days: [ChatDaySection] { ChatDay.sections(model.window.displayEvents, timeZone: model.timeZone) }
     private var today: String { ChatDay.key(Date(), timeZone: model.timeZone) }
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
@@ -139,7 +139,7 @@ struct MainChatView: View {
                 await A16PhoneMeasurement.poll(model)
                 #endif
                 #endif
-                try? await Task.sleep(for: .seconds(2))
+                try? await Task.sleep(for: .seconds(ReplySnapshots.pollDelay(streaming: model.capabilities.supports("replyStreaming"), running: model.chat?.running == true || model.window.liveEvents.contains { $0.data["streaming"]?.bool == true }, failed: model.error != nil)))
             }
         }
         .onChange(of: model.window.generation) { _, _ in interactions.cancel(); positions.frames.removeAll(); restore = nil; searching = false; importing = false; importEpoch = nil; importGeneration = nil }
@@ -187,7 +187,7 @@ struct MainChatView: View {
                     }
                     ForEach(days) { section in
                         let day = section.date
-                        let rows = section.events.filter { ["user.message", "assistant.message", "side.result", "step.started", "artifact.created"].contains($0.type) }
+                        let rows = section.events.filter { ["user.message", "assistant.message", "assistant.delta", "side.result", "step.started", "artifact.created"].contains($0.type) }
                         let expanded = day == today || model.window.expandedDays.contains(day)
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                         Button {
@@ -197,7 +197,7 @@ struct MainChatView: View {
                                 .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).frame(minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
                         }.buttonStyle(.plain).accessibilityIdentifier("mainChat.day." + day).accessibilityValue(expanded ? "已展开" : "已折叠")
                         if expanded {
-                            ForEach(rows) { event in
+                            ForEach(rows, id: \.presentationID) { event in
                                 MainChatEventRow(app: app, model: model, event: event)
                                     .fixedSize(horizontal: false, vertical: true)
                                     .id(event.id)
@@ -224,7 +224,7 @@ struct MainChatView: View {
                 guard !Task.isCancelled else { return }
                 proxy.scrollTo(anchor.eventID, anchor: .top)
             }
-            .onChange(of: model.window.events.last?.id) { _, _ in if positions.following { proxy.scrollTo("latest", anchor: .bottom) } }
+            .onChange(of: model.window.displayEvents.last?.text) { _, _ in if positions.following { proxy.scrollTo("latest", anchor: .bottom) } }
             .overlay(alignment: .bottomTrailing) {
                 if !model.window.events.isEmpty {
                 Button("回到底部") {
@@ -383,7 +383,7 @@ struct MainChatEventRow: View {
     @State private var attachmentPreview: ConversationAttachmentReference?
     @State private var detail: TimelineDetail?
     @State private var expanded = false
-    private var message: Bool { event.type == "user.message" || event.type == "assistant.message" }
+    private var message: Bool { event.type == "user.message" || event.type == "assistant.message" || event.type == "assistant.delta" }
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
             if event.type == "side.result" {
@@ -399,8 +399,8 @@ struct MainChatEventRow: View {
             } else if message {
                 HStack {
                     if event.type == "user.message" { Spacer(minLength: AppleTokens.Space.p32) }
-                    if event.type == "assistant.message", model.query.isEmpty {
-                        MessageBodyView(text: event.text, messageID: event.id).frame(maxWidth: .infinity, alignment: .leading)
+                    if event.type.hasPrefix("assistant."), model.query.isEmpty {
+                        MessageBodyView(text: event.text, messageID: event.presentationID).frame(maxWidth: .infinity, alignment: .leading)
                     } else {
                         highlighted(event.text).textSelection(.enabled).font(AppleTokens.Fonts.body).lineSpacing(AppleTokens.Space.p5)
                             .padding(AppleTokens.Space.p12).background(event.type == "user.message" ? Weave.accentSoft : Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
@@ -425,7 +425,7 @@ struct MainChatEventRow: View {
             }
         }
         .modifier(MessageActionsPresentation(app: app, id: event.id, text: event.text, at: event.at,
-            user: event.type == "user.message", enabled: message,
+            user: event.type == "user.message", enabled: message && event.type != "assistant.delta",
             latest: event.id == model.window.events.last?.id,
             menuID: "mainChat.messageMenu." + event.id,
             quote: { model.setDraft(model.draft + (model.draft.isEmpty ? "" : "\n\n") + "> " + event.text.replacingOccurrences(of: "\n", with: "\n> ") + "\n") },

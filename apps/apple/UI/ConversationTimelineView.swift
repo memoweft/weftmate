@@ -24,11 +24,13 @@ struct ConversationTimelineView: View {
         ForEach(appModel.messages.filter { !$0.id.hasPrefix("host|") && !$0.pendingContext && !appModel.timelineMessageIDs.values.contains($0.id) }) { message in
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
         }
-        ForEach(TimelineProjection.conversationEntries(appModel.timeline.events)) { entry in
+        ForEach(TimelineProjection.conversationEntries(appModel.timeline.displayEvents)) { entry in
             VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                 if !entry.steps.isEmpty {
                     TimelineExecutionBlock(appModel: appModel, client: appModel.assistantClient, sessionID: sessionID, entry: entry, interactions: interactions, openSources: openSources)
                         .id(entry.id + appModel.accountEpoch.uuidString)
+                } else if entry.event.type == "assistant.delta" {
+                    MessageBodyView(text: entry.event.data["text"]?.string ?? "", messageID: entry.id)
                 } else if entry.event.type.hasSuffix(".message") {
                     if let message = appModel.messages.first(where: { $0.id == (appModel.timelineMessageIDs[entry.seq] ?? "host|\(sessionID)|\(entry.seq)") }) {
                         MessageView(model: appModel, message: message, openAttachment: openAttachment)
