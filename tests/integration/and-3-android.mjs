@@ -76,10 +76,13 @@ async function shot(scene, theme) {
   await writeFile(join(out, file), png);
   const status = systemBarDifference(png, { statusHeight: geometry.top * geometry.scale });
   const navigation = bottomDifference(png, Math.round(geometry.bottom * geometry.scale));
+  const native = JSON.parse(run('shell', 'run-as', pkg, 'cat', 'files/and3-window.json'));
+  assert.equal(native.darkStatusIcons, theme === 'light', file + ' status icons');
+  if (geometry.bottom > 0) assert.equal(native.darkNavigationIcons, theme === 'light', file + ' navigation icons');
   assert.ok(status.passed, file + ' status color');
   if (!local) { assert.ok(geometry.bottom > 0, 'Real SystemUI navigation area required'); assert.ok(navigation.delta <= 18, file + ' navigation color'); }
   report.screenshots.push({ file, ...geometry, osVersion: report.osVersion, systemTheme: run('shell', 'cmd', 'uimode', 'night').trim(),
-    bottomNavigationVisible: geometry.bottom > 0, status, navigation });
+    bottomNavigationVisible: geometry.bottom > 0, native, status, navigation });
 }
 async function both(scene) { for (const theme of ['light', 'dark']) await shot(scene, theme); }
 async function login(method) {
@@ -107,8 +110,11 @@ try {
   await mkdir(out, { recursive: true });
   if (local) {
     const orchestrator = 'D:/AIProjects/WeftMate/Runtime/Orchestrator';
-    for (let slot = 1; slot <= 3; slot++) { try { heavy = await takeLock(join(orchestrator, `heavy-${slot}.lock`), 'native acceptance'); break; } catch (error) { if (error.code !== 'EEXIST') throw error; } }
-    assert.ok(heavy, 'No heavy slot available'); lock = await takeLock(join(orchestrator, 'mumu.lock'), 'native acceptance');
+    while (!heavy) {
+      for (let slot = 1; slot <= 3; slot++) { try { heavy = await takeLock(join(orchestrator, `heavy-${slot}.lock`), 'native acceptance'); break; } catch (error) { if (error.code !== 'EEXIST') throw error; } }
+      if (!heavy) { console.log('AND-3 waiting for a heavy slot'); await pause(120000); }
+    }
+    lock = await takeLock(join(orchestrator, 'mumu.lock'), 'native acceptance');
     const info = JSON.parse(execute('D:/Software/MuMuPlayer/nx_main/MuMuManager.exe', ['info', '-v', '0']).toString());
     assert.ok(info.is_android_started); assert.ok(Number(info.adb_port) > 0); serial = '127.0.0.1:' + info.adb_port;
     execute(adb, ['connect', serial]);
@@ -139,7 +145,9 @@ try {
   await page.evaluate(async () => { state.model = await call('models.selectHost', { profileId: 'local' }); updateComposer(); });
   await page.locator('#draft').fill('原生壳里的合成问候'); await page.getByRole('button', { name:'发送', exact:true }).click();
   await until(() => fixture.candidate.operations.some(row => row.kind === 'message' && row.text === '原生壳里的合成问候'), 'real native main message');
-  fixture.candidate.progress.completeStream('合成回复：原生壳里的合成问候'); fixture.candidate.progress.finish();
+  fixture.candidate.progress.text('合成回复：原生壳里的合成问候'); fixture.candidate.progress.finish();
+  report.mainReply = await page.evaluate(async () => ({ selected:uiCore.state.selectedChatId, session:state.sharedSessionId,
+    reply:await call('host.business',{path:'/personal/v1/chats/'+encodeURIComponent(uiCore.state.selectedChatId)+'/events',method:'GET'}) }));
   await page.getByText('合成回复：原生壳里的合成问候', {exact:true}).first().waitFor();
   report.checks.push('real-native-main-chat-send-and-synthetic-reply'); await both('chat');
   await scene('activity', '这周回顾'); await scene('health', '接上后，这里会显示你自己的记录'); await scene('goals', '目标'); await scene('library', '成果');
