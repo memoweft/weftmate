@@ -4,6 +4,11 @@ on:
     branches: [wp/sec-1-second-opinion]
     paths: [tests/integration/sec-1-phone-evidence.mjs, tests/integration/sec-1-system-bars.mjs, .github/workflows/sec-1-phone-evidence.yml]
   workflow_dispatch:
+    inputs:
+      matrix:
+        description: Optional isolated capture matrix as JSON
+        type: string
+        required: false
 permissions:
   contents: read
 jobs:
@@ -13,10 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: 4
-      matrix:
-        width: [360, 390]
-        theme: [light, dark]
-        scenario: [agree, warning, timeout, unavailable]
+      matrix: ${{ fromJSON(inputs.matrix || '{"width":[360,390],"theme":["light","dark"],"scenario":["agree","warning","timeout","unavailable"]}') }}
     env:
       WEFTMATE_SEC1_PHONE_WIDTH: ${{ matrix.width }}
       WEFTMATE_SEC1_PHONE_THEME: ${{ matrix.theme }}
