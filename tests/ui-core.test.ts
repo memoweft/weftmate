@@ -238,6 +238,26 @@ test('core registers distinct actions, constructs independent stores and has no 
   assert.notEqual(f.core.memory.drafts, other.memory.drafts)
 })
 
+test('composed health settings keep serialized writes and reject queued work after an account change', async () => {
+  const f = fixture(), first = deferred(), calls: any[] = []
+  f.core.accessApi = async (_path: string, options: any) => {
+    calls.push(options)
+    return calls.length === 1 ? first.promise : { settings: options.body }
+  }
+  const active = f.core.saveHealthSettings({ itemAnalysisEnabled: true })
+  const queued = f.core.saveHealthSettings({ modelInsightsEnabled: false })
+  const rejected = assert.rejects(queued, /ACCOUNT_CHANGED/)
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].protectedWrite, true)
+  f.core.state.identityGeneration++
+  f.core.state.ownerId = 'other-owner'
+  first.resolve({ settings: { itemAnalysisEnabled: true } })
+  await active
+  await rejected
+  assert.equal(calls.length, 1, 'the old account queued write must never reach the API')
+})
+
 test('history accepts gaps, sorts by event sequence, rejects duplicates/foreign sessions and keeps the latest terminal', () => {
   const f = fixture()
   f.core.appendHistory([
