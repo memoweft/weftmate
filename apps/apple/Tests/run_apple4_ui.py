@@ -7,6 +7,8 @@ p = argparse.ArgumentParser()
 p.add_argument('--xctestrun', type=Path, required=True)
 p.add_argument('--simulator', required=True)
 p.add_argument('--result', type=Path, required=True)
+p.add_argument('--polish-only', action='store_true')
+p.add_argument('--all-ui', action='store_true')
 a = p.parse_args()
 evidence = root / 'apps/apple/Tests/Evidence/APPLE-4'
 logs = Path('/private/tmp/apple4-logs'); logs.mkdir(exist_ok=True)
@@ -38,7 +40,8 @@ try:
     subprocess.run(['xcrun','simctl','bootstatus',a.simulator,'-b'],check=True,stdout=(logs/'boot.log').open('w'))
     with tempfile.NamedTemporaryFile(suffix='.xctestrun',dir=a.xctestrun.parent) as f:
         f.write(plistlib.dumps(config)); f.flush()
-        result = subprocess.run(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',f.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/Apple4UITests/testSmallScreenRefreshBatch','-resultBundlePath',str(a.result)],stdout=(logs/'ui.log').open('w'),stderr=subprocess.STDOUT)
+        extra = ['-only-testing:WeftMatePhoneUITests/Apple4UITests/testPanelAndSideChatPolishBatch'] if a.all_ui else []
+        result = subprocess.run(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',f.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/Apple4UITests/'+('testPanelAndSideChatPolishBatch' if a.polish_only else 'testSmallScreenRefreshBatch'),'-resultBundlePath',str(a.result)] + extra,stdout=(logs/'ui.log').open('w'),stderr=subprocess.STDOUT)
     summary=json.loads(subprocess.check_output(['xcrun','xcresulttool','get','test-results','summary','--path',str(a.result)],text=True))
     attempt=evidence/('attempt-'+str(count['boots'])); attempt.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory() as out:
@@ -53,9 +56,9 @@ try:
     import urllib.request
     with urllib.request.urlopen(meta['origin']+'/fixture/apple3-report') as r: report=json.load(r)
     (attempt/'host-report.json').write_text(json.dumps({'syntheticOnly':True,'routes':sorted(set(x['method']+' '+x['path'] for x in report['routes'])),'decisionCount':len(report['decisions'])},indent=2)+'\n')
-    if result.returncode or info['passed']!=1 or info['failed'] or info['skipped']: raise RuntimeError('Native evidence batch failed; private log retains details')
+    if result.returncode or info['passed']!=(2 if a.all_ui else 1) or info['failed'] or info['skipped']: raise RuntimeError('Native evidence batch failed; private log retains details')
     for file in attempt.glob('apple4-*.png'): shutil.copyfile(file,evidence/file.name)
-    (evidence/'ui-validation.json').write_text(json.dumps(info,indent=2)+'\n')
+    (evidence/('final-ui-validation.json' if a.all_ui else 'polish-validation.json' if a.polish_only else 'ui-validation.json')).write_text(json.dumps(info,indent=2)+'\n')
 finally:
     subprocess.run(['xcrun','simctl','shutdown','all'],capture_output=True)
     service.terminate(); service.wait(timeout=20)

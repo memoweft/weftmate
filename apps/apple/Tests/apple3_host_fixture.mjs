@@ -29,6 +29,10 @@ const server=http.createServer(async(req,res)=>{let body='';for await(const c of
  if(path==='/projects')return send({projects:[],canManage:false});
  if(path==='/devices')return send({devices:[{id:'health4-phone',name:'合成设备',revoked:false,current:true}]});
  if(path==='/settings/usage')return send({timeZone:'UTC',canManage:false,models:[]});
+ if(path==='/activity')return send({items:[],hasMore:false,nextCursor:null});
+ if(path.startsWith('/chats/apple4-')&&!path.endsWith('/events')&&!path.endsWith('/changes')&&!path.endsWith('/resources'))return send({chat:{chatId:path.split('/').at(-1),kind:'side',title:'周末的合成计划',activeSessionId:'apple4-side-session',modelProfileId:'synthetic-model',timeZone:'UTC',revision:1,contentRevision:1,running:false,sendAvailable:true,taskAvailable:true,pinned:true,archived:false,unread:true}});
+ if(path.startsWith('/chats/apple4-')&&path.endsWith('/resources'))return send({items:[],hasMore:false,nextCursor:null});
+ if(path.startsWith('/chats/apple4-')&&(path.endsWith('/events')||path.endsWith('/changes')))return send({items:[],upserts:[],removals:[],hasOlder:false,hasNewer:false,syncCursor:'side-history',contentRevision:1,indexState:'ready',timeZone:'UTC',liveRevision:0,liveEvents:[],hasMore:false,nextCursor:null});
  if(path==='/settings/general')return send({settings:{language:'zh-CN'}});
  if(path==='/usage')return send({month:new Date().toISOString().slice(0,7),timeZone:'UTC',total:{requests:0,unknownRequests:0,unpricedRequests:0,inputTokens:0,cachedInputTokens:0,outputTokens:0,cost:0},days:[],sessions:[],models:[],budget:{state:'normal'}});
  if(path.endsWith('/thinking'))return send({supported:false,enabled:false});
