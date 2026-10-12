@@ -28,37 +28,97 @@
 !macroend
 
 !macro customInstallMode
-  StrCpy $isForceCurrentInstall "1"
-  StrCpy $isForceMachineInstall "0"
+  ${If} $installMode == "all"
+    StrCpy $isForceCurrentInstall "0"
+    StrCpy $isForceMachineInstall "1"
+  ${Else}
+    StrCpy $isForceCurrentInstall "1"
+    StrCpy $isForceMachineInstall "0"
+  ${EndIf}
 !macroend
 !macro customPageAfterChangeDir
   Page custom WeftChoose WeftChooseLeave
 !macroend
 !macro WeftLoad
   InitPluginsDir
-  File /oname=$PLUGINSDIR\WeftInstaller.dll "${BUILD_RESOURCES_DIR}\..\.local\installer-ui\WeftInstaller.dll"
-  File /oname=$PLUGINSDIR\WeftIcon.ico "${BUILD_RESOURCES_DIR}\icon.ico"
+  ; Both initialization and process-check hooks use this helper. Never rewrite
+  ; the DLL after System::Call has loaded it into the installer.
+  ${IfNot} ${FileExists} "$PLUGINSDIR\WeftInstaller.dll"
+    File /oname=$PLUGINSDIR\WeftInstaller.dll "${BUILD_RESOURCES_DIR}\..\.local\installer-ui\WeftInstaller.dll"
+    File /oname=$PLUGINSDIR\WeftIcon.ico "${BUILD_RESOURCES_DIR}\icon.ico"
+  ${EndIf}
 !macroend
 !macro preInit
   ${GetParameters} $R0
-  ${GetOptions} $R0 "/allusers" $R1
+  ClearErrors
+  ${GetOptions} $R0 "--silent" $R1
   ${IfNot} ${Errors}
-    SetErrorLevel 2
-    Quit
+    SetSilent silent
+  ${EndIf}
+  ; Upstream's unsupported-platform checks display MessageBox without /SD.
+  ; Exit before those checks when silent, including the --silent alias.
+  ${If} ${Silent}
+    ${If} ${IsWin2000}
+    ${OrIf} ${IsWinME}
+    ${OrIf} ${IsWinXP}
+    ${OrIf} ${IsWinVista}
+      !insertmacro WeftFail 1633 "UNSUPPORTED_SYSTEM: this Windows version is unsupported"
+    ${EndIf}
+    !ifdef APP_64
+      !ifndef APP_ARM64
+        !ifndef APP_32
+          ${IfNot} ${RunningX64}
+            !insertmacro WeftFail 1633 "UNSUPPORTED_SYSTEM: a 64-bit Windows system is required"
+          ${EndIf}
+        !endif
+      !endif
+    !endif
+  ${EndIf}
+  SetRegView 64
+  ReadRegStr $weftOldUser HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ReadRegStr $weftOldMachine HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ; Refuse unavailable elevation before the upstream silent UAC branch.
+  StrCpy $R2 0
+  ${If} $weftOldMachine != ""
+  ${AndIf} $weftOldUser == ""
+    StrCpy $R2 1
+  ${EndIf}
+  ${If} ${isForAllUsers}
+    StrCpy $R2 1
+  ${EndIf}
+  ${If} ${isForCurrentUser}
+    StrCpy $R2 0
+  ${EndIf}
+  ${If} $R2 == 1
+  ${OrIf} $weftOldMachine != ""
+    ${IfNot} ${UAC_IsAdmin}
+      ${IfNot} ${Silent}
+        !insertmacro WeftLoad
+        System::Call '$PLUGINSDIR\WeftInstaller.dll::Initialize(p $HWNDPARENT, w "$PLUGINSDIR\WeftIcon.ico")'
+        System::Call '$PLUGINSDIR\WeftInstaller.dll::AdminRequired()'
+      ${EndIf}
+      !insertmacro WeftFail 740 "ADMIN_REQUIRED: run setup from an elevated terminal"
+    ${EndIf}
   ${EndIf}
 !macroend
 !macro customInit
+  SetOutPath $TEMP
+  ; Upstream's silent section otherwise switches back to all users even when
+  ; /currentuser was explicitly requested. Keep the selected target scope.
+  ${If} ${isForCurrentUser}
+    StrCpy $hasPerMachineInstallation "0"
+  ${EndIf}
+  !insertmacro WeftLoad
   ${IfNot} ${Silent}
     ; The upstream init starts in $INSTDIR. Keep the UI and its Windows DLL
     ; search outside the old app directory while an upgrade removes that tree.
-    SetOutPath $TEMP
-    !insertmacro WeftLoad
     System::Call '$PLUGINSDIR\WeftInstaller.dll::Initialize(p $HWNDPARENT, w "$PLUGINSDIR\WeftIcon.ico")'
   ${EndIf}
 !macroend
 !macro customUnInit
+  SetOutPath $TEMP
+  !insertmacro WeftLoad
   ${IfNot} ${Silent}
-    !insertmacro WeftLoad
     System::Call '$PLUGINSDIR\WeftInstaller.dll::Initialize(p $HWNDPARENT, w "$PLUGINSDIR\WeftIcon.ico")'
     System::Call '$PLUGINSDIR\WeftInstaller.dll::Confirm(w "$APPDATA\${WEFT_CONTROL_NAMESPACE}WeftMate\desktop-config.json", w "%APPDATA%\${WEFT_CONTROL_NAMESPACE}com.memoweft.weftmate") i.r0'
     ${If} $0 != 1
@@ -69,14 +129,45 @@
   ${EndIf}
 !macroend
 
-; Preserve the upstream silent process handling, including update flags.
-!include getProcessInfo.nsh
-Var pid
+Var weftOldUser
+Var weftOldMachine
+!macro WeftFail code message
+  FileOpen $R7 "$TEMP\${APP_FILENAME}-setup.log" a
+  FileWrite $R7 "${message}$\r$\n"
+  FileClose $R7
+  SetErrorLevel ${code}
+  Quit
+!macroend
+!macro WeftPleaseQuit directory
+  ${If} "${directory}" != ""
+    System::Call '$PLUGINSDIR\WeftInstaller.dll::QuitApp(w "${directory}", w "${APP_EXECUTABLE_FILENAME}", i 1) i.r0'
+    ${If} $0 != 1
+      ${IfNot} ${Silent}
+        System::Call '$PLUGINSDIR\WeftInstaller.dll::WaitForApp(w "${directory}") i.r0'
+      ${EndIf}
+      ${If} $0 != 1
+        !insertmacro WeftFail 3 "QUIT_FAILED: app did not finish saving within 20 seconds"
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
+!macroend
 !macro customCheckAppRunning
-  ${If} ${Silent}
-    !insertmacro IS_POWERSHELL_AVAILABLE
-    !insertmacro _CHECK_APP_RUNNING
-  ${Else}
+  ; un.onInit invokes this hook before customUnInit, including under /S.
+  SetOutPath $TEMP
+  !insertmacro WeftLoad
+  ${GetParameters} $R0
+  ClearErrors
+  ${GetOptions} $R0 "--silent" $R1
+  ${IfNot} ${Errors}
+    SetSilent silent
+  ${EndIf}
+  ReadRegStr $R6 HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${If} $R6 != ""
+    ${IfNot} ${UAC_IsAdmin}
+      !insertmacro WeftFail 740 "ADMIN_REQUIRED: run setup from an elevated terminal"
+    ${EndIf}
+  ${EndIf}
+  ${IfNot} ${Silent}
     System::Call '$PLUGINSDIR\WeftInstaller.dll::Work()'
     !ifdef WEFT_TEST_IDENTITY
       SetDetailsPrint both
@@ -85,15 +176,42 @@ Var pid
         Abort "Synthetic section failure"
       ${EndIf}
     !endif
-    System::Call '$PLUGINSDIR\WeftInstaller.dll::WaitForApp(w "$INSTDIR") i.r0'
-    ${If} $0 != 1
-      SetErrorLevel 2
-      Quit
-    ${EndIf}
   ${EndIf}
+  !insertmacro WeftPleaseQuit "$INSTDIR"
+  !ifndef BUILD_UNINSTALLER
+    ${If} $weftOldUser != $INSTDIR
+      !insertmacro WeftPleaseQuit "$weftOldUser"
+    ${EndIf}
+    ${If} $weftOldMachine != $INSTDIR
+      !insertmacro WeftPleaseQuit "$weftOldMachine"
+    ${EndIf}
+    ; Upstream handles user -> machine; also remove machine -> user.
+    ${If} $installMode == "CurrentUser"
+    ${AndIf} $weftOldMachine != ""
+      ; Upstream derives the old uninstaller's /allusers argument from this
+      ; variable, even when an explicit HKLM root was passed.
+      StrCpy $installMode "all"
+      !insertmacro uninstallOldVersion HKEY_LOCAL_MACHINE
+      StrCpy $installMode "CurrentUser"
+      !insertmacro handleUninstallResult HKEY_LOCAL_MACHINE
+    ${EndIf}
+  !endif
+!macroend
+
+!macro customUnInstallCheck
+  ${If} ${Errors}
+    !insertmacro WeftFail 2 "UNINSTALL_FAILED: previous uninstaller could not be started"
+  ${EndIf}
+  ${If} $R0 != 0
+    !insertmacro WeftFail 2 "UNINSTALL_FAILED: previous installation could not be removed"
+  ${EndIf}
+!macroend
+!macro customUnInstallCheckCurrentUser
+  !insertmacro customUnInstallCheck
 !macroend
 
 !macro customHeader
+  !include "${BUILD_RESOURCES_DIR}\installer-silent-instance.nsh"
   ManifestDPIAware true
   AutoCloseWindow true
   !ifdef BUILD_UNINSTALLER
@@ -105,7 +223,9 @@ Var pid
       ${EndIf}
     FunctionEnd
     Function un.WeftProgress
-      System::Call '$PLUGINSDIR\WeftInstaller.dll::Attach(p $HWNDPARENT, i 2)'
+      ${IfNot} ${Silent}
+        System::Call '$PLUGINSDIR\WeftInstaller.dll::Attach(p $HWNDPARENT, i 2)'
+      ${EndIf}
     FunctionEnd
     Function un.onGUIEnd
       ${IfNot} ${Silent}
@@ -119,13 +239,9 @@ Var pid
       ${If} ${Silent}
         Abort
       ${EndIf}
-      ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
-      ${If} $0 != ""
-        ; Upstream already resolved the registered location and any explicit /D.
+      ${If} ${isUpdated}
         Abort
       ${EndIf}
-      IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 +2
-      Abort
       nsDialogs::Create 1018
       Pop $0
       !ifdef APP_64_UNPACKED_SIZE
@@ -144,6 +260,7 @@ Var pid
       StrCpy $INSTDIR $0
     FunctionEnd
     Function .onInstFailed
+      SetErrorLevel 2
       ${IfNot} ${Silent}
         System::Call '$PLUGINSDIR\WeftInstaller.dll::Failed()'
         SetErrorLevel 2
@@ -151,6 +268,9 @@ Var pid
       ${EndIf}
     FunctionEnd
     Function WeftProgress
+      ${If} ${Silent}
+        Return
+      ${EndIf}
       StrCpy $0 0
       IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 +2
       StrCpy $0 1
@@ -169,6 +289,19 @@ Var pid
 ; one-click path does. There is no hidden Close button to wait for.
 !macro customInstall
   !insertmacro WeftSendToInstall
+  FileOpen $0 "$INSTDIR\resources\weftmate-install.json" w
+  FileWrite $0 '{"scope":"$installMode","externalQuit":true}'
+  FileClose $0
+  ExecWait '"$appExe" --repair-installation' $0
+  ${If} ${Silent}
+    ${GetParameters} $R0
+    ClearErrors
+    ${GetOptions} $R0 "--launch" $R1
+    ${IfNot} ${Errors}
+      Exec '"$appExe"'
+    ${EndIf}
+    !insertmacro quitSuccess
+  ${EndIf}
   ${IfNot} ${Silent}
     HideWindow
     StrCpy $1 ""

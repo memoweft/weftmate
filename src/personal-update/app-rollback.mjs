@@ -3,18 +3,20 @@ import { app } from 'electron';
 import { mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { spawn } from 'node:child_process';
-import { readUninstallRegistry } from './watchdog-commands.mjs';
+import { readUninstallRegistry, recoveryEnvironment } from './watchdog-commands.mjs';
 import { createHostLog } from '../host-log.mjs';
 import { randomUUID } from 'node:crypto';
 import { atomicJson } from './store.mjs';
 import { copyPhysicalTree, removePhysicalTree, copyPhysicalFile } from './physical-copy.mjs';
 import packageInfo from '../../package.json' with { type: 'json' };
+import { installationScope } from '../desktop-installation.mjs';
 const controlAppData = () => packageInfo.desktopIdentity ? join(app.getPath('appData'), packageInfo.desktopIdentity) : app.getPath('appData');
 
 export const rollbackRoot = appData => join(appData, 'WeftMate', 'app-recovery');
 export async function prepareAppRollback({ configFile, nextVersion, appData = app.getPath('appData'),
   timeoutMs = 180000, cacheDirectory, installer, installerSha256 }) {
   if (!app.isPackaged || process.platform !== 'win32') throw new Error('APP_RECOVERY_REQUIRES_WINDOWS_PACKAGE');
+  if (installationScope() === 'all') throw new Error('APP_UPDATE_REQUIRES_INTERACTIVE_INSTALLER');
   const root = rollbackRoot(appData), snapshot = join(root, randomUUID());
   await mkdir(snapshot, { recursive: true });
   const installation = dirname(process.execPath);
@@ -22,6 +24,7 @@ export async function prepareAppRollback({ configFile, nextVersion, appData = ap
     await copyPhysicalTree(installation, join(snapshot, 'program'));
     if (cacheDirectory) await copyPhysicalTree(cacheDirectory, join(snapshot, 'cache'));
     await writeFile(join(snapshot, 'monitor.mjs'), await readFile(new URL('./app-watchdog.mjs', import.meta.url)));
+    await writeFile(join(snapshot, 'process-output.mjs'), await readFile(new URL('../process-output.mjs', import.meta.url)));
     await writeFile(join(snapshot, 'physical-copy.mjs'), await readFile(new URL('./physical-copy.mjs', import.meta.url)));
     await writeFile(join(snapshot, 'watchdog-commands.mjs'), await readFile(new URL('./watchdog-commands.mjs', import.meta.url)));
     await writeFile(join(snapshot, 'watchdog-host-log.mjs'), await readFile(new URL('../host-log.mjs', import.meta.url)));
@@ -34,7 +37,7 @@ export async function prepareAppRollback({ configFile, nextVersion, appData = ap
     state.dataDirectory = app.getPath('userData');
     await atomicJson(join(root, 'pending.json'), state);
     const child = spawn(recoveryExe, [join(snapshot, 'monitor.mjs'), root], {
-      cwd: snapshot, detached: true, windowsHide: true, stdio: 'ignore', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+      cwd: snapshot, detached: true, windowsHide: true, stdio: 'ignore', env: recoveryEnvironment(),
     });
     await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject); });
     child.unref();
