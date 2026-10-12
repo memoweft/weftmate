@@ -34,6 +34,7 @@ const luminance=(hex:string)=>{const rgb=hex.slice(1).match(/../g)!.map(v=>parse
 const contrast=(a:string,b:string)=>{const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
 test('health text tokens have both themes and at least 4.5:1 contrast on card and own tinted backgrounds',()=>{
  const tokens=JSON.parse(read('design/tokens/tokens.json')),colors=tokens.shared.color;
+ const {WeftHealth:H,WeftHealthGraphics:G}=setup();for(const id of Object.keys(H.metrics))for(const theme of ['light','dark'])assert.ok(colors['health-'+G.metricPalette(id)+'-'+theme],`Missing metric palette: ${id}/${theme}`);
  for(const name of ['recovery','sleep','load','stress-calm','stress-moderate','stress-high','stress-extreme','energy-low','energy-mid','energy-high','fitness-age','hrv','resting-heart-rate','respiratory','oxygen','temperature'])for(const theme of ['light','dark']){
   const color=colors['health-'+name+'-'+theme],soft=colors['health-'+name+'-soft-'+theme],card=colors['health-card-'+theme];assert.match(color,/^#[0-9A-F]{6}$/);for(const background of [soft,card])assert.ok(contrast(color,background)>=4.5,`${name}/${theme}: ${contrast(color,background)}`);
   const native='health'+name.split('-').map(s=>s[0].toUpperCase()+s.slice(1)).join('');assert.equal(tokens.apple.colors[native][theme],color);
