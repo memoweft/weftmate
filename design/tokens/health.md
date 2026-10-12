@@ -21,6 +21,6 @@
 | oxygen | `#A93694` | `#EAA0DD` | `healthOxygen` |
 | temperature | `#B24A12` | `#FFAC75` | `healthTemperature` |
 
-表内每个 Apple 引用都有对应的 `Soft` 后缀底色，例如 `AppleTokens.Colors.healthRecoverySoft`。睡眠分期另有 `healthSleepDeep / healthSleepCore / healthSleepRem / healthSleepAwake` 及其 `Soft` 底色。共用的健康卡片、轨道、主文字、次文字为 `healthCard / healthTrack / healthInk / healthMuted`。这些都是浅深自动适配的 SwiftUI（苹果界面框架）颜色，可直接用于 iPhone 原生健康页面；本包只生成颜色，不修改原生视图。
+表内每个 Apple 引用都有对应的 `Soft` 后缀底色，例如 `AppleTokens.Colors.healthRecoverySoft`。睡眠分期另有 `healthSleepDeep / healthSleepCore / healthSleepRem / healthSleepAwake` 及其 `Soft` 底色。共用的健康卡片、轨道、页面底、主文字、次文字为 `healthCard / healthTrack / healthCanvas / healthInk / healthMuted`。这些都是浅深自动适配的 SwiftUI（苹果界面框架）颜色，可直接用于 iPhone 原生健康页面；本包只生成颜色，不修改原生视图。
 
 运行 `node scripts/generate-tokens.mjs` 同时生成网页 CSS（层叠样式表）、`generated/apple/DesignTokens.json` 和 `DesignTokens.swift`；`node scripts/generate-tokens.mjs --check` 校验一致性。新增健康颜色没有改变 Android（安卓）的原生颜色或动效生成物。固定测试见 `tests/health-visuals.test.ts` 和 `tests/design-tokens.test.ts`。

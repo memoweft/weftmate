@@ -290,3 +290,5 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 .health-metric-tabs [aria-selected=true],.health-segments [aria-pressed=true],.health-overlay[aria-checked=true] { color:var(--health-color); background:var(--health-color-soft); }
 .health-date-out .health-layout { opacity:.25; transition:opacity var(--wm-duration-base); }
 @media(prefers-reduced-motion:reduce) { .health-date-out .health-layout { opacity:1; } }
+.health-page { --health-canvas:var(--wm-color-health-canvas-light); background:var(--health-canvas); }
+[data-theme=dark] .health-page { --health-canvas:var(--wm-color-health-canvas-dark); }
