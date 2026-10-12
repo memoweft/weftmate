@@ -54,7 +54,7 @@ export function parseClaude(data) {
       if (!['human', 'assistant'].includes(m.sender)) return null;
       if (typeof m.text !== 'string' && !Array.isArray(m.content)) throw formatError();
       return msg(m.sender === 'human' ? 'user' : 'assistant',
-        [textBlocks(m.content) || m.text, names(m.attachments), names(m.files)].filter(Boolean).join('\n'), m.created_at);
+        [Array.isArray(m.content) ? textBlocks(m.content) : m.text, names(m.attachments), names(m.files)].filter(Boolean).join('\n'), m.created_at);
     }));
   });
 }

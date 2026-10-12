@@ -8,8 +8,8 @@ const root=resolve(import.meta.dirname,'../..'),phase=process.argv[2];
 const commands={electron:['tests/integration/mem-1-import-history.mjs'],required:['.github/scripts/ci-unit-tests.mjs','required'],vendor:['.github/scripts/ci-unit-tests.mjs','vendor'],mobile:['--test','tests/personal-cloud-web.test.ts','apps/mobile-ui/tests/cloud-login.test.mjs','apps/mobile-ui/tests/chat-interactions.test.mjs','apps/mobile-ui/tests/visual-interactions.test.mjs','apps/mobile-ui/tests/approval-interactions.test.mjs']};
 commands.resume=[...commands.electron,'--resume'];
 if(!commands[phase])throw Error('Unknown MEM-1 heavy phase');
-const identity=`MEM-1 ${new Date().toISOString()} ${phase}`,directory='D:/AIProjects/WeftMate/Runtime/Orchestrator';let lock;
-while(!lock){for(const n of [1,2,3]){const file=join(directory,`heavy-${n}.lock`);let handle;try{handle=await open(file,'wx');await handle.writeFile(identity);await handle.close();lock=file;console.log(`MEM-1 acquired heavy-${n} for ${phase}`);break;}catch(e){await handle?.close();if(e.code!=='EEXIST')throw e;}}if(!lock){console.log(`MEM-1 waiting for a heavy slot: ${phase}`);await delay(120000);}}
+const directory='D:/AIProjects/WeftMate/Runtime/Orchestrator';let lock,identity;
+while(!lock){for(const n of [1,2,3]){const file=join(directory,`heavy-${n}.lock`);let handle;try{handle=await open(file,'wx');identity=`MEM-1 ${new Date().toISOString()} ${phase}`;await handle.writeFile(identity);await handle.close();lock=file;console.log(`MEM-1 acquired heavy-${n} for ${phase}`);break;}catch(e){await handle?.close();if(e.code!=='EEXIST')throw e;}}if(!lock){console.log(`MEM-1 waiting for a heavy slot: ${phase}`);await delay(120000);}}
 let output='',child,logWrites=Promise.resolve();
 try{
  const logFile=join(root,'.local','mem-1',`${phase}.log`);

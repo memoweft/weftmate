@@ -214,6 +214,7 @@ export function createPersonalDesktop({ systemManager = null, dataManager = null
     const response = await fetchLocal('/memory/backfill', { method: 'POST', headers: { 'content-type': 'application/json', 'x-weftmate-csrf': current.csrfToken },
       body: JSON.stringify({ action: 'import-preview', app: appName, paths: selection.filePaths }) });
     const body = await response.json(); if (!response.ok) throw new Error(body.error?.code ?? body.code ?? 'IMPORT_FORMAT_UNKNOWN');
+    if ((await jsonLocal('/auth/me')).account?.ownerId !== owner) throw new Error('ACCOUNT_CHANGED');
     return body;
   });
   const nativeProjects = async () => {

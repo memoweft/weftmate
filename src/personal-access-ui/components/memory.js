@@ -136,7 +136,8 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
                 ? source.summary : source.contentAvailable === false ? '此来源当前不可读。' : '摘要当前不可用。');
             const raw = ui.element('p', 'memory-source-raw', source.contentAvailable === true && typeof source.rawContent === 'string'
                 ? `${globalThis.WeftImportSourceText?.(source) ?? source.rawContent}${source.rawContentTruncated === true ? '\n（仅显示可读片段）' : ''}` : '原文当前不可用。');
-            row.append(meta, summary, raw);
+            if (imported) row.append(meta, raw);
+            else row.append(meta, summary, raw);
             list.append(row);
         }
     }

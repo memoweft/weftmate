@@ -207,20 +207,21 @@ function renderMemoryDetail(target=memoryTarget,token=memoryToken()){target=memo
   if(memory.sourceError)target.append(el('p','inline-error',memory.sourceError));
   if(!memory.sourcesLoading&&!memory.sourceError&&memory.sources.length){const sourceGroup=group('来源与读取状态',[]);const box=sourceGroup.querySelector('.group-body');
     for(const source of memory.sources){const entry=el('div','');const relation=typeof source.relation==='string'?source.relation:'来源';
+      if(source.importSource){const imported=source.importSource;entry.append(el('p','muted',`来自 ${imported.appName}，${imported.originalAt?new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'long'}).format(new Date(imported.originalAt)):'日期不明'}的一段对话`));}
       entry.append(el('strong','',`${memoryRelationLabel(relation)} · ${memoryCurrentnessLabel(source.currentnessState)}`));
       if(typeof source.recordedAt==='string')entry.append(el('p','muted',`记录于 ${timeLabel(source.recordedAt)}`));
       const permissions=source.permissions&&typeof source.permissions==='object'?source.permissions:{};
       entry.append(el('p','muted',`记忆内容的模型目的地：本机模型${permissions.allowLocalRead===true?'允许':'未允许'} · 云端模型${permissions.allowCloudRead===true?'允许':'未允许'} · 记忆推理${permissions.allowInference===true?'允许':'未允许'}`));
       entry.append(el('p','muted','这些权限只描述记忆内容的模型读取用途，不代表设备操作或删除权限。'));
-      if(source.summary!==null&&typeof source.summary==='string')entry.append(el('p','muted',`摘要：${source.summary}`));
+      if(!source.importSource&&source.summary!==null&&typeof source.summary==='string')entry.append(el('p','muted',`摘要：${source.summary}`));
       if(source.contentAvailable===true&&typeof source.rawContent==='string'){
         if(source.rawContentTruncated===true)entry.append(el('p','muted','以下原文已由服务端截断。'));
         entry.append(el('p','',globalThis.WeftImportSourceText?.(source)??source.rawContent));
       }else if(source.contentAvailable===false)entry.append(el('p','muted','此来源正文当前不可读取。'));
-      else if(source.summary===null||typeof source.summary!=='string')entry.append(el('p','muted','服务端没有提供可读取的正文或摘要。'));
+      else if(source.importSource||source.summary===null||typeof source.summary!=='string')entry.append(el('p','muted','这段聊天记录当前不可读。'));
       if(memoryActionAllowed('deleteEvidence',source))entry.append(action('删除这条来源',()=>{
         openMemoryConfirmation({operation:'deleteEvidence',id:source.evidenceId,
-          summary:source.summary||'这条来源',confirmText:''},target,token)},false));
+          summary:source.importSource?`来自 ${source.importSource.appName} 的一段对话`:source.summary||'这条来源',confirmText:''},target,token)},false));
       box.append(entry)}target.append(sourceGroup)}
   else if(!memory.sourcesLoading&&!memory.sourceError&&memory.detail&&!memory.sources.length)target.append(el('p','muted','服务端没有返回来源记录。'));
   renderMemoryActions(target,token)}

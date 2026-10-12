@@ -21,7 +21,7 @@ export function createMemoryHttpHandler(context) {
       if (url.search) throw failure('INVALID_REQUEST');
       if (request.method === 'GET') return context.json(response, 200, { ownerId, ...await context.memoryIngestion.preview(ownerId) });
       if (request.method === 'POST') {
-        const body = await context.readJson(request);
+        const body = await context.readJson(request, context.historyImport.requestLimit(ownerId));
         if (body.action === 'import-preview') {
           if (request.headers['x-weftmate-desktop'] !== context.libraryDesktopToken) throw failure('IMPORT_NATIVE_SELECTION_REQUIRED', 403);
           const preview = await context.historyImport.preview(ownerId, body.app, body.paths);
