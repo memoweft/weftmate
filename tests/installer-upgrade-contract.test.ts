@@ -10,6 +10,7 @@ test('silent setup guards drawing, preserves upstream /D resolution and refuses 
   }
   assert.match(installer, /ADMIN_REQUIRED/);
   assert.match(installer, /WeftFail 740/);
+  assert.match(installer, /WeftFail 1633/);
   assert.match(installer, /\$installMode == "all"/);
   assert.match(installer, /--launch/);
   assert.doesNotMatch(installer, /!insertmacro _CHECK_APP_RUNNING/);

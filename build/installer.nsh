@@ -55,6 +55,25 @@
   ${IfNot} ${Errors}
     SetSilent silent
   ${EndIf}
+  ; Upstream's unsupported-platform checks display MessageBox without /SD.
+  ; Exit before those checks when silent, including the --silent alias.
+  ${If} ${Silent}
+    ${If} ${IsWin2000}
+    ${OrIf} ${IsWinME}
+    ${OrIf} ${IsWinXP}
+    ${OrIf} ${IsWinVista}
+      !insertmacro WeftFail 1633 "UNSUPPORTED_SYSTEM: this Windows version is unsupported"
+    ${EndIf}
+    !ifdef APP_64
+      !ifndef APP_ARM64
+        !ifndef APP_32
+          ${IfNot} ${RunningX64}
+            !insertmacro WeftFail 1633 "UNSUPPORTED_SYSTEM: a 64-bit Windows system is required"
+          ${EndIf}
+        !endif
+      !endif
+    !endif
+  ${EndIf}
   SetRegView 64
   ReadRegStr $weftOldUser HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
   ReadRegStr $weftOldMachine HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
