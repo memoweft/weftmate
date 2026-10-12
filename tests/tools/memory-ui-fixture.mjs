@@ -2,7 +2,8 @@ import { createServer } from 'node:http';
 import { Readable } from 'node:stream';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
@@ -15,8 +16,7 @@ const personalAccessModule = join(repositoryRoot, 'src', 'personal-access', 'ind
 if (!existsSync(personalAccessModule)) throw new Error('Set WEFTMATE_REPO_ROOT to the WeftMate repository when running an isolated candidate.');
 const { createPersonalAccessService } = await import(pathToFileURL(personalAccessModule).href);
 const runId = `memory-ui-${new Date().toISOString().replaceAll(':', '').replaceAll('.', '-')}-${process.pid}`;
-const dataRoot = join(candidateRoot, 'test-data', runId);
-await mkdir(dataRoot, { recursive: true });
+const dataRoot = await mkdtemp(join(process.env.RUNNER_TEMP || tmpdir(), 'weftmate-memory-ui-'));
 
 const sessions = new Map();
 const memoryStores = new Map();
@@ -430,8 +430,10 @@ await writeFile(join(dataRoot, 'process.json'), JSON.stringify({ pid: process.pi
   apiHost: '127.0.0.1', apiPort: Number(new URL(origin).port), startedAt: new Date().toISOString() }, null, 2), { flag: 'wx' });
 console.log(JSON.stringify({ ...fixture, accounts: fixture.accounts.map(({ cookie, csrfToken, ...account }) => account), dataRoot }, null, 2));
 const stop = async () => {
+  proxy.closeAllConnections();
   await new Promise((resolve) => proxy.close(resolve));
   await service.close();
+  await rm(dataRoot, { recursive: true, force: true });
   process.exit(0);
 };
 process.once('SIGINT', stop);
