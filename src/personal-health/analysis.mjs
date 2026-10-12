@@ -1,5 +1,6 @@
 /** Versioned, deterministic personal comparisons. No model and no population thresholds. */
 import {hasPrivateContent} from '../personal-access/temporary-chats.mjs';
+import { resolvedComputerUsage, computerNight } from '../personal-access/computer-usage.mjs';
 import { localNotificationTime } from '../personal-access/notification-policy.mjs';
 import { HEALTH_DEFAULTS } from './records-schema.mjs';
 import {healthAdvanced,healthStress,healthEnergy,healthFitnessAge} from './advanced.mjs';
@@ -14,10 +15,10 @@ const clamp=(v,min=0,max=100)=>Math.max(min,Math.min(max,v));
 export function percentile(values,p){const a=values.filter(known).sort((a,b)=>a-b);if(!a.length)return null;const i=(a.length-1)*p,l=Math.floor(i);return a[l]+(a[Math.ceil(i)]-a[l])*(i-l);}
 export const average=values=>{const a=values.filter(known);return a.length?a.reduce((a,b)=>a+b,0)/a.length:null;};
 const record=(state,day)=>state.days?.[day]?.health?.status==='available'?state.days[day].health:null;
-export function metricValue(state,account={},day,id) {
-  const r=record(state,day),usage=account.dailyDigest?.days?.[day]?.usage;
-  if(id==='usageActiveMinutes')return usage?.estimatedActiveMinutes??null;
-  if(id==='usageLateNightMinutes')return usage?.lateNightMinutes??null;
+export function metricValue(state,account={},day,id,zone='UTC') {
+  const r=record(state,day);
+  if(id==='usageActiveMinutes')return resolvedComputerUsage(account,day,zone).activeMinutes;
+  if(id==='usageLateNightMinutes')return resolvedComputerUsage(account,day,zone).lateNightMinutes;
   if(!r)return null;
   if(['inBedMinutes','deepMinutes','coreMinutes','remMinutes','awakeMinutes'].includes(id))return r.sleep?.[id]??null;
   if(id==='workoutMinutes')return r.workouts.length?(r.workouts.some(w=>known(w.minutes))?r.workouts.reduce((n,w)=>n+(w.minutes??0),0):null):0;
@@ -30,8 +31,8 @@ export function comparison(value,values){
   const baseline=percentile(a,.5),low=percentile(a,.15),high=percentile(a,.85),state=value<low?'low':value>high?'high':'normal';
   return {value,baseline,low,high,state,label:{normal:'正常',low:'比平时低',high:'比平时高'}[state]};
 }
-const previous=(state,day,id,account={})=>Array.from({length:28},(_,n)=>metricValue(state,account,healthShiftDay(day,-n-1),id));
-const vital=(state,day,id,account)=>({id,...comparison(metricValue(state,account,day,id),previous(state,day,id,account))});
+const previous=(state,day,id,account={},zone='UTC')=>Array.from({length:28},(_,n)=>metricValue(state,account,healthShiftDay(day,-n-1),id,zone));
+const vital=(state,day,id,account,zone='UTC')=>({id,...comparison(metricValue(state,account,day,id,zone),previous(state,day,id,account,zone)),...(['usageActiveMinutes','usageLateNightMinutes'].includes(id)?{source:resolvedComputerUsage(account,day,zone).source}:{})});
 const emptyScore=(missing=[])=>({score:null,state:'insufficient',label:'再戴几天就有对比了',reasons:[],missing,baseline:null,low:null,high:null});
 const relative=(value,baseline,scale,direction=1)=>clamp(70+direction*30*(value-baseline)/scale);
 function combine(parts,all){
@@ -100,12 +101,13 @@ export function healthScores(state,day,zone='UTC'){
   return raw;
 }
 export function healthOverview(state,account,day,zone='UTC',now=Infinity){
-  state={settings:HEALTH_DEFAULTS,...state};const r=record(state,day),row=state.days?.[day],usage=account.dailyDigest?.days?.[day]?.usage;
+  state={settings:HEALTH_DEFAULTS,...state};const r=record(state,day),row=state.days?.[day];
   const scores=healthScores(state,day,zone),advanced=healthAdvanced(state,day,zone,scores,now);
-  return {day,capabilities:{record:3,profile:true},...advanced,connected:Object.values(state.days??{}).some(d=>d.health.status==='available'),updatedAt:row?.updatedAt??null,insight:r?row.insight??null:null,...scores,vitals:VITAL_IDS.map(id=>vital(state,day,id,account)),activity:{steps:r?.steps??null,activeEnergyKcal:r?.activeEnergyKcal??null,exerciseMinutes:r?.exerciseMinutes??null,workouts:r?.workouts??[]},usage:{lastUsedAt:lastNightUsage(account,day,zone),activeMinutes:usage?.estimatedActiveMinutes??null,lateNightMinutes:usage?.lateNightMinutes??null}};
+  const computer=computerNight(account,day,zone);
+  return {day,capabilities:{record:3,profile:true},...advanced,connected:Object.values(state.days??{}).some(d=>d.health.status==='available'),updatedAt:row?.updatedAt??null,insight:r?row.insight??null:null,...scores,vitals:VITAL_IDS.map(id=>vital(state,day,id,account)),activity:{steps:r?.steps??null,activeEnergyKcal:r?.activeEnergyKcal??null,exerciseMinutes:r?.exerciseMinutes??null,workouts:r?.workouts??[]},usage:{...resolvedComputerUsage(account,day,zone),lastUsedAt:computer?computer.lastUsedAt:lastNightUsage(account,day,zone),lastUsedAtSource:computer?'computer':'chat'}};
 }
 export function healthMetrics(state,account,id,days,today,zone,now=Infinity){
-  const points=Array.from({length:days},(_,n)=>{const day=healthShiftDay(today,n-days+1);if(['stress','energy','fitnessAge'].includes(id)){const s=id==='fitnessAge'?healthFitnessAge(state,day):id==='stress'?healthStress(state,day,zone,now):healthEnergy(state,day,zone,healthScores(state,day,zone),healthStress(state,day,zone,now),now),value=id==='stress'?s?.average:id==='fitnessAge'?s?.fitnessAge:s?.current;return {day,value:value??null,baseline:null,low:null,high:null,state:s?.state??'insufficient',label:s?.label??'未记录'};}if(['recovery','sleep','load'].includes(id)){const s=healthScores(state,day,zone)[id];return {day,value:s.score,baseline:s.baseline,low:s.low,high:s.high,state:s.state,label:s.label};}return {day,...vital(state,day,id,account)};});
+  const points=Array.from({length:days},(_,n)=>{const day=healthShiftDay(today,n-days+1);if(['stress','energy','fitnessAge'].includes(id)){const s=id==='fitnessAge'?healthFitnessAge(state,day):id==='stress'?healthStress(state,day,zone,now):healthEnergy(state,day,zone,healthScores(state,day,zone),healthStress(state,day,zone,now),now),value=id==='stress'?s?.average:id==='fitnessAge'?s?.fitnessAge:s?.current;return {day,value:value??null,baseline:null,low:null,high:null,state:s?.state??'insufficient',label:s?.label??'未记录'};}if(['recovery','sleep','load'].includes(id)){const s=healthScores(state,day,zone)[id];return {day,value:s.score,baseline:s.baseline,low:s.low,high:s.high,state:s.state,label:s.label};}return {day,...vital(state,day,id,account,zone)};});
   return {id,days,timeZone:zone,average:round(average(points.map(p=>p.value))),points};
 }
 export function healthCalendar(state,month,zone){const first=month+'-01',next=healthShiftDay(first,32).slice(0,7)+'-01',days=[];for(let day=first;day<next;day=healthShiftDay(day,1)){const s=healthScores(state,day,zone);days.push({day,hasWorkout:(record(state,day)?.workouts.length??0)>0,sleepScore:s.sleep.score,recoveryScore:s.recovery.score});}return {month,days};}

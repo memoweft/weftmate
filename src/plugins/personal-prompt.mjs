@@ -23,7 +23,7 @@ const delegationGuidance = 'Treat delegated work as owned by that child until it
 const researchGuidance = 'For research, first state a short deliverable outline in visible reply text, then gather only evidence needed for it. A brief explanation should be a few short paragraphs with links. For a major-version comparison, state that you compare initial major releases unless the user asks about current minor versions; do not expand into all backports, support calendars or build/dependency audits. Prefer official overview/release summaries. Fetch independent pages in pairs; read targeted captured paragraphs for a genuinely missing necessary fact. Preserve source conditions and exceptions; omit peripheral ambiguous details or label them uncertain in the document. When the outlined main facts are supported, draft the document, perform the configured key-claim self-check using existing evidence, save the corrected final file, read it back once for completeness, and finish. Do not restart research to verify the same facts or add optional sections.';
 const LOAD = 'load_tools';
 const groups = { goal: ['create_goal', 'get_goal', 'update_goal'], jobs: ['job_list', 'job_output', 'job_kill'], subagent: ['subagent', 'send_message', 'interrupt_agent'] };
-export const isHealthQuestion=question=>/健康|压力|电能|体能年龄|身体年龄|睡眠|睡得|睡了|熬夜|恢复|训练负荷|运动负荷|运动记录|心率|血氧|手腕温度|步数|摄氧量|\b(?:sleep|recovery|stress|energy|fitness age|hrv|spo2)\b/i.test(question);
+export const isHealthQuestion=question=>/电脑使用|电脑用了|屏幕时间|(?:昨晚|昨夜|深夜).*电脑|电脑.*(?:用了多久|几点|时长)|健康|压力|电能|体能年龄|身体年龄|睡眠|睡得|睡了|熬夜|恢复|训练负荷|运动负荷|运动记录|心率|血氧|手腕温度|步数|摄氧量|\b(?:sleep|recovery|stress|energy|fitness age|hrv|spo2)\b/i.test(question);
 /** Pure projection: never changes tool execution, permission, or parameter schemas. */
 export function presentPersonalPrompt(assembly, selected = new Set()) {
     assembly = { ...assembly, tools: assembly.tools.map(tool => descriptions[tool.name]
@@ -44,7 +44,7 @@ export function presentPersonalPrompt(assembly, selected = new Set()) {
       { name: 'weftmate:memory-guidance', text: memoryGuidance },
       { name: 'weftmate:shared-decisions', text: personalMemoryGuidance },
       { name: 'weftmate:approval-guidance', text: approvalGuidance },
-      ...(toolNames.has('health_query')&&assembly.tools.some(tool=>tool.name==='health_query')?[{name:'weftmate:health-guidance',text:'本人问自己的睡眠、恢复、训练负荷、压力、电能、体能年龄、健康趋势或熬夜关联时，先直接调用 health_query 查询最新汇总数字，再据返回结果回答；背景摘要不能替代这次查询。普通健康数值提问用 metric=overview（默认最近7天），明确问某项就用该指标id。不必读文件、写脚本或追问授权。工具返回还没接上／缺测时照实说，不编造。只相对本人平时，不提疾病名、不作诊断、不建议用药；使用与睡眠同时变化只能说有关联，不能说导致。'}]:[]),
+      ...(toolNames.has('health_query')&&assembly.tools.some(tool=>tool.name==='health_query')?[{name:'weftmate:health-guidance',text:'本人问自己的睡眠、恢复、训练负荷、压力、电能、体能年龄、健康趋势、电脑使用时段或熬夜关联时，先直接调用 health_query 查询最新汇总数字，再据返回结果回答；背景摘要不能替代这次查询。普通健康数值提问用 metric=overview（默认最近7天），明确问某项就用该指标id。不必读文件、写脚本或追问授权。使用分钟优先看 source=computer 的本机观察，无电脑记录才看 source=chat 的估算；问昨晚几点仍在用电脑时优先原样引用 usage.lastUsedAtLocal 的钟点和 lastUsedAtSource；当地时刻由工具按账号时区换算，不再用模型或系统时区转换。usageConnected=true 即使没有身体测量仍可回答电脑使用。工具返回还没接上／缺测时照实说，不编造。只相对本人平时，不提疾病名、不作诊断、不建议用药；使用与睡眠同时变化只能说有关联，不能说导致。'}]:[]),
       ...(['web_fetch', 'browser', 'web_search'].some(name => selected.has(name)) ? [{ name: 'weftmate:research-guidance', text: researchGuidance }] : []),
       ...(groups.subagent.some(name => selected.has(name)) || groups.jobs.some(name => selected.has(name)) ? [{ name: 'weftmate:delegation-guidance', text: delegationGuidance }] : [])],
       tools: assembly.tools.filter(tool => toolNames.has(tool.name)) };

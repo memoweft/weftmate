@@ -9,6 +9,15 @@ import java.security.spec.ECGenParameterSpec
 class CloudAppUnitTest {
     private val host = "https://host.example.com"
     private val issuer = "https://cloud.example.com/personal/v1/cloud/oidc"
+    @Test fun emailCodeLoginUsesExactPostRoutesOnTheConfiguredIssuer() {
+        for (path in listOf("auth/login/code/request", "auth/login/code/confirm", "hosts/offline/status", "feedback")) {
+            val url = "https://cloud.example.com/personal/v1/cloud/$path"
+            assertTrue(cloudAppRouteAllowed(url, "POST", host, issuer))
+            for (method in listOf("GET", "PUT", "DELETE")) assertFalse(cloudAppRouteAllowed(url, method, host, issuer))
+            for (bad in listOf(url + "?owner=other", url + "/raw", url.replace("cloud.example.com", "evil.example.com")))
+                assertFalse(cloudAppRouteAllowed(bad, "POST", host, issuer))
+        }
+    }
     @Test fun fixedOriginsAndExactCloudAccountRoutes() {
         for (path in listOf("auth/authorization", "auth/registration/request", "auth/recovery/complete",
             "auth/account/delete", "auth/email/change/confirm", "auth/logout/others", "devices/rename", "hosts/connect"))

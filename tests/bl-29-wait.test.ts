@@ -14,7 +14,10 @@ test('BL-29 existing chat changes wait for a native delta, wake immediately and 
     const page=await f.request(`/chats/${chat.chatId}/events?limit=100`),at=Date.now();
     const pending=f.request(`/chats/${chat.chatId}/changes?cursor=${page.syncCursor}&liveRevision=${page.liveRevision}&waitMs=2000&limit=100`);
     await new Promise(r=>setTimeout(r,100));f.progress.chunk('即时增量。');
-    const changed=await pending;assert.ok(Date.now()-at<700,'native event wakes before the timeout');
+    let changed=await pending;
+    // The finished reply above is projected asynchronously and may wake the wait first: follow the cursor to the chunk itself.
+    for(let n=0;n<5&&!changed.liveEvents?.length;n++)changed=await f.request(`/chats/${chat.chatId}/changes?cursor=${changed.nextCursor}&liveRevision=${changed.liveRevision}&waitMs=2000&limit=100`);
+    assert.ok(Date.now()-at<700,'native event wakes before the timeout');
     assert.equal(changed.liveEvents[0].data.text,'即时增量。');assert.ok(changed.liveRevision>page.liveRevision);
     const stable=await f.request(`/chats/${chat.chatId}/changes?cursor=${changed.nextCursor}&limit=100`);
     assert.equal(stable.liveRevision,changed.liveRevision,'an unchanged read cannot manufacture a new live revision');
