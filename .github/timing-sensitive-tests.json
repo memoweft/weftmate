@@ -2,6 +2,12 @@
   "evidence": "tests/evidence/ci-1/flaky-table.json",
   "tests": [
     {
+      "file": "tests/ci-1-timing-probe.test.ts",
+      "name": "CI-1 temporary clock budget passes only on second file attempt",
+      "reason": "Temporary explicitly requested CI-1 fault injection; remove this test and entry before the final six runs.",
+      "failureCount": 1
+    },
+    {
       "file": "tests/bl-29-rework.test.ts",
       "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
       "reason": "Real Electron/mobile must synchronize within 1000/6000/7000ms; cloud logs contain 55000ms controller deadlines and a real UI wait timeout. Historical spawn EINVAL was a separate already-fixed fixture failure.",
