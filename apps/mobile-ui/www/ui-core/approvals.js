@@ -40,10 +40,10 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }
     }
     async function saveApprovalMode(mode) {
-        if (!effects.acceptApprovalRisk(mode))
-            return;
         const sessionId = core.state.selectedSessionId;
         const generation = core.state.identityGeneration;
+        if (!await effects.acceptApprovalRisk(mode)) return;
+        if (core.state.identityGeneration !== generation || core.state.selectedSessionId !== sessionId) return;
         if(!sessionId&&core.state.newConversation){
             core.state.newConversationApprovalMode=mode;core.currentApprovalMode=mode;
             effects.renderApprovalMode();effects.closeApprovalMenu();effects.focusApprovalMode();return;

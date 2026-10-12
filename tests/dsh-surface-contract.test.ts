@@ -48,7 +48,9 @@ describe('official DSH surface shell contract', () => {
     for (const forbidden of ['wm:stage1:', 'wm:stage2:', 'sessions:', 'apiKey']) {
       assert.doesNotMatch(preload, new RegExp(forbidden.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }
-    assert.deepEqual([...preload.matchAll(/ipcRenderer\.on\('([^']+)'/g)].map(match => match[1]), ['wm:mod-window:open-project']);
+    assert.deepEqual([...preload.matchAll(/ipcRenderer\.on\('([^']+)'/g)].map(match => match[1]), ['wm:ui:notice', 'wm:mod-window:open-project']);
+    assert.deepEqual([...preload.matchAll(/ipcRenderer\.send\('([^']+)'/g)].map(match => match[1]), ['wm:ui:notice-closed']);
+    assert.match(main, /event\.sender !== target \|\| event\.senderFrame !== target\.mainFrame \|\| noticeId !== id/);
     assert.match(preload, /removeListener\('wm:mod-window:open-project', listener\)/);
   });
 

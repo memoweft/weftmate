@@ -109,10 +109,10 @@ const mobileMarkup = String.raw`
     <div id="approval-mode-popover" class="popover approval-mode-popover" role="menu" aria-label="审批模式" hidden></div>
     <div id="approval-risk-dialog" class="approval-risk-dialog" role="dialog" aria-modal="true" aria-labelledby="approval-risk-title" hidden>
       <section class="approval-risk-sheet">
-        <h2 id="approval-risk-title">允许所有操作？</h2>
+        <h2 id="approval-risk-title">启用全部允许？</h2>
         <p>删除或覆盖文件、修改系统、安装软件、发送或发布内容、付款都可能直接执行，不再询问你。部分操作无法撤销。</p>
         <p id="approval-risk-scope"></p>
-        <div class="approval-risk-actions"><button id="approval-risk-cancel" class="secondary" type="button">取消</button><button id="approval-risk-confirm" class="primary" type="button">确认全部允许</button></div>
+        <div class="approval-risk-actions"><button id="approval-risk-cancel" class="secondary" type="button">取消</button><button id="approval-risk-confirm" class="danger" type="button">确认全部允许</button></div>
       </section>
     </div>
   </div>

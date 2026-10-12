@@ -824,7 +824,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('approval-mode-button').addEventListener('click',()=>{void openApprovalModes()});
   $('approval-risk-cancel').addEventListener('click',()=>closeApprovalRisk());
   $('approval-risk-confirm').addEventListener('click',()=>{if(approvalModeState.confirmation)void saveApprovalMode('allow-all',approvalModeState.confirmation)});
-  $('approval-risk-dialog').addEventListener('keydown',event=>{if(event.key==='Tab'){
+  $('approval-risk-dialog').addEventListener('keydown',event=>{event.stopPropagation();if(event.key==='Enter'&&!event.isComposing){event.preventDefault();if(approvalModeState.confirmation)void saveApprovalMode('allow-all',approvalModeState.confirmation)}if(event.key==='Escape'){event.preventDefault();closeApprovalRisk()}if(event.key==='Tab'){
     event.preventDefault();(document.activeElement===$('approval-risk-cancel')?$('approval-risk-confirm'):$('approval-risk-cancel')).focus()}});
   $('approval-mode-popover').addEventListener('keydown',event=>{
     const options=[...$('approval-mode-popover').querySelectorAll('button:not(:disabled)')],index=options.indexOf(document.activeElement);
