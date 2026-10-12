@@ -1,0 +1,27 @@
+{
+  "model": "mimo-v2.6-flash",
+  "acceptedRun": {
+    "mimoRequests": 6,
+    "itemAnalysisRequests": 1,
+    "topInsightRequests": 0,
+    "itemCacheHitExtraRequests": 0
+  },
+  "priorAttempts": [
+    {
+      "attempt": "initial item model validation",
+      "mimoRequests": 1,
+      "result": "statistics fallback; supplied calendar date tokens unsupported"
+    },
+    {
+      "attempt": "summary-only diagnostic",
+      "mimoRequests": 1,
+      "result": "response is valid after exact supplied date support"
+    },
+    {
+      "attempt": "second Electron acceptance",
+      "mimoRequests": 6,
+      "result": "item model/cache and both native queries pass; visible reply assertion counted Markdown asterisks"
+    }
+  ],
+  "totalMimoRequests": 14
+}
