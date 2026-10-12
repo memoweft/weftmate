@@ -45,7 +45,7 @@ export async function sec1SystemBars({origin,cookie,out}) {
         // This fixture covers approvals; it does not provision an offline cloud model/replica.
         await evaluate(`(async()=>{const me=await(await fetch('/personal/v1/auth/me')).json();if(me.device.authKind!=='cloud')throw Error('Cloud identity required');sec1Core.cloudOfflineIdentity=()=>null;sec1Core.state.cloudAuth.mode='authenticated';await sec1Core.acceptSession(me);await sec1Core.enterAssistant();await sec1Core.selectSession(${JSON.stringify(sessionId)});document.documentElement.dataset.theme=${JSON.stringify(theme)};window.weftSyncSystemBars?.();})()`);
         await until("!!document.querySelector('#approval-bar:not([hidden])')");await new Promise(done=>setTimeout(done,200));
-        const focus=run('shell','dumpsys','window','windows').toString().split('\n').find(line=>line.includes('mCurrentFocus'));assert.ok(focus?.includes(pkg), 'Screenshot must show the test browser, without a system error dialog');
+        const focus=run('shell','dumpsys','window').toString().split('\n').find(line=>line.includes('mCurrentFocus'));assert.ok(focus?.includes(pkg), 'Screenshot must show the test browser, without a system error dialog: '+(focus??'focus unavailable'));
         const dump=run('shell','dumpsys','window','displays').toString();
         await writeFile(resolve('.local/sec-1/system-insets.txt'),dump.split('\n').filter(line=>/navigationBars|statusBars|NavigationBar/.test(line)).join('\n'));
         const insetHeight=kind=>{const line=dump.split('\n').find(line=>line.includes('type='+kind)&&line.includes('visible=true'));const frame=/frame=\[(\d+),(\d+)\]\[(\d+),(\d+)\]/.exec(line??'');return frame?Number(frame[4])-Number(frame[2]):0;};
