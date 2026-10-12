@@ -8,6 +8,8 @@
     steps:['步数','步','chart'],activeEnergyKcal:['活动能量','千卡','chart'],exerciseMinutes:['运动时长','分钟','chart'],
     usageLateNightMinutes:['深夜使用时长','分钟','desktop'],usageActiveMinutes:['电脑使用时长','分钟','desktop'],vo2Max:['最大摄氧量','毫升/千克/分','health']
   };
+  // Change this one constant to keep health in the drawer but return to four bottom tabs.
+  const SHOW_HEALTH_BOTTOM_TAB=true;
   const finite = n => typeof n === 'number' && Number.isFinite(n);
   const value = n => finite(n) ? new Intl.NumberFormat('zh-CN',{maximumFractionDigits:1}).format(n) : '—';
   const duration = n => finite(n) ? `${Math.floor(n/60)}小时${Math.round(n%60)}分钟` : '—';
@@ -23,7 +25,7 @@
     function addBand(){if(!ranges.length)return;const ids=ranges.splice(0);band+=`M${ids.map(i=>`${x(i)},${y(points[i].high)}`).join(' L')} L${ids.reverse().map(i=>`${x(i)},${y(points[i].low)}`).join(' L')} Z `;}
     return {min,max,x,y,path,band,empty:!points.some(p=>finite(p.value))};
   }
-  globalThis.WeftHealth = {metrics,finite,value,duration,dayShift,chart,vitals:['hrvSdnnMs','restingHeartRateBpm','respiratoryRateBrpm','spo2Pct','wristTempC']};
+  globalThis.WeftHealth = {showHealthBottomTab:SHOW_HEALTH_BOTTOM_TAB,metrics,finite,value,duration,dayShift,chart,vitals:['hrvSdnnMs','restingHeartRateBpm','respiratoryRateBrpm','spo2Pct','wristTempC']};
   globalThis.WeftUiCore.factories.health = (core,effects,env) => {
     const model={overview:null,day:'',today:'',metric:'recovery',days:30,view:'today',overlay:false,trend:null,usage:null,weekSleep:null,weekUsage:null,recoveryWeek:null,calendar:null,month:'',loading:false,trendLoading:false,error:'',trendError:'',calendarError:'',calendarLoading:false,generation:0,reminders:new Map(),busy:new Set()};
     let identity,readId=0,trendId=0,calendarId=0;const requests=new Map();
