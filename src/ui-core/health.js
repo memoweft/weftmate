@@ -45,7 +45,7 @@
     async function readHealth(day=model.day){sync();const token=scope(),id=++readId;model.loading=true;model.error='';emit();
       try{const requestedDay=day===model.today?'':day;const overview=await core.accessApi(`/health/overview${requestedDay?`?day=${encodeURIComponent(requestedDay)}`:''}`);if(token!==scope()||id!==readId)return;
         const dayChanged=model.day!==overview.day;if(dayChanged){model.analyses.clear();model.analysisOpen.clear();model.analysisBusy.clear();model.analysisErrors.clear();}model.overview=overview;model.day=overview.day;Object.assign(model,{...(dayChanged?{sleepStages:{},scoreAverages:{},dimensionMetrics:{},dimensionLoading:false,recoveryWeek:null,weekSleep:null,weekUsage:null}:{}),supplementLoading:overview.connected,stageError:''});if(!requestedDay||!model.today)model.today=overview.day;
-        model.loading=false;emit();await readHealthSettings();if(token!==scope()||id!==readId)return;if(overview.connected){await Promise.all([readHealthAnalyses(),readHealthTrend(),readWeek(token,id),...(model.view==='detail'&&model.metric==='load'?[readDimensions()]:[])]);}
+        model.loading=false;emit();await readHealthSettings();if(token!==scope()||id!==readId)return;if(overview.connected){await Promise.all([readHealthAnalyses(),readHealthTrend(),readWeek(token,id),readHealthCalendar(model.day.slice(0,7)),...(model.view==='detail'&&model.metric==='load'?[readDimensions()]:[])]);}
       }catch(error){if(token===scope()&&id===readId){model.error=core.failureMessage(error);}}
       finally{if(token===scope()&&id===readId){model.loading=false;emit();}}
     }
