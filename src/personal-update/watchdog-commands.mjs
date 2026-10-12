@@ -21,7 +21,7 @@ export async function readNotificationPermission({exec,timeoutMs=NOTIFICATION_QU
   } catch(error) {onFailure(error);return null;}
 }
 export async function readUninstallRegistry(executable,{exec,timeoutMs=REGISTRY_TIMEOUT_MS}={}) {
-  const script="$target=$env:WEFTMATE_RECOVERY_EXE; Get-ChildItem HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall | Where-Object { $value=$_.GetValue('UninstallString'); $value -and $value -match '^\"([^\"]+)\"' -and [IO.Path]::GetDirectoryName($matches[1]) -eq [IO.Path]::GetDirectoryName($target) } | ForEach-Object { @{key=$_.Name;version=$_.GetValue('DisplayVersion')} } | ConvertTo-Json -Compress";
+  const script="$target=$env:WEFTMATE_RECOVERY_EXE; Get-ChildItem HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall,HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall -ErrorAction SilentlyContinue | Where-Object { $value=$_.GetValue('UninstallString'); $value -and $value -match '^\"([^\"]+)\"' -and [IO.Path]::GetDirectoryName($matches[1]) -eq [IO.Path]::GetDirectoryName($target) } | ForEach-Object { @{key=$_.Name;version=$_.GetValue('DisplayVersion')} } | ConvertTo-Json -Compress";
   const result=await boundedCommand('powershell.exe',['-NoProfile','-NonInteractive','-Command',script],{exec,timeoutMs,windowsHide:true,env:{...process.env,WEFTMATE_RECOVERY_EXE:executable}});
   try {return result.stdout.trim()?JSON.parse(result.stdout):null;}
   catch {throw Object.assign(new Error('EXTERNAL_COMMAND_FAILED'),{code:'EXTERNAL_COMMAND_FAILED'});}
@@ -49,7 +49,7 @@ export async function boundedCommand(command, args, { exec=execute, timeoutMs, t
 // Get-Process uses native process enumeration, not the CIM/WMI service.
 // A candidate with an unreadable path is UNKNOWN, never an absent process.
 export async function relevantProcesses(targets, { exec, timeoutMs=SYSTEM_QUERY_TIMEOUT_MS, env=process.env }={}) {
-  const script="$ErrorActionPreference='Stop'; $targets=ConvertFrom-Json $env:WEFTMATE_RECOVERY_TARGETS; $names=@($targets | ForEach-Object {[IO.Path]::GetFileNameWithoutExtension($_)}); $rows=@(Get-Process | Where-Object {$_.ProcessName -in $names} | ForEach-Object { $path=$_.Path; if(-not $path){throw 'PROCESS_PATH_UNKNOWN'}; if($path -in $targets){@{ProcessId=$_.Id; ExecutablePath=$path}} }); ConvertTo-Json -InputObject $rows -Compress";
+  const script="$ErrorActionPreference='Stop'; $targets=ConvertFrom-Json $env:WEFTMATE_RECOVERY_TARGETS; $names=@($targets | ForEach-Object {[IO.Path]::GetFileNameWithoutExtension($_)}); $rows=@(Get-Process | Where-Object {$_.ProcessName -in $names} | ForEach-Object { $candidate=$_; if(-not $candidate.HasExited){ try { $path=$candidate.Path } catch { if(-not $candidate.HasExited){throw} }; if($path -in $targets){@{ProcessId=$candidate.Id; ExecutablePath=$path}} elseif(-not $path -and -not $candidate.HasExited){throw 'PROCESS_PATH_UNKNOWN'} } }); ConvertTo-Json -InputObject $rows -Compress";
   const result=await boundedCommand('powershell.exe',['-NoProfile','-NonInteractive','-Command',script],
     {exec,timeoutMs,timeoutCode:'SYSTEM_QUERY_TIMEOUT',failureCode:'SYSTEM_QUERY_FAILED',windowsHide:true,maxBuffer:64*1024,env:{...env,WEFTMATE_RECOVERY_TARGETS:JSON.stringify(targets.filter(Boolean))}});
   try {

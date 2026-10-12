@@ -73,9 +73,9 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         for (const layer of value?.layers || []) if (layer.releaseNotes) target.append(globalThis.WeftSettingsControls.row(`${names[layer.layer] || '版本'}更新内容`, layer.releaseNotes, node('span', '', '')));
         const actions=node('div','actions'), refresh=node('button','button secondary','检查更新');refresh.type='button';refresh.addEventListener('click',()=>{void renderSettingsUpdates(true)});actions.append(refresh);
-        if(value?.canRestart){const restart=node('button','button primary','重启并更新');restart.type='button';restart.addEventListener('click',async()=>{restart.disabled=true;try{const result=await core.restartForUpdate();if(!current())return;if(!result?.restarted){loading.textContent=result?.reason||'更新尚未就绪，请重新检查。';target.prepend(loading);restart.disabled=false}}catch{if(current()){loading.textContent='更新未完成，请重新检查。';target.prepend(loading);restart.disabled=false}}});actions.append(restart)}
+        if(value?.canRestart){const restart=node('button','button primary',value.manualInstall?'打开安装包':'重启并更新');restart.type='button';restart.addEventListener('click',async()=>{restart.disabled=true;try{const result=await core.restartForUpdate();if(!current())return;if(!result?.restarted){loading.textContent=result?.reason||'更新尚未就绪，请重新检查。';target.prepend(loading);restart.disabled=false}}catch{if(current()){loading.textContent='更新未完成，请重新检查。';target.prepend(loading);restart.disabled=false}}});actions.append(restart)}
         target.append(actions);
-        if (value?.canRestart) target.append(node('p', 'muted', '可以稍后再更新。重启前会等待进行中的任务结束，并创建备份。'));
+        if (value?.canRestart) target.append(node('p', 'muted', value.manualInstall ? '新版已下载。打开安装包后按提示完成更新。' : '可以稍后再更新。重启前会等待进行中的任务结束，并创建备份。'));
         clearTimeout(renderSettingsUpdates.timer);
         if (value?.layers.some(layer => ['checking', 'available', 'downloading'].includes(layer.status))) renderSettingsUpdates.timer = setTimeout(() => { if (current()) void renderSettingsUpdates(); }, 1500);
     }
