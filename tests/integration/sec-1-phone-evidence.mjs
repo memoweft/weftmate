@@ -26,7 +26,7 @@ try{
  const api=async(path,body,method=body?'POST':'GET')=>{const response=await fetch(origin+'/personal/v1'+path,{method,headers:{origin,cookie,'x-weftmate-csrf':auth.csrfToken,'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const value=await response.json();assert.ok(response.ok,JSON.stringify(value));return value;};
  const command=async body=>{let {command}=await api('/commands',{targetDeviceId:started.hostId,requestId:randomUUID(),...body});for(let n=0;n<100&&command.state!=='accepted_by_dsh';n++){await new Promise(done=>setTimeout(done,20));command=(await api('/commands/'+command.commandId)).command;}assert.equal(command.state,'accepted_by_dsh');return command;};
  bars=process.env.WEFTMATE_SEC1_PHONE_SMOKE==='1'?{capture:async()=>{},close:async()=>{}}:await sec1SystemBars({origin,cookie,out});
- for(const scenario of ['agree','warning','timeout','unavailable']){
+ for(const scenario of process.env.WEFTMATE_SEC1_PHONE_CASE?[process.env.WEFTMATE_SEC1_PHONE_CASE]:['agree','warning','timeout','unavailable']){
   mode=scenario;const sessionId=(await command({kind:'session.create',modelProfileId:'local'})).sessionId;
   const text=mode==='warning'?'请读取 source.txt，用一句话告诉我观测样本数和状态。':'请覆盖 notes.txt，写入合成更新。';
   const source=await command({kind:'session.message',sessionId,text});const args=mode==='warning'?{command:"Remove-Item -LiteralPath 'notes.txt'"}:{command:"Set-Content -LiteralPath 'notes.txt' -Value '合成更新'"};
