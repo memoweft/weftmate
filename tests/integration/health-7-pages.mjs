@@ -12,8 +12,8 @@ import {health6Synthetic} from '../helpers/health-6-synthetic.mjs';
 import {generateHealthSequence} from '../helpers/health-sequence.mjs';
 import {healthOverview,healthMetrics} from '../../src/personal-health/analysis.mjs';
 import {HEALTH_DEFAULTS} from '../../src/personal-health/records-schema.mjs';
-const mode=process.argv.includes('--before')?'before':process.argv.includes('--recovery')?'recovery':'after';
-const out=resolve('tests/evidence/health-7',mode);await mkdir(out,{recursive:true});
+const mode=process.argv.includes('--before')?'before':process.argv.includes('--recovery')?'recovery':process.argv.includes('--cards')?'cards':'after';
+const out=resolve('tests/evidence/health-7',mode==='cards'?'after':mode);await mkdir(out,{recursive:true});
 const report={realElectron:true,syntheticOnly:true,realModelRequests:0,mode,screenshots:[],checks:[],errors:[]};
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 const names=[['recovery','恢复'],['sleep','睡眠'],['load','负荷'],['stress','压力'],['energy','电能'],['fitnessAge','体能年龄']];
@@ -50,10 +50,10 @@ for(const theme of mode==='recovery'?['dark']:['dark','light']){
   const top=page=>page.evaluate(()=>{const n=document.querySelector('.health-surface')??document.getElementById('generic-page');if(n)n.scrollTop=0;});
   const shot=async(page,name,locator=null)=>{await page.waitForFunction(()=>!document.getElementById('toast')||document.getElementById('toast').hidden);await page.waitForTimeout(500);const file=`${name}-${theme}.png`;await (locator??page).screenshot({path:join(out,file)});report.screenshots.push(file);};
   const enter=async(page,mobile)=>{if(mobile)await page.evaluate(()=>page('health'));else {await page.waitForFunction(()=>globalThis.__health7Core?.state.currentView==='assistant'&&globalThis.__health7Core.state.online&&!globalThis.__health7Core.state.refreshing&&!globalThis.__health7Core.state.sessionSelecting&&!!globalThis.__health7Core.state.mainChat);if(!(await page.locator('.health-entry').isVisible()))await page.evaluate(()=>WeftDesktop.toggleRail(false));await page.locator('.health-entry').click();}await settled(page);};
-  for(const [page,mobile,width,height]of mode==='recovery'?[[phone,true,390,844]]:[[desktop,false,1200,800],[desktop,false,480,780],[phone,true,390,844],[phone,true,360,780]]){
+  for(const [page,mobile,width,height]of mode==='recovery'?[[phone,true,390,844]]:mode==='cards'?[[desktop,false,1200,1100],[desktop,false,480,1100],[phone,true,390,1100],[phone,true,360,1100]]:[[desktop,false,1200,800],[desktop,false,480,780],[phone,true,390,844],[phone,true,360,780]]){
    const prefix=mobile?`mobile-${width}`:`electron-${width}`;variant='six';fixtures.set(page,health6Synthetic());
    if(mobile){await page.setViewportSize({width,height});await page.goto(host.mobileUrl);await page.waitForFunction(()=>state.booted&&state.loggedIn);await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);}else {await app.evaluate(({BrowserWindow},{width,height})=>BrowserWindow.getAllWindows()[0].setContentSize(width,height),{width,height});await page.reload();}
-   await enter(page,mobile);await top(page);await shot(page,`${prefix}-today-six`);
+   await enter(page,mobile);await top(page);if(mode==='cards'){await page.locator('.health-scores').evaluate(n=>n.scrollIntoView({block:'start'}));await shot(page,`${prefix}-all-six-cards`,page.locator('.health-scores'));continue;}await shot(page,`${prefix}-today-six`);
    await shot(page,`${prefix}-recovery-card`,page.getByRole('button',{name:'恢复，查看详情',exact:true}));
    if(mode==='recovery')continue;
    assert.ok(await page.locator('.health-page').evaluate(n=>n.scrollWidth<=n.clientWidth),'health page must fit its width');
@@ -61,7 +61,7 @@ for(const theme of mode==='recovery'?['dark']:['dark','light']){
    if(width<600){assert.equal(boxes[0].y,boxes[1].y);assert.ok(boxes[2].y>boxes[0].y);assert.ok(boxes.every(b=>b.right<=width));}
    if(mode==='after'){
     for(const [selector,scene]of [['.health-scores','scores'],['.health-scores>:last-child','scores-lower'],['.health-sleep-summary','sleep-summary'],['.health-vitals','vitals'],['.health-activity-numbers','activity']]){await page.locator(selector).evaluate(n=>n.scrollIntoView({block:'center'}));await shot(page,`${prefix}-${scene}`);}
-    await top(page);await shot(page,`${prefix}-today-content`,page.locator('.health-today'));
+    await top(page);
     for(const state of ['three','disconnected','short']){variant=state;fixtures.set(page,health6Synthetic({variant:state==='three'?'three':'six'}));await page.getByRole('button',{name:'刷新健康',exact:true}).click();await settled(page);await top(page);await shot(page,`${prefix}-today-${state}`);if(state==='three'||state==='short')assert.equal(await page.locator('.health-scores').evaluate(n=>n.children.length),3);}
     variant='six';fixtures.set(page,health6Synthetic());await page.getByRole('button',{name:'刷新健康',exact:true}).click();await settled(page);
    }
@@ -96,4 +96,4 @@ for(const theme of mode==='recovery'?['dark']:['dark','light']){
   }
  }finally{await browser?.close();await app?.close();await host.close();await rm(profile,{recursive:true,force:true});await rm(host.root,{recursive:true,force:true});}
 }
-assert.deepEqual(report.errors,[]);await writeFile(join(out,'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({mode,screenshots:report.screenshots.length,checks:report.checks,errors:report.errors}));
+assert.deepEqual(report.errors,[]);if(mode==='cards')report.componentCrop='Six cards only; width unchanged, capture window height 1100. Canonical device viewports and native system-bar evidence are separate.';await writeFile(join(out,mode==='cards'?'cards-verification.json':'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({mode,screenshots:report.screenshots.length,checks:report.checks,errors:report.errors}));
