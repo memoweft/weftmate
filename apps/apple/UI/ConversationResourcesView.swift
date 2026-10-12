@@ -82,7 +82,7 @@ struct ConversationResourcesPanel: View {
                         }
                     }
                     #endif
-                    Button { resources.showingList.toggle() } label: { WeftIcon("plus") }.accessibilityLabel("打开另一个输出或来源")
+                    Button { resources.showingList.toggle() } label: { WeftIcon("plus") }.phoneIcon().accessibilityLabel("打开另一个输出或来源")
                         .accessibilityIdentifier("addResourceTab")
                     #if os(macOS)
                     Button(enlarged ? "还原" : "放大") { enlarged.toggle() }
