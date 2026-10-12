@@ -46,3 +46,5 @@
 .weekly-insight-text { white-space:pre-line; line-height:var(--wm-line-height-1_65); margin:0 0 var(--wm-space-16); overflow-wrap:anywhere; }
 .weekly-insight-sources { display:flex; flex-wrap:wrap; gap:var(--wm-space-8); }
 .weekly-insight-sources button { display:inline-flex; align-items:center; gap:var(--wm-space-8); max-width:100%; overflow-wrap:anywhere; text-align:left; }
+
+.weekly-insight { margin-top:var(--wm-space-8); }
