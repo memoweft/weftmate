@@ -27,10 +27,47 @@ public enum HealthPagePolicy {
     }
     public static func analysisFailure(_ error: any Error, offline: Bool) -> (message: String, disabled: Bool) {
         if case APIFailure.server(409,"AI_ANALYSIS_OFF") = error { return ("AI 分析已关闭，可以重新打开。",true) }
+        if case APIFailure.server(429,"AI_ANALYSIS_LIMIT") = error { return ("今天的 AI 分析次数用完了，明天再来看看。",false) }
+        if case APIFailure.server(409,"HEALTH_DATA_CHANGED") = error { return ("健康数据刚更新，请刷新后再分析。",false) }
         if offline || error is URLError { return ("电脑不在线，连接后再来看看。",false) }
         return ("这次没能分析好，点一下再试。",false)
     }
     public static func visibleOptionalCards(_ overview: HealthOverview) -> [String] {
-        [("stress",overview.stress),("energy",overview.energy),("fitnessAge",overview.fitnessAge)].compactMap { id,value in value == nil || value == .null ? nil : id }
+        [("stress",overview.stress != nil),("energy",overview.energy != nil),("fitnessAge",overview.fitnessAge != nil)].compactMap { id,present in present ? id : nil }
+    }
+}
+
+public enum HealthFieldText {
+    public static func name(_ id: String) -> String {
+        switch id {
+        case "sex": "生理性别"
+        case "birthYear": "出生年份"
+        case "vo2Max": "最大摄氧量"
+        case "sleep", "sleepMinutes": "睡眠"
+        case "recovery": "恢复情况"
+        case "restingHeartRateBpm": "静息心率"
+        case "hrvSdnnMs", "hrvSamples", "stressBaseline": "心率变异性测量与个人基线"
+        case "heartRateGaps", "heartRateQuarterHourly", "heartRateHourly": "部分时段的心率"
+        default: "相关测量与个人基线"
+        }
+    }
+}
+
+public enum HealthUploadPolicy {
+    public static func sendsProfile(_ capabilities: HealthCapabilities?) -> Bool { capabilities?.profile == true }
+    public static func wireRecord(_ value: DailyHealth, capabilities: HealthCapabilities?) -> DailyHealth {
+        var record=value
+        let supported=HealthPagePolicy.recordVersion(capabilities)
+        if record.version > supported {
+            record.version=supported; record.hrvSamples=nil; record.heartRateQuarterHourly=nil; record.sleep?.stages=nil
+        }
+        return record
+    }
+    public static func validBytes(_ data: Data, version: Int) -> Bool { data.count <= (version >= 3 ? 64 : 12)*1024 }
+    public static func validBatch(_ items: [HealthBatchItem]) throws -> Bool {
+        guard (1...100).contains(items.count), Set(items.map(\.day)).count == items.count else { return false }
+        let encoder=JSONEncoder()
+        guard try items.allSatisfy({ try validBytes(encoder.encode($0.health),version:$0.health.version) }) else { return false }
+        return try encoder.encode(HealthBatchBody(items:items)).count <= 1280*1024
     }
 }

@@ -43,7 +43,7 @@ final class Apple4UITests: XCTestCase {
                 XCTAssertTrue(app.descendants(matching: .any)["approvalSecondOpinion"].waitForExistence(timeout: 20))
                 let approve = app.buttons["approveOnce.apple3-" + value], reject = app.buttons["rejectApproval.apple3-" + value]
                 XCTAssertTrue(approve.exists && reject.exists)
-                XCTAssertEqual(approve.frame.minY, reject.frame.minY, accuracy: 1)
+                if app.buttons["approvalConfirm.apple3-" + value].exists { XCTAssertGreaterThan(reject.frame.minY,approve.frame.minY) } else { XCTAssertEqual(approve.frame.minY, reject.frame.minY, accuracy: 1) }
                 XCTAssertGreaterThanOrEqual(approve.frame.height, 44)
                 capture(app, theme, value)
             }

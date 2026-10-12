@@ -1,0 +1,34 @@
+{
+  "previousUncleanExits": 0,
+  "sample": "after actual running upgrade and startup self-repair",
+  "exitRecords": [
+    {
+      "event": "host.exit",
+      "reason": "unknown",
+      "exitCode": 0,
+      "normal": true,
+      "cleanupComplete": true
+    },
+    {
+      "event": "host.exit",
+      "reason": "unknown",
+      "exitCode": 0,
+      "normal": true,
+      "cleanupComplete": true
+    },
+    {
+      "event": "host.exit",
+      "reason": "user-quit",
+      "exitCode": 0,
+      "normal": true,
+      "cleanupComplete": true
+    },
+    {
+      "event": "host.exit",
+      "reason": "user-quit",
+      "exitCode": 0,
+      "normal": true,
+      "cleanupComplete": true
+    }
+  ]
+}

@@ -9,7 +9,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const retrySeconds = Math.max(0, Math.ceil((auth.retryAt - now()) / 1000));
     const error = auth.retryAt && auth.error.startsWith('尝试太多次')
       ? retrySeconds ? `尝试太多次，请等待 ${retrySeconds} 秒后重试。` : '等待已结束，可以重试。' : auth.error;
-    return { ...auth, error, codeLoginSupported: environment.deviceType !== 'android' || client?.config?.nativeEmailCodeLogin === true,
+    return { ...auth, error, codeLoginSupported: environment.deviceType !== 'android' || environment.nativeEmailCodeLogin === true || client?.config?.nativeEmailCodeLogin === true,
       resendSeconds: Math.max(0, Math.ceil((auth.resendAt - now()) / 1000)), retrySeconds };
   }
   function cloudError(error) {
@@ -50,7 +50,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (mode === 'offline-login' || mode === 'local-login') bindingClaim = null;
     journey++; clearTimeout(waitTimer); client.generation++; client.pending = null;
     Object.assign(auth, { mode, step: 'email', error: '', busy: false, challengeId: null, passwordTicket: null, requestId: null, devices: [], hosts: [], resendAt: 0, retryAt: 0 });
-    auth.modal = !!auth.localSession;
+    auth.modal = !!(auth.localSession || auth.cachedSession);
     if (auth.modal) returnView ??= core.state.currentView;
     else core.show('login');
     paint();
@@ -67,7 +67,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return core.dateText ? core.dateText(value, { year: date.getFullYear() !== today.getFullYear() }) : core.formatDate(value);
   }
   function dismissCloudLogin() {
-    if (!auth.localSession) return;
+    if (!auth.localSession && !auth.cachedSession) return;
     journey++; client.generation++; client.pending = null; bindingClaim = null;
     auth.modal = false; auth.busy = false; auth.mode = 'offline'; auth.error = ''; paint();
     if (returnView && core.state.currentView !== returnView) core.show(returnView);
@@ -184,6 +184,10 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await environment.cloudCredentials('offline-account', { sub: saved.sub, email: auth.email, deviceName: saved.deviceName }); auth.offlineKnown = true;
     if (ticket !== journey) return;
     if (result.status === 'pending_approval') throw { code: environment.deviceType === 'android' && !result.requestId ? 'NATIVE_LOGIN_UPGRADE_REQUIRED' : 'UPDATE_REQUIRED' };
+    if (result.status === 'cloud_only') {
+      auth.mode = 'authenticated'; auth.modal = false; paint();
+      await effects.enterCloudOnly?.(); return;
+    }
     clearTimeout(waitTimer); waitTimer = null;
     if (pairing) { await saveCloudPairingPin(pairing); environment.initialPairing = null; }
     auth.mode = 'authenticated'; auth.modal = false; paint();
@@ -208,7 +212,12 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     try { await client.access(); if (auth.mode === 'authenticated') scheduleRenewal(); }
     catch (error) { if (error.code === 'NETWORK') { scheduleRenewal(); return; } await expireCloudSession(); }
   }
-  async function expireCloudSession(email = auth.email) {
+  async function expireCloudSession(email = auth.email, { retainCached = true } = {}) {
+    if (retainCached && environment.retainNativeCache && auth.cachedSession) {
+      clearTimeout(renewalTimer); clearTimeout(waitTimer); journey++; await client.forget();
+      Object.assign(auth, { mode: 'offline', modal: false, busy: false, email, error: '', cloudExpired: true });
+      effects.nativeSessionExpired?.(); paint(); return;
+    }
     if (auth.localSession) {
       clearTimeout(renewalTimer); clearTimeout(waitTimer); journey++; await client.forget();
       Object.assign(auth, { mode: 'offline', modal: false, busy: false, email, error: '需要重新登录', cloudExpired: true });
@@ -221,7 +230,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     // Clear the host cookie as well as the in-memory projection.
     try { await core.api('/logout', { method: 'POST', protectedWrite: true, body: {} }); } catch { /* revoked cookies are already unusable */ }
     await effects.clearNativeHostSessions?.();
-    core.clearSession(); auth.email = email; startCloudJourney();
+    auth.cachedSession = false; core.clearSession(); auth.email = email; startCloudJourney();
   }
   async function cancelCloudJourney() { if (auth.localSession) { dismissCloudLogin(); return; } bindingClaim = null; await client.forget(); await client.resetKey(); startCloudJourney(); }
   async function cloudOfflineLogin({ password, cloudAccountId, username }) {
@@ -291,23 +300,23 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       const jkt = await client.hash(JSON.stringify({ crv: jwk.crv, kty: jwk.kty, x: jwk.x, y: jwk.y }));
       const saved = await client.saved();
       const { payload } = await environment.cloudVendor.jwtVerify(material.token, await environment.cloudVendor.importJWK(material.anchor, 'ES256'), {
-        algorithms: ['ES256'], typ: 'wm-host-trust+jwt', issuer: material.hostId, audience: jkt, requiredClaims: ['iat', 'exp', 'jti', 'sub', 'hostId', 'deviceId', 'jkt', 'tlsSpki', 'publicJwk'], maxTokenAge: '120s', currentDate: new Date(now()) });
+        algorithms: ['ES256'], typ: 'wm-host-trust+jwt', issuer: material.hostId, audience: jkt, requiredClaims: ['iat', 'exp', 'jti', 'sub', 'hostId', 'deviceId', 'jkt', 'tlsSpki', 'publicJwk'], maxTokenAge: '120s', clockTolerance:30, currentDate: new Date(now()) });
       if (payload.sub !== saved.sub || ![client.config.hostId, ...auth.hosts.map(host => host.hostId)].includes(payload.hostId) || payload.deviceId !== key.deviceId || payload.jkt !== jkt ||
-        payload.exp - payload.iat > 120 || payload.iat * 1000 > now() + 30000 || !/^[A-Za-z0-9_-]{43}$/.test(payload.tlsSpki) ||
+        payload.exp - payload.iat > 120 || payload.iat * 1000 > now() + 30000 || payload.exp * 1000 <= now() || !/^[A-Za-z0-9_-]{43}$/.test(payload.tlsSpki) ||
         await environment.cloudVendor.calculateJwkThumbprint(payload.publicJwk) !== await environment.cloudVendor.calculateJwkThumbprint(material.anchor)) throw new Error();
       await environment.cloudCredentials('trusted-host:' + payload.hostId, { tlsSpki: payload.tlsSpki, publicJwk: material.anchor, origin: payload.origin, relay: payload.relay });
       return finishCloudLogin();
     } catch { throw { code: 'HOST_TRUST_INVALID' }; }
   }
   async function cloudEmailRequest(email) { const result = await client.authorized('/auth/email/change/request', { method: 'POST', body: { email } }); auth.emailChange = { email, challengeId: result.challengeId, resendAt: now() + 60000 }; return result; }
-  async function cloudEmailConfirm(code) { const result = await client.authorized('/auth/email/change/confirm', { method: 'POST', body: { challengeId: auth.emailChange.challengeId, code } }); auth.emailChange = null; await expireCloudSession(result.account.email); return result; }
-  async function cloudChangePassword(currentPassword, password, confirmation) { validPassword(password, confirmation); const result = await client.authorized('/auth/password/change', { method: 'POST', body: { currentPassword, password } }); await expireCloudSession(); return result; }
+  async function cloudEmailConfirm(code) { const result = await client.authorized('/auth/email/change/confirm', { method: 'POST', body: { challengeId: auth.emailChange.challengeId, code } }); auth.emailChange = null; await expireCloudSession(result.account.email, {retainCached:false}); return result; }
+  async function cloudChangePassword(currentPassword, password, confirmation) { validPassword(password, confirmation); const result = await client.authorized('/auth/password/change', { method: 'POST', body: { currentPassword, password } }); await expireCloudSession(auth.email, {retainCached:false}); return result; }
   async function cloudLogout() {
     if (auth.mode !== 'offline') { await client.authorized('/auth/logout', { method: 'POST', body: {} }); await client.resetKey(); }
-    await expireCloudSession();
+    await expireCloudSession(auth.email, {retainCached:false});
   }
   async function cloudLogoutOthers() { return client.authorized('/auth/logout/others', { method: 'POST', body: {} }); }
-  async function cloudDeleteAccount(password, { prepareBackup = true } = {}) { if (auth.localDesktop && prepareBackup) await core.prepareAccountDeletionBackup(); const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } }); await expireCloudSession(''); return result; }
+  async function cloudDeleteAccount(password, { prepareBackup = true } = {}) { if (auth.localDesktop && prepareBackup) await core.prepareAccountDeletionBackup(); const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } }); await expireCloudSession('', {retainCached:false}); return result; }
   async function cloudEmergencyPassword(password, confirmation) {
     if (Array.from(password).length < 15 || Array.from(password).length > 128) throw { code: 'EMERGENCY_PASSWORD_INVALID' };
     if (password !== confirmation) throw { code: 'PASSWORD_MISMATCH' };
@@ -346,7 +355,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (connection.hostId !== client.config.hostId) {
       const self = ownHost?.hostId === connection.hostId;
       const trusted = self || await environment.cloudCredentials('trusted-host:' + connection.hostId);
-      if (!trusted || !self && !connection.baseUrl) throw { code: 'PAIRING_REQUIRED' };
+      if (!trusted && !environment.automaticHostTrust || !self && !connection.baseUrl) throw { code: environment.automaticHostTrust ? 'HOST_UNAVAILABLE' : 'PAIRING_REQUIRED' };
       const target = self ? ownHost : await effects.openCloudHost?.({ hostId: connection.hostId, baseUrl: connection.baseUrl });
       if (!target) return connection;
       const previous = { host: client.host, hostId: client.config.hostId }, generation = client.generation;

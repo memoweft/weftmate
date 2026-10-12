@@ -5,6 +5,7 @@ import { finalizeNotifications } from './notification-settings.mjs';
 import { sendHostPush } from './push.mjs';
 import { accountPersonalization } from './personalization.mjs';
 import { createMemoryIngestion } from './memory-ingestion.mjs';
+import { createHistoryImport } from './history-import.mjs';
 import { modelTierFor } from '../model-tier.ts';
 import { currentChatProfile } from '../background-model-selection.mjs';
 import { createBackgroundModels } from './background-model.mjs';
@@ -49,6 +50,9 @@ import { createPersonalHealthStore } from '../personal-health/index.mjs';
 import { createHealthRecordsStore } from '../personal-health/records-store.mjs';
 import { createHealthOperations } from '../personal-health/records-http.mjs';
 import { createHealthInsights } from '../personal-health/insight.mjs';
+import { mergeComputerBuckets } from './computer-usage.mjs';
+import { notificationSettings as computerNotificationSettings } from './notification-policy.mjs';
+import { dailyDigestState, pruneDailyDigests } from './daily-digest.mjs';
 import { createHostCloudIdentity } from '../personal-cloud/index.mjs';
 import { createHostRelay } from '../personal-relay/index.mjs';
 import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
@@ -318,6 +322,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get loginAccount() { return loginAccount; },
     get matchingOrigin() { return matchingOrigin; },
     get memoryIngestion() { return memoryIngestion; },
+    get historyImport() { return historyImport; },
     get memoryManager() { return memoryManager; },
     get healthStore() { return healthStore; },
     get healthRecords() { return healthRecords; },
@@ -744,20 +749,50 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const offline = await createOfflineService(context);
   const temporaryChats = createTemporaryChats(context);
   const memoryIngestion = createMemoryIngestion(context);
+  const historyImport = createHistoryImport(context);
   dataControls = createDataControls(context);
   for(const ownerId of Object.keys(rootState.accounts)){
     const legacy=accountState(ownerId).dailyDigest?.healthDays;
     if(Object.keys(legacy??{}).length){await healthRecords.migrate(ownerId,legacy);await serial(()=>mutate(ownerId,next=>{next.dailyDigest.healthDays={};}));}
   }
+  let computerUsageCheckpoint = null;
+  context.checkpointComputerUsage = ownerId => computerUsageCheckpoint?.(ownerId);
   const service = {
+    setComputerUsageCheckpoint(checkpoint) { computerUsageCheckpoint = checkpoint; },
+    computerUsagePolicy(ownerId) {
+      const account = accountState(ownerId), settings = computerNotificationSettings(account);
+      return { enabled: !closing && settings.reviewEnabled && settings.computerUsageEnabled && !dataControls.isLocked(ownerId),
+        // Whole-account erasure replaces the durable main-chat identity, even
+        // when the account itself stays signed in and its counters reset.
+        generation: `${account.chatIdentity?.mainChatId ?? ''}:${account.dailyDigest?.generation ?? 0}:${account.computerUsageGeneration ?? 0}`,
+        timeZone: usage.settings(ownerId).timeZone };
+    },
+    async recordComputerUsage(ownerId, generation, buckets) {
+      if (closing) return;
+      const initial = service.computerUsagePolicy(ownerId);
+      if (!initial.enabled || initial.generation !== generation) return;
+      let changed = false;
+      await serial(() => mutate(ownerId, next => {
+        const current = service.computerUsagePolicy(ownerId);
+        if (!current.enabled || current.generation !== generation) return;
+        const state = dailyDigestState(next);
+        state.computerUsageRevision = (state.computerUsageRevision ?? 0) + 1;
+        state.computerUsage = { buckets: mergeComputerBuckets(state.computerUsage?.buckets ?? [], buckets) };
+        pruneDailyDigests(next, timestamp(), current.timeZone);
+        changed = true;
+      }));
+      if (changed) await healthInsights.usageChanged(ownerId);
+    },
     pushActivity: (ownerId, eventId) => sendHostPush(context, ownerId, eventId),
     recordActivity: activity.record,
     recordMemoryUse: activity.memoryDigest.noteUse,
     dataControls,
     captureMemoryTurn: memoryIngestion.capture,
+    importPermission: (ownerId, routeId) => historyImport.permit(ownerId, routeId) ? 'run'
+      : historyImport.owns(ownerId, routeId) && accountState(ownerId).historyImports.find(j => j.routeId === routeId)?.state === 'paused' ? 'wait' : 'stop',
     memoryTurnPolicy: temporaryChats.policy,
     expireTemporaryChats: temporaryChats.sweep,
-    async cleanupMemoryCopies(ownerId, { sourceTexts = [], deleteConversationSnippets = false }) {
+    async cleanupMemoryCopies(ownerId, { sourceTexts = [], affectedIds = [], deleteConversationSnippets = false }) {
       await serial(() => mutate(ownerId, next => { next.memoryCleanupPending = true; }));
       await memoryManager?.discardPendingSources?.(ownerId, { sourceTexts });
       await mainChat.drain(ownerId);
@@ -775,6 +810,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         const schedulesErased = backend.schedules ? await backend.schedules({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
         const goalErased = backend.goals ? await backend.goals({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
         const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets,
+          ...(affectedIds.length ? { affectedIds } : {}),
           ...(schedulesErased?.removedNativeIds?.length ? { scheduleIds: schedulesErased.removedNativeIds } : {}),
           ...(goalErased?.clearedGoalIds?.length ? { goalIds: goalErased.clearedGoalIds } : {}) }));
         sessions.invalidate(ownerId,sessionId);
@@ -847,6 +883,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       await restoreSchedulesWithRetry();
       temporaryChats.start();
       await memoryIngestion.start();
+      await historyImport.start();
       activity.start();
       for (const ownerId of Object.keys(rootState.accounts)) void sessions.initialize(ownerId);
       hostCloudIdentity?.start();
@@ -896,12 +933,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     },
     async beginUsage({ sessionId = null, profileId, ownerId = null }) {
       const binding = sessionId ? sessions.ownerForSession(sessionId) : null;
-      if (sessionId && !binding || ownerId && binding && binding.ownerId !== ownerId) throw failure('SESSION_UNAVAILABLE', 404);
+      const imported = ownerId && historyImport.owns(ownerId, sessionId);
+      if (sessionId && !binding && !imported || ownerId && binding && binding.ownerId !== ownerId) throw failure('SESSION_UNAVAILABLE', 404);
       ownerId ??= binding?.ownerId ?? rootState.legacyOwnerId;
       if (!rootState.accounts[ownerId]) throw failure('ACCOUNT_LOGIN_REQUIRED', 401);
       const model = (await backend.listModels({ ownerId })).find(row => row.id === profileId);
       if (!model || !accountModels.canUseModelProfile(ownerId, profileId)) throw failure('MODEL_UNAVAILABLE', 409);
-      const requestId = await usage.begin(ownerId, { sessionId, profileId, model });
+      const requestId = await usage.begin(ownerId, { sessionId, profileId, model, category: imported ? 'import' : 'conversation' });
       return { ownerId, requestId };
     },
     finishUsage: ({ ownerId, requestId, usage: value, source }) => usage.finish(ownerId, requestId, value, source),
@@ -975,6 +1013,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         await dataControls.close();
         nextSuggestions.close();
         await memoryIngestion.close();
+        await historyImport.close();
         await temporaryChats.close();
         await activity.close();
         await healthInsights.close();

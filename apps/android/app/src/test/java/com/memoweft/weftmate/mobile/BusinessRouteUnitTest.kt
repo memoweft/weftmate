@@ -1,10 +1,27 @@
 package com.memoweft.weftmate.mobile
 
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun replyChangeWaitOutlivesTheServerBudgetWithoutChangingOtherReads() {
+        assertEquals(30_000, businessReadTimeout("/personal/v1/chats/main/changes?afterSeq=1&waitMs=25000", "GET"))
+        assertEquals(30_000, businessReadTimeout("/personal/v1/chats/chat-one/events?waitMs=25000", "GET"))
+        assertEquals(35_000, businessReadTimeout("/personal/v1/chats/chat-one/changes?waitMs=30000", "GET"))
+        for (path in listOf("/personal/v1/system", "/personal/v1/chats/main/changes?waitMs=0", "/personal/v1/chats/main/changes?waitMs=invalid", "/personal/v1/system?waitMs=25000")) assertEquals(20_000, businessReadTimeout(path, "GET"))
+        assertEquals(20_000, businessReadTimeout("/personal/v1/chats/main/changes?waitMs=25000", "POST"))
+        assertEquals(360_000, businessReadTimeout("/personal/v1/system/host/restart", "POST"))
+        assertEquals(120_000, businessReadTimeout("/personal/v1/sessions/session-one/message-branches", "POST"))
+    }
+    @Test fun catchupAccountRecordsAndForgetPreviewsKeepExactPaths() {
+        for (path in listOf("/personal/v1/execution-records?type=write&projectId=none&limit=100", "/personal/v1/account/models", "/personal/v1/account/models/check", "/personal/v1/account/models/model-one/test", "/personal/v1/chats/chat-one/forget-preview", "/personal/v1/sessions/session-one/forget-preview", "/personal/v1/usage?timeZone=Asia%2FShanghai&month=2026-10")) assertTrue(path, validBusinessPath(path))
+        for (path in listOf("/personal/v1/execution-records/raw", "/personal/v1/execution-records?type=<script>", "/personal/v1/account/models/model-one/secret", "/personal/v1/account/models%2Fcheck", "/personal/v1/auth/desktop", "/personal/v1/sessions/../forget-preview", "/personal/v1/chats/chat-one/forget-preview/raw")) assertFalse(path, validBusinessPath(path))
+        assertEquals("/personal/v1/sessions/session-one/approvals/00000000-0000-4000-8000-000000000001", approvalDecisionPath("session-one", "00000000-0000-4000-8000-000000000001", "request-one", "allowed-once", "global-category"))
+        assertThrows(IllegalArgumentException::class.java) { approvalDecisionPath("session-one", "00000000-0000-4000-8000-000000000001", "request-one", "rejected", "global-category") }
+    }
     @Test fun healthV3RoutesAllowOnlyExactAggregatePathsAndQueries() {
         assertTrue(validBusinessMethod("/personal/v1/health/profile", "PUT"))
         for (route in listOf("/personal/v1/health/profile", "/personal/v1/health/analysis", "/personal/v1/health/analysis?day=2026-10-12", "/personal/v1/health/weekly", "/personal/v1/health/weekly?to=2026-10-12", "/personal/v1/health/metrics/stress?days=7&to=2026-10-12", "/personal/v1/health/metrics/energy?to=2026-10-12&days=30", "/personal/v1/health/metrics/fitnessAge?to=2026-10-12", "/personal/v1/health/metrics/vo2Max")) assertTrue(route, validBusinessPath(route))
