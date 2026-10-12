@@ -264,9 +264,10 @@ function syncMobileTabs(){
     const badge=tab.querySelector('.mobile-tab-badge');badge.hidden=id==='activity'?!unread:id==='goals'?!pending:true;badge.textContent=id==='activity'?(unread>99?'99+':String(unread)):'';
   }
   if(releaseNotice)void releaseNotice.check();
-  const profile=$('header-profile');if(profile){profile.hidden=!identity;const avatar=$('drawer-avatar');if(avatar){const copy=avatar.cloneNode(true);copy.removeAttribute('id');profile.replaceChildren(copy);}}
+  document.body.classList.toggle('mobile-chat-visible',state.page==='chat');
+  const profile=$('header-profile');if(profile){profile.hidden=!identity||state.page==='chat';const avatar=$('drawer-avatar');if(avatar){const copy=avatar.cloneNode(true);copy.removeAttribute('id');profile.replaceChildren(copy);}}
   if(visible&&state.page!=='chat'){
-    $('header-title').textContent=mobileTabNames[state.page];$('header-subtitle').hidden=true;$('page-back').hidden=true;$('menu-button').hidden=true;
+    $('header-title').textContent=mobileTabNames[state.page];$('header-subtitle').hidden=true;$('page-back').hidden=true;$('menu-button').hidden=false;
     $('outputs-button').hidden=true;$('conversation-usage').hidden=true;$('conversation-more').hidden=true;document.querySelector('.main-chat-tools')?.setAttribute('hidden','');
   }
 }
@@ -810,7 +811,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('conversation-more').append(WeftIcons.create('more',20));
   $('conversation-more').addEventListener('click',()=>WeftPopover.menu($('conversation-more'),[
     {name:'输出与来源',icon:'folder',action:()=>openConversationResources()},
-    ...(!$('conversation-usage').hidden?[{name:'本对话用量',icon:'chart',action:()=>$('conversation-usage').click()}]:[])
+    ...(!$('conversation-usage').hidden?[{name:'本对话用量',icon:'chart',action:()=>$('conversation-usage').click()}]:[]),
+    ...mobileConversationActions()
   ]));
   $('resource-back').addEventListener('click',()=>closeResourcePage());
   $('profile-link').addEventListener('click',()=>mobileProfileMenu($('profile-link')));

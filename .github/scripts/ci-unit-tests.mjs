@@ -2,7 +2,6 @@
 import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
-import { pathToFileURL } from 'node:url';
 import { assertRuntimeIdentity } from '../../scripts/dsh-runtime-identity.mjs';
 import { managedMkdtempSync, disposeManagedTemp, startManagedTempLease } from '../../tests/helpers/managed-temp.mjs';
 import { runManagedTestProcess } from '../../tests/helpers/managed-test-process.mjs';
@@ -38,9 +37,10 @@ const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // Node matches both leaf names and suite-qualified names. Only exact recorded
 // leaf names are exempt; another failing test in the same file still blocks CI.
 const pattern = entries => `(?:^| )(?:(?:${entries.map(entry => escape(entry.name)).join(')|(?:')}))$`;
-// Windows includes the long, isolated credential-recovery matrix. Two file
-// workers keep the complete selection within the local 30-minute heavy slot.
-const args = ['--test', `--test-concurrency=${process.platform === 'win32' && mode === 'required' ? 2 : 1}`];
+// Only the local Windows required gate uses two file workers to fit its heavy-slot budget.
+// CI keeps one worker: real Windows timing checks must retain their sequential execution.
+const concurrency = process.platform === 'win32' && mode === 'required' && process.env.CI !== 'true' ? 2 : 1;
+const args = ['--test', `--test-concurrency=${concurrency}`];
 if (mode === 'required') {
   const excluded = [...exceptions.knownFailures, ...suite.tests, ...platformTests];
   if (excluded.length) args.push(`--test-skip-pattern=${pattern(excluded)}`);
@@ -75,19 +75,13 @@ if (mode === 'required') {
 }
 console.log(lines.join('\n'));
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
-// The complete Windows selection exceeds CreateProcess's command-line limit
-// with absolute filenames. Keep its short names and an absolute, side-effect-free
-// helper import so the runner and workers remain attributable to this worktree.
-const absoluteTests = selected.map(file => resolve(file));
-const workerImport = resolve('tests/helpers/managed-temp.mjs');
-const testArguments = process.platform === 'win32'
-  ? [...args, '--import', pathToFileURL(workerImport).href, ...selected]
-  : [...args, ...absoluteTests];
+// Windows' command-line limit is reached in long worktree paths. Use relative
+// file arguments and an inherited absolute report path for owned-worker cleanup.
 let result;
 const streamingOutput = process.env.CI === 'true';
 try {
-  result = await runManagedTestProcess(process.execPath, testArguments,
-    { env, commandRoots: [temp, ...(process.platform === 'win32' ? [workerImport] : []), ...absoluteTests], executables: [process.execPath, createRequire(import.meta.url)('electron')],
+  result = await runManagedTestProcess(process.execPath, [...args, ...(process.platform === 'win32' ? [`--report-directory=${temp}`, ...selected] : selected.map(file => resolve(file)))],
+    { env, commandRoots: [temp, ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')],
       onOutput: streamingOutput ? (stream, chunk) => process[stream].write(chunk) : undefined });
 } finally {
   stopLease();

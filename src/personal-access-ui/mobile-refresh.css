@@ -1,0 +1,51 @@
+/* Shared scale, scoped to remote touch phones so native 480px windows stay unchanged. */
+body.remote-phone { --mobile-control-size:var(--wm-space-44); --mobile-control-radius:var(--wm-radius-999); --mobile-card-radius:var(--wm-radius-26); --mobile-page-gap:var(--wm-space-24); --soft:var(--surface-soft); --muted:var(--ink-muted); --secondary:var(--ink-secondary); }
+.remote-phone #assistant-view button,.remote-phone #settings-dialog button { min-width:var(--mobile-control-size); min-height:var(--mobile-control-size); }
+.remote-phone:has(#assistant-view:not([hidden])) .site-header { display:none; }
+.remote-phone #assistant-view .assistant-topbar { min-height:calc(var(--wm-space-64) + var(--wm-space-16)); padding:var(--wm-space-12); border:0; gap:var(--wm-space-12); }
+.remote-phone .assistant-heading { align-items:center; text-align:center; }
+.remote-phone #assistant-title { font-size:var(--wm-font-size-17); }
+.remote-phone .remote-connection-copy { font-size:var(--wm-font-size-12); color:var(--muted); line-height:var(--wm-line-height-1_5); }
+.remote-phone #assistant-connection:has(.presence-badge[data-state=online]) { display:none; }
+.remote-phone:not(.activity-open):not(.goals-open):not(.library-open) #assistant-view .phone-header-profile { display:none; }
+.remote-phone:is(.activity-open,.goals-open,.library-open) .remote-connection-copy { display:none; }
+.remote-phone #assistant-connection { display:flex; justify-content:center; font-size:var(--wm-font-size-12); }
+.remote-phone #assistant-view :is(.icon-close,.phone-header-profile,.phone-conversation-more,.composer-icon) { width:var(--mobile-control-size); min-width:var(--mobile-control-size); min-height:var(--mobile-control-size); border-radius:var(--mobile-control-radius); }
+.remote-phone #assistant-view .assistant-topbar :is(.icon-close,.phone-conversation-more,.phone-header-profile) { background:var(--soft); }
+.remote-phone .assistant-main { display:flex; flex-direction:column; min-height:0; }
+.remote-phone .conversation-pane { flex:1; min-height:0; }
+.remote-phone .assistant-main > :is(.activity-surface,.goals-surface,.library-surface) { flex:1; min-height:0; height:auto; overflow:auto; }
+.remote-phone .composer-area { padding:var(--wm-space-8) var(--wm-space-12) var(--wm-space-12); }
+.remote-phone #message-form { background:var(--soft); border-radius:var(--mobile-card-radius); border-color:transparent; padding:var(--wm-space-12) var(--wm-space-8) var(--wm-space-8); }
+.remote-phone #message-form:focus-within { border-color:var(--accent); box-shadow:none; }
+.remote-phone #message-text { font-size:calc(var(--text-size,var(--wm-font-size-16)) + var(--wm-space-2)); line-height:var(--wm-line-height-1_65); padding:var(--wm-space-4) var(--wm-space-12) var(--wm-space-12); }
+.remote-phone .composer-bottom { gap:var(--wm-space-4); }
+.remote-phone .composer-bottom .composer-icon,.remote-phone .approval-picker .model-trigger { background:var(--surface); }
+.remote-phone .composer-bottom .model-trigger { min-height:var(--mobile-control-size); border-radius:var(--mobile-control-radius); }
+.remote-phone .model-picker .model-trigger { background:var(--surface); padding-inline:var(--wm-space-12); }
+.remote-phone .transcript { padding:var(--mobile-page-gap) var(--wm-space-20); }
+.remote-phone .message .message-text { font-size:calc(var(--text-size,var(--wm-font-size-16)) + var(--wm-space-2)); line-height:var(--wm-line-height-1_9); }
+.remote-phone .message.user { border-radius:var(--mobile-card-radius); }
+.remote-phone .remote-mobile-tabs { flex:none; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:var(--wm-space-4); margin:var(--wm-space-4) var(--wm-space-12) calc(var(--wm-space-12) + var(--safe-bottom,env(safe-area-inset-bottom,0px))); padding:var(--wm-space-6); border-radius:var(--mobile-control-radius); background:var(--soft); box-shadow:var(--wm-shadow-mobile-composer); }
+.remote-phone .remote-mobile-tabs[hidden] { display:none; }
+.remote-phone .remote-mobile-tab { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--wm-space-4); min-height:var(--wm-space-56); border:0; border-radius:var(--mobile-control-radius); background:transparent; color:var(--muted); font-size:var(--wm-font-size-12); }
+.remote-phone .remote-mobile-tab[aria-selected=true] { background:var(--surface); color:var(--accent); }
+.remote-phone .remote-mobile-tab:hover { background:var(--surface); }
+.remote-phone .remote-mobile-tab:active { background:var(--accent-soft); }
+.remote-phone .remote-mobile-tab:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:calc(-1 * var(--wm-space-2)); }
+.remote-phone .remote-mobile-tab:disabled { opacity:.48; }
+.remote-phone .session-rail { border-radius:0 var(--wm-radius-32) var(--wm-radius-32) 0; }
+.remote-phone .session-rail :is(.rail-main-chat,.rail-link,.session-main,.rail-new,.rail-search) { min-height:var(--wm-space-48); border-radius:var(--mobile-control-radius); }
+.remote-phone .session-rail :is(.session-main,.rail-link,.rail-main-chat) { font-size:var(--wm-font-size-16); }
+.remote-phone #session-rail :is(.rail-link,.rail-main-chat,.session-select) { font-size:var(--wm-font-size-16); min-height:var(--wm-space-56); border-radius:var(--mobile-control-radius); }
+.remote-phone .session-rail .session-row { border:0; margin-block:var(--wm-space-4); }
+.remote-phone .remote-drawer-footer { display:flex; gap:var(--wm-space-8); padding:var(--wm-space-12); }
+.remote-phone .remote-drawer-footer .search-entry { flex:1; min-width:0; margin:0; min-height:var(--wm-space-48); border-radius:var(--mobile-control-radius); background:var(--soft); }
+.remote-phone .remote-drawer-footer kbd { display:none; }
+.remote-phone .remote-drawer-footer .rail-top { padding:0; margin:0; display:flex; gap:var(--wm-space-4); }
+.remote-phone .remote-drawer-footer .rail-new { flex:none; width:var(--wm-space-48); padding:0; justify-content:center; background:var(--soft); }
+.remote-phone :is(.activity-row,.goals-row,.library-row) { border:0; border-radius:var(--mobile-card-radius); background:var(--soft); margin-block:var(--wm-space-12); padding:var(--wm-space-12); }
+.remote-phone #settings-dialog { border-radius:var(--wm-radius-32) var(--wm-radius-32) 0 0; }
+.remote-phone #settings-dialog .settings-row { border:0; border-radius:var(--mobile-card-radius); background:var(--soft); margin-block:var(--wm-space-12); padding:var(--wm-space-20); }
+.remote-phone .wm-menu { border-radius:var(--mobile-card-radius); border:0; }
+.remote-phone .wm-menu-item { min-height:var(--wm-space-48); border-radius:var(--wm-radius-16); }
