@@ -79,3 +79,25 @@ iPhone SE、后台无窗口、单实例，原包共启动 4 次。第 1 批启�
 - [apple5add-light-pdf-fullscreen.png](apple5add-light-pdf-fullscreen.png)
 - [apple5add-light-pdf-menu.png](apple5add-light-pdf-menu.png)
 - [apple5add-light-question-choices.png](apple5add-light-question-choices.png)
+
+
+## 收尾修正（两次启动额度已用完）
+
+已合入最新 main（含 #254、#255）。iPhone 的输入区与底部导航改为实际占据布局空间，对话视口随输入区、附件和键盘变化；新待决定卡片滚到末端可见。待决定入口只在卡片完全离开视口时显示，返回底部控件只在末项不完整可见时显示；两个入口独立占据输入框上方一行。移除了隐藏的系统 TabView 层，避免与悬浮导航叠出半截圆角背景。空输入只保留主按钮的听写入口；图片和文件移除按钮共用小半透明圆底与 44 点区域。
+
+第一批 XCTest **0／2**，4 条断言失败：浅深三选一卡片旁返回底部按钮仍显示；附件合成文件因页面消失回调提前清理，导致附件步骤中断。没有放宽断言；之后修正实际滚动 bounds 的测量（不再重复扣 content inset）并保留合成附件文件，最后仅编译／包测可验。第一批浅深审批卡片、自动定位、离屏提示和点击返回、已拒绝回执图均已逐张看过；三选一卡片完整且确认可点，但图仍含修正前多余返回按钮，不能作为该项最终通过证明。
+
+第一批结束后新增一次 GPU reset；第二批等足至少十分钟再启动，期间**整机重启一次**，没有可恢复的测试结果或截图。重连后已关闭所有模拟器，未原样重跑，也未启动第三次。两批均后台单实例、无窗口；第一批关闭后冷却至少三分钟，重连后同样停止并冷却。没有发现新增 WeftMate 崩溃报告；整机重启不能据此说成无崩溃。
+
+证据在 `Fix/batch-1/`：
+
+- `apple5fix-{light,dark}-approval-two-visible.png`：两按钮卡片完整、没有覆盖或多余回底按钮。
+- `apple5fix-{light,dark}-approval-three-visible.png`：三项及确认完整可见可点；修正前回底按钮仍在。
+- `apple5fix-{light,dark}-new-decision-auto-visible.png`：新卡片自动定位。
+- `apple5fix-{light,dark}-decision-outside-hint.png`、`hint-returned-to-card.png`：卡片离屏后显示入口，点击回到卡片后入口消失。
+- `apple5fix-{light,dark}-registered-receipt.png`：已拒绝 · 等待电脑确认回执。
+- `apple5fix-light-empty-collapsed.png`、`focused.png`：空输入仅一个麦克风、收起没有半截背景、聚焦在键盘上方。
+
+最后修正后的返回底部显示条件、附件双关闭按钮／键盘布局、五项导航逐个点按与未选中按钮 44 点区域，以及「已允许」回执 **需要本人真机看**。这些没有修正后截图，不用旧图当成功图。大字体／320 点／横屏不是这次新验结果，旧追加图只保留历史。
+
+最终非模拟器验证：完整包 XCTest 13／13、Swift Testing 483 通过（2 外部环境跳过），真实合成宿主 HTTP、TaskInteraction／ToolProgress 状态检查、令牌 5／5、回调 68 处零失败、文案检查和 iPhone generic build-for-testing 通过。详见 `Fix/validation.json`；最终界面没有全绿结论。
