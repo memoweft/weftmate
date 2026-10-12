@@ -41,8 +41,12 @@
 !macroend
 !macro WeftLoad
   InitPluginsDir
-  File /oname=$PLUGINSDIR\WeftInstaller.dll "${BUILD_RESOURCES_DIR}\..\.local\installer-ui\WeftInstaller.dll"
-  File /oname=$PLUGINSDIR\WeftIcon.ico "${BUILD_RESOURCES_DIR}\icon.ico"
+  ; Both initialization and process-check hooks use this helper. Never rewrite
+  ; the DLL after System::Call has loaded it into the installer.
+  ${IfNot} ${FileExists} "$PLUGINSDIR\WeftInstaller.dll"
+    File /oname=$PLUGINSDIR\WeftInstaller.dll "${BUILD_RESOURCES_DIR}\..\.local\installer-ui\WeftInstaller.dll"
+    File /oname=$PLUGINSDIR\WeftIcon.ico "${BUILD_RESOURCES_DIR}\icon.ico"
+  ${EndIf}
 !macroend
 !macro preInit
   ${GetParameters} $R0
@@ -69,6 +73,11 @@
   ${If} $R2 == 1
   ${OrIf} $weftOldMachine != ""
     ${IfNot} ${UAC_IsAdmin}
+      ${IfNot} ${Silent}
+        !insertmacro WeftLoad
+        System::Call '$PLUGINSDIR\WeftInstaller.dll::Initialize(p $HWNDPARENT, w "$PLUGINSDIR\WeftIcon.ico")'
+        System::Call '$PLUGINSDIR\WeftInstaller.dll::AdminRequired()'
+      ${EndIf}
       !insertmacro WeftFail 740 "ADMIN_REQUIRED: run setup from an elevated terminal"
     ${EndIf}
   ${EndIf}
@@ -202,8 +211,6 @@ Var weftOldMachine
       ${If} ${isUpdated}
         Abort
       ${EndIf}
-      IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 +2
-      Abort
       nsDialogs::Create 1018
       Pop $0
       !ifdef APP_64_UNPACKED_SIZE

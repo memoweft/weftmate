@@ -3672,7 +3672,7 @@ function refreshTrayMenu() {
   const updateBusy = update.status === 'checking' || update.status === 'available';
   const updateReady = update.status === 'downloaded';
   const updateLabel = updateReady
-    ? `安装更新${update.version ? ` v${update.version}` : ''}…`
+    ? requiresManualAppInstall() ? '打开已下载的安装包…' : `安装更新${update.version ? ` v${update.version}` : ''}…`
     : updateBusy
       ? '正在检查或下载更新…'
       : update.enabled

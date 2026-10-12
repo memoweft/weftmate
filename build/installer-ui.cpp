@@ -49,7 +49,14 @@ static LRESULT CALLBACK pathProc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp,UINT_PTR
   auto s=reinterpret_cast<Surface*>(ref);
   if(msg==WM_MOUSEMOVE) {
     s->fullPathHover=true;
+#ifdef WEFT_QA
+    wchar_t forced[8]{};bool syntheticHover=GetEnvironmentVariable(L"WEFTMATE_INSTALLER_TEST_HOVER",forced,8)>0;
+    if(!syntheticHover) {
+#endif
     TRACKMOUSEEVENT tracking{sizeof(TRACKMOUSEEVENT),TME_LEAVE,hwnd,0};TrackMouseEvent(&tracking);
+#ifdef WEFT_QA
+    }
+#endif
     SetWindowText(s->bodyLabel,selectedDirectory.c_str());
   } else if(msg==WM_MOUSELEAVE){s->fullPathHover=false;SetWindowText(s->bodyLabel,s->body.c_str());}
   return DefSubclassProc(hwnd,msg,wp,lp);
@@ -460,6 +467,9 @@ extern "C" int __stdcall QuitApp(const wchar_t* directory,const wchar_t* executa
 }
 extern "C" void __stdcall CleanupWarning() {
   prompt(tr(L"程序清理未完成",L"App cleanup could not finish"),tr(L"你的数据已保留。请关闭 WeftMate 后重新安装，再尝试卸载；也可以在设置里关闭开机自启。",L"Your data is kept. Close WeftMate, reinstall and retry uninstalling. You can also disable launch at login in Settings."),false,false);
+}
+extern "C" void __stdcall AdminRequired() {
+  prompt(tr(L"请重新打开安装包",L"Reopen the installer"),tr(L"请右键安装包，选择“以管理员身份运行”，再继续更新。原有程序和数据会保留。",L"Right-click the installer and choose Run as administrator to continue updating. Your current app and data are kept."),false,false);
 }
 extern "C" int __stdcall Launch(const wchar_t* executable,const wchar_t* args) {
   std::wstring command=L"\""+std::wstring(executable)+L"\" "+args;

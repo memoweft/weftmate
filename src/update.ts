@@ -176,6 +176,7 @@ export async function checkForUpdates(getWindow: () => BrowserWindow | null): Pr
 /** 用户确认「重启安装」——只有已下载完成时可用。 */
 export function quitAndInstall(): boolean {
   if (!state.enabled || autoUpdater === null || state.status !== 'downloaded') return false
+  if (requiresManualAppInstall()) { showPreparedInstaller(); return false }
   try {
     // The recovery monitor owns the reviewed NSIS installer. Main's shutdown
     // deliberately calls app.exit(), which does not emit will-quit.
