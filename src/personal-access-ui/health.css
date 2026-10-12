@@ -218,7 +218,7 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 .health-insight h3 { font-size:var(--wm-font-size-24); color:var(--health-ink); line-height:1.35; }
 .health-insight .health-reading { color:var(--health-muted); }
 .health-insight .health-remind { color:var(--health-card); background:var(--health-recovery); font-weight:600; }
-.health-insight .health-remind:hover { filter:brightness(1.08); }
+.health-page .health-insight .health-remind:hover { color:var(--health-card); background:var(--health-recovery); filter:brightness(1.08); }
 .health-insight-foot .health-control { background:var(--surface-soft,var(--soft)); }
 .health-mobile .health-insight { background:var(--health-card); }
 .health-sleep-summary { margin-top:var(--wm-space-20); }
