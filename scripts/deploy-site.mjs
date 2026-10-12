@@ -7,6 +7,7 @@ import { buildSite, dist } from './build-site.mjs';
 export const protectedPaths=['downloads','updates','.well-known','preview-*'];
 export const backupOmissions=['downloads/files','updates'];
 export const quote = s => `'${String(s).replace(/'/g,"'\\''")}'`;
+export function commandLine(exe,args,platform=process.platform){const q=platform==='win32'?s=>`'${String(s).replace(/'/g,"''")}'`:quote;return (platform==='win32'?'& ':'')+[exe,...args].map(q).join(' ');}
 const timestamp=()=>new Date().toISOString().replace(/[-:.]/g,'');
 export function parseArgs(args) {
  const o={dryRun:false};for(let i=0;i<args.length;i++){const arg=args[i];if(arg==='--dry-run')o.dryRun=true;else if(['--host','--root','--mode','--path'].includes(arg)){if(!args[i+1]||args[i+1].startsWith('--'))throw Error(`Missing value for ${arg}`);o[arg.slice(2)]=args[++i];}else throw Error(`Unknown option: ${arg}`);}
@@ -41,11 +42,11 @@ export function planDeployment(o,stamp=timestamp()) {
 function run(exe,args,options={}) {return new Promise((resolve,reject)=>{const child=spawn(exe,args,{stdio:['ignore','inherit','inherit'],...options});child.once('error',reject);child.once('exit',code=>code===0?resolve():reject(Error(`${exe} exited ${code}`)));});}
 export async function deploy(o) {
  const p=planDeployment(o);const commands=[['node',['scripts/build-site.mjs',...(o.mode==='preview'?['--preview']:[])]],['ssh',[o.host,p.prepare]],['pipeline',[['tar','-cf','-','-C','site/dist','.'],['ssh',o.host,p.upload]]],['ssh',[o.host,p.publish]]];
- if(o.dryRun){for(const [exe,args] of commands)console.log(exe==='pipeline'?args.map(a=>a.map(quote).join(' ')).join(' | '):[exe,...args].map(quote).join(' '));if(o.mode==='production')console.log(`Rollback: ssh ${quote(o.host)} ${quote(p.rollback)}`);return p;}
+ if(o.dryRun){for(const [exe,args] of commands)console.log(exe==='pipeline'?args.map(([exe,...args])=>commandLine(exe,args)).join(' | '):commandLine(exe,args));if(o.mode==='production')console.log(`Rollback: ${commandLine('ssh',[o.host,p.rollback])}`);return p;}
  await buildSite({preview:o.mode==='preview'});await run('ssh',[o.host,p.prepare]);
  try{await new Promise((done,reject)=>{const tar=spawn('tar',['-cf','-','-C',dist,'.'],{stdio:['ignore','pipe','inherit']});const ssh=spawn('ssh',[o.host,p.upload],{stdio:['pipe','inherit','inherit']});tar.stdout.pipe(ssh.stdin);let finished=0;let failed=false;const complete=(name,code)=>{if(code!==0&&!failed){failed=true;tar.kill();ssh.kill();reject(Error(`${name} exited ${code}`));}if(++finished===2&&!failed)done();};tar.once('error',reject);ssh.once('error',reject);ssh.stdin.on('error',()=>{});tar.once('exit',c=>complete('tar',c));ssh.once('exit',c=>complete('ssh',c));});await run('ssh',[o.host,p.publish]);}
- catch(error){console.error(`Deployment did not finish. Staging directory: ${p.staging}`);if(o.mode==='production')console.error(`If a backup was created, rollback: ssh ${quote(o.host)} ${quote(p.rollback)}`);throw error;}
- if(o.mode==='production')console.log(`Rollback: ssh ${quote(o.host)} ${quote(p.rollback)}`);return p;
+ catch(error){console.error(`Deployment did not finish. Staging directory: ${p.staging}`);if(o.mode==='production')console.error(`If a backup was created, rollback: ${commandLine('ssh',[o.host,p.rollback])}`);throw error;}
+ if(o.mode==='production')console.log(`Rollback: ${commandLine('ssh',[o.host,p.rollback])}`);return p;
 }
 
 // Offline rsync model for contract tests. It consumes the actual generated

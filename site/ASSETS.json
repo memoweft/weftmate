@@ -1,17 +1,40 @@
 {
-  "reviewed": "2026-10-12",
-  "sources": {
-    "windows-light": "tests/evidence/ux-3/quieter-replies/desktop-light-five-collapsed.png",
-    "windows-dark": "tests/evidence/ux-3/quieter-replies/desktop-dark-five-collapsed.png",
-    "mac-light": "tests/evidence/qa-3/apple/a10/mac-light/main.png",
-    "mac-dark": "tests/evidence/qa-3/apple/a10/mac-dark/main.png",
-    "android-light": "tests/evidence/mob-2/after/phone-system-390-light-chat.png",
-    "android-dark": "tests/evidence/mob-2/after/phone-system-390-dark-chat.png",
-    "iphone-light": "tests/evidence/qa-1/apple/iphone/review-iphone-conversation-light-20261009T092639Z.png",
-    "iphone-dark": "tests/evidence/qa-1/apple/iphone/review-iphone-conversation-dark-20261009T093104Z.png",
-    "watch-light": "tests/evidence/qa-3/apple/watch/approve-pending-watch.png",
-    "watch-dark": "tests/evidence/qa-3/apple/watch/approve-ended-watch.png"
-  },
-  "review": "Every source opened and visually checked: fictional test identities only, no personal names, emails, user directories or machine names. Apple captures are older native client evidence. Watch uses its actual black UI in both site themes; the two images show waiting and completed.",
-  "derived": "Resized and compressed only. No interface text or content was altered. Keyframes and share image are screenshots of the new synthetic site demo; see scripts/capture-site.mjs."
+  "version": 1,
+  "images": {
+    "assets/keyframe-files-light.webp": {
+      "sha256": "c0d58e88c047fa32af41d0aa14959a2fce2efd2b9459e7e5ae18c8dac3f1ad21",
+      "text": "WeftMate\n今天\n搜索\nWeftMate\n动态\n目标\n成果库\n周末骑行路线\n十月报销\n读书笔记\n阿青\n把这个月的资料整理好，给我一份能看懂的报告。\n\n我先看看文件，再按类型和日期整理。重复文件会单独列出来，交给你决定。\n\n读取了 213 个文件\n\n按类型和日期归好了类\n\n找到 6 个重复文件，已单独标记\n\n移动了 38 个文件 · 新建 5 个文件夹\n\n写好了整理报告和文件清单\n\n这次整理出 2 个文件\n\n整理报告.md\n报告 · 12 KB\n文件清单.csv\n表格 · 8 KB\n\n213 个文件看过了，38 个归好了位置。6 个重复文件先留着，报告和清单都在这里。\n\n下一步可以\n\n以后每周五自动整理一次\n看看重复文件\n把报告再写短一点\n向 WeftMate 说说你的目标\n自动\n整理报告.md\n\n10 月资料整理 · 10 月 12 日\n\n这个月的资料，理清楚了。\n\n按文件类型与日期整理，保留全部原始内容。需要你再决定的事项，单独列在最后。\n\n这次完成了什么\n看过 213 个文件，按类型和日期分组。\n38 个文件移到 5 个新文件夹，原始内容未改动。\n6 个重复文件保留原位，已在清单中标记。\n生成完整文件清单，之后找文件时有据可查。\n整理后的分布\n类别\t文件\t这次整理\n文档\t86\t归入月份文件夹\n图片\t72\t按日期归类\n表格\t31\t报销与工作分开\n其它\t24\t保留原位置\n\n演示中的虚构文件与内容。",
+      "source": "Screenshot of the natural-content website demo; visually reviewed."
+    },
+    "assets/keyframe-memory-light.webp": {
+      "sha256": "4f5851b11309e592da173c8a4f2b64c6aaff03f4a793c69aa0848c57498a12f6",
+      "text": "WeftMate\n今天\n搜索\nWeftMate\n动态\n目标\n成果库\n周末骑行路线\n十月报销\n读书笔记\n阿青\n上周 · 周四\n周末出门我想骑车，路线别超过 20 公里。\n\n好，先按 20 公里以内来找路线。\n\n也别太拥挤，我更喜欢安静一点的地方。\n\n记住了。周末骑车，选安静的路线，不赶路。\n\n今天\n帮我想想周末去哪儿放松。\n\n可以去河边骑一圈。选安静的路线，控制在 20 公里以内，中途找一家小店歇歇。\n\n用到了 2 条记忆\n\n周末喜欢骑车，偏好安静的路线。\n\n来自上周四的对话\n骑行路线不超过 20 公里。\n「路线别超过 20 公里。」\n来自上周四的对话\n更正\n忘掉\n向 WeftMate 说说你的目标\n自动",
+      "source": "Screenshot of the natural-content website demo; visually reviewed."
+    },
+    "assets/keyframe-phone-light.webp": {
+      "sha256": "f39eda9b7c1563d0a3d044b34a74d6f14c6b6f6b017e71839365729b69cb4f6d",
+      "text": "WeftMate\n电脑已经做完\n搜索\nWeftMate\n动态\n目标\n成果库\n阿青\n我准备出门了。把季度总结导出成 PDF，放进共享文件夹。\n\n我会检查排版、导出 PDF，再放进共享文件夹。\n\n读好了季度总结，保留了 3 张图表\n\n导出了 12 页 PDF，准备放进共享文件夹\n\n你在手机上允许了覆盖，电脑继续保存\n\n已放进共享文件夹，旧版已替换\n\n新版文件已准备好\n\n季度总结.pdf\nPDF · 12 页\n\n12 页总结已导出，3 张图表完整保留。新版在共享文件夹，出门也能接着看。\n\n向 WeftMate 说说你的目标\n自动\n9:41\nWeftMate\nWeftMate · 已完成\n\n新版 PDF 已放进共享文件夹。\n\n已在手机上批准。电脑正在保存。\n\n新版 PDF 已放进共享文件夹。\n\n新版文件已准备好\n\n季度总结.pdf\n向 WeftMate 说说你的目标\n自动\n聊天\n动态\n目标\n成果库\n9:41\n\n已完成\n\n已完成\n\n手表上也能处理审批",
+      "source": "Screenshot of the natural-content website demo; visually reviewed."
+    },
+    "assets/keyframe-files-dark.webp": {
+      "sha256": "70e2d0e1160fc0db62496604284c51bc2ff97b8f06a31f8528223613b1c9aaa4",
+      "text": "WeftMate\n今天\n搜索\nWeftMate\n动态\n目标\n成果库\n周末骑行路线\n十月报销\n读书笔记\n阿青\n把这个月的资料整理好，给我一份能看懂的报告。\n\n我先看看文件，再按类型和日期整理。重复文件会单独列出来，交给你决定。\n\n读取了 213 个文件\n\n按类型和日期归好了类\n\n找到 6 个重复文件，已单独标记\n\n移动了 38 个文件 · 新建 5 个文件夹\n\n写好了整理报告和文件清单\n\n这次整理出 2 个文件\n\n整理报告.md\n报告 · 12 KB\n文件清单.csv\n表格 · 8 KB\n\n213 个文件看过了，38 个归好了位置。6 个重复文件先留着，报告和清单都在这里。\n\n下一步可以\n\n以后每周五自动整理一次\n看看重复文件\n把报告再写短一点\n向 WeftMate 说说你的目标\n自动\n整理报告.md\n\n10 月资料整理 · 10 月 12 日\n\n这个月的资料，理清楚了。\n\n按文件类型与日期整理，保留全部原始内容。需要你再决定的事项，单独列在最后。\n\n这次完成了什么\n看过 213 个文件，按类型和日期分组。\n38 个文件移到 5 个新文件夹，原始内容未改动。\n6 个重复文件保留原位，已在清单中标记。\n生成完整文件清单，之后找文件时有据可查。\n整理后的分布\n类别\t文件\t这次整理\n文档\t86\t归入月份文件夹\n图片\t72\t按日期归类\n表格\t31\t报销与工作分开\n其它\t24\t保留原位置\n\n演示中的虚构文件与内容。",
+      "source": "Screenshot of the natural-content website demo; visually reviewed."
+    },
+    "assets/keyframe-memory-dark.webp": {
+      "sha256": "68a44635b4d813301d95bb6a058a23443b8ff17089e8f15d0eda91eeb68e6d60",
+      "text": "WeftMate\n今天\n搜索\nWeftMate\n动态\n目标\n成果库\n周末骑行路线\n十月报销\n读书笔记\n阿青\n上周 · 周四\n周末出门我想骑车，路线别超过 20 公里。\n\n好，先按 20 公里以内来找路线。\n\n也别太拥挤，我更喜欢安静一点的地方。\n\n记住了。周末骑车，选安静的路线，不赶路。\n\n今天\n帮我想想周末去哪儿放松。\n\n可以去河边骑一圈。选安静的路线，控制在 20 公里以内，中途找一家小店歇歇。\n\n用到了 2 条记忆\n\n周末喜欢骑车，偏好安静的路线。\n\n来自上周四的对话\n骑行路线不超过 20 公里。\n「路线别超过 20 公里。」\n来自上周四的对话\n更正\n忘掉\n向 WeftMate 说说你的目标\n自动",
+      "source": "Screenshot of the natural-content website demo; visually reviewed."
+    },
+    "assets/keyframe-phone-dark.webp": {
+      "sha256": "cc962f20e149b6a494715f09d103e7534ef1d40315d192b30d0e48b34cd04d32",
+      "text": "WeftMate\n电脑已经做完\n搜索\nWeftMate\n动态\n目标\n成果库\n阿青\n我准备出门了。把季度总结导出成 PDF，放进共享文件夹。\n\n我会检查排版、导出 PDF，再放进共享文件夹。\n\n读好了季度总结，保留了 3 张图表\n\n导出了 12 页 PDF，准备放进共享文件夹\n\n你在手机上允许了覆盖，电脑继续保存\n\n已放进共享文件夹，旧版已替换\n\n新版文件已准备好\n\n季度总结.pdf\nPDF · 12 页\n\n12 页总结已导出，3 张图表完整保留。新版在共享文件夹，出门也能接着看。\n\n向 WeftMate 说说你的目标\n自动\n9:41\nWeftMate\nWeftMate · 已完成\n\n新版 PDF 已放进共享文件夹。\n\n已在手机上批准。电脑正在保存。\n\n新版 PDF 已放进共享文件夹。\n\n新版文件已准备好\n\n季度总结.pdf\n向 WeftMate 说说你的目标\n自动\n聊天\n动态\n目标\n成果库\n9:41\n\n已完成\n\n已完成\n\n手表上也能处理审批",
+      "source": "Screenshot of the natural-content website demo; visually reviewed."
+    },
+    "og-image.png": {
+      "sha256": "fbcf25c6e35eac8c744ca3126c1e089dbb4f5058f8032a041339982e9e73bb5f",
+      "text": "预览阶段\n它记得你，\n也替你把事做完。\n\nWeftMate 是住在你自己电脑里的 AI 助手。说一句目标，它在电脑上把事做完；你说过的事，下次还记得。手机和手表上，也是同一个它。\n\nWeftMate\n今天\n把这个月的资料整理好，给我一份能看懂的报告。\n\n我先看看文件，再按类型和日期整理。重复文件会单独列出来，交给你决定。\n\n读取了 213 个文件\n\n按类型和日期归好了类\n\n找到 6 个重复文件，已单独标记\n\n移动了 38 个文件 · 新建 5 个文件夹\n\n写好了整理报告和文件清单\n\n这次整理出 2 个文件\n\n整理报告.md\n报告 · 12 KB\n文件清单.csv\n表格 · 8 KB\n向 WeftMate 说说你的目标\n自动",
+      "source": "1200 × 630 screenshot composition of this website."
+    }
+  }
 }
