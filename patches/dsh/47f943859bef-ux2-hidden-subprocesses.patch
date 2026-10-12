@@ -1,0 +1,80 @@
+diff --git a/packages/subprocess/subprocess-local/src/spawn.ts b/packages/subprocess/subprocess-local/src/spawn.ts
+--- a/packages/subprocess/subprocess-local/src/spawn.ts
++++ b/packages/subprocess/subprocess-local/src/spawn.ts
+@@ -278,7 +278,7 @@
+   // Outcome deliberately unchecked: an already-absent tree (status 128), exit
+   // races, and a missing taskkill binary (spawnSync reports, never throws) are
+   // as tolerable here as ESRCH is for a POSIX group signal.
+-  spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' })
++  spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true })
+ }
+ 
+ /**
+@@ -350,6 +350,7 @@
+   const child = spawn(program, args, {
+     cwd: spec.cwd,
+     env,
++    windowsHide: true,
+     stdio: [
+       stdinMode === 'ignore' ? 'ignore' : 'pipe',
+       outMode === 'inherit' ? 'inherit' : 'pipe',
+diff --git a/packages/subprocess/subprocess-local/src/process-inspector.ts b/packages/subprocess/subprocess-local/src/process-inspector.ts
+--- a/packages/subprocess/subprocess-local/src/process-inspector.ts
++++ b/packages/subprocess/subprocess-local/src/process-inspector.ts
+@@ -42,7 +42,7 @@
+   open: path => openSync(path, 'r'),
+   read: (fd, buffer, length, position) => readSync(fd, buffer, 0, length, position),
+   close: closeSync,
+-  exec: (file, args) => execFileSync(file, args, { encoding: 'utf8' }),
++  exec: (file, args) => execFileSync(file, args, { encoding: 'utf8', windowsHide: true }),
+   kill: (pid, signal) => process.kill(pid, signal),
+ }
+ /* v8 ignore stop */
+diff --git a/packages/sandbox/sandbox-windows-acl/src/spawn.ts b/packages/sandbox/sandbox-windows-acl/src/spawn.ts
+--- a/packages/sandbox/sandbox-windows-acl/src/spawn.ts
++++ b/packages/sandbox/sandbox-windows-acl/src/spawn.ts
+@@ -113,7 +113,8 @@
+   const startupInfo = allocStartupInfo()
+   encodeStartupInfo(startupInfo, {
+     cb: abi.STARTUPINFOW_SIZE,
+-    dwFlags: abi.STARTF_USESTDHANDLES,
++    dwFlags: abi.STARTF_USESTDHANDLES | abi.STARTF_USESHOWWINDOW,
++    wShowWindow: abi.SW_HIDE,
+     hStdInput: stdIn.read,
+     hStdOutput: stdOut.write,
+     hStdError: stdErr.write,
+@@ -297,7 +298,8 @@
+   const startupInfo = allocStartupInfo()
+   encodeStartupInfo(startupInfo, {
+     cb: abi.STARTUPINFOW_SIZE,
+-    dwFlags: abi.STARTF_USESTDHANDLES,
++    dwFlags: abi.STARTF_USESTDHANDLES | abi.STARTF_USESHOWWINDOW,
++    wShowWindow: abi.SW_HIDE,
+     hStdInput: stdIn,
+     hStdOutput: stdOut,
+     hStdError: stdErr,
+diff --git a/packages/sandbox/sandbox-windows-acl/src/win32-abi.ts b/packages/sandbox/sandbox-windows-acl/src/win32-abi.ts
+--- a/packages/sandbox/sandbox-windows-acl/src/win32-abi.ts
++++ b/packages/sandbox/sandbox-windows-acl/src/win32-abi.ts
+@@ -139,6 +139,10 @@
+  * handles, required because Node clears stdio inheritability at startup.
+  */
+ export const STARTF_USESTDHANDLES = 0x00000100
++/** STARTF_USESHOWWINDOW: apply the explicit show state without changing console creation or the restricted token. */
++export const STARTF_USESHOWWINDOW = 0x00000001
++/** SW_HIDE: background command execution never opens a window. */
++export const SW_HIDE = 0
+ /** HANDLE_FLAG_INHERIT: SetHandleInformation flag re-enabling handle inheritance for the spawned child's stdio handles. */
+ export const HANDLE_FLAG_INHERIT = 0x1
+ /** INFINITE: never-timeout wait value. */
+diff --git a/packages/sandbox/sandbox-windows-acl/src/ffi.ts b/packages/sandbox/sandbox-windows-acl/src/ffi.ts
+--- a/packages/sandbox/sandbox-windows-acl/src/ffi.ts
++++ b/packages/sandbox/sandbox-windows-acl/src/ffi.ts
+@@ -43,6 +43,7 @@
+ export interface StartupInfoInput {
+   cb: number
+   dwFlags: number
++  wShowWindow?: number
+   hStdInput: NativePtr
+   hStdOutput: NativePtr
+   hStdError: NativePtr

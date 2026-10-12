@@ -1,0 +1,48 @@
+{
+  "realElectron": true,
+  "synthetic": true,
+  "checks": [
+    {
+      "theme": "light",
+      "focusContained": true,
+      "cancelInitiallyFocused": true,
+      "shape": {
+        "left": 367.66668701171875,
+        "right": 847.6666870117188,
+        "width": 1215,
+        "radius": "24px",
+        "fill": "rgb(169, 38, 64)",
+        "text": "rgb(255, 255, 255)"
+      }
+    },
+    {
+      "theme": "dark",
+      "focusContained": true,
+      "cancelInitiallyFocused": true,
+      "shape": {
+        "left": 367.66668701171875,
+        "right": 847.6666870117188,
+        "width": 1215,
+        "radius": "24px",
+        "fill": "rgb(169, 38, 64)",
+        "text": "rgb(255, 255, 255)"
+      }
+    }
+  ],
+  "enterConfirms": true,
+  "escapeCancels": true,
+  "updateIpc": true,
+  "reducedMotion": true,
+  "errors": [],
+  "requestedNarrowWidth": 360,
+  "narrowViewport": {
+    "height": 236.8541717529297,
+    "viewport": 788,
+    "css": "236.854px",
+    "minHeight": "0px",
+    "maxHeight": "756px",
+    "display": "block",
+    "width": 375,
+    "footer": "0px"
+  }
+}

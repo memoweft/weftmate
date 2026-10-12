@@ -2,6 +2,7 @@
 import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 import { assertRuntimeIdentity } from '../../scripts/dsh-runtime-identity.mjs';
 import { managedMkdtempSync, disposeManagedTemp, startManagedTempLease } from '../../tests/helpers/managed-temp.mjs';
 import { runManagedTestProcess } from '../../tests/helpers/managed-test-process.mjs';
@@ -37,7 +38,9 @@ const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // Node matches both leaf names and suite-qualified names. Only exact recorded
 // leaf names are exempt; another failing test in the same file still blocks CI.
 const pattern = entries => `(?:^| )(?:(?:${entries.map(entry => escape(entry.name)).join(')|(?:')}))$`;
-const args = ['--test', '--test-concurrency=1'];
+// Windows includes the long, isolated credential-recovery matrix. Two file
+// workers keep the complete selection within the local 30-minute heavy slot.
+const args = ['--test', `--test-concurrency=${process.platform === 'win32' && mode === 'required' ? 2 : 1}`];
 if (mode === 'required') {
   const excluded = [...exceptions.knownFailures, ...suite.tests, ...platformTests];
   if (excluded.length) args.push(`--test-skip-pattern=${pattern(excluded)}`);
@@ -72,13 +75,19 @@ if (mode === 'required') {
 }
 console.log(lines.join('\n'));
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
-// Absolute test paths keep every worker's command line attributable to its
-// worktree during the required creation-time/executable/command-line cleanup.
+// The complete Windows selection exceeds CreateProcess's command-line limit
+// with absolute filenames. Keep its short names and an absolute, side-effect-free
+// helper import so the runner and workers remain attributable to this worktree.
+const absoluteTests = selected.map(file => resolve(file));
+const workerImport = resolve('tests/helpers/managed-temp.mjs');
+const testArguments = process.platform === 'win32'
+  ? [...args, '--import', pathToFileURL(workerImport).href, ...selected]
+  : [...args, ...absoluteTests];
 let result;
 const streamingOutput = process.env.CI === 'true';
 try {
-  result = await runManagedTestProcess(process.execPath, [...args, ...selected.map(file => resolve(file))],
-    { env, commandRoots: [temp, ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')],
+  result = await runManagedTestProcess(process.execPath, testArguments,
+    { env, commandRoots: [temp, ...(process.platform === 'win32' ? [workerImport] : []), ...absoluteTests], executables: [process.execPath, createRequire(import.meta.url)('electron')],
       onOutput: streamingOutput ? (stream, chunk) => process[stream].write(chunk) : undefined });
 } finally {
   stopLease();

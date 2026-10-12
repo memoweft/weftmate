@@ -1,0 +1,465 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "isolatedAccount": true,
+  "hostName": "synthetic-host",
+  "modelRequests": 3,
+  "commandCalls": 1,
+  "commandTimeoutScenario": true,
+  "sandboxReadOnlyScenario": false,
+  "packaged": {
+    "executable": "isolated-release/WeftMate.exe",
+    "sourceCode": "worktree",
+    "version": "0.2.0-preview.3",
+    "originalArchiveSha256": "7bfdd73e8dd7655d112576de5e89811642688ad66d7c10b726673cb9ef8cfbb8",
+    "syntheticDesktopIdentity": "WeftMate ux2console09b31faa",
+    "runtimeReadOnly": true
+  },
+  "toolLoadingRequests": 1,
+  "commandResultSeen": true,
+  "commandTimedOut": true,
+  "finalReplySent": true,
+  "completed": true,
+  "commandEvidence": {
+    "modelReceivedToolOutput": "UX2_COMMAND_OK"
+  },
+  "parentConsole": {
+    "guiLauncher": true,
+    "launcherDetached": true,
+    "consoleAttached": false,
+    "attachError": 6,
+    "consoleWindow": false
+  },
+  "sampling": {
+    "sleepMs": 1,
+    "meanSampleGapMs": 19.93,
+    "maxSampleGapMs": 38,
+    "samples": 1110,
+    "elapsedMs": 22121,
+    "visibleConsoleWindows": 1
+  },
+  "windows": [
+    {
+      "elapsedMs": 19286,
+      "phase": "native-positive-control",
+      "windowClass": "ConsoleWindowClass",
+      "pid": 12592,
+      "process": "powershell.exe",
+      "consoleClientPid": 12592,
+      "matchedSyntheticTitle": false,
+      "ancestry": [
+        {
+          "pid": 12592,
+          "name": "powershell.exe",
+          "parentPid": 62484
+        }
+      ]
+    }
+  ],
+  "processes": [
+    {
+      "elapsedMs": 224,
+      "pid": 13396,
+      "parentPid": 52076,
+      "process": "WeftMate.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 287,
+      "pid": 39904,
+      "parentPid": 52076,
+      "process": "WeftMate.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 287,
+      "pid": 38688,
+      "parentPid": 52076,
+      "process": "WeftMate.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 311,
+      "pid": 59432,
+      "parentPid": 52076,
+      "process": "powershell.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 311,
+      "pid": 34052,
+      "parentPid": 59432,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 581,
+      "pid": 59088,
+      "parentPid": 52076,
+      "process": "powershell.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 581,
+      "pid": 52428,
+      "parentPid": 59088,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 10284,
+      "pid": 45276,
+      "parentPid": 52076,
+      "process": "powershell.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 10304,
+      "pid": 33856,
+      "parentPid": 45276,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 10638,
+      "pid": 29900,
+      "parentPid": 52076,
+      "process": "WeftMate.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 11003,
+      "pid": 24772,
+      "parentPid": 52076,
+      "process": "WeftMate.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 12320,
+      "pid": 23960,
+      "parentPid": 52076,
+      "process": "powershell.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 12320,
+      "pid": 58700,
+      "parentPid": 23960,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 12531,
+      "pid": 41308,
+      "parentPid": 52076,
+      "process": "powershell.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 12531,
+      "pid": 11180,
+      "parentPid": 41308,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 12774,
+      "pid": 53472,
+      "parentPid": 52076,
+      "process": "powershell.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 12774,
+      "pid": 25452,
+      "parentPid": 53472,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 12970,
+      "pid": 54080,
+      "parentPid": 52076,
+      "process": "powershell.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 12970,
+      "pid": 58252,
+      "parentPid": 54080,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 13188,
+      "pid": 46268,
+      "parentPid": 52076,
+      "process": "powershell.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 13188,
+      "pid": 63032,
+      "parentPid": 46268,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 13378,
+      "pid": 44204,
+      "parentPid": 52076,
+      "process": "powershell.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 13398,
+      "pid": 60764,
+      "parentPid": 44204,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 13676,
+      "pid": 32656,
+      "parentPid": 52076,
+      "process": "WeftMate.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 13968,
+      "pid": 52744,
+      "parentPid": 52076,
+      "process": "reg.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 14023,
+      "pid": 52452,
+      "parentPid": 52076,
+      "process": "reg.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 14304,
+      "pid": 38356,
+      "parentPid": 52076,
+      "process": "taskkill.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 14304,
+      "pid": 57120,
+      "parentPid": 38356,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 14647,
+      "pid": 49276,
+      "parentPid": 52076,
+      "process": "WeftMate.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 15093,
+      "pid": 27852,
+      "parentPid": 52076,
+      "process": "WeftMate.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 16477,
+      "pid": 44008,
+      "parentPid": 52076,
+      "process": "reg.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 16477,
+      "pid": 57684,
+      "parentPid": 44008,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 16497,
+      "pid": 24756,
+      "parentPid": 52076,
+      "process": "reg.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 16497,
+      "pid": 54652,
+      "parentPid": 24756,
+      "process": "conhost.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 16516,
+      "pid": 60872,
+      "parentPid": 52076,
+      "process": "reg.exe",
+      "phase": "startup"
+    },
+    {
+      "elapsedMs": 17226,
+      "pid": 24860,
+      "parentPid": 27852,
+      "process": "pwsh.exe",
+      "phase": "model-command"
+    },
+    {
+      "elapsedMs": 17249,
+      "pid": 51820,
+      "parentPid": 24860,
+      "process": "conhost.exe",
+      "phase": "model-command"
+    },
+    {
+      "elapsedMs": 18722,
+      "pid": 47096,
+      "parentPid": 27852,
+      "process": "taskkill.exe",
+      "phase": "model-command"
+    },
+    {
+      "elapsedMs": 18722,
+      "pid": 46752,
+      "parentPid": 47096,
+      "process": "conhost.exe",
+      "phase": "model-command"
+    },
+    {
+      "elapsedMs": 19229,
+      "pid": 12592,
+      "parentPid": 62484,
+      "process": "powershell.exe",
+      "phase": "native-positive-control",
+      "creationFlags": 16,
+      "showWindow": 7
+    },
+    {
+      "elapsedMs": 19229,
+      "pid": 60548,
+      "parentPid": 12592,
+      "process": "conhost.exe",
+      "phase": "native-positive-control"
+    }
+  ],
+  "unmatchedWindows": [
+    {
+      "elapsedMs": 28,
+      "phase": "startup",
+      "windowClass": "PseudoConsoleWindow",
+      "pid": 34832
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "CASCADIA_HOSTING_WINDOW_CLASS",
+      "pid": 30756
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "PseudoConsoleWindow",
+      "pid": 13088
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "CASCADIA_HOSTING_WINDOW_CLASS",
+      "pid": 30756
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "PseudoConsoleWindow",
+      "pid": 46104
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "CASCADIA_HOSTING_WINDOW_CLASS",
+      "pid": 30756
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "PseudoConsoleWindow",
+      "pid": 53844
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "CASCADIA_HOSTING_WINDOW_CLASS",
+      "pid": 30756
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "PseudoConsoleWindow",
+      "pid": 43136
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "CASCADIA_HOSTING_WINDOW_CLASS",
+      "pid": 30756
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "PseudoConsoleWindow",
+      "pid": 61052
+    },
+    {
+      "elapsedMs": 29,
+      "phase": "startup",
+      "windowClass": "CASCADIA_HOSTING_WINDOW_CLASS",
+      "pid": 30756
+    }
+  ],
+  "consoleClients": [
+    {
+      "elapsedMs": 19262,
+      "phase": "native-positive-control",
+      "clientPid": 12592,
+      "clientProcess": "powershell.exe",
+      "windowClass": "ConsoleWindowClass",
+      "visible": true,
+      "syntheticTitle": false
+    },
+    {
+      "elapsedMs": 19461,
+      "phase": "native-positive-control",
+      "clientPid": 12592,
+      "clientProcess": "powershell.exe",
+      "windowClass": "ConsoleWindowClass",
+      "visible": true,
+      "syntheticTitle": true
+    }
+  ],
+  "controlWindows": [
+    {
+      "elapsedMs": 19286,
+      "phase": "native-positive-control",
+      "windowClass": "ConsoleWindowClass",
+      "pid": 12592,
+      "process": "powershell.exe",
+      "consoleClientPid": 12592,
+      "matchedSyntheticTitle": false,
+      "ancestry": [
+        {
+          "pid": 12592,
+          "name": "powershell.exe",
+          "parentPid": 62484
+        }
+      ]
+    }
+  ],
+  "applicationWindows": [],
+  "cleanedProcesses": 1
+}

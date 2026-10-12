@@ -676,3 +676,6 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 .mobile-system-component[data-state="healthy"] .mobile-system-label {color:var(--success);}
 .mobile-system-component[data-state="problem"] .mobile-system-label {color:var(--danger);}
 .mobile-system-component[data-state="disabled"] .mobile-system-label {color:var(--muted);}
+.approval-risk-actions .danger {background:var(--wm-color-toast-danger);color:var(--wm-color-white);border-radius:var(--wm-radius-12);font-weight:500;}
+.approval-risk-actions .danger:hover {background:var(--wm-color-danger-hover);}
+.approval-risk-actions .danger:active {filter:brightness(.9);}
