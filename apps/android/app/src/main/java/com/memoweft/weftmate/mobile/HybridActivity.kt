@@ -750,7 +750,7 @@ class HybridActivity : Activity() {
         if (!::web.isInitialized || closed.get()) return
         val scale = resources.displayMetrics.density
         val bottom = if (keyboardVisible) 0 else safeInsets.bottom
-        web.evaluateJavascript("""(()=>{const s=document.documentElement.style;
+        web.evaluateJavascript("""(()=>{const root=document.documentElement;if(!root)return;const s=root.style;
             s.setProperty('--native-safe-top','${safeInsets.top / scale}px');
             s.setProperty('--native-safe-right','${safeInsets.right / scale}px');
             s.setProperty('--native-safe-bottom','${bottom / scale}px');

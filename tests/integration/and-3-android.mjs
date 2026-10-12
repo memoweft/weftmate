@@ -122,7 +122,10 @@ async function both(scene) {
   run('shell','wm','size','390x844'); await page.waitForFunction(()=>innerWidth===390);
 }
 async function login(method) {
-  if (method === 'code') await page.getByRole('button', { name: '用邮箱验证码登录', exact: true }).click();
+  if (method === 'code') {
+    await page.getByRole('button', { name: '用邮箱验证码登录', exact: true }).click();
+    await both('email-code-entry');
+  }
   await page.getByLabel('邮箱', { exact: true }).fill(fixture.email);
   if (method === 'password') await page.getByLabel('密码', { exact: true }).fill(fixture.password);
   await page.locator('#cloud-auth-form [type=submit]').click();
@@ -188,7 +191,10 @@ try {
     reply:await call('host.business',{path:'/personal/v1/chats/'+encodeURIComponent(uiCore.state.selectedChatId)+'/events',method:'GET'}) }));
   await page.getByText('合成回复：原生壳里的合成问候', {exact:true}).first().waitFor();
   report.checks.push('real-native-main-chat-send-and-synthetic-reply'); await both('chat');
-  await scene('activity', '这周回顾'); await scene('health', '接上后，这里会显示你自己的记录'); await scene('goals', '目标'); await scene('library', '成果');
+  await scene('activity', '这周回顾');
+  await page.getByText('这周回顾', { exact: false }).first().scrollIntoViewIfNeeded(); await both('weekly-review');
+  report.checks.push('native-weekly-review-visible');
+  await scene('health', '接上后，这里会显示你自己的记录'); await scene('goals', '目标'); await scene('library', '成果');
   await scene('settings', '设置'); await scene('approvals', '权限'); await scene('executionRecords', '执行记录'); await scene('system', '系统状态');
   await scene('notifications', '回顾与洞察', 'review-settings');
   await page.getByText('健康数据', { exact: true }).first().scrollIntoViewIfNeeded(); await both('health-settings');
