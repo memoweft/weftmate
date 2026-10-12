@@ -10,7 +10,8 @@ struct WeftMatePhoneApp: App {
     var body: some Scene {
         WindowGroup {
             #if DEBUG && targetEnvironment(simulator)
-            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple3-fixture") { Apple3Fixture(health:health) }
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple4-fixture") { Apple4Fixture(health: health) }
+            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple3-fixture") { Apple3Fixture(health:health) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--health4-double-model") { Health4BackgroundRegistrationFixture() }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--health4-fixture") { Health4Fixture(health:health) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--h1-healthkit-fixture") {
