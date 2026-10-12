@@ -7,20 +7,20 @@
  * explicit, isolated --stage-root; the legacy default remains .stage so the
  * existing dist scripts keep working.
  */
-import { cp, lstat, mkdir, readdir, rm, realpath } from 'node:fs/promises'
+import { cp, lstat, mkdir, readdir, realpath, rename } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { writeFile, copyFile } from 'node:fs/promises'
 import { rootCertificates } from 'node:tls'
 import { downloadFrp } from './download-frp.mjs'
 import { stageRuntimeEntry } from './windows-package-policy.mjs'
 import { assertRuntimeIdentity } from './dsh-runtime-identity.mjs'
+import { assertRuntimeDestination, assertUnlinkedPath, createRuntimeScratch, retainRuntimeDestination } from './dsh-runtime-storage.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, '..')
 // Worktrees may share the verified vendor root through a junction. Nested links remain forbidden.
-const runtime = await realpath(join(repoRoot, 'vendor', 'dsh-runtime'))
 
 function option(name, fallback) {
   const index = process.argv.indexOf(name)
@@ -28,11 +28,6 @@ function option(name, fallback) {
   const value = process.argv[index + 1]
   if (!value || value.startsWith('--')) throw new Error(`${name} requires a path`)
   return value
-}
-
-function isInside(parent, child) {
-  const rel = relative(parent, child)
-  return rel !== '' && rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel)
 }
 
 async function assertNoReparsePoints(root) {
@@ -46,36 +41,43 @@ async function assertNoReparsePoints(root) {
   }
 }
 
-const requestedRoot = option('--stage-root', join(repoRoot, '.stage'))
-const stageRoot = resolve(requestedRoot)
-const stage = join(stageRoot, 'dsh-runtime')
-
-if (!existsSync(join(runtime, 'VENDOR-MANIFEST.json'))) {
-  console.error('[stage-dsh-runtime] missing vendor/dsh-runtime; Stage 3 does not regenerate vendor automatically')
-  process.exit(1)
+export async function stageDshRuntime({ projectRoot = repoRoot, runtimePath = join(projectRoot, 'vendor/dsh-runtime'), stageRoot = join(projectRoot, '.stage'), copy = cp } = {}) {
+  const runtime = await realpath(runtimePath)
+  stageRoot = resolve(stageRoot)
+  const stage = join(stageRoot, 'dsh-runtime')
+  if (stageRoot === projectRoot) throw Error(`unsafe stage root: ${stageRoot}`)
+  if (!existsSync(join(runtime, 'VENDOR-MANIFEST.json'))) throw Error('missing vendor/dsh-runtime; Stage 3 does not regenerate vendor automatically')
+  await assertRuntimeDestination(stage, dirname(runtime))
+  await assertRuntimeIdentity(runtime, projectRoot)
+  await assertNoReparsePoints(runtime)
+  const scratch = await createRuntimeScratch(stageRoot)
+  try {
+    await copy(runtime, scratch.runtime, {
+      recursive: true,
+      dereference: false,
+      filter: source => stageRuntimeEntry(relative(runtime, source).split(sep).join('/')),
+    })
+    await scratch.assertOwned(scratch.runtime)
+    await assertRuntimeDestination(stage, dirname(runtime))
+    await retainRuntimeDestination(stage)
+    await rename(scratch.runtime, stage)
+  } finally { await scratch.dispose() }
+  console.log(`[stage-dsh-runtime] staged verified vendor runtime -> ${stage}`)
 }
-if (stageRoot === repoRoot || !isInside(dirname(stageRoot), stageRoot) || !isInside(stageRoot, stage)) {
-  console.error(`[stage-dsh-runtime] unsafe stage root: ${stageRoot}`)
-  process.exit(1)
+
+async function main() {
+  const stageRoot = resolve(option('--stage-root', join(repoRoot, '.stage')))
+  await stageDshRuntime({ stageRoot })
+  if (process.platform === 'win32') {
+    const frp = await downloadFrp({ destination: join(repoRoot, '.local', 'frp') })
+    const relay = join(stageRoot, 'relay')
+    await assertUnlinkedPath(relay)
+    await mkdir(relay, { recursive: true })
+    await copyFile(join(frp, 'frpc.exe'), join(relay, 'frpc.exe'))
+    await writeFile(join(relay, 'transport-ca.pem'), rootCertificates.join('\n') + '\n')
+  }
 }
 
-await assertRuntimeIdentity(runtime, repoRoot)
-await assertNoReparsePoints(runtime)
-await mkdir(stageRoot, { recursive: true })
-// Delete only the exact runtime child below the already validated stage root.
-await rm(stage, { recursive: true, force: true })
-await cp(runtime, stage, {
-  recursive: true,
-  dereference: false,
-  filter: (source) => {
-    const rel = relative(runtime, source).split(sep).join('/')
-    return stageRuntimeEntry(rel)
-  },
-})
-console.log(`[stage-dsh-runtime] staged verified vendor runtime -> ${stage}`)
-if (process.platform === 'win32') {
-  const frp = await downloadFrp({ destination: join(repoRoot, '.local', 'frp') })
-  const relay = join(stageRoot, 'relay'); await mkdir(relay, { recursive: true })
-  await copyFile(join(frp, 'frpc.exe'), join(relay, 'frpc.exe'))
-  await writeFile(join(relay, 'transport-ca.pem'), rootCertificates.join('\n') + '\n')
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(error => { console.error(error); process.exitCode = 1 })
 }

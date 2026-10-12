@@ -15,6 +15,7 @@ try{
  writeFileSync(join(root,'child.ps1'),'Start-Sleep -Seconds 120');
  writeFileSync(join(root,'parent.ps1'),`$p=Start-Process -FilePath '${powershell.replaceAll("'","''")}' -ArgumentList '-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',('"'+$PSScriptRoot+'\\child.ps1"') -WindowStyle Hidden -PassThru; [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'child.pid'),[string]$p.Id); Start-Sleep -Seconds 120`);
  for(let repeat=0;repeat<3;repeat++){
+  rmSync(join(root,'child.pid'),{force:true});
   let parentPid,code;const at=Date.now();
   try{await boundedCommand(powershell,['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',join(root,'parent.ps1')],{timeoutMs:2000,windowsHide:true,exec:(...args)=>{const p=execute(...args);parentPid=p.child.pid;return p;}});}catch(e){code=e.code;}
   const childPid=existsSync(join(root,'child.pid'))?Number(readFileSync(join(root,'child.pid'),'utf8')):null;
