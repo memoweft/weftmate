@@ -48,41 +48,131 @@ private enum DailyHealthCallbacks {
     }
     private var observers: [HKObserverQuery] = []
     func authorize() async throws { try await store.requestAuthorization(toShare: [], read: Set(Self.types)) }
-    func read(now: Date = Date(), calendar: Calendar) async throws -> [String: DailyHealth] {
+    static var expandedTypes: Set<HKSampleType> {
+        types.union([.activeEnergyBurned, .heartRate, .heartRateVariabilitySDNN, .respiratoryRate,
+                     .oxygenSaturation, .appleSleepingWristTemperature, .vo2Max, .height, .bodyMass]
+            .compactMap { HKObjectType.quantityType(forIdentifier: $0) }).union([HKSeriesType.heartbeat()])
+    }
+    func authorizeExpanded() async throws {
+        var read = Set<HKObjectType>(Self.expandedTypes)
+        read.insert(HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!)
+        read.insert(HKObjectType.characteristicType(forIdentifier: .biologicalSex)!)
+        try await store.requestAuthorization(toShare: [], read: read)
+    }
+    func needsExpandedAuthorization() async -> Bool {
+        var read = Set<HKObjectType>(Self.expandedTypes)
+        read.insert(HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!)
+        read.insert(HKObjectType.characteristicType(forIdentifier: .biologicalSex)!)
+        return (try? await store.statusForAuthorizationRequest(toShare: [], read: read)) == .shouldRequest
+    }
+    #if DEBUG && targetEnvironment(simulator)
+    var fixtureProfile: HealthProfile?
+    #endif
+    func profile(now: Date = Date()) async -> HealthProfile {
+        #if DEBUG && targetEnvironment(simulator)
+        if let fixtureProfile { return fixtureProfile }
+        #endif
+        let birth = try? store.dateOfBirthComponents().year
+        let sex = try? store.biologicalSex().biologicalSex
+        func latest(_ id: HKQuantityTypeIdentifier, _ unit: HKUnit) async -> Double? {
+            let values = (try? await samples(HKObjectType.quantityType(forIdentifier: id)!, start: .distantPast, end: now, limit: 1)) ?? []
+            return (values.sorted { $0.endDate < $1.endDate }.last as? HKQuantitySample)?.quantity.doubleValue(for: unit)
+        }
+        return HealthProfile(birthYear: birth ?? nil, sex: sex == .male ? "male" : sex == .female ? "female" : sex == .other ? "other" : nil,
+            heightCm: await latest(.height, .meterUnit(with: .centi)), weightKg: await latest(.bodyMass, .gramUnit(with: .kilo)))
+    }
+    func read(now: Date = Date(), calendar: Calendar, count: Int = 7, version: Int = 2) async throws -> [String: DailyHealth] {
         try Task.checkCancellation()
-        let days = DailyHealthCalendar.days(now: now, calendar: calendar)
-        let first = days[0], sleepStart = calendar.date(byAdding: .day, value: -2, to: first)!
-        let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
-        let rawSleep = try await samples(sleepType, start: sleepStart, end: now)
-        let sleep = rawSleep.compactMap { sample -> DateInterval? in
-            guard let sample = sample as? HKCategorySample, sample.endDate <= now,
-                  [HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue, HKCategoryValueSleepAnalysis.asleepCore.rawValue,
-                   HKCategoryValueSleepAnalysis.asleepDeep.rawValue, HKCategoryValueSleepAnalysis.asleepREM.rawValue].contains(sample.value) else { return nil }
-            return DateInterval(start: sample.startDate, end: sample.endDate)
+        let days = DailyHealthCalendar.days(now: now, calendar: calendar, count: count)
+        return try await read(days: days, now: now, calendar: calendar, version: version)
+    }
+    func read(days: [Date], now: Date = Date(), calendar: Calendar, version: Int) async throws -> [String: DailyHealth] {
+        guard let first = days.min(), let last = days.max() else { return [:] }
+        let until = min(now, calendar.date(byAdding: .day, value: 1, to: last)!)
+        let sleepStart = calendar.date(byAdding: .day, value: -2, to: first)!
+        let rawSleep = try await samples(HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!, start: sleepStart, end: until)
+        let sleeping = HealthInputMath.sleep(rawSleep.compactMap { raw in
+            guard let sample = raw as? HKCategorySample, sample.endDate <= until else { return nil }
+            let names = [HKCategoryValueSleepAnalysis.inBed.rawValue:"inBed", HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue:"unspecified",
+                HKCategoryValueSleepAnalysis.asleepCore.rawValue:"core", HKCategoryValueSleepAnalysis.asleepDeep.rawValue:"deep",
+                HKCategoryValueSleepAnalysis.asleepREM.rawValue:"rem", HKCategoryValueSleepAnalysis.awake.rawValue:"awake"]
+            return names[sample.value].map { HealthInputMath.SleepInput(sample.startDate,sample.endDate,$0) }
+        }, calendar: calendar)
+        let workouts = try await samples(HKObjectType.workoutType(), start: first, end: until).compactMap { $0 as? HKWorkout }
+        func quantities(_ id: HKQuantityTypeIdentifier, _ unit: HKUnit, from: Date? = nil) async throws -> [(Date, Double)] {
+            try await samples(HKObjectType.quantityType(forIdentifier: id)!, start: from ?? first, end: until).compactMap {
+                guard let s = $0 as? HKQuantitySample, s.startDate < until else { return nil }
+                return (s.startDate, s.quantity.doubleValue(for: unit))
+            }.sorted { $0.0 < $1.0 }
         }
-        let sessions = rawSleep.compactMap { sample -> DateInterval? in
-            guard let sample = sample as? HKCategorySample, sample.endDate <= now,
-                  [HKCategoryValueSleepAnalysis.inBed.rawValue, HKCategoryValueSleepAnalysis.awake.rawValue].contains(sample.value) else { return nil }
-            return DateInterval(start: sample.startDate, end: sample.endDate)
+        let rate = try await quantities(.heartRate,.count().unitDivided(by: .minute()))
+        let hrv = try await quantities(.heartRateVariabilitySDNN,.secondUnit(with: .milli),from: sleepStart)
+        let respiration = try await quantities(.respiratoryRate,.count().unitDivided(by: .minute()))
+        let oxygen = try await quantities(.oxygenSaturation,.percent())
+        let temperature = try await quantities(.appleSleepingWristTemperature,.degreeCelsius())
+        let fitness = try await quantities(.vo2Max,HKUnit(from: "ml/kg*min"))
+        var variability: [HealthVariabilityRecord] = []
+        if version >= 3 {
+            let series = try await samples(HKSeriesType.heartbeat(), start: first, end: until).compactMap { $0 as? HKHeartbeatSeriesSample }
+            for point in hrv where point.0 >= first {
+                var rr: [Double] = []
+                // Only match the same measurement interval; never borrow a nearby unrelated series.
+                if let sample = series.first(where: { abs($0.startDate.timeIntervalSince(point.0)) < 1 }) {
+                    var previous: Double?
+                    for try await beat in HKHeartbeatSeriesQueryDescriptor(sample).results(for: store) {
+                        if let previous, !beat.precededByGap { rr.append((beat.timeIntervalSinceStart-previous)*1000) }
+                        else if previous != nil { rr.append(0) }
+                        previous = beat.timeIntervalSinceStart
+                    }
+                }
+                variability.append(.init(time: HealthInputMath.iso(point.0),sdnnMs: point.1,intervalsMs: rr))
+            }
         }
-        let sleeping = DailyHealthCalendar.sleep(sleep, calendar: calendar, sessions: sessions)
-        let workouts = try await samples(HKObjectType.workoutType(), start: first, end: now).compactMap { $0 as? HKWorkout }
+        let personal = await profile(now: now)
+        let age = personal.birthYear.map { calendar.component(.year, from: now)-$0 }
+        // HealthKit has no public physiological maximum-heart-rate quantity. Use the agreed age estimate.
+        let maximum = age.map { 211-0.64*Double($0) }
         var result: [String: DailyHealth] = [:]
         for day in days {
-            let end = min(now, calendar.date(byAdding: .day, value: 1, to: day)!)
-            let steps = try await statistic(.stepCount, day: day, end: end, unit: .count(), options: .cumulativeSum)
-            let resting = try await statistic(.restingHeartRate, day: day, end: end, unit: .count().unitDivided(by: .minute()), options: .discreteAverage)
-            let exercise = try await statistic(.appleExerciseTime, day: day, end: end, unit: .minute(), options: .cumulativeSum)
-            var grouped: [String: Double] = [:]
-            for workout in workouts {
-                let minutes = DailyHealthCalendar.workoutMinutes(start: workout.startDate, end: workout.endDate,
-                    duration: workout.duration, day: day, calendar: calendar)
-                if minutes > 0 { grouped[Self.name(workout.workoutActivityType), default: 0] += minutes }
+            try Task.checkCancellation()
+            let end = min(until, calendar.date(byAdding: .day, value: 1, to: day)!)
+            let key = DailyHealthCalendar.key(day,calendar: calendar)
+            func average(_ values: [(Date,Double)]) -> Double? {
+                let v = values.filter { $0.0 >= day && $0.0 < end }.map(\.1)
+                return v.isEmpty ? nil : v.reduce(0,+)/Double(v.count)
             }
-            let key = DailyHealthCalendar.key(day, calendar: calendar)
-            result[key] = DailyHealth(steps: steps.map { Int($0.rounded()) }, sleepMinutes: sleeping[key],
-                restingHeartRateBpm: resting, exerciseMinutes: exercise.map { min(1440, $0) },
-                workouts: grouped.keys.sorted().map { .init(type: $0, minutes: min(1440, grouped[$0]!)) })
+            var value = DailyHealth(steps: try await statistic(.stepCount,day: day,end: end,unit: .count(),options: .cumulativeSum).map { Int($0.rounded()) },
+                sleepMinutes: sleeping[key]?.minutes,
+                restingHeartRateBpm: try await statistic(.restingHeartRate,day: day,end: end,unit: .count().unitDivided(by: .minute()),options: .discreteAverage),
+                exerciseMinutes: try await statistic(.appleExerciseTime,day: day,end: end,unit: .minute(),options: .cumulativeSum).map { min(1440,$0) })
+            value.version = version; value.sleep = sleeping[key]
+            value.activeEnergyKcal = try await statistic(.activeEnergyBurned,day: day,end: end,unit: .kilocalorie(),options: .cumulativeSum)
+            if let sleep = sleeping[key], let start = sleep.start.flatMap({ ISO8601DateFormatter().date(from: $0) }), let finish = sleep.end.flatMap({ ISO8601DateFormatter().date(from: $0) }) {
+                let night = hrv.filter { $0.0 >= start && $0.0 < finish }.map(\.1)
+                value.hrvSdnnMs = night.isEmpty ? nil : night.reduce(0,+)/Double(night.count)
+            }
+            value.respiratoryRateBrpm = average(respiration); value.spo2Pct = average(oxygen).map { $0*100 }
+            value.wristTempC = average(temperature); value.vo2Max = average(fitness)
+            value.heartRateHourly = HealthInputMath.buckets(rate,day: day,calendar: calendar,quarter: false)
+            if version >= 3 {
+                value.heartRateQuarterHourly = HealthInputMath.buckets(rate,day: day,calendar: calendar,quarter: true)
+                value.hrvSamples = Array(variability.filter { $0.time >= HealthInputMath.iso(day) && $0.time < HealthInputMath.iso(end) }.prefix(96))
+            }
+            for workout in workouts {
+                let minutes = DailyHealthCalendar.workoutMinutes(start: workout.startDate,end: workout.endDate,duration: workout.duration,day: day,calendar: calendar)
+                guard minutes > 0 else { continue }
+                let a = max(workout.startDate,day), b = min(workout.endDate,end)
+                let heart = rate.filter { $0.0 >= a && $0.0 < b }
+                var record = DailyHealth.Workout(type: Self.name(workout.workoutActivityType),minutes: minutes)
+                record.start = HealthInputMath.iso(a)
+                record.kcal = workout.statistics(for: HKQuantityType(.activeEnergyBurned))?.sumQuantity()?.doubleValue(for: .kilocalorie()).map { $0*minutes/(workout.duration/60) }
+                record.avgHeartRateBpm = heart.isEmpty ? nil : heart.map(\.1).reduce(0,+)/Double(heart.count)
+                record.maxHeartRateBpm = heart.map(\.1).max()
+                let spans = heart.enumerated().map { i,p in (bpm:p.1,seconds:max(0,min(b,min(p.0.addingTimeInterval(60),i+1 < heart.count ? heart[i+1].0 : b)).timeIntervalSince(p.0))) }
+                record.zoneMinutes = HealthInputMath.zones(spans,maximum: maximum,durationMinutes: minutes)
+                value.workouts.append(record)
+            }
+            result[key] = value
         }
         return result
     }
@@ -106,16 +196,16 @@ private enum DailyHealthCallbacks {
             store.execute(query)
         }
     }
-    private func samples(_ type: HKSampleType, start: Date, end: Date) async throws -> [HKSample] {
+    private func samples(_ type: HKSampleType, start: Date, end: Date, limit: Int = HKObjectQueryNoLimit) async throws -> [HKSample] {
         try Task.checkCancellation()
         return try await withCheckedThrowingContinuation { continuation in
             store.execute(HKSampleQuery(sampleType: type, predicate: HKQuery.predicateForSamples(withStart: start, end: end),
-                limit: HKObjectQueryNoLimit, sortDescriptors: nil, resultsHandler: DailyHealthCallbacks.samples(continuation)))
+                limit: limit, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)], resultsHandler: DailyHealthCallbacks.samples(continuation)))
         }
     }
     func observe(update: @escaping @Sendable () async -> Void) async {
         guard observers.isEmpty else { return }
-        for type in Self.types {
+        for type in Self.expandedTypes {
             guard !Task.isCancelled else { return }
             let query = HKObserverQuery(sampleType: type, predicate: nil, updateHandler: DailyHealthCallbacks.observer(update))
             observers.append(query); store.execute(query)

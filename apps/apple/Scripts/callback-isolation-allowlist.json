@@ -411,5 +411,19 @@
     "api": "observe",
     "sha256": "bbd0f492965f5fa0efde383a77194a3dc7d7af2b5b688d3081cfab66f80cbfea",
     "reason": "MainActor owns observer registration and the query array. The SDK closure is produced by nonisolated DailyHealthCallbacks.observer and explicitly @Sendable; it captures an immutable completion owner plus Bool and Sendable update, accesses no UI state, and one task calls completion once from defer on success, error and skipped/cancelled work."
+  },
+  {
+    "file": "apps/apple/iOS/DailyHealthReader.swift",
+    "line": 202,
+    "api": "HKSampleQuery",
+    "sha256": "cd66f624884debb8c7afd6d7cb408da6d0ef40f16835b2284d6fa1a21adb5c80",
+    "reason": "MainActor owns HealthKit query registration. Nonisolated DailyHealthCallbacks.samples returns an explicit Sendable continuation-only callback; query limit and ordering change no callback actor accesses. No UI or health reader state is captured."
+  },
+  {
+    "file": "apps/apple/iOS/DailyHealthReader.swift",
+    "line": 206,
+    "api": "observe",
+    "sha256": "074fb83aacf8204f10360e387d83310f59f4c592f99e7e4c29ed2eb0ec242ca3",
+    "reason": "Observer registration remains MainActor. The expanded types use the same nonisolated Sendable callback factory; no UI references enter the SDK closure, and completion runs once after the awaited update including errors and cancellation."
   }
 ]
