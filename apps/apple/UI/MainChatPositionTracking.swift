@@ -88,9 +88,9 @@ struct MainChatEventPosition: UIViewRepresentable {
                 }
             }
             guard let scroll else { return }; let rect = convert(bounds, to: scroll)
-            let inset=scroll.adjustedContentInset
-            let height=max(0,scroll.bounds.height-inset.top-inset.bottom)
-            report?(eventID, CGRect(x: rect.minX, y: rect.minY-scroll.bounds.minY-inset.top, width: rect.width, height: rect.height), height, scroll.isDragging || scroll.isTracking || scroll.isDecelerating)
+            // The footer and navigation now occupy sibling layout space. bounds is the
+            // actual unobscured viewport; adjustedContentInset is scroll padding, not another occluder.
+            report?(eventID, CGRect(x: rect.minX, y: rect.minY-scroll.bounds.minY, width: rect.width, height: rect.height), scroll.bounds.height, scroll.isDragging || scroll.isTracking || scroll.isDecelerating)
         }
         func disconnect() { observation?.invalidate(); observation = nil; boundsObservation?.invalidate(); boundsObservation=nil; report?(eventID, nil, 0, false); report = nil; scroll = nil }
     }
