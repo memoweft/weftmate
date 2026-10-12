@@ -385,7 +385,7 @@ function updateComposer(){uiCore.syncMobileIdentity();
   renderContextUsage();
   paintMobileThinking();
   globalThis.WeftComposerSubtasks?.paint($('composer-subtasks'),globalThis.WeftUiCore.composerSubtasks([...uiCore.state.historyEvents.values()]),{scope:`${state.owner}/${state.authEpoch}/${state.sharedSessionId}`,root:$('chat-content')});
-  $('device-line').hidden=!uiCore.state.online||!view.processingHint;$('device-line').textContent=view.processingHint||'';$('device-line').setAttribute('role','status');WeftUiCore.fitModelLabel($('model-label'),view.modelName);$('model-button').setAttribute('aria-label',view.modelLabel);
+  $('device-line').hidden=!uiCore.state.online||!view.processingHint;$('device-line').textContent=view.processingHint||'';$('device-line').setAttribute('role','status');WeftModelLabel($('model-label'),view.modelName);$('model-button').setAttribute('aria-label',view.modelLabel);
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;

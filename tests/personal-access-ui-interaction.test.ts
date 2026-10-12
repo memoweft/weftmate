@@ -999,7 +999,7 @@ test('task15-narrow late task refresh cannot reclaim focus after switching accou
   page.resolveTaskDetail({ ...task, replyEvidence: { status: 'aborted' } }); await flush()
   assert.equal(oldEntry.isConnected, false)
   assert.equal(page.document.activeElement, page.getByRole('textbox', { name: '输入消息' }))
-  assert.equal(page.get('account-name').textContent, 'ProfileB')
+  assert.equal(page.get('account-name').textContent, '合成账户 B')
 })
 
 test('task15-narrow late task refresh cannot reclaim focus after switching to the phone source', async () => {

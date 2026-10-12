@@ -34,7 +34,7 @@ async function capture(p,surface,width,theme){
   await shot(p,prefix,'l-composer');if(!before){const label=await p.locator('#model-label').textContent();assert.equal(label,'MiMo v2.6 Flash');report.checks.push(prefix+' l: full model name');}
   await p.evaluate(()=>{page('home');openDrawer();});await shot(p,prefix,'m-sidebar');if(!before){const position=await p.evaluate(()=>{const footer=document.querySelector('.drawer-footer').getBoundingClientRect(),profile=$('profile-link').getBoundingClientRect(),scroll=document.querySelector('.drawer-scroll');return {gap:profile.top-footer.bottom,overflow:getComputedStyle(scroll).overflowY,height:scroll.clientHeight};});assert.ok(Math.abs(position.gap)<20);assert.equal(position.overflow,'auto');report.checks.push(prefix+' m: footer attached above account');}
   await p.evaluate(()=>{closeDrawer();state.username='local-owner';state.profile={displayName:'local-owner'};page('settings');});await shot(p,prefix,'n-account');if(!before){assert.equal(await p.getByText('local-owner',{exact:true}).count(),0);assert.ok(await p.getByText('只在这台电脑上用',{exact:true}).count());report.checks.push(prefix+' n: readable local account');}
-  await p.evaluate(()=>page('appearance'));await shot(p,prefix,'ab-appearance');await p.locator(before?'#appearance-accentLight':'.appearance-swatches').first().scrollIntoViewIfNeeded();await shot(p,prefix,'b-colors');
+  await p.evaluate(()=>page('appearance'));await shot(p,prefix,'ab-appearance');await (before?p.getByRole('combobox',{name:'浅色强调色',exact:true}):p.locator('.appearance-swatches').first()).scrollIntoViewIfNeeded();await shot(p,prefix,'b-colors');
   await p.evaluate(()=>page('notifications'));await shot(p,prefix,'u-notifications');
   if(!before){await p.evaluate(()=>page('reviewHealth'));await shot(p,prefix,'u-review-health');await p.getByRole('button',{name:'清空回顾',exact:true}).click();await shot(p,prefix,'u-clear-review-open');await p.getByRole('button',{name:'取消',exact:true}).click();await p.evaluate(()=>page('healthData'));assert.equal(await p.evaluate(()=>state.page),'reviewHealth');}
   await p.evaluate(()=>{page('chat');toast('这条记录已不可查看，请回到对话列表重新打开。',true);});await shot(p,prefix,'s-notice');if(!before){const size=await p.locator('#toast').boundingBox();assert.ok(size.height<=44);report.checks.push(prefix+' s: one-line lightweight notice');}
@@ -44,7 +44,7 @@ async function capture(p,surface,width,theme){
  }else{
   await shot(p,prefix,'l-composer');
   await p.evaluate(()=>{__ux7core.state.personalCapabilities.activity=1;__polishui.openActivity();});await p.getByText('这周回顾',{exact:true}).waitFor();await shot(p,prefix,'r-weekly');
-  await p.evaluate(()=>WeftSettingsNavigation.open('appearance'));await shot(p,prefix,'ab-appearance');await p.locator(before?'#appearance-accentLight':'.appearance-swatches').first().scrollIntoViewIfNeeded();await shot(p,prefix,'b-colors');
+  await p.evaluate(()=>WeftSettingsNavigation.open('appearance'));await shot(p,prefix,'ab-appearance');await (before?p.getByRole('combobox',{name:'浅色强调色',exact:true}):p.locator('.appearance-swatches').first()).scrollIntoViewIfNeeded();await shot(p,prefix,'b-colors');
   await p.evaluate(()=>WeftSettingsNavigation.open('notifications'));await shot(p,prefix,'u-notifications');
   if(!before){await p.evaluate(()=>WeftSettingsNavigation.open('reviewHealth'));await shot(p,prefix,'u-review-health');}
   await p.evaluate(async()=>{document.querySelector('#settings-dialog').close();await __ux7core.selectSession(__ux7core.state.selectedSessionId);});
