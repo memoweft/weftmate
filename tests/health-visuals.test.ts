@@ -41,6 +41,6 @@ test('health text tokens have both themes and at least 4.5:1 contrast on card an
  const swift=read('design/tokens/generated/apple/DesignTokens.swift');assert.match(swift,/public static let healthRecovery = adaptive/);assert.match(swift,/public static let healthSleepSoft = adaptive/);
 });
 test('the health notice exists once in settings and receipt disclaimers are never rendered',()=>{
- const source=read('src/personal-access-ui/components/health-view.js'),[page,settings]=source.split('globalThis.WeftHealthView.settings=');assert.doesNotMatch(page,/disclaimer|医学结论|趋势估计|免责声明|不表示因果/);assert.equal((settings.match(/按公开方法做的估计，不是医学结论/g)||[]).length,1);assert.match(settings,/health-settings-notice/);
+ const source=read('src/personal-access-ui/components/health-view.js'),[page,settings]=source.split('globalThis.WeftHealthView.settings=');assert.doesNotMatch(page,/disclaimer|医学结论|趋势估计|粗略估计|免责声明|不表示因果/);assert.equal((settings.match(/按公开方法做的估计，不是医学结论/g)||[]).length,1);assert.match(settings,/health-settings-notice/);
 });
 test('graphic widths and reduced-motion overrides remain scoped to the health page',()=>{const css=read('src/personal-access-ui/health.css');assert.match(css,/\.health-graphic \{[^}]*width:100%/);assert.match(css,/@media\(prefers-reduced-motion:reduce\)[\s\S]*animation:none!important/);assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);});

@@ -131,7 +131,7 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
   }
 
   function intraday(id,data,compact=false){const samples=id==='stress'?data.samples??[]:data.curve??[],wrap=el('div',`health-plot health-intraday${compact?' is-compact':''}`);
-    if(id==='energy'&&data.degraded===true){wrap.append(small('只有每小时心率，电能为粗略估计，暂不显示曲线细节。'));return wrap;}
+    if(id==='energy'&&data.degraded===true){wrap.append(small('当前记录较少，暂时没有曲线。'));return wrap;}
     const points=samples.map(p=>({value:p.value})),g=H.chart(points),svg=svgEl('svg',{viewBox:'0 0 320 180',role:'img','aria-label':id==='stress'?'当天各次压力测量':'当日电能曲线，淡色区域表示睡眠'});
     if(g.empty){if(!compact)wrap.append(small('当天还没有足够的测量点。'));return wrap;}
     if(id==='energy'){const first=H.clockMinutes(samples[0].time),last=H.clockMinutes(samples.at(-1).time),span=last-first||1;for(const sleep of data.sleepPeriods??[]){const a=H.clockMinutes(sleep.start),b=H.clockMinutes(sleep.end);for(const [from,to]of b<a?[[0,b],[a,1440]]:[[a,b]]){const start=Math.max(16,16+(from-first)/span*288),end=Math.min(304,16+(to-first)/span*288);if(end>start)svg.append(svgEl('rect',{x:start,y:16,width:end-start,height:138,class:'health-sleep-band'}));}}svg.append(svgEl('path',{d:G.fillPath(points,g),fill:G.gradient(svg),class:'health-area-fill'}),svgEl('path',{d:g.path,class:'health-line health-graphic-draw',pathLength:1}));}
