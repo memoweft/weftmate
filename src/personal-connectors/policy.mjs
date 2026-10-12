@@ -36,7 +36,7 @@ export function connectorError(error) {
   if (messages[error?.code]) return { code: error.code, message: messages[error.code] };
   const text = `${error?.name ?? ''} ${error?.code ?? ''} ${error?.message ?? ''} ${error?.cause?.code ?? ''} ${error?.cause?.name ?? ''} ${error?.cause?.message ?? ''} ${error?.cause?.cause?.message ?? ''}`;
   if (/ENOENT|not found|cannot find|could not determine executable/i.test(text)) return { code: 'CONNECTOR_COMMAND_MISSING', message: '找不到启动命令，请确认程序已安装，并检查命令。' };
-  if (/401|403|unauthor|forbidden|authenticat/i.test(text)) return { code: 'CONNECTOR_AUTH_FAILED', message: '凭据未被接受，请检查并重新保存。' };
+  if (/\b(?:401|403)\b|unauthor|forbidden|authenticat/i.test(text)) return { code: 'CONNECTOR_AUTH_FAILED', message: '凭据未被接受，请检查并重新保存。' };
   if (/timeout|timed out|超时|-32001/i.test(text)) return { code: 'CONNECTOR_TIMEOUT', message: '连接器响应太慢，请稍后测试连接。' };
   return { code: 'CONNECTOR_UNAVAILABLE', message: '连接器暂时无法连接，请检查地址或启动命令后重试。' };
 }

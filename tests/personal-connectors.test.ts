@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createConnectors } from '../src/personal-connectors/index.mjs';
 import { createConnectorVault } from '../src/personal-connectors/vault.mjs';
-import { classifyConnectorTool, connectorPermission } from '../src/personal-connectors/policy.mjs';
+import { classifyConnectorTool, connectorPermission, connectorError } from '../src/personal-connectors/policy.mjs';
 import { validPermissionRules } from '../src/plugins/personal-permission-rules.mjs';
 import { httpFixture } from './fixtures/st-7a/http.mjs';
 import { createEncryptedCredentialVaultStore } from '../src/credential-vault-document.ts';
@@ -24,6 +24,10 @@ function syntheticVault() {
     saveCredential: (id: string, value: string) => { map.set(id,value); }, removeCredential: (id: string) => { map.delete(id); }, listCredentialIds: () => [...map.keys()] });
 }
 test('connector classification and individual rules conservatively reuse ST-2', () => {
+  assert.equal(connectorError(new Error('fetch failed at http://127.0.0.1:54013/mcp')).code,'CONNECTOR_UNAVAILABLE');
+  assert.equal(connectorError(new Error('fetch failed at http://127.0.0.1:54037/mcp')).code,'CONNECTOR_UNAVAILABLE');
+  assert.equal(connectorError(new Error('HTTP 401')).code,'CONNECTOR_AUTH_FAILED');
+  assert.equal(connectorError(new Error('HTTP 403')).code,'CONNECTOR_AUTH_FAILED');
   for (const [tool, expected] of [[{name:'list',annotations:{readOnlyHint:true}},'read'],[{name:'send_email',annotations:{readOnlyHint:true}},'external'],
     [{name:'purchase'},'spend'],[{name:'remove_item'},'delete'],[{name:'set_event'},'write'],[{name:'opaque'},'write']] as const) assert.equal(classifyConnectorTool(tool),expected);
   const tool={name:'mcp__fixture__send',category:'external'};
