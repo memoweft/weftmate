@@ -1,0 +1,2342 @@
+[
+  {
+    "id": "synthetic-0",
+    "title": "合成对话 synthetic-0",
+    "create_time": 1710234000,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我的虚构鹦鹉叫青瓷，最喜欢的零食是荞麦。"
+            ]
+          },
+          "create_time": 1710234000,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234001
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234002
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-1",
+    "title": "合成对话 synthetic-1",
+    "create_time": 1710234001,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 1 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234001,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234002
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234003
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-2",
+    "title": "合成对话 synthetic-2",
+    "create_time": 1710234002,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 2 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234002,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234003
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234004
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-3",
+    "title": "合成对话 synthetic-3",
+    "create_time": 1710234003,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 3 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234003,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234004
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234005
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-4",
+    "title": "合成对话 synthetic-4",
+    "create_time": 1710234004,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 4 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234004,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234005
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234006
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-5",
+    "title": "合成对话 synthetic-5",
+    "create_time": 1710234005,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 5 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234005,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234006
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234007
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-6",
+    "title": "合成对话 synthetic-6",
+    "create_time": 1710234006,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 6 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234006,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234007
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234008
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-7",
+    "title": "合成对话 synthetic-7",
+    "create_time": 1710234007,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 7 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234007,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234008
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234009
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-8",
+    "title": "合成对话 synthetic-8",
+    "create_time": 1710234008,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 8 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234008,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234009
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234010
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-9",
+    "title": "合成对话 synthetic-9",
+    "create_time": 1710234009,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 9 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234009,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234010
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234011
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-10",
+    "title": "合成对话 synthetic-10",
+    "create_time": 1710234010,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 10 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234010,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234011
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234012
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-11",
+    "title": "合成对话 synthetic-11",
+    "create_time": 1710234011,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 11 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234011,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234012
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234013
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-12",
+    "title": "合成对话 synthetic-12",
+    "create_time": 1710234012,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 12 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234012,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234013
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234014
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-13",
+    "title": "合成对话 synthetic-13",
+    "create_time": 1710234013,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 13 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234013,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234014
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234015
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-14",
+    "title": "合成对话 synthetic-14",
+    "create_time": 1710234014,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 14 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1710234014,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1710234015
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1710234016
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-15",
+    "title": "合成对话 synthetic-15",
+    "create_time": 1773306015,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 15 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306015,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306016
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306017
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-16",
+    "title": "合成对话 synthetic-16",
+    "create_time": 1773306016,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 16 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306016,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306017
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306018
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-17",
+    "title": "合成对话 synthetic-17",
+    "create_time": 1773306017,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 17 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306017,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306018
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306019
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-18",
+    "title": "合成对话 synthetic-18",
+    "create_time": 1773306018,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 18 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306018,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306019
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306020
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-19",
+    "title": "合成对话 synthetic-19",
+    "create_time": 1773306019,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 19 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306019,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306020
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306021
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-20",
+    "title": "合成对话 synthetic-20",
+    "create_time": 1773306020,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 20 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306020,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306021
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306022
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-21",
+    "title": "合成对话 synthetic-21",
+    "create_time": 1773306021,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 21 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306021,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306022
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306023
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-22",
+    "title": "合成对话 synthetic-22",
+    "create_time": 1773306022,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 22 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306022,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306023
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306024
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-23",
+    "title": "合成对话 synthetic-23",
+    "create_time": 1773306023,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 23 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306023,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306024
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306025
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-24",
+    "title": "合成对话 synthetic-24",
+    "create_time": 1773306024,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 24 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306024,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306025
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306026
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-25",
+    "title": "合成对话 synthetic-25",
+    "create_time": 1773306025,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 25 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306025,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306026
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306027
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-26",
+    "title": "合成对话 synthetic-26",
+    "create_time": 1773306026,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 26 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306026,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306027
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306028
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-27",
+    "title": "合成对话 synthetic-27",
+    "create_time": 1773306027,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 27 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306027,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306028
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306029
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-28",
+    "title": "合成对话 synthetic-28",
+    "create_time": 1773306028,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 28 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306028,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306029
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306030
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "synthetic-29",
+    "title": "合成对话 synthetic-29",
+    "create_time": 1773306029,
+    "current_node": "a",
+    "mapping": {
+      "root": {
+        "parent": null,
+        "message": null
+      },
+      "u": {
+        "parent": "root",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "我喜欢第 29 号合成咖啡馆的安静靠窗座位。"
+            ]
+          },
+          "create_time": 1773306029,
+          "metadata": {
+            "attachments": [
+              {
+                "name": "合成旅行计划.pdf"
+              }
+            ]
+          }
+        }
+      },
+      "a": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "收到，我会按你的偏好来。"
+            ]
+          },
+          "create_time": 1773306030
+        }
+      },
+      "unused": {
+        "parent": "u",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "分支废弃内容"
+            ]
+          },
+          "create_time": 1773306031
+        }
+      },
+      "sys": {
+        "parent": null,
+        "message": {
+          "author": {
+            "role": "system"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "系统秘密"
+            ]
+          }
+        }
+      }
+    }
+  }
+]

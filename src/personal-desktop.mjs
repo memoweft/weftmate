@@ -201,6 +201,21 @@ export function createPersonalDesktop({ systemManager = null, dataManager = null
       selectedFolders.set(rootPath, owner); }
     return rootPath;
   });
+  handle('wm:desktop:history-import', async appName => {
+    if (contentOrigin !== origin || !['chatgpt', 'claude', 'codex', 'claude-code'].includes(appName)) throw new Error('IMPORT_NATIVE_SELECTION_REQUIRED');
+    const initial = await jsonLocal('/auth/me'), owner = initial.account?.ownerId;
+    const local = ['codex', 'claude-code'].includes(appName);
+    const selection = await dialog.showOpenDialog(win, { title: local ? '选择会话记录目录' : '选择聊天记录导出文件',
+      ...(local ? { defaultPath: join(app.getPath('home'), appName === 'codex' ? '.codex' : '.claude', appName === 'codex' ? 'sessions' : 'projects') } : { filters: [{ name: '聊天记录', extensions: ['zip', 'json'] }] }),
+      properties: local ? ['openDirectory'] : ['openFile', 'multiSelections'] });
+    if (selection.canceled) return null;
+    const current = await jsonLocal('/auth/me');
+    if (current.account?.ownerId !== owner) throw new Error('ACCOUNT_CHANGED');
+    const response = await fetchLocal('/memory/backfill', { method: 'POST', headers: { 'content-type': 'application/json', 'x-weftmate-csrf': current.csrfToken },
+      body: JSON.stringify({ action: 'import-preview', app: appName, paths: selection.filePaths }) });
+    const body = await response.json(); if (!response.ok) throw new Error(body.error?.code ?? body.code ?? 'IMPORT_FORMAT_UNKNOWN');
+    return body;
+  });
   const nativeProjects = async () => {
     if (contentOrigin !== origin) throw new Error('Desktop project registration unavailable');
     const response = await fetchLocal('/projects', {headers:{'x-weftmate-desktop':libraryDesktopToken}});

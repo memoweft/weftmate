@@ -126,6 +126,8 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   search.input.addEventListener('input',()=>{memory.queryDraft=search.input.value});
   const category=el('label','field');category.hidden=true;category.append(el('span','','记忆类别'),select);
   memoryIngestionPanel(target);
+  if(globalThis.WeftHistoryImportView)WeftHistoryImportView({target,owner:()=>state.owner,
+    request:(path,options={})=>uiCore.mobile.business({path:`/personal/v1${path}`,method:options.method??'GET',...(options.body?{body:options.body}:{})})});
   const form=el('form');form.append(search.box,category);
   form.addEventListener('submit',event=>{event.preventDefault();memory.queryDraft=search.input.value;
     const query=search.input.value.trim();if([...query].length>120){memory.error='搜索内容最多120个字符，请缩短后重试。';renderMemoryList(target);return}
@@ -145,7 +147,7 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
         memory.pendingBoundaryCount?'当前还没有已形成的记忆。':'当前账户还没有可显示的记忆。'));
     }}
   else { const entries=memory.items.map(item=>{const wrapper=el('div','memory-item'),entry=row(`${item.truncated===true?'记忆片段 · ':''}${item.text}`,`${MEMORY_KINDS[item.kind]} · ${memoryLifecycle(item).join(' · ')}${item.updatedAt?` · 更新于 ${timeLabel(item.updatedAt)}`:''}`,()=>openMemoryDetail(target,item));wrapper.append(entry);
-    for(const id of item.sourceConversationIds??[]){const source=action('来源对话',()=>selectSharedSession(id),false);source.classList.add('memory-source-link');source.prepend(WeftIcons.create('chat',16));wrapper.append(source)}return wrapper;});target.append(group('记忆列表',entries)); }
+    if(item.importSources?.length)wrapper.append(el('p','muted','来自 ' + item.importSources[0].appName + ' 的一段对话'));for(const id of item.sourceConversationIds??[]){const source=action('来源对话',()=>selectSharedSession(id),false);source.classList.add('memory-source-link');source.prepend(WeftIcons.create('chat',16));wrapper.append(source)}return wrapper;});target.append(group('记忆列表',entries)); }
   if(memory.hasMore){const more=action(memory.loading?'正在读取…':'加载更多',()=>loadMemoryMore(target),false);more.disabled=memory.loading;target.append(more)}
 }
 
@@ -213,7 +215,7 @@ function renderMemoryDetail(target=memoryTarget,token=memoryToken()){target=memo
       if(source.summary!==null&&typeof source.summary==='string')entry.append(el('p','muted',`摘要：${source.summary}`));
       if(source.contentAvailable===true&&typeof source.rawContent==='string'){
         if(source.rawContentTruncated===true)entry.append(el('p','muted','以下原文已由服务端截断。'));
-        entry.append(el('p','',source.rawContent));
+        entry.append(el('p','',globalThis.WeftImportSourceText?.(source)??source.rawContent));
       }else if(source.contentAvailable===false)entry.append(el('p','muted','此来源正文当前不可读取。'));
       else if(source.summary===null||typeof source.summary!=='string')entry.append(el('p','muted','服务端没有提供可读取的正文或摘要。'));
       if(memoryActionAllowed('deleteEvidence',source))entry.append(action('删除这条来源',()=>{
