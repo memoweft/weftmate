@@ -121,8 +121,10 @@ public actor PersonalClient {
               day.range(of: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", options: .regularExpression) != nil else { throw APIFailure.identityMismatch }
         try await verify(auth, generation)
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let body=try encoder.encode(health)
+        guard HealthUploadPolicy.validBytes(body,version:health.version) else { throw APIFailure.invalidResponse }
         let response = try await sharedAuthorizedRequest(auth, generation, path: "/daily-summaries/" + day + "/health",
-            method: "PUT", body: encoder.encode(health), timeoutInterval: 15)
+            method: "PUT", body: body, timeoutInterval: 15)
         guard [200, 201, 204].contains(response.status) else { throw APIFailure.invalidResponse }
     }
     public func healthTopInsightSetting(_ enabled: Bool) async throws -> HealthPageSettingsReply {
@@ -141,15 +143,21 @@ public actor PersonalClient {
             body: JSONSerialization.data(withJSONObject: ["scope":scope,"day":day]), timeoutInterval: 30)
     }
     public func healthOverview() async throws -> HealthOverview { try await parityRequest(path: "/health/overview", timeoutInterval: 15) }
-    public func healthMetrics(_ id: String, days: Int) async throws -> HealthMetricSeries {
+    public func healthMetrics(_ id: String, days: Int, to: String? = nil) async throws -> HealthMetricSeries {
         guard [7,14,30,60,90].contains(days), id.range(of: "^[a-zA-Z0-9]+$", options: .regularExpression) != nil else { throw APIFailure.invalidResponse }
-        return try await parityRequest(path: "/health/metrics/" + id + "?days=\(days)", timeoutInterval: 15)
+        if let to, to.range(of: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", options: .regularExpression) == nil { throw APIFailure.invalidResponse }
+        return try await parityRequest(path: "/health/metrics/" + id + "?days=\(days)" + (to.map { "&to=" + $0 } ?? ""), timeoutInterval: 15)
+    }
+    public func healthWeekly(to: String? = nil) async throws -> HealthWeeklyReply {
+        if let to, to.range(of: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", options: .regularExpression) == nil { throw APIFailure.invalidResponse }
+        return try await parityRequest(path: "/health/weekly" + (to.map { "?to=" + $0 } ?? ""), timeoutInterval: 15)
     }
     public func healthCalendar(month: String) async throws -> HealthCalendarReply {
         guard month.range(of: "^[0-9]{4}-[0-9]{2}$", options: .regularExpression) != nil else { throw APIFailure.invalidResponse }
         return try await parityRequest(path: "/health/calendar?month=" + month, timeoutInterval: 15)
     }
     public func putHealthBatch(_ items: [HealthBatchItem], account: LocalAccountScope) async throws -> HealthBatchReply {
+        guard try HealthUploadPolicy.validBatch(items) else { throw APIFailure.invalidResponse }
         let (auth, _) = try snapshot()
         guard try LocalAccountScope(server: auth.session.server, ownerId: auth.session.account.ownerId) == account else { throw APIFailure.identityMismatch }
         return try await parityRequest(path: "/health/records/batch", method: "PUT", body: JSONEncoder().encode(HealthBatchBody(items: items)), timeoutInterval: 30)
@@ -161,10 +169,10 @@ public actor PersonalClient {
         let response = try await sharedAuthorizedRequest(auth, generation, path: "/health/profile", method: "PUT", body: JSONEncoder().encode(profile), timeoutInterval: 15)
         guard [200,201,204].contains(response.status) else { throw APIFailure.invalidResponse }
     }
-    public func remindHealthSuggestion(_ id: String, sessionID: String, requestID: String) async throws {
+    public func remindHealthSuggestion(_ id: String, sessionID: String? = nil, requestID: String) async throws {
         guard let escaped = id.addingPercentEncoding(withAllowedCharacters: .alphanumerics) else { throw APIFailure.invalidResponse }
         let _: JSONValue = try await parityRequest(path: "/health/suggestions/" + escaped + "/remind", method: "POST",
-            body: JSONSerialization.data(withJSONObject: ["sessionId": sessionID, "requestId": requestID]), timeoutInterval: 15)
+            body: JSONEncoder().encode(HealthReminderBody(sessionId: sessionID, requestId: requestID)), timeoutInterval: 15)
     }
     public func dailySummaries() async throws -> DailySummariesReply { try await parityRequest(path: "/daily-summaries", timeoutInterval: 15) }
     public func dailyReviewSettings() async throws -> DailyReviewSettingsReply { try await parityRequest(path: "/settings/notifications", timeoutInterval: 15) }
@@ -1672,3 +1680,5 @@ public actor PersonalClient {
         guard validID(value) else { throw APIFailure.invalidResponse }; return value
     }
 }
+
+private struct HealthReminderBody: Encodable { var sessionId: String?; var requestId: String }

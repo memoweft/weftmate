@@ -9,7 +9,7 @@ private func pageOverview(_ extras: String = "") throws -> HealthOverview {
     let old=try pageOverview()
     #expect(HealthPagePolicy.recordVersion(old.capabilities)==2)
     #expect(HealthPagePolicy.visibleOptionalCards(old).isEmpty)
-    let current=try pageOverview(",\"capabilities\":{\"record\":3,\"profile\":true},\"stress\":{\"score\":35},\"energy\":{\"score\":72},\"fitnessAge\":{\"value\":34}")
+    let current=try pageOverview(",\"capabilities\":{\"record\":3,\"profile\":true},\"stress\":{\"score\":35},\"energy\":{\"score\":72},\"fitnessAge\":{\"fitnessAge\":34}")
     #expect(HealthPagePolicy.recordVersion(current.capabilities)==3)
     #expect(HealthPagePolicy.visibleOptionalCards(current)==["stress","energy","fitnessAge"])
     #expect(HealthPagePolicy.visibleOptionalCards(try pageOverview(",\"stress\":null,\"energy\":null,\"fitnessAge\":null")).isEmpty)
