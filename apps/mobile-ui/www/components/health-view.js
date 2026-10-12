@@ -51,7 +51,8 @@
     const nodes=[...root.querySelectorAll('[data-count-to]')],started=clock();let frame;const tick=now=>{const progress=clamp((now-started)/400,0,1),eased=1-(1-progress)**3;for(const n of nodes)if(n.isConnected)n.textContent=WeftHealth.value(Number(n.dataset.countTo)*eased,n.dataset.countMetric);if(progress<1)frame=request(tick);else onFinish();};frame=request(tick);return ()=>cancel(frame);
   }
   const reducedMotion=()=>globalThis.WeftReplyMotion?.reduced===true||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;
-  globalThis.WeftHealthGraphics={band,dualBars,range,halfGauge,area,comparison,progress,stages,gradient,fillPath,percent,animateNumbers,reducedMotion};
+  const criticalStatus=data=>/明显(?:偏离|偏高|偏低)/.test(data?.label??'');
+  globalThis.WeftHealthGraphics={band,dualBars,range,halfGauge,area,comparison,progress,stages,gradient,fillPath,percent,animateNumbers,reducedMotion,criticalStatus};
 })();
 
 /* Page-family presentation shared with the phone shell. Inline SVG contains only geometry. */
@@ -61,7 +62,7 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
   const action=(text,run,cls='health-control')=>{const n=el('button',cls,text);n.type='button';n.onclick=()=>Promise.resolve().then(run).catch(e=>toast?.(core.failureMessage(e)));return n;};
   const icon=(label,name,run)=>{const n=action('',run,'health-control health-icon');n.setAttribute('aria-label',label);n.title=label;n.append(WeftIcons.create(name,18));return n;};
   const small=text=>el('p','health-muted',text),card=(name)=>{const n=el('section','health-card');n.setAttribute('aria-label',name);n.append(el('h2','',name));return n;};
-  const status=(data)=>el('span',`health-status is-${data?.state??'insufficient'}`,data?.label??'再戴几天就有对比了');
+  const status=(data)=>el('span',`health-status is-${data?.state??'insufficient'}${G.criticalStatus(data)?' is-critical':''}`,data?.label??'再戴几天就有对比了');
   const svgEl=(tag,attrs={})=>{const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,String(v));return n;};
   function colorMetric(n,id,data={}){data??={};n.dataset.metric=id;let name={fitnessAge:'fitness-age',hrvSdnnMs:'hrv',restingHeartRateBpm:'resting-heart-rate',respiratoryRateBrpm:'respiratory',spo2Pct:'oxygen',wristTempC:'temperature',activity:'load',sleepMinutes:'sleep',vo2Max:'fitness-age'}[id]??id;
     if(id==='stress'){const v=data.score;name=H.finite(v)?`stress-${v<25?'calm':v<50?'moderate':v<75?'high':'extreme'}`:'stress-calm';}
@@ -118,7 +119,7 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
     }return n;
   }
   function metricButton(id,data={}){data??={};const n=colorMetric(action('',()=>core.openHealthMetric(id,'detail'),'health-metric health-card'),id,data);n.setAttribute('aria-label',H.metrics[id][0]+'，查看详情');
-    const value=id==='fitnessAge'?data.fitnessAge:id==='energy'?data.current:data.score;const name=el('span','health-card-name',H.metrics[id][0]);name.append(WeftIcons.create('right',14));n.append(name,number(value,id));
+    const value=id==='fitnessAge'?data.fitnessAge:id==='energy'?data.current:data.score;n.setAttribute('aria-description',H.finite(value)?`${H.value(value,id)} ${H.metrics[id][1]}，${data.label??''}`:id==='fitnessAge'?H.profileHint(data):data.label??'当天还没有测量');const name=el('span','health-card-name',H.metrics[id][0]);name.append(WeftIcons.create('right',14));n.append(name,number(value,id));
     const state=status(data);if(!H.finite(value)){state.textContent=id==='fitnessAge'?'资料不足':data.state==='insufficient'?'记录不足':'暂无测量';state.title=id==='fitnessAge'?H.profileHint(data):data.label??'继续记录，就能看到自己的变化';}n.append(state,metricGraphic(id,data));
     if(id==='fitnessAge'&&H.finite(data.difference)){const capsule=el('span','health-age-capsule',ageDifference(data));n.append(capsule);}
     if(id==='stress')n.append(small(data.latest?.time?'最近测量 '+timeLabel(data.latest.time):'等待下一次测量'));
