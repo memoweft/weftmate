@@ -17,7 +17,7 @@ struct ReplyArtifactList: View {
     @State private var previewing = false
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-            ForEach(bundle.visible(expanded: expanded)) { row in
+            ForEach(bundle.visible(expanded: expanded), id: \.artifactPresentationID) { row in
                 HStack(spacing: AppleTokens.Space.p8) {
                     Button { Task { await load(row); if file != nil { previewing = true } } } label: {
                         WeftLabel(row.data["fileName"]?.string ?? "成果文件", icon: "file", size: AppleTokens.Space.p16)

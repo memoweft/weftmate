@@ -35,6 +35,7 @@ public struct TimelineEvent: Codable, Equatable, Sendable, Identifiable {
     public let at: String?
     public let data: JSONValue
     public var id: Int { seq }
+    public var artifactPresentationID: String { data["artifactId"]?.string ?? String(seq) }
     public init(seq: Int, type: String, at: String? = nil, data: JSONValue) {
         self.seq = seq; self.type = type; self.at = at; self.data = data
     }

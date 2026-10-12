@@ -1773,16 +1773,21 @@ final class AppleAppModel: ObservableObject {
         timelinePolling = request
         defer { if timelinePolling == request { timelinePolling = nil } }
         var policy = ConversationPollingPolicy()
+        var lastSummaryRead = Date.distantPast
         while !Task.isCancelled, actionEpoch == epoch, request == historyRequest, foreground, selectedConversation?.id == conversation.id {
             do {
                 let page = try await client.timelinePage(sessionID: sessionID, afterSeq: timeline.nextSeq)
                 guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
                 if page.cacheAllowed == false { historyCacheAllowed = false; await clearLocalHistory(conversation) }
                 timeline.apply(page); historyError = nil
-                let summaries = try await client.conversations(includeArchived: true)
-                guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
-                conversations = summaries
-                liveConversations = Dictionary(uniqueKeysWithValues: summaries.map { ($0.id, $0) })
+                if Date().timeIntervalSince(lastSummaryRead) >= 4.5 {
+                    lastSummaryRead = Date()
+                    if let summaries = try? await client.conversations(includeArchived: true) {
+                        guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
+                        conversations = summaries
+                        liveConversations = Dictionary(uniqueKeysWithValues: summaries.map { ($0.id, $0) })
+                    }
+                }
                 updateTimelineActivity(conversation)
                 let new = try await client.timelineMessages(page.events, sessionID: sessionID)
                 let mapped = await client.cachedTimelineMessageIDs(sessionID: sessionID)
@@ -1801,7 +1806,7 @@ final class AppleAppModel: ObservableObject {
                     #endif
                 }
                 if !page.hasMore {
-                    let running = self.conversations.first(where: { $0.id == conversation.id })?.running == true
+                    let running = TimelineProjection.taskRunning(timeline.events, fallback: self.conversations.first(where: { $0.id == conversation.id })?.running == true)
                     if page.liveSeq != nil { try await Task.sleep(for: .seconds(ReplySnapshots.pollDelay(streaming: true, running: running))) }
                     else { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty || running)) }
                 }
@@ -1818,6 +1823,9 @@ final class AppleAppModel: ObservableObject {
                 } else {
                     historyError = friendly(error)
                     if case APIFailure.transport = error {
+                        try? await Task.sleep(for: .seconds(1.5)); continue
+                    }
+                    if case APIFailure.server(let status, _) = error, status >= 500 {
                         try? await Task.sleep(for: .seconds(1.5)); continue
                     }
                 }; return

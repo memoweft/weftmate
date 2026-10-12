@@ -44,6 +44,13 @@ final class Apple3ReplyTests: XCTestCase {
         XCTAssertEqual(window.syncCursor, "history-1")
         XCTAssertEqual(window.displayEvents.first?.text, "第一段第二段")
         XCTAssertTrue(window.events.isEmpty)
+        let oldID = window.displayEvents.first?.presentationID
+        let finalRow: [String:Any] = ["eventId":"final-history", "chatId":"main", "orderKey":"009", "revision":1, "type":"assistant.message", "sourceRef":["sessionId":"s1","seq":9], "data":["text":"第一段第二段。","streamSeq":2]]
+        let changes = try JSONDecoder().decode(ChatChanges.self, from:JSONSerialization.data(withJSONObject:["upserts":[finalRow],"removals":[],"nextCursor":"history-2","hasMore":false,"contentRevision":1,"indexState":"ready","timeZone":"UTC","liveRevision":5,"liveEvents":[]]))
+        try window.apply(changes)
+        XCTAssertEqual(window.displayEvents.count,1)
+        XCTAssertEqual(window.displayEvents.first?.presentationID,oldID)
+        XCTAssertEqual(window.displayEvents.first?.text,"第一段第二段。")
         window.reset()
         XCTAssertTrue(window.displayEvents.isEmpty)
         XCTAssertEqual(window.liveRevision, -1)

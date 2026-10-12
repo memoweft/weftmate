@@ -57,6 +57,7 @@ struct ConversationApprovalBar: View {
                 .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("approvalBar")
+                .onChange(of: approval.secondOpinion) { _, opinion in if opinion?.recommendsRejection == true { approveFocused = false; rejectFocused = true } }
                 .task(id: approval.id) { expanded = false; approveFocused = false; rejectFocused = approval.secondOpinion?.recommendsRejection == true; await model.readApprovalPresentation(approval, events: events) }
         } else { ConversationQuestionBar(model: model) }
     }

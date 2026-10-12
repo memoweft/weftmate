@@ -51,7 +51,11 @@ public enum ReplyArtifacts {
         return order.compactMap { key in
             guard let rows = groups[key], let anchor = rows.last?.seq else { return nil }
             var latest: [String:TimelineEvent] = [:], keys: [String] = []
-            for row in rows {
+            let expandedRows = rows.flatMap { row -> [TimelineEvent] in
+                guard case .array(let files) = row.data["artifacts"] else { return [row] }
+                return files.map { TimelineEvent(seq:row.seq,type:row.type,at:row.at,data:$0) }
+            }
+            for row in expandedRows {
                 let data = row.data
                 if ["source", "intermediate"].contains(data["role"]?.string ?? "") || ["superseded", "deleted", "replaced"].contains(data["state"]?.string ?? "") || data["supersededBy"] != nil || ["read", "move", "rename", "delete", "remove"].contains(data["operation"]?.string ?? data["action"]?.string ?? data["completedStep"]?["toolName"]?.string ?? "") { continue }
                 guard let artifactID = data["artifactId"]?.string else { continue }
