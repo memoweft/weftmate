@@ -19,3 +19,27 @@ Swift 全包：XCTest 13/13 与 Swift Testing 460/460，0 失败、0 跳过；�
 界面最终结果及截图清单见下方；`attempt-1/` 保留未签名夹具停在登录阶段的失败，`attempt-2/` 保留浅色对话／设置已走通但夹具菜单被嵌套导航隐藏的失败。它们不作为整批通过证据。`attempt-3/` 保留外层导航栈仍显示设置详情、尚未进入健康场景的失败；第四批按场景重建测试导航栈。原始带本机路径的编译／测试日志与 xcresult 留在临时目录，没有提交。
 
 真实电脑持续长回复、网络断开后继续生成、停止请求直到宿主终态、全局规则对下次真实工具的生效、VoiceOver／外接键盘初始拒绝焦点、真机 HealthKit 与签名后台行为需要本人设备及电脑配合；本包数据／请求与合成原生 UI 不替代这些验收。没有健康新指标或 HEALTH-5 字段改动，没有 Mac／Watch 页面改版、安卓或线上部署。
+
+## 最终原生界面结果
+
+主路浅／深批次 1/1 通过，构图补拍浅／深批次 1/1 通过，两批均 0 失败、0 跳过。最终 30 张接受截图；网格与五文件展开四张由补拍替换，断言内容完整落在导航栏和输入区之间。`ui-main-validation.json` 是第四次启动的主路结果，`ui-validation.json` 是第五次启动的构图结果；`host-report.json` 为最后构图批次的合成服务报告。
+
+共启动 5 次，均为隔离 iPhone SE（第三代）、一个模拟器、无 Simulator.app 窗口。每次先查 GPU 报告与 uptime，结束关闭全部模拟器并冷却至少三分钟。本包 GPU／整机重启 0，新增 WeftMate 崩溃报告 0。一次临时 OCR 辅助进程读取失效图像后崩溃，随后改为捕获错误；原始诊断留在临时目录，不属于 App 崩溃。
+
+| 场景 | 浅色 | 深色 |
+|---|---|---|
+| 流式正文 | [图](apple3-light-stream.png) | [图](apple3-dark-stream.png) |
+| 最终正文 | [图](apple3-light-final.png) | [图](apple3-dark-final.png) |
+| 一致意见 | [图](apple3-light-aligned.png) | [图](apple3-dark-aligned.png) |
+| 提醒意见／拒绝主操作 | [图](apple3-light-warning.png) | [图](apple3-dark-warning.png) |
+| 成果默认三行 | [图](apple3-light-files-collapsed.png) | [图](apple3-dark-files-collapsed.png) |
+| 五文件完整展开 | [图](apple3-light-files-expanded.png) | [图](apple3-dark-files-expanded.png) |
+| 中途重试后完成 | [图](apple3-light-recovered.png) | [图](apple3-dark-recovered.png) |
+| 已中断 | [图](apple3-light-interrupted.png) | [图](apple3-dark-interrupted.png) |
+| 整轮失败 | [图](apple3-light-failed.png) | [图](apple3-dark-failed.png) |
+| 复核设置 | [图](apple3-light-permissions.png) | [图](apple3-dark-permissions.png) |
+| 今日模型解读设置 | [图](apple3-light-health-settings.png) | [图](apple3-dark-health-settings.png) |
+| 今日解读按钮与卡片 | [图](apple3-light-health-buttons.png) | [图](apple3-dark-health-buttons.png) |
+| 完整两列分数网格 | [图](apple3-light-health-grid.png) | [图](apple3-dark-health-grid.png) |
+| 详情分析关闭提示 | [图](apple3-light-health-analysis-off.png) | [图](apple3-dark-health-analysis-off.png) |
+| 详情分析展开 | [图](apple3-light-health-analysis-expanded.png) | [图](apple3-dark-health-analysis-expanded.png) |

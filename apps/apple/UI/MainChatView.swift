@@ -33,7 +33,13 @@ struct MainChatView: View {
             epoch: app.accountEpoch, stateDirectory: app.assistantStateDirectory,
             currentEpoch: { [weak app] in app?.accountEpoch ?? UUID() }, currentSession: { [weak app] in app?.session }))
     }
-    private var days: [ChatDaySection] { ChatDay.sections(model.window.displayEvents, timeZone: model.timeZone) }
+    private var days: [ChatDaySection] {
+        #if os(iOS)
+        ChatDay.sections(model.window.displayEvents, timeZone: model.timeZone)
+        #else
+        ChatDay.sections(model.window.events, timeZone: model.timeZone)
+        #endif
+    }
     private var today: String { ChatDay.key(Date(), timeZone: model.timeZone) }
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
@@ -143,7 +149,11 @@ struct MainChatView: View {
                 await A16PhoneMeasurement.poll(model)
                 #endif
                 #endif
+                #if os(iOS)
                 try? await Task.sleep(for: .seconds(ReplySnapshots.pollDelay(streaming: model.capabilities.supports("replyStreaming"), running: model.chat?.running == true || model.window.liveEvents.contains { $0.data["streaming"]?.bool == true }, failed: model.error != nil)))
+                #else
+                try? await Task.sleep(for: .seconds(2))
+                #endif
             }
         }
         .onChange(of: model.window.generation) { _, _ in interactions.cancel(); positions.frames.removeAll(); restore = nil; searching = false; importing = false; importEpoch = nil; importGeneration = nil }
