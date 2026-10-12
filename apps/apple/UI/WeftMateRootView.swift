@@ -58,13 +58,7 @@ struct WeftMateRootView: View {
             runLogOpen = true
             #endif
         })
-        .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
-        .sheet(isPresented: $model.cloudLogin.showDevices) {
-            NavigationStack {
-                CloudDevicesView(app: model, cloud: model.cloudLogin)
-                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { model.cloudLogin.showDevices = false } } }
-            }
-        }
+        .overlay { CloudAccessPresenter(app: model, cloud: model.cloudLogin) }
         .sheet(item: Binding(get: { model.deletionInSettings ? nil : model.deletionCandidate }, set: { model.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: model) }
         #if os(iOS)
         .sheet(item: $model.temporaryExpiryCandidate) { row in

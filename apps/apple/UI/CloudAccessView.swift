@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Server features ask for login without replacing the current local workspace.
 struct CloudAccessPresenter: View {
+    @ObservedObject var app: AppleAppModel
     @ObservedObject var cloud: CloudLoginModel
     var body: some View {
         VStack {
@@ -21,6 +22,12 @@ struct CloudAccessPresenter: View {
             Spacer()
         }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .allowsHitTesting(cloud.newDeviceNotice != nil)
+            .sheet(isPresented: $cloud.showDevices) {
+                NavigationStack {
+                    CloudDevicesView(app: app, cloud: cloud)
+                        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("完成") { cloud.showDevices = false } } }
+                }
+            }
             .sheet(isPresented: $cloud.showLogin) {
                 NavigationStack {
                     AuthView(model: cloud).navigationTitle("登录")

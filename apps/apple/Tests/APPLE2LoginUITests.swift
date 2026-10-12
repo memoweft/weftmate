@@ -17,7 +17,7 @@ final class APPLE2LoginUITests: XCTestCase {
         }
     }
     @MainActor private func tap(_ app: XCUIApplication, _ id: String) throws {
-        let button = id == "newDeviceOpen" ? app.scrollViews.buttons.matching(identifier: id).firstMatch : app.buttons.matching(identifier: id).firstMatch
+        let button = id == "newDeviceOpen" ? app.buttons.matching(NSPredicate(format: "label == %@", "查看设备")).firstMatch : app.buttons.matching(identifier: id).firstMatch
         if id.hasPrefix("settingsCategory.") {
             for _ in 0..<8 { if button.exists && button.isHittable { break }; app.swipeUp() }
         }
@@ -79,22 +79,19 @@ final class APPLE2LoginUITests: XCTestCase {
         try expect(app.buttons["mainChat.sideList"], 40)
         XCTAssertFalse(app.staticTexts["cloudWaiting"].exists)
         keep(app, "password-connected", theme)
-        try tap(app, "phoneAccountMenu"); try tap(app, "phoneMenu.settings")
-        try tap(app, "settingsCategory.devices")
+        _ = try await get("/new-device")
+        try expect(app.buttons.matching(NSPredicate(format: "label == %@", "查看设备")).firstMatch, 45)
+        keep(app, "new-device-notice", theme)
+        try tap(app, "newDeviceOpen")
         try expect(app.buttons["刷新设备"])
         try expect(app.staticTexts["已登录的设备"])
         keep(app, "devices", theme)
-        _ = try await get("/new-device")
-        try tap(app, "刷新设备")
-        try expect(app.scrollViews.buttons.matching(identifier: "newDeviceOpen").firstMatch)
-        keep(app, "new-device-notice", theme)
-        try tap(app, "newDeviceOpen")
         try expect(app.buttons["removeDevice.synthetic-new-phone"])
         try tap(app, "removeDevice.synthetic-new-phone")
         try tap(app, "将设备下线")
         let removed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.buttons["removeDevice.synthetic-new-phone"])
         XCTAssertEqual(XCTWaiter.wait(for: [removed], timeout: 20), .completed)
-        try tap(app, "closeAuxiliarySheetButton")
+        try tap(app, "完成")
         try tap(app, "phoneAccountMenu"); try tap(app, "phoneMenu.settings")
         try tap(app, "settingsCategory.about")
         try expect(app.staticTexts["aboutNativeVersion"])
