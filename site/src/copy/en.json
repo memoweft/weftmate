@@ -1,0 +1,253 @@
+{
+  "lang": "en",
+  "title": "WeftMate — It remembers you. It gets things done.",
+  "description": "A personal AI assistant that lives on your computer. Give it a goal, follow the work, and pick up on your phone. Try the interactive WeftMate demo.",
+  "navDemo": "Try it",
+  "navDevices": "Every device",
+  "navGet": "Coming soon",
+  "language": "Language",
+  "theme": "Appearance",
+  "system": "Use device setting",
+  "light": "Light",
+  "dark": "Dark",
+  "skip": "Skip to content",
+  "preview": "In preview",
+  "heroA": "It remembers you.",
+  "heroB": "It gets things done.",
+  "heroBody": "Meet the AI assistant that lives on your computer. Give it a goal. Watch it do the work. Pick up on your phone or watch, with the same assistant that remembers what matters to you.",
+  "heroPrimary": "See it in action",
+  "heroSecondary": "When can I get it?",
+  "heroNote": "Your computer holds your data · Your choice of model",
+  "demoTitle": "Give it a goal.\nSee what happens next.",
+  "demoBody": "Go ahead. Approve an action. Explore a memory. This part is yours to try.",
+  "demoNote": "A scripted demo with fictional content. No files are changed and no AI model is called.",
+  "sceneFiles": "Clear the clutter",
+  "sceneMemory": "Remember last week",
+  "scenePhone": "Approve on your phone",
+  "play": "Play",
+  "pause": "Pause",
+  "next": "Next step",
+  "restart": "Start over",
+  "computer": "Desktop",
+  "phone": "Phone",
+  "step": "Step",
+  "waiting": "Your turn. Choose Allow to let it continue.",
+  "done": "All done. Try another scene, or play this one again.",
+  "stopped": "Declined. No files were moved. Start over to try again.",
+  "memoryHint": "Open the memories to see their sources. Try correcting or forgetting one.",
+  "staticTitle": "One goal. A finished result.",
+  "staticNote": "Enable JavaScript to try approvals and memory corrections.",
+  "workTitle": "Tell it the outcome.\nIt brings back the work.",
+  "workBody": "You shouldn't have to turn every goal into a list of instructions. It reads files, runs commands, organizes material, and writes the report. Follow the work in your conversation. Stop anytime, or queue up what comes next.",
+  "workSmall": "When a step needs your decision, it asks right there. Allow it once, or allow similar actions in future. Finished files arrive as one tidy list.",
+  "workPrompt": "Organize this month's files and write a report I can actually use.",
+  "workProgress": "Read 213 files · Found 38 files to organize",
+  "workApproval": "Move 38 files into 5 new folders?",
+  "allow": "Allow",
+  "deny": "Decline",
+  "always": "Allow similar actions",
+  "report": "Organization report.md",
+  "inventory": "File inventory.csv",
+  "reportMeta": "Report · 12 KB",
+  "inventoryMeta": "Spreadsheet · 8 KB",
+  "results": "2 files ready for you",
+  "workFinish": "All organized. The originals are intact, and your report is here.",
+  "memoryTitle": "You said it last week.\nYou don't have to say it again.",
+  "memoryBody": "It learns from everyday conversations. No extra notes to keep. In a new conversation, it can find what matters by meaning.",
+  "memorySmall": "See what it remembers. Correct what it got wrong. Fully forget what you don't want kept. A weekly memory note shows what's new. For a conversation you don't want remembered, go temporary.",
+  "lastWeek": "Last week · Thursday",
+  "today": "Today",
+  "memoryOld": "I like cycling on weekends, somewhere quiet. Keep the route under 20 km.",
+  "memoryOldReply": "Got it. I'll keep that in mind for your weekend plans.",
+  "memoryRequest": "Any ideas for a relaxing weekend?",
+  "memoryReply": "How about a quiet riverside ride? Keep it under 20 km, with a stop at a little café along the way.",
+  "memoryUsed": "Used 2 memories",
+  "memoryOne": "Enjoys weekend cycling and quiet routes.",
+  "memoryTwo": "Keep cycling routes under 20 km.",
+  "sourceLabel": "From last Thursday's conversation",
+  "sourceQuote": "“Keep the route under 20 km.”",
+  "correct": "Correct",
+  "forget": "Forget",
+  "correctionLabel": "Your current distance preference",
+  "correctionValue": "Keep cycling routes under 30 km.",
+  "save": "Save correction",
+  "cancel": "Cancel",
+  "corrected": "Memory updated. The demo now uses your new preference.",
+  "forgotten": "Distance preference forgotten. The demo no longer uses it.",
+  "memoryNewReply": "How about a quiet riverside ride? Keep it under 30 km, with a stop at a little café along the way.",
+  "memoryForgotReply": "How about a quiet riverside ride, with a stop at a little café along the way?",
+  "weekly": "What I remembered this week",
+  "weeklyDetail": "New preferences and corrections, together in one place.",
+  "devicesTitle": "Step away from your desk.\nStay with the task.",
+  "devicesBody": "Windows. Mac. Android. iPhone. Apple Watch. Follow your computer's progress on your phone, approve from a notification, or handle a request on your wrist. Change devices, conversations, or models. It's still the same assistant.",
+  "deviceCaption": "Real app screenshots with fictional test content · Interfaces are still evolving",
+  "windowsLabel": "Windows",
+  "macLabel": "Mac",
+  "androidLabel": "Android",
+  "iphoneLabel": "iPhone",
+  "watchLabel": "Apple Watch",
+  "windowsDesc": "Your full desktop workspace",
+  "macDesc": "A native Mac client",
+  "androidDesc": "Progress and conversation, anywhere",
+  "iphoneDesc": "A native iPhone client",
+  "watchDesc": "A quick decision on your wrist",
+  "devicePrev": "Previous device",
+  "deviceNext": "Next device",
+  "deviceOpen": "View this device's interface",
+  "phoneRequest": "WeftMate on your computer wants to move 38 files into new folders.",
+  "phoneLead": "Your computer is waiting",
+  "phoneAllowed": "Allowed on your phone. Your computer is back to work.",
+  "phoneFinished": "Finished on your computer. Your report is ready.",
+  "watchHint": "Handle approvals on your watch, too",
+  "watchAction": "Approve",
+  "phoneBottom": [
+    "Chat",
+    "Activity",
+    "Goals",
+    "Library"
+  ],
+  "dataTitle": "Your life.\nOn your own computer.",
+  "dataBody": "Conversations, attachments, and memories are stored primarily on your computer. WeftMate's cloud handles essentials like accounts, connections, and notifications. It doesn't store conversation text or memory content.",
+  "dataModel": "Bring your own API, or run a model locally. When you choose a third-party model, your device sends your messages and the relevant memories selected for that reply directly to the provider, under its privacy policy.",
+  "dataLocal": "Use it on your own computer without signing in. Sign in when you need remote access.",
+  "dataBusiness": "We don't sell models or require a membership today. Any third-party model costs are yours.",
+  "dataPolicy": "Read the full data policy",
+  "dataComputer": "Your computer",
+  "dataInside": "Conversations · Files · Memories",
+  "dataChoice": "Your chosen model",
+  "dataFlow": "Messages and memories needed for a reply",
+  "dataCloud": "WeftMate cloud",
+  "dataCloudNote": "Account · Connection · Notification",
+  "dataFoot": "We don't sell your personal information or use your content to train models.",
+  "detailsTitle": "The big work, finished.\nThe little things, considered.",
+  "details": [
+    [
+      "One main chat. Room for side chats.",
+      "Keep everyday life together. Give a specific task its own space.",
+      "chat"
+    ],
+    [
+      "Activity, goals, and a library",
+      "Progress, plans, and finished files, each with a place to land.",
+      "outputs"
+    ],
+    [
+      "Scheduled tasks",
+      "Turn “Every Friday, help me…” into something that happens on time.",
+      "clock"
+    ],
+    [
+      "One search across it all",
+      "Find conversations, memories, files, and scheduled tasks.",
+      "search"
+    ],
+    [
+      "Send it to WeftMate",
+      "Right-click a file or folder in Windows and hand it over.",
+      "desktop"
+    ],
+    [
+      "Replies worth reading",
+      "Code, tables, formulas, and diagrams, clearly presented.",
+      "code"
+    ],
+    [
+      "A little help with what's next",
+      "Pick a suggested next step and keep moving.",
+      "right"
+    ],
+    [
+      "Status and repair",
+      "Check when you want to. Repair a troubled connection on your computer.",
+      "tool"
+    ]
+  ],
+  "futureTitle": "More of your day.\nMore understood.",
+  "futureBody": "Here's what's on the way. Each step brings your assistant a little closer to everyday life.",
+  "coming": "Coming soon",
+  "future": [
+    [
+      "Daily notes and weekly reviews",
+      "Keep the few things worth remembering from a busy day or week.",
+      "book"
+    ],
+    [
+      "A second look at risky actions",
+      "Another model reviews the step before you make the decision.",
+      "approval"
+    ],
+    [
+      "Health data from iPhone and Watch",
+      "Connect everyday patterns for more thoughtful, practical suggestions.",
+      "health"
+    ],
+    [
+      "A companion with a little character",
+      "A small, responsive friend to share the routines of daily life.",
+      "pet"
+    ],
+    [
+      "Calendar and email",
+      "Bring plans, messages, and the work at hand together.",
+      "mail"
+    ],
+    [
+      "Your ChatGPT / Claude history",
+      "Let past conversations help it get to know you, without starting over.",
+      "history"
+    ]
+  ],
+  "getTitle": "Your next assistant.\nAt home on your computer.",
+  "getBody": "WeftMate is coming soon. It's still in preview, with no public release yet. Installers aren't code-signed yet either. We're working on making every entrance feel right.",
+  "getNote": "Bring your own model · No membership required",
+  "platforms": [
+    [
+      "Windows",
+      "Desktop installer",
+      "desktop"
+    ],
+    [
+      "Mac",
+      "Native client",
+      "desktop"
+    ],
+    [
+      "Android",
+      "Mobile app",
+      "phone"
+    ],
+    [
+      "iPhone",
+      "Native app",
+      "phone"
+    ],
+    [
+      "Apple Watch",
+      "Watch app",
+      "watch"
+    ]
+  ],
+  "getAction": "Try the demo first",
+  "getFoot": "Public downloads and app-store distribution are coming later. Availability details will be announced here.",
+  "feedback": "Tell us through Feedback in the app.",
+  "terms": "Terms",
+  "privacy": "Privacy",
+  "changelog": "What's new",
+  "legalEnglish": "English version coming soon",
+  "copyright": "© 2026 Memoweft. All rights reserved.",
+  "footerLine": "One assistant. More understanding.",
+  "backHome": "Back to home",
+  "notFoundTitle": "This thread doesn't connect yet.",
+  "notFoundBody": "The page may have moved, or the address may be missing a piece. Head home and pick up from there.",
+  "changelogTitle": "Always getting better.",
+  "changelogBody": "Development updates for WeftMate. These versions are in development and aren't public releases.",
+  "added": "Added",
+  "improved": "Improved",
+  "fixed": "Fixed",
+  "desktopVersion": "Desktop",
+  "mobileVersion": "Mobile UI",
+  "searchPlaceholder": "Search",
+  "composerPlaceholder": "Tell WeftMate what you have in mind",
+  "workAllowed": "Allowed. Continuing the work and keeping the originals.",
+  "memoryError": "Add your current preference before saving."
+}
