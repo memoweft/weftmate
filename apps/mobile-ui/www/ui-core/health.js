@@ -27,15 +27,19 @@
     function addBand(){if(!ranges.length)return;const ids=ranges.splice(0);band+=`M${ids.map(i=>`${x(i)},${y(points[i].high)}`).join(' L')} L${ids.reverse().map(i=>`${x(i)},${y(points[i].low)}`).join(' L')} Z `;}
     return {min,max,x,y,path,band,empty:!points.some(p=>finite(p.value))};
   }
-  globalThis.WeftHealth = {showHealthBottomTab:SHOW_HEALTH_BOTTOM_TAB,metrics,finite,value,analysisScope,duration,dayShift,chart,vitals:['hrvSdnnMs','restingHeartRateBpm','respiratoryRateBrpm','spo2Pct','wristTempC']};
+  const vital = (overview,id) => Array.isArray(overview?.vitals)?overview.vitals.find(item=>item.id===id):overview?.vitals?.[id];
+  const clockMinutes = time => typeof time==='string'&&/^\d{2}:\d{2}$/.test(time)?Number(time.slice(0,2))*60+Number(time.slice(3)):null;
+  const profileHint = data => {const missing=data?.missing??[],fields=[...(missing.includes('birthYear')?['出生年份']:[]),...(missing.includes('sex')?['性别']:[])];return fields.length?`在 iPhone 的健康页里补一下${fields.join('和')}就能算`:'最近还没有足够的最大摄氧量记录，继续戴着手表记录活动';};
+  globalThis.WeftHealth = {showHealthBottomTab:SHOW_HEALTH_BOTTOM_TAB,metrics,finite,value,vital,clockMinutes,profileHint,analysisScope,duration,dayShift,chart,vitals:['hrvSdnnMs','restingHeartRateBpm','respiratoryRateBrpm','spo2Pct','wristTempC']};
   globalThis.WeftUiCore.factories.health = (core,effects,env) => {
+    const priorSaveHealthSettings=core.saveHealthSettings;
     const model={overview:null,day:'',today:'',metric:'recovery',days:30,view:'today',overlay:false,trend:null,usage:null,weekSleep:null,weekUsage:null,recoveryWeek:null,calendar:null,month:'',loading:false,trendLoading:false,error:'',trendError:'',calendarError:'',calendarLoading:false,sleepStages:{},scoreAverages:{},supplementLoading:false,stageError:'',dimensionMetrics:{},dimensionLoading:false,settings:null,settingsLoading:false,settingsError:'',analyses:new Map(),analysisOpen:new Set(),analysisBusy:new Set(),analysisErrors:new Map(),generation:0,reminders:new Map(),busy:new Set()};
     let identity,readId=0,trendId=0,calendarId=0,dimensionId=0;const requests=new Map();
     const scope=()=>`${core.state.identityGeneration}:${core.state.account?.ownerId??core.state.ownerId}`;
     const emit=()=>effects.renderHealth?.();
     function resetHealth(){readId++;trendId++;calendarId++;dimensionId++;model.generation++;requests.clear();model.reminders.clear();model.busy.clear();model.analyses.clear();model.analysisOpen.clear();model.analysisBusy.clear();model.analysisErrors.clear();Object.assign(model,{overview:null,settings:null,settingsLoading:false,settingsError:'',day:'',today:'',metric:'recovery',days:30,view:'today',overlay:false,trend:null,usage:null,calendar:null,month:'',weekSleep:null,weekUsage:null,recoveryWeek:null,loading:false,trendLoading:false,error:'',trendError:'',calendarError:'',calendarLoading:false,sleepStages:{},scoreAverages:{},supplementLoading:false,stageError:'',dimensionMetrics:{},dimensionLoading:false});emit();}
     function sync(){core.syncMobileIdentity?.();if(identity!==scope()){identity=scope();resetHealth();}}
-    async function series(id,days){const result=await core.accessApi(`/health/metrics/${encodeURIComponent(id)}?days=${model.day&&model.today&&model.day<model.today?90:days}`);
+    async function series(id,days){const supportsTo=model.overview?.capabilities?.record>=3,query=new URLSearchParams({days:String(!supportsTo&&model.day&&model.today&&model.day<model.today?90:days)});if(supportsTo&&model.day)query.set('to',model.day);const result=await core.accessApi(`/health/metrics/${encodeURIComponent(id)}?${query}`);
       const points=(result.points??[]).filter(p=>!model.day||p.day<=model.day).slice(-days),values=points.map(p=>p.value).filter(finite);
       return {...result,points,outsideRange:!!model.day&&(result.points??[]).length>0&&model.day<result.points[0].day,average:values.length?values.reduce((a,b)=>a+b,0)/values.length:null};}
     async function readHealth(day=model.day){sync();const token=scope(),id=++readId;model.loading=true;model.error='';emit();
@@ -88,12 +92,12 @@
       catch(error){if(token===scope()){model.settings=null;model.settingsError=core.failureMessage(error);}return null;}
       finally{if(token===scope()){model.settingsLoading=false;emit();}}
     }
-    async function saveHealthSettings(patch){sync();const token=scope();const result=await core.accessApi('/settings/health',{method:'PATCH',protectedWrite:true,body:patch});
+    async function saveHealthSettings(patch){sync();const token=scope();const result=await (priorSaveHealthSettings?priorSaveHealthSettings(patch):core.accessApi('/settings/health',{method:'PATCH',protectedWrite:true,body:patch}));
       if(token===scope()){model.settings=result.settings;emit();}return result;
     }
     async function readHealthAnalyses(){if(!Object.hasOwn(model.settings??{},'itemAnalysisEnabled'))return;const token=scope(),day=model.day;
       try{const result=await core.accessApi(`/health/analysis?day=${day}`);if(token!==scope()||day!==model.day)return;
-        for(const item of (Array.isArray(result)?result:result.items??result.analyses??[]))if(item.day===day&&analysisScope(item.scope.replace(/^vital:/,'')))model.analyses.set(item.scope,item);emit();
+        if(result.day!==day)return;for(const item of result.items??[])if(item.day===day&&analysisScope(item.scope.replace(/^vital:/,'')))model.analyses.set(item.scope,item);emit();
       }catch{/* Cache availability never blocks the daily numbers. */}
     }
     function analysisFailure(error){const code=error.code??error.error?.code??error.message??'';

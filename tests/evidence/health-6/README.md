@@ -8,7 +8,7 @@
 
 ## 数据和验证边界
 
-基础数据复用 HEALTH-3 的 90 天合成生成器 `tests/helpers/health-page-synthetic.mjs`，v3（第三版）展示和分析响应在 `tests/helpers/health-6-synthetic.mjs` 中明确实现。起点为主线 `b4509f45`，这个快照没有 HEALTH-2 的 v2（第二版）合成生成器或新读取接口；没有用真实健康数据或请求真实模型。参考图只在私人目录查看，没有复制或转录其中数值。
+当前对齐数据复用 HEALTH-2 的 `tests/helpers/health-sequence.mjs` 90 天合成生成器和生产 v2（第二版）投影；v3（第三版）三卡与分析由 `tests/helpers/health-6-synthetic.mjs` 按 HEALTH-5 第16节的正式形状提供。初版从 `b4509f45` 开始，当时没有 HEALTH-2 的新读取实现；初版194张原图保留，正式字段对齐后重拍的原图放在 `aligned/`。没有用真实健康数据或请求真实模型。参考图只在私人目录查看，没有复制或转录其中数值。
 
 真实 Electron（桌面程序框架）使用生产桌面壳、合成账号与随机端口的隔离服务；身份和会话流程经过真实服务，所有健康和健康设置响应经过 UI（用户界面）夹具。手机网页用相同界面代码和合成响应。云端 Android（安卓）用既有独立测试浏览器容器拍原始整屏，验证网页与系统栏，不代表产品原生业务路径或新算法已经联调。
 
@@ -58,19 +58,22 @@
 - [x] 原未接入、空、加载、错误设计保留；单项新增加载骨架和失败重试。
 - [x] 沿 HEALTH-3 与已通过的目标页页面家族、控件和设计令牌。
 
-## 需要 HEALTH-5 配合
+## 正式字段与联调边界
 
-v3 编排约定只列了三个 overview 根字段，尚未列出内部字段、最后使用时刻字段及分析 GET（读取）的容器。页面现采用以下明确夹具字段，需 HEALTH-5 补进同一份约定后对齐；这些没有被称为真实算法联调。
+页面与夹具已按 `origin/wp/health-5-stress-energy-age:docs/CLIENT_API.md` 第16节及调度补充对齐，正式字段替代初版的临时名称：
 
-| 对象 | 当前展示夹具字段 |
+| 对象 | 当前正式字段 |
 |---|---|
-| `stress` | `score,state,label,average,latestSampleAt,samples:[{time,value}]` |
-| `energy` | `score,state,label,resolution,charged,drained,curve:[{time,value}],sleepPeriods:[{start,end}]`；`resolution:"hourly"` 降级 |
-| `fitnessAge` | `value,actualAge,state,label,referenceRange:{low,high}`；资料缺失用非空对象与 `value:null`，根对象为空则卡片隐藏 |
-| `usage` | `lastUsedAt`；没有时只显示原时长 |
-| 当天分析缓存 | `{items:[{scope,day,mode,text,points,basis,generatedAt}]}`；读取同时兼容直接数组或 `analyses` 数组 |
+| `stress` | `score,average,latest:{value,time},samples:[{time,value,method}],baselineDays,state,label,missing,disclaimer`；`latest:null` 有缺测反馈 |
+| `energy` | `score,current,highest,lowest,nightCharged,dayDrained,degraded,state,label,missing,disclaimer`；`curve` 固定96格当地 `HH:mm`，空值/未来时段不画；`sleepPeriods:[{start,end}]` 同为当地时分 |
+| `fitnessAge` | `fitnessAge,actualAge,difference,vo2Max,vo2MaxDay,trend,bounded,state,missing,disclaimer`；`referenceRange` 可为空；按 `missing` 分别提示出生年份/性别/摄氧量 |
+| `usage` / `load` | `usage.lastUsedAt`；`load.recommendedRange:{low,high,unit}` 有值时显示当天相对负荷与建议带，无值保留个人范围 |
+| 当天分析缓存 | `{day,items:[analysis]}`，按选定日期恢复，不重复POST（生成请求） |
+| 历史指标 | v3能力使用 `metrics/:id?days=…&to=YYYY-MM-DD`；旧能力保留原合法查询，避免向旧电脑发送不支持的参数 |
 
-压力、电能趋势需要允许对应 `metrics/:id`；体能年龄详情读取 `vo2Max` 趋势，并用返回的参考范围画灰带。分析发送严格采用约定的 `{scope,day}`，设置只 PATCH（局部更新）目标字段。每日上限与离线安全错误码需用实际服务再次核验。HEALTH-5 合并后还应切换到 HEALTH-2 的合成生成器并完成健康读取、设置、缓存和生成接口联调。
+免责声明优先显示回执字段，缺少时才使用页面默认文案。最大摄氧量参考灰带注明公开参考范围。共享模型保留主线的健康设置写入队列，两个开关各只更新自己的字段。
+
+`real-v2-verification.json` 记录 HEALTH-2 生成的90天数据经过真实批量、设置、概况、指标和睡眠分期接口，旧电脑不请求分析、不发送未支持的 `to`。v3三卡与分析仍为正式接口夹具；HEALTH-5实际算法和模型版生成需合入后联调。调度承诺由HEALTH-5补齐 `energy.sleepPeriods` 与 `fitnessAge.referenceRange` 的实际回执，页面已消费这两个字段。
 
 ## 原生端接线
 
@@ -88,3 +91,9 @@ iPhone 原生应跟进同样的三项可用性、资料提示、估计依据、�
 - 健康定向：17 通过；共享资源一致性：5 通过；类型检查、共享构建与公开卫生 0 命中。
 - 最终本地原图 194 张、页面异常 0；云端原始整屏 2 张，Android 14、底部导航可见。状态栏色差浅/深均 0，底部色差浅 1、深 0。[云端原始取证](https://github.com/memoweft/weftmate/actions/runs/38256450521)。
 - 聚焦取证修复：Android 窗口记录同时包含启动器与测试浏览器；读取完整聚焦列表后，仍逐张验证原生截图确实包含网页的标题与数字像素，没有降低画面核验。
+
+## 正式字段对齐复验
+
+健康/设置定向22项通过，手机五文件114项通过，均0失败；HEALTH-2基础13项（含真实HTTP路径）通过。新原图与缓存恢复截图详见 `aligned/verification.json`，包括三卡、详情、小时降级、生日/性别各自缺失、空参考范围、未来空白桶、负荷有/无建议区间、免责声明回执/回退及分析GET缓存恢复。初版的1776/232/114完整验证计数保持为交接前快照，不冒充对齐后的全量重跑。
+
+正式字段对齐最终原图222张、界面异常0；缓存恢复收起/展开各有截图，后端写入数没有增加。[本轮索引](aligned/README.md)，真实v2路径记录在 real-v2-verification.json。
