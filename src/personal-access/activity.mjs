@@ -5,6 +5,7 @@ import { REQUEST_ID } from './constants.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { nativeFailureReason } from './notification-content.mjs';
 import { ACTIVITY_TYPES, activityState, activityCounts, activitySource, putActivity, activityToken, readActivityToken, activityMatches, nativeTaskActivity } from './activity-store.mjs';
+import { createDailyDigest } from './daily-digest.mjs';
 import { createMemoryDigest, confirmDigestMemory } from './memory-digest.mjs';
 
 export function observeActivityEvents(account,sessionId,events,nextSeq,observeReminders=true) {
@@ -44,7 +45,7 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
 }
 
 export function createActivity(context) {
-  const memoryDigest=createMemoryDigest(context);
+  const memoryDigest=createMemoryDigest(context),dailyDigest=createDailyDigest(context);
   const flights=new Map(), bootId=randomUUID();let timer,closed=false;
   async function refresh(ownerId){
     if(context.dataControls?.isLocked(ownerId))return;
@@ -114,6 +115,7 @@ export function createActivity(context) {
             summary:'历史对话已提交整理，形成进度可在记忆页查看。',source:{memoryJobId:job.id},level:'silent',actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});
           state.memoryState=healthKey;
         }));await memoryDigest.refresh(ownerId,memory);}
+      await dailyDigest.refresh(ownerId);
       const update=await context.updateStatus();
       for(const layer of update?.layers??[])if(layer.availableVersion&&layer.availableVersion!==layer.currentVersion)await record(ownerId,{key:`update:${layer.layer}:${layer.availableVersion}`,type:'system.update.available',title:'更新可用',summary:`新版本 ${layer.availableVersion} 已可用。`,level:'normal',actions:[{kind:'view_settings',label:'查看更新',target:{category:'about'}}]});
       await context.sideChats.reconcile(ownerId);
@@ -180,6 +182,6 @@ export function createActivity(context) {
     return reply(readMatch?{item:context.accountState(ownerId).activity.items[readMatch[1]]}:counts(ownerId));
   }
   async function tick(){try{for(const ownerId of context.ownerIds())if(!closed)await refresh(ownerId);}catch{/* Next observation retries; no task is dispatched. */}finally{if(!closed){timer=setTimeout(tick,2000);timer.unref?.();}}}
-  return {refresh,record,counts,watermark,handleHttp,memoryDigest,start(){closed=false;void tick();},async close(){closed=true;clearTimeout(timer);await Promise.allSettled([...flights.values()]);}};
+  return {refresh,record,counts,watermark,handleHttp,memoryDigest,dailyDigest,start(){closed=false;void tick();},async close(){closed=true;clearTimeout(timer);await Promise.allSettled([...flights.values()]);await dailyDigest.close();}};
 }
 function pageLimit(url){const text=url.searchParams.get('limit')??'50';if(!/^\d+$/.test(text)||Number(text)<1||Number(text)>200)throw failure('INVALID_REQUEST');return Number(text);}

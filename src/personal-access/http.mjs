@@ -1,3 +1,4 @@
+import { dailyDigestState, validateHealthPartition, shiftDay } from './daily-digest.mjs';
 import { PERMISSION_TYPES, validPermissionRules, mergePermissionRules } from '../plugins/personal-permission-rules.mjs';
 import { executionRecords } from './execution-records.mjs';
 import { hostName } from '../host-name.mjs';
@@ -687,6 +688,18 @@ export function createHttpHandler(context) {
       if (['/personal/v1/settings/personalization', '/personal/v1/settings/personalization/style'].includes(pathname)) return await handlePersonalization(context, request, response, url, ownerId);
       if (['/personal/v1/settings/notifications', '/personal/v1/settings/notifications/test'].includes(pathname)) return await handleNotificationSettings(context, request, response, url, ownerId);
       if (await handlePush(context, request, response, url, ownerId, deviceId)) return;
+      if(pathname==='/personal/v1/daily-summaries'&&request.method==='GET'){
+        if(url.search)throw failure('INVALID_REQUEST');context.authenticate(request,'sessions:read');await context.activity.dailyDigest.refresh(ownerId);
+        return context.json(response,200,{items:Object.values(dailyDigestState(context.accountState(ownerId)).days).sort((a,b)=>b.day.localeCompare(a.day))});
+      }
+      const healthDay=/^\/personal\/v1\/daily-summaries\/(\d{4}-\d{2}-\d{2})\/health$/.exec(pathname);
+      if(healthDay&&request.method==='PUT'){
+        if(url.search||!Number.isFinite(Date.parse(healthDay[1]+'T00:00:00Z'))||new Date(healthDay[1]+'T00:00:00Z').toISOString().slice(0,10)!==healthDay[1])throw failure('INVALID_REQUEST');
+        context.authenticate(request,'account:manage');const health=validateHealthPartition(await context.readJson(request));
+        await context.activity.dailyDigest.refresh(ownerId);
+        await context.serial(()=>context.mutate(ownerId,next=>{context.authenticate(request,'account:manage');const state=dailyDigestState(next),today=new Intl.DateTimeFormat('en-CA',{timeZone:context.usage.settings(ownerId).timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(context.timestamp()));if(healthDay[1]>today||healthDay[1]<shiftDay(today,-(next.notificationSettings?.reviewRetentionDays??90)))throw failure('INVALID_REQUEST');state.healthDays??={};state.healthDays[healthDay[1]]=health;if(state.days[healthDay[1]])state.days[healthDay[1]].health=health;}));
+        return context.json(response,200,{day:healthDay[1],health});
+      }
       if (await context.activity.handleHttp(request, response, url, ownerId, deviceId)) return;
       const suggestionsMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]{1,128})\/suggestions$/.exec(pathname);
       if (suggestionsMatch && ['POST', 'DELETE'].includes(request.method)) return await context.nextSuggestions.handle(request, response, url, ownerId, suggestionsMatch[1]);

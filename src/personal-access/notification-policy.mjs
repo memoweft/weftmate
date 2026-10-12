@@ -4,6 +4,7 @@ export const notificationDefaults = Object.freeze({
   memoryReport: 'notify', companion: 'notify', system: 'notify',
   dndEnabled: false, dndStart: '22:00', dndEnd: '08:00', approvalException: true,
   dailyLimit: 5, soundEnabled: true,
+  reviewEnabled:true, reviewRetentionDays:90,
   memoryDigestEnabled:true, memoryDigestWeekday:0, memoryDigestTime:'21:00',
 });
 export function notificationSettings(account) { return {...notificationDefaults, ...account.notificationSettings}; }
@@ -11,7 +12,8 @@ export function validateNotificationSettings(patch) {
   if (!patch || typeof patch !== 'object' || Array.isArray(patch) || !Object.keys(patch).length) throw new TypeError('INVALID_REQUEST');
   for (const [key,value] of Object.entries(patch)) {
     if (!Object.hasOwn(notificationDefaults,key)) throw new TypeError('INVALID_REQUEST');
-    if(key==='memoryDigestWeekday'){if(!Number.isInteger(value)||value<0||value>6)throw new TypeError('INVALID_REQUEST');}
+    if(key==='reviewRetentionDays'){if(!Number.isInteger(value)||value<7||value>365)throw new TypeError('INVALID_REQUEST');}
+    else if(key==='memoryDigestWeekday'){if(!Number.isInteger(value)||value<0||value>6)throw new TypeError('INVALID_REQUEST');}
     else if (key === 'dailyLimit') { if (![0,3,5,10,null].includes(value)) throw new TypeError('INVALID_REQUEST'); }
     else if (key === 'dndStart' || key === 'dndEnd' || key==='memoryDigestTime') { if (typeof value !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) throw new TypeError('INVALID_REQUEST'); }
     else if (typeof notificationDefaults[key] === 'boolean') { if (typeof value !== 'boolean') throw new TypeError('INVALID_REQUEST'); }
