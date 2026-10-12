@@ -623,7 +623,9 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 
 ### 3.20 电脑离线时交代任务（S7 / D17 / D40）
 
-新客户端可在 3.19 的 `/offline/sync` 请求兼容增加 `taskSupport:1`。响应兼容增加 `taskReferences:[{id,title,projectId?}]`（最多100条，不含正文）；没有云聊天模型时允许 `model:null`，只下发任务所需的授权与公钥，不下发记忆／近期正文。没有该请求字段的旧客户端仍按原 `OFFLINE_MODEL_REQUIRED` 处理。`recent[].messages[]` 可增加 `offlineTaskId`，由宿主原 `receiptId` 核对，供本机任务状态关联，避免电脑已执行后的消息重复显示。客户端不得把仅有标题的电脑对话当成离线聊天上下文。
+云端未升级时这个功能不出现。现有云 `POST /hosts/offline/status` 的已授权回执兼容增加 `capabilities:{offlineTasks:1}`；只有精确的数字1表示支持，字段缺失或其他值均不支持。电脑从原签名 `/hosts/revocations` 事件令牌与 `/hosts/offline/publish` 回执读取同一标记。手机与电脑仅在回执明确支持时显示／读取任务；旧云不探测任务路径，没有任务请求、错误提示或空等待组。能力在登录／状态刷新时重新读取，不永久缓存“不支持”；已有加密接收材料的设备在云升级后下一次刷新即可启用。接收公钥与引用标识可先在原加密副本中预备，标识选择仅在功能启用后出现。
+
+新客户端可在 3.19 的 `/offline/sync` 请求兼容增加 `taskSupport:1`。响应兼容增加 `taskReferences:[{id,title,projectId?}]`（最多100条，不含正文）；云端明确支持任务且没有云聊天模型时允许 `model:null`，只下发任务所需的授权与公钥，不下发记忆／近期正文。没有该请求字段的旧客户端仍按原 `OFFLINE_MODEL_REQUIRED` 处理。`recent[].messages[]` 可增加 `offlineTaskId`，由宿主原 `receiptId` 核对，供本机任务状态关联，避免电脑已执行后的消息重复显示。客户端不得把仅有标题的电脑对话当成离线聊天上下文。
 
 3.19 的解密副本兼容增加 `taskRecipient:{kty:"RSA",n,e:"AQAB"}`，`recent[]` 兼容增加 `title,projectId?`；旧客户端可忽略。此公钥来自已认证的电脑副本，不能用云服务器给出的未核对公钥替换。手机沿 3.19 同一 RSA-OAEP-256 + A256GCM（设备信封加密格式），加密 `{text,sessionId:null|string,projectId:null|string,createdAt:毫秒}`；文字最多8,192字，无附件入口。`sessionId:null` 在目标电脑主对话执行；非空只允许该电脑仍存在、属于同账户的原对话／项目。云只取得信封，正文不能出现在外层请求、错误或日志中。
 

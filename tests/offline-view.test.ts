@@ -36,6 +36,19 @@ test('sync errors distinguish connectivity from permission, request and replica 
   assert.equal(classify({code:'UNAUTHORIZED',status:401}).clear,true);
 });
 
+test('phone plus menu and goals expose no task feature without support and appear after refreshed support',async()=>{
+  const f=fixture();let supported=false,entries:any[]=[];
+  const pending={id:'cached',state:'waiting',text:'合成事项',conversationId:'tasks'};
+  const view=()=>({ready:true,chatReady:true,taskReady:supported,tasks:[pending],targets:[],conversations:[],turns:[],snapshot:{recent:[]}});
+  f.environment.WeftOffline.create=async()=>({view,sync:async()=>true,check:async()=>({}),close(){}});
+  f.environment.WeftPopover={menu:(_anchor:any,values:any[])=>entries=values};f.core.connectionView=()=>({kind:'host_offline'});
+  const mounted=f.environment.WeftOfflineView.mount({core:f.core,identity:async()=>({origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'})});
+  await new Promise(resolve=>setImmediate(resolve));const more=f.body.children[0].children.at(-1).children.at(-1);more.listeners.click();
+  assert.equal(JSON.stringify(entries.map(e=>e.name)),JSON.stringify(['继续聊聊']));assert.equal(f.core.offlineTasksView().length,0);
+  supported=true;await mounted.tick();more.listeners.click();assert.ok(entries.some(e=>e.name==='交给电脑，上线后做'));assert.equal(f.core.offlineTasksView().length,1);
+  supported=false;await mounted.tick();more.listeners.click();assert.equal(entries.some(e=>e.name.includes('交给电脑')),false);assert.equal(f.core.offlineTasksView().length,0);mounted.close();
+});
+
 test('restoring a cached phone waits for host login before replica sync and keeps accepted tasks', async () => {
   const f=fixture(), cached={origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'};
   f.environment.localStorage.setItem('weftmate-offline-identity',JSON.stringify(cached));

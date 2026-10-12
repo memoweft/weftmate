@@ -127,3 +127,5 @@ S7：schema（存储结构）9 新增 `009-offline-tasks.sql`，不改变旧表�
 | `result` | 安装签名 `{action,id,receiptId,state:"started"\|"completed"\|"failed"}` | `{accepted:boolean}`，只发最小事件身份推送，不接收通知正文 |
 
 任务接口每账户120次／分钟，安装每电脑600次／分钟；越限429 `RATE_LIMITED`。过期自动置空正文密文，领取回执保留到执行终结，最小终态7天后删除；授权／代次变更及账户／设备外键删除会立即删记录。服务日志只保留原操作字段；所有非法请求错误只返回固定代码，不能回显请求体。安全边界、原生接线与故障恢复详见 `docs/M3_OFFLINE.md` 的 S7 节。
+
+S7兼容能力：已有 /hosts/offline/status 与 /hosts/offline/publish 回执、签名 /hosts/revocations 事件令牌兼容增加 capabilities.offlineTasks:1。旧云没有字段，新客户端不显示或请求任务功能；刷新重新判定，没有404探测或永久负缓存。

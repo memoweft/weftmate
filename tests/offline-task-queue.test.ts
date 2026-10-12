@@ -26,8 +26,8 @@ test('phone encrypts using the existing replica envelope; wrong key, host and ci
 test('phone persists encrypted retry identity, closes immediately after acceptance, restores status and clears on erasure',async()=>{
   const indexedDB=new IDBFactory(),scope=JSON.stringify(['synthetic','owner']);let generation=1,lost=true,uploads:any[]=[],remote:any[]=[];
   const vault=await W.browserVault(scope,{indexedDB,crypto:webcrypto}),jwk=await vault.key();
-  const host=async()=>sealReplica({generation,reset:false,remove:[],items:[],hashes:{},recent:[{id:'session',projectId:'project',messages:[]}],taskRecipient:recipient.publicJwk,control:{accountId:'account',hostId:'host'}},jwk,identity);
-  const control=async()=>({authorized:true,hostId:'host',accountId:'account',generation});
+  const host=async()=>sealReplica({generation,reset:false,remove:[],items:[],hashes:{},recent:[{id:'session',projectId:'project',messages:[]}],taskRecipient:recipient.publicJwk,control:{accountId:'account',hostId:'host',capabilities:{offlineTasks:1}}},jwk,identity);
+  const control=async()=>({authorized:true,hostId:'host',accountId:'account',generation,capabilities:{offlineTasks:1}});
   const tasks=async(action:string,body:any)=>{
     if(action==='submit'){uploads.push(body);remote=[{id:body.id,hostId:'host',createdAt:Date.now(),state:'waiting'}];if(lost){lost=false;throw Error('NETWORK');}return remote[0];}
     if(action==='list')return {items:remote};if(action==='cancel'){remote[0].state='canceled';return remote[0];}if(action==='clear'){remote=[];return {deleted:true};}
@@ -44,25 +44,25 @@ test('phone persists encrypted retry identity, closes immediately after acceptan
 });
 test('previously connected computers retain authenticated recipient keys; explicit target is inside the authenticated envelope',async()=>{
   const indexedDB=new IDBFactory(),other=taskRecipient(),scopes=[JSON.stringify(['host-origin-one','owner-one']),JSON.stringify(['host-origin-two','owner-two'])];
-  const snapshot=(hostId:string,key:any)=>({generation:1,items:[],recent:[],taskRecipient:key,control:{hostId,accountId:'account'}});
+  const snapshot=(hostId:string,key:any)=>({generation:1,items:[],recent:[],taskRecipient:key,control:{hostId,accountId:'account',capabilities:{offlineTasks:1}}});
   const v1=await W.browserVault(scopes[0],{indexedDB,crypto:webcrypto}),v2=await W.browserVault(scopes[1],{indexedDB,crypto:webcrypto});
   await v1.save({snapshot:snapshot('host',recipient.publicJwk),tasks:[],turns:[],conversations:[]});await v2.save({snapshot:snapshot('other-host',other.publicJwk),tasks:[],turns:[],conversations:[]});v2.close();
   let sent:any;
-  const engine=await W.create({vault:v1,identity,host:async()=>{},control:async(hostId:string)=>({hostId,accountId:'account',authorized:true,generation:1}),taskDevice:async()=> 'phone',crypto:webcrypto,
+  const engine=await W.create({vault:v1,identity,host:async()=>{},control:async(hostId:string)=>({hostId,accountId:'account',authorized:true,generation:1,capabilities:{offlineTasks:1}}),taskDevice:async()=> 'phone',crypto:webcrypto,
     tasks:async(action:string,body:any)=>{sent=body;return {id:body.id,state:'waiting',hostId:body.hostId};}});
-  assert.deepEqual(engine.view().targets.map((s:any)=>s.control.hostId),['host','other-host']);await engine.submitTask(secret,null,'other-host');
+  assert.deepEqual(engine.view().targets.map((s:any)=>s.control.hostId),['host','other-host']);await engine.check();await engine.submitTask(secret,null,'other-host');
   assert.equal(sent.hostId,'other-host');const body=openTask(sent.envelope,other,{...header(sent.id),hostId:'other-host'});assert.equal(body.sessionId,null);assert.equal(body.text,secret);engine.close();
 });
 
 for(const action of ['forget','revoke'])test(`another computer's ${action} clears its phone tasks and encrypted replica while the current computer stays connected`,async()=>{
   const indexedDB=new IDBFactory(),other=taskRecipient(),scopeA=JSON.stringify(['A','ownerA']),scopeB=JSON.stringify(['B','ownerB']);
   const vault=await W.browserVault(scopeA,{indexedDB,crypto:webcrypto}),b=await W.browserVault(scopeB,{indexedDB,crypto:webcrypto});
-  const snapshot=(hostId:string,key:any)=>({generation:1,items:[],recent:[],taskRecipient:key,control:{hostId,accountId:'account'}});
+  const snapshot=(hostId:string,key:any)=>({generation:1,items:[],recent:[],taskRecipient:key,control:{hostId,accountId:'account',capabilities:{offlineTasks:1}}});
   await vault.save({snapshot:snapshot('host',recipient.publicJwk),tasks:[],turns:[],conversations:[]});await b.save({snapshot:snapshot('other-host',other.publicJwk),tasks:[],turns:[],conversations:[]});b.close();
   let changed=false;
-  const engine=await W.create({vault,identity,host:async()=>{},control:async(hostId:string)=>({hostId,accountId:'account',authorized:!(changed&&action==='revoke'&&hostId==='other-host'),generation:changed&&hostId==='other-host'?2:1}),taskDevice:async()=> 'phone',crypto:webcrypto,
+  const engine=await W.create({vault,identity,host:async()=>{},control:async(hostId:string)=>({hostId,accountId:'account',authorized:!(changed&&action==='revoke'&&hostId==='other-host'),generation:changed&&hostId==='other-host'?2:1,capabilities:{offlineTasks:1}}),taskDevice:async()=> 'phone',crypto:webcrypto,
     tasks:async(action:string,body:any)=>action==='list'?{items:[]}:{id:body.id,state:'waiting',hostId:body.hostId}});
-  await engine.submitTask(secret,null,'other-host');changed=true;await engine.refreshTasks();
+  await engine.check();await engine.submitTask(secret,null,'other-host');changed=true;await engine.refreshTasks();
   assert.equal(engine.view().tasks.length,0);assert.deepEqual(engine.view().targets.map((s:any)=>s.control.hostId),['host']);assert.equal(engine.view().taskReady,true);
   const erased=await W.browserVault(scopeB,{indexedDB,crypto:webcrypto});assert.equal((await erased.load()).snapshot,null);erased.close();engine.close();
 });
@@ -72,7 +72,7 @@ function receiverFixture(){
   const context:any={rootState:{hostId:'host'},ownerIds:()=>['owner'],accountState:()=>account,hostOwner:()=>true,timestamp:Date.now,
     offline:{generation:()=>1},messageModelUsable:()=>true,mainChat:{prepareReminder:async()=> 'session'},
     serial:(fn:Function)=>{const work=queue.then(()=>fn());queue=work.catch(()=>{});return work;},mutate:async(_owner:string,fn:Function)=>fn(account),schedule:(_owner:string,id:string)=>scheduled.push(id),activity:{record:async()=>{}},taskDetail:async()=>({replyEvidence:{}}),
-    cloudIdentity:{syncRevocations:async()=>{},offlineAccount:()=>({ownerId:'owner',deviceId:'cookie'}),offlineSource:()=> 'cookie',
+    cloudIdentity:{offlineTasksSupported:()=>true,syncRevocations:async()=>{},offlineAccount:()=>({ownerId:'owner',deviceId:'cookie'}),offlineSource:()=> 'cookie',
       relayRequest:async(path:string,body:any)=>{if(path.endsWith('/claim'))return {items:rows};if(path.endsWith('/ack')){const c:any=Object.values(account.commands).find((c:any)=>c.commandId===body.receiptId);assert.ok(c,'persist before cloud deletion');if(!acks.some(a=>a.receiptId===body.receiptId))assert.equal(c.offlineSource.confirmed,false,'first ack must follow a persisted unconfirmed command');acks.push(body);return {accepted:!cancel};}results.push(body);return {accepted:true};}}};
   const add=(text=secret)=>{const id=randomUUID();rows.push({id,claimId:randomUUID(),accountId:'account',hostId:'host',deviceId:'phone',jkt:'jkt',generation:1,envelope:sealReplica({text,sessionId:'session',projectId:null,createdAt:Date.now()},recipient.publicJwk,header(id))});};
   return {context,account,rows,scheduled,acks,results,add,cancel:()=>cancel=true};
@@ -86,6 +86,24 @@ test('computer persists receipt before cloud ack, preserves order and deduplicat
 test('cancel racing receipt never schedules execution and removes local plaintext',async()=>{
   const f=receiverFixture();f.add();f.cancel();const receiver=createOfflineTaskReceiver(f.context,recipient);await receiver.tick();await receiver.close();
   assert.equal(f.scheduled.length,0);assert.equal(Object.values(f.account.commands)[0].state,'rejected');assert.ok(!JSON.stringify(f.account).includes(secret));
+});
+
+test('host makes zero task requests without explicit cloud support, and enables after a fresh supported receipt',async()=>{
+  const f=receiverFixture();let supported=false;f.context.cloudIdentity.offlineTasksSupported=()=>supported;f.add();
+  const request=f.context.cloudIdentity.relayRequest,requests:string[]=[];f.context.cloudIdentity.relayRequest=async(path:string,body:any)=>{requests.push(path);return request(path,body);};
+  const receiver=createOfflineTaskReceiver(f.context,recipient);await receiver.tick();assert.equal(requests.length,0);assert.equal(f.acks.length,0);assert.equal(Object.keys(f.account.commands).length,0);
+  supported=true;await receiver.tick();assert.equal(f.acks.length,1);assert.equal(Object.keys(f.account.commands).length,1);
+  const supportedRequests=requests.length;supported=false;await receiver.tick();assert.equal(requests.length,supportedRequests);assert.equal(receiver.canDispatch('owner',Object.keys(f.account.commands)[0]),false);await receiver.close();
+});
+
+test('phone ignores cached task keys until cloud advertises support; refresh can enable and disable without any 404 probe',async()=>{
+  const vault=await W.browserVault('cloud-capability',{indexedDB:new IDBFactory(),crypto:webcrypto});
+  await vault.save({snapshot:{generation:1,items:[],recent:[],model:{modelId:'synthetic'},taskRecipient:recipient.publicJwk,control:{accountId:'account',hostId:'host',capabilities:{offlineTasks:1}}},tasks:[],conversations:[],turns:[]});
+  let supported=false,requests=0,chats=0;vault.complete=async()=>{chats++;return {choices:[{message:{content:'合成聊天回复'}}]};};
+  const engine=await W.create({vault,identity,host:async()=>{},control:async()=>({authorized:true,hostId:'host',accountId:'account',generation:1,...(supported?{capabilities:{offlineTasks:1}}:{})}),tasks:async()=>{requests++;return {items:[]};},crypto:webcrypto});
+  await engine.refreshTasks();assert.equal(engine.view().taskReady,false);assert.equal(requests,0);await engine.send('普通聊天');assert.equal(chats,1);assert.equal(requests,0);
+  supported=true;await engine.refreshTasks();assert.equal(engine.view().taskReady,true);assert.equal(requests,1);
+  supported=false;await engine.refreshTasks();assert.equal(engine.view().taskReady,false);assert.equal(requests,1);await engine.clearTasks();assert.equal(requests,1);engine.close();
 });
 
 test('two receiver connections racing the same delivered task persist one original command',async()=>{

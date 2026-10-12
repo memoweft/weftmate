@@ -100,8 +100,9 @@ export async function createOfflineService(context) {
           if (!Number.isSafeInteger(body.generation) || body.generation < 0) throw failure('INVALID_REQUEST');
           const publicJwk = publicDeviceKey(body.publicJwk);
           const control = await publish(ownerId);
+          const taskSupport=body.taskSupport===1&&control.capabilities?.offlineTasks===1;
           let model;
-          try{model=await cloudModel(ownerId);}catch(error){if(body.taskSupport!==1||error.code!=='OFFLINE_MODEL_REQUIRED')throw error;model=null;}
+          try{model=await cloudModel(ownerId);}catch(error){if(!taskSupport||error.code!=='OFFLINE_MODEL_REQUIRED')throw error;model=null;}
           const snapshot = model?await memorySnapshot(context.memoryManager, ownerId):{worldRevision:null,items:[],truncated:false};
           const generation = account.generation;
           const known = body.generation === generation ? body.hashes ?? {} : {};

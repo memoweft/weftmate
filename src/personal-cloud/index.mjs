@@ -21,6 +21,7 @@ export async function createHostCloudIdentity(context, options) {
   const installationKey = await importJWK(store.state.installation.privateJwk, 'ES256');
   let poll;
   let syncing = null;
+  let offlineTasksSupported=false;
   let desktopQueue = Promise.resolve();
   const activeResponses = new Map();
   async function edit(change) {
@@ -186,6 +187,7 @@ export async function createHostCloudIdentity(context, options) {
       await revokeInvalidSessions();
     });
     closeInvalidResponses();
+    offlineTasksSupported=envelope.capabilities?.offlineTasks===1;
   }
   async function syncRevocations() {
     if (syncing) {
@@ -571,13 +573,15 @@ export async function createHostCloudIdentity(context, options) {
     async publishOffline(ownerId, generation) {
       const binding = Object.values(store.state.bindings).find(item => item.ownerId === ownerId && item.status === 'active');
       if (!binding) throw failure('CLOUD_NOT_BOUND', 409);
-      await signedRequest('/hosts/offline/publish', { sub: binding.sub, generation });
-      return { url: `${config.base}/hosts/offline/status`, hostId, accountId: binding.sub, generation };
+      const result=await signedRequest('/hosts/offline/publish', { sub: binding.sub, generation });
+      offlineTasksSupported=result.capabilities?.offlineTasks===1;
+      return { url: `${config.base}/hosts/offline/status`, hostId, accountId: binding.sub, generation, ...(offlineTasksSupported?{capabilities:{offlineTasks:1}}:{}) };
     },
     isInstallationOwner: ownerId => Object.values(store.state.bindings).some(binding => binding.ownerId === ownerId && binding.desktop === true && binding.status === 'active'),
     // Any active binding counts: accounts bound through the claim flow have no `desktop` flag but still need the relay.
     relayReady: () => Object.values(store.state.bindings).some(binding => binding.status === 'active'),
     tls: () => structuredClone(store.state.tls), relayRequest: signedRequest, handle, assertSession, revokeLocalDevice, applyEvents, syncRevocations, closeInvalidResponses,
+    offlineTasksSupported:()=>offlineTasksSupported,
     cloudDeviceId(ownerId, deviceId) {
       const session = store.state.sessions[deviceId], device = store.state.devices[session?.trustId];
       return device?.ownerId === ownerId ? device.cloudDeviceId : undefined;

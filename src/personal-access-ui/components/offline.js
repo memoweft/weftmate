@@ -36,7 +36,7 @@
         const targets=engine?.view().targets||[],hosts=core.state?.cloudAuth?.hosts||[];
         const choices=(hosts.length>1?hosts:targets.map(target=>({hostId:target.control.hostId,name:hosts.find(h=>h.hostId===target.control.hostId)?.name||'这台电脑'}))).slice().sort((a,b)=>Number(b.hostId===targetHostId)-Number(a.hostId===targetHostId));
         const entries=choices.length>1?choices.map(target=>({name:`交给${target.name||'这台电脑'}，上线后做`,checked:taskMode&&targetHostId===target.hostId,disabled:!targets.some(t=>t.control.hostId===target.hostId),...(!targets.some(t=>t.control.hostId===target.hostId)?{description:'先在线连接这台电脑一次'}:{}),action:()=>{targetHostId=target.hostId;if(targetHostId!==identity.hostId)selected=null;taskMode=true;paint();input.focus();}})):[{name:'交给电脑，上线后做',checked:taskMode,disabled:!engine?.view().taskReady,action:()=>{targetHostId=identity.hostId;taskMode=true;paint();input.focus();}}];
-        WeftPopover.menu(more,[{name:'继续聊聊',checked:!taskMode,disabled:engine?.view().chatReady===false,action:()=>{taskMode=false;paint();}},...entries]);
+        WeftPopover.menu(more,[{name:'继续聊聊',checked:!taskMode,disabled:engine?.view().chatReady===false,action:()=>{taskMode=false;paint();}},...(engine?.view().taskReady?entries:[])]);
       });
       const launcher = element('button', '离线对话', 'offline-launcher'); launcher.hidden = true; launcher.type = 'button';
       const notice = element('p', '', 'offline-notice'); notice.hidden = true; notice.setAttribute('role', 'status');
@@ -47,6 +47,7 @@
       (document.getElementById?.('chat-scroll') || document.body).append(notice);
       function paint() {
         const view = engine?.view();
+        if(!view?.taskReady)taskMode=false;
         const scrollTop=messages.scrollTop||0,atBottom=messages.scrollHeight-messages.clientHeight-scrollTop<8;
         if (core.connectionView) {const kind=core.connectionView().kind;offline=kind==='host_offline'||kind==='connecting'&&offline;}
         launcher.hidden = core.connectionView ? true : !offline && !view?.conversations.length;
@@ -63,7 +64,7 @@
         input.disabled = !offline || !(taskMode?view?.taskReady:view?.chatReady??view?.ready) || view.running;
         send.disabled = input.disabled || !input.value.trim();
         if(taskMode&&input.value.length>8192)send.disabled=true;
-        more.disabled=input.disabled;more.hidden=!view?.taskReady;
+        more.disabled=input.disabled;more.hidden=!view?.ready;
         send.textContent=taskMode?'记下来':'发送';input.maxLength=taskMode?8192:16384;
         status.textContent = error || (view?.running ? '正在回复…' : view?.turns.length ? '电脑上线后自动同步' : '');
         if(taskMode&&!error)status.textContent=view?.taskSending?'正在记下来…':'记下来，等电脑上线后去做';
@@ -75,7 +76,7 @@
           const option = element('option', '最近对话 · ' + (recent.messages.find(m => m.role === 'user')?.text.slice(0, 20) || '继续聊'));
           option.value = 'recent:' + recent.id; options.push(option);
         }
-        for(const reference of view?.snapshot?.taskReferences||[]){if(view.snapshot.recent?.some(c=>c.id===reference.id))continue;const option=element('option','电脑对话 · '+reference.title);option.value='recent:'+reference.id;options.push(option);}
+        for(const reference of view?.taskReady?view.snapshot.taskReferences||[]:[]){if(view.snapshot.recent?.some(c=>c.id===reference.id))continue;const option=element('option','电脑对话 · '+reference.title);option.value='recent:'+reference.id;options.push(option);}
         selector.replaceChildren(element('option', '新对话'), ...options); selector.options[0].value = ''; selector.value = selected || '';
         referencePicker.hidden=taskMode&&targetHostId!==identity.hostId;
         const conversation = view?.conversations.find(c => c.id === selected);
@@ -113,7 +114,7 @@
           tasks:core.cloudOfflineTasks,taskDevice:core.cloudOfflineTaskDevice,notify:()=>{paint();goalsCore.offlineTasksChanged?.();} });
         targetHostId=engine.view().tasks.at(-1)?.hostId||current.hostId;
         if(engine.view().taskReady&&!engine.view().chatReady)taskMode=true;
-        goalsCore.offlineTasksView=()=>engine?.view().tasks||[];
+        goalsCore.offlineTasksView=()=>engine?.view().taskReady?engine.view().tasks:[];
         goalsCore.refreshOfflineTasks=()=>engine?.refreshTasks();
         goalsCore.cancelOfflineTask=async id=>{try{return await engine?.cancelTask(id);}catch(cause){if(cause.code==='TASK_ALREADY_RECEIVED'){await engine?.refreshTasks();throw Object.assign(new Error('电脑已接收这件事，请打开原对话后停止。'),{code:'TASK_ALREADY_RECEIVED',userMessage:'电脑已接收这件事，请打开原对话后停止。'});}throw cause;}};
         goalsCore.openOfflineTask=task=>{selected=task.conversationId==='tasks'?null:task.conversationId;open();};
