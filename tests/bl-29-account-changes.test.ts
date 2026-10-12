@@ -37,6 +37,8 @@ test('BL-29c N1 an unrelated account commit cannot wake this account subscriber'
     // foreign-account wake while the machine is busy.
     const subscriber=await c.registerAccount({username:'quiet-subscriber',password:'Synthetic-password-234567',deviceName:'synthetic-host'});
     const owner=subscriber.account.ownerId;
+    // Finish this account's own startup observation before testing foreign-account isolation.
+    await c.activity.refresh(owner);
     const before=await c.accountChanges(owner);let woke=false;
     const pending=c.waitAccountChange(before.revision,controller.signal,owner).then(()=>{woke=true;});
     await c.serial(()=>c.mutate(activeOwner,next=>{next.account.displayName='Changed other account';next.account.profileRevision++;}));
