@@ -121,6 +121,12 @@
     accept(payload);
     return payload;
   };
+  globalThis.WeftUiCore.restoreCachedMobileHostSession = async (bridge, accept) => {
+    const profile = await bridge.call('auth.cached');
+    const payload = { ...profile, account: bridge.account(profile), device: profile.device,
+      csrfToken: 'native-managed' };
+    accept(payload); return payload;
+  };
   // App account transport shares the account core; only the platform owns secrets.
   globalThis.WeftUiCore.createMobileCloudTransport = ({ bridge, native, hostOrigin }) => {
     const request = async (url, options = {}) => {
@@ -141,7 +147,7 @@
       let result;
       try {
         result = path === '/personal/v1/cloud/config'
-          ? { status: 200, body: await bridge.call('cloud.app.configure', { origin: hostOrigin }) }
+          ? { status: 200, body: await bridge.call('cloud.app.configure', { origin: new URL(absolute).origin }) }
           : await bridge.call('cloud.app.request', { url: absolute, method: options.method || 'GET', headers: options.headers || {},
             ...(options.body !== undefined ? { body: options.body } : {}) });
       } catch (error) {
@@ -160,16 +166,26 @@
       clear: id => bridge.call('cloud.app.key', { id, clear: true }),
     } : undefined };
   };
-  globalThis.WeftUiCore.adaptMobileCloudClient = client => {
+  globalThis.WeftUiCore.adaptMobileCloudClient = (client, connected = async () => {}) => {
     const exchange = client.exchange.bind(client);
-    // Cloud sign-in precedes selecting a computer. A missing trusted channel is
-    // a device-approval state; it must not send the user back to password entry.
+    // Verified account login selects its own computer automatically. There is
+    // no device approval or pairing step on this journey.
     client.exchange = async (...args) => {
-      if (client.config?.hostId === 'unconnected') return { status: 'pending_approval', requestId: null };
+      if (client.config?.hostId === 'unconnected') {
+        const directory = await client.authorized('/devices');
+        const host = directory.hosts?.find(row => row.status === 'online' || row.online === true) || directory.hosts?.[0];
+        if (!host) return { status: 'cloud_only' };
+        const connection = await client.authorized('/hosts/connect', { method: 'POST', body: { hostId: host.hostId } });
+        if (!connection.baseUrl) return { status: 'cloud_only' };
+        client.host = new URL(connection.baseUrl).origin;
+        const config = await client.request(client.host + '/personal/v1/cloud/config');
+        if (config.hostId !== host.hostId || config.issuer !== client.config.issuer) throw { code: 'HOST_TRUST_INVALID' };
+        client.config = { ...client.config, ...config };
+        await connected({ hostId: host.hostId, baseUrl: client.host });
+      }
       try { return await exchange(...args); }
       catch (error) {
-        if (error.code === 'PAIRING_REQUIRED' || error.status === 404 && ['HOST_NOT_FOUND', 'NOT_FOUND'].includes(error.code))
-          return { status: 'pending_approval', requestId: null };
+        if (error.status === 404 && ['HOST_NOT_FOUND', 'NOT_FOUND'].includes(error.code)) return { status: 'cloud_only' };
         throw error;
       }
     };

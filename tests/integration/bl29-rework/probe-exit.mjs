@@ -55,6 +55,7 @@ for(const version of (process.argv.includes('--head-only')?['head']:['main','hea
  try{
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:resolve('.'),args:['tests/integration/bl29-rework/exit-entry.mjs',`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],env,timeout:90000});
   const p=await app.firstWindow(),pending=new Set(),waitCounts={started:0,finished:0,failed:0};
+  await app.evaluate(()=>globalThis.revProcessRegistration);
   // Native startup owns login and can start its first wait before /auth/me.
   // Observe real requests from the first window, not only after login; request
   // identity also avoids negative counts when startup is reloaded/cancelled.

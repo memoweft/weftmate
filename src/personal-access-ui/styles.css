@@ -865,6 +865,15 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 
 .composer-actions .settings-select { max-width: 100px; min-height: var(--wm-space-32); padding: var(--wm-space-4) var(--wm-space-6); font-size: var(--wm-font-size-12); }
 .chat-scroll { overflow-anchor: none; }
+@media(max-width:640px) {
+  .composer-actions .model-picker { flex:1 1 auto; }
+  .composer-actions .model-trigger { max-width:none; width:100%; }
+  .composer-actions .composer-spacer { display:none; }
+  .composer-actions #approval-mode-label { display:none; }
+  .composer-actions #approval-mode-trigger { width:var(--wm-space-36); max-width:var(--wm-space-36); justify-content:center; }
+  .composer-actions .context-usage { width:var(--wm-space-28); min-width:var(--wm-space-28); padding:0; }
+  .composer-actions .context-usage svg { width:var(--wm-space-20); height:var(--wm-space-20); }
+}
 @media (max-width:640px) { .composer-actions .settings-select { order:8; margin-left:auto; } }
 
 /* D37: folders and their conversations share the rail's scrolling surface. */

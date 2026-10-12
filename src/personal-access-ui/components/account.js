@@ -27,7 +27,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
         if (!current())
             return false;
         if (!avatar) {
-            placeholder.textContent = Array.from(ui.byId('profile-display-name').value.trim() || core.state.account?.username || '?')[0] || '?';
+            placeholder.textContent = Array.from(ui.byId('profile-display-name').value.trim() || core.profileName() || '?')[0] || '?';
             return true;
         }
         try {
