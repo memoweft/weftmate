@@ -84,7 +84,14 @@ async function shot(scene, theme) {
   report.screenshots.push({ file, ...geometry, osVersion: report.osVersion, systemTheme: run('shell', 'cmd', 'uimode', 'night').trim(),
     bottomNavigationVisible: geometry.bottom > 0, native, status, navigation });
 }
-async function both(scene) { for (const theme of ['light', 'dark']) await shot(scene, theme); }
+async function both(scene) {
+  for (const width of [390,360]) {
+    run('shell','wm','size',width===390?'390x844':'360x780');
+    await page.waitForFunction(width=>innerWidth===width,width);
+    for (const theme of ['light', 'dark']) await shot(scene, theme);
+  }
+  run('shell','wm','size','390x844'); await page.waitForFunction(()=>innerWidth===390);
+}
 async function login(method) {
   if (method === 'code') await page.getByRole('button', { name: '用邮箱验证码登录', exact: true }).click();
   await page.getByLabel('邮箱', { exact: true }).fill(fixture.email);
