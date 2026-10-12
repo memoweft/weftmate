@@ -1,0 +1,15 @@
+{
+  "passed": 0,
+  "failed": 2,
+  "skipped": 0,
+  "syntheticOnly": true,
+  "realCloud": false,
+  "realHealthKit": false,
+  "boots": 5,
+  "finalSourceSimulatorRetested": false,
+  "unverifiedAfterFinalFixes": [
+    "context ring 44pt accessibility target",
+    "side-chat model capsule at narrow width",
+    "dark focused composer to resources menu interaction"
+  ]
+}
