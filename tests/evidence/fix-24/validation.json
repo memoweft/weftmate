@@ -46,5 +46,13 @@
     "vendor-final: heavy-1",
     "mobile: heavy-1",
     "required-final: heavy-1"
-  ]
+  ],
+  "mainMergeVerification": {
+    "main": "54e77395",
+    "relatedPassed": 75,
+    "relatedFailed": 0,
+    "mobilePassed": 114,
+    "mobileFailed": 0,
+    "sharedFixture": "tests/helpers/health-page-synthetic.mjs adds the exact existing /health/analysis empty response; unknown routes still fail"
+  }
 }
