@@ -2,7 +2,7 @@ process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {execFile,execFileSync,spawn} from 'node:child_process';
 import {promisify} from 'node:util';
-import {readFile,writeFile,open,unlink,rm} from 'node:fs/promises';
+import {readFile,writeFile,open,unlink,rm,mkdir} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {createServer} from 'node:net';
 import {chromium} from 'playwright';
@@ -12,8 +12,9 @@ import {disposeHealthFixture} from '../helpers/health-5-temp.mjs';
 import {assertSystemBars} from '../../scripts/nightly/system-bars.mjs';
 const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/health-5'),lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg='com.memoweft.weftmate.mobile.health5qa',adb=process.env.WEFTMATE_HEALTH5_ADB??'D:/Software/MuMuPlayer/nx_main/adb.exe',execute=promisify(execFile);
 let serial,fixture,browser,forward,probe,installed=false,held=false,reversed=false,probeLog='';const report={source:process.env.WEFTMATE_HEALTH5_ANDROID_SERIAL?'cloudAndroid':'MuMu',synthetic:true,realNativeBusinessBridge:true,modelRequests:0,checks:[],screenshots:[],settingsChanged:false};
+await mkdir(out,{recursive:true});
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
-async function until(fn,label){const end=Date.now()+45000;while(Date.now()<end){try{const v=await fn();if(v)return v;}catch{}await pause(150);}throw Error('Health native timeout: '+label);}
+async function until(fn,label){console.log('Health-5 native stage: '+label);const end=Date.now()+45000;while(Date.now()<end){try{const v=await fn();if(v)return v;}catch{}await pause(150);}throw Error('Health native timeout: '+label);}
 const run=(...args)=>execFileSync(adb,['-s',serial,...args],{encoding:'utf8',windowsHide:true,timeout:15000});
 try{
  if(process.env.WEFTMATE_HEALTH5_ANDROID_SERIAL)serial=process.env.WEFTMATE_HEALTH5_ANDROID_SERIAL;
