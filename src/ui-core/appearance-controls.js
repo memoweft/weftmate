@@ -45,8 +45,9 @@
         motion = node('input'); motion.type = 'checkbox'; motion.id = 'appearance-reduced-motion'; motion.setAttribute('aria-label', '减少动态效果'); WeftSettingsControls.toggle(motion);
         const motionTarget = node('label', 'appearance-switch-target'); motionTarget.htmlFor = motion.id; motionTarget.append(motion);
         const motionRow = WeftSettingsControls.row('减少动态效果', '', motionTarget); motionHelp = motionRow.querySelector('p'); motionRow.querySelector('label').htmlFor = motion.id;
+        motionRow.classList.add('appearance-motion-row');
         motion.addEventListener('change', () => { globalThis.WeftReplyMotion.setPreference(motion.checked ? 'reduce' : 'full'); sync(); });
-        reset = node('button', 'button secondary appearance-motion-reset', '恢复跟随系统'); reset.type = 'button';
+        reset = node('button', 'button quiet appearance-motion-reset', '恢复跟随系统'); reset.type = 'button';
         reset.addEventListener('click', () => { globalThis.WeftReplyMotion.setPreference('system'); sync(); }); motionRow.firstChild.append(reset); target.append(motionRow);
         function select(key, label, help, values) {
             const control = node('select'); control.id = 'appearance-' + key; control.setAttribute('aria-label', label);
@@ -54,8 +55,21 @@
             controls.set(key, control); target.append(WeftSettingsControls.row(label, help, control));
             control.addEventListener('change', () => { void save({[key]:control.value}); }); WeftSettingsControls.select(control);
         }
-        select('accentLight', '浅色强调色', '浅色模式下的按钮、文字与焦点环。', colors);
-        select('accentDark', '深色强调色', '深色模式下的按钮、文字与焦点环。', colors);
+        function swatches(key, label, help) {
+            const group = node('div', 'appearance-swatches'); group.setAttribute('role', 'group'); group.setAttribute('aria-label', label);
+            const update = () => { for (const button of group.children) button.setAttribute('aria-pressed', String(button.dataset.value === options.get()[key])); };
+            for (const [value, text] of colors) {
+                const button = node('button', 'appearance-swatch'); button.type = 'button'; button.dataset.value = value; button.dataset.palette = key;
+                button.setAttribute('aria-label', text); button.title = text; button.append(WeftIcons.create('allow', 18));
+                button.onclick = async () => { for (const item of group.children) item.disabled = true; await save({[key]:value}); for (const item of group.children) item.disabled = false; update(); };
+                group.append(button);
+            }
+            // Match the other appearance controls' shared synchronization path.
+            group.addEventListener('weft:sync', update); controls.set(key, group);
+            target.append(WeftSettingsControls.row(label, help, group));
+        }
+        swatches('accentLight', '浅色强调色', '浅色模式下的按钮、文字与焦点环。');
+        swatches('accentDark', '深色强调色', '深色模式下的按钮、文字与焦点环。');
         select('fontSize', '字号', '调整阅读与输入的文字大小。', [['14','小 · 14'],['15','标准 · 15'],['17','大 · 17'],['19','特大 · 19']]);
         select('codeFontSize', '代码字号', '只改变代码块与行内代码，不改变正文。', [['12','小 · 12'],['13','标准 · 13'],['15','大 · 15'],['17','特大 · 17']]);
         const preview = node('div', 'appearance-code-preview markdown-body'); preview.setAttribute('aria-label', '代码字号预览');

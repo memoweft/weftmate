@@ -1,0 +1,13 @@
+{
+  "passed": 0,
+  "failed": 2,
+  "skipped": 0,
+  "realPersonalHost": true,
+  "syntheticNativeAdapter": true,
+  "realCloud": false,
+  "realHealthKit": false,
+  "syntheticPresentationService": true,
+  "boots": 1,
+  "gpuResetsAdded": 0,
+  "weftmateCrashesAdded": 0
+}

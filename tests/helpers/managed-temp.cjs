@@ -183,6 +183,13 @@ function managedMkdtempSync(prefix = 'weftmate-test-', options) {
   return directory;
 }
 async function managedMkdtemp(prefix, options) { return managedMkdtempSync(prefix, options); }
+function detachTempLinks(directory) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const child = path.join(directory, entry.name), stat = fs.lstatSync(child);
+    if (stat.isSymbolicLink()) fs.unlinkSync(child);
+    else if (stat.isDirectory()) detachTempLinks(child);
+  }
+}
 function disposeManagedTemp(directory, { log = console.log } = {}) {
   const registration = owned.get(directory);
   if (!registration) throw Error('Cannot remove a temp directory not owned by this process');
@@ -194,7 +201,9 @@ function disposeManagedTemp(directory, { log = console.log } = {}) {
       lastWriteTime: fs.lstatSync(directory).mtime.toISOString(), owner, mode: 'owned-dispose', result: 'deleting' };
     log(JSON.stringify(record));
     try {
-      // Node recursive rm removes links themselves, with retries for transient Windows handles.
+      // Windows junction fixtures can leave dangling directory links. Detach
+      // them before recursive removal; never traverse an external target.
+      detachTempLinks(directory);
       fs.rmSync(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
       record.result = 'deleted'; log(JSON.stringify(record));
     } catch (error) { record.result = 'failed'; record.error = error.message; log(JSON.stringify(record)); throw error; }

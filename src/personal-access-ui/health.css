@@ -154,3 +154,147 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 
 .health-method-toggle { border:1px solid var(--line); }
 .health-method-toggle .wm-icon { flex:none; }
+
+/* Health owns a readable color palette independently of the selected app accent. */
+.health-page { --health-card:var(--wm-color-health-card-light); --health-muted:var(--wm-color-health-muted-light); --health-ink:var(--wm-color-health-ink-light); --health-track:var(--wm-color-health-track-light); --health-good:var(--wm-color-health-recovery-light); --health-warning:var(--wm-color-health-stress-moderate-light); --health-recovery:var(--wm-color-health-recovery-light); --health-stress-calm:var(--wm-color-health-stress-calm-light); --health-stress-moderate:var(--wm-color-health-stress-moderate-light); --health-stress-high:var(--wm-color-health-stress-high-light); --health-stress-extreme:var(--wm-color-health-stress-extreme-light); }
+[data-theme=dark] .health-page { --health-card:var(--wm-color-health-card-dark); --health-muted:var(--wm-color-health-muted-dark); --health-ink:var(--wm-color-health-ink-dark); --health-track:var(--wm-color-health-track-dark); --health-good:var(--wm-color-health-recovery-dark); --health-warning:var(--wm-color-health-stress-moderate-dark); --health-recovery:var(--wm-color-health-recovery-dark); --health-stress-calm:var(--wm-color-health-stress-calm-dark); --health-stress-moderate:var(--wm-color-health-stress-moderate-dark); --health-stress-high:var(--wm-color-health-stress-high-dark); --health-stress-extreme:var(--wm-color-health-stress-extreme-dark); }
+.health-page [data-metric=recovery] { --health-color:var(--health-recovery); }
+.health-metric[data-metric=recovery] { color:var(--health-ink); padding:var(--wm-space-20); border:0; border-radius:var(--wm-radius-24); gap:var(--wm-space-8); align-self:start; }
+.health-metric[data-metric=recovery] .health-card-name { color:var(--health-muted); }
+.health-metric[data-metric=recovery] .health-big { font-size:calc(var(--wm-font-size-28) * 2); font-weight:750; line-height:1; letter-spacing:-.035em; }
+.health-score-number { display:flex; align-items:baseline; gap:var(--wm-space-4); margin-top:var(--wm-space-8); }
+.health-score-number .health-unit { font-size:var(--wm-font-size-12); }
+.health-graphic { display:block; width:100%; flex:none; overflow:visible; }
+.health-graphic-track { fill:var(--health-track); }
+.health-graphic-zone { fill:var(--zone-color); }
+.health-stress-calm { --zone-color:var(--health-stress-calm); }
+.health-stress-moderate { --zone-color:var(--health-stress-moderate); }
+.health-stress-high { --zone-color:var(--health-stress-high); }
+.health-stress-extreme { --zone-color:var(--health-stress-extreme); }
+.health-graphic-pointer { fill:var(--health-ink); }
+.health-graphic-cursor { stroke:var(--health-card); stroke-width:4; }
+.health-graphic-marker { fill:var(--zone-color,var(--health-color)); stroke:var(--health-card); stroke-width:3; }
+.health-graphic-label { fill:var(--health-muted); font:500 20px var(--wm-font-family-body); }
+.health-graphic[data-empty=true] .health-graphic-zone { fill:var(--health-track); }
+.health-metric[data-metric=recovery] .health-graphic { margin-top:auto; padding-top:var(--wm-space-16); }
+@media(max-width:600px) { .health-metric[data-metric=recovery] { padding:var(--wm-space-16); min-height:calc(var(--wm-space-48) * 4); }.health-metric[data-metric=recovery] .health-big { font-size:calc(var(--wm-font-size-22) * 2); }.health-metric[data-metric=recovery] .health-status { font-size:var(--wm-font-size-12); }.health-metric[data-metric=recovery] .health-graphic { padding-top:var(--wm-space-12); } }
+
+/* Metric colors are semantic, and intentionally independent of the app accent. */
+.health-page { --health-recovery:var(--wm-color-health-recovery-light); --health-recovery-soft:var(--wm-color-health-recovery-soft-light); --health-sleep:var(--wm-color-health-sleep-light); --health-sleep-soft:var(--wm-color-health-sleep-soft-light); --health-load:var(--wm-color-health-load-light); --health-load-soft:var(--wm-color-health-load-soft-light); --health-stress-calm:var(--wm-color-health-stress-calm-light); --health-stress-calm-soft:var(--wm-color-health-stress-calm-soft-light); --health-stress-moderate:var(--wm-color-health-stress-moderate-light); --health-stress-moderate-soft:var(--wm-color-health-stress-moderate-soft-light); --health-stress-high:var(--wm-color-health-stress-high-light); --health-stress-high-soft:var(--wm-color-health-stress-high-soft-light); --health-stress-extreme:var(--wm-color-health-stress-extreme-light); --health-stress-extreme-soft:var(--wm-color-health-stress-extreme-soft-light); --health-energy-low:var(--wm-color-health-energy-low-light); --health-energy-low-soft:var(--wm-color-health-energy-low-soft-light); --health-energy-mid:var(--wm-color-health-energy-mid-light); --health-energy-mid-soft:var(--wm-color-health-energy-mid-soft-light); --health-energy-high:var(--wm-color-health-energy-high-light); --health-energy-high-soft:var(--wm-color-health-energy-high-soft-light); --health-fitness-age:var(--wm-color-health-fitness-age-light); --health-fitness-age-soft:var(--wm-color-health-fitness-age-soft-light); --health-hrv:var(--wm-color-health-hrv-light); --health-hrv-soft:var(--wm-color-health-hrv-soft-light); --health-resting-heart-rate:var(--wm-color-health-resting-heart-rate-light); --health-resting-heart-rate-soft:var(--wm-color-health-resting-heart-rate-soft-light); --health-respiratory:var(--wm-color-health-respiratory-light); --health-respiratory-soft:var(--wm-color-health-respiratory-soft-light); --health-oxygen:var(--wm-color-health-oxygen-light); --health-oxygen-soft:var(--wm-color-health-oxygen-soft-light); --health-temperature:var(--wm-color-health-temperature-light); --health-temperature-soft:var(--wm-color-health-temperature-soft-light); --health-sleep-deep:var(--wm-color-health-sleep-deep-light); --health-sleep-deep-soft:var(--wm-color-health-sleep-deep-soft-light); --health-sleep-core:var(--wm-color-health-sleep-core-light); --health-sleep-core-soft:var(--wm-color-health-sleep-core-soft-light); --health-sleep-rem:var(--wm-color-health-sleep-rem-light); --health-sleep-rem-soft:var(--wm-color-health-sleep-rem-soft-light); --health-sleep-awake:var(--wm-color-health-sleep-awake-light); --health-sleep-awake-soft:var(--wm-color-health-sleep-awake-soft-light); --health-card:var(--wm-color-health-card-light); --health-track:var(--wm-color-health-track-light); --health-ink:var(--wm-color-health-ink-light); --health-muted:var(--wm-color-health-muted-light); color:var(--health-ink); }
+[data-theme=dark] .health-page { --health-recovery:var(--wm-color-health-recovery-dark); --health-recovery-soft:var(--wm-color-health-recovery-soft-dark); --health-sleep:var(--wm-color-health-sleep-dark); --health-sleep-soft:var(--wm-color-health-sleep-soft-dark); --health-load:var(--wm-color-health-load-dark); --health-load-soft:var(--wm-color-health-load-soft-dark); --health-stress-calm:var(--wm-color-health-stress-calm-dark); --health-stress-calm-soft:var(--wm-color-health-stress-calm-soft-dark); --health-stress-moderate:var(--wm-color-health-stress-moderate-dark); --health-stress-moderate-soft:var(--wm-color-health-stress-moderate-soft-dark); --health-stress-high:var(--wm-color-health-stress-high-dark); --health-stress-high-soft:var(--wm-color-health-stress-high-soft-dark); --health-stress-extreme:var(--wm-color-health-stress-extreme-dark); --health-stress-extreme-soft:var(--wm-color-health-stress-extreme-soft-dark); --health-energy-low:var(--wm-color-health-energy-low-dark); --health-energy-low-soft:var(--wm-color-health-energy-low-soft-dark); --health-energy-mid:var(--wm-color-health-energy-mid-dark); --health-energy-mid-soft:var(--wm-color-health-energy-mid-soft-dark); --health-energy-high:var(--wm-color-health-energy-high-dark); --health-energy-high-soft:var(--wm-color-health-energy-high-soft-dark); --health-fitness-age:var(--wm-color-health-fitness-age-dark); --health-fitness-age-soft:var(--wm-color-health-fitness-age-soft-dark); --health-hrv:var(--wm-color-health-hrv-dark); --health-hrv-soft:var(--wm-color-health-hrv-soft-dark); --health-resting-heart-rate:var(--wm-color-health-resting-heart-rate-dark); --health-resting-heart-rate-soft:var(--wm-color-health-resting-heart-rate-soft-dark); --health-respiratory:var(--wm-color-health-respiratory-dark); --health-respiratory-soft:var(--wm-color-health-respiratory-soft-dark); --health-oxygen:var(--wm-color-health-oxygen-dark); --health-oxygen-soft:var(--wm-color-health-oxygen-soft-dark); --health-temperature:var(--wm-color-health-temperature-dark); --health-temperature-soft:var(--wm-color-health-temperature-soft-dark); --health-sleep-deep:var(--wm-color-health-sleep-deep-dark); --health-sleep-deep-soft:var(--wm-color-health-sleep-deep-soft-dark); --health-sleep-core:var(--wm-color-health-sleep-core-dark); --health-sleep-core-soft:var(--wm-color-health-sleep-core-soft-dark); --health-sleep-rem:var(--wm-color-health-sleep-rem-dark); --health-sleep-rem-soft:var(--wm-color-health-sleep-rem-soft-dark); --health-sleep-awake:var(--wm-color-health-sleep-awake-dark); --health-sleep-awake-soft:var(--wm-color-health-sleep-awake-soft-dark); --health-card:var(--wm-color-health-card-dark); --health-track:var(--wm-color-health-track-dark); --health-ink:var(--wm-color-health-ink-dark); --health-muted:var(--wm-color-health-muted-dark); }
+
+.health-card { background:var(--health-card); border:0; border-radius:var(--wm-radius-24); }
+.health-metric,.health-metric[data-metric=recovery] { align-self:stretch; color:var(--health-ink); padding:var(--wm-space-20); min-height:calc(var(--wm-space-48) * 5); gap:var(--wm-space-8); position:relative; transition:background var(--wm-duration-fast),transform var(--wm-duration-fast); }
+.health-metric .health-card-name,.health-metric[data-metric=recovery] .health-card-name { font-size:var(--wm-font-size-15); color:var(--health-muted); }
+.health-metric .health-big,.health-metric[data-metric=recovery] .health-big { font-size:calc(var(--wm-font-size-28) * 2); font-weight:750; line-height:1; letter-spacing:-.035em; }
+.health-score-number { margin-top:0; flex-wrap:wrap; }
+.health-metric .health-score-number { margin-top:var(--wm-space-8); }
+.health-metric>.health-status { color:var(--health-color); font-weight:600; }
+.health-metric>.health-status.is-insufficient { color:var(--health-muted); }
+.health-metric>.health-graphic,.health-metric[data-metric=recovery]>.health-graphic { margin-top:auto; padding:0; height:var(--wm-space-64); }
+.health-metric>.health-muted { font-size:var(--wm-font-size-11); }
+.health-metric:hover { background:color-mix(in srgb,var(--health-color) 9%,var(--health-card)); }
+.health-graphic-fill { fill:var(--health-color); }
+.health-graphic-target { fill:var(--health-color); opacity:.48; }
+.health-graphic-marker { fill:var(--health-dot-color,var(--zone-color,var(--health-color))); }
+.health-graphic-tick { stroke:var(--health-ink); stroke-width:4; stroke-linecap:round; }
+.health-graphic-arc { fill:none; stroke-width:21; stroke-linecap:round; }
+.health-graphic-arc.is-hit { stroke:var(--zone-color); }
+.health-graphic-inactive { stroke:var(--health-track); }
+.health-gradient-color { stop-color:var(--health-color); }
+.health-line { stroke:var(--health-color); stroke-width:2.5; }
+.health-point { fill:var(--health-color); stroke:var(--health-card); stroke-width:2; }
+.health-range { fill:var(--health-color); opacity:.09; }
+.health-average { stroke:var(--health-color); opacity:.55; }
+.health-usage-bar { fill:var(--health-muted); opacity:.16; }
+.health-gridline { stroke:var(--health-muted); opacity:.1; }
+.health-last-value { fill:var(--health-color); font:600 13px var(--wm-font-family-body); }
+.health-selected-point { stroke-width:3; }
+.health-age-capsule { display:inline-flex; align-self:flex-start; color:var(--health-color); background:var(--health-color-soft); border-radius:var(--wm-radius-999); padding:var(--wm-space-4) var(--wm-space-8); font-size:var(--wm-font-size-12); font-weight:600; }
+.health-insight { position:relative; background:var(--health-card); overflow:hidden; }
+.health-insight::after { content:''; position:absolute; inset:auto 0 0; height:var(--wm-space-3); background:linear-gradient(90deg,var(--health-recovery),var(--health-load),var(--health-sleep),var(--health-hrv)); }
+.health-insight>h2 { display:flex; align-items:center; gap:var(--wm-space-8); color:var(--health-muted); font-size:var(--wm-font-size-15); }
+.health-insight>h2 .wm-icon { color:var(--health-sleep); }
+.health-insight h3 { font-size:var(--wm-font-size-24); color:var(--health-ink); line-height:1.35; }
+.health-insight .health-reading { color:var(--health-muted); }
+.health-insight .health-remind { color:var(--health-card); background:var(--health-recovery); font-weight:600; }
+.health-page .health-insight .health-remind:hover { color:var(--health-card); background:var(--health-recovery); filter:brightness(1.08); }
+.health-insight-foot .health-control { background:var(--surface-soft,var(--soft)); }
+.health-mobile .health-insight { background:var(--health-card); }
+.health-sleep-summary { margin-top:var(--wm-space-20); }
+.health-sleep-usage .wm-icon { color:var(--health-sleep); }
+.health-duration { display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--wm-space-4); }
+.health-duration .health-big { font-size:var(--wm-font-size-36); font-weight:700; }
+.health-detail-hero { background:linear-gradient(160deg,var(--health-color-soft),var(--health-card) 85%); padding:var(--wm-space-24); }
+.health-detail-hero>h2 { color:var(--health-color); }
+.health-detail-hero .health-conclusion { font-size:var(--wm-font-size-28); font-weight:650; line-height:1.3; margin-block:var(--wm-space-16); }
+.health-detail-hero .health-hero-number { font-size:calc(var(--wm-font-size-16) * 4); font-weight:750; line-height:1; letter-spacing:-.03em; }
+.health-detail-hero>.health-graphic { margin-block:var(--wm-space-20); max-height:calc(var(--wm-space-48) * 3); }
+.health-detail-hero>.health-status { color:var(--health-color); }
+.health-detail-hero>.health-muted { margin-top:var(--wm-space-8); }
+.health-detail-hero .health-score-number { margin-block:var(--wm-space-12); }
+.health-comparisons { margin-block:var(--wm-space-4) var(--wm-space-16); }
+.health-comparisons .health-score-number { margin-top:var(--wm-space-8); }
+.health-detail .health-card>.health-muted { margin-top:var(--wm-space-8); }
+.health-dimension .health-graphic { grid-column:1/-1; max-height:var(--wm-space-40); }
+.health-vital { align-items:flex-start; text-align:left; padding:var(--wm-space-12); background:var(--surface-soft,var(--soft)); }
+.health-vital .wm-icon { color:var(--health-color); }
+.health-vital-name { min-height:0; }
+.health-vital .health-score-number { gap:var(--wm-space-2); }
+.health-vital .health-unit { font-size:var(--wm-font-size-10); }
+.health-vital .health-medium { font-size:var(--wm-font-size-24); font-weight:700; }
+.health-vital .health-graphic { height:var(--wm-space-28); }
+.health-vital .health-graphic-fill { fill:var(--health-track); }
+.health-vital .health-graphic-tick { opacity:.3; }
+.health-activity-value { align-items:stretch; text-align:left; padding:var(--wm-space-8) 0; }
+.health-activity-value .health-score-number { gap:var(--wm-space-2); }
+.health-activity-value .health-medium { font-size:var(--wm-font-size-28); font-weight:700; }
+.health-activity-value .health-unit { font-size:var(--wm-font-size-10); }
+.health-activity-dots { display:grid; grid-template-columns:repeat(7,1fr); gap:var(--wm-space-8); margin-top:var(--wm-space-16); max-width:calc(var(--wm-space-48) * 5); }
+.health-activity-dots>span { width:var(--wm-space-8); height:var(--wm-space-8); border-radius:50%; background:var(--health-track); }
+.health-activity-dots>.has-workout,.health-calendar-dot { background:var(--health-recovery); }
+.health-stages>.health-graphic { margin-block:var(--wm-space-16); }
+.health-stage-deep { fill:var(--health-sleep-deep); }.health-stage-core { fill:var(--health-sleep-core); }.health-stage-rem { fill:var(--health-sleep-rem); }.health-stage-awake { fill:var(--health-sleep-awake); }
+.health-stage-legend { display:grid; grid-template-columns:1fr 1fr; gap:var(--wm-space-12); color:var(--health-muted); font-size:var(--wm-font-size-12); }
+.health-stage-legend>span { display:flex; align-items:center; gap:var(--wm-space-6); }
+.health-stage-legend i { width:var(--wm-space-8); height:var(--wm-space-8); flex:none; border-radius:50%; }
+.health-stage-deepMinutes i { background:var(--health-sleep-deep); }.health-stage-coreMinutes i { background:var(--health-sleep-core); }.health-stage-remMinutes i { background:var(--health-sleep-rem); }.health-stage-awakeMinutes i { background:var(--health-sleep-awake); }
+.health-sleep-band { fill:var(--health-sleep); }
+.health-settings-notice { margin-top:var(--wm-space-12); font-size:var(--wm-font-size-12); line-height:1.6; }
+.health-enter .health-graphic-grow { transform-origin:left center; transform-box:fill-box; animation:health-grow calc(var(--wm-duration-base) * 2) var(--wm-easing-desktop); }
+.health-enter .health-graphic-draw,.health-enter .health-graphic-sweep { animation:health-draw calc(var(--wm-duration-base) * 2) var(--wm-easing-desktop); }
+.health-day-enter .health-layout { animation:health-day-fade calc(var(--wm-duration-base) * 2) var(--wm-easing-desktop); }
+@keyframes health-grow { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+@keyframes health-draw { from { stroke-dasharray:1; stroke-dashoffset:1; } to { stroke-dasharray:1; stroke-dashoffset:0; } }
+@keyframes health-day-fade { from { opacity:.2; } to { opacity:1; } }
+@media(max-width:600px) {
+  .health-card { padding:var(--wm-space-16); border-radius:var(--wm-radius-24); }
+  .health-metric,.health-metric[data-metric=recovery] { padding:var(--wm-space-16); min-height:calc(var(--wm-space-48) * 4); gap:var(--wm-space-6); }
+  .health-metric .health-big,.health-metric[data-metric=recovery] .health-big { font-size:calc(var(--wm-font-size-22) * 2); }
+  .health-metric .health-card-name,.health-metric[data-metric=recovery] .health-card-name { font-size:var(--wm-font-size-13); }
+  .health-metric .health-status,.health-metric[data-metric=recovery] .health-status { font-size:var(--wm-font-size-12); }
+  .health-metric>.health-graphic,.health-metric[data-metric=recovery]>.health-graphic { height:var(--wm-space-48); }
+  .health-metric[data-metric=stress]>.health-muted { font-size:var(--wm-font-size-10); }
+  .health-age-capsule { font-size:var(--wm-font-size-10); padding-inline:var(--wm-space-6); }
+  .health-detail-hero { padding:var(--wm-space-20); }
+  .health-detail-hero .health-conclusion { font-size:var(--wm-font-size-28); }
+  .health-page.is-compact .health-insight h3 { white-space:normal; font-size:var(--wm-font-size-22); }
+  .health-vital .health-medium { font-size:var(--wm-font-size-28); }
+  .health-sleep-summary { gap:var(--wm-space-16); }
+  .health-activity-value .health-medium { font-size:var(--wm-font-size-24); }
+}
+@media(prefers-reduced-motion:reduce) { .health-page * { animation:none!important; transition:none!important; } }
+.health-detail-hero .health-graphic-label { font-size:var(--wm-font-size-12); }
+.health-graphic-area .health-line { stroke-width:6; }
+.health-metric[data-metric=fitnessAge] .health-big,.health-detail-hero[data-metric=fitnessAge] .health-hero-number { color:var(--health-color); }
+.health-metric-tabs [aria-selected=true],.health-segments [aria-pressed=true],.health-overlay[aria-checked=true] { color:var(--health-color); background:var(--health-color-soft); }
+.health-date-out .health-layout { opacity:.25; transition:opacity var(--wm-duration-base); }
+@media(prefers-reduced-motion:reduce) { .health-date-out .health-layout { opacity:1; } }
+.health-page { --health-canvas:var(--wm-color-health-canvas-light); background:var(--health-canvas); }
+[data-theme=dark] .health-page { --health-canvas:var(--wm-color-health-canvas-dark); }
+.health-card[data-metric=sleep]>.health-duration { margin-block:var(--wm-space-16); }
+.health-card[data-metric=sleep]>.health-duration .health-big { font-size:calc(var(--wm-font-size-22) * 2); }
+[data-reduced-motion] .health-page * { animation:none!important; transition:none!important; }
+[data-reduced-motion] .health-date-out .health-layout { opacity:1; }
+[data-motion-paused] .health-page * { animation-play-state:paused!important; }
+.health-page .health-status.is-critical { color:var(--health-stress-extreme); }

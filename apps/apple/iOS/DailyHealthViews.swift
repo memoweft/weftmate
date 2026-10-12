@@ -4,13 +4,16 @@ import WeftMateCore
 struct DailyHealthSettingsRow: View {
     @EnvironmentObject private var health: DailyHealthModel
     @ObservedObject var app: AppleAppModel
+    var showsReview = true
+    var showsHealth = true
     var body: some View {
-        Section("回顾与洞察") {
-            if let review = health.review {
+        Section(showsReview ? "回顾与洞察" : "健康数据") {
+            if showsReview, let review = health.review {
                 Toggle("回顾与洞察", isOn: Binding(get: { health.review?.reviewEnabled ?? review.reviewEnabled }, set: { value in
                     Task { await health.setReview(value, app: app) }
                 })).accessibilityIdentifier("dailyReviewToggle")
             }
+            if showsHealth {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 HStack {
                     Text("健康数据")
@@ -29,6 +32,7 @@ struct DailyHealthSettingsRow: View {
                 Text("读取步数、睡眠、静息心率和运动，只把每天的汇总送到你自己的电脑，随时可以关。")
                     .font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
             }.accessibilityElement(children: .contain)
+            }
         }
     }
 }
