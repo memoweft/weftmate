@@ -84,6 +84,7 @@ jobs:
           name: health-6-phone-system-bars-${{ matrix.width }}-${{ matrix.theme }}
           path: |
             tests/evidence/health-6/phone-system-*.png
+            tests/evidence/health-6/focus-failure.*
             tests/evidence/health-6/system-bars.json
             tests/evidence/health-6/phone-verification.json
           retention-days: 7
