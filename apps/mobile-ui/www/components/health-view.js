@@ -90,7 +90,7 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
       if(selectedPoint!==null)show(selectedPoint);wrap.append(tip);
       const dates=el('div','health-chart-dates');dates.append(el('span','',dateLabel(points[0].day)),el('span','',dateLabel(points.at(-1).day)));wrap.append(dates);
       wrap.append(small(`实线：${H.metrics[series.id]?.[0]??'当前指标'} · 色带：${series.referenceRange?'公开参考范围':'你平时的范围'} · 虚线：平均${usage?' · 灰柱：深夜使用':''}`));
-      if(usage)wrap.append(small(usageValues.length?`深夜使用柱最高 ${H.value(Math.max(...usageValues))} 分钟；同时变化不表示因果。`:'这段时间还没有深夜使用记录，可以先看当前指标的变化。'));
+      if(usage)wrap.append(small(usageValues.length?`深夜使用柱最高 ${H.value(Math.max(...usageValues))} 分钟`:'这段时间还没有深夜使用记录，可以先看当前指标的变化。'));
     }return wrap;
   }
   function dateLabel(day){if(!day)return '今天';if(day===m.today)return '今天';const p=day.split('-');return `${Number(p[1])}月${Number(p[2])}日`;}
