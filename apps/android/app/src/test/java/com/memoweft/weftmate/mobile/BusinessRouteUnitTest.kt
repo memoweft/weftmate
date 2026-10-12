@@ -7,6 +7,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun replyChangeWaitOutlivesTheServerBudgetWithoutChangingOtherReads() {
+        assertEquals(30_000, businessReadTimeout("/personal/v1/chats/main/changes?afterSeq=1&waitMs=25000", "GET"))
+        assertEquals(30_000, businessReadTimeout("/personal/v1/chats/chat-one/events?waitMs=25000", "GET"))
+        assertEquals(35_000, businessReadTimeout("/personal/v1/chats/chat-one/changes?waitMs=30000", "GET"))
+        for (path in listOf("/personal/v1/system", "/personal/v1/chats/main/changes?waitMs=0", "/personal/v1/chats/main/changes?waitMs=invalid", "/personal/v1/system?waitMs=25000")) assertEquals(20_000, businessReadTimeout(path, "GET"))
+        assertEquals(20_000, businessReadTimeout("/personal/v1/chats/main/changes?waitMs=25000", "POST"))
+        assertEquals(360_000, businessReadTimeout("/personal/v1/system/host/restart", "POST"))
+        assertEquals(120_000, businessReadTimeout("/personal/v1/sessions/session-one/message-branches", "POST"))
+    }
     @Test fun catchupAccountRecordsAndForgetPreviewsKeepExactPaths() {
         for (path in listOf("/personal/v1/execution-records?type=write&projectId=none&limit=100", "/personal/v1/account/models", "/personal/v1/account/models/check", "/personal/v1/account/models/model-one/test", "/personal/v1/chats/chat-one/forget-preview", "/personal/v1/sessions/session-one/forget-preview", "/personal/v1/usage?timeZone=Asia%2FShanghai&month=2026-10")) assertTrue(path, validBusinessPath(path))
         for (path in listOf("/personal/v1/execution-records/raw", "/personal/v1/execution-records?type=<script>", "/personal/v1/account/models/model-one/secret", "/personal/v1/account/models%2Fcheck", "/personal/v1/auth/desktop", "/personal/v1/sessions/../forget-preview", "/personal/v1/chats/chat-one/forget-preview/raw")) assertFalse(path, validBusinessPath(path))

@@ -126,6 +126,19 @@ internal fun validBusinessMethod(path: String, method: String): Boolean =
         (method == "PUT" && (path == "/personal/v1/health/records/batch" ||
             path.matches(Regex("/personal/v1/daily-summaries/[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])/health"))))
 
+internal fun businessReadTimeout(path: String, method: String): Int {
+    if (method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))) return 360_000
+    if (path.endsWith("/message-branches")) return 120_000
+    // Mainline reply reads may wait 25 seconds for a real change. The socket
+    // must outlive that server wait, otherwise a quiet conversation looks offline.
+    if (method == "GET" && path.substringBefore('?').matches(Regex("/personal/v1/chats/[A-Za-z0-9_-]{1,128}/(events|changes)"))) {
+        val wait = path.substringAfter('?', "").split('&').firstOrNull { it.startsWith("waitMs=") }
+            ?.substringAfter('=')?.toIntOrNull()
+        if (wait != null && wait in 0..30_000) return maxOf(20_000, wait + 5_000)
+    }
+    return 20_000
+}
+
 private fun requestByteLimit(url: URL): Int = if (url.path == "/personal/v1/health/records/batch") 1280 * 1024 else if (url.path.endsWith("/chat/completions"))
     14 * 1024 * 1024 else 256 * 1024
 
@@ -832,10 +845,9 @@ class PersonalApi(transport: JsonTransport = JsonHttp()) {
         require(validBusinessMethod(path, method))
         require(validBusinessPath(path))
         if (body != null) require(body.toString().toByteArray(Charsets.UTF_8).size <= if (path == "/personal/v1/health/records/batch") 1280 * 1024 else if (path.startsWith("/personal/v1/offline/")) 256 * 1024 else 64 * 1024)
-        val restarting = method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))
         return http.request("${host.origin}$path", method, body,
             if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host),
-            readTimeoutMs = if (restarting) 360_000 else if (path.endsWith("/message-branches")) 120_000 else 20_000).body
+            readTimeoutMs = businessReadTimeout(path, method)).body
     }
 
     private fun authWriteHeaders(host: HostIdentity) = mapOf("Cookie" to host.cookie,
