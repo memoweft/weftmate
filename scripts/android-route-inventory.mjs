@@ -21,6 +21,13 @@ async function files(directory) {
 export async function inventory() {
   const routes = new Map();
   const add = (template, source, method = 'GET', cloudClient = false) => {
+    if (template.includes('${kind}') && template.includes('${p[key]') && template.startsWith('/personal/v1/sessions/')) {
+      for (const kind of ['approvals','questions']) {
+        const base = template.replace('${kind}', kind).replace(/\$\{p\[key\][^}]*\}/, '');
+        add(base, source, 'GET', cloudClient); add(base + '/' + uuid, source, 'POST', cloudClient);
+      }
+      return;
+    }
     const branch = template.match(/\$\{[^}]*\?\s*'([^']*)'\s*:\s*'([^']*)'\}/);
     if (branch) { for (const value of [branch[1],branch[2]]) add(template.replace(branch[0], value), source, method, cloudClient); return; }
     if (cloudClient && /\$\{(?:auth\.mode|mode)[^}]*\}/.test(template)) {
