@@ -24,7 +24,7 @@ npm run dist:win:candidate -- `
   --stage-root (Join-Path $candidateRoot 'staging')
 ```
 
-- `vendor:dsh` 自动构建固定提交与随仓补丁，并把工作树的 `vendor/dsh-runtime` 联接到共享缓存；缺失、损坏、升级固定提交或增删改补丁后都运行同一条命令 `npm run vendor:dsh`；候选构建只校验已有运行时，夜间的 `vendor-tests` 阶段会重建缺失或过期运行时；
+- `vendor:dsh` 自动构建固定提交与随仓补丁，并把工作树的 `vendor/dsh-runtime` 联接到共享缓存；缺失、升级固定提交或增删改补丁后运行 `npm run vendor:dsh`；同身份缓存损坏时按下节保留现场并人工挪开；候选构建只校验已有运行时，夜间的 `vendor-tests` 阶段会重建缺失或过期运行时；
 - `vendor:verify` 检查版本、文件、依赖闭包和启动行为；
 - `dist:win` 把已验证的 DSH 运行时放入 Windows 安装包；
 - `dist:win:candidate` 先验证现有 vendor，再使用无 reparse point（重解析点）的隔离暂存目录构建，并审计安装包闭包、开发机路径、用户数据和凭据文件；
@@ -69,3 +69,28 @@ Windows 缓存默认位于 `D:\AIProjects\WeftMate\Worktrees\_shared\dsh-runtime
 暂存排除 hoisted（平铺依赖）布局中的 pnpm 安装状态与缓存元数据：`node_modules/.bin`、`.pnpm`、`.modules.yaml`、`.pnpm-workspace-state-v1.json`。这些文件记录安装机绝对路径；真实入口为 `bin/dsh-web` 与包的 `main/exports`，原生绑定、源码、许可证及整个运行包集合保留。原始 vendor 与 tarball 哈希不改，暂存副本只移除安装管理文件。DSH 随仓库的 portable CSS module IDs（可移植样式模块标识）补丁将虚拟模块标识改成仓库相对路径，读取及 watch（构建变更监听）仍解析回物理源文件；修复编译器在输出注释中泄露绝对目录，新增固定 vendor 测试会拒绝漏打补丁的产物。
 
 缓存校验命中后，工作树指针建立失败直接报告原始错误，不触发编译。取得构建锁后再次校验缓存，若另一构建刚发布则直接复用。同身份缓存一旦存在就保留：校验失败也拒绝删除或重新发布，先由操作者诊断；不会用重建替换其它工作树正在使用的缓存。
+
+## 共享缓存是只读的
+
+已发布的缓存只用于读取、校验和复制。装配与打包暂存各自在本次新建的独立临时目录完成，再整体改名发布；不会在 `vendor/dsh-runtime` 原地执行安装。替换联接或 symbolic link（符号链接）只 `unlink`（解除链接）自身；已有普通目录改名保留为相邻的 `.replaced-<id>`，不自动递归删除。已有指针仍有效时正常命令直接复用，不重建联接。缓存的身份、闭包包版本、包入口和 tarball（依赖包归档）哈希均按清单核对。
+
+独立 cwd（当前目录）本身不足以隔离安装：pnpm 会读取父进程的 `npm_config_modules_dir` 等环境变量及用户 `.npmrc`，相对的安装目录可以越出临时目录、沿联接进入旧缓存并清空其 node_modules。源码安装与运行时安装都以显式命令行选项固定 `modules-dir=node_modules`、本次目录内的 `virtual-store-dir` 和 `lockfile-dir`，并关闭全局安装；这些选项优先于继承配置。
+
+出现「同身份缓存已存在但校验失败；保留缓存，拒绝重新发布」时，先保留日志和目录，确认使用它的构建与程序已停止，由操作者把错误信息中的**准确目录**改名挪开（例如追加 `.damaged-<时间>`），然后重跑 `npm run vendor:dsh` 生成同身份的新缓存。不要对工作树联接执行清空或递归删除，也不要直接在共享缓存里运行 `pnpm install`。中断遗留的构建目录和锁同样先确认属主进程退出；脚本不回收其它运行留下的目录。
+
+隔离试验须同时隔离缓存根与工作树输出；只设缓存根仍会更新当前工作树的 vendor 指针：
+
+```powershell
+$probeRoot = Join-Path ([IO.Path]::GetTempPath()) ('weftmate-vendor-probe-' + [guid]::NewGuid())
+New-Item -ItemType Directory -Path $probeRoot | Out-Null
+$env:WEFTMATE_DSH_CACHE_ROOT = Join-Path $probeRoot 'cache'
+$env:WEFTMATE_DSH_RUNTIME_DIR = Join-Path $probeRoot 'repo/vendor/dsh-runtime'
+try {
+  npm run vendor:dsh
+} finally {
+  Remove-Item Env:WEFTMATE_DSH_CACHE_ROOT
+  Remove-Item Env:WEFTMATE_DSH_RUNTIME_DIR
+}
+```
+
+测试结束后仅处理自己的 `$probeRoot`，保留失败样本供诊断。输出父级或缓存根有联接、输出与缓存根重叠时命令直接失败。递归删除仅允许本次创建的临时目录；清理前核对真实路径、目录身份和归属范围，内部联接逐个解除，不沿联接进入目标。
