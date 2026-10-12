@@ -1,0 +1,533 @@
+{
+  "syntheticCloud": true,
+  "realElectron": true,
+  "realDSH": true,
+  "model": "mimo-v2.6-flash",
+  "modelRequests": 9,
+  "checks": [
+    "phone closed after two accepted tasks; cloud retained ciphertext only; cancellation deleted ciphertext",
+    "tasks executed in original session and order; write waited for original approval; canceled task never ran; generic notifications point to conversation",
+    "model removal failed through original dispatch; generic failure notice opened the original conversation"
+  ],
+  "screenshots": [
+    "mobile-360-light-offline-entry.png",
+    "mobile-390-light-offline-entry.png",
+    "mobile-360-dark-offline-entry.png",
+    "mobile-390-dark-offline-entry.png",
+    "mobile-360-light-waiting-message.png",
+    "mobile-390-light-waiting-message.png",
+    "mobile-360-dark-waiting-message.png",
+    "mobile-390-dark-waiting-message.png",
+    "mobile-360-light-waiting-goals.png",
+    "mobile-390-light-waiting-goals.png",
+    "mobile-360-dark-waiting-goals.png",
+    "mobile-390-dark-waiting-goals.png",
+    "mobile-360-light-cancel-confirm.png",
+    "mobile-390-light-cancel-confirm.png",
+    "mobile-360-dark-cancel-confirm.png",
+    "mobile-390-dark-cancel-confirm.png",
+    "mobile-360-light-computer-started.png",
+    "mobile-390-light-computer-started.png",
+    "mobile-360-dark-computer-started.png",
+    "mobile-390-dark-computer-started.png",
+    "mobile-360-light-approval.png",
+    "mobile-390-light-approval.png",
+    "mobile-360-dark-approval.png",
+    "mobile-390-dark-approval.png",
+    "mobile-360-light-completed.png",
+    "mobile-390-light-completed.png",
+    "mobile-360-dark-completed.png",
+    "mobile-390-dark-completed.png",
+    "desktop-1200-light-source.png",
+    "desktop-480-light-source.png",
+    "desktop-1200-dark-source.png",
+    "desktop-480-dark-source.png",
+    "mobile-360-light-failed.png",
+    "mobile-390-light-failed.png",
+    "mobile-360-dark-failed.png",
+    "mobile-390-dark-failed.png"
+  ],
+  "systemBars": "Browser viewport evidence; native system bars require the follow-up shell.",
+  "usage": {
+    "month": "2026-10",
+    "timeZone": "Asia/Shanghai",
+    "sessionId": null,
+    "total": {
+      "requests": 9,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 29912,
+      "cachedInputTokens": 21888,
+      "outputTokens": 397,
+      "cost": 0.00925576
+    },
+    "days": [
+      {
+        "day": "2026-10-01",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-02",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-03",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-04",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-05",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-06",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-07",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-08",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-09",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-10",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-11",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-12",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-13",
+        "requests": 9,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 29912,
+        "cachedInputTokens": 21888,
+        "outputTokens": 397,
+        "cost": 0.00925576
+      },
+      {
+        "day": "2026-10-14",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-15",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-16",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-17",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-18",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-19",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-20",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-21",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-22",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-23",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-24",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-25",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-26",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-27",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-28",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-29",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-30",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-31",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      }
+    ],
+    "sessions": [
+      {
+        "sessionId": "session-169a26d2-d84a-4c3f-8c77-f462f18584cf",
+        "requests": 9,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 29912,
+        "cachedInputTokens": 21888,
+        "outputTokens": 397,
+        "cost": 0.00925576
+      }
+    ],
+    "models": [
+      {
+        "profileId": "private-model-e0a8f7d2c28f4e9dabe13e7f0de861a391a3c4f0",
+        "requests": 9,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 29912,
+        "cachedInputTokens": 21888,
+        "outputTokens": 397,
+        "cost": 0.00925576
+      }
+    ],
+    "categories": [
+      {
+        "category": "conversation",
+        "requests": 9,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 29912,
+        "cachedInputTokens": 21888,
+        "outputTokens": 397,
+        "cost": 0.00925576
+      }
+    ],
+    "budget": {
+      "monthlyLimit": null,
+      "effectiveLimit": null,
+      "temporaryLimit": null,
+      "state": "unlimited"
+    }
+  },
+  "electronExit": {
+    "code": 0,
+    "signal": null
+  },
+  "notifications": [
+    {
+      "type": "task.failed",
+      "notification": {
+        "level": "normal",
+        "type": "task.failed",
+        "initiatedBy": "user",
+        "title": "你交代的一件事",
+        "body": "没做成 · 点开查看原因",
+        "notify": true,
+        "sound": true,
+        "decision": "notify",
+        "reason": "allowed",
+        "decidedAt": "2026-10-12T22:38:13.080Z"
+      },
+      "hasConversation": true
+    },
+    {
+      "type": "task.completed",
+      "notification": {
+        "level": "normal",
+        "type": "task.completed",
+        "initiatedBy": "user",
+        "title": "你交代的一件事",
+        "body": "做完了 · 点开查看结果",
+        "notify": true,
+        "sound": true,
+        "decision": "notify",
+        "reason": "allowed",
+        "decidedAt": "2026-10-12T22:37:54.244Z"
+      },
+      "hasConversation": true
+    },
+    {
+      "type": "approval.pending",
+      "notification": {
+        "level": "silent",
+        "type": "approval.pending",
+        "initiatedBy": "user",
+        "title": "你交代的一件事",
+        "body": "需要你批准 · 点开查看",
+        "notify": false,
+        "sound": false,
+        "decision": "activity",
+        "reason": "silent",
+        "decidedAt": "2026-10-12T22:37:42.877Z"
+      },
+      "hasConversation": true
+    },
+    {
+      "type": "task.started",
+      "notification": {
+        "level": "normal",
+        "type": "task.started",
+        "initiatedBy": "user",
+        "title": "你交代的一件事",
+        "body": "电脑已开始 · 点开查看",
+        "notify": true,
+        "sound": true,
+        "decision": "notify",
+        "reason": "allowed",
+        "decidedAt": "2026-10-12T22:37:39.760Z"
+      },
+      "hasConversation": true
+    },
+    {
+      "type": "task.completed",
+      "notification": {
+        "level": "normal",
+        "type": "task.completed",
+        "initiatedBy": "user",
+        "title": "你交代的一件事",
+        "body": "做完了 · 点开查看结果",
+        "notify": true,
+        "sound": true,
+        "decision": "notify",
+        "reason": "allowed",
+        "decidedAt": "2026-10-12T22:37:39.760Z"
+      },
+      "hasConversation": true
+    },
+    {
+      "type": "task.started",
+      "notification": {
+        "level": "normal",
+        "type": "task.started",
+        "initiatedBy": "user",
+        "title": "你交代的一件事",
+        "body": "电脑已开始 · 点开查看",
+        "notify": true,
+        "sound": true,
+        "decision": "notify",
+        "reason": "allowed",
+        "decidedAt": "2026-10-12T22:37:33.541Z"
+      },
+      "hasConversation": true
+    }
+  ],
+  "status": "passed",
+  "proxyRequests": {
+    "model": 9,
+    "catalog": 17
+  },
+  "ledgerModelRequests": 9,
+  "pageErrors": [],
+  "cleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  }
+}

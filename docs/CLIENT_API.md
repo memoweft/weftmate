@@ -621,6 +621,31 @@ R0-2：`GET /system` 增加可选 `components`（组件状态列表）、`metric
 
 宿主通过既有安装签名 `POST /personal/v1/cloud/hosts/offline/publish` 发送 `{hostId,proof}`，签名载荷带 `action,sub,generation`；云只单调递增保存 `offline_controls`，不保存正文、模型密钥或设备解密私钥。云数据库 schema（结构版本）7，账号／宿主删除级联清除此表；本包未部署。
 
+### 3.20 电脑离线时交代任务（S7 / D17 / D40）
+
+新客户端可在 3.19 的 `/offline/sync` 请求兼容增加 `taskSupport:1`。响应兼容增加 `taskReferences:[{id,title,projectId?}]`（最多100条，不含正文）；没有云聊天模型时允许 `model:null`，只下发任务所需的授权与公钥，不下发记忆／近期正文。没有该请求字段的旧客户端仍按原 `OFFLINE_MODEL_REQUIRED` 处理。`recent[].messages[]` 可增加 `offlineTaskId`，由宿主原 `receiptId` 核对，供本机任务状态关联，避免电脑已执行后的消息重复显示。客户端不得把仅有标题的电脑对话当成离线聊天上下文。
+
+3.19 的解密副本兼容增加 `taskRecipient:{kty:"RSA",n,e:"AQAB"}`，`recent[]` 兼容增加 `title,projectId?`；旧客户端可忽略。此公钥来自已认证的电脑副本，不能用云服务器给出的未核对公钥替换。手机沿 3.19 同一 RSA-OAEP-256 + A256GCM（设备信封加密格式），加密 `{text,sessionId:null|string,projectId:null|string,createdAt:毫秒}`；文字最多8,192字，无附件入口。`sessionId:null` 在目标电脑主对话执行；非空只允许该电脑仍存在、属于同账户的原对话／项目。云只取得信封，正文不能出现在外层请求、错误或日志中。
+
+任务 `aad` 原始 UTF-8（字符编码）字节解码为 `{version:1,purpose:"offline-task",accountId,hostId,deviceId,generation,id,keyId}`；`deviceId` 是当前云 DPoP（设备持钥证明）物理设备 ID，`keyId` 是 `{kty,n,e}` JSON（数据交换格式）序列化的 SHA-256（安全散列算法）十六进制哈希。每个任务新 AES 内容钥匙与12字节随机数；电脑解密时核对全部身份、代次与公钥哈希，不使用手机 Cookie（会话凭据）编号替代物理设备。
+
+| 云 POST（提交）路径 | 请求 | 响应 |
+|---|---|---|
+| `/personal/v1/cloud/hosts/offline/tasks/submit` | `{hostId,id,generation,envelope}`；已批准同账户设备 DPoP；稳定随机 `id` 与相同密文重试 | `{id,hostId,createdAt,expiresAt,state}`，初始 `waiting`，迟到重试可返回已领取／终态 |
+| `/personal/v1/cloud/hosts/offline/tasks/list` | `{hostId}`；相同身份 | `{items:[{id,hostId,createdAt,expiresAt,state}]}`，只返回当前手机的事项，不含摘要／对话标识 |
+| `/personal/v1/cloud/hosts/offline/tasks/cancel` | `{hostId,id}` | 同条状态，`canceled` 后云密文已删除；409 `TASK_ALREADY_RECEIVED` 表示电脑已接收，沿原 `/tasks/{id}/stop` 停止 |
+| `/personal/v1/cloud/hosts/offline/tasks/clear` | `{}` | `{deleted:true}`，当前手机所有目标电脑的云记录删除；退出先清理再撤销原凭据 |
+
+状态为 `waiting/claimed/received/started/completed/failed/expired/canceled`；客户端正文／摘要只读自己设备的加密保管库。64 KiB 单信封、每账户100件尚未终结事项、7天自动过期；领取回执保留到执行终结，终态元数据7天后清除。接口每账户每分钟120次，429 `RATE_LIMITED`；容量429 `CAPACITY_LIMIT`，正文413 `BODY_TOO_LARGE`；授权403 `DEVICE_NOT_TRUSTED`，旧代次409 `OFFLINE_RESET_REQUIRED`。取消可在 `waiting/claimed` 时提交；取消与电脑确认按云事务先后决定，不冒称已取消正在执行的操作。
+
+电脑安装签名 `POST /personal/v1/cloud/hosts/offline/tasks/claim|ack|result` 的契约见 [云端接口](../services/cloud/README.md)。领取按创建序号，确认前持久登记原 `session.message` 与 `mode:"queue"`、确认后删云密文、再派发；任务 ID 复用原命令避免重启／重复领取另建任务。权限与审批沿原对话、项目及账号规则，来源不放宽权限。登录寿命到期不取消已登记的物理设备意图，但撤权／账号退出／代次变化仍禁止派发。
+
+`Command` 兼容增加 `offlineSource:{id,submittedAt,receivedAt,startedAt?}`，不含密钥或领取凭据。电脑消息按 `receiptId` 关联此来源，执行记录沿旧接口；`Activity.type` 增加 `task.started`，类别仍为 `task`，终态仅为 `task.completed/failed/stopped`。离线任务的 `notification.title/body` 为固定文案「你交代的一件事」及「电脑已开始／做完了／没做成／需要你批准」，点击沿原对话来源。云与提供方只收 `{eventId,type}`，现有未配置推送提供方不代表可唤醒系统。
+
+Android（安卓）需要新壳版本：四条云路径的精确放行与拒绝用例、保管库 `offline.seal` 加密调用、读取接收公钥／本地任务状态、退出清理；本包按分工不改 `apps/android/**`。iPhone（苹果手机）同样增加设备保管库加密、四条云接口、菜单／目标组／取消确认／状态与固定通知文案。没有原生 `seal` 能力时隐藏任务入口，旧离线聊天仍可用。部署前仅在本地合成云验证，生产服务由编排部署。
+
+原生跟进的方法形状：`offline.seal({payload:{text,sessionId,projectId,createdAt},recipient:taskRecipient,identity:{purpose:"offline-task",accountId,hostId,deviceId,generation,id}})` 返回本节信封；原生补齐 `version/keyId` 并按本节算法处理，不能返回私钥或内容钥匙。多电脑保管库 `offline.targets({accountId})` 只返回 `[{control,generation,taskRecipient}]`，`offline.clearAccount({accountId,hostId?,keepGeneration?})` 清除此账号各电脑的加密记录与本地内容钥匙；指定 `hostId` 时只清该电脑，`keepGeneration` 保留其当前有效代次。`offline.load/save` 的原对象兼容保存 `tasks`。这些是跟进接口，本包的旧 `nativeVault` 不声称已经实现。原生任务入口启用后才发送 `taskSupport:1`，同时处理 `model:null`、`taskReferences`、断网重试和退出先删除云记录的顺序。Android 后台补发及 Apple（苹果端）本地通知沿原动态决定消费，`task.started` 与终态使用不同事件身份；云推送仅作唤醒提示，再从电脑读取通知决定，不将云的事项身份当成对话正文或直接深链。
+
 ## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
 ### 4.1 事件结构与原生来源

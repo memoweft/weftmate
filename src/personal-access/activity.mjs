@@ -23,11 +23,16 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
     if(event.type==='user.message' && typeof data.receiptId==='string') {
       const command=Object.values(account.commands).find(c=>c.kind==='session.message'&&c.sessionId===sessionId&&c.receiptId===data.receiptId);
       if(command)scan.taskId=command.rootTaskId??command.commandId;
+      if(command?.offlineSource&&command.state==='accepted_by_dsh'){
+        command.offlineSource.startedAt??=at;
+        const source=activitySource(account,sessionId,{taskId:command.commandId});
+        putActivity(account,`offline-start:${command.offlineSource.id}`,{at,type:'task.started',title:'电脑已开始',summary:'你交代的一件事已经开始。',source,actions:[{kind:'open_chat',label:'打开对话',target:source}]});
+      }
     }
     if(event.type.startsWith('step.')||event.type==='artifact.created')scan.executed=true;
     if(event.type==='step.failed'&&!hasPrivateContent(session))scan.failureReason=nativeFailureReason(data)||scan.failureReason;
     if(event.type==='assistant.message'&&!hasPrivateContent(session))scan.summary=String(data.text??'').slice(0,160);
-    if(event.type==='turn.ended' && (scan.executed||account.commands[scan.taskId]?.scheduleSourceId||['failed','error','blocked','aborted'].includes(data.reason))){
+    if(event.type==='turn.ended' && (scan.executed||account.commands[scan.taskId]?.scheduleSourceId||account.commands[scan.taskId]?.offlineSource||['failed','error','blocked','aborted'].includes(data.reason))){
       const result={completed:'completed',failed:'failed',error:'failed',blocked:'failed',aborted:'stopped'}[data.reason];
       if(result){const failureReason=result==='failed'&&!hasPrivateContent(session)?nativeFailureReason(data)||scan.failureReason:undefined;
         const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:scan.summary}:{}),...(failureReason?{failureReason}:{})};
@@ -123,8 +128,13 @@ export function createActivity(context) {
     })().finally(()=>flights.delete(ownerId));flights.set(ownerId,work);return work;
   }
   async function record(ownerId,input){
-    if(!ACTIVITY_TYPES.includes(input.type)||!input.key|| ['system.dnd.summary','system.notification.test'].includes(input.type)|| (input.initiatedBy!==undefined&&!['user','assistant'].includes(input.initiatedBy)) ||!['memory.','system.','companion.'].some(prefix=>input.type.startsWith(prefix)))throw failure('INVALID_REQUEST');
-    return context.serial(()=>context.mutate(ownerId,next=>putActivity(next,`${input.type}:${input.key}`,{...input,at:input.at??new Date(context.timestamp()).toISOString()})));
+    const offlineStart=input.type==='task.started'&&context.accountState(ownerId).commands[input.source?.taskId]?.offlineSource?.startedAt;
+    const rejected=context.accountState(ownerId).commands[input.source?.taskId],offlineFailure=input.type==='task.failed'&&rejected?.offlineSource?.confirmed&&rejected.state==='rejected';
+    if(!ACTIVITY_TYPES.includes(input.type)||!input.key|| ['system.dnd.summary','system.notification.test'].includes(input.type)|| (input.initiatedBy!==undefined&&!['user','assistant'].includes(input.initiatedBy)) ||!offlineStart&&!offlineFailure&&!['memory.','system.','companion.'].some(prefix=>input.type.startsWith(prefix)))throw failure('INVALID_REQUEST');
+    return context.serial(()=>context.mutate(ownerId,next=>{
+      if(offlineStart&&Object.values(next.activity?.items??{}).some(row=>row.source.taskId===input.source.taskId&&['task.completed','task.failed','task.stopped'].includes(row.type)))return;
+      return putActivity(next,`${input.type}:${input.key}`,{...input,at:input.at??new Date(context.timestamp()).toISOString()});
+    }));
   }
   function counts(ownerId){return activityCounts(context.accountState(ownerId));}
   function watermark(ownerId){const account=context.accountState(ownerId);return {...counts(ownerId),cursor:activityToken(account,ownerId,{kind:'changes',position:activityState(account).sequence})};}

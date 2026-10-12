@@ -538,6 +538,20 @@ export async function createHostCloudIdentity(context, options) {
     }
   }
   return { browserConfiguration: () => ({ issuer: config.issuer }),
+    offlineAccount(sub,cloudDeviceId,jkt) {
+      for(const [deviceId,session] of Object.entries(store.state.sessions)){
+        const binding=store.state.bindings[session.bindingKey],device=store.state.devices[session.trustId];
+        if(binding?.sub===sub&&device?.cloudDeviceId===cloudDeviceId&&device.jkt===jkt){
+          try{assertSession(binding.ownerId,deviceId);return {ownerId:binding.ownerId,deviceId};}catch{}
+        }
+      }
+      return null;
+    },
+    offlineSource(ownerId,cloudDeviceId,jkt) {
+      const binding=Object.values(store.state.bindings).find(b=>b.ownerId===ownerId&&b.status==='active');
+      const source=binding&&this.offlineAccount(binding.sub,cloudDeviceId,jkt);
+      return source?.deviceId;
+    },
     async eraseLocalAccount(ownerId, removeBinding, keepDeviceId) {
       await edit(next => {
         const bindings = new Set(Object.entries(next.bindings).filter(([,row])=>row.ownerId===ownerId).map(([id])=>id));
