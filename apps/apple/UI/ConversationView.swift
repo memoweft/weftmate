@@ -572,6 +572,7 @@ struct ConversationView: View {
                 Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("projectNotice")
             }
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+                HStack(alignment: .top, spacing: AppleTokens.Space.p8) {
                 TextField(conversation.running ? (model.runningMessageMode == .queue ? "排队到下一条…" : "引导当前回复…") : "向 WeftMate 说说你的目标", text: draft, axis: .vertical)
                     .lineLimit(2...6).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
                     .focused($draftFocused).padding(.horizontal, AppleTokens.Space.p9).padding(.top, AppleTokens.Space.p7)
@@ -585,6 +586,18 @@ struct ConversationView: View {
                         return .handled
                     }
                     #endif
+                #if os(iOS)
+                    if let usage = conversation.contextUsage {
+                        Button { contextPopover.toggle() } label: {
+                            ZStack {
+                                Circle().stroke(Weave.line, lineWidth: AppleTokens.Space.p2)
+                                if let value = usage.fraction { Circle().trim(from: 0, to: min(1, value)).stroke(usage.warning ? Weave.danger : Weave.muted, style: StrokeStyle(lineWidth: AppleTokens.Space.p2, lineCap: .round)).rotationEffect(.degrees(-90)) }
+                            }.frame(width: AppleTokens.Space.p18, height: AppleTokens.Space.p18).frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44)
+                        }.buttonStyle(.plain).phoneIcon(quiet: true).accessibilityLabel(usage.label).accessibilityIdentifier("contextUsage")
+                            .help(usage.label).popover(isPresented: $contextPopover) { Text(usage.label).font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
+                    }
+                #endif
+                }
                 if let files = model.attachmentDrafts[key], !files.isEmpty {
                     ScrollView(.horizontal) {
                         HStack(spacing: AppleTokens.Space.p10) {
@@ -653,6 +666,7 @@ struct ConversationView: View {
                     if !dynamicTypeSize.isAccessibilitySize { composerApprovalMode(accountEpoch: accountEpoch) }
                     if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
                     Spacer(minLength: AppleTokens.Space.p4)
+                    #if os(macOS)
                     if let usage = conversation.contextUsage {
                         Button { contextPopover.toggle() } label: {
                             ZStack {
@@ -662,6 +676,7 @@ struct ConversationView: View {
                         }.buttonStyle(.plain).accessibilityLabel(usage.label).accessibilityIdentifier("contextUsage")
                             .help(usage.label).popover(isPresented: $contextPopover) { Text(usage.label).font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
                     }
+                    #endif
                     Menu {
                         Text(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型")
                         Button("配置模型") {
