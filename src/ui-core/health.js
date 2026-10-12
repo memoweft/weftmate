@@ -27,19 +27,19 @@
   }
   globalThis.WeftHealth = {showHealthBottomTab:SHOW_HEALTH_BOTTOM_TAB,metrics,finite,value,duration,dayShift,chart,vitals:['hrvSdnnMs','restingHeartRateBpm','respiratoryRateBrpm','spo2Pct','wristTempC']};
   globalThis.WeftUiCore.factories.health = (core,effects,env) => {
-    const model={overview:null,day:'',today:'',metric:'recovery',days:30,view:'today',overlay:false,trend:null,usage:null,weekSleep:null,weekUsage:null,recoveryWeek:null,calendar:null,month:'',loading:false,trendLoading:false,error:'',trendError:'',calendarError:'',calendarLoading:false,sleepStages:{},scoreAverages:{},supplementLoading:false,stageError:'',generation:0,reminders:new Map(),busy:new Set()};
-    let identity,readId=0,trendId=0,calendarId=0;const requests=new Map();
+    const model={overview:null,day:'',today:'',metric:'recovery',days:30,view:'today',overlay:false,trend:null,usage:null,weekSleep:null,weekUsage:null,recoveryWeek:null,calendar:null,month:'',loading:false,trendLoading:false,error:'',trendError:'',calendarError:'',calendarLoading:false,sleepStages:{},scoreAverages:{},supplementLoading:false,stageError:'',dimensionMetrics:{},dimensionLoading:false,generation:0,reminders:new Map(),busy:new Set()};
+    let identity,readId=0,trendId=0,calendarId=0,dimensionId=0;const requests=new Map();
     const scope=()=>`${core.state.identityGeneration}:${core.state.account?.ownerId??core.state.ownerId}`;
     const emit=()=>effects.renderHealth?.();
-    function resetHealth(){readId++;trendId++;calendarId++;model.generation++;requests.clear();model.reminders.clear();model.busy.clear();Object.assign(model,{overview:null,day:'',today:'',metric:'recovery',days:30,view:'today',overlay:false,trend:null,usage:null,calendar:null,month:'',weekSleep:null,weekUsage:null,recoveryWeek:null,loading:false,trendLoading:false,error:'',trendError:'',calendarError:'',calendarLoading:false,sleepStages:{},scoreAverages:{},supplementLoading:false,stageError:''});emit();}
+    function resetHealth(){readId++;trendId++;calendarId++;dimensionId++;model.generation++;requests.clear();model.reminders.clear();model.busy.clear();Object.assign(model,{overview:null,day:'',today:'',metric:'recovery',days:30,view:'today',overlay:false,trend:null,usage:null,calendar:null,month:'',weekSleep:null,weekUsage:null,recoveryWeek:null,loading:false,trendLoading:false,error:'',trendError:'',calendarError:'',calendarLoading:false,sleepStages:{},scoreAverages:{},supplementLoading:false,stageError:'',dimensionMetrics:{},dimensionLoading:false});emit();}
     function sync(){core.syncMobileIdentity?.();if(identity!==scope()){identity=scope();resetHealth();}}
     async function series(id,days){const result=await core.accessApi(`/health/metrics/${encodeURIComponent(id)}?days=${model.day&&model.today&&model.day<model.today?90:days}`);
       const points=(result.points??[]).filter(p=>!model.day||p.day<=model.day).slice(-days),values=points.map(p=>p.value).filter(finite);
-      return {...result,points,average:values.length?values.reduce((a,b)=>a+b,0)/values.length:null};}
+      return {...result,points,outsideRange:!!model.day&&(result.points??[]).length>0&&model.day<result.points[0].day,average:values.length?values.reduce((a,b)=>a+b,0)/values.length:null};}
     async function readHealth(day=model.day){sync();const token=scope(),id=++readId;model.loading=true;model.error='';emit();
       try{const requestedDay=day===model.today?'':day;const overview=await core.accessApi(`/health/overview${requestedDay?`?day=${encodeURIComponent(requestedDay)}`:''}`);if(token!==scope()||id!==readId)return;
-        const dayChanged=model.day!==overview.day;model.overview=overview;model.day=overview.day;Object.assign(model,{...(dayChanged?{sleepStages:{},scoreAverages:{},recoveryWeek:null,weekSleep:null,weekUsage:null}:{}),supplementLoading:overview.connected,stageError:''});if(!requestedDay||!model.today)model.today=overview.day;
-        model.loading=false;emit();if(overview.connected){await Promise.all([readHealthTrend(),readWeek(token,id)]);}
+        const dayChanged=model.day!==overview.day;model.overview=overview;model.day=overview.day;Object.assign(model,{...(dayChanged?{sleepStages:{},scoreAverages:{},dimensionMetrics:{},dimensionLoading:false,recoveryWeek:null,weekSleep:null,weekUsage:null}:{}),supplementLoading:overview.connected,stageError:''});if(!requestedDay||!model.today)model.today=overview.day;
+        model.loading=false;emit();if(overview.connected){await Promise.all([readHealthTrend(),readWeek(token,id),...(model.view==='detail'&&model.metric==='load'?[readDimensions()]:[])]);}
       }catch(error){if(token===scope()&&id===readId){model.error=core.failureMessage(error);}}
       finally{if(token===scope()&&id===readId){model.loading=false;emit();}}
     }
@@ -49,9 +49,15 @@
       if(token!==scope()||id!==readId)return;
       for(const [i,[key]]of specs.entries()){const result=results[i],data=result.status==='fulfilled'?result.value:null;
         if(key.startsWith('average:')){const metric=key.slice(8);model.scoreAverages[metric]=data?.average??null;if(metric==='recovery')model.recoveryWeek=data?{...data,points:data.points.slice(-7),average:null}:null;}
-        else if(key.startsWith('stage:')){model.sleepStages[key.slice(6)]=data?.points.find(p=>p.day===model.day)?.value??null;if(result.status==='rejected')model.stageError=core.failureMessage(result.reason);}
-        else model[key]=data;
+        else if(key.startsWith('stage:')){const point=data?.points.find(p=>p.day===model.day);model.sleepStages[key.slice(6)]=point?.value??null;model.dimensionMetrics[key.slice(6)]=point??null;if(result.status==='rejected')model.stageError=core.failureMessage(result.reason);}
+        else {model[key]=data;if(key==='weekSleep')model.dimensionMetrics.sleepMinutes=data?.points.find(p=>p.day===model.day)??null;}
       }model.supplementLoading=false;emit();
+    }
+    async function readDimensions(){const token=scope(),day=model.day,id=++dimensionId;model.dimensionLoading=true;emit();
+      const metrics=['exerciseMinutes','activeEnergyKcal','steps'],results=await Promise.allSettled(metrics.map(metric=>series(metric,7)));
+      if(token!==scope()||day!==model.day||id!==dimensionId)return;
+      for(const [i,metric]of metrics.entries())model.dimensionMetrics[metric]=results[i].status==='fulfilled'?results[i].value.points.find(p=>p.day===day)??null:null;
+      model.dimensionLoading=false;emit();
     }
     async function readHealthTrend(metric=model.metric,days=model.days){sync();if(!metrics[metric]||![7,14,30,60].includes(days))return;const token=scope(),id=++trendId;
       Object.assign(model,{metric,days,trendLoading:true,trendError:'',trend:null,usage:null});emit();
@@ -64,7 +70,7 @@
       catch(error){if(token===scope()&&id===calendarId)model.calendarError=core.failureMessage(error);}
       finally{if(token===scope()&&id===calendarId){model.calendarLoading=false;emit();}}
     }
-    async function openHealthMetric(metric,view='trend'){model.view=view;await readHealthTrend(metric);}
+    async function openHealthMetric(metric,view='trend'){model.view=view;await Promise.all([readHealthTrend(metric),...(view==='detail'&&metric==='load'?[readDimensions()]:[])]);}
     async function healthOverlay(enabled){model.overlay=enabled;await readHealthTrend();}
     async function remindHealth(suggestion){sync();if(model.busy.has(suggestion.id)||model.reminders.has(suggestion.id)||!suggestion.reminder)return;
       const token=scope();model.busy.add(suggestion.id);emit();

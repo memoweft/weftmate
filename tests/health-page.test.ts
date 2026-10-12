@@ -17,7 +17,7 @@ test('health chart breaks at missing days and remains finite for empty, zero and
   assert.equal((H.chart([{value:1},{value:null},{value:2}]).path.match(/M/g)||[]).length,2);assert.equal(H.value(0),'0');assert.equal(H.duration(59.8),'1小时0分钟');
 });
 test('health overlay joins independent series and days respect selected history date',async()=>{
-  const {core}=await setup();await core.readHealth();await core.healthOverlay(true);assert.equal(core.health.usage.id,'usageLateNightMinutes');await core.readHealth('2026-10-10');assert.ok(core.health.trend.points.every((p:any)=>p.day<='2026-10-10'));await core.openHealthMetric('sleep','detail');assert.equal(core.health.view,'detail');assert.equal(core.health.metric,'sleep');await core.readHealthTrend('sleep',14);assert.equal(core.health.days,14);await core.readHealthCalendar('2026-09');assert.equal(core.health.calendar.days.length,30);
+  const {core}=await setup();await core.readHealth();await core.healthOverlay(true);assert.equal(core.health.usage.id,'usageLateNightMinutes');await core.readHealth('2026-10-10');assert.ok(core.health.trend.points.every((p:any)=>p.day<='2026-10-10'));await core.openHealthMetric('sleep','detail');assert.equal(core.health.view,'detail');assert.equal(core.health.metric,'sleep');await core.readHealthTrend('sleep',14);assert.equal(core.health.days,14);await core.readHealthCalendar('2026-09');assert.equal(core.health.calendar.days.length,30);await core.readHealth('2026-06-01');assert.equal(core.health.trend.outsideRange,true);assert.equal(core.health.trend.points.length,0);assert.equal(core.health.overview.recovery.score,null);
 });
 test('remind is an explicit idempotent write and ask only quotes into the main draft',async()=>{
   const {core,writes,quotes}=await setup();await core.readHealth();const suggestion=core.health.overview.insight.suggestions[0];await core.remindHealth(suggestion);await core.remindHealth(suggestion);assert.equal(writes.length,1);assert.deepEqual(JSON.parse(JSON.stringify(writes[0].body)),{sessionId:'main-session',requestId:'synthetic-request'});assert.equal(writes[0].protectedWrite,true);await core.askHealth();assert.match(quotes[0],/^> 2026-10-12/);assert.equal(writes.length,1);
@@ -39,7 +39,7 @@ test('personal low/high and more/less states preserve the server labels and meas
 
 test('sleep stages use existing metric reads and the 14 day comparison survives a 7 day chart selection',async()=>{
   const {core,fixture}=await setup();await core.readHealth();assert.equal(core.health.overview.sleep.deepMinutes,undefined);assert.equal(core.health.sleepStages.deepMinutes,fixture.metric('deepMinutes',7).points.at(-1).value);
-  const average=core.health.scoreAverages.sleep;assert.equal(average,fixture.metric('sleep',14).average);await core.openHealthMetric('sleep','detail');await core.readHealthTrend('sleep',7);assert.equal(core.health.scoreAverages.sleep,average);
+  const average=core.health.scoreAverages.sleep;assert.equal(average,fixture.metric('sleep',14).average);await core.openHealthMetric('sleep','detail');await core.readHealthTrend('sleep',7);assert.equal(core.health.scoreAverages.sleep,average);await core.openHealthMetric('load','detail');assert.equal(core.health.dimensionMetrics.exerciseMinutes.value,fixture.metric('exerciseMinutes',7).points.at(-1).value);assert.equal(core.health.dimensionLoading,false);
 });
 
 test('a missing stage or failed stage read never blanks the rest of the overview',async()=>{
