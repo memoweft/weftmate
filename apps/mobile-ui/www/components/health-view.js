@@ -52,7 +52,11 @@
   }
   const reducedMotion=()=>globalThis.WeftReplyMotion?.reduced===true||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true;
   const criticalStatus=data=>/明显(?:偏离|偏高|偏低)/.test(data?.label??'');
-  globalThis.WeftHealthGraphics={band,dualBars,range,halfGauge,area,comparison,progress,stages,gradient,fillPath,percent,animateNumbers,reducedMotion,criticalStatus};
+  function metricPalette(id,data={}){data??={};let name={fitnessAge:'fitness-age',hrvSdnnMs:'hrv',restingHeartRateBpm:'resting-heart-rate',respiratoryRateBrpm:'respiratory',spo2Pct:'oxygen',wristTempC:'temperature',activity:'load',sleepMinutes:'sleep',deepMinutes:'sleep',remMinutes:'sleep',awakeMinutes:'sleep',steps:'recovery',activeEnergyKcal:'energy-high',exerciseMinutes:'load',usageLateNightMinutes:'sleep',usageActiveMinutes:'load',vo2Max:'fitness-age'}[id]??id;
+    if(id==='stress'){const v=data.score;name=finite(v)?`stress-${v<25?'calm':v<50?'moderate':v<75?'high':'extreme'}`:'stress-calm';}
+    if(id==='energy'){const v=data.current??data.score;name=finite(v)?`energy-${v<30?'low':v<65?'mid':'high'}`:'energy-high';}return name;
+  }
+  globalThis.WeftHealthGraphics={band,dualBars,range,halfGauge,area,comparison,progress,stages,gradient,fillPath,percent,animateNumbers,reducedMotion,criticalStatus,metricPalette};
 })();
 
 /* Page-family presentation shared with the phone shell. Inline SVG contains only geometry. */
@@ -64,9 +68,7 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
   const small=text=>el('p','health-muted',text),card=(name)=>{const n=el('section','health-card');n.setAttribute('aria-label',name);n.append(el('h2','',name));return n;};
   const status=(data)=>el('span',`health-status is-${data?.state??'insufficient'}${G.criticalStatus(data)?' is-critical':''}`,data?.label??'再戴几天就有对比了');
   const svgEl=(tag,attrs={})=>{const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,String(v));return n;};
-  function colorMetric(n,id,data={}){data??={};n.dataset.metric=id;let name={fitnessAge:'fitness-age',hrvSdnnMs:'hrv',restingHeartRateBpm:'resting-heart-rate',respiratoryRateBrpm:'respiratory',spo2Pct:'oxygen',wristTempC:'temperature',activity:'load',sleepMinutes:'sleep',vo2Max:'fitness-age'}[id]??id;
-    if(id==='stress'){const v=data.score;name=H.finite(v)?`stress-${v<25?'calm':v<50?'moderate':v<75?'high':'extreme'}`:'stress-calm';}
-    if(id==='energy'){const v=data.current??data.score;name=H.finite(v)?`energy-${v<30?'low':v<65?'mid':'high'}`:'energy-high';}
+  function colorMetric(n,id,data={}){n.dataset.metric=id;const name=G.metricPalette(id,data);
     n.style.setProperty('--health-color',`var(--health-${name})`);n.style.setProperty('--health-color-soft',`var(--health-${name}-soft)`);return n;
   }
   function number(value,id,cls='health-big'){const wrap=el('div','health-score-number'),strong=el('strong',cls,H.value(value,id));if(H.finite(value)){strong.dataset.countTo=String(value);strong.dataset.countMetric=id;}wrap.append(strong,el('span','health-unit',H.metrics[id]?.[1]??''));return wrap;}
@@ -207,7 +209,7 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
     if(m.calendarLoading)n.append(skeleton('正在读取月历'));else if(m.calendarError)n.append(errorState(m.calendarError,()=>core.readHealthCalendar()));else{const grid=el('div','health-calendar-grid');for(const name of ['一','二','三','四','五','六','日'])grid.append(el('span','health-muted',name));const start=(new Date(`${m.month}-01T12:00:00Z`).getUTCDay()+6)%7;for(let i=0;i<start;i++)grid.append(el('span'));for(const day of m.calendar?.days??[]){const b=action(String(Number(day.day.slice(-2))),async()=>{calendarOpen=false;await core.readHealth(day.day);});b.setAttribute('aria-label',`${dateLabel(day.day)}${day.hasWorkout?'，有运动':''}`);b.setAttribute('aria-pressed',String(day.day===m.day));b.disabled=day.day>m.today;if(day.hasWorkout)b.append(el('span','health-calendar-dot'));grid.append(b);}n.append(grid,small('日期下的小点表示当天有运动记录。'));}return n;
   }
   function render(){motionFrame?.();const viewChanged=lastView!==m.view;lastView=m.view;const focus=document.activeElement,focusName=target.contains(focus)?focus.getAttribute('aria-label')||focus.textContent:null;
-    if(m.loading&&m.overview?.connected&&target.querySelector('.health-layout')){target.classList.add('health-date-out');return;}
+    if(m.loading&&m.overview?.connected&&target.querySelector('.health-layout')){target.querySelector('[aria-label="前一天"]')?.setAttribute('disabled','');target.querySelector('[aria-label="后一天"]')?.setAttribute('disabled','');target.classList.add('health-date-out');return;}
     target.classList.remove('health-date-out');
     target.classList.add('health-page');target.classList.toggle('health-mobile',mobile);const compact=mobile||globalThis.matchMedia('(max-width:600px)').matches;target.classList.toggle('is-compact',compact);const header=el('div','health-heading'),title=el('h1','','健康');title.tabIndex=-1;const refresh=icon('刷新健康','sync',()=>core.readHealth());header.append(title);const nav=el('div','health-date-nav');
     if(m.view!=='today')nav.append(action('返回今日',()=>{m.view='today';selectedPoint=null;render();}));
