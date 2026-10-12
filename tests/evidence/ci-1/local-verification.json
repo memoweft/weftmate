@@ -1,0 +1,51 @@
+{
+  "required": {
+    "mode": "required",
+    "files": 315,
+    "exitCode": 0,
+    "passed": 1763,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 33,
+    "exitCode": 0,
+    "passed": 230,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "occupancy": {
+    "required": {
+      "startedAt": "2026-10-12T10:04:31.8896589Z",
+      "exitCode": 0,
+      "slot": "heavy-3.lock",
+      "mode": "required",
+      "completedAt": "2026-10-12T10:21:35.4435439Z"
+    },
+    "vendor": {
+      "startedAt": "2026-10-12T10:51:40.7654129Z",
+      "slot": "heavy-1.lock",
+      "completedAt": "2026-10-12T11:00:33.2969938Z",
+      "mode": "vendor",
+      "exitCode": 0
+    }
+  },
+  "fixedTests": {
+    "passed": 17,
+    "failed": 0
+  },
+  "relatedTests": {
+    "passed": 18,
+    "failed": 0
+  },
+  "typecheck": {
+    "exitCode": 0
+  },
+  "publicHygiene": {
+    "hits": 0
+  },
+  "realModelRequests": 0
+}
