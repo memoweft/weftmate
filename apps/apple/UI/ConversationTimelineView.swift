@@ -20,11 +20,18 @@ struct ConversationTimelineView: View {
             expectedHostId: appModel.session?.hostId ?? "", accountEpoch: appModel.accountEpoch,
             currentEpoch: { [weak appModel] in appModel?.accountEpoch ?? UUID() }, currentSession: { [weak appModel] in appModel?.session }))
     }
+    private var displayEvents: [TimelineEvent] {
+        #if os(iOS)
+        appModel.timeline.displayEvents
+        #else
+        appModel.timeline.events
+        #endif
+    }
     var body: some View {
         ForEach(appModel.messages.filter { !$0.id.hasPrefix("host|") && !$0.pendingContext && !appModel.timelineMessageIDs.values.contains($0.id) }) { message in
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
         }
-        ForEach(TimelineProjection.conversationEntries(appModel.timeline.displayEvents)) { entry in
+        ForEach(TimelineProjection.conversationEntries(displayEvents)) { entry in
             VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                 if !entry.steps.isEmpty {
                     TimelineExecutionBlock(appModel: appModel, client: appModel.assistantClient, sessionID: sessionID, entry: entry, interactions: interactions, openSources: openSources)

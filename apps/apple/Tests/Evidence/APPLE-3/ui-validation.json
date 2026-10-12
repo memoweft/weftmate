@@ -6,5 +6,6 @@
   "realCloud": false,
   "realHealthKit": false,
   "systemStatusBar": true,
-  "boots": 4
+  "boots": 5,
+  "layoutOnly": true
 }
