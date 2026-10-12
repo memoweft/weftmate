@@ -19,7 +19,7 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
   let counter = 0
   const environment = { fetch: async (path: string, options: any = {}) => { requests.push({ path, options }); return read(path, options) }, storage,
     crypto: { randomUUID: () => `00000000-0000-4000-8000-${String(++counter).padStart(12, '0')}` } }
-  const context = { AbortSignal, URL, URLSearchParams, TextEncoder, Blob, DOMException, Intl, setTimeout, clearTimeout, setInterval, clearInterval }
+  const context = { AbortController, AbortSignal, URL, URLSearchParams, TextEncoder, Blob, DOMException, Intl, setTimeout, clearTimeout, setInterval, clearInterval }
   runInNewContext(source, context)
   const api = (context as any).WeftUiCore, core = api.create({ effects, ...environment })
   Object.assign(core.state, { csrfToken: 'synthetic-csrf', account: { ownerId: 'owner-test', username: 'Synthetic' }, ownerId: 'owner-test', device: { id: 'device-test' }, hostId: 'host-test', online: true,
@@ -304,6 +304,60 @@ test('history pages use host watermarks/cursors and keep stale reads out after a
   late.resolve(response({ events: [{ seq: 1, type: 'assistant.message', data: { text: 'wrong conversation' } }], nextSeq: 1, hasMore: false }))
   await inFlight; assert.equal(g.core.state.historyEvents.size, 0)
 })
+
+test('FIX-31 a side-chat wait baseline catches up messages and approvals already inside its cursor', async () => {
+  const f = fixture(), wait = deferred(); let reads = 0, waits = 0;
+  Object.assign(f.core.state, {personalCapabilities:{chats:1,replyWait:1,replyStreaming:1},
+    mainChat:{chatId:'main',activeSessionId:'main-session'},selectedChatId:'side',
+    chats:[{chatId:'side',activeSessionId:'session-test'}]});
+  f.core.refreshConversationFacts = async () => {};
+  f.core.refreshConversationApprovals = async () => {};
+  f.core.refreshConversationQuestions = async () => {};
+  f.core.accessApi = async path => {
+    assert.match(path,/^\/sessions\/session-test\/events\?/);
+    if (++reads === 1) return {events:[],nextSeq:3,hasMore:false};
+    return {events:[{seq:8,type:'user.message',data:{text:'read brief.md',receiptId:'receipt-test'}},
+      {seq:39,type:'approval.requested',data:{approvalId:'approval-test',turn:1}}],nextSeq:39,hasMore:false};
+  };
+  // The selection's first read finishes before the native turn starts.
+  await f.core.refreshHistory(true);
+  f.core.readChatEvents = async () => ({syncCursor:'cursor-including-approval',liveRevision:0});
+  f.core.readChatChanges = async () => { waits++; return wait.promise; };
+  const read = f.core.refreshLiveConversation();
+  try {
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(reads,2,'snapshot establishment must catch up native history without waiting for another change');
+    assert.equal(waits,0,'the already-present approval must not be gated by a 30-second idle wait');
+    assert.equal(f.core.state.historyEvents.get(8)?.data.receiptId,'receipt-test');
+    assert.equal(f.core.state.historyEvents.get(39)?.type,'approval.requested');
+    assert.equal(f.core.state.afterSeq,39);
+    const result = await read;
+    assert.equal(result.kind,'changed');assert.equal(result.immediateRenew,true);
+    const renewal = f.core.refreshLiveConversation();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(waits,1,'subsequent reads retain the normal long wait');
+    wait.resolve({nextCursor:'next',liveRevision:0,upserts:[],removals:[],waitOutcome:'timeout'});
+    assert.equal((await renewal).kind,'unchanged');
+  } finally {
+    wait.resolve({nextCursor:'next',liveRevision:0,upserts:[],removals:[],waitOutcome:'timeout'});
+    await read;
+  }
+});
+
+test('FIX-31 baseline catch-up does not reuse an older in-flight native history snapshot', async () => {
+  const f=fixture(), initial=deferred(); let reads=0;
+  Object.assign(f.core.state,{personalCapabilities:{replyWait:1},selectedChatId:'side'});
+  f.core.accessApi=async()=>++reads===1 ? initial.promise : {events:[{seq:8,type:'user.message',data:{text:'new message'}}],nextSeq:8,hasMore:false};
+  f.core.readChatEvents=async()=>({syncCursor:'cursor-including-new-message',liveRevision:0});
+  f.core.readChatChanges=async()=>{throw Error('must catch up before waiting')};
+  const old=f.core.refreshHistory(true), catchUp=f.core.refreshLiveConversation();
+  await new Promise(resolve=>setImmediate(resolve));
+  initial.resolve({events:[],nextSeq:3,hasMore:false});
+  await old;const result=await catchUp;
+  assert.equal(reads,2,'a pre-baseline response cannot substitute for a fresh catch-up read');
+  assert.equal(f.core.state.historyEvents.get(8)?.data.text,'new message');
+  assert.equal(result.kind,'changed');
+});
 
 test('shared send/stop actions choose steer or queue and block unresolved submissions', async () => {
   const f = fixture(), commands: any[] = []

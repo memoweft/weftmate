@@ -1,0 +1,64 @@
+{
+  "base": "9a9f53f0",
+  "regressions": {
+    "alreadyFinishedHistory": {
+      "originalFailed": true,
+      "fixedPassed": true
+    },
+    "inFlightHistory": {
+      "initialFixFailed": true,
+      "finalFixPassed": true
+    }
+  },
+  "relatedTests": {
+    "pass": 82,
+    "fail": 0
+  },
+  "mobileInteractionTests": {
+    "files": 5,
+    "pass": 114,
+    "fail": 0
+  },
+  "typecheckPassed": true,
+  "publicHygieneHits": 0,
+  "installedSmoke": [
+    {
+      "round": 1,
+      "buildPassed": true,
+      "smokePassed": true,
+      "checks": 7,
+      "providerRequests": 6,
+      "durationSeconds": 161.254,
+      "orphanProcesses": 0
+    },
+    {
+      "round": 2,
+      "buildPassed": true,
+      "smokePassed": true,
+      "checks": 7,
+      "providerRequests": 6,
+      "durationSeconds": 163.129,
+      "orphanProcesses": 0
+    },
+    {
+      "round": 3,
+      "buildPassed": true,
+      "smokePassed": true,
+      "checks": 7,
+      "providerRequests": 6,
+      "durationSeconds": 150.214,
+      "orphanProcesses": 0
+    }
+  ],
+  "development": {
+    "nativeTurnRequests": 4,
+    "providerRequests": 5,
+    "readDirect": true,
+    "approvalTools": [
+      "write"
+    ],
+    "writeReadBack": true
+  },
+  "realModelRequests": 0,
+  "smokeSelectorsAndTimeoutsUnchanged": true
+}
