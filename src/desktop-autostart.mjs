@@ -12,12 +12,11 @@ export function repairWindowsLoginItem({ name, executable, force = false, platfo
   if (platform !== 'win32') return false;
   const key = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
   try {
-    const options = { windowsHide: true, encoding: 'utf8' };
-    const result = run('reg.exe', ['query', key, '/v', name], options);
+    const result = run('reg.exe', ['query', key, '/v', name], { windowsHide: true, encoding: 'utf8' });
     if (result.status !== 0) return false;
     const command = result.stdout.split(/\r?\n/).map(line => /^\s*.+?\s+REG_SZ\s+(.*)$/.exec(line)?.[1]).find(Boolean);
     const repaired = rebaseLoginCommand(command, executable, { force, exists });
-    return !!repaired && run('reg.exe', ['add', key, '/v', name, '/t', 'REG_SZ', '/d', repaired, '/f'], options).status === 0;
+    return !!repaired && run('reg.exe', ['add', key, '/v', name, '/t', 'REG_SZ', '/d', repaired, '/f'], { windowsHide: true, encoding: 'utf8' }).status === 0;
   } catch { return false; } // A registry problem must never block ordinary use.
 }
 export function loginItemEnabled(value, name, path, platform = process.platform) {
