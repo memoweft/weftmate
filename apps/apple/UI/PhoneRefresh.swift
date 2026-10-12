@@ -196,9 +196,9 @@ extension View {
         self
         #endif
     }
-    @ViewBuilder func phoneComposerCard() -> some View {
+    @ViewBuilder func phoneComposerCard(expanded: Bool = true) -> some View {
         #if os(iOS)
-        self.padding(AppleTokens.Space.p12).background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24, style: .continuous))
+        self.padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, expanded ? AppleTokens.Space.p12 : AppleTokens.Space.p4).background(Weave.soft, in: RoundedRectangle(cornerRadius: expanded ? AppleTokens.Radius.r24 : AppleTokens.Radius.r32, style: .continuous))
             .padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, AppleTokens.Space.p8)
         #else
         self.padding(AppleTokens.Space.p16).background(Weave.soft)

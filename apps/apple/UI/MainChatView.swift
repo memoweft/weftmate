@@ -27,6 +27,7 @@ struct MainChatView: View {
     @State private var restore: ChatAnchor?
     @State private var pixelScroll: ((Double) -> Void)?
     @FocusState private var draftFocused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var stopping = false
     @StateObject private var positions = MainChatPositionTracker()
     init(app: AppleAppModel) {
@@ -326,9 +327,13 @@ struct MainChatView: View {
                 HStack { Text(file.original.name); Button("移除") { file.removeTemporaryFiles(); model.attachments.removeAll { $0.id == file.id } } }.buttonStyle(OutlineActionStyle()).font(AppleTokens.Fonts.caption)
             }
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-            TextField(composerPlaceholder, text: Binding(get: { model.draft }, set: { model.setDraft($0) }), axis: .vertical).lineLimit(1...6)
-                .textFieldStyle(.plain).focused($draftFocused).disabled(!model.models.contains(where: \.configured)).accessibilityIdentifier("mainChat.draft")
+            #if os(iOS)
+            if composerExpanded { draftInput }
+            if composerExpanded && dynamicTypeSize.isAccessibilitySize { modelSelection }
+            #else
+            draftInput
             if dynamicTypeSize.isAccessibilitySize { modelSelection }
+            #endif
             HStack {
                 Menu {
                     Button("文件", image: ImageResource(name: "wm-file", bundle: .main)) { captureImportScope(); DispatchQueue.main.async { importing = true } }
@@ -362,7 +367,12 @@ struct MainChatView: View {
                 .menuStyle(.borderlessButton).fixedSize()
                 #endif
                 .phoneIcon().phoneComposerControl(circle: true).menuOrder(.fixed).disabled(!model.models.contains(where: \.configured)).accessibilityLabel("添加").accessibilityIdentifier("mainChat.plus")
+                #if os(iOS)
+                if !composerExpanded { draftInput }
+                if composerExpanded && !dynamicTypeSize.isAccessibilitySize { modelSelection }
+                #else
                 if !dynamicTypeSize.isAccessibilitySize { modelSelection }
+                #endif
                 Spacer(minLength: AppleTokens.Space.p0)
                 #if os(iOS)
                 Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic") }.phoneIcon(quiet: true)
@@ -387,7 +397,9 @@ struct MainChatView: View {
             }
             }
             #if os(iOS)
-            .phoneComposerCard()
+            .phoneComposerCard(expanded: composerExpanded)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: composerExpanded)
+            .accessibilityValue(composerExpanded ? "输入区已展开" : "输入区已收起")
             #endif
         }
         #if os(iOS)
@@ -395,6 +407,18 @@ struct MainChatView: View {
         #else
         .padding(AppleTokens.Space.p16).background(Weave.soft)
         #endif
+    }
+    private var composerExpanded: Bool {
+        #if os(iOS)
+        PhoneComposerState(focused: draftFocused, draft: model.draft, attachmentCount: model.attachments.count).expanded
+        #else
+        true
+        #endif
+    }
+    private var draftInput: some View {
+        TextField(composerPlaceholder, text: Binding(get: { model.draft }, set: { model.setDraft($0) }), axis: .vertical)
+            .lineLimit(composerExpanded ? 1...6 : 1...1).textFieldStyle(.plain).focused($draftFocused)
+            .disabled(!model.models.contains(where: \.configured)).accessibilityIdentifier("mainChat.draft")
     }
     @ViewBuilder private var modelSelection: some View {
         #if os(iOS)
