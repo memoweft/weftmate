@@ -109,6 +109,7 @@ async function shot(scene, theme) {
 }
 async function both(scene) {
   for (const width of [390,360]) {
+    if(!local)run('shell','am','force-stop','com.google.android.apps.nexuslauncher');
     run('shell','wm','size',width===390?'390x844':'360x780');
     await page.waitForFunction(width=>innerWidth===width,width);
     for (const theme of ['light', 'dark']) await shot(scene, theme);
@@ -153,8 +154,7 @@ try {
   assert.ok(!run('shell', 'pm', 'list', 'packages', pkg).includes(pkg), 'Never overwrite an existing test installation');
   assert.deepEqual(run('shell', 'ps', '-A').split('\n').filter(row => row.includes('com.memoweft.weftmate')), [], 'Another WeftMate app is active');
   originalSize = run('shell', 'wm', 'size'); originalDensity = run('shell', 'wm', 'density');
-  if(!local){run('shell','pm','disable-user','--user','0','com.google.android.apps.nexuslauncher');
-    run('shell','settings','put','global','heads_up_notifications_enabled','0');}
+  if(!local)run('shell','settings','put','global','heads_up_notifications_enabled','0');
   run('shell', 'wm', 'density', '160'); run('shell', 'wm', 'size', '390x844');
   report.osVersion = run('shell', 'getprop', 'ro.build.version.release').trim();
   fixture = await startAnd3Fixture();
