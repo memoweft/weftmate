@@ -43,6 +43,7 @@ public struct HealthBatchItem: Codable, Sendable {
 public struct HealthBatchBody: Codable, Sendable { public var items: [HealthBatchItem]; public init(items: [HealthBatchItem]) { self.items = items } }
 public struct HealthBatchReply: Codable, Sendable { public var items: [HealthBatchItem]; public var changedDays: [String] }
 public struct HealthPageCache: Codable, Sendable {
+    public var cachedAnalyses: [HealthAnalysis]?; public var itemAnalysisEnabled: Bool?; public var analysisSupported: Bool?
     public var overview: HealthOverview?; public var calendar: HealthCalendarReply?; public var series: [String: HealthMetricSeries] = [:]; public var fetchedAt: Date?
     public init() {}
 }

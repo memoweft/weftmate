@@ -74,3 +74,81 @@ private func h4calendar(_ zone: String = "UTC") -> Calendar { var c = Calendar(i
     let s=try JSONDecoder().decode(DailyHealthState.self,from:Data(original.utf8))
     #expect(s.enabled && s.connected && s.expandedAuthorization == nil && s.historyVersion == nil)
 }
+private actor Health4ContractTransport: HTTPTransport {
+    var requests: [URLRequest]=[]
+    func send(_ r: URLRequest) async throws -> HTTPResponse {
+        let path=r.url!.path;requests.append(r)
+        if path.hasSuffix("/auth/login") || path.hasSuffix("/auth/me") {
+            return .init(status:200,headers:["set-cookie":"wm_personal_session="+String(repeating:"a",count:43)],body:Data(("{\"account\":{\"ownerId\":\"synthetic\",\"username\":\"fixture\",\"displayName\":\"Fixture\"},\"device\":{\"id\":\"test-phone\",\"name\":\"Test\"},\"csrfToken\":\""+String(repeating:"b",count:43)+"\"}").utf8))
+        }
+        if path.hasSuffix("/status") { return .init(status:200,body:Data("{\"ownerId\":\"synthetic\",\"hostId\":\"synthetic-host\"}".utf8)) }
+        if path.hasSuffix("/records/batch") {
+            let body=try JSONDecoder().decode(HealthBatchBody.self,from:r.httpBody!)
+            let value=HealthBatchReply(items:body.items,changedDays:body.items.map(\.day))
+            return .init(status:200,body:try JSONEncoder().encode(value))
+        }
+        if path.hasSuffix("/settings/health") { return .init(status:200,body:Data("{\"settings\":{\"modelInsightsEnabled\":true,\"itemAnalysisEnabled\":true,\"sleepTargetMinutes\":450,\"retentionDays\":400}}".utf8)) }
+        if path.hasSuffix("/health/analysis") {
+            if r.httpMethod == "GET" { return .init(status:200,body:Data("{\"items\":[]}".utf8)) }
+            return .init(status:409,body:Data("{\"error\":{\"code\":\"AI_ANALYSIS_OFF\"}}".utf8))
+        }
+        return .init(status:200,body:Data("{}".utf8))
+    }
+    func all() -> [URLRequest] { requests }
+}
+@Test func health4RealClientBatchProfileAndAnalysisUseContractBodiesAndAuth() async throws {
+    let transport=Health4ContractTransport()
+    // Each client uses one authenticated identity, including all subsequent parity requests.
+    let tested=PersonalClient(credentialStore:MemoryStore(),transport:transport,platform:.iOS)
+    let server=try ServerConfiguration(input:"https://health.example.com")
+    let session=try await tested.login(server:server,username:"fixture",password:"synthetic-only",deviceName:"Test")
+    let account=try LocalAccountScope(server:server,ownerId:session.account.ownerId)
+    var v=DailyHealth(steps:1234);v.version=2
+    let reply=try await tested.putHealthBatch([.init(day:"2026-10-11",health:v)],account:account)
+    #expect(reply.items.count == 1 && reply.items[0].health == v)
+    try await tested.putHealthProfile(.init(birthYear:1986,sex:"male",heightCm:175,weightKg:70),account:account)
+    _=try await tested.healthPageSettings(enabled:true)
+    _=try await tested.healthAnalysisCache(day:"2026-10-12")
+    await #expect(throws:APIFailure.server(status:409,code:"AI_ANALYSIS_OFF")) { _=try await tested.healthAnalysis(scope:"recovery",day:"2026-10-12") }
+    let requests=await transport.all()
+    let mutations=requests.filter { $0.httpMethod == "PUT" || $0.httpMethod == "PATCH" || $0.url!.path.hasSuffix("/health/analysis") && $0.httpMethod == "POST" }
+    #expect(mutations.count == 4 && mutations.allSatisfy { $0.value(forHTTPHeaderField:"X-WeftMate-CSRF") != nil })
+    let setting=try JSONSerialization.jsonObject(with:mutations[2].httpBody!) as! [String:Bool]
+    #expect(setting == ["itemAnalysisEnabled":true])
+    let analysis=try JSONSerialization.jsonObject(with:mutations[3].httpBody!) as! [String:String]
+    #expect(analysis == ["scope":"recovery","day":"2026-10-12"])
+}
+@Test func health4HeartbeatFloatingPointBoundariesDoNotChangeHistogramMode() {
+    let rr=(0..<40).map { $0%2 == 0 ? 999.9999999999999 : 1100.0000000000002 }
+    #expect(abs(HealthInputMath.beats(rr).stress! - 243.90243902439) < 0.000001)
+}
+@Test func health4RepresentativeVariabilityExcludesAwakeDaytimeAndNapMeasurements() {
+    let start=h4date("2026-10-11T22:00:00Z"), wake=h4date("2026-10-12T06:00:00Z"),nap=h4date("2026-10-12T13:00:00Z")
+    let sleep: [HealthInputMath.SleepInput]=[.init(start,wake,"core"),.init(start.addingTimeInterval(3600),start.addingTimeInterval(7200),"awake"),.init(nap,nap.addingTimeInterval(3600),"core")]
+    let points=[(start.addingTimeInterval(1800),50.0),(start.addingTimeInterval(5400),200.0),(wake.addingTimeInterval(3600),300.0),(nap.addingTimeInterval(1800),400.0)]
+    #expect(HealthInputMath.representativeVariability(points,sleep:sleep,calendar:h4calendar())["2026-10-12"] == 50)
+    let shift=[HealthInputMath.SleepInput(nap,nap.addingTimeInterval(8*3600),"core")]
+    #expect(HealthInputMath.representativeVariability([(nap.addingTimeInterval(3600),60)],sleep:shift,calendar:h4calendar())["2026-10-12"] == 60)
+}
+@Test func health4TemporaryHostDowngradeDoesNotRepeatCompletedVersionThreeHistory() {
+    var s=DailyHealthState();let now=h4date("2026-10-12T12:00:00Z")
+    s.beginHistory(version:2,now:now,calendar:h4calendar());while !s.nextHistoryDays.isEmpty { s.acknowledgeHistory(s.nextHistoryDays) }
+    s.beginHistory(version:3,now:now,calendar:h4calendar());s.acknowledgeHistory(s.nextHistoryDays)
+    s.beginHistory(version:2,now:now,calendar:h4calendar())
+    #expect(s.historyTargetVersion == 3 && s.historyRemaining?.count == 80)
+    while !s.nextHistoryDays.isEmpty { s.acknowledgeHistory(s.nextHistoryDays) }
+    s.beginHistory(version:2,now:now,calendar:h4calendar());s.beginHistory(version:3,now:now,calendar:h4calendar())
+    #expect(s.historyVersion == 3 && s.historyRemaining?.isEmpty == true)
+}
+@Test func health4HostTimestampsAcceptFractionalSecondsAndOffsets() {
+    let expected=h4date("2026-10-12T14:32:00Z")
+    #expect(HealthInputMath.parseISO("2026-10-12T14:32:00.000Z") == expected)
+    #expect(HealthInputMath.parseISO("2026-10-12T07:32:00-07:00") == expected)
+    #expect(HealthInputMath.parseISO("missing") == nil)
+}
+@Test func health4WorkoutOverlapsAreNotCountedTwice() {
+    let a=h4date("2026-10-12T09:00:00Z"), b=a.addingTimeInterval(3600)
+    #expect(HealthInputMath.uncovered(DateInterval(start:a,end:b),occupied:[DateInterval(start:a,end:b)]).isEmpty)
+    #expect(HealthInputMath.uncovered(DateInterval(start:a.addingTimeInterval(1800),end:b.addingTimeInterval(1800)),occupied:[DateInterval(start:a,end:b)]) == [DateInterval(start:b,end:b.addingTimeInterval(1800))])
+    #expect(HealthInputMath.uncovered(DateInterval(start:a,end:b),occupied:[DateInterval(start:a.addingTimeInterval(1200),end:a.addingTimeInterval(2400))]).map(\.duration) == [1200,1200])
+}
