@@ -8,7 +8,7 @@
         return n;
     };
     function stepCard(step, saved, running, options) {
-        const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || '工具执行'}${step.state === 'failed' ? ' · 失败' : step.state === 'cancelled' ? ' · 已停止' : step.state === 'running' && running ? ' · 运行中' : ''}${step.approvalText ? ` · ${step.approvalText}` : ''}`);
+        const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || '工具执行'}${step.statusText ? ` · ${step.statusText}` : step.state === 'failed' ? ' · 遇到问题' : step.state === 'cancelled' ? ' · 已停止' : step.state === 'running' && running ? ' · 运行中' : ''}${step.approvalText ? ` · ${step.approvalText}` : ''}`);
         const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true');
         arrow.append(window.WeftIcons.create('chevron', 16)); label.append(arrow);
         const output = node('pre', 'timeline-raw'), copy = node('button', 'timeline-action', '复制');

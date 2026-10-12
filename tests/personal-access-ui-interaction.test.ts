@@ -925,7 +925,8 @@ test('orphan stop observation ends its progress without inventing history or hid
   assert.match(page.get('timeline-status').textContent, /^已结束/)
   const progress = page.get('transcript').children.find((row: any) => row.dataset.timeline === 'steps-2')
   assert.ok(progress)
-  assert.match(visibleText(progress), /读取了 1 个文件.*已结束/)
+  assert.match(visibleText(progress), /读取了 1 个文件/)
+  assert.doesNotMatch(visibleText(progress), /失败|正在继续/)
   assert.equal(progress.dataset.running, 'false')
   assert.equal(events.some(event => event.type === 'turn.ended'), false)
   events.push({ seq: 4, type: 'turn.started', data: { turn: 2 } },
