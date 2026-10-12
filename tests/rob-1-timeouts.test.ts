@@ -53,6 +53,7 @@ for(const phase of ['before-install','before-rollback']) test(`real standalone w
   const source=resolve('src/personal-update/app-watchdog.mjs');
   const monitor=join(snapshot,'monitor.mjs');
   writeFileSync(monitor,readFileSync(source,'utf8'));
+  writeFileSync(join(snapshot,'process-output.mjs'),readFileSync('src/process-output.mjs'));
   writeFileSync(join(snapshot,'physical-copy.mjs'),`export async function copyPhysicalTree(){throw Error('unexpected installation write')}; export async function removePhysicalTree(){throw Error('unexpected installation removal')};`);
   writeFileSync(join(snapshot,'watchdog-host-log.mjs'),readFileSync('src/host-log.mjs'));
   const executor=phase==='before-install'?'()=>new Promise(()=>{})':"()=> (++globalThis.rob1QueryCalls===1?Promise.resolve({stdout:'[]'}):new Promise(()=>{}))";

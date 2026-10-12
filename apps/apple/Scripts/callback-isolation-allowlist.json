@@ -481,5 +481,12 @@
     "api": "onReceive",
     "sha256": "0c48c5c905572de58183954c76fc96812887dc9d6e84029873b74a0767426b1a",
     "reason": "UIKit keyboard notification value is ignored by an explicitly @Sendable callback. Only a nested Task isolated to MainActor updates the keyboard visibility presentation state; no UI or mutable actor state is read on the callback executor."
+  },
+  {
+    "file": "apps/apple/UI/MainChatPositionTracking.swift",
+    "line": 86,
+    "api": "observe",
+    "sha256": "7d8838c956e5f5faa0a0947c4a58fc8638ddadc3befedb0866cb60b21f4c29ed",
+    "reason": "Viewport bounds KVO uses an explicitly Sendable callback and hops to MainActor before scheduling the UIKit measurement; no UI state is read on the SDK callback executor."
   }
 ]

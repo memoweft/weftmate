@@ -32,6 +32,9 @@ if ($Undo) {
     return
 }
 $electronPath = Join-Path $Repository 'node_modules\electron\dist\electron.exe'
+if ($env:ELECTRON_OVERRIDE_DIST_PATH) {
+    $electronPath = Join-Path $env:ELECTRON_OVERRIDE_DIST_PATH 'electron.exe'
+}
 $iconPath = Join-Path $Repository 'build\icon.ico'
 foreach ($requiredPath in @($electronPath, $iconPath, (Join-Path $Repository 'package.json'))) {
     if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) { throw "Missing development asset: $requiredPath" }

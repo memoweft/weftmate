@@ -60,9 +60,9 @@ struct HealthPageView: View {
         }.accessibilityElement(children:.contain).accessibilityIdentifier("health.insight")
         LazyVGrid(columns:Array(repeating:GridItem(.flexible(),alignment:.top),count:HealthPagePolicy.scoreColumns(width:0)),alignment:.leading,spacing:AppleTokens.Space.p12) {
             ForEach(["recovery","sleep","load"],id:\.self) { id in score(id,o) }
-            if HealthPagePolicy.visibleOptionalCards(o).contains("stress"),let value=o.stress { extra("stress","压力",value) }
-            if HealthPagePolicy.visibleOptionalCards(o).contains("energy"),let value=o.energy { extra("energy","电能",value) }
-            if HealthPagePolicy.visibleOptionalCards(o).contains("fitnessAge"),let value=o.fitnessAge { extra("fitnessAge","体能年龄",value) }
+            if HealthPagePolicy.visibleOptionalCards(o).contains("stress"),let value=o.stress { extra("stress","压力",value.score,value.state,value.label) }
+            if HealthPagePolicy.visibleOptionalCards(o).contains("energy"),let value=o.energy { extra("energy","电能",value.current,value.state,value.label) }
+            if HealthPagePolicy.visibleOptionalCards(o).contains("fitnessAge"),let value=o.fitnessAge { extra("fitnessAge","体能年龄",value.fitnessAge,value.state,value.label) }
         }.accessibilityIdentifier("health.scoreGrid")
         card {
             NavigationLink { detail("sleepMinutes","睡眠时长") } label: {
@@ -71,7 +71,7 @@ struct HealthPageView: View {
                     HealthScoreNumber(text:minutes(o.sleep?.minutes))
                     Text("深睡 "+minutes(o.sleep?.deepMinutes ?? page.cache.series["deepMinutes-7"]?.points.last?.value)+" · 快速眼动 "+minutes(o.sleep?.remMinutes ?? page.cache.series["remMinutes-7"]?.points.last?.value))
                     Text(time(o.sleep?.start)+" — "+time(o.sleep?.end)).foregroundStyle(.secondary)
-                    Text(o.usage?.lastActiveAt == nil ? "深夜使用电脑 "+minutes(o.usage?.lateNightMinutes) : "昨晚用电脑到 "+time(o.usage?.lastActiveAt)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
+                    Text(o.usage?.lastUsedAt == nil ? "深夜使用电脑 "+minutes(o.usage?.lateNightMinutes) : "最近一次向 WeftMate 发消息 "+time(o.usage?.lastUsedAt)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
                 }.frame(maxWidth:.infinity,alignment:.leading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("health.sleepDuration")
         }
@@ -79,7 +79,7 @@ struct HealthPageView: View {
         ScrollView(.horizontal) {
             HStack(alignment:.top,spacing:AppleTokens.Space.p12) {
                 ForEach(vitalIDs,id:\.self) { id in
-                    let metric=o.vitals[id]
+                    let metric=o.vital(id)
                     card {
                         NavigationLink { detail(id,title(id)) } label: {
                             VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
@@ -128,20 +128,18 @@ struct HealthPageView: View {
             }.buttonStyle(.plain).accessibilityIdentifier("health.score."+id)
         }
     }
-    private func extra(_ id: String,_ name: String,_ value: JSONValue) -> some View {
+    private func extra(_ id: String,_ name: String,_ value: Double?,_ state: String?,_ label: String?) -> some View {
         card {
             NavigationLink { detail(id,name) } label: {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                     Text(name).font(AppleTokens.Fonts.title2.bold())
-                    HealthScoreNumber(text:number(value["score"]?.healthNumber ?? value["value"]?.healthNumber))
-                    if let score=value["score"]?.healthNumber {
-                        HealthScoreRangeBar(score:score,low:value["low"]?.healthNumber,high:value["high"]?.healthNumber,state:value["state"]?.string)
-                    }
-                    Text(value["label"]?.string ?? "根据你平时的变化估计").foregroundStyle(stateColor(value["state"]?.string))
-                    if id == "stress" { Text("最近一次测量 "+time(value["measuredAt"]?.string ?? value["updatedAt"]?.string)).font(AppleTokens.Fonts.footnote) }
-                    if id == "energy", case .array(let points)=value["points"] {
-                        Chart(Array(points.enumerated()),id:\.offset) { i,p in
-                            if let v=p["value"]?.healthNumber { LineMark(x:.value("时刻",i),y:.value("电能",v)).lineStyle(StrokeStyle(lineWidth:AppleTokens.Space.p4,lineCap:.round,lineJoin:.round)) }
+                    HealthScoreNumber(text:number(value))
+                    if id != "fitnessAge" { HealthScoreRangeBar(score:value,low:nil,high:nil,state:state) }
+                    Text(label ?? "还没有足够的测量").foregroundStyle(stateColor(state))
+                    if id == "stress" { Text("最近一次测量 "+time(page.cache.overview?.stress?.latest?.time)).font(AppleTokens.Fonts.footnote) }
+                    if id == "energy", let curve=page.cache.overview?.energy?.curve {
+                        Chart(Array(curve.enumerated()),id:\.offset) { i,p in
+                            if let v=p.value { LineMark(x:.value("时刻",i),y:.value("电能",v)).lineStyle(StrokeStyle(lineWidth:AppleTokens.Space.p4,lineCap:.round,lineJoin:.round)) }
                         }.frame(height:80).accessibilityLabel("当日电能曲线")
                     }
                 }.contentShape(Rectangle())
@@ -232,6 +230,7 @@ struct HealthDetailView: View {
                 Picker("时间范围",selection:$days) { ForEach([7,14,30,60],id:\.self) { Text("\($0) 天").tag($0) } }.pickerStyle(.segmented).accessibilityIdentifier("health.range")
                 if loading { ProgressView("正在读取变化…") }
                 HealthTrendChart(series:series,overlay:overlays ? overlay : nil,compact:false).accessibilityIdentifier("health.trend")
+                HealthFormalBasis(overview:page.cache.overview,id:id)
                 Text("灰色是你常见的范围，虚线是这段时间的平均；按住图表可以看某一天。").font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
                 Toggle("叠加深夜使用时长",isOn:$overlays).accessibilityIdentifier("health.overlay")
                 if overlays { Text("淡色柱按这段时间最长的深夜使用分钟缩放，显示变化关联。").font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
@@ -309,5 +308,35 @@ struct HealthAdditionalAuthorizationView: View {
             Button("继续",action:authorize).buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("health.expandAuthorize")
             Button("先看已有的",action:later).buttonStyle(OutlineActionStyle()).accessibilityIdentifier("health.expandLater")
         }.padding(AppleTokens.Space.p24).presentationDetents([.medium,.large]).presentationDragIndicator(.visible)
+    }
+}
+
+private struct HealthFormalBasis: View {
+    var overview: HealthOverview?; var id: String
+    var body: some View {
+        VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
+            if id == "stress", let stress=overview?.stress {
+                Text("最近一次测量 "+time(stress.latest?.time))
+                Text("当天平均 "+number(stress.average)+" · 基线 "+String(stress.baselineDays ?? 0)+" 天")
+                Text((stress.samples ?? []).contains { $0.method == "stressIndex" } ? "根据逐搏间期估计压力，再与你的个人基线比较。" : "根据心率变异性和心率估计，再与你的个人基线比较。")
+                missing(stress.missing); Text(stress.disclaimer ?? "这是趋势估计，不是医学结论。")
+            }
+            if id == "energy", let energy=overview?.energy {
+                Text("夜间恢复 "+number(energy.nightCharged)+" · 白天消耗 "+number(energy.dayDrained))
+                if energy.degraded == true { Text("部分时段使用每小时心率估计，空缺时段不补测量。") }
+                ForEach(Array((energy.sleepPeriods ?? []).enumerated()),id:\.offset) { _,period in Text("睡眠时段 "+period.start+" — "+period.end) }
+                missing(energy.missing); Text(energy.disclaimer ?? "这是趋势估计，不是医学结论。")
+            }
+            if id == "fitnessAge", let age=overview?.fitnessAge {
+                if let difference=age.difference { Text("与实际年龄相差 "+number(difference)+" 岁") }
+                if let range=age.referenceRange { Text("同年龄参考范围 "+number(range.low)+" — "+number(range.high)+" 毫升/千克/分钟") }
+                if age.bounded == true { Text("已到参考表边界，只供趋势参考。") }
+                missing(age.missing); Text(age.disclaimer ?? "这是趋势估计，不是医学结论。")
+            }
+            if id == "load", let range=overview?.load?.recommendedRange { Text("建议相对负荷 "+number(range.low)+" — "+number(range.high)) }
+        }.font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
+    }
+    @ViewBuilder private func missing(_ values: [String]?) -> some View {
+        if let values, !values.isEmpty { Text("还缺少："+values.map(HealthFieldText.name).joined(separator:"、")) }
     }
 }

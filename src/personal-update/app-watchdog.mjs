@@ -1,3 +1,4 @@
+import { setProcessWarningLog } from './process-output.mjs';
 import { readFile, writeFile, rename, rm, mkdir } from 'node:fs/promises';
 import { join, isAbsolute } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -22,6 +23,7 @@ async function save(name, value) { const file = join(root, name), temp = file + 
 const state = await json('pending.json');
 if (!state || !isAbsolute(root) || !isAbsolute(state.installation) || state.snapshot !== join(root, state.snapshot.split(/[\\/]/).at(-1))) process.exit(2);
 const hostLog = state.dataDirectory ? createHostLog(state.dataDirectory) : null;
+setProcessWarningLog((event, data) => hostLog?.write(event, data));
 const recordFailure = error => hostLog?.failure('app-watchdog', error);
 async function relevantProcesses() { return queryProcesses([state.executable,state.installer]); }
 await save('monitor-ready.json', { token: state.token, pid: process.pid });
@@ -32,10 +34,25 @@ while (alive(state.oldPid)) {
   await pause(200);
 }
 // A timeout/unknown enumeration must not move or overwrite the installation.
-try { if ((await relevantProcesses()).length) throw Object.assign(new Error('SYSTEM_QUERY_FAILED'),{code:'SYSTEM_QUERY_FAILED'}); }
+try {
+  // Main can exit just before Electron's auxiliary processes / --quit requester.
+  // Wait for those exact executables; an unknown query still fails immediately.
+  const closedDeadline = Date.now() + 5000;
+  while ((await relevantProcesses()).length) {
+    if (Date.now() >= closedDeadline) throw Object.assign(new Error('SYSTEM_QUERY_FAILED'), { code: 'SYSTEM_QUERY_FAILED' });
+    await pause(200);
+  }
+}
 catch(error) {
   recordFailure(error);
   await save('last-result.json',{phase:'recovery-failed',step:'check-closed-program',version:state.oldVersion,code:error.code});
+  // The original tree is untouched. Let the user keep using it after a system
+  // query failure; the normal instance channel handles an already running copy.
+  const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
+  const child = spawn(state.executable, [`--desktop-config=${state.configFile}`], {
+    detached: true, windowsHide: true, stdio: 'ignore', env,
+  });
+  child.on('error', () => {}); child.unref();
   process.exit(1);
 }
 let installResult = 1;
@@ -53,7 +70,11 @@ try {
   const installerEnv = { ...process.env,
     PSModulePath: join(process.env.SystemRoot || 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/Modules') };
   delete installerEnv.ELECTRON_RUN_AS_NODE;
-  const child = spawn(state.installer, ['--updated', '/S', '/currentuser', `/D=${state.installation}`], { windowsHide: true, stdio: 'ignore', env: installerEnv });
+  // NSIS /D must be last and unquoted, even when the destination has spaces.
+  // Quote argv[0] ourselves while preserving the final /D command-line tail.
+  const child = spawn(state.installer, ['--updated', '/S', '/currentuser', `/D=${state.installation}`], {
+    windowsHide: true, windowsVerbatimArguments: true, argv0: `"${state.installer}"`, stdio: 'ignore', env: installerEnv,
+  });
   installResult = await new Promise(resolve => {
     let timedOut=false;
     const timer = setTimeout(() => { timedOut=true; child.kill(); recordFailure(Object.assign(new Error('EXTERNAL_COMMAND_TIMEOUT'),{code:'EXTERNAL_COMMAND_TIMEOUT'})); resolve(1); }, 600000);

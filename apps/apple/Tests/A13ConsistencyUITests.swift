@@ -1,6 +1,13 @@
 import XCTest
 
 final class A13ConsistencyUITests: XCTestCase {
+    @MainActor private func pendingApprovalElement(_ app: XCUIApplication) -> XCUIElement {
+        #if os(iOS)
+        app.descendants(matching:.any).matching(NSPredicate(format:"identifier BEGINSWITH %@","approvalCard.")).firstMatch
+        #else
+        app.descendants(matching:.any)["approvalBar"]
+        #endif
+    }
     @MainActor private func get(_ path: String) async throws -> [String: Any] {
         let driver = ProcessInfo.processInfo.environment["WEFTMATE_A13_DRIVER"]!
         let (data, response) = try await URLSession.shared.data(from: URL(string: driver + path)!)
@@ -44,15 +51,15 @@ final class A13ConsistencyUITests: XCTestCase {
         _ = try await get("/prepare"); let ready = try await get("/ready")
         let app = XCUIApplication(); app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "a13-" + UUID().uuidString.prefix(8), "--a5-local-server", "--a5-theme", theme, "--server-url", ready["host"] as! String, "--a12-live-session", ready["sessionID"] as! String]
         app.launch(); defer { app.terminate() }
-        try expect(app.descendants(matching: .any)["approvalBar"])
+        try expect(pendingApprovalElement(app))
         try expect(app.staticTexts["处理审批后还有 3 个问题"])
         XCTAssertFalse(app.descendants(matching: .any)["questionBar"].exists)
         keep(app, "approval-priority", theme)
         for _ in 0..<2 {
             let button = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "approveOnce.")).firstMatch
-            try tap(button); try await Task.sleep(for: .seconds(1))
+            try tap(button); if app.buttons["approvalConfirm."+String(button.identifier.dropFirst("approveOnce.".count))].exists { try tap(app.buttons["approvalConfirm."+String(button.identifier.dropFirst("approveOnce.".count))]) }; try await Task.sleep(for: .seconds(1))
         }
-        try await gone(app.descendants(matching: .any)["approvalBar"])
+        try await gone(pendingApprovalElement(app))
         try tap(app.buttons["questionOption.format.简要报告"])
         XCTAssertEqual(app.buttons["questionOption.format.简要报告"].value as? String, "已选择")
         try expect(app.staticTexts["还有 2 个问题"]); keep(app, "single-choice", theme)

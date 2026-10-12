@@ -92,10 +92,8 @@ struct PhoneBottomTabs: View {
         HStack(spacing: AppleTokens.Space.p4) {
             ForEach(PhoneTab.allCases) { tab in
                 Button { selection = tab } label: {
-                    VStack(spacing: AppleTokens.Space.p4) {
-                        WeftIcon(tab.icon, size: AppleTokens.Space.p20)
-                        Text(tab.title).font(AppleTokens.Fonts.caption).fixedSize()
-                    }.frame(maxWidth: .infinity).frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p56)
+                    WeftIcon(tab.icon, size: AppleTokens.Space.p24)
+                        .frame(maxWidth: .infinity).frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44)
                 }.buttonStyle(PhoneTabStyle(selected: selection == tab))
                     .accessibilityLabel(tab.title).accessibilityIdentifier("phone.tab." + tab.id)
                     .accessibilityAddTraits(selection == tab ? .isSelected : [])
@@ -103,10 +101,7 @@ struct PhoneBottomTabs: View {
         }.padding(AppleTokens.Space.p4).background(Weave.soft, in: Capsule())
     }
     var body: some View {
-        Group {
-            if typeSize.isAccessibilitySize { ScrollView(.horizontal) { items }.scrollIndicators(.hidden) }
-            else { items }
-        }.padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, AppleTokens.Space.p8)
+        items.padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, AppleTokens.Space.p8)
             .accessibilityElement(children: .contain).accessibilityIdentifier("phone.bottomTabs")
     }
 }
@@ -114,8 +109,8 @@ private struct PhoneTabStyle: ButtonStyle {
     let selected: Bool
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label.foregroundStyle(selected ? Weave.accent : Weave.muted)
-            .background(selected ? Weave.surface : AppleTokens.Colors.clear, in: Capsule())
+        configuration.label.foregroundStyle(selected ? Weave.ink : Weave.muted)
+            .background(selected ? Weave.surface : Weave.soft, in: Capsule())
             .opacity(!enabled ? AppleTokens.Opacity.disabled : configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
     }
 }
@@ -196,9 +191,9 @@ extension View {
         self
         #endif
     }
-    @ViewBuilder func phoneComposerCard() -> some View {
+    @ViewBuilder func phoneComposerCard(expanded: Bool = true) -> some View {
         #if os(iOS)
-        self.padding(AppleTokens.Space.p12).background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24, style: .continuous))
+        self.padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, expanded ? AppleTokens.Space.p12 : AppleTokens.Space.p4).background(Weave.soft, in: RoundedRectangle(cornerRadius: expanded ? AppleTokens.Radius.r24 : AppleTokens.Radius.r32, style: .continuous))
             .padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, AppleTokens.Space.p8)
         #else
         self.padding(AppleTokens.Space.p16).background(Weave.soft)

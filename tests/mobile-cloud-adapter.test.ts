@@ -36,7 +36,7 @@ test('mobile app transport keeps platform key operations native and uses only op
   const config = await api.fetch('https://host.example.com/personal/v1/cloud/config');
   assert.equal((await config.json()).hostId, 'unconnected');
 });
-test('mobile adapter preserves native errors and treats a missing trusted computer as approval, without weakening token errors', async () => {
+test('mobile adapter preserves native trust and token errors without inventing device approval', async () => {
   const functions = context();
   const api = functions.createMobileCloudTransport({ native: true, hostOrigin: 'https://host.example.com', bridge: {
     call: async () => { throw Object.assign(new Error('PAIRING_REQUIRED'), { status: 403 }); }
@@ -44,9 +44,34 @@ test('mobile adapter preserves native errors and treats a missing trusted comput
   const response = await api.fetch('https://host.example.com/personal/v1/auth/cloud-session');
   assert.equal(response.status, 403); assert.equal((await response.json()).error.code, 'PAIRING_REQUIRED');
   const client = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, exchange: async () => { throw { code: 'PAIRING_REQUIRED' }; } });
-  assert.equal((await client.exchange()).status, 'pending_approval');
+  await assert.rejects(client.exchange(), error => error.code === 'PAIRING_REQUIRED');
   const invalid = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, exchange: async () => { throw { code: 'CLOUD_TOKEN_INVALID' }; } });
   await assert.rejects(invalid.exchange(), error => error.code === 'CLOUD_TOKEN_INVALID');
+});
+
+test('cached native content restores without a server request or cloud credentials', async () => {
+  const profile = { owner: 'cached-owner', username: 'Synthetic', device: { id: 'cached-device' }, connectionVerified: false };
+  const bridge = { account: value => ({ ...value, ownerId: value.owner }), call: async method => { assert.equal(method, 'auth.cached'); return profile; },
+    fetch: async () => { throw Error('Cached reading must not contact a server'); } };
+  let accepted;
+  const payload = await context().restoreCachedMobileHostSession(bridge, value => { accepted = value; });
+  assert.equal(payload, accepted); assert.equal(payload.account.ownerId, profile.owner); assert.equal(payload.connectionVerified, false);
+});
+
+test('new account selects its own computer without pairing and validates the connection identity', async () => {
+  const calls = [], connected = [];
+  const base = { host: 'https://cloud.example', config: { hostId: 'unconnected', issuer: 'https://cloud.example/personal/v1/cloud/oidc' },
+    authorized: async (path, options) => { calls.push({ path, options }); return path === '/devices' ? { hosts: [{ hostId: 'own-computer', status: 'online' }] } : { baseUrl: 'https://computer.example' }; },
+    request: async () => ({ hostId: 'own-computer', issuer: 'https://cloud.example/personal/v1/cloud/oidc' }),
+    exchange: async () => ({ account: { ownerId: 'synthetic-owner' } }) };
+  const client = context().adaptMobileCloudClient({ ...base, config: { ...base.config } }, value => connected.push(value));
+  assert.equal((await client.exchange()).account.ownerId, 'synthetic-owner');
+  assert.equal(client.host, 'https://computer.example'); assert.equal(connected.length, 1);
+  assert.equal(calls[1].options.body.hostId, 'own-computer');
+  const wrong = context().adaptMobileCloudClient({ ...base, config: { ...base.config }, request: async () => ({ hostId: 'other-computer', issuer: base.config.issuer }) });
+  await assert.rejects(wrong.exchange(), error => error.code === 'HOST_TRUST_INVALID');
+  const none = context().adaptMobileCloudClient({ ...base, config: { ...base.config }, authorized: async () => ({ hosts: [] }) });
+  assert.equal((await none.exchange()).status, 'cloud_only');
 });
 
 test('known direct computer connects without a relay, but mismatched host identity stays refused', async () => {
