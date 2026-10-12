@@ -297,3 +297,4 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 [data-reduced-motion] .health-page * { animation:none!important; transition:none!important; }
 [data-reduced-motion] .health-date-out .health-layout { opacity:1; }
 [data-motion-paused] .health-page * { animation-play-state:paused!important; }
+.health-page .health-status.is-critical { color:var(--health-stress-extreme); }
