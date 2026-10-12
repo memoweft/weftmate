@@ -1,0 +1,427 @@
+{
+  "synthetic": true,
+  "assetRevision": "working-tree",
+  "realModelRequests": 0,
+  "systemBars": false,
+  "screenshots": [
+    "phone-360-light-chat-empty.png",
+    "phone-360-light-chat-content.png",
+    "phone-360-light-chat-menu.png",
+    "phone-360-light-chat-streaming.png",
+    "phone-360-light-composer-focus.png",
+    "phone-360-light-attachment-menu.png",
+    "phone-360-light-sidebar.png",
+    "phone-360-light-settings.png",
+    "phone-360-light-settings-bottom.png",
+    "phone-360-light-appearance.png",
+    "phone-360-light-bottom-sheet.png",
+    "phone-360-light-tab-chat.png",
+    "phone-360-light-tab-activity.png",
+    "phone-360-light-tab-goals.png",
+    "phone-360-light-tab-library.png",
+    "phone-360-dark-chat-empty.png",
+    "phone-360-dark-chat-content.png",
+    "phone-360-dark-chat-menu.png",
+    "phone-360-dark-chat-streaming.png",
+    "phone-360-dark-composer-focus.png",
+    "phone-360-dark-attachment-menu.png",
+    "phone-360-dark-sidebar.png",
+    "phone-360-dark-settings.png",
+    "phone-360-dark-settings-bottom.png",
+    "phone-360-dark-appearance.png",
+    "phone-360-dark-bottom-sheet.png",
+    "phone-360-dark-tab-chat.png",
+    "phone-360-dark-tab-activity.png",
+    "phone-360-dark-tab-goals.png",
+    "phone-360-dark-tab-library.png",
+    "phone-390-light-chat-empty.png",
+    "phone-390-light-chat-content.png",
+    "phone-390-light-chat-menu.png",
+    "phone-390-light-chat-streaming.png",
+    "phone-390-light-composer-focus.png",
+    "phone-390-light-attachment-menu.png",
+    "phone-390-light-sidebar.png",
+    "phone-390-light-settings.png",
+    "phone-390-light-settings-bottom.png",
+    "phone-390-light-appearance.png",
+    "phone-390-light-bottom-sheet.png",
+    "phone-390-light-tab-chat.png",
+    "phone-390-light-tab-activity.png",
+    "phone-390-light-tab-goals.png",
+    "phone-390-light-tab-library.png",
+    "phone-390-dark-chat-empty.png",
+    "phone-390-dark-chat-content.png",
+    "phone-390-dark-chat-menu.png",
+    "phone-390-dark-chat-streaming.png",
+    "phone-390-dark-composer-focus.png",
+    "phone-390-dark-attachment-menu.png",
+    "phone-390-dark-sidebar.png",
+    "phone-390-dark-settings.png",
+    "phone-390-dark-settings-bottom.png",
+    "phone-390-dark-appearance.png",
+    "phone-390-dark-bottom-sheet.png",
+    "phone-390-dark-tab-chat.png",
+    "phone-390-dark-tab-activity.png",
+    "phone-390-dark-tab-goals.png",
+    "phone-390-dark-tab-library.png",
+    "remote-360-light-chat-empty.png",
+    "remote-360-light-chat-content.png",
+    "remote-360-light-chat-menu.png",
+    "remote-360-light-composer-focus.png",
+    "remote-360-light-sidebar.png",
+    "remote-360-light-tab-chat.png",
+    "remote-360-light-tab-activity.png",
+    "remote-360-light-tab-goals.png",
+    "remote-360-light-tab-library.png",
+    "remote-360-light-settings.png",
+    "remote-360-light-appearance.png",
+    "remote-360-dark-chat-empty.png",
+    "remote-360-dark-chat-content.png",
+    "remote-360-dark-chat-menu.png",
+    "remote-360-dark-composer-focus.png",
+    "remote-360-dark-sidebar.png",
+    "remote-360-dark-tab-chat.png",
+    "remote-360-dark-tab-activity.png",
+    "remote-360-dark-tab-goals.png",
+    "remote-360-dark-tab-library.png",
+    "remote-360-dark-settings.png",
+    "remote-360-dark-appearance.png",
+    "remote-390-light-chat-empty.png",
+    "remote-390-light-chat-content.png",
+    "remote-390-light-chat-menu.png",
+    "remote-390-light-composer-focus.png",
+    "remote-390-light-sidebar.png",
+    "remote-390-light-tab-chat.png",
+    "remote-390-light-tab-activity.png",
+    "remote-390-light-tab-goals.png",
+    "remote-390-light-tab-library.png",
+    "remote-390-light-settings.png",
+    "remote-390-light-appearance.png",
+    "remote-390-dark-chat-empty.png",
+    "remote-390-dark-chat-content.png",
+    "remote-390-dark-chat-menu.png",
+    "remote-390-dark-composer-focus.png",
+    "remote-390-dark-sidebar.png",
+    "remote-390-dark-tab-chat.png",
+    "remote-390-dark-tab-activity.png",
+    "remote-390-dark-tab-goals.png",
+    "remote-390-dark-tab-library.png",
+    "remote-390-dark-settings.png",
+    "remote-390-dark-appearance.png",
+    "electron-1200-light-chat.png",
+    "electron-1200-light-settings.png",
+    "electron-1200-dark-chat.png",
+    "electron-1200-dark-settings.png",
+    "electron-480-light-chat.png",
+    "electron-480-light-settings.png",
+    "electron-480-dark-chat.png",
+    "electron-480-dark-settings.png"
+  ],
+  "checks": [
+    {
+      "prefix": "phone-360-light",
+      "touchTargets": [
+        {
+          "id": "menu-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "conversation-more",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "plus-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "approval-mode-button",
+          "width": 49,
+          "height": 44
+        },
+        {
+          "id": "context-usage",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "model-button",
+          "width": 73,
+          "height": 44
+        },
+        {
+          "id": "voice-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "send-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "mobile-tab-chat",
+          "width": 78,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-activity",
+          "width": 78,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-goals",
+          "width": 78,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-library",
+          "width": 78,
+          "height": 54.796875
+        }
+      ]
+    },
+    {
+      "prefix": "phone-360-light",
+      "menuAnchored": true,
+      "keyboardYields": true,
+      "tabsRestore": true
+    },
+    {
+      "prefix": "phone-360-dark",
+      "touchTargets": [
+        {
+          "id": "menu-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "conversation-more",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "plus-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "approval-mode-button",
+          "width": 49,
+          "height": 44
+        },
+        {
+          "id": "context-usage",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "model-button",
+          "width": 73,
+          "height": 44
+        },
+        {
+          "id": "voice-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "send-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "mobile-tab-chat",
+          "width": 78,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-activity",
+          "width": 78,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-goals",
+          "width": 78,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-library",
+          "width": 78,
+          "height": 54.796875
+        }
+      ]
+    },
+    {
+      "prefix": "phone-360-dark",
+      "menuAnchored": true,
+      "keyboardYields": true,
+      "tabsRestore": true
+    },
+    {
+      "prefix": "phone-390-light",
+      "touchTargets": [
+        {
+          "id": "menu-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "conversation-more",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "plus-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "approval-mode-button",
+          "width": 49,
+          "height": 44
+        },
+        {
+          "id": "context-usage",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "model-button",
+          "width": 103,
+          "height": 44
+        },
+        {
+          "id": "voice-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "send-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "mobile-tab-chat",
+          "width": 85.5,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-activity",
+          "width": 85.5,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-goals",
+          "width": 85.5,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-library",
+          "width": 85.5,
+          "height": 54.796875
+        }
+      ]
+    },
+    {
+      "prefix": "phone-390-light",
+      "menuAnchored": true,
+      "keyboardYields": true,
+      "tabsRestore": true
+    },
+    {
+      "prefix": "phone-390-dark",
+      "touchTargets": [
+        {
+          "id": "menu-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "conversation-more",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "plus-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "approval-mode-button",
+          "width": 49,
+          "height": 44
+        },
+        {
+          "id": "context-usage",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "model-button",
+          "width": 103,
+          "height": 44
+        },
+        {
+          "id": "voice-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "send-button",
+          "width": 44,
+          "height": 44
+        },
+        {
+          "id": "mobile-tab-chat",
+          "width": 85.5,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-activity",
+          "width": 85.5,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-goals",
+          "width": 85.5,
+          "height": 54.796875
+        },
+        {
+          "id": "mobile-tab-library",
+          "width": 85.5,
+          "height": 54.796875
+        }
+      ]
+    },
+    {
+      "prefix": "phone-390-dark",
+      "menuAnchored": true,
+      "keyboardYields": true,
+      "tabsRestore": true
+    },
+    {
+      "prefix": "remote-360-light",
+      "cloudPhone": true,
+      "bottomTabs": true
+    },
+    {
+      "prefix": "remote-360-dark",
+      "cloudPhone": true,
+      "bottomTabs": true
+    },
+    {
+      "prefix": "remote-390-light",
+      "cloudPhone": true,
+      "bottomTabs": true
+    },
+    {
+      "prefix": "remote-390-dark",
+      "cloudPhone": true,
+      "bottomTabs": true
+    }
+  ],
+  "errors": []
+}

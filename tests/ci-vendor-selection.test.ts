@@ -18,7 +18,7 @@ test('CI modes fail loudly without the pin and run complete vendor files without
     mkdirSync(join(root, '.github/scripts'), { recursive: true })
     mkdirSync(join(root, 'tests/contract'), { recursive: true })
     writeFileSync(join(root, '.github/scripts/ci-unit-tests.mjs'), readFileSync(new URL('../.github/scripts/ci-unit-tests.mjs', import.meta.url)))
-    for (const file of ['scripts/dsh-runtime-identity.mjs','scripts/nightly/prune-temp.ps1','tests/helpers/managed-temp.mjs','tests/helpers/managed-temp.cjs','tests/helpers/managed-test-process.mjs','tests/helpers/process-evidence.mjs']) {
+    for (const file of ['scripts/dsh-runtime-identity.mjs','scripts/dsh-vendor-closure.mjs','scripts/nightly/prune-temp.ps1','tests/helpers/managed-temp.mjs','tests/helpers/managed-temp.cjs','tests/helpers/managed-test-process.mjs','tests/helpers/process-evidence.mjs']) {
       mkdirSync(join(root,file,'..'),{recursive:true});
       writeFileSync(join(root,file),readFileSync(new URL('../'+file,import.meta.url)));
     }

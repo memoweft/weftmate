@@ -123,7 +123,7 @@ try {
     if(phase==='after') {
       await phone.evaluate(()=>{state.chatSource='host';state.sharedRunning=true;state.sharedSessionId='synthetic-session';state.sharedSessions=[{sessionId:'synthetic-session',sendAvailable:true}];updateComposer();});
       await phone.getByRole('button',{name:'返回',exact:true}).click();await phone.getByRole('button',{name:'打开导航',exact:true}).click();
-      await phone.getByRole('button',{name:'设置',exact:true}).click();await phone.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:/^助手/}).click();
+      await phone.locator('#profile-link').click();await phone.getByRole('menuitem',{name:'设置',exact:true}).click();await phone.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:/^助手/}).click();
       await phone.getByRole('combobox',{name:'回复进行中时发送的消息'}).click();await check(phone,phone.getByRole('listbox',{name:'回复进行中时发送的消息'}).locator('..'),'message-mode-setting','390x844');
       await phone.getByRole('option',{name:'排队',exact:true}).click();
       assert.match(await phone.getByRole('combobox',{name:'回复进行中时发送的消息'}).textContent(),/排队/);

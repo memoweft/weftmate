@@ -78,11 +78,11 @@ test('D35 progress uses real kinds/objects and prioritizes failure and stopped s
   ];
   assert.equal(api.progressText(steps).text, '正在搜索 approval…');
   assert.equal(api.progressText(steps, true).text, '已运行 1 个命令、读取了 2 个文件、搜索了 1 次');
-  assert.equal(api.progressText([...steps, {state:'failed',ordinal:4}]).text, '第 4 步失败');
-  assert.equal(api.progressText([{state:'cancelled'}]).text, '已停止');
+  assert.equal(api.progressText([...steps, {state:'failed',ordinal:4}]).text, '第 4 步遇到问题，正在继续');
+  assert.equal(api.progressText([{state:'cancelled'}]).text, '已中断');
   assert.equal(api.progressText([{state:'completed',jobState:'running',summary:'运行命令 npm test'}]).text,'正在运行命令 npm test…');
-  assert.equal(api.progressText([{state:'completed',jobState:'killed'}]).text,'已停止');
-  assert.equal(api.progressText([{state:'completed',jobState:'failed',ordinal:2}]).text,'第 2 步失败');
+  assert.equal(api.progressText([{state:'completed',jobState:'killed'}]).text,'已中断');
+  assert.equal(api.progressText([{state:'completed',jobState:'failed',ordinal:2}]).text,'第 2 步遇到问题，正在继续');
   assert.equal(api.progressText([]).text, '');
   const raw = JSON.stringify({arguments: JSON.stringify({command:'npm test'}),output:[{type:'tool-result',content:[{type:'text',text:'42 passed'}]}]});
   assert.match(api.executionDetailText(raw), /参数\n.*\n.*npm test[\s\S]*输出\n42 passed/);
@@ -186,7 +186,7 @@ test('D35 chronology splits only at visible conversation boundaries and approval
   assert.equal(result.groups.length,2);
   assert.equal(result.groups[0].steps[0].approvalText,'已批准');
   assert.equal(result.groups[0].steps[1].approvalText,'');
-  assert.equal(api.progressText(result.groups[1].steps).text,'第 3 步失败');
+  assert.equal(api.progressText(result.groups[1].steps).text,'第 3 步遇到问题，正在继续');
   assert.equal(JSON.stringify(events),copy);
 });
 
@@ -201,7 +201,7 @@ test('FX-11 progress counts actual activities and keeps internal names out of ru
   assert.equal(api.progressText([{toolName:'load_tools',state:'running',summary:'执行工具 load_tools'}]).text,'正在准备可用工具…');
   const old = api.projectTimeline([{seq:1,type:'step.completed',data:{taskId:'turn-1',stepId:'load',toolName:'load_tools',summary:'执行工具 load_tools',state:'failed'}}]);
   assert.equal(old.groups[0].steps[0].summary,'准备可用工具');
-  assert.equal(api.progressText(old.groups[0].steps,true).text,'第 1 步失败','failed internal setup remains inspectable');
+  assert.equal(api.progressText(old.groups[0].steps,{terminal:true,reason:'error'}).text,'未能完成：准备可用工具遇到问题，可以让我重试或补充说明。','failed internal setup remains inspectable');
   assert.doesNotMatch(text,/load_tools|todo_write|web_fetch|工具步骤|执行工具/);
 });
 
@@ -265,7 +265,7 @@ test('timeline merges a completed step/artifact into its existing step and never
   assert.equal(result.groups[0].steps.length, 1)
   assert.equal(result.groups[0].steps[0].state, 'completed')
   assert.equal(result.groups[0].steps[0].endAt, events[0].at)
-  assert.equal(result.cards.at(-1).data.artifactId, 'file-1')
+  assert.equal(result.cards.at(-1).data.artifacts[0].artifactId, 'file-1')
   assert.equal(JSON.stringify(events), saved)
 })
 

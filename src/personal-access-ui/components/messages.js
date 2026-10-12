@@ -185,10 +185,10 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         ui.renderConversationTasks();
         renderOptimisticMessages();
     }
-    function appendMessageFiles(row,text) {
-        if(row.classList.contains('user'))return;
-        const registered=[...(core.timelineEventsForContext?.()||core.state.historyEvents?.values()||[])].filter(e=>e.type==='artifact.created').flatMap(e=>e.data?.artifacts||[e.data?.artifact||e.data]).filter(file=>file?.artifactId&&file.fileName&&text?.includes(file.fileName));
-        for(const file of registered){if([...row.querySelectorAll('.render-file-card')].some(card=>card.dataset.artifact===file.artifactId))continue;const card=WeftContent.fileCard(file,trigger=>ui.openTimelinePreview(core.conversationTaskContext(),`/library/${encodeURIComponent(file.artifactId)}/preview`,file.fileName));card.dataset.artifact=file.artifactId;row.append(card);}
+    function appendMessageFiles(row) {
+        if (row.classList.contains('user')) return;
+        // Historical output attachments now live in the per-turn timeline summary.
+        for (const file of row.querySelectorAll('.render-file-card[data-artifact]')) file.remove();
     }
     function appendOriginalFiles(row, event) {
         const files = (Array.isArray(event.data?.originalAttachments) ? event.data.originalAttachments : [])

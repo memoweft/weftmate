@@ -1,26 +1,8 @@
-/* Artifact card component; all operations are injected feature actions. */
+/* Per-turn output summary; the shared renderer also serves the phone. */
 (() => {
-    const node = (tag, cls, text) => {
-        const n = document.createElement(tag);
-        n.className = cls || '';
-        if (text)
-            n.textContent = text;
-        return n;
-    };
     function artifactCard(row, data, options) {
-        row.append(node('small', 'artifact-verification', data.verification?.method === 'sha256_readback' && data.verification?.status === 'observed' ? '已读回核验' : '仍待核验'));
-        row.append(node('p', '', options.fileLabel ? options.fileLabel(data) : `${data.contentType || '文件'} · ${data.size || 0} 字节`));
-        const open = node('button', 'artifact-action', '打开成果');
-        open.type = 'button';
-        open.addEventListener('click', () => options.openArtifact?.(data, open));
-        row.append(open);
-        if (options.downloadArtifact) {
-            const download = node('button', 'artifact-action', '下载');
-            download.type = 'button';
-            download.addEventListener('click', () => options.downloadArtifact(data));
-            row.append(download);
-        }
-        options.appendArtifactActions?.(row, data);
+        const saved = { expanded: row.querySelector('.artifact-summary')?.dataset.expanded === 'true' };
+        row.replaceChildren(globalThis.WeftContent.artifactSummary(data.artifacts || [data], options, saved));
     }
     globalThis.WeftTimelineCards = { ...globalThis.WeftTimelineCards, artifact: artifactCard };
 })();

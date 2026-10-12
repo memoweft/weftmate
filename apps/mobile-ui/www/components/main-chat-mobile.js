@@ -42,6 +42,8 @@
     beginOlderHistory:()=>{},restoreOlderHistoryPosition:()=>{},scrollToLatest:()=>scrollBottom(true),
     updateAvailability:updateComposer, openTimelinePreview:(context,path,title)=>openTimelinePreview(context,()=>uiCore.readResource(path),title),
     appendResourceArtifactActions:()=>{},
+    openLibrary:()=>selectMobileTab('library'),
+    downloadTimelineArtifact:artifact=>call('shared.artifacts.save',{artifactId:artifact.artifactId}),
   };
   const paintNativeSelection=view.paintSelectedSession;
   const presentation=WeftUiComponents.factories.mainChat(uiCore,view);
@@ -120,7 +122,9 @@
   selectSharedSession=function(id){return state.logicalChats?uiCore.selectLogicalSession(id):nativeSides(id);};
   updatePageHeader=function(){oldHeader();if(state.logicalChats&&state.page==='chat'){$('menu-button').hidden=false;$('page-back').hidden=main();}
     if(main()&&state.page==='chat'){$('header-title').textContent='WeftMate';$('header-subtitle').textContent='主对话';$('page-back').hidden=!state.tabSource;}
-    if(state.page==='chat'&&!main())$('menu-button').hidden=true;syncMobileTabs();};
+    if(state.page==='chat'&&state.logicalChats){$('menu-button').hidden=false;$('page-back').hidden=true;
+      $('header-subtitle').hidden=false;$('header-subtitle').textContent=uiCore.connectionView().kind==='online'?'已连接':connectionLabel();}
+    syncMobileTabs();};
   refreshAttachmentDrafts=async function(...args){if(state.logicalChats&&!window.weftNative){renderAttachmentDrafts();updateComposer();return true;}return oldDrafts(...args);};
   removeAttachment=async function(id){if(state.logicalChats&&!window.weftNative)return uiCore.removeAttachmentDraft(id);return oldRemove(id);};
   selectConversation=function(id){if(state.logicalChats&&id===null)return Promise.resolve(uiCore.startChatConversation()).catch(error=>toast(uiCore.failureMessage(error)));return oldSelectConversation(id);};
