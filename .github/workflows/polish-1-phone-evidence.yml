@@ -1,9 +1,11 @@
 name: POLISH-1 phone system bars
 on:
-  push:
-    branches: [wp/polish-1-small-things]
-    paths: ["src/ui-core/**", "src/personal-access-ui/**", "apps/mobile-ui/**", "tests/helpers/polish-1-*.mjs", "tests/integration/polish-1-phone.mjs", ".github/workflows/polish-1-phone-evidence.yml"]
   workflow_dispatch:
+    inputs:
+      widths:
+        description: Phone widths as JSON
+        type: string
+        default: '[360,390]'
 concurrency:
   group: polish-1-phone-evidence-${{ github.ref }}
   cancel-in-progress: true
@@ -17,7 +19,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        width: [360, 390]
+        width: ${{ fromJson(inputs.widths || '[360,390]') }}
         theme: [light, dark]
     env:
       TZ: Asia/Shanghai
@@ -47,7 +49,7 @@ jobs:
           const manifest='.local/st2-phone-container/AndroidManifest.xml';
           fs.writeFileSync(manifest,fs.readFileSync(manifest,'utf8').replace('<manifest ', '<manifest xmlns:tools="http://schemas.android.com/tools" ').replace('<application ', '<application android:name="android.app.Application" tools:replace="android:name" '));
           const activity='.local/st2-phone-container/java/com/memoweft/weftmate/mobile/St2PhoneBrowserActivity.java';
-          fs.writeFileSync(activity,fs.readFileSync(activity,'utf8').replace('getWindow().setNavigationBarColor(Color.parseColor(bottom));', 'getWindow().setNavigationBarColor(Color.parseColor(bottom));if(android.os.Build.VERSION.SDK_INT>=29){getWindow().setNavigationBarContrastEnforced(false);getWindow().setStatusBarContrastEnforced(false);}'));
+          fs.writeFileSync(activity,fs.readFileSync(activity,'utf8').replace('document.elementFromPoint(innerWidth/2,y)', 'document.elementFromPoint(4,y)').replace('getWindow().setNavigationBarColor(Color.parseColor(bottom));', 'getWindow().setNavigationBarColor(Color.parseColor(bottom));if(android.os.Build.VERSION.SDK_INT>=29){getWindow().setNavigationBarContrastEnforced(false);getWindow().setStatusBarContrastEnforced(false);}'));
           JS
           cat > .local/polish1-phone-screen.py <<'PY'
           import os
