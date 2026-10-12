@@ -18,7 +18,7 @@ export async function capturePolishPhone(fixture,out,report,phase,weekly){
   const run=(...args)=>execFileSync(adb,['-s',serial,...args],{windowsHide:true,maxBuffer:16*1024*1024});
   const until=async(fn,label)=>{for(let n=0;n<100;n++){try{const result=await fn();if(result)return result;}catch{}await pause(100);}throw Error(`Synthetic phone did not become ready: ${label}`);};
   const metadata=[],baseline=new Map(),before=phase==='before';
-  if(before){const files=execFileSync('git',['ls-tree','-r','--name-only','54e7739505ee09248a71291a5025edbdae6d7210','apps/mobile-ui/www'],{encoding:'utf8'}).trim().split('\n');for(const file of files)if(/\.(js|css|html)$/.test(file))baseline.set(file.replace('apps/mobile-ui/www/',''),execFileSync('git',['show','54e7739505ee09248a71291a5025edbdae6d7210:'+file]));}
+  if(before){const files=execFileSync('git',['ls-tree','-r','--name-only','54e7739505ee09248a71291a5025edbdae6d7210','apps/mobile-ui/www'],{encoding:'utf8'}).trim().split('\n');for(const file of files)if(/\.(js|css|html)$/.test(file))baseline.set(file.replace('apps/mobile-ui/www/',''),execFileSync('git',['show','54e7739505ee09248a71291a5025edbdae6d7210:'+file],{maxBuffer:32*1024*1024}));}
   try{
     serial=process.env.WEFTMATE_POLISH1_ANDROID_SERIAL??readMuMuInfo().serial;if(!cloud)execFileSync(adb,['connect',serial],{windowsHide:true});
     const packages=run('shell','pm','list','packages').toString().split('\n').filter(line=>line.includes('weftmate'));

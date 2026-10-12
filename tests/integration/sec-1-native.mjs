@@ -14,7 +14,7 @@ import {fixture as cloudFixture} from '../helpers/auth-1-https-cloud.mjs';
 import {registration,appDevice,control,refresh,proof} from '../../services/cloud/test/app-helpers.mjs';
 import {sec1SystemBars} from './sec-1-system-bars.mjs';
 
-const repo=resolve('.'),out=resolve('tests/evidence/sec-1');mkdirSync(out,{recursive:true});
+const polish=process.argv.includes('--polish');const repo=resolve('.'),out=resolve(polish?'tests/evidence/polish-1/sec-native':'tests/evidence/sec-1');mkdirSync(out,{recursive:true});
 const root=managedMkdtempSync(join(managedTempRoot(),'weftmate-sec1-native-')),profile=join(root,'profile');mkdirSync(profile);
 writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const projectRoot=join(root,'project');mkdirSync(projectRoot);const victim=join(projectRoot,'notes.txt'),source=join(projectRoot,'source.txt');writeFileSync(victim,'original synthetic content');
@@ -54,6 +54,7 @@ async function capture(label,phone,sessionId){
     await target.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
     await target.locator('.approval-review').first().waitFor({state:label==='timeout'||label==='unavailable'?'hidden':'visible'});
     await target.waitForFunction(()=>{const detail=document.querySelector('#approval-bar .approval-detail'),bar=document.querySelector('#approval-bar');return detail?.getBoundingClientRect().width>=140&&bar.getBoundingClientRect().bottom<=innerHeight;});
+    if(polish&&label==='warning'&&surface==='desktop'&&width===1200&&theme==='dark'){const history=(await api('/sessions/'+sessionId+'/events?limit=100')).body;const dom=await target.evaluate(()=>[...document.querySelector('#transcript').children].map(row=>({cls:row.className,seq:row.dataset.seq,optimistic:row.dataset.optimistic,timeline:row.dataset.timeline,html:row.outerHTML,text:row.innerText})));writeFileSync(join(out,'warning-diagnostic.json'),redactEvidenceText(JSON.stringify({history,dom},null,2),[root]));}
     await target.screenshot({path:join(out,`${surface}-${width}-${theme}-${label}.png`)});
     assert.equal(await target.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     checks.push(`${surface} ${width} ${theme} ${label}`);
