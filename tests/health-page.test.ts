@@ -30,3 +30,9 @@ test('uncertain reminder retries preserve the exact intent after navigating to a
   const {core,fixture}=await setup();await core.readHealth();const attempts:any[]=[];core.accessApi=async(path:string,options:any)=>{attempts.push(JSON.parse(JSON.stringify(options.body)));if(attempts.length===1)throw Error('connection lost');return fixture.reply(path);};
   const suggestion=core.health.overview.insight.suggestions[0];await assert.rejects(core.remindHealth(suggestion));assert.equal(core.health.busy.size,0);core.state.selectedSessionId='other-chat';await core.remindHealth(suggestion);assert.deepEqual(attempts[0],attempts[1]);assert.equal(core.health.reminders.size,1);
 });
+
+test('personal low/high and more/less states preserve the server labels and measurements',async()=>{
+  for(const [state,label]of [['low','比平时低'],['high','比平时高'],['normal','正常'],['insufficient','再戴几天就有对比了']]){
+    const {core,fixture}=await setup();core.accessApi=async(path:string)=>{const result=fixture.reply(path);if(path.includes('/overview')){result.vitals.hrvSdnnMs={...result.vitals.hrvSdnnMs,state,label};result.load={...result.load,state:state==='low'?'less':state==='high'?'more':'balanced',label:state==='low'?'练少了':state==='high'?'练多了':'刚好'};}return result;};await core.readHealth();assert.equal(core.health.overview.vitals.hrvSdnnMs.state,state);assert.equal(core.health.overview.vitals.hrvSdnnMs.label,label);assert.equal(core.health.overview.load.state,state==='low'?'less':state==='high'?'more':'balanced');
+  }
+});
