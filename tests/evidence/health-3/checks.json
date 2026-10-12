@@ -1,0 +1,27 @@
+{
+  "required": {
+    "passed": 1758,
+    "failed": 0,
+    "skipped": 14
+  },
+  "vendor": {
+    "passed": 232,
+    "failed": 0,
+    "skipped": 0
+  },
+  "mobileFive": {
+    "passed": 114,
+    "failed": 0,
+    "skipped": 0
+  },
+  "healthAndSearch": {
+    "passed": 17,
+    "failed": 0
+  },
+  "realModelRequests": 0,
+  "syntheticOnly": true,
+  "screenshots": 96,
+  "uiErrors": [],
+  "source": "HEALTH-2 contract projection; its generator was not merged at start",
+  "phoneEvidenceRun": "https://github.com/memoweft/weftmate/actions/runs/38240412607"
+}
