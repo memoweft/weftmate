@@ -112,7 +112,7 @@ export async function runPreemptibleFormation(queue, signal, work,
 /** Private loopback bridge shared by native DSH streams and MemoWeft workers. */
 export async function createModelScheduler({ isIdle, profileFor, backgroundRoute, credentialFor, fetchImpl = fetch,
   beginUsage = null, finishUsage = null, backgroundReady = null, suggestionReady = null, onEvent = () => {},
-  heartbeatMs = 15_000, memoryProfileFor = null, onBackgroundResult = null }) {
+  heartbeatMs = 15_000, memoryProfileFor = null, onBackgroundResult = null, importPermission = null }) {
   const queues = new Map();
   const progress = new Map();
   async function queueFor(destination, signal = null) {
@@ -263,6 +263,20 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       const expectedKey = dynamicLocal ? memoryTokens.get(match[2]) : key;
       if (!profile || !key || !expectedKey || request.headers.authorization !== `Bearer ${expectedKey}`) { response.writeHead(403).end(); return; }
       const operation = match[4];
+      const waitImport = async signal => {
+        if (operation !== 'chat/completions' || !match[3]?.startsWith('import-') || !importPermission) return;
+        const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
+        try {
+          while (true) {
+            signal.throwIfAborted();
+            const permission = await importPermission(match[2], match[3]);
+            if (permission === 'stop') throw Object.assign(new Error('IMPORT_CANCELLED'), { code:'IMPORT_CANCELLED' });
+            if (permission === 'run' && await isIdle()) break;
+            await delay(100, undefined, { signal });
+          }
+        } finally { clearInterval(heartbeat); }
+      };
+      await waitImport(controller.signal);
       let selectedQueue;
       if (operation === 'chat/completions') {
         backgroundScope = { ownerId: match[2], profileId: profile.id };
@@ -303,10 +317,12 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
         const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
         try {
           const completed = await runPreemptibleFormation(selectedQueue, controller.signal, async signal => {
+            await waitImport(signal);
             const ticket = beginUsage ? await beginUsage({ profileId: profile.id,
               ownerId: match[2] ?? null, sessionId: match[3] === 'none' ? null : match[3] ?? null }) : null;
             let settled = false;
             try {
+              await waitImport(signal);
               let upstream = await fetchImpl(endpoint, { method: request.method, signal,
                 headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body });
               if (ticket) upstream = await usageResponse(upstream, async usage => {
@@ -327,10 +343,12 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
         } finally { clearInterval(heartbeat); }
         return;
       }
+      await waitImport(controller.signal);
       const usageTicket = operation === 'chat/completions' && beginUsage ? await beginUsage({ profileId: profile.id,
         ownerId: match[2] ?? null, sessionId: match[3] === 'none' ? null : match[3] ?? null }) : null;
       let upstream;
       try {
+        await waitImport(controller.signal);
         upstream = await fetchImpl(endpoint, { method: request.method, signal: controller.signal,
           headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body });
         if (usageTicket) upstream = await usageResponse(upstream, usage => finishUsage({ ...usageTicket, usage, source: 'openai' }));
@@ -341,10 +359,10 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       if (upstream.body) await pipeline(Readable.fromWeb(upstream.body), response);
       else response.end();
     } catch (error) {
-      if (backgroundScope) await onBackgroundResult?.({ ...backgroundScope, failed: true, aborted: controller.signal.aborted || error?.message === 'MODEL_BACKGROUND_CHANGED' });
-      const code = ['USAGE_LIMIT_REACHED', 'MODEL_SUGGESTION_BUSY'].includes(error?.code) ? error.code : 'MODEL_QUEUE_UNAVAILABLE';
+      if (backgroundScope) await onBackgroundResult?.({ ...backgroundScope, failed: true, aborted: controller.signal.aborted || error?.code === 'IMPORT_CANCELLED' || error?.message === 'MODEL_BACKGROUND_CHANGED' });
+      const code = ['USAGE_LIMIT_REACHED', 'MODEL_SUGGESTION_BUSY', 'IMPORT_CANCELLED'].includes(error?.code) ? error.code : 'MODEL_QUEUE_UNAVAILABLE';
       onEvent('model.failure', { ...metadata, code });
-      if (!response.headersSent) { response.writeHead(code === 'USAGE_LIMIT_REACHED' ? 402 : code === 'MODEL_SUGGESTION_BUSY' ? 409 : 503, { 'content-type': 'application/json' });
+      if (!response.headersSent) { response.writeHead(code === 'USAGE_LIMIT_REACHED' ? 402 : ['MODEL_SUGGESTION_BUSY','IMPORT_CANCELLED'].includes(code) ? 409 : 503, { 'content-type': 'application/json' });
         response.end(JSON.stringify({ code })); }
       else response.end();
     } finally {

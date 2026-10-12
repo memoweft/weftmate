@@ -44,6 +44,7 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   setAutoStart: (enabled) => ipcRenderer.invoke('wm:desktop:auto-start', enabled),
   artifact: (artifactId, action) => ipcRenderer.invoke('wm:desktop:artifact', { artifactId, action }),
   exportMemories: (format, ownerId) => ipcRenderer.invoke('wm:desktop:memory-export', { format, ownerId }),
+  previewHistoryImport: app => ipcRenderer.invoke('wm:desktop:history-import', app),
   exportAllData: id => ipcRenderer.invoke('wm:desktop:data-export', { id }),
   dataOperation: id => ipcRenderer.invoke('wm:desktop:data-status', id),
   showDataExport: id => ipcRenderer.invoke('wm:desktop:data-show-export', { id }),

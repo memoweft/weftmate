@@ -5,15 +5,17 @@ import { relative, resolve, isAbsolute } from 'node:path';
 
 /** Use the native surface replacement protocol: retained originals remain in
  * human history, but cannot enter future requests or native compaction. */
-export function shadowForgottenSurface(session, sourceTexts, createMessage) {
+export function shadowForgottenSurface(session, sourceTexts, createMessage, affectedIds = []) {
   const events = session.events, bySeq = new Map(events.map(event => [event.seq, event]));
   const matches = value => typeof value === 'string' ? sourceTexts.some(text => text && value.includes(text))
     : Array.isArray(value) ? value.some(matches) : value && typeof value === 'object' && Object.values(value).some(matches);
   const affectedTurns = new Set(); const turns = new Map(); let turn = null;
+  const forgotten = new Set(affectedIds);
+  const usedForgottenMemory = data => (data?.memoryUsed ?? []).some(item => forgotten.has(item.id) || forgotten.has(`${item.kind}:${item.id}`));
   for (const event of events) {
     if (event.type === 'turn/start') turn = event.data.turn;
     turns.set(event.seq, turn);
-    if (matches(event.data)) affectedTurns.add(turn);
+    if (matches(event.data) || usedForgottenMemory(event.data)) affectedTurns.add(turn);
     if (event.type === 'turn/end') turn = null;
   }
   // Preserve complete tool exchanges by replacing contiguous affected surface

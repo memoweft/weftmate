@@ -126,6 +126,8 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   search.input.addEventListener('input',()=>{memory.queryDraft=search.input.value});
   const category=el('label','field');category.hidden=true;category.append(el('span','','记忆类别'),select);
   memoryIngestionPanel(target);
+  if(globalThis.WeftHistoryImportView)WeftHistoryImportView({target,owner:()=>state.owner,
+    request:(path,options={})=>uiCore.mobile.business({path:`/personal/v1${path}`,method:options.method??'GET',...(options.body?{body:options.body}:{})})});
   const form=el('form');form.append(search.box,category);
   form.addEventListener('submit',event=>{event.preventDefault();memory.queryDraft=search.input.value;
     const query=search.input.value.trim();if([...query].length>120){memory.error='搜索内容最多120个字符，请缩短后重试。';renderMemoryList(target);return}
@@ -145,7 +147,7 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
         memory.pendingBoundaryCount?'当前还没有已形成的记忆。':'当前账户还没有可显示的记忆。'));
     }}
   else { const entries=memory.items.map(item=>{const wrapper=el('div','memory-item'),entry=row(`${item.truncated===true?'记忆片段 · ':''}${item.text}`,`${MEMORY_KINDS[item.kind]} · ${memoryLifecycle(item).join(' · ')}${item.updatedAt?` · 更新于 ${timeLabel(item.updatedAt)}`:''}`,()=>openMemoryDetail(target,item));wrapper.append(entry);
-    for(const id of item.sourceConversationIds??[]){const source=action('来源对话',()=>selectSharedSession(id),false);source.classList.add('memory-source-link');source.prepend(WeftIcons.create('chat',16));wrapper.append(source)}return wrapper;});target.append(group('记忆列表',entries)); }
+    if(item.importSources?.length)wrapper.append(el('p','muted','来自 ' + item.importSources[0].appName + ' 的一段对话'));for(const id of item.sourceConversationIds??[]){const source=action('来源对话',()=>selectSharedSession(id),false);source.classList.add('memory-source-link');source.prepend(WeftIcons.create('chat',16));wrapper.append(source)}return wrapper;});target.append(group('记忆列表',entries)); }
   if(memory.hasMore){const more=action(memory.loading?'正在读取…':'加载更多',()=>loadMemoryMore(target),false);more.disabled=memory.loading;target.append(more)}
 }
 
@@ -205,20 +207,21 @@ function renderMemoryDetail(target=memoryTarget,token=memoryToken()){target=memo
   if(memory.sourceError)target.append(el('p','inline-error',memory.sourceError));
   if(!memory.sourcesLoading&&!memory.sourceError&&memory.sources.length){const sourceGroup=group('来源与读取状态',[]);const box=sourceGroup.querySelector('.group-body');
     for(const source of memory.sources){const entry=el('div','');const relation=typeof source.relation==='string'?source.relation:'来源';
+      if(source.importSource){const imported=source.importSource;entry.append(el('p','muted',`来自 ${imported.appName}，${imported.originalAt?new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'long'}).format(new Date(imported.originalAt)):'日期不明'}的一段对话`));}
       entry.append(el('strong','',`${memoryRelationLabel(relation)} · ${memoryCurrentnessLabel(source.currentnessState)}`));
       if(typeof source.recordedAt==='string')entry.append(el('p','muted',`记录于 ${timeLabel(source.recordedAt)}`));
       const permissions=source.permissions&&typeof source.permissions==='object'?source.permissions:{};
       entry.append(el('p','muted',`记忆内容的模型目的地：本机模型${permissions.allowLocalRead===true?'允许':'未允许'} · 云端模型${permissions.allowCloudRead===true?'允许':'未允许'} · 记忆推理${permissions.allowInference===true?'允许':'未允许'}`));
       entry.append(el('p','muted','这些权限只描述记忆内容的模型读取用途，不代表设备操作或删除权限。'));
-      if(source.summary!==null&&typeof source.summary==='string')entry.append(el('p','muted',`摘要：${source.summary}`));
+      if(!source.importSource&&source.summary!==null&&typeof source.summary==='string')entry.append(el('p','muted',`摘要：${source.summary}`));
       if(source.contentAvailable===true&&typeof source.rawContent==='string'){
         if(source.rawContentTruncated===true)entry.append(el('p','muted','以下原文已由服务端截断。'));
-        entry.append(el('p','',source.rawContent));
+        entry.append(el('p','',globalThis.WeftImportSourceText?.(source)??source.rawContent));
       }else if(source.contentAvailable===false)entry.append(el('p','muted','此来源正文当前不可读取。'));
-      else if(source.summary===null||typeof source.summary!=='string')entry.append(el('p','muted','服务端没有提供可读取的正文或摘要。'));
+      else if(source.importSource||source.summary===null||typeof source.summary!=='string')entry.append(el('p','muted','这段聊天记录当前不可读。'));
       if(memoryActionAllowed('deleteEvidence',source))entry.append(action('删除这条来源',()=>{
         openMemoryConfirmation({operation:'deleteEvidence',id:source.evidenceId,
-          summary:source.summary||'这条来源',confirmText:''},target,token)},false));
+          summary:source.importSource?`来自 ${source.importSource.appName} 的一段对话`:source.summary||'这条来源',confirmText:''},target,token)},false));
       box.append(entry)}target.append(sourceGroup)}
   else if(!memory.sourcesLoading&&!memory.sourceError&&memory.detail&&!memory.sources.length)target.append(el('p','muted','服务端没有返回来源记录。'));
   renderMemoryActions(target,token)}

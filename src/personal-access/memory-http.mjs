@@ -11,6 +11,7 @@ export function createMemoryHttpHandler(context) {
       if (request.method === 'GET' && !url.search && pathname === '/personal/v1/memory/status') {
         return context.json(response, 200, { state: 'disabled', worldRevision: null,
           ownerId,
+          ...context.historyImport.list(ownerId),
           capabilities: { list: false, source: false, correct: false, mute: false,
             inject: false, deleteEvidence: false, deleteWorldItem: false } });
       }
@@ -19,7 +20,19 @@ export function createMemoryHttpHandler(context) {
     if (pathname === '/personal/v1/memory/backfill') {
       if (url.search) throw failure('INVALID_REQUEST');
       if (request.method === 'GET') return context.json(response, 200, { ownerId, ...await context.memoryIngestion.preview(ownerId) });
-      if (request.method === 'POST') return context.json(response, 202, { ownerId, ...await context.memoryIngestion.action(ownerId, await context.readJson(request)) });
+      if (request.method === 'POST') {
+        const body = await context.readJson(request, context.historyImport.requestLimit(ownerId));
+        if (body.action === 'import-preview') {
+          if (request.headers['x-weftmate-desktop'] !== context.libraryDesktopToken) throw failure('IMPORT_NATIVE_SELECTION_REQUIRED', 403);
+          const preview = await context.historyImport.preview(ownerId, body.app, body.paths);
+          const current = context.authenticate(request, 'account:manage');
+          if (current.ownerId !== ownerId) throw failure('UNAUTHORIZED', 401);
+          return context.json(response, 200, { ownerId, ...preview });
+        }
+        if (body.action?.startsWith('import-')) return context.json(response, 202, { ownerId,
+          ...await context.historyImport.action(ownerId, { ...body, action: body.action.slice(7) }) });
+        return context.json(response, 202, { ownerId, ...await context.memoryIngestion.action(ownerId, body) });
+      }
       throw failure('METHOD_NOT_ALLOWED', 405);
     }
     if (request.method === 'DELETE') await context.offline?.invalidate(ownerId);
@@ -48,8 +61,17 @@ export function createMemoryHttpHandler(context) {
     }));}
     if(mutation&&receipt?.state==='applied')await context.activity.refresh(ownerId);
     if (mutation && /\/(correct|mute)$/.test(pathname) && result.status < 300) await context.offline?.invalidate(ownerId);
+    if (result.body?.sources) for (const source of result.body.sources) {
+      const imported = context.historyImport.source(ownerId, source.evidenceId);
+      if (imported) source.importSource = imported;
+    }
+    if (result.body?.items) for (const item of result.body.items) {
+      item.importSources = (item.sourceEvidenceIds ?? []).map(id=>context.historyImport.source(ownerId,id)).filter(Boolean);
+      delete item.sourceEvidenceIds;
+      item.sourceConversationIds = item.sourceConversationIds?.filter(id => !id.startsWith('import-'));
+    }
     return context.json(response, result.status, { ownerId, ...result.body,
-      ...(pathname === '/personal/v1/memory/status' ? context.memoryIngestion.status(ownerId) : {}) });
+      ...(pathname === '/personal/v1/memory/status' ? { ...context.memoryIngestion.status(ownerId), ...context.historyImport.list(ownerId) } : {}) });
   }
   return { handleMemoryHttp };
 }
