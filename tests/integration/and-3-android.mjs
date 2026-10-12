@@ -108,6 +108,11 @@ async function shot(scene, theme) {
     bottomNavigationVisible: geometry.bottom > 0, native, status, navigation });
 }
 async function both(scene) {
+  const window = JSON.parse(run('shell', 'run-as', pkg, 'cat', 'files/and3-window.json'));
+  if (window.keyboardVisible) {
+    run('shell', 'input', 'keyevent', '4');
+    await until(() => !JSON.parse(run('shell', 'run-as', pkg, 'cat', 'files/and3-window.json')).keyboardVisible, 'keyboard hidden for full-screen evidence');
+  }
   for (const width of [390,360]) {
     if(!local)run('shell','am','force-stop','com.google.android.apps.nexuslauncher');
     run('shell','wm','size',width===390?'390x844':'360x780');
