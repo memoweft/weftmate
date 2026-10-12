@@ -170,7 +170,7 @@ public actor PersonalClient {
         guard [200,201,204].contains(response.status) else { throw APIFailure.invalidResponse }
     }
     public func remindHealthSuggestion(_ id: String, sessionID: String? = nil, requestID: String) async throws {
-        guard let escaped = id.addingPercentEncoding(withAllowedCharacters: .alphanumerics) else { throw APIFailure.invalidResponse }
+        guard let escaped = id.addingPercentEncoding(withAllowedCharacters: .alphanumerics.union(CharacterSet(charactersIn:"-._:"))) else { throw APIFailure.invalidResponse }
         let _: JSONValue = try await parityRequest(path: "/health/suggestions/" + escaped + "/remind", method: "POST",
             body: JSONEncoder().encode(HealthReminderBody(sessionId: sessionID, requestId: requestID)), timeoutInterval: 15)
     }
@@ -1636,8 +1636,10 @@ public actor PersonalClient {
     }
     private func rawRequest(server: ServerConfiguration, path: String, method: String = "GET",
                             body: Data? = nil, auth: Credential? = nil, acceptedErrorStatuses: Set<Int> = [], extraHeaders: [String: String] = [:], timeoutInterval: TimeInterval = 60, maximumResponseBytes: Int = 1_048_576) async throws -> HTTPResponse {
+        let healthBatch=path == "/health/records/batch" && method == "PUT"
+        let bodyLimit=healthBatch ? 1280*1024 : 262_144
         guard let url = URL(string: server.originString + "/personal/v1" + path),
-              body?.count ?? 0 <= 262_144 else { throw APIFailure.invalidResponse }
+              body?.count ?? 0 <= bodyLimit else { throw APIFailure.invalidResponse }
         var request = URLRequest(url: url, timeoutInterval: timeoutInterval)
         request.httpMethod = method; request.httpBody = body
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -1653,7 +1655,7 @@ public actor PersonalClient {
         catch let e as APIFailure { throw e }
         catch is CancellationError { throw APIFailure.transport(.cancelled) }
         catch { throw APIFailure.transport(.unavailable) }
-        guard response.body.count <= maximumResponseBytes else { throw APIFailure.responseTooLarge }
+        guard response.body.count <= (healthBatch ? 2*1024*1024 : maximumResponseBytes) else { throw APIFailure.responseTooLarge }
         if (300...399).contains(response.status) { throw APIFailure.transport(.redirect) }
         guard (200...299).contains(response.status) || acceptedErrorStatuses.contains(response.status) else { throw serverFailure(response) }
         return response

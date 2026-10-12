@@ -10,7 +10,7 @@ function overview() {
  return {day,connected:scenario!=='disconnected',updatedAt:new Date().toISOString(),capabilities:{record:version,profile:version>=3},
  insight:{headline:'今天可以按自己的节奏来',text:'昨晚睡眠比较稳定，今天适合轻松活动。留一点时间，让身体慢慢恢复。',suggestions:[{id:'walk',text:'下午出去走一走',reminder:{title:'出去走一走',time:new Date(Date.now()+3600000).toISOString()}}]},
  recovery:score(78),sleep:{...score(82),minutes:450,targetMinutes:450,start:new Date(Date.now()-36000000).toISOString(),end:new Date(Date.now()-9000000).toISOString(),deepMinutes:60,remMinutes:60},load:score(61,'刚好'),
- vitals:Object.fromEntries([['restingHeartRateBpm',60],['hrvSdnnMs',50],['respiratoryRateBrpm',16],['spo2Pct',98],['wristTempC',36.5]].map(([id,v])=>[id,vital(id,v)])),
+ vitals:[['restingHeartRateBpm',60],['hrvSdnnMs',50],['respiratoryRateBrpm',16],['spo2Pct',98],['wristTempC',36.5]].map(([id,v])=>vital(id,v)),
  activity:{steps:1234,activeEnergyKcal:200,exerciseMinutes:5,workouts:[{type:'跑步',minutes:5}]},usage:{activeMinutes:240,lateNightMinutes:20,lastUsedAt:null},
  ...(scenario==='extras'?{stress:{score:35,average:38,latest:{value:35,time:new Date().toISOString()},samples:[{time:new Date().toISOString(),value:35,method:'sdnnHeartRate'}],baselineDays:28,label:'比较平静',missing:[]},energy:{score:72,current:72,label:'还有余力',curve:Array.from({length:96},(_,i)=>({value:i<48?90-i/2:null,time:String(Math.floor(i/4)).padStart(2,'0')+':'+String(i%4*15).padStart(2,'0')})),sleepPeriods:[{start:'23:00',end:'07:00'}],degraded:true,nightCharged:20,dayDrained:28},fitnessAge:{fitnessAge:34,actualAge:38,difference:-4,referenceRange:{low:35.9,high:49.2},label:'相对你自己的体能估计',missing:[]}}:{})};
 }

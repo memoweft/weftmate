@@ -727,6 +727,17 @@ struct ConversationView: View {
                         .buttonStyle(.plain).phoneIcon(quiet: true).accessibilityLabel("语音输入").popover(isPresented: $dictationPopover) {
                             Text("使用系统听写输入文字").font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover)
                         }
+                #if os(iOS)
+                    if composerExpanded, let usage = conversation.contextUsage {
+                        Button { contextPopover.toggle() } label: {
+                            ZStack {
+                                Circle().stroke(Weave.line, lineWidth: AppleTokens.Space.p2)
+                                if let value = usage.fraction { Circle().trim(from: 0, to: min(1, value)).stroke(usage.warning ? Weave.danger : Weave.muted, style: StrokeStyle(lineWidth: AppleTokens.Space.p2, lineCap: .round)).rotationEffect(.degrees(-90)) }
+                            }.frame(width: AppleTokens.Space.p18, height: AppleTokens.Space.p18).phoneMenuLabel(circle: true, onCard: true)
+                        }.buttonStyle(.plain).phoneIcon(quiet: true).accessibilityLabel(usage.label).accessibilityIdentifier("contextUsage")
+                            .help(usage.label).popover(isPresented: $contextPopover) { Text(usage.label).font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
+                    }
+                #endif
                     let action = ComposerAction.resolve(running: model.tasksAvailable(conversation) && conversation.running, text: draft.wrappedValue, attachments: !(model.attachmentDrafts[key] ?? []).isEmpty)
                     Button {
                         if action == .stop { Task { await model.stopActiveTask() } }
@@ -742,7 +753,7 @@ struct ConversationView: View {
             }
             #if os(iOS)
             .phoneComposerCard(expanded: composerExpanded)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: composerExpanded)
+            .animation(reduceMotion ? nil : .easeOut(duration: AppleTokens.Motion.d160ms), value: composerExpanded)
             .accessibilityValue(composerExpanded ? "输入区已展开" : "输入区已收起")
             #else
             .padding(AppleTokens.Space.p9)

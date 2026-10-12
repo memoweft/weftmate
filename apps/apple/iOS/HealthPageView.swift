@@ -79,7 +79,7 @@ struct HealthPageView: View {
         ScrollView(.horizontal) {
             HStack(alignment:.top,spacing:AppleTokens.Space.p12) {
                 ForEach(vitalIDs,id:\.self) { id in
-                    let metric=o.vitals[id]
+                    let metric=o.vital(id)
                     card {
                         NavigationLink { detail(id,title(id)) } label: {
                             VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {

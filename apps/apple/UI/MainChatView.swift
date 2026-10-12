@@ -398,7 +398,7 @@ struct MainChatView: View {
             }
             #if os(iOS)
             .phoneComposerCard(expanded: composerExpanded)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: composerExpanded)
+            .animation(reduceMotion ? nil : .easeOut(duration: AppleTokens.Motion.d160ms), value: composerExpanded)
             .accessibilityValue(composerExpanded ? "输入区已展开" : "输入区已收起")
             #endif
         }

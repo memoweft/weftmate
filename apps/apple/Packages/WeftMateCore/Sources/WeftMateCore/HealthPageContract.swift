@@ -25,7 +25,8 @@ public struct HealthOverview: Codable, Sendable {
     public struct Usage: Codable, Sendable { public var activeMinutes: Double?; public var lateNightMinutes: Double?; public var lastUsedAt: String? }
     public var day: String; public var connected: Bool; public var updatedAt: String?; public var capabilities: HealthCapabilities?
     public var insight: HealthInsight?; public var recovery: HealthPageScore?; public var sleep: HealthPageScore?; public var load: HealthPageScore?
-    public var vitals: [String: HealthMetricPoint]; public var activity: Activity?; public var usage: Usage?
+    public var vitals: [HealthMetricPoint]; public var activity: Activity?; public var usage: Usage?
+    public func vital(_ id: String) -> HealthMetricPoint? { vitals.first { $0.id == id } }
     public var stress: HealthStress?; public var energy: HealthEnergy?; public var fitnessAge: HealthFitnessAge?
 }
 public struct HealthMetricSeries: Codable, Sendable {

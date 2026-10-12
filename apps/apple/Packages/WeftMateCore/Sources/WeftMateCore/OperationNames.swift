@@ -3,6 +3,10 @@ import Foundation
 
 public enum OperationNames {
     public static let tools: [String: String] = [
+        "health_query": "查了健康数据",
+        "daily_summaries": "查看每天的回顾",
+        "schedule_create": "安排提醒或定时任务",
+        "schedule_list": "查看提醒和定时任务",
         "open_settings": "系统设置",
         "open_app": "打开应用",
         "list_launchable_apps": "应用列表",
