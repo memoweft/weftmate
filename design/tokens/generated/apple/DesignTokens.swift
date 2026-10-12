@@ -524,6 +524,7 @@ public enum AppleTokens {
         public static let healthTrack = adaptive(light: 0xDFE6E2, dark: 0x48534D)
         public static let healthInk = adaptive(light: 0x202D26, dark: 0xF1F5F2)
         public static let healthMuted = adaptive(light: 0x58665D, dark: 0xB5C0B9)
+        public static let healthCanvas = adaptive(light: 0xF0F4F1, dark: 0x1D2420)
         private static func adaptive(light: UInt32, dark: UInt32) -> Color {
             #if os(macOS)
             return Color(nsColor: NSColor(name: nil) { appearance in
