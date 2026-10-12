@@ -17,6 +17,7 @@
     "phone-setting-default-enabled-off-stops-background",
     "host-restart-no-duplicate-days-or-weekly-inference",
     "clear-removes-days-insights-and-following-context",
+    "full-system-bars-android14-light-dark-360-390-five-scenes-native-text-regions",
     "full-system-bars-android14-light-dark-360-390-five-scenes-native-text-regions"
   ],
   "screenshots": [
@@ -73,5 +74,5 @@
   ],
   "mobileSystemBars": "Android 14 stock emulator, isolated remote webpage; real status and gesture navigation bars, light/dark 360/390. Native frames checked against visible webpage text regions; menus and dialogs asserted open. Product native bridge excluded.",
   "errors": [],
-  "systemBarEvidenceRun": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  "systemBarEvidenceRun": "https://github.com/memoweft/weftmate/actions/runs/38210710428"
 }
