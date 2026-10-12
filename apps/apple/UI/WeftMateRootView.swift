@@ -44,6 +44,7 @@ struct WeftMateRootView: View {
             }
         }
         #if os(iOS)
+        .buttonStyle(PhoneActionStyle())
         .overlay(alignment: .bottom) { ArchiveUndoBar(app: model) }
         #endif
         .onChange(of: model.session?.verification) { _, _ in runLog.connection(model.offline.hostOffline ? "offline" : model.session == nil ? "login_required" : "online") }

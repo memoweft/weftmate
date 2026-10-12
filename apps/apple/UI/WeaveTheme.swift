@@ -50,12 +50,16 @@ struct OutlineActionStyle: ButtonStyle {
     var destructive = false
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
+        #if os(iOS)
+        PhoneActionStyle(destructive: destructive).makeBody(configuration: configuration)
+        #else
         configuration.label.font(AppleTokens.Fonts.callout.weight(.medium))
             .padding(.horizontal, AppleTokens.Space.p12).frame(minHeight: 44)
             .foregroundStyle(destructive ? Weave.danger : Weave.ink)
             .background(configuration.isPressed ? Weave.soft : Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10))
             .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r10).strokeBorder(destructive ? Weave.danger : Weave.line))
             .opacity(enabled ? 1 : AppleTokens.Opacity.disabled)
+        #endif
     }
 }
 
@@ -63,6 +67,9 @@ struct PrimaryActionStyle: ButtonStyle {
     var fillsWidth = true
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
+        #if os(iOS)
+        PhoneActionStyle(primary: true).makeBody(configuration: configuration).frame(maxWidth: fillsWidth ? .infinity : nil)
+        #else
         configuration.label
             .font(.system(AppleTokens.TextStyle.body, design: .default, weight: .semibold))
             .padding(.horizontal, AppleTokens.Space.p14)
@@ -71,6 +78,7 @@ struct PrimaryActionStyle: ButtonStyle {
             .background(Weave.accent.opacity(enabled ? (configuration.isPressed ? AppleTokens.Opacity.pressed : 1) : AppleTokens.Opacity.disabled),
                         in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10, style: .continuous))
             .scaleEffect(configuration.isPressed ? AppleTokens.Scale.pressed : 1)
+        #endif
     }
 }
 
