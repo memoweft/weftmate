@@ -1,0 +1,50 @@
+{
+  "package": {
+    "xctestPassed": 13,
+    "swiftTestingPassed": 466,
+    "totalPassed": 479,
+    "failed": 0,
+    "skipped": 0,
+    "jobs": 2
+  },
+  "focusedPresentation": {
+    "passed": 4,
+    "failed": 0
+  },
+  "relatedNodeGates": {
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0
+  },
+  "designTokens": {
+    "passed": 5,
+    "failed": 0
+  },
+  "callbackIsolation": {
+    "reviewedSites": 67,
+    "failed": 0,
+    "newKeyboardSites": 2
+  },
+  "copy": {
+    "authoredStrings": 2264,
+    "historicalScreenshotFrames": 53,
+    "uiFilesScannedForSystemAccent": 96
+  },
+  "nativeBuild": {
+    "scheme": "WeftMatePhone",
+    "sdk": "iOS Simulator 26.2",
+    "architecture": "x86_64",
+    "passed": true,
+    "jobs": 4,
+    "parallelTesting": false,
+    "finalSourceBuildPassed": true
+  },
+  "productionCloudUsed": false,
+  "realHostUsed": false,
+  "personalHealthSamplesUsed": false,
+  "ciPolled": false,
+  "uiFinalAllGreen": false,
+  "finalSourceSimulatorRetested": false,
+  "finalSourceBuildPassed": true,
+  "sourceCommitCompiled": "5054cf24023cf208e462dd14562fbaecb1e23608"
+}

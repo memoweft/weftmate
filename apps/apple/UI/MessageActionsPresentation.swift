@@ -45,6 +45,16 @@ struct MessageActionsPresentation: ViewModifier {
                     .accessibilityHidden(!(hovering || actionFocused || (!user && latest)))
                     .accessibilityIdentifier("message.hover." + id)
             }
+            #else
+            if enabled && !user {
+                HStack(spacing: AppleTokens.Space.p0) {
+                    Button { copy() } label: { WeftIcon("copy", size: AppleTokens.Space.p16) }.phoneIcon(quiet: true)
+                        .accessibilityLabel(copied ? "已复制" : "复制").accessibilityIdentifier("message.copy." + id)
+                    Button { rate("useful") } label: { WeftIcon("thumb-up", size: AppleTokens.Space.p16) }.phoneIcon(quiet: true)
+                        .accessibilityLabel("有用").accessibilityValue(rating == "useful" ? "已选择" : "")
+                    actionMenu.phoneIcon(quiet: true)
+                }.foregroundStyle(Weave.muted)
+            }
             #endif
         }
         #if os(macOS)
@@ -94,7 +104,7 @@ struct MessageActionsPresentation: ViewModifier {
         if let exportDirectory { try? FileManager.default.removeItem(at: exportDirectory) }; exportDirectory = nil
     }
     private var actionMenu: some View {
-        Menu { assistantActions; extra() } label: { WeftIcon("more", size: AppleTokens.Space.p16) }
+        Menu { assistantActions; extra() } label: { WeftIcon("more", size: AppleTokens.Space.p16).phoneMenuLabel(circle: true, quiet: true) }
             .menuStyle(.borderlessButton).fixedSize().accessibilityLabel("消息操作").accessibilityIdentifier(menuID)
     }
     @ViewBuilder private var assistantActions: some View {
