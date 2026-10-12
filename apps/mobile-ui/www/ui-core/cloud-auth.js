@@ -209,7 +209,7 @@
           requiredClaims: ['iat','exp','jti','sub','hostId','deviceId','jkt','tlsSpki','publicJwk'],
           maxTokenAge: '120s', clockTolerance:30, currentDate: new Date(this.now()) });
         if (payload.sub !== saved.sub || payload.deviceId !== key.deviceId || payload.hostId !== this.config.hostId ||
-            payload.jkt !== jkt || payload.exp - payload.iat > 120 || payload.iat * 1000 > this.now() + 30000 ||
+            payload.jkt !== jkt || payload.exp - payload.iat > 120 || payload.iat * 1000 > this.now() + 30000 || payload.exp * 1000 <= this.now() ||
             !/^[A-Za-z0-9_-]{43}$/.test(payload.tlsSpki) ||
             await this.hash(JSON.stringify({ crv: payload.publicJwk.crv, kty: payload.publicJwk.kty, x: payload.publicJwk.x, y: payload.publicJwk.y })) !== await this.hash(JSON.stringify({ crv: trust.publicJwk.crv, kty: trust.publicJwk.kty, x: trust.publicJwk.x, y: trust.publicJwk.y }))) fail('HOST_TRUST_INVALID');
         // The initial anchor comes from the authenticated host TLS connection

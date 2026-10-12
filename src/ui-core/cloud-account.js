@@ -300,7 +300,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       const { payload } = await environment.cloudVendor.jwtVerify(material.token, await environment.cloudVendor.importJWK(material.anchor, 'ES256'), {
         algorithms: ['ES256'], typ: 'wm-host-trust+jwt', issuer: material.hostId, audience: jkt, requiredClaims: ['iat', 'exp', 'jti', 'sub', 'hostId', 'deviceId', 'jkt', 'tlsSpki', 'publicJwk'], maxTokenAge: '120s', clockTolerance:30, currentDate: new Date(now()) });
       if (payload.sub !== saved.sub || ![client.config.hostId, ...auth.hosts.map(host => host.hostId)].includes(payload.hostId) || payload.deviceId !== key.deviceId || payload.jkt !== jkt ||
-        payload.exp - payload.iat > 120 || payload.iat * 1000 > now() + 30000 || !/^[A-Za-z0-9_-]{43}$/.test(payload.tlsSpki) ||
+        payload.exp - payload.iat > 120 || payload.iat * 1000 > now() + 30000 || payload.exp * 1000 <= now() || !/^[A-Za-z0-9_-]{43}$/.test(payload.tlsSpki) ||
         await environment.cloudVendor.calculateJwkThumbprint(payload.publicJwk) !== await environment.cloudVendor.calculateJwkThumbprint(material.anchor)) throw new Error();
       await environment.cloudCredentials('trusted-host:' + payload.hostId, { tlsSpki: payload.tlsSpki, publicJwk: material.anchor, origin: payload.origin, relay: payload.relay });
       return finishCloudLogin();
