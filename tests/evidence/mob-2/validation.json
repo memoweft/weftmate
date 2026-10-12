@@ -57,5 +57,24 @@
   "cleanup": {
     "forcedProcesses": 9,
     "failedTempDirectoryRemoval": "Automatic approval review rejected deletion of a prior isolated test temp directory; retained, approximately 73 MB."
+  },
+  "postMain": {
+    "base": "af819a0c",
+    "merge": "2f078941",
+    "mobilePassed": 113,
+    "mobileFailed": 0,
+    "latencyPassed": 1,
+    "relatedPassed": 13,
+    "relatedFailed": 0,
+    "typecheckExitCode": 0,
+    "publicIdentityHits": 0
+  },
+  "reviewGalleryMobile": {
+    "captured": 42,
+    "failed": 0,
+    "changedExpectations": [
+      "Memory enters through settings; fact-row assertion retained.",
+      "Question waits for the prior approval action to finish; region and radio assertions retained."
+    ]
   }
 }

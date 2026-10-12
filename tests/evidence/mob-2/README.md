@@ -27,6 +27,7 @@ MuMu（安卓模拟器）的端口从 MuMuManager 读取，使用独占 `mumu.lo
 2. 记忆 HTTP（网络接口）夹具的数据目录改为隔离临时目录，避免短盘符和仓库目录的权限差异；账号、游标、回执隔离断言保持原样。
 3. Windows（操作系统）的完整测试命令改用相对测试文件参数，解决长工作树触发 `ENAMETOOLONG`。Node（运行时）的测试子进程继承绝对隔离报告目录，清理器仍收到绝对根目录；没有减少文件、用例或跳过范围。
 4. `bl29-rework/probe-latency.mjs` 在保存全部行为观测后明确退出隔离测试程序，再关闭自动化连接，避免程序退出时调试协议的等待。会话同步、恢复显示、配置同步的原有断言与时限不变。
+5. `review-capture-mobile.mjs` 的记忆场景改由设置进入，保留事实行等待；提问场景等待上一条审批动作完整收尾，再打开独立提问，保留提问区域与单选项等待。场景数量与超时时限不变。
 
 实际测试成绩与桌面逐像素比较见 [验证记录](validation.json) 与 [比较记录](comparison.json)。截图脚本为 `tests/integration/mob-2-refresh.mjs`；系统栏严格检查与诊断为 `tests/integration/mob-2-system-bars.mjs`。
 
