@@ -22,6 +22,7 @@ export async function prepareAppRollback({ configFile, nextVersion, appData = ap
     await copyPhysicalTree(installation, join(snapshot, 'program'));
     if (cacheDirectory) await copyPhysicalTree(cacheDirectory, join(snapshot, 'cache'));
     await writeFile(join(snapshot, 'monitor.mjs'), await readFile(new URL('./app-watchdog.mjs', import.meta.url)));
+    await writeFile(join(snapshot, 'process-output.mjs'), await readFile(new URL('../process-output.mjs', import.meta.url)));
     await writeFile(join(snapshot, 'physical-copy.mjs'), await readFile(new URL('./physical-copy.mjs', import.meta.url)));
     await writeFile(join(snapshot, 'watchdog-commands.mjs'), await readFile(new URL('./watchdog-commands.mjs', import.meta.url)));
     await writeFile(join(snapshot, 'watchdog-host-log.mjs'), await readFile(new URL('../host-log.mjs', import.meta.url)));

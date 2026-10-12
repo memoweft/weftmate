@@ -97,7 +97,7 @@ export function createHostLog(root, { now = () => new Date(), maxBytes = 2 * 102
       const date = now(), day = date.toISOString().slice(0, 10);
       const cutoff = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) - (retentionDays - 1) * 86400000).toISOString().slice(0, 10);
       for (const name of readdirSync(directory).filter(name => hostFile.test(name))) if (name.slice(5, 15) < cutoff) unlinkSync(join(directory, name));
-      const metadata = Object.fromEntries(Object.entries(data).filter(([key, value]) => fields.has(key) &&
+      const metadata = Object.fromEntries(Object.entries(data).filter(([key, value]) => (fields.has(key) || event === 'process.warning' && key === 'name') &&
         (typeof value === 'boolean' || typeof value === 'number' && Number.isFinite(value) || safeString(value))));
       if (['SIGTERM', 'SIGINT', 'SIGKILL', 'SIGHUP', 'SIGABRT', 'SIGSEGV', 'SIGBREAK', 'SIGQUIT'].includes(data.signal)) metadata.signal = data.signal;
       const rowRunId = typeof data.runId === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(data.runId) ? data.runId : runId;

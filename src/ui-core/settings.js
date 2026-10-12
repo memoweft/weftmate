@@ -105,7 +105,5 @@ globalThis.WeftUiCore.factories.settings = (core, effects, environment) => {
         void core.refreshModels();
         void core.refreshBrowserWorkspace();
     }
-    // Install the persistence base before the health factory wraps the public action.
-    core.saveHealthSettings = saveHealthSettings;
-    return { saveSecondOpinion: secondOpinionEnabled => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { secondOpinionEnabled } }), readPermissionRules: () => core.accessApi('/settings/approvals'), savePermissionRules: rules => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { rules } }), readExecutionRecords: params => core.accessApi('/execution-records?' + params), loadNotificationSettings, saveNotificationSettings, loadHealthSettings, sendTestNotification, loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
+    return { saveSecondOpinion: secondOpinionEnabled => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { secondOpinionEnabled } }), readPermissionRules: () => core.accessApi('/settings/approvals'), savePermissionRules: rules => core.accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { rules } }), readExecutionRecords: params => core.accessApi('/execution-records?' + params), loadNotificationSettings, saveNotificationSettings, loadHealthSettings, persistHealthSettings: saveHealthSettings, sendTestNotification, loadPersonalization, savePersonalization, sessionExpired, formatDate, refreshSystem, openAccount };
 };
