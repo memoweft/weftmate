@@ -4,6 +4,9 @@ on:
     branches: [wp/health-3-health-pages]
     paths: ["src/ui-core/**", "src/personal-access-ui/**", "apps/mobile-ui/**", "tests/helpers/health-page-*.mjs", "tests/integration/health-3-phone.mjs", ".github/workflows/health-3-phone-evidence.yml"]
   workflow_dispatch:
+concurrency:
+  group: health-3-phone-evidence-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
