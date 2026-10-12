@@ -65,10 +65,12 @@ struct DailyReviewView: View {
                             Text("接上健康数据后，这里还会有睡眠和运动").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted)
                             HStack {
                                 Button("接上") { Task { await health.connect(app: app) } }.disabled(health.busy)
+                                    .buttonStyle(PrimaryActionStyle(fillsWidth: false))
                                     .accessibilityIdentifier("dailyHealthHintConnect")
-                                Button("不用") { health.dismissHint(app: app) }.foregroundStyle(Weave.muted)
+                                Button("不用") { health.dismissHint(app: app) }
+                                    .buttonStyle(OutlineActionStyle())
                                     .accessibilityIdentifier("dailyHealthHintDismiss")
-                            }.buttonStyle(.borderless)
+                            }
                         }.accessibilityElement(children: .contain)
                     }
                 }

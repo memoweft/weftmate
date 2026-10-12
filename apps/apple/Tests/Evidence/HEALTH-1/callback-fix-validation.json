@@ -1,0 +1,13 @@
+{
+  "callbackSites": 59,
+  "unreviewedCallbacks": 0,
+  "callbackIsolationTests": 5,
+  "boundaryTests": 6,
+  "coreTests": 439,
+  "iphoneMainJourneys": 2,
+  "failed": 0,
+  "skippedUI": 0,
+  "simulatorsAtOnce": 1,
+  "completionInvocation": "one defer per SDK observer callback",
+  "buttons": "existing PrimaryActionStyle and OutlineActionStyle"
+}

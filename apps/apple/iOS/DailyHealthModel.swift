@@ -91,15 +91,21 @@ import WeftMateCore
         let requestedAgain = activationPending; activationPending = false
         if (token != generation || requestedAgain), app.session != nil { await activate(app: app) }
     }
+    /// The SDK-facing callback has no inherited UI executor; UI references are dereferenced only after the hop.
+    nonisolated private static func makeObserverUpdate(model: DailyHealthModel, app: AppleAppModel) -> @Sendable () async -> Void {
+        { @Sendable [weak model, weak app] in
+            await Task { @MainActor in
+                guard let model, let app, model.state.enabled else { return }
+                await model.activate(app: app)
+            }.value
+        }
+    }
     private func run(app: AppleAppModel, token: UUID) async {
         var sent = 0
         do {
             guard app.session?.verification == .verified else { return }
             if state.enabled, state.connected, reader.available {
-                await reader.observe { [weak self, weak app] in
-                    guard let self, let app, self.state.enabled else { return }
-                    await self.activate(app: app)
-                }
+                await reader.observe(update: Self.makeObserverUpdate(model: self, app: app))
                 guard matches(app, token), state.enabled, !Task.isCancelled else { reader.stop(); return }
             }
             do {
