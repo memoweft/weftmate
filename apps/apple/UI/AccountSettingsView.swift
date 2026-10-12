@@ -94,16 +94,11 @@ struct CloudAccountHome: View {
         NavigationStack {
             VStack(spacing: AppleTokens.Space.p24) {
                 BrandMark(size: 48)
-                if cloud.waiting {
-                    Text("在你已登录的设备上允许这台设备").font(AppleTokens.Fonts.title3).multilineTextAlignment(.center).accessibilityIdentifier("cloudWaiting")
-                    ForEach(cloud.devices.filter { !$0.isCurrent }) { device in WeftLabel(device.name, icon: device.icon) }
-                    Button("取消连接") { cloud.cancel() }.buttonStyle(OutlineActionStyle())
-                    Button("换账号") { Task { await cloud.signOutAccount() } }
-                } else {
-                    Text("已登录 WeftMate").font(AppleTokens.Fonts.title2)
-                    Text("在设置中连接你的电脑，接上对话与记忆。")
-                        .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).multilineTextAlignment(.center)
-                }
+                Text("电脑没开或没联网").font(AppleTokens.Fonts.title2)
+                Text("你已登录。打开电脑上的 WeftMate 后再试一次；本机内容可以继续使用。")
+                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).multilineTextAlignment(.center)
+                Button("再试一次") { Task { await cloud.retryConnection() } }.buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("retryComputer")
+                Button("继续使用本机") { cloud.useLocalWorkspace = true }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("continueLocal")
                 #if os(macOS)
                 Button { app.settingsRoute = .init(categoryID: "devices"); openWindow(id: "settings") } label: { WeftLabel("设置 → 设备", icon: "desktop") }.buttonStyle(PrimaryActionStyle())
                 Button { app.settingsRoute = .init(categoryID: "account"); openWindow(id: "settings") } label: { WeftLabel("设置 → 账户", icon: "account") }.buttonStyle(OutlineActionStyle())
@@ -115,6 +110,47 @@ struct CloudAccountHome: View {
             }.padding(AppleTokens.Space.p24).frame(maxWidth: 468).frame(maxWidth: .infinity, maxHeight: .infinity)
                 .safeAreaInset(edge: .top) { PreviousRunNotice().padding(.horizontal, AppleTokens.Space.p16) }
                 .background(Weave.canvas).navigationTitle("WeftMate")
+        }
+    }
+}
+
+/// Local notes are available before any server login. No account or network is needed.
+struct LocalAccountWorkspace: View {
+    @ObservedObject var app: AppleAppModel
+    @ObservedObject var cloud: CloudLoginModel
+    @AppStorage private var draft: String
+    @AppStorage private var notes: String
+    init(app: AppleAppModel, cloud: CloudLoginModel) {
+        self.app = app; self.cloud = cloud
+        let args = ProcessInfo.processInfo.arguments
+        let index = args.firstIndex(of: "--ui-testing-namespace")
+        let suffix = index.flatMap { args.indices.contains($0 + 1) ? args[$0 + 1] : nil } ?? "local"
+        let preferences = args.contains("--ui-testing") ? UserDefaults(suiteName: "com.weftmate.apple.test." + suffix)! : .standard
+        _draft = AppStorage(wrappedValue: "", "localWorkspaceDraft", store: preferences)
+        _notes = AppStorage(wrappedValue: "", "localWorkspaceNotes", store: preferences)
+    }
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
+                Text("本机笔记").font(AppleTokens.Fonts.title2)
+                Text("先记下想法，内容只保存在这台设备。需要电脑帮忙时再登录。")
+                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                ScrollView { Text(notes).frame(maxWidth: .infinity, alignment: .leading).textSelection(.enabled) }
+                    .accessibilityIdentifier("localSavedNotes")
+                WeaveCard {
+                    VStack(spacing: AppleTokens.Space.p12) {
+                        TextField("写点什么…", text: $draft, axis: .vertical).lineLimit(3...6).weaveField().accessibilityIdentifier("localDraft")
+                        HStack {
+                            Button("保存到本机") { if !draft.isEmpty { notes += (notes.isEmpty ? "" : "\n\n") + draft; draft = "" } }
+                                .buttonStyle(OutlineActionStyle()).accessibilityIdentifier("saveLocalNote")
+                            Button("让 WeftMate 帮忙") { cloud.requireLogin() }.buttonStyle(PrimaryActionStyle(fillsWidth: false))
+                                .accessibilityIdentifier("requestServer")
+                        }
+                    }
+                }
+            }.padding(AppleTokens.Space.p20).frame(maxWidth: 620).frame(maxWidth: .infinity)
+                .background(Weave.canvas).navigationTitle("WeftMate").accessibilityElement(children: .contain).accessibilityIdentifier("localWorkspace")
+                .toolbar { ToolbarItem(placement: .primaryAction) { Button("登录") { cloud.requireLogin() }.accessibilityIdentifier("openAccountLogin") } }
         }
     }
 }

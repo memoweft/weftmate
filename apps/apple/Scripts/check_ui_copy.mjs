@@ -3,6 +3,18 @@ import {readFile,readdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {checkVisibleCopy} from '../../../scripts/check-ui-copy.mjs';
+// Catch broken substitutions in current authored copy, including error messages.
+// Historical screenshot OCR remains an unchanged record of its original build.
+export const brokenAppleCopy = Object.freeze([
+ '电脑电脑', '远程连接续', '字元', '还没连上电脑状态',
+ 'WeftMate报告', '通过iPhone',
+]);
+export function checkAppleCopy(copy, label = 'Apple UI') {
+ checkVisibleCopy(copy, label);
+ for (const bad of brokenAppleCopy) {
+  if (copy.includes(bad)) throw Error(`${label}: broken Apple copy: ${bad}`);
+ }
+}
 export function swiftCopy(source) {
  const clean=source.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
  const values=[];
@@ -23,7 +35,7 @@ export async function scanAppleCopy(root=resolve(import.meta.dirname,'../../..')
   if(path.endsWith('/OperationNames.swift'))continue;
   const source=await readFile(path,'utf8');
   const copies=path.endsWith('.swift')?swiftCopy(source):path.endsWith('.xcstrings')?Object.entries(JSON.parse(source).strings).flatMap(([key,v])=>[key,...Object.values(v.localizations??{}).map(l=>l.stringUnit?.value??'')]): [...source.matchAll(/=\s*"((?:\\.|[^"\\])*)"/g)].map(m=>m[1]);
-  for(const copy of copies){count++;try{checkVisibleCopy(copy,path);}catch(e){found.push(e.message);}}
+  for(const copy of copies){count++;try{checkAppleCopy(copy,path);}catch(e){found.push(e.message);}}
  }
  const frames=JSON.parse(await readFile(join(evidence,'screenshot-text.json'),'utf8'));
  if(frames.syntheticOnly!==true||!frames.frames.length)throw Error('Missing Apple synthetic screenshot text');

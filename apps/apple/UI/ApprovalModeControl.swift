@@ -121,7 +121,7 @@ struct ApprovalModeControl: View {
         } catch { if start == identity { self.error = failureMessage(error) } }
     }
     private func failureMessage(_ error: Error) -> String {
-        if case APIFailure.server(404, _) = error { return "当前宿主尚未提供审批模式，请更新宿主后重试。" }
+        if case APIFailure.server(404, _) = error { return "当前电脑尚未提供审批模式，请更新电脑后重试。" }
         return "审批模式未能核对，请重新连接后读取。"
     }
 }
