@@ -21,6 +21,13 @@ class ClientRouteInventoryUnitTest {
         for (index in 0 until rows.length()) {
             val row = rows.getJSONObject(index)
             assertNotEquals(row.toString(), "unclassified", row.getString("transport"))
+            if (row.getString("transport") == "cloud-account") {
+                val path = row.getString("path"); val method = row.getString("method")
+                if (!cloudAppRouteAllowed("https://cloud.example.com$path", method,
+                        "https://host.example.com", "https://cloud.example.com/personal/v1/cloud/oidc"))
+                    failures.add("cloud $method $path (${row.getJSONArray("sources")})")
+                continue
+            }
             if (row.getString("transport") != "business") continue
             businessCount++
             val path = row.getString("path"); val method = row.getString("method")

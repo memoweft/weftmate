@@ -14,6 +14,7 @@ test('Android inventory discovers interface and contract paths and runs the ship
   assert.ok(rows.some(row => row.sources.includes('docs/CLIENT_API.md')));
   assert.ok(rows.filter(row => row.transport === 'business').length > 60);
   assert.ok(rows.every(row => row.transport !== 'unclassified'));
+  assert.equal(rows.find(row => row.path === '/personal/v1/cloud/auth/login/code/request')?.transport, 'cloud-account');
 });
 test('Android inventory resolves opaque IDs, dates, numeric detail anchors and health identifiers', () => {
   assert.equal(exampleRoute('/personal/v1/sessions/${encodeURIComponent(sessionId)}/events/{seq}/detail'), '/personal/v1/sessions/sample-one/events/1/detail');

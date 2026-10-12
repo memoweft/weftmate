@@ -117,6 +117,11 @@
     });
     if (native) core.sessionExpired = effects.nativeSessionExpired;
     const connect = core.cloudConnect; core.cloudConnect = async hostId => WeftUiCore.resolveMobileCloudConnection(client, await connect(hostId));
+    const probePresence = core.probeCloudPresence;
+    core.probeCloudPresence = async () => {
+      const connection = await probePresence();
+      return connection ? WeftUiCore.resolveMobileCloudConnection(client, connection) : null;
+    };
     if (identity.clientId) client.clientId = identity.clientId;
     if (identity.redirectUri) client.redirectUri = identity.redirectUri;
     forms = WeftMobileCloudForms(core, ui); settings = WeftMobileCloudSettings(core, ui);

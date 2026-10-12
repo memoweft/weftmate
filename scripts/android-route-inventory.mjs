@@ -20,7 +20,7 @@ async function files(directory) {
 }
 export async function inventory() {
   const routes = new Map();
-  const add = (template, source, method = 'GET') => {
+  const add = (template, source, method = 'GET', cloudClient = false) => {
     template = template.split('?')[0];
     if (template.includes('|')) { for (const part of template.split('|')) add(part.startsWith('/') ? part : template.slice(0, template.lastIndexOf('/') + 1) + part, source, method); return; }
     template = template.replace(/([^/])\$\{.*$/, '$1');
@@ -31,6 +31,7 @@ export async function inventory() {
     if (!path.startsWith('/personal/v1/') || /[\s`${}]/.test(path)) return;
     const key = method + ' ' + path;
     const row = routes.get(key) || { path, method, sources: [] };
+    if (cloudClient) row.cloudClient = true;
     if (!row.sources.includes(source)) row.sources.push(source);
     routes.set(key, row);
   };
@@ -43,6 +44,11 @@ export async function inventory() {
       add(prefix + match[2], source, method);
     }
     for (const match of text.matchAll(/(['"`])(\/personal\/v1\/[^'"`\n]*)\1/g)) add(match[2], source);
+    for (const match of text.matchAll(/(publicRequest|authorized)\(\s*(['"`])(\/[^'"`\n]*)\2/g)) {
+      const options = text.slice(match.index + match[0].length, match.index + match[0].length + 160);
+      const method = match[1] === 'publicRequest' ? 'POST' : options.match(/^\s*,\s*\{\s*method\s*:\s*['"](GET|POST|PATCH|PUT|DELETE)['"]/)?.[1] || 'GET';
+      add('/personal/v1/cloud' + match[3], source, method, true);
+    }
   }
   const contract = await readFile(resolve(root, 'docs/CLIENT_API.md'), 'utf8');
   for (const line of contract.split('\n')) {
@@ -82,6 +88,7 @@ export async function inventory() {
   } });
   const result = [];
   for (const row of [...routes.values()].sort((a, b) => (a.path + a.method).localeCompare(b.path + b.method))) {
+    if (row.cloudClient) { result.push({ ...row, transport:'cloud-account' }); continue; }
     if (excluded.some(rule => rule.test(row.path))) { result.push({ ...row, transport: 'specialized-or-desktop' }); continue; }
     captured = null;
     await bridge.fetch(row.path, { method: row.method, ...(row.method !== 'GET' ? { body: '{}' } : {}) });
