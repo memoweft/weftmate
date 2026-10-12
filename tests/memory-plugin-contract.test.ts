@@ -25,6 +25,17 @@ writeFileSync(stagedMemoryPath, plugin.replace("from '@deepseek-ai/dsh-tools'", 
 const importMemoryPlugin = () => import(pathToFileURL(stagedMemoryPath).href);
 process.on('exit', () => rmSync(stagedMemoryRoot, { recursive: true, force: true }));
 
+// Fake Cordis contexts must run the real effect disposers before changing the
+// process-wide DSH_HOME. Otherwise an older retry/persist flight writes into
+// the next fixture and races its same-PID temporary state file.
+function mockEffects() {
+  const disposers: Function[] = [];
+  return {
+    effect(create: Function) { const dispose=create(); if(typeof dispose==='function')disposers.push(dispose); },
+    async dispose() { while(disposers.length)await disposers.pop()!(); },
+  };
+}
+
 function between(source: string, start: string, end: string): string {
   const from = source.indexOf(start);
   const to = source.indexOf(end, from + start.length);
@@ -56,6 +67,7 @@ describe('R7 记忆宿主插件契约', () => {
   it('registered memory handler serves world and normalizes command receipts without leaking instance state', async () => {
     const { apply } = await importMemoryPlugin();
     const oldEnabled = process.env.WEFTMATE_MEMOWEFT_ENABLED; process.env.WEFTMATE_MEMOWEFT_ENABLED = '1';
+    const lifecycle=mockEffects();
     let handler: any; const submitted: any[] = [];
     const capabilities = { subject_id: 'owner-1', world_revision: 4 };
     const bridge: any = { child: {}, generation: 0, capabilities, acceptCapabilities(value) { this.capabilities = value; }, close: async () => {}, async request(method: string, params: any) {
@@ -64,14 +76,14 @@ describe('R7 记忆宿主插件契约', () => {
       if (method === 'submit_command') { submitted.push(params.command); return params.command.command_id === 'conflict' ? { receipt: { result_state: 'revision_conflict', world_revision: 5 } } : { receipt: { result_state: 'applied', world_revision: 5 } }; }
       return {};
     } };
-    const ctx: any = { logger: { info() {} }, get(name: string) { if (name === 'credentials') return { resolve: async () => undefined }; if (name === 'webServer') return { register(route: any) { handler = route.handler; return () => {} } }; if (name === 'settings') return { get: () => ({ providers: {} }) }; }, on() {}, effect(run: Function) { run(); } };
+    const ctx: any = { logger: { info() {} }, get(name: string) { if (name === 'credentials') return { resolve: async () => undefined }; if (name === 'webServer') return { register(route: any) { handler = route.handler; return () => {} } }; if (name === 'settings') return { get: () => ({ providers: {} }) }; }, on() {}, effect:lifecycle.effect };
     const call = async (url: string, body?: any) => { const chunks = body === undefined ? [] : [Buffer.from(JSON.stringify(body))]; const req: any = { method: body === undefined ? 'GET' : 'POST', url, headers: body === undefined ? {} : { host: '127.0.0.1:9', origin: 'http://127.0.0.1:9', 'content-type': 'application/json' }, async *[Symbol.asyncIterator]() { yield* chunks } }; let status = 0, text = ''; const res: any = { writeHead(code: number) { status = code }, end(value?: string) { text = value ?? '' } }; await handler(req, res); return { status, json: JSON.parse(text) }; };
     try {
       apply(ctx, { bridge }); const world = await call('/weftmate/memory/world.json'); assert.equal(world.status, 200); assert.equal(world.json.subject_id, 'owner-1'); assert.equal(world.json.world_revision, 4);
       const short = await call('/weftmate/memory/command.json', { command: { command_id: 'applied', operation: 'correct_world_item', target_id: 'c1', payload: { correction_text: '改正' } } }); assert.equal(short.status, 200); assert.equal(short.json.accepted, true); assert.equal(submitted[0].subject_id, 'owner-1'); assert.equal(submitted[0].expected_world_revision, 4); assert.equal(submitted[0].schema_version, 1);
       const conflict = await call('/weftmate/memory/command.json', { command: { command_id: 'conflict', operation: 'retract_world_item', target_id: 'c1' } }); assert.equal(conflict.status, 409); assert.equal(conflict.json.accepted, false);
       const invalid = await call('/weftmate/memory/command.json', { command: { command_id: 'bad' } }); assert.equal(invalid.status, 400);
-    } finally { if (oldEnabled === undefined) delete process.env.WEFTMATE_MEMOWEFT_ENABLED; else process.env.WEFTMATE_MEMOWEFT_ENABLED = oldEnabled; }
+    } finally { await lifecycle.dispose(); if (oldEnabled === undefined) delete process.env.WEFTMATE_MEMOWEFT_ENABLED; else process.env.WEFTMATE_MEMOWEFT_ENABLED = oldEnabled; }
   });
   it('跨语言规范化与 Python 字节一致（中文 ensure_ascii 转义）', () => {
     const payload = {
@@ -121,14 +133,16 @@ describe('R7 记忆宿主插件契约', () => {
       protocol: 'memoweft.dsh_rpc', protocol_version: 2, schema_version: 1,
       methods: ['initialize', 'capabilities', 'ingest_boundary', 'prefetch', 'query_world', 'query_evidence', 'query_jobs', 'query_provenance', 'preview_recall', 'query_interactions', 'query_interaction', 'submit_command', 'portable_export', 'health', 'shutdown'],
     };
+    const lifecycles: ReturnType<typeof mockEffects>[] = [];
     const makeCtx = () => {
+      const lifecycle=mockEffects();lifecycles.push(lifecycle);
       const handlers = new Map<string, Function[]>();
       return {
         handlers,
         logger: { info() {} },
         get(name: string) { return name === 'credentials' ? { resolve: async () => undefined } : name === 'settings' ? { get: () => ({ providers: { local: { baseURL: 'http://127.0.0.1:8080/v1' } } }) } : undefined; },
         on(name: string, handler: Function) { handlers.set(name, [...(handlers.get(name) ?? []), handler]); },
-        effect() {},
+        effect:lifecycle.effect, dispose:lifecycle.dispose,
       };
     };
     const waitFor = async (predicate: () => boolean) => {
@@ -157,7 +171,7 @@ describe('R7 记忆宿主插件契约', () => {
       firstCtx.handlers.get('session/event')?.[0](session, session.events[3]);
       const statePath = join(home, 'memoweft', 'weftmate-handoff-v1.json');
       await waitFor(() => { try { return JSON.parse(readFileSync(statePath, 'utf8')).pending.length === 1; } catch { return false; } });
-      await firstCtx.handlers.get('dispose')?.[0]();
+      await firstCtx.dispose();
 
       const accepted: any[] = [];
       const secondCtx = makeCtx();
@@ -178,8 +192,9 @@ describe('R7 记忆宿主插件契约', () => {
       secondCtx.handlers.get('session/event')?.[0](session, session.events[3]);
       await new Promise((resolve) => setTimeout(resolve, 50));
       assert.equal(accepted.length, 1);
-      await secondCtx.handlers.get('dispose')?.[0]();
+      await secondCtx.dispose();
     } finally {
+      for(const lifecycle of lifecycles)await lifecycle.dispose();
       if (previousEnabled === undefined) delete process.env.WEFTMATE_MEMOWEFT_ENABLED; else process.env.WEFTMATE_MEMOWEFT_ENABLED = previousEnabled;
       if (previousHome === undefined) delete process.env.DSH_HOME; else process.env.DSH_HOME = previousHome;
       rmSync(home, { recursive: true, force: true });
@@ -364,8 +379,9 @@ describe('R7 记忆宿主插件契约', () => {
     process.env.WEFTMATE_MEMOWEFT_ENABLED = '1';
     process.env.DSH_HOME = home;
     const handlers = new Map<string, Function[]>();
+    const lifecycle=mockEffects();
     const ctx = {
-      logger: { info() {} }, effect() {},
+      logger: { info() {} }, effect:lifecycle.effect,
       get(name: string) { return name === 'credentials' ? { resolve: async () => undefined } : name === 'settings' ? { get: () => ({ providers: { local: { baseURL: 'http://127.0.0.1:8080/v1' } } }) } : undefined; },
       on(name: string, handler: Function) { handlers.set(name, [...(handlers.get(name) ?? []), handler]); },
     };
@@ -467,6 +483,7 @@ describe('R7 记忆宿主插件契约', () => {
       assert.equal(JSON.stringify(state.recall_adoptions).includes('同一句问题'), false);
       assert.equal(JSON.stringify(state.recall_adoptions).includes('记忆A'), false);
     } finally {
+      await lifecycle.dispose();
       if (oldEnabled === undefined) delete process.env.WEFTMATE_MEMOWEFT_ENABLED; else process.env.WEFTMATE_MEMOWEFT_ENABLED = oldEnabled;
       if (oldHome === undefined) delete process.env.DSH_HOME; else process.env.DSH_HOME = oldHome;
       rmSync(home, { recursive: true, force: true });
@@ -514,7 +531,8 @@ describe('R7 记忆宿主插件契约', () => {
       throw new Error('bridge unavailable');
     } };
     const tools = { register(tool) { registered.set(tool.name, tool); } };
-    const ctx: any = { logger: { info() {} }, get(name) { return name === 'tools' ? tools : name === 'credentials' ? { resolve: async () => undefined } : name === 'settings' ? { get: () => ({ providers: { local: { baseURL: 'http://127.0.0.1:8080/v1' } } }) } : undefined; }, on(name, fn) { handlers.set(name, [...(handlers.get(name) ?? []), fn]); }, effect() {} };
+    const lifecycle=mockEffects();
+    const ctx: any = { logger: { info() {} }, get(name) { return name === 'tools' ? tools : name === 'credentials' ? { resolve: async () => undefined } : name === 'settings' ? { get: () => ({ providers: { local: { baseURL: 'http://127.0.0.1:8080/v1' } } }) } : undefined; }, on(name, fn) { handlers.set(name, [...(handlers.get(name) ?? []), fn]); }, effect:lifecycle.effect };
     try {
       apply(ctx, { bridge }); const tool = registered.get('recall_memory'); assert.ok(tool, 'the plugin registers the real recall tool');
       const cloud = await tool.execute({ query: '偏好', level: 'all' }, { agent: { session: { id: 'cloud', requestHeader() { return { config: { provider: 'cloud', model: 'test' } }; } } } });
@@ -533,12 +551,14 @@ describe('R7 记忆宿主插件契约', () => {
       session.events.push(userEvent); handlers.get('session/event')?.[0](session, userEvent);
       const success = await tool.execute({ query: '偏好', level: 'all' }, { agent: { session: Object.assign(session, { requestHeader() { return { config: { provider: 'local', model: 'test' } } } }) } });
       assert.equal(success.status, 'success');
+      await lifecycle.dispose();
       const stored = JSON.parse(readFileSync(join(home, 'memoweft', 'weftmate-handoff-v1.json'), 'utf8'));
       const capture = stored.recall_adoptions.find(item => item.capture_source === 'recall_memory');
       assert.deepEqual(capture.selected_item_ids, [['cognition', 'c1'], ['cognition', 'c2']]);
       assert.deepEqual(capture.interaction_ids, ['interaction-1']);
       assert.equal(capture.capture_status, 'complete');
     } finally {
+      await lifecycle.dispose();
       if (oldEnabled === undefined) delete process.env.WEFTMATE_MEMOWEFT_ENABLED; else process.env.WEFTMATE_MEMOWEFT_ENABLED = oldEnabled;
       if (oldHome === undefined) delete process.env.DSH_HOME; else process.env.DSH_HOME = oldHome;
       rmSync(home, { recursive: true, force: true });
