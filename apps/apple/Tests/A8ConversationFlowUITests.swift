@@ -3,6 +3,13 @@ import XCTest
 final class A8ConversationFlowUITests: XCTestCase {
     override func setUp() { super.setUp(); continueAfterFailure = false }
     private var driver: String { ProcessInfo.processInfo.environment["WEFTMATE_A5_DRIVER"]! }
+    @MainActor private func pendingApprovalElement(_ app: XCUIApplication) -> XCUIElement {
+        #if os(iOS)
+        app.descendants(matching:.any).matching(NSPredicate(format:"identifier BEGINSWITH %@","approvalCard.")).firstMatch
+        #else
+        app.descendants(matching:.any)["approvalBar"]
+        #endif
+    }
     @MainActor private func get(_ path: String) async throws -> [String: Any] {
         let (data, response) = try await URLSession.shared.data(from: URL(string: driver + path)!)
         XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
@@ -53,15 +60,15 @@ final class A8ConversationFlowUITests: XCTestCase {
         try expect(app.buttons["复制"]); keep(app, "expanded", theme)
         try tap(first)
         _ = try await get("/a8/approvals")
-        try expect(app.staticTexts["还有 1 个待批准"]); try expect(app.descendants(matching: .any)["approvalBar"])
+        try expect(app.staticTexts["还有 1 个待批准"]); try expect(pendingApprovalElement(app))
         XCTAssertEqual(group.value as? String, "已展开")
         try tap(group)
         XCTAssertTrue(app.buttons["approvalDetails"].label.contains("要运行命令：npm run verify"))
         try expect(matching(app, "approveOnce.")); keep(app, "approval", theme, review: true)
         let approve = matching(app, "approveOnce."); let previousID = approve.identifier
-        try tap(approve); try await waitGone(app.buttons[previousID])
+        try tap(approve); if app.buttons["approvalConfirm."+String(approve.identifier.dropFirst("approveOnce.".count))].exists { try tap(app.buttons["approvalConfirm."+String(approve.identifier.dropFirst("approveOnce.".count))]) }; try await waitGone(app.buttons[previousID])
         XCTAssertTrue(matching(app, "rejectApproval.").exists)
-        try tap(matching(app, "rejectApproval.")); try await waitGone(app.descendants(matching: .any)["approvalBar"])
+        let reject=matching(app,"rejectApproval."); try tap(reject); if app.buttons["approvalConfirm."+String(reject.identifier.dropFirst("rejectApproval.".count))].exists { try tap(app.buttons["approvalConfirm."+String(reject.identifier.dropFirst("rejectApproval.".count))]) }; try await waitGone(pendingApprovalElement(app))
         let approvalGroup = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "executionBlock.")).allElementsBoundByIndex.last!
         if approvalGroup.value as? String == "已收起" { try tap(approvalGroup) }
         try expect(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "已批准")).firstMatch)
