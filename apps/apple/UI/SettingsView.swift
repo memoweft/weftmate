@@ -242,6 +242,7 @@ private struct SettingsCategoryView: View {
         case "general":
             #if os(iOS)
             DailyHealthSettingsRow(app: app)
+            HealthAISettingsRow(app:app)
             #endif
             SettingsRow("回复进行中时发送的消息", "按账户保存在这台设备。") {
                 Picker("回复进行中时发送的消息", selection: Binding(get: { app.runningMessageMode }, set: { app.runningMessageMode = $0 })) {

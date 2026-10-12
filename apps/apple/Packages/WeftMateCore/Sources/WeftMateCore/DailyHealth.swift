@@ -4,8 +4,16 @@ import Foundation
 public struct DailyHealth: Codable, Equatable, Sendable {
     public struct Workout: Codable, Equatable, Sendable {
         public var type: String; public var minutes: Double
+        public var start: String?; public var kcal: Double?; public var avgHeartRateBpm: Double?; public var maxHeartRateBpm: Double?; public var zoneMinutes: [Double?]?
         public init(type: String, minutes: Double) { self.type = type; self.minutes = minutes }
     }
+    public var activeEnergyKcal: Double?
+    public var sleep: HealthSleepRecord?
+    public var hrvSdnnMs: Double?; public var respiratoryRateBrpm: Double?; public var spo2Pct: Double?
+    public var wristTempC: Double?; public var vo2Max: Double?
+    public var heartRateHourly: [HealthHeartBucket?]?
+    public var heartRateQuarterHourly: [HealthHeartBucket?]?
+    public var hrvSamples: [HealthVariabilityRecord]?
     public var version = 1
     public var status = "available"
     public var steps: Int?
@@ -19,13 +27,24 @@ public struct DailyHealth: Codable, Equatable, Sendable {
         self.exerciseMinutes = exerciseMinutes; self.workouts = workouts
     }
     public static var unavailable: Self { var value = Self(); value.status = "unavailable"; return value }
-    enum CodingKeys: String, CodingKey { case version, status, steps, sleepMinutes, restingHeartRateBpm, exerciseMinutes, workouts }
+    enum CodingKeys: String, CodingKey { case version, status, steps, sleepMinutes, restingHeartRateBpm, exerciseMinutes, workouts, activeEnergyKcal, sleep, hrvSdnnMs, respiratoryRateBrpm, spo2Pct, wristTempC, vo2Max, heartRateHourly, heartRateQuarterHourly, hrvSamples }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(version, forKey: .version); try c.encode(status, forKey: .status)
         try c.encode(steps, forKey: .steps); try c.encode(sleepMinutes, forKey: .sleepMinutes)
         try c.encode(restingHeartRateBpm, forKey: .restingHeartRateBpm); try c.encode(exerciseMinutes, forKey: .exerciseMinutes)
         try c.encode(workouts, forKey: .workouts)
+        if version >= 2 {
+            try c.encode(activeEnergyKcal, forKey: .activeEnergyKcal)
+            var safeSleep = sleep; if version < 3 { safeSleep?.stages = nil }
+            try c.encode(safeSleep, forKey: .sleep)
+            try c.encode(hrvSdnnMs, forKey: .hrvSdnnMs); try c.encode(respiratoryRateBrpm, forKey: .respiratoryRateBrpm)
+            try c.encode(spo2Pct, forKey: .spo2Pct); try c.encode(wristTempC, forKey: .wristTempC)
+            try c.encode(vo2Max, forKey: .vo2Max); try c.encode(heartRateHourly, forKey: .heartRateHourly)
+        }
+        if version >= 3 {
+            try c.encode(heartRateQuarterHourly, forKey: .heartRateQuarterHourly); try c.encode(hrvSamples, forKey: .hrvSamples)
+        }
     }
 }
 
@@ -78,6 +97,22 @@ public struct DailyHealthState: Codable, Sendable {
     public var pending: [String: DailyHealth] = [:]
     public var lastSent: Date?
     public var needsRemoteClear = false
+    // Optional migration fields preserve existing HEALTH-1 stores without reauthorization at launch.
+    public var expandedAuthorization: Bool?
+    public var historyVersion: Int?
+    public var historyTargetVersion: Int?
+    public var historyRemaining: [String]?
+    public var profileDelivered: HealthProfile?
+    public mutating func beginHistory(version: Int, now: Date, calendar: Calendar) {
+        guard version > (historyVersion ?? 0), version >= (historyTargetVersion ?? 0), historyTargetVersion != version else { return }
+        historyTargetVersion = version
+        historyRemaining = DailyHealthCalendar.days(now: now, calendar: calendar, count: 90).map { DailyHealthCalendar.key($0, calendar: calendar) }
+    }
+    public var nextHistoryDays: [String] { Array((historyRemaining ?? []).prefix(10)) }
+    public mutating func acknowledgeHistory(_ days: [String]) {
+        historyRemaining = (historyRemaining ?? []).filter { !days.contains($0) }
+        if historyRemaining?.isEmpty == true { historyVersion = historyTargetVersion }
+    }
     public init() {}
     public mutating func enqueue(_ values: [String: DailyHealth]) {
         for (day, value) in values {
@@ -91,7 +126,7 @@ public struct DailyHealthState: Codable, Sendable {
         if value.status == "available" { lastSent = now }
     }
     public mutating func disable() {
-        enabled = false; needsRemoteClear = true
+        enabled = false; needsRemoteClear = true; historyVersion = nil; historyTargetVersion = nil; historyRemaining = nil; profileDelivered = nil
         for day in Set(delivered.filter { $0.value.status == "available" }.keys).union(pending.keys) { pending[day] = .unavailable }
     }
     public mutating func clearRemote(_ days: [String]) {

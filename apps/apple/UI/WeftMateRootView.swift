@@ -452,7 +452,7 @@ struct MacWorkspace: View {
     }
 }
 #else
-struct PhoneWorkspace: View {
+struct PhoneChatWorkspace: View {
     @ObservedObject var model: AppleAppModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var search = ""
@@ -477,6 +477,7 @@ struct PhoneWorkspace: View {
                         }
                     }
                     else if id == "daily-review" { DailyReviewView(app: model) }
+                    else if id == "health" { HealthPageView(app:model,ask:{ text in model.mainChat.setDraft(text); path=[] }) }
                     else if let conversation = model.conversations.first(where: { $0.id == id }) {
                         if conversation.isMainChat { MainChatView(app: model) } else {
                         ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(conversation.chatContentRevision ?? 0))
@@ -526,6 +527,7 @@ struct PhoneWorkspace: View {
                 List {
                     Section {
                         NavigationLink(value: "daily-review") { WeftLabel("动态", icon: "bell") }.accessibilityIdentifier("dailyReviewOpen")
+                        NavigationLink(value:"health") { WeftLabel("健康",icon:"health") }.accessibilityIdentifier("health.open")
                         ForEach([("目标", "plan"), ("成果库", "outputs")], id: \.0) { title, icon in
                             Button {} label: { WeftLabel(title, icon: icon) }.disabled(true).accessibilityHint("Apple 页面即将支持")
                         }
