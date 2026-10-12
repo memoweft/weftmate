@@ -1654,11 +1654,13 @@ v1 / v2 原请求和回执保持原样；只有 `version:3` 接受新增字段�
 overview新增 `capabilities:{record:3,profile:true}` 与三项可空对象；完全无对应输入时为null，已有部分输入但不够计算时为对象、`state:"insufficient"`和`missing`。三项均附 `disclaimer`。字段固定如下：
 
 - `stress:{score,average,latest:{value,time}|null,samples:[{time,value,method}],baselineDays,state,label,missing,disclaimer}`。没有当天有效清醒测量或对应方法不足7个历史有效日时score／average／latest.value为null，不能给判断；method为`stressIndex|sdnnHeartRate`。score是最近测量值，average是当天有效值均值。历史窗口不含当天。
-- `energy:{score,current,curve:[{time,value}],highest,lowest,nightCharged,dayDrained,degraded,state,label,missing,disclaimer}`。curve固定96个当地15分钟格，time是当地`HH:mm`，value可为null；不投射今天尚未到来的时段。current／score取最后已完成桶的值。缺15分钟心率用对应小时桶并标degraded；两者都缺则该桶null，不能当安静。初值缺睡眠／恢复或静息心率时insufficient。
-- `fitnessAge:{fitnessAge,actualAge,difference,vo2Max,vo2MaxDay,trend:[{day,value}],bounded,state,label,missing,disclaimer}`。最大摄氧量取截至目标日60天内最近有效值，trend为连续60天。actualAge=目标年−birthYear（只知年份的近似），difference=fitnessAge−actualAge。sex为other／null时不套用male／female表；missing含`sex`。范围外饱和并标bounded。
+- `energy:{score,current,curve:[{time,value}],sleepPeriods:[{start,end}],highest,lowest,nightCharged,dayDrained,degraded,state,label,missing,disclaimer}`。curve固定96个当地15分钟格，time是当地`HH:mm`，value可为null；不投射今天尚未到来的时段。current／score取最后已完成桶的值。缺15分钟心率用对应小时桶并标degraded；两者都缺则该桶null，不能当安静。初值缺睡眠／恢复或静息心率时insufficient。
+- `fitnessAge:{fitnessAge,actualAge,difference,referenceRange:{low,high}|null,vo2Max,vo2MaxDay,trend:[{day,value}],bounded,state,label,missing,disclaimer}`。最大摄氧量取截至目标日60天内最近有效值，trend为连续60天。actualAge=目标年−birthYear（只知年份的近似），difference=fitnessAge−actualAge。sex为other／null时不套用male／female表；missing含`sex`。范围外饱和并标bounded。
 
 metrics新增`stress|energy|fitnessAge`（vo2Max原已支持），value分别为日平均压力、最后有效电能、体能年龄。所有metrics允许`to=YYYY-MM-DD`结束日期（默认今天，不能未来），原days口径不变。usage新增`lastUsedAt`（昨夜18:00至目标日12:00之前最后一条用户消息时刻，ISO或null，不是屏幕关闭时刻）；load新增`recommendedRange:{low,high,unit:"relative"}`或null（近42天平均±15%，用于活动安排参考）。
 
 GET `/health/weekly?to=YYYY-MM-DD`独立返回`{from,to,health}`；to为不包含的周结束日，默认明天，health沿用周回顾中的健康对象或null。建议remind请求sessionId改为可选；缺省时在主对话准备原生会话锚点，不发送模型消息，沿用原定时任务授权和幂等。
 
 POST analysis仅接受上述scope和合法day（非未来、保留范围内），关闭时409 `AI_ANALYSIS_OFF`优先于缓存；GET回执`{day,items:[analysis]}`，关闭仍可读当天缓存。每天账号40次生成包含统计退回版、缓存命中不计数，超限429 `AI_ANALYSIS_LIMIT`。缓存按账号／day／scope，生成资格持久化，重启不重置；开关关掉取消在途单项请求并丢弃迟到结果，已缓存项保留至当天结束。清空健康数据一并删除profile、单项缓存及计数。
+
+16.4增量：`energy.sleepPeriods`是曲线上的睡眠区间，按当地`HH:mm`返回；跨零点时start晚于end，无可定位的睡眠时段为`[]`。优先合并相邻非awake分期，否则使用sleep.start/end。`fitnessAge.referenceRange`是本人性别／实际年龄十岁分组的VO₂max第25–75百分位（单位mL/kg/min，同参考表）；缺性别／birthYear、未成年人时null，80岁以上使用最后70–79岁组并在依据中说明适用边界。
