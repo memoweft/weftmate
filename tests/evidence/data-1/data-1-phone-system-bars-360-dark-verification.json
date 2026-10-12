@@ -1,0 +1,24 @@
+{
+  "realElectron": false,
+  "syntheticHost": true,
+  "realModelRequests": 0,
+  "mimoRequests": 0,
+  "syntheticWeeklyRequests": 0,
+  "checks": [
+    "ten-days-conversations-tasks-verified-outputs-reminders-usage-no-bodies",
+    "daily-generation-idempotence",
+    "health-summary-write-receipt",
+    "background-unavailable-statistical-weekly-fallback",
+    "full-mobile-system-bars-light-dark-360-390-settings-open-controls"
+  ],
+  "screenshots": [
+    "phone-system-360-dark-weekly.png",
+    "phone-system-360-dark-sources-open.png",
+    "phone-system-360-dark-settings.png",
+    "phone-system-360-dark-retention-open.png",
+    "phone-system-360-dark-clear-confirm.png"
+  ],
+  "mobileSystemBars": "Android remote webpage in the synthetic test browser;  full status and bottom navigation bars captured. Product native bridge is outside this package.",
+  "errors": [],
+  "completed": true
+}
