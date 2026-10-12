@@ -1,0 +1,1746 @@
+{
+  "generatedAt": "2026-10-12T07:50:51.995Z",
+  "workflow": "windows-package.yml",
+  "limit": 80,
+  "runs": [
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T07:42:21Z",
+      "databaseId": 38219238374,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "7fb2628dfbc1349581f3641f7244fce3ba0a5a01",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219238374"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T07:42:07Z",
+      "databaseId": 38219217094,
+      "event": "pull_request",
+      "headBranch": "chore/apple-login-note",
+      "headSha": "4495d6a0c00ac8935043928c120efe56af5e46aa",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219217094"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T07:40:31Z",
+      "databaseId": 38219066376,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "5d437554add4fa5475ee1d5156a79b9da111e3e4",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219066376"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T07:40:25Z",
+      "databaseId": 38219055282,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "36c50654feeb399ae6d3f8dc1b3ccea7937cd059",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219055282"
+    },
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-12T06:09:00Z",
+      "databaseId": 38211140040,
+      "event": "pull_request",
+      "headBranch": "wp/web-1-official-site",
+      "headSha": "e89ad0414cd2a00ca926598faf84e88a43281040",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38211140040"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T06:07:10Z",
+      "databaseId": 38210997261,
+      "event": "pull_request",
+      "headBranch": "wp/web-1-official-site",
+      "headSha": "fc70b0c4615999329719b5a18474451cfeaa0cf6",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38210997261"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T06:03:59Z",
+      "databaseId": 38210748165,
+      "event": "pull_request",
+      "headBranch": "wp/web-1-official-site",
+      "headSha": "f5200037be653e81af7330c56e44f8324b5704d7",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38210748165"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T05:33:56Z",
+      "databaseId": 38208483208,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "79c133767d87a0c2960e70e47ee04be2c282620b",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38208483208"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T05:30:28Z",
+      "databaseId": 38208227378,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "7ceec016cf21f92958f84daa893e3a863777a758",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38208227378"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T05:26:45Z",
+      "databaseId": 38207958601,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "d6f0f991df8d428f1e928e92e747427beac91153",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38207958601"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T05:24:01Z",
+      "databaseId": 38207762434,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "4b95323af61d97fe3d915ba52f1688b625aff670",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38207762434"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:46:24Z",
+      "databaseId": 38205148483,
+      "event": "pull_request",
+      "headBranch": "wp/ux-2-no-native-popups",
+      "headSha": "d638623dd8056bea38719de14a553f09c0ddc83d",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38205148483"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:43:55Z",
+      "databaseId": 38204977027,
+      "event": "pull_request",
+      "headBranch": "wp/sec-1-second-opinion",
+      "headSha": "8e931de764a0e45e721bbc78acc72e1765698221",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204977027"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:42:21Z",
+      "databaseId": 38204871643,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "b772103b226716cf41fdf28796082b26e7d55066",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204871643"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:42:14Z",
+      "databaseId": 38204863882,
+      "event": "pull_request",
+      "headBranch": "wp/ux-3-quieter-replies",
+      "headSha": "3fe199d28c7fd003538edb2175701babbdedbb7b",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204863882"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:39:28Z",
+      "databaseId": 38204671938,
+      "event": "pull_request",
+      "headBranch": "wp/apple-2-login-first",
+      "headSha": "2a3a47a88d08c53aaf529ec6f269e965559531b3",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204671938"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:38:38Z",
+      "databaseId": 38204616876,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "7c57c43fa05db1389ff4b9bbb2ab58ae31b66a18",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204616876"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:29:32Z",
+      "databaseId": 38203995779,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "41f10a2c253177fdc9b1bc1e0a66a3c6348c80e8",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203995779"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:20:12Z",
+      "databaseId": 38203359346,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "7c6d0851e0e406281a3eeb76c365062d8f64ddba",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203359346"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:19:03Z",
+      "databaseId": 38203283388,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "fc5b31d2b77780716b3f6977d196f24ad43a11ae",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203283388"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:12:46Z",
+      "databaseId": 38202863490,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "84062f7c20f5e92452f603a23c453477f615b420",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202863490"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:10:03Z",
+      "databaseId": 38202675116,
+      "event": "pull_request",
+      "headBranch": "wp/ux-2-no-native-popups",
+      "headSha": "1b73fcab2fa398e5998740ccf5ae068dfc2e1707",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202675116"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T04:09:13Z",
+      "databaseId": 38202621958,
+      "event": "pull_request",
+      "headBranch": "wp/ux-2-no-native-popups",
+      "headSha": "d06a3a81dad2f49575e95189a86ac6fa8a417ed5",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202621958"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T04:07:57Z",
+      "databaseId": 38202536222,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "b26406f1753e1f824a3ef582c0abbb3273fc543a",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202536222"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T03:52:02Z",
+      "databaseId": 38201453222,
+      "event": "pull_request",
+      "headBranch": "wp/ux-3-quieter-replies",
+      "headSha": "071ded31c1026f2b05ac47901cc306cd734cfb82",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38201453222"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T03:51:35Z",
+      "databaseId": 38201423135,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "1592a0295148a7a7f82e9eaa2c37821982e7d15f",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38201423135"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T03:45:19Z",
+      "databaseId": 38200999340,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "0b48b5c9c0277d618696640b81ed7194c4a4d482",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200999340"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T03:45:03Z",
+      "databaseId": 38200980908,
+      "event": "pull_request",
+      "headBranch": "wp/mob-2-mobile-refresh",
+      "headSha": "8276bda781f28a2e1c8320ec633a02daa8f006d0",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200980908"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T03:37:25Z",
+      "databaseId": 38200478489,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "d54557d1061980ee166bfaa5f1db5859381faf05",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200478489"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T03:25:48Z",
+      "databaseId": 38199711306,
+      "event": "pull_request",
+      "headBranch": "wp/mob-2-mobile-refresh",
+      "headSha": "2f0789416d7749676de4d8174ce5de904a4bf1cf",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38199711306"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T03:05:06Z",
+      "databaseId": 38198356448,
+      "event": "pull_request",
+      "headBranch": "wp/ux-3-quieter-replies",
+      "headSha": "8df973b9d2dd73f64a084bf8998812e976fbc425",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38198356448"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T02:58:17Z",
+      "databaseId": 38197888963,
+      "event": "pull_request",
+      "headBranch": "wp/apple-2-login-first",
+      "headSha": "e166a59e21336351be6f7de250abd309152310d8",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38197888963"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T02:04:54Z",
+      "databaseId": 38194388781,
+      "event": "pull_request",
+      "headBranch": "wp/apple-2-login-first",
+      "headSha": "016ba03b8f9dc8ee390c58145de15010e1d379f2",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38194388781"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T02:02:21Z",
+      "databaseId": 38194223690,
+      "event": "pull_request",
+      "headBranch": "wp/apple-2-login-first",
+      "headSha": "f8edd4f5f355f3a21db819bb74a76406e014a95f",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38194223690"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T00:09:08Z",
+      "databaseId": 38186915992,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "af819a0c809b9a0ff056703e7ec94e7c5ed11b22",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186915992"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T00:09:01Z",
+      "databaseId": 38186908274,
+      "event": "pull_request",
+      "headBranch": "wp/bl-38-vendor-cache-safety",
+      "headSha": "0fb0db7cafc8a61371c42f4a61a90e23d484e86b",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186908274"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T23:22:46Z",
+      "databaseId": 38184057122,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "9d5dc5d69d97bd5f5aaa7096e55af648ed61db92",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38184057122"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T23:22:38Z",
+      "databaseId": 38184048721,
+      "event": "pull_request",
+      "headBranch": "wp/st-2-permission-rules",
+      "headSha": "296fbee1986e8b2d0dd5bc62ee3c0314f57478c9",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38184048721"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T23:20:07Z",
+      "databaseId": 38183885970,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "3d9798a3146f66de04915541d3934776e5a53ee4",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183885970"
+    },
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-11T23:19:59Z",
+      "databaseId": 38183876238,
+      "event": "pull_request",
+      "headBranch": "wp/sys-3-windows-integration",
+      "headSha": "e80a70357d06d8ad21b9e3d1f80ab0c5a80add16",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183876238"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T23:19:20Z",
+      "databaseId": 38183837808,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "28df81f61c65380e22101805aa9f461843be3147",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183837808"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T22:43:09Z",
+      "databaseId": 38181528224,
+      "event": "pull_request",
+      "headBranch": "wp/bl-38-vendor-cache-safety",
+      "headSha": "c57c61c9a513ee5018f8f47eb5636ab3a24e779f",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38181528224"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T22:32:03Z",
+      "databaseId": 38180802700,
+      "event": "pull_request",
+      "headBranch": "wp/bl-38-vendor-cache-safety",
+      "headSha": "a78593bb1fd6d9c2fa55aea19f509bcc81669f37",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38180802700"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T22:28:21Z",
+      "databaseId": 38180551203,
+      "event": "pull_request",
+      "headBranch": "wp/bl-38-vendor-cache-safety",
+      "headSha": "cf9b473509371b066edd693b833afcc77bed00cd",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38180551203"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T20:54:30Z",
+      "databaseId": 38174156740,
+      "event": "pull_request",
+      "headBranch": "wp/sys-3-windows-integration",
+      "headSha": "32da9a02e26046546c1f121ce4ca9cff07b2c409",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38174156740"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T20:31:05Z",
+      "databaseId": 38172542500,
+      "event": "pull_request",
+      "headBranch": "wp/st-2-permission-rules",
+      "headSha": "089a84288cc85f9e394268c8238fc8892f0a019f",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172542500"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T20:26:37Z",
+      "databaseId": 38172227772,
+      "event": "pull_request",
+      "headBranch": "wp/mem-3-weekly-memory-digest",
+      "headSha": "60230f401658914a6e3c04c1303f9130f6d54266",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172227772"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T20:16:44Z",
+      "databaseId": 38171525466,
+      "event": "pull_request",
+      "headBranch": "wp/st-2-permission-rules",
+      "headSha": "b799c98877c0fc8a83f9a76521c379a50c511243",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38171525466"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T19:44:37Z",
+      "databaseId": 38169300598,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "cddb56464b013010cc513668a55f8995476c1156",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169300598"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T19:44:29Z",
+      "databaseId": 38169292424,
+      "event": "pull_request",
+      "headBranch": "wp/r0-4-in-app-feedback",
+      "headSha": "3daa13ae548b354d242681d4ae1230521c3ba143",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169292424"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T19:41:59Z",
+      "databaseId": 38169121217,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "f19fe7bca0151fc7ffe93d61dc42b8e2b30a1283",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169121217"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:59:58Z",
+      "databaseId": 38166146850,
+      "event": "pull_request",
+      "headBranch": "wp/r0-4-in-app-feedback",
+      "headSha": "1c2d6394f6b97808c45c59b2117c8d055be68c8d",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38166146850"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:59:01Z",
+      "databaseId": 38166085116,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "e70f1427318db8aca66dc09777b65c743ffbc8d4",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38166085116"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:19:45Z",
+      "databaseId": 38163340134,
+      "event": "pull_request",
+      "headBranch": "wp/inst-1-branded-installer",
+      "headSha": "77da44d23bf10668f591ff0d0e7790bf1dbaf0c4",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163340134"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:14:53Z",
+      "databaseId": 38163003818,
+      "event": "pull_request",
+      "headBranch": "wp/r0-2-diagnose-and-repair",
+      "headSha": "847216bcf10bb046e4cbfd84e918bc40bee61617",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163003818"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:14:45Z",
+      "databaseId": 38162995522,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "81b65e1e34f978f47f020f2a5fa867c57b8d06d2",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162995522"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:05:46Z",
+      "databaseId": 38162367369,
+      "event": "pull_request",
+      "headBranch": "wp/sys-3-windows-integration",
+      "headSha": "6b888960546c0290e9f514ce023ccf877fa4bcdf",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162367369"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:02:14Z",
+      "databaseId": 38162122498,
+      "event": "pull_request",
+      "headBranch": "wp/r0-2-diagnose-and-repair",
+      "headSha": "f2cdb55cfd909bedebfa49e2960e5e6072f4d8a6",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162122498"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:01:30Z",
+      "databaseId": 38162072469,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "1ddae8b3ae60ffa652d02499e9f2333b8b1eb6ae",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162072469"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T17:59:19Z",
+      "databaseId": 38161909481,
+      "event": "pull_request",
+      "headBranch": "wp/inst-1-branded-installer",
+      "headSha": "4bc7d01b00e2a22b6e44cbb583e10c6270ccb738",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161909481"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T17:56:07Z",
+      "databaseId": 38161704789,
+      "event": "pull_request",
+      "headBranch": "wp/r0-2-diagnose-and-repair",
+      "headSha": "60471e5f7a34e43547264ce8a5308f133da6e744",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161704789"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T17:55:10Z",
+      "databaseId": 38161639206,
+      "event": "pull_request",
+      "headBranch": "wp/r0-2-diagnose-and-repair",
+      "headSha": "ed5af6d547c989ab0a0d48bee5d816df718738f5",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161639206"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T17:32:40Z",
+      "databaseId": 38160093457,
+      "event": "pull_request",
+      "headBranch": "chore/apple-run-log-changelog",
+      "headSha": "ac516ae79e6469bc64987e157bfd9ce5fb92eabb",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38160093457"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T17:31:42Z",
+      "databaseId": 38160025964,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "7c166452cab1440f15bcbbc3a29b5ef36cafee49",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38160025964"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T17:26:30Z",
+      "databaseId": 38159651383,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "59d971e792f1feb692038252677ec5781924a387",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38159651383"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T16:48:31Z",
+      "databaseId": 38156992070,
+      "event": "pull_request",
+      "headBranch": "wp/diag-3-apple-run-log",
+      "headSha": "d4733489bfa5d3bf65931aa1023ab461db6341e1",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38156992070"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T16:09:51Z",
+      "databaseId": 38154299163,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "a1ed8955731857c27f25601b5b1ce109901cf0af",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38154299163"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T16:09:48Z",
+      "databaseId": 38154294694,
+      "event": "pull_request",
+      "headBranch": "wp/r0-4-in-app-feedback",
+      "headSha": "287316eaece66ea732cd24603450790ebf8576ea",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38154294694"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T15:50:49Z",
+      "databaseId": 38152988474,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "305b5088e7713cea8565063a97b20669fe0e8f97",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38152988474"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T14:38:02Z",
+      "databaseId": 38147975549,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "ba45182d551ef4c8a827d5846fcb3e9a1e9287bd",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38147975549"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T12:58:29Z",
+      "databaseId": 38141321806,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "1491fe5a88c95428a2781d6277702fd5260f7cfd",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38141321806"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T12:19:35Z",
+      "databaseId": 38138830193,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "fea5567a96290b11ebb538e4170866b62bfa8063",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38138830193"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T12:19:02Z",
+      "databaseId": 38138796372,
+      "event": "pull_request",
+      "headBranch": "wp/mem-3-weekly-memory-digest",
+      "headSha": "3f0b10d627cb9caf01a614414e4338cec70ec016",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38138796372"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T11:50:13Z",
+      "databaseId": 38137017122,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "375d68ed021c4eca1162d7055e30165c6003021f",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38137017122"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T11:48:43Z",
+      "databaseId": 38136926346,
+      "event": "pull_request",
+      "headBranch": "chore/core-ref-mem6",
+      "headSha": "8713d8840f0b135d3547335c429ebc12aff11396",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136926346"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T11:37:23Z",
+      "databaseId": 38136238287,
+      "event": "pull_request",
+      "headBranch": "wp/mem-3-weekly-memory-digest",
+      "headSha": "2dc54b68f4552ced5c704ec745b0396e368ec586",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136238287"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T11:35:11Z",
+      "databaseId": 38136104501,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "1f14e780542d5e794a0413ae8fd8fbae22a07578",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136104501"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T11:13:02Z",
+      "databaseId": 38134745133,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "fd956bc0b3045c05755e2dff4d25e2ad08ba3b4e",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134745133"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T11:09:04Z",
+      "databaseId": 38134508799,
+      "event": "pull_request",
+      "headBranch": "wp/bl-29-quiet-when-idle",
+      "headSha": "5a338cbb9ad9d22a2f8cc60217066aff252d5bbd",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134508799"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T11:02:30Z",
+      "databaseId": 38134114954,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "8029aeffa2acb47ba069f32024509a0f70de79c6",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134114954"
+    }
+  ],
+  "errors": [],
+  "durations": [
+    {
+      "job": "Windows package and startup smoke",
+      "jobSeconds": {
+        "samples": 61,
+        "median": 440,
+        "p95": 656,
+        "max": 830
+      },
+      "requiredSeconds": {
+        "samples": 0,
+        "median": null,
+        "p95": null,
+        "max": null
+      }
+    }
+  ],
+  "table": [
+    {
+      "job": "Windows package and startup smoke",
+      "file": "workflow",
+      "name": "Build, inspect package contents and start real application",
+      "type": "step-failure",
+      "count": 2,
+      "runIds": [
+        38211140040,
+        38183876238
+      ],
+      "examples": [
+        {
+          "runId": 38211140040,
+          "diagnostic": "No TAP leaf failure in failed log."
+        },
+        {
+          "runId": 38183876238,
+          "diagnostic": "No TAP leaf failure in failed log."
+        }
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "runId": 38219238374,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219238374",
+      "sha": "7fb2628dfbc1349581f3641f7244fce3ba0a5a01",
+      "createdAt": "2026-10-12T07:42:21Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 286,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38219217094,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219217094",
+      "sha": "4495d6a0c00ac8935043928c120efe56af5e46aa",
+      "createdAt": "2026-10-12T07:42:07Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 431,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38219066376,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219066376",
+      "sha": "5d437554add4fa5475ee1d5156a79b9da111e3e4",
+      "createdAt": "2026-10-12T07:40:31Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 128,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38219055282,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219055282",
+      "sha": "36c50654feeb399ae6d3f8dc1b3ccea7937cd059",
+      "createdAt": "2026-10-12T07:40:25Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 445,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38211140040,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38211140040",
+      "sha": "e89ad0414cd2a00ca926598faf84e88a43281040",
+      "createdAt": "2026-10-12T06:09:00Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "failure",
+      "seconds": 395,
+      "requiredSeconds": null,
+      "failures": [
+        {
+          "job": "Windows package and startup smoke",
+          "file": "workflow",
+          "name": "Build, inspect package contents and start real application",
+          "type": "step-failure",
+          "diagnostic": "No TAP leaf failure in failed log."
+        }
+      ]
+    },
+    {
+      "runId": 38210997261,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38210997261",
+      "sha": "fc70b0c4615999329719b5a18474451cfeaa0cf6",
+      "createdAt": "2026-10-12T06:07:10Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 107,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38210748165,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38210748165",
+      "sha": "f5200037be653e81af7330c56e44f8324b5704d7",
+      "createdAt": "2026-10-12T06:03:59Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 206,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38208483208,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38208483208",
+      "sha": "79c133767d87a0c2960e70e47ee04be2c282620b",
+      "createdAt": "2026-10-12T05:33:56Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 638,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38208227378,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38208227378",
+      "sha": "7ceec016cf21f92958f84daa893e3a863777a758",
+      "createdAt": "2026-10-12T05:30:28Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 207,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38207958601,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38207958601",
+      "sha": "d6f0f991df8d428f1e928e92e747427beac91153",
+      "createdAt": "2026-10-12T05:26:45Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 518,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38207762434,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38207762434",
+      "sha": "4b95323af61d97fe3d915ba52f1688b625aff670",
+      "createdAt": "2026-10-12T05:24:01Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 403,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38205148483,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38205148483",
+      "sha": "d638623dd8056bea38719de14a553f09c0ddc83d",
+      "createdAt": "2026-10-12T04:46:24Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 552,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38204977027,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204977027",
+      "sha": "8e931de764a0e45e721bbc78acc72e1765698221",
+      "createdAt": "2026-10-12T04:43:55Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 536,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38204871643,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204871643",
+      "sha": "b772103b226716cf41fdf28796082b26e7d55066",
+      "createdAt": "2026-10-12T04:42:21Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 455,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38204863882,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204863882",
+      "sha": "3fe199d28c7fd003538edb2175701babbdedbb7b",
+      "createdAt": "2026-10-12T04:42:14Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 451,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38204671938,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204671938",
+      "sha": "2a3a47a88d08c53aaf529ec6f269e965559531b3",
+      "createdAt": "2026-10-12T04:39:28Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 458,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38204616876,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204616876",
+      "sha": "7c57c43fa05db1389ff4b9bbb2ab58ae31b66a18",
+      "createdAt": "2026-10-12T04:38:38Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 286,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38203995779,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203995779",
+      "sha": "41f10a2c253177fdc9b1bc1e0a66a3c6348c80e8",
+      "createdAt": "2026-10-12T04:29:32Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 306,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38203359346,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203359346",
+      "sha": "7c6d0851e0e406281a3eeb76c365062d8f64ddba",
+      "createdAt": "2026-10-12T04:20:12Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 323,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38203283388,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203283388",
+      "sha": "fc5b31d2b77780716b3f6977d196f24ad43a11ae",
+      "createdAt": "2026-10-12T04:19:03Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 436,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38202863490,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202863490",
+      "sha": "84062f7c20f5e92452f603a23c453477f615b420",
+      "createdAt": "2026-10-12T04:12:46Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 287,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38202675116,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202675116",
+      "sha": "1b73fcab2fa398e5998740ccf5ae068dfc2e1707",
+      "createdAt": "2026-10-12T04:10:03Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 656,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38202621958,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202621958",
+      "sha": "d06a3a81dad2f49575e95189a86ac6fa8a417ed5",
+      "createdAt": "2026-10-12T04:09:13Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 49,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38202536222,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202536222",
+      "sha": "b26406f1753e1f824a3ef582c0abbb3273fc543a",
+      "createdAt": "2026-10-12T04:07:57Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 304,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38201453222,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38201453222",
+      "sha": "071ded31c1026f2b05ac47901cc306cd734cfb82",
+      "createdAt": "2026-10-12T03:52:02Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 409,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38201423135,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38201423135",
+      "sha": "1592a0295148a7a7f82e9eaa2c37821982e7d15f",
+      "createdAt": "2026-10-12T03:51:35Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 451,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38200999340,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200999340",
+      "sha": "0b48b5c9c0277d618696640b81ed7194c4a4d482",
+      "createdAt": "2026-10-12T03:45:19Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 328,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38200980908,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200980908",
+      "sha": "8276bda781f28a2e1c8320ec633a02daa8f006d0",
+      "createdAt": "2026-10-12T03:45:03Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 307,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38200478489,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200478489",
+      "sha": "d54557d1061980ee166bfaa5f1db5859381faf05",
+      "createdAt": "2026-10-12T03:37:25Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 415,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38199711306,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38199711306",
+      "sha": "2f0789416d7749676de4d8174ce5de904a4bf1cf",
+      "createdAt": "2026-10-12T03:25:48Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 340,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38198356448,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38198356448",
+      "sha": "8df973b9d2dd73f64a084bf8998812e976fbc425",
+      "createdAt": "2026-10-12T03:05:06Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 427,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38197888963,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38197888963",
+      "sha": "e166a59e21336351be6f7de250abd309152310d8",
+      "createdAt": "2026-10-12T02:58:17Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 447,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38194388781,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38194388781",
+      "sha": "016ba03b8f9dc8ee390c58145de15010e1d379f2",
+      "createdAt": "2026-10-12T02:04:54Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 382,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38194223690,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38194223690",
+      "sha": "f8edd4f5f355f3a21db819bb74a76406e014a95f",
+      "createdAt": "2026-10-12T02:02:21Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 168,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38186915992,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186915992",
+      "sha": "af819a0c809b9a0ff056703e7ec94e7c5ed11b22",
+      "createdAt": "2026-10-12T00:09:08Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 830,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38186908274,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186908274",
+      "sha": "0fb0db7cafc8a61371c42f4a61a90e23d484e86b",
+      "createdAt": "2026-10-12T00:09:01Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 417,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38184057122,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38184057122",
+      "sha": "9d5dc5d69d97bd5f5aaa7096e55af648ed61db92",
+      "createdAt": "2026-10-11T23:22:46Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 515,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38184048721,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38184048721",
+      "sha": "296fbee1986e8b2d0dd5bc62ee3c0314f57478c9",
+      "createdAt": "2026-10-11T23:22:38Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 468,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38183885970,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183885970",
+      "sha": "3d9798a3146f66de04915541d3934776e5a53ee4",
+      "createdAt": "2026-10-11T23:20:07Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 165,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38183876238,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183876238",
+      "sha": "e80a70357d06d8ad21b9e3d1f80ab0c5a80add16",
+      "createdAt": "2026-10-11T23:19:59Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "failure",
+      "seconds": 403,
+      "requiredSeconds": null,
+      "failures": [
+        {
+          "job": "Windows package and startup smoke",
+          "file": "workflow",
+          "name": "Build, inspect package contents and start real application",
+          "type": "step-failure",
+          "diagnostic": "No TAP leaf failure in failed log."
+        }
+      ]
+    },
+    {
+      "runId": 38183837808,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183837808",
+      "sha": "28df81f61c65380e22101805aa9f461843be3147",
+      "createdAt": "2026-10-11T23:19:20Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 54,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38181528224,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38181528224",
+      "sha": "c57c61c9a513ee5018f8f47eb5636ab3a24e779f",
+      "createdAt": "2026-10-11T22:43:09Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 821,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38180802700,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38180802700",
+      "sha": "a78593bb1fd6d9c2fa55aea19f509bcc81669f37",
+      "createdAt": "2026-10-11T22:32:03Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 672,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38180551203,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38180551203",
+      "sha": "cf9b473509371b066edd693b833afcc77bed00cd",
+      "createdAt": "2026-10-11T22:28:21Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 229,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38174156740,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38174156740",
+      "sha": "32da9a02e26046546c1f121ce4ca9cff07b2c409",
+      "createdAt": "2026-10-11T20:54:30Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 483,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38172542500,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172542500",
+      "sha": "089a84288cc85f9e394268c8238fc8892f0a019f",
+      "createdAt": "2026-10-11T20:31:05Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 304,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38172227772,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172227772",
+      "sha": "60230f401658914a6e3c04c1303f9130f6d54266",
+      "createdAt": "2026-10-11T20:26:37Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 422,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38171525466,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38171525466",
+      "sha": "b799c98877c0fc8a83f9a76521c379a50c511243",
+      "createdAt": "2026-10-11T20:16:44Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 426,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38169300598,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169300598",
+      "sha": "cddb56464b013010cc513668a55f8995476c1156",
+      "createdAt": "2026-10-11T19:44:37Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 444,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38169292424,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169292424",
+      "sha": "3daa13ae548b354d242681d4ae1230521c3ba143",
+      "createdAt": "2026-10-11T19:44:29Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 439,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38169121217,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169121217",
+      "sha": "f19fe7bca0151fc7ffe93d61dc42b8e2b30a1283",
+      "createdAt": "2026-10-11T19:41:59Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 173,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38166146850,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38166146850",
+      "sha": "1c2d6394f6b97808c45c59b2117c8d055be68c8d",
+      "createdAt": "2026-10-11T18:59:58Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 485,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38166085116,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38166085116",
+      "sha": "e70f1427318db8aca66dc09777b65c743ffbc8d4",
+      "createdAt": "2026-10-11T18:59:01Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 447,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38163340134,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163340134",
+      "sha": "77da44d23bf10668f591ff0d0e7790bf1dbaf0c4",
+      "createdAt": "2026-10-11T18:19:45Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 381,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38163003818,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163003818",
+      "sha": "847216bcf10bb046e4cbfd84e918bc40bee61617",
+      "createdAt": "2026-10-11T18:14:53Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 437,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38162995522,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162995522",
+      "sha": "81b65e1e34f978f47f020f2a5fa867c57b8d06d2",
+      "createdAt": "2026-10-11T18:14:45Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 404,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38162367369,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162367369",
+      "sha": "6b888960546c0290e9f514ce023ccf877fa4bcdf",
+      "createdAt": "2026-10-11T18:05:46Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 427,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38162122498,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162122498",
+      "sha": "f2cdb55cfd909bedebfa49e2960e5e6072f4d8a6",
+      "createdAt": "2026-10-11T18:02:14Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 390,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38162072469,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162072469",
+      "sha": "1ddae8b3ae60ffa652d02499e9f2333b8b1eb6ae",
+      "createdAt": "2026-10-11T18:01:30Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 413,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38161909481,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161909481",
+      "sha": "4bc7d01b00e2a22b6e44cbb583e10c6270ccb738",
+      "createdAt": "2026-10-11T17:59:19Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 503,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38161704789,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161704789",
+      "sha": "60471e5f7a34e43547264ce8a5308f133da6e744",
+      "createdAt": "2026-10-11T17:56:07Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 369,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38161639206,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161639206",
+      "sha": "ed5af6d547c989ab0a0d48bee5d816df718738f5",
+      "createdAt": "2026-10-11T17:55:10Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 68,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38160093457,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38160093457",
+      "sha": "ac516ae79e6469bc64987e157bfd9ce5fb92eabb",
+      "createdAt": "2026-10-11T17:32:40Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 457,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38160025964,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38160025964",
+      "sha": "7c166452cab1440f15bcbbc3a29b5ef36cafee49",
+      "createdAt": "2026-10-11T17:31:42Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 425,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38159651383,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38159651383",
+      "sha": "59d971e792f1feb692038252677ec5781924a387",
+      "createdAt": "2026-10-11T17:26:30Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 329,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38156992070,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38156992070",
+      "sha": "d4733489bfa5d3bf65931aa1023ab461db6341e1",
+      "createdAt": "2026-10-11T16:48:31Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 449,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38154299163,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38154299163",
+      "sha": "a1ed8955731857c27f25601b5b1ce109901cf0af",
+      "createdAt": "2026-10-11T16:09:51Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 446,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38154294694,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38154294694",
+      "sha": "287316eaece66ea732cd24603450790ebf8576ea",
+      "createdAt": "2026-10-11T16:09:48Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 443,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38152988474,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38152988474",
+      "sha": "305b5088e7713cea8565063a97b20669fe0e8f97",
+      "createdAt": "2026-10-11T15:50:49Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 518,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38147975549,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38147975549",
+      "sha": "ba45182d551ef4c8a827d5846fcb3e9a1e9287bd",
+      "createdAt": "2026-10-11T14:38:02Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 282,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38141321806,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38141321806",
+      "sha": "1491fe5a88c95428a2781d6277702fd5260f7cfd",
+      "createdAt": "2026-10-11T12:58:29Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 462,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38138830193,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38138830193",
+      "sha": "fea5567a96290b11ebb538e4170866b62bfa8063",
+      "createdAt": "2026-10-11T12:19:35Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 395,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38138796372,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38138796372",
+      "sha": "3f0b10d627cb9caf01a614414e4338cec70ec016",
+      "createdAt": "2026-10-11T12:19:02Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 440,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38137017122,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38137017122",
+      "sha": "375d68ed021c4eca1162d7055e30165c6003021f",
+      "createdAt": "2026-10-11T11:50:13Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 447,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38136926346,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136926346",
+      "sha": "8713d8840f0b135d3547335c429ebc12aff11396",
+      "createdAt": "2026-10-11T11:48:43Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 420,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38136238287,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136238287",
+      "sha": "2dc54b68f4552ced5c704ec745b0396e368ec586",
+      "createdAt": "2026-10-11T11:37:23Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 441,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38136104501,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136104501",
+      "sha": "1f14e780542d5e794a0413ae8fd8fbae22a07578",
+      "createdAt": "2026-10-11T11:35:11Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 475,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38134745133,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134745133",
+      "sha": "fd956bc0b3045c05755e2dff4d25e2ad08ba3b4e",
+      "createdAt": "2026-10-11T11:13:02Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 418,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38134508799,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134508799",
+      "sha": "5a338cbb9ad9d22a2f8cc60217066aff252d5bbd",
+      "createdAt": "2026-10-11T11:09:04Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "success",
+      "seconds": 821,
+      "requiredSeconds": null,
+      "failures": []
+    },
+    {
+      "runId": 38134114954,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134114954",
+      "sha": "8029aeffa2acb47ba069f32024509a0f70de79c6",
+      "createdAt": "2026-10-11T11:02:30Z",
+      "job": "Windows package and startup smoke",
+      "conclusion": "cancelled",
+      "seconds": 650,
+      "requiredSeconds": null,
+      "failures": []
+    }
+  ]
+}
