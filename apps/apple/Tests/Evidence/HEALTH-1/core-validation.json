@@ -1,0 +1,9 @@
+{
+  "passed": 439,
+  "failed": 0,
+  "platform": "macOS Core package",
+  "focusedDailyHealthTests": 9,
+  "boundaryTests": 6,
+  "repairedApple2RegressionTests": 3,
+  "callbackIsolationTests": 5
+}

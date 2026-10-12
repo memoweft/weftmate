@@ -32,10 +32,11 @@ private func cloudAuthReply(host: String = "host-one") throws -> HTTPResponse {
 
 private func automaticTrustReply(installation: SecKey, recipient: CloudDeviceKey, subject: String = "subject-one") throws -> HTTPResponse {
     let anchor = try ECPublicKey(publicKey: SecKeyCopyPublicKey(installation)!).parameters
+    let issuedAt = Date().timeIntervalSince1970.rounded(.down)
     let body: [String: Any] = ["iss": "host-one", "aud": recipient.thumbprint, "sub": subject, "hostId": "host-one",
         "deviceId": "apple-" + recipient.thumbprint, "jkt": recipient.thumbprint, "tlsSpki": String(repeating: "A", count: 43),
-        "publicJwk": anchor, "origin": "https://host.example.com", "iat": Date().timeIntervalSince1970,
-        "exp": Date().timeIntervalSince1970 + 120, "jti": UUID().uuidString]
+        "publicJwk": anchor, "origin": "https://host.example.com", "iat": issuedAt,
+        "exp": issuedAt + 120, "jti": UUID().uuidString]
     var header = JWSHeader(algorithm: .ES256); header.typ = "wm-host-trust+jwt"
     let token = try JWS(header: header, payload: Payload(JSONSerialization.data(withJSONObject: body)),
         signer: Signer(signatureAlgorithm: .ES256, key: installation)!).compactSerializedString

@@ -285,13 +285,20 @@ struct SharedConversationSDKTests {
         #expect(await transport.requests().count == 4)
     }
 
-    @Test func expiredCommandLookupClearsCurrentCredentialAndNeverPosts() async throws {
+    @Test func expiredCommandLookupRetainsReadIdentityAndNeverPosts() async throws {
         let store = MemoryStore()
-        let transport = SharedScriptTransport(sharedLoginSteps() + [sharedStep("/auth/me", sharedAuth()), sharedStep("/commands/by-request/apple-request-1", sharedMissing("UNAUTHORIZED", status: 401))])
+        let transport = SharedScriptTransport(sharedLoginSteps() + [sharedStep("/auth/me", sharedAuth()),
+            sharedStep("/commands/by-request/apple-request-1", sharedMissing("UNAUTHORIZED", status: 401)),
+            sharedStep("/auth/me", sharedMissing("UNAUTHORIZED", status: 401))])
         let client = PersonalClient(credentialStore: store, transport: transport)
         let intent = try sharedIntent(await sharedLogin(client))
         await #expect(throws: APIFailure.server(status: 401, code: "UNAUTHORIZED")) { try await client.reconcileCommand(intent, allowSubmission: true) }
-        #expect(await client.currentSession() == nil && store.count == 0)
+        let retained = try #require(await client.currentSession())
+        #expect(retained.account.ownerId == intent.ownerId && retained.verification == .unverifiedOffline && store.count == 1)
+        // A retained reading identity still cannot post, including a second explicit submission attempt.
+        await #expect(throws: APIFailure.server(status: 401, code: "UNAUTHORIZED")) { try await client.reconcileCommand(intent, allowSubmission: true) }
+        #expect(await transport.requests().allSatisfy { $0.httpMethod != "POST" || $0.url?.path == "/personal/v1/auth/login" })
+        #expect(await transport.remaining() == 0)
     }
 
     @Test func productionCapabilityDeclarationContainsOnlyAppleSharingFields() async throws {

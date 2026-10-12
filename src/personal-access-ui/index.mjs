@@ -21,6 +21,9 @@ const files = new Map([
   ['/personal/v1/ui/library.css', ['library.css', 'text/css; charset=utf-8']],
   ...['components/library-view.js','components/library.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/goals.css', ['goals.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/health.css', ['health.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/components/health-view.js', ['components/health-view.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/components/health.js', ['components/health.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/goals-view.js', ['components/goals-view.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/goals.js', ['components/goals.js', 'text/javascript; charset=utf-8']],
 
