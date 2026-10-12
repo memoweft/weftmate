@@ -62,3 +62,4 @@ html[data-reduced-motion] :is(button,.popover button,.send-button,.nav-primary):
 :root[data-theme="dark"] .is-review-warning { --review-attention: var(--wm-color-attention-dark); }
 .approval-bar.is-review-warning, .approval-bar .is-review-warning { background: color-mix(in srgb, var(--review-attention) 10%, var(--surface)); outline: 1px solid color-mix(in srgb, var(--review-attention) 65%, transparent); border-radius: var(--wm-radius-12); }
 .is-review-warning .approval-review { color: var(--review-attention); }
+:root:not([data-theme="dark"]) .is-review-warning .approval-review { color: color-mix(in srgb, var(--review-attention) 85%, var(--ink)); }
