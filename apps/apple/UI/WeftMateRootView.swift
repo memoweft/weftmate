@@ -454,7 +454,6 @@ struct MacWorkspace: View {
 #else
 struct PhoneWorkspace: View {
     @ObservedObject var model: AppleAppModel
-    @StateObject private var health = HealthSettingsModel()
     @Environment(\.scenePhase) private var scenePhase
     @State private var search = ""
     @State private var path: [String] = []
@@ -477,6 +476,7 @@ struct PhoneWorkspace: View {
                             }
                         }
                     }
+                    else if id == "daily-review" { DailyReviewView(app: model) }
                     else if let conversation = model.conversations.first(where: { $0.id == id }) {
                         if conversation.isMainChat { MainChatView(app: model) } else {
                         ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString + String(conversation.chatContentRevision ?? 0))
@@ -519,20 +519,14 @@ struct PhoneWorkspace: View {
         }
         #endif
         .onChange(of: model.renamingSessionID) { _, id in if id != nil { path = model.conversations.contains(where: \.isMainChat) ? ["a16-side-list"] : [] } }
-        .environmentObject(health)
-        .task(id: "\(model.accountEpoch)-\(scenePhase)-\(model.session?.verification.rawValue ?? "none")") {
-            guard scenePhase == .active else { return }
-            while !Task.isCancelled {
-                await health.activate(app: model)
-                do { try await Task.sleep(for: .seconds(900)) } catch { return }
-            }
-        }
+
     }
 
     private var sideList: some View {
                 List {
                     Section {
-                        ForEach([("动态", "bell"), ("目标", "plan"), ("成果库", "outputs")], id: \.0) { title, icon in
+                        NavigationLink(value: "daily-review") { WeftLabel("动态", icon: "bell") }.accessibilityIdentifier("dailyReviewOpen")
+                        ForEach([("目标", "plan"), ("成果库", "outputs")], id: \.0) { title, icon in
                             Button {} label: { WeftLabel(title, icon: icon) }.disabled(true).accessibilityHint("Apple 页面即将支持")
                         }
                     }

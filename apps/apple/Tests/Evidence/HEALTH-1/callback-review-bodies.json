@@ -1,0 +1,37 @@
+{
+  "reviewed": true,
+  "sites": [
+    {
+      "file": "apps/apple/iOS/DailyHealthModel.swift",
+      "line": 108,
+      "api": "observe",
+      "sha256": "af052997e9cd2cd38b759756eea166f3968690889ca87b5c1d8ce57c6b59c8d2"
+    },
+    {
+      "file": "apps/apple/iOS/DailyHealthReader.swift",
+      "line": 112,
+      "api": "HKSampleQuery",
+      "sha256": "cc63e8635ec914d140b28bcc5f106bfa3025c21f09f63dabc4304e72fdc5eaa9"
+    },
+    {
+      "file": "apps/apple/iOS/DailyHealthReader.swift",
+      "line": 116,
+      "api": "observe",
+      "sha256": "bbd0f492965f5fa0efde383a77194a3dc7d7af2b5b688d3081cfab66f80cbfea"
+    }
+  ],
+  "factories": [
+    {
+      "file": "apps/apple/iOS/DailyHealthModel.swift",
+      "factory": "makeObserverUpdate",
+      "body": "    nonisolated private static func makeObserverUpdate(model: DailyHealthModel, app: AppleAppModel) -> @Sendable () async -> Void {\n        { @Sendable [weak model, weak app] in\n            await Task { @MainActor in\n                guard let model, let app, model.state.enabled else { return }\n                await model.activate(app: app)\n            }.value\n        }\n    }\n",
+      "sha256": "16d91d652377b108b7904a80404506178c1e7b57c3051141c86b541400619c7c"
+    },
+    {
+      "file": "apps/apple/iOS/DailyHealthReader.swift",
+      "factory": "DailyHealthCallbacks",
+      "body": "private enum DailyHealthCallbacks {\n    nonisolated static func samples(_ continuation: CheckedContinuation<[HKSample], any Error>)\n        -> @Sendable (HKSampleQuery, [HKSample]?, (any Error)?) -> Void {\n        { @Sendable _, values, error in\n            if let error { continuation.resume(throwing: error) }\n            else { continuation.resume(returning: values ?? []) }\n        }\n    }\n    nonisolated static func statistic(_ continuation: CheckedContinuation<Double?, any Error>, unit: HKUnit, options: HKStatisticsOptions)\n        -> @Sendable (HKStatisticsQuery, HKStatistics?, (any Error)?) -> Void {\n        { @Sendable _, result, error in\n            if let error = error as? HKError, error.code == .errorNoData { continuation.resume(returning: nil) }\n            else if let error { continuation.resume(throwing: error) }\n            else { continuation.resume(returning: (options == .discreteAverage ? result?.averageQuantity() : result?.sumQuantity())?.doubleValue(for: unit)) }\n        }\n    }\n    nonisolated static func observer(_ update: @escaping @Sendable () async -> Void)\n        -> @Sendable (HKObserverQuery, @escaping HKObserverQueryCompletionHandler, (any Error)?) -> Void {\n        { @Sendable _, completion, error in\n            let acknowledgement = HealthObserverAcknowledgement(completion)\n            let changed = error == nil\n            Task {\n                // One task owns one acknowledgement. Defer covers successful, skipped and cancelled work.\n                defer { acknowledgement.finish() }\n                if changed { await update() }\n            }\n        }\n    }\n}\n",
+      "sha256": "60184262d7142d1b9c117341add8363c816b3d1280c7cdda678183fa9e268d77"
+    }
+  ]
+}
