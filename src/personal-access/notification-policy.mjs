@@ -4,7 +4,7 @@ export const notificationDefaults = Object.freeze({
   memoryReport: 'notify', companion: 'notify', system: 'notify',
   dndEnabled: false, dndStart: '22:00', dndEnd: '08:00', approvalException: true,
   dailyLimit: 5, soundEnabled: true,
-  reviewEnabled:true, reviewRetentionDays:90,
+  reviewEnabled:true, reviewRetentionDays:90, computerUsageEnabled:true,
   memoryDigestEnabled:true, memoryDigestWeekday:0, memoryDigestTime:'21:00',
 });
 export function notificationSettings(account) { return {...notificationDefaults, ...account.notificationSettings}; }
