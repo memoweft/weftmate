@@ -21,6 +21,12 @@ async function files(directory) {
 export async function inventory() {
   const routes = new Map();
   const add = (template, source, method = 'GET', cloudClient = false) => {
+    const branch = template.match(/\$\{[^}]*\?\s*'([^']*)'\s*:\s*'([^']*)'\}/);
+    if (branch) { for (const value of [branch[1],branch[2]]) add(template.replace(branch[0], value), source, method, cloudClient); return; }
+    if (cloudClient && /\$\{(?:auth\.mode|mode)[^}]*\}/.test(template)) {
+      for (const mode of ['registration','recovery']) add(template.replace(/\$\{(?:auth\.mode|mode)[^}]*\}/, mode), source, method, true);
+      return;
+    }
     template = template.split('?')[0];
     if (template.includes('|')) { for (const part of template.split('|')) add(part.startsWith('/') ? part : template.slice(0, template.lastIndexOf('/') + 1) + part, source, method); return; }
     template = template.replace(/([^/])\$\{.*$/, '$1');
@@ -38,13 +44,13 @@ export async function inventory() {
   for (const file of [...await files(resolve(root, 'src/ui-core')), ...await files(resolve(root, 'apps/mobile-ui/www'))]) {
     if (!file.endsWith('.js') || /vendor|icons|[\\/]ui-core[\\/]/.test(relative(resolve(root, 'apps/mobile-ui/www'), file)) && file.startsWith(resolve(root, 'apps/mobile-ui/www'))) continue;
     const source = relative(root, file).replaceAll('\\', '/'), text = await readFile(file, 'utf8');
-    for (const match of text.matchAll(/(?:accessApi|memoryRequest|api)\(\s*(['"`])(\/[^'"`\n]*)\1/g)) {
+    for (const match of text.matchAll(/(?:accessApi|memoryRequest|api)\(\s*(['"`])(\/[^\n]*?)\1/g)) {
       const prefix = match[0].startsWith('memoryRequest') ? '/personal/v1/memory' : match[0].startsWith('api(') ? '/personal/v1/auth' : '/personal/v1';
       const method = text.slice(match.index + match[0].length, match.index + match[0].length + 160).match(/method\s*:\s*['"](GET|POST|PATCH|PUT|DELETE)['"]/)?.[1] || 'GET';
       add(prefix + match[2], source, method);
     }
-    for (const match of text.matchAll(/(['"`])(\/personal\/v1\/[^'"`\n]*)\1/g)) add(match[2], source);
-    for (const match of text.matchAll(/(publicRequest|authorized)\(\s*(['"`])(\/[^'"`\n]*)\2/g)) {
+    for (const match of text.matchAll(/(['"`])(\/personal\/v1\/[^\n]*?)\1/g)) add(match[2], source);
+    for (const match of text.matchAll(/(publicRequest|authorized)\(\s*(['"`])(\/[^\n]*?)\2/g)) {
       const options = text.slice(match.index + match[0].length, match.index + match[0].length + 160);
       const method = match[1] === 'publicRequest' ? 'POST' : options.match(/^\s*,\s*\{\s*method\s*:\s*['"](GET|POST|PATCH|PUT|DELETE)['"]/)?.[1] || 'GET';
       add('/personal/v1/cloud' + match[3], source, method, true);

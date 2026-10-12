@@ -17,6 +17,23 @@ class And3ShellProbeTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         check(context.packageName == "com.memoweft.weftmate.mobile.and3qa")
+        val cacheName = "and3-cache-" + java.util.UUID.randomUUID()
+        val cacheRoot = File(context.filesDir, cacheName).apply { check(mkdirs()) }
+        val cacheContext = object : android.content.ContextWrapper(context) {
+            override fun getFilesDir() = cacheRoot
+            override fun getSharedPreferences(name: String, mode: Int) = context.getSharedPreferences(cacheName, mode)
+        }
+        val prefs = context.getSharedPreferences(cacheName, android.content.Context.MODE_PRIVATE)
+        val oldId = "a".repeat(64)
+        val oldPage = File(cacheRoot, "mobile-ui-bundles/$oldId/index.html").apply { parentFile!!.mkdirs(); writeText("synthetic old pairing page") }
+        prefs.edit().putString("active", oldId).putString("previous", oldId).putString("staged", oldId).putInt("nativeLoginUiVersion",21).commit()
+        try {
+            val bundles = MobileUiBundles(cacheContext)
+            check(bundles.state().active == "builtin" && bundles.state().staged == null)
+            check(prefs.getBoolean("verifiedAccountLoginUi", false))
+            check(oldPage.readText() == "synthetic old pairing page")
+            bundles.close()
+        } finally { cacheRoot.deleteRecursively(); context.deleteSharedPreferences(cacheName) }
         val origin = InstrumentationRegistry.getArguments().getString("host")!!
         check(origin.matches(Regex("http://127[.]0[.]0[.]1:[0-9]+")))
         val done = File(context.filesDir, "and3-probe.done"); done.delete()
