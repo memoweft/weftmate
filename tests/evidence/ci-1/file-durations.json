@@ -1,0 +1,2158 @@
+{
+  "sampleRunId": 38201453268,
+  "method": "Sum top-level TAP test durations mapped by declared test name; excludes unresolvable dynamic/suite names and runner overhead.",
+  "files": [
+    {
+      "file": "tests/rob-1-electron.test.ts",
+      "seconds": 492,
+      "shard": 3
+    },
+    {
+      "file": "tests/bl-29-rework.test.ts",
+      "seconds": 236,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-desktop-ui.test.ts",
+      "seconds": 222,
+      "shard": 2
+    },
+    {
+      "file": "tests/vendor-cache-safety.test.ts",
+      "seconds": 132,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-cloud.test.ts",
+      "seconds": 92,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-desktop-motion.test.ts",
+      "seconds": 92,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-tool-approvals.test.ts",
+      "seconds": 65,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-access-multi-account.test.ts",
+      "seconds": 54,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-access-core.test.ts",
+      "seconds": 51,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-user-questions.test.ts",
+      "seconds": 51,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-access-account.test.ts",
+      "seconds": 47,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-backup.test.ts",
+      "seconds": 43,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-conversation-adoption.test.ts",
+      "seconds": 41,
+      "shard": 2
+    },
+    {
+      "file": "tests/bl-29-account-changes.test.ts",
+      "seconds": 40,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-artifact-task.test.ts",
+      "seconds": 40,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-popovers.test.ts",
+      "seconds": 39,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-health.test.ts",
+      "seconds": 33,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-sync-attachments.test.ts",
+      "seconds": 30,
+      "shard": 1
+    },
+    {
+      "file": "tests/rob-1-timeouts.test.ts",
+      "seconds": 27,
+      "shard": 1
+    },
+    {
+      "file": "tests/desktop-identity.test.ts",
+      "seconds": 18,
+      "shard": 1
+    },
+    {
+      "file": "tests/nightly-temp.test.ts",
+      "seconds": 17,
+      "shard": 2
+    },
+    {
+      "file": "tests/nightly-prune-safety.test.ts",
+      "seconds": 16,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-activity.test.ts",
+      "seconds": 16,
+      "shard": 3
+    },
+    {
+      "file": "tests/notification-policy.test.ts",
+      "seconds": 15,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-browser-service.test.ts",
+      "seconds": 15,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-general-execution.test.ts",
+      "seconds": 15,
+      "shard": 1
+    },
+    {
+      "file": "tests/fx-16.test.ts",
+      "seconds": 13,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-shared-attachments.test.ts",
+      "seconds": 13,
+      "shard": 3
+    },
+    {
+      "file": "tests/mobile-ui-core-assets.test.ts",
+      "seconds": 12,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-mobile-ui-release.test.ts",
+      "seconds": 12,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-project-service.test.ts",
+      "seconds": 12,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-access-profile-api.test.ts",
+      "seconds": 10,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-account-model-service.test.ts",
+      "seconds": 10,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-sync.test.ts",
+      "seconds": 10,
+      "shard": 2
+    },
+    {
+      "file": "tests/personalization.test.ts",
+      "seconds": 10,
+      "shard": 1
+    },
+    {
+      "file": "tests/content-rendering.test.ts",
+      "seconds": 9,
+      "shard": 3
+    },
+    {
+      "file": "tests/next-suggestions.test.ts",
+      "seconds": 9,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-access-ui-interaction.test.ts",
+      "seconds": 9,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-memory-processing-route.test.ts",
+      "seconds": 9,
+      "shard": 1
+    },
+    {
+      "file": "tests/mod-project-runtime.test.ts",
+      "seconds": 8,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-access-memory-ui.test.ts",
+      "seconds": 8,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-data-controls.test.ts",
+      "seconds": 8,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-host-model.test.ts",
+      "seconds": 8,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-memory-http.test.ts",
+      "seconds": 8,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-memory-outbox.test.ts",
+      "seconds": 8,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-project-reader.test.ts",
+      "seconds": 8,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-task-control.test.ts",
+      "seconds": 8,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-usage.test.ts",
+      "seconds": 8,
+      "shard": 1
+    },
+    {
+      "file": "tests/auth-1-desktop.test.ts",
+      "seconds": 7,
+      "shard": 2
+    },
+    {
+      "file": "tests/bl-29-wait.test.ts",
+      "seconds": 7,
+      "shard": 1
+    },
+    {
+      "file": "tests/ia-2a-identity.test.ts",
+      "seconds": 7,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-browser-reader.test.ts",
+      "seconds": 7,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-execution-ui-candidate.test.ts",
+      "seconds": 6,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-memory-journal.test.ts",
+      "seconds": 6,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-access-desktop.test.ts",
+      "seconds": 5,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-project-folders.test.ts",
+      "seconds": 5,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-push.test.ts",
+      "seconds": 5,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-system.test.ts",
+      "seconds": 5,
+      "shard": 3
+    },
+    {
+      "file": "tests/session-menu.test.ts",
+      "seconds": 5,
+      "shard": 3
+    },
+    {
+      "file": "tests/ci-vendor-selection.test.ts",
+      "seconds": 4,
+      "shard": 1
+    },
+    {
+      "file": "tests/fg-1-erasure-journal.test.ts",
+      "seconds": 4,
+      "shard": 1
+    },
+    {
+      "file": "tests/folder-choice.test.ts",
+      "seconds": 4,
+      "shard": 2
+    },
+    {
+      "file": "tests/ia-2b-relay.test.ts",
+      "seconds": 4,
+      "shard": 1
+    },
+    {
+      "file": "tests/message-actions.test.ts",
+      "seconds": 4,
+      "shard": 3
+    },
+    {
+      "file": "tests/model-scheduler.test.ts",
+      "seconds": 4,
+      "shard": 2
+    },
+    {
+      "file": "tests/model-settings-ms1.test.ts",
+      "seconds": 4,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-cloud-web.test.ts",
+      "seconds": 4,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-offline.test.ts",
+      "seconds": 4,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-task-stop.test.ts",
+      "seconds": 4,
+      "shard": 2
+    },
+    {
+      "file": "tests/r0-2-runtime.test.ts",
+      "seconds": 4,
+      "shard": 3
+    },
+    {
+      "file": "tests/composer-menu.test.ts",
+      "seconds": 3,
+      "shard": 2
+    },
+    {
+      "file": "tests/ia-2a-side-chats.test.ts",
+      "seconds": 3,
+      "shard": 2
+    },
+    {
+      "file": "tests/ia-2b-chat-lifecycle.test.ts",
+      "seconds": 3,
+      "shard": 3
+    },
+    {
+      "file": "tests/m3-1-presence.test.ts",
+      "seconds": 3,
+      "shard": 2
+    },
+    {
+      "file": "tests/nightly-vendor-tests.test.ts",
+      "seconds": 3,
+      "shard": 3
+    },
+    {
+      "file": "tests/onboarding.test.ts",
+      "seconds": 3,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-conversation-resources.test.ts",
+      "seconds": 3,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-native-downloads.test.ts",
+      "seconds": 3,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-project-tool-proof.test.ts",
+      "seconds": 3,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-schedules.test.ts",
+      "seconds": 3,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-task-queue-steer.test.ts",
+      "seconds": 3,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-task-stop-dsh.test.ts",
+      "seconds": 3,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-tool-source.test.ts",
+      "seconds": 3,
+      "shard": 3
+    },
+    {
+      "file": "tests/private-host-storage.test.ts",
+      "seconds": 3,
+      "shard": 1
+    },
+    {
+      "file": "tests/session-experience.test.ts",
+      "seconds": 3,
+      "shard": 3
+    },
+    {
+      "file": "tests/temporary-chats.test.ts",
+      "seconds": 3,
+      "shard": 1
+    },
+    {
+      "file": "tests/ui-copy-consistency.test.ts",
+      "seconds": 3,
+      "shard": 3
+    },
+    {
+      "file": "tests/ux-10-status.test.ts",
+      "seconds": 3,
+      "shard": 1
+    },
+    {
+      "file": "tests/bl-29-scheduler-mutation.test.ts",
+      "seconds": 2,
+      "shard": 2
+    },
+    {
+      "file": "tests/eval-runner.test.ts",
+      "seconds": 2,
+      "shard": 1
+    },
+    {
+      "file": "tests/host-diagnostics.test.ts",
+      "seconds": 2,
+      "shard": 1
+    },
+    {
+      "file": "tests/icon-system.test.ts",
+      "seconds": 2,
+      "shard": 1
+    },
+    {
+      "file": "tests/mobile-memory-page.test.ts",
+      "seconds": 2,
+      "shard": 2
+    },
+    {
+      "file": "tests/packaged-project-reader.test.ts",
+      "seconds": 2,
+      "shard": 3
+    },
+    {
+      "file": "tests/diag-1-backup-failure.test.ts",
+      "seconds": 1,
+      "shard": 2
+    },
+    {
+      "file": "tests/ia-2b-history-cache.test.ts",
+      "seconds": 1,
+      "shard": 2
+    },
+    {
+      "file": "tests/managed-test-process-output.test.ts",
+      "seconds": 1,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-host.test.ts",
+      "seconds": 1,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-memory-observed-outbox.test.ts",
+      "seconds": 1,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-memory-shutdown.test.ts",
+      "seconds": 1,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-prompt-size.test.ts",
+      "seconds": 1,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-public-origin.test.ts",
+      "seconds": 1,
+      "shard": 2
+    },
+    {
+      "file": "tests/stage12-dpapi-loader.test.ts",
+      "seconds": 1,
+      "shard": 1
+    },
+    {
+      "file": "tests/ai-game-tool-contract.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/appearance.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/apple-ui-copy.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/apple-update-release.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/backup-windows-long-path.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/bl-29-baseline.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/conversation-scroll.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/design-tokens.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/desktop-autostart.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/desktop-config.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/diag-1-uninstall.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/dsh-view-carrier.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/dsh-web-profile.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/dsh-web-runtime-process-events.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/dsh-web-url.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/fg-1-lifecycle-models.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/fg-1-memory-export.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/fg-1-native-cleanup.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/fg-1-native-lifecycle.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/fx-16-erasure.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/fx-9-delivery.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/grounded-writing.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/host-name.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/ia-2a-history.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/ia-2b-erasure.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/ia-3-chat-window.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/ia-3-core-contract.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/ia-4-mobile-main.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/installer-brand-contract.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/latest-file-writer.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/licensing-contract.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/local-model-config.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/local-model-service.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/memory-heldout-verification.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/memory-pull-refresh.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/memory-ui.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/memoweft-config.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/migration-session-errors.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/minimal-context-compaction.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/mobile-android-bridge.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/mobile-cloud-adapter.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/mobile-offline-ui-core.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/mobile-web-bridge.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/mod-window-manager.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/mod-window-renderer.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/model-budget-runtime.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/model-budget.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/model-route-fingerprint.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/model-scheduler-suggestions.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/model-tier.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/mods-integration-client.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/mods-integration-host.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/next-suggestions-ui.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/nightly-command-budget.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/nightly-gallery-bridge.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/nightly-heavy.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/nightly-mumu.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/offline-view.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-access-electron.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-access-host.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-access-ui.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-account-electron.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-approval-bridge.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-approval-modes.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-browser-network.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-conversation-context-ipc.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-desktop-ipc.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-desktop-task.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-development-tools.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-dynamic-write-targets.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-goals.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-host-restart.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-library-ui.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-library.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-memory-boundary.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-memory-config.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-memory-digest.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-memory-fx17-http.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-memory-ingestion.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-memory-plugin-ipc.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-memory-request-order.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-model-api-proxy.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-model-identity.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-model-idle.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-model-observation.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-native-files.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-notification-content.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-permission-rules.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-plugin-fixture.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-relay.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-remote-loop.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-remote-preset-electron.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-remote-tool-scope.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-reply-evidence-ipc.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-reply-evidence.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-script-output-provenance.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-source-range.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-task-early-stop.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-task-orphan-stop.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-task-stop-backend.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-task-stop-state.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-timeline-native.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/personal-titlebar-scrim.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/personal-user-question-native.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/personal-web-fetch.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/phone-execution-config.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/preview-mod-projects.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/problem-feedback.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/process-evidence.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/public-downloads.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/r0-2-diagnostics.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/r0-5-help.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/reply-motion.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/research-task-speed.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/rob-1-storage.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/run-dogfood-backend.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/settings-registry.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/side-result-copy.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/stage2-config.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/stream-live.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/synthetic-browser-fixture-policy.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/synthetic-stop-fixture-policy.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/system-bars.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/ui-core-cloud-auth.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/ui-core.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/update-install-policy.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/update-manifest.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/update-store.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/update-ui-core.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/ux-2-sidebar-account.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/ux-3-quieter-replies.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/ux-6-search.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/ux-p1-memory.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/verify-windows-package.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/weftmate-credentials-bridge.test.ts",
+      "seconds": 0,
+      "shard": 2
+    },
+    {
+      "file": "tests/weftmod-desktop.test.ts",
+      "seconds": 0,
+      "shard": 1
+    },
+    {
+      "file": "tests/weftmod-plugin.test.ts",
+      "seconds": 0,
+      "shard": 3
+    },
+    {
+      "file": "tests/windows-system-integration.test.ts",
+      "seconds": 0,
+      "shard": 1
+    }
+  ],
+  "unmapped": [
+    {
+      "name": "AI-Game installation owner persistence",
+      "ms": 7.8531
+    },
+    {
+      "name": "AI-GAME client surfaces use the official DSH seams",
+      "ms": 7.5008
+    },
+    {
+      "name": "Stage 4B durable execution recovery",
+      "ms": 6.2108
+    },
+    {
+      "name": "Stage 4B safe host projection",
+      "ms": 3.9731
+    },
+    {
+      "name": "AI-Game loopback transport",
+      "ms": 7.992
+    },
+    {
+      "name": "AI-Game v2 transport fence",
+      "ms": 34.5136
+    },
+    {
+      "name": "AI-Game v2 durable task projection",
+      "ms": 2.15
+    },
+    {
+      "name": "Stage 2 encrypted credential vault byte preservation",
+      "ms": 14.6673
+    },
+    {
+      "name": "桌面宠物屏幕边界与走动",
+      "ms": 7.8762
+    },
+    {
+      "name": "default error text is suppressed after safe runtime recording",
+      "ms": 25.1836
+    },
+    {
+      "name": "local diagnostics drops conversation and preserves fixed technical fields",
+      "ms": 1.915
+    },
+    {
+      "name": "local diagnostics drops prompt and preserves fixed technical fields",
+      "ms": 1.1766
+    },
+    {
+      "name": "local diagnostics drops model output and preserves fixed technical fields",
+      "ms": 0.9563
+    },
+    {
+      "name": "local diagnostics drops file content and preserves fixed technical fields",
+      "ms": 0.9957
+    },
+    {
+      "name": "local diagnostics drops file name and preserves fixed technical fields",
+      "ms": 0.9764
+    },
+    {
+      "name": "local diagnostics drops account name and preserves fixed technical fields",
+      "ms": 0.9564
+    },
+    {
+      "name": "local diagnostics drops email and preserves fixed technical fields",
+      "ms": 1.0866
+    },
+    {
+      "name": "local diagnostics drops device name and preserves fixed technical fields",
+      "ms": 1.1916
+    },
+    {
+      "name": "local diagnostics drops server address and preserves fixed technical fields",
+      "ms": 1.0368
+    },
+    {
+      "name": "local diagnostics drops domain and preserves fixed technical fields",
+      "ms": 1.0235
+    },
+    {
+      "name": "local diagnostics drops IP and preserves fixed technical fields",
+      "ms": 0.9667
+    },
+    {
+      "name": "local diagnostics drops key and preserves fixed technical fields",
+      "ms": 0.9343
+    },
+    {
+      "name": "local diagnostics drops token and preserves fixed technical fields",
+      "ms": 0.9611
+    },
+    {
+      "name": "local diagnostics drops Cookie and preserves fixed technical fields",
+      "ms": 1.0415
+    },
+    {
+      "name": "local diagnostics drops authorization and preserves fixed technical fields",
+      "ms": 0.8879
+    },
+    {
+      "name": "local diagnostics drops query and preserves fixed technical fields",
+      "ms": 1.0048
+    },
+    {
+      "name": "local diagnostics drops random string and preserves fixed technical fields",
+      "ms": 0.8451
+    },
+    {
+      "name": "location only retains our exact script path and numeric coordinates, never origin or query",
+      "ms": 1.2411
+    },
+    {
+      "name": "window errors and rejected promises retain type and own script location while dropping raw stack",
+      "ms": 1.2664
+    },
+    {
+      "name": "browser diagnostics are bounded, retained for 7 days, scrubbed again on read and sequenced within a run",
+      "ms": 11.2166
+    },
+    {
+      "name": "blocked storage is nonfatal and retains a small in-memory fallback",
+      "ms": 1.7444
+    },
+    {
+      "name": "native runtime records go through generic diagnostics.record and do not enter browser storage",
+      "ms": 2.0001
+    },
+    {
+      "name": "native startup failure before bridge configuration sends only sanitized fields",
+      "ms": 1.1796
+    },
+    {
+      "name": "local phone previous failure is visible before login in the single existing status strip",
+      "ms": 2.6509
+    },
+    {
+      "name": "background termination and first launch do not show the abnormal-exit notice",
+      "ms": 2.599
+    },
+    {
+      "name": "acknowledged local failure stays dismissed after navigating back and remounting",
+      "ms": 1.3878
+    },
+    {
+      "name": "records have loading/error/empty, human preview, structured copy and user initiated share",
+      "ms": 1.9212
+    },
+    {
+      "name": "known Android exit time and seven-day abnormal event total are shown",
+      "ms": 0.9823
+    },
+    {
+      "name": "redacted diagnostics export",
+      "ms": 3.1642
+    },
+    {
+      "name": "阶段 0 dogfood 启动器",
+      "ms": 198.4235
+    },
+    {
+      "name": "official DSH legacy route migration helper",
+      "ms": 142.9298
+    },
+    {
+      "name": "official DSH surface shell contract",
+      "ms": 9.9472
+    },
+    {
+      "name": "DSH vendor workspace closure",
+      "ms": 41.2701
+    },
+    {
+      "name": "writeWebProfile（R1-02：profile 由 main 写进 dsh-home）",
+      "ms": 2125.0316
+    },
+    {
+      "name": "parseWebUrlLine（官方 web-app 行就绪信号）",
+      "ms": 0.5562
+    },
+    {
+      "name": "DshWebRuntime lifecycle fences（阶段 0）",
+      "ms": 5853.3514
+    },
+    {
+      "name": "D33 cached forget: lists, search, pages, native index and restart cannot revive erased content",
+      "ms": 3544.2841
+    },
+    {
+      "name": "D33 cached forget-title: lists, search, pages, native index and restart cannot revive erased content",
+      "ms": 3330.8178
+    },
+    {
+      "name": "D33 cached delete: lists, search, pages, native index and restart cannot revive erased content",
+      "ms": 2786.3003
+    },
+    {
+      "name": "P1-01 · WeftMate API v1 schemas",
+      "ms": 7.6949
+    },
+    {
+      "name": "shared DSH model-route projection",
+      "ms": 6.8318
+    },
+    {
+      "name": "Harness 启动失败原生提示",
+      "ms": 3.1816
+    },
+    {
+      "name": "redaction API key: sensitive example removed and technical example preserved",
+      "ms": 2.1515
+    },
+    {
+      "name": "redaction token: sensitive example removed and technical example preserved",
+      "ms": 0.2058
+    },
+    {
+      "name": "redaction password: sensitive example removed and technical example preserved",
+      "ms": 0.1497
+    },
+    {
+      "name": "redaction cookie: sensitive example removed and technical example preserved",
+      "ms": 0.1204
+    },
+    {
+      "name": "redaction authorization: sensitive example removed and technical example preserved",
+      "ms": 0.1553
+    },
+    {
+      "name": "redaction email: sensitive example removed and technical example preserved",
+      "ms": 0.1273
+    },
+    {
+      "name": "redaction random token: sensitive example removed and technical example preserved",
+      "ms": 0.1544
+    },
+    {
+      "name": "redaction URL query: sensitive example removed and technical example preserved",
+      "ms": 0.1944
+    },
+    {
+      "name": "redaction absolute path: sensitive example removed and technical example preserved",
+      "ms": 0.2882
+    },
+    {
+      "name": "redaction Unix path: sensitive example removed and technical example preserved",
+      "ms": 0.373
+    },
+    {
+      "name": "redaction standalone key: sensitive example removed and technical example preserved",
+      "ms": 0.1986
+    },
+    {
+      "name": "redaction JSON secret: sensitive example removed and technical example preserved",
+      "ms": 0.1604
+    },
+    {
+      "name": "legacy compatibility backfill",
+      "ms": 1.9999
+    },
+    {
+      "name": "Stage 1 combined encrypted vault migration",
+      "ms": 4.4682
+    },
+    {
+      "name": "删除全部 WeftMate 本机数据",
+      "ms": 14.6634
+    },
+    {
+      "name": "native output reserve recovery compacts before continuing and preserves goal/todos # SKIP Requires the pinned compiled DSH runtime (not supplied in CI)",
+      "ms": 0.9765
+    },
+    {
+      "name": "native pre-step pressure compacts before continuing and preserves goal/todos # SKIP Requires the pinned compiled DSH runtime (not supplied in CI)",
+      "ms": 0.1642
+    },
+    {
+      "name": "main canonical renderer trust wiring",
+      "ms": 6.3574
+    },
+    {
+      "name": "阶段 0 主进程启动与退出收口",
+      "ms": 3.8403
+    },
+    {
+      "name": "本机数据删除接线（新基座：main 壳接缝）",
+      "ms": 2.8891
+    },
+    {
+      "name": "R7 记忆宿主插件契约",
+      "ms": 10.4737
+    },
+    {
+      "name": "R7 MemoWeft 2.0 本地桥契约（可选外部系统，显式 opt-in） # SKIP MemoWeft 正向集成不属于默认工程门（设置 WEFTMATE_TEST_MEMOWEFT=1 显式运行）",
+      "ms": 0.6721
+    },
+    {
+      "name": "stream message keyed incremental updates",
+      "ms": 2.0454
+    },
+    {
+      "name": "late offline-resource reply stays out after a conversation switch",
+      "ms": 4.1047
+    },
+    {
+      "name": "late offline-resource reply stays out after a owner switch",
+      "ms": 3.5314
+    },
+    {
+      "name": "service model capacity",
+      "ms": 39.9006
+    },
+    {
+      "name": "per-request output budget",
+      "ms": 0.7743
+    },
+    {
+      "name": "model discovery credential policy",
+      "ms": 5.1981
+    },
+    {
+      "name": "recoverable profile mutation transaction",
+      "ms": 6.098
+    },
+    {
+      "name": "persistent model profile mutation guard",
+      "ms": 2.3428
+    },
+    {
+      "name": "model save credential scope policy",
+      "ms": 2.7444
+    },
+    {
+      "name": "Stage 2 active-model future-session preference",
+      "ms": 3.024
+    },
+    {
+      "name": "BL-28a desktop default typing sends zero completion requests; explicit opt-in restores completion",
+      "ms": 8.0908
+    },
+    {
+      "name": "BL-28a phone default typing sends zero completion requests; explicit opt-in restores completion",
+      "ms": 2.0965
+    },
+    {
+      "name": "OpenAI-compatible real discovery response validation",
+      "ms": 6.9312
+    },
+    {
+      "name": "P1-03 · DSH session / agent adapter",
+      "ms": 22.7085
+    },
+    {
+      "name": "P1-03 Gateway fake-model headless probe",
+      "ms": 82.6925
+    },
+    {
+      "name": "P1-04 · DSH workspace adapter",
+      "ms": 11.1534
+    },
+    {
+      "name": "P1-04 · DSH model adapter",
+      "ms": 3.7735
+    },
+    {
+      "name": "P1-04 · DSH permission-preset adapter",
+      "ms": 6.9764
+    },
+    {
+      "name": "P1-04 · sessions adapter safe-code table extension",
+      "ms": 1.1793
+    },
+    {
+      "name": "P1-05 · Gateway diagnostics",
+      "ms": 77.5088
+    },
+    {
+      "name": "R6-01 桌面感知接缝契约",
+      "ms": 6.6263
+    },
+    {
+      "name": "real local Caddy rejects remote local-password credentials and keeps setup and logout local # SKIP Set WEFTMATE_TLS_PROXY_TEST=1 with explicit Caddy/certificate paths to run this non-default integration test",
+      "ms": 0.9732
+    },
+    {
+      "name": "auto: ordinary tools and all six risk classes use the same approval policy",
+      "ms": 1.9929
+    },
+    {
+      "name": "ask: ordinary tools and all six risk classes use the same approval policy",
+      "ms": 0.2499
+    },
+    {
+      "name": "accept-edits: ordinary tools and all six risk classes use the same approval policy",
+      "ms": 0.1413
+    },
+    {
+      "name": "plan: ordinary tools and all six risk classes use the same approval policy",
+      "ms": 0.1036
+    },
+    {
+      "name": "allow-all: ordinary tools and all six risk classes use the same approval policy",
+      "ms": 0.1838
+    },
+    {
+      "name": "cloud initialization backs up legacy v1 before existing migration and preserves old host/owner IDs and legal ***",
+      "ms": 11977.4544
+    },
+    {
+      "name": "FX-11 first native write registers a cloud owner's artifact in ordinary conversation",
+      "ms": 5706.7647
+    },
+    {
+      "name": "FX-11 first native write registers a cloud owner's artifact in project conversation",
+      "ms": 7326.3262
+    },
+    {
+      "name": "FX-11 first native write registers a cloud owner's artifact in phone conversation",
+      "ms": 5804.6952
+    },
+    {
+      "name": "native background delegation waits, collects and then summarizes the child result # SKIP Requires pinned compiled DSH runtime",
+      "ms": 1.2914
+    },
+    {
+      "name": "native uncollected completion sends one notice then is collected # SKIP Requires pinned compiled DSH runtime",
+      "ms": 0.1965
+    },
+    {
+      "name": "native uncollected completion sends one wakeup then is collected # SKIP Requires pinned compiled DSH runtime",
+      "ms": 0.1561
+    },
+    {
+      "name": "personal preset preserves the native delegation schema and explains collection before summary # SKIP Requires pinned compiled DSH runtime",
+      "ms": 0.1551
+    },
+    {
+      "name": "pwsh: new and existing targets: $p=\"$($PWD.Path)/TARGET\"; Set-Content $p data",
+      "ms": 17.215
+    },
+    {
+      "name": "pwsh: new and existing targets: $p=\"${PWD}/TARGET\"; Set-Content $p data",
+      "ms": 6.7267
+    },
+    {
+      "name": "bash: new and existing targets: ***; cd sub; echo data > \"$PWD/TARGET\"",
+      "ms": 7.2343
+    },
+    {
+      "name": "bash: new and existing targets: OLDPWD=unused; cd sub; echo data > \"$OLDPWD/TARGET\"",
+      "ms": 7.0545
+    },
+    {
+      "name": "pwsh: new and existing targets: [string]$p='TARGET'; Set-Content $p data",
+      "ms": 7.7754
+    },
+    {
+      "name": "pwsh: new and existing targets: $p='TARGET'; Invoke-WebRequest https://example.org -OutFile:$p",
+      "ms": 6.629
+    },
+    {
+      "name": "bash: new and existing targets: P=TARGET; curl --output=\"$P\" https://example.org",
+      "ms": 8.0402
+    },
+    {
+      "name": "bash: new and existing targets: P=TARGET; curl -o\"$P\" https://example.org",
+      "ms": 6.0391
+    },
+    {
+      "name": "pwsh: new and existing targets: $p=Join-Path -ChildPath ('TARGET' + '') -Path $PWD; Set-Content $p data",
+      "ms": 6.824
+    },
+    {
+      "name": "pwsh: new and existing targets: $p=(Join-Path -Path $PWD -ChildPath 'TARGET'); [IO.File]::WriteAllText($p, 'data')",
+      "ms": 8.1267
+    },
+    {
+      "name": "pwsh: new and existing targets: if (-not (Test-Path -LiteralPath 'TARGET')) { New-Item -ItemType File -Path 'TARGET' }; Set-Content TARGET data",
+      "ms": 9.4982
+    },
+    {
+      "name": "pwsh: new and existing targets: $p='TARGET'; [IO.File]::WriteAllText($p, 'data')",
+      "ms": 8.133
+    },
+    {
+      "name": "pwsh: new and existing targets: $dir=$PWD; $p=Join-Path $dir 'TARGET'; [System.IO.File]::WriteAllBytes($p, $bytes)",
+      "ms": 6.8757
+    },
+    {
+      "name": "pwsh: new and existing targets: $p=$PWD.Path + '/TARGET'; [IO.File]::AppendAllText($p, 'data')",
+      "ms": 5.5458
+    },
+    {
+      "name": "pwsh: new and existing targets: $dir=$PWD; $p=\"$dir/TARGET\"; Set-Content -Value data -LiteralPath $p",
+      "ms": 6.6763
+    },
+    {
+      "name": "pwsh: new and existing targets: $p='TARGET'; New-Item -Path $p -ItemType File -Force",
+      "ms": 5.5751
+    },
+    {
+      "name": "pwsh: new and existing targets: $p='TARGET'; 'data' | Out-File -Encoding utf8 -FilePath $p",
+      "ms": 5.5547
+    },
+    {
+      "name": "pwsh: new and existing targets: $p='TARGET'; Add-Content -Path $p -Value data",
+      "ms": 5.8145
+    },
+    {
+      "name": "pwsh: new and existing targets: $p='TARGET'; 'data' > $p",
+      "ms": 5.9096
+    },
+    {
+      "name": "pwsh: new and existing targets: $p='TARGET'; 'data' >> $p",
+      "ms": 5.9577
+    },
+    {
+      "name": "pwsh: new and existing targets: $p='TARGET'; Invoke-WebRequest -Uri https://example.org -OutFile $p",
+      "ms": 6.344
+    },
+    {
+      "name": "pwsh: new and existing targets: $p='TARGET'; curl -o $p https://example.org",
+      "ms": 6.0231
+    },
+    {
+      "name": "pwsh: new and existing targets: Set-Location sub; $p='TARGET'; Set-Content $p data",
+      "ms": 5.7789
+    },
+    {
+      "name": "pwsh: new and existing targets: Push-Location sub; $p='TARGET'; Set-Content $p data; Pop-Location",
+      "ms": 7.9411
+    },
+    {
+      "name": "pwsh: new and existing targets: Push-Location sub; Pop-Location; Set-Content TARGET data",
+      "ms": 7.1414
+    },
+    {
+      "name": "pwsh: new and existing targets: $env:APR_TEST_DIR=$PWD.Path; $p=Join-Path $env:APR_TEST_DIR 'TARGET'; Out-File $p",
+      "ms": 8.089
+    },
+    {
+      "name": "pwsh: new and existing targets: $p=Join-Path $env:TEMP 'APR_TEST_TARGET'; Set-Content $p data",
+      "ms": 7.2106
+    },
+    {
+      "name": "bash: new and existing targets: DIR=$(pwd); P=\"$DIR/TARGET\"; echo data > \"$P\"",
+      "ms": 6.3386
+    },
+    {
+      "name": "bash: new and existing targets: cd sub; P=TARGET; echo data >> \"$P\"",
+      "ms": 6.036
+    },
+    {
+      "name": "bash: new and existing targets: P=TARGET; curl https://example.org -o \"$P\"",
+      "ms": 6.2376
+    },
+    {
+      "name": "bash: new and existing targets: P=\"$PWD/TARGET\"; curl --output \"$P\" https://example.org",
+      "ms": 7.1694
+    },
+    {
+      "name": "confirmed decision across durable turns: alternate wording # SKIP Observed bridge runs with pinned Core",
+      "ms": 0.9006
+    },
+    {
+      "name": "confirmed decision across durable turns: delayed # SKIP Observed bridge runs with pinned Core",
+      "ms": 0.1526
+    },
+    {
+      "name": "natural memory explicit correction: source retention, new-session recall and restart # SKIP CI runs this test with the pinned MemoWeft Core",
+      "ms": 0.9652
+    },
+    {
+      "name": "natural memory changed preference: source retention, new-session recall and restart # SKIP CI runs this test with the pinned MemoWeft Core",
+      "ms": 0.1429
+    },
+    {
+      "name": "natural memory negated coffee correction: source retention, new-session recall and restart # SKIP CI runs this test with the pinned MemoWeft Core",
+      "ms": 0.1496
+    },
+    {
+      "name": "default immediate new-session recall bridges only accepted permitted quotes, then formal memory replaces them # SKIP The pinned Core integration job supplies Python and source",
+      "ms": 0.8998
+    },
+    {
+      "name": "elliptical numeric corrections are paired immediately; ambiguous topics and forgetting keep their boundaries # SKIP The pinned Core integration job supplies Python and source",
+      "ms": 0.1905
+    },
+    {
+      "name": "FX-17 failed correction survives restart, annotates recall and retries one successor for two objects # SKIP CI runs this test with the pinned MemoWeft Core",
+      "ms": 0.9206
+    },
+    {
+      "name": "FX-18 shutdown resumes a real Core job without expiry or duplicates # SKIP CI runs this test with the pinned MemoWeft Core",
+      "ms": 0.8433
+    },
+    {
+      "name": "FX-18 forced resumes a real Core job without expiry or duplicates # SKIP CI runs this test with the pinned MemoWeft Core",
+      "ms": 0.1408
+    },
+    {
+      "name": "real MemoWeft observed health: local/cloud consent, ordinary memory, overwrite, delete/export, restart # SKIP Set WEFTMATE_TEST_MEMOWEFT_PYTHON and WEFTMATE_TEST_MEMOWEFT_SOURCE; CI runs the pinned Core job",
+      "ms": 0.9527
+    },
+    {
+      "name": "recall does not wait by default while a stuck job remains durable",
+      "ms": 1083.4881
+    },
+    {
+      "name": "recall honors an explicit formation deadline while a stuck job remains durable",
+      "ms": 1122.6422
+    },
+    {
+      "name": "read: allow validates and decides at the host gate",
+      "ms": 2.0452
+    },
+    {
+      "name": "read: ask validates and decides at the host gate",
+      "ms": 0.3332
+    },
+    {
+      "name": "read: deny validates and decides at the host gate",
+      "ms": 0.1753
+    },
+    {
+      "name": "write: allow validates and decides at the host gate",
+      "ms": 0.2102
+    },
+    {
+      "name": "write: ask validates and decides at the host gate",
+      "ms": 1.4783
+    },
+    {
+      "name": "write: deny validates and decides at the host gate",
+      "ms": 0.174
+    },
+    {
+      "name": "delete: allow validates and decides at the host gate",
+      "ms": 0.2401
+    },
+    {
+      "name": "delete: ask validates and decides at the host gate",
+      "ms": 0.1999
+    },
+    {
+      "name": "delete: deny validates and decides at the host gate",
+      "ms": 0.234
+    },
+    {
+      "name": "command: allow validates and decides at the host gate",
+      "ms": 0.5242
+    },
+    {
+      "name": "command: ask validates and decides at the host gate",
+      "ms": 0.2065
+    },
+    {
+      "name": "command: deny validates and decides at the host gate",
+      "ms": 0.154
+    },
+    {
+      "name": "network: allow validates and decides at the host gate",
+      "ms": 0.1641
+    },
+    {
+      "name": "network: ask validates and decides at the host gate",
+      "ms": 0.1176
+    },
+    {
+      "name": "network: deny validates and decides at the host gate",
+      "ms": 0.2494
+    },
+    {
+      "name": "external: allow validates and decides at the host gate",
+      "ms": 0.1092
+    },
+    {
+      "name": "external: ask validates and decides at the host gate",
+      "ms": 0.1079
+    },
+    {
+      "name": "external: deny validates and decides at the host gate",
+      "ms": 0.0877
+    },
+    {
+      "name": "spend: allow validates and decides at the host gate",
+      "ms": 0.0763
+    },
+    {
+      "name": "spend: ask validates and decides at the host gate",
+      "ms": 0.1252
+    },
+    {
+      "name": "spend: deny validates and decides at the host gate",
+      "ms": 0.0804
+    },
+    {
+      "name": "install: allow validates and decides at the host gate",
+      "ms": 0.087
+    },
+    {
+      "name": "install: ask validates and decides at the host gate",
+      "ms": 0.0801
+    },
+    {
+      "name": "install: deny validates and decides at the host gate",
+      "ms": 0.0895
+    },
+    {
+      "name": "system: allow validates and decides at the host gate",
+      "ms": 0.0829
+    },
+    {
+      "name": "system: ask validates and decides at the host gate",
+      "ms": 0.0785
+    },
+    {
+      "name": "system: deny validates and decides at the host gate",
+      "ms": 0.0708
+    },
+    {
+      "name": "real pinned DSH greeting wire obeys the token ceiling # SKIP Pinned DSH vendor required; pure projection runs in CI",
+      "ms": 0.3997
+    },
+    {
+      "name": "host IPC disconnect terminates its sidecar even when the host cannot run graceful shutdown # SKIP Unix executable fixture; real Windows frpc validation belongs to deployment",
+      "ms": 0.3702
+    },
+    {
+      "name": "native local at handles zones, DST overlap/gap and weekly calendar keeps local hour # SKIP prebuilt DSH vendor fixture unavailable",
+      "ms": 0.1426
+    },
+    {
+      "name": "native UI create/edit preserves stable id, pause and exact run receipts; forgetting preserves unrelated schedules # SKIP prebuilt DSH vendor fixture unavailable",
+      "ms": 0.1024
+    },
+    {
+      "name": "one-shot dispatch survives restart and only delivers once with missed time # SKIP prebuilt DSH vendor fixture unavailable",
+      "ms": 0.157
+    },
+    {
+      "name": "native periodic dispatch skips missed backlog; pause/resume/delete and run now # SKIP prebuilt DSH vendor fixture unavailable",
+      "ms": 0.118
+    },
+    {
+      "name": "calendar task renews via native at and dispatches owner command once # SKIP prebuilt DSH vendor fixture unavailable",
+      "ms": 0.1648
+    },
+    {
+      "name": "daily calendar continuation skips the nonexistent spring DST occurrence # SKIP prebuilt DSH vendor fixture unavailable",
+      "ms": 0.1065
+    },
+    {
+      "name": "calendar catch-up during a DST overlap skips the already-past earlier instant # SKIP prebuilt DSH vendor fixture unavailable",
+      "ms": 0.1945
+    },
+    {
+      "name": "early stop before user persistence becomes resumable via native evidence",
+      "ms": 21.5624
+    },
+    {
+      "name": "early stop before user persistence becomes resumable via timeline evidence",
+      "ms": 1.1911
+    },
+    {
+      "name": "orphan stop: runtime restart / missing turn",
+      "ms": 4.7055
+    },
+    {
+      "name": "orphan stop: missing turn record",
+      "ms": 0.464
+    },
+    {
+      "name": "orphan stop: model switch failure",
+      "ms": 0.3286
+    },
+    {
+      "name": "orphan stop: upstream disconnect",
+      "ms": 1.5794
+    },
+    {
+      "name": "native stop state accepts actual terminal: completed",
+      "ms": 2.8617
+    },
+    {
+      "name": "native stop state accepts actual terminal: aborted",
+      "ms": 1.1176
+    },
+    {
+      "name": "native stop state accepts actual terminal: error",
+      "ms": 0.2599
+    },
+    {
+      "name": "native stop state accepts actual terminal: blocked",
+      "ms": 0.1605
+    },
+    {
+      "name": "native stop state accepts actual terminal: max-tokens",
+      "ms": 0.1758
+    },
+    {
+      "name": "native stop state accepts actual terminal: unknown",
+      "ms": 0.1755
+    },
+    {
+      "name": "桌面宠物与 Soul 隔离契约（R4 退役后：只锁新基座事实源）",
+      "ms": 16.4611
+    },
+    {
+      "name": "本机 MCP 宠物孵化器",
+      "ms": 603.7858
+    },
+    {
+      "name": "R6-02 桌宠恢复接缝契约（新基座）",
+      "ms": 5.2298
+    },
+    {
+      "name": "Pet Store / Soul 绑定",
+      "ms": 40.2254
+    },
+    {
+      "name": "R8-01 设备接缝契约（手机源 · 桌面侧）",
+      "ms": 4.8967
+    },
+    {
+      "name": "main renderer navigation and IPC trust fence",
+      "ms": 2.8153
+    },
+    {
+      "name": "research pressure and timeout use durable native checkpoints below the capacity threshold # SKIP Pinned DSH vendor required",
+      "ms": 1.0059
+    },
+    {
+      "name": "taskkill.exe hang has a deadline and a sanitized failure",
+      "ms": 29.7988
+    },
+    {
+      "name": "reg.exe hang has a deadline and a sanitized failure",
+      "ms": 31.6007
+    },
+    {
+      "name": "openssl hang has a deadline and a sanitized failure",
+      "ms": 31.5645
+    },
+    {
+      "name": "real standalone watchdog retains pending state and installation on a query hang before-install",
+      "ms": 1332.0173
+    },
+    {
+      "name": "real standalone watchdog retains pending state and installation on a query hang before-rollback",
+      "ms": 1325.5046
+    },
+    {
+      "name": "Stage 2 route mutation crash recovery",
+      "ms": 40.9093
+    },
+    {
+      "name": "Stage 2 route mutation queue",
+      "ms": 3.9243
+    },
+    {
+      "name": "src/personal-access-ui/popovers.js: hidden source selects never get a visible proxy",
+      "ms": 5.9599
+    },
+    {
+      "name": "src/personal-access-ui/popovers.js: closing a proxy menu tolerates WebViews without :popover-open",
+      "ms": 1.844
+    },
+    {
+      "name": "apps/mobile-ui/www/popovers.js: hidden source selects never get a visible proxy",
+      "ms": 1.852
+    },
+    {
+      "name": "apps/mobile-ui/www/popovers.js: closing a proxy menu tolerates WebViews without :popover-open",
+      "ms": 2.0205
+    },
+    {
+      "name": "R6/R8 设置面收口契约（官方设置页 WeftMate 节）",
+      "ms": 4.5037
+    },
+    {
+      "name": "模型提供方编辑保真",
+      "ms": 2.0157
+    },
+    {
+      "name": "记忆与插件的真实状态",
+      "ms": 3.0735
+    },
+    {
+      "name": "桌宠请求与实际状态分开",
+      "ms": 17.1218
+    },
+    {
+      "name": "shared DSH_HOME vendor routes",
+      "ms": 1.173
+    },
+    {
+      "name": "阶段 1 Gateway 会话恢复与逐次工具许可",
+      "ms": 91.4216
+    },
+    {
+      "name": "阶段 1 的 DSH 产品面收敛",
+      "ms": 5.0487
+    },
+    {
+      "name": "阶段 1 真实 vendor approval response carrier",
+      "ms": 0.9074
+    },
+    {
+      "name": "Stage 2 non-secret configuration",
+      "ms": 23.8969
+    },
+    {
+      "name": "Stage 2 incremental interaction state",
+      "ms": 2.6296
+    },
+    {
+      "name": "Stage 2 renderer executable behavior",
+      "ms": 5.1109
+    },
+    {
+      "name": "Stage 2 strict shared-session guards",
+      "ms": 7.4556
+    },
+    {
+      "name": "Stage 2 settings, model management and product surface",
+      "ms": 7.9049
+    },
+    {
+      "name": "WeftMate conversation workspace surface",
+      "ms": 3.8625
+    },
+    {
+      "name": "live Windows: inspect, type, invoke and screenshot only a newly created WinForms fixture # SKIP",
+      "ms": 0.3878
+    },
+    {
+      "name": "Windows candidate package policy",
+      "ms": 11.3124
+    }
+  ],
+  "shardSeconds": [
+    759,
+    750,
+    824
+  ]
+}

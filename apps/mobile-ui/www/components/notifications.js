@@ -4,7 +4,7 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
   const current=()=>target.isConnected&&identity===core.state.identityGeneration;
   const node=(tag,text='',cls='')=>{const el=document.createElement(tag);el.textContent=text;el.className=cls;return el;};
   const form=node('form','','personalization-form notification-settings'),notice=node('p','正在读取…','muted');notice.setAttribute('role','status');
-  const fields=new Map();let ready=false,saved,localDelivery=false;
+  const fields=new Map(),healthFields=new Map();let ready=false,saved,localDelivery=false,healthReady=false,healthSaved;
   target.replaceChildren(form);form.append(notice);
   const busy=value=>{for(const el of form.querySelectorAll('input,select,button'))el.disabled=value||el.dataset.reserved==='true';};
   const fill=settings=>{for(const [key,el] of fields){if(el.type==='checkbox')el.checked=settings[key];else el.value=String(settings[key]);el.dispatchEvent(new Event('weft:sync'));}};
@@ -13,12 +13,14 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
     catch{if(current()){notice.textContent='未能同步，请重试。';fill(saved);}return false;}
     finally{if(current())busy(false);}
   }
-  function field(key,label,description,type,options){
-    const el=node(type==='select'?'select':'input');el.id='notifications-'+key;el.setAttribute('aria-label',label);
+  const fillHealth=settings=>{for(const [key,el]of healthFields){if(el.type==='checkbox')el.checked=settings[key];else{const value=String(settings[key]);if(key==='sleepTargetMinutes'&&![...el.options].some(o=>o.value===value)){const minutes=settings[key];el.append(new Option(`${Math.floor(minutes/60)} 小时${minutes%60?` ${minutes%60} 分钟`:''}`,value));}el.value=value;}el.dispatchEvent(new Event('weft:sync'));}};
+  async function writeHealth(patch){if(!healthReady||!current())return false;busy(true);healthNotice.textContent='正在保存…';try{const value=await core.saveHealthSettings(patch);if(current()){healthSaved=value.settings;fillHealth(healthSaved);healthNotice.textContent='';device.toast?.(patch.clear?'健康数据已清空。':'健康设置已保存。');}return true;}catch{if(current()){healthNotice.textContent='未能保存，请重试。';fillHealth(healthSaved);}return false;}finally{if(current())busy(false);}}
+  function field(key,label,description,type,options,health=false){
+    const el=node(type==='select'?'select':'input');el.id=(health?'health-':'notifications-')+key;el.setAttribute('aria-label',label);if(health)el.dataset.reserved='true';
     if(type==='select'){el.dataset.checkSelection='true';for(const [value,title] of options)el.append(new Option(title,value));}
     else{el.type=type;if(type==='checkbox')controls.toggle(el);}
-    form.append(controls.row(label,description,el));fields.set(key,el);
-    el.addEventListener('change',()=>{if(el.reportValidity())void write({[key]:type==='checkbox'?el.checked:['memoryDigestWeekday','reviewRetentionDays'].includes(key)?Number(el.value):key==='dailyLimit'?(el.value==='null'?null:Number(el.value)):el.value});});
+    form.append(controls.row(label,description,el));(health?healthFields:fields).set(key,el);
+    el.addEventListener('change',()=>{if(el.reportValidity())void (health?writeHealth:write)({[key]:type==='checkbox'?el.checked:['memoryDigestWeekday','reviewRetentionDays','sleepTargetMinutes'].includes(key)?Number(el.value):['dailyLimit','retentionDays'].includes(key)?(el.value==='null'?null:Number(el.value)):el.value});});
     if(type==='select')globalThis.WeftPopover?.bindSettingsSelect(el);
     return el;
   }
@@ -40,6 +42,16 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
   clear.onclick=()=>{const focus=document.activeElement,box=node('dialog','',core.android?.call?'session-action-dialog data-dialog review-clear-dialog':'dialog confirm-dialog data-dialog review-clear-dialog');box.setAttribute('aria-label','清空回顾与洞察');box.append(node('h2','清空回顾与洞察'),node('p','删除已保存的摘要和周回顾，之后从明天重新开始整理。对话、成果和记忆会保留。'));
     const cancel=node('button','取消','button secondary'),confirm=node('button','确认清空','button danger');cancel.type=confirm.type='button';cancel.onclick=()=>box.close();confirm.onclick=async()=>{box.close();if(await write({reviewClear:true}))device.toast?.('回顾已清空。');};const actions=node('div','','actions');actions.append(cancel,confirm);box.append(actions);box.addEventListener('close',()=>{box.remove();focus?.focus();});document.body.append(box);globalThis.WeftPopover?.bindSettings(box);box.showModal();cancel.focus();};
   form.append(controls.row('已保存的回顾','清空后，助手不再引用这些摘要。',clear));
+  form.append(node('h2','健康数据'));
+  const healthNotice=node('p','正在读取健康设置…','muted');healthNotice.setAttribute('role','status');form.append(healthNotice);
+  field('modelInsightsEnabled','用模型解读','会把每天的汇总数字发给你设置的模型，不发明细。','checkbox',undefined,true);
+  field('sleepTargetMinutes','睡眠目标','用来比较自己的睡眠时长。','select',[[360,'6 小时'],[390,'6.5 小时'],[420,'7 小时'],[450,'7.5 小时'],[480,'8 小时'],[510,'8.5 小时'],[540,'9 小时']],true);
+  field('retentionDays','健康数据保留多久','只保存在这台电脑，独立于使用回顾。','select',[[90,'90 天'],[180,'180 天'],[400,'400 天'],['null','一直']],true);
+  const healthClear=node('button','清空健康数据','button secondary');healthClear.type='button';healthClear.dataset.reserved='true';
+  healthClear.onclick=()=>{const focus=document.activeElement,box=node('dialog','',core.android?.call?'session-action-dialog data-dialog review-clear-dialog':'dialog confirm-dialog data-dialog review-clear-dialog');box.setAttribute('aria-label','清空健康数据');box.append(node('h2','清空健康数据'),node('p','删除这台电脑上保存的健康记录和解读。使用回顾、对话和记忆会保留。'));const cancel=node('button','取消','button secondary'),confirm=node('button','确认清空','button danger');cancel.type=confirm.type='button';cancel.onclick=()=>box.close();confirm.onclick=async()=>{box.close();await writeHealth({clear:true});};const actions=node('div','','actions');actions.append(cancel,confirm);box.append(actions);box.addEventListener('close',()=>{box.remove();focus?.focus();});document.body.append(box);globalThis.WeftPopover?.bindSettings(box);box.showModal();cancel.focus();};
+  form.append(controls.row('已保存的健康数据','清空后，助手不再引用这些健康记录。',healthClear));
+  async function loadHealth(){try{const value=await core.loadHealthSettings();if(!current())return;healthSaved=value.settings;fillHealth(healthSaved);healthReady=true;for(const el of [...healthFields.values(),healthClear]){el.dataset.reserved='false';el.disabled=false;}healthNotice.textContent='';}catch{if(!current())return;healthNotice.textContent='无法读取健康设置，请连接电脑后重试。';const retry=node('button','重试健康设置','button secondary');retry.type='button';retry.onclick=()=>{retry.remove();void loadHealth();};healthNotice.append(retry);}}
+  void loadHealth();
   form.append(node('h2','记忆周报'));
   field('memoryDigestEnabled','每周生成记忆周报','这一周有新记忆或变更时，在动态里整理一次。','checkbox');
   field('memoryDigestWeekday','每周哪一天','按账户时区；关机错过后，下次启动补发最近一周。','select',[[1,'星期一'],[2,'星期二'],[3,'星期三'],[4,'星期四'],[5,'星期五'],[6,'星期六'],[0,'星期日']]);

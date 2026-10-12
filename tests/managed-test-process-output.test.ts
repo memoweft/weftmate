@@ -1,9 +1,44 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runManagedTestProcess } from './helpers/managed-test-process.mjs';
+
+test('an exited root with inherited descendant pipes completes cleanup and cannot block later files', {timeout:30000}, async()=>{
+  const scope=mkdtempSync(join(tmpdir(),'weftmate-managed-pipes-')),pidFile=join(scope,'grandchild.pid');
+  let pid;
+  try {
+    const source=`const {spawn}=require('node:child_process');const fs=require('node:fs');
+      const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)',${JSON.stringify(scope)}],{stdio:['ignore',process.stdout,process.stderr],windowsHide:true});
+      fs.writeFileSync(${JSON.stringify(pidFile)},String(child.pid));console.log('root finished');child.unref();`;
+    const result=await runManagedTestProcess(process.execPath,['-e',source,scope],{env:process.env,commandRoots:[scope],timeoutMs:3000});
+    assert.equal(result.status,0,'the root itself exited normally');
+    assert.match(result.stdout,/root finished/);pid=Number(readFileSync(pidFile,'utf8'));
+    let alive=true;for(let i=0;i<40&&alive;i++){try{process.kill(pid,0);await new Promise(r=>setTimeout(r,50));}catch{alive=false;}}
+    assert.equal(alive,false,'deadline removes the pipe-holding descendant');
+    const next=await runManagedTestProcess(process.execPath,['-e',"console.log('later file ran')",scope],{env:process.env,commandRoots:[scope],timeoutMs:3000});
+    assert.equal(next.status,0);assert.match(next.stdout,/later file ran/);
+  }finally{if(pid)try{process.kill(pid);}catch{}rmSync(scope,{recursive:true,force:true});}
+});
+
+test('file deadline terminates its owned child tree and a later file can still run', async()=>{
+  const scope=mkdtempSync(join(tmpdir(),'weftmate-managed-timeout-')),pidFile=join(scope,'grandchild.pid');
+  let pid;
+  try {
+    const source=`const {spawn}=require('node:child_process');const fs=require('node:fs');
+      const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)',${JSON.stringify(scope)}],{stdio:'ignore',windowsHide:true});
+      fs.writeFileSync(${JSON.stringify(pidFile)},String(child.pid));console.log('fixture running');setInterval(()=>{},1000);`;
+    const result=await runManagedTestProcess(process.execPath,['-e',source,scope],{env:process.env,commandRoots:[scope],timeoutMs:3000});
+    assert.equal(result.timedOut,true);assert.notEqual(result.status,0);assert.match(result.stdout,/fixture running/);
+    assert.ok(existsSync(pidFile));pid=Number(readFileSync(pidFile,'utf8'));
+    let alive=true;
+    for(let i=0;i<40&&alive;i++){try{process.kill(pid,0);await new Promise(r=>setTimeout(r,50));}catch{alive=false;}}
+    assert.equal(alive,false,'timeout releases the owned grandchild');
+    const next=await runManagedTestProcess(process.execPath,['-e',"console.log('later file ran')",scope],{env:process.env,commandRoots:[scope],timeoutMs:3000});
+    assert.equal(next.status,0);assert.equal(next.timedOut,false);assert.match(next.stdout,/later file ran/);
+  }finally{if(pid)try{process.kill(pid);}catch{}rmSync(scope,{recursive:true,force:true});}
+});
 
 test('a completed Windows runner cleans its owned detached descendant before removing the scope',{skip:process.platform!=='win32'},async()=>{
   const scope=mkdtempSync(join(tmpdir(),'weftmate-managed-descendant-')),pidFile=join(scope,'child.pid');
