@@ -5,7 +5,7 @@ import { activitySource, putActivity, removeActivity } from './activity-store.mj
 import { notificationSettings, localNotificationTime } from './notification-policy.mjs';
 import { digestLocalInstant } from './memory-digest.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
-import { currentChatProfile } from '../background-model-selection.mjs';
+import { createBackgroundModels } from './background-model.mjs';
 import { EMPTY_HEALTH } from '../personal-health/records-schema.mjs';
 import { healthScores,healthWeeklySummary,healthOverview } from '../personal-health/analysis.mjs';
 import { HEALTH_UNSAFE_TEXT,HEALTH_INSIGHT_PROMPT,healthModelSummary,validateHealthInsight } from '../personal-health/insight.mjs';
@@ -117,6 +117,7 @@ export function statisticalInsight(days){
 }
 
 export function createDailyDigest(context){
+  const backgroundModels = createBackgroundModels(context);
   const flights=new Map(),models=new Set(),controllers=new Set();let closed=false;
   async function refresh(ownerId){
     if(flights.has(ownerId))return flights.get(ownerId);
@@ -165,8 +166,8 @@ export function createDailyDigest(context){
       await context.serial(()=>context.mutate(ownerId,next=>{if(current()){const report={from,to:week,timeZone:zone,text,usageText,mode:'statistics',sources:insight.sources,...(health?{health}: {})};dailyDigestState(next).weeks[week]=report;putActivity(next,`usage-week:${week}:${generation}`,{type:'memory.report',at:new Date(now).toISOString(),title:'这周回顾',summary:`完成 ${days.reduce((n,d)=>n+d.tasks.completed,0)} 件事 · 产出 ${days.reduce((n,d)=>n+d.outputs.count,0)} 份成果`,weeklyInsight:report,level:'silent',source:{usageWeek:week},actions:[]});}}));
       const job={ownerId,controller:new AbortController()};controllers.add(job);
       const refinement=(async()=>{try{
-        const profileId=account.backgroundModelProfileId??currentChatProfile(account,id=>context.modelSelectable(ownerId,id));
         const catalog=await context.callBackend(()=>context.backend.listModels({ownerId}));
+        const profileId=await backgroundModels.resolve(ownerId,catalog);
         const profile=context.visibleModels(ownerId,catalog).find(row=>row.id===profileId);
         if(current()&&!job.controller.signal.aborted&&profile&&context.backend.modelCompletion){
           const healthEnabled=health&&healthRecords.settings.modelInsightsEnabled;
