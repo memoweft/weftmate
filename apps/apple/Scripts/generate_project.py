@@ -81,7 +81,7 @@ def target(name, platform, sources, testing=None):
         framework_files.append(obj(name + ":framework:core", isa="PBXBuildFile", productRef=core))
     phases.append(obj(name + ":frameworks", isa="PBXFrameworksBuildPhase", buildActionMask=2147483647, files=framework_files, runOnlyForDeploymentPostprocessing=0))
     resource_files = []
-    if not is_test:
+    if not is_test and not name.startswith("WeftMateHealthSeed"):
         for catalog in ["Resources/Spirit.xcassets", "Resources/Icons.xcassets",
                         "Resources/" + {"macosx": "Mac", "iphoneos": "Phone", "watchos": "Watch"}[platform] + "Icons.xcassets"]:
             resource_files.append(obj(name + ":resource:" + catalog, isa="PBXBuildFile",
@@ -115,6 +115,12 @@ def target(name, platform, sources, testing=None):
         if not is_test:
             settings["PRODUCT_BUNDLE_IDENTIFIER"] = "com.weftmate.apple.weftmatephone.watch"
             settings.update(INFOPLIST_KEY_WKApplication="YES", INFOPLIST_KEY_WKCompanionAppBundleIdentifier="com.weftmate.apple.weftmatephone", INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp="NO")
+    if name.startswith("WeftMateHealthSeed"):
+        settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMateHealth.entitlements"
+        settings["INFOPLIST_KEY_NSHealthShareUsageDescription"] = "只读取隔离测试中的合成健康数据。"
+        settings["INFOPLIST_KEY_NSHealthUpdateUsageDescription"] = "仅在测试中写入合成步数、睡眠、静息心率和运动。"
+    if name == "WeftMatePhoneUITests":
+        deps.extend([dependency(name, "WeftMateHealthSeedPhone"), dependency(name, "WeftMateHealthSeedWatch")])
     if is_test:
         settings.update(TEST_TARGET_NAME=testing, INFOPLIST_KEY_CFBundleDisplayName=name)
     elif platform in ["macosx", "iphoneos"]:
@@ -124,6 +130,9 @@ def target(name, platform, sources, testing=None):
     if not is_test and platform in ["iphoneos", "watchos"]:
         settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMateHealth.entitlements"
         settings["INFOPLIST_KEY_NSHealthShareUsageDescription"] = "WeftMate 只读取你选择的健康项目，在设备上汇总每日摘要，用于个人陪伴。"
+        if name == "WeftMatePhone":
+            settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMatePhoneHealth.entitlements"
+            settings["INFOPLIST_KEY_NSHealthShareUsageDescription"] = "WeftMate 会读取你的步数、睡眠、心率和运动，把每天的汇总送到你自己的电脑，用来回答『我最近睡得怎么样』这类问题。"
     cfg = configs(name, settings)
     tid = obj("target:" + name, isa="PBXNativeTarget", buildConfigurationList=cfg, buildPhases=phases, buildRules=[], dependencies=deps, name=name, packageProductDependencies=packages, productName=name, productReference=product, productType="com.apple.product-type.bundle.ui-testing" if is_test else "com.apple.product-type.application")
     targets.append(tid)
@@ -140,8 +149,10 @@ target("WeftMateWatch", "watchos", watch + ["UI/WeftIcon.swift", "../../design/t
 debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixture.swift", "Tests/HealthKitUIFixture.swift"]
 target("WeftMateMac", "macosx", ui + mac + debug_fixture + ["../../design/tokens/generated/apple/DesignTokens.swift"])
 target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture + ["../../design/tokens/generated/apple/DesignTokens.swift"])
+target("WeftMateHealthSeedPhone", "iphoneos", ["Tests/HEALTH1SeedApp.swift"])
+target("WeftMateHealthSeedWatch", "iphoneos", ["Tests/HEALTH1SeedApp.swift"])
 target("WeftMateMacUITests", "macosx", ["Tests/A16ChatUITests.swift", "Tests/A15UXUITests.swift", "Tests/UPD2UITests.swift", "Tests/WeftMateUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMateMac")
-target("WeftMatePhoneUITests", "iphoneos", ["Tests/APPLE2LoginUITests.swift", "Tests/DIAG3UITests.swift", "Tests/A17StatesUITests.swift", "Tests/A16ChatUITests.swift", "Tests/A15UXUITests.swift", "Tests/A14OfflineUITests.swift", "Tests/A13ConsistencyUITests.swift", "Tests/A11ProjectsUITests.swift", "Tests/A9PolishUITests.swift", "Tests/A8ConversationFlowUITests.swift", "Tests/UPD2UITests.swift", "Tests/A7SessionMenuUITests.swift", "Tests/A6SettingsUITests.swift", "Tests/A5ParityUITests.swift", "Tests/LG2AccountUITests.swift", "Tests/WeftMateUITests.swift", "Tests/IC2IconsUITests.swift", "Tests/A4cAppearanceUITests.swift", "Tests/A3TimelineUITests.swift", "Tests/S1cCloudUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMatePhone")
+target("WeftMatePhoneUITests", "iphoneos", ["Tests/HEALTH1UITests.swift", "Tests/APPLE2LoginUITests.swift", "Tests/DIAG3UITests.swift", "Tests/A17StatesUITests.swift", "Tests/A16ChatUITests.swift", "Tests/A15UXUITests.swift", "Tests/A14OfflineUITests.swift", "Tests/A13ConsistencyUITests.swift", "Tests/A11ProjectsUITests.swift", "Tests/A9PolishUITests.swift", "Tests/A8ConversationFlowUITests.swift", "Tests/UPD2UITests.swift", "Tests/A7SessionMenuUITests.swift", "Tests/A6SettingsUITests.swift", "Tests/A5ParityUITests.swift", "Tests/LG2AccountUITests.swift", "Tests/WeftMateUITests.swift", "Tests/IC2IconsUITests.swift", "Tests/A4cAppearanceUITests.swift", "Tests/A3TimelineUITests.swift", "Tests/S1cCloudUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMatePhone")
 target("WeftMateWatchUITests", "watchos", ["Tests/DIAG3WatchUITests.swift", "Tests/A16WatchUITests.swift", "Tests/A13WatchUITests.swift", "Tests/IC2WatchIconsUITests.swift", "Tests/A12WatchLiveUITests.swift"], "WeftMateWatch")
 product_group = obj("products", isa="PBXGroup", children=products, name="Products", sourceTree="<group>")
 group = obj("group", isa="PBXGroup", children=all_files+[product_group], sourceTree="<group>")

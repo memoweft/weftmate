@@ -115,6 +115,27 @@ public actor PersonalClient {
         return .uploaded
     }
 
+    public func putDailyHealth(day: String, health: DailyHealth, account: LocalAccountScope) async throws {
+        let (auth, generation) = try snapshot()
+        guard try LocalAccountScope(server: auth.session.server, ownerId: auth.session.account.ownerId) == account,
+              day.range(of: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", options: .regularExpression) != nil else { throw APIFailure.identityMismatch }
+        try await verify(auth, generation)
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/daily-summaries/" + day + "/health",
+            method: "PUT", body: encoder.encode(health), timeoutInterval: 15)
+        guard [200, 201, 204].contains(response.status) else { throw APIFailure.invalidResponse }
+    }
+    public func dailySummaries() async throws -> DailySummariesReply { try await parityRequest(path: "/daily-summaries", timeoutInterval: 15) }
+    public func dailyReviewSettings() async throws -> DailyReviewSettingsReply { try await parityRequest(path: "/settings/notifications", timeoutInterval: 15) }
+    public func setDailyReview(_ enabled: Bool) async throws -> DailyReviewSettingsReply {
+        try await parityRequest(path: "/settings/notifications", method: "PATCH", body: JSONSerialization.data(withJSONObject: ["reviewEnabled": enabled]), timeoutInterval: 15)
+    }
+    public func healthActivity(cursor: String? = nil) async throws -> HealthActivityReply {
+        var path = "/activity?type=memory.report&limit=50"
+        if let cursor, let escaped = cursor.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed.subtracting(CharacterSet(charactersIn: "&+=?#"))) { path += "&cursor=" + escaped }
+        return try await parityRequest(path: path, timeoutInterval: 15)
+    }
+
     public func currentSession() -> AccountSession? { credential?.session }
 
     public func restoreSession(server: ServerConfiguration) async throws -> AccountSession? {
