@@ -72,12 +72,12 @@ if (mode === 'required') {
 }
 console.log(lines.join('\n'));
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
-// Absolute test paths keep every worker's command line attributable to its
-// worktree during the required creation-time/executable/command-line cleanup.
+// Windows' command-line limit is reached in long worktree paths. Use relative
+// file arguments and an inherited absolute report path for owned-worker cleanup.
 let result;
 const streamingOutput = process.env.CI === 'true';
 try {
-  result = await runManagedTestProcess(process.execPath, [...args, ...selected.map(file => resolve(file))],
+  result = await runManagedTestProcess(process.execPath, [...args, ...(process.platform === 'win32' ? [`--report-directory=${temp}`, ...selected] : selected.map(file => resolve(file)))],
     { env, commandRoots: [temp, ...selected.map(file => resolve(file))], executables: [process.execPath, createRequire(import.meta.url)('electron')],
       onOutput: streamingOutput ? (stream, chunk) => process[stream].write(chunk) : undefined });
 } finally {
