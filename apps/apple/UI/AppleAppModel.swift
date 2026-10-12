@@ -1778,7 +1778,7 @@ final class AppleAppModel: ObservableObject {
                 let page = try await client.timelinePage(sessionID: sessionID, afterSeq: timeline.nextSeq)
                 guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
                 if page.cacheAllowed == false { historyCacheAllowed = false; await clearLocalHistory(conversation) }
-                timeline.apply(page)
+                timeline.apply(page); historyError = nil
                 let summaries = try await client.conversations(includeArchived: true)
                 guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
                 conversations = summaries
@@ -1815,7 +1815,12 @@ final class AppleAppModel: ObservableObject {
                     mainChat.sideSource = nil; drafts[Self.draftKey(for: conversation)] = nil
                     conversations.removeAll { $0.id == conversation.id }; liveConversations[conversation.id] = nil
                     historyError = "临时对话已到期或被删除。"
-                } else { historyError = friendly(error) }; return
+                } else {
+                    historyError = friendly(error)
+                    if case APIFailure.transport = error {
+                        try? await Task.sleep(for: .seconds(1.5)); continue
+                    }
+                }; return
             }
         }
     }

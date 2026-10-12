@@ -130,9 +130,12 @@ struct MainChatView: View {
         .task(id: "\(scenePhase)|\(model.chat?.activeSessionId ?? "")|\(model.window.generation)") {
             guard scenePhase == .active else { interactions.suspend(); return }
             interactions.activate()
+            var lastDecisionRead = Date.distantPast
             while !Task.isCancelled {
                 await model.changes()
-                if let id = model.chat?.activeSessionId { await interactions.refreshTimeline(sessionID: id) }
+                if Date().timeIntervalSince(lastDecisionRead) >= 1.5, let id = model.chat?.activeSessionId {
+                    lastDecisionRead = Date(); await interactions.refreshTimeline(sessionID: id)
+                }
                 #if os(iOS)
                 _ = await app.watchSnapshotBytes()
                 #if DEBUG
@@ -187,7 +190,7 @@ struct MainChatView: View {
                     }
                     ForEach(days) { section in
                         let day = section.date
-                        let rows = section.events.filter { ["user.message", "assistant.message", "assistant.delta", "side.result", "step.started", "artifact.created"].contains($0.type) }
+                        let rows = section.events.filter { ["user.message", "assistant.message", "assistant.delta", "side.result", "step.started", "artifact.created", "turn.ended", "task.ended"].contains($0.type) }
                         let expanded = day == today || model.window.expandedDays.contains(day)
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                         Button {
@@ -416,7 +419,20 @@ struct MainChatEventRow: View {
                         ConversationAttachmentTile(model: app, reference: .sessionImage(image, session)) { attachmentPreview = .sessionImage(image, session) }
                     }
                 }
-            } else if event.type == "step.started" || event.type == "artifact.created" {
+            } else if event.type == "artifact.created" {
+                #if os(iOS)
+                if let sessionID = event.sessionID, let bundle = model.artifactBundle(event) { ReplyArtifactList(app: app, sessionID: sessionID, bundle: bundle) }
+                #else
+                Text(OperationNames.text(event.data["summary"]?.string ?? "成果文件")).foregroundStyle(Weave.muted)
+                #endif
+            } else if event.type == "turn.ended" || event.type == "task.ended" {
+                #if os(iOS)
+                if let sessionID = event.sessionID {
+                    let outcome = ReplyOutcome.classify(events: model.sessionEvents(sessionID), taskID: event.data["taskId"]?.string ?? "turn-\(event.data["turn"]?.int ?? -1)")
+                    Text(outcome.text).font(AppleTokens.Fonts.caption).foregroundStyle(outcome.prominent ? Weave.danger : Weave.muted).accessibilityIdentifier("replyOutcome")
+                }
+                #endif
+            } else if event.type == "step.started" {
                 Button { expanded.toggle(); if expanded { Task { await readDetail() } } } label: {
                     HStack { WeftIcon(expanded ? "chevron" : "right", size: AppleTokens.Space.p16); Text(OperationNames.text(event.data["summary"]?.string ?? event.type)) }
                         .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)

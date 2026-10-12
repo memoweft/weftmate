@@ -51,8 +51,14 @@ struct ConversationTimelineView: View {
                 } else if entry.event.type.hasPrefix("question.") {
                     TimelineInteractionCard(model: interactions, entry: entry, events: appModel.timeline.events)
                 } else if entry.event.type == "artifact.created" {
+                    #if os(iOS)
+                    if let bundle = ReplyArtifacts.bundles(appModel.timeline.events).first(where: { $0.anchorSeq == entry.seq }) {
+                        ReplyArtifactList(app: appModel, sessionID: sessionID, bundle: bundle)
+                    }
+                    #else
                     TimelineArtifactCard(appModel: appModel, sessionID: sessionID, entry: entry, openPreview: openArtifact)
                         .id(entry.id + appModel.accountEpoch.uuidString)
+                    #endif
                 } else if entry.event.type == "task.queued" { Text("排队中").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             }.id(entry.id)
         }
@@ -103,8 +109,19 @@ struct TimelineExecutionBlock: View {
     @State private var expanded = false
     @State private var initialized = false
     @StateObject private var progress = ToolProgressModel()
-    private var failed: Bool { entry.steps.contains { $0.effectiveState == "failed" } }
+    private var outcome: ReplyOutcome { ReplyOutcome.classify(events: appModel.timeline.events, taskID: entry.steps.first?.taskID ?? "") }
+    private var failed: Bool {
+        #if os(iOS)
+        outcome.prominent
+        #else
+        entry.steps.contains { $0.effectiveState == "failed" }
+        #endif
+    }
     private var summary: String {
+        #if os(iOS)
+        if outcome.state != .running { return outcome.text }
+        if outcome.retries > 0 { return outcome.text }
+        #endif
         guard entry.running, !failed, let step = entry.steps.last(where: \.running) else { return ToolProgressSummary.text(entry) }
         let pending = interactions.pendingApprovals.contains { $0.callId == step.data["stepId"]?.string }
         return (pending ? "等待批准：" : "正在") + progress.summary(step) + "…"
@@ -115,7 +132,7 @@ struct TimelineExecutionBlock: View {
                 HStack {
                     Text(summary)
                     WeftIcon(expanded ? "chevron" : "right", size: AppleTokens.Space.p16)
-                }.font(AppleTokens.Fonts.body).foregroundStyle(entry.steps.contains { $0.effectiveState == "failed" } ? Weave.danger : Weave.muted).frame(maxWidth: .infinity, minHeight: AppleTokens.Space.p44, alignment: .leading).contentShape(Rectangle())
+                }.font(AppleTokens.Fonts.body).foregroundStyle(failed ? Weave.danger : Weave.muted).frame(maxWidth: .infinity, minHeight: AppleTokens.Space.p44, alignment: .leading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("executionBlock.\(entry.seq)")
                 .accessibilityValue(expanded ? "已展开" : "已收起")
             if expanded {
