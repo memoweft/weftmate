@@ -1,0 +1,22 @@
+{
+  "boots": 2,
+  "smallDevice": "iPhone SE (3rd generation)",
+  "windowOpened": false,
+  "concurrentSimulators": 1,
+  "completed": false,
+  "reason": "Whole machine restarted during second UI batch; temporary result bundle and logs were lost. No retry.",
+  "wholeMachineRestartsObserved": 1,
+  "testCountsAvailable": false,
+  "newScreenshotsExported": 0,
+  "weftmateCrashesAdded": 0,
+  "needsPhysicalDevice": [
+    "final return-to-bottom visibility",
+    "attachment close-button consistency and keyboard layout",
+    "44-point unselected navigation hit regions",
+    "all five navigation taps",
+    "allowed decision receipt"
+  ],
+  "simulatorsShutdownAfterReconnect": true,
+  "systemPanicReportObservedAt": "2026-10-12T18:59:09Z",
+  "reportContentsPublished": false
+}

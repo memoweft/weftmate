@@ -27,7 +27,7 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
         val issuer = config.getString("issuer")
         val url = URL(issuer)
         require(Endpoints.allowedProtocol(url) && url.path == "/personal/v1/cloud/oidc" && url.userInfo == null && url.query == null && url.ref == null)
-        config.put("clientId", "weftmate-android")
+        config.put("clientId", "weftmate-android").put("nativeEmailCodeLogin", true)
         secrets.saveAppValue("login", JSONObject().put("host", host).put("issuer", issuer).put("config", config).toString())
         return config
     }
@@ -94,7 +94,9 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
         val targetUrl = URL(target)
         val hostTrust = cloudAppHostTrustRoute(target, host)
         val hostContent = hostTrust || target in setOf("$host/personal/v1/auth/cloud-session", "$host/personal/v1/cloud/pairings/redeem")
-        if (hostContent && !CloudPins.has(host) && !(BuildConfig.DEBUG && targetUrl.protocol == "http" && targetUrl.host in setOf("localhost", "127.0.0.1")))
+        // AUTH-1: the first verified account session supplies signed hostTrust.
+        // The normal CA/domain check still runs; subsequent requests use its pin.
+        if (hostTrust && !CloudPins.has(host) && !(BuildConfig.DEBUG && targetUrl.protocol == "http" && targetUrl.host in setOf("localhost", "127.0.0.1")))
             throw ApiFailure(403, "PAIRING_REQUIRED")
         val headers = params.optJSONObject("headers") ?: JSONObject()
         require(headers.keys().asSequence().all { it.lowercase() in setOf("content-type", "dpop", "authorization") ||
