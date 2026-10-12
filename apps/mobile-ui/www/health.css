@@ -29,7 +29,7 @@
 .health-insight-toggle { border:0; background:transparent; font:inherit; font-size:var(--wm-font-size-22); font-weight:600; width:100%; display:flex; align-items:center; justify-content:space-between; text-align:left; min-height:var(--wm-space-44); border-radius:var(--wm-radius-12); cursor:pointer; color:var(--ink); }
 .health-scores { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--wm-space-12); }
 .health-metric { text-align:left; color:var(--ink); font:inherit; display:flex; flex-direction:column; align-items:stretch; gap:var(--wm-space-8); cursor:pointer; }
-.health-card-name { font-size:var(--wm-font-size-15); font-weight:600; }
+.health-card-name { display:flex; align-items:center; justify-content:space-between; gap:var(--wm-space-4); font-size:var(--wm-font-size-15); font-weight:600; }
 .health-big { font-size:calc(var(--wm-font-size-20) * 2); line-height:1.1; letter-spacing:-.025em; font-weight:650; font-variant-numeric:tabular-nums; }
 .health-medium { font-size:var(--wm-font-size-22); font-weight:600; line-height:1.35; font-variant-numeric:tabular-nums; }
 .health-hero-number { font-size:calc(var(--wm-font-size-30) * 2); display:block; line-height:1.3; font-weight:650; font-variant-numeric:tabular-nums; }
