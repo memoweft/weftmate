@@ -509,6 +509,8 @@ test('22000+ step-heavy history approves the exact current source using only its
   for (const native of [false, true]) {
     const f = await fixture({ useReplyEvidence: false })
     try {
+      // This probe measures approval source reads, not the independent daily observer.
+      assert.equal((await f.request('settings/notifications', { reviewEnabled: false }, {}, 'PATCH')).status, 200)
       const current = f.events.splice(0), prefix: any[] = []
       for (let turn = 1; turn <= 1000; turn++) {
         prefix.push({ type: 'turn.started', data: { turn } },
