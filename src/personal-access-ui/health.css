@@ -103,3 +103,5 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 .health-page.is-compact .health-insight h3 { font-size:clamp(var(--wm-font-size-16),calc((100vw - var(--wm-space-64))/16),var(--wm-font-size-22)); white-space:nowrap; }
 
 @media(max-width:600px) { .health-page .health-calendar { margin-inline:calc(-1 * var(--wm-space-8)); padding:var(--wm-space-8); }.health-calendar-grid { gap:var(--wm-space-2); } }
+
+.health-page.is-compact .health-reading:not(.is-expanded) { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }.health-trend-panel[data-score=false] .health-status.is-high,.health-dimension .health-status.is-high { color:var(--health-warning); }

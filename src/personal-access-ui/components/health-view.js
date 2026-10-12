@@ -38,12 +38,14 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
   function insightCard(collapsible=false){const data=m.overview?.insight,n=card('今日解读');n.classList.add('health-insight');
     if(!data){n.append(el('h3','','这一天还没有足够的记录'),small('有了睡眠和活动记录，就能把当天的变化讲给你听。'));return n;}
     if(collapsible){const toggle=action(data.headline,()=>{expanded=!expanded;render();},'health-insight-toggle');toggle.append(WeftIcons.create('chevron',18));toggle.setAttribute('aria-expanded',String(expanded));n.append(toggle);}else n.append(el('h3','',data.headline));
-    if(!collapsible||expanded){n.append(el('p','health-reading',data.text));
+    if(!collapsible||expanded){n.append(el('p',`health-reading${basisOpen||collapsible?' is-expanded':''}`,data.text));
       for(const suggestion of (data.suggestions??[]).slice(0,2)){const row=el('div','health-suggestion'),saved=m.reminders.has(suggestion.id),b=action(saved?'已设提醒':m.busy.has(suggestion.id)?'正在设置…':'提醒我',()=>core.remindHealth(suggestion));
         b.disabled=saved||m.busy.has(suggestion.id)||!suggestion.reminder||m.day!==m.today;if(!suggestion.reminder)b.title='这条建议没有指定提醒时间';row.append(el('span','',suggestion.text),b);n.append(row);}
       const foot=el('div','health-insight-foot');
-      if(data.observations?.length){const basis=action('查看依据',()=>{basisOpen=!basisOpen;basis.setAttribute('aria-expanded',String(basisOpen));body.hidden=!basisOpen;});basis.setAttribute('aria-expanded',String(basisOpen));const body=el('div','health-basis');body.hidden=!basisOpen;
-        body.append(small(`依据：${[...new Set(data.observations.flatMap(o=>o.inputs??[]))].map(id=>H.metrics[id]?.[0]??({lateNightMinutes:'深夜使用时长',activeMinutes:'电脑使用时长'}[id]??'每日汇总')).join('、')}`));for(const o of data.observations)body.append(small(o.text));foot.append(basis);n.append(body);}
+      const basis=action(basisOpen?'收起解读':'展开解读',()=>{basisOpen=!basisOpen;render();});basis.setAttribute('aria-expanded',String(basisOpen));foot.append(basis);
+      if(basisOpen&&data.observations?.length){const body=el('div','health-basis');
+        body.append(small(`依据：${[...new Set(data.observations.flatMap(o=>o.inputs??[]))].map(id=>H.metrics[id]?.[0]??({lateNightMinutes:'深夜使用时长',activeMinutes:'电脑使用时长'}[id]??'每日汇总')).join('、')}`));for(const o of data.observations)body.append(small(o.text));n.append(body);
+      }
       foot.append(action('接着问它',()=>core.askHealth()));n.append(foot);
     }return n;
   }
@@ -64,7 +66,7 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
     const activity=card('今天的活动'),numbers=el('div','health-activity-numbers');for(const [id,num]of [['steps',o.activity?.steps],['activeEnergyKcal',o.activity?.activeEnergyKcal],['exerciseMinutes',o.activity?.exerciseMinutes]]){const b=action('',()=>core.openHealthMetric(id),'health-activity-value');b.append(el('span','',H.metrics[id][0]),el('strong','health-medium',H.value(num)),el('span','health-unit',H.metrics[id][1]));if(!H.finite(num))b.append(small('当天还没有记录'));numbers.append(b);}activity.append(numbers);
     const workouts=o.activity?.workouts??[];for(const w of workouts.slice(0,moreWorkouts?workouts.length:3)){const row=el('div','health-workout');row.append(el('span','',w.type),el('span','',H.duration(w.minutes)));activity.append(row);}if(!workouts.length)activity.append(small('今天还没有运动记录，日常走动也会显示在上面。'));if(workouts.length>3){const b=action(moreWorkouts?'收起运动记录':`查看另外 ${workouts.length-3} 条运动`,()=>{moreWorkouts=!moreWorkouts;render();});b.setAttribute('aria-expanded',String(moreWorkouts));activity.append(b);}column.append(activity);return column;
   }
-  function trendPanel(){const n=card('趋势'),caps=el('div','health-metric-tabs');caps.setAttribute('role','tablist');caps.setAttribute('aria-label','健康指标');
+  function trendPanel(){const n=card('趋势');n.dataset.score=String(['recovery','sleep','load'].includes(m.metric));const caps=el('div','health-metric-tabs');caps.setAttribute('role','tablist');caps.setAttribute('aria-label','健康指标');
     for(const [id,[name]]of Object.entries(H.metrics)){const b=action(name,()=>core.readHealthTrend(id));b.setAttribute('role','tab');b.setAttribute('aria-selected',String(id===m.metric));caps.append(b);}n.append(caps);
     const trend=m.trend,point=trend?.points.at(-1),summary=el('div','health-trend-value');summary.append(el('h3','',H.metrics[m.metric][0]),el('strong','health-big',H.value(point?.value)),el('span','health-unit',H.metrics[m.metric][1]));n.append(summary,status(point),small(H.finite(point?.low)&&H.finite(point?.high)?`你平时：${H.value(point.low)}–${H.value(point.high)} ${H.metrics[m.metric][1]}`:'再戴几天就有对比了'));
     if(m.trendLoading)n.append(skeleton('正在读取趋势'));else if(m.trendError)n.append(errorState(m.trendError,()=>core.readHealthTrend()));else n.append(plot(trend,m.overlay?m.usage:null));

@@ -28,7 +28,7 @@ for(const theme of ['light','dark']){
   for(const [page,mobile,prefix]of [[desktop,false,'electron-1200'],[phone,true,'mobile-390']]){
    await page.getByRole(mobile?'tab':'button',{name:'健康',exact:true}).click();await ready(page);await page.locator(mobile?'.health-scores .health-line':'.health-trend-panel .health-line').first().waitFor();await shot(page,`${prefix}-today`);
    if(!mobile){assert.equal(await page.locator('#assistant-title').textContent(),'健康');const left=await page.locator('.health-today').boundingBox(),right=await page.locator('.health-trend-panel').boundingBox();assert.ok(right.x>left.x+left.width);await page.locator('.health-week').scrollIntoViewIfNeeded();await shot(page,`${prefix}-week`);await page.locator('.health-page h1').scrollIntoViewIfNeeded();}
-   await page.getByRole('button',{name:'查看依据',exact:true}).click();await shot(page,`${prefix}-basis-open`);
+   await page.getByRole('button',{name:'展开解读',exact:true}).click();await shot(page,`${prefix}-basis-open`);
    await page.getByRole('button',{name:'提醒我',exact:true}).click();await page.getByRole('button',{name:'已设提醒',exact:true}).waitFor();await shot(page,`${prefix}-reminder`);
    for(const [id,name]of [['recovery','恢复'],['sleep','睡眠'],['load','负荷']]){
     await page.getByRole('button',{name:`${name}，查看详情`,exact:true}).click();await page.locator('.health-detail').waitFor();await page.locator('.health-trend-panel .health-line').waitFor();await shot(page,`${prefix}-${id}-detail`);await page.locator('.health-insight-toggle').click();await shot(page,`${prefix}-${id}-insight-open`);await page.getByRole('button',{name:'返回今日',exact:true}).click();
