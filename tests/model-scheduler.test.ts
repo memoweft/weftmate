@@ -4,6 +4,15 @@ import { createInferenceQueue, createModelScheduler, runPreemptibleFormation } f
 import { acquireModelSlot, scheduledModelFetch, isBackgroundPurpose, runWithModelSlot } from '../src/model-scheduler-client.mjs';
 const pause = (ms = 15) => new Promise(resolve => setTimeout(resolve, ms));
 
+test('history imports wait for explicit resume and idle chat without usage, and cancelled imports never reach provider', async () => {
+  let permission='wait',idle=false,calls=0,bills=0;
+  const bridge=await createModelScheduler({isIdle:async()=>idle,profileFor:()=>({id:'cloud',baseUrl:'https://synthetic.invalid/v1',model:'synthetic'}),
+    credentialFor:()=> 'synthetic-key',backgroundRoute:async()=>null,importPermission:()=>permission,
+    beginUsage:async()=>{bills++;return {};},finishUsage:async()=>{},fetchImpl:async()=>{calls++;return Response.json({usage:{prompt_tokens:1,completion_tokens:1}});}});
+  const send=()=>fetch(bridge.memoryBaseUrl('cloud','synthetic-owner','import-synthetic')+'/chat/completions',{method:'POST',headers:{authorization:'Bearer synthetic-key'},body:JSON.stringify({messages:[]})});
+  try{const pending=send();await pause(150);assert.equal(calls,0);assert.equal(bills,0);permission='run';await pause(150);assert.equal(calls,0);idle=true;assert.equal((await pending).status,200);assert.equal(calls,1);permission='stop';assert.equal((await send()).status,409);assert.equal(calls,1);assert.equal(bills,1);}finally{await bridge.close();}
+});
+
 test('owner local memory follows a changed model and credential while waiting, without changing the Core route', async () => {
   const profiles = ['a', 'b'].map(id => ({ id, baseUrl: 'http://127.0.0.1:1/v1', model: `model-${id}` }));
   let current = profiles[0], ready = false, observed = false;

@@ -1,0 +1,16 @@
+{
+  "nativeSlash": [
+    "/S"
+  ],
+  "gitBashSlash": [
+    "S:/"
+  ],
+  "gitBashLong": [
+    "--silent"
+  ],
+  "gitBashNoConversion": [
+    "/S"
+  ],
+  "preview4Source": "7fb2628d",
+  "preview4BrandedIncludePresent": true
+}

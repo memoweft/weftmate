@@ -1,0 +1,81 @@
+{
+  "model": "mimo-v2.6-flash",
+  "actualRequestsAcrossAllAttempts": 150,
+  "acceptedImportUsage": {
+    "requests": 31,
+    "inputTokens": 271170,
+    "outputTokens": 10194,
+    "cost": 0.1589052,
+    "unpricedRequests": 0,
+    "unknownRequests": 0
+  },
+  "finalAcceptanceNewRequests": 6,
+  "attempts": [
+    {
+      "file": "acceptance.json",
+      "result": "passed",
+      "resumed": true,
+      "actualNewRequests": 6
+    },
+    {
+      "file": "attempt-1791825652123.json",
+      "result": "failed",
+      "resumed": false,
+      "actualNewRequests": 2
+    },
+    {
+      "file": "attempt-1791826109449.json",
+      "result": "failed",
+      "resumed": false,
+      "actualNewRequests": 32
+    },
+    {
+      "file": "attempt-1791827045173.json",
+      "result": "failed",
+      "resumed": false,
+      "actualNewRequests": 33
+    },
+    {
+      "file": "attempt-1791827326698.json",
+      "result": "failed",
+      "resumed": false,
+      "actualNewRequests": 33
+    },
+    {
+      "file": "attempt-1791828343964.json",
+      "result": "failed",
+      "resumed": false,
+      "actualNewRequests": 34
+    },
+    {
+      "file": "attempt-1791829043145.json",
+      "result": "failed",
+      "resumed": true,
+      "actualNewRequests": 0
+    },
+    {
+      "file": "attempt-1791831119197.json",
+      "result": "failed",
+      "resumed": true,
+      "actualNewRequests": 0
+    },
+    {
+      "file": "attempt-1791832901649.json",
+      "result": "failed",
+      "resumed": true,
+      "actualNewRequests": 2
+    },
+    {
+      "file": "attempt-1791835933694.json",
+      "result": "failed",
+      "resumed": true,
+      "actualNewRequests": 3
+    },
+    {
+      "file": "attempt-1791836059977.json",
+      "result": "failed",
+      "resumed": true,
+      "actualNewRequests": 5
+    }
+  ]
+}
