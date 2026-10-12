@@ -43,7 +43,7 @@ test('daily 03:00 cutoff waits for yesterday, then generates without replacing p
 });
 test('weekly model uses only seven documents, background priority, one call; unavailable uses statistics',async()=>{
   let captured:any;const f=fixture((input:any)=>{captured=input;return new Response(JSON.stringify({choices:[{message:{content:'这周主要在做季度报告，报告已完成。记得休息。'}}]}));});
-  await f.refresh();await f.settle();assert.equal(f.calls(),1);assert.equal(captured.priority,'background');const docs=JSON.parse(captured.body.messages[1].content);assert.equal(docs.length,7);assert.ok(docs.every((r:any)=>r.version===1&&r.health));assert.ok(!JSON.stringify(captured).includes('PRIVATE'));assert.equal(Object.values(f.a.activity.items).find((r:any)=>r.weeklyInsight)!.weeklyInsight.mode,'model');
+  await f.refresh();await f.settle();assert.equal(f.calls(),1);assert.equal(captured.priority,'background');const docs=JSON.parse(captured.body.messages[1].content);assert.equal(docs.length,7);assert.ok(docs.every((r:any)=>r.version===1));assert.ok(docs.every((r:any)=>!Object.hasOwn(r,'health')),'unprovided health data must not be represented as unavailable measurements');assert.ok(!JSON.stringify(captured).includes('PRIVATE'));assert.equal(Object.values(f.a.activity.items).find((r:any)=>r.weeklyInsight)!.weeklyInsight.mode,'model');
   f.restart();await f.refresh();await f.settle();assert.equal(f.calls(),1);await f.close();
   const unavailable=fixture(()=>{throw Error('offline');});await unavailable.refresh();await unavailable.settle();assert.equal(Object.values(unavailable.a.activity.items).find((r:any)=>r.weeklyInsight)!.weeklyInsight.mode,'statistics');await unavailable.close();
 });
