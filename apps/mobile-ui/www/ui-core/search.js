@@ -36,9 +36,9 @@
     const scheduleRow = row => ({...row,paused:row.state==='paused',type:'schedules',key:`schedule:${row.sessionId}:${row.id}`,title:row.text||row.title||row.prompt||'定时任务',icon:'clock',meta:row.state==='paused'?'已暂停':row.nextRunAt||row.nextAt||'定时任务'});
     const memoryRow = row => ({...row,type:'memory',key:`memory:${row.kind}:${row.id}`,title:row.text,icon:'memory',meta:core.memoryKinds?.[row.kind]||'记忆'});
     function actions(q='') {
-      const definitions = q ? [['start','新建旁聊并用这句话开始','compose']] : [
+      const definitions = q ? [...(('打开健康'.includes(q)||q.toLowerCase()==='health')?[['health','打开健康','health']]:[]),['start','新建旁聊并用这句话开始','compose']] : [
         ['new','新建旁聊','compose'],['temporary','新建临时对话','chat'],...(!env.mobileState&&(effects.canCreateSearchProject?.()??true)?[['project','新建项目','folder']]:[]),
-        ['settings','打开设置','settings'],['memory','打开记忆','memory'],['activity','打开动态','bell'],['goals','打开目标','chart'],['library','打开成果库','folder'],
+        ['settings','打开设置','settings'],['memory','打开记忆','memory'],['activity','打开动态','bell'],['health','打开健康','health'],['goals','打开目标','chart'],['library','打开成果库','folder'],
         ['help','帮助','info'],['releases','更新内容','sync'],...(!env.mobileState&&(env.desktop||!(globalThis.matchMedia?.('(max-width:720px)')?.matches))?[['shortcuts','快捷键一览','keyboard']]:[])];
       return definitions.map(([id,title,icon])=>({id,key:`action:${id}`,type:'actions',title,icon,query:q}));
     }
@@ -76,6 +76,7 @@
         const opened=resolved.filter(Boolean),recentRows=merge([...mixed.map(row=>({...row,needsAttention:false})),...opened]);
         model.groups=[...(attention.length?[{id:'attention',title:'需要关注',rows:attention.slice(0,5)}]:[]),{id:'recent',title:'最近使用',rows:recentRows.slice(0,4)}, {id:'actions',title:'操作',rows:actions()}];
       }else model.groups=groups.map(group=>({...group,allRows:group.rows,rows:model.expanded.has(group.id)?group.rows:group.rows.slice(0,3)}));
+      if(q&&all){const pageActions=actions(q).filter(row=>row.id==='health');if(pageActions.length)model.groups.unshift({id:'actions',title:'操作',rows:pageActions});}
       if(q&&!model.groups.some(group=>group.rows.length)&&!model.error)model.groups=[{id:'empty',title:'',rows:actions(q)}];
       model.loading=false;model.selected=0;emit();
     }

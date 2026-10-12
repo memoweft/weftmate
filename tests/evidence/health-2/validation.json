@@ -1,0 +1,41 @@
+{
+  "syntheticOnly": true,
+  "required": {
+    "failed": 0,
+    "skipped": 14,
+    "files": 313,
+    "passed": 1762,
+    "sequentialCI": true
+  },
+  "vendor": {
+    "failed": 0,
+    "passed": 232,
+    "skipped": 0
+  },
+  "mobileFiveFiles": {
+    "failed": 0,
+    "passed": 113
+  },
+  "targeted": {
+    "failed": 0,
+    "passed": 38
+  },
+  "androidBusinessRoutes": {
+    "appAndTestBuild": true,
+    "passed": 17,
+    "skipped": 0,
+    "isolatedPackage": "com.memoweft.weftmate.mobile.health2qa",
+    "failed": 0,
+    "healthPutMethodChecked": true
+  },
+  "typecheck": true,
+  "sharedUiAssets": 56,
+  "publicHygieneHits": 0,
+  "finalMimoRequests": 5,
+  "finalHealthMimoRequests": 1,
+  "persistedAllRunMimoRequests": 23,
+  "additionalObservedEarlyRequests": 2,
+  "earlyRunsWithIncompleteCount": 1,
+  "cleanedFormalElectronProcesses": 1,
+  "ownProcessResiduals": 0
+}

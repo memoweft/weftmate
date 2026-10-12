@@ -1,0 +1,44 @@
+{
+  "evidence": "tests/evidence/ci-1/flaky-table.json",
+  "tests": [
+    {
+      "file": "tests/packaged-project-reader.test.ts",
+      "name": "bundled project reader runs from a real ASAR without extracting an executable script",
+      "evidence": "tests/evidence/ci-1/followup-table.json",
+      "reason": "Observed PROJECT_READER_TIMEOUT inside the real Electron ASAR read, with a 30000ms outer test and a bounded native reader. Follow-up run 38236573397; budgets and exact returned-text assertion unchanged.",
+      "failureCount": 1
+    },
+    {
+      "file": "tests/bl-29-timing-sync.test.ts",
+      "evidenceFile": "tests/bl-29-rework.test.ts",
+      "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
+      "reason": "Real Electron/mobile must synchronize within 1000/6000/7000ms; cloud logs contain 55000ms controller deadlines and a real UI wait timeout. Historical spawn EINVAL was a separate already-fixed fixture failure.",
+      "failureCount": 6
+    },
+    {
+      "file": "tests/bl-29-timing-approval.test.ts",
+      "evidenceFile": "tests/bl-29-rework.test.ts",
+      "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+      "reason": "Real Electron/mobile 2000ms responsiveness assertions plus a 25000ms controller deadline; logs show startup consuming 22541ms and another deadline during Electron teardown after all assertions passed.",
+      "failureCount": 7
+    },
+    {
+      "file": "tests/bl-29-rework.test.ts",
+      "name": "BL-29b M5 host close revokes empty account waits before closing sockets",
+      "reason": "Observed failed wall-clock assertion Date.now()-at<500; shutdown status and waiter assertions remain unchanged.",
+      "failureCount": 1
+    },
+    {
+      "file": "tests/bl-29-wait.test.ts",
+      "name": "BL-29 empty main chat wait wakes when another device starts its first task",
+      "reason": "Observed failed Date.now()-at<700 account mutation wake assertion.",
+      "failureCount": 1
+    },
+    {
+      "file": "tests/personal-desktop-motion.test.ts",
+      "name": "desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists",
+      "reason": "Observed real Electron performance assertion: zero main-thread tasks exceeding the wall-clock 50ms budget (panel-open-close). Functional motion/accessibility assertions remain unchanged.",
+      "failureCount": 2
+    }
+  ]
+}

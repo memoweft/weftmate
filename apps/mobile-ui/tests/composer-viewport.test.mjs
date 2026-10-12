@@ -5,6 +5,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {startMainChatCandidate} from '../../../tests/integration/main-chat-candidate.mjs';
 import {localUiSession} from '../../../tests/helpers/local-ui-session.mjs';
+import {healthPageSynthetic} from '../../../tests/helpers/health-page-synthetic.mjs';
 
 test('remote phone composer remains inside the visual viewport with folders, suggestions, connection bar and keyboard',async()=>{
   const f=await startMainChatCandidate(10),browser=await chromium.launch({headless:true});
@@ -70,6 +71,24 @@ test('mobile bundle keeps the composer and bottom tabs inside safe areas and abo
       assert.ok(g.send.bottom<=g.height+1,JSON.stringify(geometry.at(-1)));assert.ok(g.pageHeight<=g.layoutHeight+1);
       assert.ok(g.toast.top>=g.topbar.bottom&&g.toast.bottom<=g.composer.top,JSON.stringify(geometry.at(-1)));
       if(!keyboard)assert.ok(g.tabs.bottom<=g.height+1&&g.tabs.height>0,JSON.stringify(geometry.at(-1)));
+      if(!keyboard){const tabs=await page.locator('#mobile-bottom-tabs [role=tab]').evaluateAll(nodes=>nodes.map(n=>({text:n.querySelector('.mobile-tab-label').textContent,left:n.getBoundingClientRect().left,right:n.getBoundingClientRect().right,scroll:n.scrollWidth,client:n.clientWidth})));assert.deepEqual(tabs.map(t=>t.text),['聊天','动态','健康','目标','成果库']);assert.ok(tabs.every(t=>t.left>=0&&t.right<=size.width&&t.scroll<=t.client),'all five tabs fit the phone');}
     }
+  }finally{await browser.close();await f.close();}
+});
+
+test('the fifth mobile tab opens health, keeps other tabs reachable and quotes without sending',async()=>{
+  const f=await startMainChatCandidate(10,{logicalMobile:true}),browser=await chromium.launch({headless:true}),health=healthPageSynthetic();let reminders=0;
+  try{
+    const page=await browser.newPage({viewport:{width:360,height:780},isMobile:true,hasTouch:true});
+    await page.route('**/bridge.js',r=>r.fulfill({contentType:'text/javascript',body:'// authenticated HTTP test'}));
+    await page.route('**/personal/v1/**',async r=>{const u=new URL(r.request().url());if(u.pathname.includes('/health/')){if(r.request().method()==='POST')reminders++;return r.fulfill({json:health.reply(u.href)});}const response=await r.fetch({url:f.origin+u.pathname+u.search,headers:{...r.request().headers(),origin:f.origin}});await r.fulfill({response});});
+    await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);
+    const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}});assert.equal(login.status(),200);
+    await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await uiCore.selectMainChat();},await login.json());
+    await page.getByRole('tab',{name:'健康',exact:true}).click();await page.getByRole('heading',{name:'把今天的节奏放轻松',exact:true}).waitFor();assert.equal(await page.getByRole('tab',{name:'健康',exact:true}).getAttribute('aria-selected'),'true');
+    assert.equal(await page.locator('#header-title').textContent(),'健康');assert.equal(await page.locator('#outputs-button').isVisible(),false);
+    await page.getByRole('button',{name:'提醒我',exact:true}).click();await page.getByRole('button',{name:'已设提醒',exact:true}).waitFor();assert.equal(reminders,1);
+    await page.getByRole('button',{name:'接着问它',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#draft').value.includes('把今天的节奏放轻松'));assert.match(await page.locator('#draft').inputValue(),/^> /);
+    await page.getByRole('tab',{name:'健康',exact:true}).click();await page.getByRole('button',{name:'恢复，查看详情',exact:true}).click();await page.locator('.health-detail').waitFor();await page.getByRole('button',{name:'返回今日',exact:true}).click();await page.getByRole('tab',{name:'健康',exact:true}).focus();await page.keyboard.press('End');assert.equal(await page.getByRole('tab',{name:'成果库',exact:true}).getAttribute('aria-selected'),'true');
   }finally{await browser.close();await f.close();}
 });
