@@ -1661,6 +1661,8 @@ metrics新增`stress|energy|fitnessAge`（vo2Max原已支持），value分别为
 
 GET `/health/weekly?to=YYYY-MM-DD`独立返回`{from,to,health}`；to为不包含的周结束日，默认明天，health沿用周回顾中的健康对象或null。建议remind请求sessionId改为可选；缺省时在主对话准备原生会话锚点，不发送模型消息，沿用原定时任务授权和幂等。
 
-POST analysis仅接受上述scope和合法day（非未来、保留范围内），关闭时409 `AI_ANALYSIS_OFF`优先于缓存；GET回执`{day,items:[analysis]}`，关闭仍可读当天缓存。每天账号40次生成包含统计退回版、缓存命中不计数，超限429 `AI_ANALYSIS_LIMIT`。缓存按账号／day／scope，生成资格持久化，重启不重置；开关关掉取消在途单项请求并丢弃迟到结果，已缓存项保留至当天结束。清空健康数据一并删除profile、单项缓存及计数。
+POST analysis仅接受上述scope和合法day（非未来、保留范围内），关闭时409 `AI_ANALYSIS_OFF`优先于缓存；GET回执`{day,items:[analysis]}`，关闭仍可读当天缓存。每天账号40次生成包含统计退回版、缓存命中不计数，超限429 `AI_ANALYSIS_LIMIT`。缓存按账号／day／scope，生成资格持久化，重启不重置；开关关掉取消在途单项请求并丢弃迟到结果，已缓存项保留至当天结束。清空健康数据一并删除profile和单项缓存；当日生成次数作为无健康内容的额度元数据保留，清空不会重新获得40次额度。
 
 16.4增量：`energy.sleepPeriods`是曲线上的睡眠区间，按当地`HH:mm`返回；跨零点时start晚于end，无可定位的睡眠时段为`[]`。优先合并相邻非awake分期，否则使用sleep.start/end。`fitnessAge.referenceRange`是本人性别／实际年龄十岁分组的VO₂max第25–75百分位（单位mL/kg/min，同参考表）；缺性别／birthYear、未成年人时null，80岁以上使用最后70–79岁组并在依据中说明适用边界。
+
+DATA-1日摘要usage可增量返回`lastUserMessageAt`（ISO或null），仅取已允许的用户消息来源，供健康页夜间结束时刻投影；原使用分钟估算法和字段不变。分析生成期间若健康输入清空／替换导致资料代次变化，返回409 `HEALTH_DATA_CHANGED`，要求重新展开读取当前数据；两个模型开关互改不触发该代次冲突。
