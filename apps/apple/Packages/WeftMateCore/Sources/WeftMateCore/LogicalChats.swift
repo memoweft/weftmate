@@ -84,6 +84,11 @@ public struct ChatEvent: Codable, Equatable, Identifiable, Sendable {
     public let data: JSONValue
     public var id: String { eventId }
     public var sessionID: String? { sourceRef["sessionId"]?.string ?? sourceRef["native"]?["sessionId"]?.string }
+    public var presentationID: String {
+        guard type == "assistant.delta" || type == "assistant.message", let sessionID,
+              let anchor = data["streamSeq"]?.int ?? (type == "assistant.delta" ? sourceRef["seq"]?.int : nil) else { return id }
+        return "reply|" + sessionID + "|" + String(anchor)
+    }
     public var text: String { data["text"]?.string ?? data["summary"]?.string ?? "" }
 }
 public struct ChatPage: Codable, Sendable {
@@ -96,10 +101,14 @@ public struct ChatPage: Codable, Sendable {
     public let contentRevision: Int
     public let indexState: String
     public let timeZone: String
+    public var liveEvents: [ChatEvent]? = nil
+    public var liveRevision: Int? = nil
     public let deletedAnchor: Bool?
 }
 public struct ChatChanges: Decodable, Sendable {
     public struct Removal: Decodable, Sendable { public let eventId: String; public let revision: Int }
+    public var liveEvents: [ChatEvent]? = nil
+    public var liveRevision: Int? = nil
     public let upserts: [ChatEvent]
     public let removals: [Removal]
     public let nextCursor: String
@@ -140,6 +149,13 @@ public struct ChatWindow: Sendable {
     public private(set) var hasNewer = false
     public private(set) var contentRevision: Int?
     public private(set) var generation = UUID()
+    public private(set) var liveRevision = -1
+    public private(set) var liveEvents: [ChatEvent] = []
+    public var displayEvents: [ChatEvent] { ReplySnapshots.chat(history: events, live: liveEvents) }
+    private mutating func acceptLive(_ rows: [ChatEvent]?, _ watermark: Int?) {
+        guard let rows, let watermark, watermark >= liveRevision else { return }
+        liveRevision = watermark; liveEvents = rows
+    }
     public var anchor: ChatAnchor?
     public var expandedDays = Set<String>()
     public init() {}
@@ -160,7 +176,8 @@ public struct ChatWindow: Sendable {
     }
     public mutating func apply(_ page: ChatPage, older: Bool = false, replace: Bool = false) throws {
         try requireRevision(page.contentRevision)
-        if replace { events = [] }
+        if replace { events = []; liveEvents = []; liveRevision = -1 }
+        if !older && !page.hasNewer { acceptLive(page.liveEvents, page.liveRevision) }
         contentRevision = page.contentRevision
         if syncCursor == nil { syncCursor = page.syncCursor }
         if older || replace || olderCursor == nil { olderCursor = page.olderCursor; hasOlder = page.hasOlder }
@@ -172,6 +189,7 @@ public struct ChatWindow: Sendable {
         let removed = Set(page.removals.map(\.eventId)); events.removeAll { removed.contains($0.id) }
         if let anchor, removed.contains(anchor.eventID) { self.anchor = nil }
         merge(page.upserts, older: false); syncCursor = page.nextCursor
+        acceptLive(page.liveEvents, page.liveRevision)
     }
 }
 public struct ChatDaySection: Sendable, Identifiable {
