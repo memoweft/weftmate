@@ -8,6 +8,9 @@
   "type": "module",
   "main": "src/main.mjs",
   "scripts": {
+    "site:build": "node scripts/build-site.mjs",
+    "site:preview": "node scripts/preview-site.mjs",
+    "site:check": "node scripts/check-site.mjs",
     "start": "electron .",
     "smoke": "electron .",
     "dogfood": "node dogfood/run.mjs",

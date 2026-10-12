@@ -1,0 +1,467 @@
+{
+  "lang": "en",
+  "title": "WeftMate — It remembers you. It gets things done.",
+  "description": "A personal AI assistant that lives on your computer. Give it a goal, follow the work, and pick up on your phone. Try the interactive WeftMate demo.",
+  "navDemo": "Try it",
+  "navDevices": "Devices",
+  "navGet": "Get WeftMate",
+  "language": "Language",
+  "theme": "Appearance",
+  "system": "Use device setting",
+  "light": "Light",
+  "dark": "Dark",
+  "skip": "Skip to content",
+  "preview": "In preview",
+  "heroA": "It remembers you.",
+  "heroB": "It gets things done.",
+  "heroBody": "Meet the AI assistant that lives on your computer. Give it a goal. Watch it do the work. Pick up on your phone or watch, with the same assistant that remembers what matters to you.",
+  "heroPrimary": "See it in action",
+  "heroSecondary": "When can I get it?",
+  "heroNote": "Your computer holds your data · Your choice of model",
+  "demoTitle": "Don’t take our word for it.\nTry it yourself.",
+  "demoBody": "Approve a step. Open the report. Correct a memory. See where it goes next.",
+  "demoNote": "An interactive story with fictional content. No files are changed and no AI model is called.",
+  "sceneFiles": "Clear the clutter",
+  "sceneMemory": "Remember last week",
+  "scenePhone": "Approve on your phone",
+  "play": "Play",
+  "pause": "Pause",
+  "next": "Next step",
+  "restart": "Start over",
+  "computer": "Desktop",
+  "phone": "Phone",
+  "step": "Step",
+  "waiting": "Your turn. Choose Allow to let it continue.",
+  "done": "All done. Try another scene, or play this one again.",
+  "stopped": "Declined. No files were moved. Start over to try again.",
+  "memoryHint": "Open the memories to see their sources. Try correcting or forgetting one.",
+  "staticTitle": "One goal. A finished result.",
+  "staticNote": "Enable JavaScript to try approvals and memory corrections.",
+  "workTitle": "Tell it the outcome.\nIt brings back the work.",
+  "workBody": "You shouldn't have to turn every goal into a list of instructions. It reads files, runs commands, organizes material, and writes the report. Follow the work in your conversation. Stop anytime, or queue up what comes next.",
+  "workSmall": "When a step needs your decision, it asks right there. Allow it once, or allow similar actions in future. Finished files arrive as one tidy list.",
+  "workPrompt": "Organize this month's files and write a report I can actually use.",
+  "workProgress": "Read 213 files · Found 38 files to organize",
+  "workApproval": "Move 38 files into 5 new folders?",
+  "allow": "Allow",
+  "deny": "Decline",
+  "always": "Allow similar actions",
+  "report": "Organization report.md",
+  "inventory": "File inventory.csv",
+  "reportMeta": "Report · 12 KB",
+  "inventoryMeta": "Spreadsheet · 8 KB",
+  "results": "2 files ready for you",
+  "workFinish": "213 files reviewed, 38 put in place. The 6 duplicates are untouched. Your report and inventory are ready.",
+  "memoryTitle": "You said it last week.\nYou don't have to say it again.",
+  "memoryBody": "It learns from everyday conversations. No extra notes to keep. In a new conversation, it can find what matters by meaning.",
+  "memorySmall": "See what it remembers. Correct what it got wrong. Fully forget what you don't want kept. A weekly memory note shows what's new. For a conversation you don't want remembered, go temporary.",
+  "lastWeek": "Last week · Thursday",
+  "today": "Today",
+  "memoryOld": "I like cycling on weekends. Keep the route under 20 km.",
+  "memoryOldReply": "Got it. I’ll look for routes under 20 km.",
+  "memoryRequest": "Any ideas for a relaxing weekend?",
+  "memoryReply": "How about a quiet riverside ride? Keep it under 20 km, with a stop at a little café along the way.",
+  "memoryUsed": "Used 2 memories",
+  "memoryOne": "Enjoys weekend cycling and quiet routes.",
+  "memoryTwo": "Keep cycling routes under 20 km.",
+  "sourceLabel": "From last Thursday's conversation",
+  "sourceQuote": "“Keep the route under 20 km.”",
+  "correct": "Correct",
+  "forget": "Forget",
+  "correctionLabel": "Your current distance preference",
+  "correctionValue": "Keep cycling routes under 30 km.",
+  "save": "Save correction",
+  "cancel": "Cancel",
+  "corrected": "Memory updated. The demo now uses your new preference.",
+  "forgotten": "Distance preference forgotten. The demo no longer uses it.",
+  "memoryNewReply": "How about a quiet riverside ride? Keep it under 30 km, with a stop at a little café along the way.",
+  "memoryForgotReply": "How about a quiet riverside ride, with a stop at a little café along the way?",
+  "weekly": "What I remembered this week",
+  "weeklyDetail": "New preferences and corrections, together in one place.",
+  "devicesTitle": "Step away from your desk.\nStay with the task.",
+  "devicesBody": "Windows. Mac. Android. iPhone. Apple Watch. Follow your computer's progress on your phone, approve from a notification, or handle a request on your wrist. Change devices, conversations, or models. It's still the same assistant.",
+  "deviceCaption": "Interface illustration · One task, the same moment",
+  "windowsLabel": "Windows",
+  "macLabel": "Mac",
+  "androidLabel": "Android",
+  "iphoneLabel": "iPhone",
+  "watchLabel": "Apple Watch",
+  "windowsDesc": "Your full desktop workspace",
+  "macDesc": "A native Mac client",
+  "androidDesc": "Progress and conversation, anywhere",
+  "iphoneDesc": "A native iPhone client",
+  "watchDesc": "A quick decision on your wrist",
+  "devicePrev": "Previous device",
+  "deviceNext": "Next device",
+  "deviceOpen": "View this device's interface",
+  "phoneRequest": "Your quarterly review is ready. Replace the older PDF in the shared folder?",
+  "phoneLead": "Out the door. Still your decision.",
+  "phoneAllowed": "Approved here. Your computer is saving it.",
+  "phoneFinished": "The updated PDF is in the shared folder.",
+  "watchHint": "Handle approvals on your watch, too",
+  "watchAction": "Approve",
+  "phoneBottom": [
+    "Chat",
+    "Activity",
+    "Goals",
+    "Library"
+  ],
+  "dataTitle": "Your life.\nOn your own computer.",
+  "dataBody": "Conversations, attachments, and memories are stored primarily on your computer. WeftMate's cloud handles essentials like accounts, connections, and notifications. It doesn't store conversation text or memory content.",
+  "dataModel": "Bring your own API, or run a model locally. When you choose a third-party model, your device sends your messages and the relevant memories selected for that reply directly to the provider, under its privacy policy.",
+  "dataLocal": "Use it on your own computer without signing in. Sign in when you need remote access.",
+  "dataBusiness": "We don't sell models or require a membership today. Any third-party model costs are yours.",
+  "dataPolicy": "Read the full data policy",
+  "dataComputer": "Your computer",
+  "dataInside": "Conversations · Files · Memories",
+  "dataChoice": "Your chosen model",
+  "dataFlow": "Messages and memories needed for a reply",
+  "dataCloud": "WeftMate cloud",
+  "dataCloudNote": "Account · Connection · Notification",
+  "dataFoot": "We don't sell your personal information or use your content to train models.",
+  "detailsTitle": "The big work, finished.\nThe little things, considered.",
+  "details": [
+    [
+      "One main chat. Room for side chats.",
+      "Keep everyday life together. Give a specific task its own space.",
+      "chat"
+    ],
+    [
+      "Activity, goals, and a library",
+      "Progress, plans, and finished files, each with a place to land.",
+      "outputs"
+    ],
+    [
+      "Scheduled tasks",
+      "Turn “Every Friday, help me…” into something that happens on time.",
+      "clock"
+    ],
+    [
+      "One search across it all",
+      "Find conversations, memories, files, and scheduled tasks.",
+      "search"
+    ],
+    [
+      "Send it to WeftMate",
+      "Right-click a file or folder in Windows and hand it over.",
+      "desktop"
+    ],
+    [
+      "Replies worth reading",
+      "Code, tables, formulas, and diagrams, clearly presented.",
+      "code"
+    ],
+    [
+      "A little help with what's next",
+      "Pick a suggested next step and keep moving.",
+      "right"
+    ],
+    [
+      "Status and repair",
+      "Check when you want to. Repair a troubled connection on your computer.",
+      "tool"
+    ],
+    [
+      "Daily notes, weekly reviews",
+      "It keeps track of what you've been working on and picks it up in conversation, with a weekly look back at results and to-dos.",
+      "book"
+    ],
+    [
+      "A second look at risky actions",
+      "Before you approve, another model checks the step and notes any concern right beside the request. The decision stays yours.",
+      "approval"
+    ]
+  ],
+  "futureTitle": "More of your day.\nMore understood.",
+  "futureBody": "Here's what's on the way. Each step brings your assistant a little closer to everyday life.",
+  "coming": "Coming soon",
+  "future": [
+    [
+      "Health data from iPhone and Watch",
+      "Connect everyday patterns for more thoughtful, practical suggestions.",
+      "health"
+    ],
+    [
+      "A companion with a little character",
+      "A small, responsive friend to share the routines of daily life.",
+      "pet"
+    ],
+    [
+      "Calendar and email",
+      "Bring plans, messages, and the work at hand together.",
+      "mail"
+    ],
+    [
+      "Your ChatGPT / Claude history",
+      "Let past conversations help it get to know you, without starting over.",
+      "history"
+    ]
+  ],
+  "getTitle": "Your next assistant.\nAt home on your computer.",
+  "getBody": "WeftMate is coming soon. It’s still in preview, with no public release yet. We’re working on making every entrance feel right.",
+  "getNote": "Bring your own model · No membership required",
+  "platforms": [
+    [
+      "Windows",
+      "Desktop installer",
+      "desktop"
+    ],
+    [
+      "Mac",
+      "Native client",
+      "desktop"
+    ],
+    [
+      "Android",
+      "Mobile app",
+      "phone"
+    ],
+    [
+      "iPhone",
+      "Native app",
+      "phone"
+    ],
+    [
+      "Apple Watch",
+      "Watch app",
+      "watch"
+    ]
+  ],
+  "getAction": "Try the demo first",
+  "getFoot": "Public downloads are coming soon. Availability details will be announced here.",
+  "feedback": "Tell us through Feedback in the app.",
+  "terms": "Terms",
+  "privacy": "Privacy",
+  "changelog": "What's new",
+  "legalEnglish": "English version coming soon",
+  "copyright": "© 2026 WeftMate. All rights reserved.",
+  "footerLine": "One assistant. More understanding.",
+  "backHome": "Back to home",
+  "notFoundTitle": "This thread doesn't connect yet.",
+  "notFoundBody": "The page may have moved, or the address may be missing a piece. Head home and pick up from there.",
+  "changelogTitle": "Always getting better.",
+  "changelogBody": "Development updates for WeftMate. These versions are in development and aren't public releases.",
+  "added": "Added",
+  "improved": "Improved",
+  "fixed": "Fixed",
+  "desktopVersion": "Desktop",
+  "mobileVersion": "Mobile UI",
+  "searchPlaceholder": "Search",
+  "composerPlaceholder": "Tell WeftMate what you have in mind",
+  "workAllowed": "Allowed. Continuing the work and keeping the originals.",
+  "memoryError": "Add your current preference before saving.",
+  "navMemory": "Memory",
+  "navData": "Your data",
+  "navigation": "Explore WeftMate",
+  "heroTry": "Try it yourself",
+  "heroCaption": "From a goal to something finished.",
+  "accountName": "Alex",
+  "auto": "Auto",
+  "sideChats": [
+    "Weekend ride",
+    "October expenses",
+    "Reading notes"
+  ],
+  "values": [
+    [
+      "No need to\nstart from scratch.",
+      "Last week’s preferences. Today’s decisions. It picks up where you left off.",
+      "memory"
+    ],
+    [
+      "More than words.\nWork, finished.",
+      "Files, reports, and results, made on your own computer.",
+      "terminal"
+    ],
+    [
+      "Your model.\nNo membership.",
+      "Choose the model. Keep your content primarily on your computer.",
+      "model"
+    ]
+  ],
+  "workPlan": "I’ll review the files, then organize them by type and date. I’ll flag duplicates and leave that decision to you.",
+  "workReadEarly": "Read 42 files. Checking the rest.",
+  "workRead": "Read 213 files",
+  "workClassified": "Grouped by type and date",
+  "workDuplicates": "Found 6 duplicates and flagged them",
+  "workMoved": "Moved 38 files · Created 5 folders",
+  "workWritten": "Finished the report and file inventory",
+  "suggestions": [
+    "Make this a Friday routine",
+    "Show me the duplicates",
+    "Give me a shorter report"
+  ],
+  "suggestionTitle": "A next step, if you want",
+  "scheduledTitle": "Scheduled for every Friday",
+  "scheduledDetail": "Fridays at 6 pm · Organize this folder",
+  "scheduledNote": "Any step that needs your decision will still ask first.",
+  "duplicatesTitle": "6 duplicates, left untouched",
+  "duplicatesDetail": "They’re flagged in the inventory. Take a look before deciding what to delete.",
+  "shortenedTitle": "The short version is ready",
+  "shortenedDetail": "38 files in place. 5 new folders. 6 duplicates kept for your review.",
+  "closePreview": "Close file preview",
+  "reportDocumentMeta": "October files · October 12",
+  "reportTitle": "A clearer folder. A useful record.",
+  "inventoryTitle": "Every file has a place you can find.",
+  "reportIntro": "Organized by type and date, with the originals intact. Anything needing another decision is listed separately.",
+  "reportHighlights": "What changed",
+  "reportPoints": [
+    "Reviewed 213 files and grouped them by type and date.",
+    "Moved 38 files into 5 folders without changing their contents.",
+    "Left 6 duplicate files in place and flagged them in the inventory.",
+    "Created a complete inventory so every move is easy to trace."
+  ],
+  "reportTableTitle": "Where things landed",
+  "reportTable": [
+    [
+      "Type",
+      "Files",
+      "Organization"
+    ],
+    [
+      "Documents",
+      "86",
+      "Filed by month"
+    ],
+    [
+      "Images",
+      "72",
+      "Grouped by date"
+    ],
+    [
+      "Spreadsheets",
+      "31",
+      "Expenses separated"
+    ],
+    [
+      "Other",
+      "24",
+      "Kept in place"
+    ]
+  ],
+  "inventoryTable": [
+    [
+      "File",
+      "Destination",
+      "Status"
+    ],
+    [
+      "Meeting notes.docx",
+      "Documents / October",
+      "Filed"
+    ],
+    [
+      "Travel photo.jpg",
+      "Images / October",
+      "Filed"
+    ],
+    [
+      "Expenses.xlsx",
+      "Spreadsheets / Expenses",
+      "Filed"
+    ],
+    [
+      "Draft copy.docx",
+      "Original folder",
+      "Duplicate, kept"
+    ]
+  ],
+  "documentNote": "Fictional files and content for this demonstration.",
+  "quarterPrompt": "I’m heading out. Export the quarterly review as a PDF and put it in the shared folder.",
+  "quarterPlan": "I’ll check the layout, export the PDF, then save it to the shared folder.",
+  "quarterRead": "Read the review and preserved all 3 charts",
+  "quarterExported": "Exported a 12-page PDF. Ready to save it.",
+  "quarterApproval": "The shared folder already has “Quarterly review.pdf”. Replace it with this version?",
+  "quarterFile": "Quarterly review.pdf",
+  "quarterMeta": "PDF · 12 pages",
+  "quarterReady": "Your new version is ready",
+  "quarterAllowed": "Approved on your phone. Your computer is saving the file.",
+  "quarterSaved": "Saved in the shared folder, replacing the old version",
+  "quarterFinish": "All 12 pages exported, with 3 charts intact. The new version is in the shared folder, ready to read on the go.",
+  "quarterDocumentMeta": "Third-quarter review · October 12",
+  "quarterDocumentTitle": "What this quarter made possible.",
+  "quarterIntro": "Progress, next steps, and things to watch, together in one useful review.",
+  "quarterPoints": [
+    "Completed 3 milestones and collected the key files.",
+    "Kept all 3 charts and checked headings and page breaks.",
+    "Review the material first, then move into next quarter’s plan.",
+    "Updated the shared copy so everyone reads the same version."
+  ],
+  "quarterTableTitle": "Milestones",
+  "quarterTable": [
+    [
+      "Work",
+      "Status",
+      "Next"
+    ],
+    [
+      "File organization",
+      "Complete",
+      "Weekly review"
+    ],
+    [
+      "Quarterly review",
+      "Complete",
+      "Share new copy"
+    ],
+    [
+      "Next quarter",
+      "In progress",
+      "Set priorities"
+    ]
+  ],
+  "computerWorking": "Working on your computer",
+  "computerWaiting": "Your computer is waiting for you",
+  "computerComplete": "Finished on your computer",
+  "notificationTitle": "WeftMate · A decision on your computer",
+  "notificationBody": "Your review is exported. Confirm before replacing the older PDF in the shared folder.",
+  "notificationRead": "See the request",
+  "watchFinished": "All done",
+  "remoteNote": "Approve on your phone. Your computer takes it from there.",
+  "remoteDeclined": "Replacement declined. The old file is intact; the new one hasn’t been saved there.",
+  "remoteIdle": "Keep an eye on the work, wherever you are.",
+  "memoryOldMore": "And somewhere quiet. Crowds aren’t my thing.",
+  "memoryOldMoreReply": "A quiet weekend ride, without rushing. I’ll remember that.",
+  "memoryHighlightWords": [
+    "riverside ride",
+    "quiet",
+    "20 km"
+  ],
+  "memoryExampleCaption": "Memory illustration · Everyday conversations, with sources you can check and change.",
+  "memoryCards": [
+    [
+      "Preference",
+      "Enjoys weekend cycling and quiet routes.",
+      "From an October 8 conversation"
+    ],
+    [
+      "People and everyday plans",
+      "Wants to ride by the river with Sam.",
+      "From an October 10 conversation"
+    ],
+    [
+      "A decision",
+      "Organize work files every Friday first.",
+      "From an October 9 conversation"
+    ]
+  ],
+  "memoryEditing": "Being corrected",
+  "memoryEditingOld": "Keep rides under 20 km",
+  "memoryEditingNew": "30 km is comfortable now",
+  "memoryForgottenLabel": "Forgotten",
+  "memoryForgottenText": "Always get up early on weekends",
+  "memoryWeekPoints": [
+    "Remembered 3 new things",
+    "Updated the cycling distance",
+    "Forgot an outdated plan"
+  ],
+  "availability": "Coming soon",
+  "notificationApprovedTitle": "WeftMate · Approved",
+  "notificationDoneTitle": "WeftMate · Finished",
+  "watchWorking": "Working",
+  "watchSaving": "Saving",
+  "watchQuestion": "Replace the old PDF?",
+  "watchIdle": "Your computer is exporting the quarterly review",
+  "watchApprovedLine": "Approved. Your computer is back at it.",
+  "watchDoneLine": "The quarterly review is in the shared folder"
+}
