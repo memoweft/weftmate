@@ -53,7 +53,7 @@ struct MainChatView: View {
                     Button("输出与来源", image: ImageResource(name: "wm-outputs", bundle: .main)) { draftFocused = false; Task { await model.loadResources() } }.disabled(!model.capabilities.supports("chatResources")).accessibilityIdentifier("mainChat.resources")
                     Button("本对话用量", image: ImageResource(name: "wm-chart", bundle: .main)) { draftFocused = false; showingUsage = true }
                     Button("刷新记录", image: ImageResource(name: "wm-sync", bundle: .main)) { Task { await model.read() } }
-                } label: { WeftIcon("more") }.accessibilityLabel("对话菜单").accessibilityIdentifier("mainChat.menu")
+                } label: { WeftIcon("more").phoneMenuLabel(circle: true) }.accessibilityLabel("对话菜单").accessibilityIdentifier("mainChat.menu")
             }
             #else
             HStack {
@@ -357,7 +357,7 @@ struct MainChatView: View {
                         Button { A16TestSupport.addAttachment(model) } label: { Label("添加合成附件", image: "wm-file") }.accessibilityIdentifier("mainChat.syntheticAttachment")
                     }
                     #endif
-                } label: { WeftIcon("plus").frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44) }
+                } label: { WeftIcon("plus").phoneMenuLabel(circle: true, onCard: true) }
                 #if os(macOS)
                 .menuStyle(.borderlessButton).fixedSize()
                 #endif
@@ -408,7 +408,7 @@ struct MainChatView: View {
                 HStack(spacing: AppleTokens.Space.p4) {
                     Text(model.models.first(where: { $0.id == (model.chat?.modelProfileId ?? model.modelID) })?.name ?? "模型").font(AppleTokens.Fonts.caption).lineLimit(1)
                     WeftIcon("chevron", size: AppleTokens.Space.p12)
-                }
+                }.phoneMenuLabel(onCard: true)
             }.buttonStyle(PhoneActionStyle()).phoneComposerControl().accessibilityLabel("模型选择").accessibilityIdentifier("mainChat.model")
         }
         #else

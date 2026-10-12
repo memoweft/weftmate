@@ -242,7 +242,7 @@ struct ConversationView: View {
                 Button { endDraftFocus(); resources.showingList = true; resources.visible = true } label: { Label("输出与来源", image: "wm-outputs") }.accessibilityIdentifier("openConversationResources")
                 Button { Task { await model.open(conversation) } } label: { Label("刷新记录", image: "wm-sync") }.disabled(model.historyBusy)
                 SessionActions(app: model, conversation: conversation)
-            } label: { WeftIcon("more") }.accessibilityLabel("对话菜单").accessibilityIdentifier("conversationMenu")
+            } label: { WeftIcon("more").phoneMenuLabel(circle: true) }.accessibilityLabel("对话菜单").accessibilityIdentifier("conversationMenu")
         }
         #endif
         ScrollViewReader { proxy in
@@ -644,7 +644,7 @@ struct ConversationView: View {
                                 .disabled(model.thinking.pending).accessibilityValue(model.thinking.confirmed?.enabled == true ? "已开启" : "已关闭")
                                 .accessibilityIdentifier("composer.thinking")
                         }
-                    } label: { WeftIcon("plus").frame(width: 44, height: 44) }
+                    } label: { WeftIcon("plus").frame(width: 44, height: 44).phoneMenuLabel(circle: true, onCard: true) }
                     #if os(macOS)
                     .menuIndicator(.hidden).menuStyle(.borderlessButton)
                     #endif
@@ -675,7 +675,7 @@ struct ConversationView: View {
                         #if os(macOS)
                         Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1)
                         #else
-                        HStack(spacing: AppleTokens.Space.p3) { Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1); WeftIcon("chevron", size: 12) }
+                        HStack(spacing: AppleTokens.Space.p3) { Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1); WeftIcon("chevron", size: 12) }.phoneMenuLabel(onCard: true)
                         #endif
                     }
                     #if os(macOS)
