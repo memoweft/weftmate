@@ -34,7 +34,20 @@ jobs:
         with:
           gradle-version: 8.9
       - run: npm ci
-      - run: node tests/integration/st-2-phone-container.mjs
+      - run: |
+          node tests/integration/st-2-phone-container.mjs
+          cat > .local/data1-phone-capture.sh <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          export WEFTMATE_DATA1_ADB="$ANDROID_HOME/platform-tools/adb"
+          export WEFTMATE_DATA1_ANDROID_SERIAL="$(adb devices | awk '/^emulator-/ {print $1; exit}')"
+          export WEFTMATE_DATA1_ANDROID_PACKAGE=com.memoweft.weftmate.mobile.data1qa
+          export WEFTMATE_DATA1_ANDROID_ACTIVITY=com.memoweft.weftmate.mobile.St2PhoneBrowserActivity
+          export WEFTMATE_DATA1_PHONE_APK="$PWD/apps/android/app/build/outputs/apk/debug/app-debug.apk"
+          export WEFTMATE_DATA1_AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort -V | tail -1)"
+          export WEFTMATE_DATA1_PHONE_ONLY=1
+          node tests/integration/data-1-daily-digest.mjs
+          SH
       - run: gradle -I ../../.local/st2-phone-container/fixture.gradle -PweftmateApplicationId=com.memoweft.weftmate.mobile.data1qa :app:assembleDebug --no-daemon --console=plain
         working-directory: apps/android
       - name: Enable KVM
@@ -50,15 +63,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -skin 720x1560 -dpi-device 320 -memory 3072 -cores 4
-          script: |
-            export WEFTMATE_DATA1_ADB="$ANDROID_HOME/platform-tools/adb"
-            export WEFTMATE_DATA1_ANDROID_SERIAL="$(adb devices | awk '/^emulator-/ {print $1; exit}')"
-            export WEFTMATE_DATA1_ANDROID_PACKAGE=com.memoweft.weftmate.mobile.data1qa
-            export WEFTMATE_DATA1_ANDROID_ACTIVITY=com.memoweft.weftmate.mobile.St2PhoneBrowserActivity
-            export WEFTMATE_DATA1_PHONE_APK="$PWD/apps/android/app/build/outputs/apk/debug/app-debug.apk"
-            export WEFTMATE_DATA1_AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort -V | tail -1)"
-            export WEFTMATE_DATA1_PHONE_ONLY=1
-            node tests/integration/data-1-daily-digest.mjs
+          script: bash .local/data1-phone-capture.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
