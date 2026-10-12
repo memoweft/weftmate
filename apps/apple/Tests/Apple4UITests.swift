@@ -96,6 +96,8 @@ final class Apple4UITests: XCTestCase {
             try choose(app, "side")
             XCTAssertTrue(app.staticTexts["可以先留出一段时间散步，再读几页书。"].waitForExistence(timeout: 25))
             XCTAssertTrue(app.buttons["sendButton"].exists)
+            XCTAssertGreaterThanOrEqual(app.buttons["contextUsage"].frame.width, 44)
+            XCTAssertGreaterThanOrEqual(app.buttons["contextUsage"].frame.height, 44)
             capture(app, theme, "side-chat")
             app.buttons["conversationMenu"].tap(); app.buttons["openConversationResources"].tap()
             XCTAssertTrue(app.buttons["closeResourcesPanel"].waitForExistence(timeout: 20))
