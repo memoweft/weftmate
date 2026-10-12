@@ -1,0 +1,215 @@
+{
+  "realModelRequests": 0,
+  "rounds": [
+    {
+      "round": 1,
+      "exit": 0,
+      "durationMs": 8080,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 2,
+      "exit": 0,
+      "durationMs": 7344,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 3,
+      "exit": 0,
+      "durationMs": 6667,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 4,
+      "exit": 0,
+      "durationMs": 5446,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 5,
+      "exit": 0,
+      "durationMs": 5548,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 6,
+      "exit": 0,
+      "durationMs": 5391,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 7,
+      "exit": 0,
+      "durationMs": 5273,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 8,
+      "exit": 0,
+      "durationMs": 5282,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 9,
+      "exit": 0,
+      "durationMs": 5249,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 10,
+      "exit": 0,
+      "durationMs": 5222,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 11,
+      "exit": 0,
+      "durationMs": 5685,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 12,
+      "exit": 0,
+      "durationMs": 6144,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 13,
+      "exit": 0,
+      "durationMs": 5652,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 14,
+      "exit": 0,
+      "durationMs": 5274,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 15,
+      "exit": 0,
+      "durationMs": 5210,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 16,
+      "exit": 0,
+      "durationMs": 5664,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 17,
+      "exit": 0,
+      "durationMs": 5733,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 18,
+      "exit": 0,
+      "durationMs": 6194,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 19,
+      "exit": 0,
+      "durationMs": 5559,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 20,
+      "exit": 0,
+      "durationMs": 5884,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 21,
+      "exit": 0,
+      "durationMs": 5882,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 22,
+      "exit": 0,
+      "durationMs": 5889,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 23,
+      "exit": 0,
+      "durationMs": 9030,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 24,
+      "exit": 0,
+      "durationMs": 7066,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 25,
+      "exit": 0,
+      "durationMs": 5605,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 26,
+      "exit": 0,
+      "durationMs": 5711,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 27,
+      "exit": 0,
+      "durationMs": 6282,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 28,
+      "exit": 0,
+      "durationMs": 5678,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 29,
+      "exit": 0,
+      "durationMs": 6451,
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "round": 30,
+      "exit": 0,
+      "durationMs": 6989,
+      "passed": 16,
+      "failed": 0
+    }
+  ]
+}

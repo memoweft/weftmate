@@ -13,6 +13,9 @@ struct OfflineWorkspace: View {
                     Button("联网使用") { app.cloudLogin.requireLogin() }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("expiredLogin")
                 }.padding(AppleTokens.Space.p12)
             }
+            #if os(iOS)
+            PhoneWorkspace(model:app)
+            #else
             if model.hostOffline || model.showHistory {
                 OfflineChatView(app: app, model: model)
             } else {
@@ -27,6 +30,7 @@ struct OfflineWorkspace: View {
                 PhoneWorkspace(model: app)
                 #endif
             }
+            #endif
         }.accessibilityElement(children: .contain)
     }
 }

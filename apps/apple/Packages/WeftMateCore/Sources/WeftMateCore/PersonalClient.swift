@@ -125,6 +125,47 @@ public actor PersonalClient {
             method: "PUT", body: encoder.encode(health), timeoutInterval: 15)
         guard [200, 201, 204].contains(response.status) else { throw APIFailure.invalidResponse }
     }
+    public func healthTopInsightSetting(_ enabled: Bool) async throws -> HealthPageSettingsReply {
+        try await parityRequest(path:"/settings/health",method:"PATCH",body:JSONSerialization.data(withJSONObject:["modelInsightsEnabled":enabled]),timeoutInterval:15)
+    }
+    public func healthPageSettings(enabled: Bool? = nil) async throws -> HealthPageSettingsReply {
+        try await parityRequest(path: "/settings/health", method: enabled == nil ? "GET" : "PATCH",
+            body: enabled.map { try! JSONSerialization.data(withJSONObject: ["itemAnalysisEnabled": $0]) }, timeoutInterval: 15)
+    }
+    public func healthAnalysisCache(day: String) async throws -> HealthAnalysisCacheReply {
+        guard day.range(of: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", options: .regularExpression) != nil else { throw APIFailure.invalidResponse }
+        return try await parityRequest(path: "/health/analysis?day=" + day, timeoutInterval: 15)
+    }
+    public func healthAnalysis(scope: String, day: String) async throws -> HealthAnalysis {
+        try await parityRequest(path: "/health/analysis", method: "POST",
+            body: JSONSerialization.data(withJSONObject: ["scope":scope,"day":day]), timeoutInterval: 30)
+    }
+    public func healthOverview() async throws -> HealthOverview { try await parityRequest(path: "/health/overview", timeoutInterval: 15) }
+    public func healthMetrics(_ id: String, days: Int) async throws -> HealthMetricSeries {
+        guard [7,14,30,60,90].contains(days), id.range(of: "^[a-zA-Z0-9]+$", options: .regularExpression) != nil else { throw APIFailure.invalidResponse }
+        return try await parityRequest(path: "/health/metrics/" + id + "?days=\(days)", timeoutInterval: 15)
+    }
+    public func healthCalendar(month: String) async throws -> HealthCalendarReply {
+        guard month.range(of: "^[0-9]{4}-[0-9]{2}$", options: .regularExpression) != nil else { throw APIFailure.invalidResponse }
+        return try await parityRequest(path: "/health/calendar?month=" + month, timeoutInterval: 15)
+    }
+    public func putHealthBatch(_ items: [HealthBatchItem], account: LocalAccountScope) async throws -> HealthBatchReply {
+        let (auth, _) = try snapshot()
+        guard try LocalAccountScope(server: auth.session.server, ownerId: auth.session.account.ownerId) == account else { throw APIFailure.identityMismatch }
+        return try await parityRequest(path: "/health/records/batch", method: "PUT", body: JSONEncoder().encode(HealthBatchBody(items: items)), timeoutInterval: 30)
+    }
+    public func putHealthProfile(_ profile: HealthProfile, account: LocalAccountScope) async throws {
+        let (auth, generation) = try snapshot()
+        guard try LocalAccountScope(server: auth.session.server, ownerId: auth.session.account.ownerId) == account else { throw APIFailure.identityMismatch }
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/health/profile", method: "PUT", body: JSONEncoder().encode(profile), timeoutInterval: 15)
+        guard [200,201,204].contains(response.status) else { throw APIFailure.invalidResponse }
+    }
+    public func remindHealthSuggestion(_ id: String, sessionID: String, requestID: String) async throws {
+        guard let escaped = id.addingPercentEncoding(withAllowedCharacters: .alphanumerics) else { throw APIFailure.invalidResponse }
+        let _: JSONValue = try await parityRequest(path: "/health/suggestions/" + escaped + "/remind", method: "POST",
+            body: JSONSerialization.data(withJSONObject: ["sessionId": sessionID, "requestId": requestID]), timeoutInterval: 15)
+    }
     public func dailySummaries() async throws -> DailySummariesReply { try await parityRequest(path: "/daily-summaries", timeoutInterval: 15) }
     public func dailyReviewSettings() async throws -> DailyReviewSettingsReply { try await parityRequest(path: "/settings/notifications", timeoutInterval: 15) }
     public func setDailyReview(_ enabled: Bool) async throws -> DailyReviewSettingsReply {
@@ -760,6 +801,15 @@ public actor PersonalClient {
         try await verify(auth, generation)
         let response = try await sharedAuthorizedRequest(auth, generation, path: path,
             method: mode == nil ? "GET" : "PATCH", body: body)
+        try SharedValidation.require(response.status == 200)
+        return try decode(response.body)
+    }
+
+    public func setSecondOpinionEnabled(_ enabled: Bool) async throws -> ApprovalModeSettings {
+        let (auth, generation) = try snapshot()
+        struct Body: Encodable { let secondOpinionEnabled: Bool }
+        let body = try JSONEncoder().encode(Body(secondOpinionEnabled: enabled))
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/settings/approvals", method: "PATCH", body: body)
         try SharedValidation.require(response.status == 200)
         return try decode(response.body)
     }

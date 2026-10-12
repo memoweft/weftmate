@@ -58,8 +58,10 @@ export function createNextSuggestions(context, { timeoutMs = 5000, watchMs = 150
     return kind === 'completion' ? settings.inlineCompletionEnabled === true : settings.nextSuggestionsEnabled !== false;
   };
   function cancel(ownerId, sessionId = null, requestId = null, deviceId = null) {
+    const waits = [];
     for (const row of pending.values()) if (row.ownerId === ownerId && (!sessionId || row.sessionId === sessionId) &&
-        (!requestId || row.requestId === requestId) && (!deviceId || row.deviceId === deviceId)) row.controller.abort();
+        (!requestId || row.requestId === requestId) && (!deviceId || row.deviceId === deviceId)) { row.controller.abort(); waits.push(row.done); }
+    return Promise.all(waits);
   }
   function reconcile(ownerId) {
     const account = context.accountState(ownerId);
@@ -77,7 +79,7 @@ export function createNextSuggestions(context, { timeoutMs = 5000, watchMs = 150
     if (request.method === 'DELETE') {
       if ([...url.searchParams.keys()].some(name => name !== 'requestId') || url.searchParams.getAll('requestId').length > 1 ||
           url.searchParams.has('requestId') && !REQUEST_ID.test(url.searchParams.get('requestId'))) throw failure('INVALID_REQUEST');
-      cancel(ownerId, sessionId, url.searchParams.get('requestId'), auth.deviceId);
+      await cancel(ownerId, sessionId, url.searchParams.get('requestId'), auth.deviceId);
       return context.json(response, 200, { cancelled: true });
     }
     if (url.search) throw failure('INVALID_REQUEST');
@@ -88,11 +90,14 @@ export function createNextSuggestions(context, { timeoutMs = 5000, watchMs = 150
         body.kind === 'completion' && !body.draft?.trim()) throw failure('INVALID_REQUEST');
     const result = empty(body.requestId);
     if (!enabled(ownerId, body.kind)) return context.json(response, 200, result);
-    cancel(ownerId, sessionId);
+    while (pending.has(key(ownerId, sessionId))) await cancel(ownerId, sessionId);
+    context.authenticate(request, 'commands:write');
     if (typeof context.backend.modelCompletion !== 'function' || body.kind === 'replies' && body.draft?.length ||
         !context.messageModelUsable(ownerId, session)) return context.json(response, 200, result);
     const controller = new AbortController();
-    const row = { ownerId, sessionId, kind: body.kind, profileId: session.modelProfileId, deviceId: auth.deviceId, requestId: body.requestId, controller };
+    let settled;
+    const done = new Promise(resolve => { settled = resolve; });
+    const row = { ownerId, sessionId, kind: body.kind, profileId: session.modelProfileId, deviceId: auth.deviceId, requestId: body.requestId, controller, done };
     pending.set(key(ownerId, sessionId), row);
     const disconnect = () => controller.abort();
     response.once('close', disconnect);
@@ -124,7 +129,7 @@ export function createNextSuggestions(context, { timeoutMs = 5000, watchMs = 150
         : '续写用户草稿，只输出接下来的一个短语（2–12字）。不重复草稿，不解释，不新增任务。没把握输出空。';
       controller.signal.throwIfAborted();
       const upstream = await context.backend.modelCompletion({ ownerId, profileId: session.modelProfileId, priority: 'suggestion', signal: controller.signal,
-        onStart: async () => { controller.signal.throwIfAborted(); ticket = await context.usage.begin(ownerId, { sessionId, profileId: session.modelProfileId, model, category: 'next-suggestions' }); },
+        onStart: async () => { controller.signal.throwIfAborted(); ticket = await context.usage.begin(ownerId, { sessionId, profileId: session.modelProfileId, model, category: 'next-suggestions' }); controller.signal.throwIfAborted(); },
         body: { model: model.model, stream: body.kind === 'completion', ...(body.kind === 'completion' ? {stream_options:{include_usage:true}} : {}), max_tokens: body.kind === 'completion' ? 24 : 160, temperature: 0.3,
           messages: [{ role: 'system', content: instruction }, ...messages,
             { role: 'user', content: body.kind === 'completion' ? `草稿：${[...body.draft].slice(-400).join('')}`
@@ -142,11 +147,15 @@ export function createNextSuggestions(context, { timeoutMs = 5000, watchMs = 150
     } catch { /* Speculation fails silently, never retries or affects the real turn. */ }
     finally {
       clearTimeout(timer); clearInterval(watch); response.off('close', disconnect);
-      if (pending.get(key(ownerId, sessionId)) === row) pending.delete(key(ownerId, sessionId));
-      if (ticket) await context.usage.finish(ownerId, ticket, usage);
+      try { if (ticket) await context.usage.finish(ownerId, ticket, usage); } finally {
+        if (pending.get(key(ownerId, sessionId)) === row) pending.delete(key(ownerId, sessionId));
+        settled();
+      }
     }
     if (controller.signal.aborted) Object.assign(result, empty(body.requestId));
     if (!response.destroyed) return context.json(response, 200, result);
   }
-  return { handle, cancel, reconcile, close: () => { for (const row of pending.values()) row.controller.abort(); } };
+  return { handle, cancel, reconcile,
+    drain: ownerId => Promise.all([...pending.values()].filter(row => row.ownerId === ownerId && row.controller.signal.aborted).map(row => row.done)),
+    close: () => { for (const row of pending.values()) row.controller.abort(); } };
 }

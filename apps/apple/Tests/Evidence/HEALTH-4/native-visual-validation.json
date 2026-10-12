@@ -1,0 +1,18 @@
+{
+  "theme": "light",
+  "passed": 2,
+  "failed": 0,
+  "skipped": 0,
+  "realHealthKit": false,
+  "gpuConstrainedVisualOnly": true,
+  "fakeHost": true,
+  "realCloud": false,
+  "simulatorsAtOnce": 1,
+  "systemStatusBar": true,
+  "appearances": [
+    "light",
+    "dark"
+  ],
+  "visualCases": 1,
+  "doubleModelCases": 1
+}

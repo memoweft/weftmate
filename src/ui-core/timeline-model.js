@@ -93,6 +93,9 @@
         return '调用扩展服务';
     }
     function toolActivity(name) {
+        if (name === 'health_query') return { summary: '查询健康数据', kind: 'health' };
+        if (/^(calendar_query|calendar_list|calendar_search|calendar_events|calendar_read)$/.test(name)) return { summary: '查询日程', kind: 'calendar' };
+        if (/^(mail_query|mail_search|mail_read|email_query|email_search|email_read)$/.test(name)) return { summary: '查询邮件', kind: 'mail' };
         if (name === 'load_tools') return { summary: '准备可用工具', internal: true };
         if (/^(get_goal|create_goal|update_goal)$/.test(name)) return { summary: {get_goal:'查看任务目标',create_goal:'建立任务目标',update_goal:'更新任务目标'}[name], kind: {get_goal:'goalRead',create_goal:'goalCreate',update_goal:'goal'}[name] };
         if (/^(todo|todo_write|enter_plan_mode|exit_plan_mode)$/.test(name)) return { summary: '整理执行计划', kind: 'plan' };
@@ -206,7 +209,7 @@
             const amount = ['read','write','delete'].includes(kind) ? paths.length || Number(/(\d+) 个文件/.exec(summary)?.[1]) || 1 : 1;
             counts.set(kind, (counts.get(kind) || 0) + amount);
         }
-        const labels = { command: n => `已运行 ${n} 个命令`, read: n => `读取了 ${n} 个文件`, search: n => `搜索了 ${n} 次`, write: n => `修改了 ${n} 个文件`, delete: n => `删除了 ${n} 个文件`, web: n => `访问了 ${n} 次网页`, subagent: n => `处理了 ${n} 个子任务`, goal: n => `更新了 ${n} 次任务目标`, goalRead: n => `查看了 ${n} 次任务目标`, goalCreate: n => `建立了 ${n} 个任务目标`, plan: n => `整理了 ${n} 次执行计划`, schedule: n => `处理了 ${n} 次定时安排`, job: n => `查看或管理了 ${n} 次后台命令`, code: n => `运行了 ${n} 次脚本`, computer: n => `操作了 ${n} 次电脑应用`, memory: n => `查询或更新了 ${n} 次记忆`, question: n => `请求了 ${n} 次补充信息`, extension: n => `调用了 ${n} 次扩展服务` };
+        const labels = { health: n => n === 1 ? '查了健康数据' : `查了 ${n} 次健康数据`, calendar: n => n === 1 ? '查了日程' : `查了 ${n} 次日程`, mail: n => n === 1 ? '查了邮件' : `查了 ${n} 次邮件`, command: n => `已运行 ${n} 个命令`, read: n => `读取了 ${n} 个文件`, search: n => `搜索了 ${n} 次`, write: n => `修改了 ${n} 个文件`, delete: n => `删除了 ${n} 个文件`, web: n => `访问了 ${n} 次网页`, subagent: n => `处理了 ${n} 个子任务`, goal: n => `更新了 ${n} 次任务目标`, goalRead: n => `查看了 ${n} 次任务目标`, goalCreate: n => `建立了 ${n} 个任务目标`, plan: n => `整理了 ${n} 次执行计划`, schedule: n => `处理了 ${n} 次定时安排`, job: n => `查看或管理了 ${n} 次后台命令`, code: n => `运行了 ${n} 次脚本`, computer: n => `操作了 ${n} 次电脑应用`, memory: n => `查询或更新了 ${n} 次记忆`, question: n => `请求了 ${n} 次补充信息`, extension: n => `调用了 ${n} 次扩展服务` };
         const text = [...counts].map(([kind, count]) => labels[kind](count)).join('、') || (progress.state === 'completed' ? '已完成' : steps.length ? '工具已就绪' : '');
         return { text: text + (progress.state === 'completed' && progress.retries ? ` · 中途有 ${progress.retries} 步重试` : ''), running: false };
     }
@@ -265,6 +268,19 @@
         let turnKey = 'history';
         for (const event of ordered) {
             if (event.type === 'turn.started') turnKey = `${event.sessionId || event.sourceRef?.sessionId || ''}:turn-${event.data?.turn ?? event.seq}`;
+            if (event.type === 'task.queued') {
+                const data = event.data || {}, queued = data.tasks || [data];
+                const pending = queued.filter(task => !ordered.some(next => {
+                    const session = event.sessionId || event.sourceRef?.sessionId, nextSession = next.sessionId || next.sourceRef?.sessionId;
+                    if (next.seq <= event.seq || nextSession && session && nextSession !== session) return false;
+                    const id = task.receiptId || task.taskId;
+                    if (!id) return false;
+                    return ['user.message','task.started','task.ended','step.started','step.completed'].includes(next.type) &&
+                        (next.data?.receiptId === id || next.data?.taskId === id);
+                }));
+                if (pending.length) cards.push({...event, data:{...pending[0], ...(pending.length > 1 ? {tasks:pending} : {})}});
+                continue;
+            }
             if (event.type !== 'artifact.created') { cards.push(event); continue; }
             const data = event.data || {};
             if (/^(read|read_file|move|rename|delete|remove)$/.test(data.completedStep?.toolName || '')) continue;

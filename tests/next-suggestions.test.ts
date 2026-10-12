@@ -14,6 +14,8 @@ function fixture(options:any = {}) {
     {seq:2,type:'assistant.message',data:{text:'提纲：背景、方法、结果。'}},{seq:3,type:'turn.ended',data:{reason:'completed'}}];
   const account:any = {sessions:{s:{origin:'personal-remote',modelProfileId:'m',...options.session}},commands:{},personalization:{nextSuggestionsEnabled:true}};
   let calls = 0, aborted = false;
+  let providerStarted:any;
+  let started = new Promise<void>(resolve => { providerStarted = resolve; });
   const tickets:any[] = [], finishes:any[] = [];
   const context:any = {accountState:()=>account, authenticate:()=>({deviceId:'d'}),messageModelUsable:()=>true,
     readJson:async(request:any)=>request.body,json:(_response:any,_status:any,value:any)=>value,
@@ -22,8 +24,8 @@ function fixture(options:any = {}) {
     usage:{begin:async(_owner:any,value:any)=>{tickets.push(value);return 'ticket'},finish:async(...value:any[])=>finishes.push(value)}};
   const service = createNextSuggestions(context,{timeoutMs:options.timeoutMs??1000,watchMs:10});
   const run=(body:any,owner='o',response:any=new EventEmitter())=>service.handle({body},response,new URL('http://unit/personal/v1/sessions/s/suggestions'),owner,'s');
-  const hold=()=>{context.backend.modelCompletion=async(input:any)=>{calls++;await input.onStart();return new Promise((_resolve,reject)=>input.signal.addEventListener('abort',()=>{aborted=true;reject(input.signal.reason)},{once:true}))};};
-  return {context,service,account,events,run,hold,tickets,finishes,get calls(){return calls},get aborted(){return aborted}};
+  const hold=()=>{aborted=false;started=new Promise<void>(resolve=>{providerStarted=resolve;});context.backend.modelCompletion=async(input:any)=>{calls++;try{await input.onStart();input.signal.throwIfAborted();}catch(error){if(input.signal.aborted)aborted=true;throw error;}return new Promise((_resolve,reject)=>{input.signal.addEventListener('abort',()=>{aborted=true;reject(input.signal.reason)},{once:true});providerStarted();})};};
+  return {context,service,account,events,run,hold,tickets,finishes,get started(){return started},get calls(){return calls},get aborted(){return aborted}};
 }
 const body={kind:'replies',requestId:'r'};
 const delay=(ms=20)=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -167,7 +169,7 @@ test('UX-7 account switch synchronizes across devices, isolates another account,
   const a={cookie:setup.cookie,csrf:setup.value.csrfToken},created=await api('/commands',a,{requestId:'create',kind:'session.create',targetDeviceId:hostId,modelProfileId:'m'});
   let sessionId;for(let i=0;i<100;i++){const current=(await api('/commands/'+created.value.command.commandId,a)).value.command;sessionId=current.sessionId;if(current.state==='accepted_by_dsh')break;await delay(20)}
   const pending=api(`/sessions/${sessionId}/suggestions`,a,body);
-  for(let i=0;i<100&&!f.calls;i++)await delay(20);assert.equal(f.calls,1);
+  await f.started;assert.equal(f.calls,1);
   assert.equal((await api('/settings/personalization',a,{nextSuggestionsEnabled:false},'PATCH')).status,200);
   assert.equal(f.aborted,true);assert.deepEqual((await pending).value.suggestions,[]);
   const login=await api('/auth/login',null,{username:'Ux7SyntheticA',password:'UX7-synthetic-password-2026!',deviceName:'two'}),second={cookie:login.cookie,csrf:login.value.csrfToken};
@@ -175,4 +177,19 @@ test('UX-7 account switch synchronizes across devices, isolates another account,
   const register=await api('/auth/register',null,{username:'Ux7SyntheticB',password:'UX7-synthetic-password-2026!',deviceName:'other'}),b={cookie:register.cookie,csrf:register.value.csrfToken};
   assert.equal((await api('/settings/personalization',b)).value.settings.nextSuggestionsEnabled,true);
   assert.equal((await api(`/sessions/${sessionId}/suggestions`,b,body)).status,404);
+  await api('/settings/personalization',second,{nextSuggestionsEnabled:true},'PATCH');f.hold();
+  const loggingOut=api(`/sessions/${sessionId}/suggestions`,second,{...body,requestId:'logout'});await f.started;
+  assert.equal((await api('/auth/logout',second,{})).status,200);assert.equal(f.aborted,true);
+  assert.deepEqual((await loggingOut).value.suggestions,[]);
+});
+
+test('FIX-24 abort during asynchronous provider admission completes before cancellation resolves',async()=>{
+  const f=fixture();f.hold();let admit:any,entered:any,finish:any,finishing:any;
+  const admitted=new Promise<void>(r=>entered=r),finishStarted=new Promise<void>(r=>finishing=r);
+  f.context.usage.begin=async()=>{entered();await new Promise<void>(r=>admit=r);return 'ticket'};
+  f.context.usage.finish=async()=>{finishing();await new Promise<void>(r=>finish=r);};
+  const work=f.run(body);await admitted;
+  let done=false;const cancelling=f.service.cancel('o','s').then(()=>done=true);
+  admit();await finishStarted;assert.equal(f.aborted,true);assert.equal(done,false);
+  finish();await cancelling;assert.equal(done,true);assert.deepEqual((await work).suggestions,[]);
 });
