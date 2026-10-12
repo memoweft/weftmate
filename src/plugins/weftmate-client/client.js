@@ -1,3 +1,4 @@
+globalThis.weftmateSurface?.onNotice?.(async notice => { await globalThis.WeftDialogs.inform(notice.title, notice.message); globalThis.weftmateSurface.closeNotice(notice.id); });
 /**
  * WeftMate 客户端插件（R3-01/R3-02），浏览器 half，手写 classic script（无构建步骤）。
  *
@@ -500,7 +501,7 @@ window.__ModuleLoader__.load({
           body: JSON.stringify({ session_id: props.sessionId, task_id: snap.taskId || snap.executionId, action: action, expected_revision: snap.currentRevision })
         }).then(function (r) { return r.json().then(function (v) { if (!r.ok) throw new Error(v.error && v.error.message || '操作失败'); return v }) })
           .then(function () { setRetry(function (v) { return v + 1 }) })
-          .catch(function (error) { window.alert(error.message) })
+          .catch(function (error) { void globalThis.WeftDialogs.inform('操作未完成', error.message) })
       }
       if (snap.allowedIntents.pause) actions.push(React.createElement('button', {
         key: 'pause', type: 'button', className: 'weftmate-ai-game__action',
@@ -4079,7 +4080,7 @@ window.__ModuleLoader__.load({
         if (!cog || !cog.id) return
         var newText = editText.trim()
         if (!newText) {
-          alert('修改内容不能为空')
+          setActionMsg('请先填写修改后的内容。')
           return
         }
         var oldText = (cog.content || cog.text || '').trim()
@@ -4171,7 +4172,7 @@ window.__ModuleLoader__.load({
       async function doRetract(cog) {
         if (!cog || !cog.id) return
         var title = cog.content || cog.text || '此条记忆'
-        if (!window.confirm('确定要停用此条认知记忆吗？\n\n「' + title + '」\n\n停用后后续对话将不再自动召回此条目。')) return
+        if (!await globalThis.WeftDialogs.request({ title: '停用这条记忆？', message: '「' + title + '」\n\n停用后，后续聊天不会再自动使用这条记忆。', confirmLabel: '停用记忆', danger: true })) return
         try {
           var outcome = await submitMemoryCommand('retract:' + cog.id, {
             operation: 'retract_world_item', target_kind: 'cognition', target_id: cog.id,
