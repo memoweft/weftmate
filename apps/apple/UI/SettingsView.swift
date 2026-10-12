@@ -290,7 +290,7 @@ private struct SettingsCategoryView: View {
                 Text(settings.models.first { $0.id == settings.backgroundModelID }?.name ?? (settings.backgroundModelID.isEmpty ? "跟随主模型" : "原后台模型不可用")).foregroundStyle(Weave.muted)
                 #endif
             }
-            Section("模型档案与单价 · 元 / 百万字元") {
+            Section("模型档案与单价 · 元 / 百万字") {
                 ForEach(settings.models) { model in
                     SettingsRow(model.name, (model.configured ? "已配置 · " + model.model : "未配置") + (model.deepThinking?.supported == true ? " · 支持深入思考" : " · 不支持深入思考")) {
                         if let price = settings.prices.first(where: { $0.id == model.id })?.price {
@@ -330,7 +330,7 @@ private struct SettingsCategoryView: View {
             Button { Task { await settings.refresh("schedules") } } label: { WeftIcon("sync") }.accessibilityLabel("刷新提醒").buttonStyle(.borderless).disabled(settings.busy)
         case "system":
             ForEach(HostService.allCases) { service in
-                SettingsRow(service.title, "电脑上的 WeftMate 报告的实际状态；重启可能中断当前任务。") {
+                SettingsRow(service.title, "电脑上的 WeftMate 报告的状态；重启可能中断当前任务。") {
                     VStack(alignment: .trailing, spacing: AppleTokens.Space.p5) {
                         Text(settings.status?.service(service).title ?? "尚未读取")
                         if let version = settings.status?.service(service).version { Text(version).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }

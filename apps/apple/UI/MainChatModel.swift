@@ -313,7 +313,7 @@ import WeftMateCore
         if temporary && !capabilities.supports("temporaryChats") { return }
         if !temporary && !capabilities.supports("sideChats") { return }
         let origin = sourceConversation ?? event.flatMap { event in app.conversations.first { $0.chatId == event.chatId } }
-        if !temporary, origin?.temporaryState.cacheAllowed == false { error = "临时内容需要明确分享，当前请在临时对话远程连接续。"; return }
+        if !temporary, origin?.temporaryState.cacheAllowed == false { error = "临时内容需要明确分享，当前请在临时对话中继续。"; return }
         var body: [String: JSONValue] = ["requestId": .string("apple-side-" + UUID().uuidString.lowercased()), "modelProfileId": .string(modelID)]
         if !temporary {
             body["kind"] = .string("session.side.create"); body["targetDeviceId"] = .string(app.session?.hostId ?? "")
