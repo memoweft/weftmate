@@ -29,6 +29,7 @@ struct MainChatView: View {
     @FocusState private var draftFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var stopping = false
+    @State private var decisionJump = 0
     @StateObject private var positions = MainChatPositionTracker()
     init(app: AppleAppModel) {
         self.app = app; model = app.mainChat
@@ -252,6 +253,9 @@ struct MainChatView: View {
                     if model.window.hasNewer {
                         Button("查看后续记录") { Task { await model.read(after: model.window.newerCursor) } }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.newer")
                     }
+                    #if os(iOS)
+                    PhonePendingDecision(model:interactions,events:model.nativeEvents).id("phone.pendingDecision")
+                    #endif
                     AppleTokens.Colors.clear.frame(height: 1).id("latest")
                 }.padding(AppleTokens.Space.p20).frame(maxWidth: 760).frame(maxWidth: .infinity)
                 .background(MainChatPixelScroll(onReady: { pixelScroll = $0 }).frame(width: 0, height: 0))
@@ -260,6 +264,7 @@ struct MainChatView: View {
             .scrollDismissesKeyboard(.interactively)
             #endif
             .coordinateSpace(name: "mainChatScroll")
+            .onChange(of:decisionJump) { _,_ in proxy.scrollTo("phone.pendingDecision",anchor:.center) }
             .task(id: model.target) {
                 guard let anchor = model.target else { return }
                 positions.following = false
@@ -317,17 +322,25 @@ struct MainChatView: View {
                     }.buttonStyle(OutlineActionStyle())
                 }
             }
+            #if os(iOS)
+            PhonePendingDecisionNotice(model:interactions) { draftFocused=false; decisionJump += 1 }.padding(.horizontal,AppleTokens.Space.p12)
+            #else
             ConversationApprovalBar(model: interactions, events: model.nativeEvents)
-                #if os(iOS)
-                .padding(.horizontal, AppleTokens.Space.p12)
-                #endif
+            #endif
             if model.chat?.contextOrganizing == true { Text("正在整理上下文，消息将排队发送。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             if model.chat?.relayError != nil { Text("上下文整理未完成，草稿已保留。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+            #if os(macOS)
             ForEach(model.attachments) { file in
                 HStack { Text(file.original.name); Button("移除") { file.removeTemporaryFiles(); model.attachments.removeAll { $0.id == file.id } } }.buttonStyle(OutlineActionStyle()).font(AppleTokens.Fonts.caption)
             }
+            #endif
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
             #if os(iOS)
+            if !model.attachments.isEmpty {
+                ScrollView(.horizontal) { HStack(alignment:.top,spacing:AppleTokens.Space.p8) {
+                    ForEach(model.attachments) { file in PhoneAttachmentBlock(name:file.original.name,image:file.display,isImage:file.original.isImage,status:model.sending ? "正在发送…" : model.error == nil ? nil : "发送未完成",remove:{ file.removeTemporaryFiles(); model.attachments.removeAll { $0.id == file.id } }) }
+                } }.scrollIndicators(.hidden).accessibilityIdentifier("mainChat.attachmentBlocks")
+            }
             draftInput.frame(minHeight:AppleTokens.Space.p44)
                 .padding(.leading,composerExpanded ? AppleTokens.Space.p0 : AppleTokens.Space.p56)
                 .padding(.trailing,composerExpanded ? AppleTokens.Space.p0 : AppleTokens.Space.p44 * 2 + AppleTokens.Space.p16)
@@ -408,13 +421,19 @@ struct MainChatView: View {
                     Button("继续原请求") { Task { await model.reconcile(submit: true) } }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.continue")
                     Text(model.command?.state == "pending" ? "排队中" : "待核对").font(AppleTokens.Fonts.caption)
                 }
-                let stop = model.draft.isEmpty && model.attachments.isEmpty && model.chat?.running == true
+                let action=PhoneComposerPrimaryAction.resolve(running:model.chat?.running == true,draft:model.draft,attachmentCount:model.attachments.count)
+                let stop = action == .stop
+                #if os(iOS)
+                let voice = action == .voice
+                #else
+                let voice = false
+                #endif
                 Button {
                     draftFocused = false
-                    if stop { Task { await stopTask() } } else { Task { await model.send() } }
-                } label: { WeftIcon(stop ? "stop" : "send") }.buttonStyle(PrimaryActionStyle(fillsWidth: false)).phoneIcon(primary: true)
-                    .disabled(model.sending || stopping || (!stop && ((model.draft.isEmpty && model.attachments.isEmpty) || model.pending != nil || model.chat?.sendAvailable != true || (model.chat?.activeSessionId == nil && model.modelID.isEmpty) || !model.capabilities.supports("chatSend"))))
-                    .accessibilityLabel(stop ? "停止" : "发送").accessibilityIdentifier("mainChat.send")
+                    if voice { draftFocused=true; dictationPopover=true } else if stop { Task { await stopTask() } } else { Task { await model.send() } }
+                } label: { WeftIcon(stop ? "stop" : voice ? "mic" : "send") }.buttonStyle(PrimaryActionStyle(fillsWidth: false)).phoneIcon(primary: true)
+                    .disabled(model.sending || stopping || (!stop && !voice && ((model.draft.isEmpty && model.attachments.isEmpty) || model.pending != nil || model.chat?.sendAvailable != true || (model.chat?.activeSessionId == nil && model.modelID.isEmpty) || !model.capabilities.supports("chatSend"))))
+                    .accessibilityLabel(stop ? "停止" : voice ? "语音输入" : "发送").accessibilityIdentifier("mainChat.send")
             }
     }
     private var composerExpanded: Bool {
@@ -426,7 +445,7 @@ struct MainChatView: View {
     }
     private var draftInput: some View {
         TextField(composerPlaceholder, text: Binding(get: { model.draft }, set: { model.setDraft($0) }), axis: .vertical)
-            .lineLimit(composerExpanded ? 1...6 : 1...1).textFieldStyle(.plain).focused($draftFocused)
+            .lineLimit(1...PhoneComposerState(focused:draftFocused,draft:model.draft,attachmentCount:model.attachments.count).maximumLines).textFieldStyle(.plain).focused($draftFocused)
             .disabled(!model.models.contains(where: \.configured)).accessibilityIdentifier("mainChat.draft")
     }
     @ViewBuilder private var modelSelection: some View {
@@ -526,6 +545,9 @@ struct MainChatEventRow: View {
                     if event.type != "user.message" { Spacer(minLength: AppleTokens.Space.p0) }
                 }
 
+                #if os(iOS)
+                if !originals.isEmpty || !images.isEmpty {
+                ScrollView(.horizontal) { HStack(alignment:.top,spacing:AppleTokens.Space.p8) {
                 ForEach(originals) { file in
                     ConversationAttachmentTile(model: app, reference: .original(file)) { attachmentPreview = .original(file) }
                 }
@@ -534,6 +556,18 @@ struct MainChatEventRow: View {
                         ConversationAttachmentTile(model: app, reference: .sessionImage(image, session)) { attachmentPreview = .sessionImage(image, session) }
                     }
                 }
+                } }.scrollIndicators(.hidden)
+                }
+                #else
+                ForEach(originals) { file in
+                    ConversationAttachmentTile(model: app, reference: .original(file)) { attachmentPreview = .original(file) }
+                }
+                if originals.isEmpty, let session = event.sessionID {
+                    ForEach(images, id: \.attachmentId) { image in
+                        ConversationAttachmentTile(model: app, reference: .sessionImage(image, session)) { attachmentPreview = .sessionImage(image, session) }
+                    }
+                }
+                #endif
             } else if event.type == "artifact.created" {
                 #if os(iOS)
                 if let sessionID = event.sessionID, let bundle = model.artifactBundle(event) { ReplyArtifactList(app: app, sessionID: sessionID, bundle: bundle) }

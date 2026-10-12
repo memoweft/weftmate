@@ -27,11 +27,18 @@ struct ConversationTimelineView: View {
         appModel.timeline.events
         #endif
     }
+    private var phoneEntries: [TimelineEntry] {
+        #if os(iOS)
+        TimelineProjection.entries(displayEvents).filter { $0.event.type != "task.queued" }
+        #else
+        TimelineProjection.conversationEntries(displayEvents)
+        #endif
+    }
     var body: some View {
         ForEach(appModel.messages.filter { !$0.id.hasPrefix("host|") && !$0.pendingContext && !appModel.timelineMessageIDs.values.contains($0.id) }) { message in
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
         }
-        ForEach(TimelineProjection.conversationEntries(displayEvents)) { entry in
+        ForEach(phoneEntries) { entry in
             VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                 if !entry.steps.isEmpty {
                     TimelineExecutionBlock(appModel: appModel, client: appModel.assistantClient, sessionID: sessionID, entry: entry, interactions: interactions, openSources: openSources)
@@ -55,7 +62,7 @@ struct ConversationTimelineView: View {
                         }.buttonStyle(.plain).accessibilityIdentifier("memoryUsed.\(entry.seq)")
                     }
 
-                } else if entry.event.type.hasPrefix("question.") {
+                } else if entry.event.type.hasPrefix("question.") || entry.event.type.hasPrefix("approval.") {
                     TimelineInteractionCard(model: interactions, entry: entry, events: appModel.timeline.events)
                 } else if entry.event.type == "artifact.created" {
                     #if os(iOS)
