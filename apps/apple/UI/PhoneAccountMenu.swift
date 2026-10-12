@@ -5,13 +5,13 @@ import WeftMateCore
 /// Auxiliary pages keep the current conversation underneath the sheet.
 struct PhoneAccountMenu: View {
     @ObservedObject var model: AppleAppModel
-    @EnvironmentObject private var health: HealthSettingsModel
+    @EnvironmentObject private var health: DailyHealthModel
     @StateObject private var usage: AccountUsageModel
     init(model: AppleAppModel) { self.model = model; _usage = StateObject(wrappedValue: AccountUsageModel(app: model)) }
     @State private var confirmingLogout = false
     @State private var route: Route?
 
-    private enum Destination { case memory, settings, about, health }
+    private enum Destination { case memory, settings, about, activity }
     private struct Route: Identifiable {
         let id = UUID()
         let destination: Destination
@@ -29,8 +29,8 @@ struct PhoneAccountMenu: View {
             } else { Text(usage.error ?? "正在读取本月用量…") }
             Button { open(.memory) } label: { Label("记忆", image: "wm-memory") }
                 .accessibilityLabel("记忆").accessibilityIdentifier("phoneMenu.memory")
-            Button { open(.health) } label: { Label("健康", image: "wm-health") }
-                .accessibilityLabel("健康").accessibilityIdentifier("phoneMenu.health")
+            Button { open(.activity) } label: { Label("动态", image: "wm-bell") }
+                .accessibilityLabel("动态").accessibilityIdentifier("phoneMenu.activity")
             Divider()
             Button { model.settingsRoute = .init(categoryID: "general"); open(.settings) } label: { Label("设置", image: "wm-settings") }
                 .accessibilityLabel("设置").accessibilityIdentifier("phoneMenu.settings")
@@ -53,8 +53,8 @@ struct PhoneAccountMenu: View {
                         switch item.destination {
                         case .memory: MemoryWorkspaceView(appModel: model).id(item.epoch)
                         case .settings, .about: EmptyView()
-                        case .health:
-                            HealthSettingsView(model: health, app: model)
+                        case .activity:
+                            DailyReviewView(app: model)
                         }
                     } else {
                         EmptyState(symbol: "account", title: "账户已变更",
@@ -70,6 +70,7 @@ struct PhoneAccountMenu: View {
                     }
                 }
             }
+            .environmentObject(health)
             .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme)
         }
         .confirmationDialog("退出登录？本机对话与记忆保留。", isPresented: $confirmingLogout, titleVisibility: .visible) {

@@ -1,0 +1,12 @@
+{
+  "healthDeliveryEvents": 5,
+  "fieldNames": [
+    "dayCount",
+    "errorType",
+    "phase",
+    "recordIndex",
+    "result"
+  ],
+  "noHealthMeasurements": true,
+  "syntheticOnly": true
+}

@@ -158,6 +158,9 @@ private struct SettingsCategoryView: View {
     @EnvironmentObject private var updates: MacUpdateModel
     @Environment(\.openWindow) private var openWindow
     #endif
+    #if os(iOS)
+    @EnvironmentObject private var dailyHealth: DailyHealthModel
+    #endif
     private var title: String { AppleSettingsRegistry.category(route.categoryID)?.name ?? "设置" }
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p0) {
@@ -237,6 +240,9 @@ private struct SettingsCategoryView: View {
     @ViewBuilder private var fields: some View {
         switch route.categoryID {
         case "general":
+            #if os(iOS)
+            DailyHealthSettingsRow(app: app)
+            #endif
             SettingsRow("回复进行中时发送的消息", "按账户保存在这台设备。") {
                 Picker("回复进行中时发送的消息", selection: Binding(get: { app.runningMessageMode }, set: { app.runningMessageMode = $0 })) {
                     ForEach(RunningMessageMode.allCases) { Text($0.title).tag($0) }

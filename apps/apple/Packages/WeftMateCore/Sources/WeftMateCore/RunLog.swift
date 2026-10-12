@@ -23,7 +23,8 @@ public enum RunLogPrivacy {
         "reason": ["user_quit", "system_termination", "update", "suspected_foreground_crash", "terminated_in_background"],
         "state": ["foreground", "background", "inactive"], "launchKind": ["cold", "resume"],
         "status": ["online", "offline", "login_required", "certificate_error", "relay_unavailable", "connecting"],
-        "phase": ["connection", "sync", "approval", "notification", "watch_transfer", "storage", "task", "lifecycle"],
+        "phase": ["health_delivery", "connection", "sync", "approval", "notification", "watch_transfer", "storage", "task", "lifecycle"],
+        "result": ["success", "failure"],
         "errorType": ["api", "network", "storage", "objc_exception", "unknown"],
         "code": ["UNAVAILABLE", "UNCONFIRMED", "AUTH_REQUIRED", "CERTIFICATE_ERROR", "RELAY_UNAVAILABLE", "STORAGE_FAILED", "CANCELED"],
         "terminationReason": ["signal", "watchdog", "memory_pressure", "unknown"],
@@ -32,7 +33,7 @@ public enum RunLogPrivacy {
     public static func fields(_ input: [String: String]) -> [String: String] {
         input.filter { key, value in
             if let words = vocabulary[key] { return words.contains(value) }
-            if ["exitCode", "signal", "exceptionCode", "exceptionType", "errorCode", "reportCount", "line", "recordIndex"].contains(key) {
+            if ["exitCode", "signal", "exceptionCode", "exceptionType", "errorCode", "reportCount", "dayCount", "line", "recordIndex"].contains(key) {
                 return value.count <= 20 && value.range(of: "^-?[0-9]+$", options: .regularExpression) != nil
             }
             if key == "module" { return modules.contains(value) }
