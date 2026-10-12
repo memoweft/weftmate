@@ -10,20 +10,24 @@ struct Apple3Fixture: View {
     @State private var scenario = "stream"
     private let scenarios = ["stream", "final", "aligned", "warning", "files", "recovered", "interrupted", "failed", "health", "permissions", "healthSettings"]
     var body: some View {
-        NavigationStack {
+        VStack(spacing: AppleTokens.Space.p0) {
+            if ready {
+                HStack {
+                    Menu { ForEach(scenarios, id: \.self) { value in Button(value) { Task { await select(value) } }.accessibilityIdentifier("apple3." + value) } }
+                        label: { Text("合成场景") }.accessibilityIdentifier("apple3.scenarios")
+                    Spacer()
+                }.padding(AppleTokens.Space.p8)
+            }
+            NavigationStack {
             if ready {
                 Group {
                     if scenario == "health" { HealthPageView(app: app, ask: { app.mainChat.setDraft($0) }) }
                     else if scenario == "permissions" { SettingsView(model: app, route: .init(categoryID: "approvals")) }
                     else if scenario == "healthSettings" { Form { HealthAISettingsRow(app: app) } }
                     else { MainChatView(app: app).id(scenario) }
-                }.toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Menu { ForEach(scenarios, id: \.self) { value in Button(value) { Task { await select(value) } }.accessibilityIdentifier("apple3." + value) } }
-                            label: { Text("合成场景") }.accessibilityIdentifier("apple3.scenarios")
-                    }
                 }
             } else { Text(app.authError ?? "正在连接合成账号…") }
+            }
         }.environmentObject(health)
             .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("dark") ? .dark : .light)
             .task {
