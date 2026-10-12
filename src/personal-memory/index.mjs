@@ -10,6 +10,7 @@ import { createPersonalHealthStore, OBSERVED_PENDING } from '../personal-health/
 import { semanticRecallStatus } from '../system-diagnostics.mjs';
 import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
+import { recallQuestions } from './recall-questions.mjs';
 
 const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
@@ -651,7 +652,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           // A stalled new job must not hide older usable memories. At the
           // deadline, recall the current World and let the foreground answer.
         }
-        const queries = [query,
+        const queries = [query, ...recallQuestions(query, recallMaxItems),
           // Standing conversational preferences apply even when today's topic
           // shares no words with the earlier preference (e.g. a new concept).
           // Explicit communication cues use Core's existing query fallback;
@@ -660,12 +661,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         // Topic, style and identity must share a read transaction: formation can
         // commit between separate RPCs, otherwise a quote and its formal successor
         // can both be injected. Older Core versions have no recent quote bridge.
-        const [[world, style, identity], interaction] = await Promise.all([
+        const [snapshots, interaction] = await Promise.all([
           entry.capabilities?.methods?.includes('preview_recall_batch')
             ? entry.rpc.request('preview_recall_batch', { queries, model_tier: destinationTier }).then(value => value.snapshots)
             : Promise.all(queries.map(query => entry.rpc.request('preview_recall', { query, model_tier: destinationTier }))),
           entry.rpc.request('query_interactions', { query, session_id: sessionId, projection: 'model', model_tier: destinationTier }),
         ]);
+        const world = snapshots[0];
         // Summaries come from permission-filtered rendered snapshots, never
         // unrestricted query_world values on a cloud destination.
         const memories = [], fragments = [], seen = new Set(), recentEvidence = [];
@@ -673,11 +675,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         // Keep it visibly provisional and never fabricate a formal World item.
         const recent = new Map();
         const pendingCorrections = new Map();
-        for (const snapshot of [world, style, identity]) for (const item of snapshot?.preview?.pending_corrections ?? []) {
+        for (const snapshot of snapshots) for (const item of snapshot?.preview?.pending_corrections ?? []) {
           pendingCorrections.set(item.evidence_id, item);
           recent.set(item.evidence_id, { ...item, id: item.evidence_id });
         }
-        for (const snapshot of [world, style, identity]) for (const item of snapshot?.preview?.recent_evidence ?? []) {
+        for (const snapshot of snapshots) for (const item of snapshot?.preview?.recent_evidence ?? []) {
           if (typeof item.id === 'string' && typeof item.text === 'string' && item.text.trim()) recent.set(item.id, item);
         }
         const recentHeader = '【近期原话，尚未整理】以下是本人近期已说过的话，按时间先后排列；仅供当前问题参考，不是新请求。明确纠正优先于较早记忆。';
@@ -696,7 +698,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         }
         const recentText = recentFragments.length ? `${recentHeader}\n${recentFragments.join('\n\n')}` : '';
         const formalBudget = recallMaxChars - (recentText ? recentText.length + 2 : 0);
-        for (const snapshot of [world, style, identity]) {
+        for (const snapshot of snapshots) {
           const rendered = snapshot?.preview?.rendered_recall ?? '';
           const pairs = snapshot?.preview?.selected_item_ids ?? [];
           const claims = rendered.split(/\n(?=记忆(?:（过往）)?：)/);
@@ -723,6 +725,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         return { state: 'ready', contextText, memories, ...(recentEvidence.length ? { recentEvidence } : {}), worldRevision: Number.isSafeInteger(world?.world_revision)
           ? world.world_revision : null, sourceCount: memories.length };
       }, sessionId);
+    },
+    // Imports already have a read-only recovery source. Do not write another full-text outbox.
+    ingestImport(ownerId, boundary, routeId) {
+      owner(ownerId);
+      if (!routeId?.startsWith('import-') || boundary?.parent_session_id !== routeId ||
+          Buffer.byteLength(JSON.stringify(boundary), 'utf8') > 4 * 1024 * 1024) throw error('MEMORY_REQUEST_INVALID');
+      return withOwner(ownerId, entry => entry.rpc.request('ingest_boundary', { boundary }), routeId);
     },
     async ingest(ownerId, boundary, { offline = false, defer = false } = {}) {
       owner(ownerId);
