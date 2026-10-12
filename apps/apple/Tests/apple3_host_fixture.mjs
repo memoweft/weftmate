@@ -31,12 +31,12 @@ const server=http.createServer(async(req,res)=>{let body='';for await(const c of
  if(path==='/settings/usage')return send({timeZone:'UTC',canManage:false,models:[]});
  if(path==='/activity')return send({items:[],hasMore:false,nextCursor:null});
  if(path.startsWith('/chats/apple4-')&&!path.endsWith('/events')&&!path.endsWith('/changes')&&!path.endsWith('/resources'))return send({chat:{chatId:path.split('/').at(-1),kind:'side',title:'周末的合成计划',activeSessionId:'apple4-side-session',modelProfileId:'synthetic-model',timeZone:'UTC',revision:1,contentRevision:1,running:false,sendAvailable:true,taskAvailable:true,pinned:true,archived:false,unread:true}});
- if(path.startsWith('/chats/apple4-')&&path.endsWith('/resources'))return send({items:[],hasMore:false,nextCursor:null});
+ if(path.startsWith('/chats/apple4-')&&path.endsWith('/resources'))return send({outputs:[],sources:[],contentRevision:1,hasMore:false,nextCursor:null});
  if(path.startsWith('/chats/apple4-')&&(path.endsWith('/events')||path.endsWith('/changes')))return send({items:[],upserts:[],removals:[],hasOlder:false,hasNewer:false,syncCursor:'side-history',contentRevision:1,indexState:'ready',timeZone:'UTC',liveRevision:0,liveEvents:[],hasMore:false,nextCursor:null});
  if(path==='/settings/general')return send({settings:{language:'zh-CN'}});
  if(path==='/usage')return send({month:new Date().toISOString().slice(0,7),timeZone:'UTC',total:{requests:0,unknownRequests:0,unpricedRequests:0,inputTokens:0,cachedInputTokens:0,outputTokens:0,cost:0},days:[],sessions:[],models:[],budget:{state:'normal'}});
  if(path.endsWith('/thinking'))return send({supported:false,enabled:false});
- if(path===`/chats/${chatID}/resources`)return send({items:[],hasMore:false,nextCursor:null});
+ if(path===`/chats/${chatID}/resources`)return send({outputs:[],sources:[],contentRevision:1,hasMore:false,nextCursor:null});
  if(path.startsWith('/sessions/apple4-')){
   if(path.endsWith('/events'))return send({events:[native(1,'user.message',{text:'想整理周末的计划'}),native(2,'assistant.message',{text:'可以先留出一段时间散步，再读几页书。'})],nextSeq:2,hasMore:false});
   if(path.endsWith('/messages'))return send({messages:[],hasMore:false,nextBefore:null});
