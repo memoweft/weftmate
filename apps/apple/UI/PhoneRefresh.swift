@@ -7,6 +7,7 @@ struct PhoneActionStyle: ButtonStyle {
     var primary = false
     var destructive = false
     var selected = false
+    var onCard = false
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         let state = PhonePresentation.controlState(selected: selected, pressed: configuration.isPressed, enabled: enabled)
@@ -14,7 +15,7 @@ struct PhoneActionStyle: ButtonStyle {
             .padding(.horizontal, AppleTokens.Space.p12)
             .frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44)
             .foregroundStyle(primary ? Weave.onAccent : destructive ? Weave.danger : Weave.accent)
-            .background(primary ? Weave.accent : selected ? Weave.accentSoft : Weave.soft, in: Capsule())
+            .background(primary ? Weave.accent : selected ? Weave.accentSoft : onCard ? Weave.surface : Weave.soft, in: Capsule())
             .opacity(state == "disabled" ? AppleTokens.Opacity.disabled : state == "pressed" ? AppleTokens.Opacity.pressed : 1)
             .contentShape(Capsule())
     }
@@ -22,12 +23,13 @@ struct PhoneActionStyle: ButtonStyle {
 struct PhoneIconStyle: ButtonStyle {
     var primary = false
     var quiet = false
+    var onCard = false
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44)
             .foregroundStyle(primary ? Weave.onAccent : quiet ? Weave.muted : Weave.accent)
-            .background(primary ? Weave.accent : quiet ? AppleTokens.Colors.clear : Weave.soft, in: Circle())
+            .background(primary ? Weave.accent : quiet ? AppleTokens.Colors.clear : onCard ? Weave.surface : Weave.soft, in: Circle())
             .contentShape(Circle())
             .opacity(!enabled ? AppleTokens.Opacity.disabled : configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
     }
@@ -129,8 +131,8 @@ extension AppleAppModel {
 extension View {
     @ViewBuilder func phoneComposerControl(circle: Bool = false) -> some View {
         #if os(iOS)
-        if circle { self.background(Weave.surface, in: Circle()) }
-        else { self.background(Weave.surface, in: Capsule()) }
+        if circle { self.buttonStyle(PhoneIconStyle(onCard: true)).tint(Weave.accent) }
+        else { self.buttonStyle(PhoneActionStyle(onCard: true)).tint(Weave.accent) }
         #else
         self
         #endif

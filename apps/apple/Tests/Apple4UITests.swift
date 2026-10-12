@@ -63,4 +63,39 @@ final class Apple4UITests: XCTestCase {
             app.terminate()
         }
     }
+    @MainActor func testPanelAndSideChatPolishBatch() throws {
+        let origin = ProcessInfo.processInfo.environment["WEFTMATE_APPLE3_ORIGIN"]!
+        for theme in ["light", "dark"] {
+            let app = XCUIApplication()
+            app.launchArguments = ["--ui-testing", "--apple4-fixture", "--health4-render-only", "--a5-local-server", "--server-url", origin,
+                "--ui-testing-namespace", "apple4-panels-" + UUID().uuidString, "--a5-theme", theme, theme]
+            app.launch()
+            XCTAssertTrue(app.buttons["mainChat.menu"].waitForExistence(timeout: 35))
+            app.buttons["mainChat.menu"].tap(); app.buttons["mainChat.resources"].tap()
+            XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout: 20))
+            XCTAssertEqual(app.staticTexts.matching(identifier: "输出与来源").count, 1)
+            XCTAssertGreaterThanOrEqual(app.descendants(matching: .any)["phoneSheet.resourcesCard"].frame.width, 300)
+            capture(app, theme, "sheet"); app.buttons["phoneSheet.close"].tap()
+            app.buttons["phone.tab.resources"].tap(); capture(app, theme, "tab-resources")
+            app.buttons["phone.tab.activity"].tap()
+            XCTAssertTrue(app.staticTexts["每周的回顾会出现在这里。"].waitForExistence(timeout: 15)); capture(app, theme, "tab-activity")
+            app.buttons["phone.tab.chat"].tap(); app.buttons["phone.sidebar"].tap()
+            let sidebar = app.descendants(matching: .any)["phone.sidebar.panel"]
+            sidebar.buttons["phoneAccountMenu"].firstMatch.tap()
+            XCTAssertTrue(app.buttons["settings.accountCard"].waitForExistence(timeout: 20))
+            let logout = app.buttons["settings.logout"]
+            for _ in 0..<8 where !logout.isHittable { app.swipeUp() }
+            XCTAssertTrue(logout.isHittable); capture(app, theme, "settings-bottom")
+            app.buttons["closeAuxiliarySheetButton"].firstMatch.tap(); app.buttons["phone.sidebar.close"].tap()
+            try choose(app, "side")
+            XCTAssertTrue(app.staticTexts["可以先留出一段时间散步，再读几页书。"].waitForExistence(timeout: 25))
+            XCTAssertTrue(app.buttons["sendButton"].exists)
+            capture(app, theme, "side-chat")
+            app.buttons["conversationMenu"].tap(); app.buttons["openConversationResources"].tap()
+            XCTAssertTrue(app.buttons["closeResourcesPanel"].waitForExistence(timeout: 20))
+            XCTAssertEqual(app.staticTexts.matching(identifier: "输出与来源").count, 1); capture(app, theme, "side-sheet")
+            app.buttons["closeResourcesPanel"].tap(); app.terminate()
+        }
+    }
+
 }
