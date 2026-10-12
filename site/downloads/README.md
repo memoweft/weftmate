@@ -47,6 +47,6 @@ node scripts/prepare-public-downloads.mjs --config /absolute/path/publish.json -
 
 ## 放入既有官网
 
-Ubuntu 上已有的网站根由现行 virtual host（虚拟站点）配置决定。将完整候选 `downloads/` 放到**该根目录下**，先备份原 `downloads/`，在同一文件系统完成目录切换。`deploy-nginx-location.conf.example` 是只供审阅并插入现有 HTTPS server（加密站点配置）的片段，不含监听端口、证书或反向代理变更。修改现有配置后先运行 `nginx -t`，通过后再 reload（平滑加载）。不要运行旧的 `site/deploy-remote.sh`，它会处理整个 virtual host。
+Ubuntu 上已有的网站根由现行 virtual host（虚拟站点）配置决定。将完整候选 `downloads/` 放到**该根目录下**，先备份原 `downloads/`，在同一文件系统完成目录切换。`deploy-nginx-location.conf.example` 是只供审阅并插入现有 HTTPS server（加密站点配置）的片段，不含监听端口、证书或反向代理变更。修改现有配置后先运行 `nginx -t`，通过后再 reload（平滑加载）。官网更新使用 `scripts/deploy-site.mjs`（见 `site/README.md`），它保留既有下载与自动更新目录，不改站点配置。
 
 若现有站点使用 Caddy（网页服务器），让其已有站点根包含 `downloads/` 并继续使用原 `file_server`；对 `releases.json` 关闭缓存，对 `files/` 可启用长期不可变缓存和附件下载。这里不新建站点或占用 80/443。网站页面更新与 APK/DMG 原生安装包更新分别发布；此候选不会把网页文件当作原生升级包。

@@ -1,0 +1,12 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { checkSite, forbiddenClaims, fixtureText, checkImageText } from '../scripts/check-site.mjs';
+import { createHash } from 'node:crypto';
+import { buildSite, dist, markdown, repo, walk } from '../scripts/build-site.mjs';
+test('site builds and checks resources, localization, licensing, network and budget',async()=>{const r=await checkSite();assert.equal(r.pages,7);assert.equal(r.externalRuntimeRequests,0);assert(r.internalLinks>100);assert(r.homepageBytes<300*1024);});
+test('preview adds noindex on every page; production preserves MemoWeft exactly',async()=>{await buildSite({preview:true});for(const p of(await walk(dist)).filter(p=>p.endsWith('.html')))assert.match(await readFile(p,'utf8'),/name="robots" content="noindex,nofollow"/);await buildSite();assert.deepEqual(await readFile(join(dist,'memoweft.html')),await readFile(join(repo,'site/memoweft.html')));});
+test('legal rendering preserves every original character after markup removal',async()=>{for(const name of ['terms','privacy']){const md=await readFile(join(repo,`docs/legal/${name}-zh.md`),'utf8');const html=markdown(md);const decode=(s:string)=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");const normalize=(s:string)=>s.replace(/\*\*/g,'').replace(/^(?:#{1,6} |\d+\. |- )/gm,'').replace(/^\|[\s:|-]+\|$/gm,'').replace(/[|\s]/g,'');assert.equal(normalize(decode(html.replace(/<[^>]+>/g,''))),normalize(md));assert.match(html,/草稿/);if(name==='privacy')assert.match(html,/<table>/);}});
+test('claims gate retains prohibited claims and proprietary repository protection',()=>{for(const s of ['WeftMate is an open-source assistant','开源桌面','用户数','军用级','绝对安全','github.com/memoweft/weftmate'])assert(forbiddenClaims.test(s));assert(!forbiddenClaims.test('GitHub: https://github.com/memoweft'));});
+test('fixture gate covers page text and hash-bound image text snapshots',()=>{for(const s of ['合成会话','A8_WAIT','AB_WAIT','A5 合成资料','**项目报告**'])assert(fixtureText.test(s));const bytes=Buffer.from('reviewed-image');const sha256=createHash('sha256').update(bytes).digest('hex');assert.doesNotThrow(()=>checkImageText(bytes,{sha256,text:'季度总结已完成'}));assert.throws(()=>checkImageText(bytes,{sha256,text:'A8_WAIT'}));assert.throws(()=>checkImageText(Buffer.from('unreviewed-image'),{sha256,text:'季度总结已完成'}));});

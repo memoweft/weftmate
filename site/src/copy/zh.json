@@ -1,0 +1,467 @@
+{
+  "lang": "zh-CN",
+  "title": "WeftMate — 它记得你，也替你把事做完。",
+  "description": "住在你自己电脑里的 AI 助手。说一句目标，看它把事做完；换设备、换对话，它还记得你。亲手玩一段 WeftMate 演示。",
+  "navDemo": "演示",
+  "navDevices": "设备",
+  "navGet": "获取",
+  "language": "语言",
+  "theme": "外观",
+  "system": "跟随系统",
+  "light": "浅色",
+  "dark": "深色",
+  "skip": "跳到内容",
+  "preview": "预览阶段",
+  "heroA": "它记得你，",
+  "heroB": "也替你把事做完。",
+  "heroBody": "WeftMate 是住在你自己电脑里的 AI 助手。说一句目标，它在电脑上把事做完；你说过的事，下次还记得。手机和手表上，也是同一个它。",
+  "heroPrimary": "看它怎么做事",
+  "heroSecondary": "什么时候能用",
+  "heroNote": "数据主要在你的电脑上 · 模型由你选择",
+  "demoTitle": "别光听我们说。\n亲手试一次。",
+  "demoBody": "点一次允许，打开一份报告，再把一条记忆更正。看看下一步会怎样。",
+  "demoNote": "互动演示，内容为虚构示例。不操作你的文件，也不调用模型。",
+  "sceneFiles": "把文件整理好",
+  "sceneMemory": "想起上周的事",
+  "scenePhone": "在手机上点批准",
+  "play": "播放",
+  "pause": "暂停",
+  "next": "下一步",
+  "restart": "重来",
+  "computer": "电脑",
+  "phone": "手机",
+  "step": "步骤",
+  "waiting": "轮到你了。点「允许」，它才会继续。",
+  "done": "演示完成。你可以换一段，或再玩一次。",
+  "stopped": "已拒绝，文件没有移动。点「重来」再试一次。",
+  "memoryHint": "点开记忆，看看来源。也可以更正或忘掉。",
+  "staticTitle": "一句目标，到一份成果。",
+  "staticNote": "开启 JavaScript 后，可以亲手批准和更正记忆。",
+  "workTitle": "你说想要什么。\n它把结果带回来。",
+  "workBody": "不用把目标拆成一串指令。读文件、运行命令、整理资料、写出报告，过程在对话里一行行看得见。你随时可以停下，也可以把下一件事排上。",
+  "workSmall": "需要你拿主意的那一步，它才停下来问。允许一次，或让以后的同类操作直接继续。做完，文件收成一份清单。",
+  "workPrompt": "把这个月的资料整理好，给我一份能看懂的报告。",
+  "workProgress": "读取了 213 个文件 · 找到 38 个待整理文件",
+  "workApproval": "要把 38 个文件移进 5 个新文件夹吗？",
+  "allow": "允许",
+  "deny": "拒绝",
+  "always": "以后这类都允许",
+  "report": "整理报告.md",
+  "inventory": "文件清单.csv",
+  "reportMeta": "报告 · 12 KB",
+  "inventoryMeta": "表格 · 8 KB",
+  "results": "这次整理出 2 个文件",
+  "workFinish": "213 个文件看过了，38 个归好了位置。6 个重复文件先留着，报告和清单都在这里。",
+  "memoryTitle": "上周随口说的，\n今天不用再说。",
+  "memoryBody": "它从日常对话里自己记住你，不需要你另做笔记。换一段对话，也能按意思想起来。",
+  "memorySmall": "记住了什么，你看得见。记错了可以更正，不想留的可以彻底忘掉。每周一份「这周我记住了什么」；想不留痕，就开临时对话。",
+  "lastWeek": "上周 · 周四",
+  "today": "今天",
+  "memoryOld": "周末出门我想骑车，路线别超过 20 公里。",
+  "memoryOldReply": "好，先按 20 公里以内来找路线。",
+  "memoryRequest": "帮我想想周末去哪儿放松。",
+  "memoryReply": "可以去河边骑一圈。选安静的路线，控制在 20 公里以内，中途找一家小店歇歇。",
+  "memoryUsed": "用到了 2 条记忆",
+  "memoryOne": "周末喜欢骑车，偏好安静的路线。",
+  "memoryTwo": "骑行路线不超过 20 公里。",
+  "sourceLabel": "来自上周四的对话",
+  "sourceQuote": "「路线别超过 20 公里。」",
+  "correct": "更正",
+  "forget": "忘掉",
+  "correctionLabel": "现在的距离偏好",
+  "correctionValue": "骑行路线不超过 30 公里。",
+  "save": "保存更正",
+  "cancel": "取消",
+  "corrected": "记忆已更正。后续演示会用新的偏好。",
+  "forgotten": "已忘掉距离偏好。后续演示不再使用它。",
+  "memoryNewReply": "可以去河边骑一圈。选安静的路线，控制在 30 公里以内，中途找一家小店歇歇。",
+  "memoryForgotReply": "可以去河边骑一圈。选安静的路线，中途找一家小店歇歇。",
+  "weekly": "这周我记住了什么",
+  "weeklyDetail": "新增的偏好、更正过的事，都放在一起。",
+  "devicesTitle": "离开电脑，\n不用离开这件事。",
+  "devicesBody": "Windows、Mac、安卓、iPhone、Apple Watch。手机看电脑上的进度，通知里点一下允许，手表上也能处理审批。换设备、换对话、换模型，它还是它。",
+  "deviceCaption": "界面示意 · 同一件事，同一个现场",
+  "windowsLabel": "Windows",
+  "macLabel": "Mac",
+  "androidLabel": "安卓",
+  "iphoneLabel": "iPhone",
+  "watchLabel": "Apple Watch",
+  "windowsDesc": "电脑上的完整工作区",
+  "macDesc": "原生 Mac 客户端",
+  "androidDesc": "随身看进度、接着聊",
+  "iphoneDesc": "原生 iPhone 客户端",
+  "watchDesc": "抬腕，处理眼前的审批",
+  "devicePrev": "上一台设备",
+  "deviceNext": "下一台设备",
+  "deviceOpen": "查看这台设备的界面",
+  "phoneRequest": "季度总结已准备好。要覆盖共享文件夹里的旧版 PDF 吗？",
+  "phoneLead": "出门了，也能决定这一步。",
+  "phoneAllowed": "已在手机上批准。电脑正在保存。",
+  "phoneFinished": "新版 PDF 已放进共享文件夹。",
+  "watchHint": "手表上也能处理审批",
+  "watchAction": "批准",
+  "phoneBottom": [
+    "聊天",
+    "动态",
+    "目标",
+    "成果库"
+  ],
+  "dataTitle": "你的生活，\n留在你自己这儿。",
+  "dataBody": "对话、附件和记忆，主要保存在你自己的电脑上。WeftMate 云负责账号、连接和通知等必要的事情，不保存对话正文与记忆内容。",
+  "dataModel": "模型由你选择：用自己的 API，或在本机运行模型。使用第三方模型时，消息与为回答选出的相关记忆，会直接从你的设备发给该服务商，适用其隐私政策。",
+  "dataLocal": "在自己的电脑上，不登录也能用；需要远程访问时再登录。",
+  "dataBusiness": "目前不卖模型、无需会员。第三方模型服务的费用由你自行承担。",
+  "dataPolicy": "看看完整的数据说明",
+  "dataComputer": "你的电脑",
+  "dataInside": "对话 · 附件 · 记忆",
+  "dataChoice": "你选择的模型",
+  "dataFlow": "回答需要的消息与相关记忆",
+  "dataCloud": "WeftMate 云",
+  "dataCloudNote": "账号 · 连接 · 通知",
+  "dataFoot": "我们不出售你的个人信息，不用你的内容训练模型。",
+  "detailsTitle": "大事做完。\n小地方，也顺手。",
+  "details": [
+    [
+      "主对话 + 旁聊",
+      "日常一直聊；一件具体的事，开个旁聊专心做。",
+      "chat"
+    ],
+    [
+      "动态、目标、成果库",
+      "进度、待办和做好的文件，各有一个好找的位置。",
+      "outputs"
+    ],
+    [
+      "定时任务",
+      "把一句「每周五帮我……」变成按时进行的事。",
+      "clock"
+    ],
+    [
+      "一个搜索，全部找到",
+      "对话、记忆、成果与定时任务，不用来回翻。",
+      "search"
+    ],
+    [
+      "右键，发送到 WeftMate",
+      "Windows 的文件和文件夹，随手交给它。",
+      "desktop"
+    ],
+    [
+      "回复也能好好读",
+      "代码、表格、公式和图表，清楚呈现。",
+      "code"
+    ],
+    [
+      "下一步，有建议",
+      "聊完之后，顺着一个建议继续往下走。",
+      "right"
+    ],
+    [
+      "状态与一键修复",
+      "想看时找得到；电脑上出问题的连接可以修复。",
+      "tool"
+    ],
+    [
+      "每天的事，自动成摘要",
+      "最近在忙什么，它自己整理好，聊天时接得上；每周再给你一份成果与待办的回顾。",
+      "book"
+    ],
+    [
+      "有风险时，多看一眼",
+      "要你批准之前，另一个模型先核对一遍，有疑问就写在审批旁边。决定仍然由你来做。",
+      "approval"
+    ]
+  ],
+  "futureTitle": "它还会，\n更懂你的日常。",
+  "futureBody": "这些正在路上。每一项，都是让同一个助手更靠近你的生活。",
+  "coming": "即将推出",
+  "future": [
+    [
+      "iPhone 与手表健康数据",
+      "把日常状态放在一起理解，给出更合适的小建议。",
+      "health"
+    ],
+    [
+      "精灵与陪伴",
+      "一个有回应的小伙伴，和你一起照顾日常。",
+      "pet"
+    ],
+    [
+      "日历与邮件",
+      "让安排、来信和正在做的事，自然接起来。",
+      "mail"
+    ],
+    [
+      "导入 ChatGPT / Claude 历史",
+      "从过去的对话接着认识你，少从头解释一次。",
+      "history"
+    ]
+  ],
+  "getTitle": "下一位助手，\n想住进你的电脑。",
+  "getBody": "WeftMate 即将开放。现在仍处于预览阶段，尚未正式对外发布。我们正在把每个入口打磨好。",
+  "getNote": "自带模型 · 无需会员",
+  "platforms": [
+    [
+      "Windows",
+      "安装版程序",
+      "desktop"
+    ],
+    [
+      "Mac",
+      "原生客户端",
+      "desktop"
+    ],
+    [
+      "安卓",
+      "手机 App",
+      "phone"
+    ],
+    [
+      "iPhone",
+      "原生 App",
+      "phone"
+    ],
+    [
+      "Apple Watch",
+      "手表 App",
+      "watch"
+    ]
+  ],
+  "getAction": "先玩一段演示",
+  "getFoot": "公开下载即将开放，具体开放方式以之后的公告为准。",
+  "feedback": "在 App 内「反馈」里告诉我们。",
+  "terms": "服务条款",
+  "privacy": "隐私政策",
+  "changelog": "更新记录",
+  "legalEnglish": "English version coming soon",
+  "copyright": "© 2026 WeftMate. 保留所有权利。",
+  "footerLine": "同一个它。越来越懂你。",
+  "backHome": "回到首页",
+  "notFoundTitle": "这根线，暂时没接上。",
+  "notFoundBody": "你找的页面可能搬走了，或地址少了一点。回到首页，我们接着聊。",
+  "changelogTitle": "一直在，变得更好。",
+  "changelogBody": "WeftMate 的开发更新记录。这里列的是开发中的版本，不代表已经公开发布。",
+  "added": "新增",
+  "improved": "改进",
+  "fixed": "修复",
+  "desktopVersion": "电脑版",
+  "mobileVersion": "手机界面",
+  "searchPlaceholder": "搜索",
+  "composerPlaceholder": "向 WeftMate 说说你的目标",
+  "workAllowed": "已允许。继续整理，保留原始文件。",
+  "memoryError": "请写下现在的偏好，再保存。",
+  "navMemory": "记忆",
+  "navData": "数据",
+  "navigation": "浏览官网",
+  "heroTry": "自己玩",
+  "heroCaption": "一句目标，做到有结果。",
+  "accountName": "阿青",
+  "auto": "自动",
+  "sideChats": [
+    "周末骑行路线",
+    "十月报销",
+    "读书笔记"
+  ],
+  "values": [
+    [
+      "不用每次\n重新介绍自己。",
+      "从上周的偏好，到今天的决定，它接着记得。",
+      "memory"
+    ],
+    [
+      "不止会说，\n还会做。",
+      "在你的电脑上，一路做到文件、报告和结果。",
+      "terminal"
+    ],
+    [
+      "不绑模型，\n不收会员。",
+      "模型由你选择，内容主要留在你自己的电脑。",
+      "model"
+    ]
+  ],
+  "workPlan": "我先看看文件，再按类型和日期整理。重复文件会单独列出来，交给你决定。",
+  "workReadEarly": "读取了 42 个文件，继续看看剩下的",
+  "workRead": "读取了 213 个文件",
+  "workClassified": "按类型和日期归好了类",
+  "workDuplicates": "找到 6 个重复文件，已单独标记",
+  "workMoved": "移动了 38 个文件 · 新建 5 个文件夹",
+  "workWritten": "写好了整理报告和文件清单",
+  "suggestions": [
+    "以后每周五自动整理一次",
+    "看看重复文件",
+    "把报告再写短一点"
+  ],
+  "suggestionTitle": "下一步可以",
+  "scheduledTitle": "已设为定时任务",
+  "scheduledDetail": "每周五 18:00 · 整理这个资料文件夹",
+  "scheduledNote": "下一次需要你决定的操作，仍会先问你。",
+  "duplicatesTitle": "6 个重复文件，先留着",
+  "duplicatesDetail": "已标记在文件清单里。你可以先看看，再决定是否删除。",
+  "shortenedTitle": "报告要点，已经收好了",
+  "shortenedDetail": "38 个文件已归位，5 个新文件夹，6 个重复文件保留待确认。",
+  "closePreview": "关闭成果预览",
+  "reportDocumentMeta": "10 月资料整理 · 10 月 12 日",
+  "reportTitle": "这个月的资料，理清楚了。",
+  "inventoryTitle": "文件去了哪里，一眼能查。",
+  "reportIntro": "按文件类型与日期整理，保留全部原始内容。需要你再决定的事项，单独列在最后。",
+  "reportHighlights": "这次完成了什么",
+  "reportPoints": [
+    "看过 213 个文件，按类型和日期分组。",
+    "38 个文件移到 5 个新文件夹，原始内容未改动。",
+    "6 个重复文件保留原位，已在清单中标记。",
+    "生成完整文件清单，之后找文件时有据可查。"
+  ],
+  "reportTableTitle": "整理后的分布",
+  "reportTable": [
+    [
+      "类别",
+      "文件",
+      "这次整理"
+    ],
+    [
+      "文档",
+      "86",
+      "归入月份文件夹"
+    ],
+    [
+      "图片",
+      "72",
+      "按日期归类"
+    ],
+    [
+      "表格",
+      "31",
+      "报销与工作分开"
+    ],
+    [
+      "其它",
+      "24",
+      "保留原位置"
+    ]
+  ],
+  "inventoryTable": [
+    [
+      "文件",
+      "去向",
+      "状态"
+    ],
+    [
+      "会议记录.docx",
+      "文档 / 十月",
+      "已归位"
+    ],
+    [
+      "旅行照片.jpg",
+      "图片 / 十月",
+      "已归位"
+    ],
+    [
+      "报销明细.xlsx",
+      "表格 / 报销",
+      "已归位"
+    ],
+    [
+      "产品草稿副本.docx",
+      "原文件夹",
+      "重复，已保留"
+    ]
+  ],
+  "documentNote": "演示中的虚构文件与内容。",
+  "quarterPrompt": "我准备出门了。把季度总结导出成 PDF，放进共享文件夹。",
+  "quarterPlan": "我会检查排版、导出 PDF，再放进共享文件夹。",
+  "quarterRead": "读好了季度总结，保留了 3 张图表",
+  "quarterExported": "导出了 12 页 PDF，准备放进共享文件夹",
+  "quarterApproval": "共享文件夹里已有「季度总结.pdf」，要用新版覆盖吗？",
+  "quarterFile": "季度总结.pdf",
+  "quarterMeta": "PDF · 12 页",
+  "quarterReady": "新版文件已准备好",
+  "quarterAllowed": "你在手机上允许了覆盖，电脑继续保存",
+  "quarterSaved": "已放进共享文件夹，旧版已替换",
+  "quarterFinish": "12 页总结已导出，3 张图表完整保留。新版在共享文件夹，出门也能接着看。",
+  "quarterDocumentMeta": "第三季度回顾 · 10 月 12 日",
+  "quarterDocumentTitle": "这一季，做成了什么。",
+  "quarterIntro": "项目进展、下一步重点与需要关注的事项，放在同一份回顾里。",
+  "quarterPoints": [
+    "完成 3 个阶段目标，关键文件集中归档。",
+    "保留 3 张趋势图，导出前检查了标题与分页。",
+    "下一季度先完成资料复核，再推进新计划。",
+    "本版已更新共享文件，团队阅读同一份内容。"
+  ],
+  "quarterTableTitle": "阶段进展",
+  "quarterTable": [
+    [
+      "事项",
+      "进度",
+      "下一步"
+    ],
+    [
+      "资料整理",
+      "完成",
+      "每周复核"
+    ],
+    [
+      "阶段回顾",
+      "完成",
+      "共享新版"
+    ],
+    [
+      "下季计划",
+      "准备中",
+      "确认重点"
+    ]
+  ],
+  "computerWorking": "电脑正在做",
+  "computerWaiting": "电脑在等你批准",
+  "computerComplete": "电脑已经做完",
+  "notificationTitle": "WeftMate · 电脑在等你",
+  "notificationBody": "季度总结已导出。放进共享文件夹前，需要你确认覆盖旧版。",
+  "notificationRead": "查看这件事",
+  "watchFinished": "已完成",
+  "remoteNote": "在手机上点批准，电脑就会继续。",
+  "remoteDeclined": "已拒绝覆盖。原文件保留，新版还没有放进去。",
+  "remoteIdle": "进度就在这里，随身也看得见。",
+  "memoryOldMore": "也别太拥挤，我更喜欢安静一点的地方。",
+  "memoryOldMoreReply": "记住了。周末骑车，选安静的路线，不赶路。",
+  "memoryHighlightWords": [
+    "河边骑",
+    "安静",
+    "20 公里"
+  ],
+  "memoryExampleCaption": "记忆示意 · 来自日常对话，能看见、能更正、能忘掉。",
+  "memoryCards": [
+    [
+      "偏好",
+      "周末喜欢骑车，路线尽量安静。",
+      "来自 10 月 8 日的对话"
+    ],
+    [
+      "常提到的人和事",
+      "周末想和小满一起去河边。",
+      "来自 10 月 10 日的对话"
+    ],
+    [
+      "做过的决定",
+      "每周五先把工作资料整理好。",
+      "来自 10 月 9 日的对话"
+    ]
+  ],
+  "memoryEditing": "更正中",
+  "memoryEditingOld": "骑行不超过 20 公里",
+  "memoryEditingNew": "现在可以骑到 30 公里",
+  "memoryForgottenLabel": "已忘掉",
+  "memoryForgottenText": "周末一定要早起",
+  "memoryWeekPoints": [
+    "记住了 3 件新说过的事",
+    "更正了骑行距离",
+    "忘掉了不再适合的安排"
+  ],
+  "availability": "即将开放",
+  "notificationApprovedTitle": "WeftMate · 已批准",
+  "notificationDoneTitle": "WeftMate · 已完成",
+  "watchWorking": "进行中",
+  "watchSaving": "正在保存",
+  "watchQuestion": "要覆盖旧版 PDF 吗？",
+  "watchIdle": "电脑正在导出季度总结",
+  "watchApprovedLine": "已批准，电脑接着做",
+  "watchDoneLine": "季度总结已放进共享文件夹"
+}
