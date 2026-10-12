@@ -100,8 +100,10 @@ export function createOfflineTaskReceiver(context, recipient) {
   }
   function tick(){
     if(closed||flight||!context.cloudIdentity)return flight;
+    if(context.cloudIdentity.offlineTasksSupported?.()!==true){validated.clear();return Promise.resolve();}
     flight=(async()=>{
       await context.cloudIdentity.syncRevocations();
+      if(context.cloudIdentity.offlineTasksSupported?.()!==true){validated.clear();return;}
       for(const ownerId of context.ownerIds())for(const command of Object.values(context.accountState(ownerId).commands))await resume(ownerId,command.commandId);
       const result=await request('claim',{});
       for(const row of result.items){
@@ -115,5 +117,5 @@ export function createOfflineTaskReceiver(context, recipient) {
       await results();
     })().finally(()=>{flight=null;});return flight;
   }
-  return {tick,canDispatch:(ownerId,commandId)=>validated.has(key(ownerId,commandId)),start(){if(!context.cloudIdentity)return;void tick().catch(()=>{});timer=setInterval(()=>void tick().catch(()=>{}),5000);timer.unref();},async close(){closed=true;clearInterval(timer);await flight?.catch(()=>{});}};
+  return {tick,canDispatch:(ownerId,commandId)=>context.cloudIdentity.offlineTasksSupported?.()===true&&validated.has(key(ownerId,commandId)),start(){if(!context.cloudIdentity)return;void tick().catch(()=>{});timer=setInterval(()=>void tick().catch(()=>{}),5000);timer.unref();},async close(){closed=true;clearInterval(timer);await flight?.catch(()=>{});}};
 }

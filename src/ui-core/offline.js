@@ -120,12 +120,12 @@
       complete: body => call('offline.complete', { body }, 180000), clear: () => call('offline.clear'), close() {} };
   }
   async function create({ vault, identity, host, control, tasks, taskDevice, notify = () => {}, crypto = globalThis.crypto }) {
-    let value = await vault.load(), running = false, taskSending=false, abort, version = 0, targets=[];
+    let value = await vault.load(), running = false, taskSending=false, abort, version = 0, targets=[],cloudTasksSupported=false;
     value.tasks??=[];
     if(value.snapshot)targets=await vault.targets?.(value.snapshot.control.accountId)||[value.snapshot];
-    const view = () => ({ ...value, targets, ready: !!value.snapshot, chatReady:!!value.snapshot?.model,taskReady:!!tasks&&!!vault.seal&&!!value.snapshot?.taskRecipient, taskSending, running:running||taskSending });
+    const view = () => ({ ...value, targets, ready: !!value.snapshot, chatReady:!!value.snapshot?.model,taskReady:cloudTasksSupported&&!!tasks&&!!vault.seal&&!!value.snapshot?.taskRecipient, taskSending, running:running||taskSending });
     const persist = async () => { await vault.save(value); notify(view()); };
-    async function clear() { const accountId=value.snapshot?.control?.accountId;version++; abort?.abort(); value = empty();targets=[];await vault.clearAccount?.(accountId);await vault.clear(); notify(view()); }
+    async function clear() { const accountId=value.snapshot?.control?.accountId;version++;cloudTasksSupported=false; abort?.abort(); value = empty();targets=[];await vault.clearAccount?.(accountId);await vault.clear(); notify(view()); }
     async function check() {
       if (!value.snapshot) fail('OFFLINE_NOT_READY');
       let status;
@@ -135,6 +135,7 @@
           status.accountId !== value.snapshot.control.accountId || status.generation !== value.snapshot.generation) {
         await clear(); fail('OFFLINE_RESET_REQUIRED');
       }
+      cloudTasksSupported=status.capabilities?.offlineTasks===1;
       return status;
     }
     async function sync() {
@@ -151,6 +152,7 @@
       for (const id of delta.remove) items.delete(id);
       for (const item of delta.items) items.set(item.id, item);
       value.snapshot = { ...delta, items: [...items.values()] };
+      cloudTasksSupported=delta.control?.capabilities?.offlineTasks===1;
       await persist();
       targets=await vault.targets?.(value.snapshot.control.accountId)||[value.snapshot];
       if (value.turns.length) {
@@ -167,7 +169,7 @@
     }
     async function refreshTasks() {
       if(!tasks||!value.snapshot)return;
-      const ticket=version;await check();
+      const ticket=version;await check();if(!cloudTasksSupported){notify(view());return;}
       const hosts=new Set([identity.hostId,...value.tasks.map(t=>t.hostId)]),items=[];
       for(const hostId of hosts){
         if(hostId!==identity.hostId){
@@ -196,6 +198,7 @@
       taskSending=true;notify(view());
       try{
       const ticket=version;await check();
+      if(!cloudTasksSupported)fail('OFFLINE_NOT_READY');
       const target=targetHostId===identity.hostId?value.snapshot:targets.find(t=>t.control.hostId===targetHostId);
       if(!target)fail('OFFLINE_NOT_READY');
       const authorization=await control(targetHostId);
@@ -214,17 +217,17 @@
       }finally{taskSending=false;notify(view());}
     }
     async function retryTask(id) {
-      await check();const ticket=version,task=value.tasks.find(t=>t.id===id);if(!task?.envelope)fail('INVALID_REQUEST');
+      await check();if(!cloudTasksSupported)fail('OFFLINE_NOT_READY');const ticket=version,task=value.tasks.find(t=>t.id===id);if(!task?.envelope)fail('INVALID_REQUEST');
       const result=await tasks('submit',{hostId:task.hostId,id,generation:task.generation,envelope:task.envelope});
       if(ticket!==version)return;await check();Object.assign(task,result);delete task.envelope;await persist();return task;
     }
     async function cancelTask(id) {
-      await check();const ticket=version;
+      await check();if(!cloudTasksSupported)fail('OFFLINE_NOT_READY');const ticket=version;
       const task=value.tasks.find(t=>t.id===id);if(!task)fail('INVALID_REQUEST');
       const result=await tasks('cancel',{hostId:task.hostId,id});
       if(ticket!==version)return;await check();if(task){Object.assign(task,result);delete task.envelope;}await persist();
     }
-    async function clearTasks(){if(tasks)try{await tasks('clear',{});}catch(error){if(![401,403,404].includes(error.status))throw error;}await clear();}
+    async function clearTasks(){if(value.snapshot)try{await check();}catch(error){if(![401,403,404].includes(error.status)&&error.code!=='OFFLINE_RESET_REQUIRED')throw error;cloudTasksSupported=false;}if(tasks&&cloudTasksSupported)try{await tasks('clear',{});}catch(error){if(![401,403,404].includes(error.status))throw error;}await clear();}
     async function send(text, conversationId = null) {
       if(!value.snapshot?.model)fail('OFFLINE_MODEL_REQUIRED');
       if (running || taskSending || typeof text !== 'string' || !text.trim() || text.length > 16384) fail('INVALID_REQUEST');

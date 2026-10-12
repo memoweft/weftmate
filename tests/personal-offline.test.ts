@@ -29,7 +29,7 @@ async function fixture(t: any) {
     backend: { listModels: () => [{ id: 'mimo', configured: true, sourceKind: 'cloud', name: 'MiMo' }] },
     service: { currentChatModelProfile: () => 'mimo' },
     accountModelManager: { readOfflineModel: async () => ({ baseUrl: 'https://model.example/v1', modelId: 'mimo', apiKey: 'synthetic-secret' }) },
-    cloudIdentity: { publishOffline: async (_owner: string, value: number) => { generation = value; return { hostId: identity.hostId, accountId: 'account-test', generation }; } },
+    cloudIdentity: { publishOffline: async (_owner: string, value: number) => { generation = value; return { hostId: identity.hostId, accountId: 'account-test', generation, capabilities:{offlineTasks:1} }; } },
     memoryManager: { enabled: true, query: async (_: any, _method: any, input: any) => ({ world_revision: generation, ...(input.operation === 'list' ? { items } : {}) }),
       ingest: async (_: any, boundary: any) => { assert.ok(boundary.source_messages.every((m: any) => ['user', 'assistant'].includes(m.role))); accepted.push(boundary); return { state: 'accepted' }; }, discardOfflinePending: async () => {} },
     readJson: (request: any) => request.body, json: (_response: any, _status: any, value: any) => value };
@@ -59,7 +59,7 @@ test('S7 text tasks work without a cloud chat model, while old replica callers r
   const vault=await W.browserVault('task-only',{indexedDB:new IDBFactory(),crypto:webcrypto}),jwk=await vault.key();
   await assert.rejects(f.host('/offline/sync',{publicJwk:jwk,generation:0,hashes:{}}),{code:'OFFLINE_MODEL_REQUIRED'});
   let uploaded:any;
-  const engine=await W.create({vault,identity,host:f.host,crypto:webcrypto,taskDevice:async()=> 'phone',control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1}),
+  const engine=await W.create({vault,identity,host:f.host,crypto:webcrypto,taskDevice:async()=> 'phone',control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1,capabilities:{offlineTasks:1}}),
     tasks:async(_action:string,body:any)=>{uploaded=body;return {id:body.id,state:'waiting',hostId:body.hostId};}});
   await engine.sync();assert.equal(engine.view().chatReady,false);assert.equal(engine.view().taskReady,true);assert.equal(engine.view().snapshot.model,null);
   await assert.rejects(engine.send('聊天'),{code:'OFFLINE_MODEL_REQUIRED'});await engine.submitTask('上线后读一下合成说明','task:local-dialogue');
@@ -91,7 +91,7 @@ test('temporary history never enters the encrypted replica, including a switch d
     if(sessionId==='racing')sessions.racing.hasTemporaryContent=true;
     return {events:[{type:'user.message',data:{text:sessionId==='ordinary'?'ordinary history':'PRIVATE_SENTINEL'}}]};
   };
-  const engine=await W.create({vault,identity,host:f.host,control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1}),crypto:webcrypto});
+  const engine=await W.create({vault,identity,host:f.host,control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1,capabilities:{offlineTasks:1}}),crypto:webcrypto});
   try {
     await engine.sync();
     assert.deepEqual(reads,['racing','ordinary']);
@@ -165,7 +165,7 @@ test('encrypted offline replica carries only account personalization and uses th
   const settings={preferredName:'小合成',tone:'concise',fixedInstructions:'末尾加 —WM',webSearch:false};
   f.context.accountState=()=>({sessions:{},personalization:settings});let sent:any;
   vault.complete=async(body:any)=>{sent=body;return {choices:[{message:{content:'好的。\n—WM'}}]}};
-  const engine=await W.create({vault,identity,host:f.host,control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1}),crypto:webcrypto});
+  const engine=await W.create({vault,identity,host:f.host,control:async()=>({authorized:true,hostId:identity.hostId,accountId:'account-test',generation:1,capabilities:{offlineTasks:1}}),crypto:webcrypto});
   try {
     await engine.sync();assert.equal(engine.view().snapshot.personalization.preferredName,'小合成');
     await engine.send('你好');assert.match(sent.messages[0].content,/小合成/);assert.match(sent.messages[0].content,/末尾加 —WM/);assert.equal(sent.tools,undefined);

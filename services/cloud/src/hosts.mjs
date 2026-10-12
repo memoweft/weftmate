@@ -22,7 +22,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
     const events = rows.map(r => ({ seq: r.seq, sub: r.account_id, kind: r.kind,
       ...(r.kind === 'epoch' ? { epoch: r.epoch } : { deviceId: r.device_id, ...(r.jkt ? { jkt: r.jkt } : {}) }) }));
     const memberships = db.prepare('SELECT a.id AS sub,a.auth_epoch AS epoch FROM cloud_accounts a JOIN host_memberships m ON m.account_id=a.id WHERE m.host_id=?').all(hostId);
-    const eventToken = await new SignJWT({ events, watermark, memberships }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
+    const eventToken = await new SignJWT({ events, watermark, memberships, capabilities:{offlineTasks:1} }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
       .setIssuer(config.issuer).setAudience(`${config.audience}/hosts/${hostId}`).setIssuedAt()
       .setExpirationTime('300s').sign(await importJWK(keys.privateJwks.keys[0], 'RS256'));
     return { eventToken };
@@ -55,7 +55,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
       if (!member || device?.status !== 'trusted') throw new CloudError(403, 'DEVICE_NOT_TRUSTED');
       const control = db.prepare('SELECT generation FROM offline_controls WHERE host_id=? AND account_id=?').get(body.hostId, account.id);
       if (!control) throw new CloudError(404, 'NOT_FOUND');
-      return { hostId: body.hostId, accountId: account.id, generation: control.generation, authorized: true };
+      return { hostId: body.hostId, accountId: account.id, generation: control.generation, authorized: true, capabilities:{offlineTasks:1} };
     }
     if (route === '/hosts/claims') {
       requireFields(body, ['claimId', 'hostId', 'publicJwk', 'tlsSpki']);
@@ -170,7 +170,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
         throw new CloudError(400, 'INVALID_REQUEST');
       db.prepare(`INSERT INTO offline_controls VALUES(?,?,?) ON CONFLICT(host_id,account_id)
         DO UPDATE SET generation=MAX(generation,excluded.generation)`).run(body.hostId, payload.sub, payload.generation);
-      return { updated: true };
+      return { updated: true, capabilities:{offlineTasks:1} };
     }
     if (route === '/hosts/status') {
       if (typeof payload.name !== 'string' || !payload.name.trim() || payload.name.length > 128 ||
