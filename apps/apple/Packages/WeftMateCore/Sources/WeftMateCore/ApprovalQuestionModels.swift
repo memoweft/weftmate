@@ -75,6 +75,14 @@ public struct SessionApproval: Codable, Equatable, Sendable, Identifiable {
     public let createdAt: String
     public let status: SessionInteractionStatus
     public let riskCategories: [String]?
+    public var secondOpinion: ApprovalSecondOpinion? = nil
+    public var operationCategories: [String]? = nil
+    public var canAlwaysAllow: Bool? = nil
+    public var offersAlwaysAllow: Bool {
+        canAlwaysAllow == true && !(operationCategories ?? []).isEmpty &&
+        !(operationCategories ?? []).contains { ["delete", "external", "spend"].contains($0) } &&
+        !(riskCategories ?? []).contains { ["delete", "external", "spend"].contains($0) }
+    }
     public let decisionScope: String?
     public let decisionOutcome: ApprovalOutcome?
     public let decisionRequestId: String?
@@ -142,6 +150,7 @@ public struct ApprovalDecisionIntent: Codable, Equatable, Sendable {
         try scope.validate(); try approval.validate(scope: scope)
         try SharedValidation.require(approval.canDecide && SharedValidation.request(requestID))
         try SharedValidation.require(decisionScope == nil || outcome == .allowedOnce)
+        if decisionScope == .globalCategory { try SharedValidation.require(approval.offersAlwaysAllow) }
         if decisionScope == .conversationCategory { try SharedValidation.require(!(approval.riskCategories ?? []).isEmpty) }
         self.scope = scope; self.approval = approval; self.outcome = outcome; requestId = requestID
         self.decisionScope = decisionScope
