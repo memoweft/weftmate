@@ -93,7 +93,7 @@
       catch(error){if(token===scope()){model.settings=null;model.settingsError=core.failureMessage(error);}return null;}
       finally{if(token===scope()){model.settingsLoading=false;emit();}}
     }
-    async function saveHealthSettings(patch){sync();const token=scope();const result=await (priorSaveHealthSettings?priorSaveHealthSettings(patch):core.accessApi('/settings/health',{method:'PATCH',protectedWrite:true,body:patch}));
+    async function saveHealthViewSettings(patch){sync();const token=scope();const result=await (priorSaveHealthSettings?priorSaveHealthSettings(patch):core.accessApi('/settings/health',{method:'PATCH',protectedWrite:true,body:patch}));
       if(token===scope()){model.settings=result.settings;emit();}return result;
     }
     async function readHealthAnalyses(){if(!Object.hasOwn(model.settings??{},'itemAnalysisEnabled'))return;const token=scope(),day=model.day;
@@ -116,7 +116,7 @@
       if(model.analysisOpen.has(itemScope)){model.analysisOpen.delete(itemScope);emit();return;}model.analysisOpen.add(itemScope);emit();
       if(model.settings.itemAnalysisEnabled&&!model.analyses.has(itemScope))await generateHealthAnalysis(itemScope);
     }
-    async function enableHealthAnalysis(itemScope){const token=scope(),day=model.day;await saveHealthSettings({itemAnalysisEnabled:true});
+    async function enableHealthAnalysis(itemScope){const token=scope(),day=model.day;await saveHealthViewSettings({itemAnalysisEnabled:true});
       if(token===scope()&&day===model.day){model.analysisOpen.add(itemScope);if(!model.analyses.has(itemScope))await generateHealthAnalysis(itemScope);}
     }
     async function askHealthAnalysis(itemScope){const token=scope(),item=model.analyses.get(itemScope);if(!item)return;await core.selectMainChat();if(token!==scope())return;
@@ -125,6 +125,6 @@
     async function askHealth(){const token=scope(),insight=model.overview?.insight;if(!insight)return;await core.selectMainChat();if(token!==scope())return;
       const quote=`> ${model.day} · ${insight.headline}\n> ${insight.text.replace(/\n/g,'\n> ')}\n\n`;
       effects.quoteHealth?.(quote);}
-    return {health:model,resetHealth,readHealth,readHealthTrend,readHealthCalendar,openHealthMetric,healthOverlay,remindHealth,askHealth,readHealthSettings,saveHealthSettings,readHealthAnalyses,toggleHealthAnalysis,enableHealthAnalysis,generateHealthAnalysis,askHealthAnalysis};
+    return {health:model,resetHealth,readHealth,readHealthTrend,readHealthCalendar,openHealthMetric,healthOverlay,remindHealth,askHealth,readHealthSettings,saveHealthViewSettings,readHealthAnalyses,toggleHealthAnalysis,enableHealthAnalysis,generateHealthAnalysis,askHealthAnalysis};
   };
 })();
