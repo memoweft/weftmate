@@ -9,8 +9,8 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
   const busy=value=>{for(const el of form.querySelectorAll('input,select,button'))el.disabled=value||el.dataset.reserved==='true';};
   const fill=settings=>{for(const [key,el] of fields){if(el.type==='checkbox')el.checked=settings[key];else el.value=String(settings[key]);el.dispatchEvent(new Event('weft:sync'));}};
   async function write(patch){if(!ready||!current())return;busy(true);notice.textContent='正在同步…';
-    try{const value=await core.saveNotificationSettings(patch);if(current()){saved=value.settings;fill(saved);notice.textContent='';device.toast?.('通知规则已保存。');}}
-    catch{if(current()){notice.textContent='未能同步，请重试。';fill(saved);}}
+    try{const value=await core.saveNotificationSettings(patch);if(current()){saved=value.settings;fill(saved);notice.textContent='';device.toast?.('通知规则已保存。');}return true;}
+    catch{if(current()){notice.textContent='未能同步，请重试。';fill(saved);}return false;}
     finally{if(current())busy(false);}
   }
   function field(key,label,description,type,options){
@@ -18,7 +18,7 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
     if(type==='select'){el.dataset.checkSelection='true';for(const [value,title] of options)el.append(new Option(title,value));}
     else{el.type=type;if(type==='checkbox')controls.toggle(el);}
     form.append(controls.row(label,description,el));fields.set(key,el);
-    el.addEventListener('change',()=>{if(el.reportValidity())void write({[key]:type==='checkbox'?el.checked:key==='memoryDigestWeekday'?Number(el.value):key==='dailyLimit'?(el.value==='null'?null:Number(el.value)):el.value});});
+    el.addEventListener('change',()=>{if(el.reportValidity())void write({[key]:type==='checkbox'?el.checked:['memoryDigestWeekday','reviewRetentionDays'].includes(key)?Number(el.value):key==='dailyLimit'?(el.value==='null'?null:Number(el.value)):el.value});});
     if(type==='select')globalThis.WeftPopover?.bindSettingsSelect(el);
     return el;
   }
@@ -33,6 +33,13 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
     ['system','系统','有可用更新时提醒。']]){
       field(key,label,description,'select',modes);
   }
+  form.append(node('h2','回顾与洞察'));
+  field('reviewEnabled','回顾与洞察','每天在这台电脑整理使用摘要；每周在动态里回顾，聊天时可接续最近的事情。','checkbox');
+  field('reviewRetentionDays','保留多久','只保存在这台电脑，清空后不再用于聊天背景。','select',[[7,'7 天'],[30,'30 天'],[90,'90 天'],[180,'180 天'],[365,'365 天']]);
+  const clear=node('button','清空回顾','button secondary');clear.type='button';
+  clear.onclick=()=>{const focus=document.activeElement,box=node('dialog','',core.android?.call?'session-action-dialog data-dialog':'dialog confirm-dialog data-dialog');box.setAttribute('aria-label','清空回顾与洞察');box.append(node('h2','清空回顾与洞察'),node('p','删除已保存的摘要和周回顾，之后从明天重新开始整理。对话、成果和记忆会保留。'));
+    const cancel=node('button','取消','button secondary'),confirm=node('button','确认清空','button danger');cancel.type=confirm.type='button';cancel.onclick=()=>box.close();confirm.onclick=async()=>{box.close();if(await write({reviewClear:true}))device.toast?.('回顾已清空。');};const actions=node('div','','actions');actions.append(cancel,confirm);box.append(actions);box.addEventListener('close',()=>{box.remove();focus?.focus();});document.body.append(box);globalThis.WeftPopover?.bindSettings(box);box.showModal();cancel.focus();};
+  form.append(controls.row('已保存的回顾','清空后，助手不再引用这些摘要。',clear));
   form.append(node('h2','记忆周报'));
   field('memoryDigestEnabled','每周生成记忆周报','这一周有新记忆或变更时，在动态里整理一次。','checkbox');
   field('memoryDigestWeekday','每周哪一天','按账户时区；关机错过后，下次启动补发最近一周。','select',[[1,'星期一'],[2,'星期二'],[3,'星期三'],[4,'星期四'],[5,'星期五'],[6,'星期六'],[0,'星期日']]);

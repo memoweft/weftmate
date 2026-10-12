@@ -67,3 +67,15 @@ test('context IPC admits only current child, projects exact safe fields, and fai
     contextHash: hash('bounded phone history'), throughSeq: 5 })
   assert.equal(JSON.stringify(sent[1]).includes('never exposed'), false)
 })
+
+test('daily background traverses the existing IPC without history adoption and oversized optional text is withheld', async () => {
+  let recent='最近七天：季度报告';const sent:any[]=[];
+  const runtime:any=new DshWebRuntime({homeDir:'C:\\synthetic\\dsh-home',workspaceDir:'C:\\synthetic\\work',
+    personalConversationContextHandler:async()=>({state:'none',recentContextText:recent,secret:'not exposed'})});
+  const child={connected:true,send:(value:any)=>sent.push(value)};runtime.child=child;
+  runtime.handlePersonalConversationContextMessage(child,frame);
+  while(!sent.length)await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(sent[0].result,{state:'none',recentContextText:recent});assert.ok(!JSON.stringify(sent).includes('not exposed'));
+  recent='x'.repeat(3601);runtime.handlePersonalConversationContextMessage(child,{...frame,id:'context-22345678-1234-1234-1234-123456789abc'});
+  while(sent.length<2)await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(sent[1].result,{state:'none'});
+})

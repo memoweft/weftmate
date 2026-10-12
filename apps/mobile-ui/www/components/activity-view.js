@@ -37,6 +37,13 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
         if(report.review.length){body.append(node('h4','','这些很久没用到了，还对吗？'));entries(report.review,true);}
         return body;
     }
+    function insightContent(item){
+        const report=item.weeklyInsight,body=node('div','memory-digest weekly-insight');
+        body.append(node('p','weekly-insight-text',report.text));
+        const sources=node('div','weekly-insight-sources');
+        for(const source of report.sources){const control=button(source.title,()=>core.activityAction(item,{kind:source.artifactId?'view_library':'open_chat',target:source.artifactId?{id:source.artifactId}:source.source}));control.className='button secondary small';control.prepend(WeftIcons.create(source.artifactId?'file':'chat',16));sources.append(control);}
+        body.append(sources);return body;
+    }
     function render(){
         const model=core.activity;all.disabled=!model.snapshotCursor||!model.unreadCount||model.loading;
         for(const el of filters.children){el.setAttribute('aria-current',el.dataset.filter===model.filter?'true':'false');el.disabled=model.loading;}
@@ -70,6 +77,7 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
                 }
                 for(const el of actions.children)el.disabled=model.busy.has(item.id);
                 if(!mobile){row.replaceChildren(heading,summary,reason,status,actions);row.setAttribute('aria-label',`${item.read?'':'未读，'}${item.title}`);}
+                if(item.weeklyInsight){row.classList.add("has-memory-digest");row.append(insightContent(item));}
                 if(item.memoryDigest){
                     row.classList.add('has-memory-digest');
                     if(!mobile){
