@@ -112,7 +112,7 @@ export async function runPreemptibleFormation(queue, signal, work,
 /** Private loopback bridge shared by native DSH streams and MemoWeft workers. */
 export async function createModelScheduler({ isIdle, profileFor, backgroundRoute, credentialFor, fetchImpl = fetch,
   beginUsage = null, finishUsage = null, backgroundReady = null, suggestionReady = null, onEvent = () => {},
-  heartbeatMs = 15_000, memoryProfileFor = null }) {
+  heartbeatMs = 15_000, memoryProfileFor = null, onBackgroundResult = null }) {
   const queues = new Map();
   const progress = new Map();
   async function queueFor(destination, signal = null) {
@@ -143,17 +143,17 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       backgroundPending: rows.reduce((sum, row) => sum + row.backgroundPending, 0) + switchPending };
   }, close: () => { for (const value of queues.values()) value.close(); } };
   let switchPending = 0;
-  async function acquireBackground(profile, selectedQueue, signal, onPreempt = null, refresh = null) {
+  async function acquireBackground(profile, selectedQueue, signal, onPreempt = null, refresh = null, scope = {}) {
     let waiting = false;
     try {
       while (true) {
         signal.throwIfAborted();
         if (refresh) profile = refresh();
-        if (!backgroundReady || await backgroundReady(profile)) {
+        if (!backgroundReady || await backgroundReady(profile, scope)) {
           const release = await selectedQueue?.acquire('background', signal, null, onPreempt);
           if (refresh) { try { profile = refresh(); } catch (error) { release?.(); throw error; } }
           // Foreground may have switched models while this request waited for idle.
-          if (!backgroundReady || await backgroundReady(profile)) return release;
+          if (!backgroundReady || await backgroundReady(profile, scope)) return release;
           release?.();
         }
         if (!waiting) { waiting = true; switchPending++; onEvent('model.switch_wait', { profileId: profile.id, priority: 'background' }); }
@@ -173,7 +173,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
     const controller = new AbortController(); controllers.add(controller);
     response.once('close', () => { controller.abort(); controllers.delete(controller); });
     let release;
-    const started = Date.now(); let metadata = null;
+    const started = Date.now(); let metadata = null, backgroundScope = null;
     response.once('close', () => { if (metadata) onEvent('model.end', { ...metadata, durationMs: Date.now() - started, status: response.statusCode }); });
     try {
       const url = new URL(request.url, 'http://127.0.0.1');
@@ -244,7 +244,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
           }
           controller.signal.throwIfAborted();
         } else if (priority === 'background' && destinationProfile) {
-          release = await acquireBackground(destinationProfile, selectedQueue, controller.signal);
+          release = await acquireBackground(destinationProfile, selectedQueue, controller.signal, null, null, { sessionId });
         } else release = await selectedQueue?.acquire(priority, controller.signal, ahead => {
           onEvent('model.queued', { ...metadata, ahead });
           state.phase = 'queued'; state.ahead = ahead;
@@ -265,6 +265,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       const operation = match[4];
       let selectedQueue;
       if (operation === 'chat/completions') {
+        backgroundScope = { ownerId: match[2], profileId: profile.id };
         metadata = { profileId: profile.id, sessionId: match[3], priority: 'background' }; onEvent('model.start', metadata);
         onEvent('model.queued', metadata);
         // MemoWeft's HTTP timeout measures transport inactivity. Informational
@@ -293,7 +294,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       } : null;
       if (operation === 'chat/completions' && !selectedQueue) {
         const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
-        try { release = await acquireBackground(profile, null, controller.signal, null, refreshLocal); }
+        try { release = await acquireBackground(profile, null, controller.signal, null, refreshLocal, { ownerId: match[2], sessionId: match[3] }); }
         finally { clearInterval(heartbeat); }
         // Loading can temporarily hide /props. Recheck capacity after readiness.
         selectedQueue = await queueFor({ profileId: profile.id });
@@ -318,9 +319,10 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
               if (ticket && !settled) await finishUsage({ ...ticket, usage: null });
               throw error;
             }
-          }, onPreempt => acquireBackground(profile, selectedQueue, controller.signal, onPreempt, refreshLocal));
+          }, onPreempt => acquireBackground(profile, selectedQueue, controller.signal, onPreempt, refreshLocal, { ownerId: match[2], sessionId: match[3] }));
           response.writeHead(completed.status, { 'content-type': completed.contentType ?? 'application/json',
             'x-modelswitcher-model': profile.model });
+          await onBackgroundResult?.({ ...backgroundScope, failed: completed.status >= 400 && completed.status !== 402, unavailable: completed.status === 404 });
           response.end(Buffer.from(completed.bytes));
         } finally { clearInterval(heartbeat); }
         return;
@@ -335,9 +337,11 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       } catch (error) { if (usageTicket) await finishUsage({ ...usageTicket, usage: null }); throw error; }
       response.writeHead(upstream.status, { 'content-type': upstream.headers.get('content-type') ?? 'application/json',
         'x-modelswitcher-model': profile.model });
+      if (backgroundScope) await onBackgroundResult?.({ ...backgroundScope, failed: !upstream.ok && upstream.status !== 402, unavailable: upstream.status === 404 });
       if (upstream.body) await pipeline(Readable.fromWeb(upstream.body), response);
       else response.end();
     } catch (error) {
+      if (backgroundScope) await onBackgroundResult?.({ ...backgroundScope, failed: true, aborted: controller.signal.aborted || error?.message === 'MODEL_BACKGROUND_CHANGED' });
       const code = ['USAGE_LIMIT_REACHED', 'MODEL_SUGGESTION_BUSY'].includes(error?.code) ? error.code : 'MODEL_QUEUE_UNAVAILABLE';
       onEvent('model.failure', { ...metadata, code });
       if (!response.headersSent) { response.writeHead(code === 'USAGE_LIMIT_REACHED' ? 402 : code === 'MODEL_SUGGESTION_BUSY' ? 409 : 503, { 'content-type': 'application/json' });

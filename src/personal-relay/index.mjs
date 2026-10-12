@@ -49,7 +49,7 @@ localPort = ${localPort}
 customDomains = [${str(new URL(c.baseUrl).hostname)}]
 `;
 }
-export async function createHostRelay({ root, identity, options, setPublicOrigin, executeCommand=boundedCommand }) {
+export async function createHostRelay({ root, identity, options, setPublicOrigin, executeCommand=boundedCommand, clock = Date.now, fetchImpl = fetch, pollMs = 2000 }) {
   if (!identity || !options?.binary || !options?.transportCaFile || (!options.certFile && !options.developmentTls && !options.acme))
     throw new Error('Relay requires cloud identity, frpc, transport CA and host certificate');
   let stdout;
@@ -60,6 +60,14 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
   let origin, child, adapter, timer, polling, closed = false, state = 'stopped', publicOrigin = null, failure = null;
   let credentials, adminPort, adminPassword, certificates, activeCertFile, certificateExpiresAt = null;
   const configFile = path.join(dir, 'frpc.toml');
+  let retryAt = 0, retryMs = 2000, lastReason = null;
+  function failed(error) {
+    const reason = error?.code ?? error?.cause?.code ?? error?.message ?? 'RELAY_UNAVAILABLE';
+    if (reason !== lastReason) options.diagnostic?.(error);
+    lastReason = reason;
+    retryAt = clock() + retryMs; retryMs = Math.min(retryMs * 2, 60_000);
+    state = closed ? 'stopped' : 'offline'; failure = 'RELAY_UNAVAILABLE';
+  }
   async function stopChild() {
     const current = child; child = null;
     if (!current || current.exitCode !== null || current.signalCode !== null) return;
@@ -107,25 +115,32 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
     if (closed || polling) return polling;
     polling = (async () => {
       try {
+        if (identity.relayReady?.() === false) {
+          await stopChild(); state = 'stopped'; failure = null; retryAt = 0; retryMs = 2000;
+          return;
+        }
+        if (clock() < retryAt) return;
         if (!child) {
           state = 'connecting';
           await launch(await identity.relayRequest('/hosts/relay/credentials', {}));
         }
         if (!child || closed) return;
-        const result = await fetch(`http://127.0.0.1:${adminPort}/api/status`, {
+        const result = await fetchImpl(`http://127.0.0.1:${adminPort}/api/status`, {
           headers: { authorization: `Basic ${Buffer.from(`relay:${adminPassword}`).toString('base64')}` },
           signal: AbortSignal.timeout(1500), redirect: 'error' });
         const status = await result.json();
-        const previousState = state;
         state = result.ok && status.https?.some(p => p.status === 'running') ? 'online' : 'offline';
         failure = state === 'online' ? null : 'RELAY_UNAVAILABLE';
-        if (state === 'online' && previousState !== 'online') options.onRecovery?.('relay');
-      } catch (error) { options.diagnostic?.(error); state = closed ? 'stopped' : 'offline'; failure = 'RELAY_UNAVAILABLE'; }
+        if (state === 'online') {
+          retryAt = 0; retryMs = 2000;
+          if (lastReason !== null) { lastReason = null; options.onRecovery?.('relay'); }
+        } else failed(Object.assign(new Error('RELAY_UNAVAILABLE'), { code: 'RELAY_UNAVAILABLE' }));
+      } catch (error) { if (!closed) failed(error); }
     })().finally(() => { polling = null; });
     return polling;
   }
   return {
-    start(localOrigin) { origin = localOrigin; void tick(); timer = setInterval(() => { void tick(); }, 2000); timer.unref(); },
+    start(localOrigin) { origin = localOrigin; void tick(); timer = setInterval(() => { void tick(); }, pollMs); timer.unref(); },
     status() { return { state, baseUrl: publicOrigin, certificateExpiresAt, certificateErrorCode: null, ...certificates?.status(), ...(failure ? { errorCode: failure } : {}) }; },
     async rotate(requestId) {
       await polling;
@@ -135,6 +150,7 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
     async reconnect() {
       await polling;
       await stopChild();
+      retryAt = 0;
       await tick();
       return this.status();
     },

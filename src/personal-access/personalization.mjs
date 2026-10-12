@@ -29,5 +29,8 @@ export async function handlePersonalization(context, request, response, url, own
     next.personalizationUpdatedAt = new Date(context.timestamp()).toISOString();
   }));
   const account = context.accountState(ownerId);
+  if (patch && (patch.nextSuggestionsEnabled === false || patch.inlineCompletionEnabled === false)) {
+    await context.nextSuggestions.drain(ownerId);
+  }
   return context.json(response, 200, { settings: accountPersonalization(account), updatedAt: account.personalizationUpdatedAt ?? null, synced: true });
 }
