@@ -1690,6 +1690,28 @@ DATA-2增量：`usageActiveMinutes/usageLateNightMinutes` 的每个趋势点附 
 
 DATA-2原生查询补充：未接入身体测量、但查询范围（含目标日的昨夜窗口）有本机使用观察时，`health_query` 的 overview／usage 两项仍返回汇总 `items`，并附 `connected:false,usageConnected:true`；有效查询增量带 `timeZone` 与 overview 的 `usage.lastUsedAtLocal`（账号当地 `YYYY-MM-DD HH:mm`／null）供模型直接引用钟点，避免误换算 UTC（协调世界时）使用时刻；身体指标仍为空。完全没数据时保留原「还没接上」回执。
 
+### MEM-1：从其他应用导入聊天记录
+
+沿用已有 `/memory/status` 与 `/memory/backfill` 路由，旧的 WeftMate 历史整理请求保持兼容。没有新增业务路径或权限。
+
+`GET /memory/status` 增加可选 `imports` 数组：每行 `{id,app,appName,createdAt,state,total,processed,memoryCount,skipped,error,waitingForChat,usage:{requests,inputTokens,outputTokens,cost,unknownRequests,unpricedRequests}}`。状态为 `running / paused / cancelled / completed / forgetting / forgotten`。只返回计数和状态，不返回本机文件位置或对话正文。手机只显示这些记录与进度。
+
+`POST /memory/backfill` 支持以下新增动作（已登录账户、写操作沿用 CSRF 校验）：
+
+| action | 请求与结果 |
+|---|---|
+| `import-preview` | `{app:"chatgpt"|"claude"|"codex"|"claude-code",paths:[绝对路径]}`。只接受本机可信 Electron（桌面程序框架）选择桥携带的 `x-weftmate-desktop`，浏览器不能登记任意路径。200 `{ownerId,previewId,app,appName,conversationCount,duplicateCount,emptyCount,from,to,estimate,items}`。只在本机扫描，零模型请求；预览不落盘。items 包含 `key,id,title,at,until,characters,chunks,duplicate`，无正文或文件位置。 |
+| `import-start` | `{previewId,selected:[key]|base64位图字符串,confirm:true}`；预览属于当前账号，后台模型改变必须重新预览。重复开始同一个预览返回现有记录。202 `{ownerId,imports}`。默认全选可导入内容，可按时间或逐段选择。位图按预览 items 顺序，从每字节最低位起表示选中，长度为 ceil(items.length/8)，未使用的高位必须为0；使用标准 Base64（编码）字符串。大批选择用位图避免编号数组超过原有请求体上限；此路由按本账户已创建预览的位图大小扩展接收上限，其余接口不变。 |
+| `import-pause / import-resume / import-cancel` | `{jobId}` → 202 `{ownerId,imports}`；暂停允许已经发出的请求收尾，后续请求等待继续。取消保留已记住的内容，在导入记录中可整批忘掉。退出／重启后恢复原状态与进度。 |
+| `import-forget-preview` | `{jobId}`；先暂停运行中的导入。202 `{jobId,forgetToken,items,evidenceCount}`，列出受影响的记忆，复用核心现有遗忘预览。 |
+| `import-forget` | `{jobId,forgetToken,confirm:true}` → 202 `{ownerId,imports}`；进入 `forgetting`，真正清理来源、相关记忆与派生副本后为 `forgotten`。原文件保持只读；随后可重导。 |
+
+`estimate` 为 `{characters,modelName,profileId,local,approximate:true,inputTokens:[low,high],outputTokens:[low,high],cost:[low,high]|null,seconds:[low,high],price}`。价格来自现有账户用量设置；下界计入重复提示可能享受的输入优惠，上界按未优惠输入估算。没有单价时费用未知，不能显示为免费。本机／局域网模型费用为零，耗时以约每秒50个输出词元与提示处理余量估算。实际请求包括核心形成步骤和失败重试，不是价格承诺。真实用量沿用账户用量账本，`category:"import"`、`sessionId:"import-<jobId>"`；未知用量明确保留，没有单价时 cost 为 null、unpricedRequests 大于零，界面显示费用未知。
+
+来源详情增加可选 `importSource:{kind:"import",app,appName,conversationId,originalAt,importId}`；带 `includeSources=true` 的列表可含与单条来源相同结构的 `importSources` 数组，导入编号不会被当作可继续聊天的 WeftMate 对话。核心聊天入口当前仍记录 `source_kind=spoken`，来源应用与原日期通过有日期前缀的正文、原始 `timestamp`、宿主回执映射提供，未更改记忆核心仓库。未来核心应增加正式导入来源类型和整批撤回接口。
+
+错误：`IMPORT_FORMAT_UNKNOWN`（这个文件的格式认不出）、`IMPORT_SOURCE_UNAVAILABLE`、`IMPORT_SOURCE_CHANGED`、`IMPORT_NATIVE_SELECTION_REQUIRED`、`IMPORT_MODEL_CHANGED`、`IMPORT_JOB_ACTIVE`、`IMPORT_PAUSE_REQUIRED`。账号之间不共享预览、进度、文件引用、用量或核心回执。运行记录只保存本机源引用、对话编号、日期、数量、指纹、游标与回执；不另存对话全文。
+
 ## ST-7a：连接器（复用现有设置契约）
 
 `GET /personal/v1/settings/approvals` 新增可选字段 `connectors`、`builtinConnectors`、`canManageConnectors`；旧字段与审批模式保持兼容。未配置连接器服务时返回空列表及 `false`。不新增业务路由，Android（安卓）现有精确路由白名单与 Apple（苹果）原生网络层可直接读取。手机网页提供只读列表／详情与总开关；完整添加、测试、凭据轮换、移除和单工具规则仅在电脑程序提供。

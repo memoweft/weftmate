@@ -11,6 +11,29 @@ const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_bo
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup', 'query_jobs']
 
+test('compound recall merges both cloud-permitted facts in one Core snapshot without unrestricted world reads',async t=>{
+  const root=mkdtempSync(join(tmpdir(),'weftmate-memory-compound-')),methods=[...required,'preview_recall_batch'];let batches=0;
+  const manager=createPersonalMemoryManager({root,enabled:true,python:join(root,'python.exe'),pythonPath:join(root,'py'),
+    baseUrl:'http://127.0.0.1:8081/v1',model:'@current',credential:()=> 'synthetic',rpcFactory:()=>({child:{},async close(){},async request(method,params={}){
+      if(method==='capabilities')return{protocol:'memoweft.dsh_rpc',protocol_version:2,schema_version:1,methods};
+      if(method==='initialize')return{runtime:{subject_id:ownerA,db_path:join(params.dsh_home,'memoweft','memoweft.sqlite3')},capabilities:{subject_id:ownerA,methods,services:{command:{operations:[]}}}};
+      if(method==='health')return{runtime:{subject_id:ownerA,route_ready:true}};
+      if(method==='query_world'){assert.equal(params.operation,'revision','recall must never retrieve unfiltered world facts');return{world_revision:5};}
+      if(method==='preview_recall_batch'){
+        batches++;assert.equal(params.model_tier,'cloud');assert.equal(params.queries.length,5);
+        assert.ok(params.queries.includes('我的鹦鹉叫什么'));assert.ok(params.queries.includes('喜欢什么零食'));
+        return{snapshots:params.queries.map(query=>{const name=query==='我的鹦鹉叫什么',food=query.includes('喜欢什么零食');return{world_revision:5,preview:{
+          selected_item_ids:name||food?[['cognition',name?'name':'food']]:[],rendered_recall:name?'记忆：用户的鹦鹉叫青瓷。':food?'记忆：用户的鹦鹉喜欢荞麦饼干。':''}};})};
+      }
+      if(method==='query_interactions'){assert.equal(params.model_tier,'cloud');return{rendered_context:''};}
+      return{};
+    }})});
+  t.after(async()=>{await manager.close();rmSync(root,{recursive:true,force:true});});
+  const result=await manager.recall(ownerA,{query:'根据我的记忆，我的鹦鹉叫什么，喜欢什么零食？只回答已知内容，不调用工具。',sessionId:'synthetic-main',modelTier:'cloud'});
+  assert.equal(batches,1);assert.equal(result.sourceCount,2);assert.match(result.contextText,/青瓷/);assert.match(result.contextText,/荞麦/);
+  assert.deepEqual(result.memories.map(m=>m.id),['food','name']);
+});
+
 for (const formationWaitMs of [undefined, 30]) test(`recall ${formationWaitMs === undefined ? 'does not wait by default' : 'honors an explicit formation deadline'} while a stuck job remains durable`, async t => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-stalled-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
