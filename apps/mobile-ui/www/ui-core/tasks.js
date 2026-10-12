@@ -61,6 +61,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
     function messageTaskLabel(event) {
         const command = core.state.tasks.find(row => row.sessionId === core.conversationTaskContext().sessionId &&
             row.receiptId && row.receiptId === event.data?.receiptId);
+        if(command?.offlineSource){const started=command.offlineSource.startedAt;if(!started)return '在手机上离线交代，电脑已接收';const at=new Intl.DateTimeFormat('zh-CN',{hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(started));const status=core.offlineTasksView?.().find(t=>t.id===command.offlineSource.id)?.state;return `在手机上离线交代，${at} 上线后开始${status?` · ${{started:'电脑已开始',completed:'做完了',failed:'没做成'}[status]||'电脑已开始'}`:''}`;}
         return event.data?.taskAction === 'supplement' || command?.taskAction === 'supplement'
             ? '已补充到当前任务' : '';
     }

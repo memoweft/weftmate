@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { calculateJwkThumbprint, importJWK, jwtVerify, SignJWT } from 'jose';
 import { CloudError } from './security.mjs';
+import { createOfflineTasks } from './offline-tasks.mjs';
 
 const publicKey = jwk => jwk && typeof jwk === 'object' && !Array.isArray(jwk) &&
   !['d', 'p', 'q', 'dp', 'dq', 'qi', 'oth', 'k'].some(key => key in jwk) &&
@@ -11,6 +12,7 @@ const requireFields = (body, fields) => {
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
 
 export function createHosts({ database: db, config, keys, authenticate, now, relay, provider }) {
+  const tasks = createOfflineTasks({database:db,authenticate,now});
   async function revocations(hostId, afterSeq) {
     if (!Number.isSafeInteger(afterSeq) || afterSeq < 0) throw new CloudError(400, 'INVALID_REQUEST');
     const rows = db.prepare(`SELECT r.* FROM cloud_revocations r JOIN host_memberships m ON m.account_id=r.account_id
@@ -43,6 +45,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
     return payload;
   }
   return { async handle(route, req, body) {
+    if (/^\/hosts\/offline\/tasks\/(submit|list|cancel|clear)$/.test(route)) return tasks.device(route,req,body);
     if (route === '/hosts/offline/status') {
       requireFields(body, ['hostId']);
       const account = await authenticate(req, true);
@@ -159,6 +162,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
     }
     const payload = await signed(body);
     if (payload.action !== route) throw new CloudError(401, 'UNAUTHORIZED');
+    if (/^\/hosts\/offline\/tasks\/(claim|ack|result)$/.test(route)) return tasks.host(route,body.hostId,payload);
     db.prepare('UPDATE cloud_hosts SET last_seen=? WHERE host_id=?').run(now(), body.hostId);
     if (route === '/hosts/offline/publish') {
       if (typeof payload.sub !== 'string' || !Number.isSafeInteger(payload.generation) || payload.generation < 1 ||

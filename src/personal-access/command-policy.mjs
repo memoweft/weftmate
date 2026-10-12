@@ -216,6 +216,7 @@ export function publicCommand(command) {
     updatedAt: command.updatedAt,
   };
   if (command.sessionId) result.sessionId = command.sessionId;
+  if(command.offlineSource)result.offlineSource={id:command.offlineSource.id,submittedAt:command.offlineSource.submittedAt,receivedAt:command.offlineSource.receivedAt,...(command.offlineSource.startedAt?{startedAt:command.offlineSource.startedAt}:{})};
   if (command.payload?.chatId) { result.chatId = command.payload.chatId; result.kind = 'chat.message'; }
   if (command.payload?.sideChat) {
     result.kind = 'session.side.create'; result.chatId = command.payload.sideChat.chatId;
