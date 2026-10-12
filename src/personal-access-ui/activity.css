@@ -50,3 +50,6 @@
 .weekly-insight { margin-top:var(--wm-space-8); }
 
 .data-dialog.review-clear-dialog .button.danger,.data-dialog.review-clear-dialog .button.danger:hover:not(:disabled),.data-dialog.review-clear-dialog .button.danger:active { color:var(--danger); background:var(--danger-soft); border-color:var(--danger); }
+
+/* The mobile sheet supplies its own bottom anchoring; discard the legacy centered-dialog offset. */
+.review-clear-dialog.mobile-sheet { transform:none; inset:auto calc(var(--safe-right,env(safe-area-inset-right,0px)) + var(--wm-space-12)) calc(var(--safe-bottom,env(safe-area-inset-bottom,0px)) + var(--wm-space-12)) calc(var(--safe-left,env(safe-area-inset-left,0px)) + var(--wm-space-12)); width:auto; max-width:none; }
