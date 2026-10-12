@@ -110,22 +110,88 @@
             hasArguments: Object.keys(args).length > 0 };
     }
 
+    // Presentation only: native task, step and job records remain untouched.
     function executionState(step) {
+        const reason = step.stopReason || step.endReasonKind || step.reason?.kind || step.reason || '';
+        if (['cancelled','canceled','aborted','stopped','killed','terminated','replaced'].includes(step.state) ||
+            ['killed','cancelled','stopped'].includes(step.jobState) ||
+            /^(aborted|cancelled|canceled|interrupted|terminated|stopped|replaced|superseded)$/.test(reason) ||
+            step.interrupted === true || step.signal === 'SIGINT' || step.signal === 'SIGTERM' || [130,143].includes(step.exitCode)) return 'cancelled';
         if (step.state === 'failed' || step.jobState === 'failed') return 'failed';
-        if (step.state === 'cancelled' || step.jobState === 'killed') return 'cancelled';
         return ['running', 'stopping'].includes(step.jobState) ? 'running' : step.state;
     }
-    function progressText(steps, terminal = false) {
+    function executionPresentation(step, records = []) {
+        const record = records.find(row=>row.callId === (step.callId || step.stepId) &&
+            (!step.sessionId || row.sessionId === step.sessionId) && (!step.turn || row.turn === step.turn));
+        return record ? { ...step, ...(record.state === 'cancelled' ? {state:'cancelled'} : {}),
+            jobState:record.jobState ?? step.jobState, stopReason:record.stopReason ?? step.stopReason,
+            signal:record.signal ?? step.signal, exitCode:record.exitCode ?? step.exitCode } : step;
+    }
+    function interruptionFromDetail(text, step) {
+        if (step && executionState(step) !== 'failed') return false;
+        try {
+            const data = JSON.parse(text);
+            const interrupted = value => {
+                if (typeof value === 'string') {
+                    try { const parsed=JSON.parse(value); if(parsed!==value && interrupted(parsed)) return true; } catch { /* Native text output. */ }
+                    return /(?:signal|信号)\s*[:=]?\s*SIG(?:INT|TERM)\b|(?:command|process|job|execution|operation|用户|使用者|命令|进程).{0,60}(?:interrupt(?:ed)?\b|cancel(?:led|ed)\b|terminated\b|killed\b|中断|终止|已停止)/i.test(value);
+                }
+                if (Array.isArray(value)) return value.some(interrupted);
+                if (!value || typeof value !== 'object') return false;
+                if (['SIGINT','SIGTERM'].includes(value.signal) || [130,143].includes(value.exitCode ?? value.exit_code) || ['killed','cancelled','canceled','interrupted','terminated'].includes(value.status)) return true;
+                return [value.text,value.content,value.output,value.result,value.value,value.error,value.message,value.stderr].some(interrupted);
+            };
+            return interrupted(data.output ?? data.result);
+        } catch { return false; }
+    }
+    function turnOutcome(events, taskId, stopView) {
+        const matches = event => event.data?.taskId === taskId ||
+            event.type === 'turn.ended' && (taskId === `turn-${event.data?.turn}` || taskId?.endsWith(`:turn-${event.data?.turn}`)) &&
+            (!event.sessionId || !taskId.includes(':') || taskId.startsWith(`${event.sessionId}:`));
+        const end = events.filter(event => ['task.ended','turn.ended'].includes(event.type) && matches(event)).at(-1);
+        if (stopView?.terminal && stopView.text === '已停止' && end?.data?.reason !== 'completed') return {terminal:true,reason:'aborted'};
+        if (stopView?.terminal && !end) return {terminal:true,reason:stopView.text==='已结束'?'completed':'aborted'};
+        return end ? { terminal: true, reason: end.data?.reason, endReasonKind: end.data?.endReasonKind } : { terminal: false };
+    }
+    function classifyProgress(steps, outcome = {}) {
+        if (typeof outcome === 'boolean') outcome = { terminal: outcome };
+        const reason = outcome.reason?.kind || outcome.reason || outcome.status;
+        const stopped = ['aborted','cancelled','canceled','stopped','killed'].includes(reason);
+        const completed = reason === 'completed';
+        const failed = ['error','failed','blocked'].includes(reason);
+        return { terminal: outcome.terminal === true || stopped || completed || failed,
+            state: failed ? 'failed' : stopped ? 'stopped' : completed ? 'completed' : outcome.terminal ? 'ended' : 'running',
+            retries: steps.filter(step => executionState(step) === 'failed').length };
+    }
+    function stepPresentation(step, outcome) {
+        const progress = classifyProgress([step], outcome), state = executionState(step);
+        if (state === 'cancelled' || progress.state === 'stopped' && ['running','pending','failed'].includes(state))
+            return { ...step, state: 'cancelled', statusText: '已中断' };
+        if (state === 'failed') return { ...step, state: progress.state === 'failed' ? 'failed' : 'issue',
+            statusText: progress.state === 'completed' ? '已换办法继续' : progress.terminal ? '遇到问题' : '遇到问题，正在继续' };
+        return { ...step, statusText: state === 'running' && !progress.terminal ? '运行中' : '' };
+    }
+    function progressText(steps, outcome = false) {
+        const progress = classifyProgress(steps, outcome);
         const failed = steps.find(step => executionState(step) === 'failed');
-        if (failed) return { text: `第 ${failed.ordinal || steps.indexOf(failed) + 1} 步失败`, failed: true, running: false };
-        if (steps.some(step => executionState(step) === 'cancelled')) return { text: '已停止', running: false };
-        const current = !terminal && steps.filter(step => ['running', 'pending'].includes(executionState(step))).at(-1);
+        if (progress.state === 'failed') {
+            const problem = failed?.summary || '这次回复';
+            const limit = outcome.endReasonKind === 'max-tokens';
+            return { text: limit ? '回复未完成：内容超出了本次可回复的长度，可以让我接着做。'
+                : `未能完成：${problem}遇到问题，可以让我重试或补充说明。`, failed: true, running: false };
+        }
+        if (progress.state === 'stopped') return { text: '已中断', running: false };
+        if (failed && !progress.terminal) return { text: `第 ${failed.ordinal || steps.indexOf(failed) + 1} 步遇到问题，正在继续`, running: true };
+        if (!progress.terminal && steps.some(step => executionState(step) === 'cancelled') &&
+            !steps.some(step => ['running','pending'].includes(executionState(step)))) return { text: '已中断', running: false };
+        const current = (!progress.terminal || steps.some(step=>['running','stopping'].includes(step.jobState))) && steps.filter(step => ['running', 'pending'].includes(executionState(step))).at(-1);
         if (current) {
             const summary = toolActivity(current.toolName)?.summary || current.summary || toolSummary(current.toolName, current.arguments);
             return { text: current.approvalStatus === 'pending' ? `等待批准：${summary}` : current.jobState === 'stopping' ? `正在停止：${summary}…` : `正在${summary.replace(/^运行命令：/, '运行命令 ')}…`, running: current.approvalStatus !== 'pending' };
         }
         const counts = new Map();
         for (const step of steps) {
+            if (progress.terminal && ['failed','cancelled'].includes(executionState(step))) continue;
             const name = step.toolName || '', summary = step.summary || '';
             const activity = toolActivity(name);
             if (activity?.internal) continue;
@@ -141,7 +207,8 @@
             counts.set(kind, (counts.get(kind) || 0) + amount);
         }
         const labels = { command: n => `已运行 ${n} 个命令`, read: n => `读取了 ${n} 个文件`, search: n => `搜索了 ${n} 次`, write: n => `修改了 ${n} 个文件`, delete: n => `删除了 ${n} 个文件`, web: n => `访问了 ${n} 次网页`, subagent: n => `处理了 ${n} 个子任务`, goal: n => `更新了 ${n} 次任务目标`, goalRead: n => `查看了 ${n} 次任务目标`, goalCreate: n => `建立了 ${n} 个任务目标`, plan: n => `整理了 ${n} 次执行计划`, schedule: n => `处理了 ${n} 次定时安排`, job: n => `查看或管理了 ${n} 次后台命令`, code: n => `运行了 ${n} 次脚本`, computer: n => `操作了 ${n} 次电脑应用`, memory: n => `查询或更新了 ${n} 次记忆`, question: n => `请求了 ${n} 次补充信息`, extension: n => `调用了 ${n} 次扩展服务` };
-        return { text: [...counts].map(([kind, count]) => labels[kind](count)).join('、') || (steps.length ? '工具已就绪' : ''), running: false };
+        const text = [...counts].map(([kind, count]) => labels[kind](count)).join('、') || (progress.state === 'completed' ? '已完成' : steps.length ? '工具已就绪' : '');
+        return { text: text + (progress.state === 'completed' && progress.retries ? ` · 中途有 ${progress.retries} 步重试` : ''), running: false };
     }
     function approvalProgress(row) {
         return ({ 'allowed-once': '已批准', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[row?.outcome || row?.decisionOutcome] || (row?.status === 'pending' ? '等待批准' : '');
@@ -171,7 +238,7 @@
                     }
                     const ordinal = (ordinals.get(data.taskId) || 0) + 1;
                     ordinals.set(data.taskId, ordinal);
-                    step = { ...data, ordinal, at: event.at, endAt: event.type === 'step.completed' ? event.at : null };
+                    step = { ...data, sessionId:event.sessionId || event.sourceRef?.sessionId, ordinal, at: event.at, endAt: event.type === 'step.completed' ? event.at : null };
                     group.steps.push(step);
                     steps.set(key, step);
                 }
@@ -181,8 +248,6 @@
                         step.endAt = event.at;
                 }
                 if (toolActivity(step.toolName) || /^执行工具(?:\s|$)/.test(step.summary || '')) step.summary = toolSummary(step.toolName, step.arguments);
-                if (raw.type === 'artifact.created')
-                    group = null;
             }
             else if (!['turn.started', 'turn.ended', 'task.started', 'task.ended', 'approval.requested', 'approval.resolved'].includes(event.type))
                 group = null;
@@ -196,9 +261,43 @@
             step.approvalText = approvalProgress(record);
             step.approvalStatus = row?.status || (resolved ? 'resolved' : request ? 'pending' : undefined);
         }
-        const cards = ordered.flatMap(event => event.type === 'artifact.created' && event.data?.artifacts?.length
-            ? event.data.artifacts.map(artifact => ({ ...event, data: { ...event.data, ...artifact } })) : [event]);
+        const cards = [], outputs = new Map();
+        let turnKey = 'history';
+        for (const event of ordered) {
+            if (event.type === 'turn.started') turnKey = `${event.sessionId || event.sourceRef?.sessionId || ''}:turn-${event.data?.turn ?? event.seq}`;
+            if (event.type !== 'artifact.created') { cards.push(event); continue; }
+            const data = event.data || {};
+            if (/^(read|read_file|move|rename|delete|remove)$/.test(data.completedStep?.toolName || '')) continue;
+            const key = data.completedStep?.taskId || data.taskId || turnKey;
+            let bundle = outputs.get(key);
+            if (!bundle) { bundle = { ...event, data: { ...data, taskId:key, artifactId: `summary:${key}`, artifacts: [] } }; outputs.set(key,bundle); cards.push(bundle); }
+            bundle.data.artifacts.push(...(data.artifacts || [data.artifact || data]));
+            bundle.seq = event.seq;
+        }
         return { ordered, groups, cards };
+    }
+    function finalArtifacts(artifacts) {
+        const latest = new Map();
+        for (const file of artifacts || []) {
+            if (!file?.artifactId || ['read','move','rename','delete'].includes(file.operation || file.action) ||
+                ['source','intermediate'].includes(file.role) || ['superseded','deleted','replaced'].includes(file.state) || file.supersededBy || file.exists === false && file.finalDelivery === false) continue;
+            const location = file.filePath || file.relativePath || file.path;
+            const key = location || file.artifactId;
+            latest.set(key,file);
+        }
+        return [...latest.values()];
+    }
+    function artifactFamilies(artifacts) {
+        const groups = new Map();
+        for (const file of finalArtifacts(artifacts)) {
+            const name = file.fileName || file.name || '成果文件', location = file.filePath || file.relativePath || file.path || '';
+            const folder = location.replace(/\\/g,'/').replace(/[^/]*$/,'');
+            const stem = name.replace(/\.[^.]+$/, '').replace(/[-_ ]v\d+$/i,'');
+            const key = `${folder}/${stem}`;
+            if (!groups.has(key)) groups.set(key,[]);
+            groups.get(key).push(file);
+        }
+        return [...groups.values()];
     }
     function sessionGroup(session, now = new Date()) {
         const stamp = session.updatedAt || session.lastMessageAt || session.createdAt;
@@ -232,6 +331,6 @@
         }
         return references;
     }
-    Object.assign(globalThis.WeftUiCore, { projectTimeline, executionState, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
-    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, executionState, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
+    Object.assign(globalThis.WeftUiCore, { projectTimeline, executionState, executionPresentation, interruptionFromDetail, turnOutcome, classifyProgress, stepPresentation, finalArtifacts, artifactFamilies, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
+    globalThis.WeftUiCore.factories.timeline = () => ({ projectTimeline, executionState, executionPresentation, interruptionFromDetail, turnOutcome, classifyProgress, stepPresentation, finalArtifacts, artifactFamilies, progressText, approvalProgress, executionDetailText, sessionGroup, sortSessions, resourceReferences, toolArguments, toolSummary, toolLabel, interfaceText, readableParameters, dateText, monthText, dayText, sourcePresentation });
 })();

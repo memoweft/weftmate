@@ -354,9 +354,7 @@ function renderLiveProgress(){if(state.page!=='chat'||state.chatSource!=='phone'
   if(state.scrollPinned){if((globalThis.WeftMobileMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches))scrollBottom();
     else scheduleLiveMotion()}}
 
-function appendRenderedFiles(row,text){if(row.classList.contains('user')||!globalThis.WeftContent)return;
-  const files=state.sharedEvents.filter(e=>e.type==='artifact.created').flatMap(e=>e.data?.artifacts||[e.data?.artifact||e.data]).filter(file=>file?.artifactId&&file.fileName&&text?.includes(file.fileName));
-  for(const file of files){if([...row.querySelectorAll('.render-file-card')].some(card=>card.dataset.artifact===file.artifactId))continue;const card=WeftContent.fileCard(file,button=>{const context=conversationTaskContext();uiCore.syncMobileIdentity();void openTimelinePreview(context,()=>uiCore.readResource(`/library/${encodeURIComponent(file.artifactId)}/preview`),file.fileName,file);});card.dataset.artifact=file.artifactId;row.append(card);}}
+function appendRenderedFiles(row){if(row.classList.contains('user'))return;for(const file of row.querySelectorAll('.render-file-card[data-artifact]'))file.remove();}
 
 function toolLabel(name){return uiCore.toolLabel(name)}
 
