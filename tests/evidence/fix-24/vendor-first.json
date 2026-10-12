@@ -1,0 +1,13 @@
+{
+  "mode": "vendor",
+  "files": 33,
+  "exitCode": 1,
+  "passed": 229,
+  "failed": 1,
+  "skipped": 0,
+  "failures": [
+    "tests\\\\shared-runtime-vendor-routes.test.ts"
+  ],
+  "processExitCode": 3221226505,
+  "processExitHex": "0xC0000409"
+}

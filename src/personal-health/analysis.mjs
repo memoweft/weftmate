@@ -1,11 +1,13 @@
 /** Versioned, deterministic personal comparisons. No model and no population thresholds. */
+import {hasPrivateContent} from '../personal-access/temporary-chats.mjs';
 import { localNotificationTime } from '../personal-access/notification-policy.mjs';
 import { HEALTH_DEFAULTS } from './records-schema.mjs';
-export const HEALTH_ALGORITHM_VERSION=1;
+import {healthAdvanced,healthStress,healthEnergy,healthFitnessAge} from './advanced.mjs';
+export const HEALTH_ALGORITHM_VERSION=2;
 const DAY=86400000;
 export const healthShiftDay=(day,n)=>new Date(Date.parse(day+'T00:00:00Z')+n*DAY).toISOString().slice(0,10);
 export const VITAL_IDS=['restingHeartRateBpm','hrvSdnnMs','respiratoryRateBrpm','spo2Pct','wristTempC'];
-export const METRIC_IDS=[...VITAL_IDS,'vo2Max','activeEnergyKcal','exerciseMinutes','steps','sleepMinutes','inBedMinutes','deepMinutes','coreMinutes','remMinutes','awakeMinutes','recovery','sleep','load','usageActiveMinutes','usageLateNightMinutes','heartRateAvgBpm','heartRateMinBpm','heartRateMaxBpm','workoutMinutes'];
+export const METRIC_IDS=[...VITAL_IDS,'vo2Max','activeEnergyKcal','exerciseMinutes','steps','sleepMinutes','inBedMinutes','deepMinutes','coreMinutes','remMinutes','awakeMinutes','recovery','sleep','load','stress','energy','fitnessAge','usageActiveMinutes','usageLateNightMinutes','heartRateAvgBpm','heartRateMinBpm','heartRateMaxBpm','workoutMinutes'];
 const known=v=>typeof v==='number'&&Number.isFinite(v);
 const round=v=>known(v)?Math.round(v*100)/100:null;
 const clamp=(v,min=0,max=100)=>Math.max(min,Math.min(max,v));
@@ -93,16 +95,17 @@ export function healthScores(state,day,zone='UTC'){
   }
   const r=record(state,day);Object.assign(raw.sleep,{minutes:r?.sleepMinutes??null,targetMinutes:state.settings?.sleepTargetMinutes??450,start:r?.sleep?.start??null,end:r?.sleep?.end??null});
   const {mask}=loadSelection(state,day),loads=n=>Array.from({length:n},(_,i)=>dailyLoad(state,healthShiftDay(day,-i),mask)),a7=loads(7),a42=loads(42),avg7=average(a7),avg42=average(a42),diff=known(avg7)&&known(avg42)?avg7-avg42:null;
-  Object.assign(raw.load,{daily:round(dailyLoad(state,day,mask)),average7:round(avg7),average42:round(avg42),difference:round(diff)});
+  Object.assign(raw.load,{recommendedRange:raw.load.score!==null&&known(avg42)?{low:round(Math.max(0,avg42*.85)),high:round(avg42*1.15),unit:'relative'}:null,daily:round(dailyLoad(state,day,mask)),average7:round(avg7),average42:round(avg42),difference:round(diff)});
   if(raw.load.score!==null){const tolerance=Math.max(1,(avg42??0)*.15),state=diff===null?'insufficient':diff>tolerance?'more':diff< -tolerance?'less':'balanced';Object.assign(raw.load,{state,label:{more:'练多了',less:'练少了',balanced:'刚好',insufficient:'再戴几天就有对比了'}[state]});}
   return raw;
 }
-export function healthOverview(state,account,day,zone='UTC'){
+export function healthOverview(state,account,day,zone='UTC',now=Infinity){
   state={settings:HEALTH_DEFAULTS,...state};const r=record(state,day),row=state.days?.[day],usage=account.dailyDigest?.days?.[day]?.usage;
-  return {day,connected:Object.values(state.days??{}).some(d=>d.health.status==='available'),updatedAt:row?.updatedAt??null,insight:r?row.insight??null:null,...healthScores(state,day,zone),vitals:VITAL_IDS.map(id=>vital(state,day,id,account)),activity:{steps:r?.steps??null,activeEnergyKcal:r?.activeEnergyKcal??null,exerciseMinutes:r?.exerciseMinutes??null,workouts:r?.workouts??[]},usage:{activeMinutes:usage?.estimatedActiveMinutes??null,lateNightMinutes:usage?.lateNightMinutes??null}};
+  const scores=healthScores(state,day,zone),advanced=healthAdvanced(state,day,zone,scores,now);
+  return {day,capabilities:{record:3,profile:true},...advanced,connected:Object.values(state.days??{}).some(d=>d.health.status==='available'),updatedAt:row?.updatedAt??null,insight:r?row.insight??null:null,...scores,vitals:VITAL_IDS.map(id=>vital(state,day,id,account)),activity:{steps:r?.steps??null,activeEnergyKcal:r?.activeEnergyKcal??null,exerciseMinutes:r?.exerciseMinutes??null,workouts:r?.workouts??[]},usage:{lastUsedAt:lastNightUsage(account,day,zone),activeMinutes:usage?.estimatedActiveMinutes??null,lateNightMinutes:usage?.lateNightMinutes??null}};
 }
-export function healthMetrics(state,account,id,days,today,zone){
-  const points=Array.from({length:days},(_,n)=>{const day=healthShiftDay(today,n-days+1);if(['recovery','sleep','load'].includes(id)){const s=healthScores(state,day,zone)[id];return {day,value:s.score,baseline:s.baseline,low:s.low,high:s.high,state:s.state,label:s.label};}return {day,...vital(state,day,id,account)};});
+export function healthMetrics(state,account,id,days,today,zone,now=Infinity){
+  const points=Array.from({length:days},(_,n)=>{const day=healthShiftDay(today,n-days+1);if(['stress','energy','fitnessAge'].includes(id)){const s=id==='fitnessAge'?healthFitnessAge(state,day):id==='stress'?healthStress(state,day,zone,now):healthEnergy(state,day,zone,healthScores(state,day,zone),healthStress(state,day,zone,now),now),value=id==='stress'?s?.average:id==='fitnessAge'?s?.fitnessAge:s?.current;return {day,value:value??null,baseline:null,low:null,high:null,state:s?.state??'insufficient',label:s?.label??'未记录'};}if(['recovery','sleep','load'].includes(id)){const s=healthScores(state,day,zone)[id];return {day,value:s.score,baseline:s.baseline,low:s.low,high:s.high,state:s.state,label:s.label};}return {day,...vital(state,day,id,account)};});
   return {id,days,timeZone:zone,average:round(average(points.map(p=>p.value))),points};
 }
 export function healthCalendar(state,month,zone){const first=month+'-01',next=healthShiftDay(first,32).slice(0,7)+'-01',days=[];for(let day=first;day<next;day=healthShiftDay(day,1)){const s=healthScores(state,day,zone);days.push({day,hasWorkout:(record(state,day)?.workouts.length??0)>0,sleepScore:s.sleep.score,recoveryScore:s.recovery.score});}return {month,days};}
@@ -111,4 +114,14 @@ export function healthWeeklySummary(state,account,from,to,zone){
   const sleep=round(average(rows.map(r=>r.sleep.minutes))),recovery=round(average(rows.map(r=>r.recovery.score))),workouts=rows.reduce((n,r)=>n+r.activity.workouts.length,0),late=rows.filter(r=>r.usage.lateNightMinutes>0),paired=rows.filter(r=>r.usage.lateNightMinutes>0&&r.recovery.state==='low');
   if(sleep===null&&recovery===null&&!workouts)return null;
   return {sleepMinutes:sleep,recoveryScore:recovery,workouts,lateNightDays:late.length,pairedLowRecoveryDays:paired.length,text:`这周健康：${sleep===null?'睡眠还缺记录':`平均睡眠 ${sleep} 分钟`}，${recovery===null?'恢复还在积累对比':`平均恢复 ${recovery} 分`}，运动 ${workouts} 次。${paired.length?`有 ${paired.length} 天凌晨还在使用、当天恢复也比平时低；这只是同时出现的记录。`:late.length?`有 ${late.length} 天凌晨还在使用，可以和睡眠记录一起看看。`:'已记录的使用中没有凌晨活动。'}`};
+}
+
+function lastNightUsage(account,day,zone){
+  const from=healthShiftDay(day,-1),times=[];
+  for(const [id,row]of Object.entries(account.dailyDigest?.sources??{})){
+    const session=account.sessions?.[id];if(!session||session.deleting||hasPrivateContent(session))continue;
+    for(const d of [from,day]){const source=row.days?.[d];if(source?.lastUserMessageAt)times.push(source.lastUserMessageAt);for(const minute of source?.minutes??[])times.push(new Date(minute*60000).toISOString());}
+  }
+  for(const d of [from,day])if(!account.dailyDigest?.sources&&account.dailyDigest?.days?.[d]?.usage?.lastUserMessageAt)times.push(account.dailyDigest.days[d].usage.lastUserMessageAt);
+  return times.filter(t=>{const local=localNotificationTime(Date.parse(t),zone);return local.day===from&&local.time>='18:00'||local.day===day&&local.time<'12:00';}).sort((a,b)=>Date.parse(a)-Date.parse(b)).at(-1)??null;
 }

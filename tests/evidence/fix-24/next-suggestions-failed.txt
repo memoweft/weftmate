@@ -1,0 +1,28 @@
+✔ BL-28a missing or disabled inline completion returns empty without a model call, context read or usage lease (1.6967ms)
+✔ BL-28a server routes each request kind through its own switch for all four combinations (3.4927ms)
+✔ BL-28a server only cancels the request kind whose switch was disabled (43.6406ms)
+✔ BL-28a a disabled completion request leaves enabled reply generation running (21.9328ms)
+✔ UX-7 short context includes visible recent rounds, excludes tools, hidden thinking and forgotten originals (0.5595ms)
+✔ UX-7 uncertain or generic suggestions are empty, short relevant chips deduplicate, completion only returns suffix (0.2666ms)
+✔ UX-7 speculative requests use existing provider declarations at the lightest mode without changing conversation settings (0.8589ms)
+✔ UX-7 completed reply generates at most three, temporary conversations work, no state/history/evidence/export writes (0.6643ms)
+✔ UX-7 off, draft, running, aborted/blocked reply and unavailable model do not generate or charge (0.3751ms)
+✔ UX-7 cancel really aborts provider signal, stale requestId and another device cannot cancel new request (20.4686ms)
+✔ UX-7 typing, send, switch, toggle off, model change and disconnected client abandon in-flight inference without retry (165.2181ms)
+✔ UX-7 timeout quietly aborts, busy admission has no usage ticket (30.2121ms)
+✔ UX-7 numeric usage ledger separately aggregates suggestion category and persists no text (249.4511ms)
+✖ tests\next-suggestions.test.ts (2068.6311ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 13
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2072.8371
+
+✖ failing tests:
+
+test at tests\next-suggestions.test.ts:1:1
+✖ tests\next-suggestions.test.ts (2068.6311ms)
+  'test failed'
