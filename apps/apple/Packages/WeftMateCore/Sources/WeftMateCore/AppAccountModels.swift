@@ -9,6 +9,7 @@ public struct CloudDirectoryDevice: Codable, Sendable, Identifiable {
     public let name: String
     public let type: String
     public let online: Bool
+    public let firstUsedAt: String?
     public let lastUsedAt: String?
     public let isCurrent: Bool
     public let hostId: String?
@@ -40,7 +41,8 @@ public struct AppAccountError: Error, LocalizedError, Sendable, Equatable {
         case "INVALID_CREDENTIALS", "EMAIL_NOT_VERIFIED", "EMAIL_IN_USE": "邮箱或密码不对，请检查后重试。"
         case "INVALID_EMAIL": "请输入有效的邮箱地址。"
         case "INVALID_PASSWORD": "当前服务要求密码为 15–128 位，请调整后重试。"
-        case "CODE_INVALID", "CHALLENGE_INVALID": "验证码不对或已过期，请重新获取。"
+        case "CODE_INVALID": "验证码不对，请检查邮件中的 6 位数字。"
+        case "CHALLENGE_INVALID", "INVALID_LOGIN_CODE": "验证码不对、已过期或尝试次数已用完，请重新发送验证码。"
         case "PASSWORD_TICKET_INVALID", "INTERACTION_INVALID": "本次验证已过期，请重新开始。"
         case "RATE_LIMITED": "尝试太多次，请等待 \(retryAfter ?? 60) 秒后重试。"
         default: "暂时无法完成，请稍后重试。"
@@ -52,6 +54,8 @@ public struct AppAccountError: Error, LocalizedError, Sendable, Equatable {
 public struct AppAccountForm: Sendable {
     public enum Page: String, Sendable { case login, registration, recovery, deviceConfirmation }
     public enum Step: Int, Sendable { case email, code, password, deviceName }
+    public enum LoginMethod: String, Sendable { case password, emailCode }
+    public var loginMethod: LoginMethod = .password
     public var page: Page = .login
     public var step: Step = .email
     public var email = ""
@@ -62,9 +66,9 @@ public struct AppAccountForm: Sendable {
     public var ticket = ""
     public var resendAt = Date.distantPast
     public init() {}
-    public var validPassword: Bool { password.count >= 8 && password == repeatedPassword }
+    public var validPassword: Bool { password.count >= 15 && password == repeatedPassword }
     public var strength: String {
-        if password.count < 8 { return "至少 8 位" }
+        if password.count < 15 { return "至少 15 位" }
         let kinds = [password.rangeOfCharacter(from: .lowercaseLetters) != nil,
                      password.rangeOfCharacter(from: .uppercaseLetters) != nil,
                      password.rangeOfCharacter(from: .decimalDigits) != nil,

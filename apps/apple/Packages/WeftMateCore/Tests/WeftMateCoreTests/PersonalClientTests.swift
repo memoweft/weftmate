@@ -137,15 +137,15 @@ private func login(_ client: PersonalClient) async throws -> AccountSession {
     #expect(await client.currentSession()?.account.ownerId == "owner-B")
 }
 
-@Test func revokedDeviceClearsLocalCredentialInsteadOfShowingEmptySuccess() async throws {
+@Test func revokedDeviceRetainsReadingIdentityAndRejectsServerOperation() async throws {
     let store = MemoryStore()
     let transport = ScriptTransport([step("/auth/login", auth()), step("/status", status()),
         step("/auth/me", json("{\"error\":{\"code\":\"UNAUTHORIZED\"}}", status: 401))])
     let client = PersonalClient(credentialStore: store, transport: transport)
     _ = try await login(client)
     await #expect(throws: APIFailure.server(status: 401, code: "UNAUTHORIZED")) { try await client.devices() }
-    #expect(await client.currentSession() == nil)
-    #expect(store.count == 0)
+    #expect(await client.currentSession()?.verification == .unverifiedOffline)
+    #expect(store.count == 1)
 }
 
 @Test func originalPhoneAndBoundHostHistoryMergeByReceiptAndKeepLateRecords() async throws {
