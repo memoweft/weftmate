@@ -36,6 +36,7 @@ jobs:
       - run: npm ci
       - run: |
           node tests/integration/st-2-phone-container.mjs
+          node --input-type=module -e 'import fs from "node:fs";const p=".local/st2-phone-container/AndroidManifest.xml";fs.writeFileSync(p,fs.readFileSync(p,"utf8").replace("android:exported=\"true\"", "android:exported=\"true\" android:launchMode=\"singleTask\""));'
           cat > .local/data1-phone-capture.sh <<'SH'
           #!/usr/bin/env bash
           set -euo pipefail
