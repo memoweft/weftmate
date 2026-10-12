@@ -8,7 +8,7 @@
 
 本机、vendor、`schedule` 触发及 `CI_TEST_STRICT=true` 的运行保持单次严格执行。清单名称用 TypeScript（类型化 JavaScript）语法树与当前测试声明核对，写错或过期的名称会报错。
 
-云端 required 单文件期限为 10 分钟，依据既有最长文件约 8 分 12 秒的取证确定。超期结束本文件拥有的进程树，打印阶段、输出尾段、提交内存与退出码，判失败后继续下一文件。Windows 回收仍同时核对创建时间、可执行文件和隔离目录；每次尝试都有独立临时目录。矩阵 job（作业）期限为 25 分钟；完整报告在各分片步骤摘要与汇总步骤都可见。Chromium（浏览器引擎）和 Electron 二进制缓存按系统、架构及 `package-lock.json` 隔离；Windows 的 Media Foundation（媒体基础组件）安装与 Node 准备并行，实际界面测试前仍等待成功结果。DSH（宿主运行时）缓存与版本不变。
+云端 required 单文件期限为 10 分钟，依据既有最长文件约 8 分 12 秒的取证确定。超期结束本文件拥有的进程树，打印阶段、输出尾段、提交内存与退出码，判失败后继续下一文件。Windows 回收仍同时核对创建时间、可执行文件和隔离目录；每次尝试都有独立临时目录。矩阵 job（作业）期限为 25 分钟；完整报告在各分片步骤摘要与汇总步骤都可见。Chromium（浏览器引擎）和 Electron 二进制缓存按系统、架构及 `package-lock.json` 隔离；Windows 的 Media Foundation（媒体基础组件）仍用 Playwright 顺序安装。DSH（宿主运行时）缓存与版本不变。
 
 只读取 GitHub 的取证命令：`node .github/scripts/ci-failure-survey.mjs` 获取最近 80 次主流程；`survey({workflow:'windows-package.yml', ...})` 另取打包流程。原日志留在 `.local/ci-1/`，公开表格和诊断摘要在 `tests/evidence/ci-1/`。`node .github/scripts/ci-run-evidence.mjs <运行ID> <标签>` 下载各片报告、记录用时与重跑恢复；`round-1` 至 `round-6` 自动生成完整结果表。
 
