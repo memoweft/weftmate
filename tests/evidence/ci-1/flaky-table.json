@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T07:48:59.029Z",
+  "generatedAt": "2026-10-12T08:03:04.319Z",
   "workflow": "ci.yml",
   "limit": 80,
   "runs": [
@@ -958,7 +958,7 @@
       "job": "test (windows-latest)",
       "file": "tests/bl-29-rework.test.ts",
       "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
-      "type": "assertion",
+      "type": "process-exit",
       "count": 1,
       "runIds": [
         38147975598
@@ -1006,7 +1006,7 @@
       "job": "test (windows-latest)",
       "file": "tests/bl-29-rework.test.ts",
       "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
-      "type": "assertion",
+      "type": "process-exit",
       "count": 1,
       "runIds": [
         38147975598
@@ -2759,14 +2759,14 @@
           "job": "test (windows-latest)",
           "file": "tests/bl-29-rework.test.ts",
           "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
-          "type": "assertion",
+          "type": "process-exit",
           "diagnostic": "not ok 45 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 574.4817\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:135:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\"probe\":\"probe-latency\",\"status\":1,\"hex\":\"0x00000001\",\"signal\":null,\"stdout\":\"\",\"stderr\":\"node:internal/child_process:458\\r\\n    throw new ErrnoException(err, 'spawn');\\r\\n          ^\\r\\n\\r\\nError: spawn EINVAL\\r\\n    at ChildProcess.spawn (node:internal/child_process:458:11)\\r\\n    at spawn (node:child_process:813:9)\\r\\n    at file:///D:/a/weftmate/weftmate/services/cloud/test/dependencies.mjs:51:23 {\\r\\n  errno: -4071,\\r\\n  code: 'EINVAL',\\r\\n  syscall: 'spawn'\\r\\n}\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"fatalReports\":[]}\n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    probe (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:21:12)\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:136:13)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
         },
         {
           "job": "test (windows-latest)",
           "file": "tests/bl-29-rework.test.ts",
           "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
-          "type": "assertion",
+          "type": "process-exit",
           "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 553.856\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:161:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    node:internal/child_process:458\n        throw new ErrnoException(err, 'spawn');\n              ^\n    \n    Error: spawn EINVAL\n        at ChildProcess.spawn (node:internal/child_process:458:11)\n        at spawn (node:child_process:813:9)\n        at file:///D:/a/weftmate/weftmate/services/cloud/test/dependencies.mjs:51:23 {\n      errno: -4071,\n      code: 'EINVAL',\n      syscall: 'spawn'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    ChildProcess.spawn (node:internal/child_process:458:11)\n    spawn (node:child_process:813:9)\n    file:///D:/a/weftmate/weftmate/services/cloud/test/dependencies.mjs:51:23 {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:169:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
         }
       ]

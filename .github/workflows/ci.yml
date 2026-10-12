@@ -22,6 +22,7 @@ jobs:
     env:
       WEFTMATE_TEST_HOST_NAME: synthetic-host
       CI_TEST_OS: ${{ matrix.os }}
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.local/ci-browser-cache
     strategy:
       fail-fast: false
       matrix:
@@ -51,8 +52,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The first CI-1 probe spent 4–5 minutes before Windows tests started,
+      # mostly downloading the same versioned UI binaries on each shard.
+      - name: Cache versioned UI test binaries
+        uses: actions/cache@v4
+        with:
+          path: |
+            .local/ci-browser-cache
+            node_modules/electron/dist
+            node_modules/electron/path.txt
+          key: ci-ui-binaries-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}-v1
+
       - name: Install Chromium for real UI regression probes
         run: npx playwright install --with-deps chromium
+
+      - name: Materialize versioned Electron binary
+        run: node node_modules/electron/install.js
 
       # Cloud + host identity integration; isolated services, no Electron or DSH runtime.
       - name: Cloud identity tests (Linux)

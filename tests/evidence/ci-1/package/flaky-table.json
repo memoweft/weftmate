@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T07:50:51.995Z",
+  "generatedAt": "2026-10-12T08:09:45.771Z",
   "workflow": "windows-package.yml",
   "limit": 80,
   "runs": [
@@ -825,22 +825,33 @@
   "table": [
     {
       "job": "Windows package and startup smoke",
-      "file": "workflow",
-      "name": "Build, inspect package contents and start real application",
-      "type": "step-failure",
-      "count": 2,
+      "file": "tests/helpers/migration-host.mjs",
+      "name": "electronApplication.firstWindow: Timeout 30000ms exceeded while waiting for event \"window\"",
+      "type": "timeout",
+      "count": 1,
       "runIds": [
-        38211140040,
-        38183876238
+        38211140040
       ],
       "examples": [
         {
           "runId": 38211140040,
-          "diagnostic": "No TAP leaf failure in failed log."
-        },
+          "diagnostic": "electronApplication.firstWindow: Timeout 30000ms exceeded while waiting for event \"window\"\n    at h.launch (D:\\a\\weftmate\\weftmate\\tests\\helpers\\migration-host.mjs:69:26)\n    at async migrationHost (D:\\a\\weftmate\\weftmate\\tests\\helpers\\migration-host.mjs:113:5)\n    at async file:///D:/a/weftmate/weftmate/scripts/nightly/installed-smoke.mjs:53:5"
+        }
+      ]
+    },
+    {
+      "job": "Windows package and startup smoke",
+      "file": "scripts/nightly/installed-smoke.mjs",
+      "name": "locator.waitFor: Timeout 15000ms exceeded.",
+      "type": "timeout",
+      "count": 1,
+      "runIds": [
+        38183876238
+      ],
+      "examples": [
         {
           "runId": 38183876238,
-          "diagnostic": "No TAP leaf failure in failed log."
+          "diagnostic": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-conversation-approval=\"4b9e9f6a-cb15-4116-aaac-0392e0e8b312\"]').getByRole('button', { name: '批准', exact: true }) to be visible\u001b[22m\n\n    at D:\\a\\weftmate\\weftmate\\scripts\\nightly\\installed-smoke.mjs:98:21\n    at async until (D:\\a\\weftmate\\weftmate\\tests\\helpers\\migration-host.mjs:18:44)\n    at async file:///D:/a/weftmate/weftmate/scripts/nightly/installed-smoke.mjs:93:3"
         }
       ]
     }
@@ -902,10 +913,10 @@
       "failures": [
         {
           "job": "Windows package and startup smoke",
-          "file": "workflow",
-          "name": "Build, inspect package contents and start real application",
-          "type": "step-failure",
-          "diagnostic": "No TAP leaf failure in failed log."
+          "file": "tests/helpers/migration-host.mjs",
+          "name": "electronApplication.firstWindow: Timeout 30000ms exceeded while waiting for event \"window\"",
+          "type": "timeout",
+          "diagnostic": "electronApplication.firstWindow: Timeout 30000ms exceeded while waiting for event \"window\"\n    at h.launch (D:\\a\\weftmate\\weftmate\\tests\\helpers\\migration-host.mjs:69:26)\n    at async migrationHost (D:\\a\\weftmate\\weftmate\\tests\\helpers\\migration-host.mjs:113:5)\n    at async file:///D:/a/weftmate/weftmate/scripts/nightly/installed-smoke.mjs:53:5"
         }
       ]
     },
@@ -1295,10 +1306,10 @@
       "failures": [
         {
           "job": "Windows package and startup smoke",
-          "file": "workflow",
-          "name": "Build, inspect package contents and start real application",
-          "type": "step-failure",
-          "diagnostic": "No TAP leaf failure in failed log."
+          "file": "scripts/nightly/installed-smoke.mjs",
+          "name": "locator.waitFor: Timeout 15000ms exceeded.",
+          "type": "timeout",
+          "diagnostic": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-conversation-approval=\"4b9e9f6a-cb15-4116-aaac-0392e0e8b312\"]').getByRole('button', { name: '批准', exact: true }) to be visible\u001b[22m\n\n    at D:\\a\\weftmate\\weftmate\\scripts\\nightly\\installed-smoke.mjs:98:21\n    at async until (D:\\a\\weftmate\\weftmate\\tests\\helpers\\migration-host.mjs:18:44)\n    at async file:///D:/a/weftmate/weftmate/scripts/nightly/installed-smoke.mjs:93:3"
         }
       ]
     },
