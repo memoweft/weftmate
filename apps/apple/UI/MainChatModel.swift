@@ -47,10 +47,20 @@ import WeftMateCore
     private var transferFiles: [ConversationAttachmentDraft] = []
     init(app: AppleAppModel) { self.app = app }
     var nativeEvents: [TimelineEvent] {
-        window.events.compactMap { row in
+        window.displayEvents.compactMap { row in
             guard row.sessionID == chat?.activeSessionId, let seq = row.sourceRef["seq"]?.int else { return nil }
             return TimelineEvent(seq: seq, type: row.type, at: row.at, data: row.data)
         }
+    }
+    func sessionEvents(_ sessionID: String) -> [TimelineEvent] {
+        window.events.compactMap { row in
+            guard row.sessionID == sessionID, let seq = row.sourceRef["seq"]?.int else { return nil }
+            return .init(seq: seq, type: row.type, at: row.at, data: row.data)
+        }
+    }
+    func artifactBundle(_ event: ChatEvent) -> ReplyArtifactBundle? {
+        guard let sessionID = event.sessionID, let seq = event.sourceRef["seq"]?.int else { return nil }
+        return ReplyArtifacts.bundles(sessionEvents(sessionID)).first { $0.anchorSeq == seq }
     }
     func clear() {
         window.reset(); visibleAnchor = nil; dayCounts = [:]; chat = nil; hits = []; query = ""; resources = []; resourceVisible = false; target = nil
@@ -146,7 +156,7 @@ import WeftMateCore
             let latest = try await app.assistantClient.logicalChat()
             guard current(token, generation) else { return }
             try window.requireRevision(latest.contentRevision)
-            window.anchor = visibleAnchor; try window.apply(page); self.chat = latest
+            window.anchor = visibleAnchor; try window.apply(page); self.chat = latest; error = nil
             if let bound = latest.modelProfileId, latest.activeSessionId != nil { modelID = bound }
             indexState = page.indexState; timeZone = page.timeZone
             if page.hasMore { await changes() }

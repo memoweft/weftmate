@@ -1,0 +1,18 @@
+{
+  "syntheticOnly": true,
+  "productionCallbacks": "Existing nonisolated Sendable DailyHealthCallbacks factories; only registration type set, query limit and ordering changed. Async HealthKit descriptors add no SDK callback closures.",
+  "testOnlyCallbacks": [
+    {
+      "file": "apps/apple/Tests/HEALTH4SeedApp.swift",
+      "factory": "added",
+      "sha256": "e567028787d409ff3cd1f55b44351dbe0b267267105717bb3ad39b4cc623f8b9",
+      "reason": "Nonisolated factory returns explicitly Sendable callback. Only immutable checked continuation is captured; mutually exclusive error or success resumes once. No UI or HealthKit store access occurs inside the callback."
+    },
+    {
+      "file": "apps/apple/Tests/HEALTH4SeedApp.swift",
+      "factory": "finished",
+      "sha256": "2045f66b5f8a274e2004c5d66f47b12d0c828f3b4ff53e6798407479271edbd0",
+      "reason": "Nonisolated factory returns explicitly Sendable callback. Only immutable checked continuation is captured; mutually exclusive error or success resumes once. No UI or HealthKit store access occurs inside the callback."
+    }
+  ]
+}

@@ -411,5 +411,61 @@
     "api": "observe",
     "sha256": "bbd0f492965f5fa0efde383a77194a3dc7d7af2b5b688d3081cfab66f80cbfea",
     "reason": "MainActor owns observer registration and the query array. The SDK closure is produced by nonisolated DailyHealthCallbacks.observer and explicitly @Sendable; it captures an immutable completion owner plus Bool and Sendable update, accesses no UI state, and one task calls completion once from defer on success, error and skipped/cancelled work."
+  },
+  {
+    "file": "apps/apple/iOS/DailyHealthReader.swift",
+    "line": 202,
+    "api": "HKSampleQuery",
+    "sha256": "cd66f624884debb8c7afd6d7cb408da6d0ef40f16835b2284d6fa1a21adb5c80",
+    "reason": "MainActor owns HealthKit query registration. Nonisolated DailyHealthCallbacks.samples returns an explicit Sendable continuation-only callback; query limit and ordering change no callback actor accesses. No UI or health reader state is captured."
+  },
+  {
+    "file": "apps/apple/iOS/DailyHealthReader.swift",
+    "line": 206,
+    "api": "observe",
+    "sha256": "074fb83aacf8204f10360e387d83310f59f4c592f99e7e4c29ed2eb0ec242ca3",
+    "reason": "Observer registration remains MainActor. The expanded types use the same nonisolated Sendable callback factory; no UI references enter the SDK closure, and completion runs once after the awaited update including errors and cancellation."
+  },
+  {
+    "file": "apps/apple/iOS/DailyHealthBackground.swift",
+    "line": 16,
+    "api": "launch",
+    "sha256": "240f308cdba7545d26a3c8ecc44daedf52b5fa79aadbae8ed973cbf0668a764f",
+    "reason": "Nonisolated factory returns an explicit Sendable SDK launch callback. It wraps only the SDK task in an immutable completion owner and enters Task MainActor before looking up any model or calling UI actor state."
+  },
+  {
+    "file": "apps/apple/iOS/DailyHealthBackground.swift",
+    "line": 22,
+    "api": "expiration",
+    "sha256": "f0907da51167d9330bdc3a7ec0b1dcd360b27b1de3544c751b2df6b2baece62c",
+    "reason": "Nonisolated factory returns an explicit Sendable expiration callback. Task cancellation and lock-protected completion are safe off main; the weak model is dereferenced only inside an explicit MainActor task."
+  },
+  {
+    "file": "apps/apple/iOS/DailyHealthBackground.swift",
+    "line": 37,
+    "api": "register",
+    "sha256": "8d15c55ee6854444857608bd0a8068afc312e0a3e9bbdd0013946932d17c8379",
+    "reason": "App.init calls MainActor register before launch completes. A process-level flag is set before touching BGTaskScheduler and prevents a second SDK registration. The SDK launch handler comes from the reviewed nonisolated Sendable launch factory; model construction never registers."
+  },
+  {
+    "file": "apps/apple/iOS/DailyHealthReader.swift",
+    "line": 50,
+    "api": "detached",
+    "sha256": "99ea2d3fd3a0ce471dbbc64b00b0edd58343e665e864f15e5768dc3c2972f1bc",
+    "reason": "Detached utility calculation is created inside a nonisolated factory with an explicit Sendable closure. It captures only immutable Sendable dates, calendar and local typed numeric/sleep inputs, and returns a Sendable aggregation. It never captures the HealthKit store, samples, model, UI or account state; UI assignment occurs after awaiting on MainActor."
+  },
+  {
+    "file": "apps/apple/UI/ReplyArtifactList.swift",
+    "line": 43,
+    "api": "fileExporter",
+    "sha256": "ab18ac72c3392568fcc51c6ebd9f9a0fc59fc6802a8362c69efbdc96fdb38f86",
+    "reason": "Explicit @Sendable file export completion only inspects the Sendable result; UI error assignment hops explicitly to MainActor. Cancellation captures no actor state."
+  },
+  {
+    "file": "apps/apple/iOS/HealthScoreRangeBar.swift",
+    "line": 23,
+    "api": "GeometryReader",
+    "sha256": "5596b3f020bc69e3fa32588b80cf664fb92e0ece829e26402aa829bfdc9e4d57",
+    "reason": "Explicit @Sendable geometry builder captures only immutable Sendable score fractions and Color values computed by the UI body. It reads geometry and constructs primitive shapes without reading or changing model or actor state."
   }
 ]
