@@ -90,7 +90,7 @@ struct UsageView: View {
                             Text("达到 80% 时提示；达到 100% 后暂停新的云端请求。本地模型不受限。临时金额仅覆盖当前账号时区的月份，留空清除覆盖。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         }
                     }
-                    DisclosureGroup("模型单价 · 元 / 百万字元") {
+                    DisclosureGroup("模型单价 · 元 / 百万字") {
                         ForEach(settings.models) { row in
                             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                                 Text(row.name + (row.local ? " · 本地" : ""))
