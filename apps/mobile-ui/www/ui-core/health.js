@@ -32,7 +32,7 @@
   const profileHint = data => {const missing=data?.missing??[],fields=[...(missing.includes('birthYear')?['出生年份']:[]),...(missing.includes('sex')?['性别']:[])];return fields.length?`在 iPhone 的健康页里补一下${fields.join('和')}就能算`:'最近还没有足够的最大摄氧量记录，继续戴着手表记录活动';};
   globalThis.WeftHealth = {showHealthBottomTab:SHOW_HEALTH_BOTTOM_TAB,metrics,finite,value,vital,clockMinutes,profileHint,analysisScope,duration,dayShift,chart,vitals:['hrvSdnnMs','restingHeartRateBpm','respiratoryRateBrpm','spo2Pct','wristTempC']};
   globalThis.WeftUiCore.factories.health = (core,effects,env) => {
-    const priorSaveHealthSettings=core.saveHealthSettings;
+    const priorSaveHealthSettings=core.persistHealthSettings??core.saveHealthSettings;
     const model={overview:null,day:'',today:'',metric:'recovery',days:30,view:'today',overlay:false,trend:null,usage:null,weekSleep:null,weekUsage:null,recoveryWeek:null,calendar:null,month:'',loading:false,trendLoading:false,error:'',trendError:'',calendarError:'',calendarLoading:false,sleepStages:{},scoreAverages:{},supplementLoading:false,stageError:'',dimensionMetrics:{},dimensionLoading:false,settings:null,settingsLoading:false,settingsError:'',analyses:new Map(),analysisOpen:new Set(),analysisBusy:new Set(),analysisErrors:new Map(),generation:0,reminders:new Map(),busy:new Set()};
     let identity,readId=0,trendId=0,calendarId=0,dimensionId=0;const requests=new Map();
     const scope=()=>`${core.state.identityGeneration}:${core.state.account?.ownerId??core.state.ownerId}`;

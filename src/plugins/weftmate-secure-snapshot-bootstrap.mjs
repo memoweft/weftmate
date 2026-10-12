@@ -9,6 +9,7 @@
  * and deliberately do not install `watchUserPatches`: runtime configuration is
  * the checked snapshot, not a mutable file.
  */
+import { setProcessWarningLog } from '../process-output.mjs'
 import { createHash, randomBytes } from 'node:crypto'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { createRequire as createNodeRequire } from 'node:module'
@@ -16,6 +17,7 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const PROTOCOL = 'weftmate.secure-snapshot.v1'
+setProcessWarningLog((event, data) => { try { process.send?.({ type: 'weftmate.process-warning', ...data }, () => {}) } catch {} })
 const MAX_FRAME_BYTES = 512 * 1024
 const BOOT_TIMEOUT_MS = 10_000
 const credentialLikeName = /(?:^|[_-])(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIALS?)(?:$|[_-])/i

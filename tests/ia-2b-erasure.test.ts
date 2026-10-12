@@ -62,3 +62,12 @@ test('an in-flight index read cannot return pre-erasure content after invalidati
   await assert.rejects(pending, { code: 'CURSOR_RESET_REQUIRED' });
   await f.timeline.close();
 });
+
+test('import recall answers are removed from future model context by memory identity while originals stay readable',()=>{
+ const events=[{seq:0,type:'turn/start',data:{turn:1}},{seq:1,type:'user/message',data:{content:[{text:'我的鹦鹉叫什么？'}]}},
+ {seq:2,type:'assistant/message',data:{memoryUsed:[{kind:'entity',id:'import-parrot'}],content:[{text:'青瓷。'}]}},{seq:3,type:'turn/end',data:{}},
+ {seq:4,type:'user/message',data:{content:[{text:'这是另一段无关对话。'}]}}];
+ const appended=[],session={events,surface:{nodes:[1,2,4]},append:(...args)=>appended.push(args)};
+ assert.deepEqual(shadowForgottenSurface(session,['[WeftMate 历史导入]原始记录不在本对话里',],v=>v,['entity:import-parrot']),[1,2]);
+ assert.equal(events[2].data.content[0].text,'青瓷。');assert.doesNotMatch(JSON.stringify(appended),/青瓷/);assert.equal(appended[1][2].surfaceOp.end,2);
+});

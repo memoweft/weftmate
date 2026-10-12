@@ -421,6 +421,8 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-memory.mjs'), memoryDest],
     [CREDENTIALS_PLUGIN_SRC, credentialsDest],
     [SECURE_SNAPSHOT_BOOTSTRAP_SRC, secureBootstrapDest],
+    [join(here, 'process-output.mjs'), join(dir, 'process-output.mjs')],
+    [join(here, 'host-log.mjs'), join(dir, 'host-log.mjs')],
     [join(GATEWAY_SRC, 'index.mjs'), join(gatewayDest, 'index.mjs')],
     [join(GATEWAY_SRC, 'diagnostics.mjs'), join(gatewayDest, 'diagnostics.mjs')],
   ]
@@ -827,6 +829,7 @@ export interface DshWebRuntimeOptions {
   log?: (line: string) => void
   /** Observes process failures/recovery without affecting runtime lifecycle. */
   onProcessEvent?: (event: Readonly<DshProcessEvent>) => void
+  onProcessWarning?: (data: { name: string, code: string }) => void
   /** 就绪等待上限（缺省 120s）。 */
   readyTimeoutMs?: number
 }
@@ -1178,6 +1181,7 @@ export class DshWebRuntime {
     patchFiles: readonly string[]
     log: (line: string) => void
     onProcessEvent: DshWebRuntimeOptions['onProcessEvent']
+    onProcessWarning: DshWebRuntimeOptions['onProcessWarning']
     readyTimeoutMs: number
   }
 
@@ -1241,6 +1245,7 @@ export class DshWebRuntime {
       patchFiles: [...(options.patchFiles ?? [])],
       log: options.log ?? (() => {}),
       onProcessEvent: options.onProcessEvent,
+      onProcessWarning: options.onProcessWarning,
       readyTimeoutMs: options.readyTimeoutMs ?? 120_000,
     }
   }
@@ -2478,6 +2483,11 @@ export class DshWebRuntime {
       if (this.child && this.child !== child) this.invalidatePersonalRuntime(this.child)
       this.child = child
       child.on('message', (message: unknown) => {
+        const warning = message as { type?: string, name?: string, code?: string } | null
+        if (warning?.type === 'weftmate.process-warning' && typeof warning.name === 'string' && typeof warning.code === 'string' &&
+            /^[A-Za-z0-9._:-]{1,160}$/.test(warning.name) && /^[A-Za-z0-9._:-]{1,160}$/.test(warning.code)) {
+          this.opts.onProcessWarning?.({ name: warning.name, code: warning.code })
+        }
         this.handleCredentialMessage(child, message)
         this.handlePersonalDesktopMessage(child, message)
         this.handlePersonalMemoryMessage(child, message)
