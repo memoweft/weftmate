@@ -34,20 +34,21 @@ struct PhoneIconStyle: ButtonStyle {
 }
 struct PhoneCardModifier: ViewModifier {
     func body(content: Content) -> some View {
-        content.padding(AppleTokens.Space.p12)
+        content.frame(maxWidth: .infinity, alignment: .leading).padding(AppleTokens.Space.p12)
             .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24, style: .continuous))
     }
 }
 struct PhoneSheetChrome: ViewModifier {
     let title: String
     let close: () -> Void
+    var closeIdentifier = "phoneSheet.close"
     func body(content: Content) -> some View {
         VStack(spacing: AppleTokens.Space.p0) {
             HStack {
                 AppleTokens.Colors.clear.frame(width: AppleTokens.Space.p44, height: AppleTokens.Space.p44)
                 Text(title).font(AppleTokens.Fonts.headline).frame(maxWidth: .infinity).multilineTextAlignment(.center)
                 Button(action: close) { WeftIcon("deny") }.buttonStyle(PhoneIconStyle())
-                    .accessibilityLabel("关闭" + title).accessibilityIdentifier("phoneSheet.close")
+                    .accessibilityLabel("关闭" + title).accessibilityIdentifier(closeIdentifier)
             }.padding(AppleTokens.Space.p12)
             content
         }.background(Weave.canvas).tint(Weave.accent).buttonStyle(PhoneActionStyle())
@@ -155,9 +156,9 @@ extension View {
         self
         #endif
     }
-    @ViewBuilder func phoneSheet(_ title: String, close: @escaping () -> Void) -> some View {
+    @ViewBuilder func phoneSheet(_ title: String, identifier: String = "phoneSheet.close", close: @escaping () -> Void) -> some View {
         #if os(iOS)
-        self.modifier(PhoneSheetChrome(title: title, close: close))
+        self.modifier(PhoneSheetChrome(title: title, close: close, closeIdentifier: identifier))
         #else
         self
         #endif

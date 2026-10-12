@@ -181,7 +181,7 @@ struct ConversationView: View {
             }.ignoresSafeArea()
         }
         .fullScreenCover(isPresented: $showingPreview) { attachmentPreview }
-        .sheet(isPresented: $resources.visible) { ConversationResourcesPanel(app: model, resources: resources).phoneSheet("输出与来源", close: { resources.visible = false }) }
+        .sheet(isPresented: $resources.visible) { ConversationResourcesPanel(app: model, resources: resources).phoneSheet("输出与来源", identifier: "closeResourcesPanel", close: { resources.visible = false }) }
         #endif
         .onChange(of: model.accountEpoch) { _, _ in importingAttachments = false; showingCamera = false; showingPhotos = false; importScope = nil; cancelScreenshot(); closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
         .onChange(of: conversation.id) { _, _ in cancelScreenshot(); closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
