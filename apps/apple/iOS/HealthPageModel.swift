@@ -53,11 +53,11 @@ import WeftMateCore
             if let calendar=try? await app.assistantClient.healthCalendar(month:month), matches(app,token) { cache.calendar=calendar; try save() }
             if let settings=try? await app.assistantClient.healthPageSettings(), matches(app,token) { let policy=HealthPagePolicy.itemAnalysis(settings.settings); analysisSupported=policy.supported; analysisEnabled=policy.enabled }
             if let existing=try? await app.assistantClient.healthAnalysisCache(day:overview.day), matches(app,token) {
-                analyses=HealthPagePolicy.restoredAnalysis(existing.items,day:overview.day)
+                analyses=HealthPagePolicy.restoredAnalysis(existing.day == overview.day ? existing.items : [],day:overview.day)
             }
             var series: [String:HealthMetricSeries]=[:]
             for id in ["recovery","sleep","load","deepMinutes","remMinutes"] {
-                if let value=try? await app.assistantClient.healthMetrics(id,days:7), matches(app,token) { series[id+"-7"]=value }
+                if let value=try? await app.assistantClient.healthMetrics(id,days:7,to:overview.day), matches(app,token) { series[id+"-7"]=value }
             }
             if matches(app,token) { cache.series.merge(series,uniquingKeysWith:{ _,b in b }); try save() }
         } catch { if matches(app,token) { offline=true; self.error=cache.overview == nil ? "电脑暂时连不上，请稍后重试。" : nil } }
@@ -65,7 +65,7 @@ import WeftMateCore
     func metric(_ id: String, days: Int, app: AppleAppModel) async -> HealthMetricSeries? {
         let token=epoch
         do {
-            let result=try await app.assistantClient.healthMetrics(id,days:days)
+            let result=try await app.assistantClient.healthMetrics(id,days:days,to:cache.overview?.day)
             guard matches(app,token),!Task.isCancelled else { return nil }
             cache.series[id+"-\(days)"]=result; try save(); return result
         } catch { guard matches(app,token) else { return nil }; offline=true; return cache.series[id+"-\(days)"] }
@@ -92,7 +92,7 @@ import WeftMateCore
     }
     func remind(_ suggestion: HealthInsight.Suggestion, app: AppleAppModel) async {
         let token=epoch
-        guard let sessionID=app.mainChat.chat?.activeSessionId ?? app.selectedConversation?.sessionId else { notice="先在主对话聊一句，再来设置提醒。"; return }
+        let sessionID=app.mainChat.chat?.activeSessionId ?? app.selectedConversation?.sessionId
         let key=(cache.overview?.day ?? "")+suggestion.id
         let requestID=requestIDs[key] ?? UUID().uuidString; requestIDs[key]=requestID
         do { try await app.assistantClient.remindHealthSuggestion(suggestion.id,sessionID:sessionID,requestID:requestID); if matches(app,token) { notice="已经替你记下提醒。" } }

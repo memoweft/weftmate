@@ -87,12 +87,8 @@
             core.state.phoneHistoryCursors = new Map();
             core.state.phoneHandoffBusy = false;
             core.state.phoneHandoffSelections = new Map();
-            for (const factory of Object.values(factories)) {
-                // The health view wraps the serialized settings writer; only it registers the public action.
-                if (factory === factories.health) core.saveHealthSettings = core.queueHealthSettings;
+            for (const factory of Object.values(factories))
                 Object.assign(core, factory(core, effects, environment));
-            }
-            core.saveHealthSettings ??= core.queueHealthSettings;
             return core;
         } };
 })();

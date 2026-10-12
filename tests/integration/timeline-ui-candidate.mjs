@@ -114,6 +114,7 @@ export async function startTimelineCandidate(options = {}) {
     respondUserQuestion: async input => { const frame = questionFrames.find(frame => frame.questionRpcId === input.questionRpcId) || questionFrame; frame.nativeState = 'answered'; result(frame.callId || 'question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
   }
   if(options.digestModel)backend.modelCompletion=options.digestModel;
+  if(options.verifyModelProfile)backend.verifyModelProfile=options.verifyModelProfile;
   const backupSettings = { enabled: true, directory: 'D:/Synthetic/UI-4-Backups', dailyDays: 7, weeklyCopies: 4 }, backupRows = [], backupOperations = [];
   const backupManager = options.backups ? {
     isPending: () => false,
@@ -123,7 +124,7 @@ export async function startTimelineCandidate(options = {}) {
     importBackup: async () => {backupOperations.push('import');return {backup:{id:'ui4-import'}}},
     restore: async id => {backupOperations.push('restore:'+id);return {accepted:true}},
   } : null;
-  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, libraryNativeActions:options.libraryNativeActions??null, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi, cloudIdentity:options.cloudIdentity })
+  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, systemManager:options.systemManager??null, libraryNativeActions:options.libraryNativeActions??null, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi, cloudIdentity:options.cloudIdentity })
   const started = await service.start(); let origin = started.origin;
   const { hostId } = started
   const credentials = { username: 'TimelineFixture', password: `isolated-${randomUUID()}`, deviceName: '隔离测试浏览器' }
@@ -156,7 +157,8 @@ export async function startTimelineCandidate(options = {}) {
   if (artifact) {call('write', 'artifact-1', {fileName:artifact.fileName});result('artifact-1',JSON.stringify(artifact))}
   // Register the pending overwrite only after the demo artifact write finishes.
   // The production source guard correctly rejects approvals during unknown effects.
-  if (!options.inlineProgress) await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), reason: approvalReason })
+  if (!options.inlineProgress) await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash(options.secondOpinion ? JSON.stringify({command:'write report'}) : 'write report'), reason: approvalReason,
+    ...(options.secondOpinion ? {reviewEvidence:{arguments:{command:'write report'},risks:['overwrite'],sources:['synthetic-progress.md']}} : {}) })
   setupComplete = true;
   const bridge = async (method, params) => {
     if (method === 'host.status') { const status=await request('/status'); return options.logicalMobile?status:{...status,personalCapabilities:{...status.personalCapabilities,chats:0}}; }

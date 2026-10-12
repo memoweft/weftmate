@@ -1,0 +1,391 @@
+{
+  "left": "改之前",
+  "right": "改之后",
+  "source": "Same HEALTH-2 synthetic seed and formal v3 fixtures on both sides",
+  "pairs": [
+    {
+      "file": "mobile-390-today-six-dark.png",
+      "left": "before/mobile-390-today-six-dark.png",
+      "right": "after/mobile-390-today-six-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-recovery-detail-dark.png",
+      "left": "before/mobile-390-recovery-detail-dark.png",
+      "right": "after/mobile-390-recovery-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-sleep-detail-dark.png",
+      "left": "before/mobile-390-sleep-detail-dark.png",
+      "right": "after/mobile-390-sleep-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-load-detail-dark.png",
+      "left": "before/mobile-390-load-detail-dark.png",
+      "right": "after/mobile-390-load-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-stress-detail-dark.png",
+      "left": "before/mobile-390-stress-detail-dark.png",
+      "right": "after/mobile-390-stress-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-energy-detail-dark.png",
+      "left": "before/mobile-390-energy-detail-dark.png",
+      "right": "after/mobile-390-energy-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-fitnessAge-detail-dark.png",
+      "left": "before/mobile-390-fitnessAge-detail-dark.png",
+      "right": "after/mobile-390-fitnessAge-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-trend-overlay-dark.png",
+      "left": "before/mobile-390-trend-overlay-dark.png",
+      "right": "after/mobile-390-trend-overlay-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-today-six-dark.png",
+      "left": "before/mobile-360-today-six-dark.png",
+      "right": "after/mobile-360-today-six-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-recovery-detail-dark.png",
+      "left": "before/mobile-360-recovery-detail-dark.png",
+      "right": "after/mobile-360-recovery-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-sleep-detail-dark.png",
+      "left": "before/mobile-360-sleep-detail-dark.png",
+      "right": "after/mobile-360-sleep-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-load-detail-dark.png",
+      "left": "before/mobile-360-load-detail-dark.png",
+      "right": "after/mobile-360-load-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-stress-detail-dark.png",
+      "left": "before/mobile-360-stress-detail-dark.png",
+      "right": "after/mobile-360-stress-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-energy-detail-dark.png",
+      "left": "before/mobile-360-energy-detail-dark.png",
+      "right": "after/mobile-360-energy-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-fitnessAge-detail-dark.png",
+      "left": "before/mobile-360-fitnessAge-detail-dark.png",
+      "right": "after/mobile-360-fitnessAge-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-trend-overlay-dark.png",
+      "left": "before/mobile-360-trend-overlay-dark.png",
+      "right": "after/mobile-360-trend-overlay-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-today-six-dark.png",
+      "left": "before/electron-1200-today-six-dark.png",
+      "right": "after/electron-1200-today-six-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-recovery-detail-dark.png",
+      "left": "before/electron-1200-recovery-detail-dark.png",
+      "right": "after/electron-1200-recovery-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-sleep-detail-dark.png",
+      "left": "before/electron-1200-sleep-detail-dark.png",
+      "right": "after/electron-1200-sleep-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-load-detail-dark.png",
+      "left": "before/electron-1200-load-detail-dark.png",
+      "right": "after/electron-1200-load-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-stress-detail-dark.png",
+      "left": "before/electron-1200-stress-detail-dark.png",
+      "right": "after/electron-1200-stress-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-energy-detail-dark.png",
+      "left": "before/electron-1200-energy-detail-dark.png",
+      "right": "after/electron-1200-energy-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-fitnessAge-detail-dark.png",
+      "left": "before/electron-1200-fitnessAge-detail-dark.png",
+      "right": "after/electron-1200-fitnessAge-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-trend-overlay-dark.png",
+      "left": "before/electron-1200-trend-overlay-dark.png",
+      "right": "after/electron-1200-trend-overlay-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-today-six-dark.png",
+      "left": "before/electron-480-today-six-dark.png",
+      "right": "after/electron-480-today-six-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-recovery-detail-dark.png",
+      "left": "before/electron-480-recovery-detail-dark.png",
+      "right": "after/electron-480-recovery-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-sleep-detail-dark.png",
+      "left": "before/electron-480-sleep-detail-dark.png",
+      "right": "after/electron-480-sleep-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-load-detail-dark.png",
+      "left": "before/electron-480-load-detail-dark.png",
+      "right": "after/electron-480-load-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-stress-detail-dark.png",
+      "left": "before/electron-480-stress-detail-dark.png",
+      "right": "after/electron-480-stress-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-energy-detail-dark.png",
+      "left": "before/electron-480-energy-detail-dark.png",
+      "right": "after/electron-480-energy-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-fitnessAge-detail-dark.png",
+      "left": "before/electron-480-fitnessAge-detail-dark.png",
+      "right": "after/electron-480-fitnessAge-detail-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-trend-overlay-dark.png",
+      "left": "before/electron-480-trend-overlay-dark.png",
+      "right": "after/electron-480-trend-overlay-dark.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-today-six-light.png",
+      "left": "before/mobile-390-today-six-light.png",
+      "right": "after/mobile-390-today-six-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-recovery-detail-light.png",
+      "left": "before/mobile-390-recovery-detail-light.png",
+      "right": "after/mobile-390-recovery-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-sleep-detail-light.png",
+      "left": "before/mobile-390-sleep-detail-light.png",
+      "right": "after/mobile-390-sleep-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-load-detail-light.png",
+      "left": "before/mobile-390-load-detail-light.png",
+      "right": "after/mobile-390-load-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-stress-detail-light.png",
+      "left": "before/mobile-390-stress-detail-light.png",
+      "right": "after/mobile-390-stress-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-energy-detail-light.png",
+      "left": "before/mobile-390-energy-detail-light.png",
+      "right": "after/mobile-390-energy-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-fitnessAge-detail-light.png",
+      "left": "before/mobile-390-fitnessAge-detail-light.png",
+      "right": "after/mobile-390-fitnessAge-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-390-trend-overlay-light.png",
+      "left": "before/mobile-390-trend-overlay-light.png",
+      "right": "after/mobile-390-trend-overlay-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-today-six-light.png",
+      "left": "before/mobile-360-today-six-light.png",
+      "right": "after/mobile-360-today-six-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-recovery-detail-light.png",
+      "left": "before/mobile-360-recovery-detail-light.png",
+      "right": "after/mobile-360-recovery-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-sleep-detail-light.png",
+      "left": "before/mobile-360-sleep-detail-light.png",
+      "right": "after/mobile-360-sleep-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-load-detail-light.png",
+      "left": "before/mobile-360-load-detail-light.png",
+      "right": "after/mobile-360-load-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-stress-detail-light.png",
+      "left": "before/mobile-360-stress-detail-light.png",
+      "right": "after/mobile-360-stress-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-energy-detail-light.png",
+      "left": "before/mobile-360-energy-detail-light.png",
+      "right": "after/mobile-360-energy-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-fitnessAge-detail-light.png",
+      "left": "before/mobile-360-fitnessAge-detail-light.png",
+      "right": "after/mobile-360-fitnessAge-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "mobile-360-trend-overlay-light.png",
+      "left": "before/mobile-360-trend-overlay-light.png",
+      "right": "after/mobile-360-trend-overlay-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-today-six-light.png",
+      "left": "before/electron-1200-today-six-light.png",
+      "right": "after/electron-1200-today-six-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-recovery-detail-light.png",
+      "left": "before/electron-1200-recovery-detail-light.png",
+      "right": "after/electron-1200-recovery-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-sleep-detail-light.png",
+      "left": "before/electron-1200-sleep-detail-light.png",
+      "right": "after/electron-1200-sleep-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-load-detail-light.png",
+      "left": "before/electron-1200-load-detail-light.png",
+      "right": "after/electron-1200-load-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-stress-detail-light.png",
+      "left": "before/electron-1200-stress-detail-light.png",
+      "right": "after/electron-1200-stress-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-energy-detail-light.png",
+      "left": "before/electron-1200-energy-detail-light.png",
+      "right": "after/electron-1200-energy-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-fitnessAge-detail-light.png",
+      "left": "before/electron-1200-fitnessAge-detail-light.png",
+      "right": "after/electron-1200-fitnessAge-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-1200-trend-overlay-light.png",
+      "left": "before/electron-1200-trend-overlay-light.png",
+      "right": "after/electron-1200-trend-overlay-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-today-six-light.png",
+      "left": "before/electron-480-today-six-light.png",
+      "right": "after/electron-480-today-six-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-recovery-detail-light.png",
+      "left": "before/electron-480-recovery-detail-light.png",
+      "right": "after/electron-480-recovery-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-sleep-detail-light.png",
+      "left": "before/electron-480-sleep-detail-light.png",
+      "right": "after/electron-480-sleep-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-load-detail-light.png",
+      "left": "before/electron-480-load-detail-light.png",
+      "right": "after/electron-480-load-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-stress-detail-light.png",
+      "left": "before/electron-480-stress-detail-light.png",
+      "right": "after/electron-480-stress-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-energy-detail-light.png",
+      "left": "before/electron-480-energy-detail-light.png",
+      "right": "after/electron-480-energy-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-fitnessAge-detail-light.png",
+      "left": "before/electron-480-fitnessAge-detail-light.png",
+      "right": "after/electron-480-fitnessAge-detail-light.png",
+      "pixelsPreserved": true
+    },
+    {
+      "file": "electron-480-trend-overlay-light.png",
+      "left": "before/electron-480-trend-overlay-light.png",
+      "right": "after/electron-480-trend-overlay-light.png",
+      "pixelsPreserved": true
+    }
+  ]
+}

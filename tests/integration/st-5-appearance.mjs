@@ -26,7 +26,7 @@ async function open(page,mobile=false){
  await page.getByRole('group',{name:'颜色模式',exact:true}).waitFor();
 }
 async function mode(page,value){await page.getByRole('group',{name:'颜色模式',exact:true}).getByRole('button',{name:{light:'浅色',dark:'深色',system:'跟随系统'}[value],exact:true}).click();await page.waitForFunction(value=>document.querySelector(`.appearance-modes button[data-value="${value}"]`)?.getAttribute('aria-pressed')==='true',value);}
-async function choose(page,label,text){await page.getByRole('combobox',{name:label,exact:true}).click();await page.getByRole('option',{name:text,exact:true}).click();await page.waitForFunction(({label,text})=>[...document.querySelectorAll('select')].some(el=>el.getAttribute('aria-label')===label&&el.selectedOptions[0]?.textContent===text),{label,text});}
+async function choose(page,label,text){if(label.endsWith('强调色')){const group=page.getByRole('group',{name:label,exact:true});await group.getByRole('button',{name:text,exact:true}).click();await page.waitForFunction(({label,text})=>[...document.querySelectorAll('.appearance-swatches')].find(el=>el.getAttribute('aria-label')===label)?.querySelector(`[aria-label="${text}"]`)?.getAttribute('aria-pressed')==='true',{label,text});return;}await page.getByRole('combobox',{name:label,exact:true}).click();await page.getByRole('option',{name:text,exact:true}).click();await page.waitForFunction(({label,text})=>[...document.querySelectorAll('select')].some(el=>el.getAttribute('aria-label')===label&&el.selectedOptions[0]?.textContent===text),{label,text});}
 async function matrix(page,name,width,mobile=false){
  await (name==='electron'?app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,800),width):page.setViewportSize({width,height:width===360?780:844}));
  for(const theme of ['light','dark']){
@@ -45,11 +45,11 @@ async function matrix(page,name,width,mobile=false){
   assert.equal(await motion.isChecked(),true);await motion.uncheck();await page.emulateMedia({reducedMotion:'no-preference'});await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await motion.isChecked(),false);
   await motion.check();await page.emulateMedia({reducedMotion:'no-preference'});assert.equal(await motion.isChecked(),true);
   for(const label of ['浅色强调色','深色强调色'])for(const color of ['石墨','蓝色','松绿','紫色']){
-   await choose(page,label,color);await shot(page,`${prefix}-${label==='浅色强调色'?'accent-light':'accent-dark'}-${color}`,page.getByRole('combobox',{name:label,exact:true}));
+   await choose(page,label,color);await shot(page,`${prefix}-${label==='浅色强调色'?'accent-light':'accent-dark'}-${color}`,page.getByRole('group',{name:label,exact:true}));
   }
   // Separate preferences become the active palette when switching the mode.
   await choose(page,'浅色强调色','蓝色');await choose(page,'深色强调色','松绿');await mode(page,'light');assert.equal(await page.evaluate(()=>document.documentElement.dataset.accent),'blue');await mode(page,'dark');assert.equal(await page.evaluate(()=>document.documentElement.dataset.accent),'green');await mode(page,theme);
-  for(const label of ['浅色强调色','深色强调色']){await page.getByRole('combobox',{name:label,exact:true}).click();await shot(page,`${prefix}-${label==='浅色强调色'?'accent-light':'accent-dark'}-menu`);await page.keyboard.press('Escape');}
+  for(const label of ['浅色强调色','深色强调色'])await shot(page,`${prefix}-${label==='浅色强调色'?'accent-light':'accent-dark'}-swatches`);
   for(const [value,text]of [['14','小 · 14'],['15','标准 · 15'],['17','大 · 17'],['19','特大 · 19']]){await choose(page,'字号',text);await shot(page,`${prefix}-body-${value}`,page.getByRole('combobox',{name:'字号',exact:true}));}await choose(page,'字号','标准 · 15');
   const prose=await page.locator('.appearance-code-preview>p').evaluate(el=>getComputedStyle(el).fontSize);
   for(const [value,text]of [['12','小 · 12'],['13','标准 · 13'],['15','大 · 15'],['17','特大 · 17']]){

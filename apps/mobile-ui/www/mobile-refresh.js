@@ -10,6 +10,8 @@
   const footer=el('div','drawer-footer'),creation=drawer.querySelector('.drawer-new-group'),search=$('mobile-search-entry');
   drawer.querySelector('.profile-link').before(footer);if(search)footer.append(search);if(creation)footer.append(creation);
   document.addEventListener('DOMContentLoaded',()=>{if($('mobile-search-entry'))footer.prepend($('mobile-search-entry'));});
+  const scroll=el('div','drawer-scroll');drawer.querySelector('.drawer-brand').after(scroll);
+  for(const child of [...drawer.children])if(child!==scroll&&!child.classList.contains('drawer-brand')&&child!==footer&&child!==$('profile-link')&&child!==$('cloud-device-banner'))scroll.append(child);
   const create=creation?.querySelector('[data-action="new-chat"]');
   if(create){create.setAttribute('aria-label','新建旁聊');create.replaceChildren(WeftIcons.create('compose',20));}
   const originalSync=syncMobileTabs;
