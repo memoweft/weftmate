@@ -77,6 +77,9 @@
   SetRegView 64
   ReadRegStr $weftOldUser HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
   ReadRegStr $weftOldMachine HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ; electron-builder runs this script once more to write the uninstaller (BUILD_UNINSTALLER).
+  ; That pass installs nothing: it must not be refused because the build machine has an all-users install.
+  !ifndef BUILD_UNINSTALLER
   ; Refuse unavailable elevation before the upstream silent UAC branch.
   StrCpy $R2 0
   ${If} $weftOldMachine != ""
@@ -100,6 +103,7 @@
       !insertmacro WeftFail 740 "ADMIN_REQUIRED: run setup from an elevated terminal"
     ${EndIf}
   ${EndIf}
+  !endif
 !macroend
 !macro customInit
   SetOutPath $TEMP
