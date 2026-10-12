@@ -805,6 +805,15 @@ public actor PersonalClient {
         return try decode(response.body)
     }
 
+    public func setSecondOpinionEnabled(_ enabled: Bool) async throws -> ApprovalModeSettings {
+        let (auth, generation) = try snapshot()
+        struct Body: Encodable { let secondOpinionEnabled: Bool }
+        let body = try JSONEncoder().encode(Body(secondOpinionEnabled: enabled))
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/settings/approvals", method: "PATCH", body: body)
+        try SharedValidation.require(response.status == 200)
+        return try decode(response.body)
+    }
+
     public func approvals(sessionID: String, limit: Int = 50,
                           before: ApprovalPageCursor? = nil) async throws -> ApprovalPage {
         let (auth, generation) = try snapshot()

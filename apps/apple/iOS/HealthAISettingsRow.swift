@@ -8,7 +8,7 @@ struct HealthAISettingsRow: View {
     @State private var updating=false
     var body: some View {
         if let settings {
-            Toggle("今日解读使用 AI",isOn:Binding(get:{self.settings?.modelInsightsEnabled == true},set:{value in Task { await change(top:value) } })).disabled(updating)
+            Toggle("今日解读用模型写",isOn:Binding(get:{self.settings?.modelInsightsEnabled == true},set:{value in Task { await change(top:value) } })).disabled(updating).accessibilityIdentifier("health.modelInsightsEnabled")
             if settings.itemAnalysisEnabled != nil {
                 Toggle("各项 AI 分析",isOn:Binding(get:{self.settings?.itemAnalysisEnabled == true},set:{value in Task { await change(item:value) } })).disabled(updating)
             }

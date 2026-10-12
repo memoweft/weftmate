@@ -1800,7 +1800,11 @@ final class AppleAppModel: ObservableObject {
                     _ = await watchSnapshotBytes()
                     #endif
                 }
-                if !page.hasMore { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty || self.conversations.first(where: { $0.id == conversation.id })?.running == true)) }
+                if !page.hasMore {
+                    let running = self.conversations.first(where: { $0.id == conversation.id })?.running == true
+                    if page.liveSeq != nil { try await Task.sleep(for: .seconds(ReplySnapshots.pollDelay(streaming: true, running: running))) }
+                    else { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty || running)) }
+                }
             } catch {
             RunLogRuntime.shared.failure(.syncFailure, error: error, phase: "sync")
                 if error is CancellationError { return }
@@ -1866,7 +1870,7 @@ final class AppleAppModel: ObservableObject {
                    let detail = try? await client.timelineDetail(sessionID: sessionID, seq: seq) {
                     summary = "要" + ToolProgressSummary.readable(tool: approval.toolName, raw: detail.text)
                 }
-                watchApprovals.append(WatchApproval(id: approval.id, summary: summary))
+                watchApprovals.append(WatchApproval(id: approval.id, summary: summary, secondOpinion: approval.secondOpinion?.text))
             }
             guard actionEpoch == epoch else { return nil }
             let snapshot = WatchTimelineSnapshot(accountKey: account.cacheKey, sessionID: sessionID,

@@ -1,6 +1,8 @@
 import Foundation
 
 public enum HealthPagePolicy {
+    /// iPhone score cards keep two columns at every supported phone width.
+    public static func scoreColumns(width: Double) -> Int { 2 }
     public static func recordVersion(_ capabilities: HealthCapabilities?) -> Int { (capabilities?.record ?? 2) >= 3 ? 3 : 2 }
     public static func itemAnalysis(_ settings: HealthPageSettings) -> (supported: Bool, enabled: Bool) {
         (settings.itemAnalysisEnabled != nil, settings.itemAnalysisEnabled == true)
