@@ -49,6 +49,9 @@ import { createPersonalHealthStore } from '../personal-health/index.mjs';
 import { createHealthRecordsStore } from '../personal-health/records-store.mjs';
 import { createHealthOperations } from '../personal-health/records-http.mjs';
 import { createHealthInsights } from '../personal-health/insight.mjs';
+import { mergeComputerBuckets } from './computer-usage.mjs';
+import { notificationSettings as computerNotificationSettings } from './notification-policy.mjs';
+import { dailyDigestState, pruneDailyDigests } from './daily-digest.mjs';
 import { createHostCloudIdentity } from '../personal-cloud/index.mjs';
 import { createHostRelay } from '../personal-relay/index.mjs';
 import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
@@ -749,7 +752,34 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     const legacy=accountState(ownerId).dailyDigest?.healthDays;
     if(Object.keys(legacy??{}).length){await healthRecords.migrate(ownerId,legacy);await serial(()=>mutate(ownerId,next=>{next.dailyDigest.healthDays={};}));}
   }
+  let computerUsageCheckpoint = null;
+  context.checkpointComputerUsage = ownerId => computerUsageCheckpoint?.(ownerId);
   const service = {
+    setComputerUsageCheckpoint(checkpoint) { computerUsageCheckpoint = checkpoint; },
+    computerUsagePolicy(ownerId) {
+      const account = accountState(ownerId), settings = computerNotificationSettings(account);
+      return { enabled: !closing && settings.reviewEnabled && settings.computerUsageEnabled && !dataControls.isLocked(ownerId),
+        // Whole-account erasure replaces the durable main-chat identity, even
+        // when the account itself stays signed in and its counters reset.
+        generation: `${account.chatIdentity?.mainChatId ?? ''}:${account.dailyDigest?.generation ?? 0}:${account.computerUsageGeneration ?? 0}`,
+        timeZone: usage.settings(ownerId).timeZone };
+    },
+    async recordComputerUsage(ownerId, generation, buckets) {
+      if (closing) return;
+      const initial = service.computerUsagePolicy(ownerId);
+      if (!initial.enabled || initial.generation !== generation) return;
+      let changed = false;
+      await serial(() => mutate(ownerId, next => {
+        const current = service.computerUsagePolicy(ownerId);
+        if (!current.enabled || current.generation !== generation) return;
+        const state = dailyDigestState(next);
+        state.computerUsageRevision = (state.computerUsageRevision ?? 0) + 1;
+        state.computerUsage = { buckets: mergeComputerBuckets(state.computerUsage?.buckets ?? [], buckets) };
+        pruneDailyDigests(next, timestamp(), current.timeZone);
+        changed = true;
+      }));
+      if (changed) await healthInsights.usageChanged(ownerId);
+    },
     pushActivity: (ownerId, eventId) => sendHostPush(context, ownerId, eventId),
     recordActivity: activity.record,
     recordMemoryUse: activity.memoryDigest.noteUse,

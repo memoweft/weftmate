@@ -1,4 +1,7 @@
+import { setProcessWarningLog } from '../../process-output.mjs'
 import { pathToFileURL } from 'node:url'
+
+setProcessWarningLog((_event, data) => { try { process.send?.({ type: 'process-warning', ...data }, () => {}) } catch {} })
 
 const [entryPath, stateRoot, mode, rawBehaviorChecks] = process.argv.slice(2)
 const behaviorChecks = rawBehaviorChecks ? JSON.parse(rawBehaviorChecks) : null

@@ -1,0 +1,51 @@
+{
+  "earlierMimoRequests": 4,
+  "earlierCleanupProcesses": 1,
+  "initialBaselineCleanupProcesses": 1,
+  "correctedFindings": [
+    "Electron default error-box handler is asynchronous; baseline interception must wait for its callback.",
+    "Generated Mod entry also needs the copied host-log dependency.",
+    "Native query now supplies account-local usage time; strict clock assertion rejects 22:00 for expected 02:00.",
+    "Real sampling factory is preloaded because Playwright evaluate cannot dynamically import modules.",
+    "Copied watchdog fixtures now include process-output.mjs.",
+    "Shared settings exports persistHealthSettings; health retains the public serialized saveHealthSettings wrapper.",
+    "BL-29 retains all 2s/25s/exit assertions and exits its already-drained isolated helper normally to avoid a quit-handshake hang.",
+    "Sampler quit now only flushes prior observations: no new auth lookup or unobserved tail inference. The five native exit modes retain all original timing assertions."
+  ],
+  "requiredRuns": [
+    {
+      "mode": "required",
+      "files": 324,
+      "exitCode": 1,
+      "passed": 1844,
+      "failed": 3,
+      "skipped": 14,
+      "failures": [
+        "real standalone watchdog retains pending state and installation on a query hang before-install",
+        "real standalone watchdog retains pending state and installation on a query hang before-rollback",
+        "core registers distinct actions, constructs independent stores and has no DOM dependency"
+      ]
+    },
+    {
+      "mode": "required",
+      "files": 324,
+      "exitCode": 1,
+      "passed": 1846,
+      "failed": 1,
+      "skipped": 14,
+      "failures": [
+        "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s"
+      ]
+    },
+    {
+      "mode": "required",
+      "files": 324,
+      "exitCode": 0,
+      "passed": 1847,
+      "failed": 0,
+      "skipped": 14,
+      "failures": []
+    }
+  ],
+  "earlierPipeForcedCleanupProcesses": 5
+}

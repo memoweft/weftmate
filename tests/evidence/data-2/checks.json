@@ -1,0 +1,72 @@
+{
+  "required": {
+    "mode": "required",
+    "files": 324,
+    "exitCode": 0,
+    "passed": 1847,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 33,
+    "exitCode": 0,
+    "passed": 230,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "mobile": {
+    "files": 5,
+    "passed": 114,
+    "failed": 0,
+    "skipped": 0
+  },
+  "coreRegression": {
+    "passed": 31,
+    "failed": 0
+  },
+  "lastComputerRegression": {
+    "passed": 14,
+    "failed": 0
+  },
+  "typecheck": true,
+  "publicHygiene": {
+    "hits": 0
+  },
+  "heavySlots": [
+    {
+      "operation": "required-initial",
+      "slot": "heavy-2.lock"
+    },
+    {
+      "operation": "required-second",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "operation": "required-passed",
+      "slot": "heavy-2.lock"
+    },
+    {
+      "operation": "electron-accepted",
+      "slot": "heavy-2.lock"
+    },
+    {
+      "operation": "vendor-passed",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "operation": "mobile-five-files",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "operation": "pipe-final-device-contract",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "operation": "five-exit-paths-final",
+      "slot": "heavy-1.lock"
+    }
+  ]
+}

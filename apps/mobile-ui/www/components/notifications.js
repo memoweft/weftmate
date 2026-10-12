@@ -37,6 +37,7 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
   }
   form.append(node('h2','回顾与洞察'));
   field('reviewEnabled','回顾与洞察','每天在这台电脑整理使用摘要；每周在动态里回顾，聊天时可接续最近的事情。','checkbox');
+  field('computerUsageEnabled','记录这台电脑的使用时段','只记什么时候在用，不记在用什么。','checkbox');
   field('reviewRetentionDays','保留多久','只保存在这台电脑，清空后不再用于聊天背景。','select',[[7,'7 天'],[30,'30 天'],[90,'90 天'],[180,'180 天'],[365,'365 天']]);
   const clear=node('button','清空回顾','button secondary');clear.type='button';
   clear.onclick=()=>{const focus=document.activeElement,box=node('dialog','',core.android?.call?'session-action-dialog data-dialog review-clear-dialog':'dialog confirm-dialog data-dialog review-clear-dialog');box.setAttribute('aria-label','清空回顾与洞察');box.append(node('h2','清空回顾与洞察'),node('p','删除已保存的摘要和周回顾，之后从明天重新开始整理。对话、成果和记忆会保留。'));
