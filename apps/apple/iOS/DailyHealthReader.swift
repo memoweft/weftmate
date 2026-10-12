@@ -162,8 +162,7 @@ private enum HealthReadingWork {
             let end = min(until, calendar.date(byAdding: .day, value: 1, to: day)!)
             let key = DailyHealthCalendar.key(day,calendar: calendar)
             func average(_ values: [(Date,Double)]) -> Double? {
-                let v = values.filter { $0.0 >= day && $0.0 < end }.map(\.1)
-                return v.isEmpty ? nil : v.reduce(0,+)/Double(v.count)
+                HealthInputMath.dailyMean(values,day:day,calendar:calendar)
             }
             var value = DailyHealth(steps: try await statistic(.stepCount,day: day,end: end,unit: .count(),options: .cumulativeSum).map { Int($0.rounded()) },
                 sleepMinutes: sleeping[key]?.minutes,

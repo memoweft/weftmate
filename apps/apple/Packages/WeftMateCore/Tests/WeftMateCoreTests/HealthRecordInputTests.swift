@@ -76,6 +76,9 @@ private func h4calendar(_ zone: String = "UTC") -> Calendar { var c = Calendar(i
 }
 private actor Health4ContractTransport: HTTPTransport {
     var requests: [URLRequest]=[]
+    var failBatchAt: Int?
+    var batchAttempts=0
+    func failOnceAtBatch(_ index: Int) { failBatchAt=index }
     func send(_ r: URLRequest) async throws -> HTTPResponse {
         let path=r.url!.path;requests.append(r)
         if path.hasSuffix("/auth/login") || path.hasSuffix("/auth/me") {
@@ -83,6 +86,8 @@ private actor Health4ContractTransport: HTTPTransport {
         }
         if path.hasSuffix("/status") { return .init(status:200,body:Data("{\"ownerId\":\"synthetic\",\"hostId\":\"synthetic-host\"}".utf8)) }
         if path.hasSuffix("/records/batch") {
+            batchAttempts += 1
+            if failBatchAt == batchAttempts { failBatchAt=nil; return .init(status:503,body:Data("{\"error\":{\"code\":\"UNAVAILABLE\"}}".utf8)) }
             let body=try JSONDecoder().decode(HealthBatchBody.self,from:r.httpBody!)
             let value=HealthBatchReply(items:body.items,changedDays:body.items.map(\.day))
             return .init(status:200,body:try JSONEncoder().encode(value))
@@ -151,4 +156,51 @@ private actor Health4ContractTransport: HTTPTransport {
     #expect(HealthInputMath.uncovered(DateInterval(start:a,end:b),occupied:[DateInterval(start:a,end:b)]).isEmpty)
     #expect(HealthInputMath.uncovered(DateInterval(start:a.addingTimeInterval(1800),end:b.addingTimeInterval(1800)),occupied:[DateInterval(start:a,end:b)]) == [DateInterval(start:b,end:b.addingTimeInterval(1800))])
     #expect(HealthInputMath.uncovered(DateInterval(start:a,end:b),occupied:[DateInterval(start:a.addingTimeInterval(1200),end:a.addingTimeInterval(2400))]).map(\.duration) == [1200,1200])
+}
+@Test func health4NinetySyntheticRecordsBatchEncodingAndUpgradeWithoutSimulator() async throws {
+    let transport=Health4ContractTransport()
+    let tested=PersonalClient(credentialStore:MemoryStore(),transport:transport,platform:.iOS)
+    let session=try await tested.login(server:ServerConfiguration(input:"https://health.example.com"),username:"fixture",password:"synthetic-only",deviceName:"Test")
+    let account=try LocalAccountScope(server:session.server,ownerId:session.account.ownerId)
+    let now=h4date("2026-10-12T12:00:00Z"),calendar=h4calendar()
+    var state=DailyHealthState()
+    await transport.failOnceAtBatch(2)
+    for version in [2,3] {
+        state.beginHistory(version:version,now:now,calendar:calendar)
+        while !state.nextHistoryDays.isEmpty {
+            let days=state.nextHistoryDays
+            let items=days.enumerated().map { index,day -> HealthBatchItem in
+                var record=DailyHealth(steps:index==0 ? nil : 1234,sleepMinutes:450,restingHeartRateBpm:60,exerciseMinutes:5)
+                record.version=version;record.activeEnergyKcal=200;record.hrvSdnnMs=50;record.respiratoryRateBrpm=16;record.spo2Pct=98;record.wristTempC=36.5;record.vo2Max=42
+                var sleep=HealthSleepRecord();sleep.minutes=450;sleep.inBedMinutes=480;sleep.deepMinutes=60;sleep.remMinutes=60;sleep.coreMinutes=330;sleep.awakeMinutes=30
+                sleep.stages=[.init(start:day+"T00:00:00Z",end:day+"T01:00:00Z",stage:"deep")];record.sleep=sleep
+                record.heartRateHourly=Array(repeating:nil,count:24);record.heartRateQuarterHourly=Array(repeating:nil,count:96)
+                record.hrvSamples=[.init(time:day+"T02:00:00Z",sdnnMs:50,intervalsMs:(0..<40).map { $0%2==0 ? 1000 : 1100 })]
+                var workout=DailyHealth.Workout(type:"跑步",minutes:5);workout.zoneMinutes=[1,1,1,1,1];workout.avgHeartRateBpm=140;workout.maxHeartRateBpm=180;record.workouts=[workout]
+                return .init(day:day,health:record)
+            }
+            let reply: HealthBatchReply
+            do { reply=try await tested.putHealthBatch(items,account:account) }
+            catch APIFailure.server(503,"UNAVAILABLE") {
+                state=try JSONDecoder().decode(DailyHealthState.self,from:JSONEncoder().encode(state))
+                #expect(state.nextHistoryDays==days); continue
+            }
+            #expect(reply.items.count==10)
+            state.acknowledgeHistory(days)
+        }
+        #expect(state.historyVersion==version)
+    }
+    let batches=await transport.all().filter { $0.url?.path.hasSuffix("/records/batch")==true }
+    #expect(batches.count==19)
+    var seen: [Int:Set<String>]=[:]
+    for (index,request) in batches.enumerated() where index != 1 {
+        let raw=try JSONSerialization.jsonObject(with:request.httpBody!) as! [String:Any]
+        for item in raw["items"] as! [[String:Any]] {
+            let h=item["health"] as! [String:Any],version=h["version"] as! Int,day=item["day"] as! String
+            #expect(!seen[version,default:[]].contains(day));seen[version,default:[]].insert(day)
+            if version==2 { #expect(h["hrvSamples"]==nil && h["heartRateQuarterHourly"]==nil && (h["sleep"] as! [String:Any])["stages"]==nil) }
+            else { #expect((h["heartRateQuarterHourly"] as! [Any]).count==96);#expect(abs(((h["hrvSamples"] as! [[String:Any]])[0]["stressIndex"] as! Double)-243.90243902439)<0.00001) }
+        }
+    }
+    #expect(seen[2]?.count==90 && seen[3]?.count==90)
 }

@@ -90,6 +90,11 @@ public enum HealthInputMath {
         let total = values.reduce(0,+), scale = total > durationMinutes && total > 0 ? durationMinutes/total : 1
         return values.map { $0*scale }
     }
+    public static func dailyMean(_ values: [(Date,Double)],day: Date,calendar: Calendar) -> Double? {
+        guard let end=calendar.date(byAdding:.day,value:1,to:calendar.startOfDay(for:day)) else { return nil }
+        let values=values.filter { $0.0 >= calendar.startOfDay(for:day) && $0.0 < end && $0.1.isFinite }.map(\.1)
+        return values.isEmpty ? nil : values.reduce(0,+)/Double(values.count)
+    }
     public static func buckets(_ points: [(Date, Double)], day: Date, calendar: Calendar, quarter: Bool) -> [HealthHeartBucket?] {
         let count = quarter ? 96 : 24
         let grouped = Dictionary(grouping: points.filter { calendar.isDate($0.0, inSameDayAs: day) }, by: {

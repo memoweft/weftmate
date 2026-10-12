@@ -20,7 +20,7 @@ const server=http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1'),path=url.pathname.replace('/personal/v1',''),data=body?JSON.parse(body):{};
  const send=(status,value)=>{res.writeHead(status,{'content-type':'application/json',...(path==='/auth/login'?{'set-cookie':'wm_personal_session='+ 'a'.repeat(43)+'; Path=/; HttpOnly'}:{})});res.end(JSON.stringify(value));};
  try {
- if(url.pathname==='/fixture/control'){version=data.version??version;scenario=data.scenario??scenario;offline=data.offline??offline;failBatch=data.failBatch??failBatch;enabled=data.enabled??enabled;return send(200,{ok:true});}
+ if(url.pathname==='/fixture/control'){version=data.version??version;scenario=data.scenario??scenario;offline=data.offline??offline;failBatch=data.failBatch??failBatch;enabled=data.enabled??enabled;if(data.resetAnalysis)analyses.clear();return send(200,{ok:true});}
  if(url.pathname==='/fixture/report')return send(200,{syntheticOnly:true,version,issues,reads,requests:requests.map(r=>({kind:r.kind,days:r.items.map(x=>x.day),versions:r.items.map(x=>x.health.version)})),records:[...records].map(([day,health])=>({day,health})),profiles,reminders,analysisScopes:[...analyses.keys()],modelInsightsEnabled:topEnabled,itemAnalysisEnabled:enabled});
  if(offline)return send(503,{error:{code:'UNAVAILABLE'}});
  if(path==='/auth/login'||path==='/auth/me')return send(200,{account:{ownerId:'health4-owner',username:'health4_synthetic',displayName:'合成账号'},device:{id:'health4-phone',name:'合成设备',revoked:false,current:true},csrfToken:'b'.repeat(43)});

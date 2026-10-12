@@ -150,7 +150,7 @@ import WeftMateCore
             if state.enabled, state.connected, reader.available {
                 let overview = try? await app.assistantClient.healthOverview()
                 guard matches(app, token), !Task.isCancelled else { return }
-                let version = (overview?.capabilities?.record ?? 2) >= 3 ? 3 : 2
+                let version = HealthPagePolicy.recordVersion(overview?.capabilities)
                 if state.expandedAuthorization == true { state.beginHistory(version: version, now: Date(), calendar: calendar); try save() }
                 let values = try await reader.read(calendar: calendar,version: version)
                 guard matches(app, token), state.enabled, !Task.isCancelled else { return }
@@ -186,7 +186,7 @@ import WeftMateCore
             }
             // A downgraded computer must never receive persisted v3 fields.
             let current = try? await app.assistantClient.healthOverview()
-            let wireVersion = (current?.capabilities?.record ?? 2) >= 3 ? 3 : 2
+            let wireVersion = HealthPagePolicy.recordVersion(current?.capabilities)
             guard matches(app, token), !Task.isCancelled else { return }
             for (day, queued) in state.pending.sorted(by: { $0.key < $1.key }) {
                 var value = queued; if value.version > wireVersion { value.version = wireVersion; value.sleep?.stages = nil; value.hrvSamples = nil; value.heartRateQuarterHourly = nil }

@@ -1,10 +1,26 @@
 {
   "syntheticOnly": true,
-  "version": 2,
+  "version": 3,
   "issues": [],
   "reads": [
     {
       "id": "recovery",
+      "days": 7
+    },
+    {
+      "id": "sleep",
+      "days": 7
+    },
+    {
+      "id": "load",
+      "days": 7
+    },
+    {
+      "id": "deepMinutes",
+      "days": 7
+    },
+    {
+      "id": "remMinutes",
       "days": 7
     },
     {

@@ -37,12 +37,7 @@ struct HealthPageView: View {
             .sheet(isPresented:$expansion,onDismiss:{
                 if requestExpansion { requestExpansion=false; Task { await health.expand(app:app); await page.refresh(app:app) } }
             }) {
-                VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
-                    Text("再多读几项，页面才完整").font(.title2.bold())
-                    Text("心率变异性、呼吸、血氧、手腕温度、睡眠分期、最大摄氧量、身高体重和出生年份。只读不写，拒绝也能看已有的部分。")
-                    Button("继续") { requestExpansion=true; expansion=false }.buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("health.expandAuthorize")
-                    Button("先看已有的") { expansion=false }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("health.expandLater")
-                }.padding(AppleTokens.Space.p24).presentationDetents([.medium,.large]).presentationDragIndicator(.visible)
+                HealthAdditionalAuthorizationView(authorize:{ requestExpansion=true; expansion=false },later:{ expansion=false })
             }
             .task(id:app.accountEpoch) {
                 await page.refresh(app:app)
@@ -62,13 +57,13 @@ struct HealthPageView: View {
                 }
             }
             HStack { Spacer(); Button("接着问它") { ask(o.insight?.text ?? "帮我看看今天的健康变化") }.accessibilityIdentifier("health.ask") }
-        }.accessibilityIdentifier("health.insight")
+        }.accessibilityElement(children:.contain).accessibilityIdentifier("health.insight")
         ForEach(["recovery","sleep","load"],id:\.self) { id in
             score(id,o)
         }
-        if let value=o.stress, value != .null { extra("stress","压力",value) }
-        if let value=o.energy, value != .null { extra("energy","电能",value) }
-        if let value=o.fitnessAge, value != .null { extra("fitnessAge","体能年龄",value) }
+        if HealthPagePolicy.visibleOptionalCards(o).contains("stress"),let value=o.stress { extra("stress","压力",value) }
+        if HealthPagePolicy.visibleOptionalCards(o).contains("energy"),let value=o.energy { extra("energy","电能",value) }
+        if HealthPagePolicy.visibleOptionalCards(o).contains("fitnessAge"),let value=o.fitnessAge { extra("fitnessAge","体能年龄",value) }
         card {
             NavigationLink { detail("sleepMinutes","睡眠时长") } label: {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
@@ -300,5 +295,18 @@ struct HealthPageSettingsView: View {
             HealthAISettingsRow(app:app)
         }.navigationTitle("健康数据")
             .onDisappear { Task { await page.refresh(app:app) } }
+    }
+}
+
+struct HealthAdditionalAuthorizationView: View {
+    var authorize: () -> Void
+    var later: () -> Void
+    var body: some View {
+        VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
+            Text("再多读几项，页面才完整").font(.title2.bold())
+            Text("心率变异性、呼吸、血氧、手腕温度、睡眠分期、最大摄氧量、身高体重和出生年份。只读不写，拒绝也能看已有的部分。")
+            Button("继续",action:authorize).buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("health.expandAuthorize")
+            Button("先看已有的",action:later).buttonStyle(OutlineActionStyle()).accessibilityIdentifier("health.expandLater")
+        }.padding(AppleTokens.Space.p24).presentationDetents([.medium,.large]).presentationDragIndicator(.visible)
     }
 }
