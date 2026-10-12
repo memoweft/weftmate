@@ -7,10 +7,13 @@ export function systemAccent(source) {
  const clean = source.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
  return /\b(?:Color|UIColor|NSColor)\.(?:accentColor|blue|systemBlue|controlAccentColor)\b|\.(?:foregroundStyle|foregroundColor|tint|accentColor)\(\s*\.(?:blue|accentColor)\b/.test(clean);
 }
+export function checkPhoneStyle(appleRoot = root) {
 let checked = 0;
-for (const dir of ['UI', 'iOS', 'macOS', 'watchOS']) for (const file of fs.readdirSync(path.join(root, dir))) {
+for (const dir of ['UI', 'iOS', 'macOS', 'watchOS']) for (const file of fs.readdirSync(path.join(appleRoot, dir))) {
  if (!file.endsWith('.swift')) continue;
  checked++;
- if (systemAccent(fs.readFileSync(path.join(root, dir, file), 'utf8'))) throw Error(`${dir}/${file}: use generated application emphasis tokens`);
+ if (systemAccent(fs.readFileSync(path.join(appleRoot, dir, file), 'utf8'))) throw Error(`${dir}/${file}: use generated application emphasis tokens`);
 }
-console.log(`APPLE-4: ${checked} UI files use application emphasis tokens`);
+return { checkedUIFiles: checked };
+}
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) console.log(checkPhoneStyle());

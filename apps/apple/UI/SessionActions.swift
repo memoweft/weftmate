@@ -255,7 +255,7 @@ struct ArchivedSessionsView: View {
                         #else
                         Menu {
                             Button(role: .destructive) { app.askToDelete(row, inSettings: true) } label: { Label("删除", image: "wm-trash") }.accessibilityIdentifier("deleteArchived." + row.id)
-                        } label: { WeftIcon("more").frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44) }
+                        } label: { WeftIcon("more").frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44) }.phoneIcon()
                             .accessibilityLabel("已归档对话操作").accessibilityIdentifier("archivedActions." + row.id)
                         #endif
                     }.buttonStyle(.borderless).disabled(app.lifecycleBusy)
@@ -264,7 +264,7 @@ struct ArchivedSessionsView: View {
             }.scrollContentBackground(.hidden)
         }.background(Weave.canvas).task { await app.refresh() }.accessibilityElement(children: .contain).accessibilityIdentifier("archivedSessions")
         // The settings scene or phone settings sheet owns this confirmation.
-        .sheet(item: Binding(get: { app.deletionInSettings ? app.deletionCandidate : nil }, set: { app.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: app) }
+        .sheet(item: Binding(get: { app.deletionInSettings ? app.deletionCandidate : nil }, set: { app.deletionCandidate = $0 })) { _ in SessionDeleteSheet(app: app).phoneSheet("删除对话", close: { app.deletionCandidate = nil }) }
     }
 }
 
