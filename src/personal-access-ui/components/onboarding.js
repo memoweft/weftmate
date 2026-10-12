@@ -58,7 +58,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     if (index >= 2 && !core.state.account) { content.append(node('p', '', copy.accountNeeded), button(copy.accountCloud, () => void move(1))); next.disabled = index === 6; }
     else if (index === 2) models(token);
     else if (index === 3) memory(token);
-    else if (index === 4) { const disabled = button(copy.importSoon, () => {}); disabled.disabled = true; content.append(disabled); }
+    else if (index === 4) { if(globalThis.WeftHistoryImportView)WeftHistoryImportView({target:content,request:core.accessApi,owner:()=>core.state.account?.ownerId,desktop:globalThis.weftmateDesktop?.previewHistoryImport?globalThis.weftmateDesktop:null}); }
     else if (index === 5) phone(token);
     else if (index === 6) {
       next.disabled = !core.state.models.some(model => model.configured);
