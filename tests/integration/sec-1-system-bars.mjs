@@ -45,6 +45,8 @@ export async function sec1SystemBars({origin,cookie,out}) {
         // This fixture covers approvals; it does not provision an offline cloud model/replica.
         await evaluate(`(async()=>{const me=await(await fetch('/personal/v1/auth/me')).json();if(me.device.authKind!=='cloud')throw Error('Cloud identity required');sec1Core.cloudOfflineIdentity=()=>null;sec1Core.state.cloudAuth.mode='authenticated';await sec1Core.acceptSession(me);await sec1Core.enterAssistant();await sec1Core.selectSession(${JSON.stringify(sessionId)});document.documentElement.dataset.theme=${JSON.stringify(theme)};window.weftSyncSystemBars?.();})()`);
         await until("!!document.querySelector('#approval-bar:not([hidden])')");await new Promise(done=>setTimeout(done,200));
+        run('shell','am','start','-W','--activity-reorder-to-front','-n',pkg+'/'+(process.env.WEFTMATE_SEC1_ANDROID_ACTIVITY??'com.memoweft.weftmate.mobile.St4RemoteBrowserActivity'));
+        await new Promise(done=>setTimeout(done,300));
         const focus=run('shell','dumpsys','window').toString().split('\n').find(line=>line.includes('mCurrentFocus'));assert.ok(focus?.includes(pkg), 'Screenshot must show the test browser, without a system error dialog: '+(focus??'focus unavailable'));
         const dump=run('shell','dumpsys','window','displays').toString();
         await writeFile(resolve('.local/sec-1/system-insets.txt'),dump.split('\n').filter(line=>/navigationBars|statusBars|NavigationBar/.test(line)).join('\n'));
