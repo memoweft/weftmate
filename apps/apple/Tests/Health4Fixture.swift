@@ -41,4 +41,13 @@ struct Health4Fixture: View {
             .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("dark") ? .dark : .light)
     }
 }
+struct Health4BackgroundRegistrationFixture: View {
+    @StateObject private var first=DailyHealthModel()
+    @StateObject private var second=DailyHealthModel()
+    var body: some View {
+        Text(DailyHealthBackground.registrationCount == 1 ? "PASS: two models, one launch registration" : "FAIL")
+            .accessibilityIdentifier("health4.registrationResult")
+            .task { DailyHealthBackground.register(); DailyHealthBackground.register(); _=first.state; _=second.state }
+    }
+}
 #endif
