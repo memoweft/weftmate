@@ -36,5 +36,6 @@
     "attempt-1",
     "attempt-2",
     "attempt-3"
-  ]
+  ],
+  "healthScreenshotBoundary": "Health screenshots precede the final user feedback; the final disclaimer removal, larger numbers, score range bar and basis relocation were not recaptured."
 }

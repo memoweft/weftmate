@@ -12,7 +12,7 @@ struct HealthAISettingsRow: View {
             if settings.itemAnalysisEnabled != nil {
                 Toggle("各项 AI 分析",isOn:Binding(get:{self.settings?.itemAnalysisEnabled == true},set:{value in Task { await change(item:value) } })).disabled(updating)
             }
-            Text("会把每天的汇总数字发给你设置的模型，不发明细。各项分析只有展开时才生成。") .font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
+            Text("汇总和模型解读用于了解趋势，不是医学结论；模型只接收汇总数字，各项分析展开时才生成。") .font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
         }
         if let message { Text(message).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
         Color.clear.frame(height:0).task(id:app.accountEpoch) {
