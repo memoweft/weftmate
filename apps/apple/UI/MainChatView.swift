@@ -46,7 +46,7 @@ struct MainChatView: View {
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
             #if os(iOS)
-            PhoneChatHeader(title: PhonePresentation.title(main: true, assistant: "小纬", conversation: model.chat?.title ?? ""), status: app.serverLoginExpired ? "请重新登录" : app.offline.hostOffline ? "电脑离线" : "已连接") {
+            PhoneChatHeader(title: PhonePresentation.title(main: true, assistant: "小纬", conversation: model.chat?.title ?? ""), status: app.phoneConnectionStatus) {
                 Menu {
                     Button("跳日期", image: ImageResource(name: "wm-clock", bundle: .main)) { choosingDate = true }.accessibilityIdentifier("mainChat.date")
                     Button("搜索", image: ImageResource(name: "wm-search", bundle: .main)) { searching.toggle() }.disabled(!model.capabilities.supports("chatSearch")).accessibilityIdentifier("mainChat.search")

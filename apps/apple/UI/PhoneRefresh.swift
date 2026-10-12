@@ -116,7 +116,23 @@ private struct PhoneTabStyle: ButtonStyle {
     }
 }
 #endif
+#if os(iOS)
+extension AppleAppModel {
+    var phoneConnectionStatus: String {
+        if serverLoginExpired { return "请重新登录" }
+        if offline.hostOffline { return "电脑离线" }
+        return session?.verification == .verified ? "已连接" : "正在连接"
+    }
+}
+#endif
 extension View {
+    @ViewBuilder func phoneFixedActionLabel() -> some View {
+        #if os(iOS)
+        self.fixedSize(horizontal: true, vertical: false)
+        #else
+        self
+        #endif
+    }
     @ViewBuilder func phoneIcon(primary: Bool = false, quiet: Bool = false) -> some View {
         #if os(iOS)
         self.buttonStyle(PhoneIconStyle(primary: primary, quiet: quiet)).tint(Weave.accent)
