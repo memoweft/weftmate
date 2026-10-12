@@ -184,6 +184,11 @@ try {
 } catch (error) {
   report.completed = false; report.failure = String(error).replace(/C:[\\/]Users[\\/][^\\/\s]+/gi, 'C:/Users/<user>');
   try { if (page) report.visibleFailure = await page.locator('body').innerText(); } catch {}
+  try { if (page) report.uiFailure = await page.evaluate(() => ({ page:state.page,chatSource:state.chatSource,logical:state.logicalChats,
+    connection:uiCore.connectionView(),main:uiCore.state.mainChat,selected:uiCore.state.selectedChatId,identity:uiCore.state.identityGeneration,
+    historyResult:uiCore.state.historyReadResult,historyGeneration:uiCore.state.historyGeneration,refreshing:uiCore.mainChatRefreshing,
+    events:[...(uiCore.state.chatWindow?.events?.values?.() || [])],pollActive:!!state.sharedPollTimer,
+    cloud:WeftMobileCloud.core.cloudAuthView(),cloudDialog:document.getElementById('cloud-login-dialog')?.open })); } catch {}
   try { if (serial && installed) await writeFile(join(out, (local ? 'mumu' : 'cloud') + '-failure.png'), execute(adb, ['-s', serial, 'exec-out', 'screencap', '-p'])); } catch {}
   throw error;
 } finally {
