@@ -496,6 +496,9 @@ UPD-1：资源服务从当前已验证 `ui` 版本读取既有白名单中的路
 
 ### 3.15 系统状态与后台模型（M0-6，6）
 
+既有 `GET /system` 与 `GET /settings/models` 增加可选 `backgroundModelFallback:null|{profileId,at}`：后台模型已不存在或连续三次请求失败时，账号的 `backgroundModelProfileId` 自动改为 `null`，继续跟随当前聊天模型。状态说明「后台模型不可用，已改用聊天模型」；`profileId` 是原选择，`at` 是发生时间。模型恢复后不自动切回；本人用既有 `PATCH /settings/models` 重新选择（可用原 `profileId` 一键改回）即清除说明。取消请求和用量限制不触发回退；没有可用聊天模型时保留原选择，正常聊天不被此状态阻止。无新路由，Apple（苹果端）可按需接可选字段。
+
+
 DIAG-2：既有 `GET /system` 保留可选只读 `runRecord:{state,runId,startedAt,previous,uncleanCount7Days,summary,summaryPreview}`。`state` 为 `ready|error`；`previous` 为 null 或 `{runId,startedAt,at,reason,normal,exitCode,lastAt,lastEvent,dumps:[{name,size,at}],dumpMatch:"time-window-inference"}`。没有上一轮退出记录时 `normal:false`，原因无法确定则 `unknown`，转储仅时间窗口推断。`summary` 是统一 JSON（结构化数据格式）对象的字符串：`platform/appVersion/osVersion/generatedAt/recentAbnormalRecords/abnormalCountsLast7Days/retentionPolicy`，最多二十条异常，记录白名单字段置于字符串字典 `fields`；`summaryPreview` 是可读文字，预览它并复制 `summary`。不带转储文件名或内容；详细字段见 DIAGNOSTICS.md。旧客户端可忽略新增字段，没有新增路由或权限；桌面打开日志沿既有 `openLogs` 本地接缝。安卓另经现有通用桥 `call(method, params)` 提供本机 `diagnostics.status/diagnostics.record/diagnostics.share`，需要新壳版本。苹果原生记录与统一摘要由 PR #210 接入。
 
 

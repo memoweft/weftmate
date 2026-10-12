@@ -1,0 +1,18 @@
+{
+  "baselineRevision": "5e1766ca700e90217f16a5142f81cdfed1b68595",
+  "before": {
+    "aborted": false,
+    "settled": false,
+    "reason": "abort occurred while awaiting usage.begin; original fixture registered listener after the event"
+  },
+  "after": {
+    "aborted": true,
+    "settled": true,
+    "result": {
+      "requestId": "r",
+      "suggestions": [],
+      "completion": ""
+    }
+  },
+  "realModelRequests": 0
+}

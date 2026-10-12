@@ -268,6 +268,7 @@ export function createHttpHandler(context) {
           next.devices[current.deviceId].revoked = true;
           next.devices[current.deviceId].revokedAt = new Date(context.timestamp()).toISOString();
         }));
+        await context.nextSuggestions.cancel(current.ownerId, null, null, current.deviceId);
         return context.json(response, 200, { ok: true }, { 'set-cookie': context.clearCookie(matched.startsWith('https://')) });
       }
       if (request.method === 'POST' && pathname === '/personal/v1/auth/change-password') {
@@ -787,11 +788,14 @@ export function createHttpHandler(context) {
             for (const key of Object.keys(body)) {
               if (body[key] !== null && !context.modelSelectable(ownerId, body[key])) throw failure('MODEL_UNAVAILABLE', 409);
               next[key] = body[key];
+              if (key === 'backgroundModelProfileId') delete next.backgroundModelFallback;
             }
           }));
           await context.memoryManager?.invalidateOwnerRoute?.(ownerId);
+          if ('backgroundModelProfileId' in body) context.service.resetBackgroundFailures(ownerId);
         }
         return context.json(response, 200, { backgroundModelProfileId: context.accountState(ownerId).backgroundModelProfileId ?? null,
+          backgroundModelFallback: context.accountState(ownerId).backgroundModelFallback ?? null,
           defaultModelProfileId: context.accountState(ownerId).defaultModelProfileId ?? null,
           currentChatModelProfileId: currentChatProfile(context.accountState(ownerId), id => context.modelSelectable(ownerId, id)) });
       }
@@ -810,7 +814,7 @@ export function createHttpHandler(context) {
           finally { hostRestarting = false; }
         }
         const value = await context.systemManager.status(ownerId);
-        return context.json(response, 200, { ...value, canRestart: context.hostOwner(ownerId) });
+        return context.json(response, 200, { ...value, backgroundModelFallback: context.accountState(ownerId).backgroundModelFallback ?? null, canRestart: context.hostOwner(ownerId) });
       }
       if (request.method === 'GET' && pathname === '/personal/v1/status') {
         if (url.search) throw failure('INVALID_REQUEST');

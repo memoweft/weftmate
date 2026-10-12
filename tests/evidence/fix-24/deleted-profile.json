@@ -1,0 +1,25 @@
+{
+  "before": {
+    "route": null,
+    "backgroundModelProfileId": "background-deleted",
+    "tasksCanRun": false
+  },
+  "after": {
+    "route": "chat",
+    "backgroundModelProfileId": null,
+    "backgroundModelFallback": {
+      "profileId": "background-deleted",
+      "at": "2026-10-12T13:56:26.371Z"
+    },
+    "response": {
+      "completed": true
+    },
+    "calls": [
+      {
+        "profileId": "chat",
+        "model": "synthetic-chat"
+      }
+    ]
+  },
+  "realModelRequests": 0
+}
