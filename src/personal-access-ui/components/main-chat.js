@@ -5,7 +5,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     let rows = [], offsets = [], frame = null, anchor = null, observer, sidebar, tools, searchPanel, origin, top, bottom, generation = 0, fixedNavigation;
     const box = () => ui.byId('chat-scroll'), list = () => ui.byId('transcript');
     const listStart = () => list().getBoundingClientRect().top - box().getBoundingClientRect().top + box().scrollTop;
-    const fixedTitle = () => document.body.classList.contains('help-open') ? document.querySelector('.help-surface')?.dataset.title || '帮助与小技巧' : document.body.classList.contains('library-open') ? '成果库' : document.body.classList.contains('goals-open') ? '目标' : document.body.classList.contains('activity-open') ? '动态' : 'WeftMate';
+    const fixedTitle = () => document.body.classList.contains('health-open') ? '健康' : document.body.classList.contains('help-open') ? document.querySelector('.help-surface')?.dataset.title || '帮助与小技巧' : document.body.classList.contains('library-open') ? '成果库' : document.body.classList.contains('goals-open') ? '目标' : document.body.classList.contains('activity-open') ? '动态' : 'WeftMate';
     const main = () => core.inMainChat?.() === true;
     const button = (text, name, action, className = 'button quiet small') => {
         const node = ui.element('button', className, text); node.type = 'button'; node.setAttribute('aria-label', name || text);
@@ -252,7 +252,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         else ui.byId('session-rail').querySelector('.rail-top').before(sidebar);
         const heading = ui.element('div', 'rail-side-heading', '旁聊'); ui.byId('session-list').before(heading);
         // TB-4 owns the future fixed pages; retain the explicit extension point hidden.
-        const future = ui.element('nav'); fixedNavigation = future; future.hidden = true; future.setAttribute('aria-label', '动态、目标与成果库');
+        const future = ui.element('nav'); fixedNavigation = future; future.hidden = true; future.setAttribute('aria-label', '动态、健康、目标与成果库');
         if (ui.mobile) { future.id = 'mobile-bottom-tabs'; future.setAttribute('aria-label','聊天、动态、目标、成果库'); ui.byId('chat-page').append(future); }
         else sidebar.after(future);
         tools = ui.element('div', 'main-chat-tools'); tools.hidden = true;

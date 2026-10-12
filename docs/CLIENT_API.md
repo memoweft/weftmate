@@ -1550,3 +1550,57 @@ Android（安卓）白名单与JVM（Java虚拟机）测试同步上述精确路
 动态仍使用已有 `/activity` 路由和 `type:"memory.report"`，增加可选 `weeklyInsight:{from,to,timeZone,text,mode,sources}`；`mode` 为 `statistics` 或 `model`，来源包含短标题、会话引用与可选 `artifactId`，可点回原对话／成果来源。默认静默、不弹系统通知。后台模型仅获最近完整七天的结构化摘要，调用现有后台优先级；无配置、请求失败或重启中断均保留统计版，周内不重试生成。摘要本机持久化；使用用户配置的云模型整理周回顾／聊天时，相关摘要随模型输入发送到该模型提供方，与正常聊天相同。
 
 助手通过现有会话上下文 IPC（进程间通信）获得最近七天最多3600字符的背景，每轮更新，与记忆召回并列；无关问题仍回答当前问题。引用使用 `#weftmate:session:<id>` 或 `#weftmate:library:<id>`，共用内容呈现器在两端打开来源。后台错误不阻塞本机聊天；关闭／清空后下一轮立即停止引用。安卓网页读取和设置沿用已允许的路由；健康新路由用于后续原生接线，本包按边界不改安卓壳。苹果原生需消费 `weeklyInsight` 展示与健康 PUT 接口。
+
+## 16. 健康（HEALTH-2）
+
+所有数据按登录账号隔离，只保存在这台电脑的独立健康库，不进入云端账号服务或中继持久存储。读取沿 `sessions:read`；写入沿 `account:manage`、现有 Cookie（会话凭据）／CSRF（跨站请求伪造防护）。日期按账号时区自然日；不得提交未来日期。分钟按实际经过时长，夏令时不把缺少的小时补成测量。缺测使用 `null`，真实零值仍是零。确定性公式见 [HEALTH.md](HEALTH.md)，分数只是趋势估计，不是医学结论。
+
+### 16.1 每日记录与批量补传
+
+`PUT /personal/v1/daily-summaries/:day/health` 保留15节 v1 的所有字段、校验和 `{day,health}` 回执，同内容幂等且回读保持 v1 格式。保留期改为独立健康设置，默认400天，不受摘要90天期限／摘要清空影响。首次接入可补最近90天。
+
+v2 是 v1 的超集：原来的七个字段仍必填，`version:2`；下面新增字段可省略（计算时视为缺测），未知字段拒绝。重复上传替换当天整份记录，不累加。
+
+| 字段 | 格式与校验 |
+|---|---|
+| `activeEnergyKcal` | 非负有限数或 `null` |
+| `sleep` | `null` 或 `{minutes,inBedMinutes,start,end,deepMinutes,coreMinutes,remMinutes,awakeMinutes}`；各字段可省略／为 `null`，分钟0–1440；`start/end` 为带时区 ISO（国际标准日期格式）时刻，若均有值须 end≥start；`minutes` 若提供必须与 `sleepMinutes` 相等，否则由后者补齐 |
+| `hrvSdnnMs,respiratoryRateBrpm,vo2Max` | 非负有限数或 `null` |
+| `spo2Pct` | 0–100或 `null` |
+| `wristTempC` | 有限摄氏温度或 `null`（允许负数） |
+| `heartRateHourly` | 可为 `null`，否则恰好24项，每项 `null` 或 `{avg,min,max}`，三项可为 `null`，非负有限数；有值时 min≤avg≤max |
+| `workouts` | 数组，每项 `{type,minutes,start?,kcal?,avgHeartRateBpm?,maxHeartRateBpm?,zoneMinutes?}`；旧 `{type,minutes}` 仍合法；新增数值可为 `null`，分钟0–1440；`zoneMinutes` 为 `null` 或恰好5项0–1440分钟／`null`，有值之和≤运动时长；`start` 为 ISO时刻／`null` |
+
+`status:unavailable` 要求所有数值为空、小时无有效项且运动数组为空。其余沿15节非负有限数／整数步数校验。睡眠分期有值之和不得超过卧床时长（若有），深睡／核心／快速眼动之和不得超过睡眠时长。
+
+`PUT /personal/v1/health/records/batch` 请求 `{items:[{day,health}]}`，1–100个不同日期，v1／v2可混用。先校验全部再一次提交；任一错误整体拒绝400 `INVALID_REQUEST`。回执 `{items:[{day,health}],changedDays:[YYYY-MM-DD]}`；幂等重传 `changedDays:[]`。单条与批量允许当前保留范围内历史；保留400天意味着今天及之前399天。
+
+### 16.2 页面读取
+
+只允许表中参数，不接受额外／重复参数。无健康记录时成功返回 `connected:false` 与空结构。
+
+| 方法与路径 | 响应 |
+|---|---|
+| GET `/health/overview?day=YYYY-MM-DD` | 默认账号今天；`{day,connected,updatedAt,insight,recovery,sleep,load,vitals,activity,usage}` |
+| GET `/health/metrics/:id?days=7\|14\|30\|60\|90` | 默认7天，至账号今天；`{id,days,timeZone,average,points:[{day,value,baseline,low,high,state,label}]}`；连续自然日，缺测不补0，平均忽略缺测 |
+| GET `/health/calendar?month=YYYY-MM` | 默认账号本月；`{month,days:[{day,hasWorkout,sleepScore,recoveryScore}]}`，整月包含无测量日期，分数可为 `null` |
+
+`vitals` 固定五项 `restingHeartRateBpm,hrvSdnnMs,respiratoryRateBrpm,spo2Pct,wristTempC`，每项 `{id,value,baseline,low,high,state,label}`。`baseline` 是目标日前28天有效值中位数，`low/high` 是15／85百分位；少于7天 `state:insufficient`、基线为空、`label:"再戴几天就有对比了"`。否则状态 `normal|low|high`，词为「正常／比平时低／比平时高」。当天缺测同样 insufficient。边界相等属 normal。
+
+`recovery/sleep/load` 共用 `{score,state,label,reasons:[{text,inputs:[指标id]}],missing:[指标id],baseline,low,high}`，最多3条主要原因；全缺或历史不足时 score=null、insufficient。恢复／睡眠状态 `normal|low|high|insufficient`；负荷状态 `more|balanced|less|insufficient`，词「练多了／刚好／练少了／再戴几天就有对比了」。`sleep` 另含 `minutes,targetMinutes,start,end`；`load` 另含 `daily,average7,average42,difference`（近7／42天平均原始负荷与两者差，缺测不补0）。
+
+`activity:{steps,activeEnergyKcal,exerciseMinutes,workouts}`；`usage:{activeMinutes,lateNightMinutes}` 来自 DATA-1（每日摘要）估算活动分钟，凌晨1–5点为深夜区间，不是系统屏幕时间；无摘要为 `null`。`updatedAt` 是该日记录内容最后改变的时刻。`connected` 表示账号曾收到 available 记录；指定日无测量仍保留空指标结构。
+
+指标 `id` 可用：五项身体指标、`vo2Max,activeEnergyKcal,exerciseMinutes,steps,sleepMinutes,inBedMinutes,deepMinutes,coreMinutes,remMinutes,awakeMinutes,recovery,sleep,load,usageActiveMinutes,usageLateNightMinutes`。小时心率通过 `heartRateAvgBpm,heartRateMinBpm,heartRateMaxBpm` 读取每日平均／最低／最高汇总，运动通过 `workoutMinutes` 读取总分钟。睡眠时刻仅 overview 的 sleep.start/end 返回，不作为数值序列。
+
+### 16.3 今日解读、建议与设置
+
+`insight` 为 `null`（该日无测量）或 `{headline,text,observations:[{text,inputs:[指标id或usage字段]}],suggestions:[{id,text,reminder?:{title,time}}],mode,generatedAt}`。标题最多16字、正文最多120字；观察／建议各最多2条，每条观察指明所用汇总数据；提醒 `time` 是带时区ISO未来时刻。内容变化合并触发，后台模型通道一天最多3次，统计版立即可读；模型失败／超时／非法结构保留同结构统计版。批量历史仅生成统计版，今天按正常触发。模型只接收汇总数字、基线状态、分数原因、七天趋势、每天使用／完成件数及今日已有提醒数量。最多一条跨健康／使用观察，只描述关联，不宣称因果；不诊断、不提疾病名、不建议用药。
+
+`POST /personal/v1/health/suggestions/:id/remind` 请求 `{sessionId,requestId}`，用户明确点按后复用既有提醒创建，回执沿 `/schedules` 的 `{item,...}`。建议必须属于当前账号当前日有效解读，带未来 `reminder`，否则404 `NOT_FOUND`／400 `INVALID_REQUEST`。相同requestId幂等，不能由模型自行创建。
+
+`GET/PATCH /personal/v1/settings/health` 返回 `{settings:{modelInsightsEnabled:true,sleepTargetMinutes:450,retentionDays:400},updatedAt}`。PATCH只接受上述字段；目标180–720分钟；保留期 `90|180|400|null`（null表示一直），立刻按账号日界清理。`PATCH {clear:true}` 一次性清空独立健康记录／解读并撤去摘要与周回顾健康投影；保留设置，不清使用数据。关闭模型取消健康后台调用，后续解读及周回顾健康部分只用统计版。
+
+设置放在「回顾与洞察」旁边，无弹窗引导。开关说明：「会把每天的汇总数字发给你设置的模型，不发明细」。助手工具 `health_query` 参数 `{metric:"overview"|指标id,from?:YYYY-MM-DD,to?:YYYY-MM-DD}`，默认最近7天、最大90天；只返回精简汇总／基线对比及使用分钟，无记录返回「还没接上」。DATA-1七天背景补三个分数与状态，仍≤3600字符；周回顾补健康概况与最多一条有依据的使用观察。
+
+Android（安卓）须同步上述精确业务路径与拒绝用例，需要新壳版本；Apple（苹果端）继续原v1上传也可用，v2按本节补字段／批量入口，读取／设置／提醒接上述路由，不上传原始样本。HEALTH-3页面按本节接线；健康授权和手机采集由 HEALTH-4处理。
