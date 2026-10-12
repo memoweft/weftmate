@@ -48,10 +48,10 @@ struct MainChatView: View {
             #if os(iOS)
             PhoneChatHeader(title: PhonePresentation.title(main: true, assistant: "小纬", conversation: model.chat?.title ?? ""), status: app.phoneConnectionStatus) {
                 Menu {
-                    Button("跳日期", image: ImageResource(name: "wm-clock", bundle: .main)) { choosingDate = true }.accessibilityIdentifier("mainChat.date")
-                    Button("搜索", image: ImageResource(name: "wm-search", bundle: .main)) { searching.toggle() }.disabled(!model.capabilities.supports("chatSearch")).accessibilityIdentifier("mainChat.search")
-                    Button("输出与来源", image: ImageResource(name: "wm-outputs", bundle: .main)) { Task { await model.loadResources() } }.disabled(!model.capabilities.supports("chatResources")).accessibilityIdentifier("mainChat.resources")
-                    Button("本对话用量", image: ImageResource(name: "wm-chart", bundle: .main)) { showingUsage = true }
+                    Button("跳日期", image: ImageResource(name: "wm-clock", bundle: .main)) { draftFocused = false; choosingDate = true }.accessibilityIdentifier("mainChat.date")
+                    Button("搜索", image: ImageResource(name: "wm-search", bundle: .main)) { draftFocused = false; searching.toggle() }.disabled(!model.capabilities.supports("chatSearch")).accessibilityIdentifier("mainChat.search")
+                    Button("输出与来源", image: ImageResource(name: "wm-outputs", bundle: .main)) { draftFocused = false; Task { await model.loadResources() } }.disabled(!model.capabilities.supports("chatResources")).accessibilityIdentifier("mainChat.resources")
+                    Button("本对话用量", image: ImageResource(name: "wm-chart", bundle: .main)) { draftFocused = false; showingUsage = true }
                     Button("刷新记录", image: ImageResource(name: "wm-sync", bundle: .main)) { Task { await model.read() } }
                 } label: { WeftIcon("more") }.accessibilityLabel("对话菜单").accessibilityIdentifier("mainChat.menu")
             }

@@ -32,8 +32,9 @@ final class Apple4UITests: XCTestCase {
             app.buttons["mainChat.menu"].tap()
             XCTAssertTrue(app.buttons["mainChat.date"].waitForExistence(timeout: 10)); capture(app, theme, "overflow-menu")
             // Opening a sheet dismisses the native menu and keyboard without global simulator settings.
-            app.buttons["mainChat.resources"].tap()
-            XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout: 20)); capture(app, theme, "sheet")
+            app.buttons["输出与来源"].firstMatch.tap()
+            XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout: 20))
+            XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10)); capture(app, theme, "sheet")
             app.buttons["phoneSheet.close"].tap()
             try choose(app, "stream")
             XCTAssertTrue(app.staticTexts["这一段正在生成，文字正在继续。"].waitForExistence(timeout: 25)); capture(app, theme, "stream")
@@ -71,7 +72,7 @@ final class Apple4UITests: XCTestCase {
                 "--ui-testing-namespace", "apple4-panels-" + UUID().uuidString, "--a5-theme", theme, theme]
             app.launch()
             XCTAssertTrue(app.buttons["mainChat.menu"].waitForExistence(timeout: 35))
-            app.buttons["mainChat.menu"].tap(); app.buttons["mainChat.resources"].tap()
+            app.buttons["mainChat.menu"].tap(); app.buttons["输出与来源"].firstMatch.tap()
             XCTAssertTrue(app.buttons["phoneSheet.close"].waitForExistence(timeout: 20))
             XCTAssertEqual(app.staticTexts.matching(identifier: "输出与来源").count, 1)
             XCTAssertGreaterThanOrEqual(app.descendants(matching: .any)["phoneSheet.resourcesCard"].frame.width, 300)
