@@ -163,7 +163,7 @@ import WeftMateCore
                 guard matches(app, token), state.enabled, !Task.isCancelled else { return }
                 state.enqueue(values); try save(); schedule()
                 // Persist one small batch at a time. iOS may suspend this task at any await.
-                while !state.nextHistoryDays.isEmpty {
+                while state.historyTargetVersion == version, !state.nextHistoryDays.isEmpty {
                     let keys = state.nextHistoryDays
                     let dates = keys.compactMap { key -> Date? in
                         let f = DateFormatter(); f.calendar = calendar; f.timeZone = calendar.timeZone; f.dateFormat = "yyyy-MM-dd"; return f.date(from: key)

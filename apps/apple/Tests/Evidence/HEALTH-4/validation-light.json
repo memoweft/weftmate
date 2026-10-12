@@ -1,0 +1,11 @@
+{
+  "theme": "light",
+  "passed": 0,
+  "failed": 1,
+  "skipped": 0,
+  "realHealthKit": true,
+  "fakeHost": true,
+  "realCloud": false,
+  "simulatorsAtOnce": 1,
+  "systemStatusBar": true
+}

@@ -42,6 +42,11 @@ public struct HealthProfile: Codable, Equatable, Sendable {
 }
 public enum HealthInputMath {
     public static func iso(_ date: Date) -> String { ISO8601DateFormatter().string(from: date) }
+    public static func parseISO(_ value: String) -> Date? {
+        let f=ISO8601DateFormatter()
+        if let date=f.date(from:value) { return date }
+        f.formatOptions=[.withInternetDateTime,.withFractionalSeconds]; return f.date(from:value)
+    }
     /// Compare to the preceding original beat, never join intervals across a recorded gap.
     public static func beats(_ rr: [Double]) -> (rmssd: Double?, stress: Double?, heartRate: Double?) {
         let valid = rr.enumerated().filter { i, v in v.isFinite && v > 0 && (i == 0 || (rr[i-1] > 0 && abs(v-rr[i-1]) / rr[i-1] <= 0.2)) }.map(\.element)
@@ -54,13 +59,26 @@ public enum HealthInputMath {
         let rmssd = differences.isEmpty ? nil : sqrt(differences.reduce(0,+) / Double(differences.count))
         let rate = 60000 / (valid.reduce(0,+) / Double(valid.count))
         guard valid.count >= 30, let a = valid.min(), let b = valid.max(), b > a else { return (rmssd,nil,rate) }
-        let bins = Dictionary(grouping: valid, by: { Int(floor($0/50)) }).mapValues(\.count)
-        let mode = bins.keys.sorted().max { bins[$0]! < bins[$1]! }!
+        let bins = Dictionary(grouping: valid, by: { Int(floor(($0+0.000001)/50)) }).mapValues(\.count)
+        let mode = bins.keys.sorted().max { bins[$0]! < bins[$1]! }! // Equal populations select the lowest bin.
         let mo = (Double(mode)*50+25)/1000
         let amo = Double(bins[mode]!)*100/Double(valid.count)
         return (rmssd, amo / (2*mo*((b-a)/1000)), rate)
     }
     /// Zones: below 60%, 60–70%, 70–80%, 80–90%, 90%+; half-open boundaries.
+    public static func uncovered(_ interval: DateInterval, occupied: [DateInterval]) -> [DateInterval] {
+        var remaining=[interval]
+        for used in occupied {
+            remaining=remaining.flatMap { span -> [DateInterval] in
+                guard span.start < used.end,span.end > used.start else { return [span] }
+                var values: [DateInterval]=[]
+                if span.start < used.start { values.append(DateInterval(start:span.start,end:min(span.end,used.start))) }
+                if span.end > used.end { values.append(DateInterval(start:max(span.start,used.end),end:span.end)) }
+                return values
+            }
+        }
+        return remaining.filter { $0.duration > 0 }
+    }
     public static func zones(_ spans: [(bpm: Double, seconds: Double)], maximum: Double?, durationMinutes: Double) -> [Double?]? {
         guard let maximum, maximum > 0 else { return nil }
         var values = [Double](repeating: 0, count: 5)
@@ -83,6 +101,26 @@ public enum HealthInputMath {
     public struct SleepInput: Sendable {
         public var start: Date; public var end: Date; public var stage: String
         public init(_ start: Date, _ end: Date, _ stage: String) { self.start = start; self.end = end; self.stage = stage }
+    }
+    public static func representativeVariability(_ points: [(Date,Double)], sleep: [SleepInput], calendar: Calendar) -> [String:Double] {
+        var bouts: [DateInterval]=[]
+        for s in sleep.filter({ $0.end > $0.start }).sorted(by:{ $0.start < $1.start }) {
+            if let last=bouts.last,s.start <= last.end { bouts[bouts.count-1]=DateInterval(start:last.start,end:max(last.end,s.end)) }
+            else { bouts.append(DateInterval(start:s.start,end:s.end)) }
+        }
+        let groups=Dictionary(grouping:bouts,by:{ DailyHealthCalendar.key($0.end,calendar:calendar) })
+        var result: [String:Double]=[:]
+        for (day,sessions) in groups {
+            // Use the main sleep session, including night shifts; a short daytime nap never widens its window.
+            guard let main=sessions.max(by:{ $0.duration < $1.duration }) else { continue }
+            let values=points.filter { p in
+                guard p.0 >= main.start,p.0 < main.end else { return false }
+                let covering=sleep.filter { $0.start <= p.0 && $0.end > p.0 }
+                return !covering.contains(where:{ $0.stage == "awake" }) && covering.contains(where:{ ["deep","core","rem","unspecified"].contains($0.stage) })
+            }.map(\.1)
+            if !values.isEmpty { result[day]=values.reduce(0,+)/Double(values.count) }
+        }
+        return result
     }
     public static func sleep(_ inputs: [SleepInput], calendar: Calendar) -> [String: HealthSleepRecord] {
         let inputs = inputs.filter { $0.end > $0.start }

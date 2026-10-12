@@ -104,7 +104,7 @@ public struct DailyHealthState: Codable, Sendable {
     public var historyRemaining: [String]?
     public var profileDelivered: HealthProfile?
     public mutating func beginHistory(version: Int, now: Date, calendar: Calendar) {
-        guard historyTargetVersion != version, historyVersion != version else { return }
+        guard version > (historyVersion ?? 0), version >= (historyTargetVersion ?? 0), historyTargetVersion != version else { return }
         historyTargetVersion = version
         historyRemaining = DailyHealthCalendar.days(now: now, calendar: calendar, count: 90).map { DailyHealthCalendar.key($0, calendar: calendar) }
     }
