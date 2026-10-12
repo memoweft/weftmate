@@ -14,7 +14,7 @@ globalThis.WeftHistoryImportView = ({ target, request, owner, desktop = null, re
     const button = (text, fn, cls = 'button secondary small') => { const b = node('button', cls, text); b.type = 'button'; b.onclick = () => void fn(b); return b; };
     const identity = owner(), current = () => target.isConnected && section.isConnected && owner() === identity, date = v => v ? new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(v)) : '日期不明';
     const section = node('section', 'history-import'), status = node('p', 'muted', '正在读取导入记录…'), list = node('div');
-    let dialog, timer;
+    let dialog, timer, renderedJobs;
     status.setAttribute('role', 'status');
     const loading = node('div', 'history-import-skeleton'); loading.setAttribute('aria-hidden', 'true'); list.append(loading);
     section.append(node('h2', '', '导入聊天记录'));
@@ -78,8 +78,10 @@ globalThis.WeftHistoryImportView = ({ target, request, owner, desktop = null, re
         return;
     } try {
         const v = await request('/memory/status');
-        if (current() && v.ownerId === identity)
-            paint(v.imports ?? []);
+        if (current() && v.ownerId === identity) {
+            const jobs = v.imports ?? [], signature = JSON.stringify(jobs);
+            if (signature !== renderedJobs) { renderedJobs = signature; paint(jobs); }
+        }
     }
     catch (e) {
         if (current()) {
