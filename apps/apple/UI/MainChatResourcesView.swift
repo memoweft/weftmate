@@ -57,7 +57,7 @@ struct MainChatResourcesView: View {
                                 }
                             }
                         }
-                        }.phoneCard().accessibilityElement(children: .contain).accessibilityIdentifier("phoneSheet.resourcesCard").padding(AppleTokens.Space.p16).frame(maxWidth: .infinity, alignment: .leading).buttonStyle(OutlineActionStyle())
+                        }.phoneCard().phoneCardIdentifier("phoneSheet.resourcesCard").padding(AppleTokens.Space.p16).frame(maxWidth: .infinity, alignment: .leading).buttonStyle(OutlineActionStyle())
                     }
                 }
             }.navigationTitle("输出与来源")
