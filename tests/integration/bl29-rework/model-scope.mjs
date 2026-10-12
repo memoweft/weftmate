@@ -6,6 +6,9 @@ import {modelRouteFingerprint} from '../../../src/model-route-fingerprint.mjs';
 import {rmSync,writeFileSync} from 'node:fs';
 const f=await startTimelineCandidate({daily:true,inlineProgress:true,historyCount:0}),c=f.debug.service.__reviewContext,owner=f.debug.auth.account.ownerId,report={};
 try{
+ // This probe measures catalog/account isolation, not periodic activity writes.
+ // Drain the real sampler before capturing a revision on slower Windows runners.
+ await c.activity.close();
  const other=await c.registerAccount({username:'review-other-'+randomUUID().slice(0,8),password:'Synthetic-password-234567',deviceName:'synthetic-host'});
  const otherOwner=other.account.ownerId;
  const original=f.debug.backend.listModels,hiddenId=privateProfileId(otherOwner,'account-model-'+randomUUID(),1);
