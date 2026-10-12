@@ -459,5 +459,9 @@
   "notificationApprovedTitle": "WeftMate · Approved",
   "notificationDoneTitle": "WeftMate · Finished",
   "watchWorking": "Working",
-  "watchSaving": "Saving"
+  "watchSaving": "Saving",
+  "watchQuestion": "Replace the old PDF?",
+  "watchIdle": "Your computer is exporting the quarterly review",
+  "watchApprovedLine": "Approved. Your computer is back at it.",
+  "watchDoneLine": "The quarterly review is in the shared folder"
 }

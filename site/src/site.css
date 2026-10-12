@@ -39,3 +39,33 @@ html:not(.has-js) .header-tools .menu-wrap{display:none}
 .auto-allow{animation:auto-confirm 800ms cubic-bezier(.16,1,.3,1)}@keyframes auto-confirm{0%,45%{transform:scale(1)}70%{transform:scale(.96);box-shadow:0 0 0 4px var(--site-blue-soft)}100%{transform:scale(1)}}
 
 .watch-device .watch-display{width:100%}.hero [inert]{pointer-events:none}
+
+/* 手表示意：对照真实手表端（黑底、标题与时间、深灰问题卡、并排的批准 / 拒绝） */
+.watch-device{width:172px;position:relative}
+.watch-device::after{content:"";position:absolute;right:-5px;top:30%;width:5px;height:26px;border-radius:0 3px 3px 0;background:#3a3c38}
+.watch-device .watch-display{box-sizing:border-box;width:100%;min-height:206px;border:8px solid #2b2d2a;border-radius:46px;background:#000;color:#f2f3ee;padding:var(--wm-space-14) var(--wm-space-10) var(--wm-space-12);text-align:left;display:flex;flex-direction:column;gap:var(--wm-space-8)}
+.watch-top{display:flex;align-items:baseline;justify-content:space-between;padding:0 var(--wm-space-4);font-size:11px;line-height:1.2}
+.watch-top strong{color:#8e918a;font-weight:550}
+.watch-top span{color:#f2f3ee;font-weight:600;font-variant-numeric:tabular-nums}
+.watch-card{flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:var(--wm-space-8);background:#1c1d1b;border-radius:18px;padding:var(--wm-space-10) var(--wm-space-8) var(--wm-space-8)}
+.watch-card>p{display:flex;gap:var(--wm-space-6);align-items:flex-start;margin:0;font-size:12px;line-height:1.4;color:#f2f3ee}
+.watch-card>p>.icon{width:14px;height:14px;flex:none;margin-top:2px;color:#c9ccc3}
+.watch-actions{display:flex;gap:var(--wm-space-6)}
+.watch-device .watch-approval,.watch-deny{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:var(--wm-space-4);min-height:34px;padding:0 var(--wm-space-6);border-radius:var(--wm-radius-999);font-size:11px;font-weight:550;line-height:1;white-space:nowrap;background:#33352f;color:#f2f3ee}
+.watch-device .watch-approval>.icon,.watch-deny>.icon{width:13px;height:13px}
+.watch-deny{display:none}
+.watch-waiting .watch-approval{background:#4DA3FF;color:#06121f}
+.watch-waiting .watch-deny{display:inline-flex}
+.watch-complete .watch-approval{background:#1f3a2c;color:#8fe0b5}
+.three-screens{grid-template-columns:minmax(0,1fr) 250px 172px}
+/* 三屏画面里的手机审批：和真实产品一样贴在输入框上方，做成紧凑的一条 */
+.three-screens .illustrated-approval{background:var(--surface-soft);border-radius:var(--wm-radius-14);padding:var(--wm-space-10) var(--wm-space-12);margin:0 0 var(--wm-space-8);font-size:11px}
+.three-screens .illustrated-approval>p{font-size:11px;line-height:1.45;margin:0 0 var(--wm-space-8);gap:var(--wm-space-6)}
+.three-screens .illustrated-approval>p>.icon{width:15px;height:15px;flex:none;margin-top:1px}
+.three-screens .illustrated-approval .approval-actions{gap:var(--wm-space-6);flex-wrap:nowrap}
+.three-screens .illustrated-approval .button{min-height:30px;padding:var(--wm-space-4) var(--wm-space-12);font-size:11px;gap:var(--wm-space-4)}
+.three-screens .illustrated-approval .button .icon{width:13px;height:13px}
+.three-screens .product[data-demo-view="phone"] .messages{min-height:120px}
+@media(max-width:1199px){.three-screens{grid-template-columns:minmax(0,1fr) 220px 150px}.three-screens .watch-device{width:150px}.three-screens .watch-device .watch-display{min-height:186px;border-width:7px;border-radius:40px}}
+@media(max-width:900px){.three-screens{grid-template-columns:minmax(0,1fr) 220px}}
+@media(max-width:600px){.three-screens{grid-template-columns:minmax(0,1fr) 118px}.three-screens .watch-device,.remote-watch .watch-device{width:118px}.three-screens .watch-device .watch-display,.remote-watch .watch-device .watch-display{min-height:172px;border-width:6px;border-radius:34px;padding:var(--wm-space-10) var(--wm-space-7) var(--wm-space-8)}.watch-actions{flex-direction:column}.watch-device .watch-approval,.watch-deny{min-height:28px;font-size:10px}.watch-card>p{font-size:11px}.watch-top{font-size:10px}.three-screens .product[data-demo-view="phone"] .messages{min-height:90px}}
