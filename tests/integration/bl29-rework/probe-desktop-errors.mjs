@@ -1,7 +1,8 @@
 import { outputPath } from './evidence.mjs';
+import { cleanupOwnedProcesses } from '../../helpers/process-evidence.mjs';
 import {_electron} from 'playwright';import {createRequire} from 'node:module';import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';import {join,resolve} from 'node:path';import {tmpdir} from 'node:os';import {pathToFileURL} from 'node:url';
 import {startTimelineCandidate} from './fixture.mjs';import {initializeDesktopSession} from './auth.mjs';
-const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate({daily:true,inlineProgress:true,sidebar:true,historyCount:0,baseTime:Date.now()}),profile=mkdtempSync(join(tmpdir(),'weftmate-bl29-errors-')),report=[];let app;
+const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate({daily:true,inlineProgress:true,sidebar:true,historyCount:0,baseTime:Date.now()}),profile=mkdtempSync(join(tmpdir(),'weftmate-bl29-errors-')),report=[],startedAt=Date.now();let app;
 try{
  const entry=join(profile,'entry.cjs');writeFileSync(entry,`const {app}=require('electron');app.setPath('userData',${JSON.stringify(profile)});app.whenReady().then(async()=>{const {createPersonalDesktop}=await import(${JSON.stringify(pathToFileURL(resolve('src/personal-desktop.mjs')).href)});let quitting=false;app.on('before-quit',()=>quitting=true);const d=createPersonalDesktop({origin:${JSON.stringify(f.origin)},libraryDesktopToken:${JSON.stringify(f.libraryDesktopToken)},isQuitting:()=>quitting});await d.ready;});`);const env={...process.env,WEFTMATE_TEST_HOST_NAME:'synthetic-host'};delete env.ELECTRON_RUN_AS_NODE;
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:[entry],env});const p=await app.firstWindow();let failure=null,count=0,recovering=false,healthyAt;
@@ -26,4 +27,13 @@ try{
   }
   await p.evaluate(()=>__revCore.stopAssistantRefresh());
  }
-}catch(e){report.push({failure:e.message});}finally{writeFileSync(outputPath('desktop-errors.json'),JSON.stringify(report,null,2));await app?.close();await f.close();rmSync(f.root,{recursive:true,force:true});rmSync(profile,{recursive:true,force:true});}console.log(report);
+}catch(e){report.push({failure:e.message});}finally{
+ writeFileSync(outputPath('desktop-errors.json'),JSON.stringify(report,null,2));
+ if(app) {
+  if(process.platform==='win32') {
+   const cleanup=cleanupOwnedProcesses({startedAt,executables:[createRequire(import.meta.url)('electron')],commandRoots:[profile]});
+   if(!cleanup.available||cleanup.failed)throw Error('synthetic desktop process cleanup failed');
+  } else if(app.process().exitCode===null&&app.process().signalCode===null)app.process().kill();
+ }
+ await app?.close();await f.close();rmSync(f.root,{recursive:true,force:true});rmSync(profile,{recursive:true,force:true});
+}console.log(report);
