@@ -1,0 +1,36 @@
+[
+  {
+    "uuid": "claude-synthetic",
+    "name": "合成偏好",
+    "created_at": "2024-04-01T12:00:00Z",
+    "chat_messages": [
+      {
+        "uuid": "u",
+        "sender": "human",
+        "text": "我不喝含糖饮料。",
+        "created_at": "2024-04-01T12:00:00Z",
+        "attachments": [
+          {
+            "file_name": "合成菜单.pdf",
+            "extracted_content": "附件正文秘密"
+          }
+        ]
+      },
+      {
+        "uuid": "a",
+        "sender": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "推理秘密"
+          },
+          {
+            "type": "text",
+            "text": "好，我会记住。"
+          }
+        ],
+        "created_at": "2024-04-01T12:00:01Z"
+      }
+    ]
+  }
+]

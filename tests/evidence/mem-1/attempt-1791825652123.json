@@ -1,0 +1,26 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realMemoryCore": true,
+  "syntheticAccount": true,
+  "checks": [
+    "preview-zero-model-requests"
+  ],
+  "screenshots": [
+    "electron-1200-light-preview.png",
+    "electron-480-light-preview.png",
+    "electron-1200-dark-preview.png",
+    "electron-480-dark-preview.png",
+    "electron-1200-light-running.png",
+    "electron-480-light-running.png",
+    "electron-1200-dark-running.png",
+    "electron-480-dark-running.png"
+  ],
+  "requests": 2,
+  "result": "failed",
+  "failure": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#assistant-view') to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <section hidden=\"\" id=\"assistant-view\" aria-hidden=\"false\">…</section>\u001b[22m\n",
+  "startupStage": "personal-access listening origin=http://127.0.0.1:61904",
+  "categories": {
+    "memory": 2
+  }
+}

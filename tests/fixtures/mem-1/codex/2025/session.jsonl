@@ -1,0 +1,8 @@
+{"type":"session_meta","payload":{"id":"codex-synthetic","timestamp":"2025-02-01T12:00:00Z","cli_version":"0.100.0"}}
+{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"系统提示秘密"}]}}
+{"type":"event_msg","timestamp":"2025-02-01T12:00:00Z","payload":{"type":"user_message","message":"我的虚构项目叫蓝鲸。"}}
+{"type":"event_msg","payload":{"type":"agent_reasoning","text":"推理秘密"}}
+{"type":"response_item","payload":{"type":"function_call_output","output":"命令输出秘密"}}
+{"type":"event_msg","payload":{"type":"agent_message","phase":"commentary","message":"正在读取文件秘密"}}
+{"type":"event_msg","timestamp":"2025-02-01T12:00:01Z","payload":{"type":"agent_message","phase":"final_answer","message":"蓝鲸项目已整理完。"}}
+{"type":"event_msg","timestamp":"2025-02-01T12:00:01Z","payload":{"type":"task_complete","last_agent_message":"蓝鲸项目已整理完。"}}
