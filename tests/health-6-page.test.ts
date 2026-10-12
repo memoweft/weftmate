@@ -20,22 +20,22 @@ test('item analysis is off by default, disclosure never writes, enabling generat
  await core.toggleHealthAnalysis('stress');await core.toggleHealthAnalysis('stress');assert.equal(fixture.calls.filter(c=>c.method==='POST').length,1);
 });
 test('cached statistics and model analyses restore without generation and only fill the main draft',async()=>{
- const {core,fixture,quotes}=await setup();await core.readHealth();await core.enableHealthAnalysis('recovery');await core.saveHealthSettings({itemAnalysisEnabled:false});assert.equal(core.health.analyses.has('recovery'),true);
+ const {core,fixture,quotes}=await setup();await core.readHealth();await core.enableHealthAnalysis('recovery');await core.saveHealthViewSettings({itemAnalysisEnabled:false});assert.equal(core.health.analyses.has('recovery'),true);
  core.health.analyses.clear();await core.readHealthAnalyses();assert.equal(core.health.analyses.get('recovery').mode,'statistics');await core.askHealthAnalysis('recovery');assert.match(quotes[0],/恢复 AI 分析/);assert.equal(fixture.calls.filter(c=>c.method==='POST').length,1);
 });
 test('two health toggles remain independent in both directions',async()=>{
- const {core}=await setup();await core.readHealth();await core.saveHealthSettings({itemAnalysisEnabled:true});assert.equal(core.health.settings.modelInsightsEnabled,true);await core.saveHealthSettings({modelInsightsEnabled:false});assert.equal(core.health.settings.itemAnalysisEnabled,true);await core.saveHealthSettings({itemAnalysisEnabled:false});assert.equal(core.health.settings.modelInsightsEnabled,false);
+ const {core}=await setup();await core.readHealth();await core.saveHealthViewSettings({itemAnalysisEnabled:true});assert.equal(core.health.settings.modelInsightsEnabled,true);await core.saveHealthViewSettings({modelInsightsEnabled:false});assert.equal(core.health.settings.itemAnalysisEnabled,true);await core.saveHealthViewSettings({itemAnalysisEnabled:false});assert.equal(core.health.settings.modelInsightsEnabled,false);
 });
 test('legacy settings without the field expose neither disclosure nor analysis cache requests',async()=>{
  const {core,fixture}=await setup({legacy:true});await core.readHealth();await core.toggleHealthAnalysis('recovery');assert.equal(core.health.analysisOpen.size,0);assert.equal(fixture.calls.some(c=>c.path.includes('/analysis')),false);
 });
 test('analysis maps switch-off, daily cap, offline and generation failure to distinct states',async()=>{
  for(const [code,status,expected]of [['AI_ANALYSIS_OFF',409,'off'],['AI_ANALYSIS_LIMIT',429,'limit'],['HOST_OFFLINE',503,'offline'],['FAILED',500,'failed']]){
-  const {core,fixture}=await setup();await core.readHealth();await core.saveHealthSettings({itemAnalysisEnabled:true});core.accessApi=async(path:string,opts:any)=>{if(opts?.method==='POST')throw Object.assign(Error(code),{status});return fixture.reply(path,opts);};await core.toggleHealthAnalysis('sleep');assert.equal(core.health.analysisErrors.get('sleep'),expected);assert.equal(core.health.analysisBusy.size,0);if(expected==='off')assert.equal(core.health.settings.itemAnalysisEnabled,false);
+  const {core,fixture}=await setup();await core.readHealth();await core.saveHealthViewSettings({itemAnalysisEnabled:true});core.accessApi=async(path:string,opts:any)=>{if(opts?.method==='POST')throw Object.assign(Error(code),{status});return fixture.reply(path,opts);};await core.toggleHealthAnalysis('sleep');assert.equal(core.health.analysisErrors.get('sleep'),expected);assert.equal(core.health.analysisBusy.size,0);if(expected==='off')assert.equal(core.health.settings.itemAnalysisEnabled,false);
  }
 });
 test('generation skeleton lasts while a request is pending; navigation and identity discard late analysis',async()=>{
- const {core,fixture}=await setup();await core.readHealth();await core.saveHealthSettings({itemAnalysisEnabled:true});let release:any;core.accessApi=async(path:string,opts:any)=>opts?.method==='POST'?new Promise(r=>release=r):fixture.reply(path,opts);
+ const {core,fixture}=await setup();await core.readHealth();await core.saveHealthViewSettings({itemAnalysisEnabled:true});let release:any;core.accessApi=async(path:string,opts:any)=>opts?.method==='POST'?new Promise(r=>release=r):fixture.reply(path,opts);
  const request=core.toggleHealthAnalysis('energy');assert.equal(core.health.analysisBusy.has('energy'),true);await core.readHealth('2026-10-11');release({scope:'energy',day:'2026-10-12',text:'old'});await request;assert.equal(core.health.analyses.size,0);assert.equal(core.health.analysisBusy.size,0);
  const next=core.toggleHealthAnalysis('energy');core.state.ownerId='another-synthetic';core.state.identityGeneration++;core.resetHealth();release({scope:'energy',day:'2026-10-11',text:'old'});await next;assert.equal(core.health.analyses.size,0);assert.equal(core.health.settings,null);
 });
@@ -52,4 +52,4 @@ test('v3 history uses requested to without a 90-day workaround and caches restor
  await core.enableHealthAnalysis('stress');core.health.analyses.clear();await core.readHealthAnalyses();assert.equal(core.health.analyses.get('stress').day,'2026-08-01');assert.equal(fixture.calls.filter(c=>c.method==='POST').length,1);
 });
 
-test('health presentation preserves the main settings writer when it is present',async()=>{const {core,fixture}=await setup({prior:true});await core.readHealth();await core.saveHealthSettings({itemAnalysisEnabled:true});assert.equal(core.priorWrites.length,1);assert.equal(fixture.calls.filter(c=>c.method==='PATCH').length,1);assert.equal(core.health.settings.itemAnalysisEnabled,true);});
+test('health presentation preserves the main settings writer when it is present',async()=>{const {core,fixture}=await setup({prior:true});const originalWriter=core.saveHealthSettings;assert.notEqual(originalWriter,core.saveHealthViewSettings);await core.readHealth();await core.saveHealthViewSettings({itemAnalysisEnabled:true});assert.equal(core.saveHealthSettings,originalWriter);assert.equal(core.priorWrites.length,1);assert.equal(fixture.calls.filter(c=>c.method==='PATCH').length,1);assert.equal(core.health.settings.itemAnalysisEnabled,true);});
