@@ -1,0 +1,590 @@
+{
+  "requests": 14,
+  "responses": [
+    {
+      "day": "2026-10-06",
+      "status": 200
+    },
+    {
+      "day": "2026-10-07",
+      "status": 200
+    },
+    {
+      "day": "2026-10-08",
+      "status": 200
+    },
+    {
+      "day": "2026-10-09",
+      "status": 200
+    },
+    {
+      "day": "2026-10-10",
+      "status": 200
+    },
+    {
+      "day": "2026-10-11",
+      "status": 200
+    },
+    {
+      "day": "2026-10-12",
+      "status": 200
+    },
+    {
+      "day": "2026-10-06",
+      "status": 200
+    },
+    {
+      "day": "2026-10-07",
+      "status": 200
+    },
+    {
+      "day": "2026-10-08",
+      "status": 200
+    },
+    {
+      "day": "2026-10-09",
+      "status": 200
+    },
+    {
+      "day": "2026-10-10",
+      "status": 200
+    },
+    {
+      "day": "2026-10-11",
+      "status": 200
+    },
+    {
+      "day": "2026-10-12",
+      "status": 200
+    }
+  ],
+  "failures": 3,
+  "remoteChecks": 12,
+  "contractOnly": true,
+  "healthV2ContractFixture": true,
+  "available": 7,
+  "unavailable": 7,
+  "items": [
+    {
+      "day": "2026-10-06",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-07",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-08",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-09",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-10",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-11",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-12",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    }
+  ],
+  "sent": [
+    {
+      "day": "2026-10-06",
+      "health": {
+        "activeEnergyKcal": null,
+        "exerciseMinutes": null,
+        "heartRateHourly": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hrvSdnnMs": null,
+        "respiratoryRateBrpm": null,
+        "restingHeartRateBpm": null,
+        "sleep": null,
+        "sleepMinutes": null,
+        "spo2Pct": null,
+        "status": "available",
+        "steps": null,
+        "version": 2,
+        "vo2Max": null,
+        "workouts": [],
+        "wristTempC": null
+      }
+    },
+    {
+      "day": "2026-10-07",
+      "health": {
+        "activeEnergyKcal": null,
+        "exerciseMinutes": null,
+        "heartRateHourly": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hrvSdnnMs": null,
+        "respiratoryRateBrpm": null,
+        "restingHeartRateBpm": null,
+        "sleep": null,
+        "sleepMinutes": null,
+        "spo2Pct": null,
+        "status": "available",
+        "steps": null,
+        "version": 2,
+        "vo2Max": null,
+        "workouts": [],
+        "wristTempC": null
+      }
+    },
+    {
+      "day": "2026-10-08",
+      "health": {
+        "activeEnergyKcal": null,
+        "exerciseMinutes": null,
+        "heartRateHourly": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hrvSdnnMs": null,
+        "respiratoryRateBrpm": null,
+        "restingHeartRateBpm": 63,
+        "sleep": {
+          "coreMinutes": 480,
+          "end": "2026-10-08T13:00:00Z",
+          "inBedMinutes": 480,
+          "minutes": 480,
+          "start": "2026-10-08T05:00:00Z"
+        },
+        "sleepMinutes": 480,
+        "spo2Pct": null,
+        "status": "available",
+        "steps": 1234,
+        "version": 2,
+        "vo2Max": null,
+        "workouts": [
+          {
+            "minutes": 30,
+            "start": "2026-10-08T17:00:00Z",
+            "type": "\u6b65\u884c"
+          }
+        ],
+        "wristTempC": null
+      }
+    },
+    {
+      "day": "2026-10-09",
+      "health": {
+        "activeEnergyKcal": null,
+        "exerciseMinutes": null,
+        "heartRateHourly": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hrvSdnnMs": null,
+        "respiratoryRateBrpm": null,
+        "restingHeartRateBpm": 63,
+        "sleep": {
+          "coreMinutes": 480,
+          "end": "2026-10-09T13:00:00Z",
+          "inBedMinutes": 480,
+          "minutes": 480,
+          "start": "2026-10-09T05:00:00Z"
+        },
+        "sleepMinutes": 480,
+        "spo2Pct": null,
+        "status": "available",
+        "steps": 1234,
+        "version": 2,
+        "vo2Max": null,
+        "workouts": [
+          {
+            "minutes": 30,
+            "start": "2026-10-09T17:00:00Z",
+            "type": "\u6b65\u884c"
+          }
+        ],
+        "wristTempC": null
+      }
+    },
+    {
+      "day": "2026-10-10",
+      "health": {
+        "activeEnergyKcal": null,
+        "exerciseMinutes": null,
+        "heartRateHourly": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hrvSdnnMs": null,
+        "respiratoryRateBrpm": null,
+        "restingHeartRateBpm": 63,
+        "sleep": {
+          "coreMinutes": 480,
+          "end": "2026-10-10T13:00:00Z",
+          "inBedMinutes": 480,
+          "minutes": 480,
+          "start": "2026-10-10T05:00:00Z"
+        },
+        "sleepMinutes": 480,
+        "spo2Pct": null,
+        "status": "available",
+        "steps": 1234,
+        "version": 2,
+        "vo2Max": null,
+        "workouts": [
+          {
+            "minutes": 30,
+            "start": "2026-10-10T17:00:00Z",
+            "type": "\u6b65\u884c"
+          }
+        ],
+        "wristTempC": null
+      }
+    },
+    {
+      "day": "2026-10-11",
+      "health": {
+        "activeEnergyKcal": null,
+        "exerciseMinutes": null,
+        "heartRateHourly": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hrvSdnnMs": null,
+        "respiratoryRateBrpm": null,
+        "restingHeartRateBpm": null,
+        "sleep": null,
+        "sleepMinutes": null,
+        "spo2Pct": null,
+        "status": "available",
+        "steps": null,
+        "version": 2,
+        "vo2Max": null,
+        "workouts": [],
+        "wristTempC": null
+      }
+    },
+    {
+      "day": "2026-10-12",
+      "health": {
+        "activeEnergyKcal": null,
+        "exerciseMinutes": null,
+        "heartRateHourly": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hrvSdnnMs": null,
+        "respiratoryRateBrpm": null,
+        "restingHeartRateBpm": null,
+        "sleep": null,
+        "sleepMinutes": null,
+        "spo2Pct": null,
+        "status": "available",
+        "steps": null,
+        "version": 2,
+        "vo2Max": null,
+        "workouts": [],
+        "wristTempC": null
+      }
+    },
+    {
+      "day": "2026-10-06",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-07",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-08",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-09",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-10",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-11",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    },
+    {
+      "day": "2026-10-12",
+      "health": {
+        "exerciseMinutes": null,
+        "restingHeartRateBpm": null,
+        "sleepMinutes": null,
+        "status": "unavailable",
+        "steps": null,
+        "version": 1,
+        "workouts": []
+      }
+    }
+  ]
+}

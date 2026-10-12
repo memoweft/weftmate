@@ -57,7 +57,7 @@ try:
             for attachment in item['attachments']:
                 name=attachment['suggestedHumanReadableName'].split('_0_')[0]
                 if name.startswith('health1-'):shutil.copyfile(Path(out)/attachment['exportedFileName'],a.evidence/(name+'.png'))
-    (a.evidence/('validation-'+a.theme+'.json')).write_text(json.dumps({'theme':a.theme,'passed':summary['passedTests'],'failed':summary['failedTests'],'skipped':summary['skippedTests'],'simulatorsAtOnce':1,'realCloud':True,'realHost':True,'fileMail':True,'syntheticRelayRoute':True,'systemStatusBar':True},indent=2)+'\n')
+    (a.evidence/('validation-'+a.theme+'.json')).write_text(json.dumps({'theme':a.theme,'passed':summary['passedTests'],'failed':summary['failedTests'],'skipped':summary['skippedTests'],'simulatorsAtOnce':1,'realCloud':True,'realHost':True,'realHostAuthentication':True,'healthRecordService':'synthetic-v2-contract','realHealthStorage':False,'fileMail':True,'syntheticRelayRoute':True,'systemStatusBar':True},indent=2)+'\n')
     if status or summary['passedTests']!=1 or summary['failedTests'] or summary['skippedTests']:raise RuntimeError('Native daily health journey did not pass')
 finally:
     subprocess.run(['xcrun','simctl','shutdown','all'],capture_output=True)

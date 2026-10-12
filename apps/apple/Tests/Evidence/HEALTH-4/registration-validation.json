@@ -1,0 +1,9 @@
+{
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "twoModelsOneProcess": true,
+  "sdkRegistrations": 1,
+  "headless": true,
+  "simulatorsAtOnce": 1
+}

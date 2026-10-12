@@ -9,6 +9,7 @@ private final class HealthBackgroundCompletion: @unchecked Sendable {
     init(_ task: BGTask) { self.task=task }
     func finish(_ success: Bool) {
         lock.lock(); guard !completed else { lock.unlock(); return }; completed=true; lock.unlock()
+        task.expirationHandler=nil
         task.setTaskCompleted(success:success)
     }
 }

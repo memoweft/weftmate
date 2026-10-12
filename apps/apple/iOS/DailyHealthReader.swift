@@ -39,6 +39,25 @@ private enum DailyHealthCallbacks {
         }
     }
 }
+private struct HealthReadingAggregation: Sendable {
+    var sleep: [String:HealthSleepRecord]
+    var variability: [String:Double]
+    var hourly: [String:[HealthHeartBucket?]]
+    var quarterHourly: [String:[HealthHeartBucket?]]
+}
+private enum HealthReadingWork {
+    nonisolated static func aggregate(sleep: [HealthInputMath.SleepInput],rate: [(Date,Double)],variability: [(Date,Double)],days: [Date],calendar: Calendar) async -> HealthReadingAggregation {
+        await Task.detached(priority:.utility) { @Sendable in
+            var result=HealthReadingAggregation(sleep:HealthInputMath.sleep(sleep,calendar:calendar),variability:HealthInputMath.representativeVariability(variability,sleep:sleep,calendar:calendar),hourly:[:],quarterHourly:[:])
+            for day in days {
+                let key=DailyHealthCalendar.key(day,calendar:calendar)
+                result.hourly[key]=HealthInputMath.buckets(rate,day:day,calendar:calendar,quarter:false)
+                result.quarterHourly[key]=HealthInputMath.buckets(rate,day:day,calendar:calendar,quarter:true)
+            }
+            return result
+        }.value
+    }
+}
 @MainActor final class DailyHealthReader {
     let store = HKHealthStore()
     var available: Bool { HKHealthStore.isHealthDataAvailable() }
@@ -101,21 +120,21 @@ private enum DailyHealthCallbacks {
                 HKCategoryValueSleepAnalysis.asleepREM.rawValue:"rem", HKCategoryValueSleepAnalysis.awake.rawValue:"awake"]
             return names[sample.value].map { HealthInputMath.SleepInput(sample.startDate,sample.endDate,$0) }
         }
-        let sleeping = HealthInputMath.sleep(sleepInputs,calendar:calendar)
         let workouts = try await samples(HKObjectType.workoutType(), start: first, end: until).compactMap { $0 as? HKWorkout }
         func quantities(_ id: HKQuantityTypeIdentifier, _ unit: HKUnit, from: Date? = nil) async throws -> [(Date, Double)] {
-            try await samples(HKObjectType.quantityType(forIdentifier: id)!, start: from ?? first, end: until).compactMap {
+            try await optionalSamples(HKObjectType.quantityType(forIdentifier: id)!, start: from ?? first, end: until).compactMap {
                 guard let s = $0 as? HKQuantitySample, s.startDate < until else { return nil }
                 return (s.startDate, s.quantity.doubleValue(for: unit))
             }.sorted { $0.0 < $1.0 }
         }
         let rate = try await quantities(.heartRate,.count().unitDivided(by: .minute()))
         let hrv = try await quantities(.heartRateVariabilitySDNN,.secondUnit(with: .milli),from: sleepStart)
-        let representative = HealthInputMath.representativeVariability(hrv,sleep:sleepInputs,calendar:calendar)
         let respiration = try await quantities(.respiratoryRate,.count().unitDivided(by: .minute()))
         let oxygen = try await quantities(.oxygenSaturation,.percent())
         let temperature = try await quantities(.appleSleepingWristTemperature,.degreeCelsius())
         let fitness = try await quantities(.vo2Max,HKUnit(from: "ml/kg*min"))
+        let aggregate=await HealthReadingWork.aggregate(sleep:sleepInputs,rate:rate,variability:hrv,days:days,calendar:calendar)
+        let sleeping=aggregate.sleep, representative=aggregate.variability
         var variability: [HealthVariabilityRecord] = []
         if version >= 3 {
             let series = try await samples(HKSeriesType.heartbeat(), start: first, end: until).compactMap { $0 as? HKHeartbeatSeriesSample }
@@ -151,16 +170,16 @@ private enum DailyHealthCallbacks {
                 restingHeartRateBpm: try await statistic(.restingHeartRate,day: day,end: end,unit: .count().unitDivided(by: .minute()),options: .discreteAverage),
                 exerciseMinutes: try await statistic(.appleExerciseTime,day: day,end: end,unit: .minute(),options: .cumulativeSum).map { min(1440,$0) })
             value.version = version; value.sleep = sleeping[key]
-            value.activeEnergyKcal = try await statistic(.activeEnergyBurned,day: day,end: end,unit: .kilocalorie(),options: .cumulativeSum)
+            value.activeEnergyKcal = try await optionalStatistic(.activeEnergyBurned,day: day,end: end,unit: .kilocalorie(),options: .cumulativeSum)
             value.hrvSdnnMs = representative[key]
             value.respiratoryRateBrpm = average(respiration); value.spo2Pct = average(oxygen).map { $0*100 }
             value.wristTempC = average(temperature); value.vo2Max = average(fitness)
             #if DEBUG && targetEnvironment(simulator)
             if let fixtureTemperature, value.steps != nil { value.wristTempC = fixtureTemperature }
             #endif
-            value.heartRateHourly = HealthInputMath.buckets(rate,day: day,calendar: calendar,quarter: false)
+            value.heartRateHourly = aggregate.hourly[key]
             if version >= 3 {
-                value.heartRateQuarterHourly = HealthInputMath.buckets(rate,day: day,calendar: calendar,quarter: true)
+                value.heartRateQuarterHourly = aggregate.quarterHourly[key]
                 value.hrvSamples = Array(variability.filter { $0.time >= HealthInputMath.iso(day) && $0.time < HealthInputMath.iso(end) }.prefix(96))
             }
             var occupied: [DateInterval]=[]
@@ -196,6 +215,14 @@ private enum DailyHealthCallbacks {
         case .traditionalStrengthTraining, .functionalStrengthTraining: "力量训练"
         default: "其它"
         }
+    }
+    private func optionalSamples(_ type: HKSampleType,start: Date,end: Date) async throws -> [HKSample] {
+        do { return try await samples(type,start:start,end:end) }
+        catch let error as HKError where [.errorAuthorizationDenied,.errorAuthorizationNotDetermined,.errorNoData].contains(error.code) { return [] }
+    }
+    private func optionalStatistic(_ id: HKQuantityTypeIdentifier,day: Date,end: Date,unit: HKUnit,options: HKStatisticsOptions) async throws -> Double? {
+        do { return try await statistic(id,day:day,end:end,unit:unit,options:options) }
+        catch let error as HKError where [.errorAuthorizationDenied,.errorAuthorizationNotDetermined,.errorNoData].contains(error.code) { return nil }
     }
     private func statistic(_ id: HKQuantityTypeIdentifier, day: Date, end: Date, unit: HKUnit, options: HKStatisticsOptions) async throws -> Double? {
         try Task.checkCancellation()

@@ -1,0 +1,30 @@
+{
+  "reportedCrashes": [
+    {
+      "time": "2026-10-12 03:20:00 US/Pacific",
+      "process": "WeftMateHealth4Seed",
+      "cause": "HealthKit rejected write authorization for sleeping wrist temperature",
+      "fix": "Readonly type removed from write authorization and sample seeding; synthetic simulator-only input is documented."
+    },
+    {
+      "time": "2026-10-12 03:21:44 US/Pacific",
+      "process": "WeftMatePhone",
+      "cause": "Duplicate BGTaskScheduler launch registration from model initialization",
+      "fix": "Registration moved to App.init with process-wide MainActor once flag; model construction does not register."
+    },
+    {
+      "time": "2026-10-12 03:25:56 US/Pacific",
+      "process": "WeftMatePhone",
+      "cause": "Duplicate BGTaskScheduler launch registration from model initialization",
+      "fix": "Same launch-owned registration fix; two-model UI regression passed."
+    }
+  ],
+  "twoModelRegression": {
+    "passed": 1,
+    "failed": 0,
+    "sdkRegistrations": 1
+  },
+  "kernelRestartReportedByOrchestrator": "2026-10-12 03:52 US/Pacific",
+  "headlessValidation": true,
+  "newCrashesAfterFix": []
+}
