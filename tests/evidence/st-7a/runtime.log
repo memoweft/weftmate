@@ -1,0 +1,16 @@
+[weftmate] ✓ 模型凭据保险库已就绪
+[weftmate] ✓ 伴侣状态就绪:星瑶
+[weftmate] DSH_HOME = C:\Users\<user>\AppData\Local\Temp\weftmate-st7a-electron-o4WMQY\profile\dsh-home
+[weftmate] [dsh] profile weftmate 已写入（[PATH]
+[weftmate] [dsh:stdout] dsh web: [URL]
+[weftmate] ✓ personal-host ready origin=http://127.0.0.1:61280
+[weftmate] ✓ personal-access listening origin=http://127.0.0.1:56209
+[weftmate] personal-host active; managed shutdown via launcher IPC
+[weftmate] ✓ account-model route gate idle previous=unknown
+[weftmate] [dsh:stdout] dsh web: [URL]
+[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError
+[weftmate] gateway GET /sessions/session-0ed6c4fc-bedd-4f88-8bca-461c1de836e7: HTTP 404 session-not-found
+Debugger ending on ws://127.0.0.1:58807/34151e4b-3696-45c3-86ee-59e5639b9c6b
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[weftmate] [dsh] personal approval runtime invalidation failed
+[weftmate] ✓ 退出收尾:DSH web 运行时收口完成

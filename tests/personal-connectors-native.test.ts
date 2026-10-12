@@ -8,8 +8,26 @@ import { createConnectorVault } from '../src/personal-connectors/vault.mjs';
 import { httpFixture } from './fixtures/st-7a/http.mjs';
 import { syncConnectorTools } from '../src/plugins/personal-connectors.mjs';
 import { fork } from 'node:child_process';
+import { cleanupOwnedProcesses } from './helpers/process-evidence.mjs';
 const runtime = resolve('vendor/dsh-runtime');
 const fixture = resolve('tests/fixtures/st-7a/stdio.mjs');
+
+test('abrupt host exit kills the native worker and its still-running server tree', async () => {
+  const root=await mkdtemp(join(tmpdir(),'weftmate-st7a-abrupt-')),startedAt=Date.now();
+  const {scrubbedParentEnv}=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-subprocess/lib/index.js');
+  const parent=fork(resolve('tests/fixtures/st-7a/parent.mjs'),[root,runtime,fixture],{silent:true,execArgv:[],env:scrubbedParentEnv()});
+  parent.stdout?.resume();parent.stderr?.resume();
+  const alive=(pid:number)=>{try{process.kill(pid,0);return true;}catch{return false;}};
+  try {
+    const ready=await new Promise<{workerPid:number}>((done,reject)=>{const timer=setTimeout(()=>reject(Error('Synthetic host startup timed out')),10000);parent.once('message',(message:any)=>{clearTimeout(timer);done(message);});parent.once('error',error=>{clearTimeout(timer);reject(error);});parent.once('exit',()=>{clearTimeout(timer);reject(Error('Synthetic host exited before ready'));});});
+    const pids=(await readFile(join(root,'starts'),'utf8')).trim().split('\n').map(Number);
+    assert.equal(pids.length,2);assert.ok(pids.some(alive),'a native server is still handling its deliberately slow call');
+    assert.ok(ready.workerPid>0&&alive(ready.workerPid),'the SDK server belongs to a live native worker');pids.push(ready.workerPid);
+    const exited=new Promise(resolve=>parent.once('exit',resolve));parent.kill('SIGKILL');await exited;
+    const deadline=Date.now()+5000;while(pids.some(alive)&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,25));
+    assert.ok(pids.every(pid=>!alive(pid)),'abrupt host termination leaves zero worker or server processes');
+  } finally {parent.kill('SIGKILL');cleanupOwnedProcesses({startedAt,executables:[process.execPath],commandRoots:[root]});await rm(root,{recursive:true,force:true});}
+});
 test('connector schemas belong to the actual native agent scope and disappear on disable', async () => {
   const {Context}=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/cordis/lib/index.js');
   const {SystemPrompt}=await import('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-system-prompt/lib/index.js');
