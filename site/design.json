@@ -1,0 +1,15 @@
+{
+  "surface":"official-site",
+  "mode":"persuade",
+  "authority":"User-pinned WeftMate product identity",
+  "tokens":"design/tokens/tokens.json",
+  "themes":{
+    "light":{"canvas":"#faf9f7","surface":"#ffffff","soft":"#f1f0ed","ink":"#272724","brand":"#0a7aff","action":"#0866d4"},
+    "dark":{"canvas":"#20211f","surface":"#262724","soft":"#30312e","ink":"#e8e9e3","brand":"#4da3ff","actionInk":"#102036"}
+  },
+  "layout":{"maxWidth":1280,"desktopPadding":32,"phonePadding":20,"sectionSpace":[48,64,72],"surfaceRadius":[24,32],"touchTargetMin":44},
+  "type":{"family":"system only","heroMax":82,"sectionMax":58,"phoneHero":44,"phoneSection":36,"body":[16,19],"tracking":"-0.035em"},
+  "motion":{"stepOnly":true,"pauseOffscreen":true,"pauseHidden":true,"reducedMotion":true},
+  "assets":"site/ASSETS.json",
+  "review":"Independent read-only reviewer: all listed material fixes resolved; final screenshots recaptured."
+}
