@@ -15,9 +15,9 @@ import Testing
 }
 @Test func phoneApprovalKeepsBothActionsOnNarrowRow() {
     for width in [320.0, 375, 390] {
-        let headline = PhonePresentation.approvalHeadlineWidth(width: width, inset: 24, gap: 8, actionWidth: 64)
-        #expect(headline >= 128)
-        #expect(headline + 48 + 16 + 128 == width)
+        let headline = PhonePresentation.approvalHeadlineWidth(width: width, inset: 36, gap: 8, actionWidth: 64)
+        #expect(headline >= 104)
+        #expect(headline + 72 + 16 + 128 == width)
     }
 }
 @Test func phoneFiveTabsHaveRoomForLongestLabelAtMinimumWidth() {
