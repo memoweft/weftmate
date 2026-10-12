@@ -312,15 +312,17 @@ test('trusted-device delivery uses an external sender anchor and rejects another
   const client = core.initializeCloudAccount(); f.useClient(client); await client.configure(); await login(f)
   const key = await client.key(), host = await jose.generateKeyPair('ES256', { extractable: true }), anchor = await jose.exportJWK(host.publicKey)
   const jkt = await jose.calculateJwkThumbprint(key.publicJwk), pin = randomBytes(32).toString('base64url')
-  const make = async (deviceId: string, expiry = '120s') => ({ hostId: 'host-test', publicJwk: anchor,
+  const make = async (deviceId: string, expiry = '120s', ahead = 0) => ({ hostId: 'host-test', publicJwk: anchor,
     trustToken: await new jose.SignJWT({ hostId: 'host-test', deviceId, jkt, tlsSpki: pin, publicJwk: anchor, origin: 'https://host.example.com' })
       .setProtectedHeader({ alg: 'ES256', typ: 'wm-host-trust+jwt' }).setIssuer('host-test').setSubject('account-test').setAudience(jkt)
-      .setJti(randomBytes(16).toString('hex')).setIssuedAt(Math.floor(f.environment.now() / 1000))
-      .setExpirationTime(Math.floor(f.environment.now() / 1000) + (expiry === '-1s' ? -1 : 120)).sign(host.privateKey) })
+      .setJti(randomBytes(16).toString('hex')).setIssuedAt(Math.floor(f.environment.now() / 1000) + ahead)
+      .setExpirationTime(Math.floor(f.environment.now() / 1000) + (expiry === '-1s' ? -1 : 120) + ahead).sign(host.privateKey) })
   await assert.rejects(core.cloudImportTrust(core.cloudTrustMaterial(await make('another-device'))), (error: any) => error.code === 'HOST_TRUST_INVALID')
   const expired = await make(key.deviceId, '-1s'); await assert.rejects(core.cloudImportTrust(core.cloudTrustMaterial(expired)))
   const wrongAnchor = await jose.generateKeyPair('ES256', { extractable: true }), valid = await make(key.deviceId)
   await assert.rejects(core.cloudImportTrust(core.cloudTrustMaterial({ ...valid, publicJwk: await jose.exportJWK(wrongAnchor.publicKey) })))
+  await assert.rejects(core.cloudImportTrust(core.cloudTrustMaterial(await make(key.deviceId,'120s',31))));
+  await core.cloudImportTrust(core.cloudTrustMaterial(await make(key.deviceId,'120s',20)));
   await core.cloudImportTrust(core.cloudTrustMaterial(valid)); assert.equal(f.records.get('trusted-host:host-test').tlsSpki, pin)
 })
 test('packaged legal text matches docs and encrypted desktop key never exposes private material', () => {
