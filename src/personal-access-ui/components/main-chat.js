@@ -252,7 +252,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         else ui.byId('session-rail').querySelector('.rail-top').before(sidebar);
         const heading = ui.element('div', 'rail-side-heading', '旁聊'); ui.byId('session-list').before(heading);
         // TB-4 owns the future fixed pages; retain the explicit extension point hidden.
-        const future = ui.element('nav'); fixedNavigation = future; future.hidden = true; future.setAttribute('aria-label', '动态、目标与成果库');
+        const future = ui.element('nav'); fixedNavigation = future; future.hidden = true; future.setAttribute('aria-label', '动态、健康、目标与成果库');
         if (ui.mobile) { future.id = 'mobile-bottom-tabs'; future.setAttribute('aria-label','聊天、动态、目标、成果库'); ui.byId('chat-page').append(future); }
         else sidebar.after(future);
         tools = ui.element('div', 'main-chat-tools'); tools.hidden = true;
