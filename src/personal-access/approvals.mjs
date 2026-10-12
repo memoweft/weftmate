@@ -4,6 +4,7 @@ import { readSourceEvents } from './source-history.mjs';
 import { exactKeys, failure, validId, withDeadline } from './common.mjs';
 import { sourceMessageHash } from './command-policy.mjs';
 import { approvalCategories } from '../plugins/personal-approval-policy.mjs';
+import { createSecondOpinion } from './second-opinion.mjs';
 import { redactProjectPath } from '../personal-projects/projects.mjs';
 import {
   approvalDecisionReceipt,
@@ -23,6 +24,8 @@ import {
 } from './constants.mjs';
 
 export function createApprovalOperations(context) {
+  const secondOpinion = createSecondOpinion(context);
+  const registering = new Map();
   function requireToolRuntime(runtimeId) {
     context.requireOpen();
     if (runtimeId !== undefined && context.closedToolRuntimeIds.has(runtimeId)) {
@@ -190,7 +193,7 @@ export function createApprovalOperations(context) {
     return receipt;
   }
 
-  return {
+  const operations = {
     requireToolRuntime,
     personalExecutionSource,
     approvalMatches,
@@ -201,7 +204,7 @@ export function createApprovalOperations(context) {
     /** Managed-child only: native approvals are bound to the exact original tool call. */
     async trackToolApproval(input) {
       exactKeys(input, ['id', 'action', 'sessionId', 'turn', 'callId', 'rootCallId', 'receiptId', 'messageHash',
-        'toolName', 'argumentsHash', 'approvalId', 'runtimeId', 'reason', 'outcome']);
+        'toolName', 'argumentsHash', 'approvalId', 'runtimeId', 'reason', 'outcome', 'reviewEvidence']);
       const { action, sessionId, turn, callId, rootCallId, receiptId, approvalId, runtimeId } = input;
       if (!['register_approval', 'read_approval', 'resolve_approval'].includes(action) || !validId(sessionId) ||
           !Number.isSafeInteger(turn) || turn < 1 || typeof callId !== 'string' || typeof rootCallId !== 'string' ||
@@ -225,7 +228,7 @@ export function createApprovalOperations(context) {
           requireToolRuntime(runtimeId);
         }
       }
-      const { source } = personalExecutionSource(context.accountState(ownerId), input);
+      const { source, root } = personalExecutionSource(context.accountState(ownerId), input);
       if (action === 'register_approval') {
         const project = context.accountState(ownerId).projects?.[source.payload.projectId];
         input = { ...input, reason: redactProjectPath(input.reason, project?.rootPath) };
@@ -271,6 +274,7 @@ export function createApprovalOperations(context) {
       if (!live) {
         throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       }
+      const review = await secondOpinion(ownerId, input, source, root);
       const saved = await context.serial(() => context.mutate(ownerId, next => {
         requireToolRuntime(runtimeId);
         const checked = personalExecutionSource(next, input, true);
@@ -293,6 +297,7 @@ export function createApprovalOperations(context) {
           reason: input.reason, riskCategories: approvalCategories(input.reason), status: 'pending', createdAt: new Date(context.timestamp()).toISOString() };
         row.operationCategories = [...new Set(row.riskCategories.map(riskPermissionType))];
         row.canAlwaysAllow = row.operationCategories.length > 0 && row.operationCategories.every(type => PERMISSION_TYPES.some(item => item.id === type && !item.restricted));
+        if (review) row.secondOpinion = review;
         checked.source.toolApprovals = [...rows, row];
         return publicToolApproval(row);
       }, () => requireToolRuntime(runtimeId)));
@@ -323,6 +328,20 @@ export function createApprovalOperations(context) {
         }
         return { runtimeId, invalidatedCount };
       }));
+    }
+  };
+  return { ...operations,
+    async waitToolApprovalRegistration(sessionId) {
+      const work = [...(registering.get(sessionId) ?? [])];
+      if (work.length) await withDeadline(() => Promise.allSettled(work), 6000).catch(() => {});
+    },
+    async trackToolApproval(input) {
+      if (input.action !== 'register_approval') return operations.trackToolApproval(input);
+      const pending = registering.get(input.sessionId) ?? new Set();
+      registering.set(input.sessionId, pending);
+      const work = operations.trackToolApproval(input); pending.add(work);
+      try { return await work; }
+      finally { pending.delete(work); if (!pending.size) registering.delete(input.sessionId); }
     }
   };
 }

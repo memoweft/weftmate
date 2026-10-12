@@ -145,6 +145,7 @@ function fillApprovalCard(card,row,context,cache){card.decisionContext=context;c
   const resolving=card.dataset.approvalId&&!card.classList.contains('is-resolved')&&row.status!=='pending';
   const copy=resolving?globalThis.WeftMobileMotion?.snapshot(card):null;
   const entering=!card.dataset.approvalId;card.dataset.signature=signature;clear(card);card.dataset.approvalId=row.approvalId;card.dataset.taskId=row.taskId;
+  const review=uiCore.approvalReview?.(row);card.classList.toggle('is-review-warning',!!review?.warning);
   if(row.status!=='pending'&&!(row.status==='answered'&&cache.error)){
     card.classList.add('is-resolved');const record=el('p','approval-status',approvalRecord(row));record.setAttribute('role','status');
     record.setAttribute('aria-live','polite');record.setAttribute('aria-label',`${approvalRecord(row)}。${approvalMeaning(row,cache,attempt)}`);
@@ -177,6 +178,9 @@ function fillApprovalCard(card,row,context,cache){card.decisionContext=context;c
         add('拒绝','rejected',(restoreFocus,fresh)=>decideToolApproval(row,'rejected',fresh,restoreFocus))}}
     if(cache.error||attempt?.unknown)add('检查审批状态','check',()=>refreshToolApprovals(context,{force:true}));
     card.append(controls);
+    if(review){const note=el('p','approval-review',review.text);note.setAttribute('role',review.warning?'alert':'note');card.append(note)}
+    const reject=controls.querySelector('[data-approval-choice="rejected"]');
+    if(review?.warning&&card.dataset.reviewFocusId!==row.approvalId&&reject&&!reject.disabled){reject.focus({preventScroll:true});card.dataset.reviewFocusId=row.approvalId;}
     const parameters=card.querySelector('.approval-detail');
     if(parameters)for(const child of [...card.children])if(child.className==='approval-risk-copy')parameters.append(child);
     if(hadFocus){const next=[...controls.children].find(button=>button.dataset.approvalChoice===focusChoice);next?.focus({preventScroll:true})}}

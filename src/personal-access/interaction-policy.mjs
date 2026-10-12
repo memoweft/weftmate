@@ -20,6 +20,7 @@ import {
   TOOL_RUNTIME_ID
 } from './constants.mjs';
 import { RISK_CATEGORIES } from '../plugins/personal-approval-policy.mjs';
+import { parseSecondOpinion } from './second-opinion.mjs';
 import { sourceMessageHash } from './command-policy.mjs';
 
 export function questionText(value) {
@@ -110,6 +111,7 @@ export function validUserQuestions(command, store) {
       !Array.isArray(rows) || rows.length > MAX_COMMAND_TOOL_APPROVALS ||
       new Set(rows.map(row => row?.questionRpcId)).size !== rows.length) return false;
   return rows.every(row => {
+    if (row?.secondOpinion !== undefined && !parseSecondOpinion(JSON.stringify(row.secondOpinion))) return false;
     if (!plainObject(row) || Object.keys(row).some(key => !QUESTION_FIELDS.includes(key)) ||
         typeof row.questionRpcId !== 'string' || !TOOL_RUNTIME_ID.test(row.questionRpcId) ||
         typeof row.runtimeId !== 'string' || !TOOL_RUNTIME_ID.test(row.runtimeId) || row.sessionId !== command.sessionId ||
