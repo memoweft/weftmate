@@ -70,7 +70,7 @@ public enum ProjectPresentation {
         case "PROJECT_REVOKED": "项目已移除，请刷新列表。"
         case "MODEL_UNAVAILABLE": "所选模型不可用，请重新选择。"
         case "PROJECT_UNSAFE_PATH", "PROJECT_ROOT_CHANGED": "文件夹不可用，请选择本机已有文件夹。"
-        case "PROJECT_WINDOWS_REQUIRED": "请在宿主电脑上创建项目。"
+        case "PROJECT_WINDOWS_REQUIRED": "请在电脑上创建项目。"
         default: (error as? LocalizedError)?.errorDescription ?? "项目操作未完成，请重试。"
         }
     }

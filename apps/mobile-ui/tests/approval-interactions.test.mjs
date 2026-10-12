@@ -87,7 +87,14 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await menu.locator('[data-mode="allow-all"]').click();assert.equal(await page.locator('#approval-risk-dialog').isVisible(),true);
     assert.match(await page.locator('#approval-risk-dialog').innerText(),/删除或覆盖文件.*修改系统.*安装软件.*发送或发布.*付款.*无法撤销/s);
     assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.params.method==='PATCH').length),0);
+    assert.equal(await page.evaluate(()=>document.activeElement.id),'approval-risk-cancel');
+    assert.equal(await page.locator('#approval-risk-confirm').getAttribute('class'),'danger');
+    for(let i=0;i<4;i++){await page.keyboard.press('Tab');assert.equal(await page.locator('#approval-risk-dialog').evaluate(n=>n.contains(document.activeElement)),true);}
     await screenshot('02-allow-all-risk.png');
+    await page.keyboard.press('Escape');assert.equal(await label.innerText(),'自动');
+    assert.equal(await page.locator('#approval-risk-dialog').isVisible(),false);
+    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await menu.locator('[data-mode="allow-all"]').click();
     await page.locator('#approval-risk-cancel').click();assert.equal(await label.innerText(),'自动');
     await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
     await menu.locator('[data-mode="allow-all"]').click();await page.locator('#approval-risk-confirm').click();
@@ -98,6 +105,11 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
       await menu.locator(`[data-mode="${mode}"]`).click();await page.waitForFunction(value=>document.getElementById('approval-mode-label').textContent===value,text);
       assert.equal(await label.innerText(),text);
     }
+    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await menu.locator('[data-mode="allow-all"]').click();await page.keyboard.press('Enter');
+    await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='全部允许');
+    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await menu.locator('[data-mode="auto"]').click();await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='自动');
     await seed('s2');await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='每次询问');
     await seed('s1');await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='自动');
     await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);

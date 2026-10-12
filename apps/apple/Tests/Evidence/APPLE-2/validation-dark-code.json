@@ -1,0 +1,12 @@
+{
+  "theme": "dark",
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "simulatorsAtOnce": 1,
+  "realCloud": true,
+  "realHost": true,
+  "fileMail": true,
+  "syntheticRelayRoute": true,
+  "systemStatusBar": true
+}

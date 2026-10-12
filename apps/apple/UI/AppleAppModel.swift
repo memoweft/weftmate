@@ -385,6 +385,7 @@ extension AppleAppModel {
     }
 
     func send(_ conversation: ConversationSummary, accountEpoch: UUID, intent explicitIntent: MessageIntent? = nil) async {
+        guard beginServerOperation() else { return }
         guard accountEpoch == epoch, canSend(conversation), let accountSession = session,
               let local = commandStore, let target = sendTargets[Self.draftKey(for: conversation)] else { return }
         let intent = explicitIntent ?? runningMessageMode.intent(running: conversation.running)
@@ -1153,6 +1154,7 @@ final class AppleAppModel: ObservableObject {
     @Published private(set) var needsUnsavedDraftDecision = false
     @Published private(set) var lastRefresh: Date?
     @Published private(set) var verificationPending = false
+    @Published private(set) var serverLoginExpired = false
     @Published private(set) var conversationsCachedAt: Date?
     @Published private(set) var historyCachedAt: Date?
     @Published private(set) var cacheError: String?
@@ -1499,6 +1501,7 @@ final class AppleAppModel: ObservableObject {
             RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
             // A valid stored account can survive a temporary network outage.
             session = await client.currentSession()
+            if case APIFailure.server(401, _) = error { serverLoginExpired = true }
             if session != nil {
                 verificationPending = true
                 conversationsError = friendly(error)
@@ -1549,7 +1552,7 @@ final class AppleAppModel: ObservableObject {
 
     func acceptCloudSession(_ result: AccountSession) async {
         if session?.account.ownerId != result.account.ownerId || session?.hostId != result.hostId { offline.erase() }
-        session = result; verificationPending = false
+        session = result; verificationPending = false; serverLoginExpired = false
         defaults?.set(result.server.originString, forKey: "weftmate.server")
         serverInput = result.server.originString
         await loadScopedDrafts(result); await refresh()
@@ -2239,20 +2242,33 @@ final class AppleAppModel: ObservableObject {
         authError = nil
     }
 
-    func handleLogicalChatFailure(_ error: Error) async -> Bool { await expireSessionIfNeeded(error) }
+    func beginServerOperation() -> Bool {
+        if serverLoginExpired {
+            cloudLogin.requireLogin(); return false
+        }
+        return true
+    }
+    func retainLocalContentAfterExpiry() async {
+        _ = await flushDrafts()
+        session = session?.retainedForReading(); serverLoginExpired = true
+        verificationPending = true
+    }
+    func handleLogicalChatFailure(_ error: Error, prompt: Bool = false) async -> Bool {
+        let expired = await expireSessionIfNeeded(error)
+        if expired && prompt { cloudLogin.requireLogin() }
+        return expired
+    }
 
     private func expireSessionIfNeeded(_ error: Error) async -> Bool {
         guard let failure = error as? APIFailure else { return false }
         switch failure {
-        case .notAuthenticated, .server(401, _), .identityMismatch:
-            let savedDrafts = await flushDrafts()
-            clearVisibleAccount()
-            // The client forgets local credentials even if the server is offline.
-            try? await client.logout()
-            authError = failure == .identityMismatch
-                ? "服务器返回的账户或设备身份不一致，请重新登录。"
-                : "登录已过期或设备已撤权，请重新登录。"
-            if !savedDrafts { authError = (authError ?? "请重新登录。") + " 有草稿未能保存，本机原有保存版本保留。" }
+        case .identityMismatch:
+            _ = await flushDrafts(); clearVisibleAccount(); try? await client.logout()
+            authError = "返回的账户信息不一致，请重新登录。"
+            return true
+        case .notAuthenticated, .server(401, _):
+            await retainLocalContentAfterExpiry()
+            authError = "登录已过期。已保存的内容仍可查看，联网操作需要重新登录。"
             return true
         default: return false
         }

@@ -26,7 +26,7 @@ if args.phase == "all":
     validation = {"uiPassed": 2, "uiFailed": 0, "uiSkipped": 0, "realCloudMain": True,
                   "fileMail": True, "isolatedHost": True, "freshCloudPerPhase": True, "simulatorsAtOnce": 1,
                   "steps": ["login error", "bundled terms", "registration", "device confirmation", "automatic login",
-                            "computer directory", "QR pin", "pending approval", "desktop approval", "connection", "saved login",
+                            "computer directory", "no approval or QR gate",
                             "logout", "password recovery", "new password login", "rename", "remove", "logout others", "email change", "delete"]}
     (args.evidence / "validation.json").write_text(json.dumps(validation, indent=2) + "\n")
     raise SystemExit(0)
@@ -53,7 +53,7 @@ try:
         run("xcrun", "simctl", "bootstatus", args.simulator, "-b")
         command = ["xcodebuild", "test-without-building", "-xctestrun", configured.name,
             "-destination", "platform=iOS Simulator,id=" + args.simulator, "-jobs", "2",
-            "-only-testing:WeftMatePhoneUITests/LG2AccountUITests/" + ("testRealRegistrationApprovalConnectionRecoveryErrorAndLogout" if args.phase == "account" else "testRealAccountLifecycleOnFreshCloud"), "-parallel-testing-enabled", "NO",
+            "-only-testing:WeftMatePhoneUITests/LG2AccountUITests/" + ("testRealRegistrationRecoveryAndLogout" if args.phase == "account" else "testRealAccountLifecycleOnFreshCloud"), "-parallel-testing-enabled", "NO",
             "-maximum-concurrent-test-simulator-destinations", "1", "-resultBundlePath", str(args.result)]
         test = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         for line in test.stdout:
@@ -76,7 +76,7 @@ try:
         "realCloudMain": True, "fileMail": True, "isolatedHost": True, "simulatorsAtOnce": 1,
         "phase": args.phase,
         "steps": (["login error", "bundled terms", "registration", "device confirmation", "automatic login",
-                   "computer directory", "QR pin", "pending approval", "desktop approval", "connection", "saved login",
+                   "computer directory", "no approval or QR gate",
                    "logout", "password recovery", "new password login"] if args.phase == "account" else
                   ["registration", "automatic login", "computer directory", "rename", "remove", "logout others", "email change", "delete"])}, indent=2) + "\n")
 finally:

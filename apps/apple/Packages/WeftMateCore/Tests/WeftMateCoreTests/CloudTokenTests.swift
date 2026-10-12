@@ -44,7 +44,7 @@ private actor TokenFixture: HTTPTransport {
         if fault == "audience" { payload["aud"] = "https://another.example.com" }
         if fault == "issuer" { payload["iss"] = "https://another.example.com/oidc" }
         if fault == "expired" { payload["exp"] = 1 }
-        if host { payload["host_id"] = "host-one"; payload["cnf"] = ["jkt": thumbprint] }
+        if host { payload["device_verified"] = true; payload["host_id"] = "host-one"; payload["cnf"] = ["jkt": thumbprint] }
         var id = payload; id["aud"] = configuration.clientID; id["nonce"] = fault == "nonce" ? "wrong" : nonce
         if refreshing { refreshes += 1 }
         return try reply(["access_token": rsa.token(payload, type: "at+jwt", kid: fault == "kid" ? "unknown" : "fixture"),

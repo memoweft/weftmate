@@ -472,7 +472,7 @@ export class ModProjectRuntime {
   async #spawn(project, version, run, { mode, stateRoot }) {
     await mkdir(stateRoot, { recursive: true })
     const source = this.store.source(project.project_id, version.version_id)
-    const child = fork(runner, [join(source, version.manifest.entry), stateRoot, mode, JSON.stringify(version.manifest.behaviorChecks ?? null)], { stdio: ['ignore', 'ignore', 'ignore', 'ipc'], env: { PATH: process.env.PATH ?? '', NODE_OPTIONS: '' }, execArgv: ['--permission', `--allow-fs-read=${source}`, `--allow-fs-read=${runner}`] })
+    const child = fork(runner, [join(source, version.manifest.entry), stateRoot, mode, JSON.stringify(version.manifest.behaviorChecks ?? null)], { windowsHide: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'], env: { PATH: process.env.PATH ?? '', NODE_OPTIONS: '' }, execArgv: ['--permission', `--allow-fs-read=${source}`, `--allow-fs-read=${runner}`] })
     let resolveStarted, rejectStarted, resolveValidated, rejectValidated
     let resolveExited, rejectExited
     const active = { child, project, version, run, stateRoot, closed: false, accepting: true, invocations: new Map(), stateQueue: Promise.resolve(), lifecycleQueue: Promise.resolve(), abort: new AbortController(),

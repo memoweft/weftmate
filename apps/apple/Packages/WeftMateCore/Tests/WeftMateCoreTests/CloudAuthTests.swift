@@ -30,12 +30,63 @@ private func cloudAuthReply(host: String = "host-one") throws -> HTTPResponse {
         headers: ["set-cookie": "wm_personal_session=" + String(repeating: "a", count: 43) + "; HttpOnly; Secure"])
 }
 
+private func automaticTrustReply(installation: SecKey, recipient: CloudDeviceKey, subject: String = "subject-one") throws -> HTTPResponse {
+    let anchor = try ECPublicKey(publicKey: SecKeyCopyPublicKey(installation)!).parameters
+    let body: [String: Any] = ["iss": "host-one", "aud": recipient.thumbprint, "sub": subject, "hostId": "host-one",
+        "deviceId": "apple-" + recipient.thumbprint, "jkt": recipient.thumbprint, "tlsSpki": String(repeating: "A", count: 43),
+        "publicJwk": anchor, "origin": "https://host.example.com", "iat": Date().timeIntervalSince1970,
+        "exp": Date().timeIntervalSince1970 + 120, "jti": UUID().uuidString]
+    var header = JWSHeader(algorithm: .ES256); header.typ = "wm-host-trust+jwt"
+    let token = try JWS(header: header, payload: Payload(JSONSerialization.data(withJSONObject: body)),
+        signer: Signer(signatureAlgorithm: .ES256, key: installation)!).compactSerializedString
+    let auth = try cloudAuthReply()
+    var reply = try JSONSerialization.jsonObject(with: auth.body) as! [String: Any]
+    reply["hostTrust"] = ["publicJwk": anchor, "trustToken": token]
+    return try cloudReply(reply, headers: auth.headers)
+}
+
 @Suite struct CloudAuthTests {
+    @Test func automaticHostDeliveryPinsBeforePersistingAndRejectsChangedInstallation() async throws {
+        let recipient = try CloudDeviceKey(softwareStore: MemoryStore())
+        func installation() -> SecKey { SecKeyCreateRandomKey([kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeySizeInBits: 256] as CFDictionary, nil)! }
+        let first = installation(), replacement = installation(), store = MemoryStore(), pinStore = MemoryStore()
+        let pins = HostPinStore(store: pinStore)
+        let transport = CloudTestTransport([
+            try cloudReply(["nonce": "first"]), try automaticTrustReply(installation: first, recipient: recipient),
+            try cloudReply(["ownerId": "owner-one", "hostId": "host-one"]),
+            try cloudReply(["nonce": "second"]), try automaticTrustReply(installation: replacement, recipient: recipient)])
+        let client = PersonalClient(credentialStore: store, transport: transport)
+        let server = try ServerConfiguration(input: "https://host.example.com")
+        let firstResult = try await client.exchangeCloudSession(server: server, hostID: "host-one", accessToken: "synthetic",
+            deviceName: "Synthetic", key: recipient, trustSubject: "subject-one", hostPins: pins)
+        if case .authenticated = firstResult {} else { Issue.record("A verified delivery must establish a session") }
+        #expect(try pins.pin(for: server.originString) == String(repeating: "A", count: 43))
+        await #expect(throws: APIFailure.identityMismatch) {
+            try await client.exchangeCloudSession(server: server, hostID: "host-one", accessToken: "synthetic",
+                deviceName: "Synthetic", key: recipient, trustSubject: "subject-one", hostPins: pins)
+        }
+        #expect(await client.currentSession() == nil)
+        #expect(try pins.pin(for: server.originString) == String(repeating: "A", count: 43))
+    }
+    @Test func automaticHostDeliveryRejectsWrongAccountBeforeSavingContentSession() async throws {
+        let recipient = try CloudDeviceKey(softwareStore: MemoryStore()), store = MemoryStore(), pinStore = MemoryStore()
+        let installation = SecKeyCreateRandomKey([kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeySizeInBits: 256] as CFDictionary, nil)!
+        let transport = CloudTestTransport([try cloudReply(["nonce": "first"]),
+            try automaticTrustReply(installation: installation, recipient: recipient, subject: "other-account")])
+        let client = PersonalClient(credentialStore: store, transport: transport)
+        let server = try ServerConfiguration(input: "https://host.example.com")
+        await #expect(throws: CloudLoginFailure.pairing) {
+            try await client.exchangeCloudSession(server: server, hostID: "host-one", accessToken: "synthetic",
+                deviceName: "Synthetic", key: recipient, trustSubject: "subject-one", hostPins: HostPinStore(store: pinStore))
+        }
+        #expect(await client.currentSession() == nil && store.count == 0 && pinStore.count == 0)
+    }
     @Test func deviceNameKeepsPlatformAndUTF16Limit() {
         let name = cloudDeviceName(String(repeating: "👨‍👩‍👧‍👦", count: 128), platform: .iOS)
         #expect(name.hasPrefix("iPhone · ")); #expect(name.utf16.count <= 128)
         #expect(!name.contains("�"))
         #expect(cloudDeviceName("Synthetic", platform: .macOS) == "Mac · Synthetic")
+        #expect(cloudDeviceName("iPhone · Synthetic", platform: .iOS) == "iPhone · Synthetic")
     }
     @Test func callbackAndPKCE() throws {
         let configuration = CloudConfiguration(server: try ServerConfiguration(input: "https://cloud.example.com"))

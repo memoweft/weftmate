@@ -1,0 +1,6 @@
+{
+  "realCloud": true,
+  "fileMail": true,
+  "realHost": true,
+  "syntheticRelayRoute": true
+}
