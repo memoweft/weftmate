@@ -113,7 +113,7 @@ export function apply(ctx) {
     const messages=decision.messages.filter(message=>message?.source?.plugin!=='weftmate-daily-digest');
     if(typeof result?.recentContextText==='string'&&result.recentContextText.trim()&&result.recentContextText.length<=3600){
       const background=createUserMessage({content:[{type:'text',text:result.recentContextText}],source:{kind:'plugin',plugin:'weftmate-daily-digest'}});
-      const userIndex=messages.findIndex(message=>message.source?.kind==='user');messages.splice(userIndex<0?0:userIndex,0,background);
+      const userIndex=messages.findIndex(message=>message.source?.kind==='user'&&message.source.rpcId===identity.receiptId);messages.splice(userIndex<0?0:userIndex,0,background);
     }
     decision.messages=messages;
     if (result?.state === 'none'||migrated) return decision;

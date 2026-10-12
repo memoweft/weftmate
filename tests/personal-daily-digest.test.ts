@@ -8,7 +8,7 @@ const account=():any=>({sessions:{s:{origin:'personal-remote',title:'季度报�
 function fixture(model:any=null){
   const a=account();let now=Date.parse('2026-10-12T00:00:00Z'),calls=0;
   const events=Array.from({length:10},(_,n)=>({seq:n,type:'user.message',at:`${shiftDay('2026-10-01',n)}T17:30:00Z`,data:{text:'PRIVATE ORIGINAL MUST NEVER REACH INSIGHT'}}));
-  const context:any={accountState:()=>a,timestamp:()=>now,serial:(fn:any)=>fn(),mutate:(_owner:string,fn:any)=>fn(a),callBackend:(fn:any)=>fn(),usage:{settings:()=>({timeZone:zone}),exportAccount:()=>({records:[]})},modelSelectable:()=>true,visibleModels:async()=>[{id:'synthetic',model:'synthetic'}],backend:{readEvents:async({afterSeq}:any)=>({events:events.filter(e=>e.seq>afterSeq),nextSeq:9,hasMore:false}),...(model?{modelCompletion:async(input:any)=>{calls++;return model(input);}}:{})}};
+  const context:any={accountState:()=>a,timestamp:()=>now,serial:(fn:any)=>fn(),mutate:(_owner:string,fn:any)=>fn(a),callBackend:(fn:any)=>fn(),usage:{settings:()=>({timeZone:zone}),exportAccount:()=>({records:[]})},modelSelectable:()=>true,visibleModels:(_owner:string,models:any[])=>models,backend:{listModels:async()=>[{id:'synthetic',model:'synthetic'}],readEvents:async({afterSeq}:any)=>({events:events.filter(e=>e.seq>afterSeq),nextSeq:9,hasMore:false}),...(model?{modelCompletion:async(input:any)=>{calls++;return model(input);}}:{})}};
   let service=createDailyDigest(context);
   return {a,context,events,refresh:()=>service.refresh('owner'),settle:()=>new Promise(resolve=>setImmediate(resolve)),calls:()=>calls,restart:()=>{service=createDailyDigest(context);},advance:(n:number)=>now+=n,close:()=>service.close()};
 }
@@ -50,7 +50,7 @@ test('background request does not hold the feed; clear in flight cannot resurrec
   let release:any;const f=fixture(()=>new Promise(resolve=>release=resolve));await f.refresh();await f.settle();assert.equal(f.calls(),1);assert.equal(Object.keys(f.a.activity.items).length,1);clearDailyDigests(f.a,Date.parse('2026-10-12T00:00:00Z'));release(new Response(JSON.stringify({choices:[{message:{content:'STALE'}}]})));await f.settle();assert.equal(Object.keys(f.a.activity.items).length,0);await f.close();
 });
 test('retention, clearing, disabled defaults and owner isolation',async()=>{
-  const f=fixture();await f.refresh();f.a.notificationSettings={reviewRetentionDays:7};pruneDailyDigests(f.a,Date.parse('2026-10-12T00:00:00Z'),zone);assert.equal(Object.keys(f.a.dailyDigest.days).length,6);
+  const f=fixture();await f.refresh();f.a.notificationSettings={reviewRetentionDays:7};pruneDailyDigests(f.a,Date.parse('2026-10-12T00:00:00Z'),zone);assert.equal(Object.keys(f.a.dailyDigest.days).length,7);
   const other=account();assert.equal(recentDigestContext(other,Date.parse('2026-10-12T00:00:00Z'),zone),'');assert.ok(recentDigestContext(f.a,Date.parse('2026-10-12T00:00:00Z'),zone));
   clearDailyDigests(f.a,Date.parse('2026-10-12T00:00:00Z'));await f.refresh();assert.equal(recentDigestContext(f.a,Date.parse('2026-10-12T00:00:00Z'),zone),'');assert.equal(Object.keys(f.a.dailyDigest.days).length,0);
   f.a.notificationSettings.reviewEnabled=false;f.advance(2*86400000);await f.refresh();assert.equal(Object.keys(f.a.dailyDigest.days).length,0);await f.close();
@@ -73,4 +73,8 @@ test('weekly outstanding state follows the latest receipt, not an earlier pendin
   first.tasks.items=[{title:'报告',state:'pending',source:{sessionId:'s',taskId:'same'}}];first.tasks.blocked=1;
   last.tasks.items=[{title:'报告',state:'completed',source:{sessionId:'s',taskId:'same'}}];last.tasks.completed=1;
   assert.match(statisticalInsight([first,last]).text,/没有记录到卡住/);
+});
+
+test('retention still expires local summaries when the runtime cannot return history',async()=>{
+ const f=fixture();await f.refresh();f.context.backend.readEvents=async()=>{throw Error('runtime unavailable')};f.advance(100*86400000);await f.refresh();assert.equal(Object.keys(f.a.dailyDigest.days).length,0);await f.close();
 });

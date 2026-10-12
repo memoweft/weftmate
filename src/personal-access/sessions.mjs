@@ -361,8 +361,8 @@ export function createSessionOperations(context) {
       const reviewAccount=context.accountState(ownerId);
       const reviewSource=Object.values(reviewAccount.commands).find(row=>row.kind==='session.message'&&row.sessionId===sessionId&&row.receiptId===receiptId&&row.state==='accepted_by_dsh'&&(row.payload.modelInputHash??digest(row.payload.text))===messageHash&&(row.dshTurn===undefined||row.dshTurn===turn));
       const reviewDevice=reviewAccount.devices[reviewSource?.sourceDeviceId];
-      const recentContextText=reviewSource&&reviewDevice&&!reviewDevice.revoked&&(reviewSource.sourceAuthEpoch===undefined||reviewSource.sourceAuthEpoch===reviewDevice.authEpoch)&&(!reviewDevice.expiresAt||Date.parse(reviewDevice.expiresAt)>context.timestamp())&&session.recallEnabled!==false
-        ?recentDigestContext(reviewAccount,context.timestamp(),context.usage.settings(ownerId).timeZone):'';
+      let recentContextText='';
+      if(reviewSource&&reviewDevice&&!reviewDevice.revoked&&(reviewSource.sourceAuthEpoch===undefined||reviewSource.sourceAuthEpoch===reviewDevice.authEpoch)&&(!reviewDevice.expiresAt||Date.parse(reviewDevice.expiresAt)>context.timestamp())&&session.recallEnabled!==false){try{recentContextText=recentDigestContext(reviewAccount,context.timestamp(),context.usage.settings(ownerId).timeZone);}catch{/* Optional summaries never block a local chat; settings can clear them. */}}
       if (!session?.conversationId) return { state: 'none',recentContextText };
       for (let attempt = 0; attempt < 20; attempt++) {
         if (context.closing || context.storageFault) throw failure('CONVERSATION_CONTEXT_UNAVAILABLE', 503);
