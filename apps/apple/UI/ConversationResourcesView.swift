@@ -63,9 +63,6 @@ struct ConversationResourcesPanel: View {
             VStack(spacing: AppleTokens.Space.p0) {
                 HStack(spacing: AppleTokens.Space.p10) {
                     #if os(iOS)
-                    Button { resources.visible = false } label: { WeftLabel("返回", icon: "back") }
-                        .accessibilityIdentifier("closeResourcesPanel")
-                    Text("输出与来源").font(AppleTokens.Fonts.headline)
                     Spacer()
                     #else
                     ScrollView(.horizontal) {
@@ -91,7 +88,7 @@ struct ConversationResourcesPanel: View {
                 }.buttonStyle(.plain).padding(AppleTokens.Space.p14)
                 Divider()
                 if resources.showingList || resources.activeTab == nil {
-                    ConversationResourceList(resources: resources, memories: memories)
+                    ConversationResourceList(resources: resources, memories: memories).phoneCard().padding(AppleTokens.Space.p12)
                 } else if let tab = resources.activeTab {
                     ResourceTabContent(app: app, resources: resources, tab: tab)
                         .id(tab.id + app.accountEpoch.uuidString)

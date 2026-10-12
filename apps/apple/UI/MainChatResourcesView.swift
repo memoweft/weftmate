@@ -60,7 +60,12 @@ struct MainChatResourcesView: View {
                         }.phoneCard().padding(AppleTokens.Space.p16).frame(maxWidth: .infinity, alignment: .leading).buttonStyle(OutlineActionStyle())
                     }
                 }
-            }.navigationTitle("输出与来源").toolbar {
+            }.navigationTitle("输出与来源")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(embedded ? .visible : .hidden, for: .navigationBar)
+            #endif
+            .toolbar {
                 #if os(iOS)
                 if embedded { PhoneAccountMenu(model: app) }
                 #else

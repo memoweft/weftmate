@@ -18,7 +18,7 @@ struct PhoneAccountMenu: View {
         let epoch: UUID
     }
 
-    // Native menu labels expose their title and generated template icon to UIKit accessibility.
+    // The avatar opens the existing settings routes with the generated account icon.
     var body: some View {
         Button { model.settingsRoute = .init(categoryID: "general"); open(.settings) } label: {
             WeftIcon("account")
