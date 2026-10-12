@@ -1,6 +1,6 @@
 /* Page-family presentation shared with the phone shell. Inline SVG contains only geometry. */
 globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
-  const H=WeftHealth,m=core.health;let calendarOpen=false,expanded=false,moreWorkouts=false,selectedPoint=null;
+  const H=WeftHealth,m=core.health;let calendarOpen=false,expanded=false,basisOpen=false,moreWorkouts=false,selectedPoint=null;
   const el=(tag,cls='',text)=>{const n=document.createElement(tag);n.className=cls;if(text!==undefined)n.textContent=text;return n;};
   const action=(text,run,cls='health-control')=>{const n=el('button',cls,text);n.type='button';n.onclick=()=>Promise.resolve().then(run).catch(e=>toast?.(core.failureMessage(e)));return n;};
   const icon=(label,name,run)=>{const n=action('',run,'health-control health-icon');n.setAttribute('aria-label',label);n.title=label;n.append(WeftIcons.create(name,18));return n;};
@@ -42,7 +42,7 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
       for(const suggestion of (data.suggestions??[]).slice(0,2)){const row=el('div','health-suggestion'),saved=m.reminders.has(suggestion.id),b=action(saved?'已设提醒':m.busy.has(suggestion.id)?'正在设置…':'提醒我',()=>core.remindHealth(suggestion));
         b.disabled=saved||m.busy.has(suggestion.id)||!suggestion.reminder||m.day!==m.today;if(!suggestion.reminder)b.title='这条建议没有指定提醒时间';row.append(el('span','',suggestion.text),b);n.append(row);}
       const foot=el('div','health-insight-foot');
-      if(data.observations?.length){const basis=action('查看依据',()=>{basis.setAttribute('aria-expanded',String(basis.getAttribute('aria-expanded')!=='true'));body.hidden=!body.hidden;});basis.setAttribute('aria-expanded','false');const body=el('div','health-basis');body.hidden=true;
+      if(data.observations?.length){const basis=action('查看依据',()=>{basisOpen=!basisOpen;basis.setAttribute('aria-expanded',String(basisOpen));body.hidden=!basisOpen;});basis.setAttribute('aria-expanded',String(basisOpen));const body=el('div','health-basis');body.hidden=!basisOpen;
         body.append(small(`依据：${[...new Set(data.observations.flatMap(o=>o.inputs??[]))].map(id=>H.metrics[id]?.[0]??({lateNightMinutes:'深夜使用时长',activeMinutes:'电脑使用时长'}[id]??'每日汇总')).join('、')}`));for(const o of data.observations)body.append(small(o.text));foot.append(basis);n.append(body);}
       foot.append(action('接着问它',()=>core.askHealth()));n.append(foot);
     }return n;
@@ -95,5 +95,5 @@ globalThis.WeftHealthView={mount({target,core,mobile=false,toast}){
     if(focusName){const replacement=[...target.querySelectorAll('button')].find(n=>(n.getAttribute('aria-label')||n.textContent)===focusName);replacement?.focus({preventScroll:true});}
   }
   target.addEventListener('keydown',event=>{if(event.key==='Escape'&&calendarOpen){event.preventDefault();event.stopPropagation();calendarOpen=false;render();target.querySelector('[aria-label="选择健康日期"]')?.focus();}});
-  return {render,focus(){target.querySelector('h1')?.focus();},reset(){calendarOpen=expanded=moreWorkouts=false;selectedPoint=null;},destroy(){target.replaceChildren();}};
+  return {render,focus(){target.querySelector('h1')?.focus();},reset(){calendarOpen=expanded=basisOpen=moreWorkouts=false;selectedPoint=null;},destroy(){target.replaceChildren();}};
 }};
