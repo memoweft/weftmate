@@ -34,7 +34,7 @@ export async function buildSite({preview=false,out=dist}={}) {
  // System theme works even with scripting disabled.
  tokens+='@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){'+Object.entries(t.surfaces.desktop.themes[1].variables).map(([k,v])=>`${k}:${v};`).join('')+'}}';
  await writeFile(join(out,'assets/tokens.css'),tokens);
- for(const name of ['site.css','theme.js','app.js'])if(name!=='app.js')await cp(join(repo,'site/src',name),join(out,'assets',name));
+ for(const name of ['site.css','theme.js','demo-view.js'])await cp(join(repo,'site/src',name),join(out,'assets',name));
  await cp(join(repo,'site/src/assets'),join(out,'assets'),{recursive:true});
  await cp(join(repo,'design/icons/app/color-light.svg'),join(out,'assets/brand-light.svg'));await cp(join(repo,'design/icons/app/color-dark.svg'),join(out,'assets/brand-dark.svg'));
  let symbols='<svg class="symbol-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>';

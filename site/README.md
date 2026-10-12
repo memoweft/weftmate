@@ -18,7 +18,9 @@ node --test tests/site.test.ts tests/site-deploy.test.ts tests/licensing-contrac
 
 三段合成场景：整理文件并等访客批准、跨周记忆及来源的更正/遗忘、手机批准电脑上的操作。没有模型请求，拒绝不会生成成果。播放暂停、下一步、重来、键盘分段切换和电脑/手机外观都可操作。离开视口或切到后台暂停；减少动态效果时不做位移动画；禁用脚本时显示关键帧。主题跟随系统，手动选择只存在浏览器本机。
 
-真实程序配图来自已经逐张检查的合成证据，来源见 `ASSETS.json`。可用已有 ffmpeg（图像处理工具）重新压缩：`node scripts/site-assets.mjs`。关键帧和 1200×630 分享图用无头 Chromium（浏览器引擎）截本站演示：`node scripts/capture-site.mjs --assets`；验收证据：`node scripts/capture-site.mjs`。Apple 原生证据比 Windows/安卓旧，手表保持原生黑色显示，不把它强行反色。
+官网不使用程序验收夹具图。五端段落改为同一时刻的电脑／手机／手表界面示意，直接复用演示组件；其它两端在下方用设备与形态说明。虚构内容均为自然对话，没有调试标签或未渲染的标记。静态关键帧与 1200×630 分享图用无头 Chromium（浏览器引擎）截本站演示：`node scripts/capture-site.mjs --assets`；验收证据：`node scripts/capture-site.mjs`。`node scripts/site-assets.mjs` 也是同一资产生成入口。
+
+`ASSETS.json` 保存每张发布位图生成时的可见 DOM（页面内容结构）文字与 SHA-256（内容哈希）；`site:check` 检查文字禁词与图片哈希，未重新生成来源记录的换图会失败。它不是 OCR（图片文字识别）：发布前仍逐张目视检查位图，哈希绑定保证检查后的图没有被静默替换。
 
 ## 部署交接：只在负责人确认时执行
 
