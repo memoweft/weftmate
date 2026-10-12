@@ -1,4 +1,4 @@
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn, execFileSync, execFile } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync, appendFileSync, rmSync, existsSync, readdirSync, readlinkSync } from 'node:fs';
 import { join, resolve, basename, relative } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -31,6 +31,13 @@ function posixIdentity(pid) {
 export function recordProcess(root, pid, profile) {
   const row = windows ? ps('register', root, pid) : posixIdentity(pid);
   if (row) appendFileSync(join(root, 'processes.jsonl'), JSON.stringify({ ...row, profile }) + '\n');
+}
+export async function recordProcessDuringStartup(root, pid, profile) {
+  if (!windows) return recordProcess(root,pid,profile);
+  const output=await new Promise((done,reject)=>execFile('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',script,
+    '-Action','register','-Root',root,'-ProcessId',String(pid)],{encoding:'utf8',windowsHide:true},(error,stdout)=>error?reject(error):done(stdout)));
+  const row=String(output).trim()?JSON.parse(String(output)):null;
+  if(row)appendFileSync(join(root,'processes.jsonl'),JSON.stringify({...row,profile})+'\n');
 }
 export function resources(root) {
   try { return windows ? ps('resources', root) : { at: new Date().toISOString(), memory: process.memoryUsage(), tcp: 'Windows counters only' }; }
