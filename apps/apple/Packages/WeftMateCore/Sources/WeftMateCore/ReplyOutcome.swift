@@ -57,7 +57,7 @@ public enum ReplyArtifacts {
             }
             for row in expandedRows {
                 let data = row.data
-                if ["source", "intermediate"].contains(data["role"]?.string ?? "") || ["superseded", "deleted", "replaced"].contains(data["state"]?.string ?? "") || data["supersededBy"] != nil || ["read", "move", "rename", "delete", "remove"].contains(data["operation"]?.string ?? data["action"]?.string ?? data["completedStep"]?["toolName"]?.string ?? "") { continue }
+                if ["source", "intermediate"].contains(data["role"]?.string ?? "") || ["superseded", "deleted", "replaced"].contains(data["state"]?.string ?? "") || data["supersededBy"]?.string.map({ !$0.isEmpty }) == true || ["read", "move", "rename", "delete", "remove"].contains(data["operation"]?.string ?? data["action"]?.string ?? data["completedStep"]?["toolName"]?.string ?? "") { continue }
                 guard let artifactID = data["artifactId"]?.string else { continue }
                 let fileKey = data["filePath"]?.string ?? data["relativePath"]?.string ?? data["path"]?.string ?? artifactID
                 if latest[fileKey] == nil { keys.append(fileKey) }; latest[fileKey] = row

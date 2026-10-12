@@ -27,7 +27,7 @@ struct Apple3Fixture: View {
                     else { MainChatView(app: app).id(scenario) }
                 }
             } else { Text(app.authError ?? "正在连接合成账号…") }
-            }
+            }.id(scenario)
         }.environmentObject(health)
             .preferredColorScheme(ProcessInfo.processInfo.arguments.contains("dark") ? .dark : .light)
             .task {
