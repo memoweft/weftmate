@@ -120,7 +120,7 @@ export function weeklyDayPhrase(days){
 
 export function statisticalInsight(days){
   const topics=new Map(),sources=[],latestTasks=new Map();let completed=0,blocked=0,outputs=0,late=[];
-  for(const day of days){completed+=day.tasks.completed;for(const row of day.tasks.items)latestTasks.set(row.source.taskId??row.source.sessionId,row.state);outputs+=day.outputs.count;if((day.devices?.items?.[0]?.lateNightMinutes??day.usage.lateNightMinutes)>0)late.push(day.day);
+  for(const day of days){completed+=day.tasks.completed;for(const row of day.tasks.items)latestTasks.set(row.source.taskId??row.source.sessionId,row.state);outputs+=day.outputs.count;if((day.devices?.items?.[0]?.lateNightMinutes??day.usage.lateNightMinutes??(day.usage.hourlyTurns?.slice(1,6).some(Boolean)?1:0))>0)late.push(day.day);
     for(const row of day.conversations.items){topics.set(row.title,(topics.get(row.title)??0)+row.turns);if(!sources.some(s=>s.source.sessionId===row.source.sessionId))sources.push({...row,kind:'open_chat'});}
     for(const row of day.outputs.items)if(!sources.some(s=>s.artifactId===row.artifactId))sources.push({...row,kind:'view_library'});
   }
