@@ -103,6 +103,11 @@
 !macroend
 !macro customInit
   SetOutPath $TEMP
+  ; Upstream's silent section otherwise switches back to all users even when
+  ; /currentuser was explicitly requested. Keep the selected target scope.
+  ${If} ${isForCurrentUser}
+    StrCpy $hasPerMachineInstallation "0"
+  ${EndIf}
   !insertmacro WeftLoad
   ${IfNot} ${Silent}
     ; The upstream init starts in $INSTDIR. Keep the UI and its Windows DLL
@@ -183,7 +188,11 @@ Var weftOldMachine
     ; Upstream handles user -> machine; also remove machine -> user.
     ${If} $installMode == "CurrentUser"
     ${AndIf} $weftOldMachine != ""
+      ; Upstream derives the old uninstaller's /allusers argument from this
+      ; variable, even when an explicit HKLM root was passed.
+      StrCpy $installMode "all"
       !insertmacro uninstallOldVersion HKEY_LOCAL_MACHINE
+      StrCpy $installMode "CurrentUser"
       !insertmacro handleUninstallResult HKEY_LOCAL_MACHINE
     ${EndIf}
   !endif
