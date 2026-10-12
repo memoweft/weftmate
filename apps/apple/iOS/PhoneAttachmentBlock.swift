@@ -21,7 +21,12 @@ struct PhoneAttachmentBlock: View {
             .overlay(RoundedRectangle(cornerRadius:AppleTokens.Radius.r16).strokeBorder(Weave.line))
             .clipShape(RoundedRectangle(cornerRadius:AppleTokens.Radius.r16))
             .overlay(alignment:.topTrailing) {
-                if let remove { Button(action:remove) { WeftIcon("deny",size:AppleTokens.Space.p16) }.buttonStyle(PhoneIconStyle(onCard:true)).accessibilityLabel("移除 "+name).accessibilityIdentifier("attachment.remove."+name) }
+                if let remove { Button(action:remove) {
+                    WeftIcon("deny",size:AppleTokens.Space.p16).foregroundStyle(Weave.ink)
+                        .frame(width:AppleTokens.Space.p28,height:AppleTokens.Space.p28)
+                        .background(Weave.surface.opacity(AppleTokens.Opacity.disabled),in:Circle())
+                        .frame(width:AppleTokens.Space.p44,height:AppleTokens.Space.p44).contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityElement(children:.ignore).accessibilityLabel("移除 "+name).accessibilityIdentifier("attachment.remove."+name) }
             }
     }
 }

@@ -3,11 +3,11 @@
 import argparse,json,os,plistlib,shutil,subprocess,tempfile,time
 from pathlib import Path
 root=Path(__file__).resolve().parents[3]
-p=argparse.ArgumentParser();p.add_argument('--xctestrun',type=Path,required=True);p.add_argument('--simulator',required=True);p.add_argument('--result',type=Path,required=True);p.add_argument('--addendum',action='store_true');a=p.parse_args()
-evidence=root/'apps/apple/Tests/Evidence/APPLE-5';evidence.mkdir(parents=True,exist_ok=True)
-ledger=evidence/('addendum-simulator-count.json' if a.addendum else 'simulator-count.json')
+p=argparse.ArgumentParser();p.add_argument('--xctestrun',type=Path,required=True);p.add_argument('--simulator',required=True);p.add_argument('--result',type=Path,required=True);p.add_argument('--addendum',action='store_true');p.add_argument('--fix',action='store_true');a=p.parse_args()
+evidence=root/('apps/apple/Tests/Evidence/APPLE-5/Fix' if a.fix else 'apps/apple/Tests/Evidence/APPLE-5');evidence.mkdir(parents=True,exist_ok=True)
+ledger=evidence/('fix-simulator-count.json' if a.fix else 'addendum-simulator-count.json' if a.addendum else 'simulator-count.json')
 prior=json.loads(ledger.read_text()) if ledger.exists() else {'boots':0}
-if prior['boots']>=(2 if a.addendum else 5):raise RuntimeError('APPLE-5 simulator budget exhausted')
+if prior['boots']>=(2 if a.fix or a.addendum else 5):raise RuntimeError('APPLE-5 simulator budget exhausted')
 reports=list(Path('/Library/Logs/DiagnosticReports').glob('*gpuRestart*'))+list((Path.home()/'Library/Logs/DiagnosticReports').glob('*gpuRestart*'))
 if reports:
     deadline=max(x.stat().st_mtime for x in reports)+600
@@ -30,7 +30,7 @@ try:
             for child in value.values():inject(child)
         elif isinstance(value,list):
             for child in value:inject(child)
-    if a.addendum:
+    if a.addendum or a.fix:
         presentation=subprocess.Popen(['node','apps/apple/Tests/apple3_host_fixture.mjs'],cwd=root,stdout=subprocess.PIPE,stderr=open('/private/tmp/apple5-presentation-host.log','w'),text=True)
         variables['WEFTMATE_APPLE3_ORIGIN']=json.loads(presentation.stdout.readline())['origin']
     inject(config)
@@ -40,19 +40,19 @@ try:
     subprocess.run(['xcrun','simctl','bootstatus',a.simulator,'-b'],check=True,stdout=subprocess.DEVNULL)
     with tempfile.NamedTemporaryFile(suffix='.xctestrun',dir=a.xctestrun.parent) as run:
         run.write(plistlib.dumps(config));run.flush()
-        result=subprocess.run(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',run.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/'+('Apple5AddendumUITests' if a.addendum else 'Apple5UITests/testFeatureBatch'),'-resultBundlePath',str(a.result)],stdout=open('/private/tmp/apple5-ui.log','w'),stderr=subprocess.STDOUT)
+        result=subprocess.run(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',run.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/'+('Apple5FixUITests' if a.fix else 'Apple5AddendumUITests' if a.addendum else 'Apple5UITests/testFeatureBatch'),'-resultBundlePath',str(a.result)],stdout=open('/private/tmp/apple5-ui.log','w'),stderr=subprocess.STDOUT)
     summary=json.loads(subprocess.check_output(['xcrun','xcresulttool','get','test-results','summary','--path',str(a.result)],text=True))
     with tempfile.TemporaryDirectory() as out:
         subprocess.run(['xcrun','xcresulttool','export','attachments','--path',str(a.result),'--output-path',out],check=True,stdout=subprocess.DEVNULL)
         for item in json.loads((Path(out)/'manifest.json').read_text()):
             for attachment in item['attachments']:
                 name=attachment['suggestedHumanReadableName'].split('_0_')[0]
-                if name.startswith('apple5add-' if a.addendum else 'apple5-'):shutil.copyfile(Path(out)/attachment['exportedFileName'],evidence/(name+'.png'))
+                if name.startswith('apple5fix-' if a.fix else 'apple5add-' if a.addendum else 'apple5-'):shutil.copyfile(Path(out)/attachment['exportedFileName'],evidence/(name+'.png'))
     gpuAfter=list(Path('/Library/Logs/DiagnosticReports').glob('*gpuRestart*'))+list((Path.home()/'Library/Logs/DiagnosticReports').glob('*gpuRestart*'))
     crashAfter=set((Path.home()/'Library/Logs/DiagnosticReports').glob('*[Ww]eft[Mm]ate*'))
-    info={'passed':summary['passedTests'],'failed':summary['failedTests'],'skipped':summary['skippedTests'],'realPersonalHost':True,'syntheticNativeAdapter':True,'realCloud':False,'realHealthKit':False,'syntheticPresentationService':a.addendum,'boots':prior['boots'],'gpuResetsAdded':len(set(gpuAfter)-set(reports)),'weftmateCrashesAdded':len(crashAfter-crashes)}
-    (evidence/(('addendum-ui-validation-boot-' if a.addendum else 'ui-validation-boot-')+str(prior['boots'])+'.json')).write_text(json.dumps(info,indent=2)+'\n');print(json.dumps(info),flush=True)
-    if result.returncode or info['passed']!=(2 if a.addendum else 1) or info['failed'] or info['skipped']:raise RuntimeError('UI batch incomplete; see private log')
+    info={'passed':summary['passedTests'],'failed':summary['failedTests'],'skipped':summary['skippedTests'],'realPersonalHost':True,'syntheticNativeAdapter':True,'realCloud':False,'realHealthKit':False,'syntheticPresentationService':a.addendum or a.fix,'boots':prior['boots'],'gpuResetsAdded':len(set(gpuAfter)-set(reports)),'weftmateCrashesAdded':len(crashAfter-crashes)}
+    (evidence/(('fix-ui-validation-boot-' if a.fix else 'addendum-ui-validation-boot-' if a.addendum else 'ui-validation-boot-')+str(prior['boots'])+'.json')).write_text(json.dumps(info,indent=2)+'\n');print(json.dumps(info),flush=True)
+    if result.returncode or info['passed']!=(2 if a.addendum or a.fix else 1) or info['failed'] or info['skipped']:raise RuntimeError('UI batch incomplete; see private log')
 finally:
     subprocess.run(['xcrun','simctl','shutdown','all'],capture_output=True)
     service.terminate();service.wait(timeout=20)

@@ -8,7 +8,7 @@ struct Apple4Fixture: View {
     @ObservedObject var health: DailyHealthModel
     @State private var ready = false
     @State private var scenario = "final"
-    private let scenarios = ["empty", "final", "stream", "aligned", "warning", "two", "question", "files", "side"]
+    private let scenarios = ["empty", "final", "stream", "aligned", "warning", "two", "long", "question", "files", "side"]
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
             if ready {
