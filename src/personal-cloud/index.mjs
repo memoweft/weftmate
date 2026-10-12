@@ -561,7 +561,8 @@ export async function createHostCloudIdentity(context, options) {
       return { url: `${config.base}/hosts/offline/status`, hostId, accountId: binding.sub, generation };
     },
     isInstallationOwner: ownerId => Object.values(store.state.bindings).some(binding => binding.ownerId === ownerId && binding.desktop === true && binding.status === 'active'),
-    relayReady: () => Object.values(store.state.bindings).some(binding => binding.desktop === true && binding.status === 'active'),
+    // Any active binding counts: accounts bound through the claim flow have no `desktop` flag but still need the relay.
+    relayReady: () => Object.values(store.state.bindings).some(binding => binding.status === 'active'),
     tls: () => structuredClone(store.state.tls), relayRequest: signedRequest, handle, assertSession, revokeLocalDevice, applyEvents, syncRevocations, closeInvalidResponses,
     cloudDeviceId(ownerId, deviceId) {
       const session = store.state.sessions[deviceId], device = store.state.devices[session?.trustId];

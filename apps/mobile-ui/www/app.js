@@ -171,7 +171,8 @@ function mountMobileSearch(){
   }});
   Object.assign(mobileEffects,{showSearch:()=>searchView.show(),hideSearch:()=>searchView.hide(),renderSearch:()=>searchView.render(),selectSearchRow:()=>searchView.select()});
   const entry=el('button','search-entry');entry.type='button';entry.id='mobile-search-entry';entry.setAttribute('aria-label','搜索');entry.setAttribute('aria-haspopup','dialog');entry.append(WeftIcons.create('search',20),el('span','','搜索'));
-  entry.onclick=()=>{closeDrawer();uiCore.syncMobileIdentity();void uiCore.openSearch();};$('drawer').querySelector('.drawer-brand').after(entry);
+  entry.onclick=()=>{closeDrawer();uiCore.syncMobileIdentity();void uiCore.openSearch();};
+  $('drawer').querySelector('.drawer-brand').after(entry);
   $('drawer-new-menu').onclick=()=>WeftPopover.menu($('drawer-new-menu'),[
     {name:'新对话',icon:'compose',action:()=>selectConversation(null)},
     {name:'临时对话',icon:'chat',action:()=>mobileNewTemporaryConversation()}
@@ -376,6 +377,7 @@ globalThis.WeftLocalDiagnostics?.configure((method,params)=>call(method,params,5
 
 
 function page(name,{dataLoaded=false}={}){
+  if(name==='healthData')name='reviewHealth';
   if(mobileTabNames[state.page]&&state.page!=='chat')mobileTabScroll.set(state.page,$('generic-page').scrollTop);
   WeftPopover.closeMenu();libraryView?.deactivate();
   if(name!=='health'){clearInterval(healthTimer);healthTimer=null;}
@@ -395,7 +397,7 @@ function page(name,{dataLoaded=false}={}){
   if(previousPage!==name)globalThis.WeftMobileMotion?.push($(name==='chat'?'chat-page':name==='home'?'home-page':'generic-page'),name==='home'||name==='settings'&&previousPage!=='settings');
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
-    help:'帮助与小技巧',releases:'更新内容',goals:'目标',health:'健康',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'权限',executionRecords:'执行记录',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',healthData:'健康数据',settings:'设置',
+    help:'帮助与小技巧',releases:'更新内容',goals:'目标',health:'健康',library:'成果库',activity:'动态',schedules:'提醒与定时任务',about:'关于',general:'常规',personalization:'个性化',assistant:'助手',approvals:'权限',executionRecords:'执行记录',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',reviewHealth:'回顾与健康',settings:'设置',
     account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑',system:'系统状态'
   }[name]||name;
   syncMobileTabs();
@@ -820,6 +822,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('conversation-more').addEventListener('click',()=>WeftPopover.menu($('conversation-more'),[
     {name:'输出与来源',icon:'folder',action:()=>openConversationResources()},
     ...(!$('conversation-usage').hidden?[{name:'本对话用量',icon:'chart',action:()=>$('conversation-usage').click()}]:[]),
+    {name:'背景信息',icon:'info',action:()=>WeftDialogs.inform('背景信息',[$('context-tooltip-label').textContent,$('context-tooltip-detail').textContent].filter(Boolean).join('。'))},
     ...mobileConversationActions()
   ]));
   $('resource-back').addEventListener('click',()=>closeResourcePage());
@@ -847,7 +850,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('attachment-pick-cancel').addEventListener('click',()=>cancelAttachmentPick({announce:true}));
   $('image-preview-close').addEventListener('click',()=>closeImagePreview());
   $('image-preview').addEventListener('click',event=>{if(event.target===$('image-preview')||event.target.classList?.contains('image-preview-stage'))closeImagePreview()});
-  $('toast').addEventListener('click',closeToast);
+  $('toast').addEventListener('click',()=>{if(toast.detail)void toast.detail();else closeToast();});
   $('voice-button').addEventListener('click',async()=>{try{await call('voice.start',{conversationId:state.chatSource==='host'?'':state.conversationId||'',viewGeneration:state.generation});
       status('等待系统语音输入；识别结果只会填入草稿')}catch(e){status(safeError(e),true)}});
   ensureConversationScroll();
