@@ -48,6 +48,13 @@ async function attach() {
           code:error.code,name:error.name,status:error.status,message:String(error.message||'').replace(/eyJ[A-Za-z0-9._-]+/g,'<token>').slice(0,200)});throw error;}};
     }
   });
+  // The platform adapter binds exchange during construction. Capture that real
+  // live instance too; changing only its prototype misses its rejection stage.
+  const debugging=await browser.contexts()[0].newCDPSession(page);
+  const prototype=await debugging.send('Runtime.evaluate',{expression:'WeftUiCore.CloudAuthClient.prototype'});
+  const instances=await debugging.send('Runtime.queryObjects',{prototypeObjectId:prototype.result.objectId});
+  await debugging.send('Runtime.callFunctionOn',{objectId:instances.objects.objectId,functionDeclaration:`function(){for(const client of this){const exchange=client.exchange;client.exchange=async function(...args){try{return await exchange.apply(this,args);}catch(error){and3AuthErrors.push({stage:'bound-exchange',code:error.code,name:error.name,status:error.status,message:String(error.message||'').replace(/eyJ[A-Za-z0-9._-]+/g,'<token>').slice(0,200)});throw error;}};}}`});
+  await debugging.detach();
 }
 async function finishProbe() {
   if (probe?.exitCode === null) { run('shell', 'run-as', pkg, 'touch', 'files/and3-probe.done'); await until(() => probe.exitCode !== null, 'probe exit', 15000); }
