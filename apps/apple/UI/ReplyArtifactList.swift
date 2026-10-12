@@ -26,7 +26,7 @@ struct ReplyArtifactList: View {
                     Menu {
                         Button("保存") { Task { await load(row); if file != nil { exporting = true } } }
                         Button("分享") { Task { await load(row); if file != nil { sharing = true } } }
-                    } label: { WeftIcon("more", size: AppleTokens.Space.p16) }.phoneIcon()
+                    } label: { WeftIcon("more", size: AppleTokens.Space.p16).phoneMenuLabel(circle: true) }.phoneIcon().accessibilityIdentifier("replyFileMenu.\(row.seq)")
                         .accessibilityLabel("成果操作").accessibilityIdentifier("replyFileMenu.\(row.seq)")
                 }.frame(minHeight: AppleTokens.Space.p44).disabled(loading || app.historyCachedAt != nil)
             }

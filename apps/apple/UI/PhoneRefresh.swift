@@ -129,6 +129,22 @@ extension AppleAppModel {
 }
 #endif
 extension View {
+    /// Native iOS Menu does not render a custom ButtonStyle; its label owns the shape.
+    @ViewBuilder func phoneMenuLabel(circle: Bool = false, onCard: Bool = false, quiet: Bool = false) -> some View {
+        #if os(iOS)
+        if circle {
+            self.frame(width: AppleTokens.Space.p44, height: AppleTokens.Space.p44)
+                .foregroundStyle(quiet ? Weave.muted : Weave.accent)
+                .background(quiet ? AppleTokens.Colors.clear : onCard ? Weave.surface : Weave.soft, in: Circle())
+        } else {
+            self.font(AppleTokens.Fonts.caption).padding(.horizontal, AppleTokens.Space.p8)
+                .frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44)
+                .foregroundStyle(Weave.accent).background(onCard ? Weave.surface : Weave.soft, in: Capsule())
+        }
+        #else
+        self
+        #endif
+    }
     @ViewBuilder func phoneAction() -> some View {
         #if os(iOS)
         self.buttonStyle(PhoneActionStyle())

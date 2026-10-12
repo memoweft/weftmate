@@ -47,6 +47,11 @@ final class Apple4UITests: XCTestCase {
                 XCTAssertGreaterThanOrEqual(approve.frame.height, 44)
                 capture(app, theme, value)
             }
+            try choose(app, "files")
+            XCTAssertTrue(app.buttons["replyFiles.expand"].waitForExistence(timeout: 20))
+            let fileMenu = app.buttons["replyFileMenu.10"]
+            XCTAssertTrue(fileMenu.exists); XCTAssertGreaterThanOrEqual(fileMenu.frame.width, 44); XCTAssertGreaterThanOrEqual(fileMenu.frame.height, 44)
+            capture(app, theme, "files-collapsed")
             try choose(app, "final")
             XCTAssertTrue(app.buttons["phone.sidebar"].waitForExistence(timeout: 20)); app.buttons["phone.sidebar"].tap()
             XCTAssertTrue(app.textFields["phone.sidebar.search"].waitForExistence(timeout: 10)); capture(app, theme, "sidebar")

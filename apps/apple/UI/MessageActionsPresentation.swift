@@ -104,7 +104,7 @@ struct MessageActionsPresentation: ViewModifier {
         if let exportDirectory { try? FileManager.default.removeItem(at: exportDirectory) }; exportDirectory = nil
     }
     private var actionMenu: some View {
-        Menu { assistantActions; extra() } label: { WeftIcon("more", size: AppleTokens.Space.p16) }
+        Menu { assistantActions; extra() } label: { WeftIcon("more", size: AppleTokens.Space.p16).phoneMenuLabel(circle: true, quiet: true) }
             .menuStyle(.borderlessButton).fixedSize().accessibilityLabel("消息操作").accessibilityIdentifier(menuID)
     }
     @ViewBuilder private var assistantActions: some View {
