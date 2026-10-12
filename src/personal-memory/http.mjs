@@ -162,6 +162,7 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
       for (const item of page) {
         const raw = result.items.find(value => value.object_kind === item.kind && value.item_id === item.id);
         const evidence = new Set((raw?.provenance ?? []).filter(source => !['evidence_deleted','evidence_missing','evidence_subject_mismatch'].includes(source.currentness_state)).map(source => source.evidence_id));
+        item.sourceEvidenceIds=[...evidence];
         item.sourceConversationIds = [...new Set((jobs?.jobs ?? []).filter(job => job.acceptance?.evidence_ids?.some(id => evidence.has(id))).map(job => job.acceptance.parent_session_id).filter(id => typeof id === 'string' && /^[A-Za-z0-9_.:-]{1,160}$/.test(id)))];
       }
     }

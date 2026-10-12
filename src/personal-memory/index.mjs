@@ -724,6 +724,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           ? world.world_revision : null, sourceCount: memories.length };
       }, sessionId);
     },
+    // Imports already have a read-only recovery source. Do not write another full-text outbox.
+    ingestImport(ownerId, boundary, routeId) {
+      owner(ownerId);
+      if (!routeId?.startsWith('import-') || boundary?.parent_session_id !== routeId ||
+          Buffer.byteLength(JSON.stringify(boundary), 'utf8') > 4 * 1024 * 1024) throw error('MEMORY_REQUEST_INVALID');
+      return withOwner(ownerId, entry => entry.rpc.request('ingest_boundary', { boundary }), routeId);
+    },
     async ingest(ownerId, boundary, { offline = false, defer = false } = {}) {
       owner(ownerId);
       await rm(path.join(root,'accounts',ownerId,'data-erased.json'),{force:true});

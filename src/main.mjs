@@ -1810,6 +1810,7 @@ async function bootstrap() {
     beginUsage: input => input.sessionId && !input.ownerId && !personalAccessService?.ownerForSession(input.sessionId)
       ? null : personalAccessService?.beginUsage(input),
     finishUsage: input => personalAccessService?.finishUsage(input),
+    importPermission: (ownerId, routeId) => personalAccessService?.importPermission(ownerId, routeId) ?? 'stop',
     isIdle: async () => !personalAccessService?.hasUnissuedDshCommands?.() &&
       (await webRuntime?.personalModelQueueIdle?.(true))?.idle === true,
     profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id ||
