@@ -148,7 +148,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (!apiKey) fail('MODEL_UNAVAILABLE')
       return checkModelConnection({ baseUrl: profile.baseUrl, modelId: profile.model, apiKey, fetchImpl: modelFetch })
     },
-    async modelCompletion({ profileId, body, signal, ownerId, priority, onStart }) {
+    async modelCompletion({ profileId, body, signal, ownerId, priority, purpose, onStart }) {
       requireModelAllowed(ownerId, profileId, 'new')
       const profile = modelProfile(profileId)
       if (body.model !== profile.model || typeof credentialForProfile !== 'function') fail('MODEL_UNAVAILABLE')
@@ -167,7 +167,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         ...(priority ? { priority } : {}), ...(onStart ? { onStart } : {}),
         headers: { 'content-type': 'application/json', accept: body.stream ? 'text/event-stream' : 'application/json',
           authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ ...(['suggestion', 'background'].includes(priority) ? suggestionCompletionBody(profile, body, declaredEfforts) : body), model: canonicalProviderModelId(profile.baseUrl, body.model) }),
+        body: JSON.stringify({ ...(priority === 'suggestion' || purpose === 'second-opinion' ? suggestionCompletionBody(profile, body, declaredEfforts) : body), model: canonicalProviderModelId(profile.baseUrl, body.model) }),
       })
     },
     async preflight(command) {

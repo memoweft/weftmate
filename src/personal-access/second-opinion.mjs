@@ -36,7 +36,7 @@ export function createSecondOpinion(context, { timeoutMs = 4000 } = {}) {
         const model = (await context.backend.listModels({ ownerId })).find(row => row.id === profileId && row.configured);
         signal.throwIfAborted();
         if (!model) return null;
-        const upstream = await context.backend.modelCompletion({ ownerId, profileId, priority: 'background', signal,
+        const upstream = await context.backend.modelCompletion({ ownerId, profileId, priority: 'background', purpose: 'second-opinion', signal,
           onStart: async () => { signal.throwIfAborted(); ticket = await context.usage.begin(ownerId, { sessionId: source.sessionId, profileId, model, category: 'second-opinion' }); },
           body: { model: model.model, stream: false, max_tokens: 256, temperature: 0,
             messages: [{ role: 'system', content: REVIEW_INSTRUCTION }, { role: 'user', content: JSON.stringify(data) }] } });

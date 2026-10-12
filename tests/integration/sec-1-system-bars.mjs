@@ -30,6 +30,7 @@ export async function sec1SystemBars({origin,cookie,out}) {
       for(const width of process.env.WEFTMATE_SEC1_PHONE_WIDTH?[Number(process.env.WEFTMATE_SEC1_PHONE_WIDTH)]:[360,390])for(const theme of process.env.WEFTMATE_SEC1_PHONE_THEME?[process.env.WEFTMATE_SEC1_PHONE_THEME]:['light','dark']){
         socket?.close();socket=null;if(forward){run('forward','--remove',`tcp:${forward}`);forward=null;}
         run('shell','am','force-stop',pkg);const height=width===360?780:844;run('shell','wm','size',`${width*2}x${height*2}`);run('shell','wm','density','320');resized=true;run('shell','cmd','uimode','night',theme==='dark'?'yes':'no');
+        await new Promise(done=>setTimeout(done,1500));if(stock)try{run('shell','am','force-stop','com.google.android.apps.nexuslauncher');}catch{}
         run('shell','am','start','-W','-n',pkg+'/'+(process.env.WEFTMATE_SEC1_ANDROID_ACTIVITY??'com.memoweft.weftmate.mobile.St4RemoteBrowserActivity'),'-e','st4Url',origin+'/personal/v1/ui','-e','st4Theme',theme);
         let pid;for(let n=0;n<100;n++){try{pid=run('shell','pidof',pkg+':st4remote').toString().trim();if(pid)break;}catch{}await new Promise(done=>setTimeout(done,100));}assert.ok(pid);
         forward=run('forward','tcp:0',`localabstract:webview_devtools_remote_${pid}`).toString().trim();
@@ -44,6 +45,7 @@ export async function sec1SystemBars({origin,cookie,out}) {
         // This fixture covers approvals; it does not provision an offline cloud model/replica.
         await evaluate(`(async()=>{const me=await(await fetch('/personal/v1/auth/me')).json();if(me.device.authKind!=='cloud')throw Error('Cloud identity required');sec1Core.cloudOfflineIdentity=()=>null;sec1Core.state.cloudAuth.mode='authenticated';await sec1Core.acceptSession(me);await sec1Core.enterAssistant();await sec1Core.selectSession(${JSON.stringify(sessionId)});document.documentElement.dataset.theme=${JSON.stringify(theme)};window.weftSyncSystemBars?.();})()`);
         await until("!!document.querySelector('#approval-bar:not([hidden])')");await new Promise(done=>setTimeout(done,200));
+        const focus=run('shell','dumpsys','window','windows').toString().split('\n').find(line=>line.includes('mCurrentFocus'));assert.ok(focus?.includes(pkg), 'Screenshot must show the test browser, without a system error dialog');
         const dump=run('shell','dumpsys','window','displays').toString();
         await writeFile(resolve('.local/sec-1/system-insets.txt'),dump.split('\n').filter(line=>/navigationBars|statusBars|NavigationBar/.test(line)).join('\n'));
         const insetHeight=kind=>{const line=dump.split('\n').find(line=>line.includes('type='+kind)&&line.includes('visible=true'));const frame=/frame=\[(\d+),(\d+)\]\[(\d+),(\d+)\]/.exec(line??'');return frame?Number(frame[4])-Number(frame[2]):0;};
