@@ -32,7 +32,7 @@ async function attach() {
   await until(async () => { browser = await chromium.connectOverCDP('http://127.0.0.1:' + forward, { noDefaults: true }); return browser; }, 'WebView');
   page = await until(() => browser.contexts()[0].pages().find(row => row.url().includes('appassets')), 'packaged interface');
   page.setDefaultTimeout(35000);
-  page.on('pageerror', error => report.errors.push(error.message));
+  page.on('pageerror', error => report.errors.push(error.stack || error.message));
   await page.waitForFunction(() => typeof state !== 'undefined' && state.booted);
   await page.evaluate(() => {
     globalThis.and3AuthErrors=[];
@@ -131,6 +131,7 @@ async function login(method) {
   assert.ok(challenge); await page.getByLabel('邮箱验证码', { exact: true }).fill(await fixture.cloud.mailCode(challenge.id));
   await page.locator('#cloud-auth-form [type=submit]').click();
   await page.waitForFunction(() => state.loggedIn && !document.body.classList.contains('cloud-auth-active'));
+  await page.getByRole('button', { name: '发送', exact: true }).waitFor();
   assert.equal(await page.locator('#cloud-wait-view').isVisible(), false);
   report.checks.push(method + '-real-native-login-mail-confirm-direct-host-trust');
 }
