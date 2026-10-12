@@ -3,6 +3,7 @@ import { importApps, sourceFiles, readHistory, importKey } from './history-parse
 import { defaultUsagePrice, usageCost } from './usage.mjs';
 import { currentChatProfile } from '../background-model-selection.mjs';
 import { failure } from './common.mjs';
+import { MAX_BODY } from './constants.mjs';
 
 const digest = value => createHash('sha256').update(value).digest('hex');
 const terminal = state => ['applied', 'completed', 'no_change', 'done', 'succeeded'].includes(state);
@@ -32,7 +33,8 @@ export function importBoundary(c, job, chunk, index) {
 }
 export function estimateImport(items, model, price = defaultUsagePrice(model)) {
   const characters = items.reduce((n, c) => n + c.characters, 0), chunks = items.reduce((n, c) => n + c.chunks, 0);
-  const low = { inputTokens: Math.ceil(characters * .4) + chunks * 6000, cachedInputTokens: 0, outputTokens: chunks * 600 };
+  const low = { inputTokens: Math.ceil(characters * .4) + chunks * 6000,
+    cachedInputTokens: price && price.cachedInput < price.input ? chunks * 6000 : 0, outputTokens: chunks * 600 };
   const high = { inputTokens: Math.ceil(characters * 1.5) + chunks * 18000, cachedInputTokens: 0, outputTokens: chunks * 3000 };
   const local = model?.sourceKind === 'local' || model?.modelTier === 'local';
   return { characters, modelName: model?.name ?? model?.model ?? '尚未选择模型', profileId: model?.id ?? null,
@@ -84,9 +86,17 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
     if (input.action === 'start') {
       if (jobs(ownerId).some(j => j.previewId === input.previewId)) return list(ownerId);
       const p = previews.get(ownerId);
-      if (!p || p.id !== input.previewId || input.confirm !== true || !Array.isArray(input.selected) ||
-          input.selected.some(key => !p.items.some(i => i.key === key))) throw failure('MEMORY_PREVIEW_REQUIRED', 409);
-      const selected = new Set(input.selected), existing = duplicates(ownerId), model = await modelFor(ownerId);
+      if (!p || p.id !== input.previewId || input.confirm !== true) throw failure('MEMORY_PREVIEW_REQUIRED', 409);
+      let keys = input.selected;
+      if (typeof keys === 'string') {
+        const bytes = Buffer.from(keys, 'base64');
+        if (bytes.length !== Math.ceil(p.items.length / 8) || bytes.toString('base64') !== keys ||
+            p.items.length % 8 && bytes.at(-1) >>> (p.items.length % 8)) throw failure('INVALID_REQUEST');
+        keys = p.items.filter((_, index) => bytes[index >> 3] & (1 << (index % 8))).map(item => item.key);
+      }
+      const knownKeys = new Set(p.items.map(item => item.key));
+      if (!Array.isArray(keys) || keys.some(key => !knownKeys.has(key))) throw failure('MEMORY_PREVIEW_REQUIRED', 409);
+      const selected = new Set(keys), model = await modelFor(ownerId);
       if (!model || model.id !== p.estimate.profileId) throw failure('IMPORT_MODEL_CHANGED', 409);
       context.usage.assertAllowed(ownerId, model);
       await save(ownerId, records => {
@@ -288,6 +298,7 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
     await flight;
   }
   return { preview, action, list, source, permit,
+    requestLimit: ownerId => MAX_BODY + 2 * Math.ceil((previews.get(ownerId)?.items.length ?? 0) / 8),
     owns: (ownerId, routeId) => jobs(ownerId).some(j => j.routeId === routeId),
     async start() { timer = setInterval(() => void tick().catch(() => {}), pollMs); timer.unref?.(); },
     async close() { closed = true; previews.clear(); clearInterval(timer); await flight?.catch(() => {}); }, tick };

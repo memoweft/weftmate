@@ -1683,12 +1683,12 @@ DATA-1日摘要usage可增量返回`lastUserMessageAt`（ISO或null），仅取�
 | action | 请求与结果 |
 |---|---|
 | `import-preview` | `{app:"chatgpt"|"claude"|"codex"|"claude-code",paths:[绝对路径]}`。只接受本机可信 Electron（桌面程序框架）选择桥携带的 `x-weftmate-desktop`，浏览器不能登记任意路径。200 `{ownerId,previewId,app,appName,conversationCount,duplicateCount,emptyCount,from,to,estimate,items}`。只在本机扫描，零模型请求；预览不落盘。items 包含 `key,id,title,at,until,characters,chunks,duplicate`，无正文或文件位置。 |
-| `import-start` | `{previewId,selected:[key],confirm:true}`；预览属于当前账号，后台模型改变必须重新预览。重复开始同一个预览返回现有记录。202 `{ownerId,imports}`。默认全选可导入内容，可按时间或逐段选择。 |
+| `import-start` | `{previewId,selected:[key]|base64位图字符串,confirm:true}`；预览属于当前账号，后台模型改变必须重新预览。重复开始同一个预览返回现有记录。202 `{ownerId,imports}`。默认全选可导入内容，可按时间或逐段选择。位图按预览 items 顺序，从每字节最低位起表示选中，长度为 ceil(items.length/8)，未使用的高位必须为0；使用标准 Base64（编码）字符串。大批选择用位图避免编号数组超过原有请求体上限；此路由按本账户已创建预览的位图大小扩展接收上限，其余接口不变。 |
 | `import-pause / import-resume / import-cancel` | `{jobId}` → 202 `{ownerId,imports}`；暂停允许已经发出的请求收尾，后续请求等待继续。取消保留已记住的内容，在导入记录中可整批忘掉。退出／重启后恢复原状态与进度。 |
 | `import-forget-preview` | `{jobId}`；先暂停运行中的导入。202 `{jobId,forgetToken,items,evidenceCount}`，列出受影响的记忆，复用核心现有遗忘预览。 |
 | `import-forget` | `{jobId,forgetToken,confirm:true}` → 202 `{ownerId,imports}`；进入 `forgetting`，真正清理来源、相关记忆与派生副本后为 `forgotten`。原文件保持只读；随后可重导。 |
 
-`estimate` 为 `{characters,modelName,profileId,local,approximate:true,inputTokens:[low,high],outputTokens:[low,high],cost:[low,high]|null,seconds:[low,high],price}`。价格来自现有账户用量设置；没有单价时费用未知，不能显示为免费。本机／局域网模型费用为零，耗时以约每秒50个输出词元与提示处理余量估算。实际请求包括核心形成步骤和失败重试，不是价格承诺。真实用量沿用账户用量账本，`category:"import"`、`sessionId:"import-<jobId>"`；未知用量明确保留，没有单价时 cost 为 null、unpricedRequests 大于零，界面显示费用未知。
+`estimate` 为 `{characters,modelName,profileId,local,approximate:true,inputTokens:[low,high],outputTokens:[low,high],cost:[low,high]|null,seconds:[low,high],price}`。价格来自现有账户用量设置；下界计入重复提示可能享受的输入优惠，上界按未优惠输入估算。没有单价时费用未知，不能显示为免费。本机／局域网模型费用为零，耗时以约每秒50个输出词元与提示处理余量估算。实际请求包括核心形成步骤和失败重试，不是价格承诺。真实用量沿用账户用量账本，`category:"import"`、`sessionId:"import-<jobId>"`；未知用量明确保留，没有单价时 cost 为 null、unpricedRequests 大于零，界面显示费用未知。
 
 来源详情增加可选 `importSource:{kind:"import",app,appName,conversationId,originalAt,importId}`；带 `includeSources=true` 的列表可含与单条来源相同结构的 `importSources` 数组，导入编号不会被当作可继续聊天的 WeftMate 对话。核心聊天入口当前仍记录 `source_kind=spoken`，来源应用与原日期通过有日期前缀的正文、原始 `timestamp`、宿主回执映射提供，未更改记忆核心仓库。未来核心应增加正式导入来源类型和整批撤回接口。
 

@@ -5,13 +5,24 @@ import { tmpdir } from 'node:os';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
 import { resolve } from 'node:path';
 import { parseChatGPT,parseClaude,parseCodex,parseClaudeCode,readHistory,sourceFiles,importKey } from '../src/personal-access/history-parsers.mjs';
-import { createHistoryImport,importChunks,estimateImport } from '../src/personal-access/history-import.mjs';
+import { createHistoryImport,importChunks,importBoundary,estimateImport } from '../src/personal-access/history-import.mjs';
+import { recallQuestions } from '../src/personal-memory/recall-questions.mjs';
 const root=resolve('tests/fixtures/mem-1'),file=name=>resolve(root,name);
+test('compound import recall keeps actual subquestions within Core batch capacity',()=>{
+ assert.deepEqual(recallQuestions('根据我的记忆，我的鹦鹉叫什么，喜欢什么零食？只回答已知内容，不调用工具。'),['我的鹦鹉叫什么','喜欢什么零食']);
+ assert.deepEqual(recallQuestions('What is my pet called, and what food does it like?'),['What is my pet called','and what food does it like']);
+ assert.deepEqual(recallQuestions('我叫什么？'),[]);
+ assert.equal(recallQuestions('谁1，谁2，谁3，谁4，谁5，谁6，谁7，谁8').length,5);
+});
 test('four read-only adapters retain current branch, final speech, dates and attachment names only',async()=>{
  const [gpt,claude,codex,cc]=await Promise.all([readHistory('chatgpt',file('chatgpt-edge.json')),readHistory('claude',file('claude.json')),readHistory('codex',file('codex/2025/session.jsonl')),readHistory('claude-code',file('claude-code/synthetic-project/session.jsonl'))]);
  assert.equal(gpt.length,3);assert.equal(gpt[1].messages.length,0);assert.ok(importChunks(gpt[2]).length>1);assert.match(gpt[0].messages[0].content,/合成旅行计划.pdf/);assert.equal(gpt[0].at,'2025-03-12T09:00:00.000Z');
  for(const parsed of [gpt,claude,codex,cc])assert.doesNotMatch(JSON.stringify(parsed),/秘密|废弃内容/);
+ assert.doesNotMatch(JSON.stringify(parseClaude([{uuid:'synthetic-thinking',chat_messages:[{sender:'assistant',text:'秘密推理',content:[{type:'thinking',thinking:'秘密推理'}]}]}])),/秘密/);
  assert.deepEqual(codex[0].messages.map(m=>m.role),['user','assistant']);assert.equal(cc[0].messages.length,2);
+ const historical=importBoundary(gpt[0],{id:'synthetic-import',routeId:'import-synthetic'},importChunks(gpt[0])[0],0);
+ assert.equal(historical.source_messages[0].timestamp,Math.floor(Date.parse(gpt[0].at)/1000));
+ assert.match(historical.source_messages[0].content,/2025-03-12T09:00:00.000Z/);assert.match(historical.source_messages[0].content,/过去的计划与行程不能当作今天的事实或新任务/);
  const longAssistant=importChunks({...gpt[0],messages:[{role:'user',content:'合成问题',at:gpt[0].at},{role:'assistant',content:'助手上下文'.repeat(9000),at:gpt[0].at}]});assert.ok(longAssistant.length>2);assert.ok(longAssistant.slice(1).every(chunk=>chunk.includes('· 助手]')));
  assert.equal((await sourceFiles('codex',[file('codex')])).length,1);
  assert.equal((await readHistory('chatgpt',file('chatgpt-30.zip'))).length,30);
@@ -37,6 +48,17 @@ function fixture(){
  return{context,ledger,records,get requests(){return requests;},set fail(v){fail=v;},advance(){clock+=100000;}};
 }
 const settle=async(manager,n=80)=>{for(let i=0;i<n;i++)await manager.tick();};
+test('large selections fit the import request and reject noncanonical or out-of-range bitmaps',async()=>{
+ const f=fixture();f.context.active.add('chat');const source=(await readHistory('chatgpt',file('chatgpt-30.json')))[0],count=20000;
+ const m=createHistoryImport(f.context,{read:async()=>Array.from({length:count},(_,i)=>({...source,id:`large-${i}`}))});
+ const p=await m.preview('a','chatgpt',[file('chatgpt-30.json')]);const bytes=Buffer.alloc(Math.ceil(count/8),255);
+ const input={action:'start',previewId:p.previewId,selected:bytes.toString('base64'),confirm:true};
+ assert.ok(Buffer.byteLength(JSON.stringify(input))<12*1024);
+ await assert.rejects(()=>m.action('a',{...input,selected:input.selected+'='}),/INVALID_REQUEST/);
+ await m.action('a',input);assert.equal(m.list('a').imports[0].total,count);assert.equal(f.requests,0);await m.close();
+ const x=fixture(),small=createHistoryImport(x.context),q=await small.preview('a','chatgpt',[file('chatgpt-overlap.json')]);
+ await assert.rejects(()=>small.action('a',{action:'start',previewId:q.previewId,selected:Buffer.from([128]).toString('base64'),confirm:true}),/INVALID_REQUEST/);await small.close();
+});
 test('preview makes zero requests; batching, pause/resume/cancel, restart, dedup and whole-import forgetting',async()=>{
  const f=fixture();let manager=createHistoryImport(f.context),p=await manager.preview('a','chatgpt',[file('chatgpt-30.json')]);assert.equal(p.conversationCount,30);assert.equal(f.requests,0);assert.ok(p.estimate.cost[1]>p.estimate.cost[0]);
  assert.equal(manager.list('b').imports.length,0);await assert.rejects(()=>manager.action('b',{action:'start',previewId:p.previewId,selected:p.items.map(i=>i.key),confirm:true}));
@@ -54,6 +76,10 @@ test('crash after Core acceptance reuses durable receipt; chat wins and consecut
  const x=fixture(),bad=createHistoryImport(x.context),q=await bad.preview('a','chatgpt',[file('chatgpt-30.json')]);x.fail=true;await bad.action('a',{action:'start',previewId:q.previewId,selected:[q.items[0].key],confirm:true});await bad.tick();const attempts=x.context.rootState.accounts.a.historyImports[0].failures;await settle(bad,10);assert.equal(x.context.rootState.accounts.a.historyImports[0].failures,attempts);x.advance();await bad.tick();x.advance();await bad.tick();assert.equal(bad.list('a').imports[0].state,'paused');await bad.close();
 });
 test('local estimates cost zero and include duration range',()=>{const e=estimateImport([{characters:2000,chunks:2}],{modelTier:'local',name:'本机'});assert.deepEqual(e.cost,[0,0]);assert.ok(e.seconds[1]>e.seconds[0]);});
+test('cloud cost range includes discounted repeated instructions and undiscounted upper bound',()=>{
+ const e=estimateImport([{characters:2000,chunks:2}],{model:'mimo-v2.6-flash'});
+ assert.deepEqual(e.inputTokens,[12800,39000]);assert.deepEqual(e.cost,[.00344,.051]);
+});
 
 test('pause/cancel reconciles already accepted work without starting another request',async()=>{
  for(const state of ['pause','cancel']){
