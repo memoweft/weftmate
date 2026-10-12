@@ -63,3 +63,8 @@ html[data-reduced-motion] :is(button,.popover button,.send-button,.nav-primary):
 .approval-bar.is-review-warning, .approval-bar .is-review-warning { background: color-mix(in srgb, var(--review-attention) 10%, var(--surface)); outline: 1px solid color-mix(in srgb, var(--review-attention) 65%, transparent); border-radius: var(--wm-radius-12); }
 .is-review-warning .approval-review { color: var(--review-attention); }
 :root:not([data-theme="dark"]) .is-review-warning .approval-review { color: color-mix(in srgb, var(--review-attention) 85%, var(--ink)); }
+@media (max-width: 480px) {
+  .approval-bar .approval-bar-content { grid-template-columns: minmax(0, 1fr); row-gap: var(--wm-space-8); }
+  .approval-bar :is(.approval-bar-actions,.approval-actions) { grid-column: 1; grid-row: auto; flex-wrap: wrap; }
+  .approval-bar .approval-detail { grid-row: auto; }
+}

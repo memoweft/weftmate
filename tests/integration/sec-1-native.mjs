@@ -53,6 +53,7 @@ async function capture(label,phone,sessionId){
     if(surface==='desktop')await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,width===480?780:800),width);else await target.setViewportSize({width,height:width===360?780:844});
     await target.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);
     await target.locator('.approval-review').first().waitFor({state:label==='timeout'||label==='unavailable'?'hidden':'visible'});
+    await target.waitForFunction(()=>{const detail=document.querySelector('#approval-bar .approval-detail'),bar=document.querySelector('#approval-bar');return detail?.getBoundingClientRect().width>=140&&bar.getBoundingClientRect().bottom<=innerHeight;});
     await target.screenshot({path:join(out,`${surface}-${width}-${theme}-${label}.png`)});
     assert.equal(await target.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     checks.push(`${surface} ${width} ${theme} ${label}`);
