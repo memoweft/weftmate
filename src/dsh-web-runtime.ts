@@ -426,6 +426,16 @@ async function writePluginAssets(dir: string): Promise<boolean> {
   ]
   let changed = false
   for (const [src, dest] of tasks) {
+    if (src === join(CLIENT_PLUGIN_SRC, 'client.js')) {
+      // The legacy DSH plugin receives the same program-drawn dialogs as /personal/v1.
+      const dialogs = await readFile(join(here, 'ui-core', 'dialogs.js'), 'utf8')
+      const tokens = await readFile(join(here, 'personal-access-ui', 'tokens.css'), 'utf8')
+      const scopedTokens = [...tokens.matchAll(/--wm-[\w-]+:[^;]+;/g)].map(match => match[0]).join('\n')
+      const css = `.weft-confirm { ${scopedTokens} }\n${await readFile(join(here, 'ui-core', 'dialogs.css'), 'utf8')}`
+      const content = `${dialogs}\n{ const style = document.createElement('style'); style.textContent = ${JSON.stringify(css)}; document.head.append(style); }\n${await readFile(src, 'utf8')}`
+      if (await readFile(dest, 'utf8').catch(() => '') !== content) { await mkdir(dirname(dest), { recursive: true }); await writeFile(dest, content); changed = true }
+      continue
+    }
     if (await copyFileIfChanged(src, dest)) changed = true
   }
   if (await copyDirIfChanged(join(GATEWAY_SRC, 'legacy'), join(gatewayDest, 'legacy'))) changed = true

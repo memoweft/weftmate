@@ -9,6 +9,7 @@ function blendDesktopColor(base, scrim) {
 (() => {
   const native = window.weftmateDesktop;
   if (!native) return;
+  native.onNotice?.(async notice => { await globalThis.WeftDialogs.inform(notice.title, notice.message); native.closeNotice?.(notice.id); });
   native.onVisibility?.(hidden => globalThis.WeftReplyMotion?.setVisibility(hidden));
   document.documentElement.classList.add('weftmate-desktop');
   document.documentElement.dataset.nativePlatform = native.platform;

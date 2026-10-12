@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 import { copyPhysicalTree, removePhysicalTree } from './physical-copy.mjs';
 import { boundedCommand, relevantProcesses as queryProcesses, STOP_PROCESS_TIMEOUT_MS, REGISTRY_TIMEOUT_MS } from './watchdog-commands.mjs';
 import { createHostLog } from './watchdog-host-log.mjs';
-const run = (command,args,options={}) => boundedCommand(command,args,{timeoutMs:STOP_PROCESS_TIMEOUT_MS,...options}), pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+const run = (command,args,options={}) => boundedCommand(command,args,{timeoutMs:STOP_PROCESS_TIMEOUT_MS,...options,windowsHide:true}), pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function moveDirectory(from, to) {
   for (let attempt = 0; ; attempt++) {
     try { await rename(from, to); return; }

@@ -40,7 +40,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         });
     }
     function acceptApprovalRisk(mode) {
-        return mode !== 'allow-all' || window.confirm('全部允许会直接执行删除或覆盖文件、修改系统、安装软件、对外发送或发布和付款等操作，可能无法撤销。确定启用？');
+        return mode !== 'allow-all' || globalThis.WeftDialogs.allowAll();
     }
     function renderConversationApprovals() {
         const context = core.approvalContext(), bar = ui.byId('approval-bar');
@@ -161,10 +161,11 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         ui.byId('default-approval-mode')?.addEventListener('change', async (event) => {
             const token = core.accountToken();
             const mode = event.target.value;
-            if (!ui.acceptApprovalRisk(mode)) {
+            if (!await ui.acceptApprovalRisk(mode)) {
                 void core.refreshApprovalSettings();
                 return;
             }
+            if (!core.accountCurrent(token)) return;
             event.target.disabled = true;
             try {
                 await core.saveDefaultApprovalMode(mode);
