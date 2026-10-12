@@ -47,7 +47,7 @@
         decorateSelect(select,type.label);
       }
       if (!project) {
-        const reset=node('button','button secondary small','恢复默认');reset.type='button';reset.onclick=async()=>{reset.disabled=true;try{saved=await core.savePermissionRules(Object.fromEntries(Object.keys(rules).map(type=>[type,null])));if(current()){draw();toast('已恢复默认');}}catch{if(current()){reset.disabled=false;toast('恢复未完成，请重试。');}}};body.append(reset);
+        const reset=node('button','button secondary small','恢复默认');reset.type='button';reset.onclick=async()=>{reset.disabled=true;try{saved=await core.savePermissionRules(Object.fromEntries(Object.keys(rules).filter(type=>saved.types.some(row=>row.id===type)).map(type=>[type,null])));if(current()){draw();toast('已恢复默认');}}catch{if(current()){reset.disabled=false;toast('恢复未完成，请重试。');}}};body.append(reset);
       }
     }
     void load();

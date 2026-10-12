@@ -121,6 +121,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 - **SEC-1 / Windows-4**：现有审批读取可选 `secondOpinion:{alignment,externalInfluence,reason}`，现有 GET/PATCH `/settings/approvals` 可选 `secondOpinionEnabled`，缺字段默认开启；不新增路由，不授予执行权限。Apple 需呈现与开关接线，安卓界面包更新即可。详见 CLIENT_API。
 
+- **ST-7a / Windows-9**：复用 `GET/PATCH /personal/v1/settings/approvals`，新增连接器目录、添加／测试／停用／轮换／移除动作及单工具规则；手机只读目录与总开关，秘密值不返回。无新增业务路径或壳能力，Android／Apple 原生可沿现有路径读取可选字段。详见 CLIENT_API。
 - **ST-2**：`GET/PATCH /personal/v1/settings/approvals` 增加 `rules/types`；项目 PATCH 增加 `permissionRules`；审批回复增加 `global-category`；新增 `GET /personal/v1/execution-records`，沿用 `sessions:read`、现有审批／工具记录与保留规则。安卓／苹果原生需适配，详见 CLIENT_API。
 - **R0-4 / Windows-4**：新增云 `POST /personal/v1/cloud/feedback`，现有设备认证后发送已确认标题／正文，201返回问题单编号；缺服务器配置明确503，失败保留复制路径；CLIENT_API 7.9a。Android（安卓）云请求白名单和 Apple（苹果端）原生接线留后续包。
 - AUTH-1：本机专用 `/auth/desktop` GET/POST；云纯验证码 `/cloud/auth/login/code/request|confirm`，签名 `device_verified:true` 严格检查；激活绑定交换直接会话和 hostTrust，不再 pending_approval；desktop 云登录保留本机 Cookie，新增设备动态 `system.device.signed_in`；`/auth/devices` 可选 cloudDeviceId 支持立即下线，整机备份只限直接本机。

@@ -1,4 +1,6 @@
 import { migratePermissionRules } from '../plugins/personal-permission-rules.mjs';
+import { createConnectors } from '../personal-connectors/index.mjs';
+import { connectorExecution } from '../personal-connectors/access.mjs';
 import { createLibrary } from './library.mjs';
 import { createDataControls } from '../personal-data/index.mjs';
 import { finalizeNotifications } from './notification-settings.mjs';
@@ -87,7 +89,7 @@ export { uniqueSessionOwner } from './store.mjs';
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
   mobileUiDir = null, mobileUiTrustedKeys = null, hostVersion = '0.1.0', sharedProfileIsFormal = () => false, memoryManager = null,
   allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
-  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null, updateStatus = null, nativeMinimumVersions = {}, libraryNativeActions = null }) {
+  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null, updateStatus = null, nativeMinimumVersions = {}, libraryNativeActions = null, connectorVault = null, connectorRuntime = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
@@ -125,6 +127,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   if (backend.getTaskReplyEvidence !== undefined &&
       typeof backend.getTaskReplyEvidence !== 'function') throw failure('INVALID_CONFIGURATION');
   await ensurePrivateDirectory(root);
+  const connectors = connectorVault && connectorRuntime ? await createConnectors({ root, runtime: connectorRuntime, vault: connectorVault }) : null;
   if (cloudIdentity) await backupBeforeCloud(root);
   let hostRelay = null;
   const storeFile = path.join(root, 'store.json');
@@ -207,6 +210,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
+    connectors,
     get accountRevision() { return accountRevision; },
     accountRevisionFor: revisionFor,
     closingSignal: closingController.signal,
@@ -916,6 +920,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
         allowedCategories: session.allowedApprovalCategories ?? [],
         permissionRules: account.permissionRules ?? {},
+        connectorTools: connectors?.catalog(match.ownerId) ?? [],
         projectPermissionRules: project && !project.revoked ? project.permissionRules ?? {} : {},
         ...(project && !project.revoked ? { project: { projectId: project.projectId,
           rootPath: project.rootPath, revision: project.revision, instructions: project.instructions ?? '',
@@ -952,6 +957,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     trackToolApproval: approvals.trackToolApproval,
     invalidateToolApprovals: approvals.invalidateToolApprovals,
     trackToolExecution: tasks.trackToolExecution,
+    callConnector: input => connectorExecution(context, input),
     submitToolDesktop: commands.submitToolDesktop,
     submitToolArtifact: artifacts.submitToolArtifact,
     registerNativeFile: artifacts.registerNativeFile,
@@ -971,6 +977,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        await connectors?.close();
         await dataControls.close();
         nextSuggestions.close();
         await memoryIngestion.close();

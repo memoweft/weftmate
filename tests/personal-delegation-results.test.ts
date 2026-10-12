@@ -87,9 +87,15 @@ for (const status of ['running', 'idle']) test(`native uncollected completion se
 test('personal preset preserves the native delegation schema and explains collection before summary', { skip }, async t => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-delegation-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
-  const preset = await import(stagePersonalPlugins(root).preset)
+  const staged = stagePersonalPlugins(root)
+  const preset = await import(staged.preset)
+  const desktop = await import(staged.plugin)
+  t.mock.method(desktop.PersonalDesktopBridge.prototype, 'request', async (request: any) => {
+    assert.equal(request.action, 'approval_policy')
+    return { mode: 'auto', allowedCategories: [], connectorTools: [] }
+  })
   const handlers = new Map(), registered = new Map()
-  preset.apply({ tools: { register: (tool: any) => { registered.set(tool.name, tool); return () => {} }, restrict: () => () => {} },
+  preset.apply({ tools: { register: (tool: any) => { registered.set(tool.name, tool); return () => {} }, restrict: () => () => {}, schemas: () => [] },
     on: (name: string, handler: any) => handlers.set(name, handler), effect() {} })
   const native = { name: 'subagent', description: 'Native standalone task; returns job id. Collect with job_output.', parameters: { prompt: {} } }
   const scope = { session: { header: { agentPreset: 'personal-remote' } } }

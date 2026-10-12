@@ -186,6 +186,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         account.append(content); main.append(head, strip, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
         registry = globalThis.WeftUiCore.settingsRegistry({
             approvals: () => { let target=panels.get('approvals').querySelector('.permission-settings'); if(!target){target=node('div','permission-settings');panels.get('approvals').prepend(target);}globalThis.WeftPermissionRulesView(core,target,{toast:ui.toast}); },
+            connectors: ({target}) => globalThis.WeftConnectorsView(core,target,{desktop:!!globalThis.weftmateDesktop,toast:ui.toast}),
             executionRecords: ({target}) => globalThis.WeftExecutionRecordsView(core,target,{current:()=>dialog.open&&selected==='executionRecords',openConversation:async row=>{ui.byId('account-back').click();if(core.state.currentView!=='assistant')await core.enterAssistant();if(row)await core.selectSession(row.sessionId);}}),
             system: () => { void core.refreshSystem(); },
             data: ({target}) => globalThis.WeftDataView(core,target,{toast:ui.toast}),

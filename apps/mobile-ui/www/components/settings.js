@@ -56,6 +56,7 @@ const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
   account: target => accountPage(target), devices: target => devicesPage(target),
   usage: target => usagePage(target, state.usageSessionId || ''), models: target => modelsPage(target),
   schedules: target => {target.append(heading('提醒与定时任务'));const body=el('section');target.append(body);WeftSchedulesView(uiCore,body,{current:()=>body.isConnected&&state.page==='schedules',openConversation:id=>selectSharedSession(id)})},
+  connectors: target => {target.append(heading('连接器'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftConnectorsView(uiCore,body,{toast});},
   executionRecords: target => {target.append(heading('执行记录'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftExecutionRecordsView(uiCore,body,{current:()=>state.page==='executionRecords',openConversation:row=>row?selectSharedSession(row.sessionId):page('chat')});},
   about: target => aboutSettingsPage(target), approvals: target => approvalSettingsPage(target), memory: target => memoryPage(target), resources: target => workspacesPage(target),
 });

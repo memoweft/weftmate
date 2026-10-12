@@ -1855,6 +1855,7 @@ async function bootstrap() {
         throw Object.assign(new Error('unsafe preset'), { code: 'SESSION_READ_ONLY' });
       }
       if (request.action === 'approval_policy') return personalAccessService.getApprovalPolicy(request);
+      if (request.action === 'connector_call') return personalAccessService.callConnector(request);
       if (['register_approval', 'read_approval', 'resolve_approval'].includes(request.action)) {
         return personalAccessService.trackToolApproval(request);
       }
@@ -3500,6 +3501,8 @@ async function bootstrap() {
            memoryManager: personalMemoryManager,
           browserReader: personalBrowserReader,
           accountModelManager,
+          connectorVault: (await import('./personal-connectors/vault.mjs')).createConnectorVault(configStoreMod),
+          connectorRuntime: productDshRuntime,
           backupManager: personalBackupManager,
           systemManager: systemDiagnostics,
            sharedProfileIsFormal: (marker) => {
