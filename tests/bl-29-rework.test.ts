@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { startTimelineCandidate } from './integration/bl29-rework/fixture.mjs';
@@ -9,36 +9,8 @@ import { nativeTimelineLog } from '../src/runtime/dsh-adapter/timeline.mjs';
 import { getEventListeners } from 'node:events';
 import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
-import { cleanupOwnedProcesses, redactEvidenceText } from './helpers/process-evidence.mjs';
+import { probe } from './helpers/bl-29-probe.mjs';
 
-function probe(name: string, output: string, timeout = 60000, args: string[] = []) {
-  const root = mkdtempSync(join(tmpdir(), 'weftmate-bl29-regression-'));
-  const startedAt = Date.now();
-  try {
-    // Every nested Electron profile belongs to this probe, including when its
-    // Node controller times out before Playwright can close the application.
-    const env = { ...process.env, TMPDIR:root, TMP:root, TEMP:root, BL29_EVIDENCE_DIR:root, WEFTMATE_TEST_HOST_NAME:'synthetic-host' };
-    delete env.ELECTRON_RUN_AS_NODE;
-    const result = spawnSync(process.execPath, ['--report-on-fatalerror', '--report-exclude-env', `--report-directory=${root}`,
-      `tests/integration/bl29-rework/${name}.mjs`, ...args], {
-      env, windowsHide:true, encoding:'utf8', timeout, maxBuffer:8 * 1024 * 1024,
-    });
-    assert.equal(result.status, 0, JSON.stringify({probe:name,status:result.status,
-      hex:typeof result.status==='number'?'0x'+(result.status>>>0).toString(16).toUpperCase().padStart(8,'0'):null,
-      signal:result.signal,error:result.error?.message,stdout:result.stdout,stderr:result.stderr,
-      probeEvidence:result.status!==0&&existsSync(join(root,output))?readFileSync(join(root,output),'utf8'):null,
-      fatalReports:result.status===0?[]:readdirSync(root).filter(file=>/^report.*\.json$/.test(file))
-        .map(file=>({file,report:readFileSync(join(root,file),'utf8')}))}));
-    return JSON.parse(readFileSync(join(root, output), 'utf8'));
-  } finally {
-    if (process.platform === 'win32') {
-      const cleanup = cleanupOwnedProcesses({ startedAt, commandRoots:[root], executables:[process.execPath, createRequire(import.meta.url)('electron')] });
-      assert.equal(cleanup.available, true, 'probe process cleanup must be available');
-      assert.equal(cleanup.failed, 0, 'probe must not leave its owned processes running');
-    }
-    rmSync(root, {recursive:true, force:true, maxRetries:5, retryDelay:100});
-  }
-}
 
 test('BL-29b account watermark stays scoped to identity when switching to an older host', async () => {
   const ctx:any={WeftUiCore:{factories:{}},URLSearchParams};
@@ -145,19 +117,6 @@ test('BL-29b M1/S3 shipped mobile full lifecycle empty main budgets errors, reco
   assert.ok(r.background10s.length<=1, 'all bridge methods count in 10s hidden');
 });
 
-test('BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport', {timeout:60000}, () => {
-  const r = probe('probe-latency', 'latency.json', 55000);
-  assert.equal(r.failure, undefined);
-  for (const row of r.rows) {
-    assert.equal(row.error, undefined);
-    if (row.kind === 'rename') {assert.ok(row.desktop<=6000, JSON.stringify(row));assert.ok(row.mobile<=6000, JSON.stringify(row));}
-    else assert.ok(row.ms<=1000, JSON.stringify(row));
-  }
-  assert.equal(r.electronConfig.suggestions, false); assert.equal(r.mobileConfig.suggestions, false);
-  assert.ok(r.electronConfig.models.includes('added-electron')); assert.ok(r.mobileConfig.models.includes('added-electron'));
-  for (const row of r.configurationTimes) assert.ok(row.ms<=7000, JSON.stringify(row));
-});
-
 test('BL-29c N4 real Electron and mobile independently sync catalog, settings, personalization, rename and list within 7s', {timeout:60000}, t => {
   const r=probe('ui-extra','ui-extra.json',55000);
   t.diagnostic(JSON.stringify({kind:'independent-config-sync',...r}));
@@ -169,30 +128,4 @@ test('BL-29c N4 real Electron and mobile independently sync catalog, settings, p
   for(const row of r.rows)if(row.kind==='rename'){
     assert.ok(row.desktop<=6000,JSON.stringify(row));assert.ok(row.mobile<=6000,JSON.stringify(row));
   }else {assert.equal(row.error,undefined);assert.ok(row.ms<=1000,JSON.stringify(row));}
-});
-
-test('BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s', {timeout:30000}, () => {
-  const root=mkdtempSync(join(tmpdir(),'weftmate-bl29-decision-')),startedAt=Date.now();
-  try {
-    const env={...process.env,TMPDIR:root,TMP:root,TEMP:root,WEFTMATE_TEST_HOST_NAME:'synthetic-host',WEFTMATE_BL29_EVIDENCE_DIR:root};
-    delete env.ELECTRON_RUN_AS_NODE;
-    const run=spawnSync(process.execPath,[`--report-directory=${root}`,'tests/integration/bl-29-requests.mjs','--logical','--latency','--approval-commit-delay'],{
-      env,encoding:'utf8',windowsHide:true,timeout:25000,maxBuffer:4*1024*1024,
-    });
-    assert.equal(run.status,0,JSON.stringify({status:run.status,signal:run.signal,
-      error:run.error?.message?redactEvidenceText(run.error.message):undefined,
-      stdout:redactEvidenceText(run.stdout||''),stderr:redactEvidenceText(run.stderr||'')},null,2));
-    const r=JSON.parse(readFileSync(join(root,'responsiveness.json'),'utf8'));
-    assert.equal(r.failure,undefined);
-    for(const name of ['approval-visible','approval-accepted','question-visible','question-accepted']){
-      const check=r.checks.find(row=>row.name===name);assert.ok(check,`${name} really ran`);assert.ok(check.ms<=2000,JSON.stringify(check));
-    }
-  } finally {
-    if(process.platform==='win32') {
-      const cleanup=cleanupOwnedProcesses({startedAt,commandRoots:[root],executables:[process.execPath,createRequire(import.meta.url)('electron')]});
-      assert.equal(cleanup.available,true,'approval probe process cleanup must be available');
-      assert.equal(cleanup.failed,0,'approval probe must not leave its owned processes running');
-    }
-    rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});
-  }
 });

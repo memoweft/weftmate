@@ -2,13 +2,15 @@
   "evidence": "tests/evidence/ci-1/flaky-table.json",
   "tests": [
     {
-      "file": "tests/bl-29-rework.test.ts",
+      "file": "tests/bl-29-timing-sync.test.ts",
+      "evidenceFile": "tests/bl-29-rework.test.ts",
       "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
       "reason": "Real Electron/mobile must synchronize within 1000/6000/7000ms; cloud logs contain 55000ms controller deadlines and a real UI wait timeout. Historical spawn EINVAL was a separate already-fixed fixture failure.",
       "failureCount": 6
     },
     {
-      "file": "tests/bl-29-rework.test.ts",
+      "file": "tests/bl-29-timing-approval.test.ts",
+      "evidenceFile": "tests/bl-29-rework.test.ts",
       "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
       "reason": "Real Electron/mobile 2000ms responsiveness assertions plus a 25000ms controller deadline; logs show startup consuming 22541ms and another deadline during Electron teardown after all assertions passed.",
       "failureCount": 7

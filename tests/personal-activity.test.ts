@@ -46,6 +46,10 @@ test('native terminal task waits for background effects and shares the IA-3 resu
 test('activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes',async t=>{
   const f=await startTimelineCandidate({interactive:true,historyCount:0});t.after(()=>f.close());
   assert.equal((await fetch(`${f.origin}/personal/v1/activity`)).status,401);
+  // A startup activity flight may have sampled listUserQuestions before the
+  // fixture exposes its completed question frame. Commit that native frame
+  // through the real read path before asserting approval + question + memory.
+  await f.request(`/sessions/${f.sessionId}/questions`);
   await f.recordActivity({key:'pause',type:'memory.paused',title:'记忆已暂停',summary:'测试状态',level:'normal'});
   const initial=await f.request('/activity?limit=1');assert.ok(initial.hasMore);assert.ok(initial.unreadCount>=3);
   const memory=await f.request('/activity?type=memory');assert.equal(memory.items.length,1);

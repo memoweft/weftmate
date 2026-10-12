@@ -40,6 +40,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Start Windows UI system dependency install
+        if: runner.os == 'Windows'
+        run: .github/scripts/ci-windows-media.ps1 -Action start
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -64,6 +68,7 @@ jobs:
           key: ci-ui-binaries-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}-v1
 
       - name: Install Chromium for real UI regression probes
+        if: runner.os != 'Windows'
         run: npx playwright install --with-deps chromium
 
       - name: Materialize versioned Electron binary
@@ -104,6 +109,18 @@ jobs:
       - name: Nightly maintenance regressions (no device or task registration)
         if: matrix.shard == 1
         run: node --test tests/nightly-regression.test.mjs
+
+      - name: Windows UI dependency orchestration regression
+        if: runner.os == 'Windows' && matrix.shard == 1
+        run: node --test tests/ci-windows-media.test.mjs
+
+      - name: Wait for Windows UI system dependency install
+        if: runner.os == 'Windows'
+        run: .github/scripts/ci-windows-media.ps1 -Action wait
+
+      - name: Install Chromium binaries (Windows dependencies already verified)
+        if: runner.os == 'Windows'
+        run: npx playwright install chromium
 
       # The synthetic memory HTTP fixture listens on a second loopback host.
       # Linux/Windows accept 127/8; macOS needs the alias explicitly configured.
