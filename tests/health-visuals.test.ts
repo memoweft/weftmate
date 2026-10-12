@@ -28,6 +28,7 @@ test('reduced motion queues no frame and the count-up ends exactly on the format
  G.animateNumbers(root,{reducedMotion:true,request:()=>{throw Error('reduced motion must not animate');}});assert.equal(n.textContent,'52');
  G.animateNumbers(root,{clock:()=>0,request:(fn:Function)=>{frames.push(fn);return frames.length;},cancel:()=>{}});frames.shift()!(0);assert.equal(n.textContent,'0');frames.shift()!(400);assert.equal(n.textContent,'52');assert.equal(frames.length,0);
 });
+test('health motion follows both the app preference and system setting',()=>{const context=setup(),G=context.WeftHealthGraphics;context.matchMedia=()=>({matches:false});context.WeftReplyMotion={reduced:true};assert.equal(G.reducedMotion(),true);context.WeftReplyMotion.reduced=false;assert.equal(G.reducedMotion(),false);context.matchMedia=()=>({matches:true});assert.equal(G.reducedMotion(),true);assert.match(read('src/personal-access-ui/health.css'),/\[data-reduced-motion\] \.health-page \* \{ animation:none!important/);});
 const luminance=(hex:string)=>{const rgb=hex.slice(1).match(/../g)!.map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;};
 const contrast=(a:string,b:string)=>{const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
 test('health text tokens have both themes and at least 4.5:1 contrast on card and own tinted backgrounds',()=>{
