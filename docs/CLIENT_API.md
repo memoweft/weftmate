@@ -1604,3 +1604,67 @@ v2 是 v1 的超集：原来的七个字段仍必填，`version:2`；下面新�
 设置放在「回顾与洞察」旁边，无弹窗引导。开关说明：「会把每天的汇总数字发给你设置的模型，不发明细」。助手工具 `health_query` 参数 `{metric:"overview"|指标id,from?:YYYY-MM-DD,to?:YYYY-MM-DD}`，默认最近7天、最大90天；只返回精简汇总／基线对比及使用分钟，无记录返回「还没接上」。DATA-1七天背景补三个分数与状态，仍≤3600字符；周回顾补健康概况与最多一条有依据的使用观察。
 
 Android（安卓）须同步上述精确业务路径与拒绝用例，需要新壳版本；Apple（苹果端）继续原v1上传也可用，v2按本节补字段／批量入口，读取／设置／提醒接上述路由，不上传原始样本。HEALTH-3页面按本节接线；健康授权和手机采集由 HEALTH-4处理。
+
+### 16.4 v3、个人资料与按需各项分析（HEALTH-5）
+
+#### 16.4.1 每日记录 v3 = v2 的全部字段 + 下面这些（都可为 `null`）
+- `hrvSamples`: 当天每一次心率变异性测量，按时间升序，最多 96 条：
+  `{time, sdnnMs, rmssdMs, stressIndex, meanHeartRateBpm}`
+  - `time`：ISO 时刻；`sdnnMs`：系统给的 SDNN。
+  - `rmssdMs`、`stressIndex`、`meanHeartRateBpm`：**只在系统同时提供这次测量的逐搏间期（心搏序列）时由手机算出**，否则为 `null`。逐搏数据本身不离开手机。
+  - `stressIndex` 用 Baevsky 压力指数：`SI = AMo / (2 × Mo × MxDMn)`，RR 间期直方图组距固定 50 ms，`AMo` 为众数组占比（%），`Mo` 为众数组中值（秒），`MxDMn` 为最长与最短间期之差（秒）；先剔除异常搏动（与前一搏相差超过 20% 的间期），有效间期少于 30 个时为 `null`。
+- `heartRateQuarterHourly`: 96 项（当地时间每 15 分钟一格），每项 `{avg,min,max}` 或 `null`。`heartRateHourly` 仍照 v2 送。
+- `sleep.stages`: 可选，`[{start,end,stage}]`，`stage` ∈ `deep | core | rem | awake`，最多 200 段。
+
+电脑端通过 `GET /personal/v1/health/overview` 回执里的 `capabilities:{record:3,profile:true}` 表示支持；**手机只有看到 `record >= 3` 才送 v3，否则送 v2**（v2 的电脑端会拒绝多余字段）。批量补历史同理。
+
+#### 16.4.2 个人资料（不按天）
+`PUT /personal/v1/health/profile`，请求 `{version:1, birthYear, sex, heightCm, weightKg}`：
+- `birthYear` 只要年份（不要完整生日）；`sex` ∈ `male | female | other | null`；身高体重可为 `null`。
+- 来自系统健康库里的出生日期、生理性别、身高、体重（需要各自的读取授权；没授权就是 `null`）。
+- 只存在这台电脑上，随「清空健康数据」一起清除。`capabilities.profile` 为真时才送。
+
+#### 16.4.3 电脑端据此算出的三项（HEALTH-5 实现；这里只定名字和依据，公式细节写进 `docs/HEALTH.md`）
+- **压力**（0–100，带「最近一次测量 14:32」）：以每次测量的 `stressIndex`（没有时退到 `ln(sdnnMs)` 与当时心率）相对本人近 28 天清醒时段的分布来定位；依据 Baevsky 压力指数与「相对个人基线看心率变异性」的通行做法。Apple Watch 平时每隔几小时才测一次，所以它不是逐分钟的实时值，页面上要写明测量时间。
+- **电能**（0–100 的当日曲线）：一个充放电模型——睡眠与安静时段按恢复质量充电，清醒时按心率高出静息的程度与压力放电；每 15 分钟一步，起点由昨晚睡眠决定。依据 Firstbeat「基于 24 小时心率变异性的压力与恢复分析」白皮书所述的原理（交感 / 副交感活动 → 消耗 / 恢复）；参数是我们自己的，文档里写明「这是按公开原理做的估计，不等同于任何厂商的同名指标」。
+- **体能年龄**：由最大摄氧量对照同性别各年龄段的参考值反推，并与实际年龄比较；依据 HUNT 体能研究（Nes 等）与公开的分年龄最大摄氧量参考表。需要 `birthYear` 与 `sex`，缺任何一项就不显示。名字用「体能年龄」，不叫「身体年龄」。
+
+三项都相对「你自己」呈现趋势，都标明是估计、不是医学结论。
+
+#### 16.4.4 AI 分析（本人 2026-10-12：「这些数据中间可以加 AI 的分析字段吗？默认关闭的，但是可以打开」；随后定：「顶部那张默认用模型，下面各项默认关」）
+**两个开关，各管各的**（都在设置 → 健康数据里，都可以随时改）：
+- `modelInsightsEnabled`（顶部「今日解读」用不用模型）：**默认开**，与 HEALTH-2 一致，不改。
+- `itemAnalysisEnabled`（下面各项的「AI 分析」）：**默认关**，新增，由 HEALTH-5 加进 `GET/PATCH /personal/v1/settings/health`。电脑端回执里没有这个字段时（还没升级），页面当它是关并且不显示打开入口。
+
+下面各项各带一个「AI 分析」位置（恢复、睡眠、负荷、压力、电能、体能年龄、五项身体指标各一、活动；**不含顶部的今日解读**）：
+- `itemAnalysisEnabled` 关着：这一行是收起的一句话「让 AI 分析这一项」。点它，出现一句说明（「会把这一项每天的汇总数字发给你设置的模型，不发明细；随时可以在设置里关掉」）和一个按钮「打开 AI 分析」。点了就把这个开关打开，并立刻分析这一项。
+- 开着：这一行默认仍是收起的（只显示第一句），**展开时才生成**这一项的分析（按需，不预先把所有项都跑一遍）；同一项同一天生成过的直接用缓存。
+- 关掉后已生成的分析保留到当天结束，不再生成新的。两个开关互不影响：关掉各项分析不影响顶部的今日解读，反之亦然。
+
+接口（HEALTH-5 实现）：
+- `POST /personal/v1/health/analysis`，请求 `{scope, day}`；`scope` ∈ `recovery | sleep | load | stress | energy | fitnessAge | activity | vital:<id>`。回执 `{scope, day, mode, text, points, basis, generatedAt}`：`text` ≤ 200 字，`points` ≤ 3 条短句，`basis` 列出用到了哪些数据（例如「近 28 天的心率变异性」「近 7 天的深夜使用时长」），`mode` ∈ `model | statistics`（模型失败或超时退回统计版，不报错）。`itemAnalysisEnabled` 关着时返回 `409 AI_ANALYSIS_OFF`。每天每个账号最多 40 次生成。
+- `GET /personal/v1/health/analysis?day=YYYY-MM-DD`：当天已生成的各项（给页面恢复展开状态用）。
+- 模型拿到的只有：这一项近 60 天的逐日数值与基线、相关的两三项（例如分析恢复时带上睡眠与深夜使用时长）、三个分数的当前状态。不给对话原文、记忆原文、逐条样本。文字规则同「今日解读」：说人话、不下医学诊断、不提疾病与用药。
+- 页面在每条分析下面放一个「接着问它」，把这段分析带进主对话的输入框（不自动发送）。
+
+#### 16.4.5 返回形状与兼容补充
+
+v1 / v2 原请求和回执保持原样；只有 `version:3` 接受新增字段，仍拒绝未知键、非法时刻、倒序／重复样本、非法分期和非有限数字。v3 单条健康体上限64 KiB，v1／v2仍12 KiB；批量总上限仍1280 KiB、最多100天，可混合三版。96个心率桶加200段分期可能超过12 KiB，因此只放宽v3单条上限（相对编排约定的显式补充）。`sleep.stages`允许null；段按开始升序、不重叠、end>start。profile所有五个键必须提供，缺授权用null；birthYear为1900至账号当年，heightCm／weightKg为正有限数或null。回执 `{profile,updatedAt}`。不提供单独读取资料接口，overview只给计算结果。
+
+overview新增 `capabilities:{record:3,profile:true}` 与三项可空对象；完全无对应输入时为null，已有部分输入但不够计算时为对象、`state:"insufficient"`和`missing`。三项均附 `disclaimer`。字段固定如下：
+
+- `stress:{score,average,latest:{value,time}|null,samples:[{time,value,method}],baselineDays,state,label,missing,disclaimer}`。没有当天有效清醒测量或对应方法不足7个历史有效日时score／average／latest.value为null，不能给判断；method为`stressIndex|sdnnHeartRate`。score是最近测量值，average是当天有效值均值。历史窗口不含当天。
+- `energy:{score,current,curve:[{time,value}],sleepPeriods:[{start,end}],highest,lowest,nightCharged,dayDrained,degraded,state,label,missing,disclaimer}`。curve固定96个当地15分钟格，time是当地`HH:mm`，value可为null；不投射今天尚未到来的时段。current／score取最后已完成桶的值。缺15分钟心率用对应小时桶并标degraded；两者都缺则该桶null，不能当安静。初值缺睡眠／恢复或静息心率时insufficient。
+- `fitnessAge:{fitnessAge,actualAge,difference,referenceRange:{low,high}|null,vo2Max,vo2MaxDay,trend:[{day,value}],bounded,state,label,missing,disclaimer}`。最大摄氧量取截至目标日60天内最近有效值，trend为连续60天。actualAge=目标年−birthYear（只知年份的近似），difference=fitnessAge−actualAge。sex为other／null时不套用male／female表；missing含`sex`。范围外饱和并标bounded。
+
+metrics新增`stress|energy|fitnessAge`（vo2Max原已支持），value分别为日平均压力、最后有效电能、体能年龄。所有metrics允许`to=YYYY-MM-DD`结束日期（默认今天，不能未来），原days口径不变。usage新增`lastUsedAt`（昨夜18:00至目标日12:00之前最后一条用户消息时刻，ISO或null，不是屏幕关闭时刻）；load新增`recommendedRange:{low,high,unit:"relative"}`或null（近42天平均±15%，用于活动安排参考）。
+
+GET `/health/weekly?to=YYYY-MM-DD`独立返回`{from,to,health}`；to为不包含的周结束日，默认明天，health沿用周回顾中的健康对象或null。建议remind请求sessionId改为可选；缺省时在主对话准备原生会话锚点，不发送模型消息，沿用原定时任务授权和幂等。
+
+POST analysis仅接受上述scope和合法day（非未来、保留范围内），关闭时409 `AI_ANALYSIS_OFF`优先于缓存；GET回执`{day,items:[analysis]}`，关闭仍可读当天缓存。每天账号40次生成包含统计退回版、缓存命中不计数，超限429 `AI_ANALYSIS_LIMIT`。缓存按账号／day／scope，生成资格持久化，重启不重置；开关关掉取消在途单项请求并丢弃迟到结果，已缓存项保留至当天结束。清空健康数据一并删除profile和单项缓存；当日生成次数作为无健康内容的额度元数据保留，清空不会重新获得40次额度。
+
+16.4增量：`energy.sleepPeriods`是曲线上的睡眠区间，按当地`HH:mm`返回；跨零点时start晚于end，无可定位的睡眠时段为`[]`。优先合并相邻非awake分期，否则使用sleep.start/end。`fitnessAge.referenceRange`是本人性别／实际年龄十岁分组的VO₂max第25–75百分位（单位mL/kg/min，同参考表）；缺性别／birthYear、未成年人时null，80岁以上使用最后70–79岁组并在依据中说明适用边界。
+
+DATA-1日摘要usage可增量返回`lastUserMessageAt`（ISO或null），仅取已允许的用户消息来源，供健康页夜间结束时刻投影；原使用分钟估算法和字段不变。分析生成期间若健康输入清空／替换导致资料代次变化，返回409 `HEALTH_DATA_CHANGED`，要求重新展开读取当前数据；两个模型开关互改不触发该代次冲突。
+
+压力的sdnnHeartRate降级：无同次meanHeartRateBpm时优先取测量所在15分钟心率桶avg，再退到同小时avg；这符合v3无逐搏数据时同次心率为null的采集约定。沿用原method字段，`missing:["measurementHeartRate"]`说明所用心率为时间桶估计；两种桶都缺则不给压力值。
