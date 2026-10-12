@@ -1,7 +1,7 @@
 /* MOB-2: one mobile scale for controls, cards and reading rhythm. */
 body { font-size:var(--text-size,var(--mobile-body-size)); line-height:var(--mobile-body-leading); }
 button,input,textarea { -webkit-tap-highlight-color:transparent; }
-button:not(.mobile-session-button):not(.row):not(.activity-row-open):not(.library-row-open):not(.goals-row-open) { border-radius:var(--mobile-control-radius); }
+button:not(.mobile-session-button):not(.row):not(.activity-row-open):not(.library-row-open):not(.goals-row-open):not(.health-metric):not(.health-vital):not(.health-dimension):not(.health-activity-value) { border-radius:var(--mobile-control-radius); }
 button { min-height:var(--mobile-control-size); }
 #app button,dialog.mobile-sheet button { min-width:var(--mobile-control-size); min-height:var(--mobile-control-size); }
 button:hover:not(:disabled) { background-color:var(--soft); }

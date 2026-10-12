@@ -9,12 +9,16 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms)), report={};
 const fixtureUrl=pathToFileURL(resolve('tests/integration/timeline-ui-candidate.mjs'));
 let code=readFileSync(fixtureUrl,'utf8').replaceAll('import.meta.url',JSON.stringify(fixtureUrl.href));
 code=code.replace(/from '(\.\.?\/[^']+)'/g,(_,p)=>`from '${new URL(p,fixtureUrl).href}'`);
+code=code.replace(new URL('../../src/personal-access/index.mjs',fixtureUrl).href,new URL('../helpers/personal-access-test-service.mjs',fixtureUrl).href);
 code=code.replace('return { root, origin,','return { root, origin, debug:{backend,service,eventWaiters,auth,cookie},');
 const {startTimelineCandidate}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
 export {startTimelineCandidate};
 if(process.argv.includes('--export-only')){}else{
 const f=await startTimelineCandidate({daily:true,inlineProgress:true,historyCount:0});
 try{
+ // This auth/wait probe controls its wake source; the independent activity
+ // observer must not enter the held read or finish a wait before logout.
+ await f.debug.service.__stopBackgroundActivity();
  const main=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
  const send=await f.request('/commands',{requestId:'rev-wait',kind:'chat.message',chatId:main.chatId,text:'synthetic',modelProfileId:'local',targetDeviceId:host});
  for(let n=0;n<100;n++){if((await f.request('/commands/'+send.command.commandId)).command.state==='accepted_by_dsh')break;await pause(10);}
@@ -38,7 +42,9 @@ try{
  const originalRead=f.debug.backend.readEvents;let gateResolve,gateStarted=false,hold=false;
  const gate=new Promise(r=>gateResolve=r);
  f.debug.backend.readEvents=async args=>{if(hold&&!gateStarted){gateStarted=true;await gate;}return originalRead(args);};
- const authWait=raw(latest());await pause(100);hold=true;f.progress.text('must not leak after logout');
+ const authPage=await f.request(`/chats/${main.chatId}/events?limit=100`);cursor=authPage.syncCursor;live=authPage.liveRevision;
+ const authWait=raw(latest());while(f.debug.eventWaiters.size===0)await pause(1);
+ hold=true;f.progress.text('must not leak after logout');
  for(let i=0;i<100&&!gateStarted;i++)await pause(5);
  const logout=await raw('/auth/logout',{method:'POST',body:{}});gateResolve();r=await authWait;
  report.logoutAfterQuery={gateStarted,logout:logout.status,response:r.status,body:await r.json()};f.debug.backend.readEvents=originalRead;

@@ -1,0 +1,16 @@
+{
+  "synthetic": true,
+  "realNativeBusinessBridge": true,
+  "modelRequests": 0,
+  "checks": [
+    "three-health-reads-through-real-native-allowlist"
+  ],
+  "screenshots": [],
+  "settingsChanged": false,
+  "systemVersion": "15",
+  "systemTheme": "Night mode: yes",
+  "pageErrors": [],
+  "completed": false,
+  "failure": "The expression evaluated to a falsy value:\n\n  assert.ok(geometry.bottom>0)\n",
+  "instrumentationPassed": true
+}

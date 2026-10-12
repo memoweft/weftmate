@@ -39,8 +39,9 @@ app.whenReady().then(async () => {
   if (action === 'read') {
     let readable = false;
     let revision=null;
-    try { if(store.initializeCredentialStorage) await store.initializeCredentialStorage(); store.preflightVault(); const key=store.getCredential('synthetic-model'); revision=key==='synthetic-rob1-old-key'?'old':key==='synthetic-rob1-key'?'new':null; readable=!!revision; } catch {}
-    process.stdout.write(JSON.stringify({ stage:'read', readable, revision, files:metadata() })+'\n');
+    let readError=null;
+    try { if(store.initializeCredentialStorage) await store.initializeCredentialStorage(); store.preflightVault(); const key=store.getCredential('synthetic-model'); revision=key==='synthetic-rob1-old-key'?'old':key==='synthetic-rob1-key'?'new':null; readable=!!revision; } catch(error) {readError={name:error?.name||'Error',code:error?.code||null};}
+    process.stdout.write(JSON.stringify({ stage:'read', readable, revision, readError, files:metadata() })+'\n');
     app.quit(); return;
   }
   if (action === 'refill') { await store.initializeCredentialStorage(); store.saveSubmittedCredential('synthetic-model','synthetic-rob1-key'); app.quit(); return; }
@@ -48,4 +49,4 @@ app.whenReady().then(async () => {
   if (store.initializeCredentialStorage) await store.initializeCredentialStorage();
   store.saveCredential('synthetic-model', action==='normal'?'synthetic-rob1-old-key':'synthetic-rob1-key');
   if (action === 'normal') app.quit();
-}).catch(() => { process.stdout.write(JSON.stringify({stage:'fixture-failure'})+'\n'); app.exit(74); });
+}).catch(error => { process.stdout.write(JSON.stringify({stage:'fixture-failure',name:error?.name||'Error',code:error?.code||null})+'\n'); app.exit(74); });

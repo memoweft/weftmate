@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { createPersonalAccessService } from '../src/personal-access/index.mjs'
+import { createPersonalAccessService } from './helpers/personal-access-test-service.mjs'
 import { createDshSessionAdapter } from '../src/runtime/dsh-adapter/sessions.mjs'
 import { questionSourceAsOf } from '../src/runtime/dsh-adapter/agents.mjs'
 
@@ -546,6 +546,9 @@ test('22000+ step-heavy history approves the exact current source using only its
     try {
       // This probe measures approval source reads, not the independent daily observer.
       assert.equal((await f.request('settings/notifications', { reviewEnabled: false }, {}, 'PATCH')).status, 200)
+      // Disabling review does not stop activity's native history sampling. Drain
+      // its in-flight work before installing the exact approval-read counter.
+      await f.service.__stopBackgroundActivity()
       const current = f.events.splice(0), prefix: any[] = []
       for (let turn = 1; turn <= 1000; turn++) {
         prefix.push({ type: 'turn.started', data: { turn } },

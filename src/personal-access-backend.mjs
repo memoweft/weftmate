@@ -167,7 +167,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         ...(priority ? { priority } : {}), ...(onStart ? { onStart } : {}),
         headers: { 'content-type': 'application/json', accept: body.stream ? 'text/event-stream' : 'application/json',
           authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ ...(priority === 'suggestion' || purpose === 'second-opinion' ? suggestionCompletionBody(profile, body, declaredEfforts) : body), model: canonicalProviderModelId(profile.baseUrl, body.model) }),
+        body: JSON.stringify({ ...(priority === 'suggestion' || ['second-opinion','health-insight'].includes(purpose) ? suggestionCompletionBody(profile, body, declaredEfforts) : body), model: canonicalProviderModelId(profile.baseUrl, body.model) }),
       })
     },
     async preflight(command) {

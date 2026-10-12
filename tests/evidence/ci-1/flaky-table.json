@@ -1,0 +1,3606 @@
+{
+  "generatedAt": "2026-10-12T09:01:44.627Z",
+  "cohortSelectedAt": "2026-10-12T07:46:55.474Z",
+  "workflow": "ci.yml",
+  "limit": 80,
+  "runs": [
+    {
+      "conclusion": "",
+      "createdAt": "2026-10-12T07:42:21Z",
+      "databaseId": 38219238491,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "7fb2628dfbc1349581f3641f7244fce3ba0a5a01",
+      "status": "in_progress",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219238491"
+    },
+    {
+      "conclusion": "",
+      "createdAt": "2026-10-12T07:42:07Z",
+      "databaseId": 38219217206,
+      "event": "pull_request",
+      "headBranch": "chore/apple-login-note",
+      "headSha": "4495d6a0c00ac8935043928c120efe56af5e46aa",
+      "status": "in_progress",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219217206"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T07:40:31Z",
+      "databaseId": 38219066406,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "5d437554add4fa5475ee1d5156a79b9da111e3e4",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219066406"
+    },
+    {
+      "conclusion": "",
+      "createdAt": "2026-10-12T07:40:25Z",
+      "databaseId": 38219055464,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "36c50654feeb399ae6d3f8dc1b3ccea7937cd059",
+      "status": "in_progress",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219055464"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T06:18:34Z",
+      "databaseId": 38211892427,
+      "event": "workflow_dispatch",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "ffe05068a52520e98e7f844ef75d072c3245dc31",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38211892427"
+    },
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-12T06:09:00Z",
+      "databaseId": 38211140036,
+      "event": "pull_request",
+      "headBranch": "wp/web-1-official-site",
+      "headSha": "e89ad0414cd2a00ca926598faf84e88a43281040",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38211140036"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T06:07:10Z",
+      "databaseId": 38210997398,
+      "event": "pull_request",
+      "headBranch": "wp/web-1-official-site",
+      "headSha": "fc70b0c4615999329719b5a18474451cfeaa0cf6",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38210997398"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T06:03:59Z",
+      "databaseId": 38210748135,
+      "event": "pull_request",
+      "headBranch": "wp/web-1-official-site",
+      "headSha": "f5200037be653e81af7330c56e44f8324b5704d7",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38210748135"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T05:33:57Z",
+      "databaseId": 38208483319,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "79c133767d87a0c2960e70e47ee04be2c282620b",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38208483319"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T05:30:28Z",
+      "databaseId": 38208227424,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "7ceec016cf21f92958f84daa893e3a863777a758",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38208227424"
+    },
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-12T05:26:45Z",
+      "databaseId": 38207958670,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "d6f0f991df8d428f1e928e92e747427beac91153",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38207958670"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T05:24:01Z",
+      "databaseId": 38207762445,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "4b95323af61d97fe3d915ba52f1688b625aff670",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38207762445"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:46:25Z",
+      "databaseId": 38205148538,
+      "event": "pull_request",
+      "headBranch": "wp/ux-2-no-native-popups",
+      "headSha": "d638623dd8056bea38719de14a553f09c0ddc83d",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38205148538"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:43:55Z",
+      "databaseId": 38204977018,
+      "event": "pull_request",
+      "headBranch": "wp/sec-1-second-opinion",
+      "headSha": "8e931de764a0e45e721bbc78acc72e1765698221",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204977018"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T04:42:21Z",
+      "databaseId": 38204871632,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "b772103b226716cf41fdf28796082b26e7d55066",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204871632"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:42:14Z",
+      "databaseId": 38204863931,
+      "event": "pull_request",
+      "headBranch": "wp/ux-3-quieter-replies",
+      "headSha": "3fe199d28c7fd003538edb2175701babbdedbb7b",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204863931"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T04:39:28Z",
+      "databaseId": 38204671900,
+      "event": "pull_request",
+      "headBranch": "wp/apple-2-login-first",
+      "headSha": "2a3a47a88d08c53aaf529ec6f269e965559531b3",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204671900"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T04:38:38Z",
+      "databaseId": 38204616924,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "7c57c43fa05db1389ff4b9bbb2ab58ae31b66a18",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204616924"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T04:29:32Z",
+      "databaseId": 38203995777,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "41f10a2c253177fdc9b1bc1e0a66a3c6348c80e8",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203995777"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T04:20:12Z",
+      "databaseId": 38203359309,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "7c6d0851e0e406281a3eeb76c365062d8f64ddba",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203359309"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T04:19:03Z",
+      "databaseId": 38203283463,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "fc5b31d2b77780716b3f6977d196f24ad43a11ae",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203283463"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T04:12:47Z",
+      "databaseId": 38202863508,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "84062f7c20f5e92452f603a23c453477f615b420",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202863508"
+    },
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-12T04:10:03Z",
+      "databaseId": 38202675097,
+      "event": "pull_request",
+      "headBranch": "wp/ux-2-no-native-popups",
+      "headSha": "1b73fcab2fa398e5998740ccf5ae068dfc2e1707",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202675097"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T04:09:13Z",
+      "databaseId": 38202621967,
+      "event": "pull_request",
+      "headBranch": "wp/ux-2-no-native-popups",
+      "headSha": "d06a3a81dad2f49575e95189a86ac6fa8a417ed5",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202621967"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T04:07:57Z",
+      "databaseId": 38202536232,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "b26406f1753e1f824a3ef582c0abbb3273fc543a",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202536232"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T03:52:02Z",
+      "databaseId": 38201453268,
+      "event": "pull_request",
+      "headBranch": "wp/ux-3-quieter-replies",
+      "headSha": "071ded31c1026f2b05ac47901cc306cd734cfb82",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38201453268"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T03:51:35Z",
+      "databaseId": 38201423138,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "1592a0295148a7a7f82e9eaa2c37821982e7d15f",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38201423138"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T03:45:19Z",
+      "databaseId": 38200999354,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "0b48b5c9c0277d618696640b81ed7194c4a4d482",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200999354"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T03:45:03Z",
+      "databaseId": 38200980901,
+      "event": "pull_request",
+      "headBranch": "wp/mob-2-mobile-refresh",
+      "headSha": "8276bda781f28a2e1c8320ec633a02daa8f006d0",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200980901"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T03:37:25Z",
+      "databaseId": 38200478590,
+      "event": "pull_request",
+      "headBranch": "wp/data-1-daily-digest",
+      "headSha": "d54557d1061980ee166bfaa5f1db5859381faf05",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200478590"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T03:25:48Z",
+      "databaseId": 38199711320,
+      "event": "pull_request",
+      "headBranch": "wp/mob-2-mobile-refresh",
+      "headSha": "2f0789416d7749676de4d8174ce5de904a4bf1cf",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38199711320"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T03:05:06Z",
+      "databaseId": 38198356416,
+      "event": "pull_request",
+      "headBranch": "wp/ux-3-quieter-replies",
+      "headSha": "8df973b9d2dd73f64a084bf8998812e976fbc425",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38198356416"
+    },
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-12T02:58:17Z",
+      "databaseId": 38197888969,
+      "event": "pull_request",
+      "headBranch": "wp/apple-2-login-first",
+      "headSha": "e166a59e21336351be6f7de250abd309152310d8",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38197888969"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T02:04:54Z",
+      "databaseId": 38194388715,
+      "event": "pull_request",
+      "headBranch": "wp/apple-2-login-first",
+      "headSha": "016ba03b8f9dc8ee390c58145de15010e1d379f2",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38194388715"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-12T02:02:21Z",
+      "databaseId": 38194223671,
+      "event": "pull_request",
+      "headBranch": "wp/apple-2-login-first",
+      "headSha": "f8edd4f5f355f3a21db819bb74a76406e014a95f",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38194223671"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T00:09:08Z",
+      "databaseId": 38186916036,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "af819a0c809b9a0ff056703e7ec94e7c5ed11b22",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186916036"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-12T00:09:01Z",
+      "databaseId": 38186908303,
+      "event": "pull_request",
+      "headBranch": "wp/bl-38-vendor-cache-safety",
+      "headSha": "0fb0db7cafc8a61371c42f4a61a90e23d484e86b",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186908303"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T23:22:46Z",
+      "databaseId": 38184057177,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "9d5dc5d69d97bd5f5aaa7096e55af648ed61db92",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38184057177"
+    },
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-11T23:22:38Z",
+      "databaseId": 38184048714,
+      "event": "pull_request",
+      "headBranch": "wp/st-2-permission-rules",
+      "headSha": "296fbee1986e8b2d0dd5bc62ee3c0314f57478c9",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38184048714"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T23:20:07Z",
+      "databaseId": 38183885812,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "3d9798a3146f66de04915541d3934776e5a53ee4",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183885812"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T23:19:59Z",
+      "databaseId": 38183876229,
+      "event": "pull_request",
+      "headBranch": "wp/sys-3-windows-integration",
+      "headSha": "e80a70357d06d8ad21b9e3d1f80ab0c5a80add16",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183876229"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T23:19:20Z",
+      "databaseId": 38183837765,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "28df81f61c65380e22101805aa9f461843be3147",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183837765"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T22:43:09Z",
+      "databaseId": 38181528364,
+      "event": "pull_request",
+      "headBranch": "wp/bl-38-vendor-cache-safety",
+      "headSha": "c57c61c9a513ee5018f8f47eb5636ab3a24e779f",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38181528364"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T22:32:03Z",
+      "databaseId": 38180802858,
+      "event": "pull_request",
+      "headBranch": "wp/bl-38-vendor-cache-safety",
+      "headSha": "a78593bb1fd6d9c2fa55aea19f509bcc81669f37",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38180802858"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T22:28:21Z",
+      "databaseId": 38180551178,
+      "event": "pull_request",
+      "headBranch": "wp/bl-38-vendor-cache-safety",
+      "headSha": "cf9b473509371b066edd693b833afcc77bed00cd",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38180551178"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T20:54:30Z",
+      "databaseId": 38174156747,
+      "event": "pull_request",
+      "headBranch": "wp/sys-3-windows-integration",
+      "headSha": "32da9a02e26046546c1f121ce4ca9cff07b2c409",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38174156747"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T20:31:05Z",
+      "databaseId": 38172542464,
+      "event": "pull_request",
+      "headBranch": "wp/st-2-permission-rules",
+      "headSha": "089a84288cc85f9e394268c8238fc8892f0a019f",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172542464"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T20:26:37Z",
+      "databaseId": 38172227801,
+      "event": "pull_request",
+      "headBranch": "wp/mem-3-weekly-memory-digest",
+      "headSha": "60230f401658914a6e3c04c1303f9130f6d54266",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172227801"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T20:16:44Z",
+      "databaseId": 38171525464,
+      "event": "pull_request",
+      "headBranch": "wp/st-2-permission-rules",
+      "headSha": "b799c98877c0fc8a83f9a76521c379a50c511243",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38171525464"
+    },
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-11T19:44:37Z",
+      "databaseId": 38169300516,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "cddb56464b013010cc513668a55f8995476c1156",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169300516"
+    },
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-11T19:44:29Z",
+      "databaseId": 38169292412,
+      "event": "pull_request",
+      "headBranch": "wp/r0-4-in-app-feedback",
+      "headSha": "3daa13ae548b354d242681d4ae1230521c3ba143",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169292412"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T19:41:59Z",
+      "databaseId": 38169121188,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "f19fe7bca0151fc7ffe93d61dc42b8e2b30a1283",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169121188"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:59:58Z",
+      "databaseId": 38166147082,
+      "event": "pull_request",
+      "headBranch": "wp/r0-4-in-app-feedback",
+      "headSha": "1c2d6394f6b97808c45c59b2117c8d055be68c8d",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38166147082"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:59:01Z",
+      "databaseId": 38166085141,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "e70f1427318db8aca66dc09777b65c743ffbc8d4",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38166085141"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:19:45Z",
+      "databaseId": 38163340132,
+      "event": "pull_request",
+      "headBranch": "wp/inst-1-branded-installer",
+      "headSha": "77da44d23bf10668f591ff0d0e7790bf1dbaf0c4",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163340132"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:14:53Z",
+      "databaseId": 38163003827,
+      "event": "pull_request",
+      "headBranch": "wp/r0-2-diagnose-and-repair",
+      "headSha": "847216bcf10bb046e4cbfd84e918bc40bee61617",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163003827"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T18:14:45Z",
+      "databaseId": 38162995493,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "81b65e1e34f978f47f020f2a5fa867c57b8d06d2",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162995493"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T18:05:46Z",
+      "databaseId": 38162367372,
+      "event": "pull_request",
+      "headBranch": "wp/sys-3-windows-integration",
+      "headSha": "6b888960546c0290e9f514ce023ccf877fa4bcdf",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162367372"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T18:02:14Z",
+      "databaseId": 38162122491,
+      "event": "pull_request",
+      "headBranch": "wp/r0-2-diagnose-and-repair",
+      "headSha": "f2cdb55cfd909bedebfa49e2960e5e6072f4d8a6",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162122491"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T18:01:30Z",
+      "databaseId": 38162072501,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "1ddae8b3ae60ffa652d02499e9f2333b8b1eb6ae",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162072501"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T17:59:19Z",
+      "databaseId": 38161909482,
+      "event": "pull_request",
+      "headBranch": "wp/inst-1-branded-installer",
+      "headSha": "4bc7d01b00e2a22b6e44cbb583e10c6270ccb738",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161909482"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T17:56:07Z",
+      "databaseId": 38161704747,
+      "event": "pull_request",
+      "headBranch": "wp/r0-2-diagnose-and-repair",
+      "headSha": "60471e5f7a34e43547264ce8a5308f133da6e744",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161704747"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T17:55:10Z",
+      "databaseId": 38161639170,
+      "event": "pull_request",
+      "headBranch": "wp/r0-2-diagnose-and-repair",
+      "headSha": "ed5af6d547c989ab0a0d48bee5d816df718738f5",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161639170"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T17:32:40Z",
+      "databaseId": 38160093571,
+      "event": "pull_request",
+      "headBranch": "chore/apple-run-log-changelog",
+      "headSha": "ac516ae79e6469bc64987e157bfd9ce5fb92eabb",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38160093571"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T17:31:42Z",
+      "databaseId": 38160025951,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "7c166452cab1440f15bcbbc3a29b5ef36cafee49",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38160025951"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T17:26:30Z",
+      "databaseId": 38159651386,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "59d971e792f1feb692038252677ec5781924a387",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38159651386"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T16:48:31Z",
+      "databaseId": 38156992023,
+      "event": "pull_request",
+      "headBranch": "wp/diag-3-apple-run-log",
+      "headSha": "d4733489bfa5d3bf65931aa1023ab461db6341e1",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38156992023"
+    },
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-10-11T16:09:51Z",
+      "databaseId": 38154299146,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "a1ed8955731857c27f25601b5b1ce109901cf0af",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38154299146"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T16:09:48Z",
+      "databaseId": 38154294706,
+      "event": "pull_request",
+      "headBranch": "wp/r0-4-in-app-feedback",
+      "headSha": "287316eaece66ea732cd24603450790ebf8576ea",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38154294706"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T15:50:49Z",
+      "databaseId": 38152988458,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "305b5088e7713cea8565063a97b20669fe0e8f97",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38152988458"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T14:38:02Z",
+      "databaseId": 38147975598,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "ba45182d551ef4c8a827d5846fcb3e9a1e9287bd",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38147975598"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T12:58:29Z",
+      "databaseId": 38141321791,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "1491fe5a88c95428a2781d6277702fd5260f7cfd",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38141321791"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T12:19:35Z",
+      "databaseId": 38138830162,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "fea5567a96290b11ebb538e4170866b62bfa8063",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38138830162"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T12:19:02Z",
+      "databaseId": 38138796238,
+      "event": "pull_request",
+      "headBranch": "wp/mem-3-weekly-memory-digest",
+      "headSha": "3f0b10d627cb9caf01a614414e4338cec70ec016",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38138796238"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T11:50:13Z",
+      "databaseId": 38137017047,
+      "event": "push",
+      "headBranch": "main",
+      "headSha": "375d68ed021c4eca1162d7055e30165c6003021f",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38137017047"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T11:48:44Z",
+      "databaseId": 38136926541,
+      "event": "pull_request",
+      "headBranch": "chore/core-ref-mem6",
+      "headSha": "8713d8840f0b135d3547335c429ebc12aff11396",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136926541"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T11:37:23Z",
+      "databaseId": 38136238276,
+      "event": "pull_request",
+      "headBranch": "wp/mem-3-weekly-memory-digest",
+      "headSha": "2dc54b68f4552ced5c704ec745b0396e368ec586",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136238276"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T11:35:11Z",
+      "databaseId": 38136104526,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "1f14e780542d5e794a0413ae8fd8fbae22a07578",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136104526"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-10-11T11:13:02Z",
+      "databaseId": 38134745129,
+      "event": "pull_request",
+      "headBranch": "wp/auth-1-login-first",
+      "headSha": "fd956bc0b3045c05755e2dff4d25e2ad08ba3b4e",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134745129"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-11T11:09:04Z",
+      "databaseId": 38134508827,
+      "event": "pull_request",
+      "headBranch": "wp/bl-29-quiet-when-idle",
+      "headSha": "5a338cbb9ad9d22a2f8cc60217066aff252d5bbd",
+      "status": "completed",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134508827"
+    }
+  ],
+  "errors": [],
+  "durations": [
+    {
+      "job": "test (ubuntu-latest)",
+      "jobSeconds": {
+        "samples": 60,
+        "median": 833,
+        "p95": 871,
+        "max": 925
+      },
+      "requiredSeconds": {
+        "samples": 60,
+        "median": 723,
+        "p95": 761,
+        "max": 764
+      }
+    },
+    {
+      "job": "test (windows-latest)",
+      "jobSeconds": {
+        "samples": 33,
+        "median": 2463,
+        "p95": 2638,
+        "max": 2804
+      },
+      "requiredSeconds": {
+        "samples": 33,
+        "median": 2150,
+        "p95": 2349,
+        "max": 2480
+      }
+    }
+  ],
+  "table": [
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/bl-29-rework.test.ts",
+      "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+      "type": "timeout",
+      "count": 5,
+      "runIds": [
+        38219055464,
+        38197888969,
+        38169300516,
+        38154299146
+      ],
+      "attempts": [
+        "38219055464/1",
+        "38197888969/1",
+        "38197888969/2",
+        "38169300516/1",
+        "38154299146/1"
+      ],
+      "examples": [
+        {
+          "runId": 38219055464,
+          "attempt": 1,
+          "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 25055.4546\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:174:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\n      \"status\": null,\n      \"signal\": \"SIGTERM\",\n      \"error\": \"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\n      \"stdout\": \"BL-29 lifecycle: startup / synthetic cloud authentication started (0ms)\\nBL-29 lifecycle: fixture / verified synthetic cloud authentication ready (14401ms)\\nBL-29 lifecycle: main warmup started (14402ms)\\nBL-29 lifecycle: main warmup ready (14596ms)\\nBL-29 lifecycle: desktop launch started (14597ms)\\nBL-29 lifecycle: desktop window ready (15187ms)\\nBL-29 lifecycle: desktop native initialization started (15347ms)\\ndesktop logged in\\nBL-29 lifecycle: desktop ready / mobile launch started (17096ms)\\nBL-29 lifecycle: mobile verified session / desktop and mobile ready (18027ms)\\nBL-29 lifecycle: approval-visible check started (20167ms)\\nBL-29 lifecycle: approval-visible check passed (20755ms)\\nBL-29 lifecycle: approval-accepted check started (20755ms)\\nBL-29 lifecycle: approval-accepted check passed (20854ms)\\nBL-29 lifecycle: question-visible check started (20891ms)\\nBL-29 lifecycle: question-visible check passed (21104ms)\\nBL-29 lifecycle: question-accepted check started (21118ms)\\nBL-29 lifecycle: question-accepted check passed (21227ms)\\n\",\n      \"stderr\": \"\"\n    }\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:182:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        },
+        {
+          "runId": 38197888969,
+          "attempt": 1,
+          "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 25100.0005\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:174:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\n      \"status\": null,\n      \"signal\": \"SIGTERM\",\n      \"error\": \"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\n      \"stdout\": \"BL-29 lifecycle: startup / synthetic cloud authentication started (0ms)\\nBL-29 lifecycle: fixture / verified synthetic cloud authentication ready (9319ms)\\nBL-29 lifecycle: main warmup started (9319ms)\\nBL-29 lifecycle: main warmup ready (12570ms)\\nBL-29 lifecycle: desktop launch started (12571ms)\\nBL-29 lifecycle: desktop window ready (21874ms)\\nBL-29 lifecycle: desktop native initialization started (22006ms)\\ndesktop logged in\\n\",\n      \"stderr\": \"\"\n    }\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:182:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        },
+        {
+          "runId": 38197888969,
+          "attempt": 2,
+          "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 25039.8893\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:174:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\n      \"status\": null,\n      \"signal\": \"SIGTERM\",\n      \"error\": \"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\n      \"stdout\": \"BL-29 lifecycle: startup / synthetic cloud authentication started (0ms)\\nBL-29 lifecycle: fixture / verified synthetic cloud authentication ready (14882ms)\\nBL-29 lifecycle: main warmup started (14882ms)\\nBL-29 lifecycle: main warmup ready (15929ms)\\nBL-29 lifecycle: desktop launch started (15930ms)\\nBL-29 lifecycle: desktop window ready (19195ms)\\nBL-29 lifecycle: desktop native initialization started (19309ms)\\ndesktop logged in\\nBL-29 lifecycle: desktop ready / mobile launch started (21494ms)\\nBL-29 lifecycle: mobile verified session / desktop and mobile ready (22541ms)\\n\",\n      \"stderr\": \"\"\n    }\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:182:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/bl-29-rework.test.ts",
+      "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
+      "type": "timeout",
+      "count": 4,
+      "runIds": [
+        38211892427,
+        38207958670,
+        38169292412,
+        38163003827
+      ],
+      "attempts": [
+        "38211892427/1",
+        "38207958670/1",
+        "38169292412/1",
+        "38163003827/1"
+      ],
+      "examples": [
+        {
+          "runId": 38211892427,
+          "attempt": 1,
+          "diagnostic": "not ok 45 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 57916.6175\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:148:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\"probe\":\"probe-latency\",\"status\":null,\"hex\":null,\"signal\":\"SIGTERM\",\"error\":\"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\"stdout\":\"[probe-latency] fixture ready\\n[probe-latency] desktop ready\\n\",\"stderr\":\"\",\"probeEvidence\":null,\"fatalReports\":[]}\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    probe (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:26:12)\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:149:13)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        },
+        {
+          "runId": 38207958670,
+          "attempt": 1,
+          "diagnostic": "not ok 45 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 57566.6205\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:148:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\"probe\":\"probe-latency\",\"status\":null,\"hex\":null,\"signal\":\"SIGTERM\",\"error\":\"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\"stdout\":\"[probe-latency] fixture ready\\n[probe-latency] desktop ready\\n[probe-latency] desktop authenticated\\n[probe-latency] mobile authenticated\\n[probe-latency] rename 50ms\\n[probe-latency] foreground desktop 50ms\\n[probe-latency] foreground mobile 50ms\\n\",\"stderr\":\"\",\"probeEvidence\":null,\"fatalReports\":[]}\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    probe (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:26:12)\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:149:13)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        },
+        {
+          "runId": 38169292412,
+          "attempt": 1,
+          "diagnostic": "not ok 45 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 55022.2269\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:136:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\"probe\":\"probe-latency\",\"status\":null,\"hex\":null,\"signal\":\"SIGTERM\",\"error\":\"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\"stdout\":\"\",\"stderr\":\"\",\"fatalReports\":[]}\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    probe (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:22:12)\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:137:13)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "workflow",
+      "name": "cancelled after >60 minutes (suspected hang; not proven)",
+      "type": "hang-suspected",
+      "count": 3,
+      "runIds": [
+        38172542464,
+        38138830162,
+        38137017047
+      ],
+      "attempts": [
+        "38172542464/1",
+        "38138830162/1",
+        "38137017047/1"
+      ],
+      "examples": [
+        {
+          "runId": 38172542464,
+          "attempt": 1,
+          "diagnostic": "Job ran 7547s before cancellation."
+        },
+        {
+          "runId": 38138830162,
+          "attempt": 1,
+          "diagnostic": "Job ran 8280s before cancellation."
+        },
+        {
+          "runId": 38137017047,
+          "attempt": 1,
+          "diagnostic": "Job ran 4120s before cancellation."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/bl-29-account-changes.test.ts",
+      "name": "BL-29c N1 an unrelated account commit cannot wake this account subscriber",
+      "type": "assertion",
+      "count": 2,
+      "runIds": [
+        38198356416,
+        38162995493
+      ],
+      "attempts": [
+        "38198356416/1",
+        "38162995493/1"
+      ],
+      "examples": [
+        {
+          "runId": 38198356416,
+          "attempt": 1,
+          "diagnostic": "not ok 24 - BL-29c N1 an unrelated account commit cannot wake this account subscriber\n  ---\n  duration_ms: 4117.3492\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-account-changes.test.ts:31:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    true !== false\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: false\n  actual: true\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-account-changes.test.ts:43:63)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        },
+        {
+          "runId": 38162995493,
+          "attempt": 1,
+          "diagnostic": "not ok 24 - BL-29c N1 an unrelated account commit cannot wake this account subscriber\n  ---\n  duration_ms: 3966.9812\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-account-changes.test.ts:31:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    true !== false\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: false\n  actual: true\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-account-changes.test.ts:39:63)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/personal-desktop-motion.test.ts",
+      "name": "desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists",
+      "type": "assertion",
+      "count": 2,
+      "runIds": [
+        38207958670,
+        38197888969
+      ],
+      "attempts": [
+        "38207958670/1",
+        "38197888969/1"
+      ],
+      "examples": [
+        {
+          "runId": 38207958670,
+          "attempt": 1,
+          "diagnostic": "not ok 813 - desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists\n  ---\n  duration_ms: 33182.3454\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-desktop-motion.test.ts:6:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    AssertionError [ERR_ASSERTION]: panel-open-close: >50ms main-thread task\n    \n    1 !== 0\n    \n        at measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n        at async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:174:28 {\n      generatedMessage: false,\n      code: 'ERR_ASSERTION',\n      actual: 1,\n      expected: 0,\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    搜索\n    Ctrl K\n    目标\n    新对话\n    Ctrl N\n    \n    旁聊\n    未分组\n    项目进度报告\n    合成空白对话\n    项目\n    添加一个文件夹，开始项目对话。\n    T\n    TimelineFixture\n    项目进度报告\n    输出与来源\n    本对话用量\n    \n    读取项目资料，运行测试，并保存一份进度报告。\n    \n    我会先读取资料并运行测试，再整理 项目进度报告。\n    \n    覆盖现有报告前，需要你批准。\n    \n    用到了 1 条记忆\n    读取了 3 个文件、已运行 1 个命令\n    等待批准：运行命令：node scripts/report.mjs\n    \n    文件已做好\n    \n    项目进度报告.md\n    MD · 68 B\n    在成果库中查看全部\n    要运行命令：node scripts/report.mjs\n    批准\n    拒绝\n    以后这类都允许\n    另有 1 个问题，处理审批后回答\n    输入消息\n    自动\n    合成会话\n    README.md\n    项目进度报告.md\n    性能合成预览\n    +\n    放大\n    收起\n    正在读取…\n    Isolated diagnostics: C:\\weftmate-temp\\weftmate-ci-Fod4GC\\weftmate-ui-p1-UKzhhz\n    node:internal/modules/run_main:107\n        triggerUncaughtException(\n        ^\n    \n    AssertionError [ERR_ASSERTION]: panel-open-close: >50ms main-thread task\n    \n    1 !== 0\n    \n        at measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n        at async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:174:28 {\n      generatedMessage: false,\n      code: 'ERR_ASSERTION',\n      actual: 1,\n      expected: 0,\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n    async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:174:28 {\n    measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n    async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:174:28 {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/personal-desktop-motion.test.ts:12:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ..."
+        },
+        {
+          "runId": 38197888969,
+          "attempt": 1,
+          "diagnostic": "not ok 797 - desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists\n  ---\n  duration_ms: 33840.5242\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-desktop-motion.test.ts:6:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    AssertionError [ERR_ASSERTION]: panel-tab: >50ms main-thread task\n    \n    1 !== 0\n    \n        at measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n        at async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:172:28 {\n      generatedMessage: false,\n      code: 'ERR_ASSERTION',\n      actual: 1,\n      expected: 0,\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    项目进度报告\n    输出与来源\n    本对话用量\n    \n    读取项目资料，运行测试，并保存一份进度报告。\n    \n    我会先读取资料并运行测试，再整理 项目进度报告。\n    \n    覆盖现有报告前，需要你批准。\n    \n    用到了 1 条记忆\n    读取了 3 个文件、已运行 1 个命令\n    等待批准：运行命令：node scripts/report.mjs\n    项目进度报告.md\n    已读回核验\n    \n    Markdown · 68 字节\n    \n    打开成果下载\n    要运行命令：node scripts/report.mjs\n    批准\n    拒绝\n    以后这类都允许\n    另有 1 个问题，处理审批后回答\n    输入消息\n    自动\n    合成会话\n    README.md\n    项目进度报告.md\n    +\n    放大\n    收起\n    README.md\n    \n    读取 1 次\n    \n    README.md\n    \n    读取 3 个文件 · 10 月 12 日 03:17\n    Isolated diagnostics: C:\\weftmate-temp\\weftmate-ci-T1mPVr\\weftmate-ui-p1-P1xchA\n    node:internal/modules/run_main:107\n        triggerUncaughtException(\n        ^\n    \n    AssertionError [ERR_ASSERTION]: panel-tab: >50ms main-thread task\n    \n    1 !== 0\n    \n        at measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n        at async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:172:28 {\n      generatedMessage: false,\n      code: 'ERR_ASSERTION',\n      actual: 1,\n      expected: 0,\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n    async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:172:28 {\n    measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n    async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:172:28 {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/personal-desktop-motion.test.ts:12:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/personal-tool-approvals.test.ts",
+      "name": "22000+ step-heavy history approves the exact current source using only its bounded turn range",
+      "type": "assertion",
+      "count": 1,
+      "runIds": [
+        38207958670
+      ],
+      "attempts": [
+        "38207958670/1"
+      ],
+      "examples": [
+        {
+          "runId": 38207958670,
+          "attempt": 1,
+          "diagnostic": "not ok 1167 - 22000+ step-heavy history approves the exact current source using only its bounded turn range\n  ---\n  duration_ms: 5126.7191\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-tool-approvals.test.ts:508:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    three tail pages per fresh source check, independent of the 23000 old events\n    \n    7 !== 6\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 6\n  actual: 7\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/personal-tool-approvals.test.ts:550:16)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/bl-29-wait.test.ts",
+      "name": "BL-29 empty main chat wait wakes when another device starts its first task",
+      "type": "assertion",
+      "count": 1,
+      "runIds": [
+        38211140036
+      ],
+      "attempts": [
+        "38211140036/1"
+      ],
+      "examples": [
+        {
+          "runId": 38211140036,
+          "attempt": 1,
+          "diagnostic": "not ok 49 - BL-29 empty main chat wait wakes when another device starts its first task\n  ---\n  duration_ms: 6773.3373\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-wait.test.ts:25:1'\n  failureType: 'testCodeFailure'\n  error: 'account mutation also wakes an empty conversation'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-wait.test.ts:32:26)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (ubuntu-latest)",
+      "file": "tests/bl-29-rework.test.ts",
+      "name": "BL-29b M1 real Electron empty main keeps eight immediate errors within old changes budget",
+      "type": "assertion",
+      "count": 1,
+      "runIds": [
+        38138830162
+      ],
+      "attempts": [
+        "38138830162/1"
+      ],
+      "examples": [
+        {
+          "runId": 38138830162,
+          "attempt": 1,
+          "diagnostic": "not ok 39 - BL-29b M1 real Electron empty main keeps eight immediate errors within old changes budget\n  ---\n  duration_ms: 33354.972833\n  type: 'test'\n  location: '/home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:112:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    1 !== 8\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 8\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:114:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/bl-29-rework.test.ts",
+      "name": "BL-29b M3/S2 native dispose removes listeners and wait reauthorization prevents logout leakage",
+      "type": "assertion",
+      "count": 1,
+      "runIds": [
+        38186916036
+      ],
+      "attempts": [
+        "38186916036/1"
+      ],
+      "examples": [
+        {
+          "runId": 38186916036,
+          "attempt": 1,
+          "diagnostic": "not ok 41 - BL-29b M3/S2 native dispose removes listeners and wait reauthorization prevents logout leakage\n  ---\n  duration_ms: 6557.3998\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:103:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    false !== true\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:108:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/bl-29-rework.test.ts",
+      "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
+      "type": "process-exit",
+      "count": 1,
+      "runIds": [
+        38147975598
+      ],
+      "attempts": [
+        "38147975598/1"
+      ],
+      "examples": [
+        {
+          "runId": 38147975598,
+          "attempt": 1,
+          "diagnostic": "not ok 45 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 574.4817\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:135:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\"probe\":\"probe-latency\",\"status\":1,\"hex\":\"0x00000001\",\"signal\":null,\"stdout\":\"\",\"stderr\":\"node:internal/child_process:458\\r\\n    throw new ErrnoException(err, 'spawn');\\r\\n          ^\\r\\n\\r\\nError: spawn EINVAL\\r\\n    at ChildProcess.spawn (node:internal/child_process:458:11)\\r\\n    at spawn (node:child_process:813:9)\\r\\n    at file:///D:/a/weftmate/weftmate/services/cloud/test/dependencies.mjs:51:23 {\\r\\n  errno: -4071,\\r\\n  code: 'EINVAL',\\r\\n  syscall: 'spawn'\\r\\n}\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"fatalReports\":[]}\n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    probe (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:21:12)\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:136:13)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (ubuntu-latest)",
+      "file": "tests/bl-29-rework.test.ts",
+      "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
+      "type": "timeout",
+      "count": 1,
+      "runIds": [
+        38138830162
+      ],
+      "attempts": [
+        "38138830162/1"
+      ],
+      "examples": [
+        {
+          "runId": 38138830162,
+          "attempt": 1,
+          "diagnostic": "not ok 41 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 32675.566584\n  type: 'test'\n  location: '/home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:135:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    + actual - expected\n    \n    + 'page.waitForFunction: Timeout 30000ms exceeded.'\n    - undefined\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  actual: 'page.waitForFunction: Timeout 30000ms exceeded.'\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:137:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/bl-29-rework.test.ts",
+      "name": "BL-29b M5 host close revokes empty account waits before closing sockets",
+      "type": "assertion",
+      "count": 1,
+      "runIds": [
+        38184048714
+      ],
+      "attempts": [
+        "38184048714/1"
+      ],
+      "examples": [
+        {
+          "runId": 38184048714,
+          "attempt": 1,
+          "diagnostic": "not ok 40 - BL-29b M5 host close revokes empty account waits before closing sockets\n  ---\n  duration_ms: 6832.6353\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:70:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The expression evaluated to a falsy value:\n    \n      assert.ok(Date.now()-at<500)\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:84:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/bl-29-rework.test.ts",
+      "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+      "type": "process-exit",
+      "count": 1,
+      "runIds": [
+        38147975598
+      ],
+      "attempts": [
+        "38147975598/1"
+      ],
+      "examples": [
+        {
+          "runId": 38147975598,
+          "attempt": 1,
+          "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 553.856\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:161:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    node:internal/child_process:458\n        throw new ErrnoException(err, 'spawn');\n              ^\n    \n    Error: spawn EINVAL\n        at ChildProcess.spawn (node:internal/child_process:458:11)\n        at spawn (node:child_process:813:9)\n        at file:///D:/a/weftmate/weftmate/services/cloud/test/dependencies.mjs:51:23 {\n      errno: -4071,\n      code: 'EINVAL',\n      syscall: 'spawn'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    ChildProcess.spawn (node:internal/child_process:458:11)\n    spawn (node:child_process:813:9)\n    file:///D:/a/weftmate/weftmate/services/cloud/test/dependencies.mjs:51:23 {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:169:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (ubuntu-latest)",
+      "file": "tests/bl-29-rework.test.ts",
+      "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+      "type": "timeout",
+      "count": 1,
+      "runIds": [
+        38138830162
+      ],
+      "attempts": [
+        "38138830162/1"
+      ],
+      "examples": [
+        {
+          "runId": 38138830162,
+          "attempt": 1,
+          "diagnostic": "not ok 42 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 17497.67841\n  type: 'test'\n  location: '/home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:161:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    node:internal/modules/run_main:107\n        triggerUncaughtException(\n        ^\n    \n    page.waitForFunction: Timeout 15000ms exceeded.\n        at /home/runner/work/weftmate/weftmate/tests/integration/bl-29-requests.mjs:52:17 {\n      log: [],\n      name: 'TimeoutError'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    /home/runner/work/weftmate/weftmate/tests/integration/bl-29-requests.mjs:52:17 {\n    TestContext.<anonymous> (file:///home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:169:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (ubuntu-latest)",
+      "file": "tests/bl-29-account-changes.test.ts",
+      "name": "BL-29c N1/N4 public model projection is scoped, domain keyed and covers account display name/revision",
+      "type": "assertion",
+      "count": 1,
+      "runIds": [
+        38202675097
+      ],
+      "attempts": [
+        "38202675097/1"
+      ],
+      "examples": [
+        {
+          "runId": 38202675097,
+          "attempt": 1,
+          "diagnostic": "not ok 23 - BL-29c N1/N4 public model projection is scoped, domain keyed and covers account display name/revision\n  ---\n  duration_ms: 3495.174938\n  type: 'test'\n  location: '/home/runner/work/weftmate/weftmate/tests/bl-29-account-changes.test.ts:22:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    9 !== 10\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 10\n  actual: 9\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///home/runner/work/weftmate/weftmate/tests/bl-29-account-changes.test.ts:26:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/bl-29-account-changes.test.ts",
+      "name": "BL-29c N1/N4 public model projection is scoped, domain keyed and covers account display name/revision",
+      "type": "assertion",
+      "count": 1,
+      "runIds": [
+        38198356416
+      ],
+      "attempts": [
+        "38198356416/1"
+      ],
+      "examples": [
+        {
+          "runId": 38198356416,
+          "attempt": 1,
+          "diagnostic": "not ok 23 - BL-29c N1/N4 public model projection is scoped, domain keyed and covers account display name/revision\n  ---\n  duration_ms: 4309.3659\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-account-changes.test.ts:22:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    8 !== 9\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 9\n  actual: 8\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-account-changes.test.ts:26:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (ubuntu-latest)",
+      "file": "workflow",
+      "name": "cancelled after >60 minutes (suspected hang; not proven)",
+      "type": "hang-suspected",
+      "count": 1,
+      "runIds": [
+        38147975598
+      ],
+      "attempts": [
+        "38147975598/1"
+      ],
+      "examples": [
+        {
+          "runId": 38147975598,
+          "attempt": 1,
+          "diagnostic": "Job ran 3696s before cancellation."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/rob-1-electron.test.ts",
+      "name": "real Windows Electron survives first-run and legacy-upgrade interruption at every credential commit phase",
+      "type": "process-exit",
+      "count": 1,
+      "runIds": [
+        38211892427
+      ],
+      "attempts": [
+        "38211892427/1"
+      ],
+      "examples": [
+        {
+          "runId": 38211892427,
+          "attempt": 1,
+          "diagnostic": "not ok 1279 - real Windows Electron survives first-run and legacy-upgrade interruption at every credential commit phase\n  ---\n  duration_ms: 255773.6789\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\rob-1-electron.test.ts:5:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    node:internal/modules/run_main:107\n        triggerUncaughtException(\n        ^\n    \n    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n    + actual - expected\n    \n    + '0x0000004A'\n    - '0x00000000'\n               ^\n    \n        at file:///D:/a/weftmate/weftmate/tests/integration/rob-1-vault-matrix.mjs:26:28\n        at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n      generatedMessage: true,\n      code: 'ERR_ASSERTION',\n      actual: '0x0000004A',\n      expected: '0x00000000',\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    file:///D:/a/weftmate/weftmate/tests/integration/rob-1-vault-matrix.mjs:26:28\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/rob-1-electron.test.ts:9:39)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ..."
+        }
+      ]
+    },
+    {
+      "job": "test (windows-latest)",
+      "file": "tests/rob-1-electron.test.ts",
+      "name": "real Windows Electron survives first-run and legacy-upgrade interruption at every credential commit phase",
+      "type": "assertion",
+      "count": 1,
+      "runIds": [
+        38136926541
+      ],
+      "attempts": [
+        "38136926541/1"
+      ],
+      "examples": [
+        {
+          "runId": 38136926541,
+          "attempt": 1,
+          "diagnostic": "not ok 1159 - real Windows Electron survives first-run and legacy-upgrade interruption at every credential commit phase\n  ---\n  duration_ms: 109533.3612\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\rob-1-electron.test.ts:5:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    node:internal/modules/run_main:107\n        triggerUncaughtException(\n        ^\n    \n    AssertionError [ERR_ASSERTION]: an interrupted replacement keeps the old complete value or the newly committed complete value\n    \n    null !== 'new'\n    \n        at file:///D:/a/weftmate/weftmate/tests/integration/rob-1-vault-matrix.mjs:33:73\n        at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n      generatedMessage: false,\n      code: 'ERR_ASSERTION',\n      actual: null,\n      expected: 'new',\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    file:///D:/a/weftmate/weftmate/tests/integration/rob-1-vault-matrix.mjs:33:73\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/rob-1-electron.test.ts:9:39)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ..."
+        }
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "runId": 38219238491,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219238491",
+      "sha": "7fb2628dfbc1349581f3641f7244fce3ba0a5a01",
+      "createdAt": "2026-10-12T07:42:21Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 861,
+      "requiredSeconds": 759,
+      "failures": []
+    },
+    {
+      "runId": 38219238491,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219238491",
+      "sha": "7fb2628dfbc1349581f3641f7244fce3ba0a5a01",
+      "createdAt": "2026-10-12T07:42:21Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 854,
+      "requiredSeconds": 551,
+      "failures": []
+    },
+    {
+      "runId": 38219217206,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219217206",
+      "sha": "4495d6a0c00ac8935043928c120efe56af5e46aa",
+      "createdAt": "2026-10-12T07:42:07Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "",
+      "seconds": -63927387744,
+      "requiredSeconds": -63927387844,
+      "failures": []
+    },
+    {
+      "runId": 38219217206,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219217206",
+      "sha": "4495d6a0c00ac8935043928c120efe56af5e46aa",
+      "createdAt": "2026-10-12T07:42:07Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2189,
+      "requiredSeconds": 1964,
+      "failures": []
+    },
+    {
+      "runId": 38219066406,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219066406",
+      "sha": "5d437554add4fa5475ee1d5156a79b9da111e3e4",
+      "createdAt": "2026-10-12T07:40:31Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 84,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38219066406,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219066406",
+      "sha": "5d437554add4fa5475ee1d5156a79b9da111e3e4",
+      "createdAt": "2026-10-12T07:40:31Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 72,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38219055464,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219055464",
+      "sha": "36c50654feeb399ae6d3f8dc1b3ccea7937cd059",
+      "createdAt": "2026-10-12T07:40:25Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 861,
+      "requiredSeconds": 760,
+      "failures": []
+    },
+    {
+      "runId": 38219055464,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38219055464",
+      "sha": "36c50654feeb399ae6d3f8dc1b3ccea7937cd059",
+      "createdAt": "2026-10-12T07:40:25Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2603,
+      "requiredSeconds": 2317,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+          "type": "timeout",
+          "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 25055.4546\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:174:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\n      \"status\": null,\n      \"signal\": \"SIGTERM\",\n      \"error\": \"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\n      \"stdout\": \"BL-29 lifecycle: startup / synthetic cloud authentication started (0ms)\\nBL-29 lifecycle: fixture / verified synthetic cloud authentication ready (14401ms)\\nBL-29 lifecycle: main warmup started (14402ms)\\nBL-29 lifecycle: main warmup ready (14596ms)\\nBL-29 lifecycle: desktop launch started (14597ms)\\nBL-29 lifecycle: desktop window ready (15187ms)\\nBL-29 lifecycle: desktop native initialization started (15347ms)\\ndesktop logged in\\nBL-29 lifecycle: desktop ready / mobile launch started (17096ms)\\nBL-29 lifecycle: mobile verified session / desktop and mobile ready (18027ms)\\nBL-29 lifecycle: approval-visible check started (20167ms)\\nBL-29 lifecycle: approval-visible check passed (20755ms)\\nBL-29 lifecycle: approval-accepted check started (20755ms)\\nBL-29 lifecycle: approval-accepted check passed (20854ms)\\nBL-29 lifecycle: question-visible check started (20891ms)\\nBL-29 lifecycle: question-visible check passed (21104ms)\\nBL-29 lifecycle: question-accepted check started (21118ms)\\nBL-29 lifecycle: question-accepted check passed (21227ms)\\n\",\n      \"stderr\": \"\"\n    }\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:182:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38211892427,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38211892427",
+      "sha": "ffe05068a52520e98e7f844ef75d072c3245dc31",
+      "createdAt": "2026-10-12T06:18:34Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 717,
+      "requiredSeconds": 638,
+      "failures": []
+    },
+    {
+      "runId": 38211892427,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38211892427",
+      "sha": "ffe05068a52520e98e7f844ef75d072c3245dc31",
+      "createdAt": "2026-10-12T06:18:34Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 717,
+      "requiredSeconds": 638,
+      "failures": []
+    },
+    {
+      "runId": 38211892427,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38211892427",
+      "sha": "ffe05068a52520e98e7f844ef75d072c3245dc31",
+      "createdAt": "2026-10-12T06:18:34Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2445,
+      "requiredSeconds": 2189,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
+          "type": "timeout",
+          "diagnostic": "not ok 45 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 57916.6175\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:148:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\"probe\":\"probe-latency\",\"status\":null,\"hex\":null,\"signal\":\"SIGTERM\",\"error\":\"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\"stdout\":\"[probe-latency] fixture ready\\n[probe-latency] desktop ready\\n\",\"stderr\":\"\",\"probeEvidence\":null,\"fatalReports\":[]}\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    probe (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:26:12)\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:149:13)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        },
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/rob-1-electron.test.ts",
+          "name": "real Windows Electron survives first-run and legacy-upgrade interruption at every credential commit phase",
+          "type": "process-exit",
+          "diagnostic": "not ok 1279 - real Windows Electron survives first-run and legacy-upgrade interruption at every credential commit phase\n  ---\n  duration_ms: 255773.6789\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\rob-1-electron.test.ts:5:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    node:internal/modules/run_main:107\n        triggerUncaughtException(\n        ^\n    \n    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n    + actual - expected\n    \n    + '0x0000004A'\n    - '0x00000000'\n               ^\n    \n        at file:///D:/a/weftmate/weftmate/tests/integration/rob-1-vault-matrix.mjs:26:28\n        at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n      generatedMessage: true,\n      code: 'ERR_ASSERTION',\n      actual: '0x0000004A',\n      expected: '0x00000000',\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    file:///D:/a/weftmate/weftmate/tests/integration/rob-1-vault-matrix.mjs:26:28\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/rob-1-electron.test.ts:9:39)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38211892427,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38211892427",
+      "sha": "ffe05068a52520e98e7f844ef75d072c3245dc31",
+      "createdAt": "2026-10-12T06:18:34Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 1701,
+      "requiredSeconds": 1405,
+      "failures": []
+    },
+    {
+      "runId": 38211140036,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38211140036",
+      "sha": "e89ad0414cd2a00ca926598faf84e88a43281040",
+      "createdAt": "2026-10-12T06:09:00Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 925,
+      "requiredSeconds": 737,
+      "failures": []
+    },
+    {
+      "runId": 38211140036,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38211140036",
+      "sha": "e89ad0414cd2a00ca926598faf84e88a43281040",
+      "createdAt": "2026-10-12T06:09:00Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2636,
+      "requiredSeconds": 2346,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-wait.test.ts",
+          "name": "BL-29 empty main chat wait wakes when another device starts its first task",
+          "type": "assertion",
+          "diagnostic": "not ok 49 - BL-29 empty main chat wait wakes when another device starts its first task\n  ---\n  duration_ms: 6773.3373\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-wait.test.ts:25:1'\n  failureType: 'testCodeFailure'\n  error: 'account mutation also wakes an empty conversation'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-wait.test.ts:32:26)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38210997398,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38210997398",
+      "sha": "fc70b0c4615999329719b5a18474451cfeaa0cf6",
+      "createdAt": "2026-10-12T06:07:10Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 100,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38210997398,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38210997398",
+      "sha": "fc70b0c4615999329719b5a18474451cfeaa0cf6",
+      "createdAt": "2026-10-12T06:07:10Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 100,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38210748135,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38210748135",
+      "sha": "f5200037be653e81af7330c56e44f8324b5704d7",
+      "createdAt": "2026-10-12T06:03:59Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 204,
+      "requiredSeconds": 99,
+      "failures": []
+    },
+    {
+      "runId": 38210748135,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38210748135",
+      "sha": "f5200037be653e81af7330c56e44f8324b5704d7",
+      "createdAt": "2026-10-12T06:03:59Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 194,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38208483319,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38208483319",
+      "sha": "79c133767d87a0c2960e70e47ee04be2c282620b",
+      "createdAt": "2026-10-12T05:33:57Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 871,
+      "requiredSeconds": 761,
+      "failures": []
+    },
+    {
+      "runId": 38208483319,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38208483319",
+      "sha": "79c133767d87a0c2960e70e47ee04be2c282620b",
+      "createdAt": "2026-10-12T05:33:57Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2318,
+      "requiredSeconds": 2068,
+      "failures": []
+    },
+    {
+      "runId": 38208227424,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38208227424",
+      "sha": "7ceec016cf21f92958f84daa893e3a863777a758",
+      "createdAt": "2026-10-12T05:30:28Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 208,
+      "requiredSeconds": 135,
+      "failures": []
+    },
+    {
+      "runId": 38208227424,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38208227424",
+      "sha": "7ceec016cf21f92958f84daa893e3a863777a758",
+      "createdAt": "2026-10-12T05:30:28Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 197,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38207958670,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38207958670",
+      "sha": "d6f0f991df8d428f1e928e92e747427beac91153",
+      "createdAt": "2026-10-12T05:26:45Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 855,
+      "requiredSeconds": 750,
+      "failures": []
+    },
+    {
+      "runId": 38207958670,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38207958670",
+      "sha": "d6f0f991df8d428f1e928e92e747427beac91153",
+      "createdAt": "2026-10-12T05:26:45Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2543,
+      "requiredSeconds": 2231,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
+          "type": "timeout",
+          "diagnostic": "not ok 45 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 57566.6205\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:148:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\"probe\":\"probe-latency\",\"status\":null,\"hex\":null,\"signal\":\"SIGTERM\",\"error\":\"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\"stdout\":\"[probe-latency] fixture ready\\n[probe-latency] desktop ready\\n[probe-latency] desktop authenticated\\n[probe-latency] mobile authenticated\\n[probe-latency] rename 50ms\\n[probe-latency] foreground desktop 50ms\\n[probe-latency] foreground mobile 50ms\\n\",\"stderr\":\"\",\"probeEvidence\":null,\"fatalReports\":[]}\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    probe (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:26:12)\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:149:13)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        },
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/personal-desktop-motion.test.ts",
+          "name": "desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists",
+          "type": "assertion",
+          "diagnostic": "not ok 813 - desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists\n  ---\n  duration_ms: 33182.3454\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-desktop-motion.test.ts:6:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    AssertionError [ERR_ASSERTION]: panel-open-close: >50ms main-thread task\n    \n    1 !== 0\n    \n        at measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n        at async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:174:28 {\n      generatedMessage: false,\n      code: 'ERR_ASSERTION',\n      actual: 1,\n      expected: 0,\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    搜索\n    Ctrl K\n    目标\n    新对话\n    Ctrl N\n    \n    旁聊\n    未分组\n    项目进度报告\n    合成空白对话\n    项目\n    添加一个文件夹，开始项目对话。\n    T\n    TimelineFixture\n    项目进度报告\n    输出与来源\n    本对话用量\n    \n    读取项目资料，运行测试，并保存一份进度报告。\n    \n    我会先读取资料并运行测试，再整理 项目进度报告。\n    \n    覆盖现有报告前，需要你批准。\n    \n    用到了 1 条记忆\n    读取了 3 个文件、已运行 1 个命令\n    等待批准：运行命令：node scripts/report.mjs\n    \n    文件已做好\n    \n    项目进度报告.md\n    MD · 68 B\n    在成果库中查看全部\n    要运行命令：node scripts/report.mjs\n    批准\n    拒绝\n    以后这类都允许\n    另有 1 个问题，处理审批后回答\n    输入消息\n    自动\n    合成会话\n    README.md\n    项目进度报告.md\n    性能合成预览\n    +\n    放大\n    收起\n    正在读取…\n    Isolated diagnostics: C:\\weftmate-temp\\weftmate-ci-Fod4GC\\weftmate-ui-p1-UKzhhz\n    node:internal/modules/run_main:107\n        triggerUncaughtException(\n        ^\n    \n    AssertionError [ERR_ASSERTION]: panel-open-close: >50ms main-thread task\n    \n    1 !== 0\n    \n        at measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n        at async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:174:28 {\n      generatedMessage: false,\n      code: 'ERR_ASSERTION',\n      actual: 1,\n      expected: 0,\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n    async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:174:28 {\n    measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n    async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:174:28 {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/personal-desktop-motion.test.ts:12:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ..."
+        },
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/personal-tool-approvals.test.ts",
+          "name": "22000+ step-heavy history approves the exact current source using only its bounded turn range",
+          "type": "assertion",
+          "diagnostic": "not ok 1167 - 22000+ step-heavy history approves the exact current source using only its bounded turn range\n  ---\n  duration_ms: 5126.7191\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-tool-approvals.test.ts:508:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    three tail pages per fresh source check, independent of the 23000 old events\n    \n    7 !== 6\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 6\n  actual: 7\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/personal-tool-approvals.test.ts:550:16)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38207762445,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38207762445",
+      "sha": "4b95323af61d97fe3d915ba52f1688b625aff670",
+      "createdAt": "2026-10-12T05:24:01Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 389,
+      "requiredSeconds": 309,
+      "failures": []
+    },
+    {
+      "runId": 38207762445,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38207762445",
+      "sha": "4b95323af61d97fe3d915ba52f1688b625aff670",
+      "createdAt": "2026-10-12T05:24:01Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 385,
+      "requiredSeconds": 92,
+      "failures": []
+    },
+    {
+      "runId": 38205148538,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38205148538",
+      "sha": "d638623dd8056bea38719de14a553f09c0ddc83d",
+      "createdAt": "2026-10-12T04:46:25Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 852,
+      "requiredSeconds": 751,
+      "failures": []
+    },
+    {
+      "runId": 38205148538,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38205148538",
+      "sha": "d638623dd8056bea38719de14a553f09c0ddc83d",
+      "createdAt": "2026-10-12T04:46:25Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2638,
+      "requiredSeconds": 2349,
+      "failures": []
+    },
+    {
+      "runId": 38204977018,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204977018",
+      "sha": "8e931de764a0e45e721bbc78acc72e1765698221",
+      "createdAt": "2026-10-12T04:43:55Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 782,
+      "requiredSeconds": 686,
+      "failures": []
+    },
+    {
+      "runId": 38204977018,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204977018",
+      "sha": "8e931de764a0e45e721bbc78acc72e1765698221",
+      "createdAt": "2026-10-12T04:43:55Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2627,
+      "requiredSeconds": 2330,
+      "failures": []
+    },
+    {
+      "runId": 38204871632,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204871632",
+      "sha": "b772103b226716cf41fdf28796082b26e7d55066",
+      "createdAt": "2026-10-12T04:42:21Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 788,
+      "requiredSeconds": 686,
+      "failures": []
+    },
+    {
+      "runId": 38204871632,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204871632",
+      "sha": "b772103b226716cf41fdf28796082b26e7d55066",
+      "createdAt": "2026-10-12T04:42:21Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 2374,
+      "requiredSeconds": 2067,
+      "failures": []
+    },
+    {
+      "runId": 38204863931,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204863931",
+      "sha": "3fe199d28c7fd003538edb2175701babbdedbb7b",
+      "createdAt": "2026-10-12T04:42:14Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 838,
+      "requiredSeconds": 741,
+      "failures": []
+    },
+    {
+      "runId": 38204863931,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204863931",
+      "sha": "3fe199d28c7fd003538edb2175701babbdedbb7b",
+      "createdAt": "2026-10-12T04:42:14Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2115,
+      "requiredSeconds": 1903,
+      "failures": []
+    },
+    {
+      "runId": 38204671900,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204671900",
+      "sha": "2a3a47a88d08c53aaf529ec6f269e965559531b3",
+      "createdAt": "2026-10-12T04:39:28Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 820,
+      "requiredSeconds": 715,
+      "failures": []
+    },
+    {
+      "runId": 38204671900,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204671900",
+      "sha": "2a3a47a88d08c53aaf529ec6f269e965559531b3",
+      "createdAt": "2026-10-12T04:39:28Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2597,
+      "requiredSeconds": 2292,
+      "failures": []
+    },
+    {
+      "runId": 38204616924,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204616924",
+      "sha": "7c57c43fa05db1389ff4b9bbb2ab58ae31b66a18",
+      "createdAt": "2026-10-12T04:38:38Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 853,
+      "requiredSeconds": 746,
+      "failures": []
+    },
+    {
+      "runId": 38204616924,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38204616924",
+      "sha": "7c57c43fa05db1389ff4b9bbb2ab58ae31b66a18",
+      "createdAt": "2026-10-12T04:38:38Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 944,
+      "requiredSeconds": 647,
+      "failures": []
+    },
+    {
+      "runId": 38203995777,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203995777",
+      "sha": "41f10a2c253177fdc9b1bc1e0a66a3c6348c80e8",
+      "createdAt": "2026-10-12T04:29:32Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 543,
+      "requiredSeconds": 457,
+      "failures": []
+    },
+    {
+      "runId": 38203995777,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203995777",
+      "sha": "41f10a2c253177fdc9b1bc1e0a66a3c6348c80e8",
+      "createdAt": "2026-10-12T04:29:32Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 539,
+      "requiredSeconds": 281,
+      "failures": []
+    },
+    {
+      "runId": 38203359309,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203359309",
+      "sha": "7c6d0851e0e406281a3eeb76c365062d8f64ddba",
+      "createdAt": "2026-10-12T04:20:12Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 851,
+      "requiredSeconds": 751,
+      "failures": []
+    },
+    {
+      "runId": 38203359309,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203359309",
+      "sha": "7c6d0851e0e406281a3eeb76c365062d8f64ddba",
+      "createdAt": "2026-10-12T04:20:12Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 1310,
+      "requiredSeconds": 1010,
+      "failures": []
+    },
+    {
+      "runId": 38203283463,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203283463",
+      "sha": "fc5b31d2b77780716b3f6977d196f24ad43a11ae",
+      "createdAt": "2026-10-12T04:19:03Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 627,
+      "requiredSeconds": 531,
+      "failures": []
+    },
+    {
+      "runId": 38203283463,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38203283463",
+      "sha": "fc5b31d2b77780716b3f6977d196f24ad43a11ae",
+      "createdAt": "2026-10-12T04:19:03Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 623,
+      "requiredSeconds": 329,
+      "failures": []
+    },
+    {
+      "runId": 38202863508,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202863508",
+      "sha": "84062f7c20f5e92452f603a23c453477f615b420",
+      "createdAt": "2026-10-12T04:12:47Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 373,
+      "requiredSeconds": 274,
+      "failures": []
+    },
+    {
+      "runId": 38202863508,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202863508",
+      "sha": "84062f7c20f5e92452f603a23c453477f615b420",
+      "createdAt": "2026-10-12T04:12:47Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 289,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38202675097,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202675097",
+      "sha": "1b73fcab2fa398e5998740ccf5ae068dfc2e1707",
+      "createdAt": "2026-10-12T04:10:03Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "failure",
+      "seconds": 867,
+      "requiredSeconds": 753,
+      "failures": [
+        {
+          "job": "test (ubuntu-latest)",
+          "file": "tests/bl-29-account-changes.test.ts",
+          "name": "BL-29c N1/N4 public model projection is scoped, domain keyed and covers account display name/revision",
+          "type": "assertion",
+          "diagnostic": "not ok 23 - BL-29c N1/N4 public model projection is scoped, domain keyed and covers account display name/revision\n  ---\n  duration_ms: 3495.174938\n  type: 'test'\n  location: '/home/runner/work/weftmate/weftmate/tests/bl-29-account-changes.test.ts:22:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    9 !== 10\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 10\n  actual: 9\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///home/runner/work/weftmate/weftmate/tests/bl-29-account-changes.test.ts:26:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38202675097,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202675097",
+      "sha": "1b73fcab2fa398e5998740ccf5ae068dfc2e1707",
+      "createdAt": "2026-10-12T04:10:03Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 1779,
+      "requiredSeconds": 1473,
+      "failures": []
+    },
+    {
+      "runId": 38202621967,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202621967",
+      "sha": "d06a3a81dad2f49575e95189a86ac6fa8a417ed5",
+      "createdAt": "2026-10-12T04:09:13Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 63,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38202621967,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202621967",
+      "sha": "d06a3a81dad2f49575e95189a86ac6fa8a417ed5",
+      "createdAt": "2026-10-12T04:09:13Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 26,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38202536232,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202536232",
+      "sha": "b26406f1753e1f824a3ef582c0abbb3273fc543a",
+      "createdAt": "2026-10-12T04:07:57Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 290,
+      "requiredSeconds": 192,
+      "failures": []
+    },
+    {
+      "runId": 38202536232,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38202536232",
+      "sha": "b26406f1753e1f824a3ef582c0abbb3273fc543a",
+      "createdAt": "2026-10-12T04:07:57Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 286,
+      "requiredSeconds": 90,
+      "failures": []
+    },
+    {
+      "runId": 38201453268,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38201453268",
+      "sha": "071ded31c1026f2b05ac47901cc306cd734cfb82",
+      "createdAt": "2026-10-12T03:52:02Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 845,
+      "requiredSeconds": 740,
+      "failures": []
+    },
+    {
+      "runId": 38201453268,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38201453268",
+      "sha": "071ded31c1026f2b05ac47901cc306cd734cfb82",
+      "createdAt": "2026-10-12T03:52:02Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2804,
+      "requiredSeconds": 2480,
+      "failures": []
+    },
+    {
+      "runId": 38201423138,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38201423138",
+      "sha": "1592a0295148a7a7f82e9eaa2c37821982e7d15f",
+      "createdAt": "2026-10-12T03:51:35Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 866,
+      "requiredSeconds": 764,
+      "failures": []
+    },
+    {
+      "runId": 38201423138,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38201423138",
+      "sha": "1592a0295148a7a7f82e9eaa2c37821982e7d15f",
+      "createdAt": "2026-10-12T03:51:35Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 975,
+      "requiredSeconds": 679,
+      "failures": []
+    },
+    {
+      "runId": 38200999354,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200999354",
+      "sha": "0b48b5c9c0277d618696640b81ed7194c4a4d482",
+      "createdAt": "2026-10-12T03:45:19Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 202,
+      "requiredSeconds": 104,
+      "failures": []
+    },
+    {
+      "runId": 38200999354,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200999354",
+      "sha": "0b48b5c9c0277d618696640b81ed7194c4a4d482",
+      "createdAt": "2026-10-12T03:45:19Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 229,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38200980901,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200980901",
+      "sha": "8276bda781f28a2e1c8320ec633a02daa8f006d0",
+      "createdAt": "2026-10-12T03:45:03Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 866,
+      "requiredSeconds": 762,
+      "failures": []
+    },
+    {
+      "runId": 38200980901,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200980901",
+      "sha": "8276bda781f28a2e1c8320ec633a02daa8f006d0",
+      "createdAt": "2026-10-12T03:45:03Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2069,
+      "requiredSeconds": 1864,
+      "failures": []
+    },
+    {
+      "runId": 38200478590,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200478590",
+      "sha": "d54557d1061980ee166bfaa5f1db5859381faf05",
+      "createdAt": "2026-10-12T03:37:25Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 487,
+      "requiredSeconds": 375,
+      "failures": []
+    },
+    {
+      "runId": 38200478590,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38200478590",
+      "sha": "d54557d1061980ee166bfaa5f1db5859381faf05",
+      "createdAt": "2026-10-12T03:37:25Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 483,
+      "requiredSeconds": 177,
+      "failures": []
+    },
+    {
+      "runId": 38199711320,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38199711320",
+      "sha": "2f0789416d7749676de4d8174ce5de904a4bf1cf",
+      "createdAt": "2026-10-12T03:25:48Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 847,
+      "requiredSeconds": 749,
+      "failures": []
+    },
+    {
+      "runId": 38199711320,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38199711320",
+      "sha": "2f0789416d7749676de4d8174ce5de904a4bf1cf",
+      "createdAt": "2026-10-12T03:25:48Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 1165,
+      "requiredSeconds": 883,
+      "failures": []
+    },
+    {
+      "runId": 38198356416,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38198356416",
+      "sha": "8df973b9d2dd73f64a084bf8998812e976fbc425",
+      "createdAt": "2026-10-12T03:05:06Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 856,
+      "requiredSeconds": 755,
+      "failures": []
+    },
+    {
+      "runId": 38198356416,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38198356416",
+      "sha": "8df973b9d2dd73f64a084bf8998812e976fbc425",
+      "createdAt": "2026-10-12T03:05:06Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 856,
+      "requiredSeconds": 755,
+      "failures": []
+    },
+    {
+      "runId": 38198356416,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38198356416",
+      "sha": "8df973b9d2dd73f64a084bf8998812e976fbc425",
+      "createdAt": "2026-10-12T03:05:06Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2214,
+      "requiredSeconds": 1975,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-account-changes.test.ts",
+          "name": "BL-29c N1/N4 public model projection is scoped, domain keyed and covers account display name/revision",
+          "type": "assertion",
+          "diagnostic": "not ok 23 - BL-29c N1/N4 public model projection is scoped, domain keyed and covers account display name/revision\n  ---\n  duration_ms: 4309.3659\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-account-changes.test.ts:22:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    8 !== 9\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 9\n  actual: 8\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-account-changes.test.ts:26:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ..."
+        },
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-account-changes.test.ts",
+          "name": "BL-29c N1 an unrelated account commit cannot wake this account subscriber",
+          "type": "assertion",
+          "diagnostic": "not ok 24 - BL-29c N1 an unrelated account commit cannot wake this account subscriber\n  ---\n  duration_ms: 4117.3492\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-account-changes.test.ts:31:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    true !== false\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: false\n  actual: true\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-account-changes.test.ts:43:63)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38198356416,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38198356416",
+      "sha": "8df973b9d2dd73f64a084bf8998812e976fbc425",
+      "createdAt": "2026-10-12T03:05:06Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 515,
+      "requiredSeconds": 231,
+      "failures": []
+    },
+    {
+      "runId": 38197888969,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38197888969",
+      "sha": "e166a59e21336351be6f7de250abd309152310d8",
+      "createdAt": "2026-10-12T02:58:17Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 841,
+      "requiredSeconds": 731,
+      "failures": []
+    },
+    {
+      "runId": 38197888969,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38197888969",
+      "sha": "e166a59e21336351be6f7de250abd309152310d8",
+      "createdAt": "2026-10-12T02:58:17Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 841,
+      "requiredSeconds": 731,
+      "failures": []
+    },
+    {
+      "runId": 38197888969,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38197888969",
+      "sha": "e166a59e21336351be6f7de250abd309152310d8",
+      "createdAt": "2026-10-12T02:58:17Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2502,
+      "requiredSeconds": 2216,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+          "type": "timeout",
+          "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 25100.0005\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:174:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\n      \"status\": null,\n      \"signal\": \"SIGTERM\",\n      \"error\": \"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\n      \"stdout\": \"BL-29 lifecycle: startup / synthetic cloud authentication started (0ms)\\nBL-29 lifecycle: fixture / verified synthetic cloud authentication ready (9319ms)\\nBL-29 lifecycle: main warmup started (9319ms)\\nBL-29 lifecycle: main warmup ready (12570ms)\\nBL-29 lifecycle: desktop launch started (12571ms)\\nBL-29 lifecycle: desktop window ready (21874ms)\\nBL-29 lifecycle: desktop native initialization started (22006ms)\\ndesktop logged in\\n\",\n      \"stderr\": \"\"\n    }\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:182:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        },
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/personal-desktop-motion.test.ts",
+          "name": "desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists",
+          "type": "assertion",
+          "diagnostic": "not ok 797 - desktop motion respects live reduced-motion changes, keyboard, immediate layout and long lists\n  ---\n  duration_ms: 33840.5242\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-desktop-motion.test.ts:6:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    AssertionError [ERR_ASSERTION]: panel-tab: >50ms main-thread task\n    \n    1 !== 0\n    \n        at measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n        at async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:172:28 {\n      generatedMessage: false,\n      code: 'ERR_ASSERTION',\n      actual: 1,\n      expected: 0,\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    项目进度报告\n    输出与来源\n    本对话用量\n    \n    读取项目资料，运行测试，并保存一份进度报告。\n    \n    我会先读取资料并运行测试，再整理 项目进度报告。\n    \n    覆盖现有报告前，需要你批准。\n    \n    用到了 1 条记忆\n    读取了 3 个文件、已运行 1 个命令\n    等待批准：运行命令：node scripts/report.mjs\n    项目进度报告.md\n    已读回核验\n    \n    Markdown · 68 字节\n    \n    打开成果下载\n    要运行命令：node scripts/report.mjs\n    批准\n    拒绝\n    以后这类都允许\n    另有 1 个问题，处理审批后回答\n    输入消息\n    自动\n    合成会话\n    README.md\n    项目进度报告.md\n    +\n    放大\n    收起\n    README.md\n    \n    读取 1 次\n    \n    README.md\n    \n    读取 3 个文件 · 10 月 12 日 03:17\n    Isolated diagnostics: C:\\weftmate-temp\\weftmate-ci-T1mPVr\\weftmate-ui-p1-P1xchA\n    node:internal/modules/run_main:107\n        triggerUncaughtException(\n        ^\n    \n    AssertionError [ERR_ASSERTION]: panel-tab: >50ms main-thread task\n    \n    1 !== 0\n    \n        at measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n        at async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:172:28 {\n      generatedMessage: false,\n      code: 'ERR_ASSERTION',\n      actual: 1,\n      expected: 0,\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n    async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:172:28 {\n    measure (file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:67:10)\n    async file:///D:/a/weftmate/weftmate/tests/integration/ui-p1-desktop-motion.mjs:172:28 {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/personal-desktop-motion.test.ts:12:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38197888969,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38197888969",
+      "sha": "e166a59e21336351be6f7de250abd309152310d8",
+      "createdAt": "2026-10-12T02:58:17Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2714,
+      "requiredSeconds": 2419,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+          "type": "timeout",
+          "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 25039.8893\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:174:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\n      \"status\": null,\n      \"signal\": \"SIGTERM\",\n      \"error\": \"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\n      \"stdout\": \"BL-29 lifecycle: startup / synthetic cloud authentication started (0ms)\\nBL-29 lifecycle: fixture / verified synthetic cloud authentication ready (14882ms)\\nBL-29 lifecycle: main warmup started (14882ms)\\nBL-29 lifecycle: main warmup ready (15929ms)\\nBL-29 lifecycle: desktop launch started (15930ms)\\nBL-29 lifecycle: desktop window ready (19195ms)\\nBL-29 lifecycle: desktop native initialization started (19309ms)\\ndesktop logged in\\nBL-29 lifecycle: desktop ready / mobile launch started (21494ms)\\nBL-29 lifecycle: mobile verified session / desktop and mobile ready (22541ms)\\n\",\n      \"stderr\": \"\"\n    }\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:182:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38194388715,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38194388715",
+      "sha": "016ba03b8f9dc8ee390c58145de15010e1d379f2",
+      "createdAt": "2026-10-12T02:04:54Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 851,
+      "requiredSeconds": 749,
+      "failures": []
+    },
+    {
+      "runId": 38194388715,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38194388715",
+      "sha": "016ba03b8f9dc8ee390c58145de15010e1d379f2",
+      "createdAt": "2026-10-12T02:04:54Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2083,
+      "requiredSeconds": 1885,
+      "failures": []
+    },
+    {
+      "runId": 38194223671,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38194223671",
+      "sha": "f8edd4f5f355f3a21db819bb74a76406e014a95f",
+      "createdAt": "2026-10-12T02:02:21Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 166,
+      "requiredSeconds": 38,
+      "failures": []
+    },
+    {
+      "runId": 38194223671,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38194223671",
+      "sha": "f8edd4f5f355f3a21db819bb74a76406e014a95f",
+      "createdAt": "2026-10-12T02:02:21Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 156,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38186916036,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186916036",
+      "sha": "af819a0c809b9a0ff056703e7ec94e7c5ed11b22",
+      "createdAt": "2026-10-12T00:09:08Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 855,
+      "requiredSeconds": 753,
+      "failures": []
+    },
+    {
+      "runId": 38186916036,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186916036",
+      "sha": "af819a0c809b9a0ff056703e7ec94e7c5ed11b22",
+      "createdAt": "2026-10-12T00:09:08Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 855,
+      "requiredSeconds": 753,
+      "failures": []
+    },
+    {
+      "runId": 38186916036,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186916036",
+      "sha": "af819a0c809b9a0ff056703e7ec94e7c5ed11b22",
+      "createdAt": "2026-10-12T00:09:08Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2229,
+      "requiredSeconds": 1986,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29b M3/S2 native dispose removes listeners and wait reauthorization prevents logout leakage",
+          "type": "assertion",
+          "diagnostic": "not ok 41 - BL-29b M3/S2 native dispose removes listeners and wait reauthorization prevents logout leakage\n  ---\n  duration_ms: 6557.3998\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:103:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    false !== true\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:108:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38186916036,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186916036",
+      "sha": "af819a0c809b9a0ff056703e7ec94e7c5ed11b22",
+      "createdAt": "2026-10-12T00:09:08Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2039,
+      "requiredSeconds": 1835,
+      "failures": []
+    },
+    {
+      "runId": 38186908303,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186908303",
+      "sha": "0fb0db7cafc8a61371c42f4a61a90e23d484e86b",
+      "createdAt": "2026-10-12T00:09:01Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 869,
+      "requiredSeconds": 749,
+      "failures": []
+    },
+    {
+      "runId": 38186908303,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38186908303",
+      "sha": "0fb0db7cafc8a61371c42f4a61a90e23d484e86b",
+      "createdAt": "2026-10-12T00:09:01Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2536,
+      "requiredSeconds": 2256,
+      "failures": []
+    },
+    {
+      "runId": 38184057177,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38184057177",
+      "sha": "9d5dc5d69d97bd5f5aaa7096e55af648ed61db92",
+      "createdAt": "2026-10-11T23:22:46Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 887,
+      "requiredSeconds": 738,
+      "failures": []
+    },
+    {
+      "runId": 38184057177,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38184057177",
+      "sha": "9d5dc5d69d97bd5f5aaa7096e55af648ed61db92",
+      "createdAt": "2026-10-11T23:22:46Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2529,
+      "requiredSeconds": 2235,
+      "failures": []
+    },
+    {
+      "runId": 38184048714,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38184048714",
+      "sha": "296fbee1986e8b2d0dd5bc62ee3c0314f57478c9",
+      "createdAt": "2026-10-11T23:22:38Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 838,
+      "requiredSeconds": 732,
+      "failures": []
+    },
+    {
+      "runId": 38184048714,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38184048714",
+      "sha": "296fbee1986e8b2d0dd5bc62ee3c0314f57478c9",
+      "createdAt": "2026-10-11T23:22:38Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2520,
+      "requiredSeconds": 2231,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29b M5 host close revokes empty account waits before closing sockets",
+          "type": "assertion",
+          "diagnostic": "not ok 40 - BL-29b M5 host close revokes empty account waits before closing sockets\n  ---\n  duration_ms: 6832.6353\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:70:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The expression evaluated to a falsy value:\n    \n      assert.ok(Date.now()-at<500)\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:84:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38183885812,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183885812",
+      "sha": "3d9798a3146f66de04915541d3934776e5a53ee4",
+      "createdAt": "2026-10-11T23:20:07Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 156,
+      "requiredSeconds": 58,
+      "failures": []
+    },
+    {
+      "runId": 38183885812,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183885812",
+      "sha": "3d9798a3146f66de04915541d3934776e5a53ee4",
+      "createdAt": "2026-10-11T23:20:07Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 146,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38183876229,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183876229",
+      "sha": "e80a70357d06d8ad21b9e3d1f80ab0c5a80add16",
+      "createdAt": "2026-10-11T23:19:59Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 726,
+      "requiredSeconds": 639,
+      "failures": []
+    },
+    {
+      "runId": 38183876229,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183876229",
+      "sha": "e80a70357d06d8ad21b9e3d1f80ab0c5a80add16",
+      "createdAt": "2026-10-11T23:19:59Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2517,
+      "requiredSeconds": 2208,
+      "failures": []
+    },
+    {
+      "runId": 38183837765,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183837765",
+      "sha": "28df81f61c65380e22101805aa9f461843be3147",
+      "createdAt": "2026-10-11T23:19:20Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 56,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38183837765,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38183837765",
+      "sha": "28df81f61c65380e22101805aa9f461843be3147",
+      "createdAt": "2026-10-11T23:19:20Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 53,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38181528364,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38181528364",
+      "sha": "c57c61c9a513ee5018f8f47eb5636ab3a24e779f",
+      "createdAt": "2026-10-11T22:43:09Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 808,
+      "requiredSeconds": 703,
+      "failures": []
+    },
+    {
+      "runId": 38181528364,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38181528364",
+      "sha": "c57c61c9a513ee5018f8f47eb5636ab3a24e779f",
+      "createdAt": "2026-10-11T22:43:09Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2619,
+      "requiredSeconds": 2325,
+      "failures": []
+    },
+    {
+      "runId": 38180802858,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38180802858",
+      "sha": "a78593bb1fd6d9c2fa55aea19f509bcc81669f37",
+      "createdAt": "2026-10-11T22:32:03Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 663,
+      "requiredSeconds": 562,
+      "failures": []
+    },
+    {
+      "runId": 38180802858,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38180802858",
+      "sha": "a78593bb1fd6d9c2fa55aea19f509bcc81669f37",
+      "createdAt": "2026-10-11T22:32:03Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 659,
+      "requiredSeconds": 361,
+      "failures": []
+    },
+    {
+      "runId": 38180551178,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38180551178",
+      "sha": "cf9b473509371b066edd693b833afcc77bed00cd",
+      "createdAt": "2026-10-11T22:28:21Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 235,
+      "requiredSeconds": 136,
+      "failures": []
+    },
+    {
+      "runId": 38180551178,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38180551178",
+      "sha": "cf9b473509371b066edd693b833afcc77bed00cd",
+      "createdAt": "2026-10-11T22:28:21Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 225,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38174156747,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38174156747",
+      "sha": "32da9a02e26046546c1f121ce4ca9cff07b2c409",
+      "createdAt": "2026-10-11T20:54:30Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 846,
+      "requiredSeconds": 736,
+      "failures": []
+    },
+    {
+      "runId": 38174156747,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38174156747",
+      "sha": "32da9a02e26046546c1f121ce4ca9cff07b2c409",
+      "createdAt": "2026-10-11T20:54:30Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2491,
+      "requiredSeconds": 2197,
+      "failures": []
+    },
+    {
+      "runId": 38172542464,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172542464",
+      "sha": "089a84288cc85f9e394268c8238fc8892f0a019f",
+      "createdAt": "2026-10-11T20:31:05Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 818,
+      "requiredSeconds": 717,
+      "failures": []
+    },
+    {
+      "runId": 38172542464,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172542464",
+      "sha": "089a84288cc85f9e394268c8238fc8892f0a019f",
+      "createdAt": "2026-10-11T20:31:05Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 818,
+      "requiredSeconds": 717,
+      "failures": []
+    },
+    {
+      "runId": 38172542464,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172542464",
+      "sha": "089a84288cc85f9e394268c8238fc8892f0a019f",
+      "createdAt": "2026-10-11T20:31:05Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 7547,
+      "requiredSeconds": 7258,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "workflow",
+          "name": "cancelled after >60 minutes (suspected hang; not proven)",
+          "type": "hang-suspected",
+          "diagnostic": "Job ran 7547s before cancellation."
+        }
+      ]
+    },
+    {
+      "runId": 38172542464,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172542464",
+      "sha": "089a84288cc85f9e394268c8238fc8892f0a019f",
+      "createdAt": "2026-10-11T20:31:05Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2468,
+      "requiredSeconds": 2150,
+      "failures": []
+    },
+    {
+      "runId": 38172227801,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172227801",
+      "sha": "60230f401658914a6e3c04c1303f9130f6d54266",
+      "createdAt": "2026-10-11T20:26:37Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 830,
+      "requiredSeconds": 722,
+      "failures": []
+    },
+    {
+      "runId": 38172227801,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38172227801",
+      "sha": "60230f401658914a6e3c04c1303f9130f6d54266",
+      "createdAt": "2026-10-11T20:26:37Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2497,
+      "requiredSeconds": 2209,
+      "failures": []
+    },
+    {
+      "runId": 38171525464,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38171525464",
+      "sha": "b799c98877c0fc8a83f9a76521c379a50c511243",
+      "createdAt": "2026-10-11T20:16:44Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 833,
+      "requiredSeconds": 723,
+      "failures": []
+    },
+    {
+      "runId": 38171525464,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38171525464",
+      "sha": "b799c98877c0fc8a83f9a76521c379a50c511243",
+      "createdAt": "2026-10-11T20:16:44Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 870,
+      "requiredSeconds": 575,
+      "failures": []
+    },
+    {
+      "runId": 38169300516,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169300516",
+      "sha": "cddb56464b013010cc513668a55f8995476c1156",
+      "createdAt": "2026-10-11T19:44:37Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 829,
+      "requiredSeconds": 723,
+      "failures": []
+    },
+    {
+      "runId": 38169300516,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169300516",
+      "sha": "cddb56464b013010cc513668a55f8995476c1156",
+      "createdAt": "2026-10-11T19:44:37Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2440,
+      "requiredSeconds": 2157,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+          "type": "timeout",
+          "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 25037.0379\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:162:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\n      \"status\": null,\n      \"signal\": \"SIGTERM\",\n      \"error\": \"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\n      \"stdout\": \"BL-29 lifecycle: startup / synthetic cloud authentication started (0ms)\\nBL-29 lifecycle: fixture / verified synthetic cloud authentication ready (5463ms)\\nBL-29 lifecycle: main warmup started (5464ms)\\nBL-29 lifecycle: main warmup ready (5674ms)\\nBL-29 lifecycle: desktop launch started (5675ms)\\nBL-29 lifecycle: desktop window ready (6168ms)\\nBL-29 lifecycle: desktop native initialization started (6258ms)\\ndesktop logged in\\nBL-29 lifecycle: desktop ready / mobile launch started (7878ms)\\nBL-29 lifecycle: mobile verified session / desktop and mobile ready (8808ms)\\nBL-29 lifecycle: approval-visible check started (11078ms)\\nBL-29 lifecycle: approval-visible check passed (11706ms)\\nBL-29 lifecycle: approval-accepted check started (11706ms)\\nBL-29 lifecycle: approval-accepted check passed (11820ms)\\nBL-29 lifecycle: question-visible check started (11861ms)\\nBL-29 lifecycle: question-visible check passed (12128ms)\\nBL-29 lifecycle: question-accepted check started (12144ms)\\nBL-29 lifecycle: question-accepted check passed (12288ms)\\nBL-29 lifecycle: all observations and assertions completed (16077ms)\\nBL-29 lifecycle: report written / teardown started (17136ms)\\nBL-29 lifecycle: mobile refresh stop / unload started (17136ms)\\nBL-29 lifecycle: mobile unload completed (17186ms)\\nBL-29 lifecycle: desktop refresh stop / unload started (17186ms)\\nBL-29 lifecycle: desktop unload completed (17247ms)\\nBL-29 lifecycle: browser close started (17247ms)\\nBL-29 lifecycle: browser close completed (17291ms)\\nBL-29 lifecycle: production desktop cleanup started (17291ms)\\nBL-29 lifecycle: production desktop cleanup completed (20066ms)\\nBL-29 lifecycle: Electron close started (20066ms)\\n\",\n      \"stderr\": \"\"\n    }\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:170:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38169292412,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169292412",
+      "sha": "3daa13ae548b354d242681d4ae1230521c3ba143",
+      "createdAt": "2026-10-11T19:44:29Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 819,
+      "requiredSeconds": 710,
+      "failures": []
+    },
+    {
+      "runId": 38169292412,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169292412",
+      "sha": "3daa13ae548b354d242681d4ae1230521c3ba143",
+      "createdAt": "2026-10-11T19:44:29Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2319,
+      "requiredSeconds": 2049,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
+          "type": "timeout",
+          "diagnostic": "not ok 45 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 55022.2269\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:136:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\"probe\":\"probe-latency\",\"status\":null,\"hex\":null,\"signal\":\"SIGTERM\",\"error\":\"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\"stdout\":\"\",\"stderr\":\"\",\"fatalReports\":[]}\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    probe (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:22:12)\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:137:13)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38169121188,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169121188",
+      "sha": "f19fe7bca0151fc7ffe93d61dc42b8e2b30a1283",
+      "createdAt": "2026-10-11T19:41:59Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 171,
+      "requiredSeconds": 96,
+      "failures": []
+    },
+    {
+      "runId": 38169121188,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38169121188",
+      "sha": "f19fe7bca0151fc7ffe93d61dc42b8e2b30a1283",
+      "createdAt": "2026-10-11T19:41:59Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 160,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38166147082,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38166147082",
+      "sha": "1c2d6394f6b97808c45c59b2117c8d055be68c8d",
+      "createdAt": "2026-10-11T18:59:58Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 722,
+      "requiredSeconds": 637,
+      "failures": []
+    },
+    {
+      "runId": 38166147082,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38166147082",
+      "sha": "1c2d6394f6b97808c45c59b2117c8d055be68c8d",
+      "createdAt": "2026-10-11T18:59:58Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2463,
+      "requiredSeconds": 2167,
+      "failures": []
+    },
+    {
+      "runId": 38166085141,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38166085141",
+      "sha": "e70f1427318db8aca66dc09777b65c743ffbc8d4",
+      "createdAt": "2026-10-11T18:59:01Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 723,
+      "requiredSeconds": 638,
+      "failures": []
+    },
+    {
+      "runId": 38166085141,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38166085141",
+      "sha": "e70f1427318db8aca66dc09777b65c743ffbc8d4",
+      "createdAt": "2026-10-11T18:59:01Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2467,
+      "requiredSeconds": 2171,
+      "failures": []
+    },
+    {
+      "runId": 38163340132,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163340132",
+      "sha": "77da44d23bf10668f591ff0d0e7790bf1dbaf0c4",
+      "createdAt": "2026-10-11T18:19:45Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 867,
+      "requiredSeconds": 720,
+      "failures": []
+    },
+    {
+      "runId": 38163340132,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163340132",
+      "sha": "77da44d23bf10668f591ff0d0e7790bf1dbaf0c4",
+      "createdAt": "2026-10-11T18:19:45Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2275,
+      "requiredSeconds": 2013,
+      "failures": []
+    },
+    {
+      "runId": 38163003827,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163003827",
+      "sha": "847216bcf10bb046e4cbfd84e918bc40bee61617",
+      "createdAt": "2026-10-11T18:14:53Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 840,
+      "requiredSeconds": 706,
+      "failures": []
+    },
+    {
+      "runId": 38163003827,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163003827",
+      "sha": "847216bcf10bb046e4cbfd84e918bc40bee61617",
+      "createdAt": "2026-10-11T18:14:53Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 840,
+      "requiredSeconds": 706,
+      "failures": []
+    },
+    {
+      "runId": 38163003827,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163003827",
+      "sha": "847216bcf10bb046e4cbfd84e918bc40bee61617",
+      "createdAt": "2026-10-11T18:14:53Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2550,
+      "requiredSeconds": 2239,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
+          "type": "timeout",
+          "diagnostic": "not ok 45 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 55136.4405\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:136:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\"probe\":\"probe-latency\",\"status\":null,\"hex\":null,\"signal\":\"SIGTERM\",\"error\":\"spawnSync C:\\\\hostedtoolcache\\\\windows\\\\node\\\\24.21.0\\\\x64\\\\node.exe ETIMEDOUT\",\"stdout\":\"\",\"stderr\":\"\",\"fatalReports\":[]}\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    probe (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:22:12)\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:137:13)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38163003827,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38163003827",
+      "sha": "847216bcf10bb046e4cbfd84e918bc40bee61617",
+      "createdAt": "2026-10-11T18:14:53Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2520,
+      "requiredSeconds": 2195,
+      "failures": []
+    },
+    {
+      "runId": 38162995493,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162995493",
+      "sha": "81b65e1e34f978f47f020f2a5fa867c57b8d06d2",
+      "createdAt": "2026-10-11T18:14:45Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 2625,
+      "requiredSeconds": 2519,
+      "failures": []
+    },
+    {
+      "runId": 38162995493,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162995493",
+      "sha": "81b65e1e34f978f47f020f2a5fa867c57b8d06d2",
+      "createdAt": "2026-10-11T18:14:45Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2223,
+      "requiredSeconds": 1974,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-account-changes.test.ts",
+          "name": "BL-29c N1 an unrelated account commit cannot wake this account subscriber",
+          "type": "assertion",
+          "diagnostic": "not ok 24 - BL-29c N1 an unrelated account commit cannot wake this account subscriber\n  ---\n  duration_ms: 3966.9812\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-account-changes.test.ts:31:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    true !== false\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: false\n  actual: true\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-account-changes.test.ts:39:63)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38162367372,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162367372",
+      "sha": "6b888960546c0290e9f514ce023ccf877fa4bcdf",
+      "createdAt": "2026-10-11T18:05:46Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 807,
+      "requiredSeconds": 707,
+      "failures": []
+    },
+    {
+      "runId": 38162367372,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162367372",
+      "sha": "6b888960546c0290e9f514ce023ccf877fa4bcdf",
+      "createdAt": "2026-10-11T18:05:46Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2047,
+      "requiredSeconds": 1833,
+      "failures": []
+    },
+    {
+      "runId": 38162122491,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162122491",
+      "sha": "f2cdb55cfd909bedebfa49e2960e5e6072f4d8a6",
+      "createdAt": "2026-10-11T18:02:14Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 756,
+      "requiredSeconds": 650,
+      "failures": []
+    },
+    {
+      "runId": 38162122491,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162122491",
+      "sha": "f2cdb55cfd909bedebfa49e2960e5e6072f4d8a6",
+      "createdAt": "2026-10-11T18:02:14Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 655,
+      "requiredSeconds": 366,
+      "failures": []
+    },
+    {
+      "runId": 38162072501,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162072501",
+      "sha": "1ddae8b3ae60ffa652d02499e9f2333b8b1eb6ae",
+      "createdAt": "2026-10-11T18:01:30Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 753,
+      "requiredSeconds": 649,
+      "failures": []
+    },
+    {
+      "runId": 38162072501,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38162072501",
+      "sha": "1ddae8b3ae60ffa652d02499e9f2333b8b1eb6ae",
+      "createdAt": "2026-10-11T18:01:30Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 783,
+      "requiredSeconds": 490,
+      "failures": []
+    },
+    {
+      "runId": 38161909482,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161909482",
+      "sha": "4bc7d01b00e2a22b6e44cbb583e10c6270ccb738",
+      "createdAt": "2026-10-11T17:59:19Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 822,
+      "requiredSeconds": 724,
+      "failures": []
+    },
+    {
+      "runId": 38161909482,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161909482",
+      "sha": "4bc7d01b00e2a22b6e44cbb583e10c6270ccb738",
+      "createdAt": "2026-10-11T17:59:19Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 1236,
+      "requiredSeconds": 942,
+      "failures": []
+    },
+    {
+      "runId": 38161704747,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161704747",
+      "sha": "60471e5f7a34e43547264ce8a5308f133da6e744",
+      "createdAt": "2026-10-11T17:56:07Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 364,
+      "requiredSeconds": 267,
+      "failures": []
+    },
+    {
+      "runId": 38161704747,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161704747",
+      "sha": "60471e5f7a34e43547264ce8a5308f133da6e744",
+      "createdAt": "2026-10-11T17:56:07Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 360,
+      "requiredSeconds": 57,
+      "failures": []
+    },
+    {
+      "runId": 38161639170,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161639170",
+      "sha": "ed5af6d547c989ab0a0d48bee5d816df718738f5",
+      "createdAt": "2026-10-11T17:55:10Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 71,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38161639170,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38161639170",
+      "sha": "ed5af6d547c989ab0a0d48bee5d816df718738f5",
+      "createdAt": "2026-10-11T17:55:10Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 60,
+      "requiredSeconds": 0,
+      "failures": []
+    },
+    {
+      "runId": 38160093571,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38160093571",
+      "sha": "ac516ae79e6469bc64987e157bfd9ce5fb92eabb",
+      "createdAt": "2026-10-11T17:32:40Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 799,
+      "requiredSeconds": 690,
+      "failures": []
+    },
+    {
+      "runId": 38160093571,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38160093571",
+      "sha": "ac516ae79e6469bc64987e157bfd9ce5fb92eabb",
+      "createdAt": "2026-10-11T17:32:40Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2485,
+      "requiredSeconds": 2183,
+      "failures": []
+    },
+    {
+      "runId": 38160025951,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38160025951",
+      "sha": "7c166452cab1440f15bcbbc3a29b5ef36cafee49",
+      "createdAt": "2026-10-11T17:31:42Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 839,
+      "requiredSeconds": 728,
+      "failures": []
+    },
+    {
+      "runId": 38160025951,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38160025951",
+      "sha": "7c166452cab1440f15bcbbc3a29b5ef36cafee49",
+      "createdAt": "2026-10-11T17:31:42Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 1790,
+      "requiredSeconds": 1506,
+      "failures": []
+    },
+    {
+      "runId": 38159651386,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38159651386",
+      "sha": "59d971e792f1feb692038252677ec5781924a387",
+      "createdAt": "2026-10-11T17:26:30Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 829,
+      "requiredSeconds": 724,
+      "failures": []
+    },
+    {
+      "runId": 38159651386,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38159651386",
+      "sha": "59d971e792f1feb692038252677ec5781924a387",
+      "createdAt": "2026-10-11T17:26:30Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 1900,
+      "requiredSeconds": 1702,
+      "failures": []
+    },
+    {
+      "runId": 38156992023,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38156992023",
+      "sha": "d4733489bfa5d3bf65931aa1023ab461db6341e1",
+      "createdAt": "2026-10-11T16:48:31Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 799,
+      "requiredSeconds": 695,
+      "failures": []
+    },
+    {
+      "runId": 38156992023,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38156992023",
+      "sha": "d4733489bfa5d3bf65931aa1023ab461db6341e1",
+      "createdAt": "2026-10-11T16:48:31Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2560,
+      "requiredSeconds": 2256,
+      "failures": []
+    },
+    {
+      "runId": 38154299146,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38154299146",
+      "sha": "a1ed8955731857c27f25601b5b1ce109901cf0af",
+      "createdAt": "2026-10-11T16:09:51Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 731,
+      "requiredSeconds": 635,
+      "failures": []
+    },
+    {
+      "runId": 38154299146,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38154299146",
+      "sha": "a1ed8955731857c27f25601b5b1ce109901cf0af",
+      "createdAt": "2026-10-11T16:09:51Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2491,
+      "requiredSeconds": 2195,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+          "type": "timeout",
+          "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 25042.3552\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:161:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    spawnSync C:\\hostedtoolcache\\windows\\node\\24.21.0\\x64\\node.exe ETIMEDOUT\n    \n    null !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: ~\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:169:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38154294706,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38154294706",
+      "sha": "287316eaece66ea732cd24603450790ebf8576ea",
+      "createdAt": "2026-10-11T16:09:48Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 785,
+      "requiredSeconds": 681,
+      "failures": []
+    },
+    {
+      "runId": 38154294706,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38154294706",
+      "sha": "287316eaece66ea732cd24603450790ebf8576ea",
+      "createdAt": "2026-10-11T16:09:48Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2474,
+      "requiredSeconds": 2187,
+      "failures": []
+    },
+    {
+      "runId": 38152988458,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38152988458",
+      "sha": "305b5088e7713cea8565063a97b20669fe0e8f97",
+      "createdAt": "2026-10-11T15:50:49Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 846,
+      "requiredSeconds": 740,
+      "failures": []
+    },
+    {
+      "runId": 38152988458,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38152988458",
+      "sha": "305b5088e7713cea8565063a97b20669fe0e8f97",
+      "createdAt": "2026-10-11T15:50:49Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 1152,
+      "requiredSeconds": 940,
+      "failures": []
+    },
+    {
+      "runId": 38147975598,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38147975598",
+      "sha": "ba45182d551ef4c8a827d5846fcb3e9a1e9287bd",
+      "createdAt": "2026-10-11T14:38:02Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "cancelled",
+      "seconds": 3696,
+      "requiredSeconds": 3591,
+      "failures": [
+        {
+          "job": "test (ubuntu-latest)",
+          "file": "workflow",
+          "name": "cancelled after >60 minutes (suspected hang; not proven)",
+          "type": "hang-suspected",
+          "diagnostic": "Job ran 3696s before cancellation."
+        }
+      ]
+    },
+    {
+      "runId": 38147975598,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38147975598",
+      "sha": "ba45182d551ef4c8a827d5846fcb3e9a1e9287bd",
+      "createdAt": "2026-10-11T14:38:02Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 2207,
+      "requiredSeconds": 1944,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
+          "type": "process-exit",
+          "diagnostic": "not ok 45 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 574.4817\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:135:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    {\"probe\":\"probe-latency\",\"status\":1,\"hex\":\"0x00000001\",\"signal\":null,\"stdout\":\"\",\"stderr\":\"node:internal/child_process:458\\r\\n    throw new ErrnoException(err, 'spawn');\\r\\n          ^\\r\\n\\r\\nError: spawn EINVAL\\r\\n    at ChildProcess.spawn (node:internal/child_process:458:11)\\r\\n    at spawn (node:child_process:813:9)\\r\\n    at file:///D:/a/weftmate/weftmate/services/cloud/test/dependencies.mjs:51:23 {\\r\\n  errno: -4071,\\r\\n  code: 'EINVAL',\\r\\n  syscall: 'spawn'\\r\\n}\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"fatalReports\":[]}\n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    probe (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:21:12)\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:136:13)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        },
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+          "type": "process-exit",
+          "diagnostic": "not ok 46 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 553.856\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\bl-29-rework.test.ts:161:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    node:internal/child_process:458\n        throw new ErrnoException(err, 'spawn');\n              ^\n    \n    Error: spawn EINVAL\n        at ChildProcess.spawn (node:internal/child_process:458:11)\n        at spawn (node:child_process:813:9)\n        at file:///D:/a/weftmate/weftmate/services/cloud/test/dependencies.mjs:51:23 {\n      errno: -4071,\n      code: 'EINVAL',\n      syscall: 'spawn'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    ChildProcess.spawn (node:internal/child_process:458:11)\n    spawn (node:child_process:813:9)\n    file:///D:/a/weftmate/weftmate/services/cloud/test/dependencies.mjs:51:23 {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/bl-29-rework.test.ts:169:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38141321791,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38141321791",
+      "sha": "1491fe5a88c95428a2781d6277702fd5260f7cfd",
+      "createdAt": "2026-10-11T12:58:29Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 725,
+      "requiredSeconds": 642,
+      "failures": []
+    },
+    {
+      "runId": 38141321791,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38141321791",
+      "sha": "1491fe5a88c95428a2781d6277702fd5260f7cfd",
+      "createdAt": "2026-10-11T12:58:29Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 1901,
+      "requiredSeconds": 1716,
+      "failures": []
+    },
+    {
+      "runId": 38138830162,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38138830162",
+      "sha": "fea5567a96290b11ebb538e4170866b62bfa8063",
+      "createdAt": "2026-10-11T12:19:35Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "failure",
+      "seconds": 822,
+      "requiredSeconds": 730,
+      "failures": [
+        {
+          "job": "test (ubuntu-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29b M1 real Electron empty main keeps eight immediate errors within old changes budget",
+          "type": "assertion",
+          "diagnostic": "not ok 39 - BL-29b M1 real Electron empty main keeps eight immediate errors within old changes budget\n  ---\n  duration_ms: 33354.972833\n  type: 'test'\n  location: '/home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:112:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    1 !== 8\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 8\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:114:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        },
+        {
+          "job": "test (ubuntu-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport",
+          "type": "timeout",
+          "diagnostic": "not ok 41 - BL-29b M4/S1 real Electron and mobile synchronize settings and regain foreground under 200ms transport\n  ---\n  duration_ms: 32675.566584\n  type: 'test'\n  location: '/home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:135:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    + actual - expected\n    \n    + 'page.waitForFunction: Timeout 30000ms exceeded.'\n    - undefined\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  actual: 'page.waitForFunction: Timeout 30000ms exceeded.'\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:137:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    Test.run (node:internal/test_runner/test:1467:12)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+        },
+        {
+          "job": "test (ubuntu-latest)",
+          "file": "tests/bl-29-rework.test.ts",
+          "name": "BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s",
+          "type": "timeout",
+          "diagnostic": "not ok 42 - BL-29c account commit after an early native approval frame invalidates the empty decision read within 2s\n  ---\n  duration_ms: 17497.67841\n  type: 'test'\n  location: '/home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:161:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    node:internal/modules/run_main:107\n        triggerUncaughtException(\n        ^\n    \n    page.waitForFunction: Timeout 15000ms exceeded.\n        at /home/runner/work/weftmate/weftmate/tests/integration/bl-29-requests.mjs:52:17 {\n      log: [],\n      name: 'TimeoutError'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    /home/runner/work/weftmate/weftmate/tests/integration/bl-29-requests.mjs:52:17 {\n    TestContext.<anonymous> (file:///home/runner/work/weftmate/weftmate/tests/bl-29-rework.test.ts:169:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n    Test.postRun (node:internal/test_runner/test:1542:19)\n    node:internal/test_runner/test:1305:31\n    node:internal/process/task_queues:151:7\n    AsyncResource.runInAsyncScope (node:async_hooks:227:14)\n    AsyncResource.runMicrotask (node:internal/process/task_queues:148:8)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38138830162,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38138830162",
+      "sha": "fea5567a96290b11ebb538e4170866b62bfa8063",
+      "createdAt": "2026-10-11T12:19:35Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 8280,
+      "requiredSeconds": 7995,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "workflow",
+          "name": "cancelled after >60 minutes (suspected hang; not proven)",
+          "type": "hang-suspected",
+          "diagnostic": "Job ran 8280s before cancellation."
+        }
+      ]
+    },
+    {
+      "runId": 38138796238,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38138796238",
+      "sha": "3f0b10d627cb9caf01a614414e4338cec70ec016",
+      "createdAt": "2026-10-11T12:19:02Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 819,
+      "requiredSeconds": 721,
+      "failures": []
+    },
+    {
+      "runId": 38138796238,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38138796238",
+      "sha": "3f0b10d627cb9caf01a614414e4338cec70ec016",
+      "createdAt": "2026-10-11T12:19:02Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2297,
+      "requiredSeconds": 2033,
+      "failures": []
+    },
+    {
+      "runId": 38137017047,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38137017047",
+      "sha": "375d68ed021c4eca1162d7055e30165c6003021f",
+      "createdAt": "2026-10-11T11:50:13Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 712,
+      "requiredSeconds": 631,
+      "failures": []
+    },
+    {
+      "runId": 38137017047,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38137017047",
+      "sha": "375d68ed021c4eca1162d7055e30165c6003021f",
+      "createdAt": "2026-10-11T11:50:13Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 4120,
+      "requiredSeconds": 1278,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "workflow",
+          "name": "cancelled after >60 minutes (suspected hang; not proven)",
+          "type": "hang-suspected",
+          "diagnostic": "Job ran 4120s before cancellation."
+        }
+      ]
+    },
+    {
+      "runId": 38136926541,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136926541",
+      "sha": "8713d8840f0b135d3547335c429ebc12aff11396",
+      "createdAt": "2026-10-11T11:48:44Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 634,
+      "requiredSeconds": 535,
+      "failures": []
+    },
+    {
+      "runId": 38136926541,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136926541",
+      "sha": "8713d8840f0b135d3547335c429ebc12aff11396",
+      "createdAt": "2026-10-11T11:48:44Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 634,
+      "requiredSeconds": 535,
+      "failures": []
+    },
+    {
+      "runId": 38136926541,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136926541",
+      "sha": "8713d8840f0b135d3547335c429ebc12aff11396",
+      "createdAt": "2026-10-11T11:48:44Z",
+      "job": "test (windows-latest)",
+      "conclusion": "failure",
+      "seconds": 1692,
+      "requiredSeconds": 1600,
+      "failures": [
+        {
+          "job": "test (windows-latest)",
+          "file": "tests/rob-1-electron.test.ts",
+          "name": "real Windows Electron survives first-run and legacy-upgrade interruption at every credential commit phase",
+          "type": "assertion",
+          "diagnostic": "not ok 1159 - real Windows Electron survives first-run and legacy-upgrade interruption at every credential commit phase\n  ---\n  duration_ms: 109533.3612\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\rob-1-electron.test.ts:5:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    node:internal/modules/run_main:107\n        triggerUncaughtException(\n        ^\n    \n    AssertionError [ERR_ASSERTION]: an interrupted replacement keeps the old complete value or the newly committed complete value\n    \n    null !== 'new'\n    \n        at file:///D:/a/weftmate/weftmate/tests/integration/rob-1-vault-matrix.mjs:33:73\n        at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n      generatedMessage: false,\n      code: 'ERR_ASSERTION',\n      actual: null,\n      expected: 'new',\n      operator: 'strictEqual',\n      diff: 'simple'\n    }\n    \n    Node.js v24.21.0\n    \n    \n    1 !== 0\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 0\n  actual: 1\n  operator: 'strictEqual'\n  stack: |-\n    file:///D:/a/weftmate/weftmate/tests/integration/rob-1-vault-matrix.mjs:33:73\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/rob-1-electron.test.ts:9:39)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ..."
+        }
+      ]
+    },
+    {
+      "runId": 38136926541,
+      "attempt": 2,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136926541",
+      "sha": "8713d8840f0b135d3547335c429ebc12aff11396",
+      "createdAt": "2026-10-11T11:48:44Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2022,
+      "requiredSeconds": 1929,
+      "failures": []
+    },
+    {
+      "runId": 38136238276,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136238276",
+      "sha": "2dc54b68f4552ced5c704ec745b0396e368ec586",
+      "createdAt": "2026-10-11T11:37:23Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 639,
+      "requiredSeconds": 550,
+      "failures": []
+    },
+    {
+      "runId": 38136238276,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136238276",
+      "sha": "2dc54b68f4552ced5c704ec745b0396e368ec586",
+      "createdAt": "2026-10-11T11:37:23Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 1997,
+      "requiredSeconds": 1902,
+      "failures": []
+    },
+    {
+      "runId": 38136104526,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136104526",
+      "sha": "1f14e780542d5e794a0413ae8fd8fbae22a07578",
+      "createdAt": "2026-10-11T11:35:11Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 578,
+      "requiredSeconds": 498,
+      "failures": []
+    },
+    {
+      "runId": 38136104526,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38136104526",
+      "sha": "1f14e780542d5e794a0413ae8fd8fbae22a07578",
+      "createdAt": "2026-10-11T11:35:11Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 1557,
+      "requiredSeconds": 1494,
+      "failures": []
+    },
+    {
+      "runId": 38134745129,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134745129",
+      "sha": "fd956bc0b3045c05755e2dff4d25e2ad08ba3b4e",
+      "createdAt": "2026-10-11T11:13:02Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 601,
+      "requiredSeconds": 517,
+      "failures": []
+    },
+    {
+      "runId": 38134745129,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134745129",
+      "sha": "fd956bc0b3045c05755e2dff4d25e2ad08ba3b4e",
+      "createdAt": "2026-10-11T11:13:02Z",
+      "job": "test (windows-latest)",
+      "conclusion": "cancelled",
+      "seconds": 1326,
+      "requiredSeconds": 1237,
+      "failures": []
+    },
+    {
+      "runId": 38134508827,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134508827",
+      "sha": "5a338cbb9ad9d22a2f8cc60217066aff252d5bbd",
+      "createdAt": "2026-10-11T11:09:04Z",
+      "job": "test (ubuntu-latest)",
+      "conclusion": "success",
+      "seconds": 812,
+      "requiredSeconds": 717,
+      "failures": []
+    },
+    {
+      "runId": 38134508827,
+      "attempt": 1,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38134508827",
+      "sha": "5a338cbb9ad9d22a2f8cc60217066aff252d5bbd",
+      "createdAt": "2026-10-11T11:09:04Z",
+      "job": "test (windows-latest)",
+      "conclusion": "success",
+      "seconds": 2434,
+      "requiredSeconds": 2136,
+      "failures": []
+    }
+  ]
+}
