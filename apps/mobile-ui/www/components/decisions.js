@@ -201,8 +201,8 @@ function renderConversationApprovals(){const context=approvalContext(),bar=$('ap
     .sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.approvalId.localeCompare(b.approvalId));
   const focused=bar.contains?.(document.activeElement),focusChoice=document.activeElement?.dataset?.approvalChoice,wasHidden=bar.hidden;
   bar.dataset.mobileDecision='approval';bar.hidden=!rows.length;
-  if(rows.length)placeMobileDecision(bar,rows[0]);else if(bar.dataset.mobileDecision)bar.remove();
-  for(const row of all.filter(row=>row.status!=='pending')){const content=mobileDecisionContent();let record=[...content.children].find(node=>node.dataset?.approvalReceipt===row.approvalId);if(!record){record=el('p','decision-receipt');record.dataset.approvalReceipt=row.approvalId;record.dataset.mobileDecision='receipt';content.insertBefore(record,bar.nextSibling);}record.textContent=approvalRecord(row);record.setAttribute('role','status');}
+  if(rows.length)placeMobileDecision(bar,rows[0]);else parkMobileDecision(bar);
+  for(const row of all.filter(row=>row.status!=='pending')){const content=mobileDecisionContent();let record=[...content.children].find(node=>node.dataset?.approvalReceipt===row.approvalId);if(!record){record=el('p','decision-receipt');record.dataset.approvalReceipt=row.approvalId;record.dataset.mobileDecision='receipt';content.insertBefore(record,bar.parentNode===content?bar.nextSibling:null);}record.textContent=approvalRecord(row);record.setAttribute('role','status');}
   if(!rows.length){clear(bar);if(focused)$('draft').focus({preventScroll:true});renderTimeline();syncChatInsets();return}
   const existing=new Map([...bar.children].map(card=>[card.dataset.approvalId,card]));
   for(const old of [...bar.children])if(!rows.some(row=>row.approvalId===old.dataset.approvalId))old.remove();
@@ -224,6 +224,7 @@ function questionMeaning(row,cache,attempt){if(attempt?.busy)return '正在提�
   return '这个问题当前已失效，原任务记录仍可查看。'}
 
 function mobileDecisionContent(){return state.logicalChats&&uiCore.inMainChat()&&$('main-chat-transcript')?.isConnected?$('main-chat-transcript'):$('chat-content');}
+function parkMobileDecision(bar){const dock=$('composer-dock');if(dock&&bar.parentNode!==dock)dock.append(bar);}
 function placeMobileDecision(bar,row){const content=mobileDecisionContent();
   const anchor=row&&[...content.children].find(node=>row.approvalId&&node.dataset?.timelineApproval===row.approvalId||row.questionRpcId&&node.dataset?.timelineQuestion&&Number(node.dataset.seq)===row.observedSeq);
   if(anchor){anchor.hidden=true;content.insertBefore(bar,anchor);}else if(bar.parentNode!==content)content.append(bar);
@@ -236,7 +237,7 @@ function renderConversationQuestions(){
   const pending=rows.filter(row=>row.status==='pending'),hadFocus=bar.contains(document.activeElement);
   WeftQuestionBar.waiting(approval,pending.reduce((n,row)=>n+row.questions.length,0));
   bar.dataset.mobileDecision='question';bar.hidden=!pending.length;
-  if(pending.length)placeMobileDecision(bar,pending[0]);else bar.remove();
+  if(pending.length)placeMobileDecision(bar,pending[0]);else parkMobileDecision(bar);
   if(bar.hidden&&hadFocus)$('draft').focus({preventScroll:true});
   if(!pending.length){clear(bar);delete bar.dataset.signature}
   for(const row of rows){
