@@ -48,3 +48,5 @@
 .weekly-insight-sources button { display:inline-flex; align-items:center; gap:var(--wm-space-8); max-width:100%; overflow-wrap:anywhere; text-align:left; }
 
 .weekly-insight { margin-top:var(--wm-space-8); }
+
+.data-dialog.review-clear-dialog .button.danger,.data-dialog.review-clear-dialog .button.danger:hover:not(:disabled),.data-dialog.review-clear-dialog .button.danger:active { color:var(--danger); background:var(--danger-soft); border-color:var(--danger); }

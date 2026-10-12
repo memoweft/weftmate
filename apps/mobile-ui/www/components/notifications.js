@@ -37,7 +37,7 @@ globalThis.WeftNotificationsView = (core,target,device={}) => {
   field('reviewEnabled','回顾与洞察','每天在这台电脑整理使用摘要；每周在动态里回顾，聊天时可接续最近的事情。','checkbox');
   field('reviewRetentionDays','保留多久','只保存在这台电脑，清空后不再用于聊天背景。','select',[[7,'7 天'],[30,'30 天'],[90,'90 天'],[180,'180 天'],[365,'365 天']]);
   const clear=node('button','清空回顾','button secondary');clear.type='button';
-  clear.onclick=()=>{const focus=document.activeElement,box=node('dialog','',core.android?.call?'session-action-dialog data-dialog':'dialog confirm-dialog data-dialog');box.setAttribute('aria-label','清空回顾与洞察');box.append(node('h2','清空回顾与洞察'),node('p','删除已保存的摘要和周回顾，之后从明天重新开始整理。对话、成果和记忆会保留。'));
+  clear.onclick=()=>{const focus=document.activeElement,box=node('dialog','',core.android?.call?'session-action-dialog data-dialog review-clear-dialog':'dialog confirm-dialog data-dialog review-clear-dialog');box.setAttribute('aria-label','清空回顾与洞察');box.append(node('h2','清空回顾与洞察'),node('p','删除已保存的摘要和周回顾，之后从明天重新开始整理。对话、成果和记忆会保留。'));
     const cancel=node('button','取消','button secondary'),confirm=node('button','确认清空','button danger');cancel.type=confirm.type='button';cancel.onclick=()=>box.close();confirm.onclick=async()=>{box.close();if(await write({reviewClear:true}))device.toast?.('回顾已清空。');};const actions=node('div','','actions');actions.append(cancel,confirm);box.append(actions);box.addEventListener('close',()=>{box.remove();focus?.focus();});document.body.append(box);globalThis.WeftPopover?.bindSettings(box);box.showModal();cancel.focus();};
   form.append(controls.row('已保存的回顾','清空后，助手不再引用这些摘要。',clear));
   form.append(node('h2','记忆周报'));

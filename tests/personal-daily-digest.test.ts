@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDailyDigest,dailyDigestState,dailyWindow,observeDigestEvents,projectDailyDigest,clearDailyDigests,pruneDailyDigests,recentDigestContext,validateHealthPartition,DIGEST_CONTEXT_LIMIT,shiftDay,statisticalInsight } from '../src/personal-access/daily-digest.mjs';
+import { eraseChatCopies } from '../src/personal-access/chat-erasure.mjs';
 import { putActivity } from '../src/personal-access/activity-store.mjs';
 import { validateNotificationSettings } from '../src/personal-access/notification-policy.mjs';
 const day='2026-10-07',zone='Asia/Shanghai',at='2026-10-06T17:30:00Z';
@@ -77,4 +78,10 @@ test('weekly outstanding state follows the latest receipt, not an earlier pendin
 
 test('retention still expires local summaries when the runtime cannot return history',async()=>{
  const f=fixture();await f.refresh();f.context.backend.readEvents=async()=>{throw Error('runtime unavailable')};f.advance(100*86400000);await f.refresh();assert.equal(Object.keys(f.a.dailyDigest.days).length,0);await f.close();
+});
+
+test('forgetting memory withdraws its themes and derived insight but preserves usage and original health aggregates',async()=>{
+ const f=fixture();await f.refresh();const state=f.a.dailyDigest,day='2026-10-11';state.days[day].memory.topics=['旅行习惯'];state.healthDays[day]={version:1,status:'available',steps:6500,sleepMinutes:null,restingHeartRateBpm:null,exerciseMinutes:null,workouts:[]};state.days[day].health=structuredClone(state.healthDays[day]);
+ const usage=structuredClone(state.days[day].usage),health=structuredClone(state.healthDays[day]);f.a.commands.raw={sessionId:'s',payload:{text:'保留的合成对话原话'}};
+ eraseChatCopies(f.a,{forgotten:true});assert.deepEqual(f.a.dailyDigest.days[day].memory.topics,[]);assert.deepEqual(f.a.dailyDigest.days[day].usage,usage);assert.deepEqual(f.a.dailyDigest.healthDays[day],health);assert.equal(f.a.commands.raw.payload.text,'保留的合成对话原话');assert.equal(Object.values(f.a.activity.items).filter((row:any)=>row.weeklyInsight).length,0);await f.close();
 });
