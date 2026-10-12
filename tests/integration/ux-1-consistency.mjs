@@ -84,7 +84,7 @@ try {
     fixture.progress.call('load_tools','ux1-tools',{});fixture.progress.result('ux1-tools','工具已准备好。');
     fixture.progress.call('mcp__calendar__list','ux1-extension',{});fixture.progress.result('ux1-extension','合成扩展已处理。');
     await fixture.progress.artifact();
-    for (const [,page] of surfaces) { await page.getByText('已读回核验').first().waitFor(); await page.getByRole('button',{name:'输出与来源',exact:true}).click(); await page.getByRole('button',{name:/读取文件.*次|读取文件/}).first().waitFor(); if(await page.getByRole('button',{name:'查看全部',exact:true}).count()) await page.getByRole('button',{name:'查看全部',exact:true}).click(); await page.getByRole('button',{name:/读取文件.*次|读取文件/}).first().waitFor(); }
+    for (const [,page] of surfaces) { await page.getByText('文件已做好').first().waitFor(); await page.getByRole('button',{name:'输出与来源',exact:true}).click(); await page.getByRole('button',{name:/读取文件.*次|读取文件/}).first().waitFor(); if(await page.getByRole('button',{name:'查看全部',exact:true}).count()) await page.getByRole('button',{name:'查看全部',exact:true}).click(); await page.getByRole('button',{name:/读取文件.*次|读取文件/}).first().waitFor(); }
     await shot('09-chinese-sources');
     for(const [surface,page] of surfaces){await page.getByRole('button',{name:/读取文件/}).first().click();await page.getByText(/^读取文件：使用说明.md/).filter({visible:true}).first().click(); await page.getByText('详情',{exact:true}).filter({visible:true}).first().click(); await page.getByText(/"路径"/).filter({visible:true}).first().waitFor();}
     await shot('09b-source-detail');

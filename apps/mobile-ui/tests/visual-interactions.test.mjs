@@ -96,7 +96,7 @@ test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts 
       await page.locator('.execution-step > summary').click();await page.locator('.execution-step pre').filter({hasText:'本周已经完成'}).waitFor();
       await page.evaluate(()=>renderSharedConversation());assert.equal(await page.locator('.execution-step').evaluate(n=>n.open),true);
       await page.locator('.execution-step > summary').click();
-      await page.getByRole('button',{name:'打开成果',exact:true}).click();await page.locator('#resource-content table').waitFor();await capture(`${theme}-artifact.png`);
+      await page.getByRole('button',{name:'打开成果 项目进展.md',exact:true}).click();await page.locator('#resource-content table').waitFor();await capture(`${theme}-artifact.png`);
       await page.locator('#resource-back').click();assert.equal(await page.locator('#draft').inputValue(),'稍后补充验收结果');
       await page.locator('#chat-scroll').dispatchEvent('wheel',{deltaY:-900});await page.locator('#chat-scroll').evaluate(n=>n.scrollTop=150);const top=await page.locator('#chat-scroll').evaluate(n=>n.scrollTop);
       await page.locator('#conversation-more').click();await page.getByRole('menuitem',{name:'输出与来源',exact:true}).click();await page.locator('.resource-row').filter({hasText:'notes.md'}).waitFor();

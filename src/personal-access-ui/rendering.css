@@ -59,3 +59,28 @@
 .render-icon-action:hover{border-color:var(--line)}
 
 .render-mermaid:not(.is-source) .render-code-actions>.render-action:not(.render-diagram-toggle){display:none}
+
+/* Outputs recede into a compact list shared by desktop and phone. */
+.artifact-summary{margin-block:var(--wm-space-8);max-width:100%;min-width:0}
+.artifact-summary-label{margin:0 0 var(--wm-space-6);font-size:var(--wm-font-size-13);color:var(--ink-secondary)}
+.artifact-summary-files{display:grid;gap:var(--wm-space-4)}
+.artifact-family{border:1px solid var(--line);border-radius:var(--wm-radius-8);overflow:hidden}
+.artifact-file-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;min-width:0}
+.artifact-file-row+.artifact-file-row{border-top:1px solid var(--line)}
+.artifact-file-row[hidden],.artifact-family[hidden],.artifact-fold[hidden]{display:none}
+.artifact-file-row .artifact-file-open{border:0;border-radius:0;background:transparent;margin:0;padding:var(--wm-space-8) var(--wm-space-10);min-height:var(--wm-space-44);min-width:0;gap:var(--wm-space-8)}
+.artifact-file-row .artifact-file-open>span{display:flex;align-items:baseline;gap:var(--wm-space-8);flex:1;min-width:0}
+.artifact-file-open strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;flex:1;min-width:0}
+.artifact-file-open small{white-space:nowrap;flex:none}
+.artifact-file-open>svg{flex:none}
+.artifact-file-row .artifact-more{grid-column:2;grid-row:1;margin:0;border:0;border-radius:0;background:transparent}
+.artifact-file-row .render-action:hover{background:var(--surface-soft)}
+.artifact-file-row .render-action:active{background:var(--line)}
+.artifact-file-row .render-action:disabled{opacity:.5;cursor:default}
+.artifact-warning{grid-column:1/-1;padding:0 var(--wm-space-10) var(--wm-space-8);color:var(--ink-secondary);font-size:var(--wm-font-size-12)}
+.artifact-summary :is(.artifact-fold,.artifact-all){margin-top:var(--wm-space-6);font-size:var(--wm-font-size-12);min-height:var(--wm-space-38)}
+.artifact-summary .artifact-all{margin-inline-start:var(--wm-space-6)}
+@media(max-width:480px){.artifact-file-open small{font-size:var(--wm-font-size-11)}.artifact-file-row .artifact-file-open{padding-inline:var(--wm-space-8)}.artifact-summary :is(.artifact-fold,.artifact-all){min-height:var(--wm-space-44)}}
+@media(prefers-reduced-motion:reduce){.artifact-summary *{animation:none!important;transition:none!important}}
+
+.timeline-entry.artifact-bundle[data-timeline-artifact]{padding:0;border:0;border-radius:0;background:transparent}
