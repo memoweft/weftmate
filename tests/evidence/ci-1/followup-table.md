@@ -1,0 +1,11 @@
+# CI-1 additional branch observations
+
+These follow-up observations supplement the original fixed 80-run cohort; they do not rewrite its counts.
+
+| Run | Check | File | Case | Type | Count | Disposition |
+|---|---|---|---|---|---:|---|
+| 38228051085 | Windows shard 3/3 | tests/personal-activity.test.ts | activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes | assertion | 1 | Initial unreadCount <3. A pre-setup activity flight can see no question frame; explicitly commit that frame through the real question read before the original three-item assertion. Targeted six tests pass. No timing entry. |
+| 38228051085 | Windows shard 2/3 | tests/bl-29-rework.test.ts (original path) | BL-29c early approval within 2s | timeout / recovered on file retry | 1 | Existing listed timing case. Whole mixed file retry recovered but job took 1324s. Move this and M4/S1 unchanged into independent files to reduce retry work; all test statements are byte-identical. |
+| 38228051085 | Windows setup | Playwright Windows Media Foundation | cached Chromium installation still took 130s | setup timing observation | 1 | Cache hit confirmed. Upstream --with-deps installs Server-Media-Foundation every fresh VM. Start the same installation after checkout while Node/cache/preflight run, then require its successful result before browser/UI tests. A synthetic controlled installer proves parallel start, completion wait and failure propagation. |
+
+The third local full required invocation hit an unlisted Node test worker exit **0xC0000409** in `tests/ia-2a-side-chats.test.ts`, after two pure tests passed and before HTTP tests completed (1557ms). No JS assertion/stack identified a fixture cause. Its isolated original three tests pass; no retry or budget exception is added. This is recorded as an unresolved local process/runtime observation, distinct from a product invariant failure. The preceding complete local gate passed 1761/0/14; a fresh complete gate is required after the activity fixture change.

@@ -68,7 +68,7 @@ test('manifest failure counts match every retained historical attempt and functi
   const manifest=JSON.parse(readFileSync('.github/timing-sensitive-tests.json','utf8'));
   const evidence=JSON.parse(readFileSync(manifest.evidence,'utf8'));
   for(const entry of manifest.tests) {
-    const rows=evidence.table.filter((row:any)=>row.file===entry.file&&row.name===entry.name);
+    const rows=evidence.table.filter((row:any)=>row.file===(entry.evidenceFile??entry.file)&&row.name===entry.name);
     assert.equal(entry.failureCount,rows.reduce((n:number,row:any)=>n+row.count,0),entry.name);
   }
   assert.ok(!manifest.tests.some((entry:any)=>/22000|unrelated account|public model projection|M1 real Electron|credential commit phase/.test(entry.name)));

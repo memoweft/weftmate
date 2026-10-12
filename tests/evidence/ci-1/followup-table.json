@@ -1,0 +1,13 @@
+{
+  "runId": 38228051085,
+  "url": "https://github.com/memoweft/weftmate/actions/runs/38228051085",
+  "rows": [
+    {
+      "job": "test (windows-latest, shard 3/3)",
+      "file": "tests/personal-activity.test.ts",
+      "name": "activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes",
+      "type": "assertion",
+      "diagnostic": "not ok 4 - activity HTTP snapshots, filtered all-read, version conflicts, restart, native actions and deletion changes\n  ---\n  duration_ms: 4619.3729\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-activity.test.ts:46:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The expression evaluated to a falsy value:\n    \n      assert.ok(initial.unreadCount>=3)\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/personal-activity.test.ts:50:88)\n    process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ..."
+    }
+  ]
+}
