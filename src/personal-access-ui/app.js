@@ -39,6 +39,7 @@
         ui[mount]();
     ui.mountHelp();
     ui.mountOnboarding();
+    ui.mountMobileRefresh?.();
     globalThis.WeftPresenceView.mount({core, badgeTarget:ui.byId('assistant-connection'),
         composerTarget:ui.byId('message-form').parentElement, toast:ui.toast,
         openRunRecords:()=>ui.openSettings(globalThis.weftmateDesktop ? 'system' : 'general'),

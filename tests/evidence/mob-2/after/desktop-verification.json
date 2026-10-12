@@ -1,0 +1,18 @@
+{
+  "synthetic": true,
+  "assetRevision": "working-tree",
+  "realModelRequests": 0,
+  "systemBars": false,
+  "screenshots": [
+    "electron-1200-light-chat.png",
+    "electron-1200-light-settings.png",
+    "electron-1200-dark-chat.png",
+    "electron-1200-dark-settings.png",
+    "electron-480-light-chat.png",
+    "electron-480-light-settings.png",
+    "electron-480-dark-chat.png",
+    "electron-480-dark-settings.png"
+  ],
+  "checks": [],
+  "errors": []
+}
