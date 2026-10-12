@@ -1,0 +1,966 @@
+[
+  {
+    "file": "phone-system-360-light-weekly.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "这周回顾",
+        "inkPixels": 778
+      }
+    ],
+    "statusRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageTopRgb": [
+      255,
+      255,
+      255
+    ],
+    "navigationRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageBottomRgb": [
+      255,
+      255,
+      255
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "a512a0e60347934da516d4d6029443e2c25653f96d2d26f6a64a1dc4d216b1ff",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-360-light-sources-open.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "合成-整理项目资料-7.md",
+        "inkPixels": 1125
+      },
+      {
+        "text": "合成-季度报告-6.md",
+        "inkPixels": 968
+      },
+      {
+        "text": "合成-项目测试-5.md",
+        "inkPixels": 889
+      },
+      {
+        "text": "合成-季度报告-4.md",
+        "inkPixels": 986
+      }
+    ],
+    "statusRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageTopRgb": [
+      255,
+      255,
+      255
+    ],
+    "navigationRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageBottomRgb": [
+      255,
+      255,
+      255
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "6cc05d181043d04cee3fcd0a68ad93acfa5a508864dedba89e11bd8bff8793b0",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-360-light-settings.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "回顾与洞察",
+        "inkPixels": 1187
+      }
+    ],
+    "statusRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageTopRgb": [
+      255,
+      255,
+      255
+    ],
+    "navigationRgb": [
+      249,
+      248,
+      246
+    ],
+    "pageBottomRgb": [
+      249,
+      248,
+      246
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "fe63a965e6581df5b58ee840fc5aa1b7303ee519f8ad13d2bbac513fb99b0d3a",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-360-light-retention-open.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "7 天",
+        "inkPixels": 172
+      },
+      {
+        "text": "30 天",
+        "inkPixels": 240
+      },
+      {
+        "text": "90 天",
+        "inkPixels": 305
+      },
+      {
+        "text": "180 天",
+        "inkPixels": 321
+      },
+      {
+        "text": "365 天",
+        "inkPixels": 310
+      }
+    ],
+    "statusRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageTopRgb": [
+      255,
+      255,
+      255
+    ],
+    "navigationRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageBottomRgb": [
+      255,
+      255,
+      255
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "2db66b13e935ff09a67d2d070b9be6479e52b745787cbfe48be45975e12805c9",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-360-light-clear-confirm.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "清空回顾与洞察",
+        "inkPixels": 1620
+      },
+      {
+        "text": "取消",
+        "inkPixels": 277
+      },
+      {
+        "text": "确认清空",
+        "inkPixels": 1227
+      }
+    ],
+    "statusRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageTopRgb": [
+      255,
+      255,
+      255
+    ],
+    "navigationRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageBottomRgb": [
+      249,
+      248,
+      246
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 9,
+    "sha256": "2fd1f64de88741d4e6ae73a046187b0f933e9df660888936eb57002886a07fac",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-360-dark-weekly.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "这周回顾",
+        "inkPixels": 1029
+      }
+    ],
+    "statusRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageTopRgb": [
+      38,
+      39,
+      35
+    ],
+    "navigationRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageBottomRgb": [
+      38,
+      39,
+      35
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "ea5613d4db5fc340bae018f655fa8ef4035e406418c6551695f837785114d547",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-360-dark-sources-open.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "合成-整理项目资料-7.md",
+        "inkPixels": 1308
+      },
+      {
+        "text": "合成-季度报告-6.md",
+        "inkPixels": 1119
+      },
+      {
+        "text": "合成-项目测试-5.md",
+        "inkPixels": 1041
+      },
+      {
+        "text": "合成-季度报告-4.md",
+        "inkPixels": 1133
+      }
+    ],
+    "statusRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageTopRgb": [
+      38,
+      39,
+      35
+    ],
+    "navigationRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageBottomRgb": [
+      38,
+      39,
+      35
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "e633526fade38cc5bf058001f7db4dc45c7009ac1e24fa8211adaee2ad5dd7e9",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-360-dark-settings.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "回顾与洞察",
+        "inkPixels": 1472
+      }
+    ],
+    "statusRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageTopRgb": [
+      38,
+      39,
+      35
+    ],
+    "navigationRgb": [
+      32,
+      34,
+      31
+    ],
+    "pageBottomRgb": [
+      32,
+      34,
+      31
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "0c3cdc91224497e87e5d1d92970d106e6111178956205899998b0751cfa9b1c0",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-360-dark-retention-open.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "7 天",
+        "inkPixels": 205
+      },
+      {
+        "text": "30 天",
+        "inkPixels": 295
+      },
+      {
+        "text": "90 天",
+        "inkPixels": 367
+      },
+      {
+        "text": "180 天",
+        "inkPixels": 368
+      },
+      {
+        "text": "365 天",
+        "inkPixels": 367
+      }
+    ],
+    "statusRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageTopRgb": [
+      38,
+      39,
+      35
+    ],
+    "navigationRgb": [
+      47,
+      49,
+      43
+    ],
+    "pageBottomRgb": [
+      45,
+      47,
+      41
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 2,
+    "sha256": "c013ba652518f2e5d4e7e057efee127e2cf5c2301ec1786cbf38592e50788594",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-360-dark-clear-confirm.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "清空回顾与洞察",
+        "inkPixels": 2006
+      },
+      {
+        "text": "取消",
+        "inkPixels": 313
+      },
+      {
+        "text": "确认清空",
+        "inkPixels": 1264
+      }
+    ],
+    "statusRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageTopRgb": [
+      38,
+      39,
+      35
+    ],
+    "navigationRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageBottomRgb": [
+      32,
+      34,
+      31
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 6,
+    "sha256": "5e71d228f657ccbfb94190c54653be7802b361456ba2ab89692f71601de924c9",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-390-light-weekly.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "这周回顾",
+        "inkPixels": 778
+      }
+    ],
+    "statusRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageTopRgb": [
+      255,
+      255,
+      255
+    ],
+    "navigationRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageBottomRgb": [
+      255,
+      255,
+      255
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "b5d208f1c0050f5dfaa64956d9f9550b781df8c81a7382ca5918df760d0b0f3b",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-390-light-sources-open.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "合成-整理项目资料-7.md",
+        "inkPixels": 1154
+      },
+      {
+        "text": "合成-季度报告-6.md",
+        "inkPixels": 997
+      },
+      {
+        "text": "合成-项目测试-5.md",
+        "inkPixels": 918
+      },
+      {
+        "text": "合成-季度报告-4.md",
+        "inkPixels": 1015
+      }
+    ],
+    "statusRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageTopRgb": [
+      255,
+      255,
+      255
+    ],
+    "navigationRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageBottomRgb": [
+      255,
+      255,
+      255
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "1ed1c1229101d22c5656a0bda766b9e93deebb4802710651407249bf11d8ab80",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-390-light-settings.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "回顾与洞察",
+        "inkPixels": 1187
+      }
+    ],
+    "statusRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageTopRgb": [
+      255,
+      255,
+      255
+    ],
+    "navigationRgb": [
+      245,
+      244,
+      241
+    ],
+    "pageBottomRgb": [
+      249,
+      248,
+      246
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 5,
+    "sha256": "7abbf7e4ca531450a9d6f92bf5fa8eea109c690cb41f0307e9e01b07240cbc2e",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-390-light-retention-open.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "7 天",
+        "inkPixels": 172
+      },
+      {
+        "text": "30 天",
+        "inkPixels": 240
+      },
+      {
+        "text": "90 天",
+        "inkPixels": 305
+      },
+      {
+        "text": "180 天",
+        "inkPixels": 321
+      },
+      {
+        "text": "365 天",
+        "inkPixels": 310
+      }
+    ],
+    "statusRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageTopRgb": [
+      255,
+      255,
+      255
+    ],
+    "navigationRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageBottomRgb": [
+      255,
+      255,
+      255
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "ed768b248cb6331b988bfb999acf56be6a176105aca08384389c15795a06f2c8",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-390-light-clear-confirm.png",
+    "systemTheme": "light",
+    "pageTheme": "light",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "清空回顾与洞察",
+        "inkPixels": 1620
+      },
+      {
+        "text": "取消",
+        "inkPixels": 277
+      },
+      {
+        "text": "确认清空",
+        "inkPixels": 1227
+      }
+    ],
+    "statusRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageTopRgb": [
+      255,
+      255,
+      255
+    ],
+    "navigationRgb": [
+      255,
+      255,
+      255
+    ],
+    "pageBottomRgb": [
+      249,
+      248,
+      246
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 9,
+    "sha256": "a3c4503f07a18047233ab64e8cd65efe8d218586c0b0c5868282d04f7a100e6a",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-390-dark-weekly.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "这周回顾",
+        "inkPixels": 1029
+      }
+    ],
+    "statusRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageTopRgb": [
+      38,
+      39,
+      35
+    ],
+    "navigationRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageBottomRgb": [
+      38,
+      39,
+      35
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "7f675cef586953371e4554e2c0251055936f2f2875b38decec8c82f6e1763101",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-390-dark-sources-open.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "合成-整理项目资料-7.md",
+        "inkPixels": 1330
+      },
+      {
+        "text": "合成-季度报告-6.md",
+        "inkPixels": 1141
+      },
+      {
+        "text": "合成-项目测试-5.md",
+        "inkPixels": 1063
+      },
+      {
+        "text": "合成-季度报告-4.md",
+        "inkPixels": 1155
+      }
+    ],
+    "statusRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageTopRgb": [
+      38,
+      39,
+      35
+    ],
+    "navigationRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageBottomRgb": [
+      38,
+      39,
+      35
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 0,
+    "sha256": "d70fa726879664d0729c56b0bbf1ecdbeba8d096f221aca710a4be91e20c90f1",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-390-dark-settings.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "回顾与洞察",
+        "inkPixels": 1472
+      }
+    ],
+    "statusRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageTopRgb": [
+      38,
+      39,
+      35
+    ],
+    "navigationRgb": [
+      47,
+      49,
+      43
+    ],
+    "pageBottomRgb": [
+      32,
+      34,
+      31
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 15,
+    "sha256": "9f480a11ddca4313784b290d88770d0e8827d597a7cffe5e1d79e0c381bee8a5",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-390-dark-retention-open.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "7 天",
+        "inkPixels": 205
+      },
+      {
+        "text": "30 天",
+        "inkPixels": 295
+      },
+      {
+        "text": "90 天",
+        "inkPixels": 367
+      },
+      {
+        "text": "180 天",
+        "inkPixels": 368
+      },
+      {
+        "text": "365 天",
+        "inkPixels": 367
+      }
+    ],
+    "statusRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageTopRgb": [
+      38,
+      39,
+      35
+    ],
+    "navigationRgb": [
+      47,
+      49,
+      43
+    ],
+    "pageBottomRgb": [
+      45,
+      47,
+      41
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 2,
+    "sha256": "2226718930c613982d5d5480fa56bd3ecbcc1ca043210458898e762b74bd77d2",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  },
+  {
+    "file": "phone-system-390-dark-clear-confirm.png",
+    "systemTheme": "dark",
+    "pageTheme": "dark",
+    "systemVersion": "14",
+    "statusHeight": 128,
+    "navigationHeight": 48,
+    "bottomNavigationVisible": true,
+    "fullSystemBars": true,
+    "nativeProductBridge": false,
+    "nativeTextRegions": [
+      {
+        "text": "清空回顾与洞察",
+        "inkPixels": 2006
+      },
+      {
+        "text": "取消",
+        "inkPixels": 313
+      },
+      {
+        "text": "确认清空",
+        "inkPixels": 1264
+      }
+    ],
+    "statusRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageTopRgb": [
+      38,
+      39,
+      35
+    ],
+    "navigationRgb": [
+      38,
+      39,
+      35
+    ],
+    "pageBottomRgb": [
+      32,
+      34,
+      31
+    ],
+    "statusPageDifference": 0,
+    "navigationPageDifference": 6,
+    "sha256": "779d7ae3502bc82141c54d6fd30d9130001a65f826386024662f74ccfaca729b",
+    "run": "https://github.com/memoweft/weftmate/actions/runs/38205202444"
+  }
+]
