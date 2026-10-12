@@ -53,7 +53,7 @@ import Testing
 @Test func apple5FallbackAndPhoneSettingsUseFormalFields() throws {
     let preference=try JSONDecoder().decode(BackgroundModelPreference.self,from:Data(#"{"backgroundModelProfileId":null,"backgroundModelFallback":{"profileId":"old-model","at":"2026-10-12T09:00:00Z"}}"#.utf8))
     #expect(preference.backgroundModelProfileId == nil && preference.backgroundModelFallback?.profileId == "old-model")
-    #expect(OperationNames.tool("health_query") == "查了健康数据")
+    #expect(ToolProgressSummary.readable(tool:"health_query",raw:"{}") == "查询健康数据")
     #expect(AppleSettingsRegistry.list(desktop:false).contains { $0.id == "healthData" })
     #expect(AppleSettingsRegistry.list(desktop:false).contains { $0.id == "system" })
     #expect(!AppleSettingsRegistry.list(desktop:true).contains { $0.id == "healthData" })
