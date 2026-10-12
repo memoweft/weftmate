@@ -94,7 +94,7 @@ export function contextIdentity(payload) {
 }
 
 export function apply(ctx) {
-  const bridge = new ContextBridge();
+  const bridge = new ContextBridge(),contextKinds=new WeakMap();
   ctx.on('agent/pre-step', async (payload, next) => {
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
@@ -103,18 +103,26 @@ export function apply(ctx) {
       ['personal-shared-chat', 'personal-remote'].includes(session?.header?.agentPreset) &&
       payload?.step === 1 && Array.isArray(payload.messages) &&
       payload.messages.some((message) => message?.source?.kind === 'user');
-    if (!applicable || alreadyInjected(session, decision.messages)) return decision;
+    if (!applicable) return decision;
+    const migrated=alreadyInjected(session,decision.messages);
     const identity = contextIdentity(payload);
     if (!identity) throw new Error('CONVERSATION_CONTEXT_UNAVAILABLE');
-    const result = await bridge.request(identity, payload.signal);
-    if (result?.state === 'none') return decision;
+    let result;try{result=await bridge.request(identity,payload.signal);}catch(error){if(migrated||contextKinds.get(session)==='none')return {...decision,messages:decision.messages.filter(message=>message?.source?.plugin!=='weftmate-daily-digest')};throw error;}
+    contextKinds.set(session,result?.state);
+    const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
+    const messages=decision.messages.filter(message=>message?.source?.plugin!=='weftmate-daily-digest');
+    if(typeof result?.recentContextText==='string'&&result.recentContextText.trim()&&result.recentContextText.length<=3600){
+      const background=createUserMessage({content:[{type:'text',text:result.recentContextText}],source:{kind:'plugin',plugin:'weftmate-daily-digest'}});
+      const userIndex=messages.findIndex(message=>message.source?.kind==='user'&&message.source.rpcId===identity.receiptId);messages.splice(userIndex<0?0:userIndex,0,background);
+    }
+    decision.messages=messages;
+    if (result?.state === 'none'||migrated) return decision;
     if (result?.state !== 'ready' || typeof result.contextText !== 'string' ||
         !result.contextText.trim() || Buffer.byteLength(result.contextText, 'utf8') > 16_384 ||
         typeof result.contextHash !== 'string' || !HASH.test(result.contextHash) ||
         createHash('sha256').update(result.contextText, 'utf8').digest('hex') !== result.contextHash ||
         !Number.isSafeInteger(result.throughSeq) || result.throughSeq < 0)
       throw new Error('CONVERSATION_CONTEXT_UNAVAILABLE');
-    const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
     const context = createUserMessage({
       content: [{ type: 'text', text: result.contextText }],
       source: { kind: 'plugin', plugin: name },

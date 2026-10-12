@@ -151,5 +151,5 @@ export function createMemoryDigest(context) {
       for(const row of memories)if(kinds.includes(row.kind)&&typeof row.id==='string')state.lastUsed[keyOf(row)]=at;
     }));
   }
-  return {refresh,noteUse,invalidate:ownerId=>{snapshots.delete(ownerId);epochs.set(ownerId,(epochs.get(ownerId)??0)+1);}};
+  return {refresh,noteUse,dailyTopics:(ownerId,day,zone)=>(snapshots.get(ownerId)?.rows??[]).filter(row=>current(row)&&Number.isFinite(Date.parse(row.created_at))&&localNotificationTime(Date.parse(row.created_at),zone).day===day).map(row=>String(row.value?.topic??(row.object_kind==='cognition'?cognitionTopics[row.value?.content_type]:null)??topics[row.object_kind]).slice(0,60)),invalidate:ownerId=>{snapshots.delete(ownerId);epochs.set(ownerId,(epochs.get(ownerId)??0)+1);}};
 }

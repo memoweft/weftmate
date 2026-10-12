@@ -4,6 +4,7 @@ globalThis.WeftUiCore.factories.activity = (core,effects,environment) => {
     let identity,flight;
     const filters={all:{},actionable:{filter:'actionable'},task:{type:'task'},reminder:{type:'reminder'},memory:{type:'memory'}};
     const scope=()=>`${core.state.identityGeneration}:${core.state.account?.ownerId??core.state.ownerId}`;
+    globalThis.WeftOpenDailySource=async(kind,id)=>{if(kind==='library')await core.openLibrarySource({id});else await effects.openActivitySource?.({sessionId:id},'open_chat');};
     function resetActivity(){model.generation++;Object.assign(model,{items:[],unreadCount:0,actionableCount:0,nextCursor:null,snapshotCursor:null,syncCursor:null,error:'',loading:false});model.busy.clear();flight=null;effects.renderActivity?.();}
     async function readActivity(more=false){
         effects.syncActivityIdentity?.();if(identity!==scope()){identity=scope();resetActivity();}
@@ -54,7 +55,8 @@ globalThis.WeftUiCore.factories.activity = (core,effects,environment) => {
                 await core.submitApproval(context,original,outcome);
                 const current=core.conversationApprovals.entries.get(original.approvalId);
                 if(current?.row.status==='pending'||current?.notice)throw {code:'REQUEST_FAILED'};
-            }else if(action.kind==='view_memory')await effects.openActivityMemory?.(action.target);
+            }else if(action.kind==='view_library')await core.openLibrarySource(action.target);
+            else if(action.kind==='view_memory')await effects.openActivityMemory?.(action.target);
             else if(action.kind==='memory_item')await effects.openActivityMemoryItem?.(action.target,outcome);
             else if(action.kind==='memory_confirm')await core.accessApi(`/activity/${encodeURIComponent(row.id)}/read`,{method:'PATCH',protectedWrite:true,body:{requestId:environment.crypto.randomUUID(),read:true,attentionRevision:row.attentionRevision,reviewedMemory:action.target}});
             else if(action.kind==='view_settings'&&['about','devices'].includes(action.target.category))await effects.openActivitySettings?.(action.target.category);

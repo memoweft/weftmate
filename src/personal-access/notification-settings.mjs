@@ -1,3 +1,4 @@
+import { clearDailyDigests, pruneDailyDigests } from './daily-digest.mjs';
 import { randomUUID } from 'node:crypto';
 import { failure } from './common.mjs';
 import { putActivity, activityState } from './activity-store.mjs';
@@ -28,18 +29,21 @@ export async function handleNotificationSettings(context,request,response,url,ow
   const test=url.pathname==='/personal/v1/settings/notifications/test';
   if(url.search || !(test?request.method==='POST':['GET','PATCH'].includes(request.method)))throw failure('INVALID_REQUEST');
   context.authenticate(request,request.method==='GET'?'sessions:read':'account:manage');
-  let patch;
+  let patch,clearReview=false;
   if(request.method!=='GET'){
     const body=await context.readJson(request);
     if(test){if(!body || typeof body!=='object' || Array.isArray(body) || Object.keys(body).length)throw failure('INVALID_REQUEST');}
-    else try{patch=validateNotificationSettings(body);}catch{throw failure('INVALID_REQUEST');}
+    else try{const {reviewClear,...settings}=body;clearReview=reviewClear===true;if(reviewClear!==undefined&&!clearReview)throw failure('INVALID_REQUEST');patch=Object.keys(settings).length?validateNotificationSettings(settings):clearReview?{}:validateNotificationSettings(settings);}catch{throw failure('INVALID_REQUEST');}
   }
   let activityId;
   if(request.method!=='GET')await context.serial(()=>context.mutate(ownerId,next=>{
     context.authenticate(request,'account:manage');
     if(patch){next.notificationSettings={...notificationSettings(next),...patch};next.notificationSettingsUpdatedAt=new Date(context.timestamp()).toISOString();}
+    if(clearReview)clearDailyDigests(next,context.timestamp());
+    if(patch?.reviewRetentionDays)pruneDailyDigests(next,context.timestamp(),context.usage.settings(ownerId).timeZone);
     if(test)activityId=putActivity(next,`notification-test:${randomUUID()}`,{at:new Date(context.timestamp()).toISOString(),type:'system.notification.test',title:'测试通知',summary:'通知已连接。声音和音量按你的设置与系统设置播放。',level:'normal',test:true}).id;
   }));
+  if(clearReview||patch?.reviewEnabled===false)context.activity?.dailyDigest?.cancel(ownerId);
   const account=context.accountState(ownerId);
   return context.json(response,200,{settings:notificationSettings(account),updatedAt:account.notificationSettingsUpdatedAt??null,synced:true,timeZone:context.usage.settings(ownerId).timeZone,...(test?{activityId}: {})});
 }
