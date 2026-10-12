@@ -160,22 +160,22 @@
       "Status and repair",
       "Check when you want to. Repair a troubled connection on your computer.",
       "tool"
+    ],
+    [
+      "Daily notes, weekly reviews",
+      "It keeps track of what you've been working on and picks it up in conversation, with a weekly look back at results and to-dos.",
+      "book"
+    ],
+    [
+      "A second look at risky actions",
+      "Before you approve, another model checks the step and notes any concern right beside the request. The decision stays yours.",
+      "approval"
     ]
   ],
   "futureTitle": "More of your day.\nMore understood.",
   "futureBody": "Here's what's on the way. Each step brings your assistant a little closer to everyday life.",
   "coming": "Coming soon",
   "future": [
-    [
-      "Daily notes and weekly reviews",
-      "Keep the few things worth remembering from a busy day or week.",
-      "book"
-    ],
-    [
-      "A second look at risky actions",
-      "Another model reviews the step before you make the decision.",
-      "approval"
-    ],
     [
       "Health data from iPhone and Watch",
       "Connect everyday patterns for more thoughtful, practical suggestions.",

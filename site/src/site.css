@@ -69,3 +69,5 @@ html:not(.has-js) .header-tools .menu-wrap{display:none}
 @media(max-width:1199px){.three-screens{grid-template-columns:minmax(0,1fr) 220px 150px}.three-screens .watch-device{width:150px}.three-screens .watch-device .watch-display{min-height:186px;border-width:7px;border-radius:40px}}
 @media(max-width:900px){.three-screens{grid-template-columns:minmax(0,1fr) 220px}}
 @media(max-width:600px){.three-screens{grid-template-columns:minmax(0,1fr) 118px}.three-screens .watch-device,.remote-watch .watch-device{width:118px}.three-screens .watch-device .watch-display,.remote-watch .watch-device .watch-display{min-height:172px;border-width:6px;border-radius:34px;padding:var(--wm-space-10) var(--wm-space-7) var(--wm-space-8)}.watch-actions{flex-direction:column}.watch-device .watch-approval,.watch-deny{min-height:28px;font-size:10px}.watch-card>p{font-size:11px}.watch-top{font-size:10px}.three-screens .product[data-demo-view="phone"] .messages{min-height:90px}}
+/* 细节卡片共 10 张：宽屏排成两行五列 */
+@media(min-width:1200px){.detail-grid{grid-template-columns:repeat(5,1fr);gap:var(--wm-space-16)}.detail-grid article{padding:var(--wm-space-20)}}
