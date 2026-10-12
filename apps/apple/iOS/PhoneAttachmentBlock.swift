@@ -16,7 +16,7 @@ struct PhoneAttachmentBlock: View {
             }
             Text(name).font(AppleTokens.Fonts.caption).lineLimit(1).truncationMode(.middle).padding(.horizontal,AppleTokens.Space.p8)
             if let status { Text(status).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p8) }
-        }.padding(.bottom,AppleTokens.Space.p8).frame(width:AppleTokens.Space.p32*5,alignment:.leading)
+        }.padding(.bottom,AppleTokens.Space.p8).frame(width:AppleTokens.Space.p32*5,alignment:.leading).frame(minHeight:AppleTokens.Space.p32*4,alignment:.top)
             .background(Weave.surface,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r16))
             .overlay(RoundedRectangle(cornerRadius:AppleTokens.Radius.r16).strokeBorder(Weave.line))
             .clipShape(RoundedRectangle(cornerRadius:AppleTokens.Radius.r16))
