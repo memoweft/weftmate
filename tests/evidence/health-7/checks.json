@@ -1,0 +1,103 @@
+{
+  "syntheticOnly": true,
+  "realModelRequests": 0,
+  "required": {
+    "mode": "required",
+    "files": 321,
+    "exitCode": 0,
+    "passed": 1815,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 33,
+    "exitCode": 0,
+    "passed": 230,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "mobile": {
+    "files": [
+      "tests/personal-cloud-web.test.ts",
+      "apps/mobile-ui/tests/cloud-login.test.mjs",
+      "apps/mobile-ui/tests/chat-interactions.test.mjs",
+      "apps/mobile-ui/tests/visual-interactions.test.mjs",
+      "apps/mobile-ui/tests/approval-interactions.test.mjs"
+    ],
+    "exitCode": 0,
+    "tests": 114,
+    "passed": 114,
+    "failed": 0,
+    "skipped": 0
+  },
+  "latestTargeted": {
+    "graphicsAndTokens": {
+      "passed": 14,
+      "failed": 0
+    },
+    "mobileAssetParityAndReleaseNotes": {
+      "passed": 12,
+      "failed": 0
+    }
+  },
+  "sharedBuild": {
+    "assets": 57,
+    "exitCode": 0
+  },
+  "typecheck": {
+    "exitCode": 0
+  },
+  "tokenGenerationCheck": {
+    "exitCode": 0,
+    "appleGenerated": true,
+    "androidNativeChanged": false
+  },
+  "visual": {
+    "before": 80,
+    "recoveryPrototype": 2,
+    "after": 228,
+    "comparisons": 64,
+    "errors": []
+  },
+  "heavyRuns": [
+    {
+      "task": "required first run",
+      "durationSeconds": 1102.595,
+      "failed": 1,
+      "slot": "one atomic HEALTH-7 lease, released in finally"
+    },
+    {
+      "task": "vendor",
+      "durationSeconds": 583.985,
+      "failed": 0,
+      "slot": "one atomic HEALTH-7 lease, released in finally"
+    },
+    {
+      "task": "mobile five files",
+      "failed": 0,
+      "slot": "one atomic HEALTH-7 lease, released in finally"
+    },
+    {
+      "task": "required after settings action correction",
+      "durationSeconds": 1116.412,
+      "failed": 0,
+      "slot": "one atomic HEALTH-7 lease, released in finally"
+    },
+    {
+      "task": "Electron and mobile visual runs",
+      "slot": "one atomic HEALTH-7 lease per run, released in finally"
+    }
+  ],
+  "notes": [
+    "The complete passing gates preceded final metric palette, partial-stage and hover refinements; the relevant graphics, token and generated-asset tests passed after these refinements.",
+    "The first required failure exposed a duplicate settings action inherited from HEALTH-6. The canonical writer and its original uniqueness assertion were preserved."
+  ],
+  "publicHygiene": {
+    "identityHits": 0,
+    "files": 8368,
+    "exitCode": 0
+  }
+}
