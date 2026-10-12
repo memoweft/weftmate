@@ -1,0 +1,73 @@
+name: HEALTH-5 native health and system bars
+on:
+  push:
+    branches: [wp/health-5-stress-energy-age]
+    paths: [".github/workflows/health-5-native-evidence.yml", "tests/integration/health-5-native.mjs", "apps/android/app/src/androidTest/java/com/memoweft/weftmate/mobile/Health5ProbeTest.kt"]
+  workflow_dispatch:
+concurrency:
+  group: health-5-native-evidence-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TZ: Asia/Shanghai
+      WEFTMATE_TEST_HOST_NAME: synthetic-host
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+      - run: npm ci
+      - run: gradle -p apps/android -PweftmateApplicationId=com.memoweft.weftmate.mobile.health5qa :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon --console=plain
+      - name: Prepare isolated phone
+        run: |
+          mkdir -p .local
+          cat > .local/health5-phone-screen.py <<'PY'
+          from pathlib import Path
+          config=Path.home()/'.android/avd/test.avd/config.ini'
+          fields={'hw.lcd.width':'720','hw.lcd.height':'1560','hw.lcd.density':'320','hw.mainKeys':'no'}
+          lines=[line for line in config.read_text().splitlines() if line.split('=',1)[0].strip() not in fields]
+          config.write_text('\n'.join(lines+[f'{key}={value}' for key,value in fields.items()])+'\n')
+          PY
+          cat > .local/health5-native.sh <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          export WEFTMATE_HEALTH5_ADB="$ANDROID_HOME/platform-tools/adb"
+          export WEFTMATE_HEALTH5_ANDROID_SERIAL="$(adb devices | awk '/^emulator-/ {print $1; exit}')"
+          node tests/integration/health-5-native.mjs
+          SH
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          pre-emulator-launch-script: python3 .local/health5-phone-screen.py
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -skin 720x1560 -dpi-device 320 -memory 3072 -cores 4
+          script: bash .local/health5-native.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: health-5-native-evidence
+          path: |
+            tests/evidence/health-5/android-*.png
+            tests/evidence/health-5/native-verification.json
+          retention-days: 7

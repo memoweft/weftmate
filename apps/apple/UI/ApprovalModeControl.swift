@@ -24,7 +24,11 @@ struct ApprovalModeControl: View {
                     WeftIcon("approval", size: compact ? AppleTokens.Space.p16 : AppleTokens.Space.p20)
                     Text(settings?.mode.shortTitle ?? "审批模式")
                         .lineLimit(compact ? 1 : 2).fixedSize(horizontal: compact, vertical: true)
+                    #if os(iOS)
+                    if !compact { WeftIcon("chevron", size: AppleTokens.Space.p16).font(AppleTokens.Fonts.caption) }
+                    #else
                     WeftIcon("chevron", size: compact ? AppleTokens.Space.p12 : AppleTokens.Space.p16).font(AppleTokens.Fonts.caption)
+                    #endif
                     if busy { ProgressView().controlSize(.mini) }
                 }.font(AppleTokens.Fonts.caption).foregroundStyle(settings?.mode == .allowAll ? Weave.danger : Weave.ink)
             }
@@ -129,8 +133,12 @@ struct ApprovalModeControl: View {
 private struct ApprovalModeButtonStyle: ButtonStyle {
     let compact: Bool
     func makeBody(configuration: Configuration) -> some View {
+        #if os(iOS)
+        PhoneActionStyle(onCard: compact, horizontalPadding: compact ? AppleTokens.Space.p8 : AppleTokens.Space.p12).makeBody(configuration: configuration)
+        #else
         if compact {
             configuration.label.frame(minHeight: AppleTokens.Space.p44).opacity(configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
         } else { OutlineActionStyle().makeBody(configuration: configuration) }
+        #endif
     }
 }

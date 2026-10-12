@@ -18,29 +18,13 @@ struct PhoneAccountMenu: View {
         let epoch: UUID
     }
 
-    // Native menu labels expose their title and generated template icon to UIKit accessibility.
+    // The avatar opens the existing settings routes with the generated account icon.
     var body: some View {
-        Menu {
-            Text(model.accountName)
-            Text(model.cloudLogin.authenticated ? model.cloudLogin.email : "本机账户：" + (model.session?.account.username ?? ""))
-            if let summary = usage.summary {
-                Text(AccountUsagePresentation.text(summary))
-                if let notice = summary.total.uncertaintyNotice { Text(notice) }
-            } else { Text(usage.error ?? "正在读取本月用量…") }
-            Button { open(.memory) } label: { Label("记忆", image: "wm-memory") }
-                .accessibilityLabel("记忆").accessibilityIdentifier("phoneMenu.memory")
-            Button { open(.activity) } label: { Label("动态", image: "wm-bell") }
-                .accessibilityLabel("动态").accessibilityIdentifier("phoneMenu.activity")
-            Divider()
-            Button { model.settingsRoute = .init(categoryID: "general"); open(.settings) } label: { Label("设置", image: "wm-settings") }
-                .accessibilityLabel("设置").accessibilityIdentifier("phoneMenu.settings")
-            Button { open(.about) } label: { Label("帮助 / 关于", image: "wm-info") }
-            Button { confirmingLogout = true } label: { Label("退出登录", image: "wm-logout") }
-        } label: {
+        Button { model.settingsRoute = .init(categoryID: "general"); open(.settings) } label: {
             WeftIcon("account")
-        }
+        }.phoneIcon().accessibilityLabel("设置").accessibilityIdentifier("phoneAccountMenu")
         .task(id: "\(model.uxScope)-\(route?.id.uuidString ?? "home")") { await usage.refresh() }
-        .accessibilityLabel("账户菜单")
+        .accessibilityLabel("设置")
         .accessibilityIdentifier("phoneAccountMenu")
         .sheet(item: $route) { item in
             Group {

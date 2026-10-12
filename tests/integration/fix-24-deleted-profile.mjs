@@ -1,0 +1,10 @@
+import {mkdir,writeFile} from 'node:fs/promises';
+import {createBackgroundModels} from '../../src/personal-access/background-model.mjs';
+import {selectBackgroundProfile} from '../../src/background-model-selection.mjs';
+const account={backgroundModelProfileId:'background-deleted',lastChatModelProfileId:'chat',commands:{},sessions:{}};
+const profiles=[{id:'chat',model:'synthetic-chat',configured:true}];
+const before=selectBackgroundProfile({explicit:account.backgroundModelProfileId,current:'chat',profiles,allowed:()=>true});
+const context={accountState:()=>account,modelSelectable:()=>true,serial:async work=>work(),mutate:async(_owner,work)=>work(account),timestamp:Date.now,callBackend:async work=>work(),backend:{listModels:async()=>profiles}};
+const service=createBackgroundModels(context);const selected=await service.resolve('owner',profiles);const calls=[];
+const response=await service.completion(async input=>{calls.push({profileId:input.profileId,model:input.body.model});return Response.json({completed:true})},{ownerId:'owner',priority:'background',body:{model:'removed-model'}});
+await mkdir('tests/evidence/fix-24',{recursive:true});await writeFile('tests/evidence/fix-24/deleted-profile.json',JSON.stringify({before:{route:before,backgroundModelProfileId:'background-deleted',tasksCanRun:false},after:{route:selected,backgroundModelProfileId:account.backgroundModelProfileId,backgroundModelFallback:account.backgroundModelFallback,response:await response.json(),calls},realModelRequests:0},null,2)+'\n');

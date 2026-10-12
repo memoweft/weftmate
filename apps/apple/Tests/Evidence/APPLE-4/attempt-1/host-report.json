@@ -1,0 +1,27 @@
+{
+  "syntheticOnly": true,
+  "routes": [
+    "GET /auth/devices",
+    "GET /auth/me",
+    "GET /chats",
+    "GET /chats/apple3-main/changes",
+    "GET /chats/apple3-main/dates",
+    "GET /chats/apple3-main/events",
+    "GET /chats/apple3-main/resources",
+    "GET /chats/main",
+    "GET /fixture/apple3-report",
+    "GET /models",
+    "GET /projects",
+    "GET /session-groups",
+    "GET /sessions",
+    "GET /sessions/apple3-session/approvals",
+    "GET /sessions/apple3-session/events",
+    "GET /sessions/apple3-session/questions",
+    "GET /settings/usage",
+    "GET /status",
+    "GET /usage",
+    "POST /auth/login",
+    "POST /fixture/apple3"
+  ],
+  "decisionCount": 0
+}

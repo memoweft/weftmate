@@ -1,0 +1,956 @@
+{
+  "startedAt": "2026-10-12T14:43:43.262Z",
+  "realElectron": true,
+  "realNativeDSH": true,
+  "syntheticOnly": true,
+  "model": "mimo-v2.6-flash",
+  "mimoRequests": 6,
+  "itemAnalysisRequests": 1,
+  "topInsightRequests": 0,
+  "checks": [
+    "90-day-v3-real-host-overview-profile-and-incremental-fields",
+    "off-409-and-zero-item-model-requests",
+    "real-mimo-item-analysis-one-request-and-cache-hit",
+    "native-query-before-answer-0",
+    "native-query-before-answer-1",
+    "shared-setting-toggle-and-independent-top-state"
+  ],
+  "screenshots": [
+    "electron-1200-light-stress.png",
+    "electron-1200-dark-stress.png",
+    "electron-1200-light-fitness-age.png",
+    "electron-1200-dark-fitness-age.png",
+    "electron-1200-light-settings.png",
+    "electron-1200-dark-settings.png"
+  ],
+  "errors": [],
+  "cleanedProcesses": 1,
+  "overview": {
+    "day": "2026-10-12",
+    "capabilities": {
+      "record": 3,
+      "profile": true
+    },
+    "stress": {
+      "score": 56.92,
+      "average": 51.54,
+      "latest": {
+        "value": 56.92,
+        "time": "2026-10-12T12:30:00.000Z"
+      },
+      "samples": [
+        {
+          "time": "2026-10-12T00:30:00.000Z",
+          "value": 42.31,
+          "method": "stressIndex"
+        },
+        {
+          "time": "2026-10-12T04:30:00.000Z",
+          "value": 58.85,
+          "method": "sdnnHeartRate"
+        },
+        {
+          "time": "2026-10-12T08:30:00.000Z",
+          "value": 48.08,
+          "method": "stressIndex"
+        },
+        {
+          "time": "2026-10-12T12:30:00.000Z",
+          "value": 56.92,
+          "method": "sdnnHeartRate"
+        }
+      ],
+      "baselineDays": 26,
+      "state": "normal",
+      "label": "接近平时",
+      "missing": [
+        "measurementHeartRate"
+      ],
+      "disclaimer": "按公开原理做的估计，不是医学结论，不等同于任何厂商的同名指标。"
+    },
+    "energy": {
+      "score": 20.25,
+      "current": 20.25,
+      "curve": [
+        {
+          "time": "00:00",
+          "value": 63.53
+        },
+        {
+          "time": "00:15",
+          "value": 65.26
+        },
+        {
+          "time": "00:30",
+          "value": 66.99
+        },
+        {
+          "time": "00:45",
+          "value": 68.72
+        },
+        {
+          "time": "01:00",
+          "value": 70.45
+        },
+        {
+          "time": "01:15",
+          "value": 72.18
+        },
+        {
+          "time": "01:30",
+          "value": 73.91
+        },
+        {
+          "time": "01:45",
+          "value": 75.64
+        },
+        {
+          "time": "02:00",
+          "value": 77.37
+        },
+        {
+          "time": "02:15",
+          "value": 79.1
+        },
+        {
+          "time": "02:30",
+          "value": 80.83
+        },
+        {
+          "time": "02:45",
+          "value": 82.56
+        },
+        {
+          "time": "03:00",
+          "value": 84.29
+        },
+        {
+          "time": "03:15",
+          "value": 86.02
+        },
+        {
+          "time": "03:30",
+          "value": 87.75
+        },
+        {
+          "time": "03:45",
+          "value": 89.48
+        },
+        {
+          "time": "04:00",
+          "value": 91.21
+        },
+        {
+          "time": "04:15",
+          "value": 92.94
+        },
+        {
+          "time": "04:30",
+          "value": 94.67
+        },
+        {
+          "time": "04:45",
+          "value": 96.4
+        },
+        {
+          "time": "05:00",
+          "value": 98.13
+        },
+        {
+          "time": "05:15",
+          "value": 99.86
+        },
+        {
+          "time": "05:30",
+          "value": 100
+        },
+        {
+          "time": "05:45",
+          "value": 100
+        },
+        {
+          "time": "06:00",
+          "value": 100
+        },
+        {
+          "time": "06:15",
+          "value": 100
+        },
+        {
+          "time": "06:30",
+          "value": 100
+        },
+        {
+          "time": "06:45",
+          "value": 99.2
+        },
+        {
+          "time": "07:00",
+          "value": 98.13
+        },
+        {
+          "time": "07:15",
+          "value": 97.08
+        },
+        {
+          "time": "07:30",
+          "value": 96.01
+        },
+        {
+          "time": "07:45",
+          "value": 94.96
+        },
+        {
+          "time": "08:00",
+          "value": 93.89
+        },
+        {
+          "time": "08:15",
+          "value": 92.47
+        },
+        {
+          "time": "08:30",
+          "value": 91.11
+        },
+        {
+          "time": "08:45",
+          "value": 89.82
+        },
+        {
+          "time": "09:00",
+          "value": 88.45
+        },
+        {
+          "time": "09:15",
+          "value": 87.14
+        },
+        {
+          "time": "09:30",
+          "value": 85.8
+        },
+        {
+          "time": "09:45",
+          "value": 84.51
+        },
+        {
+          "time": "10:00",
+          "value": 83.22
+        },
+        {
+          "time": "10:15",
+          "value": 81.87
+        },
+        {
+          "time": "10:30",
+          "value": 80.54
+        },
+        {
+          "time": "10:45",
+          "value": 79.22
+        },
+        {
+          "time": "11:00",
+          "value": 77.92
+        },
+        {
+          "time": "11:15",
+          "value": 76.65
+        },
+        {
+          "time": "11:30",
+          "value": 75.37
+        },
+        {
+          "time": "11:45",
+          "value": 74.1
+        },
+        {
+          "time": "12:00",
+          "value": 72.79
+        },
+        {
+          "time": "12:15",
+          "value": 71.44
+        },
+        {
+          "time": "12:30",
+          "value": 69.98
+        },
+        {
+          "time": "12:45",
+          "value": 68.54
+        },
+        {
+          "time": "13:00",
+          "value": 67.08
+        },
+        {
+          "time": "13:15",
+          "value": 65.64
+        },
+        {
+          "time": "13:30",
+          "value": 64.24
+        },
+        {
+          "time": "13:45",
+          "value": 62.82
+        },
+        {
+          "time": "14:00",
+          "value": 61.34
+        },
+        {
+          "time": "14:15",
+          "value": 59.94
+        },
+        {
+          "time": "14:30",
+          "value": 58.48
+        },
+        {
+          "time": "14:45",
+          "value": 56.97
+        },
+        {
+          "time": "15:00",
+          "value": 55.56
+        },
+        {
+          "time": "15:15",
+          "value": 54.16
+        },
+        {
+          "time": "15:30",
+          "value": 52.65
+        },
+        {
+          "time": "15:45",
+          "value": 51.24
+        },
+        {
+          "time": "16:00",
+          "value": 49.81
+        },
+        {
+          "time": "16:15",
+          "value": 48.32
+        },
+        {
+          "time": "16:30",
+          "value": 46.9
+        },
+        {
+          "time": "16:45",
+          "value": 45.58
+        },
+        {
+          "time": "17:00",
+          "value": 44.19
+        },
+        {
+          "time": "17:15",
+          "value": 42.87
+        },
+        {
+          "time": "17:30",
+          "value": 41.52
+        },
+        {
+          "time": "17:45",
+          "value": 40.17
+        },
+        {
+          "time": "18:00",
+          "value": 38.75
+        },
+        {
+          "time": "18:15",
+          "value": 37.43
+        },
+        {
+          "time": "18:30",
+          "value": 36.1
+        },
+        {
+          "time": "18:45",
+          "value": 34.74
+        },
+        {
+          "time": "19:00",
+          "value": 33.75
+        },
+        {
+          "time": "19:15",
+          "value": 32.79
+        },
+        {
+          "time": "19:30",
+          "value": 31.81
+        },
+        {
+          "time": "19:45",
+          "value": 30.8
+        },
+        {
+          "time": "20:00",
+          "value": 29.77
+        },
+        {
+          "time": "20:15",
+          "value": 28.76
+        },
+        {
+          "time": "20:30",
+          "value": 27.67
+        },
+        {
+          "time": "20:45",
+          "value": 26.57
+        },
+        {
+          "time": "21:00",
+          "value": 25.49
+        },
+        {
+          "time": "21:15",
+          "value": 24.43
+        },
+        {
+          "time": "21:30",
+          "value": 23.4
+        },
+        {
+          "time": "21:45",
+          "value": 22.35
+        },
+        {
+          "time": "22:00",
+          "value": 21.33
+        },
+        {
+          "time": "22:15",
+          "value": 20.25
+        },
+        {
+          "time": "22:30",
+          "value": null
+        },
+        {
+          "time": "22:45",
+          "value": null
+        },
+        {
+          "time": "23:00",
+          "value": null
+        },
+        {
+          "time": "23:15",
+          "value": null
+        },
+        {
+          "time": "23:30",
+          "value": null
+        },
+        {
+          "time": "23:45",
+          "value": null
+        }
+      ],
+      "sleepPeriods": [
+        {
+          "start": "23:05",
+          "end": "06:51"
+        }
+      ],
+      "highest": 100,
+      "lowest": 20.25,
+      "nightCharged": 38.2,
+      "dayDrained": 79.75,
+      "degraded": false,
+      "state": "low",
+      "label": "电能偏低",
+      "missing": [
+        "recentStress"
+      ],
+      "disclaimer": "按公开原理做的估计，不是医学结论，不等同于任何厂商的同名指标。"
+    },
+    "fitnessAge": {
+      "fitnessAge": 36.67,
+      "bounded": false,
+      "actualAge": 38,
+      "difference": -1.33,
+      "referenceRange": {
+        "low": 35.9,
+        "high": 49.2
+      },
+      "vo2Max": 41.4,
+      "vo2MaxDay": "2026-10-12",
+      "trend": [
+        {
+          "day": "2026-08-14",
+          "value": 42.2
+        },
+        {
+          "day": "2026-08-15",
+          "value": 42.4
+        },
+        {
+          "day": "2026-08-16",
+          "value": 42.1
+        },
+        {
+          "day": "2026-08-17",
+          "value": 42.6
+        },
+        {
+          "day": "2026-08-18",
+          "value": 41.7
+        },
+        {
+          "day": "2026-08-19",
+          "value": 42.1
+        },
+        {
+          "day": "2026-08-20",
+          "value": 43
+        },
+        {
+          "day": "2026-08-21",
+          "value": 42.6
+        },
+        {
+          "day": "2026-08-22",
+          "value": 42.8
+        },
+        {
+          "day": "2026-08-23",
+          "value": 41.2
+        },
+        {
+          "day": "2026-08-24",
+          "value": 41.4
+        },
+        {
+          "day": "2026-08-25",
+          "value": 42.3
+        },
+        {
+          "day": "2026-08-26",
+          "value": 42.4
+        },
+        {
+          "day": "2026-08-27",
+          "value": null
+        },
+        {
+          "day": "2026-08-28",
+          "value": 42
+        },
+        {
+          "day": "2026-08-29",
+          "value": 41.6
+        },
+        {
+          "day": "2026-08-30",
+          "value": 41.7
+        },
+        {
+          "day": "2026-08-31",
+          "value": 41.4
+        },
+        {
+          "day": "2026-09-01",
+          "value": 42.1
+        },
+        {
+          "day": "2026-09-02",
+          "value": 42.6
+        },
+        {
+          "day": "2026-09-03",
+          "value": 42.6
+        },
+        {
+          "day": "2026-09-04",
+          "value": 41
+        },
+        {
+          "day": "2026-09-05",
+          "value": 41.9
+        },
+        {
+          "day": "2026-09-06",
+          "value": 42.7
+        },
+        {
+          "day": "2026-09-07",
+          "value": 41.8
+        },
+        {
+          "day": "2026-09-08",
+          "value": 42.7
+        },
+        {
+          "day": "2026-09-09",
+          "value": 42
+        },
+        {
+          "day": "2026-09-10",
+          "value": 42.3
+        },
+        {
+          "day": "2026-09-11",
+          "value": 41.4
+        },
+        {
+          "day": "2026-09-12",
+          "value": 41.7
+        },
+        {
+          "day": "2026-09-13",
+          "value": 41.4
+        },
+        {
+          "day": "2026-09-14",
+          "value": 42.6
+        },
+        {
+          "day": "2026-09-15",
+          "value": null
+        },
+        {
+          "day": "2026-09-16",
+          "value": 41.2
+        },
+        {
+          "day": "2026-09-17",
+          "value": 41.1
+        },
+        {
+          "day": "2026-09-18",
+          "value": 41.6
+        },
+        {
+          "day": "2026-09-19",
+          "value": 41.4
+        },
+        {
+          "day": "2026-09-20",
+          "value": 42.8
+        },
+        {
+          "day": "2026-09-21",
+          "value": 42.3
+        },
+        {
+          "day": "2026-09-22",
+          "value": 42.4
+        },
+        {
+          "day": "2026-09-23",
+          "value": 42.8
+        },
+        {
+          "day": "2026-09-24",
+          "value": 42.1
+        },
+        {
+          "day": "2026-09-25",
+          "value": 42.2
+        },
+        {
+          "day": "2026-09-26",
+          "value": 42.2
+        },
+        {
+          "day": "2026-09-27",
+          "value": 41.3
+        },
+        {
+          "day": "2026-09-28",
+          "value": 41.6
+        },
+        {
+          "day": "2026-09-29",
+          "value": 41.4
+        },
+        {
+          "day": "2026-09-30",
+          "value": 42.3
+        },
+        {
+          "day": "2026-10-01",
+          "value": 42.2
+        },
+        {
+          "day": "2026-10-02",
+          "value": 41.3
+        },
+        {
+          "day": "2026-10-03",
+          "value": 42.7
+        },
+        {
+          "day": "2026-10-04",
+          "value": null
+        },
+        {
+          "day": "2026-10-05",
+          "value": 41.4
+        },
+        {
+          "day": "2026-10-06",
+          "value": 41
+        },
+        {
+          "day": "2026-10-07",
+          "value": 42
+        },
+        {
+          "day": "2026-10-08",
+          "value": 41.2
+        },
+        {
+          "day": "2026-10-09",
+          "value": 41.1
+        },
+        {
+          "day": "2026-10-10",
+          "value": 41.7
+        },
+        {
+          "day": "2026-10-11",
+          "value": 42.6
+        },
+        {
+          "day": "2026-10-12",
+          "value": 41.4
+        }
+      ],
+      "state": "low",
+      "label": "体能比同龄参考年轻",
+      "missing": [],
+      "disclaimer": "按公开原理做的估计，不是医学结论，不等同于任何厂商的同名指标。"
+    },
+    "connected": true,
+    "updatedAt": "2026-10-12T14:44:03.480Z",
+    "insight": {
+      "headline": "看看今天的状态",
+      "text": "今天恢复估计 74 分，正常。昨晚睡了 466 分钟。分数用来看趋势，按自己的节奏就好。",
+      "observations": [
+        {
+          "text": "昨晚睡了 466 分钟，目标 450 分钟。",
+          "inputs": [
+            "sleepMinutes"
+          ]
+        },
+        {
+          "text": "手腕温度比平时低，持续几天的话留意一下，不放心就问医生。",
+          "inputs": [
+            "wristTempC"
+          ]
+        }
+      ],
+      "suggestions": [
+        {
+          "text": "按自己的节奏安排今天，看看接下来几天的趋势。",
+          "id": "health-ba6f4ff709b2c86e7c40b87a519d6ccb"
+        }
+      ],
+      "mode": "statistics",
+      "generatedAt": "2026-10-12T14:44:03.778Z"
+    },
+    "recovery": {
+      "score": 74,
+      "state": "normal",
+      "label": "正常",
+      "reasons": [
+        {
+          "text": "昨晚睡了 466 分钟",
+          "inputs": [
+            "sleepMinutes"
+          ]
+        },
+        {
+          "text": "静息心率正常",
+          "inputs": [
+            "restingHeartRateBpm"
+          ]
+        },
+        {
+          "text": "心率变异性正常",
+          "inputs": [
+            "hrvSdnnMs"
+          ]
+        }
+      ],
+      "missing": [],
+      "baseline": 73,
+      "low": 59.75,
+      "high": 90
+    },
+    "sleep": {
+      "score": 90,
+      "state": "normal",
+      "label": "正常",
+      "reasons": [
+        {
+          "text": "睡眠 466 分钟，目标 450 分钟",
+          "inputs": [
+            "sleepMinutes"
+          ]
+        },
+        {
+          "text": "夜里清醒 12 分钟",
+          "inputs": [
+            "awakeMinutes"
+          ]
+        },
+        {
+          "text": "入睡比平时相差 0 分钟",
+          "inputs": [
+            "sleepStartRegularity"
+          ]
+        }
+      ],
+      "missing": [],
+      "baseline": 90.5,
+      "low": 88,
+      "high": 92,
+      "minutes": 466,
+      "targetMinutes": 450,
+      "start": "2026-10-11T15:05:00.000Z",
+      "end": "2026-10-11T22:51:00.000Z"
+    },
+    "load": {
+      "score": 51,
+      "state": "balanced",
+      "label": "刚好",
+      "reasons": [
+        {
+          "text": "今日负荷正常",
+          "inputs": [
+            "exerciseMinutes",
+            "activeEnergyKcal"
+          ]
+        }
+      ],
+      "missing": [],
+      "baseline": 49.5,
+      "low": 24,
+      "high": 76,
+      "recommendedRange": {
+        "low": 93.82,
+        "high": 126.94,
+        "unit": "relative"
+      },
+      "daily": 112.9,
+      "average7": 106.99,
+      "average42": 110.38,
+      "difference": -3.39
+    },
+    "vitals": [
+      {
+        "id": "restingHeartRateBpm",
+        "value": 56.6,
+        "baseline": 57.55,
+        "low": 55.8,
+        "high": 58.425,
+        "state": "normal",
+        "label": "正常"
+      },
+      {
+        "id": "hrvSdnnMs",
+        "value": 47.6,
+        "baseline": 46.099999999999994,
+        "low": 43.725,
+        "high": 50.41,
+        "state": "normal",
+        "label": "正常"
+      },
+      {
+        "id": "respiratoryRateBrpm",
+        "value": 14.2,
+        "baseline": 13.95,
+        "low": 13.7,
+        "high": 14.225,
+        "state": "normal",
+        "label": "正常"
+      },
+      {
+        "id": "spo2Pct",
+        "value": 96.8,
+        "baseline": 97.05,
+        "low": 96.7,
+        "high": 97.3,
+        "state": "normal",
+        "label": "正常"
+      },
+      {
+        "id": "wristTempC",
+        "value": 35.2,
+        "baseline": 35.4,
+        "low": 35.275,
+        "high": 35.6,
+        "state": "low",
+        "label": "比平时低"
+      }
+    ],
+    "activity": {
+      "steps": 7614,
+      "activeEnergyKcal": 469,
+      "exerciseMinutes": 33,
+      "workouts": [
+        {
+          "type": "步行",
+          "start": "2026-10-12T09:30:00.000Z",
+          "minutes": 33,
+          "kcal": 132,
+          "avgHeartRateBpm": 118,
+          "maxHeartRateBpm": 146,
+          "zoneMinutes": [
+            13.2,
+            9.9,
+            6.6,
+            3.3,
+            0
+          ]
+        }
+      ]
+    },
+    "usage": {
+      "lastUsedAt": null,
+      "activeMinutes": null,
+      "lateNightMinutes": null
+    }
+  },
+  "itemAnalysis": {
+    "scope": "stress",
+    "day": "2026-10-12",
+    "mode": "model",
+    "text": "近60天压力记录多数接近平时，10月初连续三天比平时高，随后回落至接近平时。近7天静息心率和睡眠时长记录平稳，与压力记录同期变化不明显。",
+    "points": [
+      "10月1日至3日压力连续标记为比平时高，10月5日后回到接近平时。",
+      "近60天内有3天记录不足，未计入趋势。",
+      "近7天静息心率和睡眠时长记录平稳，与压力同期变化不明显。"
+    ],
+    "basis": [
+      "近60天的压力",
+      "近7天的静息心率",
+      "近7天的睡眠时长"
+    ],
+    "generatedAt": "2026-10-12T14:44:04.193Z"
+  },
+  "question0": {
+    "question": "我今天压力大吗",
+    "tool": "health_query",
+    "reply": "今天（10月12日）的压力值是 **51.5**，是最近7天里偏高的一天（平时大多在25~43之间），但仍处于“接近平时”的正常范围，没有明显偏高。\n\n也就是说：相比你自己最近的节奏，今天压力略抬头，还不算异常。如果今天事情多、感觉紧绷，这是可以理解的。需要我帮你看下今天的睡眠或恢复数据有没有同时变化吗？"
+  },
+  "question1": {
+    "question": "我的体能年龄是多少",
+    "tool": "health_query",
+    "reply": "你今天的体能年龄是 **36.7 岁**，最近7天在 **34~38** 之间波动，状态都显示为“体能比同龄参考年轻”，整体比较稳定。"
+  },
+  "completed": true
+}

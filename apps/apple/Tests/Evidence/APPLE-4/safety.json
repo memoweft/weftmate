@@ -1,0 +1,13 @@
+{
+  "simulatorBoots": 5,
+  "simulatorWindowOpened": false,
+  "concurrentSimulators": 1,
+  "shutdownAllAfterEveryBatch": true,
+  "cooldownSecondsAfterEveryBatch": 180,
+  "gpuRestartsDuringPackage": 0,
+  "newWeftMateCrashReports": 0,
+  "systemSettingsChanged": false,
+  "productionCloudUsed": false,
+  "personalHostUsed": false,
+  "machineRestartsDuringPackage": 0
+}

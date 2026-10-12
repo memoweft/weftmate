@@ -30,11 +30,16 @@ struct WeaveCard<Content: View>: View {
     let padding: CGFloat
     init(padding: CGFloat = AppleTokens.Space.p20, @ViewBuilder content: () -> Content) { self.padding = padding; self.content = content() }
     var body: some View {
+        #if os(iOS)
+        content.frame(maxWidth: .infinity, alignment: .leading).padding(padding)
+            .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24, style: .continuous))
+        #else
         content
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(padding)
             .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r14, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r14).strokeBorder(Weave.line, lineWidth: AppleTokens.Space.p1))
+        #endif
     }
 }
 
@@ -50,12 +55,16 @@ struct OutlineActionStyle: ButtonStyle {
     var destructive = false
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
+        #if os(iOS)
+        PhoneActionStyle(destructive: destructive).makeBody(configuration: configuration)
+        #else
         configuration.label.font(AppleTokens.Fonts.callout.weight(.medium))
             .padding(.horizontal, AppleTokens.Space.p12).frame(minHeight: 44)
             .foregroundStyle(destructive ? Weave.danger : Weave.ink)
             .background(configuration.isPressed ? Weave.soft : Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10))
             .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r10).strokeBorder(destructive ? Weave.danger : Weave.line))
             .opacity(enabled ? 1 : AppleTokens.Opacity.disabled)
+        #endif
     }
 }
 
@@ -63,6 +72,9 @@ struct PrimaryActionStyle: ButtonStyle {
     var fillsWidth = true
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
+        #if os(iOS)
+        PhoneActionStyle(primary: true).makeBody(configuration: configuration).frame(maxWidth: fillsWidth ? .infinity : nil)
+        #else
         configuration.label
             .font(.system(AppleTokens.TextStyle.body, design: .default, weight: .semibold))
             .padding(.horizontal, AppleTokens.Space.p14)
@@ -71,6 +83,7 @@ struct PrimaryActionStyle: ButtonStyle {
             .background(Weave.accent.opacity(enabled ? (configuration.isPressed ? AppleTokens.Opacity.pressed : 1) : AppleTokens.Opacity.disabled),
                         in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10, style: .continuous))
             .scaleEffect(configuration.isPressed ? AppleTokens.Scale.pressed : 1)
+        #endif
     }
 }
 
@@ -111,13 +124,20 @@ struct EmptyState: View {
 }
 
 extension View {
-    func weaveField() -> some View {
+    @ViewBuilder func weaveField() -> some View {
+        #if os(iOS)
+        self.textFieldStyle(.plain).font(AppleTokens.Fonts.body)
+            .padding(.horizontal, AppleTokens.Space.p16).padding(.vertical, AppleTokens.Space.p12)
+            .frame(minHeight: AppleTokens.Space.p44)
+            .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r24))
+        #else
         self.textFieldStyle(.plain)
             .font(AppleTokens.Fonts.body)
             .padding(.horizontal, AppleTokens.Space.p13)
             .padding(.vertical, AppleTokens.Space.p12)
             .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r11))
             .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r11).strokeBorder(Weave.line))
+        #endif
     }
 
     @ViewBuilder func accountInput() -> some View {

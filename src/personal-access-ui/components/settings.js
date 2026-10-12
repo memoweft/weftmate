@@ -51,6 +51,19 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
             }
             list.append(item);
         }
+        if (system.backgroundModelFallback) {
+            const item = ui.element('li', 'system-service'); item.dataset.component = 'background-model';
+            const details = ui.element('div', 'system-service-detail');
+            details.append(ui.element('small', 'muted', '后台模型不可用，已改用聊天模型'));
+            const restore = ui.element('button', 'button secondary small', '改回原后台模型'); restore.type = 'button';
+            restore.addEventListener('click', async () => {
+                restore.disabled = true;
+                try { await core.accessApi('/settings/models', { method: 'PATCH', protectedWrite: true, body: { backgroundModelProfileId: system.backgroundModelFallback.profileId } }); await core.refreshSystem(); }
+                catch { ui.toast('原来的模型还不可用，可以在下方重新选择。'); }
+                finally { if (core.accountCurrent(token)) restore.disabled = false; }
+            });
+            item.append(details, restore); list.append(item);
+        }
         paintPerformance(system.metrics);
         paintDiagnosticExport(system);
         const select = ui.byId('background-model-select');
