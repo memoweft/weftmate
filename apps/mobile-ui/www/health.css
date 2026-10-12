@@ -151,3 +151,6 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 :is(.health-estimate,.health-detail .health-card)[data-metric=stress] .health-status.is-high { color:var(--health-warning); }
 .health-detail .health-card[data-metric=fitnessAge] .health-status.is-high { color:var(--health-warning); }
 @media(max-width:600px) { .health-method-toggle { min-height:var(--wm-space-44); } }
+
+.health-method-toggle { border:1px solid var(--line); }
+.health-method-toggle .wm-icon { flex:none; }
