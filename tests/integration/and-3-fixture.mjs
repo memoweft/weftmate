@@ -2,7 +2,8 @@ process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 // Reuse the existing Windows cloud durability adaptation, without model calls.
 import './and-2-fixture.mjs';
 import assert from 'node:assert/strict';
-import { fixture, EMAIL, PASSWORD } from '../../services/cloud/test/identity-helpers.mjs';
+import { EMAIL, PASSWORD } from '../../services/cloud/test/identity-helpers.mjs';
+import { fixture } from '../helpers/auth-1-https-cloud.mjs';
 import { registration, appDevice, proof, control, refresh } from '../../services/cloud/test/app-helpers.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { rm } from 'node:fs/promises';
@@ -14,7 +15,7 @@ import { createSystemStatusManager } from '../../src/system-status-runtime.mjs';
 
 export async function startAnd3Fixture() {
   const cleanups = [];
-  const cloud = await fixture({ after: fn => cleanups.push(fn) }, { env: { CLOUD_OIDC_CLIENTS: JSON.stringify([
+  const cloud = await fixture({ after: fn => cleanups.push(fn) }, { realProcess:false, env: { CLOUD_OIDC_CLIENTS: JSON.stringify([
     { client_id: 'test-native', redirect_uris: ['com.example.weftmate:/callback'] },
     { client_id: 'weftmate-android', redirect_uris: ['com.memoweft.weftmate:/oauth'] },
   ]) } });
