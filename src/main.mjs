@@ -1,3 +1,4 @@
+import { setProcessWarningLog } from './process-output.mjs';
 import { usageResponse } from './personal-access/usage-response.mjs';
 import { readFile as readFileAsync, rm as rmAsync, writeFile as writeFileAsync } from 'node:fs/promises';
 import { createLatestFileWriter } from './latest-file-writer.mjs';
@@ -109,6 +110,7 @@ function recordEarlyStartupFailure(source, error, exitCode) {
       || process.env.WEFTMATE_USER_DATA?.trim();
     const root = validatePersonalHostProfile(candidate), runId = randomUUID();
     const log = createHostLog(root, { appRoot: app.getAppPath() });
+    setProcessWarningLog((event, data) => log.write(event, data));
     log.write('host.start', { runId, version: app.getVersion(), mode: 'startup-validation', pid: process.pid });
     log.failure(source, error, { runId });
     log.write('host.exit', { runId, reason: 'startup-failure', exitCode, normal: false, cleanupComplete: false, durationMs: 0 });
@@ -246,6 +248,7 @@ if (process.platform === 'win32') app.setAppUserModelId(packageInfo.desktopAppId
 // ── B4·崩溃/错误上报最小闭环（v2 遗产）──
 const bootStartedAt = performance.now() - process.uptime() * 1000;
 const hostLog = createHostDiagnostics(app.getPath('userData'), { version: app.getVersion(), appRoot: app.getAppPath() });
+setProcessWarningLog((event, data) => hostLog.write(event, data));
 let hostExitReason = 'unknown';
 let shutdownStep = null;
 let shutdownComplete = false;
@@ -1933,6 +1936,7 @@ async function bootstrap() {
         messageHash: request.messageHash });
     } : undefined,
     onProcessEvent: event => hostLog.write('runtime.process_gone', event),
+    onProcessWarning: data => hostLog.write('process.warning', { ...data, source: 'dsh' }),
     log: (line) => { hostLog.write('runtime.event', { source: 'dsh', code: /error|failed|失败/i.test(line) ? 'RUNTIME_FAILURE' : 'RUNTIME_STATE' }); console.log(`[weftmate] ${redactSecretText(line)}`); },
   });
   async function replaceSharedRuntime() {
@@ -3521,7 +3525,7 @@ async function bootstrap() {
           // Explicit legacy setup links remain valid; the default first page is account login.
           const setupGrant = null;
           await desktopUpdates.prepareWindow();
-          personalDesktop = createPersonalDesktop({ systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
+          personalDesktop = createPersonalDesktop({ computerUsageService: personalAccessService, systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
             startInTray: process.argv.includes('--start-in-tray'),
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
           win = personalDesktop.window;

@@ -36,14 +36,19 @@ export async function handleNotificationSettings(context,request,response,url,ow
     else try{const {reviewClear,...settings}=body;clearReview=reviewClear===true;if(reviewClear!==undefined&&!clearReview)throw failure('INVALID_REQUEST');patch=Object.keys(settings).length?validateNotificationSettings(settings):clearReview?{}:validateNotificationSettings(settings);}catch{throw failure('INVALID_REQUEST');}
   }
   let activityId;
+  if(!clearReview && (patch?.computerUsageEnabled===false || patch?.reviewEnabled===false))await context.checkpointComputerUsage?.(ownerId);
   if(request.method!=='GET')await context.serial(()=>context.mutate(ownerId,next=>{
     context.authenticate(request,'account:manage');
-    if(patch){next.notificationSettings={...notificationSettings(next),...patch};next.notificationSettingsUpdatedAt=new Date(context.timestamp()).toISOString();}
+    if(patch){
+      if (['computerUsageEnabled','reviewEnabled'].some(key=>Object.hasOwn(patch,key)&&patch[key]!==notificationSettings(next)[key])) next.computerUsageGeneration=(next.computerUsageGeneration??0)+1;
+      next.notificationSettings={...notificationSettings(next),...patch};next.notificationSettingsUpdatedAt=new Date(context.timestamp()).toISOString();
+    }
     if(clearReview)clearDailyDigests(next,context.timestamp());
     if(patch?.reviewRetentionDays)pruneDailyDigests(next,context.timestamp(),context.usage.settings(ownerId).timeZone);
     if(test)activityId=putActivity(next,`notification-test:${randomUUID()}`,{at:new Date(context.timestamp()).toISOString(),type:'system.notification.test',title:'测试通知',summary:'通知已连接。声音和音量按你的设置与系统设置播放。',level:'normal',test:true}).id;
   }));
   if(clearReview||patch?.reviewEnabled===false)context.activity?.dailyDigest?.cancel(ownerId);
+  if(clearReview)await context.healthInsights?.usageChanged(ownerId,{clear:true});
   const account=context.accountState(ownerId);
   return context.json(response,200,{settings:notificationSettings(account),updatedAt:account.notificationSettingsUpdatedAt??null,synced:true,timeZone:context.usage.settings(ownerId).timeZone,...(test?{activityId}: {})});
 }
