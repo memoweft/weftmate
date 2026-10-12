@@ -42,7 +42,7 @@ export async function captureDailyDigestPhone(fixture,out,report){
       await browser.close();browser=null;run('forward','--remove',`tcp:${forward}`);forward=null;run('shell','am','force-stop',pkg);await pause(300);
     }
     await writeFile(join(out,'system-bars.json'),JSON.stringify(metadata,null,2)+'\n');report.mobileSystemBars='Android remote webpage in the synthetic test browser;  full status and bottom navigation bars captured. Product native bridge is outside this package.';report.checks.push('full-mobile-system-bars-light-dark-360-390-settings-open-controls');
-  }catch(error){if(serial)try{console.error(run('logcat','-d','-s','AndroidRuntime:E','chromium:E').toString().slice(-8000));}catch{}throw error;}finally{
+  }catch(error){if(serial)for(const args of [['logcat','-d','-b','crash'],['shell','dumpsys','activity','exit-info',pkg],['logcat','-d','-s','AndroidRuntime:E','chromium:E']])try{console.error(run(...args).toString().slice(-8000));}catch{}throw error;}finally{
     await browser?.close().catch(()=>{});
     if(serial){for(const args of [...(size?[['shell','wm','size',size],['shell','wm','density',density]]:[]),...(night?[['shell','cmd','uimode','night',night]]:[]),...(installed?[['shell','am','force-stop',pkg],['uninstall',pkg]]:[]),...(forward?[['forward','--remove',`tcp:${forward}`]]:[]),...(port?[['reverse','--remove',`tcp:${port}`]]:[])])try{run(...args);}catch{}try{if(!cloud)execFileSync(adb,['disconnect',serial],{windowsHide:true});}catch{}}
     if(proxy){proxy.closeAllConnections();await new Promise(resolve=>proxy.close(resolve));}await unlink(lock);
