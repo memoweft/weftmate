@@ -110,16 +110,19 @@ struct TimelineExecutionBlock: View {
     @State private var initialized = false
     @StateObject private var progress = ToolProgressModel()
     private var outcome: ReplyOutcome { ReplyOutcome.classify(events: appModel.timeline.events, taskID: entry.steps.first?.taskID ?? "") }
+    private var lastTaskBlock: Bool {
+        TimelineProjection.entries(appModel.timeline.events).last(where: { $0.steps.first?.taskID == entry.steps.first?.taskID })?.id == entry.id
+    }
     private var failed: Bool {
         #if os(iOS)
-        outcome.prominent
+        outcome.prominent && lastTaskBlock
         #else
         entry.steps.contains { $0.effectiveState == "failed" }
         #endif
     }
     private var summary: String {
         #if os(iOS)
-        if outcome.state != .running { return outcome.text }
+        if outcome.state != .running { return lastTaskBlock ? outcome.text : ToolProgressSummary.counts(entry.steps) }
         if outcome.retries > 0 { return outcome.text }
         #endif
         guard entry.running, !failed, let step = entry.steps.last(where: \.running) else { return ToolProgressSummary.text(entry) }

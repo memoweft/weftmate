@@ -133,11 +133,12 @@ struct MainChatView: View {
             var lastDecisionRead = Date.distantPast
             while !Task.isCancelled {
                 await model.changes()
-                if Date().timeIntervalSince(lastDecisionRead) >= 1.5, let id = model.chat?.activeSessionId {
+                let readDecisions = Date().timeIntervalSince(lastDecisionRead) >= 1.5
+                if readDecisions, let id = model.chat?.activeSessionId {
                     lastDecisionRead = Date(); await interactions.refreshTimeline(sessionID: id)
                 }
                 #if os(iOS)
-                _ = await app.watchSnapshotBytes()
+                if readDecisions { _ = await app.watchSnapshotBytes() }
                 #if DEBUG
                 await A16PhoneMeasurement.poll(model)
                 #endif
@@ -423,7 +424,11 @@ struct MainChatEventRow: View {
                 #if os(iOS)
                 if let sessionID = event.sessionID, let bundle = model.artifactBundle(event) { ReplyArtifactList(app: app, sessionID: sessionID, bundle: bundle) }
                 #else
-                Text(OperationNames.text(event.data["summary"]?.string ?? "成果文件")).foregroundStyle(Weave.muted)
+                Button { expanded.toggle(); if expanded { Task { await readDetail() } } } label: {
+                    HStack { WeftIcon(expanded ? "chevron" : "right", size: AppleTokens.Space.p16); Text(OperationNames.text(event.data["summary"]?.string ?? event.type)) }
+                        .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                }.buttonStyle(.plain)
+                if expanded, let detail { Text(detail.text).font(AppleTokens.Fonts.caption).textSelection(.enabled) }
                 #endif
             } else if event.type == "turn.ended" || event.type == "task.ended" {
                 #if os(iOS)
