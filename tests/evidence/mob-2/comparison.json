@@ -1,0 +1,552 @@
+{
+  "pairs": 120,
+  "desktop": [
+    {
+      "file": "electron-1200-dark-chat.png",
+      "changedPixels": 0,
+      "totalPixels": 960000,
+      "maximumChannelDifference": 0
+    },
+    {
+      "file": "electron-1200-dark-settings.png",
+      "changedPixels": 0,
+      "totalPixels": 960000,
+      "maximumChannelDifference": 0
+    },
+    {
+      "file": "electron-1200-light-chat.png",
+      "changedPixels": 0,
+      "totalPixels": 960000,
+      "maximumChannelDifference": 0
+    },
+    {
+      "file": "electron-1200-light-settings.png",
+      "changedPixels": 0,
+      "totalPixels": 960000,
+      "maximumChannelDifference": 0
+    },
+    {
+      "file": "electron-480-dark-chat.png",
+      "changedPixels": 0,
+      "totalPixels": 384000,
+      "maximumChannelDifference": 0
+    },
+    {
+      "file": "electron-480-dark-settings.png",
+      "changedPixels": 2,
+      "totalPixels": 384000,
+      "maximumChannelDifference": 1
+    },
+    {
+      "file": "electron-480-light-chat.png",
+      "changedPixels": 0,
+      "totalPixels": 384000,
+      "maximumChannelDifference": 0
+    },
+    {
+      "file": "electron-480-light-settings.png",
+      "changedPixels": 0,
+      "totalPixels": 384000,
+      "maximumChannelDifference": 0
+    }
+  ],
+  "systemBars": [
+    {
+      "phase": "before",
+      "file": "phone-system-360-light-chat.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "pageSurface": "#fff",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRGB": [
+        255,
+        255,
+        255
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "before",
+      "file": "phone-system-360-light-settings.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "pageSurface": "#fff",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRGB": [
+        255,
+        255,
+        255
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "before",
+      "file": "phone-system-360-dark-chat.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "pageSurface": "#262723",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        38,
+        39,
+        35
+      ],
+      "pageTopRGB": [
+        38,
+        39,
+        35
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "before",
+      "file": "phone-system-360-dark-settings.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "pageSurface": "#262723",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        38,
+        39,
+        35
+      ],
+      "pageTopRGB": [
+        38,
+        39,
+        35
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "before",
+      "file": "phone-system-390-light-chat.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "pageSurface": "#fff",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRGB": [
+        255,
+        255,
+        255
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "before",
+      "file": "phone-system-390-light-settings.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "pageSurface": "#fff",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRGB": [
+        255,
+        255,
+        255
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "before",
+      "file": "phone-system-390-dark-chat.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "pageSurface": "#262723",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        38,
+        39,
+        35
+      ],
+      "pageTopRGB": [
+        38,
+        39,
+        35
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "before",
+      "file": "phone-system-390-dark-settings.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "pageSurface": "#262723",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        38,
+        39,
+        35
+      ],
+      "pageTopRGB": [
+        38,
+        39,
+        35
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "after",
+      "file": "phone-system-360-light-chat.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "pageSurface": "#fff",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRGB": [
+        255,
+        255,
+        255
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "after",
+      "file": "phone-system-360-light-settings.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "pageSurface": "#fff",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRGB": [
+        255,
+        255,
+        255
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "after",
+      "file": "phone-system-360-dark-chat.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "pageSurface": "#262723",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        38,
+        39,
+        35
+      ],
+      "pageTopRGB": [
+        38,
+        39,
+        35
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "after",
+      "file": "phone-system-360-dark-settings.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "pageSurface": "#262723",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 720x1560",
+      "logicalScreen": {
+        "width": 360,
+        "height": 780
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        38,
+        39,
+        35
+      ],
+      "pageTopRGB": [
+        38,
+        39,
+        35
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "after",
+      "file": "phone-system-390-light-chat.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "pageSurface": "#fff",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRGB": [
+        255,
+        255,
+        255
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "after",
+      "file": "phone-system-390-light-settings.png",
+      "systemTheme": "light",
+      "pageTheme": "light",
+      "pageSurface": "#fff",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        255,
+        255,
+        255
+      ],
+      "pageTopRGB": [
+        255,
+        255,
+        255
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "after",
+      "file": "phone-system-390-dark-chat.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "pageSurface": "#262723",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        38,
+        39,
+        35
+      ],
+      "pageTopRGB": [
+        38,
+        39,
+        35
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    },
+    {
+      "phase": "after",
+      "file": "phone-system-390-dark-settings.png",
+      "systemTheme": "dark",
+      "pageTheme": "dark",
+      "pageSurface": "#262723",
+      "systemVersion": "15",
+      "physicalScreen": "Physical size: 1440x2560\r\nOverride size: 780x1688",
+      "logicalScreen": {
+        "width": 390,
+        "height": 844
+      },
+      "statusHeight": 48,
+      "navigationHeight": 0,
+      "insetsFromActualSystem": true,
+      "bottomNavigationVisible": false,
+      "fullSystemBars": false,
+      "surface": "mobile-web-in-existing-test-browser",
+      "statusBarRGB": [
+        38,
+        39,
+        35
+      ],
+      "pageTopRGB": [
+        38,
+        39,
+        35
+      ],
+      "navigationBarRGB": null,
+      "maximumChannelDifference": 0
+    }
+  ],
+  "rawScreensUnmodified": true
+}
