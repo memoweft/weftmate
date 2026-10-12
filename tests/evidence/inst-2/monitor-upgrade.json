@@ -3,100 +3,219 @@
   "realModelRequests": 0,
   "scenarios": [
     {
-      "exitCode": 0,
-      "arguments": "/S /currentuser /D=C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate",
-      "after": {
-        "shortcuts": [
-          {
-            "file": "WeftMate inst2qa.lnk",
-            "target": "C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
-          },
-          {
-            "file": "WeftMate inst2qa.lnk",
-            "target": "C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
-          }
-        ],
-        "processes": [],
-        "sendTo": "\"C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe\" --send-to-weftmate \"%1\"",
-        "login": null,
-        "registry": [
-          {
-            "scope": "HKCU",
-            "location": "C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate",
-            "uninstall": "\"C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate\\Uninstall WeftMate-inst2qa.exe\" /currentuser",
-            "version": "0.2.1-preview.1",
-            "key": "7d8cfa42-fe3f-5d93-a791-ae5b3fc6254b"
-          }
-        ],
-        "metadata": {
-          "scope": "CurrentUser",
-          "externalQuit": true
-        }
-      },
-      "name": "silent-custom-fresh",
       "probe": {
-        "samples": 76431,
-        "maxSampleGapMs": 15,
+        "samples": 66743,
+        "maxSampleGapMs": 26,
         "visibleWindows": 0,
         "baselineVisibleWindows": 0,
         "rawVisibleWindows": 0
       },
+      "after": {
+        "processes": [],
+        "sendTo": "\"C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe\" --send-to-weftmate \"%1\"",
+        "metadata": {
+          "scope": "CurrentUser",
+          "externalQuit": true
+        },
+        "shortcuts": [
+          {
+            "file": "WeftMate inst2qa.lnk",
+            "target": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "file": "WeftMate inst2qa.lnk",
+            "target": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          }
+        ],
+        "registry": [
+          {
+            "location": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate",
+            "version": "0.2.1-preview.1",
+            "uninstall": "\"C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\Uninstall WeftMate-inst2qa.exe\" /currentuser",
+            "scope": "HKCU",
+            "key": "7d8cfa42-fe3f-5d93-a791-ae5b3fc6254b"
+          }
+        ],
+        "login": null
+      },
+      "exitCode": 0,
+      "name": "silent-custom-fresh",
       "before": {
-        "shortcuts": [],
         "processes": [],
         "sendTo": null,
-        "login": null,
+        "metadata": null,
+        "shortcuts": [],
         "registry": [],
-        "metadata": null
+        "login": null
+      },
+      "arguments": "/S /currentuser /D=C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate"
+    },
+    {
+      "prepared": {
+        "prepared": true,
+        "currentVersion": "0.2.1-preview.1"
+      },
+      "originalConfigRetained": true,
+      "after": {
+        "processes": [
+          {
+            "pid": 40588,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "pid": 44296,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "pid": 49112,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "pid": 52992,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "pid": 63636,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "pid": 63984,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          }
+        ],
+        "sendTo": "\"C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe\" --send-to-weftmate \"%1\"",
+        "metadata": {
+          "scope": "CurrentUser",
+          "externalQuit": true
+        },
+        "shortcuts": [
+          {
+            "file": "WeftMate inst2qa.lnk",
+            "target": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "file": "WeftMate inst2qa.lnk",
+            "target": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          }
+        ],
+        "registry": [
+          {
+            "location": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate",
+            "version": "0.2.1-preview.2",
+            "uninstall": "\"C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\Uninstall WeftMate-inst2qa.exe\" /currentuser",
+            "scope": "HKCU",
+            "key": "7d8cfa42-fe3f-5d93-a791-ae5b3fc6254b"
+          }
+        ],
+        "login": null
+      },
+      "name": "first-custom-monitor-upgrade",
+      "result": {
+        "phase": "healthy",
+        "version": "0.2.1-preview.2",
+        "previousVersion": "0.2.1-preview.1"
+      },
+      "before": {
+        "processes": [
+          {
+            "pid": 10416,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "pid": 23576,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "pid": 33004,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "pid": 58456,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "pid": 59712,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "pid": 62180,
+            "path": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          }
+        ],
+        "sendTo": "\"C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe\" --send-to-weftmate \"%1\"",
+        "metadata": {
+          "scope": "CurrentUser",
+          "externalQuit": true
+        },
+        "shortcuts": [
+          {
+            "file": "WeftMate inst2qa.lnk",
+            "target": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "file": "WeftMate inst2qa.lnk",
+            "target": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          }
+        ],
+        "registry": [
+          {
+            "location": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate",
+            "version": "0.2.1-preview.1",
+            "uninstall": "\"C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\Uninstall WeftMate-inst2qa.exe\" /currentuser",
+            "scope": "HKCU",
+            "key": "7d8cfa42-fe3f-5d93-a791-ae5b3fc6254b"
+          }
+        ],
+        "login": null
       }
     },
     {
-      "exitCode": 0,
-      "arguments": "/S /currentuser",
-      "after": {
-        "shortcuts": [],
-        "processes": [],
-        "sendTo": null,
-        "login": null,
-        "registry": [],
-        "metadata": null
-      },
-      "name": "uninstall",
       "probe": {
-        "samples": 68,
-        "maxSampleGapMs": 12,
+        "samples": 61,
+        "maxSampleGapMs": 16,
         "visibleWindows": 0,
         "baselineVisibleWindows": 0,
         "rawVisibleWindows": 0
       },
-      "before": {
-        "shortcuts": [
-          {
-            "file": "WeftMate inst2qa.lnk",
-            "target": "C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
-          },
-          {
-            "file": "WeftMate inst2qa.lnk",
-            "target": "C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
-          }
-        ],
+      "after": {
         "processes": [],
-        "sendTo": "\"C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe\" --send-to-weftmate \"%1\"",
-        "login": null,
-        "registry": [
-          {
-            "scope": "HKCU",
-            "location": "C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate",
-            "uninstall": "\"C:\\weftmate-temp\\inst2-4eb5e7703f\\custom 中文 space\\WeftMate\\Uninstall WeftMate-inst2qa.exe\" /currentuser",
-            "version": "0.2.1-preview.1",
-            "key": "7d8cfa42-fe3f-5d93-a791-ae5b3fc6254b"
-          }
-        ],
+        "sendTo": null,
+        "metadata": null,
+        "shortcuts": [],
+        "registry": [],
+        "login": null
+      },
+      "exitCode": 0,
+      "name": "uninstall",
+      "before": {
+        "processes": [],
+        "sendTo": "\"C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe\" --send-to-weftmate \"%1\"",
         "metadata": {
           "scope": "CurrentUser",
           "externalQuit": true
-        }
-      }
+        },
+        "shortcuts": [
+          {
+            "file": "WeftMate inst2qa.lnk",
+            "target": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          },
+          {
+            "file": "WeftMate inst2qa.lnk",
+            "target": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\WeftMate-inst2qa.exe"
+          }
+        ],
+        "registry": [
+          {
+            "location": "C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate",
+            "version": "0.2.1-preview.2",
+            "uninstall": "\"C:\\weftmate-temp\\inst2-9ced3e559b\\custom 中文 space\\WeftMate\\Uninstall WeftMate-inst2qa.exe\" /currentuser",
+            "scope": "HKCU",
+            "key": "7d8cfa42-fe3f-5d93-a791-ae5b3fc6254b"
+          }
+        ],
+        "login": null
+      },
+      "arguments": "/S /currentuser"
     }
   ],
   "allUsers": {
@@ -104,10 +223,14 @@
     "installed": false
   },
   "cleanup": {
-    "stoppedApp": 0,
-    "stoppedSetup": 0
+    "stoppedSetup": 0,
+    "stoppedApp": 0
   },
-  "success": false,
-  "failure": "first monitor failed",
-  "finishedAt": "2026-10-12T23:34:05.2303356+08:00"
+  "monitorResult": {
+    "phase": "healthy",
+    "version": "0.2.1-preview.2",
+    "previousVersion": "0.2.1-preview.1"
+  },
+  "success": true,
+  "finishedAt": "2026-10-13T01:12:11.3982110+08:00"
 }
