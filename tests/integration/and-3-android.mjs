@@ -45,6 +45,7 @@ async function startProbe() {
   probeLog = '';
   probe = spawn(adb, ['-s', serial, 'shell', 'am', 'instrument', '-w', '-e', 'class',
     'com.memoweft.weftmate.mobile.And3ShellProbeTest', '-e', 'host', fixture.origin,
+    '-e', 'cloudCa', Buffer.from(fixture.cloud.certificatePem).toString('base64'),
     pkg + '.test/androidx.test.runner.AndroidJUnitRunner'], { windowsHide: true });
   probe.stdout.on('data', value => { probeLog += value; }); probe.stderr.on('data', value => { probeLog += value; });
   await attach();

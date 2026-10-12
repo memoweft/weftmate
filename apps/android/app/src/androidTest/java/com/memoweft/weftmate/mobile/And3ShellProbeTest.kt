@@ -17,6 +17,16 @@ class And3ShellProbeTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         check(context.packageName == "com.memoweft.weftmate.mobile.and3qa")
+        // Only this isolated instrumentation process trusts its generated CA.
+        // Hostname checks remain standard; product trust configuration is untouched.
+        val ca = InstrumentationRegistry.getArguments().getString("cloudCa")!!
+        val certificate = java.security.cert.CertificateFactory.getInstance("X.509")
+            .generateCertificate(java.io.ByteArrayInputStream(android.util.Base64.decode(ca, android.util.Base64.DEFAULT)))
+        val trustStore = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType()).apply { load(null); setCertificateEntry("and3-cloud", certificate) }
+        val managers = javax.net.ssl.TrustManagerFactory.getInstance(javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm()).apply { init(trustStore) }
+        val tls = javax.net.ssl.SSLContext.getInstance("TLS").apply { init(null, managers.trustManagers, null) }
+        val previousTls = javax.net.ssl.HttpsURLConnection.getDefaultSSLSocketFactory()
+        javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(tls.socketFactory)
         val cacheName = "and3-cache-" + java.util.UUID.randomUUID()
         val cacheRoot = File(context.filesDir, cacheName).apply { check(mkdirs()) }
         val cacheContext = object : android.content.ContextWrapper(context) {
@@ -58,6 +68,7 @@ class And3ShellProbeTest {
             check(done.exists()) { "Synthetic shell driver did not finish" }
         } finally {
             instrumentation.runOnMainSync { activity.finish(); WebView.setWebContentsDebuggingEnabled(false) }
+            javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(previousTls)
             done.delete()
         }
     }
