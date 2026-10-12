@@ -2287,7 +2287,7 @@ export class DshWebRuntime {
           state: 'ready', contextText: value.contextText as string,
           contextHash: value.contextHash as string, throughSeq: value.throughSeq as number,
         }
-        settle({ ok: true, result: projected })
+        settle({ ok: true, result: { ...projected, ...(typeof value.recentContextText === 'string' && value.recentContextText.length <= 3600 ? { recentContextText: value.recentContextText } : {}) } })
       }, () => settle({ ok: false, error: 'CONVERSATION_CONTEXT_UNAVAILABLE' }),
     )
   }

@@ -42,3 +42,7 @@
 .activity-open .main-chat-tools { display:none; }
 @media(max-width:720px) { .activity-page { padding:var(--wm-space-20); } .activity-surface { height:100dvh; } }
 #page-content.activity-page button { min-height:var(--wm-space-48); padding:var(--wm-space-8) var(--wm-space-12); border-radius:var(--wm-radius-8); }
+
+.weekly-insight-text { white-space:pre-line; line-height:var(--wm-line-height-1_65); margin:0 0 var(--wm-space-16); overflow-wrap:anywhere; }
+.weekly-insight-sources { display:flex; flex-wrap:wrap; gap:var(--wm-space-8); }
+.weekly-insight-sources button { display:inline-flex; align-items:center; gap:var(--wm-space-8); max-width:100%; overflow-wrap:anywhere; text-align:left; }
