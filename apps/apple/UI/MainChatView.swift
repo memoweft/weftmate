@@ -328,12 +328,34 @@ struct MainChatView: View {
             }
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
             #if os(iOS)
-            if composerExpanded { draftInput }
+            draftInput.frame(minHeight:AppleTokens.Space.p44)
+                .padding(.leading,composerExpanded ? AppleTokens.Space.p0 : AppleTokens.Space.p56)
+                .padding(.trailing,composerExpanded ? AppleTokens.Space.p0 : AppleTokens.Space.p44 * 2 + AppleTokens.Space.p16)
             if composerExpanded && dynamicTypeSize.isAccessibilitySize { modelSelection }
             #else
             draftInput
             if dynamicTypeSize.isAccessibilitySize { modelSelection }
             #endif
+            #if os(macOS)
+            composerTools
+            #endif
+            }
+            #if os(iOS)
+            .padding(.bottom,composerExpanded ? AppleTokens.Space.p56 : AppleTokens.Space.p0)
+            .overlay(alignment:.bottom) { composerTools }
+            .phoneComposerCard(expanded: composerExpanded)
+            .animation(reduceMotion ? nil : .easeOut(duration: AppleTokens.Motion.d160ms), value: composerExpanded)
+            .accessibilityElement(children:.contain).accessibilityIdentifier("mainChat.composer")
+            .accessibilityValue(composerExpanded ? "输入区已展开" : "输入区已收起")
+            #endif
+        }
+        #if os(iOS)
+        .padding(.top, AppleTokens.Space.p8)
+        #else
+        .padding(AppleTokens.Space.p16).background(Weave.soft)
+        #endif
+    }
+    private var composerTools: some View {
             HStack {
                 Menu {
                     Button("文件", image: ImageResource(name: "wm-file", bundle: .main)) { captureImportScope(); DispatchQueue.main.async { importing = true } }
@@ -368,7 +390,6 @@ struct MainChatView: View {
                 #endif
                 .phoneIcon().phoneComposerControl(circle: true).menuOrder(.fixed).disabled(!model.models.contains(where: \.configured)).accessibilityLabel("添加").accessibilityIdentifier("mainChat.plus")
                 #if os(iOS)
-                if !composerExpanded { draftInput }
                 if composerExpanded && !dynamicTypeSize.isAccessibilitySize { modelSelection }
                 #else
                 if !dynamicTypeSize.isAccessibilitySize { modelSelection }
@@ -395,18 +416,6 @@ struct MainChatView: View {
                     .disabled(model.sending || stopping || (!stop && ((model.draft.isEmpty && model.attachments.isEmpty) || model.pending != nil || model.chat?.sendAvailable != true || (model.chat?.activeSessionId == nil && model.modelID.isEmpty) || !model.capabilities.supports("chatSend"))))
                     .accessibilityLabel(stop ? "停止" : "发送").accessibilityIdentifier("mainChat.send")
             }
-            }
-            #if os(iOS)
-            .phoneComposerCard(expanded: composerExpanded)
-            .animation(reduceMotion ? nil : .easeOut(duration: AppleTokens.Motion.d160ms), value: composerExpanded)
-            .accessibilityValue(composerExpanded ? "输入区已展开" : "输入区已收起")
-            #endif
-        }
-        #if os(iOS)
-        .padding(.top, AppleTokens.Space.p8)
-        #else
-        .padding(AppleTokens.Space.p16).background(Weave.soft)
-        #endif
     }
     private var composerExpanded: Bool {
         #if os(iOS)
