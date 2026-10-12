@@ -1,10 +1,11 @@
 /** Existing isolated test WebView, real Android system bars; no product shell changes. */
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {open,rm,writeFile} from 'node:fs/promises';
+import {open,rm,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {readMuMuInfo} from '../../scripts/nightly/mumu.mjs';
 export async function sec1SystemBars({origin,cookie,out}) {
+  await mkdir(resolve('.local/sec-1'),{recursive:true});
   const stock=!!process.env.WEFTMATE_SEC1_ANDROID_SERIAL,lock=stock?resolve('.local/sec1-phone.lock'):'D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',lease=await open(lock,'wx');await lease.writeFile(`SEC-1 ${new Date().toISOString()} synthetic cloud webpage`);await lease.close();
   const adb=process.env.WEFTMATE_SEC1_ADB??'D:/Software/MuMuPlayer/nx_main/adb.exe',pkg=process.env.WEFTMATE_SEC1_ANDROID_PACKAGE??'com.memoweft.weftmate.mobile.st4qa',apk=resolve(process.env.WEFTMATE_SEC1_ANDROID_APK??'apps/android/app/build/outputs/apk/debug/app-debug.apk');
   let serial,socket,forward,installed=false,resized=false,originalSize,originalDensity,originalNight;
