@@ -10,7 +10,7 @@
   const percent=(value,min=0,max=100)=>finite(value)?clamp((value-min)/Math.max(1,max-min)*100):null;
   function band(value){const n=svg('band',100,!finite(value));
     for(const [i,name]of ['extreme','moderate','calm'].entries())n.append(rect(2+i*100,40,96,34,`health-graphic-zone health-graphic-grow health-stress-${name}`));
-    if(finite(value)){const x=8+284*percent(value)/100;n.append(node('path',{d:`M${x} 17 L${x-9} 30 L${x+9} 30 Z`,class:'health-graphic-pointer'}),node('line',{x1:x,x2:x,y1:35,y2:80,class:'health-graphic-cursor'}));}
+    if(finite(value)){const x=10+280*percent(value)/100;n.append(node('path',{d:`M${x} 17 L${x-9} 30 L${x+9} 30 Z`,class:'health-graphic-pointer'}),node('line',{x1:x,x2:x,y1:35,y2:80,class:'health-graphic-cursor'}));}
     n.append(label('0',2,99),label('100',298,99,'end'));return n;
   }
   function dualBars(actual,target){const n=svg('dual',110,!finite(actual)),ceiling=Math.max(1,finite(actual)?Math.max(0,actual):0,finite(target)?Math.max(0,target):0);
@@ -31,12 +31,12 @@
     const close=()=>{if(run.length>1){path+=`M${g.x(run[0])},${bottom} L${run.map(i=>`${g.x(i)},${g.y(points[i].value)}`).join(' L')} L${g.x(run.at(-1))},${bottom} Z `;}run=[];};
     points.forEach((p,i)=>{if(finite(p.value))run.push(i);else close();});close();return path;
   }
-  function gradient(svg,cls='health-gradient-color'){const id=`health-fill-${++sequence}`,defs=node('defs'),linear=node('linearGradient',{id,x1:0,y1:0,x2:0,y2:1});linear.append(node('stop',{offset:0,class:cls,'stop-opacity':.32}),node('stop',{offset:1,class:cls,'stop-opacity':0}));defs.append(linear);svg.append(defs);return `url(#${id})`;}
+  function gradient(svg,cls='health-gradient-color',opacity=.22){const id=`health-fill-${++sequence}`,defs=node('defs'),linear=node('linearGradient',{id,x1:0,y1:0,x2:0,y2:1});linear.append(node('stop',{offset:0,class:cls,'stop-opacity':opacity}),node('stop',{offset:1,class:cls,'stop-opacity':0}));defs.append(linear);svg.append(defs);return `url(#${id})`;}
   function area(samples=[]){const n=svg('area',124,!samples.some(p=>finite(p.value))),points=samples.map(p=>({value:finite(p.value)?clamp(p.value):null}));
     const g={x:i=>points.length<2?150:8+i*284/(points.length-1),y:v=>108-clamp(v)*.88};
     n.append(node('line',{x1:8,x2:292,y1:108,y2:108,class:'health-gridline'}));
     let path='';points.forEach((p,i)=>{if(finite(p.value))path+=`${i===0||!finite(points[i-1].value)?'M':'L'}${g.x(i)},${g.y(p.value)} `;});
-    n.append(node('path',{d:fillPath(points,g,108),fill:gradient(n),class:'health-area-fill'}),node('path',{d:path,class:'health-line health-graphic-draw',pathLength:1}));
+    n.append(node('path',{d:fillPath(points,g,108),fill:gradient(n,'health-gradient-color',.32),class:'health-area-fill'}),node('path',{d:path,class:'health-line health-graphic-draw',pathLength:1}));
     const last=points.findLastIndex(p=>finite(p.value));if(last>=0)n.append(marker(g.x(last),g.y(points[last].value)));return n;
   }
   function comparison(value,actual){const n=svg('comparison',66,!finite(value)),max=Math.max(60,finite(value)?value*1.15:0,finite(actual)?actual*1.15:0),x=v=>8+284*percent(v,0,max)/100;
