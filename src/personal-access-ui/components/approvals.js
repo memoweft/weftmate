@@ -58,6 +58,8 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             ui.renderTimeline(); return;
         }
         const entry = rows[0], row = entry.row, marker = core.approvalMarker(context, row);
+        const review = core.approvalReview?.(row);
+        bar.classList.toggle('is-review-warning', !!review?.warning);
         const operation = core.conversationApprovals.operations.get(row.approvalId);
         const notice = entry.notice || (core.conversationTasks.entries.get(row.taskId)?.notice ? '原任务暂时无法核对，请重新核对答复。' : '');
         const identity = Object.fromEntries(['ownerId','identity','deviceId','source','sessionId','conversationId'].map(key => [key, context[key]]));
@@ -103,8 +105,15 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             check.addEventListener('click', () => { if (core.approvalContextCurrent(context)) { void core.refreshConversationTasks(); void core.refreshConversationApprovals(context, true); } }); card.append(check);
         }
         card.append(actions); bar.append(card);
-        if (hadFocus) { const replacement = [...card.querySelectorAll('[data-conversation-approval-action]')].find(node => node.dataset.conversationApprovalAction === action); if (sameApproval && replacement && !replacement.disabled) replacement.focus({ preventScroll: true }); else ui.byId('message-text').focus({ preventScroll: true }); }
+        if (review) { const note = ui.element('p', 'approval-review', review.text); note.setAttribute('role', review.warning ? 'alert' : 'note'); card.append(note); }
         ui.renderTimeline();
+        if (hadFocus) { const replacement = [...bar.querySelectorAll('[data-conversation-approval-action]')].find(node => node.dataset.conversationApprovalAction === action); if (sameApproval && replacement && !replacement.disabled) replacement.focus({ preventScroll: true }); else ui.byId('message-text').focus({ preventScroll: true }); }
+        if (review?.warning && bar.dataset.reviewFocusId !== row.approvalId) queueMicrotask(() => {
+            const reject = bar.querySelector('[data-conversation-approval-action="rejected"]');
+            if (core.approvalContextCurrent(context) && !bar.hidden && bar.dataset.approvalId === row.approvalId && reject && !reject.disabled) {
+                reject.focus({ preventScroll: true }); bar.dataset.reviewFocusId = row.approvalId;
+            }
+        });
     }
     function defaultApprovalBusy(busy) {
         ui.byId('default-approval-mode').disabled = busy;
