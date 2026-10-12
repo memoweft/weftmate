@@ -1503,7 +1503,7 @@ Android（安卓）精确业务路由已登记，**需要新壳版本**，由编
 
 `statistics={measuredAt,durationMs,categories,totalBytes,accounting}`，类别为对话、记忆、成果与附件原件、缩略图缓存、离线副本、日志、备份、临时文件。每类含`id,name,icon,description,bytes,files,cleanable?,pureCache?`。文件按逻辑长度统计；共享账户／用量JSON（结构化数据）按本账户序列化字节归属；包含账号库文件中的空页，不包含磁盘分配的额外空间、整机日志、外部项目原件和整机备份，界面显示该边界。统计在 Worker（后台工作线程）执行，取消终止遍历。
 
-导出文件夹含 `README.md`、`conversations/*.md/*.json`、`memory/portable-v4.json`（Core正式Portable v4）、`files/results/`、`files/uploads/`、`files/attachments/`、`files/workspaces/`（非私密对话的工作副本，排除凭据文件）、`health/daily-summaries.json`（已有健康摘要）、`settings/settings.json`、`usage/ledger.json`、`manifest.json` 与 `manifest.sha256`。清单沿BK-1逐文件大小／SHA-256（安全哈希）和版本／排除项；临时目录原子发布，取消移除未完成包。模型凭据／密码／云令牌／设备私钥／浏览器登录／其他账户／旧备份排除；临时对话和已遗忘正式记忆排除。包未加密。
+导出文件夹含 `README.md`、`conversations/*.md/*.json`、`memory/portable-v4.json`（Core正式Portable v4）、`files/results/`、`files/uploads/`、`files/attachments/`、`files/workspaces/`（非私密对话的工作副本，排除凭据文件）、`health/daily-summaries.json`（已有健康摘要）、`health/daily-records.json`（HEALTH-2独立健康记录／设置／解读）、`settings/settings.json`、`usage/ledger.json`、`manifest.json` 与 `manifest.sha256`。清单沿BK-1逐文件大小／SHA-256（安全哈希）和版本／排除项；临时目录原子发布，取消移除未完成包。模型凭据／密码／云令牌／设备私钥／浏览器登录／其他账户／旧备份排除；临时对话和已遗忘正式记忆排除。包未加密。
 
 删除先检查本账户各持久化分区的实际路径与子路径（包括原有账号专属工作目录／原生日志），拒绝越界和目录链接；停止任务，走DSH（助手运行时）正式会话删除及Core（记忆核心）正式删除命令和存储擦除，再清账号副本／索引／设置／用量。失败保留删除标记，阻止继续写入并可重试；程序、其他账户和项目原始文件不删除。新会话与首次引导重新开始。被撤销设备下次连接时清离线副本，不能远程擦除关机设备／用户已导出文件／整机旧备份。清理只删缩略图、明确到期的副本JSON、七天前日志／一天前临时文件，不删除原件。
 
@@ -1524,7 +1524,7 @@ Android（安卓）白名单与JVM（Java虚拟机）测试同步上述精确路
 | `tasks` | `count`、`completed`、`blocked`、`items:[{title,state,source}]`；计发生工具操作的消息任务与原生终态事件，普通闲聊不当任务。`executions:[{title,state,source}]` 来自执行记录，`approvals:{count,pending,rejected}` 来自审批回执。 |
 | `outputs` | `count`、`items:[{title,artifactId,source}]`；只计已核验成果库记录，不扫描目录和文件内容。 |
 | `schedule` | `count`、`items:[{title,source}]`；计实际触发的提醒／定时任务，不计只是登记的计划。 |
-| `usage` | `estimatedActiveMinutes` 是每条用户消息后五分钟区间的并集，并裁到当日；不是屏幕时间。`hourlyTurns` 为24个当地小时的用户消息数；`models` 按模型档案含 `requests,inputTokens,outputTokens,unknownRequests`，未知用量保留未知，不能伪造零用量。 |
+| `usage` | `estimatedActiveMinutes` 是每条用户消息后五分钟区间的并集，并裁到当日；不是屏幕时间。HEALTH-2补可选 `lateNightMinutes`，为同并集中的账号当地01:00–06:00分钟，旧摘要未知可省略。`hourlyTurns` 为24个当地小时的用户消息数；`models` 按模型档案含 `requests,inputTokens,outputTokens,unknownRequests`，未知用量保留未知，不能伪造零用量。 |
 | `memory` | `topics:string[]`，复用记忆周报的本机一致性快照，按实际形成日期只取新增记忆主题，不复制记忆原文。 |
 | `health` | 见下方接收契约；无数据时完整空字段。 |
 | `devices` | 预留 `{version:1,status:"unavailable",items:[]}`；后续项期望 `{deviceId,label,platform,activeMinutes}`，时间为当日汇总；本包不采集、不提供设备写入路由。 |
@@ -1545,7 +1545,7 @@ Android（安卓）白名单与JVM（Java虚拟机）测试同步上述精确路
 
 回执为 `{day,health}`。四项数值可以为 `null`（未授权／无测量）；`steps` 为非负整数，其余非负有限数值，睡眠／运动分钟最多1440；`workouts` 每项只有短类型与分钟。`status:"unavailable"` 必须四项 `null`、`workouts:[]`。无权限时仍可聊天；Apple（苹果端）后续包负责 HealthKit（苹果健康数据接口）授权、按同一账户时区聚合并发送，失败不阻止使用。
 
-既有 `GET/PATCH /personal/v1/settings/notifications` 增加 `reviewEnabled:true`、`reviewRetentionDays:90`（7–365整数）；界面提供7／30／90／180／365天。`PATCH {reviewClear:true}` 是一次性动作，不保存为偏好；删除所有摘要、健康分区、周回顾和助手背景，从下一完整自然日重新整理。关闭后停止采集与背景注入，仍按保留期清理。摘要保存在本机私有账户存储，账号隔离。设置位于「通知 → 回顾与洞察」，没有首次提示。
+既有 `GET/PATCH /personal/v1/settings/notifications` 增加 `reviewEnabled:true`、`reviewRetentionDays:90`（7–365整数）；界面提供7／30／90／180／365天。`PATCH {reviewClear:true}` 是一次性动作，不保存为偏好；删除所有使用摘要、周回顾和使用背景，从下一完整自然日重新整理；HEALTH-2独立健康库保留，清空健康须用16.3设置。关闭后停止采集与背景注入，仍按保留期清理。摘要保存在本机私有账户存储，账号隔离。设置位于「通知 → 回顾与洞察」，没有首次提示。
 
 动态仍使用已有 `/activity` 路由和 `type:"memory.report"`，增加可选 `weeklyInsight:{from,to,timeZone,text,mode,sources}`；`mode` 为 `statistics` 或 `model`，来源包含短标题、会话引用与可选 `artifactId`，可点回原对话／成果来源。默认静默、不弹系统通知。后台模型仅获最近完整七天的结构化摘要，调用现有后台优先级；无配置、请求失败或重启中断均保留统计版，周内不重试生成。摘要本机持久化；使用用户配置的云模型整理周回顾／聊天时，相关摘要随模型输入发送到该模型提供方，与正常聊天相同。
 
@@ -1569,11 +1569,11 @@ v2 是 v1 的超集：原来的七个字段仍必填，`version:2`；下面新�
 | `spo2Pct` | 0–100或 `null` |
 | `wristTempC` | 有限摄氏温度或 `null`（允许负数） |
 | `heartRateHourly` | 可为 `null`，否则恰好24项，每项 `null` 或 `{avg,min,max}`，三项可为 `null`，非负有限数；有值时 min≤avg≤max |
-| `workouts` | 数组，每项 `{type,minutes,start?,kcal?,avgHeartRateBpm?,maxHeartRateBpm?,zoneMinutes?}`；旧 `{type,minutes}` 仍合法；新增数值可为 `null`，分钟0–1440；`zoneMinutes` 为 `null` 或恰好5项0–1440分钟／`null`，有值之和≤运动时长；`start` 为 ISO时刻／`null` |
+| `workouts` | 数组，每项 `{type,minutes,start?,kcal?,avgHeartRateBpm?,maxHeartRateBpm?,zoneMinutes?}`；旧 `{type,minutes}` 仍合法；v2的所有数值（含minutes）可为 `null`，分钟0–1440；`zoneMinutes` 为 `null` 或恰好5项0–1440分钟／`null`，有值之和≤运动时长；`start` 为 ISO时刻／`null` |
 
 `status:unavailable` 要求所有数值为空、小时无有效项且运动数组为空。其余沿15节非负有限数／整数步数校验。睡眠分期有值之和不得超过卧床时长（若有），深睡／核心／快速眼动之和不得超过睡眠时长。
 
-`PUT /personal/v1/health/records/batch` 请求 `{items:[{day,health}]}`，1–100个不同日期，v1／v2可混用。先校验全部再一次提交；任一错误整体拒绝400 `INVALID_REQUEST`。回执 `{items:[{day,health}],changedDays:[YYYY-MM-DD]}`；幂等重传 `changedDays:[]`。单条与批量允许当前保留范围内历史；保留400天意味着今天及之前399天。
+`PUT /personal/v1/health/records/batch` 请求 `{items:[{day,health}]}`，1–100个不同日期，v1／v2可混用；每份健康体≤12 KiB（千字节），批量请求≤1280 KiB。先校验全部再一次提交；任一错误整体拒绝400 `INVALID_REQUEST`。回执 `{items:[{day,health}],changedDays:[YYYY-MM-DD]}`；幂等重传 `changedDays:[]`。单条与批量允许当前保留范围内历史；保留400天意味着今天及之前399天。
 
 ### 16.2 页面读取
 
@@ -1585,9 +1585,9 @@ v2 是 v1 的超集：原来的七个字段仍必填，`version:2`；下面新�
 | GET `/health/metrics/:id?days=7\|14\|30\|60\|90` | 默认7天，至账号今天；`{id,days,timeZone,average,points:[{day,value,baseline,low,high,state,label}]}`；连续自然日，缺测不补0，平均忽略缺测 |
 | GET `/health/calendar?month=YYYY-MM` | 默认账号本月；`{month,days:[{day,hasWorkout,sleepScore,recoveryScore}]}`，整月包含无测量日期，分数可为 `null` |
 
-`vitals` 固定五项 `restingHeartRateBpm,hrvSdnnMs,respiratoryRateBrpm,spo2Pct,wristTempC`，每项 `{id,value,baseline,low,high,state,label}`。`baseline` 是目标日前28天有效值中位数，`low/high` 是15／85百分位；少于7天 `state:insufficient`、基线为空、`label:"再戴几天就有对比了"`。否则状态 `normal|low|high`，词为「正常／比平时低／比平时高」。当天缺测同样 insufficient。边界相等属 normal。
+`vitals` 固定五项 `restingHeartRateBpm,hrvSdnnMs,respiratoryRateBrpm,spo2Pct,wristTempC`，每项 `{id,value,baseline,low,high,state,label}`。`baseline` 是目标日前28天有效值中位数，`low/high` 是15／85百分位；少于7天 `state:insufficient`、基线为空、`label:"再戴几天就有对比了"`。否则状态 `normal|low|high`，词为「正常／比平时低／比平时高」。当天缺测同样 insufficient、label为“未记录”，但保留已足7天的真实基线带。边界相等属 normal。
 
-`recovery/sleep/load` 共用 `{score,state,label,reasons:[{text,inputs:[指标id]}],missing:[指标id],baseline,low,high}`，最多3条主要原因；全缺或历史不足时 score=null、insufficient。恢复／睡眠状态 `normal|low|high|insufficient`；负荷状态 `more|balanced|less|insufficient`，词「练多了／刚好／练少了／再戴几天就有对比了」。`sleep` 另含 `minutes,targetMinutes,start,end`；`load` 另含 `daily,average7,average42,difference`（近7／42天平均原始负荷与两者差，缺测不补0）。
+`recovery/sleep/load` 共用 `{score,state,label,reasons:[{text,inputs:[指标id]}],missing:[指标id],baseline,low,high}`，最多3条主要原因；全缺或历史不足时 score=null、insufficient。恢复／睡眠状态 `normal|low|high|insufficient`；负荷状态 `more|balanced|less|insufficient`，词「练多了／刚好／练少了／再戴几天就有对比了」。`sleep` 另含 `minutes,targetMinutes,start,end`；`load` 另含 `daily,average7,average42,difference`（近7／42天平均原始负荷与两者差，缺测不补0；与当天使用相同可用分量，避免缺能量被误判为负荷下降）。
 
 `activity:{steps,activeEnergyKcal,exerciseMinutes,workouts}`；`usage:{activeMinutes,lateNightMinutes}` 来自 DATA-1（每日摘要）估算活动分钟，凌晨1–5点为深夜区间，不是系统屏幕时间；无摘要为 `null`。`updatedAt` 是该日记录内容最后改变的时刻。`connected` 表示账号曾收到 available 记录；指定日无测量仍保留空指标结构。
 
@@ -1595,7 +1595,7 @@ v2 是 v1 的超集：原来的七个字段仍必填，`version:2`；下面新�
 
 ### 16.3 今日解读、建议与设置
 
-`insight` 为 `null`（该日无测量）或 `{headline,text,observations:[{text,inputs:[指标id或usage字段]}],suggestions:[{id,text,reminder?:{title,time}}],mode,generatedAt}`。标题最多16字、正文最多120字；观察／建议各最多2条，每条观察指明所用汇总数据；提醒 `time` 是带时区ISO未来时刻。内容变化合并触发，后台模型通道一天最多3次，统计版立即可读；模型失败／超时／非法结构保留同结构统计版。批量历史仅生成统计版，今天按正常触发。模型只接收汇总数字、基线状态、分数原因、七天趋势、每天使用／完成件数及今日已有提醒数量。最多一条跨健康／使用观察，只描述关联，不宣称因果；不诊断、不提疾病名、不建议用药。
+`insight` 为 `null`（该日无测量）或 `{headline,text,observations:[{text,inputs:[指标id或usage字段]}],suggestions:[{id,text,reminder?:{title,time}}],mode,generatedAt}`。标题最多16字、正文最多120字；观察／建议各最多2条，每条观察指明所用汇总数据（可用指标id或分数reasons.inputs中实际存在的分项id，如sleepStartRegularity）；提醒 `time` 是带时区ISO未来时刻。内容变化合并触发，后台模型通道一天最多3次，统计版立即可读；模型失败／超时／非法结构保留同结构统计版。批量历史仅生成统计版，今天按正常触发。模型只接收汇总数字、基线状态、分数原因、七天趋势、每天使用／完成件数及今日已有提醒数量。最多一条跨健康／使用观察，只描述关联，不宣称因果；不诊断、不提疾病名、不建议用药。
 
 `POST /personal/v1/health/suggestions/:id/remind` 请求 `{sessionId,requestId}`，用户明确点按后复用既有提醒创建，回执沿 `/schedules` 的 `{item,...}`。建议必须属于当前账号当前日有效解读，带未来 `reminder`，否则404 `NOT_FOUND`／400 `INVALID_REQUEST`。相同requestId幂等，不能由模型自行创建。
 
