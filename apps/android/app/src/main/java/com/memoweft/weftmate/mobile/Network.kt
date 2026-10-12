@@ -33,6 +33,12 @@ internal fun validBusinessPath(path: String): Boolean {
     if (path.length > if (route.startsWith("/personal/v1/chats") || route == "/personal/v1/sessions" || route.startsWith("/personal/v1/library") || route.startsWith("/personal/v1/activity") || route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/suggestions"))) 4096 else 512) return false
     if (path == "/personal/v1/sessions/temporary") return true
     val query = path.substringAfter('?', "")
+    if (route == "/personal/v1/execution-records" && query.matches(Regex("[A-Za-z0-9._~=&%+-]*"))) return true
+    if (query.isEmpty() && (route.matches(Regex("/personal/v1/account/models(/(check|by-request/[A-Za-z0-9_.:-]{1,128}|[A-Za-z0-9_-]{1,128}(/(test|stop-using|transfer))?))?")) ||
+        route.matches(Regex("/personal/v1/projects(/[A-Za-z0-9_-]{1,128}(/(sessions|revoke))?)?")) ||
+        route.matches(Regex("/personal/v1/artifacts/[A-Za-z0-9_-]{1,128}")) ||
+        route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/forget-preview")) ||
+        route.matches(Regex("/personal/v1/health/daily-summaries(/[A-Za-z0-9_-]{1,128})?")))) return true
     // HEALTH-2: only the documented aggregate reads/writes; no raw or owner selectors.
     if (route == "/personal/v1/health/overview") return query.isEmpty() || query.matches(Regex("day=[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])"))
     if (route == "/personal/v1/health/calendar") return query.isEmpty() || query.matches(Regex("month=[0-9]{4}-(0[1-9]|1[0-2])"))
@@ -43,7 +49,7 @@ internal fun validBusinessPath(path: String): Boolean {
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/activity(/changes|/unread|/read|/[A-Za-z0-9_-]{1,160}/read)?"))) return true
     if (route == "/personal/v1/sessions" && query.matches(Regex("[A-Za-z0-9._~=&%+-]*"))) return true
     // UX-6 account title/body search reuses /chats?scope=search; no new native route.
-    if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/chats(/main|/[A-Za-z0-9_-]{1,128}(/(events|changes|dates|locate|search|resources|metadata|archive|unarchive|results))?)?"))) return true
+    if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/chats(/main|/[A-Za-z0-9_-]{1,128}(/(events|changes|dates|locate|search|resources|metadata|archive|unarchive|results|forget-preview))?)?"))) return true
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/library(/[A-Za-z0-9_-]{1,128}(/preview)?)?"))) return true
     if (query.isEmpty() && route == "/personal/v1/commands") return true
     if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true
@@ -51,7 +57,7 @@ internal fun validBusinessPath(path: String): Boolean {
         route.matches(Regex("/personal/v1/commands/[A-Za-z0-9_-]{1,128}")) ||
         route.matches(Regex("/personal/v1/chats/(main|[A-Za-z0-9_-]{1,128})")))) return true
     if (route == "/personal/v1/usage" && (query.isEmpty() ||
-        query.matches(Regex("(month=[0-9]{4}-(0[1-9]|1[0-2]))?(&?sessionId=[A-Za-z0-9_-]{1,128})?")))) return true
+        query.matches(Regex("[A-Za-z0-9._~=&%+-]*")))) return true
     if (query.isEmpty() && (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/(metadata|fork|chat|message-branches)")) ||
         route.matches(Regex("/personal/v1/session-groups(/[A-Za-z0-9_-]{1,128})?")))) return true
     // TB-2 goals page: schedule management and native long-term goals use exact account routes.
@@ -90,7 +96,7 @@ internal fun approvalDecisionPath(sessionId: String, approvalId: String, request
     require(sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")) &&
         approvalId.matches(Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) &&
         requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")) && outcome in setOf("allowed-once", "rejected"))
-    require(scope == null || outcome == "allowed-once" && scope in setOf("once", "conversation-category"))
+    require(scope == null || outcome == "allowed-once" && scope in setOf("once", "conversation-category", "global-category"))
     return "/personal/v1/sessions/$sessionId/approvals/$approvalId"
 }
 
@@ -121,6 +127,19 @@ internal fun validBusinessMethod(path: String, method: String): Boolean =
     method in setOf("GET", "POST", "PATCH", "DELETE") ||
         (method == "PUT" && (path == "/personal/v1/health/records/batch" || path == "/personal/v1/health/profile" ||
             path.matches(Regex("/personal/v1/daily-summaries/[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])/health"))))
+
+internal fun businessReadTimeout(path: String, method: String): Int {
+    if (method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))) return 360_000
+    if (path.endsWith("/message-branches")) return 120_000
+    // Mainline reply reads may wait 25 seconds for a real change. The socket
+    // must outlive that server wait, otherwise a quiet conversation looks offline.
+    if (method == "GET" && path.substringBefore('?').matches(Regex("/personal/v1/chats/[A-Za-z0-9_-]{1,128}/(events|changes)"))) {
+        val wait = path.substringAfter('?', "").split('&').firstOrNull { it.startsWith("waitMs=") }
+            ?.substringAfter('=')?.toIntOrNull()
+        if (wait != null && wait in 0..30_000) return maxOf(20_000, wait + 5_000)
+    }
+    return 20_000
+}
 
 private fun requestByteLimit(url: URL): Int = if (url.path == "/personal/v1/health/records/batch") 1280 * 1024 else if (url.path.endsWith("/chat/completions"))
     14 * 1024 * 1024 else 256 * 1024
@@ -828,10 +847,9 @@ class PersonalApi(transport: JsonTransport = JsonHttp()) {
         require(validBusinessMethod(path, method))
         require(validBusinessPath(path))
         if (body != null) require(body.toString().toByteArray(Charsets.UTF_8).size <= if (path == "/personal/v1/health/records/batch") 1280 * 1024 else if (path.startsWith("/personal/v1/offline/")) 256 * 1024 else 64 * 1024)
-        val restarting = method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))
         return http.request("${host.origin}$path", method, body,
             if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host),
-            readTimeoutMs = if (restarting) 360_000 else if (path.endsWith("/message-branches")) 120_000 else 20_000).body
+            readTimeoutMs = businessReadTimeout(path, method)).body
     }
 
     private fun authWriteHeaders(host: HostIdentity) = mapOf("Cookie" to host.cookie,
