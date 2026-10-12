@@ -926,6 +926,8 @@ DPoP proof 是 ES256 `typ=dpop+jwt`、仅公钥 `jwk`；含随机 `jti`、±60 �
 
 AUTH-1 新界面不读取批准队列或展示配对/可信码。登录后的设置列设备名称、首次登录、最近使用，逐个下线。首次新设备登录产生 `system.device.signed_in` 动态，动作 `view_settings` 指向 `devices`；其它同账户会话和本机窗口可查看。旧批准/配对接口仅保留兼容，不能恢复 denied/revoked 设备。
 
+AND-3：Android（安卓）原生 `cloud.app.configure` 与 `cloud.app.identity` 声明 `nativeEmailCodeLogin:true`，放行7.8的两个纯邮箱验证码路径；首次内容登录以正常 CA（证书机构）／域名验证取得并验证上述 `hostTrust`，再保存原有 pin（证书固定），无需先配对。同账户电脑自动连接；本机缓存身份与内容先恢复，过期认证保留阅读与草稿，需要发送时使用可关闭的登录弹层。旧缓存界面首次切回内置新登录，缓存文件不删除。没有新增服务器接口或原生权限；需要新壳版本，由编排递增。
+
 新增宿主业务码：401 `CLOUD_TOKEN_INVALID / DPOP_INVALID / DPOP_REPLAY / PAIRING_INVALID`；403 `LOCAL_SESSION_REQUIRED / CLOUD_NOT_BOUND / DEVICE_NOT_TRUSTED`；400 `CLAIM_INVALID`；409 `CLOUD_BINDING_CONFLICT / DEVICE_DECISION_CONFLICT`；503 `CLOUD_UNAVAILABLE / STORAGE_UNAVAILABLE`。Origin、CSRF、媒体类型、大小与原宿主约定一致。新登录不产生等待批准。拒绝/撤销返回 403，重新登录、换公钥或旧配对接口均不能恢复已下线的宿主信任记录。
 
 显式 DELETE 原 `/auth/devices/{localDeviceId}` 也撤销同绑定、同云设备号的全部内容公钥及会话；当前流立即关闭，本地 outbox 等联网后同步。logout 只退出当前 Cookie。云 epoch 撤销与本地 authEpoch 分开；新的云 epoch 不自动撤销既有公钥信任，旧 Cookie 无效，本地密码/旧合法本地 Cookie/Bearer 不变。云已发 JWT 尚有最多 5 分钟有效窗；宿主每 60 秒轮询及启动同步，收到签名事件后立即失效；断网不能承诺取得最新撤权。有效宿主 Cookie 不要求每次请求联网，云离线不阻断本地登录。

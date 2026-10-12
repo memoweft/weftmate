@@ -1,0 +1,6138 @@
+{
+  "realNativeShell": true,
+  "realNativeTransport": true,
+  "syntheticCloud": true,
+  "syntheticHost": true,
+  "modelRequests": 0,
+  "mimoRequests": 0,
+  "checks": [
+    "password-real-native-login-mail-confirm-direct-host-trust",
+    "real-native-main-chat-send-and-synthetic-reply",
+    "native-page-activity",
+    "native-weekly-review-visible",
+    "native-page-health",
+    "native-page-goals",
+    "native-page-library",
+    "native-page-settings",
+    "native-page-approvals",
+    "native-page-executionRecords",
+    "native-page-system",
+    "native-page-notifications",
+    "native-approval-second-opinion-visible",
+    "offline-native-process-reopen-reads-cached-content-without-login",
+    "native-computer-offline-retry-preserves-cache-and-draft",
+    "native-process-reopen-cached-account-without-login",
+    "expired-native-cache-readable-server-use-dismissible-login",
+    "code-real-native-login-mail-confirm-direct-host-trust"
+  ],
+  "screenshots": [
+    {
+      "file": "cloud-390-light-password-login.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.5668202764977,
+          254.5668202764977,
+          254.5668202764977
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0.43317972350229184,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "fc0a6a914d4e4363ba8bdf8a9e4be10ae22495cd2329f7a07a165aa46a274eab"
+    },
+    {
+      "file": "cloud-390-dark-password-login.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38.61446675444371,
+          39.611668861092824,
+          35.62294272547729
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0.6163780839636905,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "56a3bba942176a8465b2ebf62640fa82a9deb97e1004ddc3edaabe4573f54bc3"
+    },
+    {
+      "file": "cloud-360-light-password-login.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "c0ff1dc5893ce405c37411bc513f7ebac749cd627043835af340bf0632363678"
+    },
+    {
+      "file": "cloud-360-dark-password-login.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.033138401559455,
+          42.02037037037037,
+          38.074561403508774
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.042777982982642,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "3047de33ecd1f483dc7e8ead40f8cddbf037da01a85e2c891c19cb773425ffb5"
+    },
+    {
+      "file": "cloud-390-light-password-email-confirm.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.562952600395,
+          254.562952600395,
+          254.562952600395
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0.43704739960500666,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "f4005b85416dbd14ff30cbc8dcb6f7fc9f38bcd1765735751ffcedc4435ff2ae"
+    },
+    {
+      "file": "cloud-390-dark-password-email-confirm.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38.61998025016458,
+          39.61759381171824,
+          35.62837393021725
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0.6219998454028401,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "ade59a880f439b48c185950f8ffc6df3a407b4f09536fdfc55c9c06376a2241f"
+    },
+    {
+      "file": "cloud-360-light-password-email-confirm.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.86140350877193,
+          252.86140350877193,
+          252.86140350877193
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.1385964912280713,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "6cf1e38ba363430bed033662ce9f3745c70fb43b6908d4ca4508dfe31dc49ef0"
+    },
+    {
+      "file": "cloud-360-dark-password-email-confirm.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.033138401559455,
+          42.02037037037037,
+          38.074561403508774
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.042777982982642,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "9f89a258fad4d810c2373961e790defc33e67c07edbcedc836ee0c6d37b07107"
+    },
+    {
+      "file": "cloud-390-light-chat.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "29b73eb25a38ada2aaf70f3042b927247cab7ca426f4c182b3f6aebfb657581e"
+    },
+    {
+      "file": "cloud-390-dark-chat.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "9a6225c663765cff8e1749ff3cbd82eda96d544339689fdad8df81f493e0a7c8"
+    },
+    {
+      "file": "cloud-360-light-chat.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "4afc640323c149351bf7aee422ef319d142a8ef07bd1a7b2cc354c35d26d7ff8"
+    },
+    {
+      "file": "cloud-360-dark-chat.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "22d34d24d34a09ab5f022500ae4a0204b6d0eac37d7cf56bde59c1859db95c1f"
+    },
+    {
+      "file": "cloud-390-light-activity.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "09bdad0caccea33cdc172714d4926cbbfad90fd376392a77ad0a53e3d34c5cae"
+    },
+    {
+      "file": "cloud-390-dark-activity.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "d9d2241a0fb3a85d013c3e750e8f0a6595f308b21822eedcf7f352da80756029"
+    },
+    {
+      "file": "cloud-360-light-activity.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "83a78e2089fcc526297a70845452c609297ab32a3f33046e1d2da998d6c1aa62"
+    },
+    {
+      "file": "cloud-360-dark-activity.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "6ecd9255d8cbb8f7196b012dfc3d1043fdd541e211178c21c6af5b09aed8c3d9"
+    },
+    {
+      "file": "cloud-390-light-weekly-review.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "f76feacefddeee4adf5f28cfe157ec523a3ccd01c3098a451ca3b284d5295299"
+    },
+    {
+      "file": "cloud-390-dark-weekly-review.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "06fd574b2809bf2504abc20a8140e07688253b3afe1fffec66a52987da5549d0"
+    },
+    {
+      "file": "cloud-360-light-weekly-review.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "963e5e3b549fb62d146d1f09ad6e18d6262b2244fb384a8d10f13dfa10179daf"
+    },
+    {
+      "file": "cloud-360-dark-weekly-review.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "a89e8cdff0f0960ce186863e371fdfa9a6c7fd46c21af931075172bead516752"
+    },
+    {
+      "file": "cloud-390-light-health.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "ab290eaa6ff920ef1a1bd144f831fbe281d739dec17e7070f3576b47477820a8"
+    },
+    {
+      "file": "cloud-390-dark-health.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "4456b23b9cac8d0aae7e0f637ec9f21d3245cd027c64bb028ba59f9462a354a3"
+    },
+    {
+      "file": "cloud-360-light-health.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "85ac4ea69b6316c1bcbbe8578c25badb403faa2126ccec217bca29ffdcae362e"
+    },
+    {
+      "file": "cloud-360-dark-health.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "6ebf4942ff5a350d51bca4da1145cf9799eb2ad611a92761fb6810df8c08590b"
+    },
+    {
+      "file": "cloud-390-light-goals.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "41574d72a28d1727607d7e7bdf3d1664cb9cef05979a6134af4d1c60a7571d50"
+    },
+    {
+      "file": "cloud-390-dark-goals.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "c882d48444cbb3d99c63be13c0361dd9fc8e56108f44207bcd37233f7711bce5"
+    },
+    {
+      "file": "cloud-360-light-goals.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "be0d035fc9505cc8893741331ebbf26f56cdaaa3b1cdbec3d5366abde9ec5fb7"
+    },
+    {
+      "file": "cloud-360-dark-goals.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "85f9957ee41ad61ed25b3cb39e49b331a98923ed2b840701315e36622b2d3096"
+    },
+    {
+      "file": "cloud-390-light-library.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.975,
+          254.975,
+          254.975
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9749999999999943
+      },
+      "sha256": "ca586a010375838ab404a35bb62c2cb5effa253963dbd3b27fb9c115f5bf2f77"
+    },
+    {
+      "file": "cloud-390-dark-library.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "cef3ab6545128148941ad962937c67873e41d6a01ee90006c33f4cf5233bd748"
+    },
+    {
+      "file": "cloud-360-light-library.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.975,
+          254.975,
+          254.975
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9749999999999943
+      },
+      "sha256": "e653d5d24a458d3a5fc5063ed09cf00eeadb42ff142cca4fcae016caeb0880a3"
+    },
+    {
+      "file": "cloud-360-dark-library.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "6d6b28e09bea9b05a53ffae68ad279547bfd0ae617cab2a0fe13c16d27567d41"
+    },
+    {
+      "file": "cloud-390-light-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "2c178b3b276c3f26d2c4019f720cd7d77d7f4bad0a147dbfab80928184e13f53"
+    },
+    {
+      "file": "cloud-390-dark-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "c4646b73e5914cd424600563f9529fd6b46101474fb3d698c05301d5b58a91fc"
+    },
+    {
+      "file": "cloud-360-light-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "8221074eca0fa76e98505a85f0661a80fa85730a67cb5050bc84a2af5dfbdd3d"
+    },
+    {
+      "file": "cloud-360-dark-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "2e4a2f87d34ce431114e6d0cd7fc6ed95ca046b8c87bb68067048222367879b7"
+    },
+    {
+      "file": "cloud-390-light-approvals.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "d86bcf2a5a04b861710e489f1d5085138a523c9d902837e3f49d9cf07e44fe91"
+    },
+    {
+      "file": "cloud-390-dark-approvals.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "795939aa3d8e65a35d08b177476a971196c413a7c7f3ad83c92e92e45b73e536"
+    },
+    {
+      "file": "cloud-360-light-approvals.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "e4d7ec03a5c6c50550e219f0407c17f1e7b30d49cfc9f518b5cdab0c9daab3dd"
+    },
+    {
+      "file": "cloud-360-dark-approvals.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "9d1acafb7d062b8741cb44c9bdb6efcea02c0fd385d1d4b340554e60d4b12e39"
+    },
+    {
+      "file": "cloud-390-light-executionRecords.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "a3850938ea640303b5eef977aeff8d04fcff27ef170abbdfd11d7a043197f887"
+    },
+    {
+      "file": "cloud-390-dark-executionRecords.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "b065052fa6d8cf238a1d7004accb72c5fdfbaabf3f2ed5dfa0b1cf888dda9139"
+    },
+    {
+      "file": "cloud-360-light-executionRecords.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "445bd9d147a4e0dfd6de4f1259acb1c9eaba0b40a9837417f69beb1a0081d6fb"
+    },
+    {
+      "file": "cloud-360-dark-executionRecords.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "d52cf96742076d793868f1dbcdf350c19b387559b4aa9101036fc2990cb80716"
+    },
+    {
+      "file": "cloud-390-light-system.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "0993a03592c560aa6ab9e7ef870d41347c9440ca257949f194a0693db36dd1bb"
+    },
+    {
+      "file": "cloud-390-dark-system.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "bd0d9679cbc728c07a9c11fbb7a4245899196e3c29f4054a2379eb8b9ea16f4f"
+    },
+    {
+      "file": "cloud-360-light-system.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "f2fda0c9ec03b4e9823d53df7e03e947b7b1ea8a1697d0710c5ec7452f747ff9"
+    },
+    {
+      "file": "cloud-360-dark-system.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "30d31d12071d2007f82e120cd88324937f11eb96c4007bad46797ff5a45c095b"
+    },
+    {
+      "file": "cloud-390-light-review-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "e1572fe8110fa8b18d0b87bd4bdef8efee50527b51058c891cca85954696ab7b"
+    },
+    {
+      "file": "cloud-390-dark-review-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "6455c5d5a5ce6d29b43f18cab1b0aaa642454c6fc7a8194347624a78acf7e3f3"
+    },
+    {
+      "file": "cloud-360-light-review-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "977d8a0e431061a11c94348ffd3148efec0fd1d326f458d00241f0bb9c061da3"
+    },
+    {
+      "file": "cloud-360-dark-review-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "7eb084a0559b5c5696370f1832c6561d956e92bbe9aab3b024f4c1df5f4fc4c5"
+    },
+    {
+      "file": "cloud-390-light-health-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "7ccf4a3acb72022fe47e1372f82848c07f87452293182a515786ceecc9f644ea"
+    },
+    {
+      "file": "cloud-390-dark-health-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "daf500a2ffc8d28b92d4df4d3c7ecd94f1891b7edbf2d17ae216a211c0241fcd"
+    },
+    {
+      "file": "cloud-360-light-health-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "368ef4c3b472d3992ed2f2ff1dc7f369b6b0ad16bc16272b84a445ed41466de6"
+    },
+    {
+      "file": "cloud-360-dark-health-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "329ff733cc94a8b09432eb5065191cd267aa54decb6c28f4c7baf42b18ec5115"
+    },
+    {
+      "file": "cloud-390-light-approval-second-opinion.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "bfac8722f1911a184e82fb2b64f591b894eb66aaab4c61acbadfc65c9499ce5a"
+    },
+    {
+      "file": "cloud-390-dark-approval-second-opinion.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "4592b02fed07cda9f8d12d50eed9173eb09da6a30db26c9879554e269f5d3e61"
+    },
+    {
+      "file": "cloud-360-light-approval-second-opinion.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "e77cf401ece7a7ba441c53ac6900517d45ccd2edb8f5fd8430ef70f9e0da4d0d"
+    },
+    {
+      "file": "cloud-360-dark-approval-second-opinion.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "15084042ddb723ec0861e603afc6fdcb318353cd9a04bbdf2f28f1c8a3b32adb"
+    },
+    {
+      "file": "cloud-390-light-computer-offline.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "5275e6e5d4116c71e23b7b9501d30561aef32410598d2f4d0158f9e359e92d4f"
+    },
+    {
+      "file": "cloud-390-dark-computer-offline.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "65c699c1a7178f2f564c49a1084683e8694654576257cbba98d4db84b5d6e7a9"
+    },
+    {
+      "file": "cloud-360-light-computer-offline.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "ababd0f0abcb6d958c608bb33417102631d7c2e590625b55330d388117863fcf"
+    },
+    {
+      "file": "cloud-360-dark-computer-offline.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "bf0804ac4652a69497bc2457218c4177f64a71f4d96c64d7479886048454e36b"
+    },
+    {
+      "file": "cloud-390-light-offline-process-reopen-cache.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.562952600395,
+          254.562952600395,
+          254.562952600395
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0.43704739960500666,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "7d9a5ac334a67e8721082d4694f497d6c09eb268618a4cd6528c106539d4a4ac"
+    },
+    {
+      "file": "cloud-390-dark-offline-process-reopen-cache.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38.61998025016458,
+          39.61759381171824,
+          35.62837393021725
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0.6219998454028401,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "ec6b414088a595e5055e1a02b1e54787a95302d38fa2b07ca6a6a406215007fd"
+    },
+    {
+      "file": "cloud-360-light-offline-process-reopen-cache.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.86140350877193,
+          252.86140350877193,
+          252.86140350877193
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.1385964912280713,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "6649a8de9b1aee41266149b8652dcd4ce99798ee78f9aae2a052a981c1afd6b1"
+    },
+    {
+      "file": "cloud-360-dark-offline-process-reopen-cache.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.033138401559455,
+          42.02037037037037,
+          38.074561403508774
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.042777982982642,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "ee0c23e8b227d9fa80aba2b25d490f587868677e719e2d1c93b20b084564c62c"
+    },
+    {
+      "file": "cloud-390-light-computer-retry-restored.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.562952600395,
+          254.562952600395,
+          254.562952600395
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0.43704739960500666,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "7ba73634761598f4eafc56a903345fdad2e9d1efb5dc8d36da991e95f67b7d48"
+    },
+    {
+      "file": "cloud-390-dark-computer-retry-restored.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38.61998025016458,
+          39.61759381171824,
+          35.62837393021725
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0.6219998454028401,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "f0e00e57ea7d7df693014a98eb2f1e6fa2e355eb2cb7ad4d26f1d3df1d9386f5"
+    },
+    {
+      "file": "cloud-360-light-computer-retry-restored.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.86140350877193,
+          252.86140350877193,
+          252.86140350877193
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.1385964912280713,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.95,
+          254.95,
+          254.95
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9499999999999886
+      },
+      "sha256": "10ff13e530b1db2c8305cc921e0eccba8f078e2a7e034f0d22f3740a3c991bf9"
+    },
+    {
+      "file": "cloud-360-dark-computer-retry-restored.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.033138401559455,
+          42.02037037037037,
+          38.074561403508774
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.042777982982642,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "686bbafeff03541eede65ec321061af8afd24cb6725c943876e12a5ddf34c416"
+    },
+    {
+      "file": "cloud-390-light-expired-cache-readable.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.562952600395,
+          254.562952600395,
+          254.562952600395
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0.43704739960500666,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.975,
+          254.975,
+          254.975
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9749999999999943
+      },
+      "sha256": "bfcdb19e0a5e5176ba1b37c3a35e0c4e877e3038b2ba138dede141b126458f16"
+    },
+    {
+      "file": "cloud-390-dark-expired-cache-readable.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38.61998025016458,
+          39.61759381171824,
+          35.62837393021725
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0.6219998454028401,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "4338ec1547e2f6a04358d75c7c3fb2e903b7616e849b2662e3d19e89d05102a0"
+    },
+    {
+      "file": "cloud-360-light-expired-cache-readable.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.86140350877193,
+          252.86140350877193,
+          252.86140350877193
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.1385964912280713,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.975,
+          254.975,
+          254.975
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.9749999999999943
+      },
+      "sha256": "39c485870006223b475059fe641e52c5362e3e0a287b07bfc8438d4a4f910238"
+    },
+    {
+      "file": "cloud-360-dark-expired-cache-readable.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.033138401559455,
+          42.02037037037037,
+          38.074561403508774
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.042777982982642,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "810402c35a5e3bb9a0643267b95f0c67cba8414811091bf490da5b62fa960da8"
+    },
+    {
+      "file": "cloud-390-light-server-use-login-prompt.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.562952600395,
+          254.562952600395,
+          254.562952600395
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0.43704739960500666,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.8,
+          254.8,
+          254.8
+        ],
+        "content": [
+          252.91666666666666,
+          252.91666666666666,
+          252.91666666666666
+        ],
+        "delta": 1.8833333333333542
+      },
+      "sha256": "eef5056e5b855f4a14af2059c3569b8fad9a9bcb09ecc24a257458ce45b2f4be"
+    },
+    {
+      "file": "cloud-390-dark-server-use-login-prompt.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38.61998025016458,
+          39.61759381171824,
+          35.62837393021725
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0.6219998454028401,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          37.583333333333336,
+          38.583333333333336,
+          34.583333333333336
+        ],
+        "delta": 0.4166666666666643
+      },
+      "sha256": "1b31405fde5729e6783d42364270d2efd50f7fa52f6eb7bcec06a078f660cc92"
+    },
+    {
+      "file": "cloud-360-light-server-use-login-prompt.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.86140350877193,
+          252.86140350877193,
+          252.86140350877193
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.1385964912280713,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.8,
+          254.8,
+          254.8
+        ],
+        "content": [
+          252.91666666666666,
+          252.91666666666666,
+          252.91666666666666
+        ],
+        "delta": 1.8833333333333542
+      },
+      "sha256": "1ece00c1f3966fae7947f6394b4ed578941592e595530eeedac1260c703e0721"
+    },
+    {
+      "file": "cloud-360-dark-server-use-login-prompt.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.033138401559455,
+          42.02037037037037,
+          38.074561403508774
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.042777982982642,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          37.583333333333336,
+          38.583333333333336,
+          34.583333333333336
+        ],
+        "delta": 0.4166666666666643
+      },
+      "sha256": "54ce4dbffb39562e1d095787fcdfe8b2a17b931dee593edb520966ca854937f2"
+    },
+    {
+      "file": "cloud-390-light-code-login.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.562952600395,
+          254.562952600395,
+          254.562952600395
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0.43704739960500666,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "55aa7f5815e0721cfd5264cc67a248087c7dbf4bb5faf47723157cc94101f236"
+    },
+    {
+      "file": "cloud-390-dark-code-login.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38.61998025016458,
+          39.61759381171824,
+          35.62837393021725
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0.6219998454028401,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "61636320c04371f898487bb80ed3fc4de8a224765fd19acb52104326e032baa5"
+    },
+    {
+      "file": "cloud-360-light-code-login.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.86140350877193,
+          252.86140350877193,
+          252.86140350877193
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.1385964912280713,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "be189da037321c51ebb006c1b59c6c22652314caafdaedcbce013d52944f401a"
+    },
+    {
+      "file": "cloud-360-dark-code-login.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.033138401559455,
+          42.02037037037037,
+          38.074561403508774
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.042777982982642,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "ae65e7891fcf2e80e241a5da8f081a108ce3821739c066b52abf6c195e3ffcaa"
+    },
+    {
+      "file": "cloud-390-light-email-code-entry.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.562952600395,
+          254.562952600395,
+          254.562952600395
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0.43704739960500666,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "17520d33553a32868af6c8670b17bd7a722070c9264d3c360799b8aa5d081018"
+    },
+    {
+      "file": "cloud-390-dark-email-code-entry.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38.61998025016458,
+          39.61759381171824,
+          35.62837393021725
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0.6219998454028401,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "65bf3dc725d9ae88686f510fd9100ca11e8fd5dc9305060d96da17d686af8316"
+    },
+    {
+      "file": "cloud-360-light-email-code-entry.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.86140350877193,
+          252.86140350877193,
+          252.86140350877193
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.1385964912280713,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "a9fe31ca7e4c41185b39d5fd6099bf1e673793108a3ab0f54e282ea0172d0dcf"
+    },
+    {
+      "file": "cloud-360-dark-email-code-entry.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.033138401559455,
+          42.02037037037037,
+          38.074561403508774
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.042777982982642,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "955bfb7e2cfb75516783551b967f5a99172f76c0e70bf8a3b9da18486a688cb7"
+    },
+    {
+      "file": "cloud-390-light-code-email-confirm.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          254.562952600395,
+          254.562952600395,
+          254.562952600395
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0.43704739960500666,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "8b2e161f76f040a10ea25be69f82e40ecba4242f017aa4227f21a27629fde50f"
+    },
+    {
+      "file": "cloud-390-dark-code-email-confirm.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38.61998025016458,
+          39.61759381171824,
+          35.62837393021725
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0.6219998454028401,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "7f59a695cbc634dc71c62b95cc0bdda77c19525440c2dd58b56bb8e7877cc8bd"
+    },
+    {
+      "file": "cloud-360-light-code-email-confirm.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.86140350877193,
+          252.86140350877193,
+          252.86140350877193
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.1385964912280713,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "content": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0
+      },
+      "sha256": "769d0b7090fd83d8a90b2e10101b604e2274c1b47fe73eee9ce7ab2efd520b9c"
+    },
+    {
+      "file": "cloud-360-dark-code-email-confirm.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.033138401559455,
+          42.02037037037037,
+          38.074561403508774
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.042777982982642,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0
+      },
+      "sha256": "156bf1db0da87844c6979628dd8d7e68613da0a510b94474f45b86c844c8860c"
+    },
+    {
+      "file": "cloud-390-light-code-signed-in.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          253.838133640553,
+          253.838133640553,
+          253.838133640553
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 1.1618663594470036,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.85,
+          254.85,
+          254.85
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.8499999999999943
+      },
+      "sha256": "647a94128dace8821df0eff79fbb12bb42ba4962b87498106abffa42670899f3"
+    },
+    {
+      "file": "cloud-390-dark-code-signed-in.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 64,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，9 条未读",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 64,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 64,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          39.64779460171165,
+          40.64195194206715,
+          36.67075378538512
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 1.6535468384523087,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          37.75,
+          38.75,
+          34.75
+        ],
+        "delta": 0.25
+      },
+      "sha256": "96df35f1515b6a5f726b67d3d907dfbb49cc1b266c5c8595e1c4a60a0fa4a757"
+    },
+    {
+      "file": "cloud-360-light-code-signed-in.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，9 条未读",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          252.23391812865498,
+          252.23391812865498,
+          252.23391812865498
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 2.7660818713450226,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          254.875,
+          254.875,
+          254.875
+        ],
+        "content": [
+          254,
+          254,
+          254
+        ],
+        "delta": 0.875
+      },
+      "sha256": "d9b871778d86d01772793a0b6e2a39f610a80f2523ff2466f8e69280c1bb3863"
+    },
+    {
+      "file": "cloud-360-dark-code-signed-in.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 59,
+      "bottom": 24,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，9 条未读",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "14",
+      "systemTheme": "Night mode: no",
+      "bottomNavigationVisible": true,
+      "native": {
+        "statusHeight": 59,
+        "navigationHeight": 24,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 59,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          41.92280701754386,
+          42.90750487329435,
+          38.9770955165692
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 3.935915733330059,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": {
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "content": [
+          37.75,
+          38.75,
+          34.75
+        ],
+        "delta": 0.25
+      },
+      "sha256": "4ff209264eff727c0a0aaa1dba8b77b638842cfea48b920fd596c8ac2bf8f491"
+    }
+  ],
+  "cleanup": {
+    "testPackagesRemoved": true,
+    "adbDisconnected": true,
+    "locksReleased": true
+  },
+  "errors": [],
+  "osVersion": "14",
+  "mainReply": {
+    "selected": "chat-9740ff62-9e6a-4e99-bbe8-7ad07f598450",
+    "session": null,
+    "reply": {
+      "items": [
+        {
+          "eventId": "event-f997135fc252d27b13a98603935ebdea58c8fd5d67762a9fab64a6b87f6ab6ac",
+          "chatId": "chat-9740ff62-9e6a-4e99-bbe8-7ad07f598450",
+          "orderKey": "0000000000000000:segment-b67c0054-3dcb-4cbc-abb0-dcfaa506cce3:0000000000000000",
+          "revision": 1,
+          "type": "turn.started",
+          "at": "2026-10-12T17:52:59.230Z",
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-470dc4e6-73f0-4c60-bd9c-8134fa4a5dab",
+            "sessionId": "session-c19e44dc-5159-4c5a-8946-9a80a3b09672",
+            "seq": 0
+          },
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "eventId": "event-f9e18baac555b9aa0b4e0498119936581734bf0da78ea3be0ca912dda678891d",
+          "chatId": "chat-9740ff62-9e6a-4e99-bbe8-7ad07f598450",
+          "orderKey": "0000000000000000:segment-b67c0054-3dcb-4cbc-abb0-dcfaa506cce3:0000000000000001",
+          "revision": 1,
+          "type": "user.message",
+          "at": "2026-10-12T17:52:59.730Z",
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-470dc4e6-73f0-4c60-bd9c-8134fa4a5dab",
+            "sessionId": "session-c19e44dc-5159-4c5a-8946-9a80a3b09672",
+            "seq": 1
+          },
+          "data": {
+            "text": "原生壳里的合成问候",
+            "receiptId": "synthetic-403f8be8-4ea5-4579-a6bc-db47b3058d0c",
+            "truncated": false
+          }
+        },
+        {
+          "eventId": "event-ff0b55276760f3ad7386b837867f1e2db934cd38980409b8309272d8ed916673",
+          "chatId": "chat-9740ff62-9e6a-4e99-bbe8-7ad07f598450",
+          "orderKey": "0000000000000000:segment-b67c0054-3dcb-4cbc-abb0-dcfaa506cce3:0000000000000002",
+          "revision": 1,
+          "type": "task.started",
+          "at": "2026-10-12T17:53:00.230Z",
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-470dc4e6-73f0-4c60-bd9c-8134fa4a5dab",
+            "sessionId": "session-c19e44dc-5159-4c5a-8946-9a80a3b09672",
+            "seq": 2
+          },
+          "data": {
+            "taskId": "cmd-d98639ca-ee8b-4413-b351-a9575d5405f3",
+            "turn": 1,
+            "receiptId": "synthetic-403f8be8-4ea5-4579-a6bc-db47b3058d0c",
+            "commandId": "cmd-d98639ca-ee8b-4413-b351-a9575d5405f3",
+            "requestId": "e4d0d3fd-c7d8-4921-b9ad-6f4cb73dbbc1",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "eventId": "event-a2ebadaaf9be03a3ea8b6406ee8e6bdf034bc313b7ca9758079c9d2f74947c8a",
+          "chatId": "chat-9740ff62-9e6a-4e99-bbe8-7ad07f598450",
+          "orderKey": "0000000000000000:segment-b67c0054-3dcb-4cbc-abb0-dcfaa506cce3:0000000000000003",
+          "revision": 1,
+          "type": "assistant.message",
+          "at": "2026-10-12T17:53:00.730Z",
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-470dc4e6-73f0-4c60-bd9c-8134fa4a5dab",
+            "sessionId": "session-c19e44dc-5159-4c5a-8946-9a80a3b09672",
+            "seq": 3
+          },
+          "data": {
+            "text": "合成回复：原生壳里的合成问候"
+          }
+        },
+        {
+          "eventId": "event-6f07d3880c04cfbe6c90b8a49025f910a02f8621cbe1ff005ecc052fb0e6d976",
+          "chatId": "chat-9740ff62-9e6a-4e99-bbe8-7ad07f598450",
+          "orderKey": "0000000000000000:segment-b67c0054-3dcb-4cbc-abb0-dcfaa506cce3:0000000000000004",
+          "revision": 1,
+          "type": "turn.ended",
+          "at": "2026-10-12T17:53:01.230Z",
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-470dc4e6-73f0-4c60-bd9c-8134fa4a5dab",
+            "sessionId": "session-c19e44dc-5159-4c5a-8946-9a80a3b09672",
+            "seq": 4
+          },
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "liveEvents": [],
+      "liveRevision": 0,
+      "olderCursor": "WyJvd25lci1hMjM1NzQ5MS01NmRkLTQ4NzItOTNmZS0xYTFiODUyZmZiZGYiLCJjaGF0LTk3NDBmZjYyLTllNmEtNGU5OS1iYmU4LTdhZDA3ZjU5ODQ1MCIsIjYyMmFhNTU5YmUwNmUzYWQ2ODRkMjMwNzAyMDg4NDQzIiwiaGlzdG9yeSIsIjAwMDAwMDAwMDAwMDAwMDA6c2VnbWVudC1iNjdjMDA1NC0zZGNiLTRjYmMtYWJiMC1kY2ZhYTUwNmNjZTM6MDAwMDAwMDAwMDAwMDAwMCIsIiJd.V6JNiI5FYz2t1djcpBfwtd0AMqaTx8Li5OtsFE1F2Ok",
+      "newerCursor": "WyJvd25lci1hMjM1NzQ5MS01NmRkLTQ4NzItOTNmZS0xYTFiODUyZmZiZGYiLCJjaGF0LTk3NDBmZjYyLTllNmEtNGU5OS1iYmU4LTdhZDA3ZjU5ODQ1MCIsIjYyMmFhNTU5YmUwNmUzYWQ2ODRkMjMwNzAyMDg4NDQzIiwiaGlzdG9yeSIsIjAwMDAwMDAwMDAwMDAwMDA6c2VnbWVudC1iNjdjMDA1NC0zZGNiLTRjYmMtYWJiMC1kY2ZhYTUwNmNjZTM6MDAwMDAwMDAwMDAwMDAwNCIsIiJd.ff424orfbxkcIYMZbYvpYdDikQPXg9OvVNJjzV79-d0",
+      "hasOlder": false,
+      "hasNewer": false,
+      "syncCursor": "WyJvd25lci1hMjM1NzQ5MS01NmRkLTQ4NzItOTNmZS0xYTFiODUyZmZiZGYiLCJjaGF0LTk3NDBmZjYyLTllNmEtNGU5OS1iYmU4LTdhZDA3ZjU5ODQ1MCIsIjYyMmFhNTU5YmUwNmUzYWQ2ODRkMjMwNzAyMDg4NDQzIiwic3luYyIsNSwiIl0.PfMdYPqtQhMydxKO2kHVPMbCTWOJL9MeT57I_gxs5ik",
+      "deletedAnchor": false,
+      "contentRevision": 1,
+      "chatRevision": 3,
+      "unread": false,
+      "indexState": "ready",
+      "timeZone": "UTC",
+      "accountChanges": {
+        "revision": 30,
+        "modelSettings": "0b5187f8be10fcd1e80c80f172c1b24bbaaa6fa2d8d5dc15d9436b081f8c42a0",
+        "personalization": "cf462473bcfadd09f6a60bc3163850465eb321609a6b553004ff0b49ccae4db4",
+        "sessions": "874f5a61639990cb73052ac82c8267bd9cb106f45a1a5f616bb9b22851352d4e",
+        "models": "e3ed98e753bc95f9150e00d12d570767d3e10a8b659a3cd4af0f2f33f2658869"
+      }
+    }
+  },
+  "expiredPrompt": {
+    "native": true,
+    "cloudView": {
+      "mode": "login",
+      "step": "email",
+      "email": "",
+      "error": "",
+      "busy": false,
+      "resendAt": 0,
+      "retryAt": 0,
+      "deviceName": "这台设备",
+      "devices": [],
+      "hosts": [],
+      "cachedSession": true,
+      "challengeId": null,
+      "passwordTicket": null,
+      "requestId": null,
+      "modal": true,
+      "codeLoginSupported": true,
+      "resendSeconds": 0,
+      "retrySeconds": 0
+    },
+    "dialogCount": 1,
+    "dialogOpen": true,
+    "currentView": null
+  },
+  "completed": true,
+  "workflow": "https://github.com/memoweft/weftmate/actions/runs/38286598488"
+}

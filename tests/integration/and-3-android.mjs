@@ -14,7 +14,7 @@ const local = process.platform === 'win32';
 const adb = process.env.AND3_ADB || 'D:/Software/MuMuPlayer/nx_main/adb.exe';
 const pkg = 'com.memoweft.weftmate.mobile.and3qa';
 let serial = process.env.AND3_SERIAL, heavy, lock, installed, testInstalled, probe, browser, page, forward, fixture, gate, offline = false;
-let originalSize, originalDensity, probeLog = '', reversed = [];
+let originalSize, originalDensity, originalHeadsUp, probeLog = '', reversed = [];
 const report = { realNativeShell: true, realNativeTransport: true, syntheticCloud: true, syntheticHost: true,
   modelRequests: 0, mimoRequests: 0, checks: [], screenshots: [], cleanup: {}, errors: [] };
 const pause = ms => new Promise(done => setTimeout(done, ms));
@@ -163,7 +163,8 @@ try {
   assert.ok(!run('shell', 'pm', 'list', 'packages', pkg).includes(pkg), 'Never overwrite an existing test installation');
   assert.deepEqual(run('shell', 'ps', '-A').split('\n').filter(row => row.includes('com.memoweft.weftmate')), [], 'Another WeftMate app is active');
   originalSize = run('shell', 'wm', 'size'); originalDensity = run('shell', 'wm', 'density');
-  if(!local)run('shell','settings','put','global','heads_up_notifications_enabled','0');
+  originalHeadsUp = run('shell','settings','get','global','heads_up_notifications_enabled').trim();
+  run('shell','settings','put','global','heads_up_notifications_enabled','0');
   run('shell', 'wm', 'density', '160'); run('shell', 'wm', 'size', '390x844');
   report.osVersion = run('shell', 'getprop', 'ro.build.version.release').trim();
   fixture = await startAnd3Fixture();
@@ -254,6 +255,12 @@ try {
     if (forward) try { run('forward', '--remove', 'tcp:' + forward); } catch {}
     for (const port of reversed) try { run('reverse', '--remove', 'tcp:' + port); } catch {}
     for (const [property, original] of [['size', originalSize], ['density', originalDensity]]) if (original) try { run('shell', 'wm', property, original.match(/Override [^:]+:\s*([^\r\n]+)/)?.[1] || 'reset'); } catch {}
+    if (originalHeadsUp !== undefined) {
+      if (originalHeadsUp === 'null') run('shell','settings','delete','global','heads_up_notifications_enabled');
+      else run('shell','settings','put','global','heads_up_notifications_enabled',originalHeadsUp);
+      assert.equal(run('shell','settings','get','global','heads_up_notifications_enabled').trim(),originalHeadsUp);
+      report.cleanup.headsUpRestored = true;
+    }
     if (testInstalled) run('uninstall', pkg + '.test'); if (installed) run('uninstall', pkg);
     execute(adb, ['disconnect', serial]); report.cleanup.testPackagesRemoved = true; report.cleanup.adbDisconnected = true;
   }
