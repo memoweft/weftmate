@@ -43,6 +43,11 @@ if ($Action -eq 'wait') {
     } catch {
       # Completion can be committed between the file check and process query.
       if (Test-Path -LiteralPath $resultFile) { break }
+      Write-Output "Windows media worker evidence: present=$([bool]$child); expectedCreated=$($info.createdAt); observedCreated=$(if($child){$child.StartTime.ToUniversalTime().ToString('o')}); executableMatches=$(if($child){$child.Path -eq $info.executable}); scriptMatches=$(if($line){$line.Contains($info.script)})"
+      foreach ($stream in 'stdout.log','stderr.log') {
+        $log = Join-Path $Scope $stream
+        if (Test-Path -LiteralPath $log) { Get-Content -LiteralPath $log -Tail 12 }
+      }
       throw
     }
     Start-Sleep -Seconds 1
