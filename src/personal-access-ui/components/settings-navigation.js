@@ -189,6 +189,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             executionRecords: ({target}) => globalThis.WeftExecutionRecordsView(core,target,{current:()=>dialog.open&&selected==='executionRecords',openConversation:async row=>{ui.byId('account-back').click();if(core.state.currentView!=='assistant')await core.enterAssistant();if(row)await core.selectSession(row.sessionId);}}),
             system: () => { void core.refreshSystem(); },
             data: ({target}) => globalThis.WeftDataView(core,target,{toast:ui.toast}),
+            healthData: () => globalThis.WeftHealthView.settings(core, panels.get('healthData'), {toast:ui.toast}),
             notifications: () => globalThis.WeftNotificationsView(core, panels.get('notifications'), {toast:ui.toast}),
             personalization: () => globalThis.WeftPersonalizationView(core, panels.get('personalization'), 'personalization', {toast:ui.toast}),
             assistant: () => globalThis.WeftPersonalizationView(core, panels.get('assistant'), 'assistant', {toast:ui.toast}),
