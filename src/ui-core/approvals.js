@@ -331,7 +331,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
                     return;
             }
             const receipt = await core.accessApi(`/sessions/${encodeURIComponent(original.sessionId)}/approvals/${encodeURIComponent(id)}`, { method: 'POST', protectedWrite: true, body: { requestId: operation.requestId, outcome: operation.outcome,
-                    ...(operation.scope === 'conversation-category' ? { scope: operation.scope } : {}) } });
+                    ...(['conversation-category','global-category'].includes(operation.scope) ? { scope: operation.scope } : {}) } });
             if (!core.approvalContextCurrent(context) || core.conversationApprovals.operations.get(id) !== operation)
                 return;
             if (receipt?.requestId !== operation.requestId || !core.validApproval(receipt.approval, original.sessionId) ||

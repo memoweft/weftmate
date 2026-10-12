@@ -385,6 +385,7 @@ function memoryRevisionMatches(value,memory=state.memory){return Number.isSafeIn
 function memoryPathEncode(value){return encodeURIComponent(value).replace(/%3A/gi,':').replace(/[!'()*]/g,c=>`%${c.charCodeAt(0).toString(16).toUpperCase()}`)}
 
 function memoryItemsPath(kind,query,after){try{const params=[`kind=${memoryPathEncode(kind)}`,'limit=20','includeSources=true'];
+    if(state.memory.weekFilter){params.push(`from=${memoryPathEncode(state.memory.weekFilter.from)}`,`to=${memoryPathEncode(state.memory.weekFilter.to)}`);}
     if(query)params.push(`query=${memoryPathEncode(query)}`);if(after)params.push(`after=${memoryPathEncode(after)}`);
     const path=`/personal/v1/memory/items?${params.join('&')}`;return path.length<=512?path:null}catch{return null}}
 
@@ -512,7 +513,7 @@ function openMemoryDetail(target,item){if(!memoryListAllowed()||!item||!Object.h
     memory.receiptMessage='';memory.receiptRequestId='';memory.receiptItemId=null}
   const token=memoryToken();effects.renderMemoryDetail(target,token);
   if(!memoryPathIdSupported(item.id)){memory.detailError='当前手机版无法打开这条来源；记忆仍保留在列表中。';effects.renderMemoryDetail(target,token);return}
-  if(memory.capabilities.source)void loadMemoryDetail(target,token,item);else{
+  if(memory.capabilities.source)return loadMemoryDetail(target,token,item);else{
     memory.detailError='当前手机版暂不能读取此项的详情与来源。';effects.renderMemoryDetail(target,token)}}
 
 async function loadMemoryDetail(target,token,item){if(!memoryCurrent(token))return;const memory=state.memory;

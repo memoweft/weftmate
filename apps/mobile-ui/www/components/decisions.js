@@ -6,7 +6,7 @@ const approvalModes=[
   {mode:'plan',label:'先出计划',short:'先出计划',description:'先给计划，你确认后再做'},
   {mode:'allow-all',label:'全部允许',short:'全部允许',description:'不再询问，危险操作也会直接执行'}];
 const approvalModeState={key:null,mode:null,loading:false,error:'',menu:null,confirmation:null,revision:0};
-const approvalRiskNames={delete:'删除文件',overwrite:'覆盖文件',system:'修改系统',install:'安装软件',external:'发送或发布',spend:'付款',execute:'执行脚本'};
+const approvalRiskNames={read:'读文件',network:'联网',delete:'删除文件',overwrite:'覆盖文件',system:'修改系统',install:'安装软件',external:'发送或发布',spend:'付款',execute:'执行脚本'};
 function conversationTaskContext(){return uiCore.mobileDecisions.context()}
 function conversationTaskCurrent(context){return uiCore.mobileDecisions.current(context)}
 function approvalDeviceId(){return uiCore.mobileDecisions.deviceId()}
@@ -170,13 +170,10 @@ function fillApprovalCard(card,row,context,cache){card.decisionContext=context;c
       button.addEventListener('click',()=>{const restoreFocus=button.dataset.restoreFocus==='1';delete button.dataset.restoreFocus;
         const fresh=approvalContext(),shown=card.decisionContext||context;if(approvalViewCurrent(fresh)&&fresh.owner===shown.owner&&fresh.epoch===shown.epoch&&fresh.sessionId===shown.sessionId&&fresh.generation===shown.generation&&fresh.page===shown.page)void handler(restoreFocus,fresh)});controls.append(button)};
     if(row.status==='pending'&&!cache.error&&(!attempt?.unknown||attempt.checked)){
-      if(attempt?.unknown)add(attempt.outcome==='allowed-once'?(attempt.scope==='conversation-category'?'重试总是允许此类':'重试允许一次'):'重试拒绝',attempt.outcome,
+      if(attempt?.unknown)add(attempt.outcome==='allowed-once'?(attempt.scope==='global-category'?'重试以后允许同类':attempt.scope==='conversation-category'?'重试总是允许此类':'重试允许一次'):'重试拒绝',attempt.outcome,
         (restoreFocus,fresh)=>decideToolApproval(row,attempt.outcome,fresh,restoreFocus,attempt.scope),attempt.outcome==='allowed-once');
       else{add('批准','allowed-once',(restoreFocus,fresh)=>decideToolApproval(row,'allowed-once',fresh,restoreFocus),true);
-        add('总是允许此类','conversation-category',(restoreFocus,fresh)=>decideToolApproval(row,'allowed-once',fresh,restoreFocus,'conversation-category'));
-        const always=controls.children[1];card.querySelector('.approval-detail')?.append(always);
-        always.disabled=!approvalRiskCategories(row).length;
-        always.title=approvalRiskCategories(row).length?'仅允许这段对话后续的同类操作':'这次审批未提供风险类别，可选择允许一次';
+        if(row.canAlwaysAllow)add('以后这类都允许','global-category',(restoreFocus,fresh)=>decideToolApproval(row,'allowed-once',fresh,restoreFocus,'global-category'));
         add('拒绝','rejected',(restoreFocus,fresh)=>decideToolApproval(row,'rejected',fresh,restoreFocus))}}
     if(cache.error||attempt?.unknown)add('检查审批状态','check',()=>refreshToolApprovals(context,{force:true}));
     card.append(controls);

@@ -92,6 +92,7 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'ai-game', 'panel.mjs')))
     assert.ok(!existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'ai-game', 'control-center.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-secure-snapshot-bootstrap.mjs')))
+    assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'personal-permission-rules.mjs')))
     assert.ok(!existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'schemas')))
   })
 
