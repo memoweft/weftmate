@@ -12,8 +12,11 @@
 | 位置省略与悬停完整显示 | `location-hover-light.png`、`location-hover-dark.png`、`raw/` | 真实144 DPI（像素密度）窗口；中间省略，完整路径在已有说明区域换行显示 |
 | 无管理员令牌的所有用户静默尝试 | `interactive-upgrade.json` | 退出740、新增窗口0、`ADMIN_REQUIRED` 日志；原安装保留 |
 | `--silent` 等价参数 | `interactive-upgrade.json` | 覆盖沿用自定义位置，退出0、新增窗口0 |
-| 首次自定义位置应用内更新监护 | `monitor-upgrade.json`、`monitor-first-upgrade.png` | 以报告最终结果为准 |
+| 首次自定义位置应用内更新监护 | `monitor-upgrade.json`、`monitor-first-upgrade.png` | 第一次实际监护 healthy，沿原配置从preview.1升级preview.2 |
 | 所有用户下载后明确运行安装包 | `all-users-update.json`、`all-users-update-light.png`、`all-users-update-dark.png` | 真实下载与核验；范围元数据为合成替身，不冒充实际 HKLM（所有用户注册表）安装 |
+| 最终安装包 `/S --launch` | `final-package.json`、`silent-explicit-launch.json` | 退出0，实际程序窗口可见，正常请退及卸载成功 |
+| 480px浅深关于页 | `narrow-layout.json`、`all-users-update-*-480.png` | 最终安装的真实程序、实际原生内容宽480，内容宽／滚动宽均448；复用单独验证过的已下载状态，仅验证布局 |
+| 最终残留与构建物清理 | `final-cleanup.json`、`artifact-cleanup.json` | 本包进程、配置、卸载登记、自启、右键与快捷方式均0；大构建树已删 |
 
 窗口探针沿既有 Win32（Windows 原生接口）枚举与私有桌面捕获助手，每1毫秒采样。原生默认安装的基线和原始可见计数均为0；运行中升级时，Windows 已有的两个75×75输入指示器被记录为基线，`visibleWindows` 只计本轮新增窗口，同时保留 `baselineVisibleWindows` 与 `rawVisibleWindows`。`tray-window-details.json` 保存其实际窗口类，不隐藏安装器或新子进程窗口。
 
@@ -24,3 +27,9 @@
 验收先后修正了探针参数命名、卸载异步完成等待、旧窗口基线；也实际抓到交互重装跳过位置页和安装 DLL（动态链接库）重复解包触发占用的问题，均已修复。`location-page-before-fix.json` 保留位置页修复前的失败，成功结果独立记录，不覆盖成通过。
 
 实际所有用户安装、所有用户覆盖升级及两种范围转换仍需管理员运行环境；当前会话令牌不具备该权限，且本包没有触发本人桌面的提权确认。无权限静默失败与所有用户应用内更新分支分别实际验证，不把合成范围数据称作真实全用户安装。Windows 10、跨屏、真实鼠标悬停、人工读屏及磁盘满／安全软件阻止仍未验。
+
+监护残留进程最终确认为旧 Crashpad（崩溃记录）处理器：`crash-handler-before-fix.json` 记录旧父进程、剩余处理器与独立监护的关系。监护现在不继承旧崩溃记录管道，最终未加诊断的真实安装包升级首次达到 `healthy`；普通程序继续保留原本的本地崩溃记录。
+
+最终 required（完整必过组）326文件、1842通过／0失败／14既有条件跳过，vendor（固定运行时组）33文件、230通过／0失败，手机交互五文件114通过／0失败；类型检查与公开卫生扫描0命中。固定覆盖维护命令的正常回复／无实例／20秒超时非零、自启修复与失败时继续使用、历史范围识别、静默与范围的源码契约，以及查询竞态／中文输出／独立崩溃环境。明确 `/currentuser` 不被上游静默段改回所有用户、旧HKLM卸载器使用正确范围，也有静态断言；不能替代仍缺的管理员实装。
+
+窄窗夹具最初在账号初始化完成前打开设置，未能渲染按钮；修正等待与内容区选择器后，两张实际截图已检查。失败夹具的清理曾在程序仍运行时碰到文件占用，后续从不同私有桌面发出的 `--quit` 返回3且程序未被强杀；通过已有的自身调试通道触发原收尾，实际退出0／正常／清理完整／381ms，再静默卸载并删掉合成目录。见 `narrow-fixture-exit.json`、`narrow-fixture-cleanup.json`，不把这个跨桌面夹具超时称作正常CLI（命令行接口）成功。
