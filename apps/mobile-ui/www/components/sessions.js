@@ -354,9 +354,7 @@ function renderLiveProgress(){if(state.page!=='chat'||state.chatSource!=='phone'
   if(state.scrollPinned){if((globalThis.WeftMobileMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches))scrollBottom();
     else scheduleLiveMotion()}}
 
-function appendRenderedFiles(row,text){if(row.classList.contains('user')||!globalThis.WeftContent)return;
-  const files=state.sharedEvents.filter(e=>e.type==='artifact.created').flatMap(e=>e.data?.artifacts||[e.data?.artifact||e.data]).filter(file=>file?.artifactId&&file.fileName&&text?.includes(file.fileName));
-  for(const file of files){if([...row.querySelectorAll('.render-file-card')].some(card=>card.dataset.artifact===file.artifactId))continue;const card=WeftContent.fileCard(file,button=>{const context=conversationTaskContext();uiCore.syncMobileIdentity();void openTimelinePreview(context,()=>uiCore.readResource(`/library/${encodeURIComponent(file.artifactId)}/preview`),file.fileName,file);});card.dataset.artifact=file.artifactId;row.append(card);}}
+function appendRenderedFiles(row){if(row.classList.contains('user'))return;for(const file of row.querySelectorAll('.render-file-card[data-artifact]'))file.remove();}
 
 function toolLabel(name){return uiCore.toolLabel(name)}
 
@@ -494,6 +492,13 @@ function mobileSessionQuickMenu(session) {
   const cancel = el('button', 'secondary', '取消'); cancel.type = 'button'; cancel.onclick = () => dialog.close();
   dialog.append(notice, cancel); dialog.onclose = () => dialog.remove(); document.body.append(dialog); dialog.showModal(); cancel.focus();
 }
+function mobileConversationActions(){
+  const session=selectedSharedSession();if(!session||session.kind==='main'||uiCore.inMainChat?.())return [];
+  return [{name:'重命名',icon:'edit',action:()=>mobileEditName('重命名对话',session.title,async title=>{await uiCore.updateSession(session.sessionId,{title});await listSharedSessions();updatePageHeader();})},
+    {name:session.pinned?'取消置顶':'置顶',icon:'pin',action:async()=>{await uiCore.updateSession(session.sessionId,{pinned:!session.pinned});await listSharedSessions();}},
+    {separator:true},{name:'归档',icon:'archive',action:async()=>{await uiCore.archiveSession(session.sessionId,true);await listSharedSessions();page('home');}},
+    {name:'删除对话',icon:'trash',danger:true,action:()=>mobileSessionMenu(session,true)}];
+}
 function mobileSessionMenu(session,confirming=false){
   const dialog=el('dialog','session-action-dialog');dialog.setAttribute('aria-label',confirming?'删除对话':'对话操作');
   dialog.append(el('h2','',confirming?'删除对话？':session.title||'新对话'));
@@ -566,6 +571,7 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
     const b=el('button','mobile-session-button'+(selected?' active':'')); b.type='button';
     if(item.source==='phone')b.dataset.conversationId=item.id;else b.dataset.sessionId=item.id;
     b.setAttribute('aria-label',item.title);b.append(el('strong','',item.title));
+    if(item.record?.pinned){const pin=WeftIcons.create('pin',16);pin.classList.add('mobile-session-pin');pin.setAttribute('aria-label','已置顶');b.append(pin);}
     mobileSessionStatus(b,item.record,item.record.running||item.source==='phone'&&state.conversationId===item.id&&state.busy);
     b.setAttribute('aria-description',[item.model,item.source==='phone'?'手机执行':'电脑执行',b.getAttribute('aria-description')].filter(Boolean).join(' · '));
     if(item.source==='host')mobileLongPress(b,()=>mobileSessionQuickMenu(item.record),()=>selectSharedSession(item.id));

@@ -217,6 +217,46 @@
     const size=Number.isFinite(file.size)&&file.size>=0?(file.size<1024?file.size+' B':file.size<1048576?(file.size/1024).toFixed(1)+' KB':(file.size/1048576).toFixed(1)+' MB'):'大小未记录';
     const text=node('span');text.append(node('strong','',file.fileName || file.name),node('small','',`${ext.toUpperCase()} · ${size}`));button.append(text);return button;
   }
+  function artifactSummary(files, options = {}, saved = {}) {
+    const families = globalThis.WeftUiCore.artifactFamilies(files), final = families.flat(), root = node('section','artifact-summary');
+    root.setAttribute('aria-label','本轮成果');
+    if (!final.length) { root.hidden = true; return root; }
+    root.append(node('p','artifact-summary-label',final.length === 1 ? '文件已做好' : `这次整理出 ${final.length} 个文件`));
+    const list = node('div','artifact-summary-files');
+    let index = 0;
+    for (const family of families) {
+      const group = node('div','artifact-family');
+      for (const file of family) {
+        const line = node('div','artifact-file-row'); line.dataset.timelineArtifact = file.artifactId;
+        line.dataset.artifactIndex = String(index++);
+        const open = fileCard(file, trigger => options.openArtifact?.(file,trigger));
+        open.classList.add('artifact-file-open');open.setAttribute('aria-label',`打开成果 ${file.fileName || file.name}`);
+        line.append(open);
+        if (file.exists === false || file.state === 'missing') line.append(node('small','artifact-warning','文件已不在原位置，请在成果库中查看。'));
+        else if (file.verification?.status && !['observed','verified','passed','pending'].includes(file.verification.status))
+          line.append(node('small','artifact-warning','文件暂时无法确认，可以重新打开检查。'));
+        const more = action('',()=>{
+          const entries = [];
+          if(options.downloadArtifact)entries.push({name:'下载',icon:'download',action:()=>options.downloadArtifact(file)});
+          const native = node('div');options.appendArtifactActions?.(native,file);
+          for(const item of native.querySelectorAll('button,a'))entries.push({name:item.textContent,icon:/文件夹/.test(item.textContent)?'folder':'open',action:()=>item.click()});
+          globalThis.WeftPopover?.menu(more,entries,options.onError);
+        },'more');more.classList.add('render-icon-action','artifact-more');
+        more.setAttribute('aria-label',`更多操作 ${file.fileName || file.name}`);more.setAttribute('aria-haspopup','menu');
+        line.append(more);group.append(line);
+      }
+      list.append(group);
+    }
+    root.append(list);
+    let expanded = saved.expanded === true;
+    const fold = action('',()=>{expanded=!expanded;paint();},'chevron');fold.classList.add('artifact-fold');fold.hidden=final.length<=3;
+    function paint(){for(const line of list.querySelectorAll('.artifact-file-row'))line.hidden=!expanded&&Number(line.dataset.artifactIndex)>=3;
+      for(const family of list.children)family.hidden=[...family.children].every(line=>line.hidden);
+      fold.replaceChildren(WeftIcons.create('chevron',16),node('span','',expanded?'收起文件':`还有 ${final.length-3} 个`));fold.setAttribute('aria-expanded',String(expanded));root.dataset.expanded=String(expanded);}
+    paint();root.append(fold);
+    if(options.openAllArtifacts){const all=action('在成果库中查看全部',()=>options.openAllArtifacts(all),'folder');all.classList.add('artifact-all');root.append(all);}
+    return root;
+  }
   function preview(content,data,{name='文件',artifactId,desktop=false}={}) {
     if(data.kind==='markdown'){content.append(create(data.text));return;}
     if(data.text!==undefined){const language=({py:'python',js:'javascript',ts:'typescript',ps1:'powershell',kt:'kotlin',sh:'bash',rs:'rust',html:'xml',cs:'csharp'})[name.split('.').pop()]||name.split('.').pop();const fence='`'.repeat(Math.max(3,...[...data.text.matchAll(/`+/g)].map(m=>m[0].length+1)));content.append(create(fence+language+'\n'+data.text+'\n'+fence));return;}
@@ -237,7 +277,7 @@
       return await WeftFormat.toCanvas(host,{pixelRatio:1,cacheBust:false,style:{position:'static',left:'auto',top:'auto'}});
     } finally {host.remove();}
   }
-  globalThis.WeftContent={create,update,enhance,lineCount,collapsed,tableCopy,openGallery,fileCard,preview,exportCanvas,isGalleryOpen:()=>!!gallery?.open,closeGallery:(restoreFocus=true)=>{if(gallery){gallery._restoreFocus=restoreFocus;gallery.close();return true;}return false;}};
+  globalThis.WeftContent={create,update,enhance,lineCount,collapsed,tableCopy,openGallery,fileCard,artifactSummary,preview,exportCanvas,isGalleryOpen:()=>!!gallery?.open,closeGallery:(restoreFocus=true)=>{if(gallery){gallery._restoreFocus=restoreFocus;gallery.close();return true;}return false;}};
   if(globalThis.document&&typeof MutationObserver==='function')new MutationObserver(()=>{for(const view of diagramViews)if(!view.isConnected){URL.revokeObjectURL(view._url);diagramViews.delete(view);}for(const [block,observer]of pendingDiagrams)if(!block.isConnected){observer.disconnect();pendingDiagrams.delete(block);}if(gallery?._trigger&&!gallery._trigger.isConnected){gallery._restoreFocus=false;gallery.close();}}).observe(document.body||document.documentElement,{childList:true,subtree:true});
   if(globalThis.document&&typeof MutationObserver==='function')new MutationObserver(()=>{for(const block of document.querySelectorAll('.render-mermaid'))block._theme?.();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-accent']});
 })();

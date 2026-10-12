@@ -223,6 +223,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             stopViews: Object.fromEntries(events.filter(event => event.type === 'turn.started')
                 .map(event => [`turn-${event.data?.turn}`, core.taskStopView(event.data?.turn)]).filter(([, view]) => view)),
             waiting: core.state.turnStatus === 'running' ? core.processingStageLabel(core.state.sessions.find(row => row.sessionId === sessionId)?.processing) : '',
+            executions:[...core.conversationTasks.entries.values()].flatMap(entry=>entry.payload?core.relatedExecutionSteps(entry.payload).map(row=>({...row,sessionId:entry.sessionId})):[]),
             artifacts: [...core.conversationTasks.entries.values()].flatMap(entry => entry.payload?.artifacts || []),
             approvals: [...core.conversationApprovals.entries.values()].filter(entry => entry.row.sessionId === sessionId).map(entry => entry.row),
             questions: [...core.conversationQuestions.entries.values()].filter(entry => entry.row.sessionId === sessionId).map(entry => entry.row),
@@ -255,6 +256,9 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
                         ui.toast('暂时无法读取来源，请重试。');
                 }
             },
+            readArtifact:id=>core.accessApi(`/library/${encodeURIComponent(id)}`),
+                openAllArtifacts: () => ui.openLibrary(),
+            onError: () => ui.toast('文件操作未完成，请重试。'),
             openArtifact: artifact => ui.openTimelinePreview(context, core.artifactPreviewPath(artifact.artifactId), artifact.fileName || '成果文件'),
             appendArtifactActions: (parent, artifact) => globalThis.WeftDesktopUI?.appendArtifactActions(parent, artifact, ui.toast),
             downloadArtifact: artifact => { const link = ui.element('a'); link.href = core.artifactDownloadUrl(artifact.artifactId); link.download = artifact.fileName || '成果文件'; link.click(); },

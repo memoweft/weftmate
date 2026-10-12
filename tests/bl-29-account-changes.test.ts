@@ -32,6 +32,9 @@ test('BL-29c N1 an unrelated account commit cannot wake this account subscriber'
   const f=await startTimelineCandidate({daily:true,inlineProgress:true,historyCount:0});
   const c=f.debug.service.__reviewContext,activeOwner=f.debug.auth.account.ownerId,controller=new AbortController();
   try {
+    // Periodic activity boot observations are legitimate own-account commits.
+    // Drain them so this isolation test controls every observed commit.
+    await c.activity.close();
     // The timeline fixture owns a running command. Subscribe the new quiet
     // account so its legitimate task bookkeeping cannot masquerade as a
     // foreign-account wake while the machine is busy.

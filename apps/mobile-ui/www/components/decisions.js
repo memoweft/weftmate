@@ -257,7 +257,7 @@ function renderConversationTasks(){const context=conversationTaskContext(),conte
     const turn=task?.source?.dshTurn??task?.replyEvidence?.turn;
     const events=state.chatSource==='phone'?state.linkedEvents.get(context.conversationId)?.events||[]:state.sharedEvents;
     const hasTimeline=Number.isSafeInteger(turn)&&events.some(event=>event.type.startsWith('step.')&&event.data?.taskId===`turn-${turn}`);
-    const visibleArtifacts=artifacts.filter(artifact=>!content.querySelector(`[data-timeline-artifact="${artifact.artifactId}"]`));
+    const visibleArtifacts=artifacts.filter(artifact=>![...content.querySelectorAll(`[data-timeline-artifact="${artifact.artifactId}"]`)].some(row=>row.closest('.conversation-task')?.dataset.conversationTask!==entry.taskId));
     let card=[...content.children].find(node=>node.dataset?.conversationTask===entry.taskId);
     if(!(!hasTimeline&&steps.length)&&!visibleArtifacts.length&&!entry.notice&&!outputLimited&&control?.state!=='stopped'){card?.remove();continue}
     const receiptId=task?.source?.receiptId||entry.receiptId,anchor=[...content.children].find(node=>node.dataset?.receiptId===receiptId);
@@ -266,21 +266,22 @@ function renderConversationTasks(){const context=conversationTaskContext(),conte
     const signature=JSON.stringify([task,entry.notice]);if(card?.dataset.signature===signature)continue;
     if(!card){card=el('section','conversation-task');card.dataset.conversationTask=entry.taskId;
       if(anchor)content.insertBefore(card,anchor.nextSibling);else content.append(card)}
-    const expanded=card.querySelector('details')?.open===true;const savedSteps=new Map([...card.querySelectorAll('.execution-step')].map(detail=>[detail.dataset.step,detail]));card.dataset.signature=signature;clear(card);
+    const expanded=card.querySelector('details')?.open===true,artifactExpanded=card.querySelector('.artifact-summary')?.dataset.expanded==='true';const savedSteps=new Map([...card.querySelectorAll('.execution-step')].map(detail=>[detail.dataset.step,detail]));card.dataset.signature=signature;clear(card);
     if(outputLimited)card.append(el('strong','conversation-task-title','回复状态'));
     if(entry.notice)card.append(el('p','conversation-task-notice',entry.notice));
-    if(steps.length&&!hasTimeline){const view=uiCore.progressText(steps.map(step=>({...step,summary:step.summary||executionName(step)})),control?.state==='stopped');
+    if(steps.length&&!hasTimeline){const view=uiCore.progressText(steps.map(step=>({...step,summary:step.summary||executionName(step)})),{terminal:['completed','failed','aborted','blocked'].includes(task?.replyEvidence?.status)||control?.state==='stopped',reason:task?.replyEvidence?.status==='completed'?'completed':control?.state==='stopped'?'aborted':task?.replyEvidence?.status});
       card.classList.toggle('has-failure',!!view.failed);const details=el('details','execution-block');details.open=expanded||!!view.failed&&card.dataset.failed!=='true';card.dataset.failed=String(!!view.failed);
       const summary=el('summary','inline-progress-summary',view.text);summary.setAttribute('role','button');const arrow=el('span','progress-chevron');arrow.setAttribute('aria-hidden','true');summary.append(arrow);
       const label=()=>summary.setAttribute('aria-label',`${view.text}，${details.open?'已展开':'已收起'}`);details.addEventListener('toggle',label);label();
-      const records=el('div','execution-records');for(const step of steps){const record=el('details','execution-step');const saved=savedSteps.get(step.executionId),state=uiCore.executionState(step);record.dataset.step=step.executionId;record.dataset.state=state;record.open=saved?.open===true||state==='failed'&&saved?.dataset.state!=='failed';
-        record.append(el('summary','',`${executionName(step)} · ${executionProgress(step)}`),el('p','',step.summary||executionProgress(step)));records.append(record)}
+      const records=el('div','execution-records');for(const step of steps){const record=el('details','execution-step');const saved=savedSteps.get(step.executionId),presentation=uiCore.stepPresentation(step,{reason:task?.replyEvidence?.status==='completed'?'completed':control?.state==='stopped'?'aborted':task?.replyEvidence?.status}),state=presentation.state;if(!['issue','failed'].includes(state))presentation.statusText=step.jobState?executionProgress(step):state==='cancelled'?presentation.statusText:executionProgress(step);record.dataset.step=step.executionId;record.dataset.state=state;record.open=saved?.open===true||state==='failed'&&saved?.dataset.state!=='failed';
+        record.append(el('summary','',`${executionName(step)}${presentation.statusText?' · '+presentation.statusText:''}`),el('p','',step.summary||executionProgress(step)));records.append(record)}
       details.append(summary,records);card.append(details)}
     if(!entry.notice&&control&&control.state!=='active')card.append(el('p','conversation-task-state',taskControlMeaning(control)));
     if(!entry.notice&&outputLimited)card.append(el('p','conversation-task-reply',taskReplyProgress(task.replyEvidence)));
     const verified=artifacts.filter(item=>item.state==='observed'&&item.verification?.status==='observed'&&item.verification?.method==='sha256_readback');
-    for(const artifact of visibleArtifacts)appendTimelineArtifact(card,artifact,context);
-    if(visibleArtifacts.length)card.append(el('p','conversation-task-result',verified.length?`${verified.length} 个成果文件已读回核验`:'成果文件仍待核验'));
+    if(visibleArtifacts.length)card.append(WeftContent.artifactSummary(visibleArtifacts,{
+      openArtifact:artifact=>openTimelinePreview(context,()=>uiCore.readResource(uiCore.artifactPreviewPath(artifact.artifactId)),artifact.fileName,artifact),
+      downloadArtifact:artifact=>call('shared.artifacts.save',{artifactId:artifact.artifactId}),openAllArtifacts:()=>selectMobileTab('library')},{expanded:artifactExpanded}));
     const controls=el('div','conversation-task-actions'),detail=el('button','secondary',verified.length?'查看来源与成果':'查看来源与成果');detail.type='button';
     detail.addEventListener('pointerdown',()=>{detail.dataset.restoreFocus=document.activeElement===$('draft')?'1':'0'});
     detail.addEventListener('pointercancel',()=>{delete detail.dataset.restoreFocus});
