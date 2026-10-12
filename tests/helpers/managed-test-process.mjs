@@ -13,9 +13,13 @@ export async function runManagedTestProcess(command, args, { env, commandRoots =
       // Creation time + executable + explicit suite paths, never a reused parent PID.
       cleanupOwnedProcesses({ startedAt, executables, commandRoots });
       if (child.exitCode === null && child.signalCode === null) child.kill();
+      // An exited root can leave inherited pipes open in an owned descendant.
+      // Close our readers after cleanup so the deadline also bounds `close`.
+      child.stdout.destroy(); child.stderr.destroy();
     } else {
       try { process.kill(-child.pid, signal); } catch { child.kill(signal); }
-      escalation = setTimeout(() => { try { process.kill(-child.pid, 'SIGKILL'); } catch { child.kill('SIGKILL'); } }, 2000);
+      escalation = setTimeout(() => { try { process.kill(-child.pid, 'SIGKILL'); } catch { child.kill('SIGKILL'); }
+        child.stdout.destroy(); child.stderr.destroy(); }, 2000);
     }
   };
   const deadline = timeoutMs ? setTimeout(() => {

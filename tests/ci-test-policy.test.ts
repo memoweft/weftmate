@@ -64,6 +64,15 @@ test('manifest refuses nonexistent, commented, duplicate and zero-evidence test 
   assert.throws(()=>validateTimingTests([{...entry,failureCount:0}],()=>source),/Invalid timing entry/);
   validateTimingTests(JSON.parse(readFileSync('.github/timing-sensitive-tests.json','utf8')).tests);
 });
+test('manifest failure counts match every retained historical attempt and functional-only cases remain strict', () => {
+  const manifest=JSON.parse(readFileSync('.github/timing-sensitive-tests.json','utf8'));
+  const evidence=JSON.parse(readFileSync(manifest.evidence,'utf8'));
+  for(const entry of manifest.tests) {
+    const rows=evidence.table.filter((row:any)=>row.file===entry.file&&row.name===entry.name);
+    assert.equal(entry.failureCount,rows.reduce((n:number,row:any)=>n+row.count,0),entry.name);
+  }
+  assert.ok(!manifest.tests.some((entry:any)=>/22000|unrelated account|public model projection|M1 real Electron|credential commit phase/.test(entry.name)));
+});
 test('stable filename shards partition all files once and new files do not move existing files', () => {
   const files=Array.from({length:300},(_,i)=>`tests/file-${i}.test.ts`);
   const parts=[1,2,3].map(i=>selectShard(files,`${i}/3`));

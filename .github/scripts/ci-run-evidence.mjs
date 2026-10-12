@@ -27,7 +27,7 @@ export async function captureRun(id, label, directory = 'tests/evidence/ci-1/clo
   const rounds=readdirSync(directory).filter(file=>/^round-\d+\.json$/.test(file)).sort().map(file=>JSON.parse(readFileSync(join(directory,file),'utf8')));
   if(rounds.length)writeFileSync(join(directory,'six-rounds.md'),[
     '# CI-1 unchanged-code acceptance runs','',
-    'Job seconds include setup/cleanup. Windows span is first Windows job start to last completion, including any staggered runner availability. Max-job seconds is the longest individual Windows shard. No per-file counts are double-counted on retry; attempts remain in the JSON.','',
+    'Six complete workflow_dispatch CI runs on one immutable branch SHA/code tree, including the existing on-demand macOS Node gate. Job seconds include setup/cleanup. Windows span is first Windows job start to last completion, including any staggered runner availability. Max-job seconds is the longest individual Windows shard. No per-file counts are double-counted on retry; attempts remain in the JSON.','',
     '| Round | SHA | Overall | Windows 1/2/3 (s) | Windows max / span (s) | Retry recoveries |',
     '|---|---|---|---|---|---|',
     ...rounds.map(row=>`| [${row.label}](${row.url}) | ${row.sha.slice(0,8)} | ${row.conclusion} | ${[1,2,3].map(s=>row.jobs.find(j=>j.name===`test (windows-latest, shard ${s}/3)`)?.seconds??'missing').join(' / ')} | ${row.windowsMaxJobSeconds} / ${row.windowsSpanSeconds} | ${row.reports.flatMap(r=>(r.recovered??[]).map(recovered=>`${r.os}: ${recovered.names.join('; ')}`)).join('<br>')||'0'} |`), '',
