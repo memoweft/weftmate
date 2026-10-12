@@ -41,7 +41,10 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
         const report=item.weeklyInsight,body=node('div','memory-digest weekly-insight');
         body.append(node('p','weekly-insight-text',report.text));
         const sources=node('div','weekly-insight-sources');
-        for(const source of report.sources){const control=button(source.title,()=>core.activityAction(item,{kind:source.artifactId?'view_library':'open_chat',target:source.artifactId?{id:source.artifactId}:source.source}));control.className='button secondary small';control.prepend(WeftIcons.create(source.artifactId?'file':'chat',16));sources.append(control);}
+        const invoke=source=>core.activityAction(item,{kind:source.artifactId?'view_library':'open_chat',target:source.artifactId?{id:source.artifactId}:source.source});
+        const visible=[...report.sources.filter(source=>!source.artifactId),...report.sources.filter(source=>source.artifactId).slice(0,3)],rest=report.sources.filter(source=>!visible.includes(source));
+        for(const source of visible){const control=button(source.title,()=>invoke(source));control.className='button secondary small';control.prepend(WeftIcons.create(source.artifactId?'file':'chat',16));control.disabled=core.activity.busy.has(item.id);sources.append(control);}
+        if(rest.length){const more=button(`更多来源（${rest.length}）`,()=>{});more.setAttribute('aria-haspopup','menu');more.disabled=core.activity.busy.has(item.id);more.onclick=()=>WeftPopover.menu(more,rest.map(source=>({name:source.title,icon:source.artifactId?'file':'chat',action:()=>invoke(source)})),error=>notice.textContent=core.failureMessage(error));sources.append(more);}
         body.append(sources);return body;
     }
     function render(){
@@ -59,7 +62,7 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
             const signature=JSON.stringify([item,model.busy.has(item.id)]);
             if(row.dataset.signature!==signature){row.dataset.signature=signature;row.classList.toggle('is-unread',!item.read);
                 const heading=node('div','activity-row-heading'),label=node('h3','',item.title),time=node('time','muted',clock.format(new Date(item.at)));time.dateTime=item.at;
-                heading.append(label,time);const summary=node('p','activity-summary',item.summary),actions=node('div','activity-actions');
+                heading.append(label,time);const summary=node('p','activity-summary',item.weeklyInsight?(()=>{const date=new Intl.DateTimeFormat('zh-CN',{timeZone:'UTC',month:'long',day:'numeric'});return `${date.format(new Date(item.weeklyInsight.from+'T00:00:00Z'))} — ${date.format(new Date(Date.parse(item.weeklyInsight.to+'T00:00:00Z')-86400000))}`;})():item.summary),actions=node('div','activity-actions');
                 if(item.type==='approval.pending'&&item.state==='pending'){
                     const action=item.actions.find(a=>a.kind==='respond_approval');if(action){actions.append(button('批准',()=>core.activityAction(item,action,'allowed-once')),button('拒绝',()=>core.activityAction(item,action,'rejected')));}
                 }

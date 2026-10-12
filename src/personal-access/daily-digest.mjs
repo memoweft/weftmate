@@ -107,7 +107,9 @@ export function statisticalInsight(days){
     for(const row of day.outputs.items)if(!sources.some(s=>s.artifactId===row.artifactId))sources.push({...row,kind:'view_library'});
   }
   blocked=[...latestTasks.values()].filter(state=>['failed','pending'].includes(state)).length;
-  return {text:`主要在忙：${[...topics].sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name])=>name).join('、')||'这周还没有对话记录'}。\n完成 ${completed} 件事，产出 ${outputs} 份成果；${blocked?`还有 ${blocked} 件需要继续看看。`:'没有记录到卡住的任务。'}\n${late.length?`${late.map(d=>['周日','周一','周二','周三','周四','周五','周六'][new Date(d+'T00:00:00Z').getUTCDay()]).join('、')}凌晨一点后还在使用，忙完也可以给自己留点休息时间。`:'这一周的使用主要在白天和晚间。'}`,sources:sources.slice(0,12)};
+  const mainTopics=[...topics].sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name])=>name);
+  const references=[...mainTopics.map(name=>sources.findLast(row=>!row.artifactId&&row.title===name)).filter(Boolean),...sources.filter(row=>row.artifactId).reverse().slice(0,8)];
+  return {text:`主要在忙：${mainTopics.join('、')||'这周还没有对话记录'}。\n完成 ${completed} 件事，产出 ${outputs} 份成果；${blocked?`还有 ${blocked} 件需要继续看看。`:'没有记录到卡住的任务。'}\n${late.length?`${late.map(d=>['周日','周一','周二','周三','周四','周五','周六'][new Date(d+'T00:00:00Z').getUTCDay()]).join('、')}凌晨一点后还在使用，忙完也可以给自己留点休息时间。`:'这一周的使用主要在白天和晚间。'}`,sources:references};
 }
 
 export function createDailyDigest(context){
