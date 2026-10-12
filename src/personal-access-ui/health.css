@@ -24,7 +24,7 @@
 .health-reading { font-size:var(--wm-font-size-15); line-height:1.7; margin-block:var(--wm-space-8) var(--wm-space-16)!important; max-width:65ch; }
 .health-suggestion { display:flex; align-items:center; justify-content:space-between; gap:var(--wm-space-12); margin-bottom:var(--wm-space-8); font-size:var(--wm-font-size-14); line-height:1.5; }
 .health-suggestion .health-control { flex:none; background:var(--health-card); }
-.health-insight-foot { display:flex; justify-content:flex-end; }
+.health-insight-foot { display:flex; align-items:center; justify-content:space-between; gap:var(--wm-space-8); }
 .health-basis { padding-block:var(--wm-space-12); }
 .health-insight-toggle { border:0; background:transparent; font:inherit; font-size:var(--wm-font-size-22); font-weight:600; width:100%; display:flex; align-items:center; justify-content:space-between; text-align:left; min-height:var(--wm-space-44); border-radius:var(--wm-radius-12); cursor:pointer; color:var(--ink); }
 .health-scores { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--wm-space-12); }
@@ -97,3 +97,5 @@
 body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-button,#temporary-chat-notice,.conversation-tools) { display:none!important; }
 
 .health-open .rail-main-chat.is-current { background:transparent; }
+
+.health-page.is-compact>.health-heading { height:0; }.health-page.is-compact>.health-heading h1 { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }.health-page.is-compact .health-date-nav { margin-top:0; }.health-page.is-compact .health-date-nav>button:last-child.health-icon { margin-left:auto; }
