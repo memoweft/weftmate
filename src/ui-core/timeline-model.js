@@ -268,6 +268,19 @@
         let turnKey = 'history';
         for (const event of ordered) {
             if (event.type === 'turn.started') turnKey = `${event.sessionId || event.sourceRef?.sessionId || ''}:turn-${event.data?.turn ?? event.seq}`;
+            if (event.type === 'task.queued') {
+                const data = event.data || {}, queued = data.tasks || [data];
+                const pending = queued.filter(task => !ordered.some(next => {
+                    const session = event.sessionId || event.sourceRef?.sessionId, nextSession = next.sessionId || next.sourceRef?.sessionId;
+                    if (next.seq <= event.seq || nextSession && session && nextSession !== session) return false;
+                    const id = task.receiptId || task.taskId;
+                    if (!id) return false;
+                    return ['user.message','task.started','task.ended','step.started','step.completed'].includes(next.type) &&
+                        (next.data?.receiptId === id || next.data?.taskId === id);
+                }));
+                if (pending.length) cards.push({...event, data:{...pending[0], ...(pending.length > 1 ? {tasks:pending} : {})}});
+                continue;
+            }
             if (event.type !== 'artifact.created') { cards.push(event); continue; }
             const data = event.data || {};
             if (/^(read|read_file|move|rename|delete|remove)$/.test(data.completedStep?.toolName || '')) continue;
