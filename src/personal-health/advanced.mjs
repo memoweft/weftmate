@@ -27,7 +27,18 @@ function asleep(r,time,zone,fallback=true){
 }
 const awakeCache=new WeakMap(),gridCache=new WeakMap();
 const method=s=>known(s.stressIndex)?'stressIndex':s.sdnnMs>0&&s.meanHeartRateBpm>0?'sdnnHeartRate':null;
-function awakeSamples(s,day,zone,now=Infinity){const r=record(s,day);if(!r)return [];let cached=awakeCache.get(r);if(cached?.day!==day||cached?.zone!==zone||cached?.samples!==r.hrvSamples||cached?.sleep!==r.sleep){cached={day,zone,samples:r.hrvSamples,sleep:r.sleep,items:(r.hrvSamples??[]).filter(v=>method(v)&&localNotificationTime(Date.parse(v.time),zone).day===day&&!asleep(r,v.time,zone))};awakeCache.set(r,cached);}return cached.items.filter(v=>Date.parse(v.time)<=now);}
+function awakeSamples(s,day,zone,now=Infinity){
+  const r=record(s,day);if(!r)return [];let cached=awakeCache.get(r);
+  if(cached?.day!==day||cached?.zone!==zone||cached?.samples!==r.hrvSamples||cached?.sleep!==r.sleep||cached?.quarter!==r.heartRateQuarterHourly||cached?.hourly!==r.heartRateHourly){
+    const items=(r.hrvSamples??[]).map(v=>{
+      if(known(v.stressIndex)||v.meanHeartRateBpm>0)return v;
+      const local=localNotificationTime(Date.parse(v.time),zone).time.split(':').map(Number),hour=local[0],quarter=hour*4+Math.floor(local[1]/15),heartRate=r.heartRateQuarterHourly?.[quarter]?.avg??r.heartRateHourly?.[hour]?.avg??null;
+      return {...v,meanHeartRateBpm:heartRate,heartRateFromBucket:heartRate>0};
+    }).filter(v=>method(v)&&localNotificationTime(Date.parse(v.time),zone).day===day&&!asleep(r,v.time,zone));
+    cached={day,zone,samples:r.hrvSamples,sleep:r.sleep,quarter:r.heartRateQuarterHourly,hourly:r.heartRateHourly,items};awakeCache.set(r,cached);
+  }
+  return cached.items.filter(v=>Date.parse(v.time)<=now);
+}
 export function healthStress(records,day,zone='UTC',now=Infinity){
   const r=record(records,day);if(!r?.hrvSamples?.length&&!Array.from({length:28},(_,n)=>record(records,shift(day,-n-1))).some(v=>v?.hrvSamples?.length))return null;
   const historical=Array.from({length:28},(_,n)=>{const d=shift(day,-n-1);return {day:d,samples:awakeSamples(records,d,zone)};});
@@ -35,10 +46,10 @@ export function healthStress(records,day,zone='UTC',now=Infinity){
     const m=method(s),days=historical.filter(d=>d.samples.some(v=>method(v)===m)),h=days.flatMap(d=>d.samples.filter(v=>method(v)===m));
     let value=null;
     if(days.length>=7)value=m==='stressIndex'?rank(s.stressIndex,h.map(v=>v.stressIndex)):.8*rank(-Math.log(s.sdnnMs),h.map(v=>-Math.log(v.sdnnMs)))+.2*rank(s.meanHeartRateBpm,h.map(v=>v.meanHeartRateBpm));
-    return {time:s.time,value:round(value),method:m,baselineDays:days.length};
+    return {time:s.time,value:round(value),method:m,baselineDays:days.length,heartRateFromBucket:s.heartRateFromBucket===true};
   });
   const latest=samples.at(-1),average=round(mean(samples.map(s=>s.value).filter(known))),score=latest?.value??null,state=score===null?'insufficient':score<15?'low':score>85?'high':'normal';
-  return {score,average,latest:latest?{value:latest.value,time:latest.time}:null,samples:samples.map(({baselineDays,...s})=>s),baselineDays:latest?.baselineDays??0,state,label:label(state),missing:!samples.length?['awakeHrvSamples']:score===null?['baseline7Days']:[],disclaimer:HEALTH_ESTIMATE_DISCLAIMER};
+  return {score,average,latest:latest?{value:latest.value,time:latest.time}:null,samples:samples.map(({baselineDays,heartRateFromBucket,...s})=>s),baselineDays:latest?.baselineDays??0,state,label:label(state),missing:!samples.length?['awakeHrvSamples']:score===null?['baseline7Days']:latest?.heartRateFromBucket?['measurementHeartRate']:[],disclaimer:HEALTH_ESTIMATE_DISCLAIMER};
 }
 export function healthEnergy(records,day,zone='UTC',scores={},stress=null,now=Infinity){
   const r=record(records,day);if(!r||!(r.heartRateQuarterHourly?.some(v=>known(v?.avg))||r.heartRateHourly?.some(v=>known(v?.avg))))return null;

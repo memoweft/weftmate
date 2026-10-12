@@ -8,18 +8,21 @@ import {createServer} from 'node:net';
 import {chromium} from 'playwright';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {generateHealthV3Sequence} from '../helpers/health-sequence.mjs';
+import {disposeHealthFixture} from '../helpers/health-5-temp.mjs';
 import {assertSystemBars} from '../../scripts/nightly/system-bars.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/health-5'),lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg='com.memoweft.weftmate.mobile.health5qa',adb='D:/Software/MuMuPlayer/nx_main/adb.exe',execute=promisify(execFile);
-let serial,fixture,browser,forward,probe,installed=false,held=false,reversed=false,probeLog='';const report={synthetic:true,realNativeBusinessBridge:true,modelRequests:0,checks:[],screenshots:[],settingsChanged:false};
+const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/health-5'),lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg='com.memoweft.weftmate.mobile.health5qa',adb=process.env.WEFTMATE_HEALTH5_ADB??'D:/Software/MuMuPlayer/nx_main/adb.exe',execute=promisify(execFile);
+let serial,fixture,browser,forward,probe,installed=false,held=false,reversed=false,probeLog='';const report={source:process.env.WEFTMATE_HEALTH5_ANDROID_SERIAL?'cloudAndroid':'MuMu',synthetic:true,realNativeBusinessBridge:true,modelRequests:0,checks:[],screenshots:[],settingsChanged:false};
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,label){const end=Date.now()+45000;while(Date.now()<end){try{const v=await fn();if(v)return v;}catch{}await pause(150);}throw Error('Health native timeout: '+label);}
 const run=(...args)=>execFileSync(adb,['-s',serial,...args],{encoding:'utf8',windowsHide:true,timeout:15000});
 try{
- const handle=await open(lock,'wx');await handle.writeFile('HEALTH-5 '+new Date().toISOString());await handle.close();held=true;
- const info=JSON.parse(execFileSync('D:/Software/MuMuPlayer/nx_main/MuMuManager.exe',['info','-v','0'],{encoding:'utf8',windowsHide:true})),details=info[0]??info,port=details.adb_port??details.vm?.adb_port;assert.ok(Number(port)>0);serial='127.0.0.1:'+port;
- execFileSync(adb,['connect',serial],{windowsHide:true});assert.ok(!run('shell','ps','-A').split('\n').some(line=>line.includes('com.memoweft.weftmate')),'Another WeftMate test app is running');
+ if(process.env.WEFTMATE_HEALTH5_ANDROID_SERIAL)serial=process.env.WEFTMATE_HEALTH5_ANDROID_SERIAL;
+ else{const handle=await open(lock,'wx');await handle.writeFile('HEALTH-5 '+new Date().toISOString());await handle.close();held=true;
+ const info=JSON.parse(execFileSync('D:/Software/MuMuPlayer/nx_main/MuMuManager.exe',['info','-v','0'],{encoding:'utf8',windowsHide:true})),details=info[0]??info,port=details.adb_port??details.vm?.adb_port;assert.ok(Number(port)>0);serial='127.0.0.1:'+port;}
+ if(!process.env.WEFTMATE_HEALTH5_ANDROID_SERIAL)execFileSync(adb,['connect',serial],{windowsHide:true});assert.ok(!run('shell','ps','-A').split('\n').some(line=>line.includes('com.memoweft.weftmate')),'Another WeftMate test app is running');
  assert.ok(!run('shell','pm','list','packages',pkg).includes(pkg),'Our package was already installed');
  fixture=await startTimelineCandidate({daily:true,digest:true,logicalMobile:true,clock:Date.now});fixture.progress.finish('completed');
+ await fixture.request('/settings/usage',{timeZone:'Asia/Shanghai'},'PATCH');
  const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());await fixture.request('/settings/health',{modelInsightsEnabled:false},'PATCH');const data=generateHealthV3Sequence({to:day});await fixture.request('/health/profile',data.profile,'PUT');await fixture.request('/health/records/batch',{items:data.items},'PUT');
  const hostPort=new URL(fixture.origin).port;run('reverse','tcp:'+hostPort,'tcp:'+hostPort);reversed=true;
  run('install',join(repo,'apps/android/app/build/outputs/apk/debug/app-debug.apk'));installed=true;run('install',join(repo,'apps/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'));
@@ -46,6 +49,7 @@ try{
 finally{
  if(installed&&serial){try{run('shell','run-as',pkg,'touch','files/health5-probe.done');await until(()=>probe?.exitCode!==null,'probe finish');report.instrumentationPassed=/OK \(1 test\)/.test(probeLog);}catch{} }
  await browser?.close();if(probe&&probe.exitCode===null)probe.kill();
- if(serial){if(forward)run('forward','--remove','tcp:'+forward);if(reversed)run('reverse','--remove','tcp:'+new URL(fixture.origin).port);if(installed){run('shell','am','force-stop',pkg);run('uninstall',pkg+'.test');run('uninstall',pkg);}execFileSync(adb,['disconnect',serial],{windowsHide:true});}
- await fixture?.close();if(fixture)await rm(fixture.root,{recursive:true,force:true});if(held)await unlink(lock);await writeFile(join(out,'native-verification.json'),JSON.stringify(report,null,2)+'\n');
+ if(serial){if(forward)run('forward','--remove','tcp:'+forward);if(reversed)run('reverse','--remove','tcp:'+new URL(fixture.origin).port);if(installed){run('shell','am','force-stop',pkg);run('uninstall',pkg+'.test');run('uninstall',pkg);}}
+ if(serial&&!process.env.WEFTMATE_HEALTH5_ANDROID_SERIAL)execFileSync(adb,['disconnect',serial],{windowsHide:true});
+ await fixture?.close();if(fixture)await disposeHealthFixture(fixture.root);if(held)await unlink(lock);await writeFile(join(out,'native-verification.json'),JSON.stringify(report,null,2)+'\n');
 }
