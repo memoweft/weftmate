@@ -50,6 +50,10 @@ export function cleanupOwned(root) {
     if (!readFileSync(`/proc/${row.pid}/cmdline`, 'utf8').includes(root)) continue;
     try { process.kill(row.pid, 'SIGKILL'); killed.push(row.pid); } catch (error) { if (error.code !== 'ESRCH') throw error; }
   }
+  // SIGKILL is delivered asynchronously: give the kernel a bounded moment to tear the
+  // processes down before the caller checks /proc for leftovers.
+  const pause = new Int32Array(new SharedArrayBuffer(4)), deadline = Date.now() + 2000;
+  while (Date.now() < deadline && killed.some(pid => posixIdentity(pid))) Atomics.wait(pause, 0, 0, 25);
   return { matched: killed.length, killed };
 }
 export function remainingOwned(root) {
