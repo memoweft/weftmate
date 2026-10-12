@@ -204,3 +204,15 @@ private actor Health4ContractTransport: HTTPTransport {
     }
     #expect(seen[2]?.count==90 && seen[3]?.count==90)
 }
+
+@Test func apple3TopInsightSettingUsesOnlyDedicatedWireField() async throws {
+    let transport=Health4ContractTransport()
+    let client=PersonalClient(credentialStore:MemoryStore(),transport:transport,platform:.iOS)
+    _=try await client.login(server:ServerConfiguration(input:"https://health.example.com"),username:"fixture",password:"synthetic-only",deviceName:"Test")
+    _=try await client.healthTopInsightSetting(false)
+    let requests=await transport.all()
+    let mutation=try #require(requests.last(where:{$0.httpMethod == "PATCH"}))
+    #expect(mutation.url?.path == "/personal/v1/settings/health")
+    #expect(mutation.value(forHTTPHeaderField:"X-WeftMate-CSRF") != nil)
+    #expect(try JSONSerialization.jsonObject(with:mutation.httpBody!) as? [String:Bool] == ["modelInsightsEnabled":false])
+}

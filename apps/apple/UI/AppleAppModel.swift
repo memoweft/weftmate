@@ -1773,16 +1773,21 @@ final class AppleAppModel: ObservableObject {
         timelinePolling = request
         defer { if timelinePolling == request { timelinePolling = nil } }
         var policy = ConversationPollingPolicy()
+        var lastSummaryRead = Date.distantPast
         while !Task.isCancelled, actionEpoch == epoch, request == historyRequest, foreground, selectedConversation?.id == conversation.id {
             do {
                 let page = try await client.timelinePage(sessionID: sessionID, afterSeq: timeline.nextSeq)
                 guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
                 if page.cacheAllowed == false { historyCacheAllowed = false; await clearLocalHistory(conversation) }
-                timeline.apply(page)
-                let summaries = try await client.conversations(includeArchived: true)
-                guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
-                conversations = summaries
-                liveConversations = Dictionary(uniqueKeysWithValues: summaries.map { ($0.id, $0) })
+                timeline.apply(page); historyError = nil
+                if Date().timeIntervalSince(lastSummaryRead) >= 4.5 {
+                    lastSummaryRead = Date()
+                    if let summaries = try? await client.conversations(includeArchived: true) {
+                        guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
+                        conversations = summaries
+                        liveConversations = Dictionary(uniqueKeysWithValues: summaries.map { ($0.id, $0) })
+                    }
+                }
                 updateTimelineActivity(conversation)
                 let new = try await client.timelineMessages(page.events, sessionID: sessionID)
                 let mapped = await client.cachedTimelineMessageIDs(sessionID: sessionID)
@@ -1800,7 +1805,11 @@ final class AppleAppModel: ObservableObject {
                     _ = await watchSnapshotBytes()
                     #endif
                 }
-                if !page.hasMore { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty || self.conversations.first(where: { $0.id == conversation.id })?.running == true)) }
+                if !page.hasMore {
+                    let running = TimelineProjection.taskRunning(timeline.events, fallback: self.conversations.first(where: { $0.id == conversation.id })?.running == true)
+                    if page.liveSeq != nil { try await Task.sleep(for: .seconds(ReplySnapshots.pollDelay(streaming: true, running: running))) }
+                    else { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty || running)) }
+                }
             } catch {
             RunLogRuntime.shared.failure(.syncFailure, error: error, phase: "sync")
                 if error is CancellationError { return }
@@ -1811,7 +1820,15 @@ final class AppleAppModel: ObservableObject {
                     mainChat.sideSource = nil; drafts[Self.draftKey(for: conversation)] = nil
                     conversations.removeAll { $0.id == conversation.id }; liveConversations[conversation.id] = nil
                     historyError = "临时对话已到期或被删除。"
-                } else { historyError = friendly(error) }; return
+                } else {
+                    historyError = friendly(error)
+                    if case APIFailure.transport = error {
+                        try? await Task.sleep(for: .seconds(1.5)); continue
+                    }
+                    if case APIFailure.server(let status, _) = error, status >= 500 {
+                        try? await Task.sleep(for: .seconds(1.5)); continue
+                    }
+                }; return
             }
         }
     }
@@ -1866,7 +1883,7 @@ final class AppleAppModel: ObservableObject {
                    let detail = try? await client.timelineDetail(sessionID: sessionID, seq: seq) {
                     summary = "要" + ToolProgressSummary.readable(tool: approval.toolName, raw: detail.text)
                 }
-                watchApprovals.append(WatchApproval(id: approval.id, summary: summary))
+                watchApprovals.append(WatchApproval(id: approval.id, summary: summary, secondOpinion: approval.secondOpinion?.text))
             }
             guard actionEpoch == epoch else { return nil }
             let snapshot = WatchTimelineSnapshot(accountKey: account.cacheKey, sessionID: sessionID,

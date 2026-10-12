@@ -1,6 +1,23 @@
 import Foundation
 
 public enum HealthPagePolicy {
+    /// iPhone score cards keep two columns at every supported phone width.
+    public static func scoreColumns(width: Double) -> Int { 2 }
+    public enum StatusTint: Equatable, Sendable { case green, amber, muted }
+    public static func statusTint(_ state: String?) -> StatusTint {
+        switch state {
+        case "normal", "balanced", "in-range", "within-range": .green
+        case "high", "low", "more", "less": .amber
+        default: .muted
+        }
+    }
+    public static func score(_ id: String, in overview: HealthOverview) -> HealthPageScore? {
+        switch id { case "recovery": overview.recovery; case "sleep": overview.sleep; case "load": overview.load; default: nil }
+    }
+    public static func scorePosition(_ value: Double?) -> Double? {
+        guard let value, value.isFinite else { return nil }
+        return min(1, max(0, value / 100))
+    }
     public static func recordVersion(_ capabilities: HealthCapabilities?) -> Int { (capabilities?.record ?? 2) >= 3 ? 3 : 2 }
     public static func itemAnalysis(_ settings: HealthPageSettings) -> (supported: Bool, enabled: Bool) {
         (settings.itemAnalysisEnabled != nil, settings.itemAnalysisEnabled == true)

@@ -3,7 +3,8 @@ import Foundation
 public struct WatchApproval: Codable, Equatable, Sendable, Identifiable {
     public let id: String
     public let summary: String
-    public init(id: String, summary: String) { self.id = id; self.summary = summary }
+    public var secondOpinion: String? = nil
+    public init(id: String, summary: String, secondOpinion: String? = nil) { self.id = id; self.summary = summary; self.secondOpinion = secondOpinion }
 }
 public struct WatchTimelineSnapshot: Codable, Equatable, Sendable {
     public let accountKey: String
