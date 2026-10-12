@@ -94,7 +94,7 @@ private actor Health4ContractTransport: HTTPTransport {
         }
         if path.hasSuffix("/settings/health") { return .init(status:200,body:Data("{\"settings\":{\"modelInsightsEnabled\":true,\"itemAnalysisEnabled\":true,\"sleepTargetMinutes\":450,\"retentionDays\":400}}".utf8)) }
         if path.hasSuffix("/health/analysis") {
-            if r.httpMethod == "GET" { return .init(status:200,body:Data("{\"items\":[]}".utf8)) }
+            if r.httpMethod == "GET" { return .init(status:200,body:Data("{\"day\":\"2026-10-12\",\"items\":[]}".utf8)) }
             return .init(status:409,body:Data("{\"error\":{\"code\":\"AI_ANALYSIS_OFF\"}}".utf8))
         }
         return .init(status:200,body:Data("{}".utf8))

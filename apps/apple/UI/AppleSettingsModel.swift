@@ -11,6 +11,7 @@ import WeftMateCore
     @Published var prices: [WeftMateCore.UsageModel] = []
     @Published var status: HostSystemSnapshot?
     @Published var backgroundModelID = ""
+    @Published var backgroundModelFallback: BackgroundModelFallback?
     @Published var approvals: ApprovalModeSettings?
     @Published var busy = false
     @Published var error: String?
@@ -39,10 +40,10 @@ import WeftMateCore
                 let models = try await app.assistantClient.hostModels()
                 let prices = try await app.assistantClient.usageSettings()
                 let preference = try await app.assistantClient.backgroundModelPreference()
-                if self.current { self.models = models; self.prices = prices.models; self.backgroundModelID = preference.backgroundModelProfileId ?? "" }
+                if self.current { self.models = models; self.prices = prices.models; self.backgroundModelID = preference.backgroundModelProfileId ?? ""; self.backgroundModelFallback = preference.backgroundModelFallback }
             case "system":
                 let reply = try await app.assistantClient.settingsStatus()
-                if self.current { self.status = reply }
+                if self.current { self.status = reply; self.backgroundModelFallback = reply.backgroundModelFallback }
             default: break
             }
         }
@@ -56,7 +57,7 @@ import WeftMateCore
     func saveBackgroundModel(_ id: String) async {
         await perform {
             let result = try await self.app?.assistantClient.setBackgroundModel(id.isEmpty ? nil : id)
-            if self.current { self.backgroundModelID = result?.backgroundModelProfileId ?? "" }
+            if self.current { self.backgroundModelID = result?.backgroundModelProfileId ?? ""; self.backgroundModelFallback = result?.backgroundModelFallback }
         }
     }
     func restart(_ service: HostService) async {
