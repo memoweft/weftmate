@@ -1,0 +1,29 @@
+{
+  "formalContract": "origin/wp/health-5-stress-energy-age:docs/CLIENT_API.md section 16 + scheduler sleepPeriods/referenceRange additions",
+  "contractCommit": "4188597d63483421e2b7c00093b5f2c905b338ef",
+  "generator": "tests/helpers/health-sequence.mjs",
+  "healthAndSettingsTests": {
+    "passed": 22,
+    "failed": 0
+  },
+  "health2BaseTests": {
+    "passed": 13,
+    "failed": 0
+  },
+  "mobileFive": {
+    "pass": 114,
+    "fail": 0,
+    "skipped": 0
+  },
+  "sharedAssets": {
+    "passed": 5,
+    "failed": 0
+  },
+  "typecheck": true,
+  "publicHygieneHits": 0,
+  "screenshots": 222,
+  "uiErrors": [],
+  "realModelRequests": 0,
+  "realV2ApiVerification": "../real-v2-verification.json",
+  "v3AlgorithmsAndAnalysis": "formal fixtures; real HEALTH-5 service integration pending"
+}
