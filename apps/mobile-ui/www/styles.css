@@ -618,6 +618,23 @@ body.mobile-keyboard-visible #app{height:var(--viewport-height,100dvh)}
 .drawer-new-group .nav-primary {flex:1;margin:0;border:0;border-radius:var(--wm-radius-8);min-width:0;min-height:var(--wm-space-44);padding-inline:var(--wm-space-8);}
 .drawer-new-group .icon-button {border-radius:var(--wm-radius-8);background:var(--accent-soft);color:var(--accent);}
 
+/* Give the model the flexible space, with secondary controls reduced to icons. */
+@media(max-width:480px) {
+  #model-button { flex:1 1 auto; max-width:none; }
+  .composer-actions .composer-spacer { display:none; }
+  #approval-mode-label { display:none; }
+  #approval-mode-button { flex:0 0 var(--wm-space-36); width:var(--wm-space-36); max-width:var(--wm-space-36); justify-content:center; }
+  #approval-mode-button .icon-chevron { display:none; }
+  .composer-actions .context-usage { width:var(--wm-space-24); min-width:var(--wm-space-24); }
+  .context-usage svg { width:var(--wm-space-20); height:var(--wm-space-20); }
+}
+
+/* One quiet line; the full explanation and feedback action open on demand. */
+.toast, .toast.error { top:calc(var(--safe-top, env(safe-area-inset-top, 0px)) + var(--wm-space-64)); bottom:auto; min-height:var(--wm-space-36); max-height:var(--wm-space-44); padding:var(--wm-space-8) var(--wm-space-12); border:1px solid var(--line); background:var(--surface); color:var(--ink); box-shadow:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:var(--wm-font-size-12); }
+.toast:hover { background:var(--soft); }
+.toast:active { background:var(--accent-soft); }
+.toast:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }
+
 /* D55: drawer, home and navigation share desktop status meanings. */
 :root { --session-attention:var(--wm-color-attention-light); --session-failure:var(--wm-color-failure-light); --session-completed:var(--wm-color-brand-light); }
 :root[data-theme="dark"] { --session-attention:var(--wm-color-attention-dark); --session-failure:var(--wm-color-failure-dark); --session-completed:var(--wm-color-brand-dark); }

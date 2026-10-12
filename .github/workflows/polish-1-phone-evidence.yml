@@ -1,0 +1,92 @@
+name: POLISH-1 phone system bars
+on:
+  push:
+    branches: [wp/polish-1-small-things]
+    paths: ["src/ui-core/**", "src/personal-access-ui/**", "apps/mobile-ui/**", "tests/helpers/polish-1-*.mjs", "tests/integration/polish-1-phone.mjs", ".github/workflows/polish-1-phone-evidence.yml"]
+  workflow_dispatch:
+concurrency:
+  group: polish-1-phone-evidence-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  phone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        width: [360, 390]
+        theme: [light, dark]
+    env:
+      TZ: Asia/Shanghai
+      WEFTMATE_POLISH1_PHONE_WIDTH: ${{ matrix.width }}
+      WEFTMATE_POLISH1_PHONE_THEME: ${{ matrix.theme }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+      - run: npm ci
+      - run: |
+          node tests/integration/st-2-phone-container.mjs
+          node --input-type=module -e 'import fs from "node:fs";const p=".local/st2-phone-container/AndroidManifest.xml";fs.writeFileSync(p,fs.readFileSync(p,"utf8").replace("android:exported=\"true\"", "android:exported=\"true\" android:launchMode=\"singleTask\""));'
+          cat > .local/polish1-phone-screen.py <<'PY'
+          import os
+          from pathlib import Path
+          width=int(os.environ['WEFTMATE_POLISH1_PHONE_WIDTH'])
+          config=Path.home()/'.android/avd/test.avd/config.ini'
+          fields={'hw.lcd.width':str(width*2),'hw.lcd.height':str((780 if width==360 else 844)*2),'hw.lcd.density':'320'}
+          lines=[line for line in config.read_text().splitlines() if line.split('=',1)[0].strip() not in fields]
+          config.write_text('\n'.join(lines+[f'{key}={value}' for key,value in fields.items()])+'\n')
+          PY
+          cat > .local/polish1-phone-capture.sh <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          export WEFTMATE_POLISH1_ADB="$ANDROID_HOME/platform-tools/adb"
+          export WEFTMATE_POLISH1_ANDROID_SERIAL="$(adb devices | awk '/^emulator-/ {print $1; exit}')"
+          export WEFTMATE_POLISH1_ANDROID_PACKAGE=com.memoweft.weftmate.mobile.polish1qa
+          export WEFTMATE_POLISH1_ANDROID_ACTIVITY=com.memoweft.weftmate.mobile.St2PhoneBrowserActivity
+          export WEFTMATE_POLISH1_PHONE_APK="$PWD/apps/android/app/build/outputs/apk/debug/app-debug.apk"
+          export WEFTMATE_POLISH1_AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort -V | tail -1)"
+          export WEFTMATE_POLISH1_PHONE_ONLY=1
+          node tests/integration/polish-1-phone.mjs
+          SH
+      - run: gradle -I ../../.local/st2-phone-container/fixture.gradle -PweftmateApplicationId=com.memoweft.weftmate.mobile.polish1qa :app:assembleDebug --no-daemon --console=plain
+        working-directory: apps/android
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          pre-emulator-launch-script: python3 .local/polish1-phone-screen.py
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -skin ${{ matrix.width == 390 && '780x1688' || '720x1560' }} -dpi-device 320 -memory 3072 -cores 4
+          script: bash .local/polish1-phone-capture.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: polish-1-phone-system-bars-${{ matrix.width }}-${{ matrix.theme }}
+          path: |
+            tests/evidence/polish-1/phone-system-*.png
+            tests/evidence/polish-1/focus-failure.*
+            tests/evidence/polish-1/system-bars-*.json
+            tests/evidence/polish-1/phone-verification-*.json
+          retention-days: 7

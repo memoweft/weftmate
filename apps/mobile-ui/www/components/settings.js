@@ -47,7 +47,7 @@ function connectionLabel(){return {connected:'电脑连接正常',checking:'已�
 const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
   data: target => { target.append(heading('数据与存储')); const body=el('section'); target.append(body); uiCore.syncMobileIdentity(); WeftDataView(uiCore,body,{toast,desktop:false}); },
   archived: target => archivedSettingsPage(target),
-  healthData: target => {target.append(heading('健康数据'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftHealthView.settings(uiCore,body,{toast});},
+  reviewHealth: target => {target.append(heading('回顾与健康'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftNotificationsView(uiCore,body,{toast,section:'reviewHealth'});},
   notifications: target => {target.append(heading('通知'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftNotificationsView(uiCore,body,{toast,permissionState:()=>call('notifications.state'),requestPermission:()=>call('notifications.requestPermission'),openSettings:()=>call('notifications.openSettings'),openBatterySettings:()=>call('notifications.openBatterySettings'),poll:()=>call('notifications.poll')})},
   personalization: target => {target.append(heading('个性化'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'personalization',{toast})},
   assistant: target => {target.append(heading('助手'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'assistant',{toast})},
@@ -64,8 +64,8 @@ function settingsPage(target){
   target.append(heading('设置'));
   if(state.loggedIn){
     const card=el('button','settings-account-card');card.type='button';card.setAttribute('aria-label','账户资料');
-    const avatar=el('span','avatar',(state.profile?.displayName||state.username||'我').slice(0,1));
-    const copy=el('span','settings-account-copy');copy.append(el('strong','',state.profile?.displayName||state.username||'我的账户'),el('small','',state.profile?.email||globalThis.WeftMobileCloud?.core?.cloudAuthView?.().email||'个人账户'));
+    const avatar=el('span','avatar',(state.profile?.displayName&&state.profile.displayName!=='local-owner'?state.profile.displayName:'我').slice(0,1));
+    const copy=el('span','settings-account-copy');copy.append(el('strong','',state.profile?.displayName&&state.profile.displayName!=='local-owner'?state.profile.displayName:'我的账户'),el('small','',mobileAccountLabel()));
     card.append(avatar,copy,WeftIcons.create('right',20));card.onclick=()=>{state.settingsChild=true;page('account');};target.append(card);
   }
   if(state.loggedIn){
@@ -77,11 +77,11 @@ function settingsPage(target){
   const draw=()=>{clear(list);let name,section;
     for(const category of mobileSettingsRegistry.list({query:search.value})){
       if(name!==category.group){name=category.group;section=group(name,[]);list.append(section)}
-      const summaries={general:'离线与同步',system:'电脑组件、性能与运行记录',notifications:'勿扰、提醒方式与声音',appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.loggedIn?state.username:'未登录',devices:'连接、配对与待批准',usage:'本月费用、用量与月度上限',models:state.model?.displayName||'管理手机与账户模型',schedules:'管理提醒与定时任务',approvals:'选择哪些操作要先问你',memory:'查看理解与来源',resources:'项目与网页资料',about:state.ui?.activeVersion||'版本、条款与隐私'};
+      const summaries={general:'离线与同步',system:'电脑组件、性能与运行记录',notifications:'勿扰、提醒方式与声音',reviewHealth:'使用回顾、健康解读与数据保留',appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.loggedIn?mobileAccountLabel():'未登录',devices:'连接、配对与待批准',usage:'本月费用、用量与月度上限',models:state.model?.displayName||'管理手机与账户模型',schedules:'管理提醒与定时任务',approvals:'选择哪些操作要先问你',memory:'查看理解与来源',resources:'项目与网页资料',about:state.ui?.activeVersion||'版本、条款与隐私'};
       const item=row(category.name,summaries[category.id]||'',()=>{
         settingsListPosition.scroll=$('generic-page').scrollTop;settingsListPosition.query=search.value;state.settingsChild=true;page(category.id)});
       const icon=el('img','settings-category-icon');icon.src='icons/'+category.icon+'.svg';icon.alt='';item.prepend(icon);section.querySelector('.group-body').append(item);
-      const current={appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.username,models:state.model?.displayName,about:state.ui?.activeVersion}[category.id];
+      const current={appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:mobileAccountLabel(),models:state.model?.displayName,about:state.ui?.activeVersion}[category.id];
       if(current){const value=el('span','settings-current',current);item.querySelector('.row-action').before(value);}
     }
     if(!list.children.length)list.append(el('p','muted','没有匹配的设置，试试“主题”或“费用”。'));
@@ -369,7 +369,7 @@ function workspacesPage(target){target.append(heading('项目与成果'));
 }
 
 function connectPage(target){globalThis.WeftCloudMobile?.mount(target,{call,loggedIn:state.loggedIn});target.append(heading('电脑账户与连接','手机离线时仍可使用本机对话；连接后可同步记录和管理设备。'));
-  if(state.loggedIn){target.append(notice(`当前账户：${state.username}。${connectionLabel()}。`,
+  if(state.loggedIn){target.append(notice(`当前账户：${mobileAccountLabel()}。${connectionLabel()}。`,
     state.connection==='connected'?'连接正常':'登录已保存'),group('连接操作',[
     row('检查账户','核对当前会话是否仍有效',async()=>{
       const epoch=state.authEpoch,owner=state.owner;
