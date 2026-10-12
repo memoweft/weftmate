@@ -136,9 +136,13 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             }
         } else {
             const nested = row.querySelector('ol') || ui.element('ol', 'chat-progress'); if (!nested.parentNode) row.replaceChildren(nested);
-            globalThis.WeftTimeline.render(spec.events, nested, { approvals: [...core.conversationApprovals.entries.values()].map(entry=>entry.row),
+            globalThis.WeftTimeline.render(spec.events, nested, { quietFailure:spec.finalTaskBlock===false, stopViews:Object.fromEntries([...core.conversationTasks.entries.values()].filter(entry=>entry.payload?.control?.state==='stopped'||entry.payload?.control?.stopStatus==='stopped').map(entry=>[`${entry.sessionId}:turn-${entry.payload?.source?.dshTurn??entry.payload?.replyEvidence?.turn}`,{terminal:true,text:'已停止'}])), executions:[...core.conversationTasks.entries.values()].flatMap(entry=>entry.payload?core.relatedExecutionSteps(entry.payload).map(row=>({...row,sessionId:entry.sessionId})):[]), approvals: [...core.conversationApprovals.entries.values()].map(entry=>entry.row),
                 readDetail: seq => { const event = spec.events.find(event => event.sourceRef?.seq === seq || event.data?.detailRef?.seq === seq); return event ? core.readTimelineDetail(event.sourceRef.sessionId, seq) : Promise.reject({ code: 'SOURCE_UNAVAILABLE' }); },
                 questions: [...core.conversationQuestions.entries.values()].map(entry => {const event=spec.events.find(event=>event.sourceRef?.seq===entry.row.observedSeq);return {...entry.row,observedSeq:event?.seq??entry.row.observedSeq};}),
+                readArtifact:id=>core.accessApi(`/library/${encodeURIComponent(id)}`),
+                openAllArtifacts:()=>ui.openLibrary(),
+                downloadArtifact:ui.downloadTimelineArtifact,
+                onError:()=>ui.toast('文件操作未完成，请重试。'),
                 openArtifact: artifact => ui.openTimelinePreview(core.conversationTaskContext(), core.artifactPreviewPath(artifact.artifactId), artifact.fileName || '成果文件'),
                 appendArtifactActions: (target, artifact) => ui.appendResourceArtifactActions(target, artifact) });
         }
@@ -188,14 +192,16 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             rows.push({ kind: 'day', key: `day:${group.date}`, date: group.date, label: group.label, collapsed: group.collapsed, count: core.state.chatWindow.dayCounts.get(group.date) ?? visible.length, estimate: 52 });
             if (group.collapsed) continue;
             const mapped = group.events.map((event, seq) => ({ ...event, seq, data: { ...event.data,
-                ...(event.data?.taskId?.startsWith('turn-') ? {taskId:`${event.sourceRef.sessionId}:${event.data.taskId}`} : {}) } })), projected = WeftUiCore.projectTimeline(mapped);
+                ...(event.data?.taskId?.startsWith('turn-') ? {taskId:`${event.sourceRef.sessionId}:${event.data.taskId}`} : {}),
+                ...(event.data?.completedStep ? {completedStep:{...event.data.completedStep,taskId:event.data.completedStep.taskId?.startsWith('turn-')?`${event.sourceRef.sessionId}:${event.data.completedStep.taskId}`:event.data.completedStep.taskId}}:{}) } })), projected = WeftUiCore.projectTimeline(mapped);
             const specs = visible.map(event => ({ kind: event.type === 'side.result' ? 'result' : 'message', key: event.presentationKey || event.eventId, event, seq: mapped.find(item => item.eventId === event.eventId).seq, estimate: 100 }));
             for (const block of projected.groups) {
                 const end = projected.groups.find(next => next.seq > block.seq)?.seq ?? Infinity;
-                const events = mapped.filter(event => event.seq >= block.seq && event.seq < end && !['user.message', 'assistant.message', 'side.result'].includes(event.type));
-                specs.push({ kind: 'progress', key: `progress:${mapped[block.seq]?.eventId || block.seq}`, seq: block.seq, events, estimate: 48 });
+                const events = mapped.filter(event => event.seq >= block.seq && event.seq < end && !['user.message', 'assistant.message', 'side.result'].includes(event.type)).flatMap(event=>event.type==='artifact.created' ? event.data?.completedStep ? [{...event,type:'step.completed',data:event.data.completedStep}] : [] : [event]);
+                events.push(...mapped.filter(event=>['task.ended','turn.ended'].includes(event.type)&&WeftUiCore.turnOutcome([event],block.taskId).terminal&&!events.includes(event)));
+                specs.push({ kind: 'progress', key: `progress:${mapped[block.seq]?.eventId || block.seq}`, seq: block.seq, events, finalTaskBlock:projected.groups.filter(group=>group.taskId===block.taskId).at(-1)===block, estimate: 48 });
             }
-            for (const event of projected.cards.filter(event => /^(artifact.|question.)/.test(event.type))) specs.push({ kind: 'progress', key: event.eventId, seq: event.seq, events: [event], estimate: 70 });
+            for (const event of projected.cards.filter(event => /^(artifact.|question.)/.test(event.type))) specs.push({ kind: 'progress', key: `output:${event.eventId || event.seq}`, seq: event.seq, events: [{...event,data:{...event.data,completedStep:undefined}},...mapped.filter(end=>['task.ended','turn.ended'].includes(end.type)&&WeftUiCore.turnOutcome([end],event.data.taskId).terminal)], estimate: 70 });
             rows.push(...specs.sort((a, b) => a.seq - b.seq));
         }
         const activeEvents = core.mainChatDays().flatMap(group=>group.events).filter(event => event.sourceRef?.sessionId === core.state.mainChat.activeSessionId).sort((a,b)=>a.orderKey.localeCompare(b.orderKey));

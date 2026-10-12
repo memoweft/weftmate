@@ -89,7 +89,7 @@ try {
     await page.getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).click()
     await page.getByText('报告已保存，测试全部通过。', { exact: true }).waitFor()
     await page.getByRole('button', { name: '发送', exact: true }).waitFor()
-    await page.getByRole('button', { name: '打开成果', exact: true }).click()
+    await page.getByRole('button', { name: '打开成果 项目进度报告.md', exact: true }).click()
     const preview = page.getByRole('complementary', { name: '成果与来源预览' })
     await preview.getByRole('heading', { name: '项目进度报告', exact: true }).waitFor()
     await preview.getByText('已读取 3 个文件。42 项测试通过。', { exact: true }).waitFor()

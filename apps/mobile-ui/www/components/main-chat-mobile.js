@@ -42,6 +42,8 @@
     beginOlderHistory:()=>{},restoreOlderHistoryPosition:()=>{},scrollToLatest:()=>scrollBottom(true),
     updateAvailability:updateComposer, openTimelinePreview:(context,path,title)=>openTimelinePreview(context,()=>uiCore.readResource(path),title),
     appendResourceArtifactActions:()=>{},
+    openLibrary:()=>selectMobileTab('library'),
+    downloadTimelineArtifact:artifact=>call('shared.artifacts.save',{artifactId:artifact.artifactId}),
   };
   const paintNativeSelection=view.paintSelectedSession;
   const presentation=WeftUiComponents.factories.mainChat(uiCore,view);
