@@ -977,6 +977,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         await temporaryChats.close();
         await activity.close();
         await healthInsights.close();
+        await healthOperations.close();
         await healthRecords.close();
         await sideChats.close();
         await chatTimeline.close();

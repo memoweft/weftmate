@@ -6,9 +6,15 @@ struct ConversationApprovalBar: View {
     let events: [TimelineEvent]
     @State private var expanded = false
     @FocusState private var approveFocused: Bool
+    @FocusState private var rejectFocused: Bool
     var body: some View {
         if let approval = model.pendingApprovals.first {
             let key = "approval:" + approval.id
+            #if os(iOS)
+            let warning = approval.secondOpinion?.recommendsRejection == true
+            #else
+            let warning = false
+            #endif
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 HStack(alignment: .center, spacing: AppleTokens.Space.p8) {
                     Button { expanded.toggle() } label: {
@@ -18,7 +24,7 @@ struct ConversationApprovalBar: View {
                         }.frame(maxWidth: .infinity, alignment: .leading)
                     }.buttonStyle(.plain).accessibilityLabel(model.approvalHeadline(approval) + "，审批详情").accessibilityIdentifier("approvalDetails").accessibilityValue(expanded ? "已展开" : "已收起")
                     Button("批准") { Task { await model.decide(approval, outcome: .allowedOnce, decisionScope: .once) } }
-                        .buttonStyle(PrimaryActionStyle(fillsWidth: false)).disabled(!model.canRespond(key)).focused($approveFocused)
+                        .buttonStyle(ApprovalChoiceStyle(primary: !warning)).disabled(!model.canRespond(key)).focused($approveFocused)
                         .accessibilityIdentifier("approveOnce." + approval.id)
                         #if os(macOS)
                         .onKeyPress(.return) {
@@ -28,8 +34,18 @@ struct ConversationApprovalBar: View {
                         }
                         #endif
                     Button("拒绝") { Task { await model.decide(approval, outcome: .rejected) } }
-                        .buttonStyle(OutlineActionStyle()).disabled(!model.canRespond(key)).accessibilityIdentifier("rejectApproval." + approval.id)
+                        .buttonStyle(ApprovalChoiceStyle(primary: warning)).disabled(!model.canRespond(key)).focused($rejectFocused).accessibilityIdentifier("rejectApproval." + approval.id)
                 }
+                #if os(iOS)
+                if let opinion = approval.secondOpinion {
+                    Text(opinion.text).foregroundStyle(opinion.recommendsRejection ? Weave.danger : Weave.muted)
+                        .fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("approvalSecondOpinion")
+                }
+                if approval.offersAlwaysAllow {
+                    Button("以后这类都允许") { Task { await model.decide(approval, outcome: .allowedOnce, decisionScope: .globalCategory) } }
+                        .buttonStyle(OutlineActionStyle()).disabled(!model.canRespond(key)).accessibilityIdentifier("approvalAlwaysAllow")
+                }
+                #endif
                 if model.pendingApprovals.count > 1 { Text("还有 \(model.pendingApprovals.count - 1) 个待批准").foregroundStyle(Weave.muted) }
                 if model.pendingQuestionCount > 0 { Text("处理审批后还有 \(model.pendingQuestionCount) 个问题").foregroundStyle(Weave.muted) }
                 if expanded {
@@ -48,7 +64,18 @@ struct ConversationApprovalBar: View {
                 .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("approvalBar")
-                .task(id: approval.id) { expanded = false; approveFocused = false; await model.readApprovalPresentation(approval, events: events) }
+                #if os(iOS)
+                .onChange(of: approval.secondOpinion) { _, opinion in if opinion?.recommendsRejection == true { approveFocused = false; rejectFocused = true } }
+                #endif
+                .task(id: approval.id) { expanded = false; approveFocused = false; rejectFocused = warning; await model.readApprovalPresentation(approval, events: events) }
         } else { ConversationQuestionBar(model: model) }
+    }
+}
+
+private struct ApprovalChoiceStyle: ButtonStyle {
+    let primary: Bool
+    @ViewBuilder func makeBody(configuration: Configuration) -> some View {
+        if primary { PrimaryActionStyle(fillsWidth: false).makeBody(configuration: configuration) }
+        else { OutlineActionStyle().makeBody(configuration: configuration) }
     }
 }

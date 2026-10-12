@@ -5,6 +5,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun healthV3RoutesAllowOnlyExactAggregatePathsAndQueries() {
+        assertTrue(validBusinessMethod("/personal/v1/health/profile", "PUT"))
+        for (route in listOf("/personal/v1/health/profile", "/personal/v1/health/analysis", "/personal/v1/health/analysis?day=2026-10-12", "/personal/v1/health/weekly", "/personal/v1/health/weekly?to=2026-10-12", "/personal/v1/health/metrics/stress?days=7&to=2026-10-12", "/personal/v1/health/metrics/energy?to=2026-10-12&days=30", "/personal/v1/health/metrics/fitnessAge?to=2026-10-12", "/personal/v1/health/metrics/vo2Max")) assertTrue(route, validBusinessPath(route))
+        for (route in listOf("/personal/v1/health/profile?ownerId=other", "/personal/v1/health/profile/raw", "/personal/v1/health/analysis?scope=stress", "/personal/v1/health/analysis?day=2026-10-12&day=2026-10-11", "/personal/v1/health/analysis?day=2026-10-12&ownerId=other", "/personal/v1/health/weekly?to=2026-99-01", "/personal/v1/health/metrics/stress?days=7&to=2026-10-12&to=2026-10-11", "/personal/v1/health/metrics/stress?days=7&ownerId=other", "/personal/v1/health/metrics/bodyAge", "/personal/v1/health%2Fanalysis")) assertFalse(route, validBusinessPath(route))
+        assertFalse(validBusinessMethod("/personal/v1/health/profile/raw", "PUT"))
+    }
     @Test fun healthAggregateRoutesRejectRawDataOwnersUnknownMetricsAndEncodedPaths() {
         assertTrue(validBusinessMethod("/personal/v1/health/records/batch", "PUT"))
         assertTrue(validBusinessMethod("/personal/v1/daily-summaries/2026-10-12/health", "PUT"))
