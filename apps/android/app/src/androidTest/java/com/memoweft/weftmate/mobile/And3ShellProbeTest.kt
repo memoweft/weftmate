@@ -61,6 +61,7 @@ class And3ShellProbeTest {
                     val measurement = File(context.filesDir, "and3-window.next")
                     measurement.writeText(JSONObject()
                         .put("statusHeight", bars?.top ?: 0).put("navigationHeight", bars?.bottom ?: 0)
+                        .put("windowFocused", shown.window.decorView.hasWindowFocus())
                         .put("darkStatusIcons", appearance and WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS != 0)
                         .put("darkNavigationIcons", appearance and WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS != 0).toString())
                     check(measurement.renameTo(File(context.filesDir, "and3-window.json")))
