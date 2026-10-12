@@ -33,6 +33,11 @@ internal fun validBusinessPath(path: String): Boolean {
     if (path.length > if (route.startsWith("/personal/v1/chats") || route == "/personal/v1/sessions" || route.startsWith("/personal/v1/library") || route.startsWith("/personal/v1/activity") || route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/suggestions"))) 4096 else 512) return false
     if (path == "/personal/v1/sessions/temporary") return true
     val query = path.substringAfter('?', "")
+    // HEALTH-2: only the documented aggregate reads/writes; no raw or owner selectors.
+    if (route == "/personal/v1/health/overview") return query.isEmpty() || query.matches(Regex("day=[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])"))
+    if (route == "/personal/v1/health/calendar") return query.isEmpty() || query.matches(Regex("month=[0-9]{4}-(0[1-9]|1[0-2])"))
+    if (route.matches(Regex("/personal/v1/health/metrics/(restingHeartRateBpm|hrvSdnnMs|respiratoryRateBrpm|spo2Pct|wristTempC|vo2Max|activeEnergyKcal|exerciseMinutes|steps|sleepMinutes|inBedMinutes|deepMinutes|coreMinutes|remMinutes|awakeMinutes|recovery|sleep|load|usageActiveMinutes|usageLateNightMinutes|heartRateAvgBpm|heartRateMinBpm|heartRateMaxBpm|workoutMinutes)"))) return query.isEmpty() || query.matches(Regex("days=(7|14|30|60|90)"))
+    if (query.isEmpty() && (route == "/personal/v1/health/records/batch" || route == "/personal/v1/settings/health" || route == "/personal/v1/daily-summaries" || route.matches(Regex("/personal/v1/daily-summaries/[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])/health")) || route.matches(Regex("/personal/v1/health/suggestions/health-[a-f0-9]{32}/remind")))) return true
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/activity(/changes|/unread|/read|/[A-Za-z0-9_-]{1,160}/read)?"))) return true
     if (route == "/personal/v1/sessions" && query.matches(Regex("[A-Za-z0-9._~=&%+-]*"))) return true
     // UX-6 account title/body search reuses /chats?scope=search; no new native route.
@@ -110,7 +115,12 @@ fun sharedImagePreviewUrl(sessionId: String, durableId: String): String =
 fun validImageScopeId(value: String): Boolean = value.matches(Regex(
     "(?:[A-Za-z][A-Za-z0-9_-]{0,31}-)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))
 
-private fun requestByteLimit(url: URL): Int = if (url.path.endsWith("/chat/completions"))
+internal fun validBusinessMethod(path: String, method: String): Boolean =
+    method in setOf("GET", "POST", "PATCH", "DELETE") ||
+        (method == "PUT" && (path == "/personal/v1/health/records/batch" ||
+            path.matches(Regex("/personal/v1/daily-summaries/[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])/health"))))
+
+private fun requestByteLimit(url: URL): Int = if (url.path == "/personal/v1/health/records/batch") 1280 * 1024 else if (url.path.endsWith("/chat/completions"))
     14 * 1024 * 1024 else 256 * 1024
 
 object Endpoints {
@@ -813,9 +823,9 @@ class PersonalApi(transport: JsonTransport = JsonHttp()) {
 
     /** Only future business routes, never auth, credentials, model configuration or arbitrary URLs. */
     fun business(host: HostIdentity, path: String, method: String, body: JSONObject?): JSONObject {
-        require(method in setOf("GET", "POST", "PATCH", "DELETE"))
+        require(validBusinessMethod(path, method))
         require(validBusinessPath(path))
-        if (body != null) require(body.toString().toByteArray(Charsets.UTF_8).size <= if (path.startsWith("/personal/v1/offline/")) 256 * 1024 else 64 * 1024)
+        if (body != null) require(body.toString().toByteArray(Charsets.UTF_8).size <= if (path == "/personal/v1/health/records/batch") 1280 * 1024 else if (path.startsWith("/personal/v1/offline/")) 256 * 1024 else 64 * 1024)
         val restarting = method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))
         return http.request("${host.origin}$path", method, body,
             if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host),

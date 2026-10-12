@@ -1,0 +1,52 @@
+{
+  "startedAt": "2026-10-12T11:07:16.340Z",
+  "realElectron": true,
+  "realNativeDSH": true,
+  "syntheticOnly": true,
+  "model": "mimo-v2.6-flash",
+  "mimoRequests": 5,
+  "healthBackgroundRequests": 1,
+  "checks": [
+    "90-day-batch-and-statistical-overview",
+    "all-metric-reads-and-month-calendar",
+    "real-mimo-background-insight-and-summary-only-input",
+    "main-chat-real-native-health-query-and-grounded-answer",
+    "setting-off-no-further-health-model-requests"
+  ],
+  "screenshots": [
+    "electron-1200-light-assistant.png",
+    "electron-1200-dark-assistant.png",
+    "electron-1200-light-settings.png",
+    "electron-1200-light-retention-open.png",
+    "electron-1200-light-clear-open.png",
+    "electron-480-light-settings.png",
+    "electron-1200-dark-settings.png",
+    "electron-1200-dark-retention-open.png",
+    "electron-1200-dark-clear-open.png",
+    "electron-480-dark-settings.png"
+  ],
+  "errors": [],
+  "cleanedProcesses": 1,
+  "nativeHealthTool": {
+    "call": {
+      "taskId": "turn-1",
+      "stepId": "call_ccabc01ddf1841a5af415702",
+      "callId": "call_ccabc01ddf1841a5af415702",
+      "toolName": "health_query",
+      "summary": "查看健康趋势",
+      "groupHint": "health_query",
+      "detailRef": {
+        "seq": 43
+      },
+      "turn": 1,
+      "state": "running"
+    },
+    "resultState": "completed"
+  },
+  "assistant": {
+    "question": "我最近睡得怎么样",
+    "tool": "health_query",
+    "reply": "最近七天（10月6日—10月12日）你的睡眠情况：\n\n- **10月6日** 91（正常）\n- **10月7日** 92（正常）\n- **10月8日** 93（比平时高）\n- **10月9日** 94（比平时高）\n- **10月10日** 91（正常）\n- **10月11日** 94（比平时高）\n- **10月12日** 89（正常）\n\n**整体来看**：这一周睡眠比较稳定，大部分日子在正常范围，有三天（10月8、9、11日）比你平时略高一点，今天（10月12日）略低于平时水平但仍在正常范围内。整体波动不大，没有明显异常。"
+  },
+  "completed": true
+}
