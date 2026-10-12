@@ -1,0 +1,17 @@
+{
+  "tests": 76,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "workflow": "https://github.com/memoweft/weftmate/actions/runs/38286598488",
+  "debugApkBuilt": true,
+  "instrumentationApkBuilt": true,
+  "localNonincrementalBuild": {
+    "tests": 76,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "debugApkBuilt": true,
+    "instrumentationApkBuilt": true
+  }
+}

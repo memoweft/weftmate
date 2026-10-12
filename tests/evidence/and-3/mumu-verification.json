@@ -1,0 +1,4986 @@
+{
+  "realNativeShell": true,
+  "realNativeTransport": true,
+  "syntheticCloud": true,
+  "syntheticHost": true,
+  "modelRequests": 0,
+  "mimoRequests": 0,
+  "checks": [
+    "password-real-native-login-mail-confirm-direct-host-trust",
+    "real-native-main-chat-send-and-synthetic-reply",
+    "native-page-activity",
+    "native-weekly-review-visible",
+    "native-page-health",
+    "native-page-goals",
+    "native-page-library",
+    "native-page-settings",
+    "native-page-approvals",
+    "native-page-executionRecords",
+    "native-page-system",
+    "native-page-notifications",
+    "native-approval-second-opinion-visible",
+    "offline-native-process-reopen-reads-cached-content-without-login",
+    "native-computer-offline-retry-preserves-cache-and-draft",
+    "native-process-reopen-cached-account-without-login",
+    "expired-native-cache-readable-server-use-dismissible-login",
+    "code-real-native-login-mail-confirm-direct-host-trust"
+  ],
+  "screenshots": [
+    {
+      "file": "mumu-390-light-password-login.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "b53fd256653589a2a627be3b452b9520adf85af46ff86a9d9d7a50c025e9449d"
+    },
+    {
+      "file": "mumu-390-dark-password-login.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "e25d902c21b387bea96b3dc7c7ec35b54038d38bae55c1f6d0887f2e00ee9271"
+    },
+    {
+      "file": "mumu-360-light-password-login.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "18c4f62e65bdce138175137c161c3536f2f1734af1d181480edbafb879b2b0cc"
+    },
+    {
+      "file": "mumu-360-dark-password-login.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "250d16669bed3cd707f5240dcee8585402fad4be7c1ab2eacb0f37b00a1fd977"
+    },
+    {
+      "file": "mumu-390-light-password-email-confirm.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "39fecb24fe3b81f894253a9483db353be0229684e538e4500626dbc7b6f9dbf6"
+    },
+    {
+      "file": "mumu-390-dark-password-email-confirm.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "21d36e5521d20d8acbe7fe8649d9969ed81c7445d433eaa79e99da4e0c75d0d6"
+    },
+    {
+      "file": "mumu-360-light-password-email-confirm.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "a22ba3276bc6de6c8034cfce5501d8d55e07b24c488655bdbbaec20793112518"
+    },
+    {
+      "file": "mumu-360-dark-password-email-confirm.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "4750ae96e0eb24fb4a3eeabca9f42c959259c4094a95dd05fdd508f9f568ffae"
+    },
+    {
+      "file": "mumu-390-light-chat.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，7 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "a91d062cbaed89d8f0671d438506461ac5b4bf72fa3a692c3913972abe38c265"
+    },
+    {
+      "file": "mumu-390-dark-chat.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，7 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "f67a8b2f4a2f5874a8dd92d3e93b8991314c92736f5b6a02fc425a5f434618c4"
+    },
+    {
+      "file": "mumu-360-light-chat.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，7 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "0215b0fa207730d65d01b110ad0f59dbc74480e82e1d1b0f115328fcf7e8edf2"
+    },
+    {
+      "file": "mumu-360-dark-chat.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，7 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "79bced1d351d4702cd59fe8b5b7e44a8fa3f247c6a3eceea0f7265e9894a5ef5"
+    },
+    {
+      "file": "mumu-390-light-activity.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "cc3ce6b983c80919d288f468923306a052ffebc87f1acc34cb872ca96c4d22cf"
+    },
+    {
+      "file": "mumu-390-dark-activity.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "593088ff1b8f3ce544593442f1321cd006d7445da78b797ce5f0224872cf499e"
+    },
+    {
+      "file": "mumu-360-light-activity.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "0fcc92089482f526e4a521c106fa24e395055bb7ccedc4fc8c68e3eec4b6442c"
+    },
+    {
+      "file": "mumu-360-dark-activity.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "61ba90b0f42e39819d56ef36a855c19321076a1eaf23aaa3fc692fc500f7a85e"
+    },
+    {
+      "file": "mumu-390-light-weekly-review.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "7f953c5c13aae51b38e3dc41bd5d13f854b5fd4308c5a99539c18d0a06ef2819"
+    },
+    {
+      "file": "mumu-390-dark-weekly-review.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "ad104f64c98a35ae7d956f662e03f97e9970f98efb8254fbf7f64b66b7406f0c"
+    },
+    {
+      "file": "mumu-360-light-weekly-review.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "048fc757aa0e1b6e0f35ec95f4e29a0dfd82749daf8f7451ea4c5f9fe219f7b7"
+    },
+    {
+      "file": "mumu-360-dark-weekly-review.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "de4ff02a11eb04f139b8841d07d4d26f0a15b83b27373623ea5e470b93f5d40a"
+    },
+    {
+      "file": "mumu-390-light-health.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "deedeb8106deac6573067c8ba93dfd44afba64c8c66d4a42cfb8628ae0643e33"
+    },
+    {
+      "file": "mumu-390-dark-health.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "a80489f70a61035a3b14d20153eb8339482ef8cfa5d5e21022081409fad0f3f5"
+    },
+    {
+      "file": "mumu-360-light-health.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "8b1cc82edc77a13fc75a8294ea9b9f33c1b93461039fec5a390c854c3a26112f"
+    },
+    {
+      "file": "mumu-360-dark-health.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "31dde436f1ea6f4122fac34338387232529b9dc62132621cebd526f7fd46ef02"
+    },
+    {
+      "file": "mumu-390-light-goals.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "21dcbdbd185af4fc93886541f1b530d7cc9f4277de6ea504d3cc0f5ca1db66ca"
+    },
+    {
+      "file": "mumu-390-dark-goals.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "4bf706f918a36e3706832c0da19bfd5a519f63c043e831d47821c51d6045e0d6"
+    },
+    {
+      "file": "mumu-360-light-goals.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "357f5355150c2318e9fe66c5be40c371622b76516d83df71fc1469d0c50e1085"
+    },
+    {
+      "file": "mumu-360-dark-goals.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "2bfa5d30f590bd19fe6657424b707cb909ebcc7ade26e3d2070c1b3186bd3730"
+    },
+    {
+      "file": "mumu-390-light-library.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "e0c3e6236c241add666b4f0eaaed4f43a34dc3cc1f01ef30c3ab9984444c5e82"
+    },
+    {
+      "file": "mumu-390-dark-library.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "48ba5fb252df241c915ad7a0723d1197235ddb3666290d30830259c8c1e4fded"
+    },
+    {
+      "file": "mumu-360-light-library.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "5da0299f110234072727dbb6a82ea0e95ee5c82362a260d104d1fdc8b89f7325"
+    },
+    {
+      "file": "mumu-360-dark-library.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "d5ada8f965a09420698e9f062c4bbbfc15e044b102867d6f9496633d13110ea5"
+    },
+    {
+      "file": "mumu-390-light-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "55fb4cfb27ecf2f2a6a3204b5b2fa7a07bdfab30a9943a63796b34cf78e5e7b5"
+    },
+    {
+      "file": "mumu-390-dark-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "bb557d6ffeecf4582e3925bf6f701349156bf330daa7f4882bb5bbc4af9e0db2"
+    },
+    {
+      "file": "mumu-360-light-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "996f7a0148f1417defb7610db94c59c9d576f013704131653d21d0021f5bb332"
+    },
+    {
+      "file": "mumu-360-dark-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "485a2f7f0c06022b8e11f58d4ddaef50f17fe16bfd0544a3957d06e8c87c7397"
+    },
+    {
+      "file": "mumu-390-light-approvals.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "75831fc2ef77de903da4e9caf4820fdbda5242edff3c7a1d292c1066feae3481"
+    },
+    {
+      "file": "mumu-390-dark-approvals.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "5cb9d0e479508a0454317bc897d92b6fd7d9d09955133bc6f43ce7e14d9c8ce1"
+    },
+    {
+      "file": "mumu-360-light-approvals.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "771aa7fc6d71daf32ca98adab6601fe38b5530deef35cb765c271be1a7da7c62"
+    },
+    {
+      "file": "mumu-360-dark-approvals.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "7e8e00af4d444065cb6584fe65caaf9fb2378d04b64a0e2b74eb10e9bf6b911d"
+    },
+    {
+      "file": "mumu-390-light-executionRecords.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "f70a3cf77464caa1947544ef54060881d144b7d2a91caf052d051b5921986e82"
+    },
+    {
+      "file": "mumu-390-dark-executionRecords.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "bb2a57b3005fef1cfa86add04cdb49f9326c907b5cc001cfea81f7b63ecada52"
+    },
+    {
+      "file": "mumu-360-light-executionRecords.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "ddb9b49c537a2623276af224cd1df31ed655d3849d64731c858d8754d1bbe642"
+    },
+    {
+      "file": "mumu-360-dark-executionRecords.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "7ec13526aafdc44f32b2939cacb2fa23993cf65941f1fb3abe690a38097dec81"
+    },
+    {
+      "file": "mumu-390-light-system.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "c04a9eee3a2e3334d227a0008ba6d957589c418710a2ab7aa1d56e8e0ebc56c0"
+    },
+    {
+      "file": "mumu-390-dark-system.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "dd8b280117d073427759f51ebae7629bbace3f7100502fd068dd48f2fa6345ee"
+    },
+    {
+      "file": "mumu-360-light-system.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "c2d544633a710b3f4954629d0d464dfcc01625c52edae4162433dff91f76b09d"
+    },
+    {
+      "file": "mumu-360-dark-system.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "1f397d62668d7b88f3a331e1a02bb7f313ef33a4dcc77c160f78f219b30244a4"
+    },
+    {
+      "file": "mumu-390-light-review-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "39e0d32b1d9c110682183862ede45edacf3291ce48c29059eff90b8b31bbe001"
+    },
+    {
+      "file": "mumu-390-dark-review-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "2d6d5d6ab72efa7178125d8efcac0c10adce6aae86b113877a66d0cb88b8494d"
+    },
+    {
+      "file": "mumu-360-light-review-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "cc8e12915b7a34efdf08c2372d1c7bee6a550bed9ed7460cd301cc580a8c3d01"
+    },
+    {
+      "file": "mumu-360-dark-review-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "b64f0bd8c1400fc87b21d089d891dcfc29213daaeafa48347c344536003b8abd"
+    },
+    {
+      "file": "mumu-390-light-health-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "eb269bfb7b329439e2872939c55030e7bbf3c801ce872a013a28b51e412423e4"
+    },
+    {
+      "file": "mumu-390-dark-health-settings.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "19350b4268eb48da8d66e64e1dd18710723a8dc9682640d59ac785b75640806b"
+    },
+    {
+      "file": "mumu-360-light-health-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "88d098c92c038ae788f02e4754d0a951e4972ad1f081b2e28ff0e5fd62dab513"
+    },
+    {
+      "file": "mumu-360-dark-health-settings.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "a6cd576c63bc4fb5b9c60ad58ba9aa946578e33617d449e1d4aa187607aa86bd"
+    },
+    {
+      "file": "mumu-390-light-approval-second-opinion.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "adfc763c0194ca8b8373454c8b92b690e1faa5e28b9aa31eb5f0006dc837ce46"
+    },
+    {
+      "file": "mumu-390-dark-approval-second-opinion.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "2dd0abb2f86e94d190e546f83932efc847cc95ad8bdf926fd0fb9a711eb5cc41"
+    },
+    {
+      "file": "mumu-360-light-approval-second-opinion.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "01cc6a908fe4c0e5ab61653ab739a4117b1a1f664a61e727058a6efd2aba7529"
+    },
+    {
+      "file": "mumu-360-dark-approval-second-opinion.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "6123cd7f772c1c41abcbe3e574493c22670713987bf0c845e624b2966dc9fd09"
+    },
+    {
+      "file": "mumu-390-light-computer-offline.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "1f47df49c0eb0ee23d548b181d90e44333e8b3aabf4989fd1a4518888a77e5dc"
+    },
+    {
+      "file": "mumu-390-dark-computer-offline.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "13708499297152ca2113a93b70fd9b7152ed03630119021173eb853cda61e017"
+    },
+    {
+      "file": "mumu-360-light-computer-offline.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "798c067f6a00aecfba91b49bd4d064549924d521e7a07f73f639f00fc45b0011"
+    },
+    {
+      "file": "mumu-360-dark-computer-offline.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "fc8b3528a7470aba3d91861575285b479934699e2a36b01228a7e53c4812f22f"
+    },
+    {
+      "file": "mumu-390-light-offline-process-reopen-cache.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "c97ced54121d1d7021de4b1c7f80c09e24cd467b2f31367db9673553b639c9af"
+    },
+    {
+      "file": "mumu-390-dark-offline-process-reopen-cache.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "3e1adff50d5d33ca48bdffc8a7a928a4e8c418aa08a282244769aa2f9c62bafe"
+    },
+    {
+      "file": "mumu-360-light-offline-process-reopen-cache.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "12118fd783b7c02d852031d7b3f66de6dc5cae6a18196132626f7e066e8b4782"
+    },
+    {
+      "file": "mumu-360-dark-offline-process-reopen-cache.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "ec5e7f3a2f7da7cf48900e6fe7fd35eb987d91cd5e51b9e97ad1374a9c5266cc"
+    },
+    {
+      "file": "mumu-390-light-computer-retry-restored.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "13d8994210fe88665ed62139a4b716dd5487998ddf354f8e65b9bd5e53050370"
+    },
+    {
+      "file": "mumu-390-dark-computer-retry-restored.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "72da01b38e4b848f31e1493752a69ab647aad27072f6705019f902f35493fa40"
+    },
+    {
+      "file": "mumu-360-light-computer-retry-restored.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "515771430b61e261e71307d5dbed38cea2a0d60455264536d1960962d155085e"
+    },
+    {
+      "file": "mumu-360-dark-computer-retry-restored.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，8 条未读",
+        "健康",
+        "目标，有进行中或待处理任务",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "e1bcb96b2e311ebb53df42bcf26c9d266eefe28c7f985f4904b16e0defc646b1"
+    },
+    {
+      "file": "mumu-390-light-expired-cache-readable.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "1b29356544d15cc04373410f4b5bd0a6d283fdb156b8f17721e5159a4639236e"
+    },
+    {
+      "file": "mumu-390-dark-expired-cache-readable.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "e78ff71dafb8387b29d1ec93c3f23eb8543947e31d3d29be319f19d9ae9ef500"
+    },
+    {
+      "file": "mumu-360-light-expired-cache-readable.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "3bf42c0eb8302a2dc68277c002fe9fdf5d7b57cebf3d509b1d0d6ce25a66d13b"
+    },
+    {
+      "file": "mumu-360-dark-expired-cache-readable.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "5860f9b2958e699e8f3c6efec5a7903e6602690f66b85ae9964532d612375d0d"
+    },
+    {
+      "file": "mumu-390-light-server-use-login-prompt.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "3f5781e65754ad2586e854192935580c96899e66993613af17312d31bad620cc"
+    },
+    {
+      "file": "mumu-390-dark-server-use-login-prompt.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "30649507addd50c66b19b11a5979454b1c2547f050359f5383e607d178d38ab8"
+    },
+    {
+      "file": "mumu-360-light-server-use-login-prompt.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "b8b7c3450b3a0d62aa5ce3d297818590aed3465a0ffdc4714ebe4893872c650c"
+    },
+    {
+      "file": "mumu-360-dark-server-use-login-prompt.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "b536d3866baaca448b3c832269bd4c1685880098e50f13ed4abb8a86ce167c23"
+    },
+    {
+      "file": "mumu-390-light-code-login.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "80f244102656d6986a69a44fdba3727cb1d090d287a8af3f72a89f13ad9b4db1"
+    },
+    {
+      "file": "mumu-390-dark-code-login.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "70d6460744255d9557b7981bc1d1d16a917ececa05ed7e02ca5976e6d1dffd3e"
+    },
+    {
+      "file": "mumu-360-light-code-login.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "14a5e94b77c957843994fac091c1f7af15fe20e9c125f54540ad507feb6901ee"
+    },
+    {
+      "file": "mumu-360-dark-code-login.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "5afb87bd73cc4e43add81091cc2c84bd9a0ca05a91be64bfc926f5c6798d4448"
+    },
+    {
+      "file": "mumu-390-light-email-code-entry.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "6787d888b73039898c0f76d7089da710eac69e92dfcf6f8e0bd06deee72670e9"
+    },
+    {
+      "file": "mumu-390-dark-email-code-entry.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "3b6bdf2d8e4b2f5669fea00ac17cf3c86e45c546775b4c2a070a8b86a2392e0a"
+    },
+    {
+      "file": "mumu-360-light-email-code-entry.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "b6d410c7af367e7a51f9dcf05bb7a9334313274030dc2f425bb4f47b4c8658e3"
+    },
+    {
+      "file": "mumu-360-dark-email-code-entry.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "f93f915ddad5914dc2a0cb81dbb07734dbb1668f509936c51553323b46c52030"
+    },
+    {
+      "file": "mumu-390-light-code-email-confirm.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "845de54878ac802d6f48199affcf89109ba586482e8f478a79af301b8b54749c"
+    },
+    {
+      "file": "mumu-390-dark-code-email-confirm.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "02ae46df17506b4eb27cbf54587a4877ed6ac3e78fdac6a65f1deb4fe5b83652"
+    },
+    {
+      "file": "mumu-360-light-code-email-confirm.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "79b66284a67369e796c6a2a3f565dc1e803475cd53e5c5283c441a6493f49ad8"
+    },
+    {
+      "file": "mumu-360-dark-code-email-confirm.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "56aecd6becddbb080f687e8d94859e2d4249e7bc078584665bc803f7e46f740a"
+    },
+    {
+      "file": "mumu-390-light-code-signed-in.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "86ac60779247368db1c8a98ef0c9cce48369cf25c18a94946d3357261aaeecc2"
+    },
+    {
+      "file": "mumu-390-dark-code-signed-in.png",
+      "width": 390,
+      "height": 844,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 390,
+        "height": 844,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "664c91be4829a344fd66823f89c6897bb8223137f3f773b8fc0907cd86e17a1d"
+    },
+    {
+      "file": "mumu-360-light-code-signed-in.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "light",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，9 条未读",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": true,
+        "darkNavigationIcons": true
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "19621ee77106869604d8e6b327d5fd5c5cdaa4ada6fff405b924e54cd696637a"
+    },
+    {
+      "file": "mumu-360-dark-code-signed-in.png",
+      "width": 360,
+      "height": 780,
+      "scale": 1,
+      "pageTheme": "dark",
+      "top": 24,
+      "bottom": 0,
+      "overflow": false,
+      "tabs": [
+        "聊天",
+        "动态，9 条未读",
+        "健康",
+        "目标",
+        "成果库"
+      ],
+      "osVersion": "15",
+      "systemTheme": "Night mode: yes",
+      "bottomNavigationVisible": false,
+      "native": {
+        "statusHeight": 24,
+        "navigationHeight": 0,
+        "windowFocused": true,
+        "keyboardVisible": false,
+        "darkStatusIcons": false,
+        "darkNavigationIcons": false
+      },
+      "status": {
+        "width": 360,
+        "height": 780,
+        "statusHeight": 24,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "navigation": null,
+      "sha256": "972a49a2139adb4b20a9d5e426c7171d4799cb5f1f87f6359e11ed5779241a03"
+    }
+  ],
+  "cleanup": {
+    "headsUpRestored": true,
+    "testPackagesRemoved": true,
+    "adbDisconnected": true,
+    "locksReleased": true
+  },
+  "errors": [],
+  "osVersion": "15",
+  "mainReply": {
+    "selected": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
+    "session": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+    "reply": {
+      "items": [
+        {
+          "eventId": "event-d276961aa43816b93e08c2349045cb494554e2dc37b00806ae469ffb642109ad",
+          "chatId": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
+          "orderKey": "0000000000000000:segment-d1238d6c-af36-4d50-9e41-07a41818be6b:0000000000000000",
+          "revision": 1,
+          "type": "turn.started",
+          "at": "2026-10-12T18:18:45.228Z",
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-9c0c97a6-49ab-4838-90a4-ee484279f9f6",
+            "sessionId": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+            "seq": 0
+          },
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "eventId": "event-0ad349802a0776825fab89a10e76ed029a5bda37411114233069803725f0097c",
+          "chatId": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
+          "orderKey": "0000000000000000:segment-d1238d6c-af36-4d50-9e41-07a41818be6b:0000000000000001",
+          "revision": 1,
+          "type": "user.message",
+          "at": "2026-10-12T18:18:45.728Z",
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-9c0c97a6-49ab-4838-90a4-ee484279f9f6",
+            "sessionId": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+            "seq": 1
+          },
+          "data": {
+            "text": "原生壳里的合成问候",
+            "receiptId": "synthetic-24b0a66b-d5f7-465f-bf0a-401e352f70a8",
+            "truncated": false
+          }
+        },
+        {
+          "eventId": "event-ecf153ab289674447951a2f56228c506e91af84b548656f9e354912cc98072d3",
+          "chatId": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
+          "orderKey": "0000000000000000:segment-d1238d6c-af36-4d50-9e41-07a41818be6b:0000000000000002",
+          "revision": 1,
+          "type": "task.started",
+          "at": "2026-10-12T18:18:46.228Z",
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-9c0c97a6-49ab-4838-90a4-ee484279f9f6",
+            "sessionId": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+            "seq": 2
+          },
+          "data": {
+            "taskId": "cmd-b106e47f-a680-408e-88f8-cca6bd22dee5",
+            "turn": 1,
+            "receiptId": "synthetic-24b0a66b-d5f7-465f-bf0a-401e352f70a8",
+            "commandId": "cmd-b106e47f-a680-408e-88f8-cca6bd22dee5",
+            "requestId": "f9b53108-2ba1-4737-a73a-16d7998feb90",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "eventId": "event-2cf9fd96392038dd081204f3991b6ab4c82fe6a1802eddf658d018198b545b3b",
+          "chatId": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
+          "orderKey": "0000000000000000:segment-d1238d6c-af36-4d50-9e41-07a41818be6b:0000000000000003",
+          "revision": 1,
+          "type": "assistant.message",
+          "at": "2026-10-12T18:18:46.728Z",
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-9c0c97a6-49ab-4838-90a4-ee484279f9f6",
+            "sessionId": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+            "seq": 3
+          },
+          "data": {
+            "text": "合成回复：原生壳里的合成问候"
+          }
+        },
+        {
+          "eventId": "event-640fb4f3da3f874d7f46e1601f8316cfc4ad690e4798f354c18cc5bd61d68833",
+          "chatId": "chat-d336e185-5d9e-4668-a3a0-0a7de7160a59",
+          "orderKey": "0000000000000000:segment-d1238d6c-af36-4d50-9e41-07a41818be6b:0000000000000004",
+          "revision": 1,
+          "type": "turn.ended",
+          "at": "2026-10-12T18:18:47.228Z",
+          "sourceRef": {
+            "kind": "native",
+            "hostId": "host-9c0c97a6-49ab-4838-90a4-ee484279f9f6",
+            "sessionId": "session-51551419-1485-4771-92fa-ffd8fc90cdba",
+            "seq": 4
+          },
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "liveEvents": [],
+      "liveRevision": 0,
+      "olderCursor": "WyJvd25lci1lZTkxYzg2NC0zM2U0LTRmOTItODY4MS05NGQyOWNlOTJhYTkiLCJjaGF0LWQzMzZlMTg1LTVkOWUtNDY2OC1hM2EwLTBhN2RlNzE2MGE1OSIsIjgwNjg5ODc5NDdiMjhmYjIwMjYxYzNhYzgzNTc1NmZkIiwiaGlzdG9yeSIsIjAwMDAwMDAwMDAwMDAwMDA6c2VnbWVudC1kMTIzOGQ2Yy1hZjM2LTRkNTAtOWU0MS0wN2E0MTgxOGJlNmI6MDAwMDAwMDAwMDAwMDAwMCIsIiJd.yCmRzcWSxboMseXa_bwDmBSI6WMhqnFDzlAJECFpo9g",
+      "newerCursor": "WyJvd25lci1lZTkxYzg2NC0zM2U0LTRmOTItODY4MS05NGQyOWNlOTJhYTkiLCJjaGF0LWQzMzZlMTg1LTVkOWUtNDY2OC1hM2EwLTBhN2RlNzE2MGE1OSIsIjgwNjg5ODc5NDdiMjhmYjIwMjYxYzNhYzgzNTc1NmZkIiwiaGlzdG9yeSIsIjAwMDAwMDAwMDAwMDAwMDA6c2VnbWVudC1kMTIzOGQ2Yy1hZjM2LTRkNTAtOWU0MS0wN2E0MTgxOGJlNmI6MDAwMDAwMDAwMDAwMDAwNCIsIiJd.P0rFCMFb0Bad3xoZbWPpkCCeQI5-_amBmXlVbkVkRB8",
+      "hasOlder": false,
+      "hasNewer": false,
+      "syncCursor": "WyJvd25lci1lZTkxYzg2NC0zM2U0LTRmOTItODY4MS05NGQyOWNlOTJhYTkiLCJjaGF0LWQzMzZlMTg1LTVkOWUtNDY2OC1hM2EwLTBhN2RlNzE2MGE1OSIsIjgwNjg5ODc5NDdiMjhmYjIwMjYxYzNhYzgzNTc1NmZkIiwic3luYyIsNSwiIl0.9HPO8dOgO_NM3ptk7Ay8kSysmWulpSbgBRCgfBQTZlA",
+      "deletedAnchor": false,
+      "contentRevision": 1,
+      "chatRevision": 3,
+      "unread": false,
+      "indexState": "ready",
+      "timeZone": "Asia/Shanghai",
+      "accountChanges": {
+        "revision": 32,
+        "modelSettings": "7a977f9931d0f29babeb438ebe22483b4fdd36b46cadc136e956ced767fc5918",
+        "personalization": "8df1e6bd753c6ec585bf88e2fccfc1129218b24767bc1d7751d3b240a3302821",
+        "sessions": "8d977f0001706b1af397e236f070482da074f5c45bb3ce0330bb8d6473bc0a83",
+        "models": "4c879b41c5993fed6e8d9ee1e527ec05c8ca2576b1d596101d35c71f53b2f5f3"
+      }
+    }
+  },
+  "expiredPrompt": {
+    "native": true,
+    "cloudView": {
+      "mode": "login",
+      "step": "email",
+      "email": "",
+      "error": "",
+      "busy": false,
+      "resendAt": 0,
+      "retryAt": 0,
+      "deviceName": "这台设备",
+      "devices": [],
+      "hosts": [],
+      "cachedSession": true,
+      "challengeId": null,
+      "passwordTicket": null,
+      "requestId": null,
+      "modal": true,
+      "codeLoginSupported": true,
+      "resendSeconds": 0,
+      "retrySeconds": 0
+    },
+    "dialogCount": 1,
+    "dialogOpen": true,
+    "currentView": null
+  },
+  "completed": true
+}
