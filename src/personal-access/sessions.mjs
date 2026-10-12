@@ -1,3 +1,4 @@
+import { recentDigestContext } from './daily-digest.mjs';
 import { digest, failure, id, plainObject, validId } from './common.mjs';
 import { CONVERSATION_ID, IMAGE_CONTENT_TYPES } from './constants.mjs';
 import { uniqueSessionOwner } from './store.mjs';
@@ -352,7 +353,17 @@ export function createSessionOperations(context) {
       if (!match) throw failure('CONVERSATION_CONTEXT_UNAVAILABLE', 409);
       const ownerId = match.ownerId;
       const session = context.accountState(ownerId).sessions[sessionId];
-      if (!session?.conversationId) return { state: 'none' };
+      for(let attempt=0;attempt<10;attempt++){
+        const live=context.accountState(ownerId),matching=Object.values(live.commands).find(row=>row.kind==='session.message'&&row.sessionId===sessionId&&(row.payload.modelInputHash??digest(row.payload.text))===messageHash&&['dispatching','accepted_by_dsh'].includes(row.state));
+        if(!matching||matching.state==='accepted_by_dsh')break;
+        await new Promise(resolve=>setTimeout(resolve,50));
+      }
+      const reviewAccount=context.accountState(ownerId);
+      const reviewSource=Object.values(reviewAccount.commands).find(row=>row.kind==='session.message'&&row.sessionId===sessionId&&row.receiptId===receiptId&&row.state==='accepted_by_dsh'&&(row.payload.modelInputHash??digest(row.payload.text))===messageHash&&(row.dshTurn===undefined||row.dshTurn===turn));
+      const reviewDevice=reviewAccount.devices[reviewSource?.sourceDeviceId];
+      let recentContextText='';
+      if(reviewSource&&reviewDevice&&!reviewDevice.revoked&&(reviewSource.sourceAuthEpoch===undefined||reviewSource.sourceAuthEpoch===reviewDevice.authEpoch)&&(!reviewDevice.expiresAt||Date.parse(reviewDevice.expiresAt)>context.timestamp())&&session.recallEnabled!==false){try{recentContextText=recentDigestContext(reviewAccount,context.timestamp(),context.usage.settings(ownerId).timeZone);}catch{/* Optional summaries never block a local chat; settings can clear them. */}}
+      if (!session?.conversationId) return { state: 'none',recentContextText };
       for (let attempt = 0; attempt < 20; attempt++) {
         if (context.closing || context.storageFault) throw failure('CONVERSATION_CONTEXT_UNAVAILABLE', 503);
         const account = context.accountState(ownerId);
@@ -377,7 +388,7 @@ export function createSessionOperations(context) {
               (['password', 'cloud', 'desktop'].includes(device.authKind) && Date.parse(device.expiresAt) <= context.timestamp())) {
             throw failure('CONVERSATION_CONTEXT_UNAVAILABLE', 409);
           }
-          return { state: 'ready', contextText: bound.contextText,
+          return { state: 'ready', recentContextText, contextText: bound.contextText,
             contextHash: bound.contextHash, throughSeq: bound.cutoverSyncSeq,
             truncated: bound.truncated, omittedImages: bound.omittedImages,
             historyMessageCount: bound.historyMessageCount };

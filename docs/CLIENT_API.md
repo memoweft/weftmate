@@ -1510,3 +1510,43 @@ Android（安卓）精确业务路由已登记，**需要新壳版本**，由编
 注销在本机删除之上清本机账户与本账户云绑定。已登录云账户的电脑确认页收当次密码；本机没有其他注册账户时用既有7.9云接口删除云身份。该接口也移除本账户拥有的宿主路由／成员连接；本机仍有其他账户时保留云身份并明确说明，避免更改其他账户连接；密码只留当次页面内存，失败明确保留邮箱／云身份并提供重试。本机应急登录没有云授权时须在账户页重新登录云身份完成7.9，不能把本机解绑称为云端注销。桌面原生桥保留该操作的内容无关回执供注销后的进度读取；其他账号不能读取。动态新增`system.data.operation`，只记类别、结果与操作入口。
 
 Android（安卓）白名单与JVM（Java虚拟机）测试同步上述精确路径；需要新壳版本，由编排统一版本号。Apple（苹果端）接线清单：设置注册表增加同序分类；接全部路径与后台轮询／取消；Mac系统保存框与完成定位；iPhone远程发起并等待Mac／电脑确认；输入账户名与最后确认、云密码仅当次内存；删除／注销清当前账户本机缓存及加密离线副本，Watch随iPhone撤销；跨账号迟到响应丢弃；浅深／窄窗／系统栏及读屏确认。Apple源码本包未改。
+
+
+## 15. 每日摘要与每周回顾（DATA-1）
+
+`GET /personal/v1/daily-summaries`（`sessions:read`）返回 `{items:[DailySummary]}`，按日期降序，只含当前账户的本机摘要；不接受查询参数。该数据不进入云端账号服务和中继持久存储。每天账户时区凌晨 03:00 后整理前一个完整自然日；错过后启动补齐保留范围内缺失日期。日界按时区与夏令时计算，日期以 `YYYY-MM-DD` 标识，重复观察与重启不覆盖已生成的统计。周一首次观察时补最近完整的周一至周日，只有一条周回顾；不足七份摘要时等下一期。没有活跃记录的完整周不发动态。
+
+`DailySummary` 的格式为 `{version:1,day,timeZone,from,to,generatedAt,conversations,tasks,outputs,schedule,usage,memory,health,devices}`。`from` 包含、`to` 不包含，都是 ISO（国际标准日期格式）时刻。各分区独立：
+
+| 分区 | 字段与统计口径 |
+|---|---|
+| `conversations` | `count`、`turns`、`items:[{title,turns,source}]`；计 DSH（助手运行时）中非提醒的真实用户消息，每个历史序号仅计一次。主对话按原会话片段留来源，旁聊同样统计。临时、关闭记忆与已删除的会话排除。 |
+| `tasks` | `count`、`completed`、`blocked`、`items:[{title,state,source}]`；计发生工具操作的消息任务与原生终态事件，普通闲聊不当任务。`executions:[{title,state,source}]` 来自执行记录，`approvals:{count,pending,rejected}` 来自审批回执。 |
+| `outputs` | `count`、`items:[{title,artifactId,source}]`；只计已核验成果库记录，不扫描目录和文件内容。 |
+| `schedule` | `count`、`items:[{title,source}]`；计实际触发的提醒／定时任务，不计只是登记的计划。 |
+| `usage` | `estimatedActiveMinutes` 是每条用户消息后五分钟区间的并集，并裁到当日；不是屏幕时间。`hourlyTurns` 为24个当地小时的用户消息数；`models` 按模型档案含 `requests,inputTokens,outputTokens,unknownRequests`，未知用量保留未知，不能伪造零用量。 |
+| `memory` | `topics:string[]`，复用记忆周报的本机一致性快照，按实际形成日期只取新增记忆主题，不复制记忆原文。 |
+| `health` | 见下方接收契约；无数据时完整空字段。 |
+| `devices` | 预留 `{version:1,status:"unavailable",items:[]}`；后续项期望 `{deviceId,label,platform,activeMinutes}`，时间为当日汇总；本包不采集、不提供设备写入路由。 |
+
+`PUT /personal/v1/daily-summaries/:day/health`（`account:manage`，沿用认证与防伪请求）以当天或保留范围内历史日期替换健康分区，重复同一内容幂等。不创建健康样本或运动记录，不接受逐点数据或额外字段。可以先于当日使用摘要写入；下次日摘要生成时汇入。日期不可在未来、不可超出保留期。请求／回执：
+
+```json
+{
+  "version": 1,
+  "status": "available",
+  "steps": 6500,
+  "sleepMinutes": 450,
+  "restingHeartRateBpm": 63,
+  "exerciseMinutes": 30,
+  "workouts": [{"type": "步行", "minutes": 30}]
+}
+```
+
+回执为 `{day,health}`。四项数值可以为 `null`（未授权／无测量）；`steps` 为非负整数，其余非负有限数值，睡眠／运动分钟最多1440；`workouts` 每项只有短类型与分钟。`status:"unavailable"` 必须四项 `null`、`workouts:[]`。无权限时仍可聊天；Apple（苹果端）后续包负责 HealthKit（苹果健康数据接口）授权、按同一账户时区聚合并发送，失败不阻止使用。
+
+既有 `GET/PATCH /personal/v1/settings/notifications` 增加 `reviewEnabled:true`、`reviewRetentionDays:90`（7–365整数）；界面提供7／30／90／180／365天。`PATCH {reviewClear:true}` 是一次性动作，不保存为偏好；删除所有摘要、健康分区、周回顾和助手背景，从下一完整自然日重新整理。关闭后停止采集与背景注入，仍按保留期清理。摘要保存在本机私有账户存储，账号隔离。设置位于「通知 → 回顾与洞察」，没有首次提示。
+
+动态仍使用已有 `/activity` 路由和 `type:"memory.report"`，增加可选 `weeklyInsight:{from,to,timeZone,text,mode,sources}`；`mode` 为 `statistics` 或 `model`，来源包含短标题、会话引用与可选 `artifactId`，可点回原对话／成果来源。默认静默、不弹系统通知。后台模型仅获最近完整七天的结构化摘要，调用现有后台优先级；无配置、请求失败或重启中断均保留统计版，周内不重试生成。摘要本机持久化；使用用户配置的云模型整理周回顾／聊天时，相关摘要随模型输入发送到该模型提供方，与正常聊天相同。
+
+助手通过现有会话上下文 IPC（进程间通信）获得最近七天最多3600字符的背景，每轮更新，与记忆召回并列；无关问题仍回答当前问题。引用使用 `#weftmate:session:<id>` 或 `#weftmate:library:<id>`，共用内容呈现器在两端打开来源。后台错误不阻塞本机聊天；关闭／清空后下一轮立即停止引用。安卓网页读取和设置沿用已允许的路由；健康新路由用于后续原生接线，本包按边界不改安卓壳。苹果原生需消费 `weeklyInsight` 展示与健康 PUT 接口。
