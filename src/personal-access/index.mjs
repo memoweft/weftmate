@@ -5,6 +5,7 @@ import { finalizeNotifications } from './notification-settings.mjs';
 import { sendHostPush } from './push.mjs';
 import { accountPersonalization } from './personalization.mjs';
 import { createMemoryIngestion } from './memory-ingestion.mjs';
+import { createHistoryImport } from './history-import.mjs';
 import { modelTierFor } from '../model-tier.ts';
 import { currentChatProfile } from '../background-model-selection.mjs';
 import { createBackgroundModels } from './background-model.mjs';
@@ -321,6 +322,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get loginAccount() { return loginAccount; },
     get matchingOrigin() { return matchingOrigin; },
     get memoryIngestion() { return memoryIngestion; },
+    get historyImport() { return historyImport; },
     get memoryManager() { return memoryManager; },
     get healthStore() { return healthStore; },
     get healthRecords() { return healthRecords; },
@@ -747,6 +749,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const offline = await createOfflineService(context);
   const temporaryChats = createTemporaryChats(context);
   const memoryIngestion = createMemoryIngestion(context);
+  const historyImport = createHistoryImport(context);
   dataControls = createDataControls(context);
   for(const ownerId of Object.keys(rootState.accounts)){
     const legacy=accountState(ownerId).dailyDigest?.healthDays;
@@ -785,9 +788,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     recordMemoryUse: activity.memoryDigest.noteUse,
     dataControls,
     captureMemoryTurn: memoryIngestion.capture,
+    importPermission: (ownerId, routeId) => historyImport.permit(ownerId, routeId) ? 'run'
+      : historyImport.owns(ownerId, routeId) && accountState(ownerId).historyImports.find(j => j.routeId === routeId)?.state === 'paused' ? 'wait' : 'stop',
     memoryTurnPolicy: temporaryChats.policy,
     expireTemporaryChats: temporaryChats.sweep,
-    async cleanupMemoryCopies(ownerId, { sourceTexts = [], deleteConversationSnippets = false }) {
+    async cleanupMemoryCopies(ownerId, { sourceTexts = [], affectedIds = [], deleteConversationSnippets = false }) {
       await serial(() => mutate(ownerId, next => { next.memoryCleanupPending = true; }));
       await memoryManager?.discardPendingSources?.(ownerId, { sourceTexts });
       await mainChat.drain(ownerId);
@@ -805,6 +810,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         const schedulesErased = backend.schedules ? await backend.schedules({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
         const goalErased = backend.goals ? await backend.goals({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
         const cleaned = await callBackend(() => backend.cleanupMemoryCopies({ sessionId, ownerId, sourceTexts, deleteConversationSnippets,
+          ...(affectedIds.length ? { affectedIds } : {}),
           ...(schedulesErased?.removedNativeIds?.length ? { scheduleIds: schedulesErased.removedNativeIds } : {}),
           ...(goalErased?.clearedGoalIds?.length ? { goalIds: goalErased.clearedGoalIds } : {}) }));
         sessions.invalidate(ownerId,sessionId);
@@ -877,6 +883,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       await restoreSchedulesWithRetry();
       temporaryChats.start();
       await memoryIngestion.start();
+      await historyImport.start();
       activity.start();
       for (const ownerId of Object.keys(rootState.accounts)) void sessions.initialize(ownerId);
       hostCloudIdentity?.start();
@@ -925,12 +932,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     },
     async beginUsage({ sessionId = null, profileId, ownerId = null }) {
       const binding = sessionId ? sessions.ownerForSession(sessionId) : null;
-      if (sessionId && !binding || ownerId && binding && binding.ownerId !== ownerId) throw failure('SESSION_UNAVAILABLE', 404);
+      const imported = ownerId && historyImport.owns(ownerId, sessionId);
+      if (sessionId && !binding && !imported || ownerId && binding && binding.ownerId !== ownerId) throw failure('SESSION_UNAVAILABLE', 404);
       ownerId ??= binding?.ownerId ?? rootState.legacyOwnerId;
       if (!rootState.accounts[ownerId]) throw failure('ACCOUNT_LOGIN_REQUIRED', 401);
       const model = (await backend.listModels({ ownerId })).find(row => row.id === profileId);
       if (!model || !accountModels.canUseModelProfile(ownerId, profileId)) throw failure('MODEL_UNAVAILABLE', 409);
-      const requestId = await usage.begin(ownerId, { sessionId, profileId, model });
+      const requestId = await usage.begin(ownerId, { sessionId, profileId, model, category: imported ? 'import' : 'conversation' });
       return { ownerId, requestId };
     },
     finishUsage: ({ ownerId, requestId, usage: value, source }) => usage.finish(ownerId, requestId, value, source),
@@ -1004,6 +1012,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         await dataControls.close();
         nextSuggestions.close();
         await memoryIngestion.close();
+        await historyImport.close();
         await temporaryChats.close();
         await activity.close();
         await healthInsights.close();

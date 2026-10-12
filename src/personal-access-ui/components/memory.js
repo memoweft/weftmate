@@ -1,6 +1,17 @@
 /* Desktop memory component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     let resetIngestion = () => {};
+    let importsView, importsOwner;
+    function mountHistoryImports() {
+        const owner = core.state.account?.ownerId;
+        if (!globalThis.WeftHistoryImportView || !owner) return;
+        if (importsView && importsOwner === owner) return;
+        importsView?.destroy(); importsOwner = owner;
+        importsView = WeftHistoryImportView({ target: ui.byId('memory-view'), owner: () => core.state.account?.ownerId,
+            request: core.accessApi, desktop: globalThis.weftmateDesktop?.previewHistoryImport ? globalThis.weftmateDesktop : null,
+            refreshMemory: () => void core.loadMemoryPage() });
+        ui.byId('memory-search-form').before(importsView.element);
+    }
     function paintMemoryAvailability(status) {
         let node = ui.byId('chat-memory-notice');
         if (!node) {
@@ -68,6 +79,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         ui.byId('memory-receipt').hidden = false;
     }
     function renderMemoryItems() {
+        mountHistoryImports();
         let week=ui.byId('memory-week-filter');
         if(!week){week=ui.element('button','button secondary small');week.id='memory-week-filter';week.type='button';week.textContent='正在查看这一周的记忆 · 查看全部';week.onclick=()=>{core.memory.weekFilter=null;void core.loadMemoryPage();};ui.byId('memory-search-form').before(week);}
         week.hidden=!core.memory.weekFilter;
@@ -89,7 +101,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             row.append(button);
             const ids = item.sourceConversationIds ?? (item.sourceSessionId ? [item.sourceSessionId] : []);
             for (const id of ids) { const source = ui.element('button','memory-source-link','来源对话'); source.type='button'; source.setAttribute('aria-label',`查看来源对话：${item.text}`); source.addEventListener('click',async()=>{ui.hideSettingsDialog();try { await core.selectSession(id); } catch(error) { ui.toast(core.failureMessage(error)); }}); source.prepend(WeftIcons.create('chat',16));row.append(source); }
-            if (!ids.length) { const source=ui.element('button','memory-source-link',item.sourceCount ? '查看来源 · 对话未定位' : '查看来源'); source.type='button'; source.addEventListener('click',()=>{void core.openMemoryDetail(item.kind,item.id)});source.prepend(WeftIcons.create('chat',16));row.append(source); }
+            if (!ids.length) { const source=ui.element('button','memory-source-link',item.importSources?.length ? `来自 ${item.importSources[0].appName}${item.importSources[0].originalAt ? '，' + new Intl.DateTimeFormat('zh-CN', {year:'numeric',month:'long'}).format(new Date(item.importSources[0].originalAt)) : ''}的一段对话` : item.sourceCount ? '查看来源 · 对话未定位' : '查看来源'); source.type='button'; source.addEventListener('click',()=>{void core.openMemoryDetail(item.kind,item.id)});source.prepend(WeftIcons.create('chat',16));row.append(source); }
             list.append(row);
         }
         ui.byId('memory-more').hidden = !core.memory.hasMore;
@@ -116,12 +128,16 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         for (const source of sources) {
             const row = ui.element('li', 'memory-source');
             const currentness = source.relation === 'superseded_by' ? '取代这条理解的纠正原话' : currentnessLabels.get(source.currentnessState) ?? '来源状态待确认';
-            const meta = ui.element('p', 'memory-source-meta', `${currentness}${source.recordedAt ? ` · 记录于 ${core.formatDate(source.recordedAt)}` : ''}`);
+            const imported = source.importSource;
+            const meta = ui.element('p', 'memory-source-meta', imported
+                ? `来自 ${imported.appName}，${imported.originalAt ? new Intl.DateTimeFormat('zh-CN', {year:'numeric',month:'long'}).format(new Date(imported.originalAt)) : '日期不明'}的一段对话`
+                : `${currentness}${source.recordedAt ? ` · 记录于 ${core.formatDate(source.recordedAt)}` : ''}`);
             const summary = ui.element('p', 'memory-source-summary', typeof source.summary === 'string' && source.summary.trim()
                 ? source.summary : source.contentAvailable === false ? '此来源当前不可读。' : '摘要当前不可用。');
             const raw = ui.element('p', 'memory-source-raw', source.contentAvailable === true && typeof source.rawContent === 'string'
-                ? `${source.rawContent}${source.rawContentTruncated === true ? '\n（仅显示可读片段）' : ''}` : '原文当前不可用。');
-            row.append(meta, summary, raw);
+                ? `${globalThis.WeftImportSourceText?.(source) ?? source.rawContent}${source.rawContentTruncated === true ? '\n（仅显示可读片段）' : ''}` : '原文当前不可用。');
+            if (imported) row.append(meta, raw);
+            else row.append(meta, summary, raw);
             list.append(row);
         }
     }
