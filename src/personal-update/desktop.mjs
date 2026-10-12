@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { UpdateStore, updateSource } from './store.mjs';
 import { personalAccessUiResources, setPersonalAccessUiResourceReader } from '../personal-access-ui/index.mjs';
-import { updateState, checkForUpdates, quitAndInstall, changeUpdateChannel } from '../update.ts';
+import { updateState, checkForUpdates, quitAndInstall, changeUpdateChannel, requiresManualAppInstall, showPreparedInstaller } from '../update.ts';
+import { manualUpdateMessage } from '../desktop-installation.mjs';
 import { configureUpdateEnvironment, saveDesktopConfig } from '../desktop-config.mjs';
 import { createMobileUiPublisher } from '../personal-access/mobile-ui-release.mjs';
 import { installPreparedUpdate } from '../update-policy.ts';
@@ -36,7 +37,7 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
     { layer: 'mobile-ui', currentVersion: mobileManifest?.version || mobileManifest?.uiVersion || null,
       availableVersion: mobileManifest?.version || mobileManifest?.uiVersion || null, scope: 'host-published',
       status: mobileError ? 'failed' : mobileManifest ? 'device-managed' : 'disabled', error: mobileError, enabled: !!mobile, channel },
-  ], canRestart: updateState().status === 'downloaded', canChangeChannel: !!desktopConfig && !['available', 'checking'].includes(updateState().status), channel };
+  ], canRestart: updateState().status === 'downloaded', manualInstall: requiresManualAppInstall(), canChangeChannel: !!desktopConfig && !['available', 'checking'].includes(updateState().status), channel };
   };
   async function check() {
     await Promise.all([feed ? store.check(feed) : undefined, checkForUpdates(getWindow)]);
@@ -87,6 +88,10 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
   const trusted = event => window && event.sender === window.webContents && event.senderFrame === window.webContents.mainFrame &&
     event.senderFrame.url === window.webContents.getURL() && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
   async function restart() {
+    if (requiresManualAppInstall() && updateState().status === 'downloaded') {
+      showPreparedInstaller();
+      return false;
+    }
     const result = await installPreparedUpdate({ ready: () => updateState().status === 'downloaded', idle: isIdle,
       beforeInstall: beforeAppInstall, install: () => { try { onAppInstall(); } catch { /* diagnostics cannot block installation */ } return quitAndInstall(); } });
     if (!result && app.isPackaged) await cancelAppRollback();
@@ -106,7 +111,7 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
   }
   for (const [channelName, handler] of [['wm:desktop:update-state', state], ['wm:desktop:update-check', check],
     ['wm:desktop:update-channel', setChannel],
-    ['wm:desktop:update-restart', async () => { const restarted = await restart(); return { restarted, ...(restarted ? {} : { reason: '更新尚未就绪、任务仍在运行或更新前备份未完成，请稍后重试' }) }; }]]) {
+    ['wm:desktop:update-restart', async () => { const restarted = await restart(); return { restarted, ...(restarted ? {} : { reason: requiresManualAppInstall() && updateState().status === 'downloaded' ? manualUpdateMessage : '更新尚未就绪、任务仍在运行或更新前备份未完成，请稍后重试' }) }; }]]) {
     ipcMain.handle(channelName, (event, value) => { if (!trusted(event)) throw new Error('Desktop update unavailable'); return handler(value); });
   }
   if (feed || updateState().enabled) { checkTimer = setInterval(() => void check(), 60 * 60 * 1000); checkTimer.unref(); void check(); }

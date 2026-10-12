@@ -49,7 +49,7 @@ export async function buildWindowsRelease(options) {
   if (options['isolate-test-executable'] === 'true' && !identity) throw new Error('An isolated test executable requires a test identity');
   const config = { ...pkg.build, extraMetadata: { version, ...(identity ? { name: `weftmate-${identity}`, desktopAppId: `com.memoweft.weftmate.${identity}`, desktopIdentity: `WeftMate ${identity}` } : {}) },
     extraResources: [{ from: stage, to: '', filter: ['dsh-runtime/**/*', 'relay/**/*'] }, { from: keysFile, to: 'update-trusted-keys.json' }],
-    ...(identity ? { appId: `com.memoweft.weftmate.${identity}`, nsis: { ...pkg.build.nsis, shortcutName: `WeftMate ${identity}`, uninstallDisplayName: `WeftMate ${identity}`, createDesktopShortcut: false } } : {}),
+    ...(identity ? { productName: `WeftMate ${identity}`, appId: `com.memoweft.weftmate.${identity}`, nsis: { ...pkg.build.nsis, shortcutName: `WeftMate ${identity}`, uninstallDisplayName: `WeftMate ${identity}`, createDesktopShortcut: options['test-desktop-shortcut'] === 'true' ? 'always' : false } } : {}),
     ...(options['isolate-test-executable'] === 'true' ? { executableName: `WeftMate-${identity}` } : {}),
     directories: { ...pkg.build.directories, output: join(output, 'build') },
     publish: { provider: 'generic', url: `https://weftmate.com/updates/windows/x64/${channel}/`, channel: channel === 'stable' ? 'latest' : 'preview' } };
