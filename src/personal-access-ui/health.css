@@ -101,3 +101,5 @@ body.health-open :is(.main-chat-tools,#conversation-resources,.usage-title-butto
 .health-page.is-compact>.health-heading { height:0; }.health-page.is-compact>.health-heading h1 { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }.health-page.is-compact .health-date-nav { margin-top:0; }.health-page.is-compact .health-date-nav>button:last-child.health-icon { margin-left:auto; }
 
 .health-page.is-compact .health-insight h3 { font-size:clamp(var(--wm-font-size-16),calc((100vw - var(--wm-space-64))/16),var(--wm-font-size-22)); white-space:nowrap; }
+
+@media(max-width:600px) { .health-page .health-calendar { margin-inline:calc(-1 * var(--wm-space-8)); padding:var(--wm-space-8); }.health-calendar-grid { gap:var(--wm-space-2); } }
