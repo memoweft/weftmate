@@ -207,7 +207,7 @@
         const { payload } = await this.vendor.jwtVerify(trust.trustToken, this.vendor.createLocalJWKSet({ keys: [trust.publicJwk] }), {
           algorithms: ['ES256'], typ: 'wm-host-trust+jwt', issuer: this.config.hostId, audience: jkt,
           requiredClaims: ['iat','exp','jti','sub','hostId','deviceId','jkt','tlsSpki','publicJwk'],
-          maxTokenAge: '120s', currentDate: new Date(this.now()) });
+          maxTokenAge: '120s', clockTolerance:30, currentDate: new Date(this.now()) });
         if (payload.sub !== saved.sub || payload.deviceId !== key.deviceId || payload.hostId !== this.config.hostId ||
             payload.jkt !== jkt || payload.exp - payload.iat > 120 || payload.iat * 1000 > this.now() + 30000 ||
             !/^[A-Za-z0-9_-]{43}$/.test(payload.tlsSpki) ||
