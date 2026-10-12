@@ -47,6 +47,7 @@ function connectionLabel(){return {connected:'电脑连接正常',checking:'已�
 const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
   data: target => { target.append(heading('数据与存储')); const body=el('section'); target.append(body); uiCore.syncMobileIdentity(); WeftDataView(uiCore,body,{toast,desktop:false}); },
   archived: target => archivedSettingsPage(target),
+  healthData: target => {target.append(heading('健康数据'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftHealthView.settings(uiCore,body,{toast});},
   notifications: target => {target.append(heading('通知'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftNotificationsView(uiCore,body,{toast,permissionState:()=>call('notifications.state'),requestPermission:()=>call('notifications.requestPermission'),openSettings:()=>call('notifications.openSettings'),openBatterySettings:()=>call('notifications.openBatterySettings'),poll:()=>call('notifications.poll')})},
   personalization: target => {target.append(heading('个性化'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'personalization',{toast})},
   assistant: target => {target.append(heading('助手'));const body=el('section');target.append(body);uiCore.syncMobileIdentity();WeftPersonalizationView(uiCore,body,'assistant',{toast})},

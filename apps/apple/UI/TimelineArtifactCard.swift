@@ -26,7 +26,7 @@ struct TimelineArtifactCard: View {
                 Menu {
                     Button { Task { await prepare(); if file != nil { exporting = true } } } label: { Label("保存", image: "wm-download") }
                     Button { Task { await prepare(); if file != nil { sharing = true } } } label: { Label("分享", image: "wm-share") }
-                } label: { WeftIcon("more") }.accessibilityLabel("成果操作").accessibilityIdentifier("artifactMenu.\(entry.seq)")
+                } label: { WeftIcon("more").phoneMenuLabel(circle: true) }.phoneIcon().accessibilityLabel("成果操作").accessibilityIdentifier("artifactMenu.\(entry.seq)")
             }.buttonStyle(OutlineActionStyle()).disabled(loading || appModel.historyCachedAt != nil)
             if loading { ProgressView() }
             if let error { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }

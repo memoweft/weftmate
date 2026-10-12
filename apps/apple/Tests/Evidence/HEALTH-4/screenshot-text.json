@@ -1,0 +1,209 @@
+{
+  "frames" : [
+    {
+      "scene" : "health4-dark-additional-authorization",
+      "surface" : "iPhone",
+      "text" : "运营商\n06:09\n0\n-0\n健康\n今日解读\n今天可以按\n自己的节奏来\n昨晚睡眠比较稳定，今天适合轻松\n再多读几项，页面才完整\n心率变异性、呼吸、血氧、手腕温度、睡眠\n分期、最大摄氧量、身高体重和出生年份。\n只读不写，拒绝也能看已有的部分。\n继续\n先看已有的",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-analysis-collapsed",
+      "surface" : "iPhone",
+      "text" : "运营商\n06:10\n健康\nC\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n这几天的变化接近你平时的范围\nV\n睡眠\n82\n正常\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让AI分析这一项\nV\n负荷\n61\n刚好",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-analysis-expanded",
+      "surface" : "iPhone",
+      "text" : "运营商\n06:10\n健康\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n^\n这几天的变化接近你平时的范围\n这几天的变化接近你平时的范围。可以\n保持轻松的活动节奏。\n留意今晚的休息时间\n参考了：近28天的心率变异性\n接着问它\n睡眠\n82\n正常\n主要因为：昨晚的睡眠和你平时差不多\nAl 分析\n让 AI分析这一项",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-analysis-generating",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:10\n健康\nC\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让 AI 分析这一项\n^\n正在看看这一项的变化..\n睡眠\n82\n正常\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让 AI分析这一项\n负荷\n61\n刚好",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-analysis-off-explanation",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:10\n健康\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让AI 分析这一项\n会把这一项每天的汇总数字发给你设置的模型，不\n发明细；随时可以在设置里关掉\n打开 AI 分析\n^\n睡眠\n82\n正常\n主要因为：昨晚的睡眠和你平时差不多\nAl 分析\n让AI分析这一项\nV\n负荷\n61\n刚好",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-ask-draft",
+      "surface" : "iPhone",
+      "text" : "运营商\n06:10\n主对话\n昨晚睡眠比较稳定，今天适合轻松活动。留一\n点时间，让身体慢慢恢复。\n返回健康",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-metric-sixty-day-overlay",
+      "surface" : "iPhone",
+      "text" : "运营商心\n<\n06:10\n心率变异性\n你平时的范围45-55\n相对平时的位置\n7天\n14天\n30天\n60天\n60\n40\n20\n0\n08-14\n08-29\n09-13\n09-28\n灰色是你常见的范围，虚线是这段时间的平均；按住图表\n可以看某一天。\n叠加深夜使用时长\n淡色柱按这段时间最长的深夜使用分钟缩放，显示\n变化关联。",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-offline-cache",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:12\nC\n-0\n健康\n电脑不在线•上次更新 今天 6:11\n今日解读\n今天可以按\n自己的节奏来\n昨晚睡眠比较稳定，今天适合轻松\n活动。留一点时间，让身体慢慢恢复。\n下午出去走一走\n提醒我\n接着问它\n恢复\n78\n正常",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-score-detail",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:09\n恢复\n和你平时差不多\n69\n你平时的范围 63-77\n相对平时的位置\n7天\n14天\n30天\n60天\n80\n60\n40\n20\n10-06\n：10-07\n10-08\n：10-09\n：10-10\n10-11",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-today-card-energy",
+      "surface" : "iPhone",
+      "text" : "运营商\n06:27\n健康\nC\n一0\n让 AI 分析这一项\n压力\n35\n比较平静\n最近一次测量6:27\n趋势估计，不是医学结论\nAl 分析\n让AI 分析这一项\n电能\n72\n还有余力\n100\n75\n50\n25\n：5\n趋势估计，不是医学结论\n：10\n：15",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-today-card-fitnessAge",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:28\n健康\n电能\n72\n还有余力\n：5\n趋势估计，不是医学结论\nAl 分析\n让AI分析这一项\n：10\n体能年龄\n34\n相对你自己的体能估计\n趋势估计，不是医学结论\nAl 分析\n让 AI 分析这一项\nC\n-0\n中\n100\n75\n50\n25\n：15",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-today-card-stress",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:27\n健康\nC\n让 Al分析这一项\n负荷\n61\n刚好\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让 AI分析这一项\n压力\n35\n比较平静\n最近一次测量 6:27\n趋势估计，不是医学结论\nAI 分析\n让 AI 分析这一项",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-today-data",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:09\nC\n0\n-0\n中\n健康\n今日解读\n今天可以按\n自己的节奏来\n昨晚睡眠比较稳定，今天适合轻松\n活动。留一点时间，让身体慢慢恢复。\n下午出去走一走\n提醒我\n接着问它\n恢复\n78\n正常\n主要因为：昨晚的睡眠和你平时差不多",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-today-disconnected",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:11\n健康\n从每天的身体\n变化，慢慢了解自己\n接上 iPhone 的健康数据，就能在这里\n看睡眠、运动和你平时的状态。只有\n汇总送到自己的电脑。\n接上",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-today-insufficient",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:11\nC\n一0\n健康\n今日解读\n今天可以按\n自己的节奏来\n昨晚睡眠比较稳定，今天适合轻松\n活动。留一点时间，让身体慢慢恢复。\n下午出去走一走\n提醒我\n接着问它\n恢复\n78\n再戴几天就有对比了\n主要因为：昨晚的睡眠和你平时差不多",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-today-new-cards-lower",
+      "surface" : "iPhone",
+      "text" : "运营商\n06:11\n健康\n相对你自己的体能管\n趋势估计，不是医学结论\nAI 分析\n让 AI 分析这一项\nC\n昨晚睡眠\n7小时30分\n深睡1小时0分• 快速眼动1小时0分\n20:113:41\n深夜使用电脑20分钟\n身体指标\n静息心率\n60次\/分\n• 正常\nAI分析\n让 AI分析这一项\n心率变异性\n50毫秒\n• 正常\nAl 分析\n让 AI分析这-",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-dark-today-new-cards",
+      "surface" : "iPhone",
+      "text" : "运营商\n06:11\n健康\n35\n比较平静\n最近一次测量 6:11\n趋势估计，不是医学结论\nAl 分析\n让AI 分析这一项\n电能\n72\n还有余力\n：15\n100\n75\n50\n25\n：5\n趋势估计，不是医学结论\nAl 分析\n让 AI 分析这一项\n：10\n体能年龄",
+      "theme" : "dark"
+    },
+    {
+      "scene" : "health4-light-additional-authorization",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:06\n0\n45\n健康\n今日解读\n今天可以按\n自己的节奏来\n昨晚睡眠比较稳定，今天适合轻松\n再多读几项，页面才完整\n心率变异性、呼吸、血氧、手腕温度、睡眠\n分期、最大摄氧量、身高体重和出生年份。\n只读不写，拒绝也能看已有的部分。\n继续\n先看已有的",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-analysis-collapsed",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:07\n健康\n5\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n这几天的变化接近你平时的范围\n0\n<\n睡眠\n82\n—\n正常\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让 AI 分析这一项\n负荷\n61\n刚好",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-analysis-expanded",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:07\n健康\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n^\n这几天的变化接近你平时的范围\n这几天的变化接近你平时的范围。可以\n保持轻松的活动节奏。\n留意今晚的休息时间\n参考了：近28天的心率变异性\n接着问它\n0\n睡眠\n82\n正常\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让 AI分析这一项",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-analysis-generating",
+      "surface" : "iPhone",
+      "text" : "运营商心\n06:07\n健康\n45\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让 AI 分析这一项\n0\n^\n正在看看这一项的变化.\n睡眠\n82\n正常\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让 AI 分析这一项\n负荷\n61\n刚好",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-analysis-off-explanation",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:07\n健康\n45\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让 AI 分析这一项\n会把这一项每天的汇总数字发给你设置的模型，不\n发明细；随时可以在设置里关掉\n打开 AI 分析\n0\n×\n睡眠\n82\n正常\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让 Al 分析这一项\nV\n负荷\n61\n刚好",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-ask-draft",
+      "surface" : "iPhone",
+      "text" : "运营商少\n06:07\n0\n主对话\n昨晚睡眠比较稳定，今天适合轻松活动。留一\n点时间，让身体慢慢恢复。\n返回健康",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-metric-sixty-day-overlay",
+      "surface" : "iPhone",
+      "text" : "运营商心\n<\n06:08\n心率变异性\n0\n你平时的范围 45—55\n相对平时的位置\n7天\n14天\n30天\n60天\n60\n40\n20\n08-14\n08-29\n：09-13\n09-28\n灰色是你常见的范围，虚线是这段时间的平均；按住图表\n可以看某一天。\n叠加深夜使用时长\n淡色柱按这段时间最长的深夜使用分钟缩放，显示\n变化关联。",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-offline-cache",
+      "surface" : "iPhone",
+      "text" : "运营商心\n06:09\n0\n5\n健康\n电脑不在线•上次更新今天 6:09\n今日解读\n今天可以按\n自己的节奏来\n昨晚睡眠比较稳定，今天适合轻松\n活动。留一点时间，让身体慢慢恢复。\n下午出去走一走\n提醒我\n接着问它\n恢复\n78\n正常\n•",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-score-detail",
+      "surface" : "iPhone",
+      "text" : "运营商の\n<\n恢复\n06:06\n和你平时差不多\n69\n你平时的范围 63 77\n相对平时的位置\n7天\n14天\n30天\n60天\n80\n60\n40\n20\n10-06\n10-07\n10-08\n10-09\n：10-10\n10-11",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-today-card-energy",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:27\n健康\n0\n5\n让 AI 分析这一项\n压力\n35\n比较平静\n最近一次测量6:27\n趋势估计，不是医学结论\nAI 分析\n让 AI 分析这一项\n电能\n72\n还有余力\n100\n75\n50\n25\n：5\n趋势估计，不是医学结论\n：10\n：15",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-today-card-fitnessAge",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:27\n健康\n电能\n72\n还有余力\n0\n：5\n：10\n趋势估计，不是医学结论\nAI 分析\n让 AI 分析这一项\n体能年龄\n34\n相对你自己的体能估计\n趋势估计，不是医学结论\nAI 分析\n让AI分析这一项\n0\n5\n，100\n75\n50\n25\n15",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-today-card-stress",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:27\n健康\n0\n45\n让Al分析这一项\n负荷\n61\n刚好\n主要因为：昨晚的睡眠和你平时差不多\nAI 分析\n让 AI 分析这一项\n压力\n35\n比较平静\n最近一次测量 6:27\n趋势估计，不是医学结论\nAI 分析\n让 AI 分析这一项",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-today-data",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:06\n0\n45\n健康\n今日解读\n今天可以按\n自己的节奏来\n昨晚睡眠比较稳定，今天适合轻松\n活动。留一点时间，让身体慢慢恢复。\n下午出去走一走\n提醒我\n接着问它\n恢复\n78\n正常\n主要因为：昨晚的睡眠和你平时差不多",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-today-disconnected",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:09\n0\n健康\n从每天的身体\n变化，慢慢了解自己\n接上iPhone 的健康数据，就能在这里\n看睡眠、运动和你平时的状态。只有\n汇总送到自己的电脑。\n接上",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-today-insufficient",
+      "surface" : "iPhone",
+      "text" : "运营商心\n06:08\n0\n45\n健康\n今日解读\n今天可以按\n自己的节奏来\n昨晚睡眠比较稳定，今天适合轻松\n活动。留一点时间，让身体慢慢恢复。\n下午出去走一走\n提醒我\n接着问它\n恢复\n78\n再戴几天就有对比了\n主要因为：昨晚的睡眠和你平时差不多",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-today-new-cards-lower",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:08\n健康\n相对你自己的体能估计\n趋势估计，不是医学结论\nAl分析\n让 AI 分析这一项\n0\n45\n<\n昨晚睡眠\n7小时30分\n深睡1小时0分•快速眼动1小时0分\n20:08- 3:38\n深夜使用电脑20分钟\n身体指标\n静息心率\n60次\/分\n• 正常\nAI 分析\n让AI分析这一项\n心率变异性\n50毫秒\n• 正常\nAI 分析\n让 AI分析这-",
+      "theme" : "light"
+    },
+    {
+      "scene" : "health4-light-today-new-cards",
+      "surface" : "iPhone",
+      "text" : "运营商の\n06:08\n健康\n0\n45\n35\n比较平静\n最近一次测量6:08\n趋势估计，不是医学结论\nAI 分析\n让 AI 分析这一项\n电能\n72\n还有余力\n100\n75\n50\n25\n0\n：5\n：10\n趋势估计，不是医学结论\nAI 分析\n让 AI 分析这一项\n：15\n休能年龄",
+      "theme" : "light"
+    }
+  ],
+  "syntheticOnly" : true
+}

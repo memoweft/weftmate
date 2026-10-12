@@ -27,9 +27,11 @@ public enum ApprovalMode: String, Codable, CaseIterable, Sendable, Identifiable 
 public struct ApprovalModeSettings: Codable, Equatable, Sendable {
     public let mode: ApprovalMode
     public let allowedCategories: [String]?
+    public var secondOpinionEnabled: Bool? = nil
+    public var effectiveSecondOpinionEnabled: Bool { secondOpinionEnabled ?? true }
 }
 public enum ApprovalDecisionScope: String, Codable, Sendable {
-    case once, conversationCategory = "conversation-category"
+    case once, conversationCategory = "conversation-category", globalCategory = "global-category"
 }
 
 public extension SessionApproval {
