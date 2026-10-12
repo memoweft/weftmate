@@ -46,7 +46,9 @@ export async function sec1SystemBars({origin,cookie,out}) {
         console.log(run('shell','am','start','-W','-f','0x10020000','-n',pkg+'/'+(process.env.WEFTMATE_SEC1_ANDROID_ACTIVITY??'com.memoweft.weftmate.mobile.St4RemoteBrowserActivity'),'-e','st4Url',origin+'/personal/v1/ui','-e','st4Theme',theme).toString());
         // This fixture covers approvals; it does not provision an offline cloud model/replica.
         await evaluate(`(async()=>{const me=await(await fetch('/personal/v1/auth/me')).json();if(me.device.authKind!=='cloud')throw Error('Cloud identity required');sec1Core.cloudOfflineIdentity=()=>null;sec1Core.state.cloudAuth.mode='authenticated';await sec1Core.acceptSession(me);await sec1Core.enterAssistant();await sec1Core.selectSession(${JSON.stringify(sessionId)});document.documentElement.dataset.theme=${JSON.stringify(theme)};window.weftSyncSystemBars?.();})()`);
-        await until("!!document.querySelector('#approval-bar:not([hidden])')");await new Promise(done=>setTimeout(done,200));
+        await until("!!document.querySelector('#approval-bar:not([hidden])')");
+        await until("document.querySelector('#approval-bar .approval-detail')?.getBoundingClientRect().width>=140 && document.querySelector('#approval-bar').getBoundingClientRect().bottom<=innerHeight");
+        await new Promise(done=>setTimeout(done,200));
         console.log(run('shell','am','start','-W','-f','0x10020000','-n',pkg+'/'+(process.env.WEFTMATE_SEC1_ANDROID_ACTIVITY??'com.memoweft.weftmate.mobile.St4RemoteBrowserActivity'),'-e','st4Url',origin+'/personal/v1/ui','-e','st4Theme',theme).toString());
         await new Promise(done=>setTimeout(done,300));
         const focus=run('shell','dumpsys','window').toString().split('\n').find(line=>line.includes('mCurrentFocus'));
