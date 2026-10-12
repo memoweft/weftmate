@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { isAbsolute, delimiter } from 'node:path';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
 import { connectorError, classifyConnectorTool } from './policy.mjs';
 const definitions = new Map(), metadata = new Map(), disposers = [];
 const pending = new Map();
@@ -70,4 +71,11 @@ process.on('message', async message => {
     }
   } catch (error) { send({ id: message.id, ok: false, error: connectorError(error) }); }
 });
-process.on('disconnect', () => { process.exit(0); });
+process.once('disconnect', () => {
+  // The host can terminate without its normal shutdown hook. Keep this worker
+  // alive until its server tree is killed; merely exiting can orphan a server
+  // that has timers or descendants even after its input pipe closes.
+  if (process.platform === 'win32') execFile('taskkill.exe', ['/PID', String(process.pid), '/T', '/F'],
+    { windowsHide: true, timeout: 5000 }, () => process.exit(0));
+  else { try { process.kill(-process.pid, 'SIGKILL'); } catch { process.exit(0); } }
+});
