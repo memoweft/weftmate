@@ -38,7 +38,7 @@ struct ConversationResourceList: View {
                 }
                 if resources.loading { ProgressView("正在读取…") }
                 if let error = resources.error { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
-                Button("查看全部") { Task { await resources.refresh() } }.disabled(resources.loading)
+                Button("查看全部") { Task { await resources.refresh() } }.phoneAction().disabled(resources.loading)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(AppleTokens.Space.p18)
         }.buttonStyle(.plain).frame(idealWidth: 360)
             .task { await resources.refresh() }
@@ -63,9 +63,6 @@ struct ConversationResourcesPanel: View {
             VStack(spacing: AppleTokens.Space.p0) {
                 HStack(spacing: AppleTokens.Space.p10) {
                     #if os(iOS)
-                    Button { resources.visible = false } label: { WeftLabel("返回", icon: "back") }
-                        .accessibilityIdentifier("closeResourcesPanel")
-                    Text("输出与来源").font(AppleTokens.Fonts.headline)
                     Spacer()
                     #else
                     ScrollView(.horizontal) {
@@ -82,7 +79,7 @@ struct ConversationResourcesPanel: View {
                         }
                     }
                     #endif
-                    Button { resources.showingList.toggle() } label: { WeftIcon("plus") }.accessibilityLabel("打开另一个输出或来源")
+                    Button { resources.showingList.toggle() } label: { WeftIcon("plus") }.phoneIcon().accessibilityLabel("打开另一个输出或来源")
                         .accessibilityIdentifier("addResourceTab")
                     #if os(macOS)
                     Button(enlarged ? "还原" : "放大") { enlarged.toggle() }
@@ -91,7 +88,7 @@ struct ConversationResourcesPanel: View {
                 }.buttonStyle(.plain).padding(AppleTokens.Space.p14)
                 Divider()
                 if resources.showingList || resources.activeTab == nil {
-                    ConversationResourceList(resources: resources, memories: memories)
+                    ConversationResourceList(resources: resources, memories: memories).phoneCard().padding(AppleTokens.Space.p12)
                 } else if let tab = resources.activeTab {
                     ResourceTabContent(app: app, resources: resources, tab: tab)
                         .id(tab.id + app.accountEpoch.uuidString)

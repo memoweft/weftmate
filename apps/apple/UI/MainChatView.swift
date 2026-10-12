@@ -11,6 +11,8 @@ struct MainChatView: View {
     @Environment(\.openWindow) private var openWindow
     #endif
     @State private var showingModels = false
+    @State private var dictationPopover = false
+    @State private var showingUsage = false
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var choosingDate = false
@@ -33,10 +35,27 @@ struct MainChatView: View {
             epoch: app.accountEpoch, stateDirectory: app.assistantStateDirectory,
             currentEpoch: { [weak app] in app?.accountEpoch ?? UUID() }, currentSession: { [weak app] in app?.session }))
     }
-    private var days: [ChatDaySection] { ChatDay.sections(model.window.events, timeZone: model.timeZone) }
+    private var days: [ChatDaySection] {
+        #if os(iOS)
+        ChatDay.sections(model.window.displayEvents, timeZone: model.timeZone)
+        #else
+        ChatDay.sections(model.window.events, timeZone: model.timeZone)
+        #endif
+    }
     private var today: String { ChatDay.key(Date(), timeZone: model.timeZone) }
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
+            #if os(iOS)
+            PhoneChatHeader(title: PhonePresentation.title(main: true, assistant: "小纬", conversation: model.chat?.title ?? ""), status: app.phoneConnectionStatus) {
+                Menu {
+                    Button("跳日期", image: ImageResource(name: "wm-clock", bundle: .main)) { draftFocused = false; choosingDate = true }.accessibilityIdentifier("mainChat.date")
+                    Button("搜索", image: ImageResource(name: "wm-search", bundle: .main)) { draftFocused = false; searching.toggle() }.disabled(!model.capabilities.supports("chatSearch")).accessibilityIdentifier("mainChat.search")
+                    Button("输出与来源", image: ImageResource(name: "wm-outputs", bundle: .main)) { draftFocused = false; Task { await model.loadResources() } }.disabled(!model.capabilities.supports("chatResources")).accessibilityIdentifier("mainChat.resources")
+                    Button("本对话用量", image: ImageResource(name: "wm-chart", bundle: .main)) { draftFocused = false; showingUsage = true }
+                    Button("刷新记录", image: ImageResource(name: "wm-sync", bundle: .main)) { Task { await model.read() } }
+                } label: { WeftIcon("more").phoneMenuLabel(circle: true) }.accessibilityLabel("对话菜单").accessibilityIdentifier("mainChat.menu")
+            }
+            #else
             HStack {
                 Button { choosingDate.toggle() } label: { if dynamicTypeSize.isAccessibilitySize { WeftIcon("clock") } else { WeftLabel("跳日期", icon: "clock") } }
                     .buttonStyle(.plain).accessibilityLabel("跳日期").accessibilityIdentifier("mainChat.date")
@@ -46,6 +65,7 @@ struct MainChatView: View {
                 Button { Task { await model.loadResources() } } label: { WeftIcon("outputs") }
                     .buttonStyle(.plain).disabled(!model.capabilities.supports("chatResources")).accessibilityLabel("输出与来源").accessibilityIdentifier("mainChat.resources")
             }.padding(AppleTokens.Space.p12)
+            #endif
             if searching { searchBar }
             if model.indexState != "ready" {
                 Text(model.indexState == "building" ? "正在整理早期记录，日期和搜索结果暂不完整。" : "早期记录整理失败，重新打开可重试。")
@@ -72,8 +92,14 @@ struct MainChatView: View {
                 }.padding(AppleTokens.Space.p24).frame(maxWidth: .infinity)
                 }.defaultScrollAnchor(dynamicTypeSize.isAccessibilitySize ? .top : .center).accessibilityIdentifier("mainChat.noModel")
             } else { timeline }
+            #if os(macOS)
             composer
+            #endif
         }
+        #if os(iOS)
+        .safeAreaInset(edge: .bottom, spacing: AppleTokens.Space.p0) { composer }
+        .toolbar(.hidden, for: .navigationBar)
+        #endif
         .background(Weave.surface).navigationTitle("WeftMate")
         .task(id: "\(model.chat?.activeSessionId ?? "")|\(model.modelID)") { await model.refreshThinking() }
         #if os(iOS)
@@ -89,6 +115,7 @@ struct MainChatView: View {
             }.padding(AppleTokens.Space.p16).frame(minWidth: 300)
                 .accessibilityElement(children: .contain).accessibilityIdentifier("mainChat.datePicker").presentationCompactAdaptation(.popover)
         }
+        .sheet(isPresented: $showingUsage) { SettingsView(model: app, route: .usage(sessionID: model.chat?.activeSessionId), onClose: { showingUsage = false }) }
         .sheet(isPresented: $showingModels) { SettingsView(model: app, route: .init(categoryID: "models"), onClose: { showingModels = false }) }
         .sheet(isPresented: $model.resourceVisible) { MainChatResourcesView(app: app, model: model) }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.item], allowsMultipleSelection: true) { @Sendable result in
@@ -130,16 +157,24 @@ struct MainChatView: View {
         .task(id: "\(scenePhase)|\(model.chat?.activeSessionId ?? "")|\(model.window.generation)") {
             guard scenePhase == .active else { interactions.suspend(); return }
             interactions.activate()
+            var lastDecisionRead = Date.distantPast
             while !Task.isCancelled {
                 await model.changes()
-                if let id = model.chat?.activeSessionId { await interactions.refreshTimeline(sessionID: id) }
+                let readDecisions = Date().timeIntervalSince(lastDecisionRead) >= 1.5
+                if readDecisions, let id = model.chat?.activeSessionId {
+                    lastDecisionRead = Date(); await interactions.refreshTimeline(sessionID: id)
+                }
                 #if os(iOS)
-                _ = await app.watchSnapshotBytes()
+                if readDecisions { _ = await app.watchSnapshotBytes() }
                 #if DEBUG
                 await A16PhoneMeasurement.poll(model)
                 #endif
                 #endif
+                #if os(iOS)
+                try? await Task.sleep(for: .seconds(ReplySnapshots.pollDelay(streaming: model.capabilities.supports("replyStreaming"), running: model.chat?.running == true || model.window.liveEvents.contains { $0.data["streaming"]?.bool == true }, failed: model.error != nil)))
+                #else
                 try? await Task.sleep(for: .seconds(2))
+                #endif
             }
         }
         .onChange(of: model.window.generation) { _, _ in interactions.cancel(); positions.frames.removeAll(); restore = nil; searching = false; importing = false; importEpoch = nil; importGeneration = nil }
@@ -187,17 +222,23 @@ struct MainChatView: View {
                     }
                     ForEach(days) { section in
                         let day = section.date
-                        let rows = section.events.filter { ["user.message", "assistant.message", "side.result", "step.started", "artifact.created"].contains($0.type) }
+                        let rows = section.events.filter { ["user.message", "assistant.message", "assistant.delta", "side.result", "step.started", "artifact.created", "turn.ended", "task.ended"].contains($0.type) }
                         let expanded = day == today || model.window.expandedDays.contains(day)
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                         Button {
                             if expanded { model.window.expandedDays.remove(day) } else { model.window.expandedDays.insert(day) }
                         } label: {
-                            HStack { WeftIcon(expanded ? "chevron" : "right", size: AppleTokens.Space.p16); Text(DeviceDateText.chatDay(day, timeZone: TimeZone(identifier: model.timeZone) ?? .gmt)); Spacer(); Text(model.dayCounts[day].map { "\($0) 条" } ?? "本页 \(rows.count) 条") }
+                            HStack {
+                                WeftIcon(expanded ? "chevron" : "right", size: AppleTokens.Space.p16)
+                                Text(DeviceDateText.chatDay(day, timeZone: TimeZone(identifier: model.timeZone) ?? .gmt)); Spacer()
+                                #if os(macOS)
+                                Text(model.dayCounts[day].map { "\($0) 条" } ?? "本页 \(rows.count) 条")
+                                #endif
+                            }
                                 .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).frame(minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
                         }.buttonStyle(.plain).accessibilityIdentifier("mainChat.day." + day).accessibilityValue(expanded ? "已展开" : "已折叠")
                         if expanded {
-                            ForEach(rows) { event in
+                            ForEach(rows, id: \.presentationID) { event in
                                 MainChatEventRow(app: app, model: model, event: event)
                                     .fixedSize(horizontal: false, vertical: true)
                                     .id(event.id)
@@ -213,7 +254,11 @@ struct MainChatView: View {
                     AppleTokens.Colors.clear.frame(height: 1).id("latest")
                 }.padding(AppleTokens.Space.p20).frame(maxWidth: 760).frame(maxWidth: .infinity)
                 .background(MainChatPixelScroll(onReady: { pixelScroll = $0 }).frame(width: 0, height: 0))
-            }.coordinateSpace(name: "mainChatScroll")
+            }
+            #if os(iOS)
+            .scrollDismissesKeyboard(.interactively)
+            #endif
+            .coordinateSpace(name: "mainChatScroll")
             .task(id: model.target) {
                 guard let anchor = model.target else { return }
                 positions.following = false
@@ -224,14 +269,20 @@ struct MainChatView: View {
                 guard !Task.isCancelled else { return }
                 proxy.scrollTo(anchor.eventID, anchor: .top)
             }
-            .onChange(of: model.window.events.last?.id) { _, _ in if positions.following { proxy.scrollTo("latest", anchor: .bottom) } }
+            .onChange(of: model.window.displayEvents.last?.text) { _, _ in if positions.following { proxy.scrollTo("latest", anchor: .bottom) } }
             .overlay(alignment: .bottomTrailing) {
                 if !model.window.events.isEmpty {
-                Button("回到底部") {
+                Button {
                     positions.following = true
                     Task { await model.returnToLatest(); proxy.scrollTo("latest", anchor: .bottom) }
+                } label: {
+                    #if os(iOS)
+                    WeftIcon("chevron")
+                    #else
+                    Text("回到底部")
+                    #endif
                 }
-                    .font(AppleTokens.Fonts.caption).buttonStyle(OutlineActionStyle()).padding(AppleTokens.Space.p12).accessibilityIdentifier("mainChat.latest")
+                    .font(AppleTokens.Fonts.caption).buttonStyle(OutlineActionStyle()).phoneIcon().padding(AppleTokens.Space.p12).accessibilityLabel("回到底部").accessibilityIdentifier("mainChat.latest")
                 }
             }
         }
@@ -266,11 +317,15 @@ struct MainChatView: View {
                 }
             }
             ConversationApprovalBar(model: interactions, events: model.nativeEvents)
+                #if os(iOS)
+                .padding(.horizontal, AppleTokens.Space.p12)
+                #endif
             if model.chat?.contextOrganizing == true { Text("正在整理上下文，消息将排队发送。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             if model.chat?.relayError != nil { Text("上下文整理未完成，草稿已保留。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             ForEach(model.attachments) { file in
                 HStack { Text(file.original.name); Button("移除") { file.removeTemporaryFiles(); model.attachments.removeAll { $0.id == file.id } } }.buttonStyle(OutlineActionStyle()).font(AppleTokens.Fonts.caption)
             }
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
             TextField(composerPlaceholder, text: Binding(get: { model.draft }, set: { model.setDraft($0) }), axis: .vertical).lineLimit(1...6)
                 .textFieldStyle(.plain).focused($draftFocused).disabled(!model.models.contains(where: \.configured)).accessibilityIdentifier("mainChat.draft")
             if dynamicTypeSize.isAccessibilitySize { modelSelection }
@@ -302,13 +357,18 @@ struct MainChatView: View {
                         Button { A16TestSupport.addAttachment(model) } label: { Label("添加合成附件", image: "wm-file") }.accessibilityIdentifier("mainChat.syntheticAttachment")
                     }
                     #endif
-                } label: { WeftIcon("plus").frame(minWidth: AppleTokens.Space.p44, minHeight: AppleTokens.Space.p44) }
+                } label: { WeftIcon("plus").phoneMenuLabel(circle: true, onCard: true) }
                 #if os(macOS)
                 .menuStyle(.borderlessButton).fixedSize()
                 #endif
-                .menuOrder(.fixed).disabled(!model.models.contains(where: \.configured)).accessibilityLabel("添加").accessibilityIdentifier("mainChat.plus")
-                Spacer()
+                .phoneIcon().phoneComposerControl(circle: true).menuOrder(.fixed).disabled(!model.models.contains(where: \.configured)).accessibilityLabel("添加").accessibilityIdentifier("mainChat.plus")
                 if !dynamicTypeSize.isAccessibilitySize { modelSelection }
+                Spacer(minLength: AppleTokens.Space.p0)
+                #if os(iOS)
+                Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic") }.phoneIcon(quiet: true)
+                    .accessibilityLabel("语音输入").accessibilityIdentifier("mainChat.dictation")
+                    .popover(isPresented: $dictationPopover) { Text("使用系统听写输入文字").font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover) }
+                #endif
                 if model.pending != nil {
                     if model.command?.state == "rejected" {
                         Button("编辑后重试") { model.editRejectedRequest() }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("mainChat.editRejected")
@@ -321,13 +381,37 @@ struct MainChatView: View {
                 Button {
                     draftFocused = false
                     if stop { Task { await stopTask() } } else { Task { await model.send() } }
-                } label: { WeftIcon(stop ? "stop" : "send") }.buttonStyle(PrimaryActionStyle(fillsWidth: false))
+                } label: { WeftIcon(stop ? "stop" : "send") }.buttonStyle(PrimaryActionStyle(fillsWidth: false)).phoneIcon(primary: true)
                     .disabled(model.sending || stopping || (!stop && ((model.draft.isEmpty && model.attachments.isEmpty) || model.pending != nil || model.chat?.sendAvailable != true || (model.chat?.activeSessionId == nil && model.modelID.isEmpty) || !model.capabilities.supports("chatSend"))))
                     .accessibilityLabel(stop ? "停止" : "发送").accessibilityIdentifier("mainChat.send")
             }
-        }.padding(AppleTokens.Space.p16).background(Weave.soft)
+            }
+            #if os(iOS)
+            .phoneComposerCard()
+            #endif
+        }
+        #if os(iOS)
+        .padding(.top, AppleTokens.Space.p8)
+        #else
+        .padding(AppleTokens.Space.p16).background(Weave.soft)
+        #endif
     }
     @ViewBuilder private var modelSelection: some View {
+        #if os(iOS)
+        if model.models.contains(where: \.configured) {
+            Menu {
+                if model.chat?.activeSessionId == nil {
+                    Picker("模型", selection: $model.modelID) { ForEach(model.models.filter(\.configured)) { Text($0.name).tag($0.id) } }
+                }
+                Button("配置模型") { showingModels = true }
+            } label: {
+                HStack(spacing: AppleTokens.Space.p4) {
+                    Text(model.models.first(where: { $0.id == (model.chat?.modelProfileId ?? model.modelID) })?.name ?? "模型").font(AppleTokens.Fonts.caption).lineLimit(1)
+                    WeftIcon("chevron", size: AppleTokens.Space.p12)
+                }.phoneMenuLabel(onCard: true)
+            }.buttonStyle(PhoneActionStyle()).phoneComposerControl().accessibilityLabel("模型选择").accessibilityIdentifier("mainChat.model")
+        }
+        #else
         if model.models.contains(where: \.configured) {
             if model.chat?.activeSessionId == nil {
                 Picker("模型", selection: $model.modelID) { ForEach(model.models.filter(\.configured)) { Text($0.name).tag($0.id) } }
@@ -337,6 +421,7 @@ struct MainChatView: View {
                     .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             }
         }
+        #endif
     }
     private func captureImportScope() { importEpoch = app.accountEpoch; importGeneration = model.window.generation }
     #if os(macOS)
@@ -383,7 +468,7 @@ struct MainChatEventRow: View {
     @State private var attachmentPreview: ConversationAttachmentReference?
     @State private var detail: TimelineDetail?
     @State private var expanded = false
-    private var message: Bool { event.type == "user.message" || event.type == "assistant.message" }
+    private var message: Bool { event.type == "user.message" || event.type == "assistant.message" || event.type == "assistant.delta" }
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
             if event.type == "side.result" {
@@ -399,8 +484,8 @@ struct MainChatEventRow: View {
             } else if message {
                 HStack {
                     if event.type == "user.message" { Spacer(minLength: AppleTokens.Space.p32) }
-                    if event.type == "assistant.message", model.query.isEmpty {
-                        MessageBodyView(text: event.text, messageID: event.id).frame(maxWidth: .infinity, alignment: .leading)
+                    if event.type.hasPrefix("assistant."), model.query.isEmpty {
+                        MessageBodyView(text: event.text, messageID: event.presentationID).frame(maxWidth: .infinity, alignment: .leading)
                     } else {
                         highlighted(event.text).textSelection(.enabled).font(AppleTokens.Fonts.body).lineSpacing(AppleTokens.Space.p5)
                             .padding(AppleTokens.Space.p12).background(event.type == "user.message" ? Weave.accentSoft : Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
@@ -416,7 +501,24 @@ struct MainChatEventRow: View {
                         ConversationAttachmentTile(model: app, reference: .sessionImage(image, session)) { attachmentPreview = .sessionImage(image, session) }
                     }
                 }
-            } else if event.type == "step.started" || event.type == "artifact.created" {
+            } else if event.type == "artifact.created" {
+                #if os(iOS)
+                if let sessionID = event.sessionID, let bundle = model.artifactBundle(event) { ReplyArtifactList(app: app, sessionID: sessionID, bundle: bundle) }
+                #else
+                Button { expanded.toggle(); if expanded { Task { await readDetail() } } } label: {
+                    HStack { WeftIcon(expanded ? "chevron" : "right", size: AppleTokens.Space.p16); Text(OperationNames.text(event.data["summary"]?.string ?? event.type)) }
+                        .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                }.buttonStyle(.plain)
+                if expanded, let detail { Text(detail.text).font(AppleTokens.Fonts.caption).textSelection(.enabled) }
+                #endif
+            } else if event.type == "turn.ended" || event.type == "task.ended" {
+                #if os(iOS)
+                if let sessionID = event.sessionID {
+                    let outcome = ReplyOutcome.classify(events: model.sessionEvents(sessionID), taskID: event.data["taskId"]?.string ?? "turn-\(event.data["turn"]?.int ?? -1)")
+                    Text(outcome.text).font(AppleTokens.Fonts.caption).foregroundStyle(outcome.prominent ? Weave.danger : Weave.muted).accessibilityIdentifier("replyOutcome")
+                }
+                #endif
+            } else if event.type == "step.started" {
                 Button { expanded.toggle(); if expanded { Task { await readDetail() } } } label: {
                     HStack { WeftIcon(expanded ? "chevron" : "right", size: AppleTokens.Space.p16); Text(OperationNames.text(event.data["summary"]?.string ?? event.type)) }
                         .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
@@ -425,7 +527,7 @@ struct MainChatEventRow: View {
             }
         }
         .modifier(MessageActionsPresentation(app: app, id: event.id, text: event.text, at: event.at,
-            user: event.type == "user.message", enabled: message,
+            user: event.type == "user.message", enabled: message && event.type != "assistant.delta",
             latest: event.id == model.window.events.last?.id,
             menuID: "mainChat.messageMenu." + event.id,
             quote: { model.setDraft(model.draft + (model.draft.isEmpty ? "" : "\n\n") + "> " + event.text.replacingOccurrences(of: "\n", with: "\n> ") + "\n") },

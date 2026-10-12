@@ -1,3 +1,4 @@
+import './apple3-health-presentation.test.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {checkAppleCopy, scanAppleCopy, swiftCopy} from '../Scripts/check_ui_copy.mjs';

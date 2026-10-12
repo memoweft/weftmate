@@ -81,7 +81,7 @@ test('the fifth mobile tab opens health, keeps other tabs reachable and quotes w
   try{
     const page=await browser.newPage({viewport:{width:360,height:780},isMobile:true,hasTouch:true});
     await page.route('**/bridge.js',r=>r.fulfill({contentType:'text/javascript',body:'// authenticated HTTP test'}));
-    await page.route('**/personal/v1/**',async r=>{const u=new URL(r.request().url());if(u.pathname.includes('/health/')){if(r.request().method()==='POST')reminders++;return r.fulfill({json:health.reply(u.href)});}const response=await r.fetch({url:f.origin+u.pathname+u.search,headers:{...r.request().headers(),origin:f.origin}});await r.fulfill({response});});
+    await page.route('**/personal/v1/**',async r=>{const u=new URL(r.request().url());if(/\/health\/(?:overview|calendar)$|\/health\/metrics\/|\/remind$/.test(u.pathname)){if(r.request().method()==='POST')reminders++;return r.fulfill({json:health.reply(u.href)});}const response=await r.fetch({url:f.origin+u.pathname+u.search,headers:{...r.request().headers(),origin:f.origin}});await r.fulfill({response});});
     await page.goto(f.mobileUrl);await page.waitForFunction(()=>state.booted);
     const login=await page.request.post(f.origin+'/personal/v1/auth/login',{data:f.credentials,headers:{origin:f.origin}});assert.equal(login.status(),200);
     await page.evaluate(async identity=>{state.loggedIn=true;state.owner=identity.account.ownerId;state.username=identity.account.username;state.deviceId=identity.device.id;state.authEpoch++;document.body.classList.remove('cloud-auth-active');$('cloud-auth-page').classList.remove('active');uiCore.syncMobileIdentity();await listSharedSessions();await uiCore.selectMainChat();},await login.json());

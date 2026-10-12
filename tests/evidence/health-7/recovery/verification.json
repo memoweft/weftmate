@@ -1,0 +1,12 @@
+{
+  "realElectron": true,
+  "syntheticOnly": true,
+  "realModelRequests": 0,
+  "mode": "recovery",
+  "screenshots": [
+    "mobile-390-today-six-dark.png",
+    "mobile-390-recovery-card-dark.png"
+  ],
+  "checks": [],
+  "errors": []
+}

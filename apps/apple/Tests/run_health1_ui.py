@@ -32,7 +32,7 @@ try:
     # No simulator settings are changed. Theme is an app-only launch argument.
     with tempfile.NamedTemporaryFile(suffix='.xctestrun',dir=a.xctestrun.parent) as f:
         f.write(plistlib.dumps(config));f.flush()
-        test=subprocess.Popen(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',f.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','2','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/HEALTH1UITests/test'+a.theme.title()+'DailyHealth','-resultBundlePath',str(a.result)],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+        test=subprocess.Popen(['xcodebuild','test-without-building','-collect-test-diagnostics','never','-xctestrun',f.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','4','-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-only-testing:WeftMatePhoneUITests/HEALTH1UITests/test'+a.theme.title()+'DailyHealth','-resultBundlePath',str(a.result)],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
         for line in test.stdout:print(re.sub(r"Type '.*?' into","Type <synthetic input redacted> into",line),end='',flush=True)
         status=test.wait()
     a.evidence.mkdir(parents=True,exist_ok=True)
@@ -57,10 +57,12 @@ try:
             for attachment in item['attachments']:
                 name=attachment['suggestedHumanReadableName'].split('_0_')[0]
                 if name.startswith('health1-'):shutil.copyfile(Path(out)/attachment['exportedFileName'],a.evidence/(name+'.png'))
-    (a.evidence/('validation-'+a.theme+'.json')).write_text(json.dumps({'theme':a.theme,'passed':summary['passedTests'],'failed':summary['failedTests'],'skipped':summary['skippedTests'],'simulatorsAtOnce':1,'realCloud':True,'realHost':True,'fileMail':True,'syntheticRelayRoute':True,'systemStatusBar':True},indent=2)+'\n')
+    (a.evidence/('validation-'+a.theme+'.json')).write_text(json.dumps({'theme':a.theme,'passed':summary['passedTests'],'failed':summary['failedTests'],'skipped':summary['skippedTests'],'simulatorsAtOnce':1,'realCloud':True,'realHost':True,'realHostAuthentication':True,'healthRecordService':'synthetic-v2-contract','realHealthStorage':False,'fileMail':True,'syntheticRelayRoute':True,'systemStatusBar':True},indent=2)+'\n')
     if status or summary['passedTests']!=1 or summary['failedTests'] or summary['skippedTests']:raise RuntimeError('Native daily health journey did not pass')
 finally:
-    subprocess.run(['xcrun','simctl','shutdown',a.simulator],capture_output=True)
+    subprocess.run(['xcrun','simctl','shutdown','all'],capture_output=True)
+    import time
+    time.sleep(30)
     fixture.terminate()
     try:fixture.wait(timeout=20)
     except subprocess.TimeoutExpired:fixture.kill();fixture.wait()
