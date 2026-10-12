@@ -131,7 +131,9 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const instructions = field('项目说明', ui.element('textarea')); instructions.value = project?.instructions || ''; instructions.rows = 5; instructions.maxLength = 16000;
         instructions.placeholder = '给助手的固定说明，例如背景、编码规范或写作要求';
         const permission = field('文件权限', ui.element('select')); permission.append(new Option('只读', 'read-only'), new Option('可写', 'write')); permission.value = project?.permission || 'write';
-        body.append(ui.element('p', 'field-help', '项目说明会自动带给模型。可写权限仅适用于项目文件夹；危险操作继续按对话审批模式处理。'));
+        body.append(ui.element('p', 'field-help', '项目说明会自动带给助手。可写范围是这个文件夹；需要确认的操作仍会先问你。'));
+        let projectRules={...(project?.permissionRules??{})};
+        if(project){body.append(ui.element('h3','','操作权限'));const rules=ui.element('section');body.append(rules);globalThis.WeftPermissionRulesView(core,rules,{project,changed:value=>{projectRules=value;}});}
         const notice = ui.element('p', 'form-error'); notice.setAttribute('role', 'alert'); body.append(notice);
         const footer = ui.element('div', 'dialog-footer');
         const cancel = ui.element('button', 'button secondary', '取消'); cancel.type = 'button'; cancel.onclick = () => dialog.close();
@@ -141,7 +143,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         const requestId = crypto.randomUUID();
         form.onsubmit = async event => { event.preventDefault(); save.disabled = true; notice.textContent = '';
             try { const fields={name:name.value.trim().normalize('NFC'),instructions:instructions.value,permission:permission.value};
-                if(project)await core.saveProject(project,fields);
+                if(project)await core.saveProject(project,{...fields,permissionRules:projectRules});
                 else await globalThis.weftmateDesktop.createFolderProject({...fields,requestId,rootPath:folder.value.trim()});
                 await core.refreshSessionProjects();ui.renderSessions();dialog.close(); }
             catch (error) { notice.textContent = projectError(error); } finally { save.disabled = false; } };

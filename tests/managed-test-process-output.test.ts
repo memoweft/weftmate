@@ -5,6 +5,20 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runManagedTestProcess } from './helpers/managed-test-process.mjs';
 
+test('a completed Windows runner cleans its owned detached descendant before removing the scope',{skip:process.platform!=='win32'},async()=>{
+  const scope=mkdtempSync(join(tmpdir(),'weftmate-managed-descendant-')),pidFile=join(scope,'child.pid');
+  let pid;
+  try{
+    const source=`const {spawn}=require('node:child_process');const fs=require('node:fs');
+      const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)',${JSON.stringify(scope)}],{stdio:'ignore',windowsHide:true,detached:true});
+      fs.writeFileSync(${JSON.stringify(pidFile)},String(child.pid));child.unref();`;
+    const result=await runManagedTestProcess(process.execPath,['-e',source],{env:process.env,commandRoots:[scope]});
+    assert.equal(result.status,0);pid=Number((await import('node:fs')).readFileSync(pidFile,'utf8'));
+    let alive=true;for(let i=0;i<20&&alive;i++){try{process.kill(pid,0);await new Promise(resolve=>setTimeout(resolve,50));}catch{alive=false;}}
+    assert.equal(alive,false,'normal runner completion releases its detached child');
+  }finally{if(pid)try{process.kill(pid);}catch{}rmSync(scope,{recursive:true,force:true});}
+});
+
 test('managed output callback receives both streams before exit while final collection stays complete', async()=>{
   const scope=mkdtempSync(join(tmpdir(),'weftmate-managed-output-')),release=join(scope,'release');
   let ready:()=>void=()=>{},completed=false,forced=false;

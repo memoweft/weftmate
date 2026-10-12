@@ -5,6 +5,7 @@ import { uiCoreBrowserAssets as uiCoreAssets } from '../ui-core/manifest.mjs'
 import renderAssets from './render-assets.json' with {type: 'json'};
 
 const files = new Map([
+  ['/personal/v1/ui/permission.css', ['permission.css','text/css; charset=utf-8']],
   ['/personal/v1/ui/components/data.js', ['components/data.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/data.css', ['data.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/help.css', ['help.css','text/css; charset=utf-8']],

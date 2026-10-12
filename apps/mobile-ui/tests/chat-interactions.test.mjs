@@ -1161,7 +1161,7 @@ function answeredApproval(row,requestId,outcome){return {...row,status:'answered
 test('UI-2a category approval preserves scope and original request through timeout and restart',async()=>{
   const h=harness();prepareApprovalChat(h);const row=syntheticApproval({riskCategories:['delete','overwrite']});await readApprovals(h,[row]);
   assert.equal(approvalCard(h).querySelector('.approval-actions').children.length,2);
-  assert.equal(approvalCard(h).querySelector('.approval-detail').children.find(node=>node.dataset.approvalChoice==='conversation-category').disabled,false);
+  assert.equal(approvalCard(h).querySelector('.approval-actions').children.some(node=>node.dataset.approvalChoice==='global-category'),false,'delete cannot be allowed permanently');
   assert.match(allText(approvalCard(h)),/删除文件、覆盖文件.*可能无法撤销/);
   const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once',approvalContext(),false,'conversation-category')");
   const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide'),params=h.bridge[request].params;
@@ -1180,7 +1180,8 @@ test('UI-2a category approval preserves scope and original request through timeo
 
 test('UI-2a category permission remains unavailable without a server risk category',async()=>{
   const h=harness();prepareApprovalChat(h);await readApprovals(h,[syntheticApproval()]);
-  assert.equal(approvalCard(h).querySelector('.approval-detail').children.find(node=>node.dataset.approvalChoice==='conversation-category').disabled,true);
+  assert.equal(approvalCard(h).querySelector('.approval-actions').children.some(node=>node.dataset.approvalChoice==='global-category'),false);
+  await h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once',approvalContext(),false,'global-category')");
   await h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once',approvalContext(),false,'conversation-category')");
   assert.equal(h.bridge.some(item=>item.method==='shared.approvals.decide'),false);
 });

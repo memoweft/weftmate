@@ -50,7 +50,7 @@ try {
     await page.getByRole('button', { name: '批准', exact: true }).waitFor({state:'visible'})
     assert.equal(await page.getByRole('button', { name: '批准', exact: true }).count(), 1)
     await page.getByRole('region', { name: '待批准操作' }).getByText(/要运行命令/).click()
-    await page.getByRole('button', { name: '总是允许此类', exact: true }).waitFor()
+    await page.getByRole('button', { name: '以后这类都允许', exact: true }).waitFor()
     await page.getByRole('button', { name: '拒绝', exact: true }).waitFor()
     async function selectMode(label) {
       await page.getByRole('button', { name: '账户菜单' }).click()

@@ -263,14 +263,26 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 | GET `/sessions/{sessionId}/approval-mode` | 无 | 200 `{"mode":"auto","allowedCategories":[]}` | 404 `SESSION_UNAVAILABLE` | 桌；手机/Android/Apple 菜单另包，接口可用 |
 | PATCH `/sessions/{sessionId}/approval-mode` | `{"mode":"ask"}` | 200 同上；对话内持久保存，下次工具调用采用最新值 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE` | 桌 |
-| GET `/settings/approvals` | 无 | 200 `{"mode":"auto"}` | — | 桌 |
-| PATCH `/settings/approvals` | `{"mode":"auto"}` | 200 同上；按账户保存，只改变新对话默认值 | 400 `INVALID_REQUEST` | 桌 |
+| GET `/settings/approvals` | 无 | 200 `{mode,rules,types}`；`rules` 为账户自定义规则，缺项沿用当前模式；`types` 含九类及默认说明 | — | 桌 / 手机网页 |
+| PATCH `/settings/approvals` | `{mode?,rules?:{[type]:allow/ask/deny/null}}`，至少一项 | 200 同上；`mode` 只改新对话，`rules` 下次工具调用生效，`null` 恢复默认 | 400 `INVALID_REQUEST` | 桌 / 手机网页 |
 
 模式枚举：`auto` 自动（推荐，有风险才问）；`ask` 每次询问（普通读取/执行也询问）；`accept-edits` 自动接受文件修改（创建、编辑、覆盖文件直接做，删除和其它危险类别仍询问）；`plan` 先出计划（DSH 原生 `exit_plan_mode` 经本节提问接口确认后按自动执行）；`allow-all` 全部允许（客户端选中前必须明确提示删除/覆盖、系统修改、安装、发送/发布、付款可能直接执行且无法撤销）。口头检查点由系统提示让模型遵守，不改保存的模式。
 
 列表新到旧，返回所有状态：`pending / answered / resolved / unavailable`。审批记录另含 `sourceCommandId,sourceReceiptId,turn,callId,rootCallId`，可有 `riskCategories`，枚举为 `delete / overwrite / system / install / external / spend / execute`；处理后可有 `decisionScope,outcome,resolvedAt`。`conversation-category` 仅用于允许有类别的审批，把这张卡包含的类别授权给本对话后续操作，其它对话不继承；拒绝不能带 scope。重试使用原 requestId、outcome、scope，不同 scope 也报冲突。旧客户端省略 scope 仍为允许一次。列表读取会刷新实时状态；待答复超过十分钟变为 `unavailable`，原生工具收到 unavailable 并将失败返回模型，迟到答复报409。POST回执保持登记时的 `answered`，重放旧回执不能覆盖较新的 `resolved`。
 
 每批问题按原顺序完整作答：`answers` 数量与问题数量相同、`id` 对应；`selected` 选项标签不可重复，可带非空 `custom`。单选不能同时给选项与自定义；多选由 `multiSelect` 标记。问题可含 `header,detail,intent:{kind:"plan-review",approve:"<label>"}`；计划确认只退出原生计划状态，之后仍执行自动风险审批，不授予危险工具权限。`answerAcceptedAt` 才是个人入口答案被消费的确认，200/`outcome:"answered"` 本身不是。
+
+ST-2：操作类型为 `read/write/delete/command/network/external/spend/install/system`。删除、对外发送、花钱拒绝 `allow`；未自定义时完整保留 D12 现有审批模式和新建文件 / 覆盖文件的区别。项目 `permissionRules` 按类别覆盖账户设置，未设置的类别继承；`PATCH /projects/{id}` 与公开项目对象增加该可选字段，保存仍遵循原 `expectedRevision` 和运行中项目限制。
+
+审批公开行增加可选 `operationCategories:string[]`、`canAlwaysAllow:boolean`；POST 审批的 `scope` 可为 `global-category`（只允许 `outcome:allowed-once` 且 `canAlwaysAllow:true`），在提交原审批决定的同一次账户写入中设置对应全局类别为 `allow`。原 `once/conversation-category` 兼容，已决定的请求仍用原 ID 与原体重放。
+
+| 方法 / 路径 | 输入 | 返回 / 说明 |
+|---|---|---|
+| GET `/execution-records` | `type?,projectId?,since?,until?,before?,limit?`；`projectId=none` 为无项目，时间为可解析日期，`limit` 1–200 默认100 | `{items,hasMore,nextBefore,projects}`；按时间倒序，`before` 是同筛选上一页的末条 ID |
+
+记录字段：`id,at,sessionId,conversationId,conversationName,projectId,projectName,types,summary,result,executionState`，自动操作另有 `ruleSource:default/global/project`。`result` 为 `allowed/rejected/automatic/blocked/pending/unavailable`；允许表示许可，失败等实际执行状态由 `executionState` 提供。投影来自原命令的审批 / 工具记录；同一次操作有审批时只显示该审批，保留与删除沿用原会话 / 命令数据，不另建存储。身份验证为 `sessions:read`；规则写入沿用 `commands:write` 与 CSRF（跨站请求伪造）验证。旧客户端可忽略新增字段。
+
+手机网页可查看与修改全局规则，项目单独设置沿用电脑上的项目设置；安卓新增路由需要白名单放行 `/personal/v1/execution-records`（含以上查询）并支持审批 `global-category`，本包按边界未改原生壳。Apple（苹果客户端）需接九类设置、项目 `permissionRules`、审批快捷操作与执行记录入口。
 
 ### 3.8 成果下载（3）
 
@@ -1284,6 +1296,18 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 
 删除会话 / D33遗忘沿 `eraseChatCopies` 清动态摘要、动作、原生观察摘要与待完成投影；无正文墓碑和抑制水位防止旧通知、旧回执、迟到观察或重启重建正文。账户删除带走整个账户存储。临时 / 混合临时来源在持久化前只保留泛化标题、原来源ID和安全动作：完成摘要固定“临时对话中的任务已完成”，失败 / 停止也只描述状态；临时审批 / 问题不带对象、问题正文或工具参数。此规则同时约束系统通知。
 
+#### MEM-3 · 记忆周报
+
+既有 `memory.report` 条目可追加 `memoryDigest`，包含 `{key,from,to,timeZone,addedCount,correctedCount,forgottenCount,moreCount,added,corrected,review}`。三组条目为 `{kind,id,text,topic,status,reviewReason?,statusLabel?}`；`status` 为 `current|corrected|confirmed|forgotten|unavailable`。已忘掉或已不可用的条目清空 `text`，分别显示无内容状态；停用不伪装为遗忘。表述直接取记忆原有内容或名称，最多展示 240 字，不调用模型。主题取已有主题或理解类型，缺少时按人物／关系／经历／理解分组。新增最多显示 6 条，其余用既有 `view_memory.target={from,to}` 打开记忆页。
+
+`GET /memory/items` 追加可选、成对的 `from,to` 时间参数，按最初形成时间的含起点、不含终点区间筛选并展示当前有效版本；分页游标同时绑定区间、账户、类型、搜索与记忆版本。既有 `query_world` 的 `transition_history` 修订链让周报和列表在纠正产生新编号后跟随新版本，条目内动作始终操作最新编号。各端沿既有列表、详情、纠正与遗忘路由操作。人物与事物的直接纠正仍由既有能力决定，当前核心不支持 `entity` 的直接纠正，需查看来源或在对话里说明；周报不绕过这项限制。
+
+旧记忆复核通过既有 `PATCH /activity/:id/read` 追加 `reviewedMemory:{kind,id}`，必须同时带 `requestId,read,attentionRevision`，只接受该条周报当前可复核的对象；除既有权限外要求 `account:manage`。同一请求重复回执保持幂等；确认后 90 天内不再询问。不会改变记忆本身或伪装为新的召回。复核最多 3 条，优先取 90 天未使用的当前记忆；缺少旧使用记录时以最后更新或形成时间保守筛选，并明确显示「很久没有更新，尚无使用记录」。今后的实际召回时间由宿主已有召回结果登记。
+
+默认账户本地星期日 21:00 生成一次，统计上次到点至这次到点；错过多个周期只补最近一次。周内新记忆、已确认纠正和遗忘均为空时不发，复核不会单独制造空周报。关闭周报、记忆关闭或不可用时不推进补发水位，恢复后重试最近周期。时间变化造成区间重叠时，从上次已处理的终点继续。定时唤醒使用 DSH（助手运行时）原生每周日历规则，宿主现有动态观察补足启动和恢复；不增加独立计时器或存储。系统通知的 `title,body` 均固定「本周记忆周报已生成」，不含具体内容。
+
+纠正统计复用 `query_world.transition_history` 中的 `corrects/supersedes`；缺少发生时间时使用替换版本的形成时间。自然对话、历史仍可查询的纠正也包含在内，宿主确认操作按原编号去重补充。遗忘统计覆盖本功能上线后经过记忆页或周报确认的操作与重启后可核对的持久回执；上线前已清除的遗忘历史、上线前逐条召回时间仍需要记忆核心提供查询。周报条目使用原动态账户权限、变化流、已读与同步规则；原生客户端需消费新增字段，不新增客户端路由。
+
 ### 9.8.1 通知设置与宿主决定（ST-6，D19 / D41）
 
 `personalCapabilities.notificationSettings:1` 表示认识本节账户设置；`activityNotification:1` 保持兼容。既有账号缺设置时读默认值，首次 PATCH（局部更新）写入；沿 ST-1 的同一账户存储、认证、串行提交与逐字段最后写入，不另建云端设置库。GET（读取）要求 `sessions:read`；写入要求 `account:manage` 与 CSRF（跨站请求伪造防护），不接受 ownerId。不同设备读写同一账户，设备通知权限仍由本机系统管理。
@@ -1294,7 +1318,9 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 | PATCH `/settings/notifications` | 只发送变更字段，至少一项 | 同 GET；未知字段、错误类型 / 时间 / 选项 400 `INVALID_REQUEST` |
 | POST `/settings/notifications/test` | `{}` | 同 GET，追加 `activityId`；生成 `system.notification.test` 动态，经原生通知通道发送；明确的测试绕过类型、勿扰与每日额度，仍遵守全局声音开关；不是 OS（操作系统）送达或权限成功回执 |
 
-`settings` 类型字段为 `approval,question,task,reminder,memory,memoryReport,companion,system`，值均为 `sound|notify|activity`，对应「通知 + 声音 / 只通知 / 只进动态不通知」。前四项默认 `sound`，后三类及 memory 默认 `notify`。记忆只对异常 `memory.paused` 通知；`memory.submission.completed` 仍为静默。`memoryReport` 已留字段，MEM-3 前控件置灰；`companion` 已留字段，M4 前不显示。`task` 覆盖 completed / failed / stopped；`reminder` 覆盖提醒与定时任务到点。系统更新默认开启。
+`settings` 类型字段为 `approval,question,task,reminder,memory,memoryReport,companion,system`，值均为 `sound|notify|activity`，对应「通知 + 声音 / 只通知 / 只进动态不通知」。前四项默认 `sound`，后三类及 memory 默认 `notify`。记忆只对异常 `memory.paused` 通知；`memory.submission.completed` 仍为静默。`memoryReport` 控制周报的通知方式；`companion` 已留字段，M4 前不显示。`task` 覆盖 completed / failed / stopped；`reminder` 覆盖提醒与定时任务到点。系统更新默认开启。
+
+MEM-3 新增 `memoryDigestEnabled:true,memoryDigestWeekday:0,memoryDigestTime:"21:00"`，分别控制周报生成开关、星期（0 为星期日，1–6 为星期一至六）及账户本地时间。生成开关与是否系统通知分开；关闭生成不会删除已有动态。
 
 其他字段：`dndEnabled:false,dndStart:"22:00",dndEnd:"08:00",approvalException:true,dailyLimit:5,soundEnabled:true`。时间为严格 `HH:mm`；含开始、不含结束，可跨午夜，相同时全天勿扰。`approvalException` 只放行 `approval.pending`，不放行待回答；仍遵守该类开关。`dailyLimit` 可为 0 / 3 / 5 / 10 / null（不限）。声音使用各平台系统通知声音和系统音量，无自带音频。
 

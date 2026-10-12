@@ -77,7 +77,7 @@ globalThis.WeftUiCore.factories.mobileDecisions = (core, effects, environment) =
         const marker = question
             ? core.validQuestionAnswer(saved.answer, row.questions) && { ...core.questionIdentity(row), requestId: saved.requestId, answer: saved.answer }
             : ['allowed-once', 'rejected'].includes(saved.outcome) &&
-                (saved.scope === undefined || saved.outcome === 'allowed-once' && ['once', 'conversation-category'].includes(saved.scope)) &&
+                (saved.scope === undefined || saved.outcome === 'allowed-once' && ['once', 'conversation-category','global-category'].includes(saved.scope)) &&
                 { ...core.approvalIdentity(row), requestId: saved.requestId, outcome: saved.outcome,
                     ...(saved.outcome === 'allowed-once' ? { scope: saved.scope || 'once' } : {}) };
         if (!marker)
@@ -277,8 +277,9 @@ globalThis.WeftUiCore.factories.mobileDecisions = (core, effects, environment) =
     }
     async function submitApproval(value, row, outcome, scope) {
         if (!current(value, true) || !['allowed-once', 'rejected'].includes(outcome)) return;
-        if (outcome === 'allowed-once' && !['once', 'conversation-category'].includes(scope) || outcome === 'rejected' && scope !== undefined) return;
+        if (outcome === 'allowed-once' && !['once', 'conversation-category','global-category'].includes(scope) || outcome === 'rejected' && scope !== undefined) return;
         if (scope === 'conversation-category' && !row.riskCategories?.some(value => ['delete', 'overwrite', 'system', 'install', 'external', 'spend', 'execute'].includes(value))) return;
+        if (scope === 'global-category' && !row.canAlwaysAllow) return;
         importMarker(value, row);
         await core.submitApproval(coreContext(value), row, outcome, scope || 'once');
     }

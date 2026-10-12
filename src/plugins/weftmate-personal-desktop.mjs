@@ -1,3 +1,4 @@
+import { decidePermission, permissionCategories, permissionSummary, permissionApprovalCategories } from './personal-permission-rules.mjs';
 import { installPersonalization } from './personal-personalization.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -131,7 +132,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
         let calls = callsByAgent.get(exec.agent);
         if (!calls) { calls = new Map(); callsByAgent.set(exec.agent, calls); }
         calls.set(exec.callId, { ...identity, toolName: exec.name,
-          argumentsHash: executionHash(exec.arguments) });
+          argumentsHash: executionHash(exec.arguments), types: permissionCategories(exec.name, exec.arguments) });
       } catch { /* Missing real tool/receipt identity cannot become an approval request. */ }
     }
     return next();
@@ -142,7 +143,13 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     if (closed || !liveAgent(request.agent)) return 'unavailable';
     if (policyFor) {
       const policy = await policyFor(request.agent);
-      if (policy.mode === 'allow-all' && !policy.project) return 'allowed-once';
+      const identity = callsByAgent.get(request.agent)?.get(request.callId);
+      const risks = /\[weftmate:([^\]]+)\]/.exec(request.reason ?? '')?.[1].split(',') ?? [];
+      const categories = [...new Set([...(identity?.types ?? []), ...(/\[weftmate:([^\]]+)\]/.exec(request.reason ?? '')?.[1].split(',') ?? []).map(type => ({overwrite:'write',execute:'command'}[type] ?? type))])];
+      const selected = decidePermission(policy, categories, risks);
+      if (selected.decision === 'deny') return 'rejected';
+      if (selected.decision === 'allow' && categories.some(type => (policy.projectPermissionRules?.[type] ?? policy.permissionRules?.[type]) === 'allow')) return 'allowed-once';
+      if (policy.mode === 'allow-all' && !policy.project && selected.decision === 'allow') return 'allowed-once';
     }
     const identity = callsByAgent.get(request.agent)?.get(request.callId);
     // The shipped WeftMod script producer asks through its shared "weftmod" approval seam.
@@ -160,7 +167,8 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
     const approvalId = asked[0].data.id;
     const key = keyOf(identity.sessionId, approvalId);
     if (bindings.has(key)) return 'unavailable';
-    const payload = { ...identity, approvalId };
+    const { types: _operationTypes, ...approvalIdentity } = identity;
+    const payload = { ...approvalIdentity, approvalId };
     const controller = new AbortController();
     const onAbort = () => controller.abort();
     request.signal?.addEventListener('abort', onAbort, { once: true });
@@ -254,6 +262,13 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
 }
 
 /** Runs after the original sandbox/approval gate. The host grants identity, never model arguments. */
+const permissionDecisions = new WeakMap();
+function rememberPermission(exec, value) {
+  let rows = permissionDecisions.get(exec.agent);
+  if (!rows) { rows = new Map(); permissionDecisions.set(exec.agent, rows); }
+  rows.set(exec.callId, value);
+}
+
 export async function trackPersonalExecution(bridge, exec, next, background = null, approvals = null) {
   // DSH owns delegated execution. The portal receipt authorizes the parent subagent call;
   // the child's native prompt is not another personal/v1 command or account boundary.
@@ -263,7 +278,7 @@ export async function trackPersonalExecution(bridge, exec, next, background = nu
   const identity = personalExecutionIdentity(exec);
   const payload = { ...identity, toolName: exec.name, argumentsHash: executionHash(exec.arguments) };
   await approvals?.beforeExecution(exec);
-  const grant = await bridge.request({ ...payload, action: 'authorize_execution' }, exec.signal);
+  const grant = await bridge.request({ ...payload, action: 'authorize_execution', ...(permissionDecisions.get(exec.agent)?.get(exec.callId) ? { permission: permissionDecisions.get(exec.agent).get(exec.callId) } : {}) }, exec.signal);
   if (grant.state !== 'running' || typeof grant.executionId !== 'string') throw refused('TOOL_SOURCE_UNAVAILABLE');
   const observeUncertain = async () => {
     approvals?.markExecutionUncertain?.(exec);
@@ -725,13 +740,25 @@ export function apply(ctx) {
     const owner = delegated?.agent ?? exec.agent;
     const policy = await policyFor(owner);
     const cwd = resolve(executionDirectory(exec.agent.session), exec.arguments?.workdir ?? '.');
+    const operationTypes = new Set();
     const risks = classifyPersonalRisk(exec.name, exec.arguments, cwd, new Set(),
-      { createdFiles: conversationCreatedFiles(exec.agent.session) });
+      { createdFiles: conversationCreatedFiles(exec.agent.session), operationTypes });
+    const selected = decidePermission(policy, [...new Set([...permissionCategories(exec.name, exec.arguments, risks), ...operationTypes])], risks);
+    const metadata = { types: selected.types, decision: selected.decision, source: selected.source, summary: permissionSummary(exec.name, exec.arguments) };
+    rememberPermission(exec, metadata);
+    if (selected.decision === 'deny') {
+      if (!delegated) {
+        const payload = { ...personalExecutionIdentity(exec), toolName: exec.name, argumentsHash: executionHash(exec.arguments) };
+        const grant = await bridge.request({ ...payload, action: 'authorize_execution', permission: metadata }, exec.signal);
+        await bridge.request({ ...payload, action: 'finish_execution', executionId: grant.executionId, state: 'cancelled', resultHash: executionHash('blocked-by-permission-rule') }, exec.signal);
+      }
+      return { kind: 'deny', reason: `WeftMate permission rule forbids ${selected.blocked.join(', ')}. This operation was not executed. Choose an alternative that does not perform the forbidden operation, or tell the user to change Settings > Permissions.` };
+    }
     if (policy.mode === 'plan' && foldPlanMode(owner.session.events))
       return { kind: 'deny', reason: 'Present the plan with exit_plan_mode and wait for approval before executing this operation.' };
-    const required = approvalRequired(policy.mode, risks, policy.allowedCategories);
+    const required = permissionApprovalCategories(selected);
     if (!required.length) return decision;
-    const reason = `[weftmate:${required.join(',')}] ${required.map(risk => RISK_LABELS[risk]).join('；')}。操作：${exec.name}\n${JSON.stringify(exec.arguments).slice(0, 700)}`;
+    const reason = `[weftmate:${required.join(',')}] ${required.map(risk => RISK_LABELS[risk] ?? ({read:'读取文件',network:'连接网络'}[risk] ?? risk)).join('；')}。操作：${exec.name}\n${JSON.stringify(exec.arguments).slice(0, 700)}`;
     if (delegated) {
       const outcome = await ctx.approval.request({ agent: owner, toolName: delegated.name,
         callId: delegated.callId, reason, signal: exec.signal });
