@@ -388,11 +388,13 @@ const proxy = createServer(async (request, response) => {
     response.end('fixture API unavailable');
   }
 });
+// Two random ports preserve distinct origins on macOS without modifying lo0.
+const proxyHost = process.platform === 'darwin' ? '127.0.0.1' : '127.0.0.2';
 await new Promise((resolve, reject) => {
   proxy.once('error', reject);
-  proxy.listen(0, '127.0.0.2', resolve);
+  proxy.listen(0, proxyHost, resolve);
 });
-browserOrigin = `http://127.0.0.2:${proxy.address().port}`;
+browserOrigin = `http://${proxyHost}:${proxy.address().port}`;
 const password = 'Synthetic-only-profile-2026!';
 const headers = { origin, 'content-type': 'application/json' };
 async function post(path, body) {
@@ -426,7 +428,7 @@ const fixture = { runId, browserOrigin, pageUrl: `${browserOrigin}/personal/v1/u
 };
 await writeFile(join(dataRoot, 'fixture.json'), JSON.stringify(fixture, null, 2), { flag: 'wx' });
 await writeFile(join(dataRoot, 'process.json'), JSON.stringify({ pid: process.pid,
-  proxyHost: '127.0.0.2', proxyPort: Number(new URL(browserOrigin).port),
+  proxyHost, proxyPort: Number(new URL(browserOrigin).port),
   apiHost: '127.0.0.1', apiPort: Number(new URL(origin).port), startedAt: new Date().toISOString() }, null, 2), { flag: 'wx' });
 console.log(JSON.stringify({ ...fixture, accounts: fixture.accounts.map(({ cookie, csrfToken, ...account }) => account), dataRoot }, null, 2));
 const stop = async () => {

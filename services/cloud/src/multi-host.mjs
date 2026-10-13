@@ -1,6 +1,6 @@
 import { CloudError, transaction } from './security.mjs';
 
-export const multiHostCapabilities = { offlineTasks: 1, multiHost: 1 };
+export const multiHostCapabilities = { offlineTasks: 1, multiHost: 1, cloudBackup: 1 };
 
 export function computerNames(rows) {
   const counts = new Map(), used = new Set();

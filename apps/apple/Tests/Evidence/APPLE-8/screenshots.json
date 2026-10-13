@@ -1,0 +1,62 @@
+[
+  {
+    "file": "apple8-dark-draft.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "146a6ed821e47d7841a7d9a0c692a263c356be11c9eaf21c9c82080dd1f42437",
+    "classification": "final native synthetic screenshot; visually inspected",
+    "sourceCommit": "3b4248fd9",
+    "fixture": "system pickers not opened; synthetic image and Markdown",
+    "captureUTC": 1791878793.221
+  },
+  {
+    "file": "apple8-dark-sent.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "68ce65981341f0635d976a22cd20ebaa15b7c5460abe3169ee0a5017af24b219",
+    "classification": "final native synthetic screenshot; visually inspected",
+    "sourceCommit": "3b4248fd9",
+    "fixture": "system pickers not opened; synthetic image and Markdown",
+    "captureUTC": 1791878800.932
+  },
+  {
+    "file": "apple8-light-draft.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "939008e0504ec99b505b27a793fbeead2fe7a0e0a84212e3182494a5c04a6d63",
+    "classification": "final native synthetic screenshot; visually inspected",
+    "sourceCommit": "3b4248fd9",
+    "fixture": "system pickers not opened; synthetic image and Markdown",
+    "captureUTC": 1791878768.931
+  },
+  {
+    "file": "apple8-light-menu.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "4f6e34b6317dab096b80e2d853d5721652b47ea9ffddf9bfda774a58eb89f15a",
+    "classification": "final native synthetic screenshot; visually inspected",
+    "sourceCommit": "3b4248fd9",
+    "fixture": "system pickers not opened; synthetic image and Markdown",
+    "captureUTC": 1791878761.033
+  },
+  {
+    "file": "apple8-light-sent.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "36a5ff598dfbfd585cf763a709b1ebbb9e3a811ace9c00173d087e20d1ce6fa3",
+    "classification": "final native synthetic screenshot; visually inspected",
+    "sourceCommit": "3b4248fd9",
+    "fixture": "system pickers not opened; synthetic image and Markdown",
+    "captureUTC": 1791878776.636
+  },
+  {
+    "file": "apple8-light-text.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "909443c08d659747304f8e4b304ad72567070e3d9ee49d482ced90fc325d688b",
+    "classification": "final native synthetic screenshot; visually inspected",
+    "sourceCommit": "3b4248fd9",
+    "fixture": "system pickers not opened; synthetic image and Markdown",
+    "captureUTC": 1791878785.314
+  }
+]

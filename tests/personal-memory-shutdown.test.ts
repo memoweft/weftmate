@@ -9,6 +9,10 @@ test('memory shutdown waits for the worker write acknowledgement and confirms th
   const root = await mkdtemp(join(tmpdir(), 'weftmate-memory-shutdown-'))
   const module = join(root, 'memoweft', 'integrations', 'dsh_bridge'), state = join(root, 'worker-state')
   await mkdir(module, { recursive: true })
+  // Real installed Core is a regular package; a namespace-only fixture loses
+  // import precedence to it, even with PYTHONPATH. Seal this owned substitute.
+  for (const directory of [join(root, 'memoweft'), join(root, 'memoweft', 'integrations'), module])
+    await writeFile(join(directory, '__init__.py'), '')
   await writeFile(join(module, '__main__.py'), `import sys, json, os, time\nfrom pathlib import Path\nfor line in sys.stdin:\n    frame = json.loads(line)\n    if frame['method'] == 'shutdown':\n        time.sleep(0.15)\n        Path(os.environ['WEFTMATE_MAINT1_STATE']).write_text('drained')\n    frame.update(ok=True, result={'pid': os.getpid()})\n    print(json.dumps(frame), flush=True)\n`)
   const rpc = new MemoWeftRpc({ python: process.env.WEFTMATE_TEST_MEMOWEFT_PYTHON || 'python', pythonPath: root,
     env: { WEFTMATE_MAINT1_STATE: state } })

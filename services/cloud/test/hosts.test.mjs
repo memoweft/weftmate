@@ -84,7 +84,7 @@ test('installation-authenticated revocation feed carries only member device/epoc
   const { payload } = await jwtVerify(result.data.eventToken, createLocalJWKSet(f.identity.keys.publicJwks), {
     issuer: f.config.issuer, audience: `${f.config.audience}/hosts/${f.hostId}`, algorithms: ['RS256'], typ: 'wm-cloud-revocations+jwt' });
   assert.equal(payload.events.length, 2); assert.equal(payload.events[0].kind, 'device'); assert.equal(payload.events[1].kind, 'epoch');
-  assert.deepEqual(payload.capabilities,{offlineTasks:1,multiHost:1});
+  assert.deepEqual(payload.capabilities,{offlineTasks:1,multiHost:1,cloudBackup:1});
   assert.doesNotMatch(JSON.stringify(payload), /email|password|title|health/);
   const invalid = await f.api(`${P}/hosts/revocations`, { method: 'POST', body: { hostId: f.hostId, proof: 'forged' } });
   assert.equal(invalid.status, 401);
