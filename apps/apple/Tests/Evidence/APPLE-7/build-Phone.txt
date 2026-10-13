@@ -1,0 +1,5 @@
+xcodebuild build; -jobs 4; -parallel-testing-enabled NO; CODE_SIGNING_ALLOWED=NO
+    /Applications/Xcode.app/Contents/Developer/usr/bin/embeddedBinaryValidationUtility /Users/yun/Desktop/WeftMate/weftmate-h3/apps/apple/Build/APPLE-7/DeviceBuild/Build/Products/Debug-iphoneos/WeftMatePhone.app/Watch/WeftMateWatch.app -info-plist-path /Users/yun/Desktop/WeftMate/weftmate-h3/apps/apple/Build/APPLE-7/DeviceBuild/Build/Products/Debug-iphoneos/WeftMatePhone.app/Info.plist
+
+** BUILD SUCCEEDED **
+

@@ -1,0 +1,14 @@
+✔ Test windowsEnvelopeOriginalAADTagTamperAndIdentity() passed after 7.680 seconds.
+✔ Test encryptedStorageDeletionAndKeyRotation() passed after 7.683 seconds.
+✔ Test longUnicodeReplyFitsHostTurnContract() passed after 7.688 seconds.
+✔ Test a12WatchSDKRepliesFromBackgroundQueue() passed after 7.734 seconds.
+✔ Test modelResponseAfterRemoteRevocationIsDiscarded() passed after 7.691 seconds.
+✔ Test logoutDuringModelRequestCannotResurrect() passed after 7.688 seconds.
+✔ Test relatedRecallBoundedContextAndDependencies() passed after 7.691 seconds.
+✔ Suite OfflineTests passed after 7.738 seconds.
+✔ Test invalidSignedTokensCannotPersist(fault:) with 5 test cases passed after 7.283 seconds.
+✔ Test rotatedRefreshSurvivesRestartAndDirectoryCannotSupplyPin() passed after 7.330 seconds.
+✔ Suite CloudTokenTests passed after 7.935 seconds.
+✔ Test journalSymlinkAndRecordLimitFailWithoutDeletingPriorRequests() passed after 30.085 seconds.
+✔ Suite TaskStopSDKTests passed after 30.230 seconds.
+✔ Test run with 497 tests in 26 suites passed after 30.232 seconds.

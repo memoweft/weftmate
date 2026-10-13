@@ -2167,7 +2167,7 @@ final class AppleAppModel: ObservableObject {
             return
         }
         #if os(iOS)
-        phoneChat.stop()
+        phoneChat.deactivate()
         #endif
         clearVisibleAccount()
         var cloudCleanupFailure = false

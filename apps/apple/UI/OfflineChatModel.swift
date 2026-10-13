@@ -19,6 +19,12 @@ import WeftMateCore
     private var replica: OfflineReplica?
     private var identity: OfflineIdentity?
     @Published private(set) var polling = false
+    func authorizeMemory(control: (String) async throws -> OfflineAuthorization) async throws {
+        guard let replica,ready else { throw OfflineFailure.notReady }
+        do { try await replica.check(control:control);publish(replica) }
+        catch { publish(replica);ready=false;throw error }
+    }
+    var memoryItems: [OfflineMemory] { ready ? replica?.state.snapshot?.items ?? [] : [] }
     var generation: Int? { replica?.state.snapshot?.generation }
     func enqueuePhoneTurns(_ turns: [OfflineTurn], generation: Int) throws {
         guard let replica, ready, !hostOffline, !polling, !busy else { throw OfflineFailure.notReady }

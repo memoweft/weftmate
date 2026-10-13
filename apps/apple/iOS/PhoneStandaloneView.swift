@@ -44,7 +44,7 @@ struct PhoneStandaloneChat: View {
                 if let notice=model.notice, !model.models.isEmpty || !model.messages.isEmpty { Text(notice).font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p16) }
                 if !model.models.isEmpty {
                     VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
-                        Text("手机上可以聊天；操作电脑和形成记忆，连上电脑后可用。")
+                        Text("手机上可以聊天和记住你说过的事；操作电脑，连上电脑后可用。")
                             .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         HStack(spacing:AppleTokens.Space.p8) {
                             TextField("聊一聊…",text:$model.draft,axis:.vertical).lineLimit(1...5).focused($focused).accessibilityIdentifier("phoneChat.draft")
@@ -105,10 +105,14 @@ struct PhoneLocalDrawer: View {
 }
 struct PhoneModelsView: View {
     @ObservedObject var model: PhoneStandaloneModel
+    @State private var clearing=false
     var body: some View {
         ScrollView {
             VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
                 Text("手机上的模型").font(AppleTokens.Fonts.title2.bold())
+                Toggle("在手机上记住我说过的事",isOn:Binding(get:{model.memory.enabled},set:{model.setMemoryEnabled($0)})).accessibilityIdentifier("phoneMemory.enabled")
+                Text("每段对话会多用一次小的模型请求。连上电脑后，由电脑负责记忆。")
+                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                 Text("密钥保存在这台 iPhone 的钥匙串里。聊天内容会发送给你选择的模型提供方。")
                 ForEach(model.models) { value in
                     VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
@@ -119,8 +123,12 @@ struct PhoneModelsView: View {
                     }.phoneCard()
                 }
                 PhoneModelEditor(model:model)
+                Button("清除手机上的模型、对话与记忆",role:.destructive) { clearing=true }.accessibilityIdentifier("phoneModel.clearLocalData")
             }.padding(AppleTokens.Space.p20)
         }.navigationTitle("模型").background(Weave.canvas)
+            .confirmationDialog("清除这台手机当前账号的模型、对话与记忆？电脑上的内容不受影响。",isPresented:$clearing,titleVisibility:.visible) {
+                Button("清除本机内容",role:.destructive) { model.clearLocalData() };Button("取消",role:.cancel) {}
+            }
     }
 }
 struct PhoneModelEditor: View {

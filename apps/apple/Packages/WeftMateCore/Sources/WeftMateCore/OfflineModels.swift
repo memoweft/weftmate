@@ -15,6 +15,7 @@ public struct OfflineIdentity: Codable, Sendable, Equatable {
 }
 public struct OfflineMemoryRef: Codable, Sendable, Hashable {
     public let kind, id: String
+    public init(kind: String,id: String) { self.kind=kind;self.id=id }
 }
 public struct OfflineMemory: Codable, Sendable, Identifiable {
     public struct Source: Codable, Sendable { public let id: String; public let summary: String? }
