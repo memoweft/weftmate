@@ -1,0 +1,117 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "transport": "isolated direct Windows host; Linux 443 relay is verified by CI",
+  "switches": [
+    {
+      "iteration": 0,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    }
+  ],
+  "approvals": [],
+  "trace": [
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "BUTTON",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 2775.199999988079,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 2879.900000035763,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 2880,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 2881.100000023842,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    }
+  ],
+  "state": {
+    "view": {
+      "placeholder": "向 WeftMate 说说你的目标",
+      "phoneChat": false,
+      "running": false,
+      "hint": "",
+      "attachmentBusy": false,
+      "newSessionDisabled": true,
+      "modelDisabled": false,
+      "modelName": "合成中继模型",
+      "messageDisabled": false,
+      "voiceDisabled": true,
+      "sendDisabled": true,
+      "sendText": "发送",
+      "attachmentsDisabled": true,
+      "desktopText": "打开记事本",
+      "desktopDisabled": true,
+      "cancelHidden": true,
+      "cancelDisabled": true
+    },
+    "selected": "session-3bdd1f6d-78b0-4629-aaad-dc71eb56851c"
+  },
+  "passed": true
+}
