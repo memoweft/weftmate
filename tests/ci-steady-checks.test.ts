@@ -1,0 +1,68 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { EventEmitter } from 'node:events';
+import { PassThrough, Writable } from 'node:stream';
+import { spawnSync } from 'node:child_process';
+import { resolve, dirname } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { tamperCiphertext } from './helpers/tamper-ciphertext.mjs';
+import { openTask } from '../src/personal-offline/crypto.mjs';
+import { invokeProjectReader } from '../src/personal-projects/index.mjs';
+import { managedMkdtempSync, disposeManagedTemp } from './helpers/managed-temp.mjs';
+import { waitForCommand } from './helpers/wait-for-command.mjs';
+import { runManagedTestProcess } from './helpers/managed-test-process.mjs';
+
+test('fixed authenticated ciphertext survives the old A/B replacement but byte tampering always rejects', () => {
+  const {envelope,recipient,identity,payload}=JSON.parse(readFileSync('tests/evidence/ci-3/fixed-ciphertext.json','utf8'));
+  const old='A'+envelope.ciphertext.slice(1,-1)+'B';
+  assert.deepEqual(Buffer.from(old,'base64url'),Buffer.from(envelope.ciphertext,'base64url'));
+  assert.deepEqual(openTask({...envelope,ciphertext:old},recipient,identity),payload);
+  const changed=tamperCiphertext(envelope.ciphertext);
+  assert.notDeepEqual(Buffer.from(changed,'base64url'),Buffer.from(envelope.ciphertext,'base64url'));
+  assert.throws(()=>openTask({...envelope,ciphertext:changed},recipient,identity),{code:'OFFLINE_TASK_INVALID'});
+});
+
+function readerFixture(){
+  const child:any=new EventEmitter(); child.stdin=new Writable({write(_chunk,_enc,next){next();}});
+  child.stdout=new PassThrough();child.stderr=new PassThrough();let killed=false,clock=0;
+  child.kill=()=>{killed=true;};const timers:any[]=[];
+  const work=invokeProjectReader({}, {spawnProcess:()=>child,now:()=>clock,
+    setTimer:(fn,ms)=>{const timer={fn,at:clock+ms,active:true};timers.push(timer);return timer;},clearTimer:t=>{t.active=false;}});
+  const advance=(ms:number)=>{clock+=ms;for(const timer of timers)if(timer.active&&timer.at<=clock){timer.active=false;timer.fn();}};
+  return {child,work,advance,get killed(){return killed}};
+}
+test('project reader excludes initialization from its existing 15s operation budget and never retries', async()=>{
+  const f=readerFixture();f.advance(10000);f.child.stdout.write('WEFTMATE_PROJECT_');
+  f.child.stdout.write('READER_READY\r\n');f.advance(10000);
+  assert.equal(f.killed,false,'20s combined work with each phase below 15s must still be running');
+  f.child.stdout.write(JSON.stringify({ok:true,value:'exact bounded read'}));f.child.emit('close',0);
+  assert.equal(await f.work,'exact bounded read');
+});
+test('project reader still terminates a stuck initialization or operation at 15s with phase evidence',async()=>{
+  for(const ready of [false,true]){
+    const f=readerFixture();if(ready)f.child.stdout.write('WEFTMATE_PROJECT_READER_READY\n');
+    const rejected=assert.rejects(f.work,(error:any)=>error.code==='PROJECT_READER_TIMEOUT'&&error.readerEvidence.phase===(ready?'operation':'initialization'));
+    f.advance(15000);await rejected;assert.equal(f.killed,true);
+  }
+});
+test('inherited managed temp scopes never overwrite the creator heartbeat',()=>{
+  const root=managedMkdtempSync('ci3-single-heartbeat-');
+  try{
+    const owner=resolve(root,'.weftmate-temp-owner.json'),before=readFileSync(owner,'utf8');
+    const script=`import {startManagedTempLease} from ${JSON.stringify(pathToFileURL(resolve('tests/helpers/managed-temp.mjs')).href)}; const stop=startManagedTempLease(${JSON.stringify(root)},{intervalMs:1}); stop();`;
+    const child=spawnSync(process.execPath,['--input-type=module','-e',script],{env:{...process.env,WEFTMATE_MANAGED_TEMP_ROOT:dirname(root),WEFTMATE_TEST_TEMP_SCOPE:root},encoding:'utf8',windowsHide:true});
+    assert.equal(child.status,0,child.stderr);assert.equal(readFileSync(owner,'utf8'),before);
+  }finally{disposeManagedTemp(root);}
+});
+test('synthetic command acceptance waits through more than 100 observations and fails on terminal rejection',async()=>{
+  let reads=0;
+  const row=await waitForCommand(async()=>({state:++reads>100?'accepted_by_dsh':'pending'}));
+  assert.equal(row.state,'accepted_by_dsh');assert.equal(reads,101);
+  await assert.rejects(waitForCommand(async()=>({state:'rejected',code:'synthetic-failure'})),/terminal state.*synthetic-failure/);
+});
+test('a child with no assertion output retains nonzero exit and its final stderr in process evidence',async()=>{
+  const result=await runManagedTestProcess(process.execPath,['-e','process.stderr.write("synthetic last cause");process.exit(7)']);
+  assert.equal(result.status,7);assert.equal(result.evidence.decimal,7);assert.equal(result.evidence.signal,null);
+  assert.equal(result.evidence.stderrTail,'synthetic last cause');assert.ok(result.evidence.systemCommit);
+});

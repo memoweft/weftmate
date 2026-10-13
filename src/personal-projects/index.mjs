@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 // Capture the bundled program once and send it over the private stdin pipe.
 // No executable script is extracted to a writable application-data directory.
 const SCRIPT = readFileSync(fileURLToPath(new URL('./reader.ps1', import.meta.url))).toString('base64');
-const BOOTSTRAP = Buffer.from("[Console]::InputEncoding = [Text.Encoding]::UTF8; $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json; & ([ScriptBlock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload.script)))) -RequestJson $payload.request", 'utf16le').toString('base64');
+const BOOTSTRAP = Buffer.from("[Console]::InputEncoding = [Text.Encoding]::UTF8; $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json; & ([ScriptBlock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload.script)))) -RequestJson $payload.request -ReportReady", 'utf16le').toString('base64');
 const POWERSHELL = path.win32.join(process.env.SystemRoot ?? 'C:\\Windows',
   'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 const QUERY_BYTES = 200;
@@ -29,18 +29,28 @@ function validQuery(value) {
 
 async function invoke(input) {
   if (process.platform !== 'win32') throw issue('PROJECT_WINDOWS_REQUIRED');
+  return invokeProjectReader(input);
+}
+
+// The one-shot reader compiles its immutable native handle checks before it
+// touches the project. Give initialization and the actual operation their own
+// bounded phase; neither phase retries nor changes file/security limits.
+export function invokeProjectReader(input, { spawnProcess = spawn, setTimer = setTimeout, clearTimer = clearTimeout, now = Date.now } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(POWERSHELL, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', BOOTSTRAP], {
+    const child = spawnProcess(POWERSHELL, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', BOOTSTRAP], {
       windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
     });
     let stdout = '', stderr = '';
-    let done = false;
-    const timer = setTimeout(() => { child.kill(); finish(issue('PROJECT_READER_TIMEOUT')); }, 15_000);
+    let done = false, readyAt, phase = 'initialization';
+    const startedAt = now();
+    const expire = () => { child.kill(); finish(issue('PROJECT_READER_TIMEOUT')); };
+    let timer = setTimer(expire, 15_000);
     function finish(error, result) {
       if (done) return;
       done = true;
-      clearTimeout(timer);
-      if (error) reject(error);
+      clearTimer(timer);
+      if (error) reject(Object.assign(error, { readerEvidence: { phase, initializationMs:(readyAt ?? now())-startedAt,
+        operationMs:readyAt === undefined ? null : now()-readyAt, stdoutBytes:Buffer.byteLength(stdout), stderrBytes:Buffer.byteLength(stderr) } }));
       else resolve(result);
     }
     child.on('error', () => finish(issue('PROJECT_FILE_UNAVAILABLE')));
@@ -49,6 +59,12 @@ async function invoke(input) {
     child.stderr.setEncoding('utf8');
     child.stdout.on('data', (chunk) => {
       stdout += chunk;
+      if (phase === 'initialization' && stdout.includes('\n')) {
+        const newline = stdout.indexOf('\n');
+        if (stdout.slice(0, newline).trim() !== 'WEFTMATE_PROJECT_READER_READY') { child.kill(); finish(issue('PROJECT_READER_INVALID')); return; }
+        stdout = stdout.slice(newline + 1); readyAt = now(); phase = 'operation';
+        clearTimer(timer); timer = setTimer(expire, 15_000);
+      }
       if (Buffer.byteLength(stdout, 'utf8') > 256 * 1024) { child.kill(); finish(issue('PROJECT_READER_INVALID')); }
     });
     child.stderr.on('data', (chunk) => {
@@ -57,6 +73,7 @@ async function invoke(input) {
     });
     child.on('close', (code) => {
       if (code !== 0) return finish(issue('PROJECT_FILE_UNAVAILABLE'));
+      if (phase !== 'operation') return finish(issue('PROJECT_READER_INVALID'));
       let value;
       try { value = JSON.parse(stdout.trim()); }
       catch { return finish(issue('PROJECT_READER_INVALID')); }
