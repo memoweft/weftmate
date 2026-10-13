@@ -8,6 +8,7 @@ import { sendHostPush } from './push.mjs';
 import { accountPersonalization } from './personalization.mjs';
 import { createMemoryIngestion } from './memory-ingestion.mjs';
 import { createHistoryImport } from './history-import.mjs';
+import { createPhoneHistory } from './phone-history.mjs';
 import { modelTierFor } from '../model-tier.ts';
 import { currentChatProfile } from '../background-model-selection.mjs';
 import { createBackgroundModels } from './background-model.mjs';
@@ -336,6 +337,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get matchingOrigin() { return matchingOrigin; },
     get memoryIngestion() { return memoryIngestion; },
     get historyImport() { return historyImport; },
+    get phoneHistory() { return phoneHistory; },
     get memoryManager() { return memoryManager; },
     get healthStore() { return healthStore; },
     get healthRecords() { return healthRecords; },
@@ -759,6 +761,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const healthInsights = createHealthInsights(context);
   const goalOperations = createGoalOperations(context);
   const activity = createActivity(context);
+  const phoneHistory = createPhoneHistory(context, backend);
+  backend = phoneHistory.backend;
   const offline = await createOfflineService(context);
   const temporaryChats = createTemporaryChats(context);
   const memoryIngestion = createMemoryIngestion(context);
@@ -819,6 +823,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const account = accountState(ownerId);
       const pendingSegment = account.chatIdentity.chats[account.chatIdentity.mainChatId].relay?.sessionId;
       for (const sessionId of new Set([...Object.keys(account.sessions), ...(pendingSegment ? [pendingSegment] : [])])) {
+        // Phone history is authoritative source text, not an executable native
+        // session or a derived memory copy. Its explicit deletion uses
+        // forgetConversations; ordinary memory erasure retains that original.
+        if(account.sessions[sessionId]?.phoneHistory)continue;
         const receiptIds = Object.values(account.commands).filter(row => row.sessionId === sessionId && sourceTexts.some(text => text && row.payload?.text?.includes(text))).map(row => row.receiptId).filter(Boolean);
         const schedulesErased = backend.schedules ? await backend.schedules({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
         const goalErased = backend.goals ? await backend.goals({ sessionId, ownerId, action: 'forget', receiptIds, sourceTexts }) : null;
