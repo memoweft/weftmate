@@ -8,6 +8,7 @@ export async function connectorSettings(context, request, auth, operation) {
     exactKeys(operation, ['action','id','name','transport','command','args','url','credentials','builtinId','fields','enabled'], ['action']);
     if (operation.action !== 'toggle' && !desktop) throw failure('FORBIDDEN', 403);
     context.authenticate(request, 'commands:write');
+    if (['test','add'].includes(operation.action) && ['calendar','calendar-ics'].includes(operation.builtinId)) operation = { ...operation, fields: { ...operation.fields, timeZone: context.usage?.settings(ownerId)?.timeZone ?? context.accountState(ownerId)?.chatIdentity?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone } };
     if (operation.action === 'test') return { connectionTest: await context.connectors.test(ownerId, operation) };
     if (operation.action === 'add') await context.connectors.add(ownerId, operation);
     else if (operation.action === 'toggle') await context.connectors.enable(ownerId, operation.id, operation.enabled);

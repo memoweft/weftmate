@@ -71,7 +71,7 @@ test('mobile bundle keeps the composer and bottom tabs inside safe areas and abo
       assert.ok(g.send.bottom<=g.height+1,JSON.stringify(geometry.at(-1)));assert.ok(g.pageHeight<=g.layoutHeight+1);
       assert.ok(g.toast.top>=g.topbar.bottom&&g.toast.bottom<=g.composer.top,JSON.stringify(geometry.at(-1)));
       if(!keyboard)assert.ok(g.tabs.bottom<=g.height+1&&g.tabs.height>0,JSON.stringify(geometry.at(-1)));
-      if(!keyboard){const tabs=await page.locator('#mobile-bottom-tabs [role=tab]').evaluateAll(nodes=>nodes.map(n=>({text:n.querySelector('.mobile-tab-label').textContent,left:n.getBoundingClientRect().left,right:n.getBoundingClientRect().right,scroll:n.scrollWidth,client:n.clientWidth})));assert.deepEqual(tabs.map(t=>t.text),['聊天','动态','健康','目标','成果库']);assert.ok(tabs.every(t=>t.left>=0&&t.right<=size.width&&t.scroll<=t.client),'all five tabs fit the phone');}
+      if(!keyboard){const tabs=await page.locator('#mobile-bottom-tabs [role=tab]').evaluateAll(nodes=>nodes.map(n=>({text:n.getAttribute('aria-label'),left:n.getBoundingClientRect().left,right:n.getBoundingClientRect().right,height:n.getBoundingClientRect().height,scroll:n.scrollWidth,client:n.clientWidth})));assert.deepEqual(tabs.map(t=>t.text),['聊天','动态','健康','目标','成果库']);assert.ok(tabs.every(t=>t.left>=0&&t.right<=size.width&&t.scroll<=t.client&&t.height>=44),'all five named icon tabs fit the phone and remain touch sized');assert.equal(await page.locator('.mobile-tab-label').count(),0);}
     }
   }finally{await browser.close();await f.close();}
 });
