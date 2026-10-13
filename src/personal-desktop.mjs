@@ -354,6 +354,15 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     await writeFile(selected.filePath, bytes, { mode: 0o600 });
     return { exported: true };
   });
+  handle('wm:desktop:recovery-export', async ({ recoveryCode, ownerId } = {}) => {
+    if(typeof ownerId!=='string'||typeof recoveryCode!=='string'||! /^(?:[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{10}-){7}[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{10}$/.test(recoveryCode))throw new Error('Invalid recovery export');
+    if((await jsonLocal('/auth/me')).account?.ownerId!==ownerId)throw new Error('Recovery export owner mismatch');
+    const selected=await dialog.showSaveDialog(win,{title:'保存恢复码',defaultPath:join(app.getPath('downloads'),'WeftMate-恢复码.txt'),filters:[{name:'文本',extensions:['txt']}]});
+    if(selected.canceled||!selected.filePath)return {canceled:true};
+    if((await jsonLocal('/auth/me')).account?.ownerId!==ownerId)throw new Error('Recovery export owner mismatch');
+    await writeFile(selected.filePath,`WeftMate 恢复码\n${recoveryCode}\n换电脑时要用它；我们没有它的副本，丢了就找不回备份。\n请保存在安全的地方。\n`,{encoding:'utf8',mode:0o600});
+    return {exported:true};
+  });
   handle('wm:desktop:memory-export', async ({ format, ownerId } = {}) => {
     if (!['json', 'markdown'].includes(format) || typeof ownerId !== 'string') throw new Error('Invalid memory export');
     const filename = format === 'json' ? 'weftmate-memory.json' : 'weftmate-memory.md';

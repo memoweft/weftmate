@@ -1,4 +1,5 @@
 import { omitTemporaryChats } from './temporary.mjs';
+import { cloudScope, filterCloudStage, cloudContentHash } from './cloud-snapshot.mjs';
 import path from 'node:path';
 import { createReadStream, createWriteStream, existsSync } from 'node:fs';
 import { copySnapshotTree } from '../runtime/dsh-adapter/snapshot-files.mjs';
@@ -21,6 +22,10 @@ const omitted = new Set(['cloud-identity', 'personal-backup', 'Backups', 'Cache'
 export function storageAttachment(relative) {
   return relative.split('/').some(part => /(?:\.enc\.|\.replaced-|^weftmate-storage-key\.json|^weftmate-.*\.recovery\.json(?:\.|$))/i.test(part));
 }
+export const sqliteSidecar = relative => /\.(?:sqlite3?|db)-(?:wal|shm|journal)$/i.test(relative);
+// MemoWeft workers own exclusive process leases here. A lease is rebuilt by
+// Core, contains no user data, and must never be copied from a running worker.
+export const sqliteWorkerLease = relative => /^personal-access\/accounts\/[^/]+\/memory-home\/memoweft\/memoweft\.sqlite3\.workers(?:\/|$)/.test(relative);
 export function included(relative) {
   const parts = relative.split('/');
   if (storageAttachment(relative)) return false;
@@ -29,15 +34,15 @@ export function included(relative) {
   if (relative === 'personal-access/chat-identity-v1.before.json') return false;
   if (omitted.has(parts[0]) || relative === 'lockfile' || /^personal-access\/(?:cloud-identity|relay|relay-tls)(?:\/|$)/.test(relative)) return false;
   if (/^dsh-home\/profiles\/(?:[^/]+\/)?node_modules(?:\/|$)/.test(relative)) return false;
-  if (/\.(?:sqlite3?|db)-(?:wal|shm)$/.test(relative)) return false;
+  if (sqliteSidecar(relative) || sqliteWorkerLease(relative)) return false;
   const userContent = ['conversations', 'workspace', 'desktop-artifacts'].includes(parts[0]) || relative.startsWith('personal-access/artifacts/');
   if (userContent) return true;
   return !parts.some(part => /(?:^\.env(?:\.|$)|credentials?|vault|\.enc$|\.pem$|\.key$|\.p12$|\.pfx$|(?:^|[-_.])tokens?(?:[-_.]|$))/i.test(part)) &&
-    !/(?:\.(?:sqlite3?|db)-(?:wal|shm)|\.tmp)$/.test(relative) && !relative.endsWith('weftmate-host-state.json') && !relative.endsWith('weftmate-crash.log');
+    !/(?:\.(?:sqlite3?|db)-(?:wal|shm|journal)|\.tmp)$/.test(relative) && !relative.endsWith('weftmate-host-state.json') && !relative.endsWith('weftmate-crash.log');
 }
 function safePath(name, skipStorageAttachments = false) {
   return typeof name === 'string' && name.length > 0 && !name.includes('\\') && !name.includes(':') &&
-    !name.includes('\0') && !name.startsWith('/') && name.split('/').every(part => part && part !== '.' && part !== '..' && !/[. ]$/.test(part)) && (included(name) || skipStorageAttachments && storageAttachment(name));
+    !name.includes('\0') && !name.startsWith('/') && name.split('/').every(part => part && part !== '.' && part !== '..' && !/[. ]$/.test(part)) && (included(name) || skipStorageAttachments && (storageAttachment(name) || sqliteSidecar(name) || sqliteWorkerLease(name)));
 }
 async function files(root, relative = '') {
   const rows = [];
@@ -90,12 +95,12 @@ function pinDatabase(source) {
 export async function sqliteSnapshot(source, destination, check = () => {}) {
   return pinDatabase(source).copy(destination, check);
 }
-export async function snapshot({ root, directory, reason = 'manual', now = Date.now(), databaseBackup = sqliteSnapshot, withCapture = work => work(() => {}) }) {
+export async function snapshot({ root, directory, reason = 'manual', now = Date.now(), databaseBackup = sqliteSnapshot, withCapture = work => work(() => {}), cloudOwnerId = null, captureSecrets = null }) {
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const id = `${new Date(now).toISOString().replace(/[:.]/g, '-')}-${randomUUID()}.wmb`;
   const stage = path.join(directory, `.${id}.stage`), temporary = path.join(directory, `.${id}.tmp`);
   await mkdir(stage, { mode: 0o700 });
-  const databases = [];
+  const databases = []; let scope = null, credentials = null, contentHash = null;
   try {
     const manifest = { format: 'weftmate-local-backup', version: 1, sourceRoot: root, createdAt: new Date(now).toISOString(), reason,
       excluded: ['model keys', 'cloud tokens and identity keys', 'device sessions and private keys', 'browser sessions/cache', 'temporary conversations'], files: [] };
@@ -103,7 +108,14 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
     // native DSH admission are paused. Copy bytes, never hard-link mutable logs.
     // Check the deadline between bounded chunks, including directory traversal.
     await withCapture(async check => {
-      copySnapshotTree(root, stage, { check, included: name => included(name) &&
+      if (cloudOwnerId !== null) {
+        scope = await cloudScope(root, cloudOwnerId); check();
+        if (captureSecrets) credentials = await captureSecrets(structuredClone(scope.metadata));
+        check();
+        manifest.cloud = structuredClone(scope.metadata);
+        manifest.excluded.push('artifact and attachment files', 'workspace and project files', 'other accounts', 'installation-specific DSH configuration');
+      }
+      copySnapshotTree(root, stage, { check, included: name => included(name) && (!scope || scope.allowed(name)) &&
         // Native logs were captured in their writer's event loop, immediately
         // after flush. Do not read them a second time from this process.
         !(name === 'dsh-home/sessions' && existsSync(path.join(stage, name))),
@@ -112,7 +124,7 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
       const identity = await readFile(path.join(root, 'personal-access/cloud-identity/identity.json'), 'utf8').then(JSON.parse).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
       if (identity) {
         const target = path.join(stage, 'personal-access/backup-cloud-owners.json');
-        const owners = Object.values(identity.bindings ?? {}).filter(row => row.desktop === true && row.status === 'active')
+        const owners = Object.values(identity.bindings ?? {}).filter(row => row.status === 'active' && (scope ? row.ownerId === cloudOwnerId : row.desktop === true))
           .map(({ issuer, sub, ownerId }) => ({ issuer, sub, ownerId }));
         await mkdir(path.dirname(target), { recursive: true }); await writeFile(target, JSON.stringify(owners), { mode: 0o600 });
       }
@@ -124,7 +136,9 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
     for (const { source, target, pinned } of databases) {
       if (pinned) await pinned.copy(target); else await databaseBackup(source, target);
     }
+    if (scope) await filterCloudStage(stage, scope);
     await omitTemporaryChats(stage);
+    if (scope) contentHash = await cloudContentHash(stage, root, credentials);
     // Hashing, sanitizing captured bytes and compression never hold the write pause.
     for (const name of await files(stage)) {
       const target = path.join(stage, name);
@@ -140,7 +154,8 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
     const handle = await open(temporary, 'r+');
     try { await handle.sync(); } finally { await handle.close(); }
     await rename(temporary, path.join(directory, id));
-    return { id, createdAt: manifest.createdAt, reason, size: (await lstat(path.join(directory, id))).size, verification: 'valid' };
+    return { id, createdAt: manifest.createdAt, reason, size: (await lstat(path.join(directory, id))).size, verification: 'valid',
+      ...(scope ? { contentHash, credentials, manifest } : {}) };
   } finally { for (const { pinned } of databases) pinned?.close(); await rm(stage, { recursive: true, force: true }); await rm(temporary, { force: true }); }
 }
 
@@ -167,7 +182,7 @@ export async function verify(file, destination = null, { skipStorageAttachments 
         !/^[a-f0-9]{64}$/.test(row.sha256)) throw backupError('BACKUP_CORRUPT');
       names.add(canonical); const hash = createHash('sha256'); let remaining = row.size, handle;
       try {
-        if (destination && !(skipStorageAttachments && storageAttachment(row.path))) { const target = path.join(destination, row.path); await mkdir(path.dirname(target), { recursive: true }); handle = await open(target, 'wx', 0o600); }
+        if (destination && !(skipStorageAttachments && (storageAttachment(row.path) || sqliteSidecar(row.path) || sqliteWorkerLease(row.path)))) { const target = path.join(destination, row.path); await mkdir(path.dirname(target), { recursive: true }); handle = await open(target, 'wx', 0o600); }
         while (remaining > 0) {
           if (!buffer.length && !ended) await more();
           if (!buffer.length) throw backupError('BACKUP_CORRUPT');
