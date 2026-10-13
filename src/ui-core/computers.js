@@ -17,11 +17,14 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
   const lastKey = () => `weftmate-computer:${core.state.cloudAuth?.sub || ''}`;
   const name = id => {const row=core.state.computers?.find(row=>row.hostId===id);return row?.displayName || row?.name || '这台电脑';};
   core.computerName = name;
-  core.hasMultipleComputers = () => enabled && core.state.computers?.length > 1;
+  core.hasMultipleComputers = () => core.state.computers?.length > 1;
+  core.canChooseExecutionComputer=()=>enabled&&core.hasMultipleComputers();
+  core.canUseComputerChannel=()=>enabled;
   core.updateComputerDirectory = result => {
     enabled = result.capabilities?.multiHost === 1 && !environment.desktop && typeof effects.openComputerChannel === 'function';
     core.state.computers = result.capabilities?.multiHost===1 ? result.hosts || [] : [];
-    current ??= core.cloudCurrentComputer?.() || core.state.hostId;
+    if(!enabled)current=core.cloudCurrentComputer?.() || core.state.hostId;
+    else current ??= core.cloudCurrentComputer?.() || core.state.hostId;
     for (const id of channels.keys()) if (!core.state.computers.some(row=>row.hostId===id)) {channels.get(id)?.close?.();channels.delete(id);}
     for(const removed of result.removedHosts || [])if((core.state.computersSeen || []).includes(removed.hostId)&&!(core.state.removedComputers || []).some(r=>r.hostId===removed.hostId))
       effects.toast?.(`${removed.name} 已移除，交给它的事项已取消。本机内容仍保留。`);
@@ -70,7 +73,7 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
   const refresh=core.refreshSessions;
   core.refreshSessions=async(...args)=>{
     if(enabled)await directory().catch(()=>{});
-    if(core.hasMultipleComputers()&&core.state.computers.find(row=>row.hostId===current)?.online===false){
+    if(enabled&&core.hasMultipleComputers()&&core.state.computers.find(row=>row.hostId===current)?.online===false){
       const page=await core.accessApi('/sessions?archived=all');core.state.sessions=page.sessions || [];
       effects.renderSessions?.();effects.updateAvailability?.();return;
     }
@@ -124,7 +127,7 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
     return original.selectSession(id,...args);
   };
   core.startNewConversation = async (...args) => {
-    if(core.hasMultipleComputers()) {
+    if(enabled) {
       let last;try{last=environment.storage.getItem(lastKey());}catch{}
       const chosen=globalThis.WeftUiCore.chooseComputer(core.state.computers,{lastHostId:last || current});
       if(chosen)await core.selectExecutionComputer(chosen);

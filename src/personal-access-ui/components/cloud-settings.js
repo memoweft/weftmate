@@ -136,7 +136,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
                 const result = await core.cloudConnect(device.hostId);
                 if (result.status !== 'online') { ui.byId('cloud-settings-status').textContent = '这台电脑离线，请稍后重试。'; return; }
                 if (result.pairingRequired) { ui.byId('cloud-settings-status').textContent = '这台电脑需要更新，请更新后重新连接。'; return; }
-                if(core.hasMultipleComputers?.())await core.selectExecutionComputer(device.hostId);
+                if(core.canUseComputerChannel?.())await core.selectExecutionComputer(device.hostId);
                 else await core.cloudConnectTrusted(result);
                 await core.enterAssistant();
             })));

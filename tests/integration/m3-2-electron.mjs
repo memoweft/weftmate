@@ -62,21 +62,23 @@ async function launch(index,restart=false){
   entry.hostId=await entry.page.evaluate(()=>m3Core.state.hostId);address.set(entry.hostId,{baseUrl:origins[index],status:'online'});
   return entry;
 }
-async function screenshot(page,description,desktop){
+async function screenshot(page,description,desktop,open=null){
   for(const theme of ['light','dark'])for(const width of desktop?[1200,480]:[360,390]){
     const height=desktop?900:width===360?780:844;
     if(desktop)await desktop.app.evaluate(({BrowserWindow,nativeTheme},{width,height,theme})=>{nativeTheme.themeSource=theme;BrowserWindow.getAllWindows()[0].setContentSize(width,height);},{width,height,theme});
     else await page.setViewportSize({width,height});
     await page.evaluate(theme=>{document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;},theme);await pause(160);
+    if(open)await open();
     const file=`${desktop?'desktop':'phone-web'}-${width}-${theme}-${description}.png`;
     if(desktop){const encoded=await desktop.app.evaluate(async({BrowserWindow,desktopCapturer})=>{const win=BrowserWindow.getAllWindows()[0],handle=win.getNativeWindowHandle(),id=handle.length===8?handle.readBigUInt64LE().toString():handle.readUInt32LE().toString();const sources=await desktopCapturer.getSources({types:['window'],thumbnailSize:{width:1600,height:1200}});const source=sources.find(source=>source.id.split(':')[1]===id);if(!source||source.thumbnail.isEmpty())throw Error('Native window capture unavailable');return source.thumbnail.toPNG().toString('base64');});await writeFile(join(out,file),Buffer.from(encoded,'base64'));}
     else await page.screenshot({path:join(out,file)});report.screenshots.push({file,width,height,pageTheme:theme,systemBars:desktop?'native window overlay included':'browser viewport only'});
+    if(open)await page.keyboard.press('Escape');
   }
 }
 async function send(page,text){await page.fill('#message-text',text);await page.locator('#send-message').click();
   await until(()=>page.evaluate(()=>m3Core.optimisticMessages?.().length>0||[...m3Core.state.historyEvents.values()].some(event=>event.type==='user.message')),'first message accepted by presentation',15000);
   await until(()=>page.evaluate(async()=>{const id=m3Core.state.selectedSessionId;if(!id)return false;const page=await m3Core.accessApi('/sessions/'+id+'/events?limit=100');return page.events?.some(event=>event.type==='turn.ended');}),'native reply ended',180000);await page.evaluate(()=>m3Core.refreshHistory());}
-async function count(entry){const usage=await entry.page.evaluate(()=>m3Core.accessApi('/usage')).catch(()=>null);if(!usage)return;const count=usage.total?.requests || 0,previous=modelCounters.get(entry.index)||0;report.modelRequests+=Math.max(0,count-previous);modelCounters.set(entry.index,count);report.requestCountSource='authenticated model usage ledger, per-computer restart deltas';}
+async function count(entry){const usage=await entry.page.evaluate(()=>m3Core.accessApi('/usage')).catch(()=>null);if(!usage)return;const count=usage.total?.requests || 0,previous=modelCounters.get(entry.index)||0,increment=Math.max(0,count-previous);report.modelRequests+=increment;modelCounters.set(entry.index,count);(report.modelUsage??=[]).push({computer:names[entry.index],total:count,increment});report.requestCountSource='authenticated model usage ledger, per-computer restart deltas';}
 async function removeLinks(directory){for(const row of await readdir(directory,{withFileTypes:true})){const file=join(directory,row.name);if(row.isSymbolicLink())await unlink(file);else if(row.isDirectory())await removeLinks(file);}}
 try {
   const relayEnv={CLOUD_RELAY_DOMAIN:'synthetic.example.com'};
@@ -101,10 +103,16 @@ try {
   else {
   stage='second-computer';const b=await launch(1);await phone.evaluate(async()=>{await m3Core.cloudDirectory();await m3Core.refreshSessions();});
   await phone.locator('#computer-choice').waitFor({state:'visible'});await screenshot(phone,'two-computers');
+  await a.page.evaluate(()=>WeftSettingsNavigation.open('devices'));await screenshot(a.page,'devices',a);
+  await screenshot(a.page,'computer-more',a,()=>a.page.getByRole('button',{name:'synthetic-laptop的更多操作',exact:true}).click());
+  await screenshot(a.page,'rename-computer',a,async()=>{await a.page.getByRole('button',{name:'synthetic-laptop的更多操作',exact:true}).click();await a.page.getByRole('menuitem',{name:'修改名称',exact:true}).click();});
+  await screenshot(a.page,'remove-confirm',a,async()=>{await a.page.getByRole('button',{name:'synthetic-laptop的更多操作',exact:true}).click();await a.page.getByRole('menuitem',{name:'移除电脑',exact:true}).click();});
+  await a.page.getByRole('button',{name:'关闭设置',exact:true}).click();
   await phone.locator('#computer-choice').click();await screenshot(phone,'computer-menu');await phone.keyboard.press('Escape');
   await phone.evaluate(()=>WeftSettingsNavigation.open('devices'));await screenshot(phone,'devices');await phone.getByRole('button',{name:'关闭设置',exact:true}).click();
   stage='messages';await phone.evaluate(async()=>{await m3Core.startNewConversation();});await send(phone,'请只回复：来自 synthetic-desk。');
   await phone.evaluate(async hostId=>{await m3Core.selectExecutionComputer(hostId);await m3Core.startNewConversation();},b.hostId);await send(phone,'请只回复：来自 synthetic-laptop。');
+  await phone.getByRole('button',{name:'切换会话侧栏',exact:true}).click();await screenshot(phone,'merged-conversations');await phone.keyboard.press('Escape');
   const bCount=await b.page.evaluate(async()=>Object.keys((await m3Core.accessApi('/commands?limit=100')).commands || {}).length);
   stage='file-on-a';const notes=join(a.profile,'notes');await mkdir(notes);await writeFile(join(notes,'synthetic-note.txt'),'M3_FILE_ONLY_ON_DESK_42');
   await a.app.evaluate(({dialog},path)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[path]});},notes);
@@ -139,5 +147,8 @@ finally {
   for(const entry of apps)if(!entry.closed){try{await count(entry);await entry.app.close();}catch{}}
   await browser?.close();for(const cleanup of cleanups.reverse())await cleanup();
   report.cleanup=cleanupOwnedProcesses({startedAt,executables:[process.execPath,createRequire(import.meta.url)('electron')],commandRoots:[root,join(repo,'tests/integration/m3-2-bootstrap.mjs')]});await removeLinks(root);await rm(root,{recursive:true,force:true});
-  await writeFile(join(out,'electron-report.json'),redactEvidenceText(JSON.stringify(report,null,2),[root,cloud?.root].filter(Boolean)).replaceAll(key,'[private]')+'\n');
+  const clean=value=>typeof value==='string'?redactEvidenceText(value,[root,cloud?.root].filter(Boolean)).replaceAll(key,'[private]'):Array.isArray(value)?value.map(clean):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([name,item])=>[name,clean(item)])):value;
+  await writeFile(join(out,'electron-report.json'),JSON.stringify(clean(report),null,2)+'\n');
+  const countsFile=join(out,'model-request-counts.json');let ledger;try{ledger=JSON.parse(await readFile(countsFile,'utf8'));}catch{ledger={attempts:[],earlyAttemptsIncomplete:true};}
+  ledger.attempts.push({at:new Date().toISOString(),ok:report.ok,stage:report.stage || 'completed',requests:report.modelRequests,source:report.requestCountSource,usage:report.modelUsage || []});await writeFile(countsFile,JSON.stringify(ledger,null,2)+'\n');
 }
