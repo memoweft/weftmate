@@ -32,7 +32,7 @@ $rows=@()
 # command lines there; query that one field only for already matched PIDs.
 foreach ($p in @(Get-Process -Name node,electron -ErrorAction SilentlyContinue)) {
   $identity=Identity $p
-  if (!$identity -or $p.StartTime.ToUniversalTime() -lt $started -or $owned.executables -notcontains $identity.executable) { continue }
+  if (!$identity -or [DateTimeOffset]::Parse($identity.createdAt).UtcDateTime -lt $started -or $owned.executables -notcontains $identity.executable) { continue }
   $line=(Get-CimInstance Win32_Process -Filter "ProcessId = $($p.Id)" -Property CommandLine -ErrorAction SilentlyContinue).CommandLine
   if (!$line -or !$line.Contains($resolvedRoot)) { continue }
   $rows += $identity

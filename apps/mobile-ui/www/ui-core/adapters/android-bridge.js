@@ -130,7 +130,12 @@
   // App account transport shares the account core; only the platform owns secrets.
   globalThis.WeftUiCore.createMobileCloudTransport = ({ bridge, native, hostOrigin }) => {
     const request = async (url, options = {}) => {
-      if (!native) return globalThis.fetch(url, options);
+      if (!native) {
+        const response = await globalThis.fetch(url, options);
+        if (new URL(url, hostOrigin).pathname === '/personal/v1/cloud/config' && response.status === 404)
+          return { ok: true, status: 200, json: async () => ({ issuer: hostOrigin + '/personal/v1/cloud/oidc', hostId: 'unconnected', clientId: 'weftmate-web' }) };
+        return response;
+      }
       const absolute = new URL(url, hostOrigin).href;
       const path = new URL(absolute).pathname;
       if (path === '/personal/v1/cloud/devices/pending' || /^\/personal\/v1\/cloud\/devices\/[^/]+\/decision$/.test(path)) {
@@ -180,7 +185,7 @@
         client.host = new URL(connection.baseUrl).origin;
         const config = await client.request(client.host + '/personal/v1/cloud/config');
         if (config.hostId !== host.hostId || config.issuer !== client.config.issuer) throw { code: 'HOST_TRUST_INVALID' };
-        client.config = { ...client.config, ...config };
+        client.config = { ...client.config, ...config, clientId: client.clientId || client.config.clientId };
         await connected({ hostId: host.hostId, baseUrl: client.host });
       }
       try { return await exchange(...args); }
