@@ -1,10 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm, readdir, cp } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, rm, readdir, cp } from 'node:fs/promises';
 import { readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { gunzipSync, gzipSync, zstdCompressSync, zstdDecompressSync } from 'node:zlib';
 import { snapshot, verify } from '../src/personal-backup/archive.mjs';
@@ -14,23 +12,7 @@ import { validateStore } from '../src/personal-access/store.mjs';
 import { beginRestore, rollbackRestore, commitRestore } from '../src/personal-backup/restore.mjs';
 import { stageCloudVaultRestore, reconcileCloudVaultRestore, commitCloudVaultRestore } from '../src/personal-cloud-backup/vault-restore.mjs';
 
-const owner = 'owner-synthetic-a', other = 'owner-synthetic-b';
-const sha = value => createHash('sha256').update(value).digest('hex');
-const account = username => ({ account: { username, usernameCanonical: username, authEpoch: 1,
-  password: { algorithm: 'scrypt', N: 131072, r: 8, p: 1, maxmem: 192 * 1024 * 1024, salt: '0'.repeat(64), hash: '1'.repeat(128) } },
-  devices: {}, setupGrant: null, authLimits: { failures: 0, lastFailureAt: 0, lockUntil: 0 }, sessions: {}, commands: {} });
-async function fixture(t) {
-  const base = await mkdtemp(path.join(tmpdir(), 'weftmate-cloud-snapshot-')), root = path.join(base, 'profile'), directory = path.join(base, 'Backups');
-  const store = { version: 3, hostId: 'host-synthetic', legacyOwnerId: other, executionOwnerId: owner,
-    accounts: { [owner]: account('synthetic-a'), [other]: account('synthetic-b') },
-    unknownAuthLimits: { failures: 0, lastFailureAt: 0, lockUntil: 0 }, sharedModelProfiles: [] };
-  await mkdir(root, { recursive: true });
-  const put = async (name, value) => { const file = path.join(root, name); await mkdir(path.dirname(file), { recursive: true }); await writeFile(file, typeof value === 'string' || Buffer.isBuffer(value) ? value : JSON.stringify(value)); };
-  await put('personal-access/store.json', store);
-  t.after(() => rm(base, { recursive: true, force: true }));
-  return { base, root, directory, store, put };
-}
-const native = (root, id, extra = {}) => JSON.stringify({ type: 'session', id, cwd: path.join(root, 'conversations', sha(owner), id), ...extra }) + '\n' + JSON.stringify({ type: 'user/message', data: { text: `history-${id}` } }) + '\n';
+import {owner,other,sha,fixture,native} from './helpers/cloud-backup-snapshot-fixture.mjs';
 
 test('S4 cloud snapshot isolates account stores, health, memory, usage, connectors and native goals/schedules', async t => {
   const f = await fixture(t);
@@ -61,23 +43,6 @@ test('S4 cloud snapshot isolates account stores, health, memory, usage, connecto
   const bytes = gunzipSync(await readFile(file)).toString('utf8');
   for (const text of ['other-secret', 'other usage secret', 'other health secret', 'other memory secret', 'other connector secret', 'other reminder secret', 'other-goal-secret', 'other sync secret', 'history-session-b']) assert.ok(!bytes.includes(text), text);
   assert.deepEqual(JSON.parse(await readFile(path.join(extracted, 'personal-access/backup-cloud-owners.json'), 'utf8')), [{ issuer: 'https://synthetic.invalid', sub: 'a', ownerId: owner }]);
-});
-
-test('S4 cloud snapshot excludes file bodies while keeping own conversation experience and account configuration', async t => {
-  const f = await fixture(t); f.store.accounts[owner].sessions['session-a'] = { ownerId: owner, modelProfileId: 'model-a' }; await f.put('personal-access/store.json', f.store);
-  const own = `conversations/${sha(owner)}/session-a`, others = `conversations/${sha(other)}/session-a`;
-  for (const [name, content] of Object.entries({
-    [`${own}/经验.md`]: 'own experience', [`${own}/large.pdf`]: 'original user file secret', [`${others}/经验.md`]: 'other experience secret',
-    'workspace/notes.txt': 'workspace secret', 'desktop-artifacts/export.txt': 'desktop artifact secret', 'personal-access/artifacts/large.txt': 'library body secret',
-    [`personal-access/accounts/${owner}/sync/attachments/file.bin`]: 'attachment secret', [`personal-access/accounts/${owner}/sync/shared-attachments/file.image`]: 'image secret',
-    'dsh-home/settings.yaml': JSON.stringify({ 'other-namespace': { secret: 'provider secret' } }), 'unknown-data/other-account.json': 'unknown secret', 'weftmate-model.enc': 'encrypted vault secret',
-  })) await f.put(name, content);
-  await f.put('weftmate-settings.json', { schemaVersion: 3, appearance: { theme: 'dark' }, models: { profiles: [{ id: 'model-a', name: 'own' }, { id: 'private-model-other', name: 'other model secret' }], activeId: 'model-a' }, sessionBindings: { 'session-a': { profileId: 'model-a' }, 'session-b': { profileId: 'private-model-other' } } });
-  const row = await snapshot({ ...f, cloudOwnerId: owner }), bytes = gunzipSync(await readFile(path.join(f.directory, row.id))).toString('utf8');
-  assert.ok(bytes.includes('own experience')); assert.ok(bytes.includes('"theme":"dark"'));
-  for (const text of ['original user file secret', 'other experience secret', 'workspace secret', 'desktop artifact secret', 'library body secret', 'attachment secret', 'image secret', 'provider secret', 'unknown secret', 'other model secret', 'encrypted vault secret']) assert.ok(!bytes.includes(text), text);
-  const local = await snapshot(f), localManifest = await verify(path.join(f.directory, local.id));
-  assert.ok(localManifest.files.some(row => row.path === `${own}/large.pdf`), 'ordinary local backup behavior remains unchanged');
 });
 
 test('S4 content hash ignores capture time and device auth changes, but detects user data and credentials changes', async t => {
@@ -129,23 +94,6 @@ test('S4 cloud snapshot refuses an absent account and unsafe owner path without 
   await assert.rejects(snapshot({ ...f, cloudOwnerId: 'owner-missing' }), { code: 'ACCOUNT_LOGIN_REQUIRED' });
   await assert.rejects(snapshot({ ...f, cloudOwnerId: '../other' }), { code: 'INVALID_REQUEST' });
   assert.deepEqual(await readdir(f.directory), []);
-});
-
-test('S4 cloud backup preserves only owned official model providers and paired migration marker', async t => {
-  const f = await fixture(t), ownRoute = `weftmate-${sha('model-a').slice(0, 24)}`, otherRoute = `weftmate-${sha('private-model-other').slice(0, 24)}`;
-  await f.put('weftmate-settings.json', { schemaVersion: 3, models: { profiles: [{ id: 'model-a' }, { id: 'private-model-other' }], activeId: 'model-a' } });
-  const provider = { apiKeyEnv: 'synthetic-formal-credential-ref', api: 'openai-completions', baseURL: 'https://synthetic.invalid/v1', models: [{ id: 'synthetic-model', contextWindow: 131072, maxTokens: 4096 }] };
-  await f.put('dsh-home/settings.yaml', `llm-pi-ai:\n  providers:\n    ${ownRoute}: ${JSON.stringify(provider)}\n    ${otherRoute}: {displayName: other-provider-secret}\nother-namespace:\n  notes: other-namespace-secret\n`);
-  await f.put('dsh-home/weftmate-stage2-official-routes-migration.json', { schemaVersion: 1, authority: 'official-dsh-user-settings', routes: [ownRoute, otherRoute] });
-  let captured;
-  const row = await snapshot({ ...f, cloudOwnerId: owner, captureSecrets: async metadata => { captured = metadata; return null; } }), extracted = path.join(f.base, 'extracted');
-  await verify(path.join(f.directory, row.id), extracted);
-  assert.deepEqual(JSON.parse(await readFile(path.join(extracted, 'dsh-home/settings.yaml'), 'utf8')), { 'llm-pi-ai': { providers: { [ownRoute]: provider } } });
-  assert.deepEqual(JSON.parse(await readFile(path.join(extracted, 'dsh-home/weftmate-stage2-official-routes-migration.json'), 'utf8')).routes, [ownRoute]);
-  assert.deepEqual(captured.modelCredentialRefs, [{ profileId: 'model-a', provider: ownRoute, credentialRef: 'synthetic-formal-credential-ref' }]);
-  const bytes = gunzipSync(await readFile(path.join(f.directory, row.id))).toString('utf8'); assert.ok(!bytes.includes('other-provider-secret')); assert.ok(!bytes.includes('other-namespace-secret'));
-  await rm(path.join(f.root, 'dsh-home/settings.yaml'));
-  const unpaired = await snapshot({ ...f, cloudOwnerId: owner }); assert.ok(!unpaired.manifest.files.some(row => row.path.endsWith('official-routes-migration.json')));
 });
 
 test('S4 cloud restore replaces the matching cloud account and preserves other accounts and original user files', async t => {

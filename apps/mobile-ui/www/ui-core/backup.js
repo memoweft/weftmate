@@ -20,7 +20,7 @@ globalThis.WeftUiCore.factories.backup = core => {
                 CLOUD_BACKUP_TOO_LARGE:'备份太大，超过了可用空间。请先做本机备份，并清理不需要的旧聊天。',
                 BACKUP_QUOTA_EXCEEDED:'备份超过了可用空间。请删除旧的云端备份，或继续使用本机备份。',BACKUP_GLOBAL_QUOTA_EXCEEDED:'云端备份空间暂时满了。请稍后重试，或先做本机备份。',
                 CLOUD_BACKUP_POWER_NETWORK:'已推迟大文件上传。请接上电源，并在自己的私人网络上重试。',
-                CLOUD_BACKUP_UNAVAILABLE:'云端备份暂不可用。',INVALID_CREDENTIALS:'账号密码不对，请重新输入。',
+                CLOUD_BACKUP_UNAVAILABLE:'云端备份暂不可用。',RUNTIME_UNAVAILABLE:'这次备份没成功，请稍后重试。',INVALID_CREDENTIALS:'账号密码不对，请重新输入。',
                 CLOUD_UNAVAILABLE:'网络中断了，请重试；上传和下载会接着进行。',SERVICE_CLOSING:'下次打开程序会接着备份。',
                 CLOUD_BACKUP_DELETE_UNVERIFIED:'暂时无法核对删除结果，请重试。'})[error?.code] || core.backupErrorText(error);
         },

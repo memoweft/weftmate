@@ -82,6 +82,7 @@ test('S4 the assistant discovers a cloud backup using account identity, and dism
   assert.ok(dialog.querySelectorAll('input').some(node => node.getAttribute('aria-label') === '恢复码'));
   assert.match(f.core.cloudBackupErrorText({ code: 'CLOUD_BACKUP_RECOVERY_CODE', invalidGroups: [2, 4] }), /第 2、4 组抄写不对/);
   assert.match(f.core.cloudBackupErrorText({ code: 'CLOUD_BACKUP_RECOVERY_CODE', details: { invalidGroups: [7] } }), /第 7 组抄写不对/);
+  assert.equal(f.core.cloudBackupErrorText({code:'RUNTIME_UNAVAILABLE'}),'这次备份没成功，请稍后重试。');
 });
 
 test('S4 an unavailable old-cloud capability produces no discovery hint and settings explains temporary unavailability', async () => {

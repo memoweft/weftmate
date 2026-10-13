@@ -15,29 +15,36 @@ const object = value => value !== null && typeof value === 'object' && !Array.is
 const segment = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(value);
 const put = (stage, name, value) => writeFile(path.join(stage, name), JSON.stringify(value), { mode: 0o600 });
 const read = (stage, name) => readFile(path.join(stage, name), 'utf8').then(JSON.parse).catch(cause => { if (cause.code === 'ENOENT') return null; throw cause; });
-let nativeSettingsParser;
-
-export async function readNativeSettings(root) {
-  const text = await readFile(path.join(root, 'dsh-home/settings.yaml'), 'utf8').catch(cause => { if (cause.code === 'ENOENT') return null; throw cause; });
-  if (text === null) return null;
-  // Use the pinned DSH provider's own YAML parser. No second YAML dialect and
-  // no unscoped namespace copying; JSON output is accepted by this parser too.
-  if (!nativeSettingsParser) {
-    try { nativeSettingsParser = createRequire(path.join(root, 'dsh-home/profiles/node_modules/@deepseek-ai/dsh-settings-file/package.json'))('yaml'); }
-    catch {
-      try { nativeSettingsParser = createRequire(import.meta.url)('../../vendor/dsh-runtime/node_modules/yaml'); }
-      catch { nativeSettingsParser = createRequire(path.join(process.resourcesPath, 'dsh-runtime/package.json'))('yaml'); }
+export function createNativeSettingsReader({ requireModule = createRequire, resourcesPath = process.resourcesPath } = {}) {
+  let nativeSettingsParser;
+  return async function readNativeSettings(root) {
+    const text = await readFile(path.join(root, 'dsh-home/settings.yaml'), 'utf8').catch(cause => { if (cause.code === 'ENOENT') return null; throw cause; });
+    if (text === null) return null;
+    // Use the pinned DSH provider's own YAML parser. No second YAML dialect and
+    // no unscoped namespace copying; JSON output is accepted by this parser too.
+    if (!nativeSettingsParser) {
+      const locations = [
+        [path.join(root, 'dsh-home/profiles/node_modules/@deepseek-ai/dsh-settings-file/package.json'), 'yaml'],
+        [import.meta.url, '../../vendor/dsh-runtime/node_modules/yaml'],
+      ];
+      if (typeof resourcesPath === 'string' && resourcesPath.length) locations.push([path.join(resourcesPath, 'dsh-runtime/package.json'), 'yaml']);
+      for (const [anchor, module] of locations) {
+        try { nativeSettingsParser = requireModule(anchor)(module); break; }
+        catch { /* Try the next existing runtime location. */ }
+      }
+      if (!nativeSettingsParser) throw error('RUNTIME_UNAVAILABLE');
     }
-  }
-  const document = nativeSettingsParser.parseDocument(text);
-  if (document.errors.length) throw error('BACKUP_CORRUPT');
-  const value = document.toJS() ?? {};
-  if (!object(value)) throw error('BACKUP_CORRUPT');
-  return value;
+    const document = nativeSettingsParser.parseDocument(text);
+    if (document.errors.length) throw error('BACKUP_CORRUPT');
+    const value = document.toJS() ?? {};
+    if (!object(value)) throw error('BACKUP_CORRUPT');
+    return value;
+  };
 }
+export const readNativeSettings = createNativeSettingsReader();
 
 /** Resolve account ownership while the same BK-1 write/capture fence is held. */
-export async function cloudScope(root, ownerId) {
+export async function cloudScope(root, ownerId, { nativeSettingsReader = readNativeSettings } = {}) {
   if (!path.isAbsolute(root) || !segment(ownerId)) throw error('INVALID_REQUEST');
   if ((await lstat(root)).isSymbolicLink()) throw error('BACKUP_SYMLINK');
   const store = await read(root, 'personal-access/store.json');
@@ -61,7 +68,7 @@ export async function cloudScope(root, ownerId) {
   for (const [id, row] of Object.entries(settings?.sessionBindings ?? {})) if (sessions.has(id) && typeof row.profileId === 'string') modelIds.add(row.profileId);
   const connectors = await read(root, 'personal-access/connectors.json');
   const connectorRows = Object.values(connectors?.accounts?.[ownerId] ?? {}).map(row => ({ id: row.id, slots: [...(row.slots ?? [])] }));
-  const nativeSettings = await readNativeSettings(root), providerIds = new Set([...modelIds].map(id => routeForProfile(id).provider));
+  const nativeSettings = await nativeSettingsReader(root), providerIds = new Set([...modelIds].map(id => routeForProfile(id).provider));
   const providers = Object.fromEntries(Object.entries(nativeSettings?.['llm-pi-ai']?.providers ?? {}).filter(([id]) => providerIds.has(id)));
   const metadata = { ownerId, modelProfileIds: [...modelIds].sort(),
     modelCredentialRefs: [...modelIds].sort().map(profileId => {
