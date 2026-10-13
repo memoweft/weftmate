@@ -53,6 +53,7 @@ internal fun validBusinessPath(path: String): Boolean {
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/chats(/main|/[A-Za-z0-9_-]{1,128}(/(events|changes|dates|locate|search|resources|metadata|archive|unarchive|results|forget-preview))?)?"))) return true
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/library(/[A-Za-z0-9_-]{1,128}(/preview)?)?"))) return true
     if (query.isEmpty() && route == "/personal/v1/commands") return true
+    // MEM-7 keeps reception, stable receipts and phone erasure on these exact paths.
     if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true
     if (query.isEmpty() && (route == "/personal/v1/status" || route == "/personal/v1/commands" ||
         route.matches(Regex("/personal/v1/commands/[A-Za-z0-9_-]{1,128}")) ||
@@ -264,7 +265,9 @@ class JsonHttp : SseTransport {
                 while (true) {
                     val n = source.read(buffer)
                     if (n < 0) break
-                    if (output.size() + n > 1024 * 1024) throw ApiFailure(status, "RESPONSE_TOO_LARGE")
+                    // Existing preview contract: PDFs up to 20 MB are returned as base64.
+                    val limit = if (connection.url.path.matches(Regex("/personal/v1/library/[A-Za-z0-9_-]{1,128}/preview"))) 28 * 1024 * 1024 else 1024 * 1024
+                    if (output.size() + n > limit) throw ApiFailure(status, "RESPONSE_TOO_LARGE")
                     output.write(buffer, 0, n)
                 }
                 output.toByteArray()

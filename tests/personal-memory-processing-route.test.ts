@@ -184,7 +184,7 @@ test('account memory workers follow only the owner session route and restart wit
   assert.equal(jobReads, 2, 'recall waits for Core accepted background jobs')
   assert.ok(recallQueries.includes('“语言”“例子”“术语”的表达偏好？'),
     'standing style recall probes source vocabulary through Core, without rewriting facts')
-  assert.ok(recallQueries.includes('我叫什么？'), 'identity remains a separate Core recall')
+  assert.ok(recallQueries.includes('用户叫什么？'), 'identity remains a separate permission-filtered Core recall using its source vocabulary')
   assert.deepEqual(recalled.memories, [{ id: 'cog-1', kind: 'cognition', summary: '安全的偏好摘要' },
     { id: 'entity-2', kind: 'entity', summary: '安全的人物名' }])
 

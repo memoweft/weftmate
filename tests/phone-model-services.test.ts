@@ -2,8 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes, webcrypto } from 'node:crypto';
 import { createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import * as catalog from '../src/model-service-catalog.mjs';
 import '../src/ui-core/phone-model-services.js';
+import '../src/ui-core/phone-memory.js';
+import '../src/ui-core/offline.js';
 const create = (globalThis as any).WeftPhoneModelServices.create;
 
 async function fixture(t: any, respond: any) {
@@ -130,4 +134,71 @@ test('phone changing a service while an old directory refresh is pending ignores
   assert.ok(manager.view().services[0].models.some((model: any) => model.modelId === 'new-chat'));
   assert.equal(manager.view().services[0].models.some((model: any) => model.modelId === 'stale-chat'), false);
   assert.ok(manager.currentModel().apiKey === nextCredential, 'only the newly configured service credential remains selected');
+});
+
+test('phone light memory freezes the selected service model before authorization and the next extraction uses the new selection', async t => {
+  const { endpoint, credential } = await fixture(t, (_request: any, response: any) => {
+    response.setHeader('content-type', 'application/json');
+    response.end(JSON.stringify({ data: [{ id: 'chat-first' }, { id: 'chat-second' }] }));
+  });
+  const manager = await create({ catalog, crypto: webcrypto });
+  await manager.configure({ endpoint, apiKey: credential });
+  const serviceId = manager.view().services[0].serviceId;
+  manager.select(serviceId, 'chat-first');
+  let stored: any = { snapshot: null, turns: [], conversations: [] }, waitForAuthorization = false;
+  let authorize!: () => void, enteredAuthorization!: () => void;
+  const authorization = new Promise<void>(resolve => { authorize = resolve; });
+  const entered = new Promise<void>(resolve => { enteredAuthorization = resolve; });
+  const extracted: string[] = [];
+  const vault = { load: async () => stored, save: async (value: any) => { stored = structuredClone(value); }, close() {},
+    complete: async (body: any, snapshot: any) => {
+      assert.equal(body.model, snapshot.model.modelId);
+      assert.equal(snapshot.model.serviceId, serviceId);
+      if (!body.max_tokens) return { choices: [{ message: { content: '已记下原话。' } }] };
+      extracted.push(body.model);
+      const source = JSON.parse(body.messages[1].content)['原话'][0];
+      return { choices: [{ message: { content: JSON.stringify({ upsert: [{ id: null, text: '喜欢茉莉花茶', evidence: '茉莉花茶', sourceIDs: [source.id] }], invalidate: [] }) } }] };
+    } };
+  const engine = await (globalThis as any).WeftOffline.create({ vault, identity: {}, crypto: webcrypto,
+    phoneModel: () => manager.currentModel(), accountCheck: async () => {
+      if (waitForAuthorization) { waitForAuthorization = false; enteredAuthorization(); await authorization; }
+      return {};
+    } });
+  t.after(() => { engine.close(); manager.clear(); });
+  const first = await engine.send('我喜欢茉莉花茶');
+  waitForAuthorization = true;
+  const extracting = engine.extractMemory(first.conversationId); await entered;
+  manager.select(serviceId, 'chat-second'); authorize();
+  assert.equal(await extracting, true);
+  await engine.send('我仍然喜欢茉莉花茶', first.conversationId);
+  await engine.extractMemory(first.conversationId);
+  assert.deepEqual(extracted, ['chat-first', 'chat-second']);
+  assert.equal(JSON.stringify(stored).includes(credential), false, 'in-flight service credential is never saved with phone memory or originals');
+});
+
+test('phone Claude completion supports light memory without a progress callback and preserves its requested token limit', async () => {
+  const credential = randomBytes(24).toString('base64url');
+  const manager = await create({ catalog: { ...catalog, queryServiceCatalog: async () => ({ status: 'available', checkedAt: new Date().toISOString(), models: [{ modelId: 'claude-synthetic', name: '合成 Claude', enabled: true }] }) }, crypto: webcrypto });
+  await manager.configure({ endpoint: 'https://model.example/v1', interfaceType: 'anthropic', apiKey: credential });
+  let attached: any, requested: any;
+  const vault = { complete: async () => assert.fail('Claude uses its messages transport') };
+  const context: any = { window: {}, state: {}, document: { addEventListener() {} }, addEventListener() {},
+    androidBridge: { call: async () => assert.fail('browser completion cannot request a native secret') },
+    WeftPhoneModelServices: { create: async () => manager },
+    WeftOffline: { browserVault: async () => vault, create: async (options: any) => { attached = options; return { view: () => ({ conversations: [] }) }; } },
+    fetch: async (url: string, options: any) => {
+      assert.equal(url, 'https://model.example/v1/messages');
+      assert.ok(options.headers['x-api-key'] === credential, 'credential remains only in the completion transport');
+      requested = JSON.parse(options.body);
+      return { ok: true, json: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: '{"upsert":[],"invalidate":[]}' }] }) };
+    }, URL, DOMException, AbortController, clearTimeout };
+  runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js', import.meta.url), 'utf8'), context);
+  await context.WeftPhone.restoreArchive({ origin: 'https://synthetic.example', accountId: 'synthetic', deviceId: 'phone' }, {});
+  assert.ok(attached, 'the standalone model service engine is attached');
+  const reply = await attached.vault.complete({ model: 'claude-synthetic', stream: false, max_tokens: 1200,
+    messages: [{ role: 'system', content: '整理原话。' }, { role: 'user', content: '我喜欢茉莉花茶。' }] },
+    { model: attached.phoneModel() }, new AbortController().signal);
+  assert.equal(requested.model, 'claude-synthetic'); assert.equal(requested.max_tokens, 1200);
+  assert.equal(requested.stream, false); assert.equal(reply.choices[0].message.content, '{"upsert":[],"invalidate":[]}');
+  manager.clear();
 });

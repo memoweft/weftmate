@@ -1860,3 +1860,26 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 手机浏览器的自填模型密钥只留在当前页面内存；刷新／关闭／退出清空，不写入 IndexedDB（浏览器结构化存储）、localStorage（网页键值存储）、日志或缓存。对话仍经 M3-A 的不可导出 WebCrypto（浏览器密码接口）钥匙加密保存；该边界不承诺同源恶意脚本隔离。提供方必须允许浏览器直连。
 
 上传回执目前只有轮次 `state:"synced"`，没有电脑可继续发送的普通会话标识。MOB-4 保留原手机对话可读；原会话自动接力到电脑仍需后续契约支持，不声称已形成记忆。
+
+
+### MEM-7：手机原对话交给电脑（D63，与APPLE-7共用）
+
+沿3.19的两个精确路径与原认证／CSRF（跨站请求防护）／物理设备／删除代次，不新增权限。`phoneFirst:true` 接收公钥与对话，不依赖可下发的云模型；允许 `model:null`，后台整理使用电脑自己的后台模型。本机模型也可用。旧请求不声明phoneFirst／任务能力且没有云模型时仍返回 `OFFLINE_MODEL_REQUIRED`；新字段只兼容增加。
+
+`/offline/sync` 的加密内容兼容增加 `memoryAuthority:{ready:boolean,hostId}`，表示当前同账号电脑的真实记忆核心是否已就绪；核心尚未启用／尚未就绪不能虚构true。`phoneImports:[{id,handoverId?,state}]` 是该账号手机导入进度，状态沿MEM-1并增加 `receiving / awaiting_confirmation`（接收中／等确认）。手机只从成功的账号目录且hosts为空认定电脑被移除，网络失败不算。信号从现有副本回执提供，不造另一条设备发现机制。
+
+`/offline/turns` 可增加 `handover:{id,totalTurns,conversationCount,bytes?,complete}`，每包仍最多50轮／256 KiB，最后包complete为true。id是手机持久冻结队列的随机批次标识；totalTurns是整批轮数，bytes是冻结turns的JSON（数据交换格式）UTF-8字节数。没有此字段的旧手机仍可接收；phoneFirst登记的旧轮次进入同一导入管线，按本次完整请求建批次。新客户端400／INVALID_REQUEST时可退回一次原字段形状；认证／权限失败不回退。
+
+回执兼容增加 `receipts:[{id,state:"synced",sessionId?,chatId?,importId?,memoryState?}]`。synced只在原文历史与MEM-1任务均持久保存后发出，表示已接收而非已形成；重发相同轮次／正文返回稳定历史标识，同账号同轮次ID跨手机去重，正文变化409。phoneFirst和新交接队列的去重不依赖Cookie（会话凭据）续期。普通M3-A电脑副本离线轮次保持原摄取／依赖处理。手机全回执后清轻量条目、水位与屏蔽摘要；未确认或部分确认继续使用条目，原对话保留。真实形成状态由imports取得。
+
+电脑复用MEM-1的导入任务／后台模型调度／来源回执／暂停继续／取消／整批忘掉，不另设形成接口。来源 `importSource` / `importSources` 的app为phone、appName为「手机上的对话」，兼容增加deviceName、turnId，保留原日期。手机历史加入现有sessions/chats列表，`phoneHistory:true,readOnly:true,source:"phone"`，可看、搜索并从消息开旁聊；不冒充可直接发送的原生电脑会话。直接在同一历史会话续聊留后续。旧会话事件投影的 `data.phoneEventId` 保留同一个稳定时间线标识，供历史消息的旁聊入口引用；标识按账号隔离。
+
+达到100轮或256 KiB等待确认；小量静默整理。导入记录增加deviceName、handoverId、from/to、conversationCount、received、expectedTurns、estimate、confirmationRequired。沿 `/memory/backfill` 增加 `action:"import-confirm",jobId,confirm:true`；确认后进入原running，可用原import-pause／resume。预计模型、输入／输出词元与费用区间沿MEM-1，默认后台模型变动前重新估算。完成时动态静默记录「已把手机上的N段对话整理进记忆」，等待确认时动态指向设置→记忆。整批忘掉不删除手机原文。
+
+**超长历史分片**：普通turns单条消息仍最多16,384 UTF-16字符。新客户端可用同路径请求 `{generation,turns:[],turnFragments:[{id,conversationId,timestamp,index,count,encoding:"json-utf8-base64",sha256,data}],handover?}`。先冻结完整原turn对象，将其JSON UTF-8字节按96,000字节切块；data为标准有填充Base64（编码），sha256是完整原turn字节的小写64位十六进制摘要。index从0开始，count固定；身份、原对话、时间、分片总数和摘要在所有分片一致。每包依旧256 KiB以内，不裁用户消息或助手回复。
+
+分片持久后回 `fragmentReceipts:[{id,index,state:"received"}]`，不能当整轮synced。全部分片重组／摘要与原身份匹配／历史及导入任务落盘后，才带原receipts的synced和稳定标识；重发最后分片不会重复形成。分片在私有电脑内容目录持久保存，重启可继续；完成后移除分片正文，删除／撤权代次变化清未完成分片。不同正文或分片描述复用标识409，旧手机无需理解新增字段。
+
+**手机发起删除**：同路径可带 `{generation,turns:[],forgetConversations:[原conversationId]}`（每次最多50个）。仅提交过或部分提交过该对话的受信物理手机可请求；电脑先持久登记墓碑并禁止重交，再用MEM-1来源遗忘任务清原来源／派生记忆和电脑历史，推进原清理代次。回 `{generation:新代次,receipts:[],forgottenConversations:[id]}` 只表示删除请求持久接受，真正清完的导入记录才为forgotten。客户端更新代次、重新取副本；未交独立原对话不受派生删除影响。重发被删对话的轮次回state:forgotten，不能复活来源。
+
+Android（安卓）白名单继续精确使用 `/offline/sync`、`/offline/turns`、`/memory/status`、`/memory/backfill`，允许／拒绝用例已同步。需要新壳版本：原生队列／解码接memoryAuthority、稳定历史回执、长消息分片及删除方向；本包不自行递增版本。旧网页壳的原生加密容器也须保留手机原始对话和未确认轻量内容：接收电脑的reset不能先清空手机容器，普通电脑副本仍按原删除合同清空。Apple（苹果端）清单：上述四条既有路径的新字段，原RSA（非对称加密）信封／账号授权／删除代次不变；iPhone APPLE-7已有phoneFirst/model:null及冻结队列，后续加handover与turnFragments／forgetConversations，不能把fragmentReceipts当确认。
