@@ -169,6 +169,7 @@
       }
     }
     function bind(row, event, id = event.sourceRef?.sessionId || sessionId(), { local = false } = {}) {
+      const immutable=event.data?.phoneSource===true;
       if (event.sourceRef?.kind === 'native') event = { ...event, seq: event.sourceRef.seq };
       if (!id || !['user.message', 'assistant.message'].includes(event.type) || !event.data?.text || row.querySelector('.message-actions')) return;
       row.tabIndex=0;row.setAttribute('role','group');if(!row.hasAttribute('aria-label'))row.setAttribute('aria-label',`${event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(event.data.text).slice(0,80).join('')}`);
@@ -217,8 +218,8 @@
           if (!more.isConnected) return;
           menu(more, [
           ...((more.closest('.message') || row).weftOpenSideChat ? [{name:'从这里开旁聊', icon:'compose', action:(more.closest('.message') || row).weftOpenSideChat}] : []),
-          { icon:'sync', name: local ? '重新生成（需由电脑接续）' : source?.kind === 'main' ? '开旁聊重新生成' : '重新生成', disabled: local || core.messageBusy(id) || event.data.reminder, ...(!local && !event.data.reminder ? { mutationId: id } : {}), action: () => regenerate(id, event, null, more) },
-          { icon:'model', name: '换模型重新生成', disabled: local || core.messageBusy(id) || event.data.reminder, ...(!local && !event.data.reminder ? { mutationId: id } : {}), children: async () => {
+          { icon:'sync', name: local ? '重新生成（需由电脑接续）' : source?.kind === 'main' ? '开旁聊重新生成' : '重新生成', disabled: local || immutable || core.messageBusy(id) || event.data.reminder, ...(!local && !immutable && !event.data.reminder ? { mutationId: id } : {}), action: () => regenerate(id, event, null, more) },
+          { icon:'model', name: '换模型重新生成', disabled: local || immutable || core.messageBusy(id) || event.data.reminder, ...(!local && !immutable && !event.data.reminder ? { mutationId: id } : {}), children: async () => {
             const models = (await core.accessApi('/models')).models;
             return models.filter(model => model.configured !== false && model.available !== false).map(model => ({ name: model.name || model.id, icon:'model', checked:model.id===(core.state.sessions.find(row=>row.sessionId===id)?.modelProfileId||core.state.modelProfileId), action: () => regenerate(id, event, model.id, more) }));
           } }, ...(core.hasPendingMessageBranch?.() ? [{ name: '上次发送未确认，重试', icon:'sync', action: () => core.retryMessageBranch() }] : [])]);
@@ -227,7 +228,7 @@
         const quoteButton = button('引用选中文字', 'quote', () => quote(quoteButton.closest('.message'))); quoteButton.dataset.messageQuote = 'true'; quoteButton.hidden = true;
         quoteButton.addEventListener('mousedown', event => event.preventDefault()); bar.append(useful, bad, share, more, quoteButton, report);
       }
-      row.dataset.memorySession=id;row.append(bar); if (!local) void versionBar(row, id, event); refresh();
+      row.dataset.memorySession=id;row.append(bar); if (!local&&!immutable) void versionBar(row, id, event); refresh();
     }
     function refresh() {
       if (lastIdentity && lastIdentity !== identity()) {
