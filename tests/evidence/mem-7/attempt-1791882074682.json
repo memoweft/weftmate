@@ -1,0 +1,104 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realMemoryCore": true,
+  "syntheticCloud": true,
+  "syntheticAccount": true,
+  "requests": [
+    {
+      "phase": "phone-register",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    }
+  ],
+  "checks": [],
+  "screenshots": [
+    {
+      "file": "phone-360-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    }
+  ],
+  "errors": [],
+  "failure": "page.waitForFunction: Timeout 90000ms exceeded.",
+  "phase": "phone-chat",
+  "processExit": {
+    "decimal": null,
+    "unsignedDecimal": null,
+    "hexadecimal": null,
+    "signal": null,
+    "meaning": "未取得退出码"
+  },
+  "commitMemory": {
+    "available": true,
+    "availableBytes": 18253709312,
+    "limitBytes": 97770655744,
+    "committedBytes": 79516946432
+  },
+  "phoneMemory": {
+    "memory": {
+      "version": 1,
+      "enabled": true,
+      "items": [],
+      "processed": [
+        "a27ad892-60dc-4823-b7a1-d22e726b5abc",
+        "e935ebcb-f970-4501-9a48-ed28ea48aabd"
+      ],
+      "suppressedSources": [],
+      "suppressedText": [],
+      "handover": false,
+      "transferred": false,
+      "resumeAfter": null
+    },
+    "extractions": [
+      {
+        "input": "{\"原话\":[{\"id\":\"a27ad892-60dc-4823-b7a1-d22e726b5abc\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"},{\"id\":\"e935ebcb-f970-4501-9a48-ed28ea48aabd\",\"text\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "```json\n{\"upsert\":[\n{\"id\":\"\",\"text\":\"使用者叫林舟。\",\"sourceIDs\":[\"a27ad892-60dc-4823-b7a1-d22e726b5abc\"],\"evidence\":\"我叫林舟。\"},\n{\"id\":\"\",\"text\":\"使用者的鹦鹉叫青瓷。\",\"sourceIDs\":[\"a27ad892-60dc-4823-b7a1-d22e726b5abc\"],\"evidence\":\"我的鹦鹉叫青瓷\"},\n{\"id\":\"\",\"text\":\"使用者在做一个叫纸舟的练习项目。\",\"sourceIDs\":[\"a27ad892-60dc-4823-b7a1-d22e726b5abc\"],\"evidence\":\"我正在做一个叫纸舟的练习项目。\"},\n{\"id\":\"\",\"text\":\"茶饮偏好：喜欢乌龙茶；此前说喜欢茉莉花茶，现已改口不再喜欢茉莉花茶。\",\"sourceIDs\":[\"e935ebcb-f970-4501-9a48-ed28ea48aabd\"],\"evidence\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。\"}\n],\"invalidate\":[]}\n```"
+      }
+    ],
+    "identity": null,
+    "connection": "phone",
+    "cloudOnly": true
+  },
+  "hostOutput": "",
+  "cleanedProcesses": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  },
+  "requestCount": 4
+}
