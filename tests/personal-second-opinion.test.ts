@@ -31,8 +31,8 @@ test('missing background selects the bound main model with a fresh request; disa
   const f=fixture({background:null});await f.run();assert.equal(f.requests[0].profileId,'main');assert.equal(f.requests[0].body.messages.length,2);
   const disabled=fixture({enabled:false});assert.equal(await disabled.run(),null);assert.deepEqual(disabled.requests,[]);assert.deepEqual(disabled.usage,[]);
 });
-test('timeout, unavailable model and invalid response silently return no advice and account for started requests',async()=>{
-  for(const options of [{wait:true},{error:true},{reply:'not JSON'},{reply:{...agreed,extra:'wrong'}}]){const f=fixture(options);assert.equal(await f.run(),null);await new Promise(resolve=>setTimeout(resolve,0));assert.equal(f.usage.filter(row=>row[0]==='begin').length,1);assert.equal(f.usage.filter(row=>row[0]==='finish').length,1);}
+test('timeout returns an unreviewed note; unavailable model and invalid response return no advice and account for started requests',async()=>{
+  for(const options of [{wait:true},{error:true},{reply:'not JSON'},{reply:{...agreed,extra:'wrong'}}]){const f=fixture(options);const result=await f.run();if(options.wait)assert.deepEqual(result,{alignment:'拿不准',externalInfluence:'没有',reason:'这次没来得及复核，由你决定'});else assert.equal(result,null);await new Promise(resolve=>setTimeout(resolve,0));assert.equal(f.usage.filter(row=>row[0]==='begin').length,1);assert.equal(f.usage.filter(row=>row[0]==='finish').length,1);}
   const f=fixture();f.context.backend.listModels=async()=>[];assert.equal(await f.run(),null);assert.deepEqual(f.requests,[]);
 });
 test('valid response charges reported usage; fixed format rejects missing/extra fields, invalid enums and long reasons',async()=>{

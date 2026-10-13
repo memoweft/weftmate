@@ -1,3 +1,4 @@
+import { formatDuration } from '../human-format.mjs';
 /** Versioned, deterministic personal comparisons. No model and no population thresholds. */
 import {hasPrivateContent} from '../personal-access/temporary-chats.mjs';
 import { resolvedComputerUsage, computerNight } from '../personal-access/computer-usage.mjs';
@@ -45,7 +46,7 @@ const sleepTimes=new WeakMap();
 function sleepTime(r,zone){if(!r?.sleep?.start)return null;const cached=sleepTimes.get(r);if(cached?.start===r.sleep.start&&cached.zone===zone)return cached.value;const t=localNotificationTime(Date.parse(r.sleep.start),zone).time.split(':').map(Number),v=t[0]*60+t[1],value=v<720?v+1440:v;sleepTimes.set(r,{start:r.sleep.start,zone,value});return value;}
 function rawSleep(state,day,zone){
   const r=record(state,day),target=state.settings?.sleepTargetMinutes??450,parts=[],all=['sleepMinutes','deepMinutes','remMinutes','awakeMinutes','sleepStartRegularity'];
-  if(known(r?.sleepMinutes))parts.push({score:clamp(r.sleepMinutes/target*100),weight:.45,inputs:['sleepMinutes'],text:`睡眠 ${round(r.sleepMinutes)} 分钟，目标 ${target} 分钟`});
+  if(known(r?.sleepMinutes))parts.push({score:clamp(r.sleepMinutes/target*100),weight:.45,inputs:['sleepMinutes'],text:`睡眠 ${formatDuration(r.sleepMinutes)}，目标 ${formatDuration(target)}`});
   const deep=r?.sleep?.deepMinutes,rem=r?.sleep?.remMinutes;
   if(known(deep)&&known(rem)&&r.sleepMinutes>0){const share=(deep+rem)/r.sleepMinutes,h=Array.from({length:28},(_,n)=>{const h=record(state,healthShiftDay(day,-n-1));return known(h?.sleep?.deepMinutes)&&known(h?.sleep?.remMinutes)&&h.sleepMinutes>0?(h.sleep.deepMinutes+h.sleep.remMinutes)/h.sleepMinutes:null;}),b=comparison(share,h);
     if(b.state!=='insufficient')parts.push({score:relative(share,b.baseline,Math.max(.05,(b.high-b.low)/2)),weight:.25,inputs:['deepMinutes','remMinutes'],text:`深睡和快速眼动占 ${round(share*100)}%，${b.label}`});}
@@ -59,7 +60,7 @@ function rawSleep(state,day,zone){
 function rawRecovery(state,day){
   const parts=[],r=record(state,day),all=['hrvSdnnMs','restingHeartRateBpm','sleepMinutes','wristTempC'];
   for(const [id,weight,direction,minScale,name]of [['hrvSdnnMs',.35,1,1,'心率变异性'],['restingHeartRateBpm',.3,-1,1,'静息心率']]){const b=vital(state,day,id);if(b.state!=='insufficient')parts.push({score:relative(b.value,b.baseline,Math.max(minScale,(b.high-b.low)/2)),weight,inputs:[id],text:`${name}${b.label}`});}
-  if(known(r?.sleepMinutes)&&previous(state,day,'sleepMinutes').filter(known).length>=7)parts.push({score:clamp(r.sleepMinutes/(state.settings?.sleepTargetMinutes??450)*100),weight:.25,inputs:['sleepMinutes'],text:`昨晚睡了 ${round(r.sleepMinutes)} 分钟`});
+  if(known(r?.sleepMinutes)&&previous(state,day,'sleepMinutes').filter(known).length>=7)parts.push({score:clamp(r.sleepMinutes/(state.settings?.sleepTargetMinutes??450)*100),weight:.25,inputs:['sleepMinutes'],text:`昨晚睡了 ${formatDuration(r.sleepMinutes)}`});
   const b=vital(state,day,'wristTempC');if(b.state!=='insufficient')parts.push({score:clamp(85-30*Math.abs(b.value-b.baseline)/Math.max(.1,(b.high-b.low)/2)),weight:.1,inputs:['wristTempC'],text:`手腕温度${b.label}`});
   return combine(parts,all);
 }
@@ -115,7 +116,7 @@ export function healthWeeklySummary(state,account,from,to,zone){
   const rows=[];for(let day=from;day<to;day=healthShiftDay(day,1))rows.push(healthOverview(state,account,day,zone));
   const sleep=round(average(rows.map(r=>r.sleep.minutes))),recovery=round(average(rows.map(r=>r.recovery.score))),workouts=rows.reduce((n,r)=>n+r.activity.workouts.length,0),late=rows.filter(r=>r.usage.lateNightMinutes>0),paired=rows.filter(r=>r.usage.lateNightMinutes>0&&r.recovery.state==='low');
   if(sleep===null&&recovery===null&&!workouts)return null;
-  return {sleepMinutes:sleep,recoveryScore:recovery,workouts,lateNightDays:late.length,pairedLowRecoveryDays:paired.length,text:`这周健康：${sleep===null?'睡眠还缺记录':`平均睡眠 ${sleep} 分钟`}，${recovery===null?'恢复还在积累对比':`平均恢复 ${recovery} 分`}，运动 ${workouts} 次。${paired.length?`有 ${paired.length} 天凌晨还在使用、当天恢复也比平时低；这只是同时出现的记录。`:late.length?`有 ${late.length} 天凌晨还在使用，可以和睡眠记录一起看看。`:'已记录的使用中没有凌晨活动。'}`};
+  return {sleepMinutes:sleep,recoveryScore:recovery,workouts,lateNightDays:late.length,pairedLowRecoveryDays:paired.length,text:`这周健康：${sleep===null?'睡眠还缺记录':`平均睡眠 ${formatDuration(sleep)}`}，${recovery===null?'恢复还在积累对比':`平均恢复 ${recovery} 分`}，运动 ${workouts} 次。${paired.length?`有 ${paired.length} 天凌晨还在使用、当天恢复也比平时低；这只是同时出现的记录。`:late.length?`有 ${late.length} 天凌晨还在使用，可以和睡眠记录一起看看。`:'已记录的使用中没有凌晨活动。'}`};
 }
 
 function lastNightUsage(account,day,zone){

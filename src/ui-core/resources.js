@@ -180,7 +180,7 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             if (!core.readMarkers().some((row) => row.requestId === marker.requestId))
                 return;
             if (error.code === 'NOT_FOUND')
-                core.operation('原请求尚无宿主记录，仍待核对；不会自动重复发送。请核对原消息后重试。', true, marker.requestId);
+                core.operation('暂时无法确认这条消息是否送达，不会自动重复发送。请检查连接，核对原消息后重试。', true, marker.requestId);
             else if (error.code === 'NETWORK')
                 core.operation('连接中断，请重连后查询原请求，不会自动重复发送。', true, marker.requestId);
         }

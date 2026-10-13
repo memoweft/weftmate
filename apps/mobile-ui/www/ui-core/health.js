@@ -14,7 +14,7 @@
   const finite = n => typeof n === 'number' && Number.isFinite(n);
   const value = (n,id='') => finite(n) ? new Intl.NumberFormat('zh-CN',{minimumFractionDigits:['wristTempC','respiratoryRateBrpm','vo2Max'].includes(id)?1:0,maximumFractionDigits:['wristTempC','respiratoryRateBrpm','vo2Max'].includes(id)?1:0}).format(n) : '—';
   const analysisScope = id => ['recovery','sleep','load','stress','energy','fitnessAge','activity'].includes(id)?id:['steps','activeEnergyKcal','exerciseMinutes'].includes(id)?'activity':['hrvSdnnMs','restingHeartRateBpm','respiratoryRateBrpm','spo2Pct','wristTempC'].includes(id)?`vital:${id}`:null;
-  const duration = n => finite(n) ? `${Math.floor(Math.round(n)/60)}小时${Math.round(n)%60}分钟` : '—';
+  const duration = globalThis.WeftHumanFormat.formatDuration;
   const dayShift = (day,offset) => new Date(Date.parse(`${day}T12:00:00Z`)+offset*86400000).toISOString().slice(0,10);
   function chart(points = [], average = null) {
     const valid = points.flatMap(p => [p.value,p.low,p.high]).filter(finite);if(finite(average))valid.push(average);

@@ -2348,3 +2348,12 @@ test('model maintenance keeps the desktop button waiting through a two-minute lo
   assert.equal(page.requests.filter(row => row.url.endsWith('/system/model/restart')).length, 1);
   legacyRestart.resolve(reply(system)); await legacy;
 });
+
+test('FIX-34 background fallback is visible beside the model choice and clears after recovery', async () => {
+  const system:any = { canRestart:false, components:[], queue:{}, metrics:{}, backgroundModelFallback:{profileId:'removed',at:'2026-10-12T12:00:00Z'} };
+  const page=harness([],[],false,{systemRead:system});await flush();page.get('show-account').fire('click');await flush();await flush();
+  await page.core.refreshSystem();await flush();
+  assert.equal(page.get('background-model-notice').textContent,'后台模型不可用，暂时用聊天模型代替');
+  system.backgroundModelFallback=null;await page.core.refreshSystem();await flush();
+  assert.equal(page.get('background-model-notice').textContent,'');
+});

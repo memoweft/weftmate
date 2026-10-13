@@ -103,6 +103,8 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
     let runRecords;
     function records() { return runRecords ||= globalThis.WeftRunRecords?.mount(ui.byId('system-heading').closest('section'), {core,toast:ui.toast,retry:()=>core.refreshSystem()}); }
     function paintSystem(system, settings, catalog, token) {
+        ui.byId('background-model-notice').textContent = system.backgroundModelFallback
+            ? '后台模型不可用，暂时用聊天模型代替' : '';
         records()?.paint(system.runRecord || {state:'error'});
         const list = ui.byId('system-services'); list.replaceChildren();
         const rows = system.components || [['host', '对话与工具'], ['memory', '记忆'], ['model', '回复模型'],
@@ -154,7 +156,7 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
         if (system.backgroundModelFallback) {
             const item = ui.element('li', 'system-service'); item.dataset.component = 'background-model';
             const details = ui.element('div', 'system-service-detail');
-            details.append(ui.element('small', 'muted', '后台模型不可用，已改用聊天模型'));
+            details.append(ui.element('small', 'muted', '后台模型不可用，暂时用聊天模型代替'));
             const restore = ui.element('button', 'button secondary small', '改回原后台模型'); restore.type = 'button';
             restore.addEventListener('click', async () => {
                 restore.disabled = true;
