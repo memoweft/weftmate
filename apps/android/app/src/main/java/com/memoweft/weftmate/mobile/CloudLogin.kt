@@ -30,11 +30,12 @@ internal fun cloudCallbackMatches(value: String, expectedState: String): Boolean
 /** Pins come only from an entered, locally issued pairing code. The normal CA check runs first. */
 internal object CloudPins {
     private val pins = ConcurrentHashMap<String, String>()
+    private val factories = ConcurrentHashMap<String, javax.net.ssl.SSLSocketFactory>()
     fun install(origin: String, pin: String) {
         require(pin.matches(Regex("[A-Za-z0-9_-]{43}")))
         pins[origin] = pin
     }
-    fun clear(origin: String) { pins.remove(origin) }
+    fun clear(origin: String) { pins.remove(origin)?.let { factories.remove(it) } }
     fun has(origin: String): Boolean = pins.containsKey(origin)
     fun matches(origin: String, certificate: X509Certificate): Boolean = pins[origin] ==
         Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(certificate.publicKey.encoded), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
@@ -45,12 +46,14 @@ internal object CloudPins {
             require(BuildConfig.DEBUG && url.host in setOf("localhost", "127.0.0.1"))
             return connection
         }
-        val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        factory.init(null as KeyStore?)
-        val standard = factory.trustManagers.filterIsInstance<X509TrustManager>().single()
-        val trust = PinnedTrustManager(standard, pin)
-        val tls = SSLContext.getInstance("TLS").apply { init(null, arrayOf(trust), null) }
-        (connection as HttpsURLConnection).sslSocketFactory = tls.socketFactory
+        // A stable factory retains Android's connection/session reuse. The pin
+        // is the cache key, so changing it never reuses the previous trust rule.
+        (connection as HttpsURLConnection).sslSocketFactory = factories.computeIfAbsent(pin) {
+            val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            factory.init(null as KeyStore?)
+            val standard = factory.trustManagers.filterIsInstance<X509TrustManager>().single()
+            SSLContext.getInstance("TLS").apply { init(null, arrayOf(PinnedTrustManager(standard, pin)), null) }.socketFactory
+        }
         return connection
     }
 }

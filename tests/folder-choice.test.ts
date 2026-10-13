@@ -34,7 +34,7 @@ test('UX-9 new-folder API uses existing permission revisions and never returns a
  // This test owns the HTTP permission/privacy contract. The real Windows reader
  // and its compiler/startup behavior are covered by personal-project-reader.test.ts.
  let inspections=0;
- const projectRootInspector=async rootPath=>{inspections++;if(!['win32','darwin'].includes(process.platform))throw Object.assign(new Error('Windows required'),{code:'PROJECT_WINDOWS_REQUIRED'});assert.equal(rootPath,folder);return {rootPath,rootFinalPath:'\\\\?\\'+rootPath,rootIdentity:'1234ABCD:1234567890ABCDEF'};};
+ const projectRootInspector=async rootPath=>{inspections++;if(!['win32','darwin'].includes(process.platform))throw Object.assign(new Error('Windows required'),{code:'PROJECT_WINDOWS_REQUIRED'});assert.equal(rootPath,folder);return {rootPath,rootFinalPath:process.platform==='darwin'?rootPath:'\\\\?\\'+rootPath,rootIdentity:'1234ABCD:1234567890ABCDEF'};};
  const service=await createPersonalAccessService({root:join(root,'host'),port:0,backend,projectRootInspector});const {origin}=await service.start();
  t.after(async()=>{await service.close();await rm(root,{recursive:true,force:true});});
  const grant=await service.issueSetupGrant(),response=await fetch(origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,username:'FolderContract',password:'Synthetic-'+randomUUID(),deviceName:'合成电脑'})});assert.equal(response.status,201);

@@ -35,6 +35,7 @@ test('MODEL-1 combined service read supplies models and default/background setti
     return response({services:[],models:[{id:'cloud',name:'Synthetic cloud',configured:true}],canManage:true,
       modelSettings:{defaultModelProfileId:'cloud',backgroundModelProfileId:'background',currentChatModelProfileId:'local'}});
   });
+  f.core.state.personalCapabilities={modelServices:1};
   f.core.state.modelProfileId=null;await f.core.refreshModels();
   assert.deepEqual(f.requests.map(row=>row.path),['/personal/v1/model-services']);
   assert.equal(f.core.state.modelProfileId,'cloud');assert.equal(f.core.state.modelSettings.backgroundModelProfileId,'background');
@@ -43,6 +44,7 @@ test('MODEL-1 combined service read supplies models and default/background setti
 
 test('MODEL-1 failed combined read keeps usable models and does not start immediate legacy retries',async()=>{
   const f=fixture(()=>response({error:{code:'BACKEND_UNAVAILABLE'}},503));
+  f.core.state.personalCapabilities={modelServices:1};
   await assert.rejects(f.core.refreshModels(),error=>error.code==='BACKEND_UNAVAILABLE');
   await f.core.refreshModels();await f.core.refreshModels();
   assert.deepEqual(f.requests.map(row=>row.path),['/personal/v1/model-services']);
