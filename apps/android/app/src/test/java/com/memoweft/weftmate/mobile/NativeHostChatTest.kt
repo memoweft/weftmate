@@ -5,6 +5,16 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NativeHostChatTest {
+    @Test fun pinnedTrustManagerExposesTheAndroidHostnameAwareChainContract() {
+        val method=PinnedTrustManager::class.java.getMethod("checkServerTrusted",Array<java.security.cert.X509Certificate>::class.java,String::class.java,String::class.java)
+        assertTrue(java.util.List::class.java.isAssignableFrom(method.returnType))
+        assertTrue(java.lang.reflect.Modifier.isPublic(method.modifiers))
+    }
+    @Test fun cloudConnectionFailuresKeepSafeActionableReasonsWithoutRawMessages() {
+        val cases=listOf(org.json.JSONException("private response") to "CLOUD_RESPONSE_INVALID",IllegalArgumentException("private request") to "CLOUD_REQUEST_INVALID",javax.net.ssl.SSLException("private host") to "CLOUD_TLS_UNAVAILABLE",java.net.SocketTimeoutException("private address") to "CLOUD_TIMEOUT")
+        for((error,code) in cases)assertEquals(code,cloudAppFailure(error).safeCode)
+        val revoked=ApiFailure(401,"UNAUTHORIZED");assertSame(revoked,cloudAppFailure(revoked))
+    }
     @Test fun mainKeepsLogicalIdentityBeforeAndAfterFirstSession() {
         for (session in listOf("", "session-one")) {
             val target = hostChatSendTarget("main","chat-main",session)

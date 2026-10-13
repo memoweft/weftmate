@@ -144,7 +144,7 @@
     if (!finished || !text.trim()) fail('MODEL_STREAM_INCOMPLETE');
     return { choices: [{ message: { content: text } }] };
   }
-  async function create({ vault, identity, host, control, tasks, taskDevice, phoneModel, accountCheck, notify = () => {}, crypto = globalThis.crypto }) {
+  async function create({ vault, identity, host, control, tasks, taskDevice, phoneModel, hostCapabilities = () => ({}), accountCheck, notify = () => {}, crypto = globalThis.crypto }) {
     let value = await vault.load(), running = false, taskSending=false, abort, version = 0, targets=[],cloudTasksSupported=false;
     value.tasks??=[];
     if(value.snapshot)targets=await vault.targets?.(value.snapshot.control.accountId)||[value.snapshot];
@@ -167,7 +167,7 @@
     async function sync() {
       if (running) return false;
       const ticket = version;
-      const body={publicJwk:await vault.key(),generation:value.snapshot?.generation??0,hashes:value.snapshot?.hashes??{},...(phoneModel?{phoneFirst:true}:{})};
+      const body={publicJwk:await vault.key(),generation:value.snapshot?.generation??0,hashes:value.snapshot?.hashes??{},...(phoneModel&&hostCapabilities().offlinePhoneFirst===1?{phoneFirst:true}:{})};
       let envelope;
       try{envelope=await host('/offline/sync',{...body,...(tasks&&vault.seal?{taskSupport:1}:{})});}
       catch(error){if((error.code||error.message)!=='INVALID_REQUEST'||!tasks||!vault.seal)throw error;envelope=await host('/offline/sync',body);}

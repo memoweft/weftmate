@@ -65,6 +65,7 @@
           if (!directory.devices.some(d => d.isCurrent && !d.revoked)) { await engine.clear(); throw Error('DEVICE_NOT_TRUSTED'); }
           return directory;
         }, control: id => client.authorized('/hosts/offline/status', { method: 'POST', body: { hostId: id } }),
+        hostCapabilities: () => client.config?.capabilities || {},
         host: (path, body) => WeftMobileCloud.core.accessApi(path, { method: 'POST', body, protectedWrite: true }), notify: show });
     }
   }

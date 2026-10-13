@@ -124,6 +124,12 @@
     const connect = core.cloudConnect; core.cloudConnect = async hostId => WeftUiCore.resolveMobileCloudConnection(client, await connect(hostId));
     const probePresence = core.probeCloudPresence;
     core.probeCloudPresence = async () => {
+      if (core.state.cloudAuth.verifiedCachedHost) {
+        const profile = await call('auth.me');
+        if (profile.connectionVerified === true)
+          return {hostId:client.config.hostId,status:'online',baseUrl:client.host};
+        return null;
+      }
       const connection = await probePresence();
       return connection ? WeftUiCore.resolveMobileCloudConnection(client, connection) : null;
     };
@@ -156,7 +162,15 @@
           restore: async () => {
             core.state.cloudAuth.mode = 'offline'; core.state.cloudAuth.cachedSession = true;
             nativeAdoption = WeftUiCore.restoreCachedMobileHostSession(androidBridge, accept);
-            await nativeAdoption; await enterAssistant();
+            await nativeAdoption;
+          },
+          verify: async () => {
+            try {
+              nativeAdoption = WeftUiCore.restoreMobileHostSession(androidBridge, accept);
+              await nativeAdoption;
+            } catch { return false; }
+            core.state.cloudAuth.verifiedCachedHost = true;
+            await enterAssistant(); return true;
           },
           reconnect: () => core.resumeCloudComputer(),
           failed: error => { core.state.cloudAuth.error = core.cloudError(error); toast(core.state.cloudAuth.error); },
