@@ -23,7 +23,7 @@ for theme in ['light','dark']:
   html+=[f'<figure><h2>{theme} · {scene}</h2><div class="labels"><span>原网页</span><span>原生</span></div><img src="pairs/{file}" alt="{theme} {scene} 并排图"><figcaption><p>一致：{same}</p><p>故意更好：{better}</p><p>还差：{gap}</p></figcaption></figure>']
 (root/'pairs.html').write_text('\n'.join(html)+ '</html>',encoding='utf-8')
 metadata={}
-for report_file in ['native-report.json','comparison-report.json','font-scale-report.json']:
+for report_file in ['native-report.json','comparison-report.json','font-scale-report.json','postmerge-report.json']:
  if (root/report_file).exists():
   for shot in json.loads((root/report_file).read_text(encoding='utf-8'))['screenshots']:metadata[shot['file']]=shot
 bars=[]
