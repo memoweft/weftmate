@@ -1,0 +1,23 @@
+{
+  "beforeFirst": {
+    "capturedUTC": "2026-10-13T07:59:23Z",
+    "taskStartUTC": "2026-10-13T07:35:26Z",
+    "reportsSinceTaskStart": [],
+    "unavailable": [],
+    "bootTime": "{ sec = 1791858742, usec = 509072 } Mon Oct 12 19:32:22 2026"
+  },
+  "beforeSecond": {
+    "capturedUTC": "2026-10-13T08:05:06Z",
+    "taskStartUTC": "2026-10-13T07:35:26Z",
+    "reportsSinceTaskStart": [],
+    "unavailable": [],
+    "bootTime": "{ sec = 1791858742, usec = 509072 } Mon Oct 12 19:32:22 2026"
+  },
+  "afterSecond": {
+    "capturedUTC": "2026-10-13T08:07:18Z",
+    "taskStartUTC": "2026-10-13T07:35:26Z",
+    "reportsSinceTaskStart": [],
+    "unavailable": [],
+    "bootTime": "{ sec = 1791858742, usec = 509072 } Mon Oct 12 19:32:22 2026"
+  }
+}

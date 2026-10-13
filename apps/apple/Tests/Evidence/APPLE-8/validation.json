@@ -24,8 +24,8 @@
   "realModelVerified": false,
   "MIMO_API_KEYAvailable": false,
   "realCloudHostAccountRequests": 0,
-  "simulatorBoots": 0,
-  "screenshots": "pending bounded capture after commit/push",
+  "simulatorBoots": 2,
+  "screenshots": "six final native images visually inspected; first-batch three historical images retained",
   "ci": "not waited; Claude receives",
   "limits": {
     "images": 4,
@@ -37,5 +37,43 @@
     "pdfPages": 30,
     "historyMessages": 20
   },
-  "pr": "https://github.com/memoweft/weftmate/pull/282"
+  "pr": "https://github.com/memoweft/weftmate/pull/282",
+  "finalNativeScreenshots": 6,
+  "historicalNativeScreenshots": 3,
+  "reboots": 0,
+  "productCrashes": 0,
+  "gpuWindowServerKernelReports": 0,
+  "screenshotSource": "3b4248fd9",
+  "nativeUITest": {
+    "passed": 1,
+    "failed": 0,
+    "scenes": 6,
+    "initialFailure": "native Menu omitted Text explanation; fixed visible titles and label assertions"
+  },
+  "runtimeWarnings": {
+    "count": 2,
+    "message": "_UIReparentingView / UIHostingController hierarchy warning in XCTest attachments; test passed, no product crash"
+  },
+  "simulatorSessions": [
+    {
+      "simulator": "WeftMate shots iPhone 16 Pro",
+      "boots": 1,
+      "startedUTC": "2026-10-13T07:59:28Z",
+      "SimulatorAppOpened": false,
+      "testExit": 65,
+      "shutdownExit": 0,
+      "shutdownUTC": "2026-10-13T08:01:57Z",
+      "cooldownUntilEpoch": 1791878697.8613591
+    },
+    {
+      "simulator": "WeftMate shots iPhone 16 Pro",
+      "boots": 1,
+      "startedUTC": "2026-10-13T08:05:06Z",
+      "SimulatorAppOpened": false,
+      "testExit": 0,
+      "shutdownExit": 0,
+      "shutdownUTC": "2026-10-13T08:07:18Z",
+      "cooldownUntilEpoch": 1791879018.716874
+    }
+  ]
 }
