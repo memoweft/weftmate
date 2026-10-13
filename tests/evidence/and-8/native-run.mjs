@@ -20,6 +20,7 @@ const report={synthetic:true,instrumentation:[],screenshots:[]};
 const filters=false;
 const captureOnly=process.argv.includes('--capture-only');
 const fontScale=process.argv.find(a=>a.startsWith('--font-scale='))?.split('=').at(-1)||'1.0';
+const reportFile=process.argv.includes('--postmerge')?'postmerge-report.json':fontScale!=='1.0'?'font-scale-report.json':captureOnly?'comparison-report.json':'native-report.json';
 async function lock(path,label){const f=await open(path,'wx');await f.writeFile(`AND-8 ${new Date().toISOString()} ${label}`);await f.close();return path;}
 try{
   while(true){
@@ -45,7 +46,7 @@ try{
   report.systemVersion=run('shell','getprop','ro.build.version.release').trim();report.systemTheme=run('shell','cmd','uimode','night').trim();
   await mkdir(process.env.WEFTMATE_MANAGED_TEMP_ROOT,{recursive:true});
   fixture=await (startHealthFixture());port=new URL(fixture.origin).port;run('reverse',`tcp:${port}`,`tcp:${port}`);
-  report.resources={ownerPid:process.pid,privateAdbPort:adbPort,reversePort:Number(port),package:pkg};await writeFile(join(out,fontScale!=='1.0'?'font-scale-report.json':captureOnly?'comparison-report.json':'native-report.json'),JSON.stringify(report,null,2)+'\n');
+  report.resources={ownerPid:process.pid,privateAdbPort:adbPort,reversePort:Number(port),package:pkg};await writeFile(join(out,reportFile),JSON.stringify(report,null,2)+'\n');
   report.apkHashes={};for(const [type,file]of [['app','debug/app-debug.apk'],['test','androidTest/debug/app-debug-androidTest.apk']]){const path=join(root,'apps/android/app/build/outputs/apk',file);report.apkHashes[type]=createHash('sha256').update(await readFile(path)).digest('hex');run('install','-r',path);installed=true}
   const only=process.argv.find(a=>a.startsWith('--variant='))?.split('=').at(-1);
   const variants=only?[[Number(only.split('-')[0]),only.split('-')[1]]]:filters?[[390,'light'],[390,'dark']]:[360,390].flatMap(w=>['light','dark'].map(t=>[w,t]));
@@ -69,5 +70,5 @@ finally{
   if(adbPort)try{execFileSync(adb,['-P',String(adbPort),'kill-server'],{windowsHide:true,timeout:5000});report.privateAdbClosed=true}catch{}
   for(const file of [mumu,heavy])if(file)await unlink(file);
   if(report.occupancy)report.occupancy.releasedAt=new Date().toISOString();
-  await mkdir(out,{recursive:true});await writeFile(join(out,fontScale!=='1.0'?'font-scale-report.json':captureOnly?'comparison-report.json':'native-report.json'),JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify({instrumentation:report.instrumentation,failure:report.failure})+'\n');
+  await mkdir(out,{recursive:true});await writeFile(join(out,reportFile),JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify({instrumentation:report.instrumentation,failure:report.failure})+'\n');
 }
