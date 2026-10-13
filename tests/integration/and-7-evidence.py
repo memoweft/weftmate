@@ -27,6 +27,8 @@ for path in sorted(root.glob('and7-*.png')):
 
 pairs = [(scene, scene, theme) for theme in ['light'] for scene in ['library-list','row-menu','library-empty','viewer-markdown']]
 (root/'pairs').mkdir(exist_ok=True)
+for stale in (root/'pairs').glob('dark-*.png'):
+    stale.unlink()
 for android, apple, theme in pairs:
     left = root / f'and7-390-{theme}-web-{apple}.png'
     right = root / f'and7-390-{theme}-{android}.png'
@@ -40,6 +42,32 @@ for android, apple, theme in pairs:
     draw.text((4,8),'Existing web UI / same account and files',fill='black');draw.text((imgs[0].width+28,8),'Native Android / same theme',fill='black')
     combined.paste(imgs[0],(0,36));combined.paste(imgs[1],(imgs[0].width+24,36))
     combined.save(root/'pairs'/f'{theme}-{android}.png')
+
+# Explicit specification swatches, not a fabricated application screenshot.
+reference=json.loads((root/'dark-control-reference.json').read_text(encoding='utf8'))
+canvas=tuple(bytes.fromhex(reference['canvas'][1:]))
+def spec_rgb(value):
+    if value.startswith('#'):
+        return tuple(bytes.fromhex(value[1:]))
+    values=[float(x) for x in re.findall(r'[\d.]+',value)]
+    return tuple(round(values[i]*values[3]+canvas[i]*(1-values[3])) for i in range(3))
+swatches=Image.new('RGB',(475,844),canvas)
+draw=ImageDraw.Draw(swatches)
+draw.text((20,20),'Controls spec / exact dark tokens',fill=spec_rgb(reference['ink']))
+for i,(name,value) in enumerate(reference.items()):
+    y=60+i*51
+    draw.rounded_rectangle((20,y,110,y+36),radius=8,fill=spec_rgb(value))
+    draw.text((124,y+2),name,fill=spec_rgb(reference['ink']))
+    draw.text((124,y+18),value,fill=spec_rgb(reference['ink-secondary']))
+swatches.save(root/'dark-control-reference.png')
+for scene in ['library-list','row-menu','library-empty','viewer-menu']:
+    source=root/f'and7-390-dark-{scene}.png'
+    if not source.exists():continue
+    native=Image.open(source).convert('RGB').resize((475,844))
+    pair=Image.new('RGB',(974,880),canvas)
+    pair.paste(swatches,(0,36));pair.paste(native,(499,36))
+    d=ImageDraw.Draw(pair);d.text((20,12),'Controls specification',fill=spec_rgb(reference['ink']));d.text((519,12),'Native Android',fill=spec_rgb(reference['ink']))
+    pair.save(root/'pairs'/f'dark-{scene}.png')
 
 lines = ['| 整屏图 | 页面主题 | 系统主题／版本 | 状态栏 RGB | 顶栏 RGB | 最大色差 | 底部系统导航 |',
          '|---|---|---|---|---|---|---|']

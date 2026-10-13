@@ -28,7 +28,12 @@ class NativeLibraryInstrumentedTest {
     private fun control(mode:String){URL("$origin/and7-control?mode=$mode").openConnection().getInputStream().use{it.readBytes()}}
     private fun reveal(name:String){compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasText(name))}
     private fun webComparisons() {
-        main{activity.originalLibrary()}
+        compose.onNodeWithContentDescription("成果库").performClick()
+        compose.waitUntil(30000){compose.onAllNodesWithText("虚构周计划.md").fetchSemanticsNodes().isNotEmpty()}
+        reveal("虚构周计划.md");compose.onNodeWithText("虚构周计划.md").performClick()
+        compose.waitUntil(30000){compose.onAllNodesWithContentDescription("正在读取文件").fetchSemanticsNodes().isEmpty()}
+        compose.onNodeWithContentDescription("更多文件操作").performClick()
+        compose.onNodeWithText("在原网页中查看").performClick()
         var legacy:HybridActivity?=null
         waitFor("original library window") {
             val field=WeftMateApplication::class.java.getDeclaredField("visible").apply{isAccessible=true}
@@ -39,6 +44,9 @@ class NativeLibraryInstrumentedTest {
         fun ready(code:String){var done=false;waitFor("web library state"){legacy!!.embeddedWeb.evaluateJavascript(code){done=it=="true"};done}}
         fun capture(name:String){Thread.sleep(350);val image=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-web-$name.png").outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}}
         ready("Boolean(typeof state!=='undefined' && state.booted)")
+        ready("Boolean(document.getElementById('resource-content')?.textContent.includes('虚构周计划'))")
+        capture("direct-preview")
+        js("closeResourcePage()")
         main{legacy!!.embeddedWeb.settings.useWideViewPort=true}
         js("(()=>{const w=${args.getString("and7Width","360")},s=innerWidth/w*visualViewport.scale;document.querySelector('meta[name=viewport]').content='width='+w+',initial-scale='+s;})()")
         js("applyTheme('${args.getString("and7Theme","light")}');page('library')")
@@ -57,6 +65,7 @@ class NativeLibraryInstrumentedTest {
         capture("library-empty")
         control("normal")
         main{legacy!!.finish()}
+        compose.waitForIdle();compose.onNodeWithContentDescription("关闭预览").performClick()
     }
     @Test fun libraryAndUnifiedFiles() {
         check(i.targetContext.packageName=="com.memoweft.weftmate.mobile.and7qa")
@@ -94,6 +103,7 @@ class NativeLibraryInstrumentedTest {
         }
         i.uiAutomation.performGlobalAction(1)
         compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasContentDescription("按项目筛选"))
+        compose.onNodeWithContentDescription("按文件类型筛选").performClick();shot("type-menu");compose.onNodeWithText("全部",useUnmergedTree=true).performClick()
         compose.onNodeWithContentDescription("按项目筛选").performClick();shot("filter-menu");compose.onAllNodesWithText("全部项目").onLast().performClick()
         for((name,label) in listOf("虚构风景.png" to "image","虚构便签.txt" to "text","虚构周计划.md" to "markdown","synthetic-example.py" to "code","虚构阅读.pdf" to "pdf","虚构文档.docx" to "other")) {
             reveal(name)
