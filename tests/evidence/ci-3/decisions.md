@@ -60,3 +60,5 @@ CI-1 第六轮 next-suggestions 的 f.aborted false≠true 早于本表起点：
 共享夹具改为分阶段异步探针：准备在before、测量55秒且测试60秒、清理在after；原6秒／1秒／7秒与配置断言全部保留。合成桌面先关闭生产控制器，再正常app.exit(0)，验证无信号；其它同步探针在硬期限使用SIGKILL（强制终止信号），避免SIGTERM（终止信号）处理器阻止退出。新增固定测试让子进程先登记忽略SIGTERM，再证明硬期限返回并关闭管道。Windows真实同步／审批2条通过，准备约12秒、测量约7秒、退出0；固定7条通过，未修改Apple工作流或原生检查，没有增加重跑次数。
 
 本机排队脚本有一次以Stop接收native stderr（原生进程标准错误）而截断TAP（测试输出协议）原断言；记录为输出采集失败，旧JSON不作为该轮通过证据。改为完整接收流后，同命令严格复验1937通过／0失败／14既有跳过；不能凭该次恢复宣称已定位原来的一个叶失败。另有一次同步探针与完整必过约20秒名额重叠，已记录；后续包内串行。
+
+同步修复前的第二额外观察轮中，主流程与macOS组通过，但中继手机 `Relay phone first input and file task` 在46503.876746ms报 `first send did not complete`，现场为首次发送完成等待（services/cloud/test/relay-phone.test.mjs:169）。它不是预算豁免；该流程归MOB-3/MOB-4，本包不改手机发送／审批／选择器。该轮结论保存在 extra-round-2.json；首轮的macOS红灯与第二轮中继红灯均不能抹掉或当作全绿。
