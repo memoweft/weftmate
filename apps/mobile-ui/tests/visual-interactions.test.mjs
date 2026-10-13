@@ -1,4 +1,4 @@
-import '../../../tests/fix-32-pointer.test.mjs';
+import './fix-32-pointer.test.mjs';
 import './composer-viewport.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
