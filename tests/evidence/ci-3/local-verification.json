@@ -1,0 +1,75 @@
+{
+  "updatedAt": "2026-10-13T03:11:52.103Z",
+  "groups": [
+    {
+      "label": "activity-resources-offline",
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 15304.4918,
+      "log": "local only"
+    },
+    {
+      "label": "questions-approvals-mobile-release",
+      "passed": 38,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 52934.425,
+      "log": "local only"
+    },
+    {
+      "label": "multi-account-adoption-relay-storage",
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 36536.3816,
+      "log": "local only"
+    },
+    {
+      "label": "policy-ui-core-weekly",
+      "passed": 83,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 5040.1891,
+      "log": ".local/ci-3/policy-remaining.log"
+    },
+    {
+      "label": "native-wait",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 6032.5429,
+      "log": "local only"
+    },
+    {
+      "label": "real-electron-asar-vault",
+      "passed": null,
+      "failed": null,
+      "skipped": null,
+      "durationMs": null,
+      "log": ".local/ci-3/heavy-related.log"
+    },
+    {
+      "label": "fixed-final",
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 5310.1592,
+      "log": ".local/ci-3/fixed-final.log"
+    }
+  ],
+  "slots": [
+    {
+      "exitCode": 0,
+      "completedAt": "2026-10-13T02:54:43.6612891Z",
+      "startedAt": "2026-10-13T02:46:29.6576004Z",
+      "mode": "related",
+      "slot": "heavy-3.lock"
+    }
+  ],
+  "typecheckPassed": true,
+  "publicHygieneHits": 0,
+  "required": "pending final slot",
+  "vendor": "pending final slot",
+  "realModelRequests": 0
+}

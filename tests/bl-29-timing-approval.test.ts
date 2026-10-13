@@ -27,6 +27,7 @@ after(async () => {
   try {
     const exit=await probe?.done;
     if(exit)console.log('BL-29 phased process:',JSON.stringify({stages:exit.evidence.stages,exitCode:exit.code,signal:exit.signal}));
+    if(exit)console.log('BL-29 lifecycle timings:',JSON.stringify(exit.evidence.stdout.split('\n').filter(line=>line.startsWith('BL-29 lifecycle:'))));
     if(exit)assert.equal(exit.code,0,JSON.stringify(exit.evidence));
   } finally {
     if(process.platform==='win32') {
