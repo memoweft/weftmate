@@ -218,7 +218,7 @@ test('FX-11 progress counts actual activities and keeps internal names out of ru
     'job_output', 'run_code', 'get_goal', 'weftmod_script', 'memory_lookup', 'custom_mcp_service']
     .map(toolName => ({toolName, state:'completed'}));
   const text = api.progressText(completed, true).text;
-  assert.equal(text, '修改了 1 个文件、访问了 1 次网页、整理了 1 次执行计划、处理了 1 个子任务、处理了 1 次定时安排、查看或管理了 1 次后台命令、运行了 1 次脚本、查看了 1 次任务目标、操作了 1 次电脑应用、查询或更新了 1 次记忆、调用了 1 次扩展服务');
+  assert.equal(text, '修改了 1 个文件、访问了 1 次网页、整理了 1 次执行计划、处理了 1 个子任务、处理了 1 次定时安排、查看或管理了 1 次后台命令、运行了 1 次脚本、查看了 1 次任务目标、操作了 1 次电脑应用、查询或更新了 1 次记忆、用了一个扩展工具');
   assert.equal(api.progressText([{toolName:'load_tools',state:'completed'}],true).text,'工具已就绪');
   assert.equal(api.progressText([{toolName:'load_tools',state:'running',summary:'执行工具 load_tools'}]).text,'正在准备可用工具…');
   const old = api.projectTimeline([{seq:1,type:'step.completed',data:{taskId:'turn-1',stepId:'load',toolName:'load_tools',summary:'执行工具 load_tools',state:'failed'}}]);

@@ -9,7 +9,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const retrySeconds = Math.max(0, Math.ceil((auth.retryAt - now()) / 1000));
     const error = auth.retryAt && auth.error.startsWith('尝试太多次')
       ? retrySeconds ? `尝试太多次，请等待 ${retrySeconds} 秒后重试。` : '等待已结束，可以重试。' : auth.error;
-    return { ...auth, error, codeLoginSupported: environment.deviceType !== 'android' || environment.nativeEmailCodeLogin === true || client?.config?.nativeEmailCodeLogin === true,
+    return { ...auth, error, recoveryHelp: '如果这个邮箱注册过，几分钟内会收到验证码；没收到请检查邮箱是否填对，或直接注册。', codeLoginSupported: environment.deviceType !== 'android' || environment.nativeEmailCodeLogin === true || client?.config?.nativeEmailCodeLogin === true,
       resendSeconds: Math.max(0, Math.ceil((auth.resendAt - now()) / 1000)), retrySeconds };
   }
   function cloudError(error) {

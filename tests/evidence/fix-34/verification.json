@@ -1,0 +1,31 @@
+{
+  "synthetic": true,
+  "modelRequests": 0,
+  "realDesktopShell": true,
+  "browserSystemBars": false,
+  "phoneViewport": "390×844 remote webpage; browser chrome not captured",
+  "screenshots": [
+    "electron-1200-light-approval.png",
+    "electron-1200-light-approval-details.png",
+    "electron-1200-light-no-computer.png",
+    "electron-1200-light-health.png",
+    "electron-1200-light-import.png",
+    "electron-1200-light-background-model.png",
+    "electron-1200-light-recovery.png",
+    "electron-480-light-approval.png",
+    "electron-480-light-approval-details.png",
+    "electron-480-light-no-computer.png",
+    "electron-480-light-health.png",
+    "electron-480-light-import.png",
+    "electron-480-light-background-model.png",
+    "electron-480-light-recovery.png",
+    "phone-web-390-light-approval.png",
+    "phone-web-390-light-approval-details.png",
+    "phone-web-390-light-no-computer.png",
+    "phone-web-390-light-health.png",
+    "phone-web-390-light-import.png",
+    "phone-web-390-light-background-model.png",
+    "phone-web-390-light-recovery.png"
+  ],
+  "errors": []
+}
