@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 
@@ -63,6 +64,9 @@ internal fun Modifier.nativeFrost(shape: Shape, floating: Boolean = false) = com
     } else if (floating) DesignTokens.nativeSurfaceFloat else DesignTokens.nativeSoft)
     if(!dark || Build.VERSION.SDK_INT < 31 || source==null)return@composed this.clip(shape).background(fallback)
     val layer = rememberGraphicsLayer()
+    val blurRadius = with(LocalDensity.current) { DesignTokens.frostRadius.dp.toPx() }
+    val blur = remember(blurRadius) { BlurEffect(blurRadius, blurRadius, TileMode.Clamp) }
+    SideEffect { layer.renderEffect = blur }
     val view = LocalView.current
     var origin by remember { mutableStateOf(Offset.Zero) }
     this.clip(shape).onGloballyPositioned { coordinates ->
@@ -71,7 +75,6 @@ internal fun Modifier.nativeFrost(shape: Shape, floating: Boolean = false) = com
     }.drawWithContent {
         if (!source.paused && !source.keyboardAnimating && source.frame > 0) {
             val delta = source.origin - origin
-            layer.renderEffect = BlurEffect(DesignTokens.frostRadius.dp.toPx(), DesignTokens.frostRadius.dp.toPx(), TileMode.Clamp)
             layer.record(size = IntSize(size.width.toInt(), size.height.toInt())) {
                 // An opaque backdrop prevents the original sharp text underneath
                 // the sampled display list from showing through the blurred layer.

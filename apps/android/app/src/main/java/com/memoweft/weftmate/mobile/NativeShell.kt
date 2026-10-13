@@ -257,7 +257,7 @@ private fun displayRows(m: NativeChatModel): List<JSONObject> {
     val previousViewport=remember { arrayOfNulls<Pair<Int,Int>>(1) }
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val bubbleMaxWidth=(maxWidth-DesignTokens.space20.dp*2)*.9f
-        LazyColumn(state=list,modifier=Modifier.fillMaxSize().pointerInput(Unit){detectTapGestures(onTap={dismissEditor()})}.layout { measurable,constraints ->
+        LazyColumn(state=list,modifier=Modifier.fillMaxSize().pointerInput(Unit){detectTapGestures(onTap={position->if(position.y>=DesignTokens.space80.dp.toPx() && position.y<size.height-bottom().toPx())dismissEditor()})}.layout { measurable,constraints ->
             val geometry=constraints.maxHeight to padding.calculateBottomPadding().roundToPx()
             if(previousViewport[0]!=geometry) {
                 previousViewport[0]=geometry
@@ -409,7 +409,7 @@ private fun inlineMarkdown(text:String):AnnotatedString=buildAnnotatedString {
         inputFocus.requestFocus();keyboard?.show()
         android.widget.Toast.makeText(context,"请使用键盘上的语音输入",android.widget.Toast.LENGTH_SHORT).show()
     }
-    Column(Modifier.fillMaxWidth().semantics{contentDescription="聊天输入区"}.animateContentSize(tween(DesignTokens.durationFast.toInt())).padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).nativeFrost(if(expanded)RoundedCornerShape(DesignTokens.radius24.dp) else pill).padding(if(expanded)gap else DesignTokens.space4.dp)) {
+    Column(Modifier.fillMaxWidth().semantics{contentDescription="聊天输入区"}.padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).nativeFrost(if(expanded)RoundedCornerShape(DesignTokens.radius24.dp) else pill).animateContentSize(tween(DesignTokens.durationFast.toInt()),alignment=Alignment.BottomStart).padding(if(expanded)gap else DesignTokens.space4.dp)) {
         if(m.attachments.isNotEmpty())NativeAttachments(m.attachments,true,{onPreview(JSONObject(it.toString()).put("conversationId",m.chatId).put("sessionId",m.sessionId))},m::remove)
         val input:@Composable ()->Unit={BasicTextField(m.draft,onValueChange=m::edit,modifier=Modifier.fillMaxWidth().heightIn(min=if(expanded)DesignTokens.space64.dp else touch,max=DesignTokens.space150.dp).focusRequester(inputFocus).onFocusChanged{editorFocused=it.isFocused;m.focused=it.isFocused}.padding(if(expanded)gap else DesignTokens.space4.dp).semantics{contentDescription="消息输入"},textStyle=TextStyle(color=MaterialTheme.colorScheme.onSurface,fontSize=LocalReadingSize.current.sp,lineHeight=(LocalReadingSize.current * 1.5f).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),maxLines=5,decorationBox={inner->Box{if(m.draft.isEmpty())Text(if(m.running)"可以继续补充…" else "说说你的目标…",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=LocalReadingSize.current.sp);inner()}})}
         NativeComposerLayout(expanded,input,leading={
