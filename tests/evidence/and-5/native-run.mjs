@@ -13,8 +13,10 @@ const adbExecutable='D:/AIProjects/AIGame/Repository/runtime/toolchains/android-
 let adbPort;
 const serverArgs=()=>adbPort?['-P',String(adbPort)]:[];
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
-const report={synthetic:true,instrumentation:[],screenshots:[],notifications:[]};
+let report={synthetic:true,instrumentation:[],screenshots:[],notifications:[]};
 const notificationProbe=process.argv.includes('--notifications-probe');
+const recapture=process.argv.find(a=>a.startsWith('--recapture-variant='))?.split('=').at(-1);
+if(recapture&&!/^(360|390)-(light|dark)$/.test(recapture))throw Error('Unknown recapture variant');
 if(notificationProbe)report.diagnosticOnly=true;
 const apkPaths={app:join(root,'apps/android/app/build/outputs/apk/debug/app-debug.apk'),androidTest:join(root,'apps/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk')};
 async function apkHashes(){return Object.fromEntries(await Promise.all(Object.entries(apkPaths).map(async([name,path])=>[name,{sha256:createHash('sha256').update(await readFile(path)).digest('hex'),modifiedAt:(await stat(path)).mtime.toISOString()}])));}
@@ -35,6 +37,13 @@ async function clickNotification(cold){
 try{
   await mkdir(out,{recursive:true});
   const currentApks=await apkHashes();
+  if(recapture){
+    const previous=JSON.parse(await readFile(join(out,'native-report.json'),'utf8'));
+    if(previous.failure||previous.diagnosticOnly||previous.instrumentation.length!==4||previous.notifications.length!==2)throw Error('Recapture requires completed four-variant and notification execution');
+    for(const name of Object.keys(apkPaths))if(previous.apkHashes?.[name].sha256!==currentApks[name].sha256)throw Error('Cannot recapture evidence from a different APK');
+    await writeFile(join(root,'.local/and5/native-before-recapture.json'),JSON.stringify({...previous,diagnosticOnly:true},null,2)+'\n');
+    report={...previous,instrumentation:previous.instrumentation.filter(row=>`${row.width}-${row.theme}`!==recapture),screenshots:previous.screenshots.filter(row=>!row.file.startsWith(`and5-${recapture}-`)),occupancies:[...(previous.occupancies||[]),previous.occupancy],recapture:{variant:recapture,reason:'stale system notification shade covered captures; collapse before foreground verification',apkHashes:currentApks}};
+  }
   report.apkHashes=currentApks;
   // A released lock can precede its owner's package cleanup. Queue without changing
   // another work package, and release both scarce slots before waiting again.
@@ -59,6 +68,7 @@ try{
     await pause(120000);
   }
   const start=Date.now();
+  run('shell','cmd','statusbar','collapse');
   report.adbIsolation={privateServer:true,portableSdk:true};
   report.occupancy={heavySlot:heavy.split(/[\\/]/).at(-1),mumuStartedAt:new Date(start).toISOString()};
   report.otherWeftMatePackages=[];
@@ -70,20 +80,25 @@ try{
   run('shell','pm','clear',pkg);
   run('install','-r',join(root,'apps/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'));
   run('shell','pm','grant',pkg,'android.permission.POST_NOTIFICATIONS');
-  for(const [width,theme] of notificationProbe?[[360,'light']]:[360,390].flatMap(width=>['light','dark'].map(theme=>[width,theme]))){
+  for(const [width,theme] of recapture?[[Number(recapture.split('-')[0]),recapture.split('-')[1]]]:notificationProbe?[[360,'light']]:[360,390].flatMap(width=>['light','dark'].map(theme=>[width,theme]))){
     if(Date.now()-start>16*60*1000)throw Error('Release MuMu before 20 minute ownership limit');
-    await fetch(`${fixture.origin}/__and5/reset`);run('shell','am','force-stop',pkg);
+    await fetch(`${fixture.origin}/__and5/reset`);run('shell','am','force-stop',pkg);run('shell','cmd','statusbar','collapse');
     const c=fixture.credentials,args=[...serverArgs(),'-s',serial,'shell','am','instrument','-w','-r','-e','class','com.memoweft.weftmate.mobile.NativeFeedInstrumentedTest','-e','and5Width',String(width),'-e','and5Theme',theme,'-e','and5Origin',c.origin,'-e','and5Username',c.username,'-e','and5Password',c.password,`${pkg}.test/androidx.test.runner.AndroidJUnitRunner`];
     process.stdout.write(`Native activity ${width} ${theme}\n`);
-    const r=await exec(adbExecutable,args,{windowsHide:true,timeout:240000,maxBuffer:4*1024*1024});const log=safe(r.stdout+r.stderr);await writeFile(join(out,`instrumentation-${width}-${theme}.txt`),log);
+    const execution=exec(adbExecutable,args,{windowsHide:true,timeout:240000,maxBuffer:4*1024*1024});execution.catch(()=>{});
+    let foreground;
+    try{await until(()=>{foreground=run('shell','dumpsys','window').split(/\r?\n/).find(line=>line.includes('mCurrentFocus='))||'';return foreground.includes(`${pkg}/`);},'instrumented application owns window focus');}
+    catch(error){await execution.catch(()=>{});throw error;}
+    (report.foregroundWindows??=[]).push({width,theme,component:foreground.match(new RegExp(`${pkg.replaceAll('.','\\.')}\/[^\\s}]+`))?.[0],method:'actual WindowManager current focus'});
+    const r=await execution;const log=safe(r.stdout+r.stderr);await writeFile(join(out,`instrumentation-${width}-${theme}.txt`),log);
     const files=run('shell','run-as',pkg,'ls','files').trim().split(/\s+/).filter(f=>f.startsWith(`and5-${width}-${theme}-`));
     for(const file of files){const data=execFileSync(adbExecutable,[...serverArgs(),'-s',serial,'exec-out','run-as',pkg,'cat',`files/${file}`],{windowsHide:true,maxBuffer:12*1024*1024});await writeFile(join(out,file),data);if(file.endsWith('.png'))report.screenshots.push({file,pageTheme:theme,widthDp:width,systemVersion:report.systemVersion,systemTheme:'unchanged emulator setting'});}
     report.instrumentation.push({width,theme,passed:/OK \(1 test\)/.test(log)});if(!report.instrumentation.at(-1).passed)throw Error(`Native instrumented test failed ${width} ${theme}`);
   }
   // Same synthetic long conversation, light baseline and dark fixed-panel blur.
-  report.longScroll=[];
-  await fetch(`${fixture.origin}/__qa/long`);
-  for(const theme of notificationProbe?[]:['light','dark']){
+  if(!recapture)report.longScroll=[];
+  if(!recapture)await fetch(`${fixture.origin}/__qa/long`);
+  for(const theme of recapture||notificationProbe?[]:['light','dark']){
     run('shell','am','start','-n',`${pkg}/com.memoweft.weftmate.mobile.NativeActivity`);
     await until(()=>probe().ready,'long conversation setup');
     run('shell','am','broadcast','-n',`${pkg}/com.memoweft.weftmate.mobile.And5QaReceiver`,'--es','command','scroll-chat','--es','theme',theme);
@@ -93,7 +108,7 @@ try{
     report.longScroll.push({theme,swipes:12,rows:probe().rows,totalFrames:Number(frames.match(/Total frames rendered:\s*(\d+)/)?.[1]||0),jankyFrames:Number(frames.match(/Janky frames:\s*(\d+)/)?.[1]||0),file:`long-scroll-${theme}.txt`});
   }
   // Real production Notification contentIntent; no fabricated navigation extras.
-  for(const cold of [false,true]){
+  for(const cold of recapture?[]:[false,true]){
     run('shell','am','start','-n',`${pkg}/com.memoweft.weftmate.mobile.NativeActivity`);
     await until(()=>probe().ready,'notification setup');
     const notification=await(await fetch(`${fixture.origin}/__and5/notify`)).json();
@@ -113,12 +128,12 @@ try{
 }catch(e){report.failure=safe(e.message);process.stderr.write(report.failure+'\n');process.exitCode=1;
 }finally{
   if(serial&&installed)try{report.notificationPolling=JSON.parse(run('shell','run-as',pkg,'cat','files/and5-notification-poll.json'))}catch{}
-  if(fixture){report.requests=fixture.requests;report.reads=fixture.reads;await fixture.close().catch(()=>{});}
+  if(fixture){report.requests=[...(recapture?report.requests||[]:[]),...fixture.requests];report.reads=[...(recapture?report.reads||[]:[]),...fixture.reads];await fixture.close().catch(()=>{});}
   if(serial){if(installed){try{run('uninstall',`${pkg}.test`)}catch{}try{run('uninstall',pkg)}catch{}}if(reversed)try{run('reverse','--remove',`tcp:${new URL(fixture.origin).port}`)}catch{}try{execFileSync(adbExecutable,[...serverArgs(),'disconnect',serial],{windowsHide:true,timeout:5000})}catch{}}
   if(adbPort)try{execFileSync(adbExecutable,[...serverArgs(),'kill-server'],{windowsHide:true,timeout:5000});report.privateAdbClosed=true}catch{report.privateAdbClosed=false}
   // Render the exact supplied control previews after releasing the Android surface.
   if(mumu){await unlink(mumu);mumu=null;}
-  if(report.instrumentation.length===4&&report.instrumentation.every(r=>r.passed))try{const preview=await exec(process.execPath,[join(out,'spec-preview.mjs')],{cwd:root,windowsHide:true,timeout:30000,maxBuffer:1024*1024});report.specPreview={passed:true,output:safe(preview.stdout)}}catch(e){report.specPreview={passed:false,failure:safe(e.message)};process.exitCode=1;}
+  if(!recapture&&report.instrumentation.length===4&&report.instrumentation.every(r=>r.passed))try{const preview=await exec(process.execPath,[join(out,'spec-preview.mjs')],{cwd:root,windowsHide:true,timeout:30000,maxBuffer:1024*1024});report.specPreview={passed:true,output:safe(preview.stdout)}}catch(e){report.specPreview={passed:false,failure:safe(e.message)};process.exitCode=1;}
   const finalApks=await apkHashes();for(const name of Object.keys(apkPaths))if(report.apkHashes?.[name].sha256!==finalApks[name].sha256){report.failure='APK changed during native verification';process.exitCode=1;}
   if(!report.failure&&report.notifications.length!==2){report.failure='Two production notification cases did not complete';process.exitCode=1;}
   for(const lock of [mumu,heavy])if(lock)await unlink(lock);
