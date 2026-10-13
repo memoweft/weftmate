@@ -20,7 +20,7 @@ function fixture(extra:any={}) {
   const context:any={AbortSignal,URL,URLSearchParams,TextEncoder,Blob,Intl,setTimeout,clearTimeout,setInterval,clearInterval};runInNewContext(source+(extra.mobileState?'\n;'+readFileSync(new URL('../src/ui-core/adapters/mobile.js',import.meta.url),'utf8'):''),context);
   const effects=new Proxy({readMessageDraft:()=> '合成原文'},{get:(o:any,k)=>o[k]||(()=>{})});
   const core=context.WeftUiCore.create({effects,clock:c,now:c.now,random:()=>1,fetch:async(path:any,options:any)=>{requests.push({path,options});return transport(path,options);},crypto:{randomUUID:()=> 'request-original'},storage:{getItem:(k:any)=>values.get(k)||null,setItem:(k:any,v:any)=>values.set(k,v),removeItem:(k:any)=>values.delete(k)},...extra});
-  Object.assign(core.state,{identityGeneration:1,ownerId:'owner',account:{ownerId:'owner'},csrfToken:'synthetic',hostId:'host',online:true,selectedSessionId:'session',selectedChatId:'chat',activeChatSource:'desktop',personalCapabilities:{chatSend:1},modelProfileId:'model',models:[{id:'model'}],mainChat:{chatId:'chat',activeSessionId:'session',sendAvailable:true}});
+  Object.assign(core.state,{identityGeneration:1,ownerId:'owner',account:{ownerId:'owner'},csrfToken:'synthetic',hostId:'host',online:true,selectedSessionId:'session',selectedChatId:'chat',activeChatSource:'desktop',personalCapabilities:{chatSend:1},capabilities:{chat:{available:true}},modelProfileId:'model',models:[{id:'model'}],mainChat:{chatId:'chat',activeSessionId:'session',sendAvailable:true}});
   core.refreshTasks=async()=>{};core.refreshLogicalHistory=async()=>{};
   return {core,c,requests,api:context.WeftUiCore,setTransport:(fn:Function)=>transport=fn};
 }
