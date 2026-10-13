@@ -38,6 +38,7 @@
     for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell", "mountSettingsNavigation", "mountMainChat", "mountActivity", "mountGoals", "mountHealth", "mountLibrary", "mountSearch"])
         ui[mount]();
     ui.mountHelp();
+    ui.mountComputers?.();
     ui.mountOnboarding();
     ui.mountMobileRefresh?.();
     globalThis.WeftPresenceView.mount({core, badgeTarget:ui.byId('assistant-connection'),

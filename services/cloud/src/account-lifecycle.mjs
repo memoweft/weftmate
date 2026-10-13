@@ -11,7 +11,7 @@ export function accountLifecycle({ database: db, accounts, relay }) {
     const revoked = await Promise.all(devices.map(async d => ({ ...d,
       jkt: d.public_jwk ? await calculateJwkThumbprint(JSON.parse(d.public_jwk)) : null })));
     if (accounts.get(account.id)?.auth_epoch !== account.auth_epoch) throw new CloudError(401, 'UNAUTHORIZED');
-    if (!db.prepare('SELECT 1 FROM cloud_devices WHERE account_id=? AND fingerprint=?').get(account.id, currentFingerprint))
+    if (currentFingerprint && !db.prepare('SELECT 1 FROM cloud_devices WHERE account_id=? AND fingerprint=?').get(account.id, currentFingerprint))
       throw new CloudError(401, 'UNAUTHORIZED');
     transaction(db, () => {
       for (const d of revoked) {
@@ -37,6 +37,11 @@ export function accountLifecycle({ database: db, accounts, relay }) {
     return revoked.length;
   }
   return {
+    async revokeComputer(account, token, hostId) {
+      const devices = db.prepare(`SELECT d.* FROM cloud_devices d JOIN device_host_links l
+        ON l.account_id=d.account_id AND l.fingerprint=d.fingerprint WHERE l.account_id=? AND l.host_id=?`).all(account.id, hostId);
+      return revokeDevices(account, devices, token?.device_fingerprint);
+    },
     async remove(body, source, account, token) {
       fields(body, ['password']);
       const limits = accounts.check(account.email, source);

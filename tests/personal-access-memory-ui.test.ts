@@ -159,8 +159,11 @@ test('isolated synthetic memory HTTP contract keeps owners, cursors and receipts
     assert.equal((await request(a, '/items/cognition/memory-a-1')).status, 404)
     assert.equal((await request(b, '/items/cognition/memory-b-1')).status, 200)
   } finally {
-    child.kill('SIGINT')
-    await new Promise((resolve) => { if (child.exitCode !== null) resolve(null); else child.once('exit', resolve) })
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = new Promise(resolve => child.once('exit', resolve))
+      child.kill('SIGINT')
+      await exited
+    }
   }
 })
 
@@ -209,6 +212,8 @@ test('memory view preserves chat draft and discards a successful response for an
     dispatchEvent(event: Event) { this.fire(event.type); return true }
     append(...nodes: Node[]) { for (const node of nodes) node.parentNode = this; this.children.push(...nodes) }
     prepend(...nodes: Node[]) { for (const node of nodes) node.parentNode = this; this.children.unshift(...nodes) }
+    insertBefore(node: Node, reference: Node | null) { node.parentNode?.children.splice(node.parentNode.children.indexOf(node),1);node.parentNode=this;const index=reference?this.children.indexOf(reference):-1;if(index<0)this.children.push(node);else this.children.splice(index,0,node);return node }
+    get nextSibling() { if(!this.parentNode)return null;return this.parentNode.children[this.parentNode.children.indexOf(this)+1]??null }
     before(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this); for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
     after(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this) + 1; for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
     replaceChildren(...nodes: Node[]) { this.children = nodes }

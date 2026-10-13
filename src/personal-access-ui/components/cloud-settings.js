@@ -78,8 +78,10 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     }
     function deviceTime(value) { return core.cloudDeviceTime(value); }
     function logoutDevice(device) {
-        confirmAction('让设备下线', `“${device.name}”将立即退出登录。再次使用时需要重新登录。`, async () => {
+        const computer=device.hostId&&core.hasMultipleComputers?.();
+        confirmAction(computer?'移除这台电脑':'让设备下线', computer?`“${device.name}”会退出这个账号，本机的对话、文件和记忆保留。等它上线的事项会取消；正在执行的事留在本机。`:`“${device.name}”将立即退出登录。再次使用时需要重新登录。`, async () => {
             if (core.state.cloudAuth.mode !== 'authenticated') await core.logoutLocalDevice(device.id);
+            else if(device.hostId&&core.state.cloudAuth.multiHostSupported)await core.cloudRemoveComputer(device.hostId);
             else { await core.cloudRemove(device.id); if (device.isCurrent) await core.cloudLogout(); }
             await refreshDirectory();
             ui.toast('设备已下线。');
@@ -94,7 +96,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const feedback = ui.element('p', 'form-error'); feedback.setAttribute('role', 'alert'); body.append(feedback);
         const save = ui.element('button', 'button primary', '保存名称'); save.type = 'submit'; footer.append(button('取消', () => dialog.close()), save);
         form.append(head, body, footer); dialog.append(form);
-        form.addEventListener('submit', async event => { event.preventDefault(); if (editingGeneration !== core.state.identityGeneration) { dialog.close(); return; } const identity = editingGeneration; save.disabled = true; try { const directory = await core.cloudRename(device.id, input.value); if (identity !== core.state.identityGeneration) { dialog.close(); return; } editingId = null; renderDirectory(directory); dialog.close(); ui.toast('设备名称已保存。'); } catch (failure) { feedback.textContent = core.cloudError(failure); } finally { save.disabled = false; } });
+        form.addEventListener('submit', async event => { event.preventDefault(); if (editingGeneration !== core.state.identityGeneration) { dialog.close(); return; } const identity = editingGeneration; save.disabled = true; try { const directory = await (device.hostId&&core.state.cloudAuth.multiHostSupported?core.cloudRenameComputer(device.hostId,input.value):core.cloudRename(device.id, input.value)); if (identity !== core.state.identityGeneration) { dialog.close(); return; } editingId = null; renderDirectory(directory); dialog.close(); ui.toast('设备名称已保存。'); } catch (failure) { feedback.textContent = core.cloudError(failure); } finally { save.disabled = false; } });
         dialog.addEventListener('close', () => { editingId = null; dialog.remove(); }); document.body.append(dialog); dialog.showModal(); input.focus();
     }
     function showDevice(device) {
@@ -116,11 +118,11 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         const currentHost = hosts.find(host => host.isCurrent), currentDevice = devices.find(device => device.isCurrent), linked = new Set();
         const rows = devices.map(device => {
             const matches = hosts.filter(host => host.name === device.name);
-            const host = device === currentDevice ? currentHost : ['windows', 'macos'].includes(device.type) && matches.length === 1 ? matches[0] : null;
+            const host = hosts.length>1&&core.state.cloudAuth.multiHostSupported ? hosts.find(host=>host.hostId===device.hostId) : device === currentDevice ? currentHost : ['windows', 'macos'].includes(device.type) && matches.length === 1 ? matches[0] : null;
             if (host) linked.add(host.hostId);
-            return host ? { ...device, hostId: host.hostId, type: 'computer', online: host.online } : device;
+            return host ? { ...device, name:host.displayName||host.name, hostId: host.hostId, type: 'computer', online: host.online } : device;
         });
-        for (const device of [...rows.filter(device => !device.revoked), ...hosts.filter(host => !linked.has(host.hostId)).map(host => ({ ...host, hostOnly: true }))]) {
+        for (const device of [...rows.filter(device => !device.revoked), ...hosts.filter(host => !linked.has(host.hostId)).map(host => ({ ...host, name:host.displayName||host.name,hostOnly: true }))]) {
             const row = ui.element('li', 'device-item cloud-device-row'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', device.name);
             const summary = ui.element('button', 'cloud-device-summary'); summary.type = 'button'; summary.setAttribute('aria-label', `查看 ${device.name}`);
             const icon = globalThis.WeftIcons.create(device.type === 'computer' || ['windows', 'macos'].includes(device.type) ? 'desktop' : ['android', 'ios'].includes(device.type) ? 'phone' : device.type === 'watch' ? 'watch' : 'web', 24);
@@ -134,13 +136,15 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
                 const result = await core.cloudConnect(device.hostId);
                 if (result.status !== 'online') { ui.byId('cloud-settings-status').textContent = '这台电脑离线，请稍后重试。'; return; }
                 if (result.pairingRequired) { ui.byId('cloud-settings-status').textContent = '这台电脑需要更新，请更新后重新连接。'; return; }
-                await core.cloudConnectTrusted(result); await core.enterAssistant();
+                if(core.canUseComputerChannel?.())await core.selectExecutionComputer(device.hostId);
+                else await core.cloudConnectTrusted(result);
+                await core.enterAssistant();
             })));
-            if (!device.hostOnly) {
+            if (!device.hostOnly || device.hostId&&core.state.cloudAuth.multiHostSupported) {
                 const more = ui.element('button', 'icon-button'); more.type = 'button'; more.setAttribute('aria-label', `${device.name}的更多操作`); more.setAttribute('aria-haspopup', 'menu'); more.append(globalThis.WeftIcons.create('more', 18));
                 more.addEventListener('click', () => globalThis.WeftPopover.menu(more, [
                     ...(core.state.cloudAuth.mode === 'authenticated' ? [{ name: '修改名称', icon: 'edit', action: () => { if (identity === core.state.identityGeneration) renameDevice(device); } }] : []),
-                    { name: '让设备下线', icon: 'logout', danger: true, action: () => { if (identity === core.state.identityGeneration) logoutDevice(device); } },
+                    { name: device.hostId&&core.hasMultipleComputers?.()?'移除电脑':'让设备下线', icon: 'logout', danger: true, action: () => { if (identity === core.state.identityGeneration) logoutDevice(device); } },
                 ], failure => error(failure))); actions.append(more);
             }
             row.append(summary, actions); list.append(row);
