@@ -53,6 +53,8 @@ private data class FeedEntry(val key: String, val day: String, val row: JSONObje
     LaunchedEffect(Unit) { feed.refresh(full = true) }
     val listState = rememberLazyListState()
     val refreshState = rememberPullToRefreshState()
+    val frost = LocalNativeFrost.current
+    val sceneModifier = if(frost != null) modifier.frostSource(frost) else modifier
     val entries = remember(feed.items, feed.timeZone) {
         buildList {
             var previousDay: String? = null
@@ -83,7 +85,7 @@ private data class FeedEntry(val key: String, val day: String, val row: JSONObje
         onRefresh = { feed.refresh(full = true, gesture = true) },
         state = refreshState,
         indicator = { PullToRefreshDefaults.Indicator(state = refreshState, isRefreshing = feed.refreshingGesture, modifier = Modifier.align(Alignment.TopCenter), containerColor = MaterialTheme.colorScheme.surface, color = MaterialTheme.colorScheme.primary) },
-        modifier = modifier.fillMaxWidth().background(Color(if(feed.dark)DesignTokens.nativeDarkCanvas else DesignTokens.nativeSurface))
+        modifier = sceneModifier.fillMaxWidth().background(Color(if(feed.dark)DesignTokens.nativeDarkCanvas else DesignTokens.nativeSurface))
     ) {
         LazyColumn(Modifier.fillMaxSize().semantics { contentDescription = "动态列表" }, state = listState,
             contentPadding = PaddingValues(start = DesignTokens.space20.dp, top = DesignTokens.space24.dp, end = DesignTokens.space20.dp, bottom = DesignTokens.space32.dp)) {
