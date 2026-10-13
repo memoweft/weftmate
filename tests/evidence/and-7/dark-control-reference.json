@@ -1,0 +1,17 @@
+{
+  "canvas": "#1c1c1e",
+  "surface": "#2a2a2c",
+  "surface-soft": "rgba(120,120,128,.26)",
+  "line": "rgba(255,255,255,.14)",
+  "ink": "#f2f2f4",
+  "ink-secondary": "#c4c4c9",
+  "ink-muted": "#a3a3a9",
+  "accent": "#e6e6e8",
+  "accent-hover": "#ffffff",
+  "accent-soft": "rgba(255,255,255,.16)",
+  "on-accent": "#1c1c1e",
+  "danger": "#ffa3ad",
+  "selected-on-soft": "rgba(255,255,255,.18)",
+  "surface-float": "rgba(44,44,46,.74)",
+  "danger-soft": "rgba(255,110,125,.20)"
+}
