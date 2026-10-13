@@ -159,9 +159,8 @@ struct PhoneStandaloneChat: View {
     }
     private var plusMenu: some View {
         Menu {
-            Button("拍照",image:ImageResource(name:"wm-camera",bundle:.main)) { openCamera() }.disabled(model.currentModel?.supportsImages == false)
-            Button("照片图库",image:ImageResource(name:"wm-image",bundle:.main)) { captureScope();photos=true }.disabled(model.currentModel?.supportsImages == false)
-            if model.currentModel?.supportsImages == false { Text("当前模型看不了图片") }
+            Button(model.currentModel?.supportsImages == false ? "拍照 · 当前模型看不了图片" : "拍照",image:ImageResource(name:"wm-camera",bundle:.main)) { openCamera() }.disabled(model.currentModel?.supportsImages == false).accessibilityIdentifier("phoneChat.camera")
+            Button(model.currentModel?.supportsImages == false ? "照片图库 · 当前模型看不了图片" : "照片图库",image:ImageResource(name:"wm-image",bundle:.main)) { captureScope();photos=true }.disabled(model.currentModel?.supportsImages == false).accessibilityIdentifier("phoneChat.photos")
             Button("文件",image:ImageResource(name:"wm-file",bundle:.main)) { captureScope();importing=true }
         } label: { WeftIcon("plus").phoneMenuLabel(circle:true,onCard:true) }.phoneIcon().disabled(model.attachmentReason != nil)
             .accessibilityLabel(model.attachmentReason ?? "添加图片或文件").accessibilityIdentifier("phoneChat.plus")
