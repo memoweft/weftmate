@@ -86,6 +86,8 @@ test('permission shield has no approval check, while goal navigation and filter 
   assert.ok(read('apps/android/app/src/main/res/drawable/wm_goal.xml').includes('m9 12 2.2 2.2L15.5 10'))
   assert.match(read('apps/mobile-ui/www/app.js'), /goals:'goal'/)
   assert.match(read('apps/mobile-ui/www/mobile-refresh.js'), /\['goals','目标','goal'\]/)
+  assert.match(read('src/personal-access-ui/mobile-refresh.js'), /\['goals','目标','goal'\]/)
+  assert.match(read('src/personal-access-ui/components/goals.js'), /WeftIcons\.create\('goal',16\)/)
   assert.match(read('apps/mobile-ui/www/components/phone-standalone.js'), /goals:'goal'/)
   assert.match(read('apps/android/app/src/main/java/com/memoweft/weftmate/mobile/NativeShell.kt'), /"goals" to \("目标" to R\.drawable\.wm_goal\)/)
   assert.match(read('apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PhonePresentation.swift'), /case \.goals: "goal"/)
