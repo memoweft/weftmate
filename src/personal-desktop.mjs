@@ -2,6 +2,7 @@ import { captureScreenRegion } from './personal-desktop-capture.mjs';
 import { readNotificationPermission } from './personal-update/watchdog-commands.mjs';
 import { createHostLog } from './host-log.mjs';
 import packageInfo from '../package.json' with { type: 'json' };
+import { desktopLoginOptions, macFilePermissionHelp } from './mac-desktop.mjs';
 import { quoteWindowsLoginArgs, loginItemEnabled } from './desktop-autostart.mjs';
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
 import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage, dialog, clipboard, powerMonitor } from 'electron';
@@ -146,7 +147,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     `--user-data-dir=${app.getPath('userData')}`,
     ...process.argv.filter(arg => /^--(?:desktop-config|access-port|workspace-dir|public-origin|personal-memory-config|local-model-config|android-package-path|mobile-ui-dir)=/.test(arg) || arg === '--trust-loopback-proxy'),
   ];
-  const loginOptions = { path: process.execPath, args: process.platform === 'win32' ? quoteWindowsLoginArgs(loginArgs) : loginArgs, name: packageInfo.desktopIdentity || 'WeftMate' };
+  const loginOptions = desktopLoginOptions({ packaged: app.isPackaged, executable: process.execPath, args: process.platform === 'win32' ? quoteWindowsLoginArgs(loginArgs) : loginArgs, name: packageInfo.desktopIdentity || 'WeftMate' });
   const sendToRegistration = createWindowsSendTo({ appId: packageInfo.desktopAppId || 'com.memoweft.weftmate', executable: process.execPath,
     args: app.isPackaged ? [] : [app.getAppPath(), ...loginArgs.slice(1).filter(arg => arg !== '--start-in-tray')] });
   const settings = () => ({ version: packageInfo.version, sendToSupported: process.platform === 'win32', sendToEnabled: sendToRegistration.enabled(), autoStart: loginItemEnabled(app.getLoginItemSettings(loginOptions), loginOptions.name, loginOptions.path),
@@ -159,7 +160,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     if(process.platform!=='win32')return {enabled:null};
     return {enabled:await readNotificationPermission({onFailure:error=>createHostLog(app.getPath('userData')).failure('notification-permission',error)})};
   });
-  handle('wm:desktop:notification-settings', async () => {await jsonLocal('/auth/me');if(process.platform!=='win32')throw new Error('UNAVAILABLE');await shell.openExternal('ms-settings:notifications');return {opened:true};});
+  handle('wm:desktop:notification-settings', async () => {await jsonLocal('/auth/me');if(!['win32','darwin'].includes(process.platform))throw new Error('UNAVAILABLE');await shell.openExternal(process.platform === 'darwin' ? 'x-apple.systempreferences:com.apple.preference.notifications' : 'ms-settings:notifications');return {opened:true};});
   handle('wm:desktop:clipboard-image', async () => {
     await jsonLocal('/auth/me'); const image = clipboard.readImage();
     return image.isEmpty() ? null : {name:'剪贴板图片.png',contentType:'image/png',dataUrl:image.toDataURL()};
@@ -195,7 +196,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   handle('wm:desktop:project-folder', async () => {
     const initialAuth = await jsonLocal('/auth/me'), initialOwner = initialAuth.ownerId || initialAuth.account?.ownerId;
     if (contentOrigin !== origin) throw new Error('Desktop project registration unavailable');
-    const selection = await dialog.showOpenDialog(win, { title: '选择项目文件夹', properties: ['openDirectory'] });
+    const selection = await dialog.showOpenDialog(win, { title: '选择项目文件夹', ...(process.platform === 'darwin' ? { message: '选择要让助手使用的文件夹。访问桌面、文稿或下载时，系统可能询问权限；请按你的意愿选择。' } : {}), properties: ['openDirectory'] });
     const rootPath = selection.canceled ? null : selection.filePaths[0] ?? null;
     if (rootPath) { const auth = await jsonLocal('/auth/me'), owner = auth.ownerId || auth.account?.ownerId;
       if (owner !== initialOwner) throw new Error('PROJECT_NATIVE_SELECTION_REQUIRED');
@@ -227,7 +228,13 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   handle('wm:desktop:project-choice', async rootPath => {
     const auth = await jsonLocal('/auth/me'), owner = auth.ownerId || auth.account?.ownerId;
     if (contentOrigin !== origin || selectedFolders.get(rootPath) !== owner || !selectedFolders.has(rootPath)) throw new Error('PROJECT_NATIVE_SELECTION_REQUIRED');
-    const resolved = await realpath(rootPath);
+    let resolved;
+    try { resolved = await realpath(rootPath); }
+    catch (error) {
+      if (process.platform === 'darwin' && ['EACCES', 'EPERM'].includes(error?.code))
+        await dialog.showMessageBox(win, { type: 'info', title: '文件夹暂时打不开', message: 'WeftMate 没有权限打开这个文件夹。', detail: macFilePermissionHelp, buttons: ['返回项目'] });
+      throw error;
+    }
     if (!(await stat(resolved)).isDirectory()) throw new Error('PROJECT_UNSAFE_PATH');
     selectedFolders.set(resolved, owner);
     const projects = await nativeProjects();
@@ -239,7 +246,11 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
     if (contentOrigin !== origin || !selectedFolders.has(fields?.rootPath) || selectedFolders.get(fields.rootPath) !== owner) throw new Error('PROJECT_NATIVE_SELECTION_REQUIRED');
     const response = await fetchLocal('/projects', {method:'POST',headers:{'content-type':'application/json',origin:contentOrigin,
       'x-weftmate-csrf':auth.csrfToken,'x-weftmate-desktop':libraryDesktopToken},body:JSON.stringify(fields)});
-    const result = await response.json(); if (!response.ok) throw new Error(result.error?.code || result.code || 'PROJECT_UNAVAILABLE');
+    const result = await response.json(); if (!response.ok) {
+      if (process.platform === 'darwin' && ['PROJECT_FILE_UNAVAILABLE', 'PROJECT_UNAVAILABLE'].includes(result.error?.code || result.code))
+        await dialog.showMessageBox(win, { type: 'info', title: '文件夹暂时打不开', message: '请检查文件夹是否还在，以及是否允许 WeftMate 访问。', detail: macFilePermissionHelp, buttons: ['返回项目'] });
+      throw new Error(result.error?.code || result.code || 'PROJECT_UNAVAILABLE');
+    }
     return result;
   });
   handle('wm:desktop:project-info', async projectId => (await nativeProjects()).find(row => row.projectId === projectId) || null);
@@ -556,7 +567,7 @@ export function createPersonalDesktop({ computerUsageService, systemManager = nu
   }) : null;
   if (computerUsage) computerUsageService.setComputerUsageCheckpoint(owner => computerUsage.checkpoint(owner));
   const ready = win.loadURL(uiUrl + (setupGrant ? `#setup=${encodeURIComponent(setupGrant)}` : '')).then(() => { if (!startInTray) show(); });
-  return { window: win, show, sendTo, ready, async close() {
+  return { window: win, show, openSettings() { show(); void win.webContents.executeJavaScript("globalThis.WeftSettingsNavigation?.open('general')").catch(() => {}); }, sendTo, ready, async close() {
     stopped = true; clearTimeout(timer);
     await computerUsage?.close();
     if (computerUsage) computerUsageService.setComputerUsageCheckpoint(null);

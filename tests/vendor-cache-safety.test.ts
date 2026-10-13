@@ -151,7 +151,16 @@ test('staging refuses parent junctions and source overlap; interrupted copy leav
     const rows = await runCacheMatrix(root, context, { phases: ['success'] })
     assert.equal(rows.length, 15)
     const runtime = join(root, 'node-absent-good-success/cache/other-cache')
+    if (process.platform !== 'win32') {
+      await mkdir(join(runtime, 'node_modules/.bin'), { recursive: true });
+      // Excluded pnpm shims do not ship. A link in a live runtime entry still
+      // fails before copying; the check must not broadly allow POSIX links.
+      await symlink('manifest.json', join(runtime, 'live-link'));
+      await assert.rejects(stageDshRuntime({ projectRoot: context.project, runtimePath: runtime, stageRoot: join(root, 'link-rejected') }), /reparse point/);
+      await unlink(join(runtime, 'live-link'));
+    }
     const before = await treeDigest(runtime)
+    if (process.platform !== 'win32') await symlink('../excluded-cli', join(runtime, 'node_modules/.bin/synthetic'));
     const alias = join(root, 'alias'); await symlink(runtime, alias, linkType)
     await assert.rejects(stageDshRuntime({ projectRoot: context.project, runtimePath: runtime, stageRoot: alias }), /拒绝经联接/)
     await assert.rejects(stageDshRuntime({ projectRoot: context.project, runtimePath: runtime, stageRoot: runtime }), /只读缓存根重叠/)
@@ -163,6 +172,11 @@ test('staging refuses parent junctions and source overlap; interrupted copy leav
     assert.equal(await realpath(join(stageRoot, 'dsh-runtime')), await realpath(runtime))
     await stageDshRuntime({ projectRoot: context.project, runtimePath: runtime, stageRoot })
     assert.notEqual(await realpath(join(stageRoot, 'dsh-runtime')), await realpath(runtime))
+    assert.equal(await readdir(join(stageRoot, 'dsh-runtime/node_modules')).then(rows => rows.includes('.bin')), false);
+    if (process.platform !== 'win32') {
+      assert.equal(await readFile(join(runtime, 'node_modules/.bin/synthetic')).then(() => true).catch(() => false), false);
+      await unlink(join(runtime, 'node_modules/.bin/synthetic'));
+    }
     assert.deepEqual(await treeDigest(runtime), before)
     await unlink(alias)
   } finally { await rm(root, { recursive: true, force: true }) }
