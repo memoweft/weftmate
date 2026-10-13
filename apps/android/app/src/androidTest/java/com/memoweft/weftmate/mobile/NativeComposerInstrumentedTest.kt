@@ -190,6 +190,10 @@ class NativeComposerInstrumentedTest {
             waitFor("accepted draft"){activity.model.draft.isEmpty()&&activity.model.running};keep("send-keeps-input","")
             click("停止回复");keep("stop-keeps-input","");waitFor("stopped"){!activity.model.running};click("语音输入");keep("primary-voice-keeps-input","")
             main{activity.hideKeyboard()};Thread.sleep(600)
+            click("目标")
+            compose.onNodeWithContentDescription("目标列表").assertExists()
+            main{assertEquals("goals",activity.model.tab)}
+            checks.put("merged-native-goals-entry-retained");shot("page-goals")
             for(tab in listOf("activity","health","library")) {
                 main{activity.model.tab=tab};Thread.sleep(900);shot("page-$tab")
                 compose.onNodeWithText("使用原生聊天界面").assertDoesNotExist()
