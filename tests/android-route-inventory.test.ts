@@ -21,3 +21,20 @@ test('Android inventory resolves opaque IDs, dates, numeric detail anchors and h
   assert.equal(exampleRoute('/personal/v1/daily-summaries/:day/health'), '/personal/v1/daily-summaries/2026-10-12/health');
   assert.equal(exampleRoute('/personal/v1/health/metrics/:id'), '/personal/v1/health/metrics/sleep');
 });
+
+test('offline phone task inventory covers all four exact cloud POST calls and keeps computer receipt routes separate', async () => {
+  const rows = await inventory();
+  const taskRows = rows.filter(row => row.path.includes('/hosts/offline/tasks/'));
+  assert.ok(!rows.some(row => row.path.startsWith('/personal/v1/hosts/')));
+  assert.equal(rows.find(row => row.path === '/personal/v1/cloud/hosts/offline/status')?.transport, 'cloud-account');
+  for (const action of ['submit', 'list', 'cancel', 'clear']) {
+    const path = '/personal/v1/cloud/hosts/offline/tasks/' + action;
+    const row = taskRows.find(row => row.path === path);
+    assert.ok(row, path); assert.equal(row.method, 'POST'); assert.equal(row.transport, 'cloud-account');
+    for (const source of ['src/ui-core/cloud-account.js', 'apps/mobile-ui/www/ui-core/cloud-account.js', 'docs/CLIENT_API.md'])
+      assert.ok(row.sources.includes(source), source + ': ' + path);
+  }
+  for (const action of ['claim', 'ack', 'result'])
+    assert.equal(taskRows.find(row => row.path.endsWith('/' + action))?.transport, 'specialized-or-desktop');
+  assert.equal(taskRows.length, 7); assert.ok(taskRows.every(row => row.method === 'POST'));
+});

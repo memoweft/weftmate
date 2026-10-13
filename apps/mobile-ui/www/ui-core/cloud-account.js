@@ -282,7 +282,15 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return cloudConnect(client.config.hostId);
   };
   core.cloudOfflineStatus = hostId => client.authorized('/hosts/offline/status', { method: 'POST', body: { hostId } });
-  core.cloudOfflineTasks = (action,body) => client.authorized('/hosts/offline/tasks/'+action,{method:'POST',body});
+  core.cloudOfflineTasks = (action,body) => {
+    switch(action) {
+      case 'submit': return client.authorized('/hosts/offline/tasks/submit', { method:'POST', body });
+      case 'list': return client.authorized('/hosts/offline/tasks/list', { method:'POST', body });
+      case 'cancel': return client.authorized('/hosts/offline/tasks/cancel', { method:'POST', body });
+      case 'clear': return client.authorized('/hosts/offline/tasks/clear', { method:'POST', body });
+      default: throw Object.assign(new Error('INVALID_REQUEST'), { code:'INVALID_REQUEST' });
+    }
+  };
   core.cloudOfflineTaskDevice = async () => (await client.key()).deviceId;
   core.cloudOfflineIdentity = () => core.state.account && client?.config?.hostId ? {
     origin: client.host, ownerId: core.state.account.ownerId, deviceId: core.state.device?.id, hostId: client.config.hostId } : null;

@@ -53,6 +53,7 @@ internal fun cloudAppRouteAllowed(target: String, method: String, host: String, 
         "/auth/registration/request", "/auth/registration/verify", "/auth/registration/complete",
         "/auth/recovery/request", "/auth/recovery/verify", "/auth/recovery/complete", "/auth/password/change",
         "/auth/login/code/request", "/auth/login/code/confirm", "/hosts/offline/status", "/feedback",
+        "/hosts/offline/tasks/submit", "/hosts/offline/tasks/list", "/hosts/offline/tasks/cancel", "/hosts/offline/tasks/clear",
         "/auth/logout", "/auth/logout/others", "/auth/account/delete", "/auth/email/change/request",
         "/auth/email/change/confirm", "/auth/devices/revoke", "/devices/rename", "/hosts/connect")
     return cloudPaths.any { target == cloud + it } || setOf("/auth/cloud-nonce", "/auth/cloud-session",
