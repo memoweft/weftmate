@@ -28,7 +28,7 @@
                 const first = value.firstFailureAt ?? time;
                 const confirmed = independent && (cloudOffline || count >= 3 && time - first >= 2000);
                 return update({ failures: count, firstFailureAt: first, lastFailureAt: count > value.failures ? time : value.lastFailureAt,
-                    kind: value.kind === 'network_unavailable' ? value.kind : confirmed ? 'host_offline' : 'connecting' });
+                    kind: value.kind === 'network_unavailable' ? value.kind : confirmed || value.kind==='host_offline' ? 'host_offline' : 'connecting' });
             },
             delay(background = false, options = {}) {
                 const cap = options.cap ?? (background ? 120000 : 30000), base = options.base ?? (background ? 15000 : 1000);

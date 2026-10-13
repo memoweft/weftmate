@@ -10,7 +10,7 @@ const network=globalThis.fetch;
 globalThis.fetch=(url,...args)=>{if(String(url).startsWith('https://api.xiaomimimo.com/')&&String(url).includes('chat/completions'))globalThis.m3ModelRequests++;return network(url,...args);};
 registerHooks({load(url,context,next){
   if(url===pathToFileURL(resolve(repo,'src/config-store.ts')).href){
-    let source='const ephemeralKeys = new Map<string,string>();\n'+readFileSync(new URL(url),'utf8');
+    let source='const ephemeralKeys = new Map<string,string>((JSON.parse(process.env.WEFTMATE_M3_CREDENTIAL_IDS || "[]") as string[]).map(id => [id,process.env.WEFTMATE_M3_MODEL_KEY || ""]));\n(globalThis as any).m3CredentialIds = () => [...ephemeralKeys.keys()];\n'+readFileSync(new URL(url),'utf8');
     source=source.replace('return readSecrets().credentials[id] ?? null;','return ephemeralKeys.get(id) ?? readSecrets().credentials[id] ?? null;');
     source=source.replace('encryptedVault().save(id, apiKey);',"if(apiKey===process.env.WEFTMATE_M3_MODEL_KEY)ephemeralKeys.set(id,apiKey);else encryptedVault().save(id,apiKey);");
     source=source.replace('encryptedVault().remove(id);','ephemeralKeys.delete(id);encryptedVault().remove(id);');

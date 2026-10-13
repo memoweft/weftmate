@@ -11,7 +11,7 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
   const json=core.requestJson;
   core.requestJson=(url,options)=>{
     const path=String(url).startsWith(core.accessBase)?String(url).slice(core.accessBase.length):null;
-    if(enabled&&current&&current!==core.cloudCurrentComputer?.()&&path&&['/status','/auth/me'].includes(path))return request(current,path,options);
+    if(enabled&&current&&current!==core.cloudCurrentComputer?.()&&path&&(!path.startsWith('/auth/')||path==='/auth/me'))return request(current,path,options);
     return json(url,options);
   };
   const lastKey = () => `weftmate-computer:${core.state.cloudAuth?.sub || ''}`;
@@ -19,8 +19,8 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
   core.computerName = name;
   core.hasMultipleComputers = () => enabled && core.state.computers?.length > 1;
   core.updateComputerDirectory = result => {
-    enabled = result.capabilities?.multiHost === 1 && typeof effects.openComputerChannel === 'function';
-    core.state.computers = enabled ? result.hosts || [] : [];
+    enabled = result.capabilities?.multiHost === 1 && !environment.desktop && typeof effects.openComputerChannel === 'function';
+    core.state.computers = result.capabilities?.multiHost===1 ? result.hosts || [] : [];
     current ??= core.cloudCurrentComputer?.() || core.state.hostId;
     for (const id of channels.keys()) if (!core.state.computers.some(row=>row.hostId===id)) {channels.get(id)?.close?.();channels.delete(id);}
     for(const removed of result.removedHosts || [])if((core.state.computersSeen || []).includes(removed.hostId)&&!(core.state.removedComputers || []).some(r=>r.hostId===removed.hostId))
@@ -92,6 +92,7 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
           rows.push(...(result[field] || []).map(row=>({...row,hostId:computer.hostId,computerName:name(computer.hostId)})));
         } catch {rows.push(...(snapshots.get(key)?.[field] || []).map(row=>({...row,hostId:computer.hostId,computerName:name(computer.hostId),computerOffline:true})));}
       }
+      if(field==='sessions'||field==='items')rows.sort((a,b)=>(Date.parse(b.updatedAt||b.lastMessageAt||b.createdAt||b.attachedAt)||0)-(Date.parse(a.updatedAt||a.lastMessageAt||a.createdAt||a.attachedAt)||0));
       return {...active,[field]:rows};
     }
     const session=/^\/sessions\/([^/?]+)/.exec(path),project=/^\/projects\/([^/?]+)/.exec(path),chat=/^\/chats\/([^/?]+)/.exec(path);
@@ -128,9 +129,26 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
       const chosen=globalThis.WeftUiCore.chooseComputer(core.state.computers,{lastHostId:last || current});
       if(chosen)await core.selectExecutionComputer(chosen);
     }
-    return original.startNewConversation(...args);
+    const created=await original.startNewConversation(...args);
+    if(core.hasMultipleComputers())await core.refreshSessions();
+    return created;
   };
   core.currentExecutionComputer = () => current || core.state.hostId;
+  const createProject=core.createProjectConversation;
+  core.createProjectConversation=async(project,...args)=>{
+    if(enabled&&project.hostId&&project.hostId!==current)await core.selectExecutionComputer(project.hostId);
+    return createProject(project,...args);
+  };
+  const side=core.openSideChat;
+  core.openSideChat=async(fields={})=>{
+    const project=fields.parent?.kind==='project'?core.state.projects?.find(row=>row.projectId===fields.parent.id):null;
+    if(enabled&&project?.hostId&&project.hostId!==current)await core.selectExecutionComputer(project.hostId);
+    return side(fields);
+  };
+  core.activeComputerIdentity=()=>{
+    if(!enabled||!current||current===core.cloudCurrentComputer?.())return null;
+    const entry=channels.get(current);return entry?{origin:entry.connection.baseUrl,hostId:current,ownerId:entry.session.account.ownerId,deviceId:entry.session.device.id}:null;
+  };
   core.clearSession = () => {for(const entry of channels.values())entry.close();channels.clear();snapshots.clear();enabled=false;current=null;core.state.computers=[];return original.clearSession();};
   return {};
 };

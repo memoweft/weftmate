@@ -34,6 +34,12 @@ test('old cloud and single computer do not open new channels or alter list respo
     assert.deepEqual(result,{sessions:[{sessionId:'a-session',title:'A'}]});
   }
 });
+test('a new conversation refreshes authoritative send availability before the first message',async()=>{
+  const {core}=await setup();let reads=0;
+  core.updateComputerDirectory({hosts:[{hostId:'a',online:true},{hostId:'b',online:true}],capabilities:{multiHost:1}});
+  core.refreshSessions=async()=>{reads++;core.state.sessions=[{sessionId:'new',hostId:'a',sendAvailable:true}];};
+  await core.startNewConversation();assert.equal(reads,1);assert.equal(core.state.sessions[0].sendAvailable,true);
+});
 test('list merges by computer; sending and retries address only the selected computer; offline lists retain ownership',async()=>{
   const {core,calls}=await setup();const hosts=[{hostId:'a',name:'synthetic-desk',online:true},{hostId:'b',name:'synthetic-laptop',online:true}];
   core.updateComputerDirectory({hosts,capabilities:{multiHost:1}});

@@ -8,6 +8,7 @@ const fields = (body, names) => { if (!body || Object.keys(body).sort().join() !
 const binary = (value, size) => typeof value === 'string' && /^[A-Za-z0-9_-]+$/.test(value) && (!size || Buffer.from(value,'base64url').length === size);
 const projection = row => ({ id:row.id, hostId:row.host_id, createdAt:row.created_at, expiresAt:row.expires_at, state:row.state });
 export function pruneOfflineTasks(db, now) {
+  db.prepare('DELETE FROM removed_computer_tasks WHERE expires_at<=?').run(now - TASK_LIMITS.ttl);
   db.prepare("UPDATE offline_tasks SET ciphertext=NULL,state='expired',claim_id=NULL WHERE expires_at<=? AND state IN ('waiting','claimed')").run(now);
   db.prepare("DELETE FROM offline_tasks WHERE expires_at<=? AND ciphertext IS NULL AND state IN ('completed','failed','expired','canceled')").run(now - TASK_LIMITS.ttl);
 }

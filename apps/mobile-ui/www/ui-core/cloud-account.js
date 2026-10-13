@@ -224,6 +224,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       effects.nativeSessionExpired?.(); paint(); return;
     }
     if (auth.localSession) {
+      core.updateComputerDirectory?.({hosts:[]});
       clearTimeout(renewalTimer); clearTimeout(waitTimer); journey++; await client.forget();
       Object.assign(auth, { mode: 'offline', modal: false, busy: false, email, error: '需要重新登录', cloudExpired: true });
       paint(); effects.toast('需要重新登录，电脑上的内容仍可继续使用。'); return;
@@ -292,7 +293,10 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   };
   core.cloudRemoveComputer = async hostId => {
     if(!core.state.computers?.length)throw {code:'FORBIDDEN'};
-    await client.authorized('/hosts/remove',{method:'POST',body:{hostId}});return cloudDirectory();
+    const current=auth.hosts.some(row=>row.hostId===hostId&&row.isCurrent);
+    await client.authorized('/hosts/remove',{method:'POST',body:{hostId}});
+    if(current){await expireCloudSession(auth.email,{retainCached:false});return {devices:[],hosts:[]};}
+    return cloudDirectory();
   };
   core.probeCloudPresence = async () => {
     if (auth.cloudOnly) return null;
@@ -310,8 +314,8 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     }
   };
   core.cloudOfflineTaskDevice = async () => (await client.key()).deviceId;
-  core.cloudOfflineIdentity = () => core.state.account && client?.config?.hostId ? {
-    origin: client.host, ownerId: core.state.account.ownerId, deviceId: core.state.device?.id, hostId: client.config.hostId } : null;
+  core.cloudOfflineIdentity = () => core.activeComputerIdentity?.() || (core.state.account && client?.config?.hostId ? {
+    origin: client.host, ownerId: core.state.account.ownerId, deviceId: core.state.device?.id, hostId: client.config.hostId } : null);
   async function cloudTrust(requestId) { return core.accessApi(`/cloud/devices/${encodeURIComponent(requestId)}/trust`, { method: 'POST', protectedWrite: true, body: {} }); }
   function cloudTrustMaterial(trust) {
     // This key comes from the already authenticated sender's host connection,
