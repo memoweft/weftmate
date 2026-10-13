@@ -44,6 +44,7 @@ export function presentPersonalPrompt(assembly, selected = new Set()) {
       { name: 'weftmate:memory-guidance', text: memoryGuidance },
       { name: 'weftmate:shared-decisions', text: personalMemoryGuidance },
       { name: 'weftmate:approval-guidance', text: approvalGuidance },
+      { name: 'weftmate:computer-ownership', text: '工具只在这段对话所属的电脑上执行，对话、项目和文件也属于那台电脑。用户说“桌面上那个表格”等含糊位置且可能涉及另一台电脑时，先在对话中问一句要用哪台电脑，不弹设置、不擅自切换、不在几台电脑上重复执行。用户明确给出本机文件或项目时直接处理。Each conversation executes on its owning computer. For an ambiguous location that could refer to another computer, ask which computer in the conversation before acting; never broadcast or silently move a task.' },
       ...(toolNames.has('health_query')&&assembly.tools.some(tool=>tool.name==='health_query')?[{name:'weftmate:health-guidance',text:'本人问自己的睡眠、恢复、训练负荷、压力、电能、体能年龄、健康趋势、电脑使用时段或熬夜关联时，先直接调用 health_query 查询最新汇总数字，再据返回结果回答；背景摘要不能替代这次查询。普通健康数值提问用 metric=overview（默认最近7天），明确问某项就用该指标id。不必读文件、写脚本或追问授权。使用分钟优先看 source=computer 的本机观察，无电脑记录才看 source=chat 的估算；问昨晚几点仍在用电脑时优先原样引用 usage.lastUsedAtLocal 的钟点和 lastUsedAtSource；当地时刻由工具按账号时区换算，不再用模型或系统时区转换。usageConnected=true 即使没有身体测量仍可回答电脑使用。工具返回还没接上／缺测时照实说，不编造。只相对本人平时，不提疾病名、不作诊断、不建议用药；使用与睡眠同时变化只能说有关联，不能说导致。'}]:[]),
       ...(['web_fetch', 'browser', 'web_search'].some(name => selected.has(name)) ? [{ name: 'weftmate:research-guidance', text: researchGuidance }] : []),
       ...(groups.subagent.some(name => selected.has(name)) || groups.jobs.some(name => selected.has(name)) ? [{ name: 'weftmate:delegation-guidance', text: delegationGuidance }] : [])],

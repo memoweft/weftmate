@@ -194,6 +194,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (!auth.localSession) { core.acceptSession(result); await core.enterAssistant(); }
     returnView = null;
     await core.refreshPendingDevices(); scheduleRenewal();
+    await cloudDirectory().catch(() => {});
     const draft = await environment.cloudCredentials('draft:' + saved.sub);
     if (draft) { effects.restoreCloudDraft?.(draft); await environment.cloudCredentials('draft:' + saved.sub, undefined, true); }
   }
@@ -251,7 +252,9 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       throw error;
     }
     if (generation !== client.generation) throw { code: 'CLOUD_TOKEN_INVALID' };
-    auth.devices = result.devices; auth.hosts = result.hosts; return result;
+    auth.devices = result.devices; auth.hosts = result.hosts;
+    auth.multiHostSupported=result.capabilities?.multiHost===1;
+    core.updateComputerDirectory?.(result); return result;
   }
   async function cloudRename(id, name) {
     name = name.trim(); if (!name || Array.from(name).length > 128) throw { code: 'INVALID_DEVICE' };
@@ -277,6 +280,16 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return cloudDirectory();
   }
   async function cloudConnect(hostId) { return client.authorized('/hosts/connect', { method: 'POST', body: { hostId } }); }
+  core.cloudCurrentComputer = () => client?.config?.hostId;
+  core.cloudComputerChannel = (connection,request) => client.channel(connection,request);
+  core.cloudRenameComputer = async (hostId,name) => {
+    if(!core.state.computers?.length)throw {code:'FORBIDDEN'};
+    await client.authorized('/hosts/rename',{method:'POST',body:{hostId,name:name.trim()}});return cloudDirectory();
+  };
+  core.cloudRemoveComputer = async hostId => {
+    if(!core.state.computers?.length)throw {code:'FORBIDDEN'};
+    await client.authorized('/hosts/remove',{method:'POST',body:{hostId}});return cloudDirectory();
+  };
   core.probeCloudPresence = async () => {
     if (!client?.config?.hostId || !await client.saved()) return null;
     return cloudConnect(client.config.hostId);
@@ -320,6 +333,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   async function cloudEmailConfirm(code) { const result = await client.authorized('/auth/email/change/confirm', { method: 'POST', body: { challengeId: auth.emailChange.challengeId, code } }); auth.emailChange = null; await expireCloudSession(result.account.email, {retainCached:false}); return result; }
   async function cloudChangePassword(currentPassword, password, confirmation) { validPassword(password, confirmation); const result = await client.authorized('/auth/password/change', { method: 'POST', body: { currentPassword, password } }); await expireCloudSession(auth.email, {retainCached:false}); return result; }
   async function cloudLogout() {
+    if(auth.localSession&&auth.multiHostSupported&&auth.mode==='authenticated')await core.accessApi('/cloud/binding',{method:'DELETE',protectedWrite:true,body:{}});
     if (auth.mode !== 'offline') { await client.authorized('/auth/logout', { method: 'POST', body: {} }); await client.resetKey(); }
     await expireCloudSession(auth.email, {retainCached:false});
   }
