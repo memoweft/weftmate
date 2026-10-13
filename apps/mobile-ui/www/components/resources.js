@@ -40,6 +40,7 @@ function appendTimelineArtifact(parent,artifact,context=conversationTaskContext(
   wrap.append(open,el('small','',`${artifact.contentType||'文件'} · ${attachmentSize(artifact.size||0)}`),save);parent.append(wrap)}
 
 function closeResourcePage({restoreFocus=true}={}){const view=state.resourceView;state.resourceView=null;
+  WeftPopover.closeMenu();clear($('resource-content'));
   if($('mobile-bottom-tabs'))$('mobile-bottom-tabs').inert=false;
   if(!$('resource-page').hidden) { if(globalThis.WeftMobileMotion) WeftMobileMotion.hide($('resource-page'),true); else $('resource-page').hidden=true; }$('chat-page').removeAttribute?.('inert');
   $('main').removeAttribute?.('inert');document.querySelector('.topbar')?.removeAttribute?.('inert');
@@ -51,16 +52,34 @@ function showResourcePage(title,context,trigger=document.activeElement){
   const previous=state.resourceView;
   const view={context,trigger:previous?.trigger||trigger,scrollTop:previous?.scrollTop??$('chat-scroll').scrollTop,
     scrollPinned:previous?.scrollPinned??state.scrollPinned};state.resourceView=view;state.scrollPinned=false;
-  $('resource-page').hidden=false;$('resource-back').setAttribute('aria-label',context?.kind==='library'?'返回成果库':'返回对话');$('resource-title').textContent=title;clear($('resource-content'));
+  $('resource-page').hidden=false;$('resource-menu').hidden=true;$('resource-back').setAttribute('aria-label',context?.kind==='library'?'返回成果库':'返回对话');$('resource-title').textContent=title;clear($('resource-content'));
   $('resource-content').scrollTop=0;$('main').setAttribute('inert','');document.querySelector('.topbar')?.setAttribute('inert','');
   $('chat-page').setAttribute('inert','');globalThis.WeftMobileMotion?.push($('resource-page'),false,'240ms');$('resource-back').focus({preventScroll:true});return view;
 }
 
+function configureResourceFile(file,{blob,sessionId,original=false,versions=file.versions||[]}={}){
+  const name=file.fileName||file.name||'文件',artifactId=file.artifactId||file.id;
+  const getBlob=blob?async()=>blob:!window.weftNative&&artifactId?()=>WeftPhoneFiles.readBlob(uiCore.artifactDownloadUrl(artifactId)):!window.weftNative&&original?()=>WeftPhoneFiles.readBlob(uiCore.syncAttachmentUrl(file.attachmentId)):undefined;
+  WeftPhoneFiles.attach({menu:$('resource-menu'),name,getBlob,
+    save:window.weftNative?(artifactId?async()=>{await call('shared.artifacts.save',{artifactId});toast('请选择保存位置');}:original?()=>saveSharedFile(sessionId,file,$('resource-menu')):undefined):undefined,
+    library:artifactId?()=>{closeResourcePage({restoreFocus:false});selectMobileTab('library');}:undefined,
+    versions:versions.filter(version=>(version.artifactId||version.id)!==artifactId).map(version=>({...version,open:()=>openTimelinePreview(conversationTaskContext(),()=>uiCore.readResource(uiCore.artifactPreviewPath(version.artifactId)),version.fileName,version)}))});
+}
+async function openAttachmentFile(file,trigger,{sessionId=state.sharedSessionId,draft=false}={}){
+  const context=conversationTaskContext(),view=showResourcePage(file.name,context,trigger),target=$('resource-content');
+  target.append(el('p','muted','正在读取…'));configureResourceFile(file,{blob:file.file instanceof Blob?file.file:undefined,sessionId,original:!draft});
+  try{if(window.weftNative&&!(file.file instanceof Blob)){target.replaceChildren(el('p','render-status','这份文件暂时无法在手机里预览，可保存后查看。'));return;}
+    const blob=file.file instanceof Blob?file.file:await WeftPhoneFiles.readBlob(uiCore.syncAttachmentUrl(file.attachmentId));
+    if(state.resourceView!==view||!conversationTaskCurrent(context))return;const data=await WeftPhoneFiles.fromBlob(blob,file.name);if(state.resourceView!==view||!conversationTaskCurrent(context))return;target.replaceChildren();WeftContent.preview(target,data,{name:file.name});
+  }catch{if(state.resourceView!==view)return;const retry=el('button','secondary','重试');retry.onclick=()=>openAttachmentFile(file,trigger,{sessionId,draft});target.replaceChildren(el('p','render-status','暂时无法读取，请重试。'),retry);}
+}
+
 function retainTimeline(content){const key=JSON.stringify([state.owner,state.authEpoch,state.chatSource,state.conversationId,state.sharedSessionId]);
-  const saved=content.dataset.context===key?[...content.children].filter(node=>node.dataset.timeline):[];content.dataset.context=key;return saved}
+  const saved=content.dataset.context===key?[...content.children].filter(node=>node.dataset.timeline||node.dataset.mobileDecision):[];content.dataset.context=key;return saved}
 
 async function openTimelinePreview(context,read,title,artifact=null){if(!conversationTaskCurrent(context))return;
   const view=showResourcePage(title,context),target=$('resource-content');
+  if(artifact)configureResourceFile(artifact);
   target.append(el('p','muted','正在读取…'));
   const load=async()=>{try{const data=await read();if(state.resourceView!==view||!conversationTaskCurrent(context))return;
     if(data.kind){clear(target);WeftContent.preview(target,data,{name:title,artifactId:artifact?.artifactId});return;}
@@ -68,9 +87,7 @@ async function openTimelinePreview(context,read,title,artifact=null){if(!convers
     const body=el('div','markdown resource-document');
     if(window.WeftFormat?.render){body.innerHTML=window.WeftFormat.render(text);enhanceMarkdown(body)}else body.textContent=text;
     target.append(body);if(data.truncated||data.source?.truncated)target.append(el('p','muted','内容已截断'));
-    if(artifact?.versions?.length){const older=el('details','resource-usage');older.append(el('summary','',`旧版 · ${artifact.versions.length} 个`));
-      for(const version of artifact.versions)appendTimelineArtifact(older,version,context);target.append(older)}
-    if(artifact){const save=el('button','timeline-action','保存到手机');save.addEventListener('click',async()=>{try{await call('shared.artifacts.save',{artifactId:artifact.artifactId});toast('请选择保存位置')}catch(e){toast(safeError(e),true)}});target.append(save)}
+    if(data.artifact&&!artifact)configureResourceFile(data.artifact);
   }catch{if(state.resourceView!==view)return;clear(target);target.append(el('p','inline-error','暂时无法读取，请重试。'));
     const retry=el('button','secondary','重新读取');retry.addEventListener('click',load);target.append(retry)}};await load();
 }
@@ -121,7 +138,9 @@ function renderTimeline(events=state.sharedEvents){if(!window.WeftTimeline)retur
     readArtifact:id=>uiCore.accessApi(`/library/${encodeURIComponent(id)}`),
     openAllArtifacts:()=>selectMobileTab('library'),onError:()=>toast('文件操作未完成，请重试。'),
     openArtifact:artifact=>openTimelinePreview(context,()=>uiCore.readResource(uiCore.artifactPreviewPath(artifact.artifactId)),artifact.fileName||'成果',artifact),
-    downloadArtifact:artifact=>call('shared.artifacts.save',{artifactId:artifact.artifactId})});focusGoalStep()}
+    downloadArtifact:artifact=>call('shared.artifacts.save',{artifactId:artifact.artifactId})});
+  const known=uiCore.mobileDecisions.rows(approvalContext());for(const node of $('chat-content').querySelectorAll('[data-timeline-approval]'))if(known.some(row=>row.approvalId===node.dataset.timelineApproval))node.hidden=true;
+  focusGoalStep()}
 
 function olderControl(content){if(!state.sharedHasOlder)return;const button=el('button','quiet',state.sharedOlderLoading?'正在读取…':'加载更早内容');button.type='button';button.disabled=state.sharedOlderLoading;
   button.addEventListener('click',()=>{void loadOlderHistory()});content.append(button)}
