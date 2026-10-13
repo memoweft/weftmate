@@ -25182,5 +25182,87 @@
       "lastFileStartedAt": "2026-10-13T03:13:05Z",
       "cancelledAt": "2026-10-13T03:15:57Z"
     }
-  ]
+  ],
+  "finalAcceptanceObservations": {
+    "recordedAt": "2026-10-13T09:14:26.580Z",
+    "rows": [
+      {
+        "run": 38357073116,
+        "workflow": "relay.yml",
+        "platform": "ubuntu-latest",
+        "file": "services/cloud/test/relay-phone.test.mjs",
+        "name": "phone approval must be inside the conversation above the composer",
+        "type": "assertion",
+        "classification": "产品里的真问题",
+        "count": 1,
+        "resolution": "MOB-3/MOB-4 scope; retained, not uniquely diagnosed here"
+      },
+      {
+        "run": 38359433300,
+        "workflow": "relay.yml",
+        "platform": "ubuntu-latest",
+        "file": "services/cloud/test/relay-phone.test.mjs",
+        "name": "first send did not complete",
+        "type": "assertion",
+        "classification": "产品里的真问题",
+        "count": 1,
+        "resolution": "MOB-3/MOB-4 scope; retained, no selector change"
+      },
+      {
+        "run": 38359286867,
+        "workflow": "ci.yml",
+        "platform": "macos-latest",
+        "file": "tests/bl-29-rework.test.ts",
+        "name": "all bridge methods count in 31s healthy idle",
+        "type": "assertion",
+        "classification": "夹具竞态",
+        "count": 1,
+        "resolution": "Fixture direction only; no per-method counts retained, unique root cause unresolved"
+      },
+      {
+        "run": 38367509701,
+        "workflow": "ci.yml",
+        "platform": "ubuntu-latest",
+        "file": "services/cloud/test/identity.test.mjs",
+        "name": "registration → verification → device-confirmed code/PKCE login → refresh → reset → new device",
+        "type": "assertion: 299 !== 300",
+        "classification": "测试写法本身不确定",
+        "count": 1,
+        "resolution": "Freeze only Date in this test; keep HTTP timers and original 300s assertions"
+      },
+      {
+        "run": 38367509701,
+        "workflow": "ci.yml",
+        "platform": "windows-latest",
+        "file": "tests/vendor-cache-safety.test.ts",
+        "name": "all leaves pass, file exit 1",
+        "type": "file-exit: Managed temp lease ownership changed",
+        "classification": "夹具竞态",
+        "count": 1,
+        "resolution": "Replace all eleven asynchronous raw root deletions with managed disposal; fixed partial-delete-window proof"
+      },
+      {
+        "run": null,
+        "workflow": "local-required",
+        "platform": "Windows / Node24.21.0",
+        "file": "tests/bl-29-timing-approval.test.ts",
+        "name": "foreground reply 恢复到最新electron",
+        "type": "locator.waitFor: Timeout 1000ms exceeded",
+        "classification": "夹具竞态",
+        "count": 1,
+        "resolution": "Wait for exact native conversation projection before visibility timer; retain 1s assertion"
+      },
+      {
+        "run": null,
+        "workflow": "local-vendor",
+        "platform": "Windows / Node24.21.0",
+        "file": "tests/bl-29-runtime-close.test.ts",
+        "name": "BL-29b M5 real tray/update shutdown and both runtime orders drain protocol waits",
+        "type": "update-restart preparation: page.waitForFunction 30000ms",
+        "classification": "夹具竞态",
+        "count": 1,
+        "resolution": "先显示窗口并等待前台状态，再等依赖前台的初始读取；原退出／等待断言不变，真实五场景及回收3条复验通过"
+      }
+    ]
+  }
 }

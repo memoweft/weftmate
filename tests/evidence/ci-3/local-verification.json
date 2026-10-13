@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-13T03:11:52.103Z",
+  "updatedAt": "2026-10-13T09:24:53.960Z",
   "groups": [
     {
       "label": "activity-resources-offline",
@@ -43,10 +43,10 @@
     },
     {
       "label": "real-electron-asar-vault",
-      "passed": null,
-      "failed": null,
-      "skipped": null,
-      "durationMs": null,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 493947.1074,
       "log": ".local/ci-3/heavy-related.log"
     },
     {
@@ -71,11 +71,169 @@
       "startedAt": "2026-10-13T02:46:29.6576004Z",
       "mode": "related",
       "slot": "heavy-3.lock"
+    },
+    {
+      "exitCode": 0,
+      "completedAt": "2026-10-13T03:47:57.1227274Z",
+      "startedAt": "2026-10-13T03:29:58.2637261Z",
+      "mode": "required",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "exitCode": 0,
+      "completedAt": "2026-10-13T04:00:12.4376180Z",
+      "startedAt": "2026-10-13T03:52:13.8387934Z",
+      "mode": "vendor",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "exitCode": 0,
+      "completedAt": "2026-10-13T04:05:06.6889365Z",
+      "startedAt": "2026-10-13T04:04:50.8413458Z",
+      "mode": "post-merge-ui",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "exitCode": 0,
+      "completedAt": "2026-10-13T04:51:43.6216739Z",
+      "startedAt": "2026-10-13T04:51:23.8068269Z",
+      "mode": "sync-ui",
+      "slot": "heavy-3.lock"
+    },
+    {
+      "exitCode": 0,
+      "completedAt": "2026-10-13T04:53:45.2470384Z",
+      "startedAt": "2026-10-13T04:33:20.4712350Z",
+      "mode": "required",
+      "slot": "heavy-2.lock"
+    },
+    {
+      "exitCode": 1,
+      "completedAt": "2026-10-13T05:40:10.7474499Z",
+      "startedAt": "2026-10-13T05:19:20.2865032Z",
+      "mode": "required",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "exitCode": 0,
+      "completedAt": "2026-10-13T06:10:41.1948474Z",
+      "startedAt": "2026-10-13T05:51:13.5375011Z",
+      "mode": "required",
+      "slot": "heavy-2.lock"
+    },
+    {
+      "exitCode": 0,
+      "completedAt": "2026-10-13T06:23:25.6488740Z",
+      "startedAt": "2026-10-13T06:13:33.0332916Z",
+      "mode": "vendor",
+      "slot": "heavy-2.lock"
+    },
+    {
+      "exitCode": 1,
+      "completedAt": "2026-10-13T06:49:58.8957632Z",
+      "startedAt": "2026-10-13T06:29:53.5679679Z",
+      "mode": "required",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "exitCode": 1,
+      "completedAt": "2026-10-13T07:08:54.1547284Z",
+      "startedAt": "2026-10-13T06:50:03.1385972Z",
+      "mode": "required",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "mode": "required",
+      "completedAt": "2026-10-13T08:23:07.4211339Z",
+      "exitCode": 1,
+      "startedAt": "2026-10-13T08:02:09.9442482Z",
+      "slot": "heavy-1.lock"
+    },
+    {
+      "startedAt": "2026-10-13T08:25:21.6395901Z",
+      "exitCode": 0,
+      "mode": "post-merge-ui",
+      "slot": "heavy-1.lock",
+      "completedAt": "2026-10-13T08:25:44.3374064Z"
+    },
+    {
+      "mode": "required",
+      "slot": "heavy-2.lock",
+      "completedAt": "2026-10-13T08:54:28.0900691Z",
+      "startedAt": "2026-10-13T08:34:36.8650431Z",
+      "exitCode": 0
+    },
+    {
+      "mode": "vendor",
+      "slot": "heavy-2.lock",
+      "completedAt": "2026-10-13T09:03:33.6219096Z",
+      "startedAt": "2026-10-13T08:54:28.1183583Z",
+      "exitCode": 1
+    },
+    {
+      "exitCode": 0,
+      "slot": "heavy-1.lock",
+      "mode": "exit-ui",
+      "startedAt": "2026-10-13T09:07:24.8006561Z",
+      "completedAt": "2026-10-13T09:09:19.6068532Z"
+    },
+    {
+      "exitCode": 0,
+      "slot": "heavy-1.lock",
+      "mode": "vendor",
+      "startedAt": "2026-10-13T09:09:19.6348903Z",
+      "completedAt": "2026-10-13T09:18:04.5603157Z"
     }
   ],
   "typecheckPassed": true,
   "publicHygieneHits": 0,
-  "required": "pending final slot",
-  "vendor": "pending final slot",
-  "realModelRequests": 0
+  "required": {
+    "mode": "required",
+    "files": 343,
+    "exitCode": 0,
+    "passed": 1962,
+    "failed": 0,
+    "skipped": 18,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 35,
+    "exitCode": 0,
+    "passed": 241,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "realModelRequests": 0,
+  "completeGateRuntime": {
+    "officialSource": "https://nodejs.org/dist/v24.21.0/win-x64/node.exe",
+    "sha256": "ba4e6d110e8c1592a1ecd390f6b05f3da124b13871a5be62b341a07a853c6c32",
+    "version": "24.21.0"
+  },
+  "fixedFinal": {
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0
+  },
+  "withoutVendor": {
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0
+  },
+  "duplicateControllerProof": {
+    "duplicateRejected": true,
+    "rejectedBeforeGitHubAccess": true,
+    "existingLeasePreserved": true,
+    "exitCode": 1
+  },
+  "priorNativeExit": {
+    "runtime": "24.15.0",
+    "hexadecimal": "0xC0000409",
+    "files": [
+      "tests/fg-1-lifecycle-models.test.ts",
+      "tests/bl-29-rework.test.ts"
+    ],
+    "rootCause": "not uniquely established; no timing exception"
+  }
 }

@@ -66,3 +66,17 @@ CI-1 第六轮 next-suggestions 的 f.aborted false≠true 早于本表起点：
 ## 第三轮：项目冷启动仍超期（产品问题）
 
 `49ecbf56` 第3轮主流程成功，但打包程序项目登记未完成。真实Electron进程标准错误明确为 `wm:desktop:project-create` 的 PROJECT_READER_TIMEOUT，详见 reader-timeout-package-evidence.json、reader-cold-start-round3.json。旧初始化15秒仍没有为PowerShell（命令解释器）／C#（编程语言）冷启动留足余量；这是产品路径，不能当作功能重试例外。最终冷启动独立30秒，实际读取15秒与全部文件安全／大小／扫描限制不变，合计上限约45秒，不重试操作。失败日志新增初始化／操作阶段、耗时与输出字节概况，不记录项目路径／正文／凭据。固定16秒初始化样例旧版必提前终止、新版读完；卡住的启动仍30秒结束，卡住的读取仍15秒结束。旧第三轮明确失败，前两轮成功也保留，不计入最终代码六轮。
+
+## 最后一批六轮之后的定性
+
+| 文件／用例 | 分类 | 依据／处理 |
+|---|---|---|
+| services/cloud/test/relay-phone.test.mjs / phone approval must be inside the conversation above the composer | 产品里的真问题 | assertion；MOB-3/MOB-4 scope; retained, not uniquely diagnosed here |
+| services/cloud/test/relay-phone.test.mjs / first send did not complete | 产品里的真问题 | assertion；MOB-3/MOB-4 scope; retained, no selector change |
+| tests/bl-29-rework.test.ts / all bridge methods count in 31s healthy idle | 夹具竞态 | assertion；Fixture direction only; no per-method counts retained, unique root cause unresolved |
+| services/cloud/test/identity.test.mjs / registration → verification → device-confirmed code/PKCE login → refresh → reset → new device | 测试写法本身不确定 | assertion: 299 !== 300；Freeze only Date in this test; keep HTTP timers and original 300s assertions |
+| tests/vendor-cache-safety.test.ts / all leaves pass, file exit 1 | 夹具竞态 | file-exit: Managed temp lease ownership changed；Replace all eleven asynchronous raw root deletions with managed disposal; fixed partial-delete-window proof |
+| tests/bl-29-timing-approval.test.ts / foreground reply 恢复到最新electron | 夹具竞态 | locator.waitFor: Timeout 1000ms exceeded；Wait for exact native conversation projection before visibility timer; retain 1s assertion |
+| tests/bl-29-runtime-close.test.ts / BL-29b M5 real tray/update shutdown and both runtime orders drain protocol waits | 夹具竞态 | update-restart preparation: page.waitForFunction 30000ms；先显示窗口并等待前台状态，再等依赖前台的初始读取；原退出／等待断言不变，真实五场景及回收3条复验通过 |
+
+公开日志片段、固定复现与仍缺数据的限制见 [final-observations.md](final-observations.md)。清单仍增0／删0；这些功能失败不登记计时例外。macOS项目读取合并对比证明见mac-merge-proof.json。
