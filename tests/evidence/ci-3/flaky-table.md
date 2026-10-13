@@ -60,3 +60,17 @@
 
 原始日志只存本包 .local；公开 JSON（结构化数据）保留清理身份后的诊断片段、完整运行链接和每次任务结论。
 起点统计之后的新增现场与定性：[补充观测](additional-observations.md)，详情也保存在 flaky-table.json 的 additionalObservations（补充观测）中。
+
+## 六轮及本机最终门禁新增条目
+
+起点快照562次运行／43组保持原样，下表保留验收时新增的实红，不把后续通过覆盖为无失败。完整定性和限制见 [final-observations.md](final-observations.md)。
+
+| 工作流 | 平台 | 文件／用例 | 失败类型 | 次数 | 运行 |
+|---|---|---|---|---:|---|
+| relay.yml | ubuntu-latest | services/cloud/test/relay-phone.test.mjs / phone approval must be inside the conversation above the composer | assertion | 1 | [38357073116](https://github.com/memoweft/weftmate/actions/runs/38357073116) |
+| relay.yml | ubuntu-latest | services/cloud/test/relay-phone.test.mjs / first send did not complete | assertion | 1 | [38359433300](https://github.com/memoweft/weftmate/actions/runs/38359433300) |
+| ci.yml | macos-latest | tests/bl-29-rework.test.ts / all bridge methods count in 31s healthy idle | assertion | 1 | [38359286867](https://github.com/memoweft/weftmate/actions/runs/38359286867) |
+| ci.yml | ubuntu-latest | services/cloud/test/identity.test.mjs / registration → verification → device-confirmed code/PKCE login → refresh → reset → new device | assertion: 299 !== 300 | 1 | [38367509701](https://github.com/memoweft/weftmate/actions/runs/38367509701) |
+| ci.yml | windows-latest | tests/vendor-cache-safety.test.ts / all leaves pass, file exit 1 | file-exit: Managed temp lease ownership changed | 1 | [38367509701](https://github.com/memoweft/weftmate/actions/runs/38367509701) |
+| local-required | Windows / Node24.21.0 | tests/bl-29-timing-approval.test.ts / foreground reply 恢复到最新electron | locator.waitFor: Timeout 1000ms exceeded | 1 | 本机保留日志 |
+| local-vendor | Windows / Node24.21.0 | tests/bl-29-runtime-close.test.ts / BL-29b M5 real tray/update shutdown and both runtime orders drain protocol waits | update-restart preparation: page.waitForFunction 30000ms | 1 | 本机保留日志 |
