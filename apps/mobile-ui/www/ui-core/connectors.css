@@ -6,6 +6,7 @@
 .connector-row-copy strong, .connector-row-copy small { overflow-wrap: anywhere; }
 .connector-empty { display: grid; justify-items: center; padding: var(--wm-space-24); color: var(--muted); }
 .connector-field { display: grid; gap: var(--wm-space-8); margin-bottom: var(--wm-space-12); }
+.connector-field[hidden] { display: none; }
 .connector-field input, .connector-field textarea { width: 100%; box-sizing: border-box; }
 .connector-field textarea { resize: none; min-height: 5em; padding: var(--wm-space-12); color: var(--ink); background: var(--surface); border: var(--wm-space-1) solid var(--line); border-radius: var(--wm-radius-8); font: inherit; }
 .connector-field textarea:focus-visible { outline: var(--wm-space-2) solid var(--accent); outline-offset: var(--wm-space-2); }
