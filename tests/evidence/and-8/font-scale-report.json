@@ -1,0 +1,1971 @@
+{
+  "synthetic": true,
+  "instrumentation": [
+    {
+      "width": 390,
+      "theme": "dark",
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "and8-390-dark-font13-activity.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-analysis-basis.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-analysis-open.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-calendar-open.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-content.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-empty.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-energy-detail.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-energy-method.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-sleep-detail.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-sleep-stages.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-sleep-summary.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-stress-detail.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-stress-method.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-trend-controls.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-trend-overlay.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-trend-selected.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-web-analysis-open.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-web-calendar-open.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-web-content.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-web-empty.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-web-sleep-detail.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and8-390-dark-font13-web-trend-overlay.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "fontScale": 1.3,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    }
+  ],
+  "occupancy": {
+    "startedAt": "2026-10-13T21:38:24.572Z",
+    "heavySlot": "heavy-1.lock",
+    "releasedAt": "2026-10-13T21:40:02.608Z"
+  },
+  "installedOtherPackages": 2,
+  "systemVersion": "15",
+  "systemTheme": "Night mode: yes",
+  "resources": {
+    "ownerPid": 51476,
+    "privateAdbPort": 51725,
+    "reversePort": 51762,
+    "package": "com.memoweft.weftmate.mobile.and8qa"
+  },
+  "apkHashes": {
+    "app": "8625d612948030ebb9114b28f4a0daa21c86d725452b5551c7e58a2d790f8d77",
+    "test": "fba20bbdcd7b57c9c896d025317ae7c74d330d7c273adc29b35a61f73fd0c212"
+  },
+  "requests": [
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "PATCH",
+      "body": {
+        "itemAnalysisEnabled": true
+      }
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "",
+      "method": "POST",
+      "body": {
+        "scope": "recovery",
+        "day": "2026-10-14"
+      }
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/analysis",
+      "query": "day=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=30&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/recovery",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/sleep",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/load",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/fitnessAge",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/deepMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/remMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/awakeMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/inBedMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/steps",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/activeEnergyKcal",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/exerciseMinutes",
+      "query": "days=7&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/calendar",
+      "query": "month=2026-10",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/stress",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/energy",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/metrics/usageLateNightMinutes",
+      "query": "days=14&to=2026-10-14",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/health/overview",
+      "query": "",
+      "method": "GET"
+    },
+    {
+      "path": "/personal/v1/settings/health",
+      "query": "",
+      "method": "GET"
+    }
+  ],
+  "privateAdbClosed": true
+}

@@ -1,0 +1,5167 @@
+[
+  {
+    "file": "and8-360-dark-activity-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-activity-more.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-activity.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-analysis-basis.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-analysis-open.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-calendar-open.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-content.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-empty.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-energy-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-energy-method.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-error.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-fitnessAge-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-fitnessAge-method.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-hrvSdnnMs-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-insight-open.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-load-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-loading.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-no-computer.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-original-entry.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-previous-day.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-quote-draft.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-reminder.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-respiratoryRateBrpm-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-restingHeartRateBpm-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-retry.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-sleep-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-sleep-stages.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-sleep-summary.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-spo2Pct-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-stress-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-stress-method.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-trend-overlay.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-trend-selected.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-web-analysis-open.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-web-calendar-open.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-web-content.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-web-empty.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-web-sleep-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-web-trend-overlay.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-dark-wristTempC-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-activity-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-activity-more.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-activity.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-analysis-basis.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-analysis-open.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-calendar-open.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-content.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-empty.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-energy-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-energy-method.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-error.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-fitnessAge-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-fitnessAge-method.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-hrvSdnnMs-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-insight-open.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-load-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-loading.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-no-computer.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-original-entry.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-previous-day.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-quote-draft.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-reminder.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-respiratoryRateBrpm-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-restingHeartRateBpm-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-retry.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-sleep-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-sleep-stages.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-sleep-summary.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-spo2Pct-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-stress-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-stress-method.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-trend-overlay.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-trend-selected.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-web-analysis-open.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-web-calendar-open.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-web-content.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-web-empty.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-web-sleep-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-web-trend-overlay.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-360-light-wristTempC-detail.png",
+    "pageTheme": "light",
+    "widthDp": 360,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      360,
+      640
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-activity-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-activity-more.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-activity.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-analysis-basis.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-analysis-open.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-calendar-open.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-content.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-empty.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-energy-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-energy-method.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-error.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-fitnessAge-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-fitnessAge-method.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-activity.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-analysis-basis.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-analysis-open.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-calendar-open.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-content.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-empty.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-energy-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-energy-method.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-insight-open.png",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-previous-day.png",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-reminder.png",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-sleep-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-sleep-stages.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-sleep-summary.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-stress-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-stress-method.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-trend-controls.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-trend-overlay.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-trend-selected.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-web-analysis-open.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-web-calendar-open.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-web-content.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-web-empty.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-web-sleep-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-font13-web-trend-overlay.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1.3,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-hrvSdnnMs-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-insight-open.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-load-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-loading.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-no-computer.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-original-entry.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-previous-day.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-quote-draft.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-reminder.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-respiratoryRateBrpm-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-restingHeartRateBpm-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-retry.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-sleep-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-sleep-stages.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-sleep-summary.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-spo2Pct-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-stress-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-stress-method.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-trend-overlay.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-trend-selected.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-web-analysis-open.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-web-calendar-open.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-web-content.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-web-empty.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-web-sleep-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-web-trend-overlay.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "headerBackgroundRGB": [
+      38,
+      39,
+      35
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-dark-wristTempC-detail.png",
+    "pageTheme": "dark",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "headerBackgroundRGB": [
+      28,
+      28,
+      30
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-activity-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-activity-more.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-activity.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-analysis-basis.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-analysis-open.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-calendar-open.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-content.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-empty.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-energy-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-energy-method.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-error.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-fitnessAge-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-fitnessAge-method.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-hrvSdnnMs-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-insight-open.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-load-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-loading.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-no-computer.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-original-entry.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-previous-day.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-quote-draft.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-reminder.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-respiratoryRateBrpm-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-restingHeartRateBpm-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-retry.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-sleep-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-sleep-stages.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-sleep-summary.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-spo2Pct-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-stress-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-stress-method.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-trend-overlay.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-trend-selected.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-web-analysis-open.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-web-calendar-open.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-web-content.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-web-empty.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-web-sleep-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-web-trend-overlay.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  },
+  {
+    "file": "and8-390-light-wristTempC-detail.png",
+    "pageTheme": "light",
+    "widthDp": 390,
+    "fontScale": 1,
+    "systemVersion": "15",
+    "systemTheme": "Night mode: yes",
+    "physicalSize": [
+      720,
+      1280
+    ],
+    "logicalSize": [
+      390,
+      693
+    ],
+    "statusBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "headerBackgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "meanChannelDifference": 0.0,
+    "bottomSystemNavigation": "not visible in this MuMu instance; real-device gesture area unverified"
+  }
+]

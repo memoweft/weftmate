@@ -105,9 +105,11 @@ internal fun activityCommandProjection(row: JSONObject): JSONObject {
 /** The updateable UI is presentation; account secrets, local history, model calls and tools stay native. */
 open class HybridActivity : androidx.activity.ComponentActivity() {
     override fun attachBaseContext(base: android.content.Context) {
-        if (BuildConfig.DEBUG && base.packageName in setOf("com.memoweft.weftmate.mobile.and12qa", "com.memoweft.weftmate.mobile.and6qa", "com.memoweft.weftmate.mobile.and7qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and5qa")) {
+        if (BuildConfig.DEBUG && base.packageName in setOf("com.memoweft.weftmate.mobile.and8qa", "com.memoweft.weftmate.mobile.and12qa", "com.memoweft.weftmate.mobile.and6qa", "com.memoweft.weftmate.mobile.and7qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and5qa")) {
             val width = base.getSharedPreferences("native-qa", MODE_PRIVATE).getInt("width", 360)
             val configuration = android.content.res.Configuration(base.resources.configuration)
+            if (base.packageName == "com.memoweft.weftmate.mobile.and8qa")
+                configuration.fontScale = base.getSharedPreferences("native-qa", MODE_PRIVATE).getFloat("fontScale", configuration.fontScale)
             configuration.densityDpi = (base.resources.displayMetrics.widthPixels * 160f / width).toInt()
             configuration.screenWidthDp = width
             configuration.screenHeightDp = (base.resources.displayMetrics.heightPixels * 160f / configuration.densityDpi).toInt()
@@ -308,7 +310,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             }
         }
         // Per-package screenshot density must also scale WebView's CSS pixels; no emulator setting changes.
-        if (packageName in setOf("com.memoweft.weftmate.mobile.and12qa", "com.memoweft.weftmate.mobile.and6qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and5qa")) web.setInitialScale((resources.displayMetrics.density * 100).toInt())
+        if (packageName in setOf("com.memoweft.weftmate.mobile.and8qa", "com.memoweft.weftmate.mobile.and12qa", "com.memoweft.weftmate.mobile.and6qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and5qa")) web.setInitialScale((resources.displayMetrics.density * 100).toInt())
         web.webChromeClient = object : android.webkit.WebChromeClient() {
             override fun onConsoleMessage(message: android.webkit.ConsoleMessage): Boolean = true
             override fun onPermissionRequest(request: android.webkit.PermissionRequest) {
@@ -1766,7 +1768,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
             .put("nativeEmailCodeLogin", true)
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
-            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.and5qa", "com.memoweft.weftmate.mobile.and12qa", "com.memoweft.weftmate.mobile.and6qa", "com.memoweft.weftmate.mobile.and7qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.mob4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
+            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.and8qa", "com.memoweft.weftmate.mobile.and5qa", "com.memoweft.weftmate.mobile.and12qa", "com.memoweft.weftmate.mobile.and6qa", "com.memoweft.weftmate.mobile.and7qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.mob4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
                 else secrets.host()?.takeIf { it.authSource == "local" }?.origin ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
         "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))
