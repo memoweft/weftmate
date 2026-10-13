@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val updateChannel = providers.gradleProperty("weftmateUpdateChannel").orElse("stable").get()
@@ -9,7 +10,7 @@ require(updateChannel in listOf("stable", "preview"))
 android {
     namespace = "com.memoweft.weftmate.mobile"
     compileSdk = 35
-    buildFeatures { buildConfig = true }
+    buildFeatures { buildConfig = true; compose = true }
 
     defaultConfig {
         applicationId = providers.gradleProperty("weftmateApplicationId")
@@ -19,6 +20,7 @@ android {
         versionCode = 43
         versionName = "0.8.30"
         buildConfigField("String", "UPDATE_CHANNEL", "\"$updateChannel\"")
+        buildConfigField("boolean", "NATIVE_UI", providers.gradleProperty("weftmateNativeUi").orElse("true").get())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -37,6 +39,12 @@ val checkMobileUiAssets by tasks.registering(Exec::class) {
 tasks.named("preBuild") { dependsOn(checkMobileUiAssets) }
 
 dependencies {
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("androidx.compose.ui:ui:1.7.6")
+    implementation("androidx.compose.foundation:foundation:1.7.6")
+    implementation("androidx.compose.material3:material3:1.3.1")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.7.6")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.6")
     implementation("androidx.work:work-runtime:2.9.1")
     testImplementation("org.json:json:20240303")
     implementation("org.bouncycastle:bcprov-jdk15to18:1.86")

@@ -1,0 +1,21 @@
+{
+  "androidJVM": 92.0,
+  "androidFailures": 0.0,
+  "androidSkipped": 0.0,
+  "nativeUIRuns": 4,
+  "nativeUIFailures": 0,
+  "realMimoRequests": 2,
+  "screenshots": 101,
+  "statusBarFailures": 0,
+  "themeMismatches": 0,
+  "routeInventory": 3,
+  "typecheck": "passed",
+  "publicHygiene": 0,
+  "mainMerged": "3062ea4a",
+  "mOB4": "not merged",
+  "apkMeasuredBeforeFinalStyleFix": true,
+  "phoneInteractions": 114,
+  "phoneFailures": 0,
+  "vendorPassed": 239,
+  "vendorFailures": 0
+}

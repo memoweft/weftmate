@@ -1,0 +1,31 @@
+{
+  "baselineApkBytes": 7601731,
+  "nativeApkBytes": 15147471,
+  "increaseBytes": 7545740,
+  "baselineColdStart": {
+    "amStart": "Starting: Intent { cmp=com.memoweft.weftmate.mobile.and4baselineqa/com.memoweft.weftmate.mobile.HybridActivity (has extras) }\r\nStatus: ok\r\nLaunchState: COLD\r\nActivity: com.memoweft.weftmate.mobile.and4baselineqa/com.memoweft.weftmate.mobile.HybridActivity\r\nTotalTime: 489\r\nWaitTime: 492\r\nComplete\r\n",
+    "wallMs": 546,
+    "inputReadyUpperBoundMs": 1389
+  },
+  "nativeColdStart": {
+    "amStart": "Starting: Intent { cmp=com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity }\r\nStatus: ok\r\nLaunchState: COLD\r\nActivity: com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity\r\nTotalTime: 807\r\nWaitTime: 809\r\nComplete\r\n",
+    "wallMs": 864,
+    "inputReadyUpperBoundMs": 1679
+  },
+  "baselineFrames": {
+    "frames": 243,
+    "janky": 1,
+    "jankyPercent": 0.41,
+    "p95Ms": 6,
+    "p99Ms": 7
+  },
+  "nativeFrames": {
+    "frames": 639,
+    "janky": 4,
+    "jankyPercent": 0.63,
+    "p95Ms": 5,
+    "p99Ms": 10
+  },
+  "restoredDraft": true,
+  "limits": "am start -W measures activity draw; input-ready polling adds UI automation overhead and is reported separately."
+}
