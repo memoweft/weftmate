@@ -151,11 +151,16 @@
       // Kotlin owns the saved identity and cached content. Restore them before
       // requesting any server login; background reads never replace this view.
       try {
-        core.state.cloudAuth.mode = 'offline';
-        core.state.cloudAuth.cachedSession = true;
-        nativeAdoption = WeftUiCore.restoreCachedMobileHostSession(androidBridge, accept);
-        await nativeAdoption;
-        await enterAssistant();
+        await WeftUiCore.resumeCachedMobileCloudSession({
+          configure: () => client.configure(),
+          restore: async () => {
+            core.state.cloudAuth.mode = 'offline'; core.state.cloudAuth.cachedSession = true;
+            nativeAdoption = WeftUiCore.restoreCachedMobileHostSession(androidBridge, accept);
+            await nativeAdoption; await enterAssistant();
+          },
+          reconnect: () => core.resumeCloudComputer(),
+          failed: error => { core.state.cloudAuth.error = core.cloudError(error); toast(core.state.cloudAuth.error); },
+        });
         core.sessionExpired = effects.nativeSessionExpired;
         return;
       } catch (error) {

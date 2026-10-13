@@ -23,7 +23,7 @@ function backend(){const sessions=new Map(), starts=[],waiters=new Set();return 
  getStatus:async()=>({runtime:'ready',referenceScan:'ready',capabilities:{chat:{available:true,inferenceVerified:false}}}),listModels:async()=>[{id:'synthetic',name:'合成模型',model:'synthetic',configured:true}],preflight:async()=>({ok:true}),
  createSession:async({sessionId})=>{sessions.set(sessionId,[]);return {sessionId};},
  sendMessage:async({sessionId,text})=>{starts.push(performance.now());const rows=sessions.get(sessionId),receiptId=randomUUID(),at=new Date().toISOString();
- rows.push({seq:rows.length,type:'user.message',at,data:{text,receiptId,messageHash:sha(text)}});rows.push({seq:rows.length,type:'assistant.message',at,data:{text:'合成回复 '+text}});rows.push({seq:rows.length,type:'turn.ended',at,data:{}});for(const wake of waiters)wake(sessionId);return {accepted:true,receiptId};},
+ const turn=starts.length;rows.push({seq:rows.length,type:'user.message',at,data:{text,receiptId,messageHash:sha(text),turn}});rows.push({seq:rows.length,type:'assistant.message',at,data:{text:'合成回复 '+text,turn}});rows.push({seq:rows.length,type:'turn.ended',at,data:{reason:'completed',turn}});for(const wake of waiters)wake(sessionId);return {accepted:true,receiptId,dshTurn:turn};},
  waitForEvents:async({sessionId,seq,timeoutMs,signal})=>{if((sessions.get(sessionId)?.at(-1)?.seq??-1)>seq)return;await new Promise(resolve=>{let timer;const wake=id=>{if(id!==sessionId)return;clearTimeout(timer);waiters.delete(wake);signal?.removeEventListener('abort',abort);resolve();},abort=()=>wake(sessionId);waiters.add(wake);timer=setTimeout(abort,timeoutMs);signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();});},
  chatRelayState:async()=>({safe:false,pending:false}),cancelSession:async()=>({accepted:true}),readEvents:async({sessionId,afterSeq=-1,limit=100})=>{const rows=sessions.get(sessionId)||[];return {events:rows.filter(r=>r.seq>afterSeq).slice(0,limit),nextSeq:rows.at(-1)?.seq??-1,hasMore:false};},
  describeSession:async sessionId=>sessions.has(sessionId)?{sessionId,title:'合成对话',running:false,agentPreset:'personal-remote',modelProfileId:'synthetic'}:null};}
@@ -79,6 +79,7 @@ try{
    const browser=await chromium.launch({headless:true}),phonePage=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),desktopPage=await electron.firstWindow();
    try {
     for(const [surface,page,identity] of [['desktop',desktopPage,bound],['phone',phonePage,auth]]) {
+     page.on('response',async response=>{const request=response.request(),url=new URL(response.url());if(url.pathname.startsWith('/personal/v1/')&&!url.pathname.includes('/ui/'))trace.push({host:version,surface,method:request.method(),path:url.pathname,status:response.status(),requestFields:Object.keys(request.postDataJSON?.()||{})});});
      await page.addInitScript(()=>{let module;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>module,set:value=>{module=value;const original=value.create;value.create=(...args)=>{const core=original(...args);globalThis.__fix33Core=core;return core;};}});});
      await page.context().addCookies([{name:'wm_personal_session',value:identity.cookie.split('=')[1],url:started.origin}]);
      await page.route('**/*',async route=>{
@@ -88,7 +89,7 @@ try{
        const target=file.startsWith('ui-core/')?resolve('src',file):resolve('src/personal-access-ui',file);
        try{return route.fulfill({status:200,body:await readFile(target),contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.html')?'text/html':file.endsWith('.svg')?'image/svg+xml':undefined});}catch{}
       }
-      return route.continue();
+      return route.continue(surface==='desktop'&&url.pathname.startsWith('/personal/v1/')?{headers:{...route.request().headers(),'x-weftmate-desktop':host.libraryDesktopToken}}:undefined);
      });
      await page.goto(started.origin+'/personal/v1/ui/');await page.waitForFunction(()=>globalThis.__fix33Core);
      await page.evaluate(async identity=>{const c=globalThis.__fix33Core;c.acceptSession(identity);await c.enterAssistant();},identity);
@@ -99,6 +100,7 @@ try{
     const visible=async(page,text)=>page.waitForFunction(text=>document.getElementById('transcript')?.textContent.includes(text),text,{timeout:20000});
     for(const [source,target,label] of [[phonePage,desktopPage,'phone-to-desktop'],[desktopPage,phonePage,'desktop-to-phone']]) {
      const text='合成来回消息-'+randomUUID(),begin=performance.now();await source.locator('#message-text').fill(text);await source.locator('#send-message').click();
+     await source.screenshot({path:join(out,`${version}-${label}-sending.png`)});
      await visible(target,text);const userMs=Math.round(performance.now()-begin);await visible(target,'合成回复 '+text);
      scenario.latency.push({label,userMs,replyMs:Math.round(performance.now()-begin)});await target.screenshot({path:join(out,`${version}-${label}.png`)});
     }

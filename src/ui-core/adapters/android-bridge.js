@@ -127,6 +127,13 @@
       csrfToken: 'native-managed' };
     accept(payload); return payload;
   };
+  globalThis.WeftUiCore.resumeCachedMobileCloudSession = async ({configure,restore,reconnect,failed}) => {
+    await configure();
+    await restore();
+    // Cache restoration is presentation, not proof that the remote computer is reachable.
+    // Keep that cache while the saved cloud login re-establishes the original content channel.
+    try { await reconnect(); } catch(error) { failed(error); }
+  };
   // App account transport shares the account core; only the platform owns secrets.
   globalThis.WeftUiCore.createMobileCloudTransport = ({ bridge, native, hostOrigin }) => {
     const request = async (url, options = {}) => {
