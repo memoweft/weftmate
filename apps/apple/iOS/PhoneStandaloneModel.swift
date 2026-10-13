@@ -282,7 +282,7 @@ import WeftMateCore
         }
         let manual=manual.trimmingCharacters(in:.whitespacesAndNewlines)
         if !manual.isEmpty,!value.service.models.contains(where: {$0.modelId == manual}) { var item=ServiceModel(modelId:manual,profileId:value.service.id+":"+manual);item.manual=true;value.service.models.append(item) }
-        if let enabled { for i in value.service.models.indices { value.service.models[i].enabled=enabled.contains(value.service.models[i].modelId) } }
+        if let enabled { for i in value.service.models.indices { value.service.models[i].enabled=enabled.contains(value.service.models[i].modelId) || value.service.models[i].modelId == manual } }
         guard !value.service.models.isEmpty else { throw OfflineFailure.model }
         let chosen=selected ?? (!manual.isEmpty ? manual : value.service.selectedModelId) ?? value.service.models.first?.modelId
         value.service.selectedModelId=chosen;value.service.revision += 1

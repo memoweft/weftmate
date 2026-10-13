@@ -66,6 +66,7 @@ private actor ContractHTTP: HTTPTransport {
         case "/personal/v1/sync/events": object = ["events": [], "nextSeq": 0, "hasMore": false]
         case "/personal/v1/session-groups": object = ["groups": []]
         case "/personal/v1/sessions": object = ["sessions": [["sessionId": sessionID, "title": "Fixture", "running": false, "sendAvailable": !shared, "modelProfileId": "local"]]]
+        case "/personal/v1/model-services": status=404;object=["error":["code":"NOT_FOUND"]]
         case "/personal/v1/models": object = ["models": [["id": "local", "name": "Fixture", "model": "fixture", "configured": true]]]
         case "/personal/v1/commands":
             guard request.httpMethod == "POST", let body = request.httpBody else { throw Failed(message: "Unexpected commands request") }
@@ -91,7 +92,10 @@ private actor ContractHTTP: HTTPTransport {
     }
 }
 @main private struct AppleContractStateChecks {
-    @MainActor static func main() async throws {
+    @MainActor static func main() async {
+        do { try await run() } catch { print("FAIL AppleContractStateChecks: \(error)");exit(1) }
+    }
+    @MainActor static func run() async throws {
         let directory = URL(fileURLWithPath: CommandLine.arguments[1])
         let store = try LocalConversationStore(directory: directory)
         let http = ContractHTTP()
