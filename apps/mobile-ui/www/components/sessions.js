@@ -245,6 +245,7 @@ function loadSharedOutbox(...args){return uiCore.mobile.loadSharedOutbox(...args
 function checkSharedPending(...args){return uiCore.mobile.checkSharedPending(...args)}
 
 async function renderConversation({silent=false}={}){if(state.page!=='chat')return;
+  if(globalThis.WeftPhone?.active||globalThis.WeftPhone?.owns(state.conversationId)){WeftPhone.render();return;}
   const id=state.conversationId,gen=state.generation,owner=state.owner,epoch=state.authEpoch;
   if(state.chatSource==='host'){renderSharedConversation();return}
   if(!id){showWelcome();return}try{const result=await call('conversations.messages',{conversationId:id});
@@ -589,7 +590,7 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
 }
 
 function updatePageHeader(){const home=state.page==='home',chat=state.page==='chat';
-  $('menu-button').hidden=!home;$('page-back').hidden=home;$('home-new-chat').hidden=!home;
+  $('menu-button').hidden=!home&&!globalThis.WeftPhone?.active;$('page-back').hidden=home||!!globalThis.WeftPhone?.active;$('home-new-chat').hidden=!home;
   $('outputs-button').hidden=!chat;
   $('conversation-more').hidden=!chat;
   const title=chat?(state.chatSource==='host'?selectedSharedSession()?.title:state.conversations.find(item=>item.id===state.conversationId)?.title):null;
