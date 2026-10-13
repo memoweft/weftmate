@@ -573,6 +573,7 @@ struct PhoneChatWorkspace: View {
                 ForEach(model.projects.filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) || !model.projectRows($0,query:search).isEmpty }) { project in
                     Text(project.name).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p12).padding(.top,AppleTokens.Space.p12)
                     ForEach(model.projectRows(project,query:search)) { row in drawerRow(row) }
+                    ProjectMoreRows(app:model,project:project,search:search).buttonStyle(.plain)
                 }
                 if model.conversations.isEmpty { Text("还没有旁聊").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).padding(AppleTokens.Space.p12) }
             }.padding(.horizontal,AppleTokens.Space.p12)
@@ -580,7 +581,9 @@ struct PhoneChatWorkspace: View {
             .accessibilityElement(children:.contain).accessibilityIdentifier("conversationList")
     }
     private func drawerRow(_ row: ConversationSummary) -> some View {
-        Button {
+        Group {
+        if model.renamingSessionID == row.id { EditableSessionRow(app:model,conversation:row).frame(minHeight:44).padding(.horizontal,AppleTokens.Space.p12) }
+        else { Button {
             if row.isMainChat { path=[] } else { path.append(row.id) }; showingSidebar=false
         } label: {
             HStack(spacing:AppleTokens.Space.p12) {
@@ -591,6 +594,8 @@ struct PhoneChatWorkspace: View {
             }.frame(minHeight:44).padding(.horizontal,AppleTokens.Space.p12)
                 .background((row.isMainChat ? path.isEmpty : path.last == row.id) ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
         }.buttonStyle(.plain).contextMenu { SessionActions(app:model,conversation:row) }.accessibilityIdentifier("conversationRow."+row.id)
+        }
+        }
     }
 
     private var filteredConversations: [WeftMateCore.ConversationSummary] {

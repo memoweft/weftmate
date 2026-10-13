@@ -69,7 +69,7 @@ struct HealthPageView: View {
             NavigationLink { detail("sleepMinutes","睡眠时长") } label: {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                     Text("昨晚睡眠").font(AppleTokens.Fonts.title2.bold())
-                    HealthScoreNumber(text:minutes(o.sleep?.minutes))
+                    HealthDurationNumber(minutes:o.sleep?.minutes)
                     Text("深睡 "+minutes(o.sleep?.deepMinutes ?? page.cache.series["deepMinutes-7"]?.points.last?.value)+" · 快速眼动 "+minutes(o.sleep?.remMinutes ?? page.cache.series["remMinutes-7"]?.points.last?.value))
                     Text(time(o.sleep?.start)+" — "+time(o.sleep?.end)).foregroundStyle(.secondary)
                     if let used=o.usage?.lastUsedAt { Text("最近一次向 WeftMate 发消息 "+time(used)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
@@ -97,7 +97,7 @@ struct HealthPageView: View {
             NavigationLink { detail("steps","步数") } label: {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                     Text("今天的活动").font(AppleTokens.Fonts.title2.bold())
-                    HealthScoreNumber(text:o.activity?.steps.map { "\($0) 步" } ?? "—")
+                    HealthScoreNumber(text:o.activity?.steps.map { "\($0)" } ?? "—",unit:"步")
                     Text("活动能量 "+number(o.activity?.activeEnergyKcal)+" 千卡 · 运动 "+minutes(o.activity?.exerciseMinutes))
                     if o.activity?.steps == nil { Text("还没有读到今天的活动测量。") }
                     ForEach(Array((o.activity?.workouts ?? []).enumerated()),id:\.offset) { _, workout in Text(workout.type+" · "+minutes(workout.minutes)) }
@@ -123,7 +123,7 @@ struct HealthPageView: View {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                     Text(title(id)).font(AppleTokens.Fonts.headline)
                     Text(value?.label ?? "再戴几天就有对比了").foregroundStyle(stateColor(value?.state)).font(AppleTokens.Fonts.caption)
-                    HealthScoreNumber(text:number(value?.score))
+                    HealthScoreNumber(text:number(value?.score),unit:"分")
                     HealthScoreRangeBar(score:value?.score,low:value?.low,high:value?.high,state:value?.state)
                 }.frame(maxWidth:.infinity,minHeight:210,alignment:.topLeading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("health.score."+id)
@@ -135,7 +135,7 @@ struct HealthPageView: View {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                     Text(name).font(AppleTokens.Fonts.headline)
                     Text(label ?? "还没有足够的测量").foregroundStyle(stateColor(state)).font(AppleTokens.Fonts.caption)
-                    HealthScoreNumber(text:number(value))
+                    HealthScoreNumber(text:number(value),unit:id == "fitnessAge" ? "岁" : "分")
                     HealthScoreRangeBar(score:id == "fitnessAge" ? nil : value,low:nil,high:nil,state:state)
                     if id == "stress" { Text("最近一次测量 "+time(page.cache.overview?.stress?.latest?.time)).font(AppleTokens.Fonts.footnote) }
                     if id == "energy", let curve=page.cache.overview?.energy?.curve,curve.compactMap(\.value).count >= 2 {

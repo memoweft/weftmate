@@ -33,7 +33,8 @@ struct PhoneLocalHealthView: View {
     private func metric(_ title: String,_ value: Double?,_ unit: String) -> some View {
         VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
             Text(title).font(AppleTokens.Fonts.headline)
-            HStack(alignment:.firstTextBaseline,spacing:AppleTokens.Space.p4) { Text(PhoneHealthText.number(value)).font(AppleTokens.Fonts.title.bold()); Text(unit).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+            if title == "昨晚睡眠" { HealthDurationNumber(minutes:value) }
+            else { HStack(alignment:.firstTextBaseline,spacing:AppleTokens.Space.p4) { Text(PhoneHealthText.number(value)).font(AppleTokens.Fonts.title.bold()); Text(unit).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) } }
         }.frame(maxWidth:.infinity,minHeight:100,alignment:.leading).phoneCard()
     }
 }

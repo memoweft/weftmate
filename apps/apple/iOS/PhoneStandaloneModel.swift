@@ -75,6 +75,7 @@ import WeftMateCore
         try store.saveModels(next); models=next; modelID=value.id
     }
     func removeModel(_ id: String) {
+        if currentModel?.id == id { stop() }
         do { guard let store else { return }; let next=models.filter { $0.id != id }; try store.saveModels(next); models=next; modelID=next.first?.id ?? "" }
         catch { notice="模型没能删除，请重试。" }
     }
