@@ -34,7 +34,7 @@
     "vendor": "vendor.json",
     "mobilePassed": 115
   },
-  "cloudChecks": "pending final push status",
+  "cloudChecks": "GitHub Actions running at handoff; no complete green claim",
   "deviceVariants": [
     {
       "width": 360,
@@ -76,7 +76,7 @@
       "width": 390,
       "theme": "light",
       "passed": true,
-      "seconds": 40.931,
+      "seconds": 47.683,
       "device": {
         "passed": true,
         "widthDp": 390,
@@ -88,7 +88,8 @@
         "statusBarPreserved": true,
         "backdrop": "shared panel-only GPU blur",
         "scrollingContentBlurred": false
-      }
+      },
+      "sameLogicalViewportPair": true
     },
     {
       "width": 390,

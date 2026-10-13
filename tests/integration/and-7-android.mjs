@@ -8,7 +8,7 @@ const exec=promisify(execFile),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const root=resolve('.'),orchestrator='D:/AIProjects/WeftMate/Runtime/Orchestrator';
 const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',manager='D:/Software/MuMuPlayer/nx_main/MuMuManager.exe';
 const pkg='com.memoweft.weftmate.mobile.and7qa';
-const variants=process.argv.includes('--single')?[[360,'light']]:[[360,'light'],[360,'dark'],[390,'light'],[390,'dark']];
+const variants=process.argv.includes('--pair')?[[390,'light']]:process.argv.includes('--single')?[[360,'light']]:[[360,'light'],[360,'dark'],[390,'light'],[390,'dark']];
 let heavy,mumu,fixture,serial,adbPort,connected=false,installed=false;
 const evidence=join(root,'tests/evidence/and-7');await mkdir(evidence,{recursive:true});await mkdir('.local/and-7',{recursive:true});
 async function claim(path,label){try{const f=await open(path,'wx');await f.writeFile(`AND-7 ${new Date().toISOString()} ${label}`);await f.close();return path;}catch(e){if(e.code==='EEXIST')return null;throw e;}}

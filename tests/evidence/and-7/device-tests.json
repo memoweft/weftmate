@@ -39,7 +39,7 @@
     "width": 390,
     "theme": "light",
     "passed": true,
-    "seconds": 40.931,
+    "seconds": 47.683,
     "device": {
       "passed": true,
       "widthDp": 390,
@@ -51,7 +51,8 @@
       "statusBarPreserved": true,
       "backdrop": "shared panel-only GPU blur",
       "scrollingContentBlurred": false
-    }
+    },
+    "sameLogicalViewportPair": true
   },
   {
     "width": 390,
