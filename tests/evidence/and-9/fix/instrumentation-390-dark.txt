@@ -15,7 +15,7 @@ INSTRUMENTATION_STATUS: test=settingsVisualRepairFlow
 INSTRUMENTATION_STATUS_CODE: 0
 INSTRUMENTATION_RESULT: stream=
 
-Time: 29.209
+Time: 28.866
 
 OK (1 test)
 
