@@ -76,5 +76,20 @@
       1
     ]
   },
-  "mergedMain": "c1e96a36"
+  "mergedMain": "3062ea4a",
+  "finalSharedAndPackageRelated": {
+    "files": 6,
+    "passed": 88,
+    "failed": 0
+  },
+  "finalNativeAndPresets": {
+    "files": 2,
+    "passed": 5,
+    "failed": 0
+  },
+  "packageSmoke": {
+    "passed": true,
+    "checks": 7,
+    "initialFailure": "Public immutable TLD data was mistaken for a local identity; corrected by exact upstream provenance"
+  }
 }

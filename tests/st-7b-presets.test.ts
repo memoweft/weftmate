@@ -36,4 +36,6 @@ test('calendar drafts inherit account timezone and approval summaries show recip
   for(const part of ['合成会议','13:00','14:00','工作日历'])assert.ok(calendar.includes(part));
   assert.ok(!calendar.includes('T13:00'));assert.ok(!calendar.includes('13:00:00'));
   assert.doesNotThrow(()=>connectorCallSummary({connectorName:'自定义',rawName:'mail_send'},{to:'another schema'}));
+  const crossZone=connectorCallSummary({builtinId:'calendar',connectorName:'日历',rawName:'calendar_create',displayName:'新建日程',timeZone:'Asia/Shanghai'},{title:'跨时区会议',start:'2026-10-15T09:00:00',end:'2026-10-15T10:00:00',timeZone:'America/New_York',calendarName:'工作日历'});
+  assert.ok(crossZone.includes('21:00'));assert.ok(crossZone.includes('22:00'));assert.ok(!crossZone.includes('America/'));
 });
