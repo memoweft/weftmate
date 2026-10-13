@@ -78,8 +78,9 @@ class NativeActivity : HybridActivity() {
         getSharedPreferences("native-ui", MODE_PRIVATE).edit().putBoolean("enabled", false).commit()
         startActivity(Intent(this, HybridActivity::class.java)); finish()
     }
-    internal fun originalLibrary() {
+    internal fun originalLibrary(fileId:String?=null) {
         startActivity(Intent(this, HybridActivity::class.java).putExtra("openLibraryPage",true)
+            .putExtra("openLibraryFileId",fileId)
             .putExtra("lg1bHostOrigin",intent.getStringExtra("lg1bHostOrigin")))
     }
     override fun onResume() { super.onResume(); nativeForeground = true }

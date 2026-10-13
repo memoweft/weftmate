@@ -35,20 +35,20 @@ internal fun libraryTypeLabel(row:JSONObject):String {
     LaunchedEffect(model.search,model.type,model.project,model.days){delay(200);model.refresh()}
     LaunchedEffect(model){while(true){delay(5000);if(activity.nativeForeground && !model.loading)model.refresh()}}
     DisposableEffect(model){onDispose{model.close()}}
-    LazyColumn(modifier.fillMaxWidth().semantics{contentDescription="成果文件"},contentPadding=PaddingValues(pad)) {
+    LazyColumn(modifier.fillMaxWidth().semantics{contentDescription="成果文件"},contentPadding=PaddingValues(start=pad,top=DesignTokens.space24.dp,end=pad,bottom=DesignTokens.space32.dp)) {
         item {
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text("成果库",Modifier.weight(1f),fontSize=DesignTokens.font24.sp,fontWeight=FontWeight.SemiBold);NativeIconButton(R.drawable.wm_sync,"刷新成果库",enabled=!model.loading){model.refresh()}}
-            Text("对话里做好的文件，都在这里。",Modifier.padding(top=gap,bottom=DesignTokens.space24.dp),fontSize=DesignTokens.font14.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("对话里做好的文件，都在这里。",Modifier.padding(top=gap,bottom=DesignTokens.space24.dp),fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom=DesignTokens.space16.dp),horizontalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)) {
-                libraryTypes.forEach{(id,label)->Box(Modifier.heightIn(min=DesignTokens.space44.dp).clip(RoundedCornerShape(DesignTokens.radius8.dp)).background(if(model.type==id)MaterialTheme.colorScheme.surfaceVariant else androidx.compose.ui.graphics.Color.Transparent).clickable{model.type=id}.semantics{selected=model.type==id}.padding(horizontal=gap),contentAlignment=Alignment.Center){Text(label,fontSize=DesignTokens.font14.sp,fontWeight=if(model.type==id)FontWeight.Medium else FontWeight.Normal,color=if(model.type==id)MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)}}
+                libraryTypes.forEach{(id,label)->Box(Modifier.heightIn(min=DesignTokens.space44.dp).clip(RoundedCornerShape(DesignTokens.radius999.dp)).background(if(model.type==id)MaterialTheme.colorScheme.surfaceVariant else androidx.compose.ui.graphics.Color.Transparent).clickable{model.type=id}.semantics{selected=model.type==id}.padding(horizontal=gap),contentAlignment=Alignment.Center){Text(label,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,fontWeight=if(model.type==id)FontWeight.Medium else FontWeight.Normal,color=if(model.type==id)MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)}}
             }
-            BasicTextField(model.search,{model.search=it.take(200)},Modifier.fillMaxWidth().heightIn(min=DesignTokens.space44.dp).border((DesignTokens.space2/2).dp,MaterialTheme.colorScheme.outline,RoundedCornerShape(DesignTokens.radius8.dp)).padding(horizontal=DesignTokens.space12.dp,vertical=gap).semantics{contentDescription="搜索文件名"},singleLine=true,textStyle=LocalTextStyle.current.copy(color=MaterialTheme.colorScheme.onSurface,fontSize=DesignTokens.font14.sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),decorationBox={inner->Box(Modifier.fillMaxWidth()){if(model.search.isEmpty())Text("搜索文件名",fontSize=DesignTokens.font14.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);inner()}})
+            BasicTextField(model.search,{model.search=it.take(200)},Modifier.fillMaxWidth().heightIn(min=DesignTokens.space44.dp).border((DesignTokens.space2/2).dp,MaterialTheme.colorScheme.outline,RoundedCornerShape(DesignTokens.radius8.dp)).padding(horizontal=DesignTokens.space12.dp,vertical=gap).semantics{contentDescription="搜索文件名"},singleLine=true,textStyle=LocalTextStyle.current.copy(color=MaterialTheme.colorScheme.onSurface,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),decorationBox={inner->Box(Modifier.fillMaxWidth()){if(model.search.isEmpty())Text("搜索文件名",fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,color=MaterialTheme.colorScheme.onSurfaceVariant);inner()}})
             Row(Modifier.fillMaxWidth().padding(top=gap),horizontalArrangement=Arrangement.spacedBy(gap)) {
                 LibrarySelect(model.projects.firstOrNull{it.optString("id")==model.project}?.optString("name") ?: "全部项目",Modifier.weight(1f),"按项目筛选") { dismiss ->
-                    (listOf(JSONObject().put("id","").put("name","全部项目"))+model.projects).forEach{row->DropdownMenuItem(text={Text(row.getString("name"),fontSize=DesignTokens.font14.sp)},trailingIcon={if(model.project==row.getString("id"))Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.project=row.getString("id");dismiss()})}
+                    (listOf(JSONObject().put("id","").put("name","全部项目"))+model.projects).forEach{row->DropdownMenuItem(text={Text(row.getString("name"),fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp)},trailingIcon={if(model.project==row.getString("id"))Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.project=row.getString("id");dismiss()})}
                 }
                 LibrarySelect(if(model.days==0)"全部时间" else "最近 ${model.days} 天",Modifier.weight(1f),"按时间筛选") { dismiss ->
-                    listOf(0,7,30,90).forEach{days->DropdownMenuItem(text={Text(if(days==0)"全部时间" else "最近 $days 天",fontSize=DesignTokens.font14.sp)},trailingIcon={if(model.days==days)Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.days=days;dismiss()})}
+                    listOf(0,7,30,90).forEach{days->DropdownMenuItem(text={Text(if(days==0)"全部时间" else "最近 $days 天",fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp)},trailingIcon={if(model.days==days)Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.days=days;dismiss()})}
                 }
             }
             Text(if(model.loading)"正在读取成果…" else if(model.error.isNotBlank())"读取失败" else "${model.total} 个文件",Modifier.padding(top=DesignTokens.space20.dp,bottom=gap),fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
@@ -61,38 +61,37 @@ internal fun libraryTypeLabel(row:JSONObject):String {
             else -> items(model.rows,key={it.getString("id")}) { row ->
                 var menu by remember(row.getString("id")){mutableStateOf(false)}
                 val ref=remember(row.toString()){JSONObject(row.toString()).put("libraryId",row.getString("id"))}
-                Row(Modifier.fillMaxWidth().clickable{onPreview(ref)}.padding(vertical=DesignTokens.space16.dp),verticalAlignment=Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth().padding(vertical=DesignTokens.space6.dp).clip(RoundedCornerShape(DesignTokens.radius26.dp)).background(MaterialTheme.colorScheme.surfaceVariant).clickable{onPreview(ref)}.padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
                     LibraryThumbnail(row,activity)
                     Column(Modifier.weight(1f).padding(horizontal=gap),verticalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)) {
-                        Text(row.optString("fileName","文件"),fontWeight=FontWeight.Medium,fontSize=DesignTokens.font14.sp,maxLines=2,overflow=TextOverflow.Ellipsis)
+                        Text(row.optString("fileName","文件"),fontWeight=FontWeight.Medium,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,maxLines=2,overflow=TextOverflow.Ellipsis)
                         Text(libraryTypeLabel(row)+" · "+nativeFileSize(row.optLong("size",-1))+(row.optString("projectName").takeIf{it.isNotBlank()&&it!="null"}?.let{" · $it"} ?: ""),fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
                         if(!row.optBoolean("exists",true))Text("已不在原位置",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Text(nativeFileTime(row.optString("modifiedAt",row.optString("createdAt"))),fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
                     Box {NativeIconButton(R.drawable.wm_more,"文件操作：${row.optString("fileName")}"){menu=true}
-                        DropdownMenu(menu,{menu=false}) {
+                        NativeFileMenu(menu,{menu=false}) {
                             fun act(action:(NativeFile)->Unit){menu=false;scope.launch{try{action(activity.fileActions.load(ref))}catch(e:CancellationException){throw e}catch(e:Exception){activity.fileActions.notice(nativeFileFailure(e))}}}
-                            DropdownMenuItem(text={Text("保存到手机")},onClick={act{activity.fileActions.save(it)}})
-                            DropdownMenuItem(text={Text("分享")},onClick={act{activity.fileActions.share(it)}})
-                            DropdownMenuItem(text={Text("在对话中定位")},onClick={menu=false;scope.launch{try{model.source(row)}catch(e:CancellationException){throw e}catch(e:Exception){activity.fileActions.notice(nativeFileFailure(e))}}})
-                            if(realFileVersions(row).isNotEmpty())DropdownMenuItem(text={Text("查看历史版本")},onClick={menu=false;onPreview(JSONObject(ref.toString()).put("showHistory",true))})
+                            NativeFileMenuAction("保存到手机",R.drawable.wm_down,onClick={act{activity.fileActions.save(it)}})
+                            NativeFileMenuAction("分享",R.drawable.wm_external,onClick={act{activity.fileActions.share(it)}})
+                            NativeFileMenuAction("在对话中定位",R.drawable.wm_chat,onClick={menu=false;scope.launch{try{model.source(row)}catch(e:CancellationException){throw e}catch(e:Exception){activity.fileActions.notice(nativeFileFailure(e))}}})
+                            if(realFileVersions(row).isNotEmpty())NativeFileMenuAction("查看历史版本",R.drawable.wm_history,onClick={menu=false;onPreview(JSONObject(ref.toString()).put("showHistory",true))})
                         }
                     }
                 }
-                HorizontalDivider(color=MaterialTheme.colorScheme.outline)
             }
         }
-        if(model.next.isNotBlank())item{OutlinedButton(onClick={model.refresh(true)},enabled=!model.loading,shape=RoundedCornerShape(DesignTokens.radius8.dp)){Text(if(model.loading)"正在读取…" else "加载更多")}}
+        if(model.next.isNotBlank())item{OutlinedButton(onClick={model.refresh(true)},enabled=!model.loading,shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.heightIn(min=DesignTokens.space44.dp)){Text(if(model.loading)"正在读取…" else "加载更多")}}
     }
 }
 @Composable private fun LibrarySelect(label:String,modifier:Modifier,description:String,content:@Composable ((()->Unit))->Unit) {
     var expanded by remember{mutableStateOf(false)}
     Box(modifier) {
-        Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space44.dp).border((DesignTokens.space2/2).dp,MaterialTheme.colorScheme.outline,RoundedCornerShape(DesignTokens.radius8.dp)).clickable{expanded=true}.padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).semantics{contentDescription=description},verticalAlignment=Alignment.CenterVertically) {
-            Text(label,Modifier.weight(1f),maxLines=1,overflow=TextOverflow.Ellipsis,fontSize=DesignTokens.font14.sp)
+        Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space44.dp).border((DesignTokens.space2/2).dp,MaterialTheme.colorScheme.outline,RoundedCornerShape(DesignTokens.radius999.dp)).clickable{expanded=true}.padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).semantics{contentDescription=description},verticalAlignment=Alignment.CenterVertically) {
+            Text(label,Modifier.weight(1f),maxLines=1,overflow=TextOverflow.Ellipsis,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp)
             Icon(painterResource(R.drawable.wm_down),null,Modifier.size(DesignTokens.space16.dp),tint=MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        DropdownMenu(expanded,{expanded=false}){content{expanded=false}}
+        NativeFileMenu(expanded,{expanded=false}){content{expanded=false}}
     }
 }
 @Composable private fun LibraryThumbnail(row:JSONObject,activity:NativeActivity) {

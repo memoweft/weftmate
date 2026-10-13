@@ -25,19 +25,19 @@ for path in sorted(root.glob('and7-*.png')):
         statusRGB=status, headerRGB=header, delta=delta))
 (root/'screenshots.json').write_text(json.dumps(records, ensure_ascii=False, indent=2)+'\n', encoding='utf8')
 
-pairs = [('library-list', 'library-list', 'light'), ('library-list', 'library-list', 'dark'), ('viewer-markdown', 'library-preview', 'dark')]
+pairs = [(scene, scene, theme) for theme in ['light'] for scene in ['library-list','row-menu','library-empty','viewer-markdown']]
 (root/'pairs').mkdir(exist_ok=True)
 for android, apple, theme in pairs:
-    left = root / f'and7-390-{theme}-{android}.png'
-    right = repo / f'apps/apple/Tests/Evidence/APPLE-5/apple5-{theme}-{apple}.png'
-    if not left.exists():
+    left = root / f'and7-390-{theme}-web-{apple}.png'
+    right = root / f'and7-390-{theme}-{android}.png'
+    if not left.exists() or not right.exists():
         continue
     imgs = [Image.open(p).convert('RGB') for p in [left,right]]
     target_height = 844
     imgs = [im.resize((round(im.width*target_height/im.height), target_height)) for im in imgs]
     combined = Image.new('RGB', (sum(im.width for im in imgs)+24,target_height+36), 'white')
     draw = ImageDraw.Draw(combined)
-    draw.text((4,8),'Android / MuMu',fill='black');draw.text((imgs[0].width+28,8),'iPhone / committed APPLE-5 reference',fill='black')
+    draw.text((4,8),'Existing web UI / same account and files',fill='black');draw.text((imgs[0].width+28,8),'Native Android / same theme',fill='black')
     combined.paste(imgs[0],(0,36));combined.paste(imgs[1],(imgs[0].width+24,36))
     combined.save(root/'pairs'/f'{theme}-{android}.png')
 

@@ -2,6 +2,7 @@ package com.memoweft.weftmate.mobile
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -29,10 +30,10 @@ import kotlinx.coroutines.launch
                 Text(nativeFileSize(row.optLong("size",-1)),fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Box {NativeIconButton(R.drawable.wm_more,"查看文件操作：${row.optString("fileName")}"){menu=true}
-                DropdownMenu(menu,{menu=false}) {
-                    DropdownMenuItem(text={Text("保存到手机")},onClick={menu=false;scope.launch{try{activity?.fileActions?.let{it.save(it.load(row))}}catch(e:Exception){activity?.fileActions?.notice(nativeFileFailure(e))}}})
-                    DropdownMenuItem(text={Text("分享")},onClick={menu=false;scope.launch{try{activity?.fileActions?.let{it.share(it.load(row))}}catch(e:Exception){activity?.fileActions?.notice(nativeFileFailure(e))}}})
-                    if(realFileVersions(row).isNotEmpty())DropdownMenuItem(text={Text("查看历史版本")},onClick={menu=false;onPreview(JSONObject(row.toString()).put("showHistory",true))})
+                NativeFileMenu(menu,{menu=false}) {
+                    NativeFileMenuAction("保存到手机",R.drawable.wm_down,onClick={menu=false;scope.launch{try{activity?.fileActions?.let{it.save(it.load(row))}}catch(e:Exception){activity?.fileActions?.notice(nativeFileFailure(e))}}})
+                    NativeFileMenuAction("分享",R.drawable.wm_external,onClick={menu=false;scope.launch{try{activity?.fileActions?.let{it.share(it.load(row))}}catch(e:Exception){activity?.fileActions?.notice(nativeFileFailure(e))}}})
+                    if(realFileVersions(row).isNotEmpty())NativeFileMenuAction("查看历史版本",R.drawable.wm_history,onClick={menu=false;onPreview(JSONObject(row.toString()).put("showHistory",true))})
                 }
             }
         }

@@ -48,16 +48,19 @@ import java.io.File
         NativeDialogBars()
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).systemBarsPadding().semantics{contentDescription="文件查看"}) {
             Row(Modifier.fillMaxWidth().padding(horizontal=DesignTokens.space8.dp,vertical=DesignTokens.space8.dp),verticalAlignment=Alignment.CenterVertically) {
-                NativeIconButton(R.drawable.wm_close,"关闭预览",Modifier.border(DesignTokens.space2.dp,MaterialTheme.colorScheme.outline,CircleShape),action=onClose)
+                NativeIconButton(R.drawable.wm_close,"关闭预览",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape),action=onClose)
                 val name=file?.name ?: row.optString("fileName",row.optString("name","文件"))
-                Text(middleFileName(name),Modifier.weight(1f).padding(horizontal=DesignTokens.space12.dp).semantics{contentDescription="文件名：$name"},fontSize=DesignTokens.font16.sp,maxLines=1,overflow=TextOverflow.Ellipsis)
-                Box {NativeIconButton(R.drawable.wm_more,"更多文件操作"){menu=true}
-                    DropdownMenu(menu,{menu=false}) {
-                        DropdownMenuItem(text={Text("保存到手机")},enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.save(it)}})
-                        DropdownMenuItem(text={Text("分享")},enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.share(it)}})
-                        DropdownMenuItem(text={Text("用其它应用打开")},enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.share(it,true)}})
-                        if(row.optString("libraryId").isNotBlank())DropdownMenuItem(text={Text("在对话中定位")},onClick={menu=false;scope.launch{try{NativeLibraryModel(chat,activity).source(row);onClose()}catch(e:Exception){activity.fileActions.notice(nativeFileFailure(e))}}})
-                        if(realFileVersions(initial).isNotEmpty())DropdownMenuItem(text={Text("查看历史版本")},onClick={menu=false;history=true})
+                BoxWithConstraints(Modifier.weight(1f).padding(horizontal=DesignTokens.space12.dp)) {
+                    Text(middleFileName(name,maxOf(8,(maxWidth.value/DesignTokens.font16).toInt())),Modifier.fillMaxWidth().semantics{contentDescription="文件名：$name"},fontSize=DesignTokens.font16.sp,maxLines=1,overflow=TextOverflow.Clip)
+                }
+                Box {NativeIconButton(R.drawable.wm_more,"更多文件操作",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)){menu=true}
+                    NativeFileMenu(menu,{menu=false}) {
+                        NativeFileMenuAction("保存到手机",R.drawable.wm_down,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.save(it)}})
+                        NativeFileMenuAction("分享",R.drawable.wm_external,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.share(it)}})
+                        NativeFileMenuAction("用其它应用打开",R.drawable.wm_external,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.share(it,true)}})
+                        if(row.optString("libraryId").isNotBlank())NativeFileMenuAction("在原网页中查看",R.drawable.wm_external,onClick={menu=false;activity.originalLibrary(row.getString("libraryId"))})
+                        if(row.optString("libraryId").isNotBlank())NativeFileMenuAction("在对话中定位",R.drawable.wm_chat,onClick={menu=false;scope.launch{try{NativeLibraryModel(chat,activity).source(row);onClose()}catch(e:Exception){activity.fileActions.notice(nativeFileFailure(e))}}})
+                        if(realFileVersions(initial).isNotEmpty())NativeFileMenuAction("查看历史版本",R.drawable.wm_history,onClick={menu=false;history=true})
                     }
                 }
             }
@@ -65,7 +68,7 @@ import java.io.File
                 history -> Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(pad)) {
                     Text("历史版本",fontSize=DesignTokens.font18.sp)
                     realFileVersions(initial).forEach{version->ListItem(headlineContent={Text(version.optString("fileName",version.optString("name","文件")))},supportingContent={Text(nativeFileTime(version.optString("createdAt")))},modifier=Modifier.clickable{row=JSONObject(version.toString()).put("libraryId",version.optString("artifactId",version.optString("id")));history=false})}
-                    OutlinedButton(onClick={history=false},shape=RoundedCornerShape(DesignTokens.radius4.dp)){Text("返回文件")}
+                    OutlinedButton(onClick={history=false},shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.heightIn(min=DesignTokens.space44.dp)){Text("返回文件")}
                 }
                 loading -> Box(Modifier.weight(1f).fillMaxWidth()){NativeFileLoading()}
                 error.isNotBlank() -> Box(Modifier.weight(1f).fillMaxWidth()){NativeFileState(error,R.drawable.wm_warning){retry++}}
@@ -82,7 +85,7 @@ import java.io.File
             Text(file.name,fontSize=DesignTokens.font18.sp)
             Text(nativeFileSize(file.size),fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
             Text(file.unavailable ?: "这种文件可以用其它应用打开。",fontSize=DesignTokens.font16.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
-            listOf("用其它应用打开" to {activity.fileActions.share(file,true)},"保存到手机" to {activity.fileActions.save(file)},"分享" to {activity.fileActions.share(file)}).forEach{(label,action)->OutlinedButton(onClick=action,enabled=path!=null,shape=RoundedCornerShape(DesignTokens.radius4.dp)){Text(label)}}
+            listOf("用其它应用打开" to {activity.fileActions.share(file,true)},"保存到手机" to {activity.fileActions.save(file)},"分享" to {activity.fileActions.share(file)}).forEach{(label,action)->OutlinedButton(onClick=action,enabled=path!=null,shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.heightIn(min=DesignTokens.space44.dp)){Text(label)}}
         }
         file.kind==NativeFileKind.IMAGE -> NativeImageFile(path,modifier,onRetry)
         file.kind==NativeFileKind.PDF -> NativePdfFile(path,modifier)

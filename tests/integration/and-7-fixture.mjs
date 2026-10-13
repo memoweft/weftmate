@@ -26,6 +26,7 @@ export async function startAnd7Fixture(){
   const list=url.pathname==='/personal/v1/library';const preview=/^\/personal\/v1\/library\/[^/]+\/preview$/.test(url.pathname);
   if(list && mode==='empty'){res.setHeader('content-type','application/json');res.end(JSON.stringify({items:[],projects:[],total:0,nextCursor:null}));return;}
   if(list && mode==='loading'){setTimeout(()=>{res.setHeader('content-type','application/json');res.end(JSON.stringify({items:[],projects:[],total:0,nextCursor:null}));},5000);return;}
+  if(preview && mode==='file-loading'){setTimeout(()=>{res.setHeader('content-type','application/json');res.end(JSON.stringify({kind:'text',text:'虚构便签',item:{fileName:'虚构便签.txt',size:12}}));},5000);return;}
   if(list && mode==='error'||preview&&mode==='file-error'){res.writeHead(503,{'content-type':'application/json'});res.end(JSON.stringify({error:{code:'HOST_UNAVAILABLE'}}));return;}
   if(preview&&mode==='missing'){res.setHeader('content-type','application/json');res.end(JSON.stringify({kind:'missing',item:{fileName:'虚构便签.txt',exists:false}}));return;}
   const upstream=httpRequest(candidate.origin+req.url,{method:req.method,headers:{...req.headers,host:new URL(candidate.origin).host,...(req.headers.origin?{origin:req.headers.origin.replace(proxyOrigin,candidate.origin)}:{})}},response=>{res.writeHead(response.statusCode,response.headers);response.pipe(res);});
