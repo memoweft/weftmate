@@ -83,7 +83,7 @@ private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
     }
 }
 
-/** The readable name is semantics only; floating controls have an explicit soft surface. */
+/** The readable name is semantics only; fixed floating controls sample the shared frost. */
 @Composable internal fun FeedControlIconButton(
     icon: Int,
     label: String,
@@ -98,7 +98,7 @@ private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
     // Compact is kept for caller compatibility; all tool glyphs now share icon-touch (22).
     @Suppress("UNUSED_VARIABLE") val sharedTouchGlyph = compact
     FeedControlSurface(enabled, modifier.size(controlHeight).semantics { contentDescription = label }, controlShape,
-        if (floating) softColor else Color.Transparent, softColor, MaterialTheme.colorScheme.primary, action) { active ->
+        Color.Transparent, softColor, MaterialTheme.colorScheme.primary, action, frosted = floating) { active ->
         Icon(painterResource(icon), null, Modifier.size(controlIcon), tint = if (active) MaterialTheme.colorScheme.onSurface else inkSecondary)
     }
 }
@@ -112,6 +112,7 @@ private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
     focusColor: Color,
     action: () -> Unit,
     borderColor: Color? = null,
+    frosted: Boolean = false,
     content: @Composable BoxScope.(Boolean) -> Unit
 ) {
     val interactions = remember { MutableInteractionSource() }
@@ -121,7 +122,6 @@ private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
     val active = enabled && (pressed || hovered)
     Box(modifier
         .graphicsLayer { scaleX = if (enabled && pressed) .97f else 1f; scaleY = scaleX; alpha = if (enabled) 1f else .45f }
-        .background(if (active) feedbackColor else baseColor, shape)
         .drawWithContent {
             drawContent()
             if (borderColor != null) {
@@ -139,6 +139,10 @@ private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
                     CornerRadius(radius + outset), style = Stroke(stroke))
             }
         }
+        // The parent's frost modifier paints the soft tint exactly once, with an
+        // opaque generated-token fallback. Keep the focus ring outside its clip.
+        .then(if (frosted) Modifier.nativeFrost(shape) else Modifier)
+        .background(if (active) feedbackColor else baseColor, shape)
         .clickable(interactionSource = interactions, indication = null, enabled = enabled, role = Role.Button, onClick = action),
         contentAlignment = Alignment.Center) { content(active) }
 }
