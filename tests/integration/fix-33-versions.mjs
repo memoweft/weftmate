@@ -6,6 +6,8 @@ import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {randomUUID, createHash} from 'node:crypto';
+import {chromium,_electron} from 'playwright';
+import {readFile} from 'node:fs/promises';
 import {fixture} from '../../services/cloud/test/identity-helpers.mjs';
 import {registration, appDevice, control, refresh, proof} from '../../services/cloud/test/app-helpers.mjs';
 import {createPersonalAccessService as currentService} from '../../src/personal-access/index.mjs';
@@ -17,13 +19,14 @@ const out=resolve('tests/evidence/fix-33');await mkdir(out,{recursive:true});
 const baseline=process.env.FIX33_BASELINE==='1';report.baseline=baseline;
 const sha=text=>createHash('sha256').update(text).digest('hex');
 const wait=async(read,done)=>{const end=Date.now()+10000;while(Date.now()<end){const r=await read();if(done(r))return r;await new Promise(r=>setTimeout(r,30));}throw Error('synthetic receipt timed out');};
-function backend(){const sessions=new Map(), starts=[];return {starts,
- getStatus:async()=>({runtime:'ready',referenceScan:'ready'}),listModels:async()=>[{id:'synthetic',name:'合成模型',model:'synthetic',configured:true}],preflight:async()=>({ok:true}),
+function backend(){const sessions=new Map(), starts=[],waiters=new Set();return {starts,
+ getStatus:async()=>({runtime:'ready',referenceScan:'ready',capabilities:{chat:{available:true,inferenceVerified:false}}}),listModels:async()=>[{id:'synthetic',name:'合成模型',model:'synthetic',configured:true}],preflight:async()=>({ok:true}),
  createSession:async({sessionId})=>{sessions.set(sessionId,[]);return {sessionId};},
  sendMessage:async({sessionId,text})=>{starts.push(performance.now());const rows=sessions.get(sessionId),receiptId=randomUUID(),at=new Date().toISOString();
- rows.push({seq:rows.length,type:'user.message',at,data:{text,receiptId,messageHash:sha(text)}});rows.push({seq:rows.length,type:'assistant.message',at,data:{text:'合成回复'}});rows.push({seq:rows.length,type:'turn.ended',at,data:{}});return {accepted:true,receiptId};},
+ rows.push({seq:rows.length,type:'user.message',at,data:{text,receiptId,messageHash:sha(text)}});rows.push({seq:rows.length,type:'assistant.message',at,data:{text:'合成回复 '+text}});rows.push({seq:rows.length,type:'turn.ended',at,data:{}});for(const wake of waiters)wake(sessionId);return {accepted:true,receiptId};},
+ waitForEvents:async({sessionId,seq,timeoutMs,signal})=>{if((sessions.get(sessionId)?.at(-1)?.seq??-1)>seq)return;await new Promise(resolve=>{let timer;const wake=id=>{if(id!==sessionId)return;clearTimeout(timer);waiters.delete(wake);signal?.removeEventListener('abort',abort);resolve();},abort=()=>wake(sessionId);waiters.add(wake);timer=setTimeout(abort,timeoutMs);signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();});},
  chatRelayState:async()=>({safe:false,pending:false}),cancelSession:async()=>({accepted:true}),readEvents:async({sessionId,afterSeq=-1,limit=100})=>{const rows=sessions.get(sessionId)||[];return {events:rows.filter(r=>r.seq>afterSeq).slice(0,limit),nextSeq:rows.at(-1)?.seq??-1,hasMore:false};},
- describeSession:async sessionId=>sessions.has(sessionId)?{sessionId,title:'合成对话',running:false}:null};}
+ describeSession:async sessionId=>sessions.has(sessionId)?{sessionId,title:'合成对话',running:false,agentPreset:'personal-remote',modelProfileId:'synthetic'}:null};}
 try{
  const archive=join(root,'old.tar');execFileSync('git',['archive','--format=tar','--output',archive,'3062ea4a','src','package.json'],{windowsHide:true});
  const old=join(root,'old');await mkdir(old);execFileSync('tar',['-xf',archive,'-C',old],{windowsHide:true});await rm(archive);
@@ -43,7 +46,8 @@ try{
  const desktop=await appDevice(f,'desktop'), phone=await appDevice(f,'phone');
  for(const [version,create] of [['old',oldService],['current',currentService]]){
   const b=backend(),data=join(root,version+'-data');await mkdir(data);
-  const host=await create({root:data,port:0,backend:b,uiHandler:servePersonalAccessUi,cloudIdentity:{issuer:f.config.issuer,allowInsecureLoopback:true}});cleanup.push(()=>host.close());
+  const desktopUi=version==='old'?(await import(pathToFileURL(join(old,'src/personal-access-ui/index.mjs')).href)).servePersonalAccessUi:servePersonalAccessUi;
+  const host=await create({root:data,port:0,backend:b,uiHandler:desktopUi,cloudIdentity:{issuer:f.config.issuer,allowInsecureLoopback:true}});cleanup.push(()=>host.close());
   const started=await host.start();
   async function api(path,body,auth,headers={}){const begin=performance.now(),response=await fetch(started.origin+'/personal/v1'+path,{method:body===undefined?'GET':'POST',headers:{origin:started.origin,'content-type':'application/json',...(auth?{cookie:auth.cookie,'x-weftmate-csrf':auth.csrfToken}:{}),...headers},body:body===undefined?undefined:JSON.stringify(body)});const data=await response.json();trace.push({host:version,method:body===undefined?'GET':'POST',path,status:response.status,ms:Math.round(performance.now()-begin),requestFields:Object.keys(body||{}),responseFields:Object.keys(data),commandFields:Object.keys(data.command||{}),code:data.error?.code});return {...data,status:response.status,cookie:response.headers.get('set-cookie')?.split(';')[0]||auth?.cookie};}
   const native=await api('/auth/desktop',{deviceName:'synthetic-host'},null,{'x-weftmate-desktop':host.libraryDesktopToken});assert.equal(native.status,200);
@@ -69,11 +73,47 @@ try{
    if(baseline&&kind==='side')assert.equal(result.error?.code,'CHAT_UNAVAILABLE');
   }
   }
+  if(process.env.FIX33_UI==='1') {
+   const environment={...process.env};delete environment.ELECTRON_RUN_AS_NODE;
+   const electron=await _electron.launch({args:[resolve('tests/helpers/fix33-electron.cjs')],env:environment});
+   const browser=await chromium.launch({headless:true}),phonePage=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),desktopPage=await electron.firstWindow();
+   try {
+    for(const [surface,page,identity] of [['desktop',desktopPage,bound],['phone',phonePage,auth]]) {
+     await page.addInitScript(()=>{let module;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>module,set:value=>{module=value;const original=value.create;value.create=(...args)=>{const core=original(...args);globalThis.__fix33Core=core;return core;};}});});
+     await page.context().addCookies([{name:'wm_personal_session',value:identity.cookie.split('=')[1],url:started.origin}]);
+     await page.route('**/*',async route=>{
+      const url=new URL(route.request().url());if(url.origin!==started.origin)return route.abort();
+      if(surface==='phone'&&url.pathname.startsWith('/personal/v1/ui/')) {
+       let file=url.pathname.slice('/personal/v1/ui/'.length)||'index.html';
+       const target=file.startsWith('ui-core/')?resolve('src',file):resolve('src/personal-access-ui',file);
+       try{return route.fulfill({status:200,body:await readFile(target),contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.html')?'text/html':file.endsWith('.svg')?'image/svg+xml':undefined});}catch{}
+      }
+      return route.continue();
+     });
+     await page.goto(started.origin+'/personal/v1/ui/');await page.waitForFunction(()=>globalThis.__fix33Core);
+     await page.evaluate(async identity=>{const c=globalThis.__fix33Core;c.acceptSession(identity);await c.enterAssistant();},identity);
+     await page.evaluate(async id=>{await globalThis.__fix33Core.selectSession(id);},sessionId);
+     await page.screenshot({path:join(out,`${version}-${surface}-connected.png`)});
+    }
+    scenario.latency=[];
+    const visible=async(page,text)=>page.waitForFunction(text=>document.getElementById('transcript')?.textContent.includes(text),text,{timeout:20000});
+    for(const [source,target,label] of [[phonePage,desktopPage,'phone-to-desktop'],[desktopPage,phonePage,'desktop-to-phone']]) {
+     const text='合成来回消息-'+randomUUID(),begin=performance.now();await source.locator('#message-text').fill(text);await source.locator('#send-message').click();
+     await visible(target,text);const userMs=Math.round(performance.now()-begin);await visible(target,'合成回复 '+text);
+     scenario.latency.push({label,userMs,replyMs:Math.round(performance.now()-begin)});await target.screenshot({path:join(out,`${version}-${label}.png`)});
+    }
+    const conversationId='conversation-'+randomUUID(),at=new Date().toISOString(),body={events:[{eventId:'event-'+randomUUID(),conversationId,clientSeq:1,kind:'conversation.created',occurredAt:at,payload:{title:'合成手机独立对话'}},{eventId:'event-'+randomUUID(),conversationId,clientSeq:2,kind:'message.created',occurredAt:at,payload:{messageId:'message-'+randomUUID(),role:'user',text:'合成手机独立消息'}},{eventId:'event-'+randomUUID(),conversationId,clientSeq:3,kind:'message.created',occurredAt:at,payload:{messageId:'message-'+randomUUID(),role:'assistant',text:'合成手机独立回复'}}]};
+    const begin=performance.now();await api('/sync/events',body,auth);
+    await desktopPage.waitForFunction(id=>globalThis.__fix33Core.phoneConversations().some(c=>c.id===id),conversationId,{timeout:20000});
+    scenario.latency.push({label:'phone-independent-upload-to-desktop-list',ms:Math.round(performance.now()-begin)});
+    await desktopPage.evaluate(id=>globalThis.__fix33Core.selectPhoneConversation(id),conversationId);await desktopPage.screenshot({path:join(out,`${version}-phone-history.png`)});
+   } finally {await browser.close();await electron.close();}
+  }
   report.scenarios.push(scenario);await host.close();cleanup.pop();
  }
 }finally{
  for(const close of cleanup.reverse())await close();
  assert.ok(resolve(root).startsWith(resolve(tmpdir())+'\\')||resolve(root).startsWith(resolve(tmpdir())+'/'));await rm(root,{recursive:true,force:true});
- await writeFile(join(out,baseline?'versions-before.json':'versions-after.json'),JSON.stringify(report,null,2)+'\n');
- console.log(JSON.stringify({scenarios:report.scenarios,requests:trace.length}));
+ await writeFile(join(out,process.env.FIX33_UI==='1'?'versions-ui.json':baseline?'versions-before.json':'versions-after.json'),JSON.stringify(report,null,2)+'\n');
+ console.log(JSON.stringify({scenarios:report.scenarios.map(s=>({version:s.version,messages:s.messages.map(m=>({kind:m.kind,index:m.index,state:m.state,error:m.error,toModelStartMs:m.toModelStartMs})),latency:s.latency})),requests:trace.length}));
 }
