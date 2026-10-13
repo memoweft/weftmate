@@ -37,6 +37,12 @@ class NativeComposerInstrumentedTest {
     }
     private fun editor()=compose.onNodeWithContentDescription("消息输入")
     private fun click(label:String)=compose.onNodeWithContentDescription(label).performTouchInput{click()}
+    private fun liveClick(label:String) {
+        val rect=compose.onNodeWithContentDescription(label).fetchSemanticsNode().boundsInRoot
+        val now=android.os.SystemClock.uptimeMillis()
+        i.sendPointerSync(android.view.MotionEvent.obtain(now,now,android.view.MotionEvent.ACTION_DOWN,rect.center.x,rect.center.y,0))
+        i.sendPointerSync(android.view.MotionEvent.obtain(now,now+30,android.view.MotionEvent.ACTION_UP,rect.center.x,rect.center.y,0))
+    }
     private fun item(label:String)=compose.onAllNodesWithText(label,useUnmergedTree=true).onLast().performTouchInput{click()}
     private fun keep(label:String,text:String) {
         compose.waitForIdle();editor().assertIsFocused();editor().assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.EditableText,androidx.compose.ui.text.AnnotatedString(text)))
@@ -156,7 +162,7 @@ class NativeComposerInstrumentedTest {
                     item(label);Thread.sleep(350);keep("plus-item-$label-canceled-picker",draft)
                 }
             } finally { i.removeMonitor(pickerMonitor) }
-            click("添加附件");click("消息输入");keep("outside-dismiss-on-editor",draft)
+            click("添加附件");liveClick("消息输入");keep("outside-dismiss-on-editor",draft);compose.onNodeWithText("照片").assertDoesNotExist()
             compose.onNodeWithContentDescription("聊天输入区").performTouchInput{click(androidx.compose.ui.geometry.Offset(center.x,height-40f))}
             keep("composer-tool-gap-keeps-input",draft)
             click("语音补充草稿");keep("voice-keeps-input",draft)
