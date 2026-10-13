@@ -9,6 +9,8 @@ export const MODEL_ID = /^[A-Za-z0-9._:/-]{1,128}$/
 const HASH = /^[a-f0-9]{64}$/
 const TIME = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/
 const plain = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
+const validThinking = value => value === undefined || plain(value) && typeof value.supported === 'boolean' &&
+  (value.effort === undefined || value.effort === 'high') && (value.type === undefined || ['adaptive', 'enabled'].includes(value.type)) && Object.keys(value).every(key => ['supported', 'effort', 'type'].includes(key))
 const sha = (text) => createHash('sha256').update(text, 'utf8').digest('hex')
 
 export function privateProfileId(ownerId, accountModelId, revision) {
@@ -20,9 +22,10 @@ export function publicAccountModel(record, configured = false) {
   return { accountModelId: record.accountModelId, revision: record.revision,
     profileId: selected.profileId, name: record.name, provider: 'openai-compatible',
     baseUrl: selected.baseUrl, modelId: selected.modelId,
+    ...(selected.interfaceType ? { interfaceType: selected.interfaceType } : {}),
     modelTier: selected.modelTier ?? 'auto', sourceKind: modelTierFor(selected),
     routeFingerprint: selected.routeFingerprint, configured: configured === true,
-    deepThinking: reasoningCapability({baseUrl:selected.baseUrl,model:selected.modelId}),
+    deepThinking: reasoningCapability({...selected,model:selected.modelId}),
     status: record.status, createdAt: record.createdAt, updatedAt: record.updatedAt }
 }
 
@@ -52,9 +55,11 @@ export function validAccountModel(record, ownerId, accountModelId) {
         !/^https?:\/\//.test(row.baseUrl) || !MODEL_ID.test(row.modelId ?? '') ||
         row.routeFingerprint !== null && !HASH.test(row.routeFingerprint ?? '') ||
         row.modelTier !== undefined && !['auto', 'local', 'cloud'].includes(row.modelTier) ||
+        row.interfaceType !== undefined && !['openai-compatible', 'anthropic'].includes(row.interfaceType) ||
+        !validThinking(row.deepThinking) ||
         !TIME.test(row.createdAt ?? '') ||
         Object.keys(row).some((key) => !['revision', 'profileId', 'baseUrl', 'modelId',
-          'routeFingerprint', 'modelTier', 'createdAt'].includes(key))) return false
+          'routeFingerprint', 'modelTier', 'interfaceType', 'deepThinking', 'createdAt'].includes(key))) return false
   }
   return true
 }
@@ -90,9 +95,11 @@ export function validModelOperation(record, ownerId, requestId, models) {
         typeof record.target.name !== 'string' || !record.target.name.trim() ||
         record.target.name.length > 120 ||
         record.target.modelTier !== undefined && !['auto', 'local', 'cloud'].includes(record.target.modelTier) ||
+        record.target.interfaceType !== undefined && !['openai-compatible', 'anthropic'].includes(record.target.interfaceType) ||
+        !validThinking(record.target.deepThinking) ||
         record.target.routeFingerprint !== null && !HASH.test(record.target.routeFingerprint ?? '') ||
         Object.keys(record.target).some((key) => !['runtimeRevision', 'profileId', 'baseUrl',
-          'modelId', 'name', 'routeFingerprint', 'modelTier'].includes(key))) ||
+          'modelId', 'name', 'routeFingerprint', 'modelTier', 'interfaceType', 'deepThinking'].includes(key))) ||
       Object.keys(record).some((key) => !['ownerId', 'requestId', 'kind', 'accountModelId',
         'payloadHash', 'status', 'expectedRevision', 'resultRevision', 'reasonCode',
         'errorCode', 'testResult', 'createdAt', 'updatedAt', 'target', 'stageRef',

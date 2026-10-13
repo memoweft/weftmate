@@ -6,6 +6,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { openAICompatibleEndpoint } from './openai-compatible-client.ts';
 import { usageResponse } from './personal-access/usage-response.mjs';
+import { anthropicCompletionBody, openAIAnthropicResponse } from './anthropic-compatible-client.mjs';
 
 const suggestionBusy = () => Object.assign(new Error('MODEL_SUGGESTION_BUSY'), { code: 'MODEL_SUGGESTION_BUSY' });
 
@@ -306,6 +307,16 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
         if (originalInput) body = JSON.stringify({ ...originalInput, model: canonicalProviderModelId(profile.baseUrl, profile.model) });
         return profile;
       } : null;
+      const providerRequest = async signal => {
+        const native = profile.interfaceType === 'anthropic', messages = native && operation === 'chat/completions';
+        const upstream = await fetchImpl(messages ? openAICompatibleEndpoint(profile.baseUrl, 'messages') : endpoint, {
+          method: request.method, signal,
+          headers: native ? { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }
+            : { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
+          body: messages && originalInput ? JSON.stringify(anthropicCompletionBody({ ...originalInput, model: canonicalProviderModelId(profile.baseUrl, profile.model) })) : body,
+        });
+        return messages ? openAIAnthropicResponse(upstream, originalInput?.stream === true) : upstream;
+      };
       if (operation === 'chat/completions' && !selectedQueue) {
         const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
         try { release = await acquireBackground(profile, null, controller.signal, null, refreshLocal, { ownerId: match[2], sessionId: match[3] }); }
@@ -323,8 +334,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
             let settled = false;
             try {
               await waitImport(signal);
-              let upstream = await fetchImpl(endpoint, { method: request.method, signal,
-                headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body });
+              let upstream = await providerRequest(signal);
               if (ticket) upstream = await usageResponse(upstream, async usage => {
                 settled = true; await finishUsage({ ...ticket, usage, source: 'openai' });
               });
@@ -349,8 +359,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       let upstream;
       try {
         await waitImport(controller.signal);
-        upstream = await fetchImpl(endpoint, { method: request.method, signal: controller.signal,
-          headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body });
+        upstream = await providerRequest(controller.signal);
         if (usageTicket) upstream = await usageResponse(upstream, usage => finishUsage({ ...usageTicket, usage, source: 'openai' }));
       } catch (error) { if (usageTicket) await finishUsage({ ...usageTicket, usage: null }); throw error; }
       response.writeHead(upstream.status, { 'content-type': upstream.headers.get('content-type') ?? 'application/json',

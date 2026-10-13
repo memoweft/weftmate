@@ -1019,11 +1019,13 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             useScope(secrets.host())
             savedIdentityView(identity).put("phoneOnly", true)
         }
-        "phone.models.list", "phone.models.configure", "phone.models.select", "phone.models.remove", "phone.models.test" ->
+        "phone.models.list", "phone.models.configure", "phone.models.select", "phone.models.remove", "phone.models.test",
+        "phone.models.services", "phone.models.serviceConfigure", "phone.models.serviceRefresh", "phone.models.serviceSelect",
+        "phone.models.serviceUpdate", "phone.models.serviceRemove" ->
             PhoneAccount(this, secrets).models(method.removePrefix("phone.models."), params)
         "phone.complete" -> {
             stopped = false
-            try { PhoneAccount(this, secrets).complete(params.getJSONObject("body"), phoneRequest) { text ->
+            try { PhoneAccount(this, secrets).complete(params.getJSONObject("body"), phoneRequest, params.optString("serviceId").takeIf { it.isNotBlank() }) { text ->
                 emitForAccount(requestEpoch, "phone.progress", JSONObject().put("text", text))
             } } catch(error: Exception) { if(stopped) throw ApiFailure(499,"CANCELLED"); throw error }
         }

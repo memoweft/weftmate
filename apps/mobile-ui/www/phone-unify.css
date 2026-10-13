@@ -4,7 +4,10 @@
 #chat-page .composer-actions{display:contents;height:auto}
 #chat-page .composer-actions>#plus-button{grid-column:1;grid-row:1;align-self:end}
 #chat-page .composer-actions>#send-button{grid-column:3;grid-row:1;align-self:end;width:44px;min-width:44px;height:44px}
-#chat-page .composer-card:not(.is-expanded) .composer-actions>:not(#plus-button):not(#send-button){display:none}
+#chat-page .composer-card:not(.is-expanded){grid-template-columns:44px minmax(0,1fr) 44px 44px}
+#chat-page .composer-card:not(.is-expanded) .composer-actions>#model-button{grid-column:3;grid-row:1;align-self:end;display:grid;max-width:44px;width:44px;min-width:44px}
+#chat-page .composer-card:not(.is-expanded) .composer-actions>#send-button{grid-column:4}
+#chat-page .composer-card:not(.is-expanded) .composer-actions>:not(#plus-button):not(#model-button):not(#send-button){display:none}
 #chat-page .composer-card.is-expanded{grid-template-columns:minmax(44px,1fr) auto auto auto auto 44px;border-radius:var(--wm-radius-24);padding:var(--wm-space-8)}
 #chat-page .composer-card.is-expanded #draft{grid-column:1/-1;grid-row:2;padding:var(--wm-space-8);min-height:64px}
 #chat-page .composer-card.is-expanded .composer-actions>#plus-button{grid-column:1;grid-row:3;justify-self:start;width:44px}

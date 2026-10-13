@@ -122,7 +122,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   return {run,node,gallery,previewImage,previewNote,previewTitle,previewVisible,timers,scheduledPolls,intervals,now:()=>now,bridge,flush,reply,advance,frames,flushFrame,document,storage:saved,domReady:()=>domReady(),observed:()=>observed};
 }
 
-test('BL-29 synthetic 30-second request budgets include every bridge method in foreground idle and hidden',async()=>{
+test('BL-29 synthetic 30-second request budgets include every bridge method in foreground idle and hidden',async t=>{
   const session={sessionId:'s1',source:'host',running:false,sendAvailable:true,taskAvailable:false};
   const h=harness({virtualClock:true,autoBoot:true,autoResults:{
     'host.status':{ownerId:'A',hostId:'host',hostName:'synthetic-host',personalCapabilities:{replyStreaming:1},backend:{capabilities:{chat:{available:true}}}},
@@ -143,10 +143,11 @@ test('BL-29 synthetic 30-second request budgets include every bridge method in f
   assert.ok(foreground.length<=66,`foreground idle: ${foreground.length} calls / 30s (2/s + 10% scheduling margin)`);
   h.document.visibilityState='hidden';h.run('stopSharedPoll();uiCore.connectionVisibility(true)');before=h.bridge.length;
   await advance(30000);assert.ok(h.bridge.length-before<=3,`hidden: ${h.bridge.length-before} calls / 30s`);
+  t.diagnostic(`30-second calls: foreground=${foreground.length}, hidden=${h.bridge.length-before}`);
   h.run('stopSharedPoll();uiCore.stopConnection()');
 });
 
-test('BL-29b full empty logical main with replyWait counts every bridge call and backs off immediate errors',async()=>{
+test('BL-29b full empty logical main with replyWait counts every bridge call and backs off immediate errors',async t=>{
   const capabilities = Object.fromEntries(['replyStreaming','replyWait','chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].map(key=>[key,1]));
   const chat = {chatId:'chat-main',kind:'main',activeSessionId:null,revision:1,contentRevision:1,sendAvailable:true};
   const page = {items:[],upserts:[],removals:[],liveEvents:[],liveRevision:0,syncCursor:'sync',nextCursor:'sync',contentRevision:1,chatRevision:1,hasMore:false};
@@ -167,6 +168,7 @@ test('BL-29b full empty logical main with replyWait counts every bridge call and
         if (path.startsWith('/chats/main')) result = {chat};
         else if (path.startsWith('/chats?')) result = {items:[]};
         else if (path.includes('/events?')) { tails++; result = page; }
+        else if (path === '/model-services') result = {services:[],models:[{id:'synthetic',name:'synthetic',configured:true}],modelSettings:{defaultModelProfileId:'synthetic'},canManage:true};
         else if (path.startsWith('/models')) result = {models:[{id:'synthetic',name:'synthetic',configured:true}]};
         else if (path.startsWith('/settings/personalization')) result = {nextSuggestionsEnabled:true};
         else if (path.includes('/dates?')) result = {days:[],contentRevision:1};
@@ -201,8 +203,14 @@ test('BL-29b full empty logical main with replyWait counts every bridge call and
       for (const timer of h.scheduledPolls) assert.ok(timer.delay>0 && timer.delay<=1750, `${fault}: failure timer must delay within recovery cap: ${timer.delay}`);
     }
     if (fault==='CURSOR_RESET_REQUIRED') assert.ok(tails-beforeTails<=1, 'continuous 409 rebuilds at most one tail');
-    if (!fault || ['BACKEND_UNAVAILABLE','HTTP_502','HTTP_504','CURSOR_RESET_REQUIRED'].includes(fault))
-      assert.ok(h.bridge.length-before<=60, `${fault || 'healthy'} full empty main idle: ${h.bridge.length-before} calls / 30s`);
+    const counts={};for(const request of h.bridge.slice(before)){const key=request.method==='host.business'?request.params.path.split('?')[0]:request.method;counts[key]=(counts[key]||0)+1;}
+    t.diagnostic(`${fault || 'healthy'} 30-second calls=${h.bridge.length-before}: ${JSON.stringify(counts)}`);
+    assert.equal(counts['/personal/v1/settings/models'] || 0,0,'combined service response avoids a second settings read');
+    assert.equal(counts['models.host'] || 0,0,'combined service response avoids the legacy model bridge');
+    assert.ok((counts['/personal/v1/model-services'] || 0)<=1,'idle configuration reads the combined models only once');
+    if (!fault || ['BACKEND_UNAVAILABLE','HTTP_502','HTTP_504','CURSOR_RESET_REQUIRED'].includes(fault)) {
+      assert.ok(h.bridge.length-before<=60, `${fault || 'healthy'} full empty main idle: ${h.bridge.length-before} calls / 30s ${JSON.stringify(counts)}`);
+    }
     if (fault && !['NOT_FOUND','UNAUTHORIZED'].includes(fault)) {
       const recoveryChanges = changes; injected = null;
       await advance(2000);
@@ -549,6 +557,13 @@ test('shared history follows exact session ID across pages and rejects the previ
   assert.equal(h.node('draft').disabled,true);
   assert.equal(h.node('model-button').disabled,true);
   assert.equal(h.node('chat-content').children.some(node=>node.textContent==='甲的私有内容'),false);
+});
+
+test('running writable host conversation keeps the model menu available for the next message',async()=>{
+  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="pc1";state.sharedHostAvailable=true;state.sharedRunning=true;state.busy=true;state.sharedSessions=[{sessionId:"pc1",title:"电脑",sendAvailable:true,running:true,source:"host"}];updateComposer()');
+  assert.equal(h.node('model-button').disabled,false);
+  h.run('state.sharedSessions[0].sendAvailable=false;updateComposer()');
+  assert.equal(h.node('model-button').disabled,true,'read-only history keeps its existing unavailable state');
 });
 
 test('shared send keeps phone drafts separate and blocks uncertain duplicate',async()=>{
