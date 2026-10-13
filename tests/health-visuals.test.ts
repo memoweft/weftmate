@@ -8,7 +8,7 @@ class Node {
  constructor(tag:string){this.tag=tag;}
  setAttribute(k:string,v:any){this.attrs[k]=String(v);}append(...nodes:Node[]){this.children.push(...nodes);}
 }
-function setup(){const context:any={WeftUiCore:{factories:{}},Intl,URLSearchParams,document:{createElementNS:(_:string,tag:string)=>new Node(tag)}};runInNewContext(read('src/ui-core/health.js'),context);runInNewContext(read('src/personal-access-ui/components/health-view.js'),context);return context;}
+function setup(){const context:any={WeftUiCore:{factories:{}},Intl,URLSearchParams,document:{createElementNS:(_:string,tag:string)=>new Node(tag)}};runInNewContext(read('src/ui-core/human-format.js'),context);runInNewContext(read('src/ui-core/health.js'),context);runInNewContext(read('src/personal-access-ui/components/health-view.js'),context);return context;}
 function nodes(n:Node):Node[]{return [n,...n.children.flatMap(nodes)];}
 function geometry(n:Node){const all=nodes(n);for(const node of all){for(const value of Object.values(node.attrs))assert.doesNotMatch(value,/NaN|Infinity|undefined/);for(const key of ['width','height','r'])if(key in node.attrs)assert.ok(Number(node.attrs[key])>=0);}return all;}
 test('every authored SVG handles no data, one observation, both outliers and narrow scalable widths',()=>{

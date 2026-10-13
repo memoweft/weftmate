@@ -1,3 +1,4 @@
+import { formatDuration } from '../human-format.mjs';
 import { createHash } from 'node:crypto';
 import { validateDeviceMetrics } from './device-metrics.mjs';
 
@@ -77,10 +78,7 @@ const sorted = (value) => !object(value) ? (Array.isArray(value) ? value.map(sor
   : Object.fromEntries(Object.keys(value).sort().map((key) => [key, sorted(value[key])]));
 export const summaryHash = (value) => createHash('sha256').update(JSON.stringify(sorted(value))).digest('hex');
 const decimal = (value) => String(Number(value.toFixed(2)));
-const minutes = (value) => {
-  const rounded = Math.round(value);
-  return `${Math.floor(rounded / 60)} 小时 ${rounded % 60} 分`;
-};
+const minutes = formatDuration;
 const LABELS = { sleep: '睡眠', steps: '步数', activeEnergy: '活动能量', heartRate: '平均心率',
   restingHeartRate: '静息心率', hrv: 'HRV', respiratoryRate: '呼吸频率', workouts: '锻炼时长' };
 const CHINESE_UNITS = { min: '分钟', count: '步', kcal: '千卡', bpm: '次/分', ms: '毫秒', 'breaths/min': '次/分' };

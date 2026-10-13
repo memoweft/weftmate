@@ -164,7 +164,7 @@ test('observed outbox has stable source identity and Chinese facts, never invent
   const evidence = observedHealthEvidence(ownerA, healthSummary(summary()))
   assert.equal(evidence.source_kind, 'observed')
   assert.equal(evidence.subject_id, ownerA)
-  assert.match(evidence.content, /2026-10-06 睡眠 5 小时 40 分，低于此前 14 天基线均值 1 小时 0 分/)
+  assert.match(evidence.content, /2026-10-06 睡眠 5 小时 40 分，低于此前 14 天基线均值 1 小时/)
   assert.equal(evidence.source.device_id, 'device-fixture')
   assert.equal(evidence.permissions.allow_cloud_read, false)
   assert.equal(evidence.content.includes('HRV'), false)
