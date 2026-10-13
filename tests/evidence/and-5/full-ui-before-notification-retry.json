@@ -1,0 +1,3215 @@
+{
+  "synthetic": true,
+  "instrumentation": [
+    {
+      "width": 360,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "and5-360-light-auto-refresh.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-empty.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-error.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-filter-menu.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-final-badge.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-list-all-read.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-list-unread-pending.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-loading.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-memory-confirmed.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-memory-filter.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-memory-inline.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-memory-menu.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-memory-review-web.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-more-loaded.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-no-computer.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-open-approval.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-open-question.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-open-reminder.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-open-task.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-pending-read.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-pull-refresh.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-retry.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-row-menu.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-web-empty.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-web-list-unread-pending.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-web-row-menu.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-weekly-inline.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-light-weekly-source.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-auto-refresh.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-empty.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-error.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-filter-menu.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-final-badge.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-list-all-read.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-list-unread-pending.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-loading.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-memory-confirmed.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-memory-filter.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-memory-inline.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-memory-menu.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-memory-review-web.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-more-loaded.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-no-computer.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-open-approval.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-open-question.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-open-reminder.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-open-task.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-pending-read.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-pull-refresh.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-retry.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-row-menu.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-web-empty.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-web-list-unread-pending.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-web-row-menu.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-weekly-inline.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-360-dark-weekly-source.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-auto-refresh.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-empty.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-error.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-filter-menu.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-final-badge.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-list-all-read.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-list-unread-pending.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-loading.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-memory-confirmed.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-memory-filter.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-memory-inline.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-memory-menu.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-memory-review-web.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-more-loaded.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-no-computer.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-open-approval.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-open-question.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-open-reminder.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-open-task.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-pending-read.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-pull-refresh.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-retry.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-row-menu.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-web-empty.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-web-list-unread-pending.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-web-row-menu.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-weekly-inline.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-light-weekly-source.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-auto-refresh.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-empty.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-error.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-filter-menu.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-final-badge.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-list-all-read.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-list-unread-pending.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-loading.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-memory-confirmed.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-memory-filter.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-memory-inline.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-memory-menu.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-memory-review-web.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-more-loaded.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-no-computer.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-open-approval.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-open-question.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-open-reminder.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-open-task.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-pending-read.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-pull-refresh.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-retry.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-row-menu.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-web-empty.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-web-list-unread-pending.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-web-row-menu.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-weekly-inline.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-weekly-source.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and5-390-dark-notification-panel-background.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    }
+  ],
+  "notifications": [],
+  "adbIsolation": {
+    "privateServer": true,
+    "portableSdk": true
+  },
+  "occupancy": {
+    "heavySlot": "heavy-2.lock",
+    "mumuStartedAt": "2026-10-13T12:15:37.266Z",
+    "releasedAt": "2026-10-13T12:19:12.606Z"
+  },
+  "otherWeftMatePackages": [],
+  "systemVersion": "15",
+  "longScroll": [
+    {
+      "theme": "light",
+      "swipes": 12,
+      "rows": 82,
+      "totalFrames": 245,
+      "jankyFrames": 164,
+      "file": "long-scroll-light.txt"
+    },
+    {
+      "theme": "dark",
+      "swipes": 12,
+      "rows": 82,
+      "totalFrames": 319,
+      "jankyFrames": 171,
+      "file": "long-scroll-dark.txt"
+    }
+  ],
+  "notificationPolling": {
+    "systemAllowed": true,
+    "passed": false,
+    "failure": "SocketTimeoutException"
+  },
+  "failure": "Command failed: D:/AIProjects/AIGame/Repository/runtime/toolchains/android-sdk/platform-tools/adb.exe -P 52070 -s 127.0.0.1:16386 shell uiautomator dump --compressed /sdcard/and5-notification-a6954b8b-c9aa-4e4c-bd9f-cf6eb7c4b149.xml\n",
+  "requests": [
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/approval-pending/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/question-pending/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/task-done/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "3"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "cursor": "6",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/reminder/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50",
+        "cursor": "4"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/weekly/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "memory",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/memory/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "memory",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "6"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50",
+        "cursor": "4"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/read",
+      "method": "POST",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "9"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "11"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "cursor": "11",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "12"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "cursor": "13",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "12"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "14"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "cursor": "14",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "14"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "14"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/approval-pending/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/question-pending/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/task-done/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "16"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "cursor": "19",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/reminder/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50",
+        "cursor": "4"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/weekly/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "memory",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/memory/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "memory",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "19"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50",
+        "cursor": "4"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/read",
+      "method": "POST",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "22"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "25"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "cursor": "24",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "25"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "cursor": "26",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "25"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "27"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "cursor": "27",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "27"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "27"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/approval-pending/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/question-pending/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/task-done/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "29"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/reminder/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50",
+        "cursor": "4"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/weekly/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "memory",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/memory/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "memory",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50",
+        "cursor": "4"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "32"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/read",
+      "method": "POST",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "cursor": "36",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "35"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "38"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "cursor": "37",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "38"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "cursor": "39",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "38"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "40"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "cursor": "40",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "40"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "40"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/approval-pending/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/question-pending/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/task-done/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "42"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/reminder/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50",
+        "cursor": "4"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/weekly/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "memory",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/memory/read",
+      "method": "PATCH",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "memory",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50",
+        "cursor": "4"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "45"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/read",
+      "method": "POST",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "cursor": "49",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "48"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "51"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "cursor": "50",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "51"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "type": "task",
+        "cursor": "52",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "51"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "53"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "cursor": "53",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "53"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "all",
+        "limit": "50"
+      }
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "query": {
+        "filter": "actionable",
+        "limit": "200"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "53"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "54"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "query": {
+        "limit": "200",
+        "cursor": "54"
+      }
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "query": {}
+    }
+  ],
+  "reads": [
+    {
+      "id": "approval-pending",
+      "body": {
+        "requestId": "e83309d4-b255-4188-9c41-cb06e992529f",
+        "read": true,
+        "attentionRevision": 3
+      }
+    },
+    {
+      "id": "question-pending",
+      "body": {
+        "requestId": "a8833cec-e831-4604-bb53-85a635de3b92",
+        "read": true,
+        "attentionRevision": 3
+      }
+    },
+    {
+      "id": "task-done",
+      "body": {
+        "requestId": "fcd71ca9-4efb-4357-a1e0-56746dba437d",
+        "read": true,
+        "attentionRevision": 3
+      }
+    },
+    {
+      "id": "reminder",
+      "body": {
+        "requestId": "27e8c0e9-9d4e-4c06-a754-468ce5cc9ba3",
+        "read": true,
+        "attentionRevision": 3
+      }
+    },
+    {
+      "id": "weekly",
+      "body": {
+        "requestId": "e9be2526-8215-48c3-9007-f877030e107f",
+        "read": true,
+        "attentionRevision": 3
+      }
+    },
+    {
+      "id": "memory",
+      "body": {
+        "requestId": "6e5ecaef-2033-4581-b923-4d73e911a02d",
+        "read": true,
+        "attentionRevision": 3,
+        "reviewedMemory": {
+          "kind": "relation",
+          "id": "synthetic-old"
+        }
+      }
+    },
+    {
+      "all": true,
+      "body": {
+        "requestId": "1b37db99-9922-462c-939f-88c0ed0cd036",
+        "through": "synthetic-snapshot"
+      }
+    },
+    {
+      "id": "approval-pending",
+      "body": {
+        "requestId": "6e61ae1b-10cb-407f-aa73-b96f7101c3d3",
+        "read": true,
+        "attentionRevision": 16
+      }
+    },
+    {
+      "id": "question-pending",
+      "body": {
+        "requestId": "c74144fb-0aaf-49ee-ab70-7d359aecc0cf",
+        "read": true,
+        "attentionRevision": 16
+      }
+    },
+    {
+      "id": "task-done",
+      "body": {
+        "requestId": "b8446064-363d-43c2-9c2d-63b7481ed90b",
+        "read": true,
+        "attentionRevision": 16
+      }
+    },
+    {
+      "id": "reminder",
+      "body": {
+        "requestId": "e7a17ec3-acd5-4d63-9374-9eaa18d56e1b",
+        "read": true,
+        "attentionRevision": 16
+      }
+    },
+    {
+      "id": "weekly",
+      "body": {
+        "requestId": "8ffedd4a-983c-4bb2-bfbc-e8f627146d54",
+        "read": true,
+        "attentionRevision": 16
+      }
+    },
+    {
+      "id": "memory",
+      "body": {
+        "requestId": "2c5e97a0-883d-4e4f-8a2a-038fad09aa01",
+        "read": true,
+        "attentionRevision": 16,
+        "reviewedMemory": {
+          "kind": "relation",
+          "id": "synthetic-old"
+        }
+      }
+    },
+    {
+      "all": true,
+      "body": {
+        "requestId": "c48b7989-e215-45bb-bdf0-85b7d2f9b00a",
+        "through": "synthetic-snapshot"
+      }
+    },
+    {
+      "id": "approval-pending",
+      "body": {
+        "requestId": "a63ea054-4444-47a6-9e9d-ed955c487cfe",
+        "read": true,
+        "attentionRevision": 29
+      }
+    },
+    {
+      "id": "question-pending",
+      "body": {
+        "requestId": "1d84e040-a8ea-404a-b109-43bc9c0c8078",
+        "read": true,
+        "attentionRevision": 29
+      }
+    },
+    {
+      "id": "task-done",
+      "body": {
+        "requestId": "e0083228-a06e-4acf-845e-15fbcedc108d",
+        "read": true,
+        "attentionRevision": 29
+      }
+    },
+    {
+      "id": "reminder",
+      "body": {
+        "requestId": "687bc76d-ab9a-4c1d-a39f-0052d1e7c0d6",
+        "read": true,
+        "attentionRevision": 29
+      }
+    },
+    {
+      "id": "weekly",
+      "body": {
+        "requestId": "ecbbfee5-cec1-4e28-828d-4d6b90079ea4",
+        "read": true,
+        "attentionRevision": 29
+      }
+    },
+    {
+      "id": "memory",
+      "body": {
+        "requestId": "748c6bb6-1834-4bd9-8c5f-58c36b50804e",
+        "read": true,
+        "attentionRevision": 29,
+        "reviewedMemory": {
+          "kind": "relation",
+          "id": "synthetic-old"
+        }
+      }
+    },
+    {
+      "all": true,
+      "body": {
+        "requestId": "5c89340b-45bc-4406-93f8-017486a58a48",
+        "through": "synthetic-snapshot"
+      }
+    },
+    {
+      "id": "approval-pending",
+      "body": {
+        "requestId": "be8a2fe7-84cd-4e3e-beb1-77ea073e5ca5",
+        "read": true,
+        "attentionRevision": 42
+      }
+    },
+    {
+      "id": "question-pending",
+      "body": {
+        "requestId": "6ea9d52a-3bed-4510-97cf-35f4d710ea70",
+        "read": true,
+        "attentionRevision": 42
+      }
+    },
+    {
+      "id": "task-done",
+      "body": {
+        "requestId": "5157a96c-ba76-4031-82d9-a2df1b3bc529",
+        "read": true,
+        "attentionRevision": 42
+      }
+    },
+    {
+      "id": "reminder",
+      "body": {
+        "requestId": "593e2541-3403-494e-bb47-3cbba24ac64b",
+        "read": true,
+        "attentionRevision": 42
+      }
+    },
+    {
+      "id": "weekly",
+      "body": {
+        "requestId": "528c09d3-5fd1-44e6-b1b1-19e247bc86d5",
+        "read": true,
+        "attentionRevision": 42
+      }
+    },
+    {
+      "id": "memory",
+      "body": {
+        "requestId": "64a9800f-b7fc-42dc-a10c-4d53d5b77ae7",
+        "read": true,
+        "attentionRevision": 42,
+        "reviewedMemory": {
+          "kind": "relation",
+          "id": "synthetic-old"
+        }
+      }
+    },
+    {
+      "all": true,
+      "body": {
+        "requestId": "ded7f1c3-0f25-4888-a9bf-b0fae9cb5e7d",
+        "through": "synthetic-snapshot"
+      }
+    }
+  ],
+  "privateAdbClosed": true,
+  "specPreview": {
+    "passed": true,
+    "output": "Rendered three dark controls-spec previews; external requests blocked\n"
+  },
+  "apkHashes": {
+    "app": {
+      "sha256": "d0cbe72e47937555403ab6da2d75a5f760062a61b0044cd599bd18dd2331d6e6",
+      "modifiedAt": "2026-10-13T12:14:35.849Z"
+    },
+    "androidTest": {
+      "sha256": "a5e55f02d0988e9f2e1fe10712cfeda00d522274dddb7cefc9efd4accf14e111",
+      "modifiedAt": "2026-10-13T12:13:16.545Z"
+    }
+  },
+  "diagnosticOnly": true
+}

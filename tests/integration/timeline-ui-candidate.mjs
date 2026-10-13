@@ -1,6 +1,7 @@
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Isolated personal host + synthetic DSH log. No model or daily data is used. */
 import assert from 'node:assert/strict'
+import { waitForCommand } from '../helpers/wait-for-command.mjs'
 import { createHash, randomUUID } from 'node:crypto'
 import { createServer } from 'node:http'
 import { readFileSync, readdirSync, realpathSync } from 'node:fs'
@@ -139,7 +140,7 @@ export async function startTimelineCandidate(options = {}) {
     assert.equal(setup.status,201);auth=await setup.json();cookie=setup.headers.get('set-cookie').split(';')[0];
   }
   const request = async (path, body, method = body ? 'POST' : 'GET') => { const response = await fetch(origin + '/personal/v1' + path, { method, headers: { origin, cookie, 'content-type': 'application/json', 'x-weftmate-csrf': auth.csrfToken }, ...(body ? { body: JSON.stringify(body) } : {}) }); const data = await response.json(); assert.ok(response.ok, JSON.stringify(data)); return data }
-  const command = async (body, route = '/commands') => { const value = await request(route, body); for (let i = 0; i < 100; i++) { const row = (await request(`/commands/${value.command.commandId}`)).command; if (row.state === 'accepted_by_dsh') return row; await new Promise(done => setTimeout(done, 20)) } throw Error('command not accepted') }
+  const command = async (body, route = '/commands') => { const value = await request(route, body); return waitForCommand(async () => (await request(`/commands/${value.command.commandId}`)).command); }
   const created = await command({ requestId: 'timeline-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId })
   sessionId = created.sessionId
   const source = await command({ requestId: 'timeline-message', kind: 'session.message', sessionId, targetDeviceId: hostId, text: goal }); taskId = source.commandId
@@ -225,7 +226,7 @@ export async function startTimelineCandidate(options = {}) {
   const bridgeCode = `window.weftNative={postMessage(raw){const m=JSON.parse(raw);fetch('/bridge',{method:'POST',body:JSON.stringify(m)}).then(r=>r.json()).then(v=>window.weftNative.onmessage({data:JSON.stringify({id:m.id,ok:!v.error,result:v.result,error:v.error})})).catch(()=>window.weftNative.onmessage({data:JSON.stringify({id:m.id,ok:false,error:{code:'NETWORK'}})}))},onmessage:null}`
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
-  return { root, origin,
+  return { root, origin, nativeWaitRegistered:()=>eventWaiters.size>0,
     resolveInitialApproval: async outcome => {
       await service.trackToolApproval({ action: 'resolve_approval', runtimeId, approvalId, sessionId, turn: 1,
         callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh',

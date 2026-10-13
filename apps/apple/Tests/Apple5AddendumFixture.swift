@@ -16,7 +16,7 @@ struct Apple5AddendumFixture: View {
             if ready {
                 Menu("合成场景") {
                     ForEach(["normal","narrow","large","attachments","pdf"],id:\.self) { value in Button(value) { select(value) }.accessibilityIdentifier("apple5add."+value) }
-                }.accessibilityIdentifier("apple5add.scenarios")
+                }.accessibilityIdentifier("apple5add.scenarios").accessibilityValue("原文件 \(images.count)，输入区附件 \(app.mainChat.attachments.count)")
                 if scene == "narrow" || scene == "large" {
                     Text(scene == "narrow" ? "320 点导航组件" : "大字体导航组件").font(AppleTokens.Fonts.headline)
                     Spacer()
@@ -33,7 +33,7 @@ struct Apple5AddendumFixture: View {
             }
     }
     private func select(_ value: String) {
-        if value == "pdf" { preview=true; return }
+        if value == "pdf" { app.phonePreviewRequest=UUID(); dismissPhonePreviewKeyboard(); preview=true; return }
         scene=value
         if value == "attachments" { app.mainChat.addFiles(images) }
     }

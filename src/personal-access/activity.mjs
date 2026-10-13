@@ -144,7 +144,12 @@ export function createActivity(context) {
     if(!context.dataControls?.isLocked(ownerId)) await refresh(ownerId);
     const authorize=()=>{const current=context.authenticate(request,write?'commands:write':'sessions:read');if(current.ownerId!==ownerId||current.deviceId!==deviceId)throw failure('UNAUTHORIZED',401);};authorize();
     const path=url.pathname.slice('/personal/v1/activity'.length), account=context.accountState(ownerId),state=activityState(account);
-    const reply=value=>{authorize();context.json(response,200,value);return true;};
+    const reply=value=>{
+      authorize();const computerName=context.cloudIdentity?.computerLabel(ownerId);
+      if(computerName)for(const field of ['items','upserts'])if(value[field])value[field]=value[field].map(row=>({...row,computerName,
+        notification:{...row.notification,title:`${computerName} · ${row.notification.title}`}}));
+      context.json(response,200,value);return true;
+    };
     if(!write){
       if(path==='/unread'){if(url.search)throw failure('INVALID_REQUEST');return reply(counts(ownerId));}
       if(path==='/changes'){

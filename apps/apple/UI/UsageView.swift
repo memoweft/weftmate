@@ -49,7 +49,13 @@ import WeftMateCore
         return app?.conversations.first { $0.sessionId == id }?.title ?? "已删除或未读取的对话"
     }
     func modelName(_ id: String?) -> String { settings?.models.first { $0.id == id }?.name ?? id ?? "未指定模型" }
-    static func money(_ cost: Double) -> String { String(format: "¥%.6f", cost) }
+    static func money(_ cost: Double) -> String {
+        #if os(iOS)
+        PhoneCurrencyText.money(cost)
+        #else
+        String(format:"¥%.6f",cost)
+        #endif
+    }
 }
 
 struct UsageView: View {

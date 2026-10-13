@@ -62,6 +62,7 @@ globalThis.WeftActivityView={mount({target,core,mobile=false,timeZone=()=>core.a
             const signature=JSON.stringify([item,model.busy.has(item.id)]);
             if(row.dataset.signature!==signature){row.dataset.signature=signature;row.classList.toggle('is-unread',!item.read);
                 const heading=node('div','activity-row-heading'),label=node('h3','',item.title),time=node('time','muted',clock.format(new Date(item.at)));time.dateTime=item.at;
+                if(item.computerName||core.hasMultipleComputers?.())heading.append(node('small','muted',item.computerName||core.computerName(item.source?.hostId||core.currentExecutionComputer())));
                 heading.append(label,time);const summary=node('p','activity-summary',item.weeklyInsight?(()=>{const date=new Intl.DateTimeFormat('zh-CN',{timeZone:'UTC',month:'long',day:'numeric'});return `${date.format(new Date(item.weeklyInsight.from+'T00:00:00Z'))} — ${date.format(new Date(Date.parse(item.weeklyInsight.to+'T00:00:00Z')-86400000))}`;})():item.summary),actions=node('div','activity-actions');
                 if(item.type==='approval.pending'&&item.state==='pending'){
                     const action=item.actions.find(a=>a.kind==='respond_approval');if(action){actions.append(button('批准',()=>core.activityAction(item,action,'allowed-once')),button('拒绝',()=>core.activityAction(item,action,'rejected')));}

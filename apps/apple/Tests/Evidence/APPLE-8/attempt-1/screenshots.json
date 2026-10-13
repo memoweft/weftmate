@@ -1,0 +1,29 @@
+[
+  {
+    "file": "attempt-1/apple8-light-menu.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "sha256": "2e9e94da58b22b4e7ee04ed37db7ba51ef72d6e02de58bf18b06f19f0682386c",
+    "classification": "valid first-batch historical screenshot; before unsupported-menu caption fix"
+  },
+  {
+    "file": "attempt-1/apple8-light-draft.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "sha256": "073d9c8403bc144d6eed0b7d6e23611b6864bda9e300ba5287f23f1dde977740",
+    "classification": "valid first-batch historical screenshot; before unsupported-menu caption fix"
+  },
+  {
+    "file": "attempt-1/apple8-light-sent.png",
+    "size": [
+      1206,
+      2622
+    ],
+    "sha256": "06057f361ed4039fa1074b3103646d76e0df45a6cc33823a9173ce3869979545",
+    "classification": "valid first-batch historical screenshot; before unsupported-menu caption fix"
+  }
+]

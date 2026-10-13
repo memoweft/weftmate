@@ -1,0 +1,44 @@
+{
+  "packagedDesktop": true,
+  "realDSH": true,
+  "account": "synthetic local owner",
+  "computerName": "synthetic-mac",
+  "credentialStorage": "real Electron safeStorage; Security API search/add scoped only to disposable keychain",
+  "startedAt": "2026-10-13T08:44:30.392Z",
+  "electronLaunches": 1,
+  "mimoRequests": 0,
+  "mimoKeyAvailable": false,
+  "checks": [
+    "first open and model connection/configuration through visible onboarding controls"
+  ],
+  "screenshots": [
+    "electron-1200-light-first-open.png",
+    "electron-1200-dark-first-open.png",
+    "failure-electron.png"
+  ],
+  "syntheticRequests": 0,
+  "tools": [],
+  "errors": [],
+  "native": {
+    "packaged": true,
+    "profile": "<synthetic-temp>/profile",
+    "encryption": true,
+    "mock": false,
+    "menuLabels": [
+      "WeftMate",
+      "编辑",
+      "窗口"
+    ],
+    "autoStart": false
+  },
+  "completed": false,
+  "phase": "native-shell",
+  "failure": "electronApplication.evaluate: ReferenceError: showMainWindow is not defined\n    at EventEmitter.<anonymous> (file:///Users/<user>/Desktop/WeftMate/trial/WeftMate.app/Contents/Resources/app.asar/src/main.mjs:270:61)\n    at EventEmitter.emit (node:events:514:28)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:18)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at short (file:///Users/<user>/Desktop/WeftMate/trial/WeftMate.app/Contents/Resources/app.asar/src/personal-access/activity-store.mjs:9:15)\n    at putActivity (file:///Users/<user>/Desktop/WeftMate/trial/WeftMate.app/Contents/Resources/app.asar/src/personal-access/activity-store.mjs:43:71)\n    at file:///Users/<user>/Desktop/WeftMate/trial/WeftMate.app/Contents/Resources/app.asar/src/personal-access/activity.mjs:66:87\n    at file:///Users/<user>/Desktop/WeftMate/trial/WeftMate.app/Contents/Resources/app.asar/src/personal-access/index.mjs:740:27\n    at mutateRoot (file:///Users/<user>/Desktop/WeftMate/trial/WeftMate.app/Contents/Resources/app.asar/src/personal-access/index.mjs:694:25)\n    at /Users/<user>/Desktop/WeftMate/weftmate-h3/tests/integration/m3-3b-mac-trial.mjs:175:13",
+  "newGpuOrWindowServerReports": 0,
+  "machineRestarted": false,
+  "keychainOperations": {
+    "finds": 0,
+    "adds": 1
+  },
+  "finishedAt": "2026-10-13T08:44:37.618Z"
+}

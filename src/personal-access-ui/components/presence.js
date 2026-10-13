@@ -57,6 +57,7 @@ globalThis.WeftPresenceView = {
                 : runtime ? value.host.runtime==='restarting' ? '助手正在重启 · 草稿会保留' : '助手暂不可用 · 草稿会保留'
                 : model ? '模型暂不可用 · 请检查设置' : ({connecting:'正在连接 · 草稿会保留',host_offline:'电脑离线 · 等待接续',network_unavailable:'网络不可用 · 草稿会保留',login_required:'请重新登录 · 草稿会保留',approval_required:'请在已登录设备批准访问'})[value.kind] || '';
             copy.title = showDiagnostic ? copy.textContent : value.description || copy.textContent;
+            if(core.hasMultipleComputers?.()&&value.kind==='host_offline')copy.textContent=`${core.computerName(core.currentExecutionComputer())} 不在线 · 等待接续`;
             diagnostic.hidden=!showDiagnostic; retry.hidden=showDiagnostic;
             feedback.hidden=!core.state?.ownerId || value.kind==='connecting';
             retry.textContent = value.kind === 'login_required' ? '重新登录' : value.kind === 'approval_required' ? '查看设备' : '重试';

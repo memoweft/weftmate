@@ -397,7 +397,7 @@
       if(value.phoneMemory){memoryEpoch++;memoryAbort?.abort();value.phoneMemory.items=value.phoneMemory.items.filter(i=>i.conversationId!==id);value.phoneMemory.processed=value.phoneMemory.processed.filter(t=>!c.turns.some(turn=>turn.id===t));}
       await persist();
     }
-    return { view, sync, send, regenerate, check, clear, extractMemory,memoryChange,removeConversation,submitTask, retryTask, cancelTask, refreshTasks, clearTasks, stop: () => abort?.abort(), close: () => { version++;memoryEpoch++;memoryAbort?.abort();abort?.abort(); vault.close(); } };
+    return { view, sync, send, regenerate, check, clear, extractMemory,memoryChange,removeConversation,submitTask, retryTask, cancelTask, refreshTasks, clearTasks, saveComposer: async (conversationId, draft) => { value.nativeDrafts ??= {}; value.nativeDrafts[conversationId || 'new'] = draft; value.nativeComposer = { conversationId, draft }; await persist(); }, stop: () => abort?.abort(), close: () => { version++;memoryEpoch++;memoryAbort?.abort();abort?.abort(); vault.close(); } };
   }
   globalThis.WeftOffline = { create, browserVault, nativeVault, recall, requestBody, readCompletion, encode, decode };
 })();
