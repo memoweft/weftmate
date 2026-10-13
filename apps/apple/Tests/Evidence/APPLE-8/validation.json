@@ -1,0 +1,40 @@
+{
+  "swiftTests": 499,
+  "swiftFailures": 0,
+  "externalFixtureSkips": 3,
+  "jobs": {
+    "swift": 2,
+    "xcodebuild": 4
+  },
+  "checks": {
+    "attachments": 35,
+    "standalone": 23,
+    "memory": 43,
+    "palette": 114,
+    "nodeTests": 14,
+    "callbackSites": 72,
+    "callbackFailures": 0,
+    "plaintextAttachmentDraftHits": 0
+  },
+  "builds": {
+    "iPhone": "generic iOS success unsigned",
+    "Watch": "generic watchOS success unsigned",
+    "Mac": "native macOS success unsigned"
+  },
+  "realModelVerified": false,
+  "MIMO_API_KEYAvailable": false,
+  "realCloudHostAccountRequests": 0,
+  "simulatorBoots": 0,
+  "screenshots": "pending bounded capture after commit/push",
+  "ci": "not waited; Claude receives",
+  "limits": {
+    "images": 4,
+    "files": 3,
+    "imageLongEdge": 2048,
+    "imageBytes": 1048576,
+    "fileBytes": 10485760,
+    "totalFileTextUTF16": 32000,
+    "pdfPages": 30,
+    "historyMessages": 20
+  }
+}
