@@ -1,0 +1,20 @@
+{
+  "realMacSourceHost": true,
+  "realCloudImplementation": true,
+  "phone": "headless Chromium 390x844",
+  "computerName": "synthetic-mac",
+  "relay": "direct loopback; production relay not exercised",
+  "electronHeadlessLaunches": 1,
+  "mimoRequests": 0,
+  "checks": [
+    "verified synthetic account binds and registers exactly one synthetic-mac host",
+    "headless phone webpage completes password + synthetic mailbox verification into the Mac account",
+    "phone settings visibly lists synthetic-mac"
+  ],
+  "completed": false,
+  "hostId": "host-dd7cb807-4a68-4187-987d-bccf803a67fa",
+  "catalog": [],
+  "connected": true,
+  "phase": "phone-chat",
+  "failure": "MAC_ACCOUNT_MODEL_CATALOG_EMPTY: the native fixture route is not published in this bound account catalog; no chat command was sent."
+}

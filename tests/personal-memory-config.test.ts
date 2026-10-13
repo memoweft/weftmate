@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -46,3 +46,18 @@ test('account memory config accepts a configured loopback service and a credenti
     }
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
+
+test('macOS memory config preserves the venv interpreter symlink and rejects a broken target', { skip: process.platform !== 'darwin' }, async () => {
+  const root = mkdtempSync(join(tmpdir(), 'personal-memory-venv-'));
+  try {
+    const python = join(root, 'venv-python'), target = join(root, 'base-python');
+    const pythonPath = join(root, 'py'), bridge = join(pythonPath, 'memoweft/integrations/dsh_bridge');
+    mkdirSync(bridge, { recursive: true }); writeFileSync(join(bridge, '__main__.py'), '');
+    writeFileSync(target, ''); symlinkSync(target, python);
+    const file = join(root, 'memory.json');
+    writeFileSync(file, JSON.stringify({ python, pythonPath, baseUrl: 'http://127.0.0.1:12345/v1', model: '@current', authRef: 'synthetic' }));
+    assert.equal((await loadPersonalMemoryConfig(file)).python, python);
+    rmSync(target);
+    await assert.rejects(loadPersonalMemoryConfig(file), /MEMORY_CONFIGURATION_INVALID/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
