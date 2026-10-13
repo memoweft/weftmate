@@ -25,7 +25,7 @@ async function fixture(t: any) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'weftmate-m3a-unit-')); t.after(() => rm(root, { recursive: true, force: true }));
   let items = [memory(), memory('travel', '用户去青海旅行。')], generation = 1, accepted: any[] = [];
   const context: any = { root, timestamp: Date.now, rootState: { hostId: identity.hostId },
-    authenticate: () => ({ ...identity, via: 'cookie', device: { authKind: 'cloud' } }),
+    authenticate: () => ({ ...identity, via: 'cookie', device: { authKind: 'cloud',scopes:['sessions:read','commands:write','account:manage'] } }),
     accountState: () => ({ sessions: {} }), modelSelectable: () => true,
     backend: { listModels: () => [{ id: 'mimo', configured: true, sourceKind: 'cloud', name: 'MiMo' }] },
     service: { currentChatModelProfile: () => 'mimo' },
@@ -199,7 +199,7 @@ test('offline import uses the original Core boundary hash and stable event id', 
 test('renewing a host cookie preserves the physical device import identity and deduplication', async t => {
   const f = await fixture(t), mutableIdentity = { ...identity };
   f.context.cloudIdentity.offlineDeviceId = () => 'trusted-physical-device';
-  f.context.authenticate = () => ({ ...mutableIdentity, via: 'cookie', device: { authKind: 'cloud' } });
+  f.context.authenticate = () => ({ ...mutableIdentity, via: 'cookie', device: { authKind: 'cloud',scopes:['sessions:read','commands:write','account:manage'] } });
   const vault = await W.browserVault('renewal', { indexedDB: new IDBFactory(), crypto: webcrypto });
   vault.complete = async () => ({ choices: [{ message: { content: '已收到偏好' } }] });
   const engine = await W.create({ vault, identity: mutableIdentity, host: f.host,
