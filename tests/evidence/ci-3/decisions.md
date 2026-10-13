@@ -62,3 +62,7 @@ CI-1 第六轮 next-suggestions 的 f.aborted false≠true 早于本表起点：
 本机排队脚本有一次以Stop接收native stderr（原生进程标准错误）而截断TAP（测试输出协议）原断言；记录为输出采集失败，旧JSON不作为该轮通过证据。改为完整接收流后，同命令严格复验1937通过／0失败／14既有跳过；不能凭该次恢复宣称已定位原来的一个叶失败。另有一次同步探针与完整必过约20秒名额重叠，已记录；后续包内串行。
 
 同步修复前的第二额外观察轮中，主流程与macOS组通过，但中继手机 `Relay phone first input and file task` 在46503.876746ms报 `first send did not complete`，现场为首次发送完成等待（services/cloud/test/relay-phone.test.mjs:169）。它不是预算豁免；该流程归MOB-3/MOB-4，本包不改手机发送／审批／选择器。该轮结论保存在 extra-round-2.json；首轮的macOS红灯与第二轮中继红灯均不能抹掉或当作全绿。
+
+## 第三轮：项目冷启动仍超期（产品问题）
+
+`49ecbf56` 第3轮主流程成功，但打包程序项目登记未完成。真实Electron进程标准错误明确为 `wm:desktop:project-create` 的 PROJECT_READER_TIMEOUT，详见 reader-timeout-package-evidence.json、reader-cold-start-round3.json。旧初始化15秒仍没有为PowerShell（命令解释器）／C#（编程语言）冷启动留足余量；这是产品路径，不能当作功能重试例外。最终冷启动独立30秒，实际读取15秒与全部文件安全／大小／扫描限制不变，合计上限约45秒，不重试操作。失败日志新增初始化／操作阶段、耗时与输出字节概况，不记录项目路径／正文／凭据。固定16秒初始化样例旧版必提前终止、新版读完；卡住的启动仍30秒结束，卡住的读取仍15秒结束。旧第三轮明确失败，前两轮成功也保留，不计入最终代码六轮。

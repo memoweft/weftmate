@@ -40,11 +40,17 @@ test('project reader excludes initialization from its existing 15s operation bud
   f.child.stdout.write(JSON.stringify({ok:true,value:'exact bounded read'}));f.child.emit('close',0);
   assert.equal(await f.work,'exact bounded read');
 });
-test('project reader still terminates a stuck initialization or operation at 15s with phase evidence',async()=>{
+test('a 16s cold initialization does not fail before the exact project operation starts',async()=>{
+  const f=readerFixture();f.advance(16000);assert.equal(f.killed,false);
+  f.child.stdout.write('WEFTMATE_PROJECT_READER_READY\n');f.advance(1000);
+  f.child.stdout.write(JSON.stringify({ok:true,value:'exact bounded read'}));f.child.emit('close',0);
+  assert.equal(await f.work,'exact bounded read');
+});
+test('project reader still terminates bounded initialization or 15s operation with phase evidence',async()=>{
   for(const ready of [false,true]){
     const f=readerFixture();if(ready)f.child.stdout.write('WEFTMATE_PROJECT_READER_READY\n');
     const rejected=assert.rejects(f.work,(error:any)=>error.code==='PROJECT_READER_TIMEOUT'&&error.readerEvidence.phase===(ready?'operation':'initialization'));
-    f.advance(15000);await rejected;assert.equal(f.killed,true);
+    f.advance(ready?15000:30000);await rejected;assert.equal(f.killed,true);
   }
 });
 test('inherited managed temp scopes never overwrite the creator heartbeat',()=>{
