@@ -95,7 +95,7 @@ function pinDatabase(source) {
 export async function sqliteSnapshot(source, destination, check = () => {}) {
   return pinDatabase(source).copy(destination, check);
 }
-export async function snapshot({ root, directory, reason = 'manual', now = Date.now(), databaseBackup = sqliteSnapshot, withCapture = work => work(() => {}), cloudOwnerId = null, captureSecrets = null }) {
+export async function snapshot({ root, directory, reason = 'manual', now = Date.now(), databaseBackup = sqliteSnapshot, withCapture = work => work(() => {}), cloudOwnerId = null, captureSecrets = null, nativeSettingsReader }) {
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const id = `${new Date(now).toISOString().replace(/[:.]/g, '-')}-${randomUUID()}.wmb`;
   const stage = path.join(directory, `.${id}.stage`), temporary = path.join(directory, `.${id}.tmp`);
@@ -109,7 +109,7 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
     // Check the deadline between bounded chunks, including directory traversal.
     await withCapture(async check => {
       if (cloudOwnerId !== null) {
-        scope = await cloudScope(root, cloudOwnerId); check();
+        scope = await cloudScope(root, cloudOwnerId, { nativeSettingsReader }); check();
         if (captureSecrets) credentials = await captureSecrets(structuredClone(scope.metadata));
         check();
         manifest.cloud = structuredClone(scope.metadata);

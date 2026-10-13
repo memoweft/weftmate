@@ -1141,6 +1141,8 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 错误码包括 `CLOUD_BACKUP_RECOVERY_CODE`（`error.invalidGroups:[1..8]` 指出组）、`CLOUD_BACKUP_RECOVERY_MISMATCH`、`CLOUD_BACKUP_CORRUPT`、`CLOUD_BACKUP_CHUNKS_MISSING`、`CLOUD_BACKUP_NEWER_VERSION`、`CLOUD_BACKUP_POWER_NETWORK`、`BACKUP_QUOTA_EXCEEDED`、`BACKUP_GLOBAL_QUOTA_EXCEEDED`（`error.usage` 给当前占用）。页面不持久保存恢复码。界面分别提示重输、重试／换份、升级、接电并回私人网络、删除旧备份／先做本机备份。
 
+读取官方模型配置所需的运行时组件缺失时，返回既有 `RUNTIME_UNAVAILABLE`，状态为 `failed`，界面提示「这次备份没成功，请稍后重试」。这次捕获不产出备份、不导出凭据，也不以遗漏配置或复制整个配置文件替代；已有备份保持完整，下次可重试。
+
 云接口均要求云账号 DPoP（设备持钥证明）登录；已登录电脑后台可用已有安装签名，载荷绑定精确 action、账号 sub 和有效成员资格。服务只保存密文及最少传输状态，不能通过账号密码解开主钥匙。
 
 | 方法与完整路径 | 业务载荷／响应 |

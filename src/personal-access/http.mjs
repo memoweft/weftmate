@@ -1123,7 +1123,7 @@ export function createHttpHandler(context) {
           if (prior.kind !== 'register' || prior.payloadHash !== hash) throw failure('REQUEST_CONFLICT', 409);
           return context.json(response, 200, { project: publicProject(state.projects[prior.projectId]) });
         }
-        const inspected = await inspectProjectRoot(body.rootPath);
+        const inspected = await (context.projectRootInspector ?? inspectProjectRoot)(body.rootPath);
         const project = await context.serial(() => context.mutate(ownerId, (next) => {
           const latest = context.authenticate(request, 'account:manage');
           if (latest.ownerId !== ownerId || latest.deviceId !== current.deviceId || !context.hostOwner(ownerId)) {

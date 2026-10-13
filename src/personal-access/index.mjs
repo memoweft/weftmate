@@ -93,11 +93,12 @@ export { uniqueSessionOwner } from './store.mjs';
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
   mobileUiDir = null, mobileUiTrustedKeys = null, hostVersion = '0.1.0', sharedProfileIsFormal = () => false, memoryManager = null,
   allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
-  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null, cloudBackup = null, updateStatus = null, nativeMinimumVersions = {}, libraryNativeActions = null, connectorVault = null, connectorRuntime = null }) {
+  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null, cloudBackup = null, updateStatus = null, nativeMinimumVersions = {}, libraryNativeActions = null, connectorVault = null, connectorRuntime = null, projectRootInspector = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
       typeof sharedProfileIsFormal !== 'function' ||
+      (projectRootInspector !== null && typeof projectRootInspector !== 'function') ||
       (accountModelManager !== null && (typeof accountModelManager.stageSecret !== 'function' ||
         typeof accountModelManager.apply !== 'function' ||
         typeof accountModelManager.inspect !== 'function' ||
@@ -251,6 +252,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     eraseChatCopies,
     get offline() { return offline; },
     get backupManager() { return backupManager; },
+    get projectRootInspector() { return projectRootInspector; },
     get cloudBackupManager() { return hostCloudBackup; },
     backupOwner: ownerId => hostOwner(ownerId) || hostCloudIdentity?.isInstallationOwner(ownerId) === true,
     restoredCloudOwner: (issuer, sub) => Array.isArray(restoredCloudOwners) ? restoredCloudOwners.find(row => row.issuer === issuer && row.sub === sub && rootState.accounts[row.ownerId])?.ownerId : undefined,
