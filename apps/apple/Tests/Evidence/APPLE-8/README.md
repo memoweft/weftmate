@@ -52,3 +52,16 @@
 最终构建、断言数字、截图尺寸/SHA、模拟器与系统报告台账见 validation.json / screenshots.json 和相应检查摘要。完整CI由Claude收取，不等待。
 
 图片消息格式核对官方文档：[OpenAI Chat image_url](https://developers.openai.com/api/docs/guides/images-vision?api-mode=chat)、[Claude OpenAI SDK compatibility](https://platform.claude.com/docs/en/cli-sdks-libraries/libraries/openai-sdk)。仅处理图片输入，不增加生成图片功能。
+
+## 最终原生截图
+
+后台指定16 Pro合计启动2次，未打开Simulator.app。第1批三个有效浅色历史图见attempt-1；模型不支持图片说明的Text在原生Menu被丢掉，保留失败，改成禁用项的可见名称直接说明。第2批最终XCTest 1/1、六个场景全部通过，以下1206×2622原图逐张看过，带状态栏，SHA见screenshots.json：
+
+- apple8-light-menu.png：三项菜单。
+- apple8-light-draft.png：合成JPEG和Markdown输入区、相同×。
+- apple8-light-sent.png：附件消息与合成回复。
+- apple8-light-text.png：两个图片项禁用且可见原因、文件仍可用。
+- apple8-dark-draft.png：深色双附件和删除按钮。
+- apple8-dark-sent.png：深色附件消息。
+
+原生XCTest里有2条_UIReparentingView/UIHostingController层级warning附件；最终测试0失败、截图正常，无产品崩溃报告，未改系统或私有视图层级。两批都shutdown all并冷却3分钟，诊断台账无新增GPU/WindowServer/Kernel/WeftMatePhone，kern.boottime未变。额度已用完，不再启动。
