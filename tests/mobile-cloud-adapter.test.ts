@@ -60,13 +60,13 @@ test('cached native content restores without a server request or cloud credentia
 
 test('new account selects its own computer without pairing and validates the connection identity', async () => {
   const calls = [], connected = [];
-  const base = { host: 'https://cloud.example', config: { hostId: 'unconnected', issuer: 'https://cloud.example/personal/v1/cloud/oidc' },
+  const base = { host: 'https://cloud.example', config: { clientId:'weftmate-web',hostId: 'unconnected', issuer: 'https://cloud.example/personal/v1/cloud/oidc' },
     authorized: async (path, options) => { calls.push({ path, options }); return path === '/devices' ? { hosts: [{ hostId: 'own-computer', status: 'online' }] } : { baseUrl: 'https://computer.example' }; },
-    request: async () => ({ hostId: 'own-computer', issuer: 'https://cloud.example/personal/v1/cloud/oidc' }),
+    request: async () => ({ clientId:'desktop-client',hostId: 'own-computer', issuer: 'https://cloud.example/personal/v1/cloud/oidc' }),
     exchange: async () => ({ account: { ownerId: 'synthetic-owner' } }) };
   const client = context().adaptMobileCloudClient({ ...base, config: { ...base.config } }, value => connected.push(value));
   assert.equal((await client.exchange()).account.ownerId, 'synthetic-owner');
-  assert.equal(client.host, 'https://computer.example'); assert.equal(connected.length, 1);
+  assert.equal(client.config.clientId,'weftmate-web');assert.equal(client.host, 'https://computer.example'); assert.equal(connected.length, 1);
   assert.equal(calls[1].options.body.hostId, 'own-computer');
   const wrong = context().adaptMobileCloudClient({ ...base, config: { ...base.config }, request: async () => ({ hostId: 'other-computer', issuer: base.config.issuer }) });
   await assert.rejects(wrong.exchange(), error => error.code === 'HOST_TRUST_INVALID');
