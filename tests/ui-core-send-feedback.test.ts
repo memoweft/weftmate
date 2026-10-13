@@ -62,3 +62,23 @@ test('FIX-32 repeated pending text is visible and disabled',async()=>{
   assert.equal(f.core.composerState('合成草稿').sendDisabled,true);await f.core.sendDraft('合成草稿');
   assert.ok(f.paints.some(p=>p.name==='toast'));assert.equal(f.requests.length,0);
 });
+
+for(const [name,block] of [['chat API unavailable',c=>c.state.personalCapabilities.chatSend=0],['main read only',c=>c.state.mainChat.sendAvailable=false]])test(`FIX-32 main send explains ${name}`,async()=>{
+ const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chatSend:1},mainChat:{chatId:'main',sendAvailable:true},selectedChatId:'main',activeChatSource:'desktop'});block(f.core);
+ assert.equal(f.core.composerState('保留的草稿').sendDisabled,true);await f.core.sendDraft('保留的草稿');assert.ok(f.paints.some(p=>p.name==='toast'));assert.equal(f.requests.length,0);
+});
+
+test('FIX-32 main duplicate during asynchronous acceptance is disabled and explained',async()=>{
+ const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chatSend:1},mainChat:{chatId:'main',sendAvailable:true},selectedChatId:'main',activeChatSource:'desktop'});
+ let resolve;const gate=new Promise(done=>resolve=done);let sends=0;
+ f.core.submitCommand=()=>{sends++;return gate};f.core.refreshHistory=async()=>{};
+ const first=f.core.sendDraft('第一句话');assert.equal(f.core.composerState('第一句话').sendDisabled,true);await f.core.sendDraft('第一句话');assert.equal(sends,1);assert.ok(f.paints.some(p=>p.name==='toast'));
+ resolve(null);await first;
+});
+
+test('FIX-32 thinking write disables send and explains a stale activation',async()=>{
+ let resolve;const gate=new Promise(done=>resolve=done);
+ const f=fixture(path=>path.endsWith('/thinking')?gate:response({}));f.core.state.models[0].deepThinking={supported:true};
+ const save=f.core.setDeepThinking(true);assert.equal(f.core.composerState('保留的草稿').sendDisabled,true);await f.core.sendDraft('保留的草稿');assert.ok(f.paints.some(p=>p.name==='toast'));assert.equal(f.requests.some(r=>r.options.method==='POST'),false);
+ resolve(response({session:{sessionId:'session-test',deepThinking:true}}));await save;
+});
