@@ -1,0 +1,21 @@
+Test Suite 'WeftMateCorePackageTests.xctest' passed at 2026-10-12 22:09:08.744.
+Test Suite 'Selected tests' passed at 2026-10-12 22:09:08.744.
+◇ Test phoneFirstFallsBackOnlyForLegacyUnknownFieldRejection() started.
+◇ Test phoneFirstNoComputerModelStillRegistersReceivesAndChatsWithPhoneModel() started.
+✔ Test wrongCloudAccountAndGenerationDeleteEverything() passed after 0.009 seconds.
+✔ Test standalonePhoneTurnsUseExistingEncryptedOutboxAndReceipts() passed after 0.285 seconds.
+✔ Test phoneFirstFallsBackOnlyForLegacyUnknownFieldRejection() passed after 2.483 seconds.
+✔ Test accountChangeAfterProcessRestartDeletesPreviousScope() passed after 2.960 seconds.
+✔ Test windowsEnvelopeOriginalAADTagTamperAndIdentity() passed after 2.960 seconds.
+✔ Test watchBackgroundRefreshCannotRetainAnApprovalOnFailure() passed after 2.960 seconds.
+✔ Test controlUnavailableSendsNothingAndRevocationClears(revocation:) with 2 test cases passed after 2.960 seconds.
+✔ Test receiptLossRetriesIdenticalTurnAndCookieRenewalKeepsKey() passed after 3.396 seconds.
+✔ Test encryptedStorageDeletionAndKeyRotation() passed after 3.400 seconds.
+✔ Test deltaRemoveAndResetEraseInheritedHistory() passed after 3.402 seconds.
+✔ Test longUnicodeReplyFitsHostTurnContract() passed after 3.404 seconds.
+✔ Test phoneFirstNoComputerModelStillRegistersReceivesAndChatsWithPhoneModel() passed after 3.408 seconds.
+✔ Test modelResponseAfterRemoteRevocationIsDiscarded() passed after 3.408 seconds.
+✔ Test logoutDuringModelRequestCannotResurrect() passed after 3.408 seconds.
+✔ Test relatedRecallBoundedContextAndDependencies() passed after 3.409 seconds.
+✔ Suite OfflineTests passed after 3.410 seconds.
+✔ Test run with 15 tests in 1 suite passed after 3.410 seconds.
