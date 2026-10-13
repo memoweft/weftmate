@@ -5,6 +5,7 @@ const root=resolve(import.meta.dirname,'../../..'),locks='D:/AIProjects/WeftMate
 const mode=process.argv[2],out=join(root,'.local/and5');await mkdir(out,{recursive:true});
 const jobs={
   gradle:['pwsh',['-NoProfile','-File',join(import.meta.dirname,'build.ps1')]],
+  spec:['node',[join(import.meta.dirname,'spec-preview.mjs')]],
   required:['node',['.github/scripts/ci-unit-tests.mjs','required','--report','tests/evidence/and-5/required.json']],
   vendor:['node',['.github/scripts/ci-unit-tests.mjs','vendor','--report','tests/evidence/and-5/vendor.json']],
   mobile:['node',['--test','tests/personal-cloud-web.test.ts','apps/mobile-ui/tests/cloud-login.test.mjs','apps/mobile-ui/tests/chat-interactions.test.mjs','apps/mobile-ui/tests/visual-interactions.test.mjs','apps/mobile-ui/tests/approval-interactions.test.mjs']]

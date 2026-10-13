@@ -18,7 +18,7 @@ const report={synthetic:true,instrumentation:[],screenshots:[],notifications:[]}
 const safe=s=>String(s).replace(/C:[\\/]Users[\\/][^\\/\s]+/gi,'C:/Users/<user>').replace(/DESKTOP-[A-Z0-9-]+/gi,'<host>');
 const run=(...args)=>execFileSync(adbExecutable,[...serverArgs(),'-s',serial,...args],{encoding:'utf8',windowsHide:true,maxBuffer:8*1024*1024,timeout:30000});
 async function acquire(path,label){const f=await open(path,'wx');await f.writeFile(`AND-5 ${new Date().toISOString()} ${label}`);await f.close();return path;}
-async function until(check,label){for(let i=0;i<150;i++){if(await check())return;await pause(200);}throw Error(`Timed out: ${label}`);}
+async function until(check,label){for(let i=0;i<150;i++){if(report.occupancy&&Date.now()-Date.parse(report.occupancy.mumuStartedAt)>18*60*1000)throw Error('Release MuMu before 20 minute ownership limit');if(await check())return;await pause(200);}throw Error(`Timed out: ${label}`);}
 const probe=()=>{run('shell','am','broadcast','-n',`${pkg}/com.memoweft.weftmate.mobile.And5QaReceiver`);return JSON.parse(run('shell','run-as',pkg,'cat','files/and5-ready.json'));};
 async function screenshot(file,theme,width){const data=execFileSync(adbExecutable,[...serverArgs(),'-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:12*1024*1024});await writeFile(join(out,file),data);report.screenshots.push({file,pageTheme:theme,widthDp:width,systemVersion:report.systemVersion,systemTheme:'unchanged emulator setting'});}
 async function clickNotification(cold){
@@ -58,6 +58,18 @@ try{
     for(const file of files){const data=execFileSync(adbExecutable,[...serverArgs(),'-s',serial,'exec-out','run-as',pkg,'cat',`files/${file}`],{windowsHide:true,maxBuffer:12*1024*1024});await writeFile(join(out,file),data);if(file.endsWith('.png'))report.screenshots.push({file,pageTheme:theme,widthDp:width,systemVersion:report.systemVersion,systemTheme:'unchanged emulator setting'});}
     report.instrumentation.push({width,theme,passed:/OK \(1 test\)/.test(log)});if(!report.instrumentation.at(-1).passed)throw Error(`Native instrumented test failed ${width} ${theme}`);
   }
+  // Same synthetic long conversation, light baseline and dark fixed-panel blur.
+  report.longScroll=[];
+  await fetch(`${fixture.origin}/__qa/long`);
+  for(const theme of ['light','dark']){
+    run('shell','am','start','-n',`${pkg}/com.memoweft.weftmate.mobile.NativeActivity`);
+    await until(()=>probe().ready,'long conversation setup');
+    run('shell','am','broadcast','-n',`${pkg}/com.memoweft.weftmate.mobile.And5QaReceiver`,'--es','command','scroll-chat','--es','theme',theme);
+    await until(()=>{const p=probe();return p.tab==='chat'&&p.rows>=75},'synthetic long history');await pause(500);
+    run('shell','dumpsys','gfxinfo',pkg,'reset');for(let i=0;i<12;i++)run('shell','input','swipe','500','350','500','1050','250');
+    const frames=safe(run('shell','dumpsys','gfxinfo',pkg));await writeFile(join(out,`long-scroll-${theme}.txt`),frames);
+    report.longScroll.push({theme,swipes:12,rows:probe().rows,totalFrames:Number(frames.match(/Total frames rendered:\s*(\d+)/)?.[1]||0),jankyFrames:Number(frames.match(/Janky frames:\s*(\d+)/)?.[1]||0),file:`long-scroll-${theme}.txt`});
+  }
   // Real production Notification contentIntent; no fabricated navigation extras.
   for(const cold of [false,true]){
     run('shell','am','start','-n',`${pkg}/com.memoweft.weftmate.mobile.NativeActivity`);
@@ -79,6 +91,9 @@ try{
   if(fixture){report.requests=fixture.requests;report.reads=fixture.reads;await fixture.close().catch(()=>{});}
   if(serial){try{run('shell','rm','-f',notificationXml)}catch{}if(installed){try{run('uninstall',`${pkg}.test`)}catch{}try{run('uninstall',pkg)}catch{}}if(reversed)try{run('reverse','--remove',`tcp:${new URL(fixture.origin).port}`)}catch{}try{execFileSync(adbExecutable,[...serverArgs(),'disconnect',serial],{windowsHide:true,timeout:5000})}catch{}}
   if(adbPort)try{execFileSync(adbExecutable,[...serverArgs(),'kill-server'],{windowsHide:true,timeout:5000});report.privateAdbClosed=true}catch{report.privateAdbClosed=false}
+  // Render the exact supplied control previews after releasing the Android surface.
+  if(mumu){await unlink(mumu);mumu=null;}
+  if(report.instrumentation.length===4&&report.instrumentation.every(r=>r.passed))try{const preview=await exec(process.execPath,[join(out,'spec-preview.mjs')],{cwd:root,windowsHide:true,timeout:30000,maxBuffer:1024*1024});report.specPreview={passed:true,output:safe(preview.stdout)}}catch(e){report.specPreview={passed:false,failure:safe(e.message)};process.exitCode=1;}
   for(const lock of [mumu,heavy])if(lock)await unlink(lock);
   if(report.occupancy)report.occupancy.releasedAt=new Date().toISOString();
   await writeFile(join(out,'native-report.json'),JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify({instrumentation:report.instrumentation,notifications:report.notifications,failure:report.failure})+'\n');

@@ -54,7 +54,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         activity.nativeRequest(method, params) { r -> if (c.isActive) r.fold({ c.resume(it) }, { c.resumeWithException(it) }) }
     }
     suspend fun business(path: String, method: String = "GET", body: JSONObject? = null) = call("host.business", JSONObject().put("path", "/personal/v1$path").put("method", method).apply { body?.let { put("body", it) } })
-    fun launch(action: suspend () -> Unit): Job = scope.launch { try { action() } catch (e: CancellationException) { throw e } catch (_: Exception) { error = "暂时没能完成，请重试。" } }
+    private fun launchJob(action: suspend () -> Unit): Job = scope.launch { try { action() } catch (e: CancellationException) { throw e } catch (_: Exception) { error = "暂时没能完成，请重试。" } }
+    fun launch(action: suspend () -> Unit) { launchJob(action) }
     fun start() { launch { bootstrap() } }
     suspend fun bootstrap() {
         val b = call("app.bootstrap")
@@ -106,13 +107,19 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         poll = scope.launch { while (isActive && g == generation) { delay(if (running) 250 else 2500); if (tab == "chat" && activity.nativeForeground) refresh() } }
     }
     fun saveDraft() { if (owner.isNotBlank() && chatId.isNotBlank()) prefs.edit().putString("draft:$owner:$chatId", draft).apply() }
-    /** Activity sources use the existing timeline anchor endpoint; keep its history cursor. */
-    suspend fun locateActivityEvent(eventId: String) {
+    /** Preserve continuous history: the existing UI pages from latest to older. */
+    suspend fun locateActivityTarget(target: JSONObject): Boolean {
         val g = generation
-        val page = business("/chats/$chatId/events?around=${java.net.URLEncoder.encode(eventId, "UTF-8")}&limit=100")
-        if (g != generation) return
-        timeline.merge(page, true); rows = timeline.rows()
-        olderCursor = page.stringOrEmpty("olderCursor"); hasOlder = page.optBoolean("hasOlder")
+        while (g == generation && rows.none { feedTargetMatches(it, target) }) {
+            while (refreshing && g == generation) delay(50)
+            if (g != generation || !hasOlder) return false
+            val before = olderCursor
+            refresh(true)
+            if (g != generation) return false
+            if (rows.none { feedTargetMatches(it, target) } && hasOlder && olderCursor == before)
+                throw ApiFailure(503, "ACTIVITY_SOURCE_UNAVAILABLE")
+        }
+        return g == generation
     }
     fun edit(text: String) { draft = text; saveDraft(); launch { call("native.draft",JSONObject().put("hasDraft",text.isNotEmpty() || attachments.isNotEmpty())) } }
     suspend fun refreshAttachments() { attachments = call("attachments.list", JSONObject().put("conversationId", chatId)).optJSONArray("attachments")?.objects().orEmpty() }
@@ -180,7 +187,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     fun stop() = launch { if (phone) call("chat.stop") else if (sessionId.isNotBlank()) call("shared.stop", JSONObject().put("sessionId", sessionId).put("requestId", "stop-${UUID.randomUUID()}")); refresh() }
     fun pick(kind: String) = launch { call("attachments.pick", JSONObject().put("conversationId", chatId).put("kind", kind)) }
     fun remove(row: JSONObject) = launch { call("attachments.remove", JSONObject().put("conversationId", chatId).put("attachmentId", row.getString("attachmentId"))); refreshAttachments() }
-    fun decide(row: JSONObject, outcome: String, decisionScope: String = "once") = launch {
+    fun decide(row: JSONObject, outcome: String, decisionScope: String = "once") = launchJob {
         val id = row.getString("approvalId"); val key = "decision:$owner:$sessionId:$id"
         val p = prefs.getString(key, null)?.let(::JSONObject) ?: JSONObject().put("sessionId", sessionId).put("approvalId", id).put("requestId", "approve-${UUID.randomUUID()}").put("outcome", outcome).apply { if (outcome != "rejected") put("scope", decisionScope) }
         check(prefs.edit().putString(key, p.toString()).commit())
