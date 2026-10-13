@@ -155,7 +155,7 @@ try {
     const approve = page.getByRole('button', { name: '批准', exact: true }).first();
     await approve.waitFor({ timeout: 90000 });
     assert.equal(await readFile(join(project, 'result.md')).then(() => true).catch(() => false), false, 'write cannot precede approval');
-    if (approvals === 1) await shots('write-approval');
+    if (approvals === 1) await shots('between-file-steps');
     await approve.click(); approvals++;
   }
   await until(async () => (await readFile(join(project, 'result.md'), 'utf8').catch(() => '')) === written, 'physical project output');

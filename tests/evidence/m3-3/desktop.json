@@ -20,8 +20,8 @@
     "electron-1200-dark-first-open.png",
     "electron-1200-light-main-chat.png",
     "electron-1200-dark-main-chat.png",
-    "electron-1200-light-write-approval.png",
-    "electron-1200-dark-write-approval.png",
+    "electron-1200-light-between-file-steps.png",
+    "electron-1200-dark-between-file-steps.png",
     "electron-1200-light-project-output.png",
     "electron-1200-dark-project-output.png",
     "electron-1200-light-restart.png",
@@ -39,5 +39,6 @@
   "completed": true,
   "newGpuOrWindowServerReports": 0,
   "machineRestarted": false,
-  "finishedAt": "2026-10-13T05:48:16.267Z"
+  "finishedAt": "2026-10-13T05:48:16.267Z",
+  "approvalScreenshotBoundary": "Captured frames fall between file steps; approval waits/clicks and prevented-before-approval write are behavioral evidence, not a stable approval-bar screenshot."
 }
