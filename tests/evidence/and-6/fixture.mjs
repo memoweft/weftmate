@@ -12,7 +12,19 @@ export async function startGoalsFixture(){
   const cookie=login.headers.getSetCookie().map(s=>s.split(';')[0]).join('; ');
   chat=(await(await fetch(`${base.origin}/personal/v1/chats/main`,{headers:{cookie}})).json()).chat;
   const source={sessionId:chat.activeSessionId,chatId:chat.chatId,chatKind:'main'};
-  function reset(){mode='list';receipts.clear();schedules=[{id:'water',sessionId:source.sessionId,text:'每天早上提醒喝水',kind:'reminder',timeZone:'Asia/Shanghai',repeat:{kind:'daily',time:'09:00:00'},state:'scheduled',nextRunAt:new Date(Date.now()+86400000).toISOString(),lastRunAt:new Date(Date.now()-20000).toISOString(),lastResult:{state:'delivered'},revision:1,conversationTitle:'WeftMate 主对话',source},{id:'weekly',sessionId:source.sessionId,text:'整理本周项目进展',kind:'task',timeZone:'Asia/Shanghai',repeat:{kind:'weekly',time:'09:00:00',weekday:1},state:'paused',nextRunAt:null,lastRunAt:null,lastResult:null,revision:1,conversationTitle:'WeftMate 主对话',source}];goals=[{id:'long',revision:1,title:'完成秋季项目',description:'检查点：整理资料，再写结论。',objective:'完成秋季项目',phase:'active',progress:'已推进 2 轮',roundsStarted:2,createdAt:Date.now()-86400000,updatedAt:Date.now(),conversationTitle:'WeftMate 主对话',source,scheduleIds:['weekly']}];records=[{id:'record-1',scheduleId:'water',sessionId:source.sessionId,text:'该喝水了，休息一下。',kind:'reminder',createdAt:new Date().toISOString(),scheduledAt:new Date().toISOString(),source}];}
+  const nextAt=body=>{
+    if(body.at)return new Date(`${body.at.date}T${body.at.time}+08:00`).toISOString();
+    const repeat=body.repeat||{kind:'daily',time:'09:00:00'};
+    if(repeat.kind==='interval')return new Date(Date.now()+repeat.seconds*1000).toISOString();
+    const local=new Date(Date.now()+8*3600000),[h,m,s]=repeat.time.split(':').map(Number);
+    for(let offset=0;offset<63;offset++){
+      const day=new Date(Date.UTC(local.getUTCFullYear(),local.getUTCMonth(),local.getUTCDate()+offset));
+      if(repeat.kind==='weekly'&&day.getUTCDay()!==repeat.weekday||repeat.kind==='monthly'&&day.getUTCDate()!==repeat.day)continue;
+      const at=Date.UTC(day.getUTCFullYear(),day.getUTCMonth(),day.getUTCDate(),h-8,m,s||0);if(at>Date.now())return new Date(at).toISOString();
+    }
+    throw Error('Synthetic calendar date unavailable');
+  };
+  function reset(){mode='list';receipts.clear();schedules=[{id:'water',sessionId:source.sessionId,text:'每天早上提醒喝水',kind:'reminder',timeZone:'Asia/Shanghai',repeat:{kind:'daily',time:'09:00:00'},state:'scheduled',nextRunAt:nextAt({repeat:{kind:'daily',time:'09:00:00'}}),lastRunAt:new Date(Date.now()-20000).toISOString(),lastResult:{state:'delivered'},revision:1,conversationTitle:'WeftMate 主对话',source},{id:'weekly',sessionId:source.sessionId,text:'整理本周项目进展',kind:'task',timeZone:'Asia/Shanghai',repeat:{kind:'weekly',time:'09:00:00',weekday:1},state:'paused',nextRunAt:null,lastRunAt:null,lastResult:null,revision:1,conversationTitle:'WeftMate 主对话',source}];goals=[{id:'long',revision:1,title:'完成秋季项目',description:'检查点：整理资料，再写结论。',objective:'完成秋季项目',phase:'active',progress:'已推进 2 轮',roundsStarted:2,createdAt:Date.now()-86400000,updatedAt:Date.now(),conversationTitle:'WeftMate 主对话',source,scheduleIds:['weekly']}];records=[{id:'record-1',scheduleId:'water',sessionId:source.sessionId,text:'该喝水了，休息一下。',kind:'reminder',seq:2,createdAt:new Date().toISOString(),scheduledAt:new Date().toISOString(),source}];}
   reset();
   const server=createServer(async(req,res)=>{try{
     const u=new URL(req.url,'http://localhost'),p=u.pathname;
@@ -28,13 +40,13 @@ export async function startGoalsFixture(){
       let value={ok:true},status=200;
       if(p==='/personal/v1/schedules'&&req.method==='POST'){
         if(!body.text?.trim()||!body.sessionId||(!body.at&&!body.repeat))return json(res,{error:{code:'INVALID_REQUEST'}},400);
-        const row={...body,id:`created-${randomUUID()}`,revision:1,state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:new Date(Date.now()+86400000).toISOString(),lastRunAt:null,lastResult:null,source,conversationTitle:'WeftMate 主对话'};schedules.push(row);value={item:row};status=201;
+        const row={...body,id:`created-${randomUUID()}`,revision:1,state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:nextAt(body),lastRunAt:null,lastResult:null,source,conversationTitle:'WeftMate 主对话'};schedules.push(row);value={item:row};status=201;
       }else if(p.startsWith('/personal/v1/schedules/')){
         const parts=p.split('/'),id=decodeURIComponent(parts[5]),row=schedules.find(r=>r.id===id);if(!row)return json(res,{error:{code:'NOT_FOUND'}},404);
         if(req.method==='DELETE')schedules=schedules.filter(r=>r!==row);
         else if(req.method==='PATCH'){if(body.expectedRevision!==row.revision)return json(res,{error:{code:'REVISION_CHANGED'}},409);Object.assign(row,body,{revision:row.revision+1});value={item:row};}
         else if(parts[6]==='run'){row.lastRunAt=new Date().toISOString();row.lastResult={state:row.kind==='task'?'queued':'delivered'};records.unshift({id:randomUUID(),scheduleId:row.id,sessionId:row.sessionId,text:row.text,kind:row.kind,createdAt:row.lastRunAt,source});}
-        else {row.state=parts[6]==='pause'?'paused':'scheduled';row.nextRunAt=row.state==='paused'?null:new Date(Date.now()+86400000).toISOString();}
+        else {row.state=parts[6]==='pause'?'paused':'scheduled';row.nextRunAt=row.state==='paused'?null:nextAt(row);}
       }else if(p==='/personal/v1/goals'){if(goals.some(r=>r.source.sessionId===body.sessionId&&r.phase!=='complete'))return json(res,{error:{code:'GOAL_ALREADY_EXISTS'}},409);const row={id:randomUUID(),revision:1,title:body.title,description:body.description,phase:'active',progress:'尚未推进',source};goals.push(row);value={ref:{id:row.id,revision:1}};status=201;}
       else if(p.endsWith('/complete'))goals=goals.map(r=>r.id===body.ref.id?{...r,phase:'complete',revision:r.revision+1}:r);
       else if(p.endsWith('/archive'))goals=goals.filter(r=>r.id!==body.ref.id);

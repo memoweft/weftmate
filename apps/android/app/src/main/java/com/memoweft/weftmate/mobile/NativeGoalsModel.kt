@@ -162,7 +162,7 @@ internal class NativeGoalsModel(private val chat: NativeChatModel, private val a
     fun openSource(row:JSONObject)=launch {
         val g=epoch
         if(row.stringOrEmpty("hostId").isNotEmpty()&&row.stringOrEmpty("hostId")!=primaryHost){openOriginal(row,"chat");return@launch}
-        val source=row.optJSONObject("source") ?: JSONObject().put("sessionId",goalSession(row));var id=source.stringOrEmpty("chatId")
+        val source=goalSource(row);var id=source.stringOrEmpty("chatId")
         if(id.isEmpty())id=chat.business("/sessions/${encode(goalSession(row))}/chat").stringOrEmpty("chatId")
         val conversation=chat.business("/chats/${encode(id)}").getJSONObject("chat");if(g!=epoch)return@launch;chat.select(conversation);if(g!=epoch)return@launch
         if(source.has("seq")||source.stringOrEmpty("eventId").isNotEmpty()){chat.locateActivityTarget(source);activity.feed.focusTarget=source}

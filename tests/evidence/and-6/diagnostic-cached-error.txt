@@ -1,0 +1,71 @@
+INSTRUMENTATION_STATUS: class=com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest:
+INSTRUMENTATION_STATUS: test=nativeGoalsFlow
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: No node found that matches Text + EditableText contains '重试' (ignoreCase: false) in scrollable container
+Semantics of the node:
+Node #1471 at (l=0.0, t=191.0, r=720.0, b=1144.0)px
+IsTraversalGroup = 'true'
+VerticalScrollAxisRange = 'ScrollAxisRange(value=4593.0, maxValue=4593.0, reverseScrolling=false)'
+CollectionInfo = 'androidx.compose.ui.semantics.CollectionInfo@6397bb1'
+ContentDescription = '[目标列表]'
+Actions = [ScrollBy, ScrollByOffset, IndexForKey, ScrollToIndex, GetScrollViewportLength]
+Has 6 children, 8 siblings
+Selector used: (ContentDescription = '目标列表' (ignoreCase: false))
+
+	at androidx.compose.ui.test.ActionsKt.performScrollToNode(Actions.kt:264)
+	at com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest.scrollTo(NativeGoalsInstrumentedTest.kt:28)
+	at com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest.nativeGoalsFlow(NativeGoalsInstrumentedTest.kt:66)
+
+INSTRUMENTATION_STATUS: stream=
+Error in nativeGoalsFlow(com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest):
+java.lang.AssertionError: No node found that matches Text + EditableText contains '重试' (ignoreCase: false) in scrollable container
+Semantics of the node:
+Node #1471 at (l=0.0, t=191.0, r=720.0, b=1144.0)px
+IsTraversalGroup = 'true'
+VerticalScrollAxisRange = 'ScrollAxisRange(value=4593.0, maxValue=4593.0, reverseScrolling=false)'
+CollectionInfo = 'androidx.compose.ui.semantics.CollectionInfo@6397bb1'
+ContentDescription = '[目标列表]'
+Actions = [ScrollBy, ScrollByOffset, IndexForKey, ScrollToIndex, GetScrollViewportLength]
+Has 6 children, 8 siblings
+Selector used: (ContentDescription = '目标列表' (ignoreCase: false))
+
+	at androidx.compose.ui.test.ActionsKt.performScrollToNode(Actions.kt:264)
+	at com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest.scrollTo(NativeGoalsInstrumentedTest.kt:28)
+	at com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest.nativeGoalsFlow(NativeGoalsInstrumentedTest.kt:66)
+
+INSTRUMENTATION_STATUS: test=nativeGoalsFlow
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 33.037
+There was 1 failure:
+1) nativeGoalsFlow(com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest)
+java.lang.AssertionError: No node found that matches Text + EditableText contains '重试' (ignoreCase: false) in scrollable container
+Semantics of the node:
+Node #1471 at (l=0.0, t=191.0, r=720.0, b=1144.0)px
+IsTraversalGroup = 'true'
+VerticalScrollAxisRange = 'ScrollAxisRange(value=4593.0, maxValue=4593.0, reverseScrolling=false)'
+CollectionInfo = 'androidx.compose.ui.semantics.CollectionInfo@6397bb1'
+ContentDescription = '[目标列表]'
+Actions = [ScrollBy, ScrollByOffset, IndexForKey, ScrollToIndex, GetScrollViewportLength]
+Has 6 children, 8 siblings
+Selector used: (ContentDescription = '目标列表' (ignoreCase: false))
+
+	at androidx.compose.ui.test.ActionsKt.performScrollToNode(Actions.kt:264)
+	at com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest.scrollTo(NativeGoalsInstrumentedTest.kt:28)
+	at com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest.nativeGoalsFlow(NativeGoalsInstrumentedTest.kt:66)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1
