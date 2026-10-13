@@ -23,7 +23,7 @@ globalThis.WeftUiComponents.factories.computers = (core,ui) => {
     return {request,close};
   }
   function paintComputers() {
-    if(!button)return;button.hidden=!core.hasMultipleComputers?.();
+    if(!button)return;button.hidden=!core.canChooseExecutionComputer?.();
     button.setAttribute('aria-label',`在哪台电脑上做：${core.computerName?.(core.currentExecutionComputer?.()) || '这台电脑'}`);
     button.title=button.getAttribute('aria-label');button.setAttribute('aria-pressed',String(!button.hidden));
     button.disabled=!!core.state.submitting;

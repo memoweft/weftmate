@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 
-async function setup(){
+async function setup(extra:any={}){
   const ctx=vm.createContext({Date,Map,Set,Promise,URL,JSON,console,globalThis:null});ctx.globalThis=ctx;
   ctx.WeftUiCore={factories:{}};vm.runInContext(await readFile('src/ui-core/computers.js','utf8'),ctx);
   const calls:any[]=[],prefs=new Map();const core:any={state:{cloudAuth:{sub:'synthetic'},hostId:'a',sessions:[]},
@@ -15,7 +15,7 @@ async function setup(){
   const effects={paintComputers:()=>{},toast:()=>{},openComputerChannel:async(c:any)=>({close:()=>{},request:async(path:string,options:any)=>{calls.push({host:c.hostId,path,options});return {sessions:[{sessionId:'b-session',title:'B'}]};}})};
   core.accessBase='/personal/v1';core.authBase='/personal/v1/auth';core.requestJson=(url:string,options:any)=>coreOriginal(url.replace('/personal/v1',''),options);
   const coreOriginal=core.accessApi;
-  ctx.WeftUiCore.factories.computers(core,effects,{storage:{getItem:(k:string)=>prefs.get(k),setItem:(k:string,v:string)=>prefs.set(k,v)}});
+  ctx.WeftUiCore.factories.computers(core,effects,{...extra,storage:{getItem:(k:string)=>prefs.get(k),setItem:(k:string,v:string)=>prefs.set(k,v)}});
   return {ctx,core,calls};
 }
 test('execution defaults inherit sources, prefer last online computer, and choose the only online computer',async()=>{
@@ -39,6 +39,12 @@ test('a new conversation refreshes authoritative send availability before the fi
   core.updateComputerDirectory({hosts:[{hostId:'a',online:true},{hostId:'b',online:true}],capabilities:{multiHost:1}});
   core.refreshSessions=async()=>{reads++;core.state.sessions=[{sessionId:'new',hostId:'a',sendAvailable:true}];};
   await core.startNewConversation();assert.equal(reads,1);assert.equal(core.state.sessions[0].sendAvailable,true);
+});
+test('the desktop program keeps local conversations while showing the account computer directory',async()=>{
+  const {core,calls}=await setup({desktop:true});core.updateComputerDirectory({hosts:[{hostId:'a',online:true},{hostId:'b',online:true}],capabilities:{multiHost:1}});
+  assert.equal(core.hasMultipleComputers(),true);assert.equal(core.canChooseExecutionComputer(),false);
+  const listed=await core.accessApi('/sessions?archived=all');assert.equal(listed.sessions.length,1);assert.equal(calls.length,1);assert.equal(calls[0].host,'a');
+  await core.selectExecutionComputer('b');assert.equal(calls.length,1);
 });
 test('list merges by computer; sending and retries address only the selected computer; offline lists retain ownership',async()=>{
   const {core,calls}=await setup();const hosts=[{hostId:'a',name:'synthetic-desk',online:true},{hostId:'b',name:'synthetic-laptop',online:true}];
