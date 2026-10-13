@@ -1,0 +1,204 @@
+{
+  "initial": [
+    {
+      "file": "initial-screenshots/apple9-dark-add.png",
+      "theme": "dark",
+      "scene": "add",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "f63f9d0dbc22c3f3ab1ea268f2e3eab050f97afa9c61adab7ff3990c5ef74365",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-dark-addQueried.png",
+      "theme": "dark",
+      "scene": "addQueried",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "972dda55a4bc99eb377c9f11e66f657e40c97663ee9c89f4602a6439568924c8",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-dark-computers.png",
+      "theme": "dark",
+      "scene": "computers",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "3d1e7324ab5e417d7d83579ecd48ea1bb192de631ce41a24dc3abd5b614efc3e",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-dark-list.png",
+      "theme": "dark",
+      "scene": "list",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "f11e35a708363e7a933eeda38fc13aa1bcb46f430eca03e0290631d969d51d05",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-dark-one.png",
+      "theme": "dark",
+      "scene": "one",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "e174a050b3ed6cc483882ac869ad9dc51451101928d2286df5c858dcf7c46b37",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-dark-settings.png",
+      "theme": "dark",
+      "scene": "settings",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "3b72eaa4608de772100f49b0ec7d2706ef654973b0e287a90aa8773d3655bea1",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-dark-two.png",
+      "theme": "dark",
+      "scene": "two",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "63c6fe1175e11543949c831231cb486ce9f1867f6ab7efc71cbee83311ef57de",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-light-add.png",
+      "theme": "light",
+      "scene": "add",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "6dfede572f9ce1fbdcea79822898e9f9cdb61a42d27f12e0911c122b7226ce6a",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-light-addQueried.png",
+      "theme": "light",
+      "scene": "addQueried",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "c8d3f96d5f12917422be2e48acac6651d2207557c89d4dc90a2b8a441991b37f",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-light-computers.png",
+      "theme": "light",
+      "scene": "computers",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "df144d4ee11903de984b50402bb4187d8274a54cd34cc4332289aa7515d3d8a6",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-light-list.png",
+      "theme": "light",
+      "scene": "list",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "f1f7e0eb38dae2eea84d9152f01982e68f5566d0d21e6177ed46a55b86025ee8",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-light-one.png",
+      "theme": "light",
+      "scene": "one",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "22f03f8cfdf29680d7da2bde247d35a3c159dd0abf582f922d13d18eebe4f071",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-light-settings.png",
+      "theme": "light",
+      "scene": "settings",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "7b381d3a16d8f0467eb074e0dd3e9496c899eff50d173d7b16273231c5a2522f",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    },
+    {
+      "file": "initial-screenshots/apple9-light-two.png",
+      "theme": "light",
+      "scene": "two",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "8270895a705ec2cb26a77715fa7fa72514d28f7edc66d3e0c253a03ea6743fcf",
+      "stage": "initial screenshots before final title/connection wording/panel fixes; no final visual acceptance"
+    }
+  ],
+  "finalRecovered": 0,
+  "finalMissing": [
+    {
+      "theme": "light",
+      "scene": "one",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "light",
+      "scene": "two",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "light",
+      "scene": "settings",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "light",
+      "scene": "add",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "light",
+      "scene": "addQueried",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "light",
+      "scene": "computers",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "light",
+      "scene": "list",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "dark",
+      "scene": "one",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "dark",
+      "scene": "two",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "dark",
+      "scene": "settings",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "dark",
+      "scene": "add",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "dark",
+      "scene": "addQueried",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "dark",
+      "scene": "computers",
+      "status": "没拍到，要本人真机确认"
+    },
+    {
+      "theme": "dark",
+      "scene": "list",
+      "status": "没拍到，要本人真机确认"
+    }
+  ],
+  "secondRun": "Screenshot timeout; machine restart; incomplete xcresult has no Info.plist and cannot be exported"
+}

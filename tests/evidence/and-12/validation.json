@@ -1,0 +1,108 @@
+{
+  "synthetic": true,
+  "package": "com.memoweft.weftmate.mobile.and12qa",
+  "settingsChanged": true,
+  "mimoRequests": 0,
+  "themes": [
+    {
+      "theme": "light",
+      "passed": true,
+      "files": [
+        "and12-light-approval-menu.png",
+        "and12-light-checks.json",
+        "and12-light-keyboard-close-final.png",
+        "and12-light-keyboard-close-frames.json",
+        "and12-light-keyboard-close-metrics.json",
+        "and12-light-keyboard-close-real-metrics.json",
+        "and12-light-keyboard-open-final.png",
+        "and12-light-keyboard-open-frames.json",
+        "and12-light-keyboard-open-metrics.json",
+        "and12-light-keyboard-open-real-metrics.json",
+        "and12-light-model-menu.png",
+        "and12-light-multiline-collapse-final.png",
+        "and12-light-multiline-collapse-frames.json",
+        "and12-light-multiline-collapse-metrics.json",
+        "and12-light-multiline-expand-final.png",
+        "and12-light-multiline-expand-frames.json",
+        "and12-light-multiline-expand-metrics.json",
+        "and12-light-native-content.png",
+        "and12-light-page-activity.png",
+        "and12-light-page-goals.png",
+        "and12-light-page-health.png",
+        "and12-light-page-library.png",
+        "and12-light-plus-menu.png",
+        "and12-light-settings-general.png",
+        "and12-light-sidebar.png",
+        "and12-light-tools-and-goal.png",
+        "and12-light-ui-checks.json",
+        "and12-light-web-content.png",
+        "and12-light-web-sidebar.png"
+      ],
+      "performancePassed": true
+    },
+    {
+      "theme": "dark",
+      "passed": true,
+      "files": [
+        "and12-dark-approval-menu.png",
+        "and12-dark-checks.json",
+        "and12-dark-keyboard-close-final.png",
+        "and12-dark-keyboard-close-frames.json",
+        "and12-dark-keyboard-close-metrics.json",
+        "and12-dark-keyboard-close-real-metrics.json",
+        "and12-dark-keyboard-open-final.png",
+        "and12-dark-keyboard-open-frames.json",
+        "and12-dark-keyboard-open-metrics.json",
+        "and12-dark-keyboard-open-real-metrics.json",
+        "and12-dark-model-menu.png",
+        "and12-dark-multiline-collapse-final.png",
+        "and12-dark-multiline-collapse-frames.json",
+        "and12-dark-multiline-collapse-metrics.json",
+        "and12-dark-multiline-expand-final.png",
+        "and12-dark-multiline-expand-frames.json",
+        "and12-dark-multiline-expand-metrics.json",
+        "and12-dark-native-content.png",
+        "and12-dark-page-activity.png",
+        "and12-dark-page-goals.png",
+        "and12-dark-page-health.png",
+        "and12-dark-page-library.png",
+        "and12-dark-plus-menu.png",
+        "and12-dark-settings-general.png",
+        "and12-dark-sidebar.png",
+        "and12-dark-tools-and-goal.png",
+        "and12-dark-ui-checks.json",
+        "and12-dark-web-content.png",
+        "and12-dark-web-sidebar.png"
+      ],
+      "performancePassed": true
+    }
+  ],
+  "cleanup": [
+    {
+      "package": "com.memoweft.weftmate.mobile.and12qa.test",
+      "result": "Success"
+    },
+    {
+      "package": "com.memoweft.weftmate.mobile.and12qa",
+      "result": "Success"
+    },
+    "adb-disconnected"
+  ],
+  "systemVersion": "15",
+  "ime": "com.sohu.inputmethod.sogou.chuizi/com.sohu.inputmethod.sogou.SogouIME",
+  "debuggable": false,
+  "imeBefore": {
+    "default": "com.sohu.inputmethod.sogou.chuizi/com.sohu.inputmethod.sogou.SogouIME",
+    "enabled": "com.sohu.inputmethod.sogou.chuizi/com.sohu.inputmethod.sogou.SogouIME"
+  },
+  "testIme": "com.memoweft.weftmate.mobile.and12qa.test/com.memoweft.weftmate.mobile.Ui2vTestIme",
+  "imeAfter": {
+    "default": "com.sohu.inputmethod.sogou.chuizi/com.sohu.inputmethod.sogou.SogouIME",
+    "enabled": "com.sohu.inputmethod.sogou.chuizi/com.sohu.inputmethod.sogou.SogouIME"
+  },
+  "imeRestored": true,
+  "imeAfterUninstall": {
+    "default": "com.sohu.inputmethod.sogou.chuizi/com.sohu.inputmethod.sogou.SogouIME",
+    "enabled": "com.sohu.inputmethod.sogou.chuizi/com.sohu.inputmethod.sogou.SogouIME"
+  }
+}

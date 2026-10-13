@@ -1,0 +1,113 @@
+import SwiftUI
+import WeftMateCore
+
+/// Scoped controls-spec palette from the generated, shared token source.
+struct ServiceControlPalette {
+    let dark: Bool
+    var surface: Color { AppleTokens.Colors.controlSurface }
+    var canvas: Color { AppleTokens.Colors.controlCanvas }
+    var ink: Color { AppleTokens.Colors.controlInk }
+    var secondary: Color { AppleTokens.Colors.controlSecondary }
+    var muted: Color { AppleTokens.Colors.controlMuted }
+    var accent: Color { AppleTokens.Colors.controlAccent.opacity(dark ? AppleTokens.Opacity.opaque : AppleTokens.Opacity.controlAccentLight) }
+    var onAccent: Color { AppleTokens.Colors.controlOnAccent }
+    var line: Color { AppleTokens.Colors.controlLine.opacity(dark ? AppleTokens.Opacity.controlLineDark : AppleTokens.Opacity.opaque) }
+    var soft: Color { AppleTokens.Colors.controlSoft.opacity(dark ? AppleTokens.Opacity.controlSoftDark : AppleTokens.Opacity.opaque) }
+    var shadow: Color { AppleTokens.Colors.controlShadow.opacity(dark ? AppleTokens.Opacity.controlShadowDark : AppleTokens.Opacity.controlShadowLight) }
+}
+struct ServiceActionStyle: ButtonStyle {
+    var primary=false
+    @Environment(\.colorScheme) private var scheme
+    func makeBody(configuration: Configuration) -> some View {
+        let colors=ServiceControlPalette(dark:scheme == .dark)
+        configuration.label.font(.system(size:AppleTokens.FontSize.f15,weight:.medium)).foregroundStyle(primary ? colors.onAccent : colors.secondary)
+            .padding(.horizontal,AppleTokens.Space.p18).frame(minHeight:AppleTokens.Space.p44).frame(maxWidth:.infinity)
+            .background(primary ? colors.accent : configuration.isPressed ? colors.soft : colors.surface,in:Capsule())
+            .overlay(Capsule().stroke(primary ? .clear : colors.line,lineWidth:AppleTokens.Space.p1))
+    }
+}
+struct ServiceSwitch: View {
+    var title: String
+    @Binding var enabled: Bool
+    @Environment(\.colorScheme) private var scheme
+    var body: some View {
+        let colors=ServiceControlPalette(dark:scheme == .dark)
+        Button { enabled.toggle() } label: {
+            HStack {
+                Text(title).font(.system(size:AppleTokens.FontSize.f15,weight:.medium)).foregroundStyle(colors.ink);Spacer()
+                Capsule().fill(enabled ? colors.accent : colors.muted).frame(width:AppleTokens.Space.pcontrol_switch_width,height:AppleTokens.Space.p26)
+                    .overlay(alignment:enabled ? .trailing : .leading) { Circle().fill(enabled ? colors.onAccent : colors.surface).frame(width:AppleTokens.Space.p20,height:AppleTokens.Space.p20).padding(AppleTokens.Space.p3) }
+            }.frame(minHeight:AppleTokens.Space.p44).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityLabel(title).accessibilityValue(enabled ? "已开启" : "已关闭").accessibilityAddTraits(.isButton)
+    }
+}
+struct ServiceMenuRow: View {
+    var title: String
+    var subtitle: String? = nil
+    var selected=false
+    var action: () -> Void
+    @Environment(\.colorScheme) private var scheme
+    var body: some View {
+        let colors=ServiceControlPalette(dark:scheme == .dark)
+        Button(action:action) {
+            HStack(spacing:AppleTokens.Space.p8) {
+                VStack(alignment:.leading,spacing:AppleTokens.Space.p3) {
+                    Text(title).font(.system(size:AppleTokens.FontSize.f15,weight:.medium)).lineLimit(1).truncationMode(.middle)
+                    if let subtitle { Text(subtitle).font(.system(size:AppleTokens.FontSize.f12)).foregroundStyle(colors.muted) }
+                };Spacer(minLength:AppleTokens.Space.p8)
+                if selected { WeftIcon("allow",size:AppleTokens.Space.p18) }
+            }.foregroundStyle(colors.ink).frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p44,alignment:.leading).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityValue(selected ? "当前选择" : "")
+    }
+}
+struct ServiceModelMenuButton: View {
+    var services: [ModelService]
+    var current: String?
+    var label: String
+    var usesImages=false
+    var thinkingSupported=false
+    var thinkingAvailable=true
+    var thinkingUnavailableReason: String? = nil
+    @Binding var thinking: Bool
+    var select: (ModelService,ServiceModel) -> Void
+    var add: () -> Void
+    var refresh: () -> Void
+    var identifier="modelServices.menu"
+    @State private var open=false
+    @State private var all=false
+    @State private var query=""
+    @Environment(\.colorScheme) private var scheme
+    private var colors: ServiceControlPalette { .init(dark:scheme == .dark) }
+    var body: some View {
+        Button { open.toggle();all=false;query="";refresh() } label: { WeftIcon("model",size:AppleTokens.Space.p22).frame(width:AppleTokens.Space.p44,height:AppleTokens.Space.p44).contentShape(Circle()) }
+            .buttonStyle(.plain).foregroundStyle(colors.secondary).accessibilityLabel("模型："+label).accessibilityIdentifier(identifier)
+            .popover(isPresented:$open,arrowEdge:.bottom) { menuContent.presentationCompactAdaptation(.popover).presentationBackground(.clear).presentationCornerRadius(AppleTokens.Radius.r12) }
+    }
+    private var listHeight: CGFloat {
+        let rows=services.reduce(0) { $0+ModelCatalog.menuModels($1.models,current:current,all:all,query:query).count }
+        return min(AppleTokens.Space.pmodel_menu_extent,CGFloat(rows)*AppleTokens.Space.p44+(services.count > 1 ? CGFloat(services.count)*AppleTokens.Space.p32 : AppleTokens.Space.p0))
+    }
+    private var menuContent: some View {
+        VStack(alignment:.leading,spacing:AppleTokens.Space.p4) {
+            if all { TextField("搜索全部模型",text:$query).textFieldStyle(.plain).padding(AppleTokens.Space.p12).background(colors.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r8)).accessibilityIdentifier("modelServices.search") }
+            ScrollView { LazyVStack(alignment:.leading,spacing:AppleTokens.Space.p0) { ForEach(services) { service in serviceRows(service) } } }.frame(height:listHeight)
+            if !all,services.contains(where: {$0.models.filter(\.enabled).count > 12}) { ServiceMenuRow(title:"全部模型") { all=true }.accessibilityIdentifier("modelServices.all") }
+            if thinkingSupported {
+                Divider();ServiceSwitch(title:"深度思考",enabled:$thinking).disabled(!thinkingAvailable).accessibilityIdentifier("modelServices.thinking")
+                if let thinkingUnavailableReason { Text(thinkingUnavailableReason).font(.system(size:AppleTokens.FontSize.f12)).foregroundStyle(colors.muted) }
+            }
+            Divider()
+            ServiceMenuRow(title:"添加模型服务…") { open=false;add() }.accessibilityIdentifier("modelServices.add")
+        }.padding(AppleTokens.Space.p12).frame(width:AppleTokens.Space.pmodel_menu_extent).foregroundStyle(colors.ink).background(colors.surface,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
+            .overlay(RoundedRectangle(cornerRadius:AppleTokens.Radius.r12).stroke(colors.line,lineWidth:AppleTokens.Space.p1))
+            .shadow(color:colors.shadow,radius:AppleTokens.Space.p24,y:AppleTokens.Space.p12)
+    }
+    @ViewBuilder private func serviceRows(_ service: ModelService) -> some View {
+        if services.count > 1 { Text(service.name).font(.system(size:AppleTokens.FontSize.f12)).foregroundStyle(colors.muted).padding(.vertical,AppleTokens.Space.p8) }
+        ForEach(ModelCatalog.menuModels(service.models,current:current,all:all,query:query)) { item in modelRow(service,item) }
+    }
+    private func modelRow(_ service: ModelService,_ item: ServiceModel) -> some View {
+        ServiceMenuRow(title:item.name,subtitle:usesImages && item.capabilities?.vision == false ? "这个模型看不了这段对话里的图片" : nil,selected:item.matches(current) || item.modelId == current) { select(service,item);open=false }
+            .accessibilityIdentifier("modelServices.choose."+item.modelId)
+    }
+}

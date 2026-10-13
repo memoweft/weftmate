@@ -11,6 +11,7 @@ struct PhoneActivityView: View {
     var body: some View {
         ScrollView {
             VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
+                if let name=app.cloudLogin.computerName(app.session?.hostId) { Text(name).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                 Picker("动态范围",selection:$model.filter) {
                     Text("全部").tag("all"); Text("未读").tag("unread"); Text("待处理").tag("actionable")
                 }.pickerStyle(.segmented).accessibilityIdentifier("activity.filter")

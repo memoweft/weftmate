@@ -1,0 +1,45 @@
+{
+  "reason": "CloudDevicesView computer rename spacing and other APPLE-9 literal UI values bypassed generated typed tokens",
+  "productFix": "Scoped control colors/opacity/sizes moved to design/tokens/tokens.json and regenerated Apple outputs; layouts and color values retained",
+  "nodeTests": {
+    "files": [
+      "tests/design-tokens.test.ts",
+      "tests/apple-callback-isolation.test.mjs",
+      "tests/icon-system.test.ts",
+      "tests/apple-update-release.test.ts",
+      "tests/apple-ui-copy.test.ts"
+    ],
+    "passed": 20,
+    "failed": 0,
+    "exactDesignTokenFile": 6,
+    "phoneStyleRegression": 2,
+    "rootNodeTestsModified": false,
+    "tempDirectory": "canonical macOS realpath; existing private storage assertions retained"
+  },
+  "nativePaletteChecks": 134,
+  "nativeBuilds": {
+    "iPhone": "passed, generic iOS unsigned",
+    "Mac": "passed, macOS unsigned",
+    "Watch": "passed, generic watchOS unsigned"
+  },
+  "AppleContractStateChecks": {
+    "normalRun": "passed",
+    "missingArgumentExit": 1,
+    "directoryFailureExit": 1,
+    "crashReport": {
+      "timestamp": "2026-10-13 12:01:11 -0700",
+      "pid": 31371,
+      "processLaunch": "2026-10-13 12:00:53.5491 -0700",
+      "exception": "EXC_BAD_INSTRUCTION / SIGILL",
+      "cause": "Uncaught Failed from async throws main; swift_errorInMain called _assertionFailure; old model-services fixture lacked 404 fallback, so continuation was not prepared and the UTF-16 notice assertion failed"
+    },
+    "repair": "Previous package caught run errors and exit(1); this fix also checks the required isolated directory argument"
+  },
+  "DesignTokenChecks": {
+    "legitimateInventoryExtension": "10 new generated control color roles; exact source-role equality, RGB tolerance and alpha checks retained",
+    "errorExit": "print reason and exit(1), replacing preconditions and unchecked palette lookups",
+    "firstFixAttempt": "Old precondition inventory check failed before inventory was extended; no product crash"
+  },
+  "simulatorStartsThisFix": 0,
+  "CI": "await final pushed head; not merged"
+}
