@@ -7,13 +7,6 @@
     "imeBottom": 324
   },
   {
-    "ms": 7,
-    "top": 711.75,
-    "bottom": 941.25,
-    "imeVisible": true,
-    "imeBottom": 324
-  },
-  {
     "ms": 13,
     "top": 711.75,
     "bottom": 941.25,
@@ -133,7 +126,7 @@
     "imeBottom": 324
   },
   {
-    "ms": 118,
+    "ms": 113,
     "top": 638.75,
     "bottom": 941.25,
     "imeVisible": true,
@@ -211,7 +204,7 @@
   },
   {
     "ms": 179,
-    "top": 584.75,
+    "top": 577.75,
     "bottom": 941.25,
     "imeVisible": true,
     "imeBottom": 324
@@ -232,7 +225,7 @@
   },
   {
     "ms": 196,
-    "top": 577.75,
+    "top": 573.75,
     "bottom": 941.25,
     "imeVisible": true,
     "imeBottom": 324
