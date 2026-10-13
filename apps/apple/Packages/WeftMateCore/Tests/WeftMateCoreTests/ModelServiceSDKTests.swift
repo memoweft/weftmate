@@ -19,8 +19,9 @@ private actor ServiceHTTP: HTTPTransport {
         if path.hasSuffix("/auth/me") { return try json(auth) }
         if path.hasSuffix("/status") { return try json(["ownerId":"owner-test","hostId":"host-test","backend":["capabilities":[:]]]) }
         guard path.contains("/model-services") else { throw APIFailure.invalidResponse }
-        #expect(request.value(forHTTPHeaderField:"Cookie") == "wm_personal_session="+cookie)
-        if request.httpMethod != "GET" { #expect(request.value(forHTTPHeaderField:"X-WeftMate-CSRF") == csrf) }
+        let cookieMatches=request.value(forHTTPHeaderField:"Cookie") == "wm_personal_session="+cookie
+        #expect(cookieMatches)
+        if request.httpMethod != "GET" { let csrfMatches=request.value(forHTTPHeaderField:"X-WeftMate-CSRF") == csrf;#expect(csrfMatches) }
         if path == "/personal/v1/model-services",request.httpMethod == "GET",let missingStatus { return try json(["error":["code":"NOT_FOUND"]],status:missingStatus) }
         let service:[String:Any]=["serviceId":serviceID,"name":"Synthetic","baseUrl":"https://model.example.com/v1","interfaceType":"openai-compatible","revision":1,"models":[["modelId":"chat-a","name":"Chat A","enabled":true,"profileId":"profile-a"]],"selectedModelId":"chat-a","catalog":["status":"available","message":"已查到模型清单。"]]
         if path.hasSuffix("/check") { return try json(["status":"available","message":"已查到模型清单。","models":service["models"]!]) }

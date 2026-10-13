@@ -20,11 +20,15 @@ private final class ServiceTestKeys: CredentialStore, @unchecked Sendable {
         let library=try store.loadLibrary()
         #expect(library.services.count == 2);#expect(library.services[0].service.models.count == 2)
         #expect(library.services[0].service.models[0].matches("old-c"));#expect(library.selectedProfileId == "old-a")
-        #expect(keys.values.first {$0.key.hasSuffix(".models.before")}?.value == before)
-        #expect(try store.loadLibrary().services == library.services)
-        #expect(try store.loadModels() == old)
+        let backupMatches=keys.values.first {$0.key.hasSuffix(".models.before")}?.value == before
+        #expect(backupMatches)
+        let idempotent=try store.loadLibrary().services == library.services
+        #expect(idempotent)
+        let legacyPreserved=try store.loadModels() == old
+        #expect(legacyPreserved)
         let metadata=String(decoding:try JSONEncoder().encode(library.services[0].service),as:UTF8.self)
-        #expect(!metadata.contains(secret))
+        let metadataSafe = !metadata.contains(secret)
+        #expect(metadataSafe)
     }
     @Test func migrationFailureKeepsLegacyAndRetries() throws {
         let keys=ServiceTestKeys(),dir=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -33,7 +37,8 @@ private final class ServiceTestKeys: CredentialStore, @unchecked Sendable {
         let old=[PhoneModelConfiguration(name:"A",baseURL:"https://model.example.com/v1",model:"chat",apiKey:UUID().uuidString)]
         try store.saveModels(old);keys.failServices=true
         #expect(throws:APIFailure.credentialStorage) { try store.loadLibrary() }
-        #expect(try store.loadModels() == old);#expect(keys.values.keys.contains {$0.hasSuffix(".models.before")})
+        let legacyPreserved=try store.loadModels() == old
+        #expect(legacyPreserved);#expect(keys.values.keys.contains {$0.hasSuffix(".models.before")})
         keys.failServices=false;#expect(try store.loadLibrary().services.count == 1)
         let serviceKey=try #require(keys.values.keys.first {$0.hasSuffix(".services")});keys.values[serviceKey]=Data("bad".utf8)
         #expect(try store.loadLibrary().services.count == 1)
@@ -47,6 +52,25 @@ private final class ServiceTestKeys: CredentialStore, @unchecked Sendable {
         #expect(!ModelCatalog.chatModel("text-embedding-3"));#expect(ModelCatalog.chatModel("mimo-v2.6-pro"))
         #expect(ModelCatalog.displayName("mimo-v2.6-flash") == "MiMo v2.6 Flash")
         #expect(ModelCatalogResult(status:"authentication_failed").message != ModelCatalogResult(status:"unsupported").message)
+    }
+    @Test func recommendationMatchesModelOneAndPreservesEnabledPreference() {
+        let models=[ServiceModel(modelId:"mimo-v2.6-pro"),ServiceModel(modelId:"mimo-v2.6-flash"),ServiceModel(modelId:"other-mini",enabled:false)]
+        #expect(ModelCatalog.recommendedModel(models) == "mimo-v2.6-flash")
+        #expect(ModelCatalog.recommendedModel(models,preferred:"mimo-v2.6-pro") == "mimo-v2.6-pro")
+        #expect(ModelCatalog.recommendedModel(models,preferred:"other-mini") == "mimo-v2.6-flash")
+    }
+    @Test func onlyJSONBooleansDeclareCapabilities() throws {
+        let value=try #require(JSONSerialization.jsonObject(with:Data("{\"yes\":true,\"no\":false,\"one\":1,\"zero\":0,\"text\":\"true\"}".utf8)) as? [String:Any])
+        #expect(ModelCatalog.declaredBoolean(value["yes"]) == true)
+        #expect(ModelCatalog.declaredBoolean(value["no"]) == false)
+        #expect(ModelCatalog.declaredBoolean(value["one"]) == nil)
+        #expect(ModelCatalog.declaredBoolean(value["zero"]) == nil)
+        #expect(ModelCatalog.declaredBoolean(value["text"]) == nil)
+    }
+    @Test func nonChatFilteringAndEmptyDisplayNamesMatchModelOne() {
+        for id in ["gpt-image-1","gpt-audio","omni-moderation","flux-1","stable-diffusion","whisper-1","text-embedding-3","rerank-v2","veo-3"] { #expect(!ModelCatalog.chatModel(id)) }
+        #expect(ModelCatalog.chatModel("mimo-v2.6-pro"))
+        #expect(ServiceModel(modelId:"mimo-v2.6-flash",name:" ").name == "MiMo v2.6 Flash")
     }
     @Test func optionalFieldsAndNextModelDecode() throws {
         let data=Data("{\"services\":[],\"canManage\":true}".utf8)
