@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
-import { mkdir, readFile, readdir, realpath, rename, rm, symlink, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, realpath, rename, symlink, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { spawnSync } from 'node:child_process'
 import { resolve } from 'node:path'
-import { managedMkdtemp } from './helpers/managed-temp.mjs'
+import { managedMkdtemp, disposeManagedTemp } from './helpers/managed-temp.mjs'
 import { prepareMatrixProject, runCacheMatrix, treeDigest } from './helpers/vendor-cache-matrix.mjs'
 import { DEFAULT_WINDOWS_CACHE_ROOT, assertRuntimeDestination, createRuntimeScratch, pointRuntime } from '../scripts/dsh-runtime-storage.mjs'
 import { stageDshRuntime } from '../scripts/stage-dsh-runtime.mjs'
@@ -18,7 +18,7 @@ test('vendor preserves both caches in the 5 pointer x 3 cache x 5 outcome matrix
     const rows = await runCacheMatrix(root, await prepareMatrixProject(root))
     assert.equal(rows.length, 75)
     assert.ok(rows.every(row => row.unchanged))
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })
 
 test('PowerShell 5.1 and 7 npm wrappers preserve caches for every starting state', { skip: process.platform !== 'win32' }, async () => {
@@ -27,7 +27,7 @@ test('PowerShell 5.1 and 7 npm wrappers preserve caches for every starting state
     const shells = [resolve(process.env.SystemRoot!, 'System32/WindowsPowerShell/v1.0/powershell.exe'), 'pwsh.exe']
     const rows = await runCacheMatrix(root, await prepareMatrixProject(root), { shells, phases: ['success', 'interrupt'] })
     assert.equal(rows.length, 60)
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })
 
 test('regression: inherited pnpm install paths cannot purge a published cache from an isolated cwd', async () => {
@@ -35,7 +35,7 @@ test('regression: inherited pnpm install paths cannot purge a published cache fr
   try {
     const rows = await runCacheMatrix(root, await prepareMatrixProject(root), { inheritedInstallPaths: true })
     assert.equal(rows.length, 75)
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })
 
 test('runtime output under a parent junction is rejected before unlink, mkdir or assembly', async () => {
@@ -55,7 +55,7 @@ test('runtime output under a parent junction is rejected before unlink, mkdir or
       await assert.rejects(assertRuntimeDestination(shared.toUpperCase(), shared), /只读缓存根重叠/)
       await assert.rejects(assertRuntimeDestination(join(DEFAULT_WINDOWS_CACHE_ROOT, 'synthetic-output'), shared), /只读缓存根重叠/)
     }
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })
 
 test('normal invocation reads a valid runtime through linked vendor parents without changing either link', async () => {
@@ -77,7 +77,7 @@ test('normal invocation reads a valid runtime through linked vendor parents with
     assert.equal(await realpath(join(vendor, 'dsh-runtime')), await realpath(cache))
     assert.deepEqual(await treeDigest(cache), before)
     await unlink(vendor); await unlink(join(physicalVendor, 'dsh-runtime'))
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })
 
 test('replacement retains an existing ordinary directory and never traverses its nested junction', async () => {
@@ -94,7 +94,7 @@ test('replacement retains an existing ordinary directory and never traverses its
     assert.deepEqual(await treeDigest(other), before)
     await unlink(join(root, 'vendor', retained, 'node_modules'))
     await unlink(output)
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })
 
 test('owned scratch cleanup unlinks nested junctions and refuses a replaced scratch root', async () => {
@@ -114,7 +114,7 @@ test('owned scratch cleanup unlinks nested junctions and refuses a replaced scra
     await assert.rejects(replaced.publish(join(root, 'cache')), /拒绝经联接/)
     assert.deepEqual(await treeDigest(other), before)
     await unlink(replaced.root)
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })
 
 test('publication refuses an existing invalid cache and leaves its bytes unchanged', async () => {
@@ -127,7 +127,7 @@ test('publication refuses an existing invalid cache and leaves its bytes unchang
     await assert.rejects(scratch.publish(cache), /保留缓存，拒绝重新发布/)
     assert.deepEqual(await treeDigest(cache), before)
     await scratch.dispose()
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })
 
 test('cache identity rejects an incomplete manifest closure even while the CLI still exists', async () => {
@@ -141,7 +141,7 @@ test('cache identity rejects an incomplete manifest closure even while the CLI s
     const before = await treeDigest(runtime)
     await assert.rejects(assertRuntimeIdentity(runtime, context.project), /缓存内容不完整/)
     assert.deepEqual(await treeDigest(runtime), before)
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })
 
 test('staging refuses parent junctions and source overlap; interrupted copy leaves published cache intact', async () => {
@@ -165,7 +165,7 @@ test('staging refuses parent junctions and source overlap; interrupted copy leav
     assert.notEqual(await realpath(join(stageRoot, 'dsh-runtime')), await realpath(runtime))
     assert.deepEqual(await treeDigest(runtime), before)
     await unlink(alias)
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })
 
 test('regression: deleting a node_modules child through a junction is blocked at the scratch boundary', async () => {
@@ -183,5 +183,5 @@ test('regression: deleting a node_modules child through a junction is blocked at
     assert.deepEqual(await treeDigest(cache), before)
     await scratch.dispose()
     assert.deepEqual(await treeDigest(cache), before)
-  } finally { await rm(root, { recursive: true, force: true }) }
+  } finally { disposeManagedTemp(root) }
 })

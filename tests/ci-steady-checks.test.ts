@@ -69,6 +69,23 @@ test('inherited managed temp scopes never overwrite the creator heartbeat',()=>{
     assert.equal(child.status,0,child.stderr);assert.equal(readFileSync(owner,'utf8'),before);
   }finally{disposeManagedTemp(root);}
 });
+
+test('owned temp disposal cannot expose partial asynchronous deletion to its heartbeat',()=>{
+  const helper=pathToFileURL(resolve('tests/helpers/managed-temp.mjs')).href;
+  for(const partial of [true,false]){
+    const script=`import fs from 'node:fs';import {join} from 'node:path';
+      import {managedMkdtempSync,startManagedTempLease,disposeManagedTemp} from ${JSON.stringify(helper)};
+      const root=managedMkdtempSync('ci3-partial-delete-');startManagedTempLease(root,{intervalMs:1});
+      if(${partial}){
+        const failed=new Promise(resolve=>{const error=console.error;console.error=(...args)=>{error(...args);if(String(args[0]).startsWith('Managed temp heartbeat failed:'))resolve();};});
+        const hold=setInterval(()=>{},10000);
+        fs.unlinkSync(join(root,'.weftmate-temp-owner.json'));await failed;clearInterval(hold);fs.rmdirSync(root);
+      }else disposeManagedTemp(root);`;
+    const child=spawnSync(process.execPath,['--input-type=module','-e',script],{encoding:'utf8',windowsHide:true,timeout:20000,killSignal:'SIGKILL'});
+    assert.ifError(child.error);assert.equal(child.status,partial?1:0,child.stderr);
+    if(partial)assert.match(child.stderr,/Managed temp lease ownership changed/);
+  }
+});
 test('synthetic command acceptance waits through more than 100 observations and fails on terminal rejection',async()=>{
   let reads=0;
   const row=await waitForCommand(async()=>({state:++reads>100?'accepted_by_dsh':'pending'}));
