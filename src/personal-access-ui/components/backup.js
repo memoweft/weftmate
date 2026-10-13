@@ -110,7 +110,7 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
         }
         function codeDialog(draft) {
             const {dialog,body,foot}=modal(draft.purpose==='rotate'?'更换恢复码':'保存恢复码');
-            body.append(ui.element('p','','换电脑时要用它；我们没有它的副本，丢了就找不回备份。'),ui.element('p','field-help','包含你保存的密钥，同样只有你能解开。成果文件和项目文件夹里的文件不上传，请在原处另行保管。'));
+            body.append(ui.element('p','','换电脑时要用它；我们没有它的副本，丢了就找不回备份。'),ui.element('p','field-help','包含你保存的密钥，同样只有你能解开。成果、附件和项目文件夹里的文件不上传，请在原处另行保管。'));
             codeActions(body,draft.recoveryCode);
             const confirmation=input(body,`输入第 ${draft.confirmGroup} 组，确认已经存下`),notice=ui.element('p','field-help');notice.setAttribute('role','status');body.append(notice);
             const confirm=button(draft.purpose==='rotate'?'确认更换':'已保存，开启备份',async()=>{
