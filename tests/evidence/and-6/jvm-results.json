@@ -1,7 +1,7 @@
 [
   {
     "suite": "com.memoweft.weftmate.mobile.BusinessRouteUnitTest",
-    "tests": 21,
+    "tests": 22,
     "failures": 0,
     "errors": 0
   },
