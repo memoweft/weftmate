@@ -13,7 +13,7 @@ public enum JSONValue: Codable, Equatable, Sendable {
     }
     public subscript(_ key: String) -> JSONValue? { if case .object(let x) = self { x[key] } else { nil } }
     public var string: String? { if case .string(let x) = self { x } else { nil } }
-    public var int: Int? { if case .number(let x) = self, x.isFinite, x >= 0, x <= 9_007_199_254_740_991, x.rounded() == x { Int(x) } else { nil } }
+    public var int: Int? { if case .number(let x) = self, x.isFinite, x >= 0, x <= 9_007_199_254_740_991, x.rounded() == x { Int(exactly:x) } else { nil } }
     public var count: Int { if case .array(let x) = self { x.count } else { 0 } }
     public var bool: Bool { if case .bool(let x) = self { x } else { false } }
     public func encode(to encoder: any Encoder) throws {
