@@ -11,6 +11,10 @@ const BOOTSTRAP = Buffer.from("[Console]::InputEncoding = [Text.Encoding]::UTF8;
 const POWERSHELL = path.win32.join(process.env.SystemRoot ?? 'C:\\Windows',
   'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 const QUERY_BYTES = 200;
+// macOS source development uses the existing developer-tools Python (stdlib
+// only). openat + O_NOFOLLOW keeps every directory/file tied to its handle.
+const MAC_READER = process.platform === 'darwin'
+  ? readFileSync(fileURLToPath(new URL('./reader-posix.py', import.meta.url)), 'utf8') : null;
 
 function issue(code) {
   return Object.assign(new Error(code), { code });
@@ -28,7 +32,8 @@ function validQuery(value) {
 }
 
 async function invoke(input) {
-  if (process.platform !== 'win32') throw issue('PROJECT_WINDOWS_REQUIRED');
+  if (process.platform === 'darwin') return invokeMacReader(input);
+if (process.platform !== 'win32') throw issue('PROJECT_WINDOWS_REQUIRED');
   return invokeProjectReader(input);
 }
 
@@ -92,14 +97,59 @@ export function invokeProjectReader(input, { spawnProcess = spawn, setTimer = se
   });
 }
 
+async function invokeMacReader(input) {
+  if (!['win32', 'darwin'].includes(process.platform)) throw issue('PROJECT_WINDOWS_REQUIRED');
+  return new Promise((resolve, reject) => {
+    const mac = process.platform === 'darwin';
+    const child = spawn(mac ? '/usr/bin/python3' : POWERSHELL, mac ? ['-I', '-c', MAC_READER] : ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', BOOTSTRAP], {
+      windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    let stdout = '', stderr = '';
+    let done = false;
+    const timer = setTimeout(() => { child.kill(); finish(issue('PROJECT_READER_TIMEOUT')); }, 15_000);
+    function finish(error, result) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (error) reject(error);
+      else resolve(result);
+    }
+    child.on('error', () => finish(issue('PROJECT_FILE_UNAVAILABLE')));
+    child.stdin.on('error', () => finish(issue('PROJECT_FILE_UNAVAILABLE')));
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+      if (Buffer.byteLength(stdout, 'utf8') > 256 * 1024) { child.kill(); finish(issue('PROJECT_READER_INVALID')); }
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+      if (stderr.length > 4_096) stderr = stderr.slice(0, 4_096);
+    });
+    child.on('close', (code) => {
+      if (code !== 0) return finish(issue('PROJECT_FILE_UNAVAILABLE'));
+      let value;
+      try { value = JSON.parse(stdout.trim()); }
+      catch { return finish(issue('PROJECT_READER_INVALID')); }
+      if (value?.ok !== true) {
+        return finish(issue(/^PROJECT_[A-Z0-9_]+$/.test(value?.code ?? '')
+        ? value.code : 'PROJECT_FILE_UNAVAILABLE'));
+      }
+      finish(null, value.value);
+    });
+    child.stdin.end(mac ? JSON.stringify(input) : JSON.stringify({script:SCRIPT,request:JSON.stringify(input)}));
+  });
+}
+
 export async function inspectProjectRoot(rootPath) {
-  if (!validRootPath(rootPath)) throw issue('PROJECT_UNSAFE_PATH');
+  const mac = process.platform === 'darwin';
+  if (mac ? typeof rootPath !== 'string' || !path.posix.isAbsolute(rootPath) || rootPath.length > 4096 : !validRootPath(rootPath)) throw issue('PROJECT_UNSAFE_PATH');
   const value = await invoke({ action: 'inspect', rootPath });
-  if (typeof value?.FinalPath !== 'string' || !/^\\\\\?\\[A-Za-z]:\\/.test(value.FinalPath) ||
+  if (typeof value?.FinalPath !== 'string' || (mac ? !path.posix.isAbsolute(value.FinalPath) : !/^\\\\\?\\[A-Za-z]:\\/.test(value.FinalPath)) ||
       typeof value.Identity !== 'string' || !/^[A-F0-9]{8}:[A-F0-9]{16}$/.test(value.Identity)) {
     throw issue('PROJECT_READER_INVALID');
   }
-  return { rootPath: path.win32.normalize(rootPath), rootFinalPath: value.FinalPath, rootIdentity: value.Identity };
+  return { rootPath: (mac ? path.posix : path.win32).normalize(rootPath), rootFinalPath: value.FinalPath, rootIdentity: value.Identity };
 }
 
 export async function listProjectFiles(project, query = '') {
