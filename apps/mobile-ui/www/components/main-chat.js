@@ -234,17 +234,20 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     }
     function showSidePanel(event,originChatId=core.state.mainChat.chatId,modelProfileId=core.state.modelProfileId) {
         const identity = core.state.identityGeneration;
-        const dialog = ui.element('dialog', 'dialog side-chat-dialog'); dialog.setAttribute('aria-label', '开旁聊');
+        const dialog = ui.element('dialog', 'dialog model-editor-dialog side-chat-dialog'); dialog.setAttribute('aria-label', '开旁聊');
+        const head=ui.element('header','dialog-head'),body=ui.element('div','dialog-body model-editor-body'),footer=ui.element('footer','dialog-footer');
         const title = ui.element('input'); title.setAttribute('aria-label', '旁聊名称'); title.value = Array.from(event.data.text || '新旁聊').slice(0, 30).join('');
         const first = ui.element('textarea'); first.setAttribute('aria-label', '旁聊第一句话'); first.value = ui.readMessageDraft();
         const field=ui.element('label','project-field field','旁聊第一句话');field.append(first);
-        dialog.append(ui.element('h2', '', '从这里开旁聊'), title, ui.element('p', 'side-source', Array.from(event.data.text || '').slice(0, 160).join('')), ui.element('p', 'muted', '相关上下文尚未带入'), field,
-            button('取消', '取消', () => { dialog.close(); dialog.remove(); }), button('开旁聊', '确认开旁聊', async () => {
+        const nameField=ui.element('label','project-field field','旁聊名称');nameField.append(title);
+        head.append(ui.element('h2', '', '从这里开旁聊'),iconButton('deny','关闭',()=>dialog.close()));
+        body.append(nameField,ui.element('p', 'side-source', Array.from(event.data.text || '').slice(0, 160).join('')),ui.element('p', 'muted', '相关上下文尚未带入'),field);
+        footer.append(button('取消', '取消', () => { dialog.close(); dialog.remove(); }), button('开旁聊', '确认开旁聊', async () => {
                 const draft = first.value; await core.openSideChat({ entry: 'message', title: title.value, originChatId, originEventId: event.eventId,modelProfileId });
                 if(identity!==core.state.identityGeneration){dialog.close();dialog.remove();return;}
                 ui.restoreMainChatDraft(draft); dialog.close(); dialog.remove(); ui.byId('message-text').focus();
             }, 'button primary'));
-        document.body.append(dialog); dialog.addEventListener('close', () => dialog.remove()); dialog.showModal(); title.focus();
+        dialog.append(head,body,footer);document.body.append(dialog); dialog.addEventListener('close', () => dialog.remove()); dialog.showModal(); title.focus();
     }
     function mountMainChat() {
         sidebar = button('WeftMate', 'WeftMate 主对话', () => core.selectMainChat(), 'rail-main-chat');
