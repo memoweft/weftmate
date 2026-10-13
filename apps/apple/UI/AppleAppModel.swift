@@ -241,7 +241,7 @@ extension AppleAppModel {
 
     func canSend(_ conversation: ConversationSummary) -> Bool {
         let key = Self.draftKey(for: conversation)
-        guard !conversation.archived, canEditDraft(for: conversation), commandStore != nil, session?.verification == .verified,
+        guard !cloudLogin.selectedComputerUnavailable,!conversation.archived, canEditDraft(for: conversation), commandStore != nil, session?.verification == .verified,
               selectedConversation?.id == conversation.id,
               !verificationPending, sendTargets[key] != nil, !preparingConversations.contains(key),
               (!(drafts[key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !(attachmentDrafts[key] ?? []).isEmpty),
@@ -274,7 +274,7 @@ extension AppleAppModel {
                 guard accountEpoch == epoch else { return }
                 guard projection.status == .active, let binding = projection.binding else {
                     if projection.status == .unbound, projection.canAdoptWithConfirmation, projection.syncThroughSeq > 0 {
-                        let catalogue = try await client.hostModels()
+                        let catalogue = try await readModelCatalogue()
                         guard accountEpoch == epoch else { return }
                         let choices = catalogue.filter { model in
                             guard model.configured else { return false }
@@ -314,14 +314,14 @@ extension AppleAppModel {
                 continuationNotices[key] = "当前电脑会话暂不能接收消息。草稿保留在本机。"
                 return
             }
-            let catalogue = try await client.hostModels()
+            let catalogue = try await readModelCatalogue()
             guard accountEpoch == epoch else { return }
             guard let model = catalogue.first(where: { $0.id == profileID }), model.configured else {
                 continuationNotices[key] = "原会话模型尚未配置，请先在电脑端完成该模型配置。"
                 return
             }
             if conversation.conversationId != nil {
-                if let original, original.modelId != model.model ||
+                if let original, record.selectedModelProfileId == nil, confirmedModels[key] != profileID, original.modelId != model.model ||
                     (original.routeFingerprint != nil && original.routeFingerprint != model.routeFingerprint) {
                     continuationNotices[key] = "当前绑定模型和原对话身份不同，请先在电脑端核对。"
                     return
@@ -337,8 +337,9 @@ extension AppleAppModel {
                     return
                 }
             }
-            sendTargets[key] = .init(sessionID: sessionID, modelProfileID: profileID,
-                                    modelName: model.name)
+            let nextID=record.selectedModelProfileId ?? profileID
+            let nextName=catalogue.first(where: {$0.id == nextID})?.name ?? modelServices.flatMap(\.models).first(where: {$0.matches(nextID)})?.name ?? model.name
+            sendTargets[key] = .init(sessionID: sessionID, modelProfileID: nextID,modelName: nextName)
             continuationNotices[key] = nil
         } catch {
             RunLogRuntime.shared.failure(.failure, error: error, phase: "task")
@@ -774,7 +775,7 @@ final class AppleAppModel: ObservableObject {
         #endif
         await offline.poll(session: session, client: client, directory: directory.appendingPathComponent("Offline"),
             store: KeychainCredentialStore(service: cloudNamespace + ".offline"),
-            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, control: offlineAuthorization)
+            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, multipleComputers:cloudLogin.multiHost, control: offlineAuthorization)
         #if os(iOS)
         await phoneChat.synchronize(app:self)
         if offline.hostOffline { _ = await watchSnapshotBytes() }
@@ -819,6 +820,58 @@ final class AppleAppModel: ObservableObject {
     @Published private(set) var projectCreatedSessionID: String?
     @Published var sourceMessageTarget: Int?
     @Published var subtaskStepTarget: Int?
+    @Published var modelServices: [ModelService]=[]
+    @Published var serviceModelSettings: ModelServiceSettings?
+    @Published var modelServicesSupported: Bool?
+    @Published var modelServicesCanManage=false
+    private var modelServicesReadAt=Date.distantPast
+    private var modelServicesEpoch=UUID()
+    private var readingModelServices=false
+    private var cachedServiceModels: [SharedHostModel]=[]
+    func readModelCatalogue(force: Bool = false) async throws -> [SharedHostModel] {
+        let ticket=epoch
+        if modelServicesEpoch != ticket { modelServices=[];modelServicesSupported=nil;serviceModelSettings=nil;modelServicesReadAt = .distantPast;modelServicesEpoch=ticket;cachedServiceModels=[] }
+        if modelServicesSupported == false { return try await client.hostModels() }
+        if !force,Date().timeIntervalSince(modelServicesReadAt)<30,modelServicesSupported == true { return cachedServiceModels }
+        if readingModelServices { return cachedServiceModels }
+        readingModelServices=true;defer { readingModelServices=false }
+        modelServicesReadAt=Date()
+        guard let reply=try await client.modelServices() else { if ticket == epoch { modelServicesSupported=false };return try await client.hostModels() }
+        guard ticket == epoch else { throw APIFailure.accountChanged }
+        modelServices=reply.services;modelServicesSupported=true;modelServicesCanManage=reply.canManage;serviceModelSettings=reply.modelSettings
+        let models: [SharedHostModel]
+        if let projected=reply.models { models=projected } else { models=try await client.hostModels() }
+        guard ticket == epoch else { throw APIFailure.accountChanged };cachedServiceModels=models;return models
+    }
+    func refreshServiceMenus() async {
+        let ticket=epoch
+        do {
+            _ = try await readModelCatalogue()
+            for service in modelServices where service.catalog.needsRefresh && modelServicesCanManage {
+                let value=try await client.refreshModelService(id:service.id)
+                guard ticket == epoch else { return }
+                if let i=modelServices.firstIndex(where: {$0.id == value.id}) { modelServices[i]=value }
+            }
+        } catch { if ticket == epoch { thinkingError="模型清单暂时读不了，已有模型仍然保留。" } }
+    }
+    func chooseServiceModel(_ service: ModelService,_ model: ServiceModel,conversation: ConversationSummary?) async {
+        guard modelServicesCanManage else { return }
+        let ticket=epoch
+        let sessionID=conversation?.isMainChat == true ? mainChat.chat?.activeSessionId : conversation.flatMap { sendTargets[Self.draftKey(for:$0)]?.sessionID ?? $0.sessionId }
+        do {
+            let result=try await client.selectServiceModel(serviceId:service.id,modelId:model.modelId,sessionId:sessionID)
+            guard ticket == epoch else { return }
+            if let i=modelServices.firstIndex(where: {$0.id == service.id}) { modelServices[i]=result.service }
+            cachedServiceModels=result.models;mainChat.models=result.models;mainChat.modelID=result.profileId
+            serviceModelSettings?.defaultModelProfileId=result.profileId
+            if let conversation { confirmedModels[Self.draftKey(for:conversation)]=result.profileId }
+            if let conversation,!conversation.isMainChat,let sessionID {
+                sendTargets[Self.draftKey(for:conversation)] = .init(sessionID:sessionID,modelProfileID:result.profileId,modelName:model.name)
+            }
+            if conversation?.isMainChat == true { await mainChat.refreshThinking() }
+            else if let conversation { await refreshThinking(conversation) }
+        } catch { if ticket == epoch { thinkingError="模型没能切换，请重试。" } }
+    }
     @Published var thinking = ThinkingState()
     @Published var thinkingError: String?
     private var thinkingConversation: String?
@@ -842,7 +895,7 @@ final class AppleAppModel: ObservableObject {
         if thinkingConversation != row.id { thinking = .init(); thinkingConversation = row.id }
         let token = thinking.begin(scope: scope); thinkingError = nil
         do {
-            let catalogue = try await client.hostModels()
+            let catalogue = try await readModelCatalogue()
             guard scope == uxScope else { return }
             let profile = sendTargets[Self.draftKey(for: row)]?.modelProfileID
             guard catalogue.first(where: { $0.id == profile })?.deepThinking?.supported == true else {
@@ -1563,8 +1616,17 @@ final class AppleAppModel: ObservableObject {
         }
     }
 
+    func removeComputerReplica(_ host: String) {
+        offline.removeComputer(host)
+        guard let directory=timelineStateDirectory else { return }
+        do { try OfflineVault.clearComputer(hostID:host,directory:directory.appendingPathComponent("Offline"),store:KeychainCredentialStore(service:cloudNamespace+".offline")) }
+        catch { authError="这台电脑的手机副本没能清除，请重试。" }
+    }
     func acceptCloudSession(_ result: AccountSession) async {
-        if session?.account.ownerId != result.account.ownerId || session?.hostId != result.hostId { offline.erase() }
+        if session?.server != result.server || session?.account.ownerId != result.account.ownerId || session?.hostId != result.hostId {
+            _ = await flushDrafts()
+            clearVisibleAccount(preserveComputerReplicas:cloudLogin.multipleComputers)
+        }
         session = result; verificationPending = false; serverLoginExpired = false
         defaults?.set(result.server.originString, forKey: "weftmate.server")
         serverInput = result.server.originString
@@ -2193,10 +2255,10 @@ final class AppleAppModel: ObservableObject {
         authBusy = false
     }
 
-    private func clearVisibleAccount() {
+    private func clearVisibleAccount(preserveComputerReplicas: Bool = false) {
         mainChat.clear(); sourceMessageTarget = nil
-        offline.erase()
-        if let directory = timelineStateDirectory {
+        if preserveComputerReplicas { offline.suspend() } else { offline.erase() }
+        if !preserveComputerReplicas,let directory = timelineStateDirectory {
             do { try OfflineVault.clearActive(directory: directory.appendingPathComponent("Offline"),
                 store: KeychainCredentialStore(service: cloudNamespace + ".offline")) }
             catch { authError = "离线副本清理失败，请检查设备存储后重试。" }

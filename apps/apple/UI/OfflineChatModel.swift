@@ -16,6 +16,7 @@ import WeftMateCore
     @Published var draft = ""
     @Published var conversationID = UUID().uuidString.lowercased()
     private var recentID: String?
+    private var retainedReplicas: [String:OfflineReplica]=[:]
     private var replica: OfflineReplica?
     private var identity: OfflineIdentity?
     @Published private(set) var polling = false
@@ -38,8 +39,17 @@ import WeftMateCore
     func newConversation(recent: String? = nil) {
         conversationID = UUID().uuidString.lowercased(); recentID = recent; draft = ""
     }
+    func suspend() {
+        if let replica,let identity { retainedReplicas[identity.hostId]=replica }
+        replica=nil;identity=nil;draft="";turns=[];synced=[];recent=[];ready=false;showHistory=false;hostOffline=false;conversationID=UUID().uuidString.lowercased()
+    }
+    func removeComputer(_ host: String) {
+        if identity?.hostId == host { do { try replica?.clear() } catch { notice="电脑副本暂时没能清除，请重试。" };suspend() }
+        do { try retainedReplicas[host]?.clear();retainedReplicas[host]=nil }
+        catch { notice="电脑副本暂时没能清除，请重试。" }
+    }
     func erase() {
-        do { try replica?.clear(); notice = nil }
+        do { try replica?.clear();for engine in retainedReplicas.values { try engine.clear() };retainedReplicas=[:]; notice = nil }
         catch { notice = "本机钥匙或副本清理失败，请检查设备存储后重试。" }
         replica = nil; identity = nil; draft = ""; turns = []; synced = []; recent = []; ready = false
         showHistory = false; hostOffline = false; conversationID = UUID().uuidString.lowercased()
@@ -50,13 +60,13 @@ import WeftMateCore
         if !ready { draft = ""; recentID = nil }
     }
     func poll(session: AccountSession, client: PersonalClient, directory: URL, store: any CredentialStore,
-              allowLoopback: Bool, phoneFirst: Bool = false, control: (String) async throws -> OfflineAuthorization) async {
+              allowLoopback: Bool, phoneFirst: Bool = false, multipleComputers: Bool = false, control: (String) async throws -> OfflineAuthorization) async {
         guard !polling, !busy else { return }; polling = true; defer { polling = false }
         do {
             let next = OfflineIdentity(ownerId: session.account.ownerId, hostId: session.hostId, deviceId: session.device.id)
             if identity?.ownerId != next.ownerId || identity?.hostId != next.hostId || replica == nil {
-                if replica != nil { erase() }
-                replica = try OfflineReplica(vault: OfflineVault(identity: next, directory: directory, store: store), allowLoopback: allowLoopback,phoneFirst:phoneFirst)
+                if replica != nil { suspend() }
+                replica = try retainedReplicas.removeValue(forKey:next.hostId) ?? OfflineReplica(vault: OfflineVault(identity: next, directory: directory, store: store,multipleHosts:multipleComputers), allowLoopback: allowLoopback,phoneFirst:phoneFirst)
                 identity = next
             }
             guard let engine = replica else { return }

@@ -46,6 +46,20 @@ import WeftMateCore
     private var transferDraft: String?
     private var transferFiles: [ConversationAttachmentDraft] = []
     init(app: AppleAppModel) { self.app = app }
+    var conversationUsesImages: Bool {
+        if attachments.contains(where: {$0.original.isImage}) { return true }
+        for event in window.events where event.type == "user.message" {
+            if case .array(let images)? = event.data["images"],!images.isEmpty { return true }
+            for key in ["originalAttachments","attachments"] {
+                if case .array(let values)? = event.data[key] {
+                    for value in values {
+                        if case .object(let metadata)=value,(metadata["contentType"]?.string ?? metadata["mimeType"]?.string ?? "").hasPrefix("image/") { return true }
+                    }
+                }
+            }
+        }
+        return false
+    }
     var nativeEvents: [TimelineEvent] {
         window.displayEvents.compactMap { row in
             guard row.sessionID == chat?.activeSessionId, let seq = row.sourceRef["seq"]?.int else { return nil }
@@ -84,9 +98,10 @@ import WeftMateCore
             chat = value
             if window.events.isEmpty { timeZone = value.timeZone }
             if draft.isEmpty, pending == nil { draft = app.draftText(for: value.summary, accountEpoch: token) }
-            let readModels = try await app.assistantClient.hostModels()
+            let readModels = try await app.readModelCatalogue()
             guard app.accountEpoch == token else { return }; models = readModels; hasLoadedModels = true
-            if let bound = value.modelProfileId, value.activeSessionId != nil { modelID = bound }
+            if let bound = value.selectedModelProfileId ?? value.modelProfileId, value.activeSessionId != nil { modelID = bound }
+            else if let selected=app.serviceModelSettings?.defaultModelProfileId { modelID=selected }
             else if modelID.isEmpty { modelID = models.first(where: \.configured)?.id ?? "" }
         } catch { if app.accountEpoch == token, !(await app.handleLogicalChatFailure(error)) { configurationError = "模型列表暂时无法读取，请检查电脑连接后重试。" } }
     }
@@ -157,7 +172,7 @@ import WeftMateCore
             guard current(token, generation) else { return }
             try window.requireRevision(latest.contentRevision)
             window.anchor = visibleAnchor; try window.apply(page); self.chat = latest; error = nil
-            if let bound = latest.modelProfileId, latest.activeSessionId != nil { modelID = bound }
+            if let bound = latest.selectedModelProfileId ?? latest.modelProfileId, latest.activeSessionId != nil { modelID = bound }
             indexState = page.indexState; timeZone = page.timeZone
             if page.hasMore { await changes() }
         } catch { await failed(error, token: token, generation: generation) }
@@ -270,6 +285,7 @@ import WeftMateCore
         if body["kind"]?.string == "chat.message", draft.isEmpty { draft = body["text"]?.string ?? "" }
     }
     func send() async {
+        guard app?.cloudLogin.selectedComputerUnavailable != true else { error="所选电脑不在线，请打开这台电脑后再试。";return }
         guard app?.beginServerOperation() == true else { return }
         guard let app, let chat, pending == nil, !sending, capabilities.supports("chatSend") else { return }
         var body: [String: JSONValue] = ["requestId": .string("apple-chat-" + UUID().uuidString.lowercased()), "kind": .string("chat.message"), "targetDeviceId": .string(app.session?.hostId ?? ""), "chatId": .string(chat.id), "text": .string(draft), "mode": .string(app.runningMessageMode.rawValue)]

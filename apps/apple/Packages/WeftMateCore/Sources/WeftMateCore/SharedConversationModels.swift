@@ -25,6 +25,7 @@ public struct SharedSessionRecord: Codable, Equatable, Sendable, Identifiable {
     public let sendAvailable: Bool
     public let conversationId: String?
     public let modelProfileId: String?
+    public var selectedModelProfileId: String? = nil
     public let taskAvailable: Bool?
     public let unavailable: Bool?
     public let archived: Bool?
@@ -107,6 +108,7 @@ public struct SharedConversationProjection: Codable, Equatable, Sendable {
     public var requiresLocalTurnConfirmation: Bool { status == .unbound && reasonCode == "LOCAL_TURN_UNCONFIRMED" }
     public var canAdoptWithConfirmation: Bool { status == .unbound && (canAdopt || requiresLocalTurnConfirmation) }
     public let binding: SharedConversationBinding?
+    public var selectedModelProfileId: String? = nil
     public let adoptedMessages: [SharedAdoptedMessage]?
     func validate(conversationID: String, hostID: String) throws {
         guard source == "host", conversationId == conversationID, hostId == hostID else { throw APIFailure.identityMismatch }
