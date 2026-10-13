@@ -16,6 +16,7 @@ import org.json.JSONObject
 
 /** Default shell. HybridActivity remains the same business implementation and a complete rollback entry. */
 class NativeActivity : HybridActivity() {
+    internal val fileActions = NativeFileActions(this)
     private val nativeScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     internal var nativeForeground = false
     internal lateinit var model: NativeChatModel
@@ -117,6 +118,17 @@ class NativeActivity : HybridActivity() {
     internal fun fallback() {
         getSharedPreferences("native-ui", MODE_PRIVATE).edit().putBoolean("enabled", false).commit()
         startActivity(Intent(this, HybridActivity::class.java)); finish()
+    }
+    internal fun originalLibrary(fileId:String?=null) {
+        startActivity(Intent(this, HybridActivity::class.java).putExtra("openLibraryPage",true)
+            .putExtra("openLibraryFileId",fileId)
+            .putExtra("lg1bHostOrigin",intent.getStringExtra("lg1bHostOrigin")))
+    }
+    internal fun originalFile(row:JSONObject) {
+        if(row.optString("libraryId").isNotBlank())originalLibrary(row.getString("libraryId"))
+        else startActivity(Intent(this,HybridActivity::class.java)
+            .putExtra("openOriginalTextFile",row.toString())
+            .putExtra("lg1bHostOrigin",intent.getStringExtra("lg1bHostOrigin")))
     }
     override fun onResume() { super.onResume(); nativeForeground = true }
     override fun onPause() { nativeForeground = false; if (::model.isInitialized) model.saveDraft(); super.onPause() }
