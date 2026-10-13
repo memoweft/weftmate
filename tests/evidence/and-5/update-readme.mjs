@@ -7,10 +7,10 @@ if(v.androidJvm.failed||!v.androidJvm.tests||v.required.failed||v.vendor.failed|
 let intro=(await readFile(join(dir,'README.md'),'utf8')).split('\n## 最终实测')[0];
 intro=intro.replace('信息順序','信息顺序').replace('验证数量、通知结果、逐张系统栏色差将在本包最终实测后写入。','最终数量、通知结果与逐张系统栏色差如下。');
 const lines=[intro.trim(),'','## 最终实测','',
-`- 完整必过：${v.required.files} 文件，${v.required.passed} 通过、${v.required.failed} 失败、${v.required.skipped} 项既有跳过。`,
-`- 固定运行时：${v.vendor.files} 文件，${v.vendor.passed} 通过、${v.vendor.failed} 失败。`,
+`- 本包独立开发阶段完整必过：${v.required.files} 文件，${v.required.passed} 通过、${v.required.failed} 失败、${v.required.skipped} 项既有跳过。`,
+`- 本包独立开发阶段固定运行时：${v.vendor.files} 文件，${v.vendor.passed} 通过、${v.vendor.failed} 失败。`,
 `- 安卓 JVM（Java 虚拟机）：${v.androidJvm.tests} 项、${v.androidJvm.failed} 失败；离线 APK（安卓安装包）与仪器化包构建通过，路由库存自动比对通过。`,
-`- 手机交互组五文件：${v.mobile.passed} 通过、${v.mobile.failed} 失败；类型检查和公开卫生通过。`,
+`- 本包独立开发阶段手机交互组五文件：${v.mobile.passed} 通过、${v.mobile.failed} 失败；合入父分支后类型检查、8 项相关检查和公开卫生复验通过。`,
 `- 原生 360／390 浅／深四组均通过；后台／冷启动两次均点击真实系统通知进入原生聊天。`,
 '- 220 条历史的旧任务跳转验证包含全部事件 1–220，无中段缺口，屏幕定位到事件 2。分页、下拉手势、自动增量、记忆确认、已读及底栏清点均包含在四组测试内。','',
 '| 通知场景 | 点击方式 | 进入页 | 进程验证 | 结果 |','|---|---|---|---|---|'];

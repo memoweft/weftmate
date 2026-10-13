@@ -54,6 +54,8 @@ private data class FeedEntry(val key: String, val day: String, val row: JSONObje
     val listState = rememberLazyListState()
     val refreshState = rememberPullToRefreshState()
     val frost = LocalNativeFrost.current
+    LaunchedEffect(listState.isScrollInProgress, frost) { frost?.paused = listState.isScrollInProgress }
+    DisposableEffect(frost) { onDispose { frost?.paused = false } }
     val sceneModifier = if(frost != null) modifier.frostSource(frost) else modifier
     val entries = remember(feed.items, feed.timeZone) {
         buildList {
