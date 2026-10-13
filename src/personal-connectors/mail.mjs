@@ -15,7 +15,7 @@ const outgoing = { to: { type: 'array', items: string, minItems: 1, maxItems: MA
   subject: { ...string, description: '邮件主题；审批时会显示。' }, body: { ...string, description: '要发出的纯文本正文；审批时会显示开头。不支持附件。' } };
 function tool(name, title, description, properties, required, readOnlyHint) {
   return { name, title, description, inputSchema: { type: 'object', properties, required, additionalProperties: false },
-    annotations: { readOnlyHint, ...(name === 'mail_delete' ? { destructiveHint: true } : {}) } };
+    annotations: { readOnlyHint, openWorldHint: true, ...(name === 'mail_delete' ? { destructiveHint: true } : {}) } };
 }
 export const mailTools = Object.freeze([
   tool('mail_list', '最近的邮件', '只读：列出最近的邮件，可按文件夹、未读、时间范围、发件人或主题筛选。每次最多 30 封，还有更多时可缩小范围；不会标为已读。', filters, [], true),

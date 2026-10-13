@@ -91,5 +91,10 @@
     "passed": true,
     "checks": 7,
     "initialFailure": "Public immutable TLD data was mistaken for a local identity; corrected by exact upstream provenance"
+  },
+  "finalMailAndNativeNetworkRules": {
+    "files": 2,
+    "passed": 14,
+    "failed": 0
   }
 }
