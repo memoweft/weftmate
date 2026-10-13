@@ -21,6 +21,7 @@ async function port() { const s = tcpServer(); s.listen(0,'127.0.0.1'); await on
 const cloudOrigin = `http://127.0.0.1:${await port()}`;
 const internalPort = await port();
 let hostOrigin, computerOffline = false;
+const requestAudit=[];
 // Synthetic routing replaces only the relay address. Cloud login, provider, DPoP,
 // file mail and host exchange remain real. No production relay is contacted.
 const cloudProxy = createServer(async (req, res) => {
@@ -28,6 +29,7 @@ const cloudProxy = createServer(async (req, res) => {
     const body = []; for await (const part of req) body.push(part);
     const reply = await fetch(`http://127.0.0.1:${internalPort}${req.url}`, {method:req.method,redirect:'manual',
         headers:{...req.headers,'x-forwarded-host':new URL(cloudOrigin).host,'x-forwarded-proto':'http'}, ...(body.length ? {body:Buffer.concat(body)} : {})});
+    requestAudit.push({path:new URL(req.url,cloudOrigin).pathname,status:reply.status});
     let bytes = Buffer.from(await reply.arrayBuffer());
     if (req.url === P + '/hosts/connect' && reply.ok) {
         const value = JSON.parse(bytes); value.baseUrl = computerOffline ? null : hostOrigin;
@@ -100,6 +102,7 @@ async function cloudJSON(path, body) {
 const registration=await cloudJSON('/auth/registration/request',{email});
 const verified=await cloudJSON('/auth/registration/verify',{challengeId:registration.challengeId,code:await mailCode(registration.challengeId)});
 await cloudJSON('/auth/registration/complete',{passwordTicket:verified.passwordTicket,password});
+if (!process.argv.includes('--apple6-nohost')) {
 await desktopLogin();
 local=await direct('/auth/desktop',{deviceName:'合成测试电脑'},null,{'x-weftmate-desktop':host.libraryDesktopToken});
 const bindingNonce=await direct('/auth/cloud-nonce',{},null);
@@ -121,13 +124,27 @@ if (process.env.WEFTMATE_HEALTH1_FIXTURE === '1') {
         source:{usageWeek:'2026-10-05'},actions:[]});
 }
 
+}
 
+let modelRequests=0, streamRequests=0;
+const modelKey=randomBytes(24).toString("base64url");
 const driver = createServer(async(req,res)=>{
     try {
         const path=new URL(req.url,'http://127.0.0.1').pathname;
         let result;
-        if(path==='/credentials')result={email,password,nextPassword};
-        else if(path==='/ready')result={cloud:cloudOrigin,host:started.origin,hostId:started.hostId,computerDeviceId:'lg2-computer'};
+        if(path==='/v1/chat/completions') {
+            if(req.headers.authorization!=='Bearer '+modelKey){res.writeHead(401);res.end();return;}
+            const chunks=[];for await(const chunk of req)chunks.push(chunk);const body=JSON.parse(Buffer.concat(chunks));modelRequests++;
+            if(body.stream) {
+                streamRequests++;res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache'});
+                for(const part of ['你好，','手机自己就能聊天。','这是一条','合成流式回复。','操作电脑，','连上电脑后可用。']) { if(res.destroyed)break;res.write('data: '+JSON.stringify({choices:[{delta:{content:part}}]})+'\n\n');await new Promise(r=>setTimeout(r,250)); }
+                res.end('data: [DONE]\n\n');return;
+            }
+            res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({choices:[{message:{role:'assistant',content:'你好。'}}]}));return;
+        }
+        if(path==='/new-account')result={email:'apple6-'+randomBytes(6).toString('hex')+'@example.com',password,modelKey};
+        else if(path==='/credentials')result={email,password,nextPassword,modelKey};
+        else if(path==='/ready')result={cloud:cloudOrigin,host:started.origin,model:`http://127.0.0.1:${driver.address().port}/v1`,hostId:started.hostId,computerDeviceId:'lg2-computer'};
         else if(path==='/code'){
             let challenge;
             for(let attempt=0;attempt<100;attempt++) {
@@ -153,7 +170,12 @@ const driver = createServer(async(req,res)=>{
             if(!target)throw new Error('No synthetic phone session');
             const r=await fetch(started.origin+'/personal/v1/auth/devices/'+target.id,{method:'DELETE',headers:{origin:started.origin,cookie:local.cookie,'x-weftmate-csrf':local.csrfToken,'x-weftmate-desktop':host.libraryDesktopToken,'content-type':'application/json'},body:'{}'});
             if(!r.ok)throw new Error('Synthetic session revoke failed');result={ok:true};
-        } else if(path==='/report'){result={realCloud:true,fileMail:true,realHost:true,syntheticRelayRoute:true};}
+        } else if(path.startsWith('/capture/') && process.argv.includes('--apple6-nohost')) {
+            const name=path.slice('/capture/'.length);
+            if(!/^[a-z0-9-]+$/.test(name))throw Error('Invalid capture name');
+            const folder=process.env.WEFTMATE_APPLE6_SHOTS;await mkdir(folder,{recursive:true});
+            await run('xcrun',['simctl','io',process.env.WEFTMATE_APPLE6_SIMULATOR,'screenshot',join(folder,name+'.png')]);result={ok:true};
+        } else if(path==='/report'){result={realCloud:true,fileMail:true,realHost:true,syntheticRelayRoute:true,noComputer:process.argv.includes('--apple6-nohost'),modelRequests,streamRequests,requestAudit};}
         else throw new Error('Unknown driver route');
         res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(result));
     } catch(error){res.writeHead(500,{'content-type':'application/json'});res.end(JSON.stringify({error:'FIXTURE_FAILED'}));process.stderr.write(error.message+'\n');}
