@@ -392,7 +392,7 @@
   ],
   "errors": [],
   "systemVersion": "15.0",
-  "apkSha256": "936a37d7d87cedd3fdcc4f26e68f94ea859b67da69b043f961737761f15d35c4",
+  "apkSha256": "af47161ba449351a6d23ba17375947017b87514d8449c65cc7f52ba256ec9943",
   "isolatedExistingNotificationPermissionGranted": true,
   "stage": "captured",
   "nativeLogin": "password and email confirmation through the existing native UI",
