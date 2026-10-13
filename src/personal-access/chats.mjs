@@ -60,6 +60,7 @@ export function createChatOperations(context) {
       ...(session?.sideChat ? { originRefs: session.sideChat.contextTransfer.sourceRefs,
         contextTransfer: session.sideChat.contextTransfer } : {}),
       deepThinking: chat.deepThinking ?? session?.deepThinking ?? false,
+      selectedModelProfileId: session?.pendingModelProfileId ?? session?.modelProfileId ?? account.defaultModelProfileId ?? null,
       timeZone: identity.timeZone, ...memorySettings(session),
       parent: chat.kind === 'main' ? null : session?.projectId
         ? { kind: 'project', id: session.projectId } : { kind: 'main', id: identity.mainChatId } };

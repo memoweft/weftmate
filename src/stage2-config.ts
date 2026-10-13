@@ -20,6 +20,9 @@ export interface PublicModelProfile {
   provider: ProviderKind;
   baseUrl: string;
   model: string;
+  interfaceType?: 'openai-compatible' | 'anthropic';
+  /** Explicit service-directory evidence; absent uses existing host declarations. */
+  deepThinking?: { supported: boolean; effort?: 'high'; type?: 'adaptive' | 'enabled' };
   reasoningEffort?: 'off' | 'low' | 'medium' | 'high';
   /** Missing/auto uses the endpoint; explicit local/cloud overrides proxies. */
   modelTier?: 'auto' | 'local' | 'cloud';
@@ -89,6 +92,10 @@ function validProfile(value: unknown): PublicModelProfile | null {
   const modelTier = ['auto', 'local', 'cloud'].includes(String(value.modelTier))
     ? value.modelTier as PublicModelProfile['modelTier'] : undefined;
   return { id, name, provider: 'openai-compatible', baseUrl, model,
+    ...(['openai-compatible', 'anthropic'].includes(String(value.interfaceType)) ? { interfaceType: value.interfaceType as PublicModelProfile['interfaceType'] } : {}),
+    ...(isRecord(value.deepThinking) && typeof value.deepThinking.supported === 'boolean' ? { deepThinking: { supported: value.deepThinking.supported,
+      ...(value.deepThinking.supported ? { effort: 'high' as const } : {}),
+      ...(['adaptive', 'enabled'].includes(String(value.deepThinking.type)) ? { type: value.deepThinking.type as 'adaptive' | 'enabled' } : {}) } } : {}),
     ...(reasoningEffort ? { reasoningEffort } : {}), ...(modelTier ? { modelTier } : {}) };
 }
 

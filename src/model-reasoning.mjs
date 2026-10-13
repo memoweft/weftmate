@@ -1,5 +1,6 @@
 /** Provider wire declarations for the existing DSH reasoning selector. No request defaults. */
 export function modelReasoning(profile) {
+  if (profile.deepThinking?.supported === false) return null;
   let host; try { host = new URL(profile.baseUrl).hostname; } catch { return null; }
   const id = profile.model ?? profile.modelId ?? '';
   const levels = { off: null, low: 'low', medium: 'medium', high: 'high' };
@@ -12,11 +13,13 @@ export function modelReasoning(profile) {
   if (host === 'api.openai.com' && /^(o[134](?:-|$)|gpt-[56])/i.test(id) ||
       ['low', 'medium', 'high'].includes(profile.reasoningEffort))
     return { reasoningEfforts: levels, compat: { thinkingFormat: 'openai', supportsReasoningEffort: true } };
+  if (profile.deepThinking?.supported === true) return { reasoningEfforts: levels,
+    ...(profile.interfaceType === 'anthropic' ? {} : { compat: { thinkingFormat: 'openai', supportsReasoningEffort: true } }) };
   return null;
 }
 
 export const reasoningCapability = profile => ({ supported: !!modelReasoning(profile),
-  ...(modelReasoning(profile) ? { effort: 'high' } : {}) });
+  ...(modelReasoning(profile) ? { effort: 'high', ...(profile.deepThinking?.type ? { type: profile.deepThinking.type } : {}) } : {}) });
 
 /** Upgrade a previously registered owned route's absent capability declarations in place. */
 export async function prepareOfficialModelReasoning(client, route, profile) {

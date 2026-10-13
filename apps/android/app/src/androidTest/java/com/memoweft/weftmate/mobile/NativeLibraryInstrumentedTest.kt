@@ -27,6 +27,7 @@ class NativeLibraryInstrumentedTest {
     private fun shot(name:String){compose.waitForIdle();Thread.sleep(300);val b=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-$name.png").outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}}
     private fun control(mode:String){URL("$origin/and7-control?mode=$mode").openConnection().getInputStream().use{it.readBytes()}}
     private fun reveal(name:String){compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasText(name))}
+    private fun filterTab(name:String)=compose.onNode(hasText(name) and SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role,androidx.compose.ui.semantics.Role.Tab))
     private fun originalViewer(name:String,label:String,assertActions:Boolean=true) {
         compose.waitForIdle()
         var legacy:HybridActivity?=null
@@ -135,7 +136,7 @@ class NativeLibraryInstrumentedTest {
         }
         i.uiAutomation.performGlobalAction(1)
         compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasContentDescription("按项目筛选"))
-        compose.onNodeWithContentDescription("按文件类型筛选").performClick();shot("type-menu");compose.onNodeWithText("全部",useUnmergedTree=true).performClick()
+        filterTab("全部").assertIsSelected();for(label in listOf("文档","表格","图片","代码","其它"))filterTab(label).assertExists();shot("type-row");filterTab("代码").performScrollTo().performClick();filterTab("代码").assertIsSelected();filterTab("全部").performScrollTo().performClick();filterTab("全部").assertIsSelected()
         compose.onNodeWithContentDescription("按项目筛选").performClick();shot("filter-menu");compose.onAllNodesWithText("全部项目").onLast().performClick()
         control("error");compose.onNodeWithContentDescription("刷新成果库").performClick()
         compose.waitUntil(30000){compose.onAllNodesWithText("那台电脑不在线，连接后再试。").fetchSemanticsNodes().isNotEmpty()}

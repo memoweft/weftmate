@@ -316,6 +316,8 @@
     async function send(text, conversationId = null) {
       if(!value.snapshot?.model&&!phoneModel)fail('OFFLINE_MODEL_REQUIRED');
       if (running || taskSending || typeof text !== 'string' || !text.trim() || text.length > 16384) fail('INVALID_REQUEST');
+      // Capture this submitted turn before authorization awaits; later menu choices affect the next turn.
+      const submittedPhoneModel = phoneModel?.();
       running = true; abort = new AbortController(); const ticket = version;
       try {
         if(memoryFlight){memoryEpoch++;memoryAbort?.abort();await memoryFlight;}
@@ -328,7 +330,7 @@
           ...(recent ? { sourceSessionId: recent.id, context: recent.messages } : {}) };
         const useLight=!!value.phoneMemory&&!value.phoneMemory.transferred;
         const light=useLight?globalThis.WeftPhoneMemory?.recall(value.phoneMemory,text)||[]:[];
-        const snapshot = { items: [], ...value.snapshot, model: phoneModel?.() || value.snapshot?.model };
+        const snapshot = { items: [], ...value.snapshot, model: submittedPhoneModel || value.snapshot?.model };
         if(useLight)snapshot.items=[];
         if (!snapshot.model) fail('MODEL_NOT_CONFIGURED');
         const { body, memories } = requestBody(snapshot, [...(conversation.context ?? []), ...conversation.turns.flatMap(t => t.messages)], text.trim());
@@ -371,12 +373,13 @@
       await persist(); return send(text, id);
     }
     async function extractMemory(conversationId){
-      if(!phoneModel?.()||!value.phoneMemory?.enabled||value.phoneMemory.handover||running)return false;
+      const extractionModel=phoneModel?.();
+      if(!extractionModel||!value.phoneMemory?.enabled||value.phoneMemory.handover||running)return false;
       if(memoryFlight)return memoryFlight;const ticket=version,epoch=memoryEpoch,conversation=value.conversations.find(c=>c.id===conversationId)||value.conversations.find(c=>c.turns.some(t=>!value.phoneMemory.processed.includes(t.id)));if(!conversation)return false;
       memoryFlight=(async()=>{try{await check();const state=structuredClone(value.phoneMemory);memoryAbort=new AbortController();
         const changed=await globalThis.WeftPhoneMemory.extract(state,conversation,async body=>{
           if(ticket!==version||epoch!==memoryEpoch||!value.phoneMemory.enabled||value.phoneMemory.handover)fail('OFFLINE_RESET_REQUIRED');
-          const snapshot={model:phoneModel()};return vault.complete({...body,model:snapshot.model.modelId},snapshot,memoryAbort.signal);
+          const snapshot={model:extractionModel};return vault.complete({...body,model:snapshot.model.modelId},snapshot,memoryAbort.signal);
         },crypto);if(ticket!==version||epoch!==memoryEpoch)return false;await check();if(changed){const next={...value,phoneMemory:state};await vault.save(next);if(ticket!==version||epoch!==memoryEpoch)return false;value=next;notify(view());}return changed;
       }catch{return false;}finally{memoryFlight=null;}})();return memoryFlight;
     }
