@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {createSessionMetadata} from '../src/personal-access/session-metadata.mjs';
-function factory(name:string){const context:any={WeftUiCore:{factories:{}},URLSearchParams,Intl,Date};runInNewContext(readFileSync(new URL(`../src/ui-core/${name}.js`,import.meta.url),'utf8'),context);return context.WeftUiCore.factories[name];}
+function factory(name:string){const context:any={WeftUiCore:{factories:{}},URLSearchParams,Intl,Date};runInNewContext(readFileSync(new URL('../src/ui-core/human-format.js',import.meta.url),'utf8'),context);runInNewContext(readFileSync(new URL(`../src/ui-core/${name}.js`,import.meta.url),'utf8'),context);return context.WeftUiCore.factories[name];}
 test('project expansion is per project and account, survives recreation and storage refusal is harmless',()=>{
   const storage=new Map(),environment={storage:{getItem:(key:string)=>storage.get(key),setItem:(key:string,value:string)=>storage.set(key,value)}};
   const core:any={state:{ownerId:'a'},sessionList:()=>[]};const create=factory('sessions'),actions=create(core,{},environment);
