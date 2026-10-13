@@ -44,7 +44,7 @@ export async function persistedWindowsStorageKey(safeStorage, sessionDirectory, 
   while (Date.now()<deadline) {
     let key;
     try { key=JSON.parse(readFileSync(join(sessionDirectory,'Local State'),'utf8')).os_crypt?.encrypted_key; } catch {}
-    if (typeof key==='string' && persistedKeyMatches(key,probe,Math.max(1,Math.min(3000,deadline-Date.now())))) {
+    if (typeof key==='string' && persistedKeyMatches(key,probe,Math.max(1,deadline-Date.now()))) {
       // Only Chromium writes Local State. We authenticate and flush its file;
       // no recovery material or unwrapped master is ever written by this module.
       const fd=openSync(join(sessionDirectory,'Local State'),'r+');

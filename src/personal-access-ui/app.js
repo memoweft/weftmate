@@ -21,7 +21,7 @@
         } finally { options.signal?.removeEventListener('abort', abort); }
     };
     const core = globalThis.WeftUiCore.create({ effects: ui, fetch: request, storage: localStorage, crypto: globalThis.crypto,
-        hostOrigin: globalThis.location?.origin, desktop: !!native, cloudVendor: globalThis.WeftCloudVendor,
+        hostOrigin: globalThis.location?.origin, desktop: !!native, deviceType: native?.platform === 'darwin' ? 'macos' : undefined, cloudVendor: globalThis.WeftCloudVendor,
         networkAvailable: () => globalThis.navigator?.onLine,
         initialPairing,
         messageModeStorage: native ? (...args) => native.credentials(...args) : undefined,

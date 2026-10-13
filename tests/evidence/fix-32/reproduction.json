@@ -1,0 +1,10521 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "transport": "isolated direct Windows host; Linux 443 relay is verified by CI",
+  "switches": [
+    {
+      "iteration": 0,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    },
+    {
+      "iteration": 1,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    },
+    {
+      "iteration": 2,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    },
+    {
+      "iteration": 3,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    },
+    {
+      "iteration": 4,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    },
+    {
+      "iteration": 5,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    },
+    {
+      "iteration": 6,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    },
+    {
+      "iteration": 7,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    },
+    {
+      "iteration": 8,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    },
+    {
+      "iteration": 9,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    }
+  ],
+  "approvals": [],
+  "commands": [
+    {
+      "kind": "session.message",
+      "requestId": "ce9b2f80-cd36-42a7-9b33-32dcebf9df52"
+    },
+    {
+      "kind": "session.message",
+      "requestId": "ef49c7e0-8aca-40ae-936a-2d5975b33fa3"
+    },
+    {
+      "kind": "session.message",
+      "requestId": "8020a8f6-2b89-4f7e-8faf-c29aadf37d7a"
+    },
+    {
+      "kind": "session.message",
+      "requestId": "146d0d57-8ef4-4f5c-ae34-029d85e35b56"
+    },
+    {
+      "kind": "session.message",
+      "requestId": "7dc6a8e2-4a2c-4a3d-bdbe-75f5f0ff32d3"
+    },
+    {
+      "kind": "session.message",
+      "requestId": "1a8c70bc-92e7-44b1-a8c3-1f91a7cc4a3e"
+    },
+    {
+      "kind": "session.message",
+      "requestId": "f33b530a-54f9-4092-b3a5-63132330e8ca"
+    },
+    {
+      "kind": "session.message",
+      "requestId": "0c72b27a-fa55-46d4-a88d-4757cb461ddb"
+    },
+    {
+      "kind": "session.message",
+      "requestId": "29c3494c-771b-4724-ad28-eb6448056f6c"
+    },
+    {
+      "kind": "session.message",
+      "requestId": "661953a6-4033-4d06-8c8b-25f795bf1205"
+    }
+  ],
+  "baseline": false,
+  "trace": [
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "BUTTON",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 2862.399999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 2966.199999988079,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 2966.2999999523163,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 2967.599999964237,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    },
+    {
+      "type": "mutation",
+      "time": 2989.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 3020.5
+    },
+    {
+      "type": "mutation",
+      "time": 3027.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 3039
+    },
+    {
+      "type": "mutation",
+      "time": 3050.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 3057
+    },
+    {
+      "type": "mutation",
+      "time": 3061.5
+    },
+    {
+      "type": "mutation",
+      "time": 3072.7999999523163
+    },
+    {
+      "type": "mutation",
+      "time": 3079.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 3095.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 3170.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 3182.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 3198.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 3214.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 3226.7999999523163
+    },
+    {
+      "type": "mutation",
+      "time": 3233.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 3244.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 3257.2999999523163
+    },
+    {
+      "type": "mutation",
+      "time": 3265.7999999523163
+    },
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 3330.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 3331.2999999523163
+    },
+    {
+      "type": "mutation",
+      "time": 3360.5
+    },
+    {
+      "type": "click-bubble",
+      "target": "BUTTON",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 3371
+    },
+    {
+      "type": "mutation",
+      "time": 3376.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 3379.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 4920.5
+    },
+    {
+      "type": "mutation",
+      "time": 4927
+    },
+    {
+      "type": "mutation",
+      "time": 4937.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 4945.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 4953.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 4956.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 4964.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 4967.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 4976.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 4984.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 4988.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5375.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5380.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5385.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5394.5
+    },
+    {
+      "type": "mutation",
+      "time": 5404.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5407.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5411.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5431.5
+    },
+    {
+      "type": "mutation",
+      "time": 5435.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5436.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5447.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5447.299999952316
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 5465,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 5568,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 5568.099999964237,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 5568.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    },
+    {
+      "type": "mutation",
+      "time": 5583.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5583.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5591.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5591.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5595.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5595.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5603.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5603.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5610.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5610.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5614.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5614.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5617.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5617.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5625.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5625.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5631.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5631.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5640.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5640.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5668.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5668.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5673.5
+    },
+    {
+      "type": "mutation",
+      "time": 5673.5
+    },
+    {
+      "type": "mutation",
+      "time": 5678
+    },
+    {
+      "type": "mutation",
+      "time": 5678
+    },
+    {
+      "type": "mutation",
+      "time": 5684.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5684.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5693.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5693.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5800.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5800.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5808.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5808.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5812.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5812.799999952316
+    },
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 5863.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5863.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 5864.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5864.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5893.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 5893.099999964237
+    },
+    {
+      "type": "click-bubble",
+      "target": "SPAN",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 5902
+    },
+    {
+      "type": "mutation",
+      "time": 5902
+    },
+    {
+      "type": "mutation",
+      "time": 5958.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5958.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5962.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5962.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5968.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5968.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5974.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5974.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 5978.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 5978.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7906.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7906.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7912.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 7912.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 7915.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7915.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7919.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7919.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7925.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7925.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7929.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 7929.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 7935.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 7935.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 7955.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7955.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 7960.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 7960.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 7961.5
+    },
+    {
+      "type": "mutation",
+      "time": 7961.5
+    },
+    {
+      "type": "mutation",
+      "time": 7963.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 7963.399999976158
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 8273.399999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 8375.5,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 8375.699999988079,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 8376.599999964237,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    },
+    {
+      "type": "mutation",
+      "time": 8386.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8386.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8386.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8419.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8419.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8419.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8424.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8424.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8424.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8509.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8509.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8509.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8514.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8514.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8514.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8524.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8524.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8524.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8534.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8534.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8534.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8538.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8538.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8538.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8541.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8541.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8541.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8554.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8554.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8554.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8560.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8560.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8560.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8569.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8569.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8569.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8574.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8574.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8574.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8613.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8613.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8613.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8623.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8623.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8623.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 8627.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8627.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8627.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8668.5
+    },
+    {
+      "type": "mutation",
+      "time": 8668.5
+    },
+    {
+      "type": "mutation",
+      "time": 8668.5
+    },
+    {
+      "type": "mutation",
+      "time": 8674.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8674.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8674.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8680.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8680.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8680.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8687.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8687.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8687.599999964237
+    },
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 8696.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8696.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8696.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8697.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8697.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8697.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8741.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8741.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8741.899999976158
+    },
+    {
+      "type": "click-bubble",
+      "target": "SPAN",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 8754.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8754.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8754.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8769.5
+    },
+    {
+      "type": "mutation",
+      "time": 8769.5
+    },
+    {
+      "type": "mutation",
+      "time": 8769.5
+    },
+    {
+      "type": "mutation",
+      "time": 8773.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8773.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8773.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 8780.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8780.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8780.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 8788.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8788.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8788.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8792.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8792.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 8792.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 9418.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9418.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9418.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9423.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 9423.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 9423.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 9430.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 9430.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 9430.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 9438.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9438.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9438.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9445.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9445.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9445.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9448.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9448.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9448.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9454.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 9454.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 9454.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 9457.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 9457.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 9457.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 9469.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9469.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9469.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 9476.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 9476.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 9476.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 9479.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 9479.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 9479.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 10754.5
+    },
+    {
+      "type": "mutation",
+      "time": 10754.5
+    },
+    {
+      "type": "mutation",
+      "time": 10754.5
+    },
+    {
+      "type": "mutation",
+      "time": 10761
+    },
+    {
+      "type": "mutation",
+      "time": 10761
+    },
+    {
+      "type": "mutation",
+      "time": 10761
+    },
+    {
+      "type": "mutation",
+      "time": 10765.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 10765.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 10765.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 10770.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 10770.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 10770.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 10779.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 10779.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 10779.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 10788.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 10788.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 10788.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 10791.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10791.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10791.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10794.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10794.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10794.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10806.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10806.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10806.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10822.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 10822.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 10822.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 10826.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10826.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10826.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 10827.5
+    },
+    {
+      "type": "mutation",
+      "time": 10827.5
+    },
+    {
+      "type": "mutation",
+      "time": 10827.5
+    },
+    {
+      "type": "mutation",
+      "time": 10829.5
+    },
+    {
+      "type": "mutation",
+      "time": 10829.5
+    },
+    {
+      "type": "mutation",
+      "time": 10829.5
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 11171.799999952316,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 11277.299999952316,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 11277.399999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 11279.099999964237,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    },
+    {
+      "type": "mutation",
+      "time": 11298.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11298.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11298.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11298.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11334.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11334.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11334.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11334.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11341.5
+    },
+    {
+      "type": "mutation",
+      "time": 11341.5
+    },
+    {
+      "type": "mutation",
+      "time": 11341.5
+    },
+    {
+      "type": "mutation",
+      "time": 11341.5
+    },
+    {
+      "type": "mutation",
+      "time": 11355.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11355.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11355.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11355.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11368.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11368.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11368.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11368.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11374.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11374.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11374.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11374.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11378.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11378.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11378.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11378.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11393.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11393.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11393.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11393.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11403.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11403.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11403.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11403.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11414.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11414.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11414.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11414.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11426.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11426.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11426.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11426.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11435.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11435.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11435.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11435.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11440.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11440.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11440.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11440.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11449.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11449.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11449.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11449.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11458.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11458.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11458.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11458.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11536.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11536.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11536.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11536.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 11545.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11545.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11545.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11545.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 11550.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11550.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11550.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11550.799999952316
+    },
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 11598
+    },
+    {
+      "type": "mutation",
+      "time": 11598
+    },
+    {
+      "type": "mutation",
+      "time": 11598
+    },
+    {
+      "type": "mutation",
+      "time": 11598
+    },
+    {
+      "type": "mutation",
+      "time": 11598.5
+    },
+    {
+      "type": "mutation",
+      "time": 11598.5
+    },
+    {
+      "type": "mutation",
+      "time": 11598.5
+    },
+    {
+      "type": "mutation",
+      "time": 11598.5
+    },
+    {
+      "type": "mutation",
+      "time": 11627.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11627.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11627.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11627.299999952316
+    },
+    {
+      "type": "click-bubble",
+      "target": "SPAN",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 11637.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11637.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11637.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11637.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11653
+    },
+    {
+      "type": "mutation",
+      "time": 11653
+    },
+    {
+      "type": "mutation",
+      "time": 11653
+    },
+    {
+      "type": "mutation",
+      "time": 11653
+    },
+    {
+      "type": "mutation",
+      "time": 11656.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11656.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11656.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11656.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11664.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11664.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11664.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11664.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 11682.5
+    },
+    {
+      "type": "mutation",
+      "time": 11682.5
+    },
+    {
+      "type": "mutation",
+      "time": 11682.5
+    },
+    {
+      "type": "mutation",
+      "time": 11682.5
+    },
+    {
+      "type": "mutation",
+      "time": 11685.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11685.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11685.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 11685.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13640.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13640.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13640.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13640.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13649.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13649.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13649.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13649.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13653
+    },
+    {
+      "type": "mutation",
+      "time": 13653
+    },
+    {
+      "type": "mutation",
+      "time": 13653
+    },
+    {
+      "type": "mutation",
+      "time": 13653
+    },
+    {
+      "type": "mutation",
+      "time": 13656.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13656.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13656.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13656.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13664.5
+    },
+    {
+      "type": "mutation",
+      "time": 13664.5
+    },
+    {
+      "type": "mutation",
+      "time": 13664.5
+    },
+    {
+      "type": "mutation",
+      "time": 13664.5
+    },
+    {
+      "type": "mutation",
+      "time": 13670.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13670.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13670.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13670.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13678.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13678.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13678.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13678.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13685.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13685.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13685.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13685.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13705
+    },
+    {
+      "type": "mutation",
+      "time": 13705
+    },
+    {
+      "type": "mutation",
+      "time": 13705
+    },
+    {
+      "type": "mutation",
+      "time": 13705
+    },
+    {
+      "type": "mutation",
+      "time": 13709.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13709.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13709.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13709.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13710
+    },
+    {
+      "type": "mutation",
+      "time": 13710
+    },
+    {
+      "type": "mutation",
+      "time": 13710
+    },
+    {
+      "type": "mutation",
+      "time": 13710
+    },
+    {
+      "type": "mutation",
+      "time": 13713.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13713.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13713.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13713.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13921.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13921.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13921.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13921.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 13928.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13928.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13928.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13928.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13936.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13936.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13936.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13936.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13947.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13947.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13947.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13947.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13956.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13956.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13956.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13956.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13960
+    },
+    {
+      "type": "mutation",
+      "time": 13960
+    },
+    {
+      "type": "mutation",
+      "time": 13960
+    },
+    {
+      "type": "mutation",
+      "time": 13960
+    },
+    {
+      "type": "mutation",
+      "time": 13967.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13967.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13967.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13967.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13971.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13971.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13971.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13971.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 13980.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13980.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13980.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13980.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 13989.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13989.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13989.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13989.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 13993
+    },
+    {
+      "type": "mutation",
+      "time": 13993
+    },
+    {
+      "type": "mutation",
+      "time": 13993
+    },
+    {
+      "type": "mutation",
+      "time": 13993
+    },
+    {
+      "type": "mutation",
+      "time": 14003.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14003.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14003.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14003.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14013.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14013.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14013.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14013.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14022.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14022.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14022.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14022.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14027.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14027.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14027.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14027.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14035.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14035.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14035.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14035.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14035.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14039.5
+    },
+    {
+      "type": "mutation",
+      "time": 14039.5
+    },
+    {
+      "type": "mutation",
+      "time": 14039.5
+    },
+    {
+      "type": "mutation",
+      "time": 14039.5
+    },
+    {
+      "type": "mutation",
+      "time": 14039.5
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 14047.399999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 14149.799999952316,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 14149.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 14150.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    },
+    {
+      "type": "mutation",
+      "time": 14170.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14170.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14170.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14170.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14170.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14183.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14183.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14183.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14183.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14183.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14192.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14192.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14192.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14192.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14192.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14198.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14198.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14198.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14198.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14198.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14202.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14202.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14202.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14202.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14202.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14212.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14212.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14212.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14212.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14212.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14221.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14221.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14221.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14221.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14221.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14225.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14225.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14225.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14225.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14225.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14228.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14228.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14228.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14228.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14228.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14237.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14237.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14237.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14237.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14237.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14243.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14243.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14243.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14243.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14243.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14253.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14253.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14253.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14253.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14253.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14259.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14259.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14259.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14259.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14259.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14268.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14268.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14268.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14268.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14268.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14398.5
+    },
+    {
+      "type": "mutation",
+      "time": 14398.5
+    },
+    {
+      "type": "mutation",
+      "time": 14398.5
+    },
+    {
+      "type": "mutation",
+      "time": 14398.5
+    },
+    {
+      "type": "mutation",
+      "time": 14398.5
+    },
+    {
+      "type": "mutation",
+      "time": 14407.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14407.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14407.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14407.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14407.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14413.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14413.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14413.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14413.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14413.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14427.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14427.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14427.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14427.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14427.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14434.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14434.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14434.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14434.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14434.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14446.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14446.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14446.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14446.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14446.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14454.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14454.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14454.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14454.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14454.099999964237
+    },
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 14498.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14498.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14498.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14498.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14498.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14499.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14499.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14499.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14499.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14499.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 14529.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14529.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14529.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14529.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14529.299999952316
+    },
+    {
+      "type": "click-bubble",
+      "target": "SPAN",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 14541
+    },
+    {
+      "type": "mutation",
+      "time": 14541
+    },
+    {
+      "type": "mutation",
+      "time": 14541
+    },
+    {
+      "type": "mutation",
+      "time": 14541
+    },
+    {
+      "type": "mutation",
+      "time": 14541
+    },
+    {
+      "type": "mutation",
+      "time": 14570.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14570.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14570.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14570.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14570.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14574.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14574.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14574.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14574.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14574.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 14583.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14583.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14583.699999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14583.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14583.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 14593.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14593.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14593.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14593.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14593.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14597.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14597.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14597.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14597.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 14597.199999988079
+    },
+    {
+      "type": "mutation",
+      "time": 15420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 15420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 15420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 15420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 15420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16543
+    },
+    {
+      "type": "mutation",
+      "time": 16543.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 16543.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 16543.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 16543.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 16549.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 16549.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 16549.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 16549.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 16549.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 16552
+    },
+    {
+      "type": "mutation",
+      "time": 16552
+    },
+    {
+      "type": "mutation",
+      "time": 16552
+    },
+    {
+      "type": "mutation",
+      "time": 16552
+    },
+    {
+      "type": "mutation",
+      "time": 16552
+    },
+    {
+      "type": "mutation",
+      "time": 16555.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 16555.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 16555.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 16555.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 16555.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 16563.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16563.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16563.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16563.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16563.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16569.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16569.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16569.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16569.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16569.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16576
+    },
+    {
+      "type": "mutation",
+      "time": 16576
+    },
+    {
+      "type": "mutation",
+      "time": 16576
+    },
+    {
+      "type": "mutation",
+      "time": 16576
+    },
+    {
+      "type": "mutation",
+      "time": 16576
+    },
+    {
+      "type": "mutation",
+      "time": 16580.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 16580.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 16580.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 16580.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 16580.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 16594.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16594.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16594.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16594.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16594.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16596.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16596.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16596.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16596.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16596.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 16602
+    },
+    {
+      "type": "mutation",
+      "time": 16602
+    },
+    {
+      "type": "mutation",
+      "time": 16602
+    },
+    {
+      "type": "mutation",
+      "time": 16602
+    },
+    {
+      "type": "mutation",
+      "time": 16602
+    },
+    {
+      "type": "mutation",
+      "time": 16602.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16602.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16602.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16602.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 16602.69999998808
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 16914.5,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 17017.69999998808,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 17017.69999998808,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 17018.599999964237,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    },
+    {
+      "type": "mutation",
+      "time": 17037.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17037.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17037.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17037.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17037.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17038
+    },
+    {
+      "type": "mutation",
+      "time": 17055.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17055.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17055.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17055.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17055.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17055.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17060.5
+    },
+    {
+      "type": "mutation",
+      "time": 17060.5
+    },
+    {
+      "type": "mutation",
+      "time": 17060.5
+    },
+    {
+      "type": "mutation",
+      "time": 17060.5
+    },
+    {
+      "type": "mutation",
+      "time": 17060.5
+    },
+    {
+      "type": "mutation",
+      "time": 17060.5
+    },
+    {
+      "type": "mutation",
+      "time": 17071.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17071.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17071.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17071.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17071.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17071.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17080.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17080.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17080.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17080.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17080.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17080.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17084.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17084.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17084.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17084.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17084.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17084.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17087.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17087.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17087.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17087.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17087.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17087.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17096.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17096.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17096.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17096.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17096.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17096.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17105
+    },
+    {
+      "type": "mutation",
+      "time": 17105.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17105.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17105.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17105.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17105.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17116.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17116.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17116.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17116.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17116.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17116.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17124.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17124.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17124.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17124.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17124.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17124.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17135.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17135.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17135.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17135.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17135.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17135.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17167.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 17167.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 17167.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 17167.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 17167.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 17167.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 17174
+    },
+    {
+      "type": "mutation",
+      "time": 17174
+    },
+    {
+      "type": "mutation",
+      "time": 17174
+    },
+    {
+      "type": "mutation",
+      "time": 17174
+    },
+    {
+      "type": "mutation",
+      "time": 17174
+    },
+    {
+      "type": "mutation",
+      "time": 17174
+    },
+    {
+      "type": "mutation",
+      "time": 17186.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17186.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17186.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17186.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17186.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17186.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17193.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17193.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17193.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17193.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17193.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17193.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17262.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17262.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17262.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17262.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17262.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17262.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17271.5
+    },
+    {
+      "type": "mutation",
+      "time": 17271.5
+    },
+    {
+      "type": "mutation",
+      "time": 17271.5
+    },
+    {
+      "type": "mutation",
+      "time": 17271.5
+    },
+    {
+      "type": "mutation",
+      "time": 17271.5
+    },
+    {
+      "type": "mutation",
+      "time": 17271.5
+    },
+    {
+      "type": "mutation",
+      "time": 17276.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17276.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17276.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17276.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17276.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17276.099999964237
+    },
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 17329.5
+    },
+    {
+      "type": "mutation",
+      "time": 17329.5
+    },
+    {
+      "type": "mutation",
+      "time": 17329.5
+    },
+    {
+      "type": "mutation",
+      "time": 17329.5
+    },
+    {
+      "type": "mutation",
+      "time": 17329.5
+    },
+    {
+      "type": "mutation",
+      "time": 17329.5
+    },
+    {
+      "type": "mutation",
+      "time": 17330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17361.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17361.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17361.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17361.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17361.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17361.19999998808
+    },
+    {
+      "type": "click-bubble",
+      "target": "SPAN",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 17371.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 17371.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 17371.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 17371.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 17371.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17371.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17402.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17402.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17402.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17402.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17402.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17402.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 17406.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17406.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17406.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17406.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17406.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17406.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 17415.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17415.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17415.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17415.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17415.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17415.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17426.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17426.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17426.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17426.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17426.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17427
+    },
+    {
+      "type": "mutation",
+      "time": 17431.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17431.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17431.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17431.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17431.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 17431.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 18420.5
+    },
+    {
+      "type": "mutation",
+      "time": 18420.5
+    },
+    {
+      "type": "mutation",
+      "time": 18420.5
+    },
+    {
+      "type": "mutation",
+      "time": 18420.5
+    },
+    {
+      "type": "mutation",
+      "time": 18420.5
+    },
+    {
+      "type": "mutation",
+      "time": 18420.5
+    },
+    {
+      "type": "mutation",
+      "time": 18426.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18426.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18426.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18426.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18426.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18426.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18435.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18435.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18435.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18435.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18435.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18435.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18443.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18443.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18443.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18443.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18443.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18443.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18453.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18453.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18453.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18453.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18453.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18453.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 18455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 18455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 18455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 18455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 18455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 18455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 18469.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18469.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18469.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18469.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18469.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18469.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18472.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18472.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18472.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18472.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18472.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18472.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18483.5
+    },
+    {
+      "type": "mutation",
+      "time": 18483.5
+    },
+    {
+      "type": "mutation",
+      "time": 18483.5
+    },
+    {
+      "type": "mutation",
+      "time": 18483.5
+    },
+    {
+      "type": "mutation",
+      "time": 18483.5
+    },
+    {
+      "type": "mutation",
+      "time": 18483.5
+    },
+    {
+      "type": "mutation",
+      "time": 18490.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18490.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18490.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18490.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18490.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18490.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 18493.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18493.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18493.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18493.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18493.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 18493.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19377.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19377.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19377.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19377.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19377.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19377.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19388.5
+    },
+    {
+      "type": "mutation",
+      "time": 19388.5
+    },
+    {
+      "type": "mutation",
+      "time": 19388.5
+    },
+    {
+      "type": "mutation",
+      "time": 19388.5
+    },
+    {
+      "type": "mutation",
+      "time": 19388.5
+    },
+    {
+      "type": "mutation",
+      "time": 19388.5
+    },
+    {
+      "type": "mutation",
+      "time": 19393.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19393.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19393.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19393.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19393.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19393.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19399.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19399.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19399.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19399.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19399.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19399.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19411.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19411.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19411.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19411.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19411.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19411.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19420
+    },
+    {
+      "type": "mutation",
+      "time": 19420
+    },
+    {
+      "type": "mutation",
+      "time": 19420
+    },
+    {
+      "type": "mutation",
+      "time": 19420.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19420.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19420.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19423.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19423.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19423.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19423.5
+    },
+    {
+      "type": "mutation",
+      "time": 19423.5
+    },
+    {
+      "type": "mutation",
+      "time": 19423.5
+    },
+    {
+      "type": "mutation",
+      "time": 19428.5
+    },
+    {
+      "type": "mutation",
+      "time": 19428.5
+    },
+    {
+      "type": "mutation",
+      "time": 19428.5
+    },
+    {
+      "type": "mutation",
+      "time": 19428.5
+    },
+    {
+      "type": "mutation",
+      "time": 19428.5
+    },
+    {
+      "type": "mutation",
+      "time": 19428.5
+    },
+    {
+      "type": "mutation",
+      "time": 19441.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19441.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19441.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19441.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19441.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19441.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19447.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19447.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19447.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19447.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19447.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19447.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19455.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19462.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19462.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19462.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19462.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19462.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19462.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19467.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19467.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19467.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19467.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19467.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19467.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19468.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19468.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19468.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19468.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19468.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19468.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19471.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19471.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19471.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19471.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19471.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19471.099999964237
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 19782.19999998808,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 19884.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 19885,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 19885.69999998808,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    },
+    {
+      "type": "mutation",
+      "time": 19909.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19909.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19909.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19909.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19909.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19909.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19909.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19943
+    },
+    {
+      "type": "mutation",
+      "time": 19943
+    },
+    {
+      "type": "mutation",
+      "time": 19943
+    },
+    {
+      "type": "mutation",
+      "time": 19943
+    },
+    {
+      "type": "mutation",
+      "time": 19943
+    },
+    {
+      "type": "mutation",
+      "time": 19943
+    },
+    {
+      "type": "mutation",
+      "time": 19943.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19953.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19953.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19953.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19953.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19953.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19953.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19953.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19970.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19970.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19970.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19970.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19970.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19970.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19970.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 19974.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19974.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19974.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19974.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19974.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19974.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19974.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 19982.5
+    },
+    {
+      "type": "mutation",
+      "time": 19982.5
+    },
+    {
+      "type": "mutation",
+      "time": 19982.5
+    },
+    {
+      "type": "mutation",
+      "time": 19982.5
+    },
+    {
+      "type": "mutation",
+      "time": 19982.5
+    },
+    {
+      "type": "mutation",
+      "time": 19982.5
+    },
+    {
+      "type": "mutation",
+      "time": 19982.5
+    },
+    {
+      "type": "mutation",
+      "time": 19989
+    },
+    {
+      "type": "mutation",
+      "time": 19989
+    },
+    {
+      "type": "mutation",
+      "time": 19989
+    },
+    {
+      "type": "mutation",
+      "time": 19989
+    },
+    {
+      "type": "mutation",
+      "time": 19989
+    },
+    {
+      "type": "mutation",
+      "time": 19989
+    },
+    {
+      "type": "mutation",
+      "time": 19989
+    },
+    {
+      "type": "mutation",
+      "time": 19992.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19992.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19992.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19992.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19992.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19992.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19992.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 19995
+    },
+    {
+      "type": "mutation",
+      "time": 19995
+    },
+    {
+      "type": "mutation",
+      "time": 19995
+    },
+    {
+      "type": "mutation",
+      "time": 19995
+    },
+    {
+      "type": "mutation",
+      "time": 19995.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19995.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 19995.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20006
+    },
+    {
+      "type": "mutation",
+      "time": 20006
+    },
+    {
+      "type": "mutation",
+      "time": 20006
+    },
+    {
+      "type": "mutation",
+      "time": 20006
+    },
+    {
+      "type": "mutation",
+      "time": 20006
+    },
+    {
+      "type": "mutation",
+      "time": 20006
+    },
+    {
+      "type": "mutation",
+      "time": 20006
+    },
+    {
+      "type": "mutation",
+      "time": 20011.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20011.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20011.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20011.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20011.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20011.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20011.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20019.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20019.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20019.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20019.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20019.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20019.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20019.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20025.5
+    },
+    {
+      "type": "mutation",
+      "time": 20025.5
+    },
+    {
+      "type": "mutation",
+      "time": 20025.5
+    },
+    {
+      "type": "mutation",
+      "time": 20025.5
+    },
+    {
+      "type": "mutation",
+      "time": 20025.5
+    },
+    {
+      "type": "mutation",
+      "time": 20025.5
+    },
+    {
+      "type": "mutation",
+      "time": 20025.5
+    },
+    {
+      "type": "mutation",
+      "time": 20033.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20033.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20033.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20033.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20033.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20033.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20033.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20045.5
+    },
+    {
+      "type": "mutation",
+      "time": 20045.5
+    },
+    {
+      "type": "mutation",
+      "time": 20045.5
+    },
+    {
+      "type": "mutation",
+      "time": 20045.5
+    },
+    {
+      "type": "mutation",
+      "time": 20045.5
+    },
+    {
+      "type": "mutation",
+      "time": 20045.5
+    },
+    {
+      "type": "mutation",
+      "time": 20045.5
+    },
+    {
+      "type": "mutation",
+      "time": 20165.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20165.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20165.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20165.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20165.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20165.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20165.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20174.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20174.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20174.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20174.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20174.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20174.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20174.5
+    },
+    {
+      "type": "mutation",
+      "time": 20179.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20179.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20179.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20179.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20179.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20179.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20179.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20183.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20183.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20183.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20183.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20183.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20183.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20183.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20190.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20190.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20190.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20190.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20190.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20190.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20190.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20201.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20201.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20201.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20201.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20201.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20201.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20201.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20206.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20206.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20206.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20206.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20206.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20206.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20206.099999964237
+    },
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 20262.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20262.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20262.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20262.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20262.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20262.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20262.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 20263.5
+    },
+    {
+      "type": "mutation",
+      "time": 20263.5
+    },
+    {
+      "type": "mutation",
+      "time": 20263.5
+    },
+    {
+      "type": "mutation",
+      "time": 20263.5
+    },
+    {
+      "type": "mutation",
+      "time": 20263.5
+    },
+    {
+      "type": "mutation",
+      "time": 20263.5
+    },
+    {
+      "type": "mutation",
+      "time": 20263.5
+    },
+    {
+      "type": "mutation",
+      "time": 20311.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20311.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20311.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20311.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20311.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20311.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20311.599999964237
+    },
+    {
+      "type": "click-bubble",
+      "target": "SPAN",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 20332.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20332.5
+    },
+    {
+      "type": "mutation",
+      "time": 20332.5
+    },
+    {
+      "type": "mutation",
+      "time": 20332.5
+    },
+    {
+      "type": "mutation",
+      "time": 20332.5
+    },
+    {
+      "type": "mutation",
+      "time": 20332.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20332.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20347
+    },
+    {
+      "type": "mutation",
+      "time": 20347
+    },
+    {
+      "type": "mutation",
+      "time": 20347
+    },
+    {
+      "type": "mutation",
+      "time": 20347
+    },
+    {
+      "type": "mutation",
+      "time": 20347
+    },
+    {
+      "type": "mutation",
+      "time": 20347
+    },
+    {
+      "type": "mutation",
+      "time": 20347
+    },
+    {
+      "type": "mutation",
+      "time": 20351.5
+    },
+    {
+      "type": "mutation",
+      "time": 20351.5
+    },
+    {
+      "type": "mutation",
+      "time": 20351.5
+    },
+    {
+      "type": "mutation",
+      "time": 20351.5
+    },
+    {
+      "type": "mutation",
+      "time": 20351.5
+    },
+    {
+      "type": "mutation",
+      "time": 20351.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20351.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 20360.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20360.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20360.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20360.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20360.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20360.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20360.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 20377.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20377.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20377.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20377.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20377.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20377.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20377.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20383.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20383.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20383.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20383.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20383.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20383.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 20383.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 22330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22330.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22338.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22338.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22338.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22338.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22338.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22338.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22338.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22342.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22342.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22342.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22342.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22342.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22342.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22342.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22346.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22346.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22346.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22346.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22346.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22346.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22346.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22356.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22356.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22356.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22356.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22356.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22356.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22356.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22360.5
+    },
+    {
+      "type": "mutation",
+      "time": 22360.5
+    },
+    {
+      "type": "mutation",
+      "time": 22360.5
+    },
+    {
+      "type": "mutation",
+      "time": 22360.5
+    },
+    {
+      "type": "mutation",
+      "time": 22360.5
+    },
+    {
+      "type": "mutation",
+      "time": 22360.5
+    },
+    {
+      "type": "mutation",
+      "time": 22360.5
+    },
+    {
+      "type": "mutation",
+      "time": 22367.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22367.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22367.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22367.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22367.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22367.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22367.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22372.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22372.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22372.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22372.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22372.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22372.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22372.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22376.5
+    },
+    {
+      "type": "mutation",
+      "time": 22376.5
+    },
+    {
+      "type": "mutation",
+      "time": 22376.5
+    },
+    {
+      "type": "mutation",
+      "time": 22376.5
+    },
+    {
+      "type": "mutation",
+      "time": 22376.5
+    },
+    {
+      "type": "mutation",
+      "time": 22376.5
+    },
+    {
+      "type": "mutation",
+      "time": 22376.5
+    },
+    {
+      "type": "mutation",
+      "time": 22455.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22455.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22455.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22455.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22455.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22455.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22455.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22459.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22459.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22459.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22459.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22459.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22459.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22459.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22460.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22460.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22460.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22460.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22460.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22460.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22460.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22462.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22462.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22462.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22462.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22462.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22462.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 22462.799999952316
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 22787.69999998808,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 22895.799999952316,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 22895.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 22896.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    },
+    {
+      "type": "mutation",
+      "time": 22924
+    },
+    {
+      "type": "mutation",
+      "time": 22924
+    },
+    {
+      "type": "mutation",
+      "time": 22924
+    },
+    {
+      "type": "mutation",
+      "time": 22924
+    },
+    {
+      "type": "mutation",
+      "time": 22924
+    },
+    {
+      "type": "mutation",
+      "time": 22924
+    },
+    {
+      "type": "mutation",
+      "time": 22924
+    },
+    {
+      "type": "mutation",
+      "time": 22924
+    },
+    {
+      "type": "mutation",
+      "time": 22932.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22932.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22932.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22932.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22932.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22932.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22932.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22932.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22937.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22937.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22937.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22937.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22937.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22937.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22937.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22937.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22946.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22946.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22946.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22946.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22946.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22946.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22946.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22946.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22950.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 22950.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 22950.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 22950.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 22950.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 22950.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 22950.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 22950.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 22959.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22959.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22959.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22959.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22959.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22959.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22959.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22959.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22968.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22968.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22968.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22968.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22968.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22968.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22968.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22968.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22972.5
+    },
+    {
+      "type": "mutation",
+      "time": 22972.5
+    },
+    {
+      "type": "mutation",
+      "time": 22972.5
+    },
+    {
+      "type": "mutation",
+      "time": 22972.5
+    },
+    {
+      "type": "mutation",
+      "time": 22972.5
+    },
+    {
+      "type": "mutation",
+      "time": 22972.5
+    },
+    {
+      "type": "mutation",
+      "time": 22972.5
+    },
+    {
+      "type": "mutation",
+      "time": 22972.5
+    },
+    {
+      "type": "mutation",
+      "time": 22976.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22976.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22976.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22976.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22976.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22976.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22976.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22976.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22982.5
+    },
+    {
+      "type": "mutation",
+      "time": 22982.5
+    },
+    {
+      "type": "mutation",
+      "time": 22982.5
+    },
+    {
+      "type": "mutation",
+      "time": 22982.5
+    },
+    {
+      "type": "mutation",
+      "time": 22982.5
+    },
+    {
+      "type": "mutation",
+      "time": 22982.5
+    },
+    {
+      "type": "mutation",
+      "time": 22982.5
+    },
+    {
+      "type": "mutation",
+      "time": 22982.5
+    },
+    {
+      "type": "mutation",
+      "time": 22987.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22987.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22987.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22987.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22987.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22987.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22987.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22987.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 22996.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22996.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22996.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22996.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22996.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22996.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22996.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 22996.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23009.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23009.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23009.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23009.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23009.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23009.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23009.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23009.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23015.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23015.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23015.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23015.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23015.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23015.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23015.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23015.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23020.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23020.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23020.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23020.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23020.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23020.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23020.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23020.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23031.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23031.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23031.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23031.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23031.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23031.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23031.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23031.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23037.5
+    },
+    {
+      "type": "mutation",
+      "time": 23037.5
+    },
+    {
+      "type": "mutation",
+      "time": 23037.5
+    },
+    {
+      "type": "mutation",
+      "time": 23037.5
+    },
+    {
+      "type": "mutation",
+      "time": 23037.5
+    },
+    {
+      "type": "mutation",
+      "time": 23037.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23037.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23037.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23043.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23043.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23043.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23043.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23043.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23043.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23043.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23043.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23054.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23054.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23054.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23054.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23054.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23054.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23054.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23054.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23060.5
+    },
+    {
+      "type": "mutation",
+      "time": 23060.5
+    },
+    {
+      "type": "mutation",
+      "time": 23060.5
+    },
+    {
+      "type": "mutation",
+      "time": 23060.5
+    },
+    {
+      "type": "mutation",
+      "time": 23060.5
+    },
+    {
+      "type": "mutation",
+      "time": 23060.5
+    },
+    {
+      "type": "mutation",
+      "time": 23060.5
+    },
+    {
+      "type": "mutation",
+      "time": 23060.5
+    },
+    {
+      "type": "mutation",
+      "time": 23067.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23067.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23067.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23067.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23067.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23067.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23067.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23067.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23071.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23071.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23071.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23071.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23071.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23071.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23071.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23071.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23082.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23082.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23082.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23082.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23082.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23082.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23082.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23082.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23091.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23091.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23091.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23091.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23091.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23091.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23091.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23091.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23105.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23105.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23105.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23105.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23105.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23105.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23105.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23105.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23114.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23114.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23114.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23114.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23114.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23114.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23114.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23114.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23118.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23118.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23118.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23118.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23118.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23118.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23118.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23118.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23129.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23129.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23129.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23129.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23129.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23129.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23129.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23129.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23137.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23137.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23137.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23137.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23137.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23137.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23137.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23137.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23149.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23149.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23149.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23149.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23149.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23149.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23149.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23149.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23163.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23163.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23163.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23163.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23163.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23163.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23163.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23163.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23172.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23172.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23172.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23172.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23172.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23172.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23172.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23172.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23177
+    },
+    {
+      "type": "mutation",
+      "time": 23177
+    },
+    {
+      "type": "mutation",
+      "time": 23177
+    },
+    {
+      "type": "mutation",
+      "time": 23177
+    },
+    {
+      "type": "mutation",
+      "time": 23177
+    },
+    {
+      "type": "mutation",
+      "time": 23177
+    },
+    {
+      "type": "mutation",
+      "time": 23177
+    },
+    {
+      "type": "mutation",
+      "time": 23177
+    },
+    {
+      "type": "mutation",
+      "time": 23184.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23184.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23184.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23184.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23184.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23184.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23184.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23184.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23189.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23189.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23189.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23189.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23189.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23189.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23189.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23189.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23195.5
+    },
+    {
+      "type": "mutation",
+      "time": 23195.5
+    },
+    {
+      "type": "mutation",
+      "time": 23195.5
+    },
+    {
+      "type": "mutation",
+      "time": 23195.5
+    },
+    {
+      "type": "mutation",
+      "time": 23195.5
+    },
+    {
+      "type": "mutation",
+      "time": 23195.5
+    },
+    {
+      "type": "mutation",
+      "time": 23195.5
+    },
+    {
+      "type": "mutation",
+      "time": 23195.5
+    },
+    {
+      "type": "mutation",
+      "time": 23199.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23199.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23199.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23199.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23199.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23199.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23199.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23199.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23208.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23208.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23208.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23208.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23208.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23208.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23208.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23208.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23219.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23219.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23219.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23219.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23219.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23219.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23219.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23219.099999964237
+    },
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 23280.5
+    },
+    {
+      "type": "mutation",
+      "time": 23280.5
+    },
+    {
+      "type": "mutation",
+      "time": 23280.5
+    },
+    {
+      "type": "mutation",
+      "time": 23280.5
+    },
+    {
+      "type": "mutation",
+      "time": 23280.5
+    },
+    {
+      "type": "mutation",
+      "time": 23280.5
+    },
+    {
+      "type": "mutation",
+      "time": 23280.5
+    },
+    {
+      "type": "mutation",
+      "time": 23280.5
+    },
+    {
+      "type": "mutation",
+      "time": 23281.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23281.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23281.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23281.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23281.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23281.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23281.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23281.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23311.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23311.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23311.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23311.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23311.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23311.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23311.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 23311.299999952316
+    },
+    {
+      "type": "click-bubble",
+      "target": "SPAN",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 23320.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23320.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23320.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23320.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23320.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23320.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23320.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23320.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23331.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23331.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23331.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23331.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23331.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23331.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23331.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23331.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23335.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23335.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23335.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23335.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23335.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23335.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23335.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23335.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23346.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23346.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23346.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23346.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23346.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23346.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23346.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23346.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 23366.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23366.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23366.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23366.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23366.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23366.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23366.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23366.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 23370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 23370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25325
+    },
+    {
+      "type": "mutation",
+      "time": 25325
+    },
+    {
+      "type": "mutation",
+      "time": 25325
+    },
+    {
+      "type": "mutation",
+      "time": 25325
+    },
+    {
+      "type": "mutation",
+      "time": 25325
+    },
+    {
+      "type": "mutation",
+      "time": 25325
+    },
+    {
+      "type": "mutation",
+      "time": 25325
+    },
+    {
+      "type": "mutation",
+      "time": 25325
+    },
+    {
+      "type": "mutation",
+      "time": 25334.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25334.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25334.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25334.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25334.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25334.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25334.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25334.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25339.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25339.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25339.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25339.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25339.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25339.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25339.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25339.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25343.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25343.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25343.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25343.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25343.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25343.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25343.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25343.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25354.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25354.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25354.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25354.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25354.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25354.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25354.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25354.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25359.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25359.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25359.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25359.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25359.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25359.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25359.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25359.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25366.5
+    },
+    {
+      "type": "mutation",
+      "time": 25366.5
+    },
+    {
+      "type": "mutation",
+      "time": 25366.5
+    },
+    {
+      "type": "mutation",
+      "time": 25366.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25366.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25366.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25366.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25366.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25371.5
+    },
+    {
+      "type": "mutation",
+      "time": 25371.5
+    },
+    {
+      "type": "mutation",
+      "time": 25371.5
+    },
+    {
+      "type": "mutation",
+      "time": 25371.5
+    },
+    {
+      "type": "mutation",
+      "time": 25371.5
+    },
+    {
+      "type": "mutation",
+      "time": 25371.5
+    },
+    {
+      "type": "mutation",
+      "time": 25371.5
+    },
+    {
+      "type": "mutation",
+      "time": 25371.5
+    },
+    {
+      "type": "mutation",
+      "time": 25376.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25376.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25376.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25376.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25376.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25376.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25376.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25376.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25385
+    },
+    {
+      "type": "mutation",
+      "time": 25385
+    },
+    {
+      "type": "mutation",
+      "time": 25385
+    },
+    {
+      "type": "mutation",
+      "time": 25385
+    },
+    {
+      "type": "mutation",
+      "time": 25385
+    },
+    {
+      "type": "mutation",
+      "time": 25385
+    },
+    {
+      "type": "mutation",
+      "time": 25385
+    },
+    {
+      "type": "mutation",
+      "time": 25385
+    },
+    {
+      "type": "mutation",
+      "time": 25393
+    },
+    {
+      "type": "mutation",
+      "time": 25393
+    },
+    {
+      "type": "mutation",
+      "time": 25393
+    },
+    {
+      "type": "mutation",
+      "time": 25393
+    },
+    {
+      "type": "mutation",
+      "time": 25393
+    },
+    {
+      "type": "mutation",
+      "time": 25393
+    },
+    {
+      "type": "mutation",
+      "time": 25393
+    },
+    {
+      "type": "mutation",
+      "time": 25393.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25396.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25396.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25396.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25396.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25396.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25396.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25396.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25396.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25403.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25403.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25403.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25403.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25403.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25403.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25403.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25403.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25404.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25404.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25404.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25404.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25404.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25404.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25404.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25404.599999964237
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 25717.69999998808,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 25820.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 25820.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 25821.599999964237,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    },
+    {
+      "type": "mutation",
+      "time": 25835.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25835.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25835.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25835.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25835.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25835.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25835.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25835.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25835.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25864.5
+    },
+    {
+      "type": "mutation",
+      "time": 25864.5
+    },
+    {
+      "type": "mutation",
+      "time": 25864.5
+    },
+    {
+      "type": "mutation",
+      "time": 25864.5
+    },
+    {
+      "type": "mutation",
+      "time": 25864.5
+    },
+    {
+      "type": "mutation",
+      "time": 25864.5
+    },
+    {
+      "type": "mutation",
+      "time": 25864.5
+    },
+    {
+      "type": "mutation",
+      "time": 25864.5
+    },
+    {
+      "type": "mutation",
+      "time": 25864.5
+    },
+    {
+      "type": "mutation",
+      "time": 25871.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25871.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25871.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25871.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25871.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25871.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25871.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25871.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25871.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25916.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25916.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25916.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25916.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25916.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25916.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25916.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25916.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25916.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25926.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25926.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25926.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25926.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25926.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25926.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25926.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25926.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25926.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 25931
+    },
+    {
+      "type": "mutation",
+      "time": 25931
+    },
+    {
+      "type": "mutation",
+      "time": 25931
+    },
+    {
+      "type": "mutation",
+      "time": 25931
+    },
+    {
+      "type": "mutation",
+      "time": 25931
+    },
+    {
+      "type": "mutation",
+      "time": 25931
+    },
+    {
+      "type": "mutation",
+      "time": 25931
+    },
+    {
+      "type": "mutation",
+      "time": 25931
+    },
+    {
+      "type": "mutation",
+      "time": 25931
+    },
+    {
+      "type": "mutation",
+      "time": 25934.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25934.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25934.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25934.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25934.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25934.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25934.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25934.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25934.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 25948.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25948.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25948.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25948.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25948.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25948.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25948.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25948.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25948.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25953
+    },
+    {
+      "type": "mutation",
+      "time": 25953
+    },
+    {
+      "type": "mutation",
+      "time": 25953
+    },
+    {
+      "type": "mutation",
+      "time": 25953
+    },
+    {
+      "type": "mutation",
+      "time": 25953
+    },
+    {
+      "type": "mutation",
+      "time": 25953
+    },
+    {
+      "type": "mutation",
+      "time": 25953
+    },
+    {
+      "type": "mutation",
+      "time": 25953
+    },
+    {
+      "type": "mutation",
+      "time": 25953
+    },
+    {
+      "type": "mutation",
+      "time": 25957.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25957.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25957.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25957.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25957.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25957.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25957.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25957.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25957.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 25970
+    },
+    {
+      "type": "mutation",
+      "time": 25970
+    },
+    {
+      "type": "mutation",
+      "time": 25970
+    },
+    {
+      "type": "mutation",
+      "time": 25970
+    },
+    {
+      "type": "mutation",
+      "time": 25970
+    },
+    {
+      "type": "mutation",
+      "time": 25970
+    },
+    {
+      "type": "mutation",
+      "time": 25970
+    },
+    {
+      "type": "mutation",
+      "time": 25970
+    },
+    {
+      "type": "mutation",
+      "time": 25970
+    },
+    {
+      "type": "mutation",
+      "time": 25980.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25980.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25980.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25980.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25980.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25980.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25980.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25980.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25980.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 25993
+    },
+    {
+      "type": "mutation",
+      "time": 25993
+    },
+    {
+      "type": "mutation",
+      "time": 25993
+    },
+    {
+      "type": "mutation",
+      "time": 25993
+    },
+    {
+      "type": "mutation",
+      "time": 25993
+    },
+    {
+      "type": "mutation",
+      "time": 25993
+    },
+    {
+      "type": "mutation",
+      "time": 25993
+    },
+    {
+      "type": "mutation",
+      "time": 25993
+    },
+    {
+      "type": "mutation",
+      "time": 25993
+    },
+    {
+      "type": "mutation",
+      "time": 26004
+    },
+    {
+      "type": "mutation",
+      "time": 26004
+    },
+    {
+      "type": "mutation",
+      "time": 26004
+    },
+    {
+      "type": "mutation",
+      "time": 26004
+    },
+    {
+      "type": "mutation",
+      "time": 26004
+    },
+    {
+      "type": "mutation",
+      "time": 26004
+    },
+    {
+      "type": "mutation",
+      "time": 26004
+    },
+    {
+      "type": "mutation",
+      "time": 26004
+    },
+    {
+      "type": "mutation",
+      "time": 26004
+    },
+    {
+      "type": "mutation",
+      "time": 26012.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26012.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26012.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26012.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26012.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26012.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26012.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26012.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26012.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26025.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26025.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26025.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26025.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26025.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26025.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26025.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26025.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26025.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26036.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26036.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26036.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26036.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26036.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26036.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26036.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26036.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26036.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26043.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26043.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26043.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26043.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26043.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26043.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26043.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26043.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26043.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26142
+    },
+    {
+      "type": "mutation",
+      "time": 26142
+    },
+    {
+      "type": "mutation",
+      "time": 26142
+    },
+    {
+      "type": "mutation",
+      "time": 26142
+    },
+    {
+      "type": "mutation",
+      "time": 26142
+    },
+    {
+      "type": "mutation",
+      "time": 26142
+    },
+    {
+      "type": "mutation",
+      "time": 26142
+    },
+    {
+      "type": "mutation",
+      "time": 26142
+    },
+    {
+      "type": "mutation",
+      "time": 26142
+    },
+    {
+      "type": "mutation",
+      "time": 26151.5
+    },
+    {
+      "type": "mutation",
+      "time": 26151.5
+    },
+    {
+      "type": "mutation",
+      "time": 26151.5
+    },
+    {
+      "type": "mutation",
+      "time": 26151.5
+    },
+    {
+      "type": "mutation",
+      "time": 26151.5
+    },
+    {
+      "type": "mutation",
+      "time": 26151.5
+    },
+    {
+      "type": "mutation",
+      "time": 26151.5
+    },
+    {
+      "type": "mutation",
+      "time": 26151.5
+    },
+    {
+      "type": "mutation",
+      "time": 26151.5
+    },
+    {
+      "type": "mutation",
+      "time": 26157.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26157.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26157.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26157.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26157.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26157.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26157.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26157.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26157.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26181.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26181.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26181.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26181.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26181.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26181.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26181.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26181.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26181.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26189.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26189.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26189.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26189.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26189.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26189.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26189.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26189.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26189.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26194.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26194.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26194.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26194.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26194.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26194.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26194.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26194.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26194.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26202.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26202.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26202.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26202.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26202.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26202.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26202.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26202.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 26202.899999976158
+    },
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 26246.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26246.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26246.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26246.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26246.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26246.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26246.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26246.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26246.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26247.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26247.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26247.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26247.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26247.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26247.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26247.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26247.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26247.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26276.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26276.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26276.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26276.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26276.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26276.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26276.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26276.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26276.799999952316
+    },
+    {
+      "type": "click-bubble",
+      "target": "SPAN",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 26288
+    },
+    {
+      "type": "mutation",
+      "time": 26288
+    },
+    {
+      "type": "mutation",
+      "time": 26288
+    },
+    {
+      "type": "mutation",
+      "time": 26288
+    },
+    {
+      "type": "mutation",
+      "time": 26288
+    },
+    {
+      "type": "mutation",
+      "time": 26288
+    },
+    {
+      "type": "mutation",
+      "time": 26288
+    },
+    {
+      "type": "mutation",
+      "time": 26288
+    },
+    {
+      "type": "mutation",
+      "time": 26288
+    },
+    {
+      "type": "mutation",
+      "time": 26300.5
+    },
+    {
+      "type": "mutation",
+      "time": 26300.5
+    },
+    {
+      "type": "mutation",
+      "time": 26300.5
+    },
+    {
+      "type": "mutation",
+      "time": 26300.5
+    },
+    {
+      "type": "mutation",
+      "time": 26300.5
+    },
+    {
+      "type": "mutation",
+      "time": 26300.5
+    },
+    {
+      "type": "mutation",
+      "time": 26300.5
+    },
+    {
+      "type": "mutation",
+      "time": 26300.5
+    },
+    {
+      "type": "mutation",
+      "time": 26300.5
+    },
+    {
+      "type": "mutation",
+      "time": 26305.5
+    },
+    {
+      "type": "mutation",
+      "time": 26305.5
+    },
+    {
+      "type": "mutation",
+      "time": 26305.5
+    },
+    {
+      "type": "mutation",
+      "time": 26305.5
+    },
+    {
+      "type": "mutation",
+      "time": 26305.5
+    },
+    {
+      "type": "mutation",
+      "time": 26305.5
+    },
+    {
+      "type": "mutation",
+      "time": 26305.5
+    },
+    {
+      "type": "mutation",
+      "time": 26305.5
+    },
+    {
+      "type": "mutation",
+      "time": 26305.5
+    },
+    {
+      "type": "mutation",
+      "time": 26316.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26316.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26316.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26316.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 26316.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26316.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26316.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26316.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26316.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 26336.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26336.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26336.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26336.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26336.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26336.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26336.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26336.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26336.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26339.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26339.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26339.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26339.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26339.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26339.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26339.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26339.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 26339.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 27420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27420.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27425.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27425.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27425.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27425.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27425.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27425.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27425.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27425.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 27425.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 27432.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27432.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27432.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27432.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27432.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27432.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27432.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27432.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27432.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27439.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27439.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27439.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27439.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27439.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27439.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27439.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27439.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27439.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27446
+    },
+    {
+      "type": "mutation",
+      "time": 27446
+    },
+    {
+      "type": "mutation",
+      "time": 27446
+    },
+    {
+      "type": "mutation",
+      "time": 27446
+    },
+    {
+      "type": "mutation",
+      "time": 27446
+    },
+    {
+      "type": "mutation",
+      "time": 27446
+    },
+    {
+      "type": "mutation",
+      "time": 27446
+    },
+    {
+      "type": "mutation",
+      "time": 27446
+    },
+    {
+      "type": "mutation",
+      "time": 27446
+    },
+    {
+      "type": "mutation",
+      "time": 27448.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27448.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27448.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27448.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27448.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27448.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27448.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27448.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27448.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27456
+    },
+    {
+      "type": "mutation",
+      "time": 27456
+    },
+    {
+      "type": "mutation",
+      "time": 27456
+    },
+    {
+      "type": "mutation",
+      "time": 27456
+    },
+    {
+      "type": "mutation",
+      "time": 27456
+    },
+    {
+      "type": "mutation",
+      "time": 27456
+    },
+    {
+      "type": "mutation",
+      "time": 27456
+    },
+    {
+      "type": "mutation",
+      "time": 27456
+    },
+    {
+      "type": "mutation",
+      "time": 27456
+    },
+    {
+      "type": "mutation",
+      "time": 27458.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27458.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27458.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27458.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27458.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27458.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27458.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27458.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27458.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27468.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27468.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27468.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27468.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27468.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27468.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27468.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27468.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27468.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27477.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27477.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27477.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27477.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27477.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27477.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27477.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27477.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27477.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 27480.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 27480.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 27480.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 27480.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27480.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27480.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27480.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27480.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 27480.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28291.5
+    },
+    {
+      "type": "mutation",
+      "time": 28291.5
+    },
+    {
+      "type": "mutation",
+      "time": 28291.5
+    },
+    {
+      "type": "mutation",
+      "time": 28291.5
+    },
+    {
+      "type": "mutation",
+      "time": 28291.5
+    },
+    {
+      "type": "mutation",
+      "time": 28291.5
+    },
+    {
+      "type": "mutation",
+      "time": 28291.5
+    },
+    {
+      "type": "mutation",
+      "time": 28291.5
+    },
+    {
+      "type": "mutation",
+      "time": 28291.5
+    },
+    {
+      "type": "mutation",
+      "time": 28303.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28303.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28303.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28303.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28303.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28303.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28303.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28303.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28303.799999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28309.5
+    },
+    {
+      "type": "mutation",
+      "time": 28309.5
+    },
+    {
+      "type": "mutation",
+      "time": 28309.5
+    },
+    {
+      "type": "mutation",
+      "time": 28309.5
+    },
+    {
+      "type": "mutation",
+      "time": 28309.5
+    },
+    {
+      "type": "mutation",
+      "time": 28309.5
+    },
+    {
+      "type": "mutation",
+      "time": 28309.5
+    },
+    {
+      "type": "mutation",
+      "time": 28309.5
+    },
+    {
+      "type": "mutation",
+      "time": 28309.5
+    },
+    {
+      "type": "mutation",
+      "time": 28314.5
+    },
+    {
+      "type": "mutation",
+      "time": 28314.5
+    },
+    {
+      "type": "mutation",
+      "time": 28314.5
+    },
+    {
+      "type": "mutation",
+      "time": 28314.5
+    },
+    {
+      "type": "mutation",
+      "time": 28314.5
+    },
+    {
+      "type": "mutation",
+      "time": 28314.5
+    },
+    {
+      "type": "mutation",
+      "time": 28314.5
+    },
+    {
+      "type": "mutation",
+      "time": 28314.5
+    },
+    {
+      "type": "mutation",
+      "time": 28314.5
+    },
+    {
+      "type": "mutation",
+      "time": 28326.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28326.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28326.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28326.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28326.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28326.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28326.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28326.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28326.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28334.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28334.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28334.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28334.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28334.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28334.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28334.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28334.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28334.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28337.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28337.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28337.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28337.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28337.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28337.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28337.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28337.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28337.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28339.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 28339.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 28339.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 28339.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 28339.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 28339.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 28339.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 28339.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 28339.399999976158
+    },
+    {
+      "type": "mutation",
+      "time": 28347.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28347.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28347.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28347.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28347.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28347.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28347.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28347.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28347.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28357.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28357.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28357.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28357.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28357.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28357.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28357.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28357.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28357.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28362.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28362.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28362.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28362.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28362.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28362.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28362.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28362.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28362.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28370.599999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28373.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28373.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28373.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28373.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28373.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28373.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28373.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28373.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28373.69999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28377.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28377.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28377.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28377.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28377.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28377.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28377.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28377.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28377.19999998808
+    },
+    {
+      "type": "mutation",
+      "time": 28378.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28378.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28378.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28378.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28378.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28378.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28378.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28378.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28378.099999964237
+    },
+    {
+      "type": "mutation",
+      "time": 28380.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28380.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28380.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28380.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28380.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28380.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28380.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28380.299999952316
+    },
+    {
+      "type": "mutation",
+      "time": 28380.299999952316
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 28691.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 28795.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click",
+      "target": "path",
+      "id": "",
+      "time": 28796,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "path",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "submit",
+      "target": "FORM",
+      "id": "message-form",
+      "time": 28796.69999998808,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "sendDraft",
+      "selecting": false,
+      "submitting": false,
+      "folder": false,
+      "capability": true
+    }
+  ],
+  "state": {
+    "view": {
+      "placeholder": "向 WeftMate 说说你的目标",
+      "phoneChat": false,
+      "running": false,
+      "hint": "",
+      "attachmentBusy": false,
+      "newSessionDisabled": true,
+      "modelDisabled": false,
+      "modelName": "合成中继模型",
+      "messageDisabled": false,
+      "voiceDisabled": true,
+      "sendDisabled": true,
+      "sendText": "发送",
+      "attachmentsDisabled": true,
+      "desktopText": "打开记事本",
+      "desktopDisabled": true,
+      "cancelHidden": true,
+      "cancelDisabled": true
+    },
+    "selected": "session-23de1d88-5a33-4bc5-9260-3581b5c7e3dd"
+  },
+  "passed": true,
+  "messageRequests": 10
+}

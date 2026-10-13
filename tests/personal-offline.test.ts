@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { tamperCiphertext } from './helpers/tamper-ciphertext.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -46,8 +47,7 @@ test('device envelope authenticates contents and identity; storage is encrypted 
   assert.ok(!JSON.stringify(envelope).includes(payload.secret));
   assert.deepEqual(await vault.open(envelope, identity), payload);
   await assert.rejects(vault.open(envelope, { ...identity, deviceId: 'other' }));
-  const tampered = { ...envelope, ciphertext: 'A' + envelope.ciphertext.slice(1) };
-  if (tampered.ciphertext === envelope.ciphertext) tampered.ciphertext = 'B' + envelope.ciphertext.slice(1);
+  const tampered = { ...envelope, ciphertext: tamperCiphertext(envelope.ciphertext) };
   await assert.rejects(vault.open(tampered, identity));
   await vault.save(payload); assert.deepEqual(await vault.load(), payload);
   await vault.clear(); assert.equal((await vault.load()).snapshot, null);

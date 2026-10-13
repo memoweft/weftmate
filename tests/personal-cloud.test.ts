@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { waitForCommand } from './helpers/wait-for-command.mjs'
 import { mkdtemp, readFile, writeFile, mkdir, rm, realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -502,13 +503,11 @@ async function createdCloudSession(f: any, auth: any) {
   const sent = await f.requests('POST', '/commands', {requestId: randomUUID(), kind: 'session.create',
     targetDeviceId: f.hostId, modelProfileId: 'synthetic'}, auth);
   assert.equal(sent.status, 202, JSON.stringify(sent));
-  for (let i = 0; i < 100; i++) {
+  return (await waitForCommand(async () => {
     const found = await f.requests('GET', '/commands/' + sent.command.commandId, undefined, auth);
     assert.equal(found.status, 200, JSON.stringify(found));
-    if (found.command.state === 'accepted_by_dsh') return found.command.sessionId;
-    await new Promise(resolve => setTimeout(resolve, 10));
-  }
-  assert.fail('session was not accepted');
+    return found.command;
+  })).sessionId;
 }
 
 test('AUTH-1 cloud login on a fresh native desktop keeps its durable local owner; another cloud identity cannot replace it', async t => {
