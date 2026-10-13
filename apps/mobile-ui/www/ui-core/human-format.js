@@ -1,8 +1,9 @@
 /* Pure human-facing formats, also imported by health templates on the server. */
 globalThis.WeftHumanFormat = Object.freeze({
-    formatDuration(value) {
+    formatDuration(value, { includeZeroParts = false } = {}) {
         if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return '—';
         const minutes = Math.round(value), hours = Math.floor(minutes / 60), rest = minutes % 60;
+        if (includeZeroParts) return `${hours} 小时 ${rest} 分`;
         return hours ? `${hours} 小时${rest ? ` ${rest} 分` : ''}` : `${rest} 分`;
     },
     formatMoney(value) {
