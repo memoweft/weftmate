@@ -1,0 +1,367 @@
+{
+  "required": {
+    "mode": "required",
+    "files": 337,
+    "exitCode": 0,
+    "passed": 1930,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 34,
+    "exitCode": 0,
+    "passed": 239,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "androidJvm": {
+    "tests": 102,
+    "failed": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "name": "com.memoweft.weftmate.mobile.ActivityNotificationPolicyTest",
+        "tests": 8,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.ArtifactSaveMimeTypeUnitTest",
+        "tests": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.BusinessRouteUnitTest",
+        "tests": 20,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.ClientRouteInventoryUnitTest",
+        "tests": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.CloudAppUnitTest",
+        "tests": 6,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.CloudCallbackUnitTest",
+        "tests": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.ConnectionErrorUnitTest",
+        "tests": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.DiagnosticUnitTest",
+        "tests": 10,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.EndpointsTest",
+        "tests": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.HostAuthenticationSourceUnitTest",
+        "tests": 3,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.ModelRouteFingerprintUnitTest",
+        "tests": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.NativeChatStateTest",
+        "tests": 15,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.NativeFeedStateTest",
+        "tests": 9,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.RefreshRatePreferenceUnitTest",
+        "tests": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.SyncJobLeaseUnitTest",
+        "tests": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.SystemBarsUnitTest",
+        "tests": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.Task15ApprovalClientUnitTest",
+        "tests": 7,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.Upd1SignatureUnitTest",
+        "tests": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.memoweft.weftmate.mobile.XiaomiCatalogFilterUnitTest",
+        "tests": 1,
+        "failed": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "offlineBuild": true,
+  "routeInventory": {
+    "name": "com.memoweft.weftmate.mobile.ClientRouteInventoryUnitTest",
+    "tests": 1,
+    "failed": 0,
+    "skipped": 0
+  },
+  "mobile": {
+    "tests": 114,
+    "passed": 114,
+    "failed": 0,
+    "skipped": 0
+  },
+  "nativeUi": [
+    {
+      "width": 360,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "theme": "light",
+      "passed": true
+    }
+  ],
+  "notifications": [
+    {
+      "cold": false,
+      "oldPid": 17842,
+      "newPid": 17842,
+      "activityId": "notice-55",
+      "chatId": "chat-e60e1e55-6eca-4c87-85af-079ca14331f9",
+      "readReceipt": true,
+      "method": "tap actual system notification row",
+      "tab": "chat",
+      "passed": true
+    },
+    {
+      "cold": true,
+      "oldPid": 17842,
+      "newPid": 18488,
+      "activityId": "notice-57",
+      "chatId": "chat-e60e1e55-6eca-4c87-85af-079ca14331f9",
+      "readReceipt": true,
+      "method": "tap actual system notification row",
+      "tab": "chat",
+      "passed": true
+    }
+  ],
+  "longScroll": [
+    {
+      "theme": "light",
+      "swipes": 12,
+      "rows": 82,
+      "totalFrames": 298,
+      "jankyFrames": 173,
+      "file": "long-scroll-light.txt"
+    },
+    {
+      "theme": "dark",
+      "swipes": 12,
+      "rows": 82,
+      "totalFrames": 359,
+      "jankyFrames": 156,
+      "file": "long-scroll-dark.txt"
+    }
+  ],
+  "darkControls": {
+    "source": "controls-spec/tokens.json supplied 2026-10-13",
+    "alpha": "nearest 8-bit ARGB",
+    "colors": [
+      {
+        "name": "canvas",
+        "field": "nativeDarkCanvas",
+        "css": "#1c1c1e",
+        "expectedArgb": "ff1c1c1e",
+        "actualArgb": "ff1c1c1e",
+        "passed": true
+      },
+      {
+        "name": "surface",
+        "field": "nativeDarkSurface",
+        "css": "#2a2a2c",
+        "expectedArgb": "ff2a2a2c",
+        "actualArgb": "ff2a2a2c",
+        "passed": true
+      },
+      {
+        "name": "surface-soft",
+        "field": "nativeDarkSoft",
+        "css": "rgba(120,120,128,.26)",
+        "expectedArgb": "42787880",
+        "actualArgb": "42787880",
+        "passed": true
+      },
+      {
+        "name": "line",
+        "field": "nativeDarkLine",
+        "css": "rgba(255,255,255,.14)",
+        "expectedArgb": "24ffffff",
+        "actualArgb": "24ffffff",
+        "passed": true
+      },
+      {
+        "name": "ink",
+        "field": "nativeDarkInk",
+        "css": "#f2f2f4",
+        "expectedArgb": "fff2f2f4",
+        "actualArgb": "fff2f2f4",
+        "passed": true
+      },
+      {
+        "name": "ink-secondary",
+        "field": "nativeDarkSecondary",
+        "css": "#c4c4c9",
+        "expectedArgb": "ffc4c4c9",
+        "actualArgb": "ffc4c4c9",
+        "passed": true
+      },
+      {
+        "name": "ink-muted",
+        "field": "nativeDarkMuted",
+        "css": "#a3a3a9",
+        "expectedArgb": "ffa3a3a9",
+        "actualArgb": "ffa3a3a9",
+        "passed": true
+      },
+      {
+        "name": "accent",
+        "field": "nativeDarkAccent",
+        "css": "#e6e6e8",
+        "expectedArgb": "ffe6e6e8",
+        "actualArgb": "ffe6e6e8",
+        "passed": true
+      },
+      {
+        "name": "accent-hover",
+        "field": "nativeDarkAccentHover",
+        "css": "#ffffff",
+        "expectedArgb": "ffffffff",
+        "actualArgb": "ffffffff",
+        "passed": true
+      },
+      {
+        "name": "accent-soft",
+        "field": "nativeDarkAccentSoft",
+        "css": "rgba(255,255,255,.16)",
+        "expectedArgb": "29ffffff",
+        "actualArgb": "29ffffff",
+        "passed": true
+      },
+      {
+        "name": "on-accent",
+        "field": "nativeDarkOnAccent",
+        "css": "#1c1c1e",
+        "expectedArgb": "ff1c1c1e",
+        "actualArgb": "ff1c1c1e",
+        "passed": true
+      },
+      {
+        "name": "danger",
+        "field": "nativeDarkDanger",
+        "css": "#ffa3ad",
+        "expectedArgb": "ffffa3ad",
+        "actualArgb": "ffffa3ad",
+        "passed": true
+      },
+      {
+        "name": "selected-on-soft",
+        "field": "nativeDarkSelectedOnSoft",
+        "css": "rgba(255,255,255,.18)",
+        "expectedArgb": "2effffff",
+        "actualArgb": "2effffff",
+        "passed": true
+      },
+      {
+        "name": "surface-float",
+        "field": "nativeDarkSurfaceFloat",
+        "css": "rgba(44,44,46,.74)",
+        "expectedArgb": "bd2c2c2e",
+        "actualArgb": "bd2c2c2e",
+        "passed": true
+      },
+      {
+        "name": "danger-soft",
+        "field": "nativeDarkDangerSoft",
+        "css": "rgba(255,110,125,.20)",
+        "expectedArgb": "33ff6e7d",
+        "actualArgb": "33ff6e7d",
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  "specPreview": {
+    "passed": true,
+    "output": "Rendered three dark controls-spec previews; external requests blocked\n"
+  },
+  "statusBars": {
+    "shots": 116,
+    "failed": 0,
+    "themeMismatches": 0,
+    "bottomNavigationVisible": false
+  },
+  "apk": {
+    "bytes": 18997556,
+    "sha256": "3fc00c8f51b3be12bb12f1a8b70ad453195836dd122b7708ad0767fc77c267c4"
+  },
+  "typecheck": true,
+  "publicHygiene": {
+    "passed": true
+  },
+  "related": {
+    "passed": 8,
+    "failed": 0
+  }
+}
