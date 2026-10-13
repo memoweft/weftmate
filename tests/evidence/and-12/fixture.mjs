@@ -6,6 +6,7 @@ import { startNativeFixture } from '../and-4/fixture.mjs';
 // authenticated verification result so model selection tests only client focus.
 export async function startComposerFixture() {
   const base=await startNativeFixture();
+  let contentRevision=1;
   const server=createServer(async (req,res)=>{
     try {
       if(req.url==='/personal/v1/models/synthetic/verify') {
@@ -23,6 +24,17 @@ export async function startComposerFixture() {
         ...(!['GET','HEAD'].includes(req.method)?{body:Readable.toWeb(req),duplex:'half'}:{}),redirect:'manual'});
       const output=Object.fromEntries(response.headers);delete output['content-length'];delete output['content-encoding'];
       if(response.headers.getSetCookie().length)output['set-cookie']=response.headers.getSetCookie();
+      if(req.url==='/__qa/long' && response.ok)contentRevision++;
+      if(req.url==='/personal/v1/status' || /\/personal\/v1\/(chats|sessions)\/[^/]+\/(events|changes)/.test(req.url)) {
+        const value=await response.json();
+        if(req.url==='/personal/v1/status')value.presence={...value.presence,runtime:'ready',model:'ready'};
+        else {
+          value.contentRevision=contentRevision;
+          for(const event of value.items || value.upserts || value.events || [])
+            if(event.type==='user.message' && event.data?.text==='合成流式')event.data.receiptId='rpc:synthetic';
+        }
+        res.writeHead(response.status,output);res.end(JSON.stringify(value));return;
+      }
       res.writeHead(response.status,output);if(response.body)Readable.fromWeb(response.body).pipe(res);else res.end();
     } catch { if(!res.headersSent)res.writeHead(503);res.end(); }
   });

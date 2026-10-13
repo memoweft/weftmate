@@ -53,7 +53,9 @@ class NativeComposerInstrumentedTest {
         File(activity.getExternalFilesDir(null) ?: activity.filesDir,"and12-$theme-$name.png").outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}
     }
     private fun motion(name:String,action:()->Unit):JSONArray {
-        val coordinates=compose.onNodeWithContentDescription("聊天输入区").fetchSemanticsNode().layoutInfo.coordinates
+        val composerNode=compose.onNodeWithContentDescription("聊天输入区").fetchSemanticsNode()
+        val coordinates=composerNode.layoutInfo.coordinates
+        val outsidePadding=DesignTokens.space8*activity.resources.displayMetrics.density
         val frames=JSONArray();val done=CountDownLatch(1)
         val durations=java.util.Collections.synchronizedList(mutableListOf<Long>())
         val metricsThread=android.os.HandlerThread("and12-frames").apply{start()}
@@ -65,8 +67,8 @@ class NativeComposerInstrumentedTest {
                 override fun doFrame(time:Long) {
                     val elapsed=(time-start)/1000000
                     if(coordinates.isAttached) {
-                        val rect=coordinates.boundsInWindow()
-                        frames.put(JSONObject().put("ms",elapsed).put("top",rect.top).put("bottom",rect.bottom)
+                        val rect=composerNode.boundsInRoot
+                        frames.put(JSONObject().put("ms",elapsed).put("top",rect.top+outsidePadding).put("bottom",rect.bottom-outsidePadding)
                             .put("imeVisible",activity.window.decorView.rootWindowInsets.isVisible(WindowInsets.Type.ime())).put("imeBottom",activity.window.decorView.rootWindowInsets.getInsets(WindowInsets.Type.ime()).bottom))
                     }
                     if(elapsed<900)Choreographer.getInstance().postFrameCallback(this) else done.countDown()
@@ -155,13 +157,18 @@ class NativeComposerInstrumentedTest {
                 }
             } finally { i.removeMonitor(pickerMonitor) }
             click("添加附件");click("消息输入");keep("outside-dismiss-on-editor",draft)
+            compose.onNodeWithContentDescription("聊天输入区").performTouchInput{click(androidx.compose.ui.geometry.Offset(center.x,height-40f))}
+            keep("composer-tool-gap-keeps-input",draft)
             click("语音补充草稿");keep("voice-keeps-input",draft)
             motion("multiline-expand"){main{activity.model.edit((1..5).joinToString("\n"){"第 $it 行草稿"})}}
             motion("multiline-collapse"){main{activity.model.edit(draft)}}
             motion("keyboard-close"){main{activity.hideKeyboard()}}
             shot("tools-and-goal")
             // Reading above: a resize must keep the first visible message at the same location.
+            click("消息输入");keep("before-list-drag",draft)
             compose.onNodeWithContentDescription("消息列表").performTouchInput{swipeDown(durationMillis=300)}
+            waitFor("list drag hides IME"){!activity.window.decorView.rootWindowInsets.isVisible(WindowInsets.Type.ime())}
+            editor().assertIsNotFocused();checks.put("list-drag-dismisses-keyboard")
             compose.waitForIdle()
             val reading=compose.onAllNodes(hasText("第 ",substring=true)).fetchSemanticsNodes().first{it.boundsInRoot.top>150}
             val readingText=reading.config[androidx.compose.ui.semantics.SemanticsProperties.Text].first().text
@@ -169,6 +176,10 @@ class NativeComposerInstrumentedTest {
             click("消息输入");Thread.sleep(600)
             assertEquals("Reading anchor",readingY,compose.onNodeWithText(readingText).fetchSemanticsNode().boundsInRoot.top,3f)
             checks.put("reading-anchor-retained")
+            compose.onNodeWithContentDescription("消息列表").performTouchInput{click(androidx.compose.ui.geometry.Offset(4f,center.y))}
+            waitFor("message blank hides IME"){!activity.window.decorView.rootWindowInsets.isVisible(WindowInsets.Type.ime())}
+            editor().assertIsNotFocused();checks.put("visible-message-blank-dismisses-keyboard")
+            click("消息输入");keep("blank-dismiss-reopen",draft)
             editor().performTextReplacement("合成流式");click("发送消息")
             waitFor("accepted draft"){activity.model.draft.isEmpty()&&activity.model.running};keep("send-keeps-input","")
             click("停止回复");keep("stop-keeps-input","");waitFor("stopped"){!activity.model.running};click("语音输入");keep("primary-voice-keeps-input","")
@@ -182,12 +193,16 @@ class NativeComposerInstrumentedTest {
             var absent=false;main{activity.embeddedWeb.evaluateJavascript("!document.body.textContent.includes('使用原生聊天界面')"){absent=it=="true"}}
             waitFor("setting absent"){absent};checks.put("retired-setting-absent")
             main{activity.model.tab="chat"};click("打开侧栏");shot("sidebar");click("关闭侧栏")
-            shot("native-content")
+            // Compare the same stable scene, rather than a stream/stop racing between captures.
+            main{activity.model.launch{activity.model.refresh()}}
+            waitFor("comparison stream settled"){!activity.model.running && activity.model.rows.last().optJSONObject("data")?.optString("text")?.startsWith("收到。")==true}
+            main{activity.model.edit("对比用的草稿");activity.model.scrollVersion++};Thread.sleep(500);shot("native-content")
             // Same installation, identity and long data through the old web entry for comparison.
             val legacy=i.startActivitySync(Intent(activity,HybridActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .putExtra("lg1bHostOrigin",args.getString("origin"))) as HybridActivity
             Thread.sleep(1200)
-            main{legacy.embeddedWeb.evaluateJavascript("applyTheme('$theme');uiCore.selectMainChat()",null)};Thread.sleep(1000);shot("web-content")
+            main{legacy.embeddedWeb.evaluateJavascript("applyTheme('$theme');uiCore.selectMainChat()",null)};Thread.sleep(1000)
+            main{legacy.embeddedWeb.evaluateJavascript("const input=document.getElementById('draft');input.value='对比用的草稿';input.dispatchEvent(new Event('input',{bubbles:true}))",null)};Thread.sleep(500);shot("web-content")
             main{legacy.embeddedWeb.evaluateJavascript("openDrawer()",null)};Thread.sleep(450);shot("web-sidebar")
             main{legacy.finish()}
             File(activity.getExternalFilesDir(null) ?: activity.filesDir,"and12-$theme-ui-checks.json").writeText(JSONObject().put("checks",checks).put("uiAssertionsPassed",true)
