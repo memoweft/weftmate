@@ -102,7 +102,7 @@ import java.io.File
     var bitmap by remember(file){mutableStateOf<Bitmap?>(null)}
     var failed by remember(file){mutableStateOf(false)}
     LaunchedEffect(file) {bitmap=withContext(Dispatchers.IO){val bounds=BitmapFactory.Options().apply{inJustDecodeBounds=true};BitmapFactory.decodeFile(file.path,bounds);var sample=1;while(maxOf(bounds.outWidth,bounds.outHeight)/sample>4096)sample*=2;BitmapFactory.decodeFile(file.path,BitmapFactory.Options().apply{inSampleSize=sample})};failed=bitmap==null}
-    if(failed)Box(modifier){NativeFileState("这张图片无法显示，可以用其它应用打开。",R.drawable.wm_image,onRetry)}
+    if(failed)Box(modifier){NativeFileState("这张图片无法显示，可以用其它应用打开。",R.drawable.wm_image,retry=onRetry)}
     else if(bitmap==null)Box(modifier){NativeFileLoading()}
     else NativeZoomImage(bitmap!!,modifier,file.name)
 }
