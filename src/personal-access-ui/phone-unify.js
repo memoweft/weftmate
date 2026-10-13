@@ -91,8 +91,8 @@
             const target = jump.phoneTarget; if (!target?.isConnected) return;
             ui.conversationScroll?.hold();
             const bounds = scroll.getBoundingClientRect(), rect = target.getBoundingClientRect();
-            scroll.scrollTo({top:scroll.scrollTop + rect.top - bounds.top - 16,
-                behavior:globalThis.matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth'});
+            scroll.scrollTo({top:scroll.scrollTop + rect.top - bounds.top - 16, behavior:'instant'});
+            syncDecisions();
             target.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
         });
         scroll.addEventListener('scroll', syncDecisions, {passive:true});
