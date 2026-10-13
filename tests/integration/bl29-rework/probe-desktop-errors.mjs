@@ -6,6 +6,10 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms)),f=await startTimelineCandidate(
 try{
  const entry=join(profile,'entry.cjs');writeFileSync(entry,`const {app}=require('electron');app.setPath('userData',${JSON.stringify(profile)});app.whenReady().then(async()=>{const {createPersonalDesktop}=await import(${JSON.stringify(pathToFileURL(resolve('src/personal-desktop.mjs')).href)});let quitting=false;app.on('before-quit',()=>quitting=true);const d=createPersonalDesktop({origin:${JSON.stringify(f.origin)},libraryDesktopToken:${JSON.stringify(f.libraryDesktopToken)},isQuitting:()=>quitting});await d.ready;});`);const env={...process.env,WEFTMATE_TEST_HOST_NAME:'synthetic-host'};delete env.ELECTRON_RUN_AS_NODE;
  app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),args:[entry],env});const p=await app.firstWindow();let failure=null,count=0,recovering=false,healthyAt;
+ // This probe measures foreground recovery, not minimize behavior. Keep its
+ // own synthetic window out of taskbar-wide minimize operations while other
+ // packages use the shared desktop; production visibility events remain real.
+ await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.setMinimizable(false);w.setSkipTaskbar(true);});
  await p.route('**/personal/v1/ui/app.js',route=>route.fulfill({contentType:'text/javascript',body:readFileSync('src/personal-access-ui/app.js','utf8').replace('ui.loadAttachmentHasher =','globalThis.__revCore=core;globalThis.__revUi=ui;ui.loadAttachmentHasher =')}));
  // UNAUTHORIZED models persistent authorization loss, including recovery.
  // A 200 native bootstrap would instead create a valid new identity after
@@ -25,7 +29,7 @@ try{
   await p.waitForFunction(()=>!__revCore.state.liveRefreshing&&!__revCore.state.refreshing&&!__revCore.state.sessionSelecting);
   failure=code;count=0;recovering=false;healthyAt=null;
   await p.evaluate(()=>{__revCore.presence.success({runtime:'ready'});__revUi.startAssistantRefresh();});const at=Date.now();await pause(4500);
-  const row={code,ms:Date.now()-at,count,rps:count/((Date.now()-at)/1000),debug:await p.evaluate(()=>({main:__revCore.inMainChat(),view:__revCore.state.currentView,visible:document.visibilityState,background:__revCore.state.background,csrf:!!__revCore.state.csrfToken}))};report.push(row);
+  const row={code,ms:Date.now()-at,count,rps:count/((Date.now()-at)/1000),debug:await p.evaluate(()=>({main:__revCore.inMainChat(),view:__revCore.state.currentView,visible:document.visibilityState,background:__revCore.state.background,csrf:!!__revCore.state.csrfToken})),nativeWindow:await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];return{visible:w.isVisible(),minimized:w.isMinimized()};})};report.push(row);
   if(!['NOT_FOUND','UNAUTHORIZED'].includes(code)){
    failure=null;recovering=true;const restored=Date.now();
    while(!healthyAt&&Date.now()-restored<2200)await pause(10);

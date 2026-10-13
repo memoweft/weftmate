@@ -93,11 +93,12 @@ export { uniqueSessionOwner } from './store.mjs';
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
   mobileUiDir = null, mobileUiTrustedKeys = null, hostVersion = '0.1.0', sharedProfileIsFormal = () => false, memoryManager = null,
   allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
-  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null, updateStatus = null, nativeMinimumVersions = {}, libraryNativeActions = null, connectorVault = null, connectorRuntime = null }) {
+  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null, cloudBackup = null, updateStatus = null, nativeMinimumVersions = {}, libraryNativeActions = null, connectorVault = null, connectorRuntime = null, projectRootInspector = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
       typeof sharedProfileIsFormal !== 'function' ||
+      (projectRootInspector !== null && typeof projectRootInspector !== 'function') ||
       (accountModelManager !== null && (typeof accountModelManager.stageSecret !== 'function' ||
         typeof accountModelManager.apply !== 'function' ||
         typeof accountModelManager.inspect !== 'function' ||
@@ -251,6 +252,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     eraseChatCopies,
     get offline() { return offline; },
     get backupManager() { return backupManager; },
+    get projectRootInspector() { return projectRootInspector; },
+    get cloudBackupManager() { return hostCloudBackup; },
     backupOwner: ownerId => hostOwner(ownerId) || hostCloudIdentity?.isInstallationOwner(ownerId) === true,
     restoredCloudOwner: (issuer, sub) => Array.isArray(restoredCloudOwners) ? restoredCloudOwners.find(row => row.issuer === issuer && row.sub === sub && rootState.accounts[row.ownerId])?.ownerId : undefined,
     get usage() { return usage; },
@@ -647,7 +650,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   let storageFault = false;
   let hashQueue = Promise.resolve();
   let queuedHashes = 0;
-  let hostCloudIdentity = null;
+  let hostCloudIdentity = null, hostCloudBackup = null;
   const active = new Set();
   const activeByCommand = new Map();
   const scheduled = new Set();
@@ -1030,6 +1033,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         await chatTimeline.close();
         await offline.close();
         await hostRelay?.close();
+        await hostCloudBackup?.close();
         hostCloudIdentity?.close();
         mobileUi?.close();
         const browserClosed = Promise.resolve(browserReader?.close());
@@ -1080,6 +1084,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     },
   };
   if (cloudIdentity) hostCloudIdentity = await createHostCloudIdentity(context, cloudIdentity);
+  if (cloudBackup && backupManager) {
+    const {createCloudBackupManager}=await import('../personal-cloud-backup/index.mjs');
+    hostCloudBackup=await createCloudBackupManager({...cloudBackup,root:path.dirname(root),identity:hostCloudIdentity,backupManager,clock});
+    hostCloudBackup.start(()=>Object.keys(rootState.accounts));
+  }
   if (relay) hostRelay = await createHostRelay({ root, identity: hostCloudIdentity, options: relay,
     setPublicOrigin(value) { if (!allowedOrigins.includes(value)) allowedOrigins.push(value); trustedProxy = true; } });
   return service;
