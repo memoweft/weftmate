@@ -102,7 +102,7 @@ globalThis.WeftUiComponents.factories.phone = (core, ui) => {
             placeholder.value = '';
             select.append(placeholder);
             for (const model of core.state.models) {
-                const option = ui.element('option', '', typeof model.name === 'string' && model.name.trim() ? model.name : model.model || model.id || '未命名模型');
+                const option = ui.element('option', '', typeof model.name === 'string' && model.name.trim() ? model.name : typeof model.model === 'string' && model.model.trim() ? model.model : '未命名模型');
                 option.value = model.id;
                 select.append(option);
             }
