@@ -1,0 +1,22 @@
+{
+  "realElectron": true,
+  "pinnedDsh": true,
+  "realModel": false,
+  "scenarios": [
+    "visible mailbox provider form, real wrong-code failure, both servers log in, encrypted credential masking",
+    "subscription form, real download/parse, read-only tools, and removal",
+    "removal erases both connectors and all credential slots"
+  ],
+  "errors": [],
+  "modelRequests": 0,
+  "modelRequestCountSource": "authenticated account ledger (all attempts preserved in separate reports)",
+  "sentMessages": 0,
+  "calendarWrites": 0,
+  "ok": true,
+  "cleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  },
+  "privateFilesChecked": 286
+}

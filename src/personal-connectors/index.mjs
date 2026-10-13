@@ -92,6 +92,9 @@ export async function createConnectors({ root, runtime, vault, idleMs = 120000, 
     // Recheck after import so concurrent calls share exactly one process.
     if (closed || !row.enabled) throw new Error('Connector unavailable');
     if (live.has(identity)) { const entry = live.get(identity); await entry.ready; return entry; }
+    const binding = Object.fromEntries((row.slots ?? []).map(slot => [slot, draftSecrets?.[slot] ?? vault.get(owner, row.id, slot)]).filter(([, value]) => value !== null));
+    let resolved = row;
+    if (row.builtinId) resolved = { ...row, ...builtins.find(item => item.id === row.builtinId).configure(row.fields ?? {}, binding) };
     const child = fork(join(import.meta.dirname, 'native-worker.mjs'), [], { execPath: process.execPath,
       env: { ...scrubbedParentEnv(), ELECTRON_RUN_AS_NODE: '1' }, execArgv: [], silent: true, windowsHide: true, detached: process.platform !== 'win32' });
     // Custom server stderr is never written to application logs.
@@ -101,7 +104,7 @@ export async function createConnectors({ root, runtime, vault, idleMs = 120000, 
       if (message.action === 'tools') {
         entry.tools = message.tools.filter(tool => !Object.values(binding).some(value => value?.length >= 8 && tool.name.includes(value))).map(tool => ({ ...tool,
           network: row.transport === 'streamable-http' || tool.network === true,
-          rawName: redact(tool.rawName, Object.values(binding)), description: redact(tool.description, Object.values(binding)), parameters: redact(tool.parameters, Object.values(binding)) }));
+          rawName: redact(tool.rawName, Object.values(binding)), displayName: redact(tool.displayName, Object.values(binding)), description: redact(tool.description, Object.values(binding)), parameters: redact(tool.parameters, Object.values(binding)) }));
         row.tools = entry.tools;
       }
       else if (message.action === 'status') { entry.status = message.status; entry.attempt = Number(message.attempt ?? 0); if (message.status === 'ready') row.problem = undefined; }
@@ -114,9 +117,6 @@ export async function createConnectors({ root, runtime, vault, idleMs = 120000, 
       for (const pending of [...entry.pending.values()]) pending.reject(Object.assign(new Error('Connector unavailable'), { code: 'CONNECTOR_UNAVAILABLE' }));
       if (live.get(identity) === entry) live.delete(identity);
     });
-    const binding = Object.fromEntries((row.slots ?? []).map(slot => [slot, draftSecrets?.[slot] ?? vault.get(owner, row.id, slot)]).filter(([, value]) => value !== null));
-    let resolved = row;
-    if (row.builtinId) resolved = { ...row, ...builtins.find(item => item.id === row.builtinId).configure(row.fields ?? {}, binding) };
     const config = { ...resolved, serverName: row.id, toolCallTimeoutMs: callMs, failOnStartupError: true,
       reconnect: { enabled: true, initialDelayMs: 250, maxDelayMs: 30000, maxAttempts: 2 },
       env: { ...(resolved.environment ?? {}), ...binding }, headers: binding, cwd: root };
@@ -132,22 +132,23 @@ export async function createConnectors({ root, runtime, vault, idleMs = 120000, 
       return { id: row.id, name: row.name, enabled: row.enabled, builtinId: row.builtinId,
         status: !row.enabled ? 'disabled' : entry?.status ?? (row.problem ? 'failed' : 'idle'),
         message: row.problem ?? (entry?.status === 'recovering' ? `连接中断，正在重试（${entry.attempt}/2）。` : entry?.status === 'failed' ? '连接器已停止重试，请测试连接后再使用。' : ''),
-        tools: tools.map(({ name, rawName, description, category, network }) => ({ name, rawName, description, category, network })),
-        credentials: vault.list(owner, row.id), activeToolCount: Math.min(16, tools.length), totalToolCount: tools.length };
+        tools: tools.map(({ name, rawName, displayName, description, category, network }) => ({ name, rawName, displayName, description, category, network })),
+        credentials: vault.list(owner, row.id).map(credential => row.builtinId ? { ...credential, label: builtins.find(item=>item.id===row.builtinId)?.fields.find(field=>field.name===credential.name)?.label } : credential), activeToolCount: Math.min(16, tools.length), totalToolCount: tools.length };
     });
   }
   const manager = {
     list: visible,
     builtins: () => builtins.map(({ id, name, description, fields }) => ({ id, name, description, fields })),
     async test(owner, input) {
-      const row = input.id ? get(owner, input.id) : makeDraft(input);
+      let row;
+      try { row = input.id ? get(owner, input.id) : makeDraft(input); } catch (error) { return {ok:false,...connectorError(error),tools:[]}; }
       const draft = { ...row, enabled: true };
       let entry;
       try {
         const previous = live.get(key(owner, row.id)); if (previous) await stop(previous);
         entry = await start(owner, draft, input.credentials);
         if (input.id) { row.tools = entry.tools; row.problem = undefined; await save(); }
-        return { ok: true, tools: entry.tools.map(({ name, rawName, description, category }) => ({ name, rawName, description, category })) };
+        return { ok: true, tools: entry.tools.map(({ name, rawName, displayName, description, category }) => ({ name, rawName, displayName, description, category })) };
       }
       catch (error) { return { ok: false, ...connectorError(error), tools: [] }; }
       finally { if (entry && (!input.id || !row.enabled)) await stop(entry); }
@@ -174,6 +175,7 @@ export async function createConnectors({ root, runtime, vault, idleMs = 120000, 
     },
     async rotate(owner, id, credentials) {
       const row = get(owner, id); validateCredentials(credentials, true);
+      if (row.builtinId && Object.keys(credentials ?? {}).some(name => !builtins.find(item=>item.id===row.builtinId)?.fields.some(field=>field.name===name&&field.secret))) invalid();
       for (const [slot, value] of Object.entries(credentials ?? {})) {
         if (value === null) vault.remove(owner,id,slot); else vault.rotate(owner,id,slot,value);
       }
@@ -185,7 +187,7 @@ export async function createConnectors({ root, runtime, vault, idleMs = 120000, 
       for (const row of rows(owner)) if (row.enabled) {
         const entry = live.get(key(owner, row.id));
         if (!entry && !row.problem) void start(owner, row).catch(() => {});
-        if (!row.problem && !['failed','recovering'].includes(entry?.status)) tools.push(...(row.tools ?? []).slice(0, 16).map(tool => ({ ...tool, connectorId: row.id, connectorName: row.name })));
+        if (!row.problem && !['failed','recovering'].includes(entry?.status)) tools.push(...(row.tools ?? []).slice(0, 16).map(tool => ({ ...tool, connectorId: row.id, connectorName: row.name, ...(row.builtinId ? {builtinId:row.builtinId} : {}), ...(row.fields?.timeZone ? {timeZone:row.fields.timeZone} : {}) })));
       }
       return tools;
     },
@@ -212,6 +214,7 @@ export async function createConnectors({ root, runtime, vault, idleMs = 120000, 
     let config;
     if (input.builtinId) {
       const builtin = builtins.find(item => item.id === input.builtinId); if (!builtin) invalid();
+      if (Object.keys(input.credentials ?? {}).some(name => !builtin.fields.some(field => field.name === name && field.secret))) invalid();
       const fields = input.fields ?? {};
       if (!fields || typeof fields !== 'object' || Array.isArray(fields) || Object.keys(fields).some(name => !builtin.fields.some(field => field.name === name && !field.secret))) invalid();
       const checked = {};
@@ -220,7 +223,8 @@ export async function createConnectors({ root, runtime, vault, idleMs = 120000, 
         if (field.required && !value || typeof value !== 'string' || value.length > 4096) invalid();
         if (!field.secret) checked[field.name] = value;
       }
-      config = { name: builtin.name, builtinId: builtin.id, fields: checked };
+      const accountLabel = builtin.id === 'mail' ? checked.email : builtin.id === 'calendar' ? checked.username : '';
+      config = { name: accountLabel ? `${builtin.name} · ${accountLabel}` : builtin.name, builtinId: builtin.id, fields: checked };
     }
     else config = customConfiguration(input);
     const publicText = JSON.stringify(config);

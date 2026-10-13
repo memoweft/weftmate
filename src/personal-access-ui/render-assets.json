@@ -23,5 +23,13 @@
   "render-vendor/fonts/KaTeX_Size4-Regular.woff2",
   "render-vendor/fonts/KaTeX_Typewriter-Regular.woff2",
   "render-vendor/mermaid.js",
-  "render-vendor/mermaid.tiny.js"
+  "render-vendor/mermaid.tiny.js",
+  "render-vendor/pdfjs/cmaps-data.js",
+  "render-vendor/pdfjs/jbig2_nowasm_fallback.js",
+  "render-vendor/pdfjs/openjpeg_nowasm_fallback.js",
+  "render-vendor/pdfjs/pdf.js",
+  "render-vendor/pdfjs/pdf.worker.js",
+  "render-vendor/pdfjs/quickjs-eval.js",
+  "render-vendor/pdfjs/standard_fonts-data.js",
+  "render-vendor/pdfjs/wasm-data.js"
 ]
