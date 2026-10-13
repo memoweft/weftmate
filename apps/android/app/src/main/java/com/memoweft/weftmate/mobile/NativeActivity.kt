@@ -57,7 +57,9 @@ class NativeActivity : HybridActivity() {
         super.onCreate(savedInstanceState)
         coveredHostHistory = true
         embeddedWebIdentity = embeddedWeb
-        if (!getSharedPreferences("native-ui", MODE_PRIVATE).getBoolean("enabled", BuildConfig.NATIVE_UI)) {
+        // Ignore the retired user preference; rollback is a build-time choice.
+        getSharedPreferences("native-ui", MODE_PRIVATE).edit().remove("enabled").apply()
+        if (!BuildConfig.NATIVE_UI) {
             startActivity(Intent(this, HybridActivity::class.java).apply { data = intent.data; putExtras(intent) }); finish(); return
         }
         model = NativeChatModel(this, nativeScope)

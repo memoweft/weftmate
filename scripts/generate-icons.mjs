@@ -20,7 +20,7 @@ const icons = Object.fromEntries(await Promise.all((await readdir(join(source, '
 // Existing native / mobile names stay compatible; new code uses canonical IDs.
 const aliases = { menu: 'sidebar', close: 'deny', down: 'chevron', arrow: 'send', check: 'allow', user: 'account',
   device: 'desktop', pc: 'desktop', task: 'outputs', refresh: 'sync', shield: 'approval', warning: 'warn', browser: 'web',
-  check_circle: 'approval', emulator: 'desktop', error: 'warn', export: 'download', external: 'open', heart: 'health',
+  check_circle: 'goal', emulator: 'desktop', error: 'warn', export: 'download', external: 'open', heart: 'health',
   layers: 'outputs', link: 'source', notification_off: 'bell-off', panel: 'sidebar' };
 for (const [name, svg] of Object.entries(icons)) if (!only || name === only) await put(`apps/mobile-ui/www/icons/${name}.svg`, svg);
 for (const [name, id] of Object.entries(aliases)) if (!only || id === only) await put(`apps/mobile-ui/www/icons/${name}.svg`, icons[id]);

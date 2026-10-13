@@ -74,3 +74,15 @@ test('new desktop icon assets are public static assets with correct MIME and exi
     }
   } finally { await service.close() }
 })
+
+
+test('permission shield has no approval check, while goal navigation and filter retain their drawings', () => {
+  const approval = read('design/icons/ui/approval.svg')
+  const goal = read('design/icons/ui/goal.svg')
+  assert.equal((approval.match(/<path /g) || []).length, 1)
+  assert.ok(goal.includes('<path d="m9 12 2.2 2.2L15.5 10"/>'))
+  assert.equal(read('apps/mobile-ui/www/icons/check_circle.svg'), goal)
+  assert.ok(read('apps/android/app/src/main/res/drawable/wm_check_circle.xml').includes('m9 12 2.2 2.2L15.5 10'))
+  assert.equal((read('apps/android/app/src/main/res/drawable/wm_approval.xml').match(/<path /g) || []).length, 1)
+  assert.ok(read('design/icons/ui/filter.svg').includes('M3 5h18M6 12h12m-8 7h4'))
+})

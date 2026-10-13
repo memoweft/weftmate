@@ -7,6 +7,10 @@ public struct PhoneModelConfiguration: Codable, Equatable, Identifiable, Sendabl
     public var baseURL: String
     public var model: String
     public var apiKey: String
+    public var interfaceType: String?
+    public var vision: Bool?
+    public var deepThinking: ServiceModel.DeepThinking?
+    public var thinkingEnabled: Bool?
     public init(id: String = UUID().uuidString, name: String, baseURL: String, model: String, apiKey: String) {
         self.id=id; self.name=name; self.baseURL=baseURL; self.model=model; self.apiKey=apiKey
     }
@@ -18,9 +22,58 @@ public struct PhoneModelConfiguration: Codable, Equatable, Identifiable, Sendabl
         r.httpMethod="POST"; r.setValue("application/json",forHTTPHeaderField:"Content-Type"); r.setValue("Bearer "+apiKey,forHTTPHeaderField:"Authorization")
         var body: [String:Any]=["model":model,"stream":stream,"messages":messages]
         if let maxTokens { body["max_tokens"]=maxTokens }
-        r.httpBody=try JSONSerialization.data(withJSONObject:body); return r
+        r.httpBody=try JSONSerialization.data(withJSONObject:body); return try adaptRequest(r)
     }
 }
+extension PhoneModelConfiguration {
+    public func adaptRequest(_ source: URLRequest) throws -> URLRequest {
+        guard interfaceType == "anthropic" else {
+            var request=source
+            if deepThinking?.supported == true,let enabled=thinkingEnabled,let data=request.httpBody,var body=try JSONSerialization.jsonObject(with:data) as? [String:Any] {
+                if enabled {
+                    switch URL(string:baseURL)?.host {
+                    case "api.xiaomimimo.com","api.deepseek.com": body["thinking"]=["type":"enabled"]
+                    case "dashscope.aliyuncs.com": body["enable_thinking"]=true
+                    default: body["reasoning_effort"]="high"
+                    }
+                };request.httpBody=try JSONSerialization.data(withJSONObject:body)
+            };return request
+        }
+        var request=source;request.url=try ModelCatalog.normalizedURL(baseURL,allowLoopback:source.url?.scheme == "http").appendingPathComponent("messages")
+        request.setValue(nil,forHTTPHeaderField:"Authorization");request.setValue(apiKey,forHTTPHeaderField:"x-api-key");request.setValue("2023-06-01",forHTTPHeaderField:"anthropic-version")
+        guard let data=source.httpBody,var body=try JSONSerialization.jsonObject(with:data) as? [String:Any] else { throw OfflineFailure.model }
+        let messages=body["messages"] as? [[String:Any]] ?? []
+        body["system"]=messages.filter {$0["role"] as? String == "system"}.compactMap {$0["content"] as? String}.joined(separator:"\n")
+        body["messages"]=try messages.filter {$0["role"] as? String != "system"}.map { message in
+            var message=message
+            if let content=message["content"] as? [[String:Any]] {
+                message["content"]=try content.map { part -> [String:Any] in
+                    guard part["type"] as? String == "image_url",let image=part["image_url"] as? [String:Any],let dataURL=image["url"] as? String,let comma=dataURL.firstIndex(of:",") else { return part }
+                    guard dataURL.hasPrefix("data:image/jpeg;base64,") else { throw OfflineFailure.model }
+                    return ["type":"image","source":["type":"base64","media_type":"image/jpeg","data":String(dataURL[dataURL.index(after:comma)...])]]
+                }
+            };return message
+        }
+        body["max_tokens"]=body["max_tokens"] ?? 4096
+        if deepThinking?.supported == true,thinkingEnabled == true {
+            body["thinking"]=deepThinking?.type == "adaptive" ? ["type":"adaptive"] : ["type":"enabled","budget_tokens":1024]
+        }
+        request.httpBody=try JSONSerialization.data(withJSONObject:body);return request
+    }
+    public func responseText(_ data: Data) throws -> String? {
+        guard let object=try JSONSerialization.jsonObject(with:data) as? [String:Any] else { return nil }
+        if interfaceType == "anthropic" { return (object["content"] as? [[String:Any]])?.filter {$0["type"] as? String == "text"}.compactMap {$0["text"] as? String}.joined() }
+        return ((object["choices"] as? [[String:Any]])?.first?["message"] as? [String:Any])?["content"] as? String
+    }
+    public func streamText(_ line: String) throws -> String? {
+        if interfaceType != "anthropic" { return try PhoneStreamDelta.text(line) }
+        guard line.hasPrefix("data:"),let object=try JSONSerialization.jsonObject(with:Data(line.dropFirst(5).utf8)) as? [String:Any] else { return nil }
+        if object["type"] as? String == "error" { throw OfflineFailure.model }
+        let delta=object["delta"] as? [String:Any]
+        return delta?["type"] as? String == "text_delta" ? delta?["text"] as? String : nil
+    }
+}
+
 public struct PhoneChatMessage: Codable, Equatable, Identifiable, Sendable {
     public var id: String = UUID().uuidString
     public var role: String
@@ -63,13 +116,24 @@ public final class PhoneChatStore {
     }
     public func clear() throws {
         if FileManager.default.fileExists(atPath:file.path) { try FileManager.default.removeItem(at:file) }
-        try credentials.delete(key:prefix+".aes");try credentials.delete(key:prefix+".models")
+        try credentials.delete(key:prefix+".aes");try credentials.delete(key:prefix+".models");try credentials.delete(key:prefix+".services");try credentials.delete(key:prefix+".models.before")
     }
     public func loadModels() throws -> [PhoneModelConfiguration] {
         guard let data=try credentials.load(key:prefix+".models") else { return [] }
         return try JSONDecoder().decode([PhoneModelConfiguration].self,from:data)
     }
     public func saveModels(_ values: [PhoneModelConfiguration]) throws { try credentials.save(JSONEncoder().encode(values),key:prefix+".models") }
+    public func loadLibrary() throws -> PhoneModelLibrary {
+        if let data=try credentials.load(key:prefix+".services") {
+            do { return try JSONDecoder().decode(PhoneModelLibrary.self,from:data) } catch { /* Preserve the old library if migration data is unreadable. */ }
+        }
+        let old=try loadModels()
+        let next=try PhoneModelLibrary.migrate(old)
+        if try credentials.load(key:prefix+".models.before") == nil,let original=try credentials.load(key:prefix+".models") { try credentials.save(original,key:prefix+".models.before") }
+        try saveLibrary(next)
+        return next
+    }
+    public func saveLibrary(_ library: PhoneModelLibrary) throws { try credentials.save(JSONEncoder().encode(library),key:prefix+".services") }
     public func load() throws -> PhoneChatState {
         guard FileManager.default.fileExists(atPath:file.path) else { return .init() }
         guard let key=try credentials.load(key:prefix+".aes") else { throw APIFailure.credentialStorage }
@@ -123,6 +187,7 @@ extension PhoneChatState {
         var migration=prior ?? PhoneChatMigration(generation:generation,turns:[],accepted:[],conversationIDs:[])
         let offered=Set(migration.turns.map(\.id))
         for thread in threads {
+            guard !(migrations ?? [:]).contains(where: { $0.key != host && $0.value.conversationIDs.contains(thread.id) }) else { continue }
             for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) {
                 var messages=[OfflineMessage(role:"user",text:([message.text]+(message.attachments ?? []).map(\.placeholder)).filter { !$0.isEmpty }.joined(separator:"\n"))]
                 if thread.messages.indices.contains(index+1),thread.messages[index+1].role == "assistant",!thread.messages[index+1].text.isEmpty { messages.append(.init(role:"assistant",text:thread.messages[index+1].text)) }

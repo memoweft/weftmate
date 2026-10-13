@@ -10,6 +10,11 @@ import android.widget.TextView;
 
 /** Real Android IME, test APK only. Java keeps this standalone service free of target APK dependencies. */
 public class Ui2vTestIme extends InputMethodService {
+    // This isolated test service can show a real input view without changing
+    // the emulator's show_ime_with_hard_keyboard setting.
+    @Override public boolean onEvaluateInputViewShown() { return true; }
+    @Override public boolean onShowInputRequested(int flags, boolean configChange) { return true; }
+    @Override public boolean onEvaluateFullscreenMode() { return false; }
     @Override public View onCreateInputView() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
