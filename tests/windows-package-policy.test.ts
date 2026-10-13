@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 import {
   assertCandidateVersion,
   assertIsolatedOutput,
@@ -14,6 +15,15 @@ import { sanitizeUpdateFailure } from '../src/update-policy.ts';
 
 describe('Windows candidate package policy', () => {
   const identity = { home: ['C:', 'Users', 'Synthetic Builder'].join('/'), username: 'Synthetic Builder', hostname: 'SYNTHETIC-BUILD-HOST', roots: ['D:/synthetic-build'] };
+  it('accepts exact public domain data even for a coincidentally named builder, but rejects inserted identity and copied data', () => {
+    const text=readFileSync(resolve('node_modules/tlds/index.json'),'utf8'),file='node_modules/tlds/index.json';
+    const coincidental={...identity,username:'com',hostname:'net'};
+    assert.equal(packagedTextViolation(text,file,coincidental),null);
+    for(const inserted of [identity.home+'/private',identity.hostname,identity.roots[0]+'/source',identity.username])assert.equal(packagedTextViolation(text+'\n'+inserted,file,identity),'build-machine-identity');
+    assert.equal(packagedTextViolation(text,'src/domain-copy.json',coincidental),'build-machine-identity');
+    assert.equal(packagedTextViolation(text+'\n',file,coincidental),'build-machine-identity');
+    assert.equal(packagedTextViolation(text,'node_modules/tlds/other.json',coincidental),'build-machine-identity');
+  });
   it('allows upstream examples only in third-party files while rejecting local identity in every layer', () => {
     const upstream = ['C:', 'Users', 'Upstream Example', 'Desktop', 'test script.bat'].join('\\');
     const thirdParty = 'node_modules/node-pty/src/windowsPtyAgent.test.ts';
