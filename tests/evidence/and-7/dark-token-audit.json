@@ -1,0 +1,110 @@
+{
+  "passed": true,
+  "tokens": [
+    {
+      "token": "canvas",
+      "androidToken": "nativeDarkCanvas",
+      "expected": "ff1c1c1e",
+      "actual": "ff1c1c1e",
+      "passed": true
+    },
+    {
+      "token": "surface",
+      "androidToken": "nativeDarkSurface",
+      "expected": "ff2a2a2c",
+      "actual": "ff2a2a2c",
+      "passed": true
+    },
+    {
+      "token": "surface-soft",
+      "androidToken": "nativeDarkSoft",
+      "expected": "42787880",
+      "actual": "42787880",
+      "passed": true
+    },
+    {
+      "token": "surface-float",
+      "androidToken": "nativeDarkSurfaceFloat",
+      "expected": "bd2c2c2e",
+      "actual": "bd2c2c2e",
+      "passed": true
+    },
+    {
+      "token": "selected-on-soft",
+      "androidToken": "nativeDarkSelectedOnSoft",
+      "expected": "2effffff",
+      "actual": "2effffff",
+      "passed": true
+    },
+    {
+      "token": "line",
+      "androidToken": "nativeDarkLine",
+      "expected": "24ffffff",
+      "actual": "24ffffff",
+      "passed": true
+    },
+    {
+      "token": "ink",
+      "androidToken": "nativeDarkInk",
+      "expected": "fff2f2f4",
+      "actual": "fff2f2f4",
+      "passed": true
+    },
+    {
+      "token": "ink-secondary",
+      "androidToken": "nativeDarkSecondary",
+      "expected": "ffc4c4c9",
+      "actual": "ffc4c4c9",
+      "passed": true
+    },
+    {
+      "token": "ink-muted",
+      "androidToken": "nativeDarkMuted",
+      "expected": "ffa3a3a9",
+      "actual": "ffa3a3a9",
+      "passed": true
+    },
+    {
+      "token": "accent",
+      "androidToken": "nativeDarkAccent",
+      "expected": "ffe6e6e8",
+      "actual": "ffe6e6e8",
+      "passed": true
+    },
+    {
+      "token": "accent-hover",
+      "androidToken": "nativeDarkAccentHover",
+      "expected": "ffffffff",
+      "actual": "ffffffff",
+      "passed": true
+    },
+    {
+      "token": "on-accent",
+      "androidToken": "nativeDarkOnAccent",
+      "expected": "ff1c1c1e",
+      "actual": "ff1c1c1e",
+      "passed": true
+    },
+    {
+      "token": "accent-soft",
+      "androidToken": "nativeDarkAccentSoft",
+      "expected": "29ffffff",
+      "actual": "29ffffff",
+      "passed": true
+    },
+    {
+      "token": "danger",
+      "androidToken": "nativeDarkDanger",
+      "expected": "ffffa3ad",
+      "actual": "ffffa3ad",
+      "passed": true
+    },
+    {
+      "token": "danger-soft",
+      "androidToken": "nativeDarkDangerSoft",
+      "expected": "33ff6e7d",
+      "actual": "33ff6e7d",
+      "passed": true
+    }
+  ]
+}
