@@ -195,7 +195,8 @@ test('Relay phone first input and file task', {
       if (pending) {
         const geometry=await approvePhoneOperation(phone,pending,async()=>phone.screenshot({path:join(evidence,`approval-${approvedIds.size+1}.png`)}));
         approvedIds.add(pending.approvalId); report.approvals.push({ approvalId: pending.approvalId, toolName: pending.toolName, scope:'once', geometry });
-        await waitFor(async()=>{const rows=(await phoneApi(`/sessions/${created.sessionId}/approvals`)).data.approvals??[];const answered=rows.find(row=>row.approvalId===pending.approvalId);if(answered?.status!=='answered')return false;assert.equal(answered.decisionOutcome,'allowed-once');assert.equal(answered.decisionScope,'once');return true;},'phone approval answer was not accepted');
+        // The tool may finish between two polls, moving the row from answered to resolved; the decision fields stay.
+        await waitFor(async()=>{const rows=(await phoneApi(`/sessions/${created.sessionId}/approvals`)).data.approvals??[];const answered=rows.find(row=>row.approvalId===pending.approvalId);if(!['answered','resolved'].includes(answered?.status))return false;assert.equal(answered.decisionOutcome,'allowed-once');assert.equal(answered.decisionScope,'once');return true;},'phone approval answer was not accepted');
       }
       const events = (await phoneApi(`/sessions/${created.sessionId}/events?limit=100`)).data.events;
       const terminal = events.find(e => e.type === 'turn.ended');
