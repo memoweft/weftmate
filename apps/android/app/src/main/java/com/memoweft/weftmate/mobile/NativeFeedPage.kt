@@ -100,14 +100,8 @@ private data class FeedEntry(val key: String, val day: String, val row: JSONObje
                 Text("提醒、任务结果和需要你处理的事项，都在这里。", Modifier.padding(top = DesignTokens.space12.dp), fontSize = DesignTokens.font16.sp, lineHeight = feedBodyLeading, color = feedMuted(feed.dark))
             }
             item(key = "filters") {
-                var menu by remember { mutableStateOf(false) }
                 Box(Modifier.fillMaxWidth().padding(top = DesignTokens.space24.dp, bottom = DesignTokens.space12.dp)) {
-                    FeedControlButton(feedFilters.first { it.first == feed.filter }.second, enabled = !feed.loading && !feed.busy, secondary = true, trailingIcon = R.drawable.wm_down, contentDescription = "筛选动态：${feedFilters.first { it.first == feed.filter }.second}") { menu = true }
-                    FeedMenu(menu, { menu = false }) {
-                    feedFilters.forEach { (id, label) ->
-                        FeedControlMenuItem(label, enabled = !feed.loading && !feed.busy, checked = feed.filter == id) { menu = false; feed.choose(id) }
-                    }
-                    }
+                    NativeFilterRow("筛选动态", feedFilters, feed.filter, enabled = !feed.loading && !feed.busy, choose = feed::choose)
                 }
             }
             item(key = "notice") {
