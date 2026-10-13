@@ -167,7 +167,9 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         const payload = await response.json().catch(() => ({}));
         if (!response.ok)
-            throw { code: payload?.error?.code || 'REQUEST_FAILED', status: response.status };
+            throw { code: payload?.error?.code || 'REQUEST_FAILED', status: response.status,
+                ...(Array.isArray(payload?.error?.invalidGroups)?{invalidGroups:payload.error.invalidGroups}:{}),
+                ...(payload?.error?.usage?{usage:payload.error.usage}:{}) };
         return payload;
         } finally { releaseSignal(); }
     }
