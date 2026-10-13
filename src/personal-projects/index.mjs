@@ -11,6 +11,10 @@ const BOOTSTRAP = Buffer.from("[Console]::InputEncoding = [Text.Encoding]::UTF8;
 const POWERSHELL = path.win32.join(process.env.SystemRoot ?? 'C:\\Windows',
   'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 const QUERY_BYTES = 200;
+// macOS source development uses the existing developer-tools Python (stdlib
+// only). openat + O_NOFOLLOW keeps every directory/file tied to its handle.
+const MAC_READER = process.platform === 'darwin'
+  ? readFileSync(fileURLToPath(new URL('./reader-posix.py', import.meta.url)), 'utf8') : null;
 
 function issue(code) {
   return Object.assign(new Error(code), { code });
@@ -28,9 +32,10 @@ function validQuery(value) {
 }
 
 async function invoke(input) {
-  if (process.platform !== 'win32') throw issue('PROJECT_WINDOWS_REQUIRED');
+  if (!['win32', 'darwin'].includes(process.platform)) throw issue('PROJECT_WINDOWS_REQUIRED');
   return new Promise((resolve, reject) => {
-    const child = spawn(POWERSHELL, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', BOOTSTRAP], {
+    const mac = process.platform === 'darwin';
+    const child = spawn(mac ? '/usr/bin/python3' : POWERSHELL, mac ? ['-I', '-c', MAC_READER] : ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', BOOTSTRAP], {
       windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
     });
     let stdout = '', stderr = '';
@@ -66,18 +71,19 @@ async function invoke(input) {
       }
       finish(null, value.value);
     });
-    child.stdin.end(JSON.stringify({script:SCRIPT,request:JSON.stringify(input)}));
+    child.stdin.end(mac ? JSON.stringify(input) : JSON.stringify({script:SCRIPT,request:JSON.stringify(input)}));
   });
 }
 
 export async function inspectProjectRoot(rootPath) {
-  if (!validRootPath(rootPath)) throw issue('PROJECT_UNSAFE_PATH');
+  const mac = process.platform === 'darwin';
+  if (mac ? typeof rootPath !== 'string' || !path.posix.isAbsolute(rootPath) || rootPath.length > 4096 : !validRootPath(rootPath)) throw issue('PROJECT_UNSAFE_PATH');
   const value = await invoke({ action: 'inspect', rootPath });
-  if (typeof value?.FinalPath !== 'string' || !/^\\\\\?\\[A-Za-z]:\\/.test(value.FinalPath) ||
+  if (typeof value?.FinalPath !== 'string' || (mac ? !path.posix.isAbsolute(value.FinalPath) : !/^\\\\\?\\[A-Za-z]:\\/.test(value.FinalPath)) ||
       typeof value.Identity !== 'string' || !/^[A-F0-9]{8}:[A-F0-9]{16}$/.test(value.Identity)) {
     throw issue('PROJECT_READER_INVALID');
   }
-  return { rootPath: path.win32.normalize(rootPath), rootFinalPath: value.FinalPath, rootIdentity: value.Identity };
+  return { rootPath: (mac ? path.posix : path.win32).normalize(rootPath), rootFinalPath: value.FinalPath, rootIdentity: value.Identity };
 }
 
 export async function listProjectFiles(project, query = '') {

@@ -284,8 +284,12 @@ export function validateSingleStore(store) {
         project.permission !== undefined && !['read-only', 'write'].includes(project.permission) ||
         project.instructions !== undefined && (typeof project.instructions !== 'string' || project.instructions.length > 16000) ||
         project.removed !== undefined && typeof project.removed !== 'boolean' ||
-        typeof project.rootPath !== 'string' || !/^[A-Za-z]:\\/.test(project.rootPath) ||
-        typeof project.rootFinalPath !== 'string' || !/^\\\\\?\\[A-Za-z]:\\/.test(project.rootFinalPath) ||
+        typeof project.rootPath !== 'string' || typeof project.rootFinalPath !== 'string' ||
+        !(/^[A-Za-z]:\\/.test(project.rootPath) && /^\\\\\?\\[A-Za-z]:\\/.test(project.rootFinalPath) ||
+          process.platform === 'darwin' && project.rootPath.startsWith('/') &&
+          project.rootPath.length <= 4096 && project.rootFinalPath === project.rootPath &&
+          !/[\\\0]/.test(project.rootPath) &&
+          (project.rootPath === '/' || !project.rootPath.slice(1).split('/').some(part => ['', '.', '..'].includes(part)))) ||
         !/^[A-F0-9]{8}:[A-F0-9]{16}$/.test(project.rootIdentity ?? '') ||
         !/^[a-f0-9]{64}$/.test(project.fileSecret ?? '') ||
         !Number.isSafeInteger(project.revision) || project.revision < 1 ||
