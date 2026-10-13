@@ -37,8 +37,10 @@ const model = createServer(async (req, res) => {
   if (req.method === 'GET') return res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ total_slots: 1, n_ctx: 8192, currentModelId: 'synthetic-stop-model', probe: { health: true } }));
   let body = ''; for await (const part of req) body += part;
   const input = JSON.parse(body); report.modelRequests = (report.modelRequests || 0) + 1;
-  res.writeHead(200, { 'content-type': 'text/event-stream' });
-  res.end(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { role: 'assistant', content: 'M3-3 手机已在 Mac 上开聊。' }, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] })}\n\ndata: [DONE]\n\n`);
+  if (input.stream) {
+    res.writeHead(200, { 'content-type': 'text/event-stream' });
+    res.end(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { role: 'assistant', content: 'M3-3 手机已在 Mac 上开聊。' }, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] })}\n\ndata: [DONE]\n\n`);
+  } else res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ choices: [{ message: { role: 'assistant', content: 'M3-3 手机已在 Mac 上开聊。' }, finish_reason: 'stop' }] }));
 });
 await new Promise(r => model.listen(0, '127.0.0.1', r));
 async function api(path, body, auth = local, extra = {}, method = body === undefined ? 'GET' : 'POST') {
@@ -60,12 +62,24 @@ try {
   prep = await createPersonalAccessService({ root: join(profile, 'personal-access'), port: hostPort, backend,
     cloudIdentity: { issuer: cloud.config.issuer, clientId: 'm3-3-web', allowInsecureLoopback: true } });
   const started = await prep.start(); report.hostId = started.hostId;
-  local = await api('/auth/desktop', { deviceName: 'synthetic-mac' }, null, { 'x-weftmate-desktop': prep.libraryDesktopToken });
-  assert.equal(local.status, 200);
+  // Seed the existing local execution-owner setup contract before starting a
+  // headless source host. Native desktop entry normally selects this owner;
+  // a headless fixture has no renderer to perform that selection.
+  const grant = await prep.issueSetupGrant();
+  local = await api('/auth/setup', { grant: grant.grant, username: 'synthetic-mac', password, deviceName: 'synthetic-mac' }, null);
+  assert.equal(local.status, 201);
+  const claim = await api('/cloud/claims', {});
+  assert.equal(claim.status, 200);
+  assert.equal((await api('/cloud/binding', { claimId: claim.claimId, accessToken: desktop.tokens.access_token })).status, 200);
+  const ownerId = local.account.ownerId;
+  local = await api('/auth/desktop', { ownerId, deviceName: 'synthetic-mac' }, null, { 'x-weftmate-desktop': prep.libraryDesktopToken });
+  assert.equal(local.status, 200); assert.equal(local.account.ownerId, ownerId);
+  // The signed native desktop exchange supplies the computer name/status and
+  // preserves the pre-existing local execution owner selected above.
   const nonce = await api('/auth/cloud-nonce', {}, null);
-  local = await api('/auth/cloud-desktop', { accessToken: desktop.tokens.access_token, deviceName: 'synthetic-mac' }, local,
+  const boundDesktop = await api('/auth/cloud-desktop', { accessToken: desktop.tokens.access_token, deviceName: 'synthetic-mac' }, local,
     { 'x-weftmate-desktop': prep.libraryDesktopToken, dpop: await proof(desktop, origin + '/personal/v1/auth/cloud-desktop', desktop.tokens.access_token, { nonce: nonce.nonce }) });
-  assert.equal(local.status, 200);
+  assert.equal(boundDesktop.status, 200); local = boundDesktop;
   await prep.syncCloudRevocations();
   const directory = (await control(desktop, '/devices')).data;
   assert.equal(directory.hosts.length, 1); assert.equal(directory.hosts[0].hostId, started.hostId);
@@ -91,8 +105,10 @@ try {
       clearTimeout(timer); child.off('message', listener); value.ok ? resolve(value.result) : reject(Error(value.code)); };
     child.on('message', listener); child.send({ type: 'weftmate:manage', requestId, action: 'model.configure-synthetic-stop-fixture', baseUrl: `http://127.0.0.1:${model.address().port}/v1` });
   });
-  const modelId = (await until(async () => (await api('/models')).models?.find(m => m.id === 'synthetic-stop-fixture'), 'model catalog')).id;
-  assert.equal((await api('/settings/models', { defaultModelProfileId: modelId, backgroundModelProfileId: modelId }, local, {}, 'PATCH')).status, 200);
+  const catalog = await api('/models');
+  report.catalog = (catalog.models || []).map(({ id, name, model, configured }) => ({ id, name, model, configured }));
+  const modelId = catalog.models?.find(m => m.name === 'Synthetic stop fixture')?.id;
+  if (modelId) assert.equal((await api('/settings/models', { defaultModelProfileId: modelId, backgroundModelProfileId: modelId }, local, {}, 'PATCH')).status, 200);
   phase = 'phone-login';
   browser = await chromium.launch({ headless: true, args: ['--disable-gpu'] });
   page = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -108,11 +124,16 @@ try {
   report.checks.push('headless phone webpage completes password + synthetic mailbox verification into the Mac account');
   phase = 'phone-directory';
   await page.evaluate(() => WeftSettingsNavigation.open('devices'));
-  await page.getByText('synthetic-mac', { exact: true }).first().waitFor();
+  await page.getByText('synthetic-mac', { exact: true }).filter({ visible: true }).first().waitFor();
   await page.screenshot({ path: 'tests/evidence/m3-3/phone-web-devices.png' });
   report.checks.push('phone settings visibly lists synthetic-mac');
   await page.getByRole('button', { name: '关闭设置', exact: true }).click();
   phase = 'phone-chat';
+  if (!modelId) {
+    report.connected = true;
+    await page.screenshot({ path: 'tests/evidence/m3-3/phone-web-model-unavailable.png' });
+    throw Error('MAC_ACCOUNT_MODEL_CATALOG_EMPTY: the native fixture route is not published in this bound account catalog; no chat command was sent.');
+  }
   await page.locator('#message-text').fill('M3-3_PHONE 在这台 Mac 上聊一句。'); await page.locator('#message-text').press('Enter');
   await page.getByText('M3-3 手机已在 Mac 上开聊。', { exact: true }).first().waitFor({ timeout: 60000 });
   await page.screenshot({ path: 'tests/evidence/m3-3/phone-web-chat.png' });
