@@ -20,6 +20,7 @@
         const area = form.parentElement, scroll = ui.byId('chat-scroll');
         let restHeight = globalThis.visualViewport?.height || innerHeight;
         let keyboardWasOpen = false;
+        const press = WeftComposerPress.mount(send, () => ui.updateAvailability());
         const syncBadges = () => {
             for (const [id,count,dot] of [['activity',core.activity?.unreadCount || 0,false],['chat',core.state.mainChat?.unread ? 1 : 0,true]]) {
                 const tab = ui.byId(`remote-tab-${id}`); if (!tab) continue;
@@ -31,6 +32,7 @@
             }
         };
         const syncComposer = () => {
+            if (press.active) return;
             const drafts = core.currentAttachmentDrafts();
             const viewportHeight = globalThis.visualViewport?.height || innerHeight;
             const editing = document.activeElement === field;
@@ -63,7 +65,7 @@
         };
         ui.syncPhoneComposer = syncComposer;
         const update = ui.updateAvailability;
-        ui.updateAvailability = (...args) => { const result = update(...args); syncComposer(); return result; };
+        ui.updateAvailability = (...args) => { if (press.active) return; const result = update(...args); syncComposer(); return result; };
         field.addEventListener('focus', syncComposer);
         field.addEventListener('blur', () => requestAnimationFrame(syncComposer));
         form.addEventListener('focusin', () => requestAnimationFrame(syncComposer));

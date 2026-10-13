@@ -1,0 +1,57 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "transport": "isolated direct Windows host; Linux 443 relay is verified by CI",
+  "switches": [],
+  "approvals": [],
+  "trace": [
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 2782
+    },
+    {
+      "type": "mousedown",
+      "target": "path",
+      "id": "",
+      "time": 2782
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 2891.800000011921
+    },
+    {
+      "type": "mouseup",
+      "target": "path",
+      "id": "",
+      "time": 2891.899999976158
+    }
+  ],
+  "state": {
+    "view": {
+      "placeholder": "向 WeftMate 说说你的目标",
+      "phoneChat": false,
+      "running": false,
+      "hint": "",
+      "attachmentBusy": false,
+      "newSessionDisabled": false,
+      "modelDisabled": false,
+      "modelName": "合成中继模型",
+      "messageDisabled": false,
+      "voiceDisabled": false,
+      "sendDisabled": false,
+      "sendText": "发送",
+      "attachmentsDisabled": false,
+      "desktopText": "打开记事本",
+      "desktopDisabled": true,
+      "cancelHidden": true,
+      "cancelDisabled": true
+    },
+    "selected": "session-4538c8ca-bc63-481d-8e89-6f731a63fa1f"
+  },
+  "passed": false,
+  "error": "first send complete"
+}
