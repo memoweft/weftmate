@@ -1,0 +1,1 @@
+PASS PhoneAttachmentModelChecks: 35 assertions; real local HTTP/SSE; plaintext hits 0; no cloud, GUI or simulator

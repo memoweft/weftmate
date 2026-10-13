@@ -1,4 +1,7 @@
 import SwiftUI
+import PhotosUI
+import AVFoundation
+import UniformTypeIdentifiers
 import WeftMateCore
 
 struct PhoneStandaloneChat: View {
@@ -9,6 +12,36 @@ struct PhoneStandaloneChat: View {
     init(app: AppleAppModel, model: PhoneStandaloneModel, tab: Binding<PhoneTab> = .constant(.chat)) { self.app=app; self.model=model; cloud=app.cloudLogin; _tab=tab }
     @State private var modelsOpen=false
     @State private var sidebar=false
+    @State private var photos=false
+    @State private var importing=false
+    @State private var camera=false
+    @State private var cameraDenied=false
+    @State private var selection: [PhotosPickerItem]=[]
+    @State private var preview: PhoneAttachment?
+    @State private var importAccount=""
+    @State private var importThread: String?
+    private func captureScope() { focused=false;importAccount=app.phoneAccountIdentity;importThread=model.state.selected }
+    private var validScope: Bool { importAccount == app.phoneAccountIdentity && importThread == model.state.selected }
+    private func addImage(_ data: Data) {
+        guard validScope else { return }
+        do { model.addAttachment(try PhoneAttachmentInput.image(data)) } catch { model.notice=(error as? PhoneAttachmentFailure)?.message ?? "图片暂时读不了，请重试。" }
+    }
+    private func addFile(_ url: URL) {
+        guard validScope else { return }
+        do { model.addAttachment(try PhoneAttachmentInput.file(url,remainingText:PhoneAttachment.textUnits-model.attachments.reduce(0) {$0+($1.text?.utf16.count ?? 0)})) }
+        catch { model.notice=(error as? PhoneAttachmentFailure)?.message ?? "文件暂时打不开，请重试。" }
+    }
+    private func openCamera() {
+        captureScope()
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else { model.notice="相机暂不可用，可从照片图库或文件添加。";return }
+        let identity=importAccount,thread=importThread
+        Task {
+            let permission=AVCaptureDevice.authorizationStatus(for:.video)
+            let allowed=permission == .authorized ? true : permission == .notDetermined ? await AVCaptureDevice.requestAccess(for:.video) : false
+            guard identity == app.phoneAccountIdentity,thread == model.state.selected else { return }
+            if allowed { camera=true } else { cameraDenied=true }
+        }
+    }
     @FocusState private var focused: Bool
     var body: some View {
         NavigationStack {
@@ -28,7 +61,12 @@ struct PhoneStandaloneChat: View {
                             LazyVStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
                                 ForEach(model.messages) { message in
                                     VStack(alignment:message.role == "user" ? .trailing : .leading,spacing:AppleTokens.Space.p8) {
-                                        Text(message.text.isEmpty ? (model.busy ? "正在回复…" : "还没有收到回复，可以重新生成。") : message.text).textSelection(.enabled).frame(maxWidth:.infinity,alignment:message.role == "user" ? .trailing : .leading)
+                                        if message.role == "assistant" || !message.text.isEmpty {
+                                            Text(message.text.isEmpty ? (model.busy ? "正在回复…" : "还没有收到回复，可以重新生成。") : message.text).textSelection(.enabled).frame(maxWidth:.infinity,alignment:message.role == "user" ? .trailing : .leading)
+                                        }
+                                        if let attachments=message.attachments,!attachments.isEmpty {
+                                            attachmentRow(attachments,removable:false)
+                                        }
                                         if message.role == "assistant" {
                                             HStack {
                                                 if !message.text.isEmpty { Button { UIPasteboard.general.string=message.text } label: { WeftIcon("copy") }.phoneIcon().accessibilityLabel("复制回复").accessibilityIdentifier("phoneChat.copy") }
@@ -46,9 +84,11 @@ struct PhoneStandaloneChat: View {
                     VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
                         Text("手机上可以聊天和记住你说过的事；操作电脑，连上电脑后可用。")
                             .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                        if !model.attachments.isEmpty { attachmentRow(model.attachments,removable:true) }
                         HStack(spacing:AppleTokens.Space.p8) {
+                            plusMenu
                             TextField("聊一聊…",text:$model.draft,axis:.vertical).lineLimit(1...5).focused($focused).accessibilityIdentifier("phoneChat.draft")
-                            Button { focused=false; model.busy ? model.stop() : model.send() } label: { WeftIcon(model.busy ? "stop" : "send") }.phoneIcon(primary:true).disabled(!model.busy && model.draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty).accessibilityLabel(model.busy ? "停止回复" : "发送").accessibilityIdentifier("phoneChat.send")
+                            Button { focused=false; model.busy ? model.stop() : model.send() } label: { WeftIcon(model.busy ? "stop" : "send") }.phoneIcon(primary:true).disabled(!model.busy && model.draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && model.attachments.isEmpty).accessibilityLabel(model.busy ? "停止回复" : "发送").accessibilityIdentifier("phoneChat.send")
                         }
                         if focused {
                             HStack(spacing:AppleTokens.Space.p8) {
@@ -70,7 +110,71 @@ struct PhoneStandaloneChat: View {
                 }
                 .navigationDestination(isPresented:$modelsOpen) { PhoneModelsView(model:model) }
                 .overlay(alignment:.leading) { if sidebar { PhoneLocalDrawer(app:app,model:model,tab:$tab,close:{sidebar=false}) } }
-        }.task(id:"\(cloud.cloudAddress)|\(cloud.subject ?? "device-local")") { model.activate(app:app) }
+        }.fileImporter(isPresented:$importing,allowedContentTypes:[.item],allowsMultipleSelection:true,onCompletion:fileCompletion)
+        .photosPicker(isPresented:$photos,selection:$selection,maxSelectionCount:PhoneAttachment.imageCount,matching:.images)
+        .onChange(of:selection) { _,items in
+            let identity=importAccount,thread=importThread
+            Task {
+                for item in items {
+                    do {
+                        if let data=try await item.loadTransferable(type:Data.self),identity == app.phoneAccountIdentity,thread == model.state.selected { addImage(data) }
+                    } catch { if identity == app.phoneAccountIdentity,thread == model.state.selected { model.notice="照片没能打开，请重试。" } }
+                }
+                if identity == app.phoneAccountIdentity,thread == model.state.selected { selection=[] }
+            }
+        }
+        .sheet(isPresented:$camera) {
+            let identity=importAccount,thread=importThread
+            PhoneStandaloneCamera { data in
+                camera=false
+                if let data,identity == app.phoneAccountIdentity,thread == model.state.selected { addImage(data) }
+            }
+        }
+        .alert("相机权限没有开启",isPresented:$cameraDenied) {
+            Button("去设置") { if let url=URL(string:UIApplication.openSettingsURLString) { UIApplication.shared.open(url) } }
+            Button("取消",role:.cancel) {}
+        } message: { Text("在设置里允许 WeftMate 使用相机；照片图库和文件仍可添加。") }
+        .fullScreenCover(item:$preview) { attachment in PhoneStandaloneAttachmentPreview(attachment:attachment,close:{preview=nil}) }
+        .onChange(of:app.phoneAccountIdentity) { _,_ in preview=nil;camera=false;photos=false;importing=false;selection=[] }
+        .task(id:"\(cloud.cloudAddress)|\(cloud.subject ?? "device-local")") { model.activate(app:app) }
+    }
+    private var fileCompletion: @Sendable (Result<[URL],Error>) -> Void {
+        let identity=importAccount,thread=importThread
+        return Self.importCallback { result in
+            guard identity == app.phoneAccountIdentity,thread == model.state.selected else { return }
+            switch result {
+            case .success(let urls):
+                var errors: [String]=[]
+                for url in urls {
+                    let count=model.attachments.count;addFile(url)
+                    if model.attachments.count == count,let notice=model.notice,!errors.contains(notice) { errors.append(notice) }
+                }
+                if !errors.isEmpty { model.notice=errors.joined(separator:"\n") }
+            case .failure: model.notice="文件没能打开，请重试。"
+            }
+        }
+    }
+    nonisolated private static func importCallback(_ complete: @escaping @MainActor @Sendable (Result<[URL],Error>) -> Void) -> @Sendable (Result<[URL],Error>) -> Void {
+        { result in Task { @MainActor in complete(result) } }
+    }
+    private var plusMenu: some View {
+        Menu {
+            Button("拍照",image:ImageResource(name:"wm-camera",bundle:.main)) { openCamera() }.disabled(model.currentModel?.supportsImages == false)
+            Button("照片图库",image:ImageResource(name:"wm-image",bundle:.main)) { captureScope();photos=true }.disabled(model.currentModel?.supportsImages == false)
+            if model.currentModel?.supportsImages == false { Text("当前模型看不了图片") }
+            Button("文件",image:ImageResource(name:"wm-file",bundle:.main)) { captureScope();importing=true }
+        } label: { WeftIcon("plus").phoneMenuLabel(circle:true,onCard:true) }.phoneIcon().disabled(model.attachmentReason != nil)
+            .accessibilityLabel(model.attachmentReason ?? "添加图片或文件").accessibilityIdentifier("phoneChat.plus")
+    }
+    private func attachmentRow(_ attachments: [PhoneAttachment],removable: Bool) -> some View {
+        ScrollView(.horizontal,showsIndicators:false) {
+            HStack(spacing:AppleTokens.Space.p8) {
+                ForEach(attachments) { attachment in
+                    PhoneAttachmentBlock(name:attachment.name,image:nil,memoryImage:attachment.isImage ? attachment.data : nil,isImage:attachment.isImage,status:attachment.truncated ? "只读了前一部分" : nil,remove:removable ? {model.removeAttachment(attachment.id)} : nil)
+                        .onTapGesture { focused=false;preview=attachment }.accessibilityAction { focused=false;preview=attachment }.accessibilityAddTraits(.isButton).accessibilityLabel("预览 "+attachment.name)
+                }
+            }
+        }
     }
 }
 struct PhoneLocalDrawer: View {
@@ -113,7 +217,7 @@ struct PhoneModelsView: View {
                 Toggle("在手机上记住我说过的事",isOn:Binding(get:{model.memory.enabled},set:{model.setMemoryEnabled($0)})).accessibilityIdentifier("phoneMemory.enabled")
                 Text("每段对话会多用一次小的模型请求。连上电脑后，由电脑负责记忆。")
                     .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                Text("密钥保存在这台 iPhone 的钥匙串里。聊天内容会发送给你选择的模型提供方。")
+                Text("密钥保存在这台 iPhone 的钥匙串里。聊天内容会发送给你选择的模型提供方。图片和文件会发送给你选择的模型提供方。")
                 ForEach(model.models) { value in
                     VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                         Text(value.name+" · "+value.model).font(AppleTokens.Fonts.headline)
