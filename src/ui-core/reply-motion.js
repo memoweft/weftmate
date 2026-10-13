@@ -97,6 +97,9 @@
   // Existing application status surfaces share feedback without changing aria-live.
   const selector = '.inline-progress-text, [role="status"], [role="alert"], .message-state, .shared-turn-state, .render-status, p.muted';
   const inspect = element => {
+    // Composer notices are overlays, even when they say an operation is pending.
+    // Applying reply-status would replace their fixed positioning with relative.
+    if (element?.closest?.('.toast')) return;
     if (!element?.matches?.(selector) || element.closest('.reply-status-out,.reply-sheen') || element.closest('.message-text,.markdown-body,.markdown') && !element.matches('.render-status')) return;
     const text = [...element.childNodes].filter(n => !n.classList?.contains('reply-status-out') && !n.classList?.contains('reply-sheen')).map(n => n.textContent).join('');
     if (!text || element.children.length && !element.classList.contains('reply-status')) return;
