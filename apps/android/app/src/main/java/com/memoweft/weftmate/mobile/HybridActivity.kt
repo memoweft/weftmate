@@ -110,6 +110,22 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     internal val embeddedWeb: WebView get() = web
     protected open fun embeddedPageFinished() {}
     internal val presentationContainer: FrameLayout get() = container
+    internal fun nativeFileCurrent(file: NativeFile): Boolean = !closed.get() && !accountTransition.get() &&
+        file.epoch == accountEpoch.get() && file.owner == owner(secrets.host())
+    internal fun nativeFileLoad(row: JSONObject, complete: (Result<NativeFile>) -> Unit) {
+        val epoch = accountEpoch.get()
+        val host = secrets.host()
+        worker.execute {
+            fun current() = !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() && host == secrets.host()
+            val result = runCatching {
+                if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
+                val file = NativeFileAccess(this, api, attachments, store).load(host ?: throw ApiFailure(401,"LOGIN_REQUIRED"), row, ::current).copy(epoch=epoch)
+                if (!current()) { file.file?.parentFile?.deleteRecursively(); throw ApiFailure(409,"ACCOUNT_SWITCHED") }
+                file
+            }
+            runOnUiThread { if (!closed.get()) complete(result) }
+        }
+    }
     internal fun nativeRequest(method: String, params: JSONObject, complete: (Result<JSONObject>) -> Unit) {
         val epoch = accountEpoch.get()
         val host = secrets.host()
@@ -432,6 +448,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             if (authMutation) {
                 accountTransition.set(true)
                 accountEpoch.incrementAndGet()
+                NativeFileCache.forContext(this).clear()
                 stopped = true
                 activeModel?.cancel()
                 emit("account.transition", JSONObject().put("pending", true))
@@ -755,6 +772,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     private fun useScope(host: HostIdentity?) {
         val scope = owner(host) ?: "local"
         if (activeScope == scope) return
+        NativeFileCache.forContext(this).clear()
         activeScope = scope
         currentPageReady = false
         draftKnowledgeReady = false

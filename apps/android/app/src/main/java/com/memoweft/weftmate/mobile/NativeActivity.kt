@@ -13,13 +13,14 @@ import org.json.JSONObject
 
 /** Default shell. HybridActivity remains the same business implementation and a complete rollback entry. */
 class NativeActivity : HybridActivity() {
+    internal val fileActions = NativeFileActions(this)
     private val nativeScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     internal var nativeForeground = false
     internal lateinit var model: NativeChatModel
     private var webRoute="login"
     private var webEmbedded=false
     override fun attachBaseContext(base: android.content.Context) {
-        if (BuildConfig.DEBUG && base.packageName == "com.memoweft.weftmate.mobile.and4qa") {
+        if (BuildConfig.DEBUG && base.packageName in setOf("com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and7qa")) {
             val width = base.getSharedPreferences("native-qa", MODE_PRIVATE).getInt("width", 360)
             val configuration = android.content.res.Configuration(base.resources.configuration)
             configuration.densityDpi = (base.resources.displayMetrics.widthPixels * 160f / width).toInt()
