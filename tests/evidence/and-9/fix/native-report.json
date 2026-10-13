@@ -389,16 +389,16 @@
     }
   ],
   "occupancy": {
-    "startedAt": "2026-10-13T21:56:39.724Z",
+    "startedAt": "2026-10-13T22:29:28.201Z",
     "heavySlot": "heavy-1.lock",
-    "releasedAt": "2026-10-13T21:58:52.633Z"
+    "releasedAt": "2026-10-13T22:31:38.898Z"
   },
   "installedOtherPackages": 2,
   "systemVersion": "15",
   "systemTheme": "Night mode: yes",
   "apkHashes": {
-    "app": "27beeca2216650788250bd20ca5ef07276117cd2a5957b43033f1355d25ec5eb",
-    "test": "8a0b8ee2acff7e60403749736fcc16872282b2d609ce47d9af7501c68087991d"
+    "app": "e7daf010438f827d96317d4ba3adde555e0f60b2926e1448c7efce24560f1b90",
+    "test": "197df8dbe9314f50310ed5185fd817dae5ef9beb0ce35b4137c0cd56a590936f"
   },
   "requests": [
     {
@@ -455,6 +455,10 @@
     },
     {
       "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
       "path": "/personal/v1/model-services"
     },
     {
@@ -555,11 +559,11 @@
     },
     {
       "method": "GET",
-      "path": "/personal/v1/model-services"
+      "path": "/personal/v1/models"
     },
     {
       "method": "GET",
-      "path": "/personal/v1/models"
+      "path": "/personal/v1/model-services"
     },
     {
       "method": "GET",
