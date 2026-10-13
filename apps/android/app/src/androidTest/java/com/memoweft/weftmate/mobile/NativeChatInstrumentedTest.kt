@@ -47,7 +47,7 @@ class NativeChatInstrumentedTest {
         onMain{activity.hideKeyboard()};shot("draft")
         compose.onNodeWithContentDescription("模型：MiMo v2.6 Flash").performClick();compose.onNodeWithText("MiMo v2.6 Flash").assertExists();shot("model-menu")
         compose.onNodeWithText("MiMo v2.6 Flash").performClick()
-        compose.onNodeWithContentDescription("审批模式：自动").performClick();compose.onNodeWithText("每次询问").assertExists();shot("mode-menu");compose.onNodeWithText("自动").performClick()
+        compose.onNodeWithContentDescription("审批方式：自动").performClick();compose.onNodeWithText("每次询问").assertExists();shot("mode-menu");compose.onNodeWithText("自动").performClick()
         compose.onNodeWithContentDescription("添加附件").performClick();compose.onNodeWithText("照片").assertExists();shot("plus-menu");onMain{activity.hideKeyboard()};instrumentation.uiAutomation.performGlobalAction(1)
         onMain{activity.model.edit("");activity.model.focused=false}
         send("合成流式")
@@ -80,7 +80,7 @@ class NativeChatInstrumentedTest {
         if(args.getString("and4Mimo")=="1"){send("真实流式");waitFor("MiMo reply"){activity.model.running};waitFor("MiMo complete"){!activity.model.running};shot("mimo")}
         onMain{activity.model.edit("重开保留的草稿")};shot("retained-draft")
         onMain{activity.model.tab="settings"}
-        compose.onNode(isToggleable()).performClick()
+        onMain{activity.fallback()}
         Thread.sleep(1400)
         assertFalse(instrumentation.targetContext.getSharedPreferences("native-ui",0).getBoolean("enabled",true))
         shot("legacy-entry")

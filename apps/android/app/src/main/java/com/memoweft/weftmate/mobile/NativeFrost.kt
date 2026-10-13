@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 /** GPU display list only: no bitmap readback and no blur on message text or controls. */
 internal class NativeFrost(val layer: GraphicsLayer) {
     var paused by mutableStateOf(false)
+    var keyboardAnimating by mutableStateOf(false)
     var revision = 0
     var origin = Offset.Zero
     // Display-list dependencies carry updates to the GPU. A snapshot write on every
@@ -42,7 +43,7 @@ internal fun Modifier.frostSource(source: NativeFrost) = composed {
         val location = IntArray(2); view.getLocationOnScreen(location)
         source.origin = coordinates.positionInRoot() + Offset(location[0].toFloat(), location[1].toFloat())
     }.drawWithContent {
-        if(enabled && !source.paused) {
+        if(enabled && !source.paused && !source.keyboardAnimating) {
             source.layer.record { this@drawWithContent.drawContent() }
             drawLayer(source.layer)
             source.frame = ++source.revision
@@ -68,7 +69,7 @@ internal fun Modifier.nativeFrost(shape: Shape, floating: Boolean = false) = com
         val location = IntArray(2); view.getLocationOnScreen(location)
         origin = coordinates.positionInRoot() + Offset(location[0].toFloat(), location[1].toFloat())
     }.drawWithContent {
-        if (!source.paused && source.frame > 0) {
+        if (!source.paused && !source.keyboardAnimating && source.frame > 0) {
             val delta = source.origin - origin
             layer.renderEffect = BlurEffect(DesignTokens.frostRadius.dp.toPx(), DesignTokens.frostRadius.dp.toPx(), TileMode.Clamp)
             layer.record(size = IntSize(size.width.toInt(), size.height.toInt())) {
