@@ -33,13 +33,14 @@ export interface LegacyRouteProjection {
   route: string;
   displayName: string;
   baseURL: string;
+  api?: 'openai-completions' | 'anthropic-messages';
   models: readonly OfficialModelProjection[];
 }
 
 export interface ProviderConfig {
   displayName: string;
   apiKeyEnv: string;
-  api: 'openai-completions';
+  api: 'openai-completions' | 'anthropic-messages';
   baseURL: string;
   models: OfficialModelProjection[];
 }
@@ -141,7 +142,7 @@ export function projectOfficialProviderConfig(route: LegacyRouteProjection): Pro
   return {
     displayName: requireString(route.displayName, 'route.displayName'),
     apiKeyEnv: officialCredentialRef(routeName),
-    api: 'openai-completions',
+    api: route.api ?? 'openai-completions',
     baseURL: requireString(route.baseURL, 'route.baseURL'),
     models: route.models.map((model) => ({
       id: requireString(model.id, 'model.id'),

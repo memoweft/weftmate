@@ -2,7 +2,7 @@
 import { copyFile, mkdir, readFile, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { uiCoreBrowserAssets as uiCoreAssets } from '../../../src/ui-core/manifest.mjs';
+import { uiCoreBrowserAssets as uiCoreAssets, uiCoreSourceAsset } from '../../../src/ui-core/manifest.mjs';
 import { buildReleaseNotes } from '../../../scripts/build-release-notes.mjs';
 
 export const uiCoreSourceDir = fileURLToPath(new URL('../../../src/ui-core/', import.meta.url));
@@ -37,7 +37,7 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
   for (const name of uiCoreAssets) {
     if (!found.has(name)) continue;
     const [source, generated] = await Promise.all([
-      readFile(path.join(sourceDir, name)), readFile(path.join(targetDir, name)),
+      readFile(path.join(sourceDir, uiCoreSourceAsset(name))), readFile(path.join(targetDir, name)),
     ]);
     if (!source.equals(generated)) problems.push(`differs ${name}`);
   }
@@ -96,7 +96,7 @@ export async function buildUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
   for (const name of uiCoreAssets) {
     const destination = path.join(targetDir, name);
     await mkdir(path.dirname(destination), { recursive: true });
-    await copyFile(path.join(sourceDir, name), destination);
+    await copyFile(path.join(sourceDir, uiCoreSourceAsset(name)), destination);
   }
   // Entries removed from the canonical manifest must also leave the public bundle.
   for (const name of await filesUnder(targetDir)) {

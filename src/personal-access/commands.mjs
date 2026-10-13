@@ -13,7 +13,7 @@ export function createCommandOperations(context) {
   const messageDispatches = new Map();
 
   function requestIdUsed(account, requestId) {
-    return !!account.messageBranches?.[requestId] || !!account.activity?.operations?.[requestId] || !!account.chatOperations?.[requestId] || !!account.sideOperations?.[requestId] || !!account.modelOperations?.[requestId] || !!account.projectOperations?.[requestId] ||
+    return !!account.modelServiceOperations?.[requestId] || !!account.messageBranches?.[requestId] || !!account.activity?.operations?.[requestId] || !!account.chatOperations?.[requestId] || !!account.sideOperations?.[requestId] || !!account.modelOperations?.[requestId] || !!account.projectOperations?.[requestId] ||
       Object.values(account.commands).some(command => command.requestId === requestId ||
         command.taskControl?.stopRequests.some(entry => entry.requestId === requestId) ||
         command.toolApprovals?.some(row => row.decisionRequestId === requestId) ||
@@ -23,7 +23,17 @@ export function createCommandOperations(context) {
   async function dispatch(ownerId, commandId) {
     try {
       if (context.closing || context.storageFault) return;
-      if (context.accountState(ownerId).commands[commandId]?.kind === 'chat.message') await context.mainChat.bind(ownerId, commandId);
+      const unbound = context.accountState(ownerId).commands[commandId];
+      if (unbound?.kind === 'chat.message' && unbound.state === 'pending') {
+        const account = context.accountState(ownerId), main = account.chatIdentity.chats[account.chatIdentity.mainChatId];
+        const selectedSessionId = account.chatIdentity.segments[main.activeSegmentId]?.sessionId;
+        const selectedSession = account.sessions[selectedSessionId];
+        const profileId = selectedSession?.pendingModelProfileId ?? selectedSession?.modelProfileId ?? unbound.payload.modelProfileId ?? account.defaultModelProfileId;
+        if (!await context.modelServices.ensureProfile(ownerId, profileId, { allowedPendingModelProfileId: profileId })) {
+          const timer = setTimeout(() => schedule(ownerId, commandId), 250); timer.unref?.(); return;
+        }
+        await context.mainChat.bind(ownerId, commandId);
+      }
       if (context.accountState(ownerId).commands[commandId]?.kind === 'chat.message') return;
       let snapshot;
       let callback;
@@ -33,6 +43,9 @@ export function createCommandOperations(context) {
       if(pending.offlineSource&&context.offline?.canDispatch?.(ownerId,commandId)===false)return;
       if(pending.offlineSource && !offlineCommandSource(context,ownerId,pending)){
         await context.serial(()=>context.mutate(ownerId,next=>{if(next.commands[commandId]?.state==='pending'){next.commands[commandId].state='rejected';next.commands[commandId].errorCode='DEVICE_REVOKED';}}));return;
+      }
+      if (pending.kind === 'session.message' && !await context.modelServices.applyPendingSelection(ownerId, pending.sessionId)) {
+        const timer = setTimeout(() => schedule(ownerId, commandId), 250); timer.unref?.(); return;
       }
       const pendingSession = pending.kind === 'session.message'
         ? context.accountState(ownerId).sessions[pending.sessionId] : null;
@@ -429,7 +442,16 @@ export function createCommandOperations(context) {
           await context.driveTaskStop(ownerId, taskId, true);
         }
       }
-    } catch {
+    } catch (error) {
+      // Route preparation happens before inference is issued. A real failure
+      // must settle that waiting request instead of leaving an unscheduled
+      // pending bubble forever; explicit busy results retry above.
+      if (!context.closing && !context.storageFault) await context.serial(() => context.mutate(ownerId, next => {
+        const command = next.commands[commandId];
+        if (command?.state === 'pending') {
+          command.state = 'rejected'; command.errorCode = safeCode(error); command.updatedAt = new Date(context.timestamp()).toISOString();
+        }
+      })).catch(() => {});
       // A failed store write leaves dispatching on disk. Recovery marks it
       // uncertain. Do not issue another backend call or claim success.
     }
@@ -457,10 +479,12 @@ export function createCommandOperations(context) {
     requestIdUsed,
     dispatch,
     schedule,
-    hasUnissuedDshCommands() {
+    hasUnissuedDshCommands({ allowedPendingSessionId = null, allowedPendingModelProfileId = null } = {}) {
       return Object.values(context.rootState.accounts).some((account) =>
         Object.values(account.commands).some((command) =>
-          ['pending', 'dispatching'].includes(command.state)));
+          ['pending', 'dispatching'].includes(command.state) && !(command.state === 'pending' &&
+            (command.kind === 'session.message' && command.sessionId === allowedPendingSessionId || command.kind === 'chat.message' &&
+              (command.payload.modelProfileId ?? account.defaultModelProfileId) === allowedPendingModelProfileId))));
     },
     /** Main-process only: a DSH tool call from an owner-bound restricted turn. */
     async submitToolDesktop({ sessionId, turn, callId, messageHash, appId }) {

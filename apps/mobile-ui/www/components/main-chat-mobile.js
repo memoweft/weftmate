@@ -111,7 +111,7 @@
     return {host:true,processingHint:uiCore.executionAccountHint(),ready:available&&modelReady&&hasDraft&&!uiCore.folderMutationPending?.()&&!uiCore.state.submitting&&!uiCore.state.unresolvedSubmission,sendHidden:running&&!hasDraft,
       draftDisabled:!available,placeholder:running?WeftUiCore.runningPlaceholder(uiCore.composerInputMode(state.sharedSessionId)):'和 WeftMate 聊聊…',
       modelName:uiCore.state.mainChat.modelDisplayName||uiCore.state.models.find(row=>row.id===uiCore.state.modelProfileId)?.name||'选择模型',
-      modelLabel:'当前模型',modelDisabled:!!state.sharedSessionId,attachmentsDisabled:!available||!!state.attachmentPick||uiCore.state.submitting,
+      modelLabel:'当前模型',modelDisabled:!state.loggedIn||state.transitionPending||state.modelSwitching||!uiCore.state.mainChat.sendAvailable,attachmentsDisabled:!available||!!state.attachmentPick||uiCore.state.submitting,
       voiceDisabled:!available,attachmentItemDisabled:uiCore.state.submitting};
   };
   renderSharedConversation=function(){if(main()){ensureList();mobileEffects.renderMainChat();updateComposer();return;}return oldRender();};
@@ -135,10 +135,7 @@
   pickAttachment=async function(kind){if(!state.logicalChats||window.weftNative)return oldPick(kind);
     closeAttachmentMenu();const input=el('input');input.type='file';input.multiple=true;input.accept=kind==='file'?'': 'image/*';if(kind==='camera')input.setAttribute('capture','environment');
     input.addEventListener('change',async()=>{await uiCore.addAttachmentFiles([...input.files]);input.remove();renderAttachmentDrafts();updateComposer();});input.addEventListener('cancel',()=>input.remove());input.hidden=true;document.body.append(input);input.click();};
-  openModels=async function(){if(!main())return oldModels();if(state.sharedSessionId)return;
-    if(state.menu){closeModelMenu();return;}closeAttachmentMenu();state.menu=true;$('model-popover').hidden=false;$('model-button').setAttribute('aria-expanded','true');
-    const list=$('model-options');list.replaceChildren();await uiCore.refreshThinkingModels();
-    for(const model of uiCore.state.models){const option=el('button','model-option',model.name||model.displayName||model.id);option.type='button';option.setAttribute('role','option');option.setAttribute('aria-selected',String(model.id===uiCore.state.modelProfileId));option.onclick=()=>{uiCore.selectModelProfile(model.id);closeModelMenu();};list.append(option);}placeModelMenu();};
+  openModels=async function(){return main()?openHostModelServices():oldModels();};
   presentation.mountMainChat();
   mountMobileTabs();
   $('open-side-chat').hidden=true;

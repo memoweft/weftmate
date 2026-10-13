@@ -193,6 +193,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
         node.classList.toggle('form-error', error);
     }
     function renderAccountModels() {
+        if (core.state.modelServices !== undefined && ui.renderModelServices) return ui.renderModelServices();
         const list = ui.byId('account-models-list');
         list.replaceChildren();
         const marker = core.savedAccountModelMarker();

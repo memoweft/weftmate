@@ -6,6 +6,7 @@ import { _electron } from 'playwright';
 import { deflateSync } from 'node:zlib';
 const root = resolve(import.meta.dirname, '../../..');
 const source = join(root, 'design/icons');
+const only = process.argv.find(arg => arg.startsWith('--only='))?.slice(7);
 const resources = join(root, 'apps/apple/Resources');
 const put = async (path, data) => { await mkdir(join(path, '..'), { recursive: true }); await writeFile(path, data); };
 const info = { author: 'xcode', version: 1 };
@@ -63,13 +64,14 @@ try {
     }
     await json(join(folder, 'Contents.json'), { images, info, properties: { 'template-rendering-intent': template ? 'template' : 'original' } });
   };
-  await json(join(resources, 'Icons.xcassets/Contents.json'), { info });
-  const names = (await readdir(join(source, 'ui'))).filter(n => n.endsWith('.svg')).sort();
+  if (!only) await json(join(resources, 'Icons.xcassets/Contents.json'), { info });
+  const names = (await readdir(join(source, 'ui'))).filter(n => n.endsWith('.svg') && (!only || n === only + '.svg')).sort();
   for (const name of names) {
     const svg = await readFile(join(source, 'ui', name), 'utf8');
     await imageSet('wm-' + name.slice(0, -4), svg, 24);
     await imageSet('wm-' + name.slice(0, -4) + '-small', svg.replace('stroke-width="1.75"', 'stroke-width="1.5"'), 16);
   }
+  if (!only) {
   const light = await readFile(join(source, 'app/color-light.svg'), 'utf8');
   const dark = await readFile(join(source, 'app/color-dark.svg'), 'utf8');
   const mono = await readFile(join(source, 'app/monochrome.svg'), 'utf8');
@@ -108,5 +110,6 @@ try {
     }
     await json(join(folder, 'Contents.json'), { images, info });
   }
-  console.log(`Generated Apple C4 AppIcon catalogs and ${names.length} template icons with small optical variants.`);
+  }
+  console.log(`Generated ${names.length} Apple template icons with small optical variants${only ? '' : ' and app catalogs'}.`);
 } finally { await app.close(); }

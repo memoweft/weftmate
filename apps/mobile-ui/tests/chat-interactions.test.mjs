@@ -201,8 +201,10 @@ test('BL-29b full empty logical main with replyWait counts every bridge call and
       for (const timer of h.scheduledPolls) assert.ok(timer.delay>0 && timer.delay<=1750, `${fault}: failure timer must delay within recovery cap: ${timer.delay}`);
     }
     if (fault==='CURSOR_RESET_REQUIRED') assert.ok(tails-beforeTails<=1, 'continuous 409 rebuilds at most one tail');
-    if (!fault || ['BACKEND_UNAVAILABLE','HTTP_502','HTTP_504','CURSOR_RESET_REQUIRED'].includes(fault))
-      assert.ok(h.bridge.length-before<=60, `${fault || 'healthy'} full empty main idle: ${h.bridge.length-before} calls / 30s`);
+    if (!fault || ['BACKEND_UNAVAILABLE','HTTP_502','HTTP_504','CURSOR_RESET_REQUIRED'].includes(fault)) {
+      const counts={};for(const request of h.bridge.slice(before)){const key=request.method==='host.business'?request.params.path.split('?')[0]:request.method;counts[key]=(counts[key]||0)+1;}
+      assert.ok(h.bridge.length-before<=60, `${fault || 'healthy'} full empty main idle: ${h.bridge.length-before} calls / 30s ${JSON.stringify(counts)}`);
+    }
     if (fault && !['NOT_FOUND','UNAUTHORIZED'].includes(fault)) {
       const recoveryChanges = changes; injected = null;
       await advance(2000);
@@ -549,6 +551,13 @@ test('shared history follows exact session ID across pages and rejects the previ
   assert.equal(h.node('draft').disabled,true);
   assert.equal(h.node('model-button').disabled,true);
   assert.equal(h.node('chat-content').children.some(node=>node.textContent==='甲的私有内容'),false);
+});
+
+test('running writable host conversation keeps the model menu available for the next message',async()=>{
+  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="pc1";state.sharedHostAvailable=true;state.sharedRunning=true;state.busy=true;state.sharedSessions=[{sessionId:"pc1",title:"电脑",sendAvailable:true,running:true,source:"host"}];updateComposer()');
+  assert.equal(h.node('model-button').disabled,false);
+  h.run('state.sharedSessions[0].sendAvailable=false;updateComposer()');
+  assert.equal(h.node('model-button').disabled,true,'read-only history keeps its existing unavailable state');
 });
 
 test('shared send keeps phone drafts separate and blocks uncertain duplicate',async()=>{

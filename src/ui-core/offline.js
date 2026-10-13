@@ -257,6 +257,8 @@
     async function send(text, conversationId = null) {
       if(!value.snapshot?.model&&!phoneModel)fail('OFFLINE_MODEL_REQUIRED');
       if (running || taskSending || typeof text !== 'string' || !text.trim() || text.length > 16384) fail('INVALID_REQUEST');
+      // Capture this submitted turn before authorization awaits; later menu choices affect the next turn.
+      const submittedPhoneModel = phoneModel?.();
       running = true; abort = new AbortController(); const ticket = version;
       try {
         await check();
@@ -264,7 +266,7 @@
           ? value.snapshot?.recent?.find(c => c.id === conversationId.slice(7)) : null;
         const conversation = value.conversations.find(c => c.id === conversationId) ?? { id: crypto.randomUUID(), turns: [],
           ...(recent ? { sourceSessionId: recent.id, context: recent.messages } : {}) };
-        const snapshot = { items: [], ...value.snapshot, model: phoneModel?.() || value.snapshot?.model };
+        const snapshot = { items: [], ...value.snapshot, model: submittedPhoneModel || value.snapshot?.model };
         if (!snapshot.model) fail('MODEL_NOT_CONFIGURED');
         const { body, memories } = requestBody(snapshot, [...(conversation.context ?? []), ...conversation.turns.flatMap(t => t.messages)], text.trim());
         const refs = new Map([...memories, ...conversation.turns.slice(-20).flatMap(t => t.memoryRefs || [])].map(m => [`${m.kind}:${m.id}`, { kind: m.kind, id: m.id }]));

@@ -305,6 +305,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         if (identity !== core.state.identityGeneration) return;
         core.state.modelsKnown=Array.isArray(payload.models);
         core.state.allModels = Array.isArray(payload.models) ? payload.models : [];
+        if(core.state.modelServicesRefreshAt===undefined||Date.now()-core.state.modelServicesRefreshAt>=60*60*1000){core.state.modelServicesRefreshAt=Date.now();void core.refreshModelServices?.().catch(()=>{});}
         const modelSettings = await core.accessApi('/settings/models').catch(() => ({}));
         if (identity !== core.state.identityGeneration) return;
         core.state.modelSettings = modelSettings;
@@ -474,6 +475,9 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         core.state.phoneHandoffBusy = false;
         core.state.phoneHandoffSelections.clear();
         core.state.accountModels = [];
+        core.state.modelServices = undefined;
+        core.state.modelServicesRefreshAt = undefined;
+        core.state.modelServicesCanManage = false;
         core.state.accountModelsCanManage = false;
         core.state.accountModelFetchGeneration++;
         core.state.accountModelEditing = null;

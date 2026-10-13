@@ -19,13 +19,36 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     function approvalModeReadFailed() {
         ui.byId('approval-mode-trigger').title = '无法读取审批模式，请重新打开对话';
     }
+    let modelPicker;
+    function getModelPicker() {
+        return modelPicker ||= globalThis.WeftModelPicker.mount({
+            trigger: ui.byId('model-trigger'), popup: ui.byId('model-popover'),
+            view: () => {
+                const value = core.modelServicesView();
+                if (core.state.modelServices === undefined) {
+                    value.services = [{ serviceId:'legacy',name:'模型',models:core.state.models.map(m => ({...m,modelId:m.id,profileId:m.id})) }];
+                    value.selected = {serviceId:'legacy',modelId:core.state.modelProfileId};
+                }
+                return value;
+            },
+            select: async item => item.serviceId === 'legacy' ? core.selectModelProfile(item.profileId) : core.selectServiceModel(item),
+            refresh: () => core.refreshModelServices(true),
+            add: () => { ui.openSettings('models'); ui.openModelServiceEditor?.(); },
+            thinking: () => core.thinkingView(), toggleThinking: value => core.setDeepThinking(value), toast: ui.toast,
+        });
+    }
+    function updateModelPicker() { getModelPicker().update(); }
     function closeModelMenu(restoreFocus = false) {
+        if (modelPicker) return modelPicker.close(restoreFocus);
         ui.byId('model-popover').hidden = true;
         ui.byId('model-trigger').setAttribute('aria-expanded', 'false');
         if (restoreFocus)
             ui.byId('model-trigger').focus();
     }
     function openModelMenu() {
+        return getModelPicker().open();
+    }
+    function openLegacyModelMenu() {
         const trigger = ui.byId('model-trigger');
         if (trigger.disabled)
             return;
@@ -194,9 +217,10 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             ui.byId('temporary-composer-hint')?.setAttribute('hidden', '');
         }
         ui.byId('model-select').disabled = value.modelDisabled;
-        ui.byId('model-trigger').disabled = value.modelDisabled;
+        ui.byId('model-trigger').disabled = !core.state.account || core.state.activeChatSource === 'phone';
         WeftModelLabel(ui.byId('model-label'), value.modelName);
-        if (value.modelDisabled)
+        ui.byId('model-trigger').setAttribute('aria-label', `模型：${core.modelServicesView?.().modelName || value.modelName}`);
+        if (ui.byId('model-trigger').disabled)
             ui.closeModelMenu();
         ui.byId('message-text').disabled = value.messageDisabled;
         ui.byId('message-text').placeholder = value.placeholder;
@@ -483,5 +507,5 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
                 void core.refreshPendingDevices();
         }, core.polling.presence);
     }
-    return { paintConnection, paintOperation, approvalModeReadFailed, closeModelMenu, openModelMenu, stopVoiceInput, startVoiceInput, takeSetupGrant, errorAt, toast, clearPasswords, setBusy, updateAvailability, startAssistantRefresh, showRegistration, cancelCloudLogin, resetAccountControls, resetIdentityControls, resetConversationControls, closeAccountMenu, stopCloudPairing, paintScreen, mountShell };
+    return { updateModelPicker, paintConnection, paintOperation, approvalModeReadFailed, closeModelMenu, openModelMenu, stopVoiceInput, startVoiceInput, takeSetupGrant, errorAt, toast, clearPasswords, setBusy, updateAvailability, startAssistantRefresh, showRegistration, cancelCloudLogin, resetAccountControls, resetIdentityControls, resetConversationControls, closeAccountMenu, stopCloudPairing, paintScreen, mountShell };
 };
