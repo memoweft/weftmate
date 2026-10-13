@@ -197,6 +197,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (!auth.localSession) { core.acceptSession(result); await core.enterAssistant(); }
     returnView = null;
     await core.refreshPendingDevices(); scheduleRenewal();
+    await cloudDirectory().catch(() => {});
     const draft = await environment.cloudCredentials('draft:' + saved.sub);
     if (draft) { effects.restoreCloudDraft?.(draft); await environment.cloudCredentials('draft:' + saved.sub, undefined, true); }
   }
@@ -223,6 +224,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       effects.nativeSessionExpired?.(); paint(); return;
     }
     if (auth.localSession) {
+      core.updateComputerDirectory?.({hosts:[]});
       clearTimeout(renewalTimer); clearTimeout(waitTimer); journey++; await client.forget();
       Object.assign(auth, { mode: 'offline', modal: false, busy: false, email, error: '需要重新登录', cloudExpired: true });
       paint(); effects.toast('需要重新登录，电脑上的内容仍可继续使用。'); return;
@@ -255,7 +257,9 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       throw error;
     }
     if (generation !== client.generation) throw { code: 'CLOUD_TOKEN_INVALID' };
-    auth.devices = result.devices; auth.hosts = result.hosts; return result;
+    auth.devices = result.devices; auth.hosts = result.hosts;
+    auth.multiHostSupported=result.capabilities?.multiHost===1;
+    core.updateComputerDirectory?.(result); return result;
   }
   async function cloudRename(id, name) {
     name = name.trim(); if (!name || Array.from(name).length > 128) throw { code: 'INVALID_DEVICE' };
@@ -281,6 +285,19 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return cloudDirectory();
   }
   async function cloudConnect(hostId) { return client.authorized('/hosts/connect', { method: 'POST', body: { hostId } }); }
+  core.cloudCurrentComputer = () => client?.config?.hostId;
+  core.cloudComputerChannel = (connection,request) => client.channel(connection,request);
+  core.cloudRenameComputer = async (hostId,name) => {
+    if(!core.state.computers?.length)throw {code:'FORBIDDEN'};
+    await client.authorized('/hosts/rename',{method:'POST',body:{hostId,name:name.trim()}});return cloudDirectory();
+  };
+  core.cloudRemoveComputer = async hostId => {
+    if(!core.state.computers?.length)throw {code:'FORBIDDEN'};
+    const current=auth.hosts.some(row=>row.hostId===hostId&&row.isCurrent);
+    await client.authorized('/hosts/remove',{method:'POST',body:{hostId}});
+    if(current){await expireCloudSession(auth.email,{retainCached:false});return {devices:[],hosts:[]};}
+    return cloudDirectory();
+  };
   core.probeCloudPresence = async () => {
     if (auth.cloudOnly) return null;
     if (!client?.config?.hostId || !await client.saved()) return null;
@@ -297,8 +314,8 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     }
   };
   core.cloudOfflineTaskDevice = async () => (await client.key()).deviceId;
-  core.cloudOfflineIdentity = () => core.state.account && client?.config?.hostId ? {
-    origin: client.host, ownerId: core.state.account.ownerId, deviceId: core.state.device?.id, hostId: client.config.hostId } : null;
+  core.cloudOfflineIdentity = () => core.activeComputerIdentity?.() || (core.state.account && client?.config?.hostId ? {
+    origin: client.host, ownerId: core.state.account.ownerId, deviceId: core.state.device?.id, hostId: client.config.hostId } : null);
   async function cloudTrust(requestId) { return core.accessApi(`/cloud/devices/${encodeURIComponent(requestId)}/trust`, { method: 'POST', protectedWrite: true, body: {} }); }
   function cloudTrustMaterial(trust) {
     // This key comes from the already authenticated sender's host connection,
@@ -325,6 +342,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   async function cloudEmailConfirm(code) { const result = await client.authorized('/auth/email/change/confirm', { method: 'POST', body: { challengeId: auth.emailChange.challengeId, code } }); auth.emailChange = null; await expireCloudSession(result.account.email, {retainCached:false}); return result; }
   async function cloudChangePassword(currentPassword, password, confirmation) { validPassword(password, confirmation); const result = await client.authorized('/auth/password/change', { method: 'POST', body: { currentPassword, password } }); await expireCloudSession(auth.email, {retainCached:false}); return result; }
   async function cloudLogout() {
+    if(auth.localSession&&auth.multiHostSupported&&auth.mode==='authenticated')await core.accessApi('/cloud/binding',{method:'DELETE',protectedWrite:true,body:{}});
     if (auth.mode !== 'offline') { await client.authorized('/auth/logout', { method: 'POST', body: {} }); await client.resetKey(); }
     await expireCloudSession(auth.email, {retainCached:false});
   }
