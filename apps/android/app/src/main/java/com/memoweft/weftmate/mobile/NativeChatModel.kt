@@ -344,7 +344,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                 if(g!=generation)return@launch
                 check(accepted.optBoolean("ready") && accepted.optString("owner")==phoneOwner) { "ACCOUNT_SWITCHED" }
                 if(!accepted.optBoolean("sent",true)) { refreshPhone(accepted);return@launch }
-                draft = ""; saveDraft(); call("native.draft",JSONObject().put("hasDraft",false)); focused = false; activity.hideKeyboard(); running = true
+                draft = ""; saveDraft(); call("native.draft",JSONObject().put("hasDraft",false)); running = true
                 refresh(); return@launch
             }
             val p = JSONObject().put("text", text).put("attachmentIds", JSONArray(files)).put("requestId", "native-${UUID.randomUUID()}")

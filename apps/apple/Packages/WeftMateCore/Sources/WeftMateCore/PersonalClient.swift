@@ -703,6 +703,40 @@ public actor PersonalClient {
         return reply.models
     }
 
+    public func modelServices() async throws -> ModelServicesReply? {
+        do { return try await modelServiceRequest(path:"/model-services") }
+        catch APIFailure.server(let status, _) where status == 404 || status == 405 { return nil }
+    }
+    public func modelService(id: String) async throws -> ModelService {
+        let reply: ModelServiceReply = try await modelServiceRequest(path:"/model-services/\(try checkedID(id))");return reply.service
+    }
+    public func checkModelService(baseUrl: String? = nil,apiKey: String? = nil,interfaceType: String? = nil,serviceId: String? = nil) async throws -> ModelCatalogResult {
+        struct Body: Encodable { let baseUrl: String?;let apiKey: String?;let interfaceType: String?;let serviceId: String? }
+        return try await modelServiceRequest(path:"/model-services/check",method:"POST",body:JSONEncoder().encode(Body(baseUrl:baseUrl,apiKey:apiKey,interfaceType:interfaceType,serviceId:serviceId)))
+    }
+    public func writeModelService(_ value: ModelServiceWrite,id: String? = nil) async throws -> ModelService {
+        let path=try id.map { "/model-services/" + (try checkedID($0)) } ?? "/model-services"
+        let reply: ModelServiceReply = try await modelServiceRequest(path:path,method:id == nil ? "POST" : "PATCH",body:JSONEncoder().encode(value));return reply.service
+    }
+    public func removeModelService(_ service: ModelService) async throws {
+        struct Reply: Decodable { let removed: Bool }
+        struct Body: Encodable { let requestId: String;let expectedRevision: Int }
+        let reply: Reply = try await modelServiceRequest(path:"/model-services/\(try checkedID(service.id))",method:"DELETE",body:JSONEncoder().encode(Body(requestId:"apple-model-service-"+UUID().uuidString.lowercased(),expectedRevision:service.revision)))
+        guard reply.removed else { throw APIFailure.invalidResponse }
+    }
+    public func refreshModelService(id: String) async throws -> ModelService {
+        let reply: ModelServiceReply = try await modelServiceRequest(path:"/model-services/\(try checkedID(id))/refresh",method:"POST",body:Data("{}".utf8));return reply.service
+    }
+    public func selectServiceModel(serviceId: String,modelId: String,sessionId: String?) async throws -> ModelServiceSelection {
+        struct Body: Encodable { let modelId: String;let sessionId: String?;let requestId: String }
+        return try await modelServiceRequest(path:"/model-services/\(try checkedID(serviceId))/select",method:"POST",body:JSONEncoder().encode(Body(modelId:modelId,sessionId:sessionId,requestId:"apple-model-select-"+UUID().uuidString.lowercased())))
+    }
+    private func modelServiceRequest<T: Decodable>(path: String,method: String = "GET",body: Data? = nil) async throws -> T {
+        let (auth,generation)=try snapshot();try await verify(auth,generation)
+        let response=try await sharedAuthorizedRequest(auth,generation,path:path,method:method,body:body)
+        return try decode(response.body)
+    }
+
     public func memoryStatus() async throws -> MemoryStatusSnapshot {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
