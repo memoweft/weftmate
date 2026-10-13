@@ -30,7 +30,7 @@ async function fixed(t:any){
  const root=await mkdtemp(join(tmpdir(),'weftmate-mem7-unit-'));t.after(()=>rm(root,{recursive:true,force:true}));
  const accounts:any={a:{sessions:{},commands:{},defaultModelProfileId:'local'},b:{sessions:{},commands:{},defaultModelProfileId:'local'}},ledger:any[]=[],sources=new Set(),activity:any[]=[];let requests=0,device='phone-a';
  const ctx:any={root,rootState:{hostId:'synthetic-host',accounts},timestamp:Date.now,accountState:(id:string)=>accounts[id],serial:async(fn:any)=>fn(),mutate:async(id:string,fn:any)=>{fn(accounts[id]);reconcileChatIdentity(accounts[id],'synthetic-host',new Date().toISOString());},active:new Set(),pendingPreflights:new Set(),
-  authenticate:()=>({ownerId:'a',deviceId:device,via:'cookie',device:{authKind:'cloud',name:device}}),readJson:(r:any)=>r.body,json:(_r:any,_status:any,v:any)=>v,
+  authenticate:()=>({ownerId:'a',deviceId:device,via:'cookie',device:{authKind:'cloud',name:device,scopes:['account:manage','sessions:read']}}),readJson:(r:any)=>r.body,json:(_r:any,_status:any,v:any)=>v,
   modelSelectable:()=>true,service:{currentChatModelProfile:()=>null},backend:{listModels:async()=>[{id:'local',sourceKind:'local',configured:true,name:'本机模型'}],describeSession:async()=>null,readEvents:async()=>({events:[]})},
   usage:{settings:()=>({prices:{}}),assertAllowed(){},exportAccount:()=>({records:[]})},activity:{record:async(_id:string,row:any)=>{assert.ok(ACTIVITY_TYPES.includes(row.type),'real activity contract accepts the import notification');activity.push(row);}},
   cloudIdentity:{publishOffline:async(_id:string,generation:number)=>({hostId:'synthetic-host',accountId:'synthetic-account',generation})},
