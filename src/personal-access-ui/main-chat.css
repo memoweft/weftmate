@@ -28,6 +28,7 @@
 .side-result-link { border:0; background:transparent; color:var(--ink); font:inherit; font-size:var(--wm-font-size-13); text-align:left; max-width:100%; padding:var(--wm-space-8); border-radius:var(--wm-radius-8); cursor:pointer; overflow-wrap:anywhere; }
 .side-result-link:hover { background:var(--surface-raised, var(--surface)); }
 .side-source { white-space:pre-wrap; overflow-wrap:anywhere; }
+.side-chat-dialog, :root[data-native-platform] .dialog.side-chat-dialog { height:fit-content; }
 .side-chat-dialog input, .side-chat-dialog textarea { width:100%; margin-block:var(--wm-space-8); }
 .main-chat-row mark { color:var(--search-highlight-ink); background:var(--search-highlight-bg); text-decoration:underline; text-underline-offset:3px; }
 #load-older { display:block; margin:var(--wm-space-8) auto; color:var(--muted); background:var(--surface); border-radius:var(--wm-radius-8); padding:var(--wm-space-8) var(--wm-space-12); font-weight:400; }

@@ -1,0 +1,143 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realMemoryCore": true,
+  "syntheticCloud": true,
+  "syntheticAccount": true,
+  "requests": [
+    {
+      "phase": "phone-register",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    }
+  ],
+  "checks": [],
+  "screenshots": [
+    {
+      "file": "phone-360-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    }
+  ],
+  "errors": [],
+  "failure": "page.waitForFunction: Timeout 30000ms exceeded.",
+  "phase": "phone-chat",
+  "processExit": {
+    "decimal": null,
+    "unsignedDecimal": null,
+    "hexadecimal": null,
+    "signal": null,
+    "meaning": "未取得退出码"
+  },
+  "commitMemory": {
+    "available": true,
+    "availableBytes": 14120910848,
+    "limitBytes": 97770655744,
+    "committedBytes": 83649744896
+  },
+  "phoneMemory": {
+    "memory": {
+      "version": 1,
+      "enabled": true,
+      "items": [],
+      "processed": [],
+      "suppressedSources": [],
+      "suppressedText": [],
+      "handover": false,
+      "transferred": false,
+      "resumeAfter": null
+    },
+    "extractions": [
+      {
+        "input": "{\"原话\":[{\"id\":\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "{\"upsert\":[{\"id\":null,\"text\":\"使用者叫林舟。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我叫林舟。\"},{\"id\":null,\"text\":\"使用者养了一只鹦鹉，名字叫青瓷。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我的鹦鹉叫青瓷\"},{\"id\":null,\"text\":\"使用者喜欢茉莉花茶。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我喜欢茉莉花茶\"},{\"id\":null,\"text\":\"使用者正在做一个叫纸舟的练习项目。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我正在做一个叫纸舟的练习项目。\"}]}"
+      },
+      {
+        "error": "PHONE_MEMORY_INVALID"
+      },
+      {
+        "input": "{\"原话\":[{\"id\":\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"},{\"id\":\"f42142e8-7cda-4c12-904a-436827da25e3\",\"text\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "{\"upsert\":[{\"id\":null,\"text\":\"使用者叫林舟。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我叫林舟。\"},{\"id\":null,\"text\":\"使用者的鹦鹉叫青瓷。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我的鹦鹉叫青瓷\"},{\"id\":null,\"text\":\"使用者喜欢乌龙茶，不再喜欢茉莉花茶。\",\"sourceIDs\":[\"f42142e8-7cda-4c12-904a-436827da25e3\"],\"evidence\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。\"},{\"id\":null,\"text\":\"使用者正在做一个叫纸舟的练习项目。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我正在做一个叫纸舟的练习项目。\"}]}"
+      },
+      {
+        "error": "PHONE_MEMORY_INVALID"
+      },
+      {
+        "input": "{\"原话\":[{\"id\":\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"},{\"id\":\"f42142e8-7cda-4c12-904a-436827da25e3\",\"text\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "{\"upsert\":[{\"id\":null,\"text\":\"使用者叫林舟。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我叫林舟。\"},{\"id\":null,\"text\":\"使用者的鹦鹉叫青瓷。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我的鹦鹉叫青瓷\"},{\"id\":null,\"text\":\"使用者现在喜欢乌龙茶（改口，不再喜欢茉莉花茶）。\",\"sourceIDs\":[\"f42142e8-7cda-4c12-904a-436827da25e3\"],\"evidence\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。\"},{\"id\":null,\"text\":\"使用者正在做一个叫纸舟的练习项目。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我正在做一个叫纸舟的练习项目。\"}]}"
+      },
+      {
+        "error": "PHONE_MEMORY_INVALID"
+      },
+      {
+        "input": "{\"原话\":[{\"id\":\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"},{\"id\":\"f42142e8-7cda-4c12-904a-436827da25e3\",\"text\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "{\"upsert\":[{\"id\":null,\"text\":\"使用者叫林舟。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我叫林舟。\"},{\"id\":null,\"text\":\"使用者养的鹦鹉叫青瓷。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我的鹦鹉叫青瓷\"},{\"id\":null,\"text\":\"使用者现在喜欢乌龙茶（此前喜欢茉莉花茶，已改口）。\",\"sourceIDs\":[\"f42142e8-7cda-4c12-904a-436827da25e3\"],\"evidence\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。\"},{\"id\":null,\"text\":\"使用者正在做一个叫纸舟的练习项目。\",\"sourceIDs\":[\"eefda067-7bd3-4db4-8f6a-c6f2f14a02ce\"],\"evidence\":\"我正在做一个叫纸舟的练习项目。\"}]}"
+      },
+      {
+        "error": "PHONE_MEMORY_INVALID"
+      }
+    ],
+    "identity": null,
+    "connection": "phone",
+    "cloudOnly": true
+  },
+  "hostOutput": "",
+  "cleanedProcesses": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  },
+  "requestCount": 7
+}

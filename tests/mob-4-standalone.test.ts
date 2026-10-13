@@ -37,7 +37,7 @@ test('MOB-4 first computer sync preserves original phone IDs and uploads after a
   const engine = await W.create({ vault, identity: {}, crypto: webcrypto, phoneModel: () => ({ modelId: 'synthetic' }),
     accountCheck: async () => ({}), control: async () => ({}), host: async (path: string, body: any) => {
       if (path === '/offline/sync') return { generation, reset: true, remove: [], items: [], hashes: {}, model: { modelId: 'synthetic' } };
-      submitted = structuredClone(body); return { receipts: body.turns.map((t: any) => ({ id: t.id })) };
+      submitted = structuredClone(body); return { receipts: body.turns.map((t: any) => ({ id: t.id,state:'synced' })) };
     } });
   await engine.send('请记住我的新偏好'); const id = stored.turns[0].id;
   await engine.sync(); assert.equal(submitted.generation, generation); assert.equal(submitted.turns[0].id, id);
@@ -60,4 +60,24 @@ test('MOB-4 stopping preserves partial text; changing account cancels and remove
   const send=engine.send('第一条');await gate;engine.stop();await assert.rejects(send,/stopped/);
   assert.equal(stored.conversations[0].turns[0].messages[1].text,'保留这段已生成的文字');
   await engine.clear();assert.equal(stored.conversations.length,0);assert.equal(stored.turns.length,0);
+});
+
+test('phone model switch during account authorization applies only to the next submitted turn', async () => {
+  let selected = { modelId: 'first-chat', serviceId: 'first-service', baseUrl: 'https://first.example/v1' };
+  let authorize: () => void, checked: () => void, checks = 0, stored: any = { snapshot: null, turns: [], conversations: [] };
+  const entered = new Promise<void>(resolve => { checked = resolve; });
+  const gate = new Promise<void>(resolve => { authorize = resolve; });
+  const used: string[] = [];
+  const vault = { load: async () => stored, save: async (value: any) => { stored = value; }, clear: async () => {}, close() {},
+    complete: async (body: any, snapshot: any) => {
+      assert.equal(snapshot.model.modelId, body.model); used.push(body.model);
+      return { choices: [{ message: { content: '已完成' } }] };
+    } };
+  const engine = await W.create({ vault, crypto: webcrypto, identity: {}, phoneModel: () => selected,
+    accountCheck: async () => { if (++checks === 1) { checked(); await gate; } return {}; } });
+  const first = engine.send('已经提交的第一条'); await entered;
+  selected = { modelId: 'second-chat', serviceId: 'second-service', baseUrl: 'https://second.example/v1' };
+  authorize(); const result = await first;
+  await engine.send('下一条', result.conversationId);
+  assert.deepEqual(used, ['first-chat', 'second-chat']); engine.close();
 });

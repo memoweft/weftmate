@@ -365,7 +365,36 @@ MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 
 
 模型配置的可选 `modelTier` 为 `auto / local / cloud`：POST 省略或设 auto 按地址判断，PATCH 省略保留原值、auto 恢复自动判断，local/cloud 为用户覆盖（例如把 loopback 云端代理设为 cloud）。`AccountModel` 与 GET `/models` 返回 modelTier（旧配置显示 auto）和最终 `sourceKind: local | cloud`。自动判断使用实际 base URL 主机：127.0.0.0/8、::1、localhost、10/8、172.16/12、192.168/16、`*.local` 为 local，其余为 cloud；不要求正式本地 profile。HTTP 地址可用于上述本机/局域网范围，其他地址仍要求 HTTPS。字段跟随模型 runtime 修订持久化、可转移；仅改变位置也生成新的 profileId，旧会话保留原配置。无字段的旧请求/存储继续兼容，非法值返回 400 `INVALID_REQUEST`。
 
-`ModelOperation`：`{"operation":{"requestId":"model-1","kind":"create","accountModelId":"account-model-…","status":"pending","createdAt":"…","updatedAt":"…"},"model":AccountModel}`；状态 `pending / applying / succeeded / failed / uncertain`，可有 `expectedRevision,resultRevision,reasonCode,errorCode,testResult`。模型选择是创建会话时的 `modelProfileId`，当前没有独立的会话换模型 `/personal/v1` 路由。
+`ModelOperation`：`{"operation":{"requestId":"model-1","kind":"create","accountModelId":"account-model-…","status":"pending","createdAt":"…","updatedAt":"…"},"model":AccountModel}`；状态 `pending / applying / succeeded / failed / uncertain`，可有 `expectedRevision,resultRevision,reasonCode,errorCode,testResult`。旧客户端仍在创建会话时提交 `modelProfileId`；MODEL-1 的服务选择接口见下一节。
+
+#### 3.10.1 模型服务（MODEL-1，加法兼容）
+
+使用者填写一个模型服务的名字、地址与密钥；型号由该服务的目录发现。以下路径均以 `/personal/v1` 为前缀，没有查询参数。读取需要 `sessions:read`；检查、创建、修改、刷新、选择和删除需要已有 Cookie（会话凭据）、CSRF（跨站请求防护）及 `account:manage`，没有新增权限。
+
+| 方法与路径 | 请求 | 响应 |
+|---|---|---|
+| GET `/model-services` | 无 | `{services:[ModelService],canManage,models:[旧模型投影],modelSettings}`；缓存可读，过期目录后台刷新；一次读取模型目录与账户选择 |
+| GET `/model-services/{serviceId}` | 无 | `{service:ModelService}` |
+| POST `/model-services/check` | `{baseUrl?,apiKey?,interfaceType?,serviceId?}`；新草稿必须给地址与密钥，已保存服务可用 `serviceId` 复用本机密钥 | `{status,models,message,checkedAt,httpStatus?}`；只查目录，不保存草稿或发送聊天消息 |
+| POST `/model-services` | `{requestId,name,baseUrl,apiKey,interfaceType?,modelId?,models?,selectedModelId?}` | 201 `{service:ModelService}`；默认选清单中推荐的聊天型号，目录不可用时可用 `modelId` 手填 |
+| PATCH `/model-services/{serviceId}` | `{requestId,expectedRevision,name?,baseUrl?,apiKey?,interfaceType?,modelId?,models?,selectedModelId?}`；`models:[{modelId,enabled}]` 控制菜单显示，`modelId` 加入一个手填型号 | `{service:ModelService}`；改地址必须重填密钥；同请求同体重放，异体409 `REQUEST_CONFLICT` |
+| DELETE `/model-services/{serviceId}` | `{requestId,expectedRevision}` | `{removed:true}`；停止该服务的模型使用，保留旧对话与历史型号标识 |
+| POST `/model-services/{serviceId}/refresh` | `{}` | `{service:ModelService}`；并发查询合并，失败保留原清单与手填型号；客户端打开菜单时可后台调用 |
+| POST `/model-services/{serviceId}/select` | `{modelId,sessionId?,requestId?}` | `{profileId,service:ModelService,models:[旧模型投影]}`；设为新对话默认；给 `sessionId` 时当前对话的下一条消息采用此型号 |
+
+`GET /model-services` 加法返回 `models` 与 `modelSettings`。`models` 复用现有 `GET /models` 的权限过滤与兼容投影；`modelSettings:{defaultModelProfileId,backgroundModelProfileId,backgroundModelFallback,currentChatModelProfileId}` 与现有 `GET /settings/models` 同义，缺省值为 `null`。目录、模型投影与选择属于同一当前账户，选择与服务元数据在原生目录读取结束后从同一个账户快照生成，返回前重新核验登录。新客户端可用一次请求代替三次读取；旧宿主缺少新增字段时，客户端仍读取既有接口补齐。原接口及权限保持原样，新增字段不含密钥或内部凭据引用；原生目录读取失败沿既有 `/models` 错误返回。
+
+`ModelService` 为 `{serviceId:"model-service-<uuid>",name,baseUrl,interfaceType:"openai-compatible"|"anthropic",revision,models:[{modelId,name,enabled,profileId?,profileIds?,capabilities?,deepThinking?,capabilitySource?,lastUsedAt?,manual?}],selectedModelId,catalog:{status,checkedAt,message,httpStatus?},createdAt,updatedAt}`。公开响应省略内部凭据引用；`profileIds` 是同型号迁移前保留的旧配置标识，可用于匹配当前对话的勾选；其中 `profileId` 沿用旧模型投影的 `id` 和会话的 `modelProfileId`，仅已登记的型号具有该字段。`capabilities.vision`、`capabilities.contextWindow`、`deepThinking.supported` 仅在服务明确声明时出现；缺失沿用既有默认处理，不按型号名猜能力。深度思考的明确声明会进入型号的持久元数据、桌面设置与 DSH 原生声明，并通过旧 `/models` 与账户模型接口返回；会话开关核对输入区选中的下一条型号。已知服务的既有思考协议保持原样，未声明能力的通用服务不按名称推测。按 [Claude 模型目录接口](https://platform.claude.com/docs/en/api/models/list)，Claude 目录另读取 `capabilities.image_input.supported`、`capabilities.thinking.supported`、`max_input_tokens`；仅明确为 adaptive-only（仅自适应思考）时透传 `deepThinking.type:"adaptive"`，不增加档位控件。显示名优先使用服务返回的名称，否则整理型号字符串，例如「MiMo v2.6 Flash」。明显的向量、语音、绘图、审核和重排型号不进入聊天清单。
+
+目录缓存为一小时；打开菜单时刷新不阻塞菜单。`catalog.status` 为 `unchecked / available / unsupported / authentication_failed / offline / failed / invalid`。`authentication_failed` 提示检查密钥与权限；`unsupported` 表示服务不提供目录，提示手填型号；两者不混为「连接失败」。目录响应正文、密钥与请求头不进入诊断结果。OpenAI（开放式模型接口）兼容目录使用 Bearer（持有者）认证；Anthropic（模型服务）目录使用该接口的密钥头与版本头，原生 DSH（助手运行时）路由使用 `anthropic-messages`。旧个人模型代理继续返回 OpenAI 形状，在内部转换 Claude 的消息、工具调用、用量及 SSE（服务端事件流）；隐藏思考不进入正文。
+
+迁移先写私有 `model-services-v1.before.json` 原状态备份，再原子提交服务元数据。同一规范化地址、同一密钥的旧配置合并，旧型号全部启用；密钥仅在进程内比较，服务元数据不保存密钥或密钥散列。旧 `accountModels`、配置 ID（标识）、会话 `modelProfileId`、默认和后台模型引用保留，重复执行不重复建服务；失败保留旧结构供旧路径继续使用。回退可恢复这份原状态备份；密钥仍在原来的加密保管库。
+
+服务选择只记录下条消息的目标型号。正在回复时不改原生模型；下一条派发等待旧回复结束，再经 DSH（助手运行时）原生模型接口切换。新发现的型号尚未登记且运行时忙时，选择仍持久受理，型号可带 `pendingInstallation:true`；下一条已受理消息等待空闲、登记路由后发送，登记期间不会改动旧回复。尚无执行段的新对话也沿现有命令队列等待登记，再创建执行段和发送。用于登记的重启只忽略同一会话尚未派发的等待消息，或目标型号对应尚未派发的主对话消息；其它未派发命令、已派发命令及 DSH 原生繁忙状态仍阻止重启。会话与逻辑对话响应加可选 `selectedModelProfileId`，表示输入区下一条要用的型号；原 `modelProfileId` 保持当前实际绑定。 运行中旧客户端发送主对话 `chat.message` 时，可仍带当前实际绑定的型号，或带已选中的下一条型号；服务器按已保存的下一条选择发送。其它不匹配的型号仍返回409 `REQUEST_CONFLICT`，原请求体保留供同 `requestId` 重放。切换后原创建命令的型号保持其历史身份。已有 `/models`、`/account/models`、`/settings/models`、`/models/{id}/verify|chat/completions` 响应及请求形状继续可读，不要求已发布安卓或 Apple（苹果客户端）接新路径。
+
+旧 Apple 模型读取已有 500 项上限，`/models` 继续提供最多 500 个已登记或已选用的兼容型号，优先保留当前对话、新对话默认、后台、迁移前配置与最近使用的标识；`/model-services` 完整保留服务目录，长目录全部可搜索、选择。初次登记在这一既有预算内一次批量写入并重启；隐藏的型号不登记，预算外型号在选择时登记，不按目录大小限制用户的菜单选择。旧字段 `profileId / modelProfileId` 仍对应每个具体型号，服务的 `serviceId` 不能作为发送消息的模型标识。
+
+Android（安卓）业务白名单已精确加入本节路径与允许／拒绝用例。新版界面调用这些路径**需要新壳版本**，版本号由合并发布统一调整；Apple 原生菜单另包接入。原生客户端菜单采用星芒 `model` 图标、无文字按钮、读屏名带当前模型；按服务分组，单服务省略标题，当前项打勾，长清单在同一菜单中搜索，支持时才显示深度思考开关，底部保留「添加模型服务…」。
 
 模型代理是受限 OpenAI 兼容体：`model` 必须对应所选profile；messages 1–40条、文字≤16,384 UTF-16，角色 `system/user/assistant/tool`；最多8个function工具，`tool_choice` 仅 `auto/none/required`；`max_tokens` 1–8192，temperature 0–2。它是手机本地循环的模型请求通道，不是宿主DSH办事消息接口。`verify` 明确没有验证实际推理。
 
@@ -1831,3 +1860,26 @@ ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影�
 手机浏览器的自填模型密钥只留在当前页面内存；刷新／关闭／退出清空，不写入 IndexedDB（浏览器结构化存储）、localStorage（网页键值存储）、日志或缓存。对话仍经 M3-A 的不可导出 WebCrypto（浏览器密码接口）钥匙加密保存；该边界不承诺同源恶意脚本隔离。提供方必须允许浏览器直连。
 
 上传回执目前只有轮次 `state:"synced"`，没有电脑可继续发送的普通会话标识。MOB-4 保留原手机对话可读；原会话自动接力到电脑仍需后续契约支持，不声称已形成记忆。
+
+
+### MEM-7：手机原对话交给电脑（D63，与APPLE-7共用）
+
+沿3.19的两个精确路径与原认证／CSRF（跨站请求防护）／物理设备／删除代次，不新增权限。`phoneFirst:true` 接收公钥与对话，不依赖可下发的云模型；允许 `model:null`，后台整理使用电脑自己的后台模型。本机模型也可用。旧请求不声明phoneFirst／任务能力且没有云模型时仍返回 `OFFLINE_MODEL_REQUIRED`；新字段只兼容增加。
+
+`/offline/sync` 的加密内容兼容增加 `memoryAuthority:{ready:boolean,hostId}`，表示当前同账号电脑的真实记忆核心是否已就绪；核心尚未启用／尚未就绪不能虚构true。`phoneImports:[{id,handoverId?,state}]` 是该账号手机导入进度，状态沿MEM-1并增加 `receiving / awaiting_confirmation`（接收中／等确认）。手机只从成功的账号目录且hosts为空认定电脑被移除，网络失败不算。信号从现有副本回执提供，不造另一条设备发现机制。
+
+`/offline/turns` 可增加 `handover:{id,totalTurns,conversationCount,bytes?,complete}`，每包仍最多50轮／256 KiB，最后包complete为true。id是手机持久冻结队列的随机批次标识；totalTurns是整批轮数，bytes是冻结turns的JSON（数据交换格式）UTF-8字节数。没有此字段的旧手机仍可接收；phoneFirst登记的旧轮次进入同一导入管线，按本次完整请求建批次。新客户端400／INVALID_REQUEST时可退回一次原字段形状；认证／权限失败不回退。
+
+回执兼容增加 `receipts:[{id,state:"synced",sessionId?,chatId?,importId?,memoryState?}]`。synced只在原文历史与MEM-1任务均持久保存后发出，表示已接收而非已形成；重发相同轮次／正文返回稳定历史标识，同账号同轮次ID跨手机去重，正文变化409。phoneFirst和新交接队列的去重不依赖Cookie（会话凭据）续期。普通M3-A电脑副本离线轮次保持原摄取／依赖处理。手机全回执后清轻量条目、水位与屏蔽摘要；未确认或部分确认继续使用条目，原对话保留。真实形成状态由imports取得。
+
+电脑复用MEM-1的导入任务／后台模型调度／来源回执／暂停继续／取消／整批忘掉，不另设形成接口。来源 `importSource` / `importSources` 的app为phone、appName为「手机上的对话」，兼容增加deviceName、turnId，保留原日期。手机历史加入现有sessions/chats列表，`phoneHistory:true,readOnly:true,source:"phone"`，可看、搜索并从消息开旁聊；不冒充可直接发送的原生电脑会话。直接在同一历史会话续聊留后续。旧会话事件投影的 `data.phoneEventId` 保留同一个稳定时间线标识，供历史消息的旁聊入口引用；标识按账号隔离。
+
+达到100轮或256 KiB等待确认；小量静默整理。导入记录增加deviceName、handoverId、from/to、conversationCount、received、expectedTurns、estimate、confirmationRequired。沿 `/memory/backfill` 增加 `action:"import-confirm",jobId,confirm:true`；确认后进入原running，可用原import-pause／resume。预计模型、输入／输出词元与费用区间沿MEM-1，默认后台模型变动前重新估算。完成时动态静默记录「已把手机上的N段对话整理进记忆」，等待确认时动态指向设置→记忆。整批忘掉不删除手机原文。
+
+**超长历史分片**：普通turns单条消息仍最多16,384 UTF-16字符。新客户端可用同路径请求 `{generation,turns:[],turnFragments:[{id,conversationId,timestamp,index,count,encoding:"json-utf8-base64",sha256,data}],handover?}`。先冻结完整原turn对象，将其JSON UTF-8字节按96,000字节切块；data为标准有填充Base64（编码），sha256是完整原turn字节的小写64位十六进制摘要。index从0开始，count固定；身份、原对话、时间、分片总数和摘要在所有分片一致。每包依旧256 KiB以内，不裁用户消息或助手回复。
+
+分片持久后回 `fragmentReceipts:[{id,index,state:"received"}]`，不能当整轮synced。全部分片重组／摘要与原身份匹配／历史及导入任务落盘后，才带原receipts的synced和稳定标识；重发最后分片不会重复形成。分片在私有电脑内容目录持久保存，重启可继续；完成后移除分片正文，删除／撤权代次变化清未完成分片。不同正文或分片描述复用标识409，旧手机无需理解新增字段。
+
+**手机发起删除**：同路径可带 `{generation,turns:[],forgetConversations:[原conversationId]}`（每次最多50个）。仅提交过或部分提交过该对话的受信物理手机可请求；电脑先持久登记墓碑并禁止重交，再用MEM-1来源遗忘任务清原来源／派生记忆和电脑历史，推进原清理代次。回 `{generation:新代次,receipts:[],forgottenConversations:[id]}` 只表示删除请求持久接受，真正清完的导入记录才为forgotten。客户端更新代次、重新取副本；未交独立原对话不受派生删除影响。重发被删对话的轮次回state:forgotten，不能复活来源。
+
+Android（安卓）白名单继续精确使用 `/offline/sync`、`/offline/turns`、`/memory/status`、`/memory/backfill`，允许／拒绝用例已同步。需要新壳版本：原生队列／解码接memoryAuthority、稳定历史回执、长消息分片及删除方向；本包不自行递增版本。旧网页壳的原生加密容器也须保留手机原始对话和未确认轻量内容：接收电脑的reset不能先清空手机容器，普通电脑副本仍按原删除合同清空。Apple（苹果端）清单：上述四条既有路径的新字段，原RSA（非对称加密）信封／账号授权／删除代次不变；iPhone APPLE-7已有phoneFirst/model:null及冻结队列，后续加handover与turnFragments／forgetConversations，不能把fragmentReceipts当确认。

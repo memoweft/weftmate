@@ -54,9 +54,13 @@ export function createMainChat(context) {
         }
         if (context.requestIdUsed(account, payload.requestId)) throw failure('REQUEST_CONFLICT', 409);
         if (account.memoryCleanupPending) throw failure('SESSION_BUSY', 409);
-        const current = active(ownerId), profile = account.sessions[current?.sessionId]?.modelProfileId ?? payload.modelProfileId;
+        const current = active(ownerId), boundSession = account.sessions[current?.sessionId];
+        const profile = boundSession?.pendingModelProfileId ?? boundSession?.modelProfileId ?? payload.modelProfileId ?? account.defaultModelProfileId;
         if (!profile || !context.modelSelectable(ownerId, profile)) throw failure('MODEL_UNAVAILABLE', 422);
-        if (payload.modelProfileId && profile !== payload.modelProfileId) throw failure('REQUEST_CONFLICT', 409);
+        // Released clients only read modelProfileId and may echo the still-
+        // running model. Both that binding and the selected next model are valid
+        // hints; the durable pending selection remains authoritative.
+        if (payload.modelProfileId && profile !== payload.modelProfileId && boundSession?.modelProfileId !== payload.modelProfileId) throw failure('REQUEST_CONFLICT', 409);
         const model = (await context.backend.listModels({ ownerId })).find(row => row.id === profile);
         if (model) context.usage.assertAllowed(ownerId, model);
         if (payload.attachments || payload.originalAttachments) {
@@ -97,7 +101,7 @@ export function createMainChat(context) {
         if (!segment || relay) {
           if (!chat(ownerId).relay) await context.serial(() => context.mutate(ownerId, next => {
             next.chatIdentity.chats[request.chatId].relay = { phase: 'preparing', sessionId: `session-${randomUUID()}`, segmentId: `segment-${randomUUID()}`,
-              modelProfileId: segment ? next.sessions[segment.sessionId].modelProfileId : request.modelProfileId,
+              modelProfileId: segment ? next.sessions[segment.sessionId].pendingModelProfileId ?? next.sessions[segment.sessionId].modelProfileId : request.modelProfileId ?? next.defaultModelProfileId,
               ...(segment ? { sourceSessionId: segment.sessionId } : {}) };
           }));
           relay = structuredClone(chat(ownerId).relay);

@@ -4,6 +4,12 @@ import { defaultUsagePrice, usageCost } from './usage.mjs';
 import { currentChatProfile } from '../background-model-selection.mjs';
 import { failure } from './common.mjs';
 import { MAX_BODY } from './constants.mjs';
+import { phoneTurnKey } from './phone-history.mjs';
+
+export const PHONE_AUTO_LIMIT = Object.freeze({ turns:100,bytes:256*1024 });
+export function phoneNeedsConfirmation(count, bytes) {
+  return count >= PHONE_AUTO_LIMIT.turns || bytes >= PHONE_AUTO_LIMIT.bytes;
+}
 
 const digest = value => createHash('sha256').update(value).digest('hex');
 const terminal = state => ['applied', 'completed', 'no_change', 'done', 'succeeded'].includes(state);
@@ -23,11 +29,20 @@ export function importChunks(c) {
   return c.messages.some(m => m.role === 'user') ? chunks : [];
 }
 export function importBoundary(c, job, chunk, index) {
-  const content = `[WeftMate 历史导入；来源 ${importApps[c.app]}；原对话 ${c.id}；原始时间 ${c.at ?? '日期不明'}]\n` +
+  const content = `[WeftMate 历史导入；来源 ${importApps[c.app]}${c.deviceName ? `（${c.deviceName}）` : ''}；原对话 ${c.id}；原始时间 ${c.at ?? '日期不明'}]\n` +
     '以下是过去的聊天记录，仅整理用户本人说过的事实、偏好与决定。助手的话只是上下文。相对日期以原始时间为准；过去的计划与行程不能当作今天的事实或新任务。日期不明时不要推定发生时间。\n' + chunk;
   const payload = { schema_version: 1, provider_name: 'memoweft', parent_session_id: job.routeId,
     result_session_id: job.routeId, mode: 'turn', source_messages: [{ role: 'user', content, source_ref: 'source:0',
-      message_id: `${job.id}:${importKey(c).slice(0, 32)}:${index}`, ...(c.at ? { timestamp: Math.floor(Date.parse(c.at) / 1000) } : {}) }] };
+      message_id: `${job.id}:${(c.app === 'phone' ? phoneTurnKey({id:c.turnId}) : importKey(c)).slice(0, 32)}:${index}`, ...(c.at ? { timestamp: Math.floor(Date.parse(c.at) / 1000) } : {}) }] };
+  // A native phone turn already supplies its human/assistant roles. Keep those
+  // roles on bounded turns rather than describing both as one new human speech.
+  // Source app/device/date remain in the same import provenance map and receipts.
+  if(c.app==='phone'&&importChunks(c).length===1)payload.source_messages=c.messages.map((m,i)=>({
+    role:m.role,content:m.content,source_ref:`source:${i}`,message_id:`${job.id}:${phoneTurnKey({id:c.turnId}).slice(0,32)}:${index}:${i}`,
+    timestamp:Math.floor(Date.parse(m.at??c.at)/1000),...(m.role==='assistant'?{model_context_dependencies:{schema_version:1,
+      capture_status:c.dependencyComplete?(c.memoryRefs?.length?'complete':'complete_empty'):'unavailable',
+      world_items:(c.memoryRefs??[]).map(ref=>({object_kind:ref.kind,item_id:ref.id})),interaction_ids:[]}}:{})
+  }));
   const payload_hash = digest(canonical(payload));
   return { ...payload, payload_hash, event_id: `weftmate-turn-boundary-v1:${digest(payload.source_messages[0].message_id).slice(0, 32)}:${payload_hash}` };
 }
@@ -58,7 +73,10 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
   const publicJob = (ownerId, job) => ({ id: job.id, app: job.app, appName: importApps[job.app], createdAt: job.createdAt,
     state: job.state, total: job.items.length, processed: job.items.filter(i => i.done).length,
     memoryCount: job.memoryCount ?? 0, skipped: job.skipped, error: job.error ?? null,
-    waitingForChat: job.waitingForChat ?? false, usage: stats(ownerId, job) });
+    waitingForChat: job.waitingForChat ?? false, usage: stats(ownerId, job),
+    ...(job.app === 'phone' ? { deviceName: job.deviceName, handoverId: job.handoverId, from: job.from, to: job.to,
+      conversationCount: new Set(job.items.map(i => i.id)).size, estimate: job.estimate,
+      received: job.items.length, expectedTurns: job.expectedTurns, confirmationRequired: job.confirmationRequired } : {}) });
   const duplicates = ownerId => new Set(jobs(ownerId).filter(j => j.state !== 'forgotten').flatMap(j => j.items.filter(i => i.done || i.receipts.length).map(i => i.key)));
   async function modelFor(ownerId) {
     const catalog = await context.backend.listModels({ ownerId });
@@ -81,7 +99,7 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       estimate, items: items.map(({ file: _file, fingerprint: _fingerprint, locator: _locator, ...i }) => i) };
   }
   async function action(ownerId, input) {
-    if (!input || typeof input !== 'object' || !['start', 'pause', 'resume', 'cancel', 'forget-preview', 'forget'].includes(input.action) ||
+    if (!input || typeof input !== 'object' || !['start', 'confirm', 'pause', 'resume', 'cancel', 'forget-preview', 'forget'].includes(input.action) ||
         Object.keys(input).some(k => !['action', 'previewId', 'selected', 'confirm', 'jobId', 'forgetToken'].includes(k))) throw failure('INVALID_REQUEST');
     if (input.action === 'start') {
       if (jobs(ownerId).some(j => j.previewId === input.previewId)) return list(ownerId);
@@ -111,6 +129,14 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
     }
     const job = jobs(ownerId).find(j => j.id === input.jobId);
     if (!job) throw failure('MEMORY_JOB_NOT_FOUND', 404);
+    if (input.action === 'confirm') {
+      if (job.app !== 'phone' || job.state !== 'awaiting_confirmation' || input.confirm !== true) throw failure('MEMORY_PREVIEW_REQUIRED', 409);
+      const model = await modelFor(ownerId); if (!model) throw failure('MODEL_UNAVAILABLE', 409);
+      context.usage.assertAllowed(ownerId, model);
+      await save(ownerId, records => { const j=records.find(j=>j.id===job.id); j.state='running'; j.confirmationRequired=false;
+        j.estimate=estimateImport(j.items,model,context.usage.settings(ownerId).prices[model.id]??defaultUsagePrice(model)); });
+      void tick().catch(()=>{}); return list(ownerId);
+    }
     if (input.action === 'forget-preview') {
       if (['running', 'forgetting'].includes(job.state)) throw failure('IMPORT_PAUSE_REQUIRED', 409);
       const evidenceIds = job.items.flatMap(i => i.receipts.flatMap(r => r.evidenceIds ?? [])), items = new Map();
@@ -140,10 +166,11 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
     });
     void tick().catch(() => {}); return list(ownerId);
   }
-  function list(ownerId) { return { imports: jobs(ownerId).map(j => publicJob(ownerId, j)) }; }
+  function list(ownerId) { return { imports: jobs(ownerId).filter(j=>!j.phoneErasure).map(j => publicJob(ownerId, j)) }; }
   function source(ownerId, evidenceId) {
     for (const j of jobs(ownerId)) for (const i of j.items) if (i.receipts.some(r => r.evidenceIds?.includes(evidenceId)))
-      return { kind: 'import', app: j.app, appName: importApps[j.app], conversationId: i.id, originalAt: i.at, importId: j.id };
+      return { kind: 'import', app: j.app, appName: importApps[j.app], conversationId: i.id, originalAt: i.at, importId: j.id,
+        ...(j.app==='phone'?{deviceName:j.deviceName,turnId:i.turnId}: {}) };
     return null;
   }
   function permit(ownerId, routeId) {
@@ -178,17 +205,26 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       const cleanup=await context.memoryManager.eraseConversationContext?.(ownerId, job.routeId);
       if(cleanup?.storage_cleanup?.state==='pending')throw failure('IMPORT_FORGET_CLEANUP_PENDING',503);
       await save(ownerId, records => { const j = records.find(j => j.id === job.id); if(j.state!=='forgetting')return;j.state = 'forgotten'; j.memoryCount = 0; j.error = null; });
+      if(job.phoneErasure && job.originalImportId){
+        await refreshCount(ownerId,job.originalImportId);
+        await save(ownerId,records=>{const original=records.find(j=>j.id===job.originalImportId);if(original?.items.every(i=>i.deleted))original.state='forgotten';});
+      }
       return;
     }
     if (job.countPending) await refreshCount(ownerId, job.id);
     const selectedModel = await modelFor(ownerId);
     if (!selectedModel || selectedModel.id !== job.estimate.profileId) {
-      await save(ownerId, records => { const j=records.find(j=>j.id===job.id);if(j.state!=='running')return;j.state='paused';j.error='后台模型已改变，请取消这次导入，重新选择文件查看用量后开始。'; });
+      await save(ownerId, records => { const j=records.find(j=>j.id===job.id);if(j.state!=='running')return;
+        if(j.app==='phone'){j.state='awaiting_confirmation';j.confirmationRequired=true;j.estimate=estimateImport(j.items.filter(i=>!i.done),selectedModel,context.usage.settings(ownerId).prices[selectedModel?.id]??defaultUsagePrice(selectedModel));j.error='后台模型已改变，请查看新的预计用量后继续。';}
+        else {j.state='paused';j.error='后台模型已改变，请取消这次导入，重新选择文件查看用量后开始。';} });
       return;
     }
-    const item = job.items.find(i => !i.done);
+    const item = job.items.find(i => !i.done && !i.deleted);
     if (!item) {
-      await save(ownerId, records => { const j=records.find(j=>j.id===job.id);if(j.state==='running')j.state = 'completed'; }); return;
+      await save(ownerId, records => { const j=records.find(j=>j.id===job.id);if(j.state==='running')j.state = 'completed'; });
+      if(job.app==='phone')await context.activity?.record(ownerId,{key:`phone-import:${job.id}:completed`,type:'memory.submission.completed',
+        title:`已把手机上的 ${new Set(job.items.filter(i=>!i.deleted).map(i=>i.id)).size} 段对话整理进记忆`,summary:'原对话仍可查看。',level:'silent'});
+      return;
     }
     // Chat has priority even before Core acceptance; the native scheduler also preempts formation.
     if (context.active.size || context.pendingPreflights?.size) {
@@ -225,11 +261,12 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
       return;
     }
     // A source edit requires another preview and explicit start; never silently import a changed file.
-    const c = (await read(job.app, item.file, item.locator)).find(c => importKey(c) === item.key || importKey({...c,fingerprint:c.legacyFingerprint})===item.key);
+    const c = job.app === 'phone' ? context.phoneHistory.read(ownerId,item.key)
+      : (await read(job.app, item.file, item.locator)).find(c => importKey(c) === item.key || importKey({...c,fingerprint:c.legacyFingerprint})===item.key);
     if (!c) throw failure('IMPORT_SOURCE_CHANGED', 409);
     const chunks = importChunks(c), boundary = importBoundary({...c,fingerprint:item.fingerprint}, job, chunks[item.cursor], item.cursor);
     const accepted = (ledger.jobs ?? []).find(j => j.acceptance?.boundary_event_id === boundary.event_id);
-    if (!permit(ownerId, job.routeId)) return;
+    if (!permit(ownerId, job.routeId) || jobs(ownerId).find(j=>j.id===job.id)?.items.find(i=>i.key===item.key)?.deleted) return;
     if (!accepted) await context.memoryManager.ingestImport(ownerId, boundary, job.routeId);
     const confirmed = accepted ?? (await context.memoryManager.query(ownerId, 'query_jobs', { operation: 'list' })).jobs?.find(j => j.acceptance?.boundary_event_id === boundary.event_id);
     if (!confirmed) throw failure('IMPORT_RECEIPT_UNAVAILABLE', 503);
@@ -288,6 +325,7 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
             const job = records.find(job => job.id === j.id);
             if(job.state!==processingState)return;
             job.failures = (job.failures ?? 0) + 1;
+            job.failureCode = e.code ?? e.name ?? 'IMPORT_PROCESS_FAILED';
             job.retryAt = new Date(context.timestamp() + 2000 * 2 ** Math.min(job.failures, 6)).toISOString();
             job.error = job.forgetRequested ? '暂时未能彻底忘掉，正在重试。' : ['IMPORT_SOURCE_CHANGED', 'IMPORT_SOURCE_UNAVAILABLE'].includes(e.code) ? '原文件已移动或更改，请放回原文件后继续；也可以取消并重新选择。' : '暂时未能读完，正在等模型恢复。';
             if (job.failures >= 3 || ['IMPORT_SOURCE_CHANGED', 'IMPORT_SOURCE_UNAVAILABLE'].includes(e.code)) { job.state = 'paused'; job.error += ' 已暂停，可稍后继续。'; }
@@ -297,7 +335,51 @@ export function createHistoryImport(context, { pollMs = 1000, read = readHistory
     })().finally(() => { flight = null; });
     await flight;
   }
-  return { preview, action, list, source, permit,
+  async function receivePhone(ownerId, deviceName, turns, handover) {
+    const model=await modelFor(ownerId), items=turns.map(turn=>{const c=context.phoneHistory.read(ownerId,phoneTurnKey(turn));return {
+      key:phoneTurnKey(turn),id:turn.conversationId,turnId:turn.id,at:c.at,until:c.until,characters:c.characters,bytes:Buffer.byteLength(JSON.stringify(turn)),
+      chunks:importChunks(c).length,cursor:0,done:false,receipts:[] };});
+    let jobId;
+    await save(ownerId,records=>{
+      const seen=new Set(records.filter(j=>j.app==='phone').flatMap(j=>j.items.map(i=>i.key)));
+      let job=records.find(j=>j.app==='phone'&&j.handoverId===handover.id);
+      if (!job) { const id=randomUUID();job={id,routeId:`import-${id}`,app:'phone',deviceName,handoverId:handover.id,
+        expectedTurns:handover.totalTurns,createdAt:now(),state:'receiving',items:[],skipped:0,memoryCount:0,failures:0};records.push(job); }
+      for(const item of items)if(!seen.has(item.key)){job.items.push(item);seen.add(item.key);}else if(!job.items.some(i=>i.key===item.key))job.skipped++;
+      jobId=job.id;
+      if(job.state!=='receiving')return;
+      job.estimate=estimateImport(job.items,model,context.usage.settings(ownerId).prices[model?.id]??defaultUsagePrice(model));
+      job.from=job.items.map(i=>i.at).sort()[0]??null;job.to=job.items.map(i=>i.at).sort().at(-1)??null;
+      if(handover.complete || job.items.length+job.skipped>=job.expectedTurns){
+        job.items.sort((a,b)=>a.at.localeCompare(b.at)||a.turnId.localeCompare(b.turnId));
+        job.confirmationRequired=phoneNeedsConfirmation(Math.max(handover.totalTurns,job.items.length+job.skipped),
+          Math.max(handover.bytes??0,job.items.reduce((n,item)=>n+(item.bytes??0),0)));
+        job.state=!job.items.length?'completed':job.confirmationRequired||!model?'awaiting_confirmation':'running';
+      }
+    });
+    const job=jobs(ownerId).find(j=>j.id===jobId);
+    if(job.state==='awaiting_confirmation')await context.activity?.record(ownerId,{key:`phone-import:${job.id}:confirmation`,
+      type:'memory.paused',title:'手机上的对话等你确认整理',summary:`${new Set(job.items.map(i=>i.id)).size} 段对话，去设置 → 记忆查看预计用量。`,level:'silent'});
+    return {importId:jobId,state:job.state};
+  }
+  async function forgetPhone(ownerId, conversationIds) {
+    // Stop new formation before collecting the already accepted durable sources.
+    await save(ownerId,records=>{for(const j of records.filter(j=>j.app==='phone'))for(const i of j.items)if(conversationIds.includes(i.id))i.deleted=true;});
+    await flight?.catch(()=>{});
+    await save(ownerId,records=>{
+      for(const original of [...records].filter(j=>j.app==='phone'&&!j.phoneErasure)) {
+        const items=original.items.filter(i=>i.deleted&&conversationIds.includes(i.id));if(!items.length)continue;
+        const id=`phone-forget-${digest(original.id+JSON.stringify(conversationIds)).slice(0,40)}`;
+        if(records.some(j=>j.id===id))continue;
+        records.push({...structuredClone(original),id,items:structuredClone(items),state:'forgetting',phoneErasure:true,originalImportId:original.id,forgetRequested:true,
+          forgottenEvidence:[],deleteRequests:{},memoryCount:0,createdAt:now()});
+        for(const item of items)item.done=true;
+      }
+    });
+    await context.phoneHistory.remove(ownerId,conversationIds);
+    void tick().catch(()=>{});
+  }
+  return { preview, action, list, source, permit, receivePhone, forgetPhone,
     requestLimit: ownerId => MAX_BODY + 2 * Math.ceil((previews.get(ownerId)?.items.length ?? 0) / 8),
     owns: (ownerId, routeId) => jobs(ownerId).some(j => j.routeId === routeId),
     async start() { timer = setInterval(() => void tick().catch(() => {}), pollMs); timer.unref?.(); },

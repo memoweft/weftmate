@@ -1,0 +1,112 @@
+{
+  "presentationOnly": true,
+  "modelRequests": 0,
+  "screenshots": [
+    {
+      "file": "ui-final-electron-1200-light-phone-history-side-dialog.png",
+      "surface": "Electron presentation fixture",
+      "width": 1200,
+      "theme": "light"
+    },
+    {
+      "file": "ui-final-electron-1200-light-large-confirmation.png",
+      "surface": "Electron presentation fixture",
+      "width": 1200,
+      "theme": "light"
+    },
+    {
+      "file": "ui-final-electron-1200-light-large-estimate.png",
+      "surface": "Electron presentation fixture",
+      "width": 1200,
+      "theme": "light"
+    },
+    {
+      "file": "ui-final-electron-1200-dark-phone-history-side-dialog.png",
+      "surface": "Electron presentation fixture",
+      "width": 1200,
+      "theme": "dark"
+    },
+    {
+      "file": "ui-final-electron-1200-dark-large-confirmation.png",
+      "surface": "Electron presentation fixture",
+      "width": 1200,
+      "theme": "dark"
+    },
+    {
+      "file": "ui-final-electron-1200-dark-large-estimate.png",
+      "surface": "Electron presentation fixture",
+      "width": 1200,
+      "theme": "dark"
+    },
+    {
+      "file": "ui-final-electron-480-light-phone-history-side-dialog.png",
+      "surface": "Electron presentation fixture",
+      "width": 480,
+      "theme": "light"
+    },
+    {
+      "file": "ui-final-electron-480-light-large-confirmation.png",
+      "surface": "Electron presentation fixture",
+      "width": 480,
+      "theme": "light"
+    },
+    {
+      "file": "ui-final-electron-480-light-large-estimate.png",
+      "surface": "Electron presentation fixture",
+      "width": 480,
+      "theme": "light"
+    },
+    {
+      "file": "ui-final-electron-480-dark-phone-history-side-dialog.png",
+      "surface": "Electron presentation fixture",
+      "width": 480,
+      "theme": "dark"
+    },
+    {
+      "file": "ui-final-electron-480-dark-large-confirmation.png",
+      "surface": "Electron presentation fixture",
+      "width": 480,
+      "theme": "dark"
+    },
+    {
+      "file": "ui-final-electron-480-dark-large-estimate.png",
+      "surface": "Electron presentation fixture",
+      "width": 480,
+      "theme": "dark"
+    },
+    {
+      "file": "ui-final-phone-360-light-memory-edit.png",
+      "surface": "web viewport, system bars excluded",
+      "width": 360,
+      "height": 780,
+      "theme": "light"
+    },
+    {
+      "file": "ui-final-phone-360-dark-memory-edit.png",
+      "surface": "web viewport, system bars excluded",
+      "width": 360,
+      "height": 780,
+      "theme": "dark"
+    },
+    {
+      "file": "ui-final-phone-390-light-memory-edit.png",
+      "surface": "web viewport, system bars excluded",
+      "width": 390,
+      "height": 844,
+      "theme": "light"
+    },
+    {
+      "file": "ui-final-phone-390-dark-memory-edit.png",
+      "surface": "web viewport, system bars excluded",
+      "width": 390,
+      "height": 844,
+      "theme": "dark"
+    }
+  ],
+  "lastDialog": {
+    "height": 515,
+    "width": 448,
+    "computedHeight": "515px"
+  },
+  "passed": true
+}

@@ -1,0 +1,34 @@
+{
+  "syntheticModelService": true,
+  "modelsUsed": [
+    "mimo-v2.6-pro"
+  ],
+  "colors": [
+    {
+      "theme": "light",
+      "background": "rgb(255, 255, 255)",
+      "msSurface": "#fff"
+    },
+    {
+      "theme": "dark",
+      "background": "rgba(44, 44, 46, 0.92)",
+      "msSurface": "rgba(44,44,46,.92)"
+    },
+    {
+      "theme": "light",
+      "background": "rgb(255, 255, 255)",
+      "msSurface": "#fff"
+    },
+    {
+      "theme": "dark",
+      "background": "rgba(44, 44, 46, 0.92)",
+      "msSurface": "rgba(44,44,46,.92)"
+    }
+  ],
+  "screenshots": 28,
+  "hostRevisionWrite": true,
+  "closedModelButtonVisible": true,
+  "browserViewportOnly": true,
+  "nativeSystemBars": "not claimed by browser viewport screenshots",
+  "errors": []
+}

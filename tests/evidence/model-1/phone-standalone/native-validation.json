@@ -1,0 +1,39 @@
+{
+  "kind": "synthetic-android-background-bridge",
+  "androidVersion": "15",
+  "applicationId": "com.memoweft.weftmate.mobile.model1qa",
+  "activitiesStarted": 0,
+  "foregroundUnchanged": true,
+  "instrumentation": {
+    "class": "PhoneModelServicesTest",
+    "tests": 3,
+    "passed": 3,
+    "failed": 0,
+    "checks": [
+      "encrypted legacy models migrate once and retain the original selection and encrypted backup",
+      "restart preserves service identity and selection; broken replacement reads the original encrypted backup",
+      "new service bridge returns multiple chat models while old endpoint/modelId fields remain readable",
+      "hidden active model is replaced by an enabled model for the new default",
+      "native Claude catalog follows all declared pages and preserves declared vision/context/thinking abilities",
+      "native Claude completion uses messages and adaptive thinking without returning its credential"
+    ]
+  },
+  "unitTests": {
+    "BusinessRouteUnitTest": 21,
+    "PhoneModelServiceCatalogUnitTest": 2,
+    "XiaomiCatalogFilterUnitTest": 1,
+    "passed": 24,
+    "failed": 0
+  },
+  "productApkSha256": "680CEC5F004CA2A3C85F1A0A5663D4C3B0A2C80ECC22C342B2A4D65A381209A5",
+  "instrumentationApkSha256": "22C209225E5BEF5FA26135E1474C7A460D2734FDD7AB4930011C2F45F5FF7606",
+  "cleanup": {
+    "qaPackagesRemoved": 2,
+    "adbDisconnected": true,
+    "mumuLockReleased": true,
+    "heavyLockReleased": true,
+    "otherApplicationsChanged": false
+  },
+  "nativeSystemBarScreenshots": false,
+  "notes": "Background bridge verification only; browser viewport screenshots do not claim native system-bar coverage."
+}

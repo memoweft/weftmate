@@ -10,5 +10,5 @@ test('desktop and phone menus stay within the viewport, flip at edges and scroll
   });
   assert.ifError(result.error);
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /menu measurements passed; no page errors/);
+  assert.match(result.stdout, /FIX-5: 25 menu measurements passed; no page errors/);
 });
