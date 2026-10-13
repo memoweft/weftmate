@@ -13,11 +13,12 @@ export const PERMISSION_TYPES = [
   { id: 'system', label: '改系统设置', default: 'ask' }
 ];
 const ids = new Set(PERMISSION_TYPES.map(row => row.id));
+export const connectorToolKey = value => typeof value === 'string' && /^mcp__[A-Za-z0-9_-]{1,58}$/.test(value) && value.length <= 64;
 export const riskPermissionType = risk => ({ overwrite: 'write', execute: 'command' }[risk] ?? risk);
 export function validPermissionRules(rules, { patch = false } = {}) {
   return !!rules && typeof rules === 'object' && !Array.isArray(rules) && Object.entries(rules).every(([type, value]) =>
-    ids.has(type) && (patch && value === null || ['allow', 'ask', 'deny'].includes(value) &&
-      !(value === 'allow' && PERMISSION_TYPES.find(row => row.id === type).restricted)));
+    (ids.has(type) || connectorToolKey(type)) && (patch && value === null || ['allow', 'ask', 'deny'].includes(value) &&
+      !(value === 'allow' && PERMISSION_TYPES.find(row => row.id === type)?.restricted)));
 }
 export function mergePermissionRules(current = {}, patch) {
   const rules = { ...current };

@@ -1,5 +1,6 @@
 import { dailyDigestState } from './daily-digest.mjs';
-import { PERMISSION_TYPES, validPermissionRules, mergePermissionRules } from '../plugins/personal-permission-rules.mjs';
+import { connectorSettings } from '../personal-connectors/access.mjs';
+import { PERMISSION_TYPES, validPermissionRules, mergePermissionRules, connectorToolKey } from '../plugins/personal-permission-rules.mjs';
 import { executionRecords } from './execution-records.mjs';
 import { hostName } from '../host-name.mjs';
 import { handlePush } from './push.mjs';
@@ -729,13 +730,18 @@ export function createHttpHandler(context) {
       const modeMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/approval-mode$/.exec(pathname);
       if ((modeMatch || pathname === '/personal/v1/settings/approvals') && ['GET', 'PATCH'].includes(request.method)) {
         if (url.search) throw failure('INVALID_REQUEST');
-        context.authenticate(request, request.method === 'PATCH' ? 'commands:write' : 'sessions:read');
+        const approvalAuth = context.authenticate(request, request.method === 'PATCH' ? 'commands:write' : 'sessions:read');
         const sessionId = modeMatch?.[1], account = context.accountState(ownerId);
         if (sessionId && account.sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_UNAVAILABLE', 404);
         if (request.method === 'PATCH') {
           const body = await context.readJson(request);
-          exactKeys(body, sessionId ? ['mode'] : ['mode', 'rules', 'secondOpinionEnabled'], sessionId ? ['mode'] : []);
+          exactKeys(body, sessionId ? ['mode'] : ['mode', 'rules', 'secondOpinionEnabled', 'connector'], sessionId ? ['mode'] : []);
+          if (body.connector !== undefined) {
+            if (Object.keys(body).length !== 1) throw failure('INVALID_REQUEST');
+            return context.json(response, 200, await connectorSettings(context, request, approvalAuth, body.connector));
+          }
           if (body.secondOpinionEnabled !== undefined && typeof body.secondOpinionEnabled !== 'boolean') throw failure('INVALID_REQUEST');
+          if (body.rules && Object.keys(body.rules).some(connectorToolKey) && approvalAuth.device.authKind !== 'desktop') throw failure('FORBIDDEN', 403);
           if (!Object.keys(body).length || body.mode !== undefined && !APPROVAL_MODES.includes(body.mode) || body.rules !== undefined && !validPermissionRules(body.rules, { patch: true })) throw failure('INVALID_REQUEST');
           await context.serial(() => context.mutate(ownerId, next => {
             context.authenticate(request, 'commands:write');
@@ -751,7 +757,7 @@ export function createHttpHandler(context) {
         }
         const saved = context.accountState(ownerId);
         return context.json(response, 200, { mode: sessionId ? saved.sessions[sessionId].approvalMode ?? saved.defaultApprovalMode ?? 'auto'
-          : saved.defaultApprovalMode ?? 'auto', ...(!sessionId ? { rules: saved.permissionRules ?? {}, types: PERMISSION_TYPES, secondOpinionEnabled: saved.secondOpinionEnabled !== false } : {}), ...(sessionId ? { allowedCategories: saved.sessions[sessionId].allowedApprovalCategories ?? [] } : {}) });
+          : saved.defaultApprovalMode ?? 'auto', ...(!sessionId ? { rules: saved.permissionRules ?? {}, types: PERMISSION_TYPES, secondOpinionEnabled: saved.secondOpinionEnabled !== false, ...await connectorSettings(context, request, approvalAuth) } : {}), ...(sessionId ? { allowedCategories: saved.sessions[sessionId].allowedApprovalCategories ?? [] } : {}) });
       }
       if (['/personal/v1/usage', '/personal/v1/settings/usage'].includes(pathname) && ['GET', 'PATCH'].includes(request.method)) {
         const settingsRoute = pathname.endsWith('/settings/usage');

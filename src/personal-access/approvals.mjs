@@ -158,6 +158,7 @@ export function createApprovalOperations(context) {
     if (!account.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
     const prior = toolApprovals(account).find(row => row.sessionId === sessionId && row.approvalId === approvalId);
     if (!prior) throw failure('NOT_FOUND', 404);
+    if (prior.toolName.startsWith('mcp__c_') && body.scope && body.scope !== 'once') throw failure('INVALID_REQUEST');
     const replay = prior.decisionRequestId === body.requestId;
     if (!replay) await refreshToolApprovals(ownerId, sessionId, true);
     const assertCurrent = () => {
@@ -296,7 +297,7 @@ export function createApprovalOperations(context) {
           toolName: input.toolName, messageHash: input.messageHash, argumentsHash: input.argumentsHash,
           reason: input.reason, riskCategories: approvalCategories(input.reason), status: 'pending', createdAt: new Date(context.timestamp()).toISOString() };
         row.operationCategories = [...new Set(row.riskCategories.map(riskPermissionType))];
-        row.canAlwaysAllow = row.operationCategories.length > 0 && row.operationCategories.every(type => PERMISSION_TYPES.some(item => item.id === type && !item.restricted));
+        row.canAlwaysAllow = !input.toolName.startsWith('mcp__c_') && row.operationCategories.length > 0 && row.operationCategories.every(type => PERMISSION_TYPES.some(item => item.id === type && !item.restricted));
         if (review) row.secondOpinion = review;
         checked.source.toolApprovals = [...rows, row];
         return publicToolApproval(row);

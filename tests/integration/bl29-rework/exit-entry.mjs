@@ -18,8 +18,15 @@ const original=Tray.prototype.setContextMenu;Tray.prototype.setContextMenu=funct
 const baseline=process.env.REV_BASELINE==='1'?JSON.parse(fs.readFileSync(resolve(process.env.BL29_BASELINE_FILE),'utf8')):{};
 const key=p=>{try{return (p instanceof URL?fileURLToPath(p):String(p)).replaceAll('\\','/').replace(process.cwd().replaceAll('\\','/')+'/','');}catch{return '';}};
 const readSync=fs.readFileSync,readAsync=fsp.readFile;
-fs.readFileSync=function(p,opt){const s=baseline[key(p)];return s===undefined?readSync.call(this,p,opt):typeof opt==='string'||opt?.encoding?s:Buffer.from(s);};
-fsp.readFile=async function(p,opt){const s=baseline[key(p)];return s===undefined?readAsync.call(this,p,opt):typeof opt==='string'||opt?.encoding?s:Buffer.from(s);};syncBuiltinESMExports();
+const projectRead=(p,opt,value)=>{
+ const path=key(p),s=baseline[path];let result=s===undefined?value:typeof opt==='string'||opt?.encoding?s:Buffer.from(s);
+ if(path==='src/personal-access-ui/app.js'&&process.env.REV_BASELINE!=='1'){
+  const text=String(result).replace('ui.loadAttachmentHasher =','globalThis.__revExitCore=core;ui.loadAttachmentHasher =');
+  result=typeof result==='string'?text:Buffer.from(text);
+ }return result;
+};
+fs.readFileSync=function(p,opt){const s=baseline[key(p)];return projectRead(p,opt,s===undefined?readSync.call(this,p,opt):s);};
+fsp.readFile=async function(p,opt){const s=baseline[key(p)];return projectRead(p,opt,s===undefined?await readAsync.call(this,p,opt):s);};syncBuiltinESMExports();
 registerHooks({load(url,context,nextLoad){const k=key(url.startsWith('file:')?new URL(url):url);let source=baseline[k];
  if(k==='src/main.mjs'){source??=readSync(new URL(url),'utf8');source+='\nglobalThis.revRuntimeOrigin=()=>runtimeOrigin;globalThis.revRuntimeClose=()=>webRuntime.close();globalThis.revAccessClose=()=>personalAccessService.close();\n';}
  if(k==='src/update.ts'){source??=readSync(new URL(url),'utf8');source+='\nexport function __revPrepareUpdate(){state.enabled=true;state.status="downloaded";autoUpdater={} as any;}\n';}

@@ -9,7 +9,19 @@ import { tmpdir } from 'node:os'
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', 'node_modules',
   '@deepseek-ai', name, 'lib', 'index.js')).href
 
-test('official rc.5 native loop completes after eight tool calls without a personal quota', { timeout: 10_000 }, async () => {
+async function isolatedPreset(t: any, root: string) {
+  const staged = stagePersonalPlugins(root)
+  const desktop = await import(staged.plugin)
+  // These native-loop fixtures have no host process. Supply its empty connector
+  // catalog while keeping the native agent, tools and loop assertions intact.
+  t.mock.method(desktop.PersonalDesktopBridge.prototype, 'request', async (request: any) => {
+    assert.equal(request.action, 'approval_policy')
+    return { connectorTools: [] }
+  })
+  return (await import(staged.preset)).default
+}
+
+test('official rc.5 native loop completes after eight tool calls without a personal quota', { timeout: 10_000 }, async t => {
   const [{ Context }, llm, { default: Sessions }, { default: SystemPrompt }, tools,
     { default: AgentRegistry }, { default: AgentLoop }] = await Promise.all([
     import(vendor('cordis')), import(vendor('dsh-llm')), import(vendor('dsh-session')),
@@ -17,7 +29,7 @@ test('official rc.5 native loop completes after eight tool calls without a perso
     import(vendor('dsh-agent')), import(vendor('dsh-agent-loop')),
   ])
   const root = mkdtempSync(join(tmpdir(), 'personal-native-loop-'))
-  const { default: preset } = await import(stagePersonalPlugins(root).preset)
+  const preset = await isolatedPreset(t, root)
   const ctx = new Context()
   let modelCalls = 0, toolCalls = 0
   try {
@@ -64,7 +76,7 @@ test('official rc.5 native loop completes after eight tool calls without a perso
 })
 
 test('official rc.5 write loop reaches its final reply after two writes, including a failed first write',
-  { timeout: 10_000 }, async () => {
+  { timeout: 10_000 }, async t => {
   const [{ Context }, llm, { default: Sessions }, { default: SystemPrompt }, tools,
     { default: AgentRegistry }, { default: AgentLoop }] = await Promise.all([
     import(vendor('cordis')), import(vendor('dsh-llm')), import(vendor('dsh-session')),
@@ -72,7 +84,7 @@ test('official rc.5 write loop reaches its final reply after two writes, includi
     import(vendor('dsh-agent')), import(vendor('dsh-agent-loop')),
   ])
   const root = mkdtempSync(join(tmpdir(), 'personal-write-loop-'))
-  const { default: preset } = await import(stagePersonalPlugins(root).preset)
+  const preset = await isolatedPreset(t, root)
   for (const failFirst of [false, true]) {
     const ctx = new Context()
     let modelCalls = 0, toolCalls = 0

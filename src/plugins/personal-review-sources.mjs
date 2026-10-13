@@ -11,6 +11,7 @@ export function reviewSourceLocations(events, beforeCallId) {
     if (event.data?.error || part?.isError) continue;
     const call = calls.get(event.data?.callId ?? event.data?.message?.source?.callId ?? part?.toolCallId);
     if (!call) continue;
+    if (call.name?.startsWith('mcp__')) sources.add(`connector:${call.name}`);
     let args = call.arguments;
     if (typeof args === 'string') { try { args = JSON.parse(args); } catch { continue; } }
     if (!args || typeof args !== 'object') continue;
