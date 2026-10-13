@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './identity-helpers.mjs';
 import {registration,appDevice,control,refresh,hostFixture} from './app-helpers.mjs';
+import {taskRecipient} from '../../../src/personal-offline/crypto.mjs';
 
 test('two computers share one account: identity, addressing, rename, removal and local access',async t=>{
   const f=await fixture(t);await registration(f);
@@ -24,6 +25,8 @@ test('two computers share one account: identity, addressing, rename, removal and
   const right=await desk.exchange(phone,'/auth/cloud-channel');assert.equal(right.status,200);assert.ok(right.token);
   const result=await desk.hostApi('/status',undefined,undefined,{authorization:'Bearer '+right.token});
   assert.equal(result.status,200);assert.equal(result.hostId,aid);
+  const replica=await desk.hostApi('/offline/sync',{publicJwk:taskRecipient().publicJwk,generation:0,taskSupport:1},undefined,{authorization:'Bearer '+right.token});
+  assert.equal(replica.status,200,JSON.stringify(replica));
   await refresh(phone,f.config.audience);
   await control(phone,'/hosts/remove',{hostId:bid});
   directory=(await control(phone,'/devices')).data;

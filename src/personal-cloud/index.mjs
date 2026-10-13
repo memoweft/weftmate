@@ -166,7 +166,7 @@ export async function createHostCloudIdentity(context, options) {
               for (const [id, event] of Object.entries(next.outbox)) if (event.sub === binding.sub) delete next.outbox[id];
             } else next.epochs[key] = Math.max(next.epochs[key] ?? 0, member.epoch);
             if(member?.computers?.length>1 && member.computers.every(c=>typeof c.hostId==='string'&&typeof c.name==='string'&&c.name.length<=128)) {
-              const self=member.computers.find(c=>c.hostId===hostId);if(self)computerLabels.set(binding.ownerId,self.name);
+              const self=member.computers.find(c=>c.hostId===hostId);if(self)computerLabels.set(binding.ownerId,self.displayName||self.name);
             } else computerLabels.delete(binding.ownerId);
           }
         }

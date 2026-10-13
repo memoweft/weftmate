@@ -64,6 +64,7 @@
         ui.syncPhoneComposer = syncComposer;
         const update = ui.updateAvailability;
         ui.updateAvailability = (...args) => { const result = update(...args); syncComposer(); return result; };
+        field.addEventListener('input', syncComposer);
         field.addEventListener('focus', syncComposer);
         field.addEventListener('blur', () => requestAnimationFrame(syncComposer));
         form.addEventListener('focusin', () => requestAnimationFrame(syncComposer));

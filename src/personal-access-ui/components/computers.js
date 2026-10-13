@@ -32,7 +32,7 @@ globalThis.WeftUiComponents.factories.computers = (core,ui) => {
     const target=ui.byId('model-picker')?.parentElement || ui.byId('model-trigger')?.parentElement;
     if(!target)return;
     button=ui.element('button','composer-icon computer-choice');button.type='button';button.hidden=true;button.id='computer-choice';
-    button.append(WeftIcons.create('desktop',18));button.setAttribute('aria-haspopup','menu');target.append(button);
+    button.append(WeftIcons.create('desktop',18));button.setAttribute('aria-haspopup','menu');target.insertBefore(button,ui.byId('model-picker').nextSibling);
     button.onclick=()=>WeftPopover.menu(button,(core.state.computers||[]).map(row=>({name:row.displayName||row.name,icon:'desktop',
       checked:row.hostId===core.currentExecutionComputer(),description:row.online?'在线':'不在线',disabled:!row.online,
       action:async()=>{const draft=ui.readMessageDraft();await core.selectExecutionComputer(row.hostId);await core.startNewConversation();ui.byId('message-text').value=draft;ui.updateAvailability();}})),error=>ui.toast(error.code==='COMPUTER_OFFLINE'?'这台电脑不在线，请稍后再试。':core.failureMessage(error)));

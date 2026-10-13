@@ -1062,7 +1062,7 @@ Windows（视窗系统）日用桌面部署使用 `weftmate-desktop`、`applicat
 | 宿主 POST `/personal/v1/cloud/emergency-password` | `{password}` + 自动绑定电脑的直接地址受信 Cookie/CSRF | 200 `{configured:true}`；云创建账号可首次设置本机独立离线密码，后续改密码走原本地接口；手机/旧密码账号/再次初始设置 403。创建时随机不可用的本地密码不会交给客户端 |
 | 宿主 POST `/personal/v1/auth/cloud-offline` | `{cloudAccountId,password,deviceName}`，直接地址 Origin/JSON | 200 原本地登录响应；只查本机已设置应急密码的云映射并走原密码校验/限速，不调用云。旧本地账号继续原 `/auth/login`；cloudAccountId 仅用于选择账号，不构成认证 |
 
-devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近 90 秒安装签名心跳（宿主默认 60 秒同步），lastUsedAt 为 UTC ISO8601，旧未上报宿主可为 null。isCurrent 使用令牌设备指纹；电脑宿主通过签名的 device-host 映射标「这台设备」，客户端无需传可伪造的 currentHostId。这是最近活动提示，不能当作内容连接成功证明。可每 30 秒以新 proof 读取目录维持前台设备状态。
+devices 的 online 指最近60秒云 API（接口）/登录/刷新活动；hosts 在配置中继时取该电脑15秒内连接/心跳，无中继时沿原90秒安装活动投影。目录可选带 `capabilities.multiHost:1`；多台时 devices 增加关联 `hostId:null|string`，同名电脑增加 `displayName`。可选 `removedHosts:[{hostId,name}]` 供显示电脑移除及任务取消。单台条目字段不变，只有多台时客户端才增加电脑名与选择控件。旧云缺少能力字段则不请求电脑管理或认证通道新接口。lastUsedAt 为 UTC ISO8601，旧未上报电脑可为 null。isCurrent 使用令牌设备指纹和签名的 device-host 映射，客户端不传 currentHostId。这是最近连接提示，不能当作请求完成证明。可每30秒以新 proof（证明）读取目录维持前台设备状态。
 
 连接时从目录选择 hostId，调用 `/hosts/connect`，以同一个轮换 refresh family（刷新授权族）取得宿主 resource token。经过云邮箱核对、未被下线且有成员资格的设备返回 `approval:trusted,pairingRequired:false`；宿主继续独立核对声明、绑定、公钥持有与撤销状态。
 

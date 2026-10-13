@@ -32,6 +32,12 @@ test('M3-1 all six states and independent failures distinguish model, permission
   m.failure({code:'UNAUTHORIZED',status:401});assert.equal(m.view().kind,'login_required');m.success();
   m.failure({code:'DEVICE_NOT_TRUSTED',status:403});assert.equal(m.view().kind,'approval_required');m.success();assert.equal(m.view().kind,'online');
 });
+test('M3-2 dependent reads cannot undo an independently confirmed offline computer',()=>{
+  const f=fixture(),m=f.core.presence;m.success();m.failure({code:'NETWORK'},{independent:true,cloudOffline:true});
+  assert.equal(m.view().kind,'host_offline');m.failure({code:'NETWORK'});assert.equal(m.view().kind,'host_offline');
+  m.success();assert.equal(m.view().kind,'online');
+});
+
 test('M3-1 burst requests count once; only three spaced failures plus independent probe confirm offline',async()=>{
   const f=fixture(),m=f.core.presence;m.success();for(let n=0;n<30;n++)m.failure({code:'NETWORK'},{independent:true});assert.equal(m.view().failures,1);assert.equal(m.view().kind,'connecting');
   await f.c.advance(1000);m.failure({code:'NETWORK'},{independent:true});assert.equal(m.view().kind,'connecting');await f.c.advance(1000);m.failure({code:'NETWORK'});assert.equal(m.view().kind,'connecting');m.failure({code:'NETWORK'},{independent:true});assert.equal(m.view().kind,'host_offline');m.success();assert.equal(m.view().failures,0);

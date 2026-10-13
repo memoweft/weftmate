@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { calculateJwkThumbprint, importJWK, jwtVerify, SignJWT } from 'jose';
 import { CloudError } from './security.mjs';
 import { createOfflineTasks } from './offline-tasks.mjs';
-import { multiHostCapabilities, createComputerActions } from './multi-host.mjs';
+import { multiHostCapabilities, createComputerActions, computerNames } from './multi-host.mjs';
 import { accountLifecycle } from './account-lifecycle.mjs';
 
 const publicKey = jwk => jwk && typeof jwk === 'object' && !Array.isArray(jwk) &&
@@ -27,7 +27,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
     const memberships = db.prepare('SELECT a.id AS sub,a.auth_epoch AS epoch FROM cloud_accounts a JOIN host_memberships m ON m.account_id=a.id WHERE m.host_id=?').all(hostId);
     for(const membership of memberships) {
       const computers=db.prepare('SELECT h.host_id AS hostId,h.name FROM cloud_hosts h JOIN host_memberships m ON m.host_id=h.host_id WHERE m.account_id=? ORDER BY h.host_id').all(membership.sub);
-      if(computers.length>1)membership.computers=computers;
+      if(computers.length>1)membership.computers=computerNames(computers);
     }
     const eventToken = await new SignJWT({ events, watermark, memberships, capabilities:multiHostCapabilities }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
       .setIssuer(config.issuer).setAudience(`${config.audience}/hosts/${hostId}`).setIssuedAt()
