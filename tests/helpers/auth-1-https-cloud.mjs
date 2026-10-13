@@ -17,7 +17,7 @@ const exec = promisify(execFile);
 // overwrites forwarding headers before reaching the real cloud HTTP server;
 // provider/appAuthorization calls still use its internal loopback HTTP port.
 // All certificates, accounts, mail and database files belong to this fixture.
-export async function httpsCloudFixture(t, { env = {}, relayDns, realProcess = true } = {}) {
+export async function httpsCloudFixture(t, { env = {}, relayDns, realProcess = true, serve, transformReply } = {}) {
   const certificateRoot = await mkdtemp(join(tmpdir(), 'wm-auth1-cloud-tls-'));
   const keyFile = join(certificateRoot, 'synthetic-cloud-key.pem');
   const certFile = join(certificateRoot, 'synthetic-cloud-cert.pem');
@@ -48,11 +48,19 @@ export async function httpsCloudFixture(t, { env = {}, relayDns, realProcess = t
     const certificate = new X509Certificate(certificatePem);
     const cloudTlsSpki = createHash('sha256').update(certificate.publicKey.export({ format: 'der', type: 'spki' })).digest('base64');
     front = createHttpsServer({ key: await readFile(keyFile), cert: certificatePem }, (request, response) => {
+      if (serve?.(request, response)) return;
       if (!cloud) { response.writeHead(503); response.end(); return; }
       const target = new URL(cloud.origin);
       const upstream = httpRequest({ hostname: '127.0.0.1', port: target.port, path: request.url,
         method: request.method, headers: { ...request.headers, host: new URL(origin).host,
           'x-forwarded-host': new URL(origin).host, 'x-forwarded-proto': 'https', 'x-forwarded-for': '127.0.0.1' } }, reply => {
+        if (transformReply && reply.statusCode === 200 && ['/personal/v1/cloud/hosts/connect', '/personal/v1/cloud/devices'].includes(request.url)) {
+          const chunks = []; reply.on('data', data => chunks.push(data)); reply.on('end', () => {
+            const body = transformReply(request.url, JSON.parse(Buffer.concat(chunks).toString()));
+            const headers = { ...reply.headers }; delete headers['content-length'];
+            response.writeHead(reply.statusCode, headers); response.end(JSON.stringify(body));
+          }); return;
+        }
         response.writeHead(reply.statusCode, reply.headers); reply.pipe(response);
       });
       upstream.on('error', () => { if (!response.headersSent) response.writeHead(502); response.end(); });
@@ -61,7 +69,7 @@ export async function httpsCloudFixture(t, { env = {}, relayDns, realProcess = t
     front.on('connection', socket => { sockets.add(socket); socket.once('close', () => sockets.delete(socket)); });
     front.listen(0, '127.0.0.1'); await once(front, 'listening');
     const origin = `https://127.0.0.1:${front.address().port}`;
-    cloud = await httpCloudFixture({ after: cleanup => { cloudCleanup = cleanup; } }, { realProcess, relayDns, env: { ...env,
+    cloud = await httpCloudFixture({ after: cleanup => { cloudCleanup = cleanup; } }, { realProcess, relayDns, env: { ...(typeof env === 'function' ? env(origin) : env),
       CLOUD_ISSUER: origin + P + '/oidc', CLOUD_TRUST_PROXY: 'true', CLOUD_MAIL_TRANSPORT: 'file' } });
     function browser() {
       const cookies = new Map();

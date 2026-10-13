@@ -1,6 +1,6 @@
 /* Compose shared auth actions with phone presentation and platform transport. */
 (() => {
-  let core, forms, settings, native, initialized = false, nativeAdoption;
+  let core, forms, settings, native, initialized = false, nativeAdoption, client;
   const noop = () => {};
   const byId = id => document.getElementById(id);
   const element = (tag, className = '', text = '') => { const node = document.createElement(tag); node.className = className; node.textContent = text; return node; };
@@ -13,6 +13,7 @@
     state.page = waiting ? 'cloud-wait' : 'login';
   }
   function clearIdentity() {
+    void globalThis.WeftPhone?.clear();
     uiCore.stopConnection();
     state.authEpoch++; state.loggedIn = false; state.owner = ''; state.username = ''; state.deviceId = '';
     state.sharedSessions = []; state.sharedEvents = []; state.conversations = []; state.conversationId = null;
@@ -26,6 +27,9 @@
     if (native) void syncAccountAppearance();
   }
   async function enterAssistant() {
+    if(native)await nativeAdoption;
+    await globalThis.WeftPhone?.restoreArchive(core.state.cloudAuth.sub?{accountId:core.state.cloudAuth.sub,email:core.state.cloudAuth.email,origin:new URL(client.config.issuer).origin,deviceId:(await client.key()).deviceId}:null,client);
+    await globalThis.WeftPhone?.connected();
     if (core.state.cloudAuth.mode !== 'offline') core.state.cloudAuth.mode = 'authenticated';
     const account = native ? await nativeAdoption : { ...core.state.account, owner: core.state.account.ownerId, deviceId: core.state.device.id, connectionVerified: true };
     state.authEpoch++; state.loggedIn = true; state.username = account.username; state.owner = account.owner || account.ownerId || '';
@@ -94,7 +98,8 @@
       openCloudHost: async connection => { if (native) await call('cloud.app.configure', { origin: connection.baseUrl }); return connection; },
       activateCloudHost: noop,
       nativeSessionExpired: () => { state.connection = 'expired'; uiCore.state.online = false; updateComposer(); },
-      enterCloudOnly: () => { document.body.classList.remove('cloud-auth-active'); page('devices'); },
+      enterCloudOnly: info => WeftPhone.start(info, client),
+      preparePhoneAccount: async info => { await WeftPhone.ensureAccount(info);if(!native)return;try{const saved=await androidBridge.call('phone.identity');if(saved.accountId===info.accountId&&saved.origin===info.origin)return;}catch{}await androidBridge.call('phone.adopt',info); },
     }, { get: (target, key) => target[key] || noop });
     core = WeftUiCore.create({ effects, ...transport, hostOrigin, initialPairing, crypto: globalThis.crypto, storage: localStorage,
       cloudVendor: WeftCloudVendor, desktop: false, bindDesktop: false, retainNativeCache: native, automaticHostTrust: native,
@@ -112,7 +117,7 @@
     const clear = core.clearSession; core.clearSession = () => { clear(); clearIdentity(); };
     core.enterAssistant = enterAssistant;
     core.authBase = hostOrigin + '/personal/v1/auth'; core.accessBase = hostOrigin + '/personal/v1';
-    const client = WeftUiCore.adaptMobileCloudClient(core.initializeCloudAccount(), connection => {
+    client = WeftUiCore.adaptMobileCloudClient(core.initializeCloudAccount(), connection => {
       core.accessBase = connection.baseUrl + '/personal/v1'; core.authBase = core.accessBase + '/auth';
     });
     if (native) core.sessionExpired = effects.nativeSessionExpired;
@@ -129,9 +134,12 @@
     const choose = element('button', 'button secondary', '连接电脑'); choose.type = 'button';
     choose.addEventListener('click', () => { page('devices'); }); byId('cloud-wait-view').append(choose);
     const redeem = core.cloudRedeemPairing; core.cloudRedeemPairing = async input => { const result = await redeem(input); core.state.cloudAuth.mode = 'authenticated'; return result; };
+    core.resumePhoneComputer = () => core.resumeCloudComputer();
+    const logoutPhone=core.cloudLogout;core.cloudLogout=async (...args)=>{await globalThis.WeftPhone?.clear();return logoutPhone(...args);};
     globalThis.WeftMobileCloud.core = core;
     uiCore.probeCloudPresence=()=>core.probeCloudPresence();
     core.connectionView=()=>uiCore.connectionView();
+    const pending=core.refreshPendingDevices;core.refreshPendingDevices=(...args)=>core.state.cloudAuth.cloudOnly?Promise.resolve():pending(...args);
     core.observeConnection=listener=>uiCore.observeConnection(listener);
     core.retryConnection=()=>uiCore.retryConnection();
     globalThis.WeftOfflineView?.mount({ core, goalsCore:uiCore, nativeCall: native ? call : null,
@@ -139,7 +147,7 @@
       identity: async () => native ? call('offline.identity') : core.cloudOfflineIdentity(),
       host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });
     uiCore.openOfflineMode=()=>core.openOfflineMode?.();
-    if (native && restoreNativeSession) {
+    if (native && restoreNativeSession && (await call('app.bootstrap')).authSource !== 'phone') {
       // Kotlin owns the saved identity and cached content. Restore them before
       // requesting any server login; background reads never replace this view.
       try {
