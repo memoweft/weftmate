@@ -18,7 +18,7 @@ globalThis.WeftHistoryImportView = ({ target, request, owner, desktop = null, re
     status.setAttribute('role', 'status');
     const loading = node('div', 'history-import-skeleton'); loading.setAttribute('aria-hidden', 'true'); list.append(loading);
     section.append(node('h2', '', '导入聊天记录'));
-    const states = { running: '正在读', paused: '已暂停', cancelled: '已取消', completed: '已读完', forgetting: '正在忘掉', forgotten: '已忘掉' };
+    const states = { receiving:'正在接收', awaiting_confirmation:'等你确认', running: '正在读', paused: '已暂停', cancelled: '已取消', completed: '已读完', forgetting: '正在忘掉', forgotten: '已忘掉' };
     const error = e => ({ IMPORT_SOURCE_UNAVAILABLE: '原文件无法读取，请放回原文件后继续，或重新选择。', IMPORT_SOURCE_CHANGED: '原文件已经改变，请重新选择并查看预览。', USAGE_LIMIT_REACHED: '已达到你设置的用量上限，请在设置 → 用量调整后再开始。', IMPORT_FORMAT_UNKNOWN: '这个文件的格式认不出，请使用官方导出或受支持的会话记录。', IMPORT_JOB_ACTIVE: '已有一次导入正在进行，请先完成或取消它。', IMPORT_MODEL_CHANGED: '后台模型已改变，请重新选择文件查看用量后开始。', IMPORT_PAUSE_REQUIRED: '请先暂停导入，再查看将忘掉的内容。', MEMORY_PREVIEW_REQUIRED: '请重新查看预览，再确认开始。' })[e.code ?? String(e.message).match(/\b(?:IMPORT_|MEMORY_|USAGE_)[A-Z_]+\b/)?.[0] ?? e.message] ?? '暂时无法读取，请重试。';
     async function run(body) { const v = await request('/memory/backfill', { method: 'POST', protectedWrite: true, body: { ...body, action: `import-${body.action}` } }); return current() ? v : null; }
     function modal(title, build) { dialog?.close(); const d = node('dialog', 'model-editor-dialog history-import-dialog'); dialog = d; d.setAttribute('aria-label', title); const head = node('header', 'dialog-head'), body = node('div', 'model-editor-body'), footer = node('footer', 'dialog-footer'); head.append(node('h2', '', title), button('关闭', () => d.close())); d.append(head, body, footer); (target.closest('dialog[open]') || document.body).append(d); build(body, footer, d); d.addEventListener('close', () => { d.remove(); if (dialog === d)
@@ -41,7 +41,7 @@ globalThis.WeftHistoryImportView = ({ target, request, owner, desktop = null, re
         const p = await run({ action: 'forget-preview', jobId: job.id });
         if (!p)
             return;
-        modal('忘掉这次导入', (body, footer, d) => { body.append(node('p', '', `将忘掉这次 ${job.appName} 导入记住的内容，以及下面这些相关记忆。原文件仍保留在你的电脑上。`)); const entries = node('ul', 'memory-sources'); for (const i of p.items)
+        modal('忘掉这次导入', (body, footer, d) => { body.append(node('p', '', `将忘掉这次 ${job.appName} 导入记住的内容，以及下面这些相关记忆。${job.app==='phone'?'手机上的原对话仍保留。':'原文件仍保留在你的电脑上。'}`)); const entries = node('ul', 'memory-sources'); for (const i of p.items)
             entries.append(node('li', '', i.text)); body.append(entries, node('p', 'muted', '忘掉后，可以再次选择同一文件重新导入。')); const message = node('p', 'error'); message.setAttribute('role', 'status'); body.append(message); footer.append(button('保留', () => d.close()), button('确认忘掉', async (b) => { b.disabled = true; try {
             await run({ action: 'forget', jobId: job.id, confirm: true, forgetToken: p.forgetToken });
             d.close();
@@ -57,10 +57,12 @@ globalThis.WeftHistoryImportView = ({ target, request, owner, desktop = null, re
         status.textContent = error(e);
     } }
     function paint(jobs) { list.replaceChildren(); status.textContent = jobs.length ? '' : desktop ? '还没有导入过聊天记录。选择一份导出，先看看要读哪些内容。' : '还没有导入记录。在电脑的 WeftMate 设置 → 记忆里导入。'; for (const job of jobs) {
-        const description = `${states[job.state]} · ${job.processed} / ${job.total} 段 · 已记住 ${job.memoryCount} 件事`, usage = `${job.usage.requests} 次请求 · ${((job.usage.inputTokens + job.usage.outputTokens) / 1000).toFixed(1)} 千词元 · ${job.usage.cost === null ? '费用未知' : `约 ¥${job.usage.cost.toFixed(4)}`}${job.usage.unknownRequests ? '（部分用量未知）' : ''}${job.waitingForChat ? ' · 等你聊完再继续' : ''}`, row = node('div', 'history-import-row'), main = button(`${job.appName} · ${date(job.createdAt)}`, () => modal('导入记录', (body, footer, d) => { body.append(node('p', '', `${job.appName} · ${description}`), node('p', 'muted', usage)); if (job.error)
+        const description = `${states[job.state]} · ${job.processed} / ${job.total} ${job.app==='phone'?'轮':'段'} · 已记住 ${job.memoryCount} 件事`, usage = `${job.usage.requests} 次请求 · ${((job.usage.inputTokens + job.usage.outputTokens) / 1000).toFixed(1)} 千词元 · ${job.usage.cost === null ? '费用未知' : `约 ¥${job.usage.cost.toFixed(4)}`}${job.usage.unknownRequests ? '（部分用量未知）' : ''}${job.waitingForChat ? ' · 等你聊完再继续' : ''}`, row = node('div', 'history-import-row'), main = button(`${job.appName} · ${date(job.createdAt)}`, () => modal('导入记录', (body, footer, d) => { body.append(node('p', '', `${job.appName} · ${description}`), node('p', 'muted', usage)); if (job.error)
             body.append(node('p', 'error', job.error)); footer.append(button('关闭', () => d.close())); }), 'history-import-main');
         main.append(node('span', 'muted', description), node('span', 'muted', usage));
         row.append(main);
+        if(job.app==='phone')main.append(node('span','muted',`${job.deviceName||'手机'} · ${job.conversationCount} 段 · ${date(job.from)} 至 ${date(job.to)}`));
+        if(desktop&&job.state==='awaiting_confirmation')row.append(button('查看预计用量',()=>modal('整理手机上的对话',(body,footer,d)=>{const e=job.estimate;body.append(node('p','',`${job.conversationCount} 段对话 · ${date(job.from)} 至 ${date(job.to)}`),node('p','muted',`${e.modelName} · 预计输入 ${e.inputTokens[0].toLocaleString()}–${e.inputTokens[1].toLocaleString()} 词元，输出 ${e.outputTokens[0].toLocaleString()}–${e.outputTokens[1].toLocaleString()} 词元 · ${e.local?'本机模型不花钱':e.cost?`约 ¥${e.cost[0].toFixed(3)}–¥${e.cost[1].toFixed(3)}`:'费用暂未知'}`));footer.append(button('稍后',()=>d.close()),button('开始整理',async b=>{b.disabled=true;try{await run({action:'confirm',jobId:job.id,confirm:true});d.close();await refresh();}catch(e){body.append(node('p','error',error(e)));b.disabled=false;}},'button primary'));})));
         if (desktop && ['running', 'paused'].includes(job.state))
             row.append(button(job.state === 'running' ? '暂停' : '继续', b => act(job, job.state === 'running' ? 'pause' : 'resume', b)));
         if (desktop && !['forgotten', 'forgetting'].includes(job.state)) {

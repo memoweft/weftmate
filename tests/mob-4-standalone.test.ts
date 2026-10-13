@@ -37,7 +37,7 @@ test('MOB-4 first computer sync preserves original phone IDs and uploads after a
   const engine = await W.create({ vault, identity: {}, crypto: webcrypto, phoneModel: () => ({ modelId: 'synthetic' }),
     accountCheck: async () => ({}), control: async () => ({}), host: async (path: string, body: any) => {
       if (path === '/offline/sync') return { generation, reset: true, remove: [], items: [], hashes: {}, model: { modelId: 'synthetic' } };
-      submitted = structuredClone(body); return { receipts: body.turns.map((t: any) => ({ id: t.id })) };
+      submitted = structuredClone(body); return { receipts: body.turns.map((t: any) => ({ id: t.id,state:'synced' })) };
     } });
   await engine.send('请记住我的新偏好'); const id = stored.turns[0].id;
   await engine.sync(); assert.equal(submitted.generation, generation); assert.equal(submitted.turns[0].id, id);

@@ -1,0 +1,378 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realMemoryCore": true,
+  "syntheticCloud": true,
+  "syntheticAccount": true,
+  "requests": [
+    {
+      "phase": "phone-register",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "desktop-start",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    },
+    {
+      "phase": "recall",
+      "transport": "computer"
+    },
+    {
+      "phase": "recall",
+      "transport": "computer"
+    },
+    {
+      "phase": "recall",
+      "transport": "computer"
+    },
+    {
+      "phase": "recall",
+      "transport": "computer"
+    },
+    {
+      "phase": "recall",
+      "transport": "computer"
+    }
+  ],
+  "checks": [
+    "phone-light-memory-recalled-new-conversation"
+  ],
+  "screenshots": [
+    {
+      "file": "phone-360-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "electron-1200-light-phone-import-record.png",
+      "surface": "Electron"
+    },
+    {
+      "file": "electron-480-light-phone-import-record.png",
+      "surface": "Electron"
+    },
+    {
+      "file": "electron-1200-dark-phone-import-record.png",
+      "surface": "Electron"
+    },
+    {
+      "file": "electron-480-dark-phone-import-record.png",
+      "surface": "Electron"
+    }
+  ],
+  "errors": [],
+  "lightItems": [
+    "使用者名叫林舟。",
+    "使用者养的鹦鹉叫青瓷。",
+    "使用者现在更喜欢乌龙茶，不再喜欢茉莉花茶。",
+    "使用者正在做一个叫纸舟的练习项目。"
+  ],
+  "importId": "5aa554ad-f047-4557-908c-49f384bf6736",
+  "jobUsage": {
+    "requests": 4,
+    "inputTokens": 23067,
+    "outputTokens": 3338,
+    "cost": 0.0106134,
+    "unpricedRequests": 0,
+    "unknownRequests": 0
+  },
+  "formedItems": [
+    {
+      "kind": "cognition",
+      "text": "用户改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。"
+    },
+    {
+      "kind": "cognition",
+      "text": "用户喜欢茉莉花茶。"
+    },
+    {
+      "kind": "cognition",
+      "text": "用户的鹦鹉叫青瓷，"
+    },
+    {
+      "kind": "cognition",
+      "text": "用户正在做一个叫纸舟的练习项目。"
+    },
+    {
+      "kind": "cognition",
+      "text": "用户叫林舟。"
+    },
+    {
+      "kind": "entity",
+      "text": "林舟"
+    },
+    {
+      "kind": "entity",
+      "text": "茉莉花茶"
+    },
+    {
+      "kind": "entity",
+      "text": "练习项目"
+    },
+    {
+      "kind": "entity",
+      "text": "青瓷"
+    }
+  ],
+  "nameAnswer": "根据已知记忆，我还不知道你的名字——现有内容里没有提到过。",
+  "mainAnswer": "根据已知记忆：\n- 你的名字：还不知道（记忆里没有提到）\n- 你的鹦鹉：青瓷\n- 你更喜欢的茶：乌龙茶（已不再喜欢茉莉花茶）\n- 你正在做的项目：纸舟",
+  "failure": "林舟",
+  "phase": "recall",
+  "processExit": {
+    "decimal": null,
+    "unsignedDecimal": null,
+    "hexadecimal": null,
+    "signal": null,
+    "meaning": "未取得退出码"
+  },
+  "commitMemory": {
+    "available": true,
+    "availableBytes": 10985660416,
+    "limitBytes": 97770655744,
+    "committedBytes": 86784995328
+  },
+  "phoneMemory": {
+    "memory": {
+      "version": 1,
+      "enabled": true,
+      "items": [],
+      "processed": [],
+      "suppressedSources": [],
+      "suppressedText": [],
+      "handover": true,
+      "transferred": true,
+      "resumeAfter": null
+    },
+    "extractions": [
+      {
+        "input": "{\"原话\":[{\"id\":\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "{\"upsert\":[{\"id\":null,\"text\":\"姓名：林舟\",\"sourceIDs\":[\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\"],\"evidence\":\"我叫林舟。\"},{\"id\":null,\"text\":\"养了一只鹦鹉，名字叫青瓷\",\"sourceIDs\":[\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\"],\"evidence\":\"我的鹦鹉叫青瓷\"},{\"id\":null,\"text\":\"喜欢茉莉花茶\",\"sourceIDs\":[\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\"],\"evidence\":\"我喜欢茉莉花茶\"},{\"id\":null,\"text\":\"正在做一个叫「纸舟」的练习项目\",\"sourceIDs\":[\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\"],\"evidence\":\"我正在做一个叫纸舟的练习项目。\"}]}"
+      },
+      {
+        "error": "PHONE_MEMORY_INVALID"
+      },
+      {
+        "input": "{\"原话\":[{\"id\":\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"},{\"id\":\"fabadc78-8ebe-4a89-ac0d-5d2f9df5b608\",\"text\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "{\"upsert\":[{\"id\":null,\"text\":\"使用者名叫林舟。\",\"sourceIDs\":[\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\"],\"evidence\":\"我叫林舟。\"},{\"id\":null,\"text\":\"使用者养了一只鹦鹉，名字叫青瓷。\",\"sourceIDs\":[\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\"],\"evidence\":\"我的鹦鹉叫青瓷\"},{\"id\":null,\"text\":\"使用者现在更喜欢乌龙茶，不再喜欢茉莉花茶。\",\"sourceIDs\":[\"fabadc78-8ebe-4a89-ac0d-5d2f9df5b608\"],\"evidence\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。\"},{\"id\":null,\"text\":\"使用者正在做一个叫「纸舟」的练习项目。\",\"sourceIDs\":[\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\"],\"evidence\":\"我正在做一个叫纸舟的练习项目。\"}]}"
+      },
+      {
+        "error": "PHONE_MEMORY_INVALID"
+      },
+      {
+        "input": "{\"原话\":[{\"id\":\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"},{\"id\":\"fabadc78-8ebe-4a89-ac0d-5d2f9df5b608\",\"text\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "{\"upsert\":[{\"id\":null,\"text\":\"使用者名叫林舟。\",\"sourceIDs\":[\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\"],\"evidence\":\"我叫林舟。\"},{\"id\":null,\"text\":\"使用者养的鹦鹉叫青瓷。\",\"sourceIDs\":[\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\"],\"evidence\":\"我的鹦鹉叫青瓷\"},{\"id\":null,\"text\":\"使用者现在更喜欢乌龙茶，不再喜欢茉莉花茶。\",\"sourceIDs\":[\"fabadc78-8ebe-4a89-ac0d-5d2f9df5b608\"],\"evidence\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。\"},{\"id\":null,\"text\":\"使用者正在做一个叫纸舟的练习项目。\",\"sourceIDs\":[\"761d2777-3f4e-4ee8-84eb-61e4ab4441e1\"],\"evidence\":\"我正在做一个叫纸舟的练习项目。\"}],\"invalidate\":[]}"
+      },
+      {
+        "input": "{\"原话\":[{\"id\":\"8275928b-3aab-427d-a64a-686fcd205c54\",\"text\":\"我的鹦鹉叫什么？我更喜欢什么茶？只根据已知内容回答。\"}],\"已有记忆\":[{\"id\":\"dea74e02-e443-4c50-913d-3735265242b9\",\"text\":\"使用者养的鹦鹉叫青瓷。\"},{\"id\":\"7240f255-c094-48e0-9b6e-c686046c7ee8\",\"text\":\"使用者现在更喜欢乌龙茶，不再喜欢茉莉花茶。\"},{\"id\":\"f28670b7-a777-4314-8f2d-d67e23424ece\",\"text\":\"使用者名叫林舟。\"},{\"id\":\"b21d4b5d-e910-4af8-a994-3a3b1bee288b\",\"text\":\"使用者正在做一个叫纸舟的练习项目。\"}]}",
+        "output": "{\"upsert\":[],\"invalidate\":[]}"
+      }
+    ],
+    "failures": [],
+    "identity": {
+      "origin": "http://127.0.0.1:50740",
+      "ownerId": "owner-9b180d92-6658-4eb4-af4e-2f4813236397",
+      "deviceId": "device-3afef31a-23fa-4c96-9cd2-59f26ec17bce",
+      "hostId": "host-1e61dd94-22e7-4e76-b5d8-4efcb4f7b5af"
+    },
+    "connection": "connected",
+    "cloudOnly": false
+  },
+  "hostOutput": "[weftmate] ✓ 模型凭据保险库已就绪\n[weftmate] ✓ 伴侣状态就绪:星瑶\n[weftmate] DSH_HOME = C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-mem7-TCgs49\\profile\\dsh-home\n[weftmate] [dsh] profile weftmate 已写入（[PATH]\n[weftmate] [dsh:stdout] dsh web: [URL]\n[weftmate] ✓ personal-host ready origin=http://127.0.0.1:50715\n[weftmate] ✓ personal-access listening origin=http://127.0.0.1:50740\n[weftmate] personal-host active; managed shutdown via launcher IPC\n[weftmate] ✓ account-model route gate idle previous=unknown\n[weftmate] [dsh:stdout] dsh web: [URL]\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/session-4606076c-2412-42d2-8d65-0d667871a767: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-035c8ae920503371007d13d1688fda37fef3cb6e96e79efa: HTTP 404 session-not-found\n",
+  "cleanedProcesses": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  },
+  "requestCount": 17
+}

@@ -1,0 +1,319 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realMemoryCore": true,
+  "syntheticCloud": true,
+  "syntheticAccount": true,
+  "requests": [
+    {
+      "phase": "phone-register",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "handover",
+      "transport": "phone",
+      "purpose": "light-extraction"
+    },
+    {
+      "phase": "handover",
+      "transport": "computer",
+      "status": 200
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    }
+  ],
+  "checks": [
+    "phone-light-memory-recalled-new-conversation",
+    "desktop-phone-history-visible-searchable-readonly"
+  ],
+  "screenshots": [
+    {
+      "file": "phone-360-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "electron-1200-light-phone-import-activity.png",
+      "surface": "Electron",
+      "width": 1200
+    },
+    {
+      "file": "electron-480-light-phone-import-activity.png",
+      "surface": "Electron",
+      "width": 480
+    },
+    {
+      "file": "electron-1200-dark-phone-import-activity.png",
+      "surface": "Electron",
+      "width": 1200
+    },
+    {
+      "file": "electron-480-dark-phone-import-activity.png",
+      "surface": "Electron",
+      "width": 480
+    }
+  ],
+  "errors": [],
+  "lightItems": [
+    "我叫林舟。",
+    "我的鹦鹉叫青瓷。",
+    "我现在更喜欢乌龙茶，不再喜欢茉莉花茶。",
+    "我正在做一个叫纸舟的练习项目。"
+  ],
+  "importId": "12f57c22-d28f-4ce6-aebd-7192d780323b",
+  "jobUsage": {
+    "requests": 4,
+    "inputTokens": 23264,
+    "outputTokens": 2035,
+    "cost": 0.012532080000000001,
+    "unpricedRequests": 0,
+    "unknownRequests": 0
+  },
+  "failure": "page.evaluate: Error: {\"error\":{\"code\":\"INVALID_REQUEST\"}}\n    at eval (eval at evaluate (:311:30), <anonymous>:1:311)\n    at async <anonymous>:337:30",
+  "phase": "handover",
+  "processExit": {
+    "decimal": null,
+    "unsignedDecimal": null,
+    "hexadecimal": null,
+    "signal": null,
+    "meaning": "未取得退出码"
+  },
+  "commitMemory": {
+    "available": true,
+    "availableBytes": 17309110272,
+    "limitBytes": 97770655744,
+    "committedBytes": 80461545472
+  },
+  "phoneMemory": {
+    "memory": {
+      "version": 1,
+      "enabled": true,
+      "items": [],
+      "processed": [],
+      "suppressedSources": [],
+      "suppressedText": [],
+      "handover": true,
+      "transferred": true,
+      "resumeAfter": null
+    },
+    "extractions": [
+      {
+        "input": "{\"原话\":[{\"id\":\"1c9411ce-b644-4c71-a4ac-e2f5b5dde4a0\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "{\"upsert\":[{\"id\":null,\"text\":\"我叫林舟。\",\"sourceIDs\":[\"1c9411ce-b644-4c71-a4ac-e2f5b5dde4a0\"],\"evidence\":\"我叫林舟。\"},{\"id\":null,\"text\":\"我的鹦鹉叫青瓷。\",\"sourceIDs\":[\"1c9411ce-b644-4c71-a4ac-e2f5b5dde4a0\"],\"evidence\":\"我的鹦鹉叫青瓷\"},{\"id\":null,\"text\":\"我喜欢茉莉花茶。\",\"sourceIDs\":[\"1c9411ce-b644-4c71-a4ac-e2f5b5dde4a0\"],\"evidence\":\"我喜欢茉莉花茶\"},{\"id\":null,\"text\":\"我正在做一个叫纸舟的练习项目。\",\"sourceIDs\":[\"1c9411ce-b644-4c71-a4ac-e2f5b5dde4a0\"],\"evidence\":\"我正在做一个叫纸舟的练习项目\"}],\"invalidate\":[]}"
+      },
+      {
+        "input": "{\"原话\":[{\"id\":\"bcb2d7f9-a2b7-482b-b788-560ddb3c85d7\",\"text\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。请只回复一句知道了。\"}],\"已有记忆\":[{\"id\":\"519a91bc-11d5-4e32-afc0-316d2c8db685\",\"text\":\"我喜欢茉莉花茶。\"},{\"id\":\"57d4efbf-00a4-485a-9150-e03456bb9dd8\",\"text\":\"我叫林舟。\"},{\"id\":\"f4ded463-6190-406a-9fff-de108e7caa3a\",\"text\":\"我的鹦鹉叫青瓷。\"},{\"id\":\"46a32b80-3880-4e80-adb9-af375d708f20\",\"text\":\"我正在做一个叫纸舟的练习项目。\"}]}",
+        "output": "{\"upsert\":[{\"id\":\"519a91bc-11d5-4e32-afc0-316d2c8db685\",\"text\":\"我现在更喜欢乌龙茶，不再喜欢茉莉花茶。\",\"sourceIDs\":[\"bcb2d7f9-a2b7-482b-b788-560ddb3c85d7\"],\"evidence\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。\"}]}"
+      },
+      {
+        "error": "PHONE_MEMORY_INVALID"
+      },
+      {
+        "input": "{\"原话\":[{\"id\":\"bcb2d7f9-a2b7-482b-b788-560ddb3c85d7\",\"text\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。请只回复一句知道了。\"}],\"已有记忆\":[{\"id\":\"519a91bc-11d5-4e32-afc0-316d2c8db685\",\"text\":\"我喜欢茉莉花茶。\"},{\"id\":\"57d4efbf-00a4-485a-9150-e03456bb9dd8\",\"text\":\"我叫林舟。\"},{\"id\":\"f4ded463-6190-406a-9fff-de108e7caa3a\",\"text\":\"我的鹦鹉叫青瓷。\"},{\"id\":\"46a32b80-3880-4e80-adb9-af375d708f20\",\"text\":\"我正在做一个叫纸舟的练习项目。\"}]}",
+        "output": "{\"upsert\":[{\"id\":\"519a91bc-11d5-4e32-afc0-316d2c8db685\",\"text\":\"我现在更喜欢乌龙茶，不再喜欢茉莉花茶。\",\"sourceIDs\":[\"bcb2d7f9-a2b7-482b-b788-560ddb3c85d7\"],\"evidence\":\"现在我更喜欢乌龙茶，不再喜欢茉莉花茶\"}],\"invalidate\":[]}"
+      },
+      {
+        "error": "signal is aborted without reason"
+      }
+    ],
+    "failures": [],
+    "identity": {
+      "origin": "http://127.0.0.1:57711",
+      "ownerId": "owner-efeecb32-816e-4b77-bcab-19bd70504f70",
+      "deviceId": "device-4225dc12-8b67-45e9-af37-37acec0bfd4b",
+      "hostId": "host-68a46018-9d64-48de-83c4-06418f4200f5"
+    },
+    "connection": "connected",
+    "cloudOnly": false
+  },
+  "hostOutput": "[weftmate] ✓ 模型凭据保险库已就绪\n[weftmate] ✓ 伴侣状态就绪:星瑶\n[weftmate] DSH_HOME = C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-mem7-QCAUHI\\profile\\dsh-home\n[weftmate] [dsh] profile weftmate 已写入（[PATH]\n[weftmate] [dsh:stdout] dsh web: [URL]\n[weftmate] ✓ personal-host ready origin=http://127.0.0.1:56867\n[weftmate] ✓ personal-access listening origin=http://127.0.0.1:57711\n[weftmate] personal-host active; managed shutdown via launcher IPC\n[weftmate] ✓ account-model route gate idle previous=unknown\n[weftmate] [dsh:stdout] dsh web: [URL]\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-f0bb11c42f6a8ec41cc3f5d36cf57bc22bbcff2d4e7fe197: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-f0bb11c42f6a8ec41cc3f5d36cf57bc22bbcff2d4e7fe197: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-f0bb11c42f6a8ec41cc3f5d36cf57bc22bbcff2d4e7fe197: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-f0bb11c42f6a8ec41cc3f5d36cf57bc22bbcff2d4e7fe197: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-f0bb11c42f6a8ec41cc3f5d36cf57bc22bbcff2d4e7fe197: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-f0bb11c42f6a8ec41cc3f5d36cf57bc22bbcff2d4e7fe197: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-f0bb11c42f6a8ec41cc3f5d36cf57bc22bbcff2d4e7fe197: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-f0bb11c42f6a8ec41cc3f5d36cf57bc22bbcff2d4e7fe197: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-f0bb11c42f6a8ec41cc3f5d36cf57bc22bbcff2d4e7fe197: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-f0bb11c42f6a8ec41cc3f5d36cf57bc22bbcff2d4e7fe197: HTTP 404 session-not-found\n",
+  "cleanedProcesses": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  },
+  "requestCount": 12
+}
