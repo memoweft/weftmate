@@ -50,6 +50,7 @@ const mobileMarkup = String.raw`
         <button id="home-settings" class="profile-link"><span class="icon icon-settings"></span><span>设置与账户</span></button>
       </section>
       <section id="chat-page" class="page" aria-label="对话">
+        <button id="pending-decision" class="pending-decision secondary" type="button" hidden>有一项等你决定</button>
         <div id="chat-scroll" class="chat-scroll"><div id="chat-content" class="chat-content"></div></div>
         <button id="jump-latest" class="jump-latest" aria-label="回到底部" hidden>回到底部</button>
         <div id="composer-dock" class="composer-dock">
@@ -62,8 +63,8 @@ const mobileMarkup = String.raw`
           </details>
           <div id="composer-subtasks" class="composer-subtasks" hidden></div><div id="chat-status" class="chat-status" role="status"></div>
           <div class="composer-card">
-            <textarea id="draft" rows="2" placeholder="和 WeftMate 聊聊…" aria-label="输入消息"></textarea>
             <div id="attachment-drafts" class="attachment-drafts" aria-label="待发送附件" hidden></div>
+            <textarea id="draft" rows="1" placeholder="和 WeftMate 聊聊…" aria-label="输入消息"></textarea>
             <div class="composer-actions">
               <button id="plus-button" class="icon-button" aria-label="添加图片或文件" aria-expanded="false" aria-controls="attachment-popover"><span class="icon icon-plus"></span></button>
               <button id="approval-mode-button" class="approval-mode-button" type="button" aria-label="审批模式" aria-haspopup="menu" aria-expanded="false" aria-controls="approval-mode-popover"><span class="icon icon-shield approval-shield" aria-hidden="true" hidden></span><span id="approval-mode-label">审批</span><span class="icon icon-down" aria-hidden="true"></span></button>
@@ -92,7 +93,7 @@ const mobileMarkup = String.raw`
       <section id="generic-page" class="page" aria-live="polite"><div id="page-content"></div></section>
     </main>
     <section id="resource-page" class="resource-page" role="dialog" aria-modal="true" aria-labelledby="resource-title" hidden>
-      <header class="resource-topbar"><button id="resource-back" class="icon-button" aria-label="返回对话"><span class="icon icon-back"></span></button><strong id="resource-title"></strong></header>
+      <header class="resource-topbar"><button id="resource-back" class="icon-button" aria-label="返回对话"><span class="icon icon-close"></span></button><strong id="resource-title"></strong><button id="resource-menu" class="icon-button" aria-label="文件操作" aria-haspopup="menu" hidden><span class="icon icon-more"></span></button></header>
       <div id="resource-content" class="resource-content"></div>
     </section>
     <div id="image-preview" class="image-preview" role="dialog" aria-modal="true" aria-label="图片预览" hidden>

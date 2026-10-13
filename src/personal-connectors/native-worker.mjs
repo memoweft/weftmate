@@ -41,7 +41,7 @@ process.on('message', async message => {
           return joined === normalized && joined.length <= 64 ? joined : `${normalized.slice(0,51)}_${createHash('sha256').update(`${message.config.serverName}\0${rawName}`).digest('hex').slice(0,12)}`;
         };
         const raw = [...metadata.values()].find(tool => publicName(tool.name) === definition.name);
-        return { name: definition.name, rawName: raw?.name ?? definition.name, description: definition.description.slice(0, 500),
+        return { name: definition.name, rawName: raw?.name ?? definition.name, displayName: raw?.annotations?.title ?? raw?.title, description: definition.description.slice(0, 500),
           parameters: definition.parameters, category: classifyConnectorTool(raw ?? definition), network: raw?.annotations?.openWorldHint === true };
       }) });
       const ctx = { root: {}, effect(fn) { disposers.push(fn()); }, tools: { register(definition) {

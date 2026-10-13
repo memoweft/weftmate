@@ -1,0 +1,61 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "transport": "isolated direct Windows host; Linux 443 relay is verified by CI",
+  "switches": [
+    {
+      "iteration": 0,
+      "delayMs": 2000,
+      "lostCharacters": 0,
+      "sends": 1
+    }
+  ],
+  "approvals": [
+    {
+      "toolName": "read",
+      "canAlwaysAllow": true,
+      "geometry": {
+        "top": 624.875,
+        "bottom": 668.875,
+        "height": 44,
+        "scrollTop": 80,
+        "scrollBottom": 722,
+        "composerTop": 782,
+        "uncovered": true
+      }
+    },
+    {
+      "toolName": "write",
+      "canAlwaysAllow": true,
+      "geometry": {
+        "top": 625.109375,
+        "bottom": 669.109375,
+        "height": 44,
+        "scrollTop": 80,
+        "scrollBottom": 722,
+        "composerTop": 782,
+        "uncovered": true
+      }
+    },
+    {
+      "toolName": "read",
+      "canAlwaysAllow": true,
+      "geometry": {
+        "top": 625.1875,
+        "bottom": 669.1875,
+        "height": 44,
+        "scrollTop": 80,
+        "scrollBottom": 722,
+        "composerTop": 782,
+        "uncovered": true
+      }
+    }
+  ],
+  "fileTask": {
+    "completed": true,
+    "approvals": 3,
+    "modelSteps": 5,
+    "libraryPreviewMatches": true
+  },
+  "passed": true
+}

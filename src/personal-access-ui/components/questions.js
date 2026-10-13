@@ -4,6 +4,8 @@ globalThis.WeftUiComponents.factories.questions = (core, ui) => {
         const context = core.approvalContext(), list = ui.byId('transcript'), approval = ui.byId('approval-bar');
         if (!approval) return;
         const bar = WeftQuestionBar.ensure(approval);
+        const phone = globalThis.WeftPhoneUnify?.isPhone() === true;
+        if (phone) globalThis.WeftPhoneUnify.placeDecision(ui,bar);
         const rows = core.approvalContextCurrent(context) ? [...core.conversationQuestions.entries.values()]
             .filter(entry => entry.row.sessionId === context.sessionId && core.approvalSource(entry.row))
             .sort((a, b) => a.row.createdAt.localeCompare(b.row.createdAt)) : [];
@@ -11,7 +13,8 @@ globalThis.WeftUiComponents.factories.questions = (core, ui) => {
         const pending = rows.filter(entry => entry.row.status === 'pending');
         WeftQuestionBar.waiting(approval, pending.reduce((n, entry) => n + entry.row.questions.length, 0));
         const wasFocused = bar.contains(document.activeElement);
-        bar.hidden = !pending.length || !approval.hidden;
+        bar.hidden = !pending.length || !phone && !approval.hidden;
+        if (phone) bar.dataset.phonePending = String(pending.length > 0);
         if (bar.hidden && wasFocused) ui.byId('message-text').focus({ preventScroll: true });
         if (!pending.length) { bar.replaceChildren(); delete bar.dataset.signature; }
         for (const entry of rows) {
@@ -27,12 +30,19 @@ globalThis.WeftUiComponents.factories.questions = (core, ui) => {
         const entry = pending[0], row = entry.row, marker = core.questionMarker(context, row), operation = core.conversationQuestions.operations.get(row.questionRpcId);
         const notice = entry.notice || entry.validation || (core.conversationTasks.entries.get(row.taskId)?.notice ? '原任务暂时无法核对，请重新核对。' : '') || (operation ? '正在提交回答…' : marker ? '上次回答尚未确认，请重新核对。' : '');
         bar.dataset.scope = JSON.stringify(context);
-        WeftQuestionBar.paint(bar, { row, draft: core.questionDraft(context, row), remaining: pending.slice(1).reduce((n, entry) => n + entry.row.questions.length, 0),
+        WeftQuestionBar.paint(bar, { row, mobile:phone, draft: core.questionDraft(context, row), remaining: pending.slice(1).reduce((n, entry) => n + entry.row.questions.length, 0),
             retry: !!marker, submitting: !!operation, locked: !!operation || !entry.authoritative || !!entry.notice || !!marker && !core.sameQuestion(marker, row), notice,
             current: () => core.approvalContextCurrent(context), focusComposer: () => ui.byId('message-text').focus({ preventScroll: true }),
             choose: (index, label, checked) => core.chooseQuestionOption(context, row, index, label, checked),
             custom: (index, text) => core.setQuestionCustom(context, row, index, text), submit: () => void core.submitQuestion(context, row),
             check: notice || marker ? () => { void core.refreshConversationTasks(); void core.refreshConversationQuestions(context, true); } : null });
+        if (phone) {
+            const title = bar.querySelector('.question-bar-title');
+            if (title && !title.querySelector('svg')) title.prepend(WeftIcons.create('list',20));
+            const summary = bar.querySelector('summary');
+            if (summary && !summary.querySelector('svg')) summary.append(WeftIcons.create('chevron',16));
+        }
+        ui.syncPhoneDecisions?.();
     }
     return { renderConversationQuestions };
 };

@@ -42,10 +42,94 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
     function acceptApprovalRisk(mode) {
         return mode !== 'allow-all' || globalThis.WeftDialogs.allowAll();
     }
+    function renderPhoneApprovals(context, bar) {
+        globalThis.WeftPhoneUnify.placeDecision(ui, bar);
+        const rows = core.approvalContextCurrent(context) ? [...core.conversationApprovals.entries.values()]
+            .filter(entry => entry.row.sessionId === context.sessionId && core.approvalSource(entry.row))
+            .sort((a,b) => a.row.createdAt.localeCompare(b.row.createdAt)) : [];
+        const scope = JSON.stringify(context);
+        if (bar.dataset.phoneScope !== scope) { bar.replaceChildren(); bar.dataset.phoneScope = scope; }
+        bar.hidden = rows.length === 0;
+        const ids = new Set(rows.map(entry => entry.row.approvalId));
+        for (const card of [...bar.children]) if (!ids.has(card.dataset.conversationApproval)) card.remove();
+        for (const entry of rows) {
+            const row = entry.row, marker = core.approvalMarker(context,row), review = core.approvalReview?.(row);
+            const operation = core.conversationApprovals.operations.get(row.approvalId);
+            const notice = entry.notice || (core.conversationTasks.entries.get(row.taskId)?.notice ? '原任务暂时无法核对，请重新核对答复。' : '');
+            const signature = JSON.stringify([row,entry.authoritative,notice,marker,!!operation,review]);
+            let card = [...bar.children].find(node => node.dataset.conversationApproval === row.approvalId);
+            if (!card) { card = ui.element('section','phone-approval-card'); card.dataset.conversationApproval = row.approvalId; bar.append(card); }
+            if (card.dataset.signature === signature) continue;
+            if (operation && card.children.length) {
+                for (const button of card.querySelectorAll('button')) button.disabled = true;
+                const status = card.querySelector('.approval-status'); if (status) { status.hidden = false; status.textContent = '正在提交本次决定…'; }
+                continue;
+            }
+            const expanded = card.querySelector('details')?.open === true;
+            const hadFocus = card.contains(document.activeElement), focusedAction = document.activeElement?.dataset?.conversationApprovalAction;
+            const previousChoice = card.phoneChoice;
+            card.dataset.signature = signature; card.dataset.phonePending = String(row.status === 'pending');
+            card.replaceChildren();
+            if (row.status !== 'pending') {
+                card.className = 'phone-approval-receipt';
+                card.append(WeftIcons.create('approval',16),ui.element('span','',core.approvalStatusText(row)));
+                if (hadFocus) ui.byId('message-text').focus({preventScroll:true});
+                continue;
+            }
+            card.className = 'phone-approval-card';
+            const title = ui.element('h3','phone-decision-title'), text = ui.element('strong');
+            title.append(WeftIcons.create('approval',20),text);
+            const reason = ui.element('p','approval-explanation'), details = ui.element('details','approval-detail'); details.open = expanded;
+            const summary = ui.element('summary',''); summary.append(ui.element('span','','查看详情'),WeftIcons.create('chevron',16));
+            const raw = ui.element('pre','timeline-raw'); details.append(summary,raw);
+            const paint = value => { text.textContent = `要${value.summary}`; reason.textContent = value.reason; reason.hidden = !value.reason; raw.textContent = core.executionDetailText(typeof value.raw === 'string' ? value.raw : JSON.stringify(value.raw,null,2)); };
+            paint(core.approvalPresentation(row)); card.append(title,reason,details);
+            void core.readApprovalPresentation(row).then(value => { if (card.dataset.signature === signature && core.approvalContextCurrent(context)) paint(value); });
+            if (review) { const note = ui.element('p','approval-review',review.text); note.setAttribute('role',review.warning ? 'alert':'note'); card.append(note); }
+            const status = ui.element('p','approval-status',operation ? '正在提交本次决定…' : notice || (marker ? '上次答复尚未确认，请核对或重试原答复。' : ''));
+            status.setAttribute('role','status'); status.hidden = !status.textContent; card.append(status);
+            const fresh = () => { const current = core.approvalContext(); return JSON.stringify(current) === scope && core.approvalContextCurrent(current) ? current : null; };
+            const disabled = (outcome, category = 'once') => !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== outcome || (marker.scope ?? 'once') !== category);
+            const submit = (outcome, category = 'once') => { const current = fresh(); if (current) void core.submitApproval(current,row,outcome,category); };
+            const actions = ui.element('div','approval-bar-actions');
+            if (row.canAlwaysAllow) {
+                const choices = ui.element('div','phone-approval-choices'); choices.setAttribute('role','radiogroup'); choices.setAttribute('aria-label','选择怎么处理这次操作');
+                const values = [['allowed-once','仅这一次','allowed-once','once'],['allowed-always','以后这类都允许','allowed-once','global-category'],['rejected','拒绝','rejected','once']];
+                card.phoneChoice = marker ? marker.outcome === 'rejected' ? 'rejected' : marker.scope === 'global-category' ? 'allowed-always' : 'allowed-once' : previousChoice || 'allowed-once';
+                const confirm = ui.element('button','button primary small','确认'); confirm.type = 'button';
+                confirm.dataset.conversationApprovalAction = 'confirm';
+                const controls = [];
+                const paintChoice = () => { for (const option of controls) option.setAttribute('aria-checked',String(option.dataset.conversationApprovalAction === card.phoneChoice)); const chosen = values.find(value=>value[0]===card.phoneChoice); confirm.disabled = !chosen || disabled(chosen[2],chosen[3]); };
+                for (const [key,label,outcome,category] of values) {
+                    const option = ui.element('button','phone-approval-option'); option.type = 'button'; option.setAttribute('role','radio'); option.dataset.conversationApprovalAction = key; option.disabled = disabled(outcome,category);
+                    const radio = ui.element('span','phone-radio'); radio.setAttribute('aria-hidden','true'); option.append(radio,ui.element('span','',label));
+                    option.addEventListener('click',()=>{ if (fresh()) { card.phoneChoice = key; paintChoice(); } }); choices.append(option); controls.push(option);
+                }
+                choices.addEventListener('keydown',event=>{ if (!['ArrowUp','ArrowDown','Home','End'].includes(event.key)) return; event.preventDefault(); const enabled = controls.filter(control=>!control.disabled),at = enabled.indexOf(document.activeElement),next = enabled[event.key==='Home'?0:event.key==='End'?enabled.length-1:(at+(event.key==='ArrowUp'?-1:1)+enabled.length)%enabled.length]; next?.focus(); next?.click(); });
+                confirm.addEventListener('click',()=>{ const chosen = values.find(value=>value[0]===card.phoneChoice); if (chosen && !disabled(chosen[2],chosen[3])) submit(chosen[2],chosen[3]); });
+                paintChoice(); card.append(choices); actions.append(confirm);
+            } else {
+                for (const [outcome,label] of [['rejected','拒绝'],['allowed-once','批准']]) {
+                    const button = ui.element('button',`button ${outcome==='allowed-once'?'primary':'secondary'} small`,label); button.type = 'button'; button.dataset.conversationApprovalAction = outcome;
+                    button.disabled = disabled(outcome); button.addEventListener('click',()=>submit(outcome)); actions.append(button);
+                }
+            }
+            if (notice || marker) {
+                const check = ui.element('button','button secondary small','重新核对答复'); check.type = 'button'; check.disabled = !!operation; check.dataset.conversationApprovalAction = 'check';
+                check.addEventListener('click',()=>{ if (fresh()) { void core.refreshConversationTasks(); void core.refreshConversationApprovals(context,true); } }); card.append(check);
+            }
+            card.append(actions);
+            if (hadFocus) { const replacement = [...card.querySelectorAll('[data-conversation-approval-action]')].find(node=>node.dataset.conversationApprovalAction===focusedAction); if (replacement && !replacement.disabled) replacement.focus({preventScroll:true}); }
+            if (review?.warning && card.dataset.reviewFocusId !== row.approvalId) { card.querySelector('[data-conversation-approval-action="rejected"]')?.focus({preventScroll:true}); card.dataset.reviewFocusId = row.approvalId; }
+        }
+        ui.byId('model-hint').hidden = rows.some(entry=>entry.row.status==='pending') || !ui.byId('model-hint').textContent;
+        ui.syncPhoneDecisions?.();
+    }
     function renderConversationApprovals() {
         const context = core.approvalContext(), bar = ui.byId('approval-bar');
         if (!bar) return;
         if (globalThis.WeftQuestionBar?.retainInteraction(bar, renderConversationApprovals)) return;
+        if (globalThis.WeftPhoneUnify?.isPhone()) { renderPhoneApprovals(context,bar); ui.renderTimeline();for(const node of ui.byId('transcript').querySelectorAll('[data-timeline-approval]'))if(core.conversationApprovals.entries.has(node.dataset.timelineApproval))node.hidden=true;return; }
         const rows = core.approvalContextCurrent(context) ? [...core.conversationApprovals.entries.values()]
             .filter(entry => entry.row.sessionId === context.sessionId && core.approvalSource(entry.row) && entry.row.status === 'pending')
             .sort((a, b) => a.row.createdAt.localeCompare(b.row.createdAt)) : [];
