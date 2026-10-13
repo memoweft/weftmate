@@ -258,6 +258,41 @@ test('composed health settings keep serialized writes and reject queued work aft
   assert.equal(calls.length, 1, 'the old account queued write must never reach the API')
 })
 
+test('QA-8 review and health controls use the composed writer for toggles and clearing', async () => {
+  const f = fixture(), nodes: any[] = [], writes: any[] = []
+  let settings = { modelInsightsEnabled: true, itemAnalysisEnabled: false, sleepTargetMinutes: 450, retentionDays: 400 }
+  f.core.accessApi = async (path: string, options: any) => {
+    if (path === '/settings/health') {
+      if (options?.method === 'PATCH') { writes.push(options); settings = { ...settings, ...options.body } }
+      return { settings }
+    }
+    return { settings: { reviewEnabled: true, reviewRetentionDays: 90, computerUsageEnabled: true }, timeZone: 'UTC' }
+  }
+  const make = (tag: string) => {
+    const n: any = { tag, dataset: {}, children: [], options: [], isConnected: true, listeners: {},
+      append(...children: any[]) { this.children.push(...children); if (tag === 'select') this.options.push(...children) },
+      replaceChildren(...children: any[]) { this.children = children }, setAttribute(k: string, v: string) { this[k] = v },
+      addEventListener(k: string, fn: any) { this.listeners[k] = fn }, dispatchEvent() {}, reportValidity: () => true,
+      querySelectorAll: () => nodes.filter(n => ['input', 'select', 'button'].includes(n.tag)),
+      close() {}, showModal() {}, focus() {}, remove() {} }
+    nodes.push(n); return n
+  }
+  const ctx: any = { document: { createElement: make, body: make('body') }, Event: class {},
+    Option: class { text: string; value: string; constructor(text: string, value: string) { this.text = text; this.value = value } },
+    WeftSettingsControls: { toggle() {}, row(...args: any[]) { const n = make('div'); n.append(args.at(-1)); return n } } }
+  runInNewContext(desktopScript('components/notifications.js'), ctx)
+  ctx.WeftNotificationsView(f.core, make('section'), { section: 'reviewHealth' })
+  await new Promise(resolve => setImmediate(resolve))
+  const toggle = nodes.find(n => n.id === 'health-modelInsightsEnabled')
+  assert.equal(toggle.disabled, false); toggle.checked = false; toggle.listeners.change()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(toggle.checked, false); assert.equal(settings.modelInsightsEnabled, false)
+  nodes.find(n => n.textContent === '清空健康数据').onclick()
+  await nodes.filter(n => n.textContent === '确认清空').at(-1).onclick()
+  assert.deepEqual(plain(writes.map(r => r.body)), [{ modelInsightsEnabled: false }, { clear: true }])
+  assert.ok(writes.every(r => r.protectedWrite && r.method === 'PATCH'))
+})
+
 test('history accepts gaps, sorts by event sequence, rejects duplicates/foreign sessions and keeps the latest terminal', () => {
   const f = fixture()
   f.core.appendHistory([
