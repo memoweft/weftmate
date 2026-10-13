@@ -1,8 +1,8 @@
 import {execFile,execFileSync} from 'node:child_process';
 import {promisify} from 'node:util';
-import {open,writeFile,mkdir,unlink} from 'node:fs/promises';
+import {open,writeFile,mkdir,unlink,readFile,stat} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
-import {randomUUID} from 'node:crypto';
+import {createHash} from 'node:crypto';
 import {readMuMuInfo} from '../../../scripts/nightly/mumu.mjs';
 import {createServer} from 'node:net';
 import {startFeedFixture} from './fixture.mjs';
@@ -12,11 +12,12 @@ let heavy,mumu,serial,fixture,installed=false,reversed=false;
 const adbExecutable='D:/AIProjects/AIGame/Repository/runtime/toolchains/android-sdk/platform-tools/adb.exe';
 let adbPort;
 const serverArgs=()=>adbPort?['-P',String(adbPort)]:[];
-const notificationXml=`/sdcard/and5-notification-${randomUUID()}.xml`;
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const report={synthetic:true,instrumentation:[],screenshots:[],notifications:[]};
 const notificationProbe=process.argv.includes('--notifications-probe');
 if(notificationProbe)report.diagnosticOnly=true;
+const apkPaths={app:join(root,'apps/android/app/build/outputs/apk/debug/app-debug.apk'),androidTest:join(root,'apps/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk')};
+async function apkHashes(){return Object.fromEntries(await Promise.all(Object.entries(apkPaths).map(async([name,path])=>[name,{sha256:createHash('sha256').update(await readFile(path)).digest('hex'),modifiedAt:(await stat(path)).mtime.toISOString()}])));}
 const safe=s=>String(s).replace(/C:[\\/]Users[\\/][^\\/\s]+/gi,'C:/Users/<user>').replace(/DESKTOP-[A-Z0-9-]+/gi,'<host>');
 const run=(...args)=>execFileSync(adbExecutable,[...serverArgs(),'-s',serial,...args],{encoding:'utf8',windowsHide:true,maxBuffer:8*1024*1024,timeout:30000});
 async function acquire(path,label){const f=await open(path,'wx');await f.writeFile(`AND-5 ${new Date().toISOString()} ${label}`);await f.close();return path;}
@@ -25,15 +26,16 @@ const probe=()=>{run('shell','am','broadcast','-n',`${pkg}/com.memoweft.weftmate
 async function screenshot(file,theme,width){const data=execFileSync(adbExecutable,[...serverArgs(),'-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:12*1024*1024});await writeFile(join(out,file),data);report.screenshots.push({file,pageTheme:theme,widthDp:width,systemVersion:report.systemVersion,systemTheme:'unchanged emulator setting'});}
 async function clickNotification(cold){
   run('shell','cmd','statusbar','expand-notifications');await pause(600);
-  await screenshot(`and5-390-dark-notification-panel-${cold?'cold':'background'}.png`,'dark',390);
-  await exec(adbExecutable,[...serverArgs(),'-s',serial,'shell','uiautomator','dump','--compressed',notificationXml],{windowsHide:true,timeout:15000,maxBuffer:1024*1024});
-  const xml=run('shell','cat',notificationXml);
-  const node=xml.match(/<node\b(?=[^>]*text="[^"]*新的合成任务完成[^"]*")[^>]*\bbounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);
-  if(!node)throw Error('Synthetic notification row absent from system panel');
-  run('shell','input','tap',String(Math.floor((Number(node[1])+Number(node[3]))/2)),String(Math.floor((Number(node[2])+Number(node[4]))/2)));
+  const file=`and5-390-dark-notification-panel-${cold?'cold':'background'}.png`;
+  await screenshot(file,'dark',390);
+  const point=JSON.parse(execFileSync('python',[join(out,'notification-point.py'),join(out,file)],{encoding:'utf8',windowsHide:true,timeout:10000}));
+  (report.notificationClicks??=[]).push({cold,file,...point});
+  run('shell','input','tap',String(point.x),String(point.y));
 }
 try{
   await mkdir(out,{recursive:true});
+  const currentApks=await apkHashes();
+  report.apkHashes=currentApks;
   // A released lock can precede its owner's package cleanup. Queue without changing
   // another work package, and release both scarce slots before waiting again.
   while(true){
@@ -112,11 +114,13 @@ try{
 }finally{
   if(serial&&installed)try{report.notificationPolling=JSON.parse(run('shell','run-as',pkg,'cat','files/and5-notification-poll.json'))}catch{}
   if(fixture){report.requests=fixture.requests;report.reads=fixture.reads;await fixture.close().catch(()=>{});}
-  if(serial){try{run('shell','rm','-f',notificationXml)}catch{}if(installed){try{run('uninstall',`${pkg}.test`)}catch{}try{run('uninstall',pkg)}catch{}}if(reversed)try{run('reverse','--remove',`tcp:${new URL(fixture.origin).port}`)}catch{}try{execFileSync(adbExecutable,[...serverArgs(),'disconnect',serial],{windowsHide:true,timeout:5000})}catch{}}
+  if(serial){if(installed){try{run('uninstall',`${pkg}.test`)}catch{}try{run('uninstall',pkg)}catch{}}if(reversed)try{run('reverse','--remove',`tcp:${new URL(fixture.origin).port}`)}catch{}try{execFileSync(adbExecutable,[...serverArgs(),'disconnect',serial],{windowsHide:true,timeout:5000})}catch{}}
   if(adbPort)try{execFileSync(adbExecutable,[...serverArgs(),'kill-server'],{windowsHide:true,timeout:5000});report.privateAdbClosed=true}catch{report.privateAdbClosed=false}
   // Render the exact supplied control previews after releasing the Android surface.
   if(mumu){await unlink(mumu);mumu=null;}
   if(report.instrumentation.length===4&&report.instrumentation.every(r=>r.passed))try{const preview=await exec(process.execPath,[join(out,'spec-preview.mjs')],{cwd:root,windowsHide:true,timeout:30000,maxBuffer:1024*1024});report.specPreview={passed:true,output:safe(preview.stdout)}}catch(e){report.specPreview={passed:false,failure:safe(e.message)};process.exitCode=1;}
+  const finalApks=await apkHashes();for(const name of Object.keys(apkPaths))if(report.apkHashes?.[name].sha256!==finalApks[name].sha256){report.failure='APK changed during native verification';process.exitCode=1;}
+  if(!report.failure&&report.notifications.length!==2){report.failure='Two production notification cases did not complete';process.exitCode=1;}
   for(const lock of [mumu,heavy])if(lock)await unlink(lock);
   if(report.occupancy)report.occupancy.releasedAt=new Date().toISOString();
   await writeFile(join(out,'native-report.json'),JSON.stringify(report,null,2)+'\n');process.stdout.write(JSON.stringify({instrumentation:report.instrumentation,notifications:report.notifications,failure:report.failure})+'\n');
