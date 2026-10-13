@@ -87,7 +87,12 @@ test('real account storage preserves privacy and isolation; disabled/cleared pen
 test('weekly model input carries only computer day totals and timestamps, never observed buckets',async()=>{
   const a=account();a.defaultModelProfileId='synthetic';a.backgroundModelProfileId='synthetic';for(let n=4;n<=10;n++)observe(a,`2026-10-${String(n).padStart(2,'0')}T17:00:00Z`,1);
   let captured:any;const context:any={accountState:()=>a,timestamp:()=>Date.parse('2026-10-13T04:00:00Z'),serial:(fn:any)=>fn(),mutate:(_owner:any,fn:any)=>fn(a),callBackend:(fn:any)=>fn(),usage:{settings:()=>({timeZone:zone}),exportAccount:()=>({records:[]})},modelSelectable:()=>true,visibleModels:(_owner:any,models:any)=>models,backend:{listModels:async()=>[{id:'synthetic',model:'synthetic'}],modelCompletion:async(input:any)=>{captured=JSON.parse(input.body.messages[1].content);return new Response(JSON.stringify({choices:[{message:{content:'这周记录到了电脑使用。'}}]}));}}};
-  const service=createDailyDigest(context);await service.refresh('a');await new Promise(r=>setImmediate(r));assert.ok(captured);assert.doesNotMatch(JSON.stringify(captured),/buckets|quarterHours|observedMinutes/);assert.equal(captured.find((d:any)=>d.devices.items.length).devices.items[0].source,'computer');await service.close();
+  const service=createDailyDigest(context);await service.refresh('a');await new Promise(r=>setImmediate(r));assert.ok(captured);assert.doesNotMatch(JSON.stringify(captured),/buckets|quarterHours|observedMinutes/);assert.equal(captured.find((d:any)=>d.devices.items.length).devices.items[0].source,'computer');
+  const device=captured.find((d:any)=>d.devices.items.length).devices.items[0];
+  assert.equal(device.firstUsedAtLocal,'2026-10-05 01:00');assert.equal(device.lastUsedAtLocal,'2026-10-05 01:01');
+  assert.equal(device.firstUsedAt,undefined,'the model receives unambiguous account-local time, without a second UTC conversion');
+  const weekly:any=Object.values(a.dailyDigest.weeks)[0];assert.equal(weekly.mode,'model');
+  assert.match(weekly.text,/这周每天凌晨一点后还在使用/,'model refinement must retain the recorded late-night fact');await service.close();
 });
 test('ordinary computer-night question loads health_query and usage remains queryable before connecting body measurements',async()=>{
   assert.equal(isHealthQuestion('我昨晚几点还在用电脑？'),true);assert.equal(isHealthQuestion('你好'),false);
