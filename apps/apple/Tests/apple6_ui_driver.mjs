@@ -2,12 +2,13 @@
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:http';
 import {once} from 'node:events';
+import {rm} from 'node:fs/promises';
 import {createInterface} from 'node:readline';
 let child,meta;const reports=[];
 async function closeChild() {
     if(!child)return;
     try { const r=await fetch(meta.driver+'/report');reports.push(await r.json()); } catch {}
-    const exited=once(child,'exit');process.kill(-child.pid,'SIGTERM');const timer=setTimeout(()=>{try{process.kill(-child.pid,'SIGKILL');}catch{}},10000);await exited;clearTimeout(timer);child=null;
+    const exited=once(child,'exit');process.kill(-child.pid,'SIGTERM');const timer=setTimeout(()=>{try{process.kill(-child.pid,'SIGKILL');}catch{}},10000);await exited;clearTimeout(timer);child=null;if(meta.root?.startsWith('/private/tmp/wm-lg2-'))await rm(meta.root,{recursive:true,force:true});
 }
 async function start() {
     child=spawn(process.execPath,['apps/apple/Tests/apple2_cloud_fixture.mjs','--apple6-nohost'],{stdio:['ignore','pipe','inherit'],env:process.env,detached:true});

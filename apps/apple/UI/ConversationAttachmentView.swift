@@ -247,21 +247,55 @@ private struct NativeAttachmentPreview: UIViewControllerRepresentable {
 #if os(iOS)
 private struct PhonePDFPreview: View {
     let file: URL
-    @State private var document: PDFDocument?
+    @State private var pages=0
     @State private var loading=true
     var body: some View {
         Group {
-            if let document { PhonePDFDocument(document:document) }
-            else if loading { ProgressView("正在打开文件…").frame(maxWidth:.infinity,maxHeight:.infinity) }
+            if pages > 0 {
+                ScrollView {
+                    LazyVStack(spacing:AppleTokens.Space.p12) {
+                        ForEach(0..<pages,id:\.self) { index in PhonePDFPage(file:file,index:index,total:pages) }
+                    }.padding(AppleTokens.Space.p12)
+                }
+            } else if loading { ProgressView("正在打开文件…").frame(maxWidth:.infinity,maxHeight:.infinity) }
             else { Text("文件暂时打不开，请关闭后重试。") }
-        }.task(id:file) { document=PDFDocument(url:file); loading=false }
+        }.task(id:file) { pages=CGPDFDocument(file as CFURL)?.numberOfPages ?? 0; loading=false }
     }
 }
-private struct PhonePDFDocument: UIViewRepresentable {
-    let document: PDFDocument
-    func makeUIView(context: Context) -> PDFView { let view=PDFView(); view.autoScales=true; view.displayMode = .singlePageContinuous; view.document=document; return view }
-    func updateUIView(_ view: PDFView,context: Context) { if view.document !== document { view.document=document }; view.layoutDocumentView() }
+/// Core Graphics renders pages on demand; no PDFView tile layer or repeated layout/redraw loop.
+private struct PhonePDFPage: View {
+    let file: URL
+    let index: Int
+    let total: Int
+    @State private var image: UIImage?
+    @State private var text=""
+    @State private var failed=false
+    var body: some View {
+        Group {
+            if let image { Image(uiImage:image).resizable().scaledToFit().accessibilityLabel("第 \(index+1) 页，共 \(total) 页。"+text) }
+            else if failed { Text("这一页暂时打不开，请重新打开文件。") }
+            else { ProgressView("正在绘制第 \(index+1) 页…").frame(maxWidth:.infinity,minHeight:160) }
+        }.task(id:"\(file)-\(index)") {
+            guard image == nil else { return }
+            guard let document=CGPDFDocument(file as CFURL),let page=document.page(at:index+1) else { failed=true;return }
+            let bounds=page.getBoxRect(.mediaBox)
+            guard bounds.width > 0,bounds.height > 0 else { failed=true;return }
+            let width=UIScreen.main.bounds.width-AppleTokens.Space.p24
+            let size=CGSize(width:width,height:width*bounds.height/bounds.width)
+            let format=UIGraphicsImageRendererFormat();format.preferredRange = .standard
+            let rendered=UIGraphicsImageRenderer(size:size,format:format).image { renderer in
+                let context=renderer.cgContext
+                UIColor.white.setFill();context.fill(CGRect(origin:.zero,size:size))
+                context.translateBy(x:0,y:size.height);context.scaleBy(x:1,y:-1)
+                context.concatenate(page.getDrawingTransform(.mediaBox,rect:CGRect(origin:.zero,size:size),rotate:0,preserveAspectRatio:true))
+                context.drawPDFPage(page)
+            }
+            guard !Task.isCancelled else { return };image=rendered
+            text=PDFDocument(url:file)?.page(at:index)?.string ?? ""
+        }.onDisappear { image=nil; text="" }
+    }
 }
+
 #endif
 
 extension View {

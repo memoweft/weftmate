@@ -39,3 +39,16 @@ struct HealthScoreRangeBar: View {
         }.frame(height:AppleTokens.Space.p12).accessibilityHidden(true)
     }
 }
+
+struct HealthDurationNumber: View {
+    var minutes: Double?
+    var body: some View {
+        HStack(alignment:.firstTextBaseline,spacing:AppleTokens.Space.p6) {
+            if let minutes {
+                let total=Int(minutes.rounded())
+                if total >= 60 { HealthScoreNumber(text:String(total/60),unit:"小时") }
+                HealthScoreNumber(text:String(total%60),unit:"分")
+            } else { HealthScoreNumber(text:"—") }
+        }
+    }
+}
