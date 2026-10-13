@@ -29,9 +29,9 @@ class NativeHostChatTest {
     }
     @Test(expected=ApiFailure::class) fun missingSideSessionNeverFallsBackToMainOrPhone() { hostChatSendTarget("side","chat-side","") }
     @Test fun oldAndCurrentHostRejectionsAreTerminal() {
-        for ((status,code) in listOf(404 to "CHAT_UNAVAILABLE",400 to "INVALID_REQUEST",422 to "MODEL_UNAVAILABLE",409 to "REQUEST_CONFLICT",403 to "FORBIDDEN"))
+        for ((status,code) in listOf(404 to "CHAT_UNAVAILABLE",400 to "INVALID_REQUEST",401 to "UNAUTHORIZED",422 to "MODEL_UNAVAILABLE",409 to "REQUEST_CONFLICT",403 to "FORBIDDEN"))
             assertTrue(sharedSendRejected(ApiFailure(status,code)))
-        for ((status,code) in listOf(503 to "HOST_UNAVAILABLE",502 to "COMMAND_RECEIPT_INVALID",401 to "UNAUTHORIZED",409 to "SESSION_BUSY"))
+        for ((status,code) in listOf(503 to "HOST_UNAVAILABLE",502 to "COMMAND_RECEIPT_INVALID",409 to "SESSION_BUSY"))
             assertFalse(sharedSendRejected(ApiFailure(status,code)))
     }
     @Test fun unknownOutcomeRetainsOriginalMessageAndOffersAnExplicitCheck() {

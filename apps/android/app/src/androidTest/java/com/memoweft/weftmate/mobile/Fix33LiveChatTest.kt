@@ -24,6 +24,8 @@ class Fix33LiveChatTest {
    }
   })
   HybridActivity::class.java.getDeclaredField("api").apply{isAccessible=true}.set(a,observed)
+  val shared=HybridActivity::class.java.getDeclaredField("sharedChat").apply{isAccessible=true}.get(a)
+  SharedChat::class.java.getDeclaredField("api").apply{isAccessible=true}.set(shared,observed)
   fun main(action:()->Unit)=i.runOnMainSync(action)
   fun await(label:String,read:()->Boolean){val end=System.currentTimeMillis()+60000;while(System.currentTimeMillis()<end){var ok=false;main{ok=read()};if(ok)return;Thread.sleep(100)};error("Timed out: $label")}
   val report=JSONObject().put("loggedInAccountReused",true).put("greetings",JSONArray())
@@ -33,11 +35,17 @@ class Fix33LiveChatTest {
    val old=a.model.chatId;val created=System.currentTimeMillis();main{a.model.newChat()}
    await("new conversation on computer"){a.model.chatId!=old && !a.model.phone && !a.model.standalone && a.model.sessionId.isNotBlank()}
    report.put("newChatRunsOnComputer",true).put("newChatMs",System.currentTimeMillis()-created)
-   for(n in 1..4){val before=a.model.rows.count{it.optString("type")=="assistant.message"};val start=System.currentTimeMillis()
+   val starts=mutableListOf<Long>()
+   for(n in 1..4){val users=a.model.rows.count{it.optString("type")=="user.message"};val start=System.currentTimeMillis();starts.add(start)
     main{a.model.edit("Hello");a.model.send()}
-    await("computer reply $n"){a.model.rows.count{it.optString("type")=="assistant.message"}>before}
-    report.getJSONArray("greetings").put(JSONObject().put("index",n).put("replyVisibleMs",System.currentTimeMillis()-start).put("uncertainCount",a.model.uncertain.count{it.optString("state")=="uncertain"}))
+    await("submission $n"){!a.model.submitting && a.model.draft.isEmpty()}
+    if(n==1){await("first user message"){a.model.rows.count{it.optString("type")=="user.message"}>users};report.put("firstUserVisibleMs",System.currentTimeMillis()-start)
+     await("computer reply 1"){a.model.rows.count{it.optString("type")=="assistant.message"}>=1}
+     report.getJSONArray("greetings").put(JSONObject().put("index",1).put("replyVisibleMs",System.currentTimeMillis()-start))
+    }
    }
+   for(n in 2..4){await("computer queued reply $n"){a.model.rows.count{it.optString("type")=="assistant.message"}>=n};report.getJSONArray("greetings").put(JSONObject().put("index",n).put("replyVisibleMs",System.currentTimeMillis()-starts[n-1]))}
+   report.put("firstThenThreeQueued",true)
   }catch(e:Exception){report.put("failure",e.message?.takeIf{it.startsWith("Timed out:") }?:"NATIVE_FLOW_FAILED");throw e}
   finally {
    main { report.put("error",a.model.error).put("submitting",a.model.submitting).put("running",a.model.running).put("sendAvailable",a.model.sendAvailable).put("draftRetained",a.model.draft=="Hello").put("tab",a.model.tab).put("foreground",a.nativeForeground).put("refreshPhase",a.model.refreshPhase)

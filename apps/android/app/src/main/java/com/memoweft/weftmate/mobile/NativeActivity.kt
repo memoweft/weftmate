@@ -77,7 +77,7 @@ class NativeActivity : HybridActivity() {
         val web = embeddedWeb
         (web.parent as? ViewGroup)?.removeView(web)
         web.visibility = android.view.View.VISIBLE
-        web.evaluateJavascript("window.weftNativeChatActive=false", null)
+        web.evaluateJavascript("window.weftNativeChatActive=false;if(typeof uiCore!=='undefined')uiCore.connectionVisibility(document.visibilityState==='hidden')", null)
         applyWebFrame()
         return web
     }
@@ -90,7 +90,7 @@ class NativeActivity : HybridActivity() {
         // Keep the shared phone engine attached, but stop painting the covered web UI.
         // evaluateJavascript/native events still drive the existing account/vault engine.
         web.visibility = android.view.View.INVISIBLE
-        web.evaluateJavascript("window.weftNativeChatActive=true;if(typeof stopSharedPoll==='function')stopSharedPoll()", null)
+        web.evaluateJavascript("window.weftNativeChatActive=true;if(typeof stopSharedPoll==='function')stopSharedPoll();if(typeof uiCore!=='undefined')uiCore.connectionVisibility(true)", null)
         presentationContainer.addView(web, 0, ViewGroup.LayoutParams(-1, -1))
     }
     private fun applyWebFrame() {

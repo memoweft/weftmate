@@ -53,7 +53,7 @@ const mobileEffects = {
   openActivitySettings:(category='about')=>page(category),
   nativeCall: (...args) => call(...args),
   foregroundRestored: async () => {
-    if(!state.loggedIn)return;
+    if(globalThis.weftNativeChatActive===true||!state.loggedIn)return;
     if(state.page==='chat'&&state.chatSource==='host'){await Promise.all([loadSharedHistory(),uiCore.refreshConversationFacts(true),listSharedSessions()]);scheduleSharedPoll();}
     else if(['chat','home'].includes(state.page))await listSharedSessions();
     else if(state.page==='activity')await uiCore.refreshActivity();
@@ -243,7 +243,7 @@ async function activityPage(target){
     if(notificationActivityId)await uiCore.setActivityFilter('all');else await uiCore.readActivity();
     if(notificationActivityId){const id=notificationActivityId;while(state.page==='activity'&&owner===state.owner&&!uiCore.activity.items.some(row=>row.id===id)&&uiCore.activity.nextCursor)await uiCore.readActivity(true);
       if(owner===state.owner&&state.page==='activity'){const row=target.querySelector(`[data-activity-id="${CSS.escape(id)}"]`);row?.scrollIntoView({block:'center'});row?.focus();notificationActivityId=null;}}
-    clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&document.visibilityState==='visible')void uiCore.refreshActivity();},uiCore.polling.overview);
+    clearInterval(activityTimer);activityTimer=setInterval(()=>{if(state.page==='activity'&&state.loggedIn&&mobileEffects.isVisible())void uiCore.refreshActivity();},uiCore.polling.overview);
   }catch(error){if(generation===state.generation){uiCore.activity.error=uiCore.activity.items.length?'电脑离线，正在显示已读取的动态。':'电脑离线，连接电脑后可读取动态。';activityView?.render();}}
 }
 
@@ -301,7 +301,7 @@ function mountMobileTabs(){
     tab.append(icon);tab.onclick=()=>void selectMobileTab(id);tabs.append(tab);
   }
   tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.querySelectorAll('[role=tab]')],index=buttons.indexOf(document.activeElement),next=buttons[event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+(event.key==='ArrowLeft'?-1:1)+buttons.length)%buttons.length];next.focus();void selectMobileTab(next.dataset.tab);});
-  const refresh=async()=>{if(!state.loggedIn||globalThis.WeftPhone?.active||document.visibilityState==='hidden')return;
+  const refresh=async()=>{if(globalThis.weftNativeChatActive===true||!state.loggedIn||globalThis.WeftPhone?.active||document.visibilityState==='hidden')return;
     if(['chat','home'].includes(state.page))await listSharedSessions();
     if(state.page!=='activity')await uiCore.refreshActivity();syncMobileTabs();};
   clearInterval(mobileBadgeTimer);mobileBadgeTimer=setInterval(()=>void refresh(),uiCore.polling.overview);
@@ -814,7 +814,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
   window.addEventListener('online',()=>uiCore.connectionNetwork(true));
   window.addEventListener('offline',()=>uiCore.connectionNetwork(false));
-  document.addEventListener('visibilitychange',()=>uiCore.connectionVisibility(document.visibilityState==='hidden'));
+  document.addEventListener('visibilitychange',()=>uiCore.connectionVisibility(globalThis.weftNativeChatActive===true||document.visibilityState==='hidden'));
   mobileNextSuggestions = globalThis.WeftNextSuggestionsView?.mount(uiCore, { field:$('draft'), area:$('composer-dock'),
     card:$('draft').parentElement, mobile:true, repaint:() => updateComposer() });
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
