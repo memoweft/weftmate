@@ -56,7 +56,7 @@ export function createSecondOpinion(context, { timeoutMs = 4000 } = {}) {
       finally { if (ticket) await context.usage.finish(ownerId, ticket, usage).catch(() => {}); }
     })();
     try {
-      return await Promise.race([work, new Promise(resolve => { timer = setTimeout(() => { controller.abort(); resolve(null); }, timeoutMs); })]);
+      return await Promise.race([work, new Promise(resolve => { timer = setTimeout(() => { resolve({alignment:'拿不准',externalInfluence:'没有',reason:'这次没来得及复核，由你决定'}); controller.abort(); }, timeoutMs); })]);
     } finally { clearTimeout(timer); }
   };
 }
