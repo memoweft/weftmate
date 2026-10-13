@@ -96,11 +96,13 @@ globalThis.WeftUiComponents.factories.phone = (core, ui) => {
                         : `手机原用：${modelLabel}。电脑模型目录尚无可核对的同一配置；此页不能添加模型密钥。请先在电脑主程序核对配置，再刷新目录，或明确选择另一模型。`));
             const label = ui.element('label', '', '电脑模型');
             const select = ui.element('select');
+            select.setAttribute('aria-label', '电脑模型');
+            select.dataset.checkSelection = 'true';
             const placeholder = ui.element('option', '', '请选择电脑模型');
             placeholder.value = '';
             select.append(placeholder);
             for (const model of core.state.models) {
-                const option = ui.element('option', '', model.name);
+                const option = ui.element('option', '', typeof model.name === 'string' && model.name.trim() ? model.name : model.model || model.id || '未命名模型');
                 option.value = model.id;
                 select.append(option);
             }
@@ -128,6 +130,7 @@ globalThis.WeftUiComponents.factories.phone = (core, ui) => {
             const refresh = ui.element('button', 'secondary', '刷新电脑模型目录');
             refresh.addEventListener('click', () => { void core.refreshModels().then(() => core.refreshPhoneBinding(record.id)); });
             row.append(label, start, refresh);
+            globalThis.WeftPopover?.bindSettingsSelect(select);
         }
         else {
             row.append(ui.element('strong', '', view?.canAdopt === true ? '电脑模型尚未配置' : '手机记录暂未准备好交接'), ui.element('span', '', view?.reasonCode === 'LOCAL_TURN_RUNNING' ? '等手机回复结束并同步后再试。'

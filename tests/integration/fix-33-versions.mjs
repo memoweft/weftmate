@@ -81,12 +81,13 @@ try{
   }
   report.scenarios.push(scenario);
   if(process.env.FIX33_UI==='1') {
+   const prepared=await fetch(started.origin+'/personal/v1/onboarding',{method:'PATCH',headers:{origin:started.origin,cookie:auth.cookie,'x-weftmate-csrf':auth.csrfToken,'content-type':'application/json'},body:JSON.stringify({step:'first',completed:true})});assert.equal(prepared.status,200);
    const environment={...process.env};delete environment.ELECTRON_RUN_AS_NODE;
    const electron=await _electron.launch({args:[resolve('tests/helpers/fix33-electron.cjs')],env:environment});
    const browser=await chromium.launch({headless:true}),phonePage=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),desktopPage=await electron.firstWindow();
    try {
     for(const [surface,page,identity] of [['desktop',desktopPage,auth],['phone',phonePage,auth]]) {
-     page.on('response',async response=>{const request=response.request(),url=new URL(response.url());if(url.pathname.startsWith('/personal/v1/')&&!url.pathname.includes('/ui/'))trace.push({host:version,surface,method:request.method(),path:url.pathname,status:response.status(),requestFields:Object.keys(request.postDataJSON?.()||{})});});
+     page.on('response',async response=>{const request=response.request(),url=new URL(response.url());if(url.pathname.startsWith('/personal/v1/')&&!url.pathname.includes('/ui/')){const data=await response.json().catch(()=>({}));trace.push({host:version,surface,method:request.method(),path:url.pathname,status:response.status(),requestFields:Object.keys(request.postDataJSON?.()||{}),state:data.command?.state,errorCode:data.command?.errorCode||data.error?.code,responseFields:Object.keys(data)});}});
      await page.addInitScript(()=>{let module;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>module,set:value=>{module=value;const original=value.create;value.create=(...args)=>{const core=original(...args);globalThis.__fix33Core=core;return core;};}});});
      await page.context().addCookies([{name:'wm_personal_session',value:identity.cookie.split('=')[1],url:started.origin}]);
      await page.route('**/*',async route=>{
@@ -99,6 +100,7 @@ try{
       return route.continue(surface==='desktop'&&url.pathname.startsWith('/personal/v1/')?{headers:{...route.request().headers(),origin:started.origin,'x-weftmate-desktop':host.libraryDesktopToken}}:undefined);
      });
      await page.goto(started.origin+'/personal/v1/ui/');await page.waitForFunction(()=>globalThis.__fix33Core);
+     await page.waitForFunction(()=>globalThis.__WeftUiStarted && globalThis.__fix33Core.state.currentView!=='loading' && !globalThis.__fix33Core.state.cloudAuth?.busy && !globalThis.__fix33Core.state.refreshing);
      await page.evaluate(async identity=>{const c=globalThis.__fix33Core;c.acceptSession(identity);await c.enterAssistant();},identity);
      await page.evaluate(async id=>{await globalThis.__fix33Core.selectSession(id);},sessionId);
      await page.screenshot({path:join(out,`${version}-${surface}-connected.png`)});
@@ -110,7 +112,8 @@ try{
      const replies=await target.evaluate(()=>Array.from(globalThis.__fix33Core.state.historyEvents.values()).filter(e=>e.type==='assistant.message').length);
      const text='合成来回消息-'+randomUUID(),begin=performance.now();await source.locator('#message-text').fill(text);await source.locator('#send-message').click();
      await source.screenshot({path:join(out,`${version}-${label}-sending.png`)});
-     await visible(target,text);const userMs=Math.round(performance.now()-begin);await target.waitForFunction(count=>Array.from(globalThis.__fix33Core.state.historyEvents.values()).filter(e=>e.type==='assistant.message').length>count,replies,{timeout:20000});
+     try {await visible(target,text);} catch(error){scenario.failedRead={source:await source.evaluate(()=>{const s=globalThis.__fix33Core.state;return {submitting:s.submitting,selected:s.selectedSessionId!==null,source:s.activeChatSource,turn:s.turnStatus,tasks:s.tasks.map(t=>({kind:t.kind,state:t.state,errorCode:t.errorCode}))};}),target:await target.evaluate(()=>{const s=globalThis.__fix33Core.state;return {source:s.activeChatSource,selected:s.selectedSessionId!==null,rows:s.historyEvents.size,turn:s.turnStatus,historyInFlight:s.historyInFlight};}),modelStarts:b.starts.length};await target.screenshot({path:join(out,`${version}-read-failed.png`)});throw error;}
+     const userMs=Math.round(performance.now()-begin);await target.waitForFunction(count=>Array.from(globalThis.__fix33Core.state.historyEvents.values()).filter(e=>e.type==='assistant.message').length>count,replies,{timeout:20000});
      scenario.latency.push({label,index,userMs,replyMs:Math.round(performance.now()-begin)});await target.screenshot({path:join(out,`${version}-${label}.png`)});
     }
     }
@@ -125,6 +128,18 @@ try{
      const refresh=performance.now();await desktopPage.evaluate(()=>globalThis.__fix33Core.refreshPhoneRecords());scenario.latency.push({label:'legacy-manual-phone-history-read',ms:Math.round(performance.now()-refresh)});
     }
     await desktopPage.evaluate(id=>globalThis.__fix33Core.selectPhoneConversation(id),conversationId);await desktopPage.screenshot({path:join(out,`${version}-phone-history.png`)});
+    if(version==='current') {
+     const created=await api('/commands',{requestId:randomUUID(),targetDeviceId:started.hostId,kind:'session.create',modelProfileId:'synthetic'},auth);
+     const ready=await wait(()=>api('/commands/by-request/'+created.command.requestId,undefined,auth),r=>r.command?.state==='accepted_by_dsh'),taskSession=ready.command.sessionId;
+     const mode=await fetch(started.origin+`/personal/v1/sessions/${taskSession}/approval-mode`,{method:'PATCH',headers:{origin:started.origin,cookie:auth.cookie,'x-weftmate-csrf':auth.csrfToken,'content-type':'application/json'},body:JSON.stringify({mode:'ask'})});assert.equal(mode.status,200);
+     await phonePage.evaluate(id=>globalThis.__fix33Core.selectSession(id),taskSession);await desktopPage.evaluate(id=>globalThis.__fix33Core.selectSession(id),taskSession);
+     const begin=performance.now();await phonePage.locator('#message-text').fill('CI_R1_FILE_TASK：在合成项目里新建一个文件。');await phonePage.locator('#send-message').click();
+     const approvals=await wait(()=>api(`/sessions/${taskSession}/approvals`,undefined,auth),r=>r.approvals?.some(a=>a.status==='pending'));
+     assert.ok(approvals.approvals.some(a=>a.status==='pending'));scenario.projectApproval={reached:true,ms:Math.round(performance.now()-begin),approved:false};
+     await phonePage.waitForFunction(()=>document.getElementById('approval-bar')?.textContent.includes('批准'),undefined,{timeout:10000});
+     await phonePage.screenshot({path:join(out,'current-phone-project-approval.png')});await desktopPage.screenshot({path:join(out,'current-desktop-project-approval.png')});
+     await api('/commands',{requestId:randomUUID(),targetDeviceId:started.hostId,kind:'session.cancel',sessionId:taskSession},auth);
+    }
    } finally {await browser.close();await electron.close();}
   }
   await host.close();cleanup.pop();if(runtime){await runtime.close();cleanup.pop();}

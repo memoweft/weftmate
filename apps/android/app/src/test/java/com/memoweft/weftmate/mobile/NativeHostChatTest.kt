@@ -5,6 +5,21 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NativeHostChatTest {
+    @Test fun aStablePinReusesTlsButChangingThePinCannotReuseItsTrustManager() {
+        val origin="https://synthetic.example.test";val url=java.net.URL(origin)
+        try {
+            CloudPins.install(origin,"a".repeat(43))
+            val first=(CloudPins.open(url) as javax.net.ssl.HttpsURLConnection).sslSocketFactory
+            assertSame(first,(CloudPins.open(url) as javax.net.ssl.HttpsURLConnection).sslSocketFactory)
+            CloudPins.install(origin,"b".repeat(43))
+            assertNotSame(first,(CloudPins.open(url) as javax.net.ssl.HttpsURLConnection).sslSocketFactory)
+        } finally {CloudPins.clear(origin)}
+    }
+    @Test fun importedPhoneHistoryKeepsTheComputerTimelineRatherThanLookingUpAnAndroidLocalId() {
+        assertFalse(hostChatUsesPhoneStorage(JSONObject().put("source","phone").put("phoneHistory",true).put("readOnly",true).put("chatId","chat-synthetic")))
+        assertTrue(hostChatUsesPhoneStorage(JSONObject().put("source","phone").put("id","conversation-synthetic")))
+        assertFalse(hostChatUsesPhoneStorage(JSONObject().put("kind","side").put("chatId","chat-synthetic")))
+    }
     @Test fun pinnedTrustManagerExposesTheAndroidHostnameAwareChainContract() {
         val method=PinnedTrustManager::class.java.getMethod("checkServerTrusted",Array<java.security.cert.X509Certificate>::class.java,String::class.java,String::class.java)
         assertTrue(java.util.List::class.java.isAssignableFrom(method.returnType))

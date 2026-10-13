@@ -36,6 +36,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     private var messageIntent = "queue"
     var sessionId by mutableStateOf("")
     var phone by mutableStateOf(false)
+    var phoneHistory by mutableStateOf(false)
     var standalone by mutableStateOf(false)
     var phoneArchive by mutableStateOf(false)
     var canRegenerate by mutableStateOf(false)
@@ -181,7 +182,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         saveDraft(); generation++; poll?.cancel(); timeline.reset(); cursor = ""; liveRevision = 0; seq = -1
         val g = generation
         phoneArchive = chat.optBoolean("nativePhone")
-        phone = chat.optString("source") == "phone" || !chat.has("chatId") && chat.has("id")
+        phoneHistory = chat.optBoolean("phoneHistory")
+        phone = hostChatUsesPhoneStorage(chat)
         chatId = if (phone) chat.getString("id") else chat.optString("chatId")
         chatKind = chat.optString("kind")
         sessionId = chat.optString("activeSessionId").takeUnless { it == "null" } ?: ""

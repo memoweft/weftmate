@@ -232,7 +232,7 @@ class SharedChatOutboxTest {
             attachments.claimDraft(owner, listOf(imported.id), sessionId)
             val fixture = HostFixture(sessionId).apply { commandState = "pending" }
             val server = Thread {
-                try { socket.accept().use { connection ->
+                try { repeat(2) { socket.accept().use { connection ->
                     val input = connection.getInputStream().buffered()
                     fun line(): String {
                         val bytes = java.io.ByteArrayOutputStream()
@@ -244,7 +244,8 @@ class SharedChatOutboxTest {
                         return bytes.toString("UTF-8")
                     }
                     val requestLine = line()
-                    if (!requestLine.startsWith("PUT /personal/v1/sessions/$sessionId/attachments/${imported.id}?"))
+                    val original = requestLine.startsWith("PUT /personal/v1/sync/attachments/${imported.id}?")
+                    if (!original && !requestLine.startsWith("PUT /personal/v1/sessions/$sessionId/attachments/${imported.id}?"))
                         throw AssertionError("Unexpected upload path")
                     var length = 0
                     var mime = ""
@@ -258,27 +259,28 @@ class SharedChatOutboxTest {
                             declaredHash = header.substringAfter(':').trim()
                     }
                     if (length !in 1..512 * 1024) throw AssertionError("Derived upload length")
-                    if (mime != "image/jpeg") throw AssertionError("Derived upload MIME")
+                    if (mime != if(original) "image/png" else "image/jpeg") throw AssertionError("Upload MIME")
                     val uploaded = input.readNBytes(length)
-                    if (uploaded.size != length || uploaded.size < 4 ||
+                    if (original && !uploaded.contentEquals(imported.file.readBytes())) throw AssertionError("Original PNG body")
+                    if (uploaded.size != length || !original && (uploaded.size < 4 ||
                         uploaded[0] != 0xff.toByte() || uploaded[1] != 0xd8.toByte() ||
                         uploaded[2] != 0xff.toByte() || uploaded[uploaded.size - 2] != 0xff.toByte() ||
-                        uploaded.last() != 0xd9.toByte()) throw AssertionError("Derived JPEG body")
+                        uploaded.last() != 0xd9.toByte())) throw AssertionError("Derived JPEG body")
                     val actualHash = MessageDigest.getInstance("SHA-256").digest(uploaded)
                         .joinToString("") { "%02x".format(it) }
                     if (declaredHash != actualHash) throw AssertionError("Derived upload hash")
-                    uploadBytes.set(uploaded)
+                    if (!original) uploadBytes.set(uploaded)
                     val meta = JSONObject().put("attachmentId", imported.id)
                         .put("name", imported.name).put("contentType", mime)
                         .put("size", uploaded.size).put("sha256", actualHash)
-                    uploadMeta.set(meta)
+                    if (!original) uploadMeta.set(meta)
                     val body = JSONObject().put("attachment", meta)
                         .put("duplicate", false).toString().toByteArray()
                     val head = "HTTP/1.1 201 Created\r\nContent-Type: application/json\r\n" +
                         "Content-Length: ${body.size}\r\nConnection: close\r\n\r\n"
                     connection.getOutputStream().write(head.toByteArray() + body)
                     connection.getOutputStream().flush()
-                } } catch (error: Throwable) { failure.set(error) }
+                } } } catch (error: Throwable) { failure.set(error) }
             }
             server.start()
             val shared = SharedChat(local, PersonalApi(fixture), attachments)
@@ -297,7 +299,7 @@ class SharedChatOutboxTest {
             val sentRef = fixture.postedPayloads.single().getJSONArray("attachments").getJSONObject(0)
             for (key in listOf("attachmentId", "name", "contentType", "size", "sha256"))
                 assertEquals("Command reference $key", transmittedMeta.get(key), sentRef.get(key))
-            assertEquals("uncertain", submitted.getString("state"))
+            assertEquals("pending", submitted.getString("state"))
             assertTrue(imported.file.exists())
             assertEquals(imported.id, attachments.list(owner, sessionId).single().id)
             fixture.commands["owner-image|shared-image-request"]!!.put("state", "accepted_by_dsh")
