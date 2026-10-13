@@ -222,6 +222,13 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
         else row.mimeType to row.file.readBytes()
     }
 
+    /** Original bytes for the unified native viewer, including already sent files. */
+    @Synchronized internal fun originalForViewing(owner: String, conversationId: String, id: String): ChatAttachment? {
+        val row = load(id)?.takeIf { it.owner == owner && it.conversationId == conversationId } ?: return null
+        verify(row)
+        return row
+    }
+
     @Synchronized fun messageThumbnails(owner: String, conversationId: String,
         rows: List<ChatAttachment>): List<MessageThumbnail> = rows.filter { it.kind == "image" }.mapNotNull { row ->
         if (row.owner != owner || row.conversationId != conversationId || load(row.id)?.owner != owner)
