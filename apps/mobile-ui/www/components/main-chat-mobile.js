@@ -117,7 +117,7 @@
   renderSharedConversation=function(){if(main()){ensureList();mobileEffects.renderMainChat();updateComposer();return;}return oldRender();};
   loadSharedHistory=function(wait=false){return main()?uiCore.refreshLogicalHistory(false,wait):oldLoad(wait);};
   loadOlderHistory=function(){return main()?uiCore.loadOlderLogicalHistory():oldOlder();};
-  handleChatScroll=function(){if(main())ensureConversationScroll().scrolled();else oldScroll();};
+  handleChatScroll=function(){if(main()){ensureConversationScroll().scrolled();syncPendingDecision();}else oldScroll();};
   send=async function(options={}){
     if(window.weftNative&&state.connection==='expired'){globalThis.WeftMobileCloud.core?.startCloudJourney();return;}
     try{return await (main()?uiCore.sendMainDraft($('draft').value,options.intent):state.logicalChats&&!window.weftNative?uiCore.sendDraft($('draft').value,options.intent):oldSend(options));}

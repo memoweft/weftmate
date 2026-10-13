@@ -1,0 +1,18 @@
+{
+  "mobileInteractions": {
+    "passed": 114,
+    "failed": 0
+  },
+  "typecheck": true,
+  "sharedAssets": 61,
+  "publicHygiene": {
+    "hits": 0
+  },
+  "mechanicalDesignDetector": {
+    "hits": 0
+  },
+  "relatedM3S7": {
+    "passed": 30,
+    "failed": 0
+  }
+}

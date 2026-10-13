@@ -1,5 +1,5 @@
 /* One library presentation for the desktop and mobile web. */
-globalThis.WeftLibraryView={mount({target,core,desktop=false,openPreview,copyPath,notice=()=>{}}){
+globalThis.WeftLibraryView={mount({target,core,desktop=false,openPreview,configurePreview,copyPath,notice=()=>{}}){
     const node=(tag,cls,text)=>{const el=document.createElement(tag);el.className=cls||'';if(text!==undefined)el.textContent=text;return el;};
     const button=(text,action,cls='button quiet small')=>{const el=node('button',cls,text);el.type='button';el.onclick=()=>Promise.resolve(action(el)).catch(error=>notice(core.failureMessage(error)));return el;};
     const kind=item=>/\.pdf$/i.test(item.fileName)?'book':/\.(zip|7z|rar|tar|gz)$/i.test(item.fileName)?'archive':({image:'image',code:'code',spreadsheet:'chart',document:'file',other:'file'})[item.type];
@@ -30,7 +30,10 @@ globalThis.WeftLibraryView={mount({target,core,desktop=false,openPreview,copyPat
         const epoch=++previewEpoch,identity=core.state.identityGeneration,generation=core.library.generation;
         const content=openPreview(item,trigger);globalThis.WeftDesktop?.configureLibraryPreview(core.library.items,preview);content.replaceChildren(skeleton());
         try{const data=await core.libraryPreview(item);if(epoch!==previewEpoch||identity!==core.state.identityGeneration||generation!==core.library.generation||!content.isConnected)return;
-            content.replaceChildren();const actions=node('div','library-preview-actions');appendActions(actions,item,true);content.append(actions);
+            content.replaceChildren();if(configurePreview)configurePreview(item,content);else if(globalThis.WeftPhoneUnify?.isPhone()){
+                const header=content.closest('.phone-file-page')?.querySelector('.phone-file-topbar');
+                if(header)WeftPhoneFiles.attach({menu:header.querySelector('button:last-child'),name:item.fileName,getBlob:()=>WeftPhoneFiles.readBlob(core.artifactDownloadUrl(item.id))});
+            }else{const actions=node('div','library-preview-actions');appendActions(actions,item,true);content.append(actions);}
             WeftContent.preview(content,data,{name:item.fileName,artifactId:item.id,desktop:false});
         }catch(error){if(epoch===previewEpoch&&content.isConnected)content.replaceChildren(node('p','library-empty','暂时无法读取，请重试。'),button('重新读取',()=>preview(item,trigger)));}
     }

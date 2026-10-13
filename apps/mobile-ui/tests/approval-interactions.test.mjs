@@ -76,13 +76,13 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     },sessionId);await page.evaluate(()=>uiCore.retryConnection());};
     const label=page.locator('#approval-mode-label'),menu=page.locator('#approval-mode-popover');
     await seed();await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='自动');
-    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await page.locator('#draft').focus();await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
     assert.equal(await menu.locator('[role="menuitemradio"]').count(),5);
     assert.equal(await menu.locator('[aria-checked="true"]').getAttribute('data-mode'),'auto');
     await page.keyboard.press('ArrowDown');assert.equal(await page.evaluate(()=>document.activeElement.dataset.mode),'ask');
     await page.keyboard.press('Escape');assert.equal(await menu.isVisible(),false);
     assert.equal(await page.evaluate(()=>document.activeElement.id),'approval-mode-button');
-    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await page.locator('#draft').focus();await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
     await screenshot('01-mode-menu.png');
     await menu.locator('[data-mode="allow-all"]').click();assert.equal(await page.locator('#approval-risk-dialog').isVisible(),true);
     assert.match(await page.locator('#approval-risk-dialog').innerText(),/删除或覆盖文件.*修改系统.*安装软件.*发送或发布.*付款.*无法撤销/s);
@@ -93,26 +93,26 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await screenshot('02-allow-all-risk.png');
     await page.keyboard.press('Escape');assert.equal(await label.innerText(),'自动');
     assert.equal(await page.locator('#approval-risk-dialog').isVisible(),false);
-    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await page.locator('#draft').focus();await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
     await menu.locator('[data-mode="allow-all"]').click();
     await page.locator('#approval-risk-cancel').click();assert.equal(await label.innerText(),'自动');
-    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await page.locator('#draft').focus();await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
     await menu.locator('[data-mode="allow-all"]').click();await page.locator('#approval-risk-confirm').click();
     await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='全部允许');
     // All five values travel through the contract, and switching conversations reads their own modes.
     for(const [mode,text] of [['ask','每次询问'],['accept-edits','接受修改'],['plan','先出计划'],['auto','自动']]){
-      await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+      await page.locator('#draft').focus();await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
       await menu.locator(`[data-mode="${mode}"]`).click();await page.waitForFunction(value=>document.getElementById('approval-mode-label').textContent===value,text);
       assert.equal(await label.innerText(),text);
     }
-    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await page.locator('#draft').focus();await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
     await menu.locator('[data-mode="allow-all"]').click();await page.keyboard.press('Enter');
     await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='全部允许');
-    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await page.locator('#draft').focus();await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
     await menu.locator('[data-mode="auto"]').click();await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='自动');
     await seed('s2');await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='每次询问');
     await seed('s1');await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='自动');
-    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await page.locator('#draft').focus();await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
     await page.evaluate(()=>fixture.failModeWrite=true);await menu.locator('[data-mode="ask"]').click();
     await page.waitForFunction(()=>!approvalModeState.loading);assert.equal(await page.evaluate(()=>fixture.sessionModes.s1),'auto');
     assert.equal(await label.innerText(),'审批');await page.evaluate(()=>fixture.failModeWrite=false);
@@ -127,7 +127,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await page.evaluate(()=>page('chat'));await seed();
     // STREAM-1b: twelve real scheduled reads must preserve menu, risk dialog and IME.
     await page.evaluate(()=>{fixture.live=true;fixture.liveTick=0;fixture.history=[{seq:0,type:'user.message',data:{text:'请持续回复'}},{seq:1,type:'turn.started',data:{}}];state.sharedEvents=fixture.history;state.sharedNextSeq=1;state.sharedRunning=true;uiCore.state.personalCapabilities={replyStreaming:1};renderSharedConversation();scheduleSharedPoll();});
-    await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
+    await page.locator('#draft').focus();await page.locator('#approval-mode-button').click();await page.waitForFunction(()=>!approvalModeState.loading);
     const unchangedOption=await menu.locator('[data-mode="allow-all"]').elementHandle();
     await page.waitForTimeout(3100);assert.equal(await menu.isVisible(),true);
     assert.equal(await unchangedOption.evaluate(node=>node.isConnected&&node===document.querySelector('#approval-mode-popover [data-mode="allow-all"]')),true);
@@ -162,7 +162,10 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params.scope),'once');
     await showApproval();assert.equal(await card.getByRole('button',{name:'以后这类都允许',exact:true}).count(),0);
     await page.evaluate(()=>{fixture.approval={...fixture.approval,riskCategories:['overwrite','execute'],operationCategories:['write','command'],canAlwaysAllow:true};});await page.evaluate(()=>refreshToolApprovals(approvalContext(),{force:true}));
-    await card.getByRole('button',{name:'以后这类都允许',exact:true}).click();
+    await card.getByRole('radio',{name:'以后这类都允许',exact:true}).click();
+    assert.equal(await card.getByRole('radio',{name:'以后这类都允许',exact:true}).getAttribute('aria-checked'),'true');
+    assert.equal(await page.evaluate(()=>fixture.approval.status),'pending','choosing a scope waits for confirmation');
+    await card.getByRole('button',{name:'确认',exact:true}).click();
     await card.waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>approvalRecord([...toolApprovals.sessions.get('s1').rows.values()][0])),'已允许 · 运行脚本');
     assert.equal(await page.evaluate(()=>fixture.requests.filter(r=>r.method==='shared.approvals.decide').at(-1).params.scope),'global-category');
     assert.equal(await page.evaluate(()=>fixture.rules.write),'allow');

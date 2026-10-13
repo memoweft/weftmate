@@ -2,6 +2,7 @@ import {build} from 'esbuild';
 import {cp, mkdir, readdir, readFile, writeFile, rm} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {join, relative} from 'node:path';
+import {buildPhonePdf} from '../../../scripts/build-phone-pdf.mjs';
 const root=fileURLToPath(new URL('../../../',import.meta.url)), modules=join(root,'apps/mobile-ui/node_modules');
 const desktop=join(root,'src/personal-access-ui'), mobile=join(root,'apps/mobile-ui/www');
 await build({entryPoints:[join(root,'src/ui-core/format-source.js')],nodePaths:[modules],bundle:true,minify:true,format:'iife',globalName:'WeftFormat',outfile:join(desktop,'format-vendor.js'),legalComments:'inline'});
@@ -32,3 +33,4 @@ for(const input of Object.keys(meta.metafile.inputs)){const tail=input.split('no
 for(const name of packages){const dir=join(modules,name);let names;try{names=await readdir(dir);}catch{continue;}for(const file of names.filter(name=>/^(license|copying|notice)(\.|$)/i.test(name)))await cp(join(dir,file),join(desktop,'licenses/rendering',name.replace(/^@/,'').replace('/','-')+'-'+file+'.txt'));}
 await cp(join(desktop,'licenses/rendering'),join(mobile,'licenses/rendering'),{recursive:true});
 console.log(`[rendering] ${assets.length} offline assets; ${packages.size} dependency licenses`);
+await buildPhonePdf();
