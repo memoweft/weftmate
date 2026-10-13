@@ -40,10 +40,11 @@ jobs:
         with:
           fetch-depth: 1
 
-      # The required compatibility case reads this tree, not its ancestors.
+      # Required cloud compatibility and mobile request-budget probes read these
+      # fixed trees, not their ancestors.
       # Avoid downloading the whole repository before Windows tests can start.
-      - name: Fetch fixed legacy cloud fixture
-        run: git fetch --no-tags --depth=1 origin 58589464caec02d651962e57e08a65453c59f6b1
+      - name: Fetch fixed legacy fixtures
+        run: git fetch --no-tags --depth=1 origin 58589464caec02d651962e57e08a65453c59f6b1 8f1b5de54e15720271e49e9b0653cd06ece3b096
 
       - name: Setup Node
         uses: actions/setup-node@v4

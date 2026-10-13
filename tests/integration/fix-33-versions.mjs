@@ -141,8 +141,21 @@ try{
      scenario.latency.push({label:'phone-independent-upload-to-desktop-list',ms:null,notVisibleWithinMs:10000,requiresDesktopUpdate:version==='old',beforeFix:timingBaseline});
      const refresh=performance.now();await desktopPage.evaluate(()=>globalThis.__fix33Core.refreshPhoneRecords());scenario.latency.push({label:'legacy-manual-phone-history-read',ms:Math.round(performance.now()-refresh)});
     }
-    await desktopPage.evaluate(id=>globalThis.__fix33Core.selectPhoneConversation(id),conversationId);await desktopPage.waitForFunction(()=>document.getElementById('transcript')?.textContent.includes('合成手机独立回复'));await desktopPage.screenshot({path:join(out,`${version}-phone-history.png`)});
+    await desktopPage.evaluate(id=>globalThis.__fix33Core.selectPhoneConversation(id),conversationId);await desktopPage.waitForFunction(()=>document.getElementById('transcript')?.textContent.includes('合成手机独立回复'));
+    scenario.handoffControls=await desktopPage.evaluate(()=>[...document.querySelectorAll('.phone-handoff button,.phone-handoff select')].map(node=>{const s=getComputedStyle(node);return {tag:node.tagName,className:node.className,text:node.textContent,color:s.color,background:s.backgroundColor,fontSize:s.fontSize,display:s.display,rules:[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].filter(rule=>rule.selectorText&&node.matches(rule.selectorText)&&rule.style.color).map(rule=>({selector:rule.selectorText,color:rule.style.color}));}catch{return [];}})};}));
+    await desktopPage.screenshot({path:join(out,`${version}-phone-history.png`)});
     if(version==='current'&&!timingBaseline) {
+     for(const control of scenario.handoffControls.filter(c=>c.display!=='none'))assert.notEqual(control.color,control.background,'handoff controls must have visible labels');
+     await desktopPage.getByRole('combobox',{name:'电脑模型',exact:true}).click();
+     await desktopPage.getByRole('option',{name:'合成中继模型',exact:true}).waitFor();
+     await desktopPage.screenshot({path:join(out,'current-handoff-model-menu.png')});
+     await desktopPage.getByRole('option',{name:'合成中继模型',exact:true}).click();
+     const handoffStart=performance.now();await desktopPage.getByRole('button',{name:'在电脑继续',exact:true}).click();
+     await desktopPage.waitForFunction(id=>globalThis.__fix33Core.phoneBinding(id)?.sessionId,conversationId,{timeout:20000});
+     await phonePage.evaluate(async id=>{await globalThis.__fix33Core.refreshPhoneRecords();await globalThis.__fix33Core.selectPhoneConversation(id);await globalThis.__fix33Core.refreshPhoneBinding(id);},conversationId);
+     scenario.handoff={ms:Math.round(performance.now()-handoffStart),phoneAlsoBound:await phonePage.evaluate(id=>!!globalThis.__fix33Core.phoneBinding(id)?.sessionId,conversationId)};
+     assert.equal(scenario.handoff.phoneAlsoBound,true);
+     await desktopPage.screenshot({path:join(out,'current-handoff-completed.png')});
      const created=await api('/commands',{requestId:randomUUID(),targetDeviceId:started.hostId,kind:'session.create',modelProfileId:'synthetic'},auth);
      const ready=await wait(()=>api('/commands/by-request/'+created.command.requestId,undefined,auth),r=>r.command?.state==='accepted_by_dsh'),taskSession=ready.command.sessionId;
      const mode=await fetch(started.origin+`/personal/v1/sessions/${taskSession}/approval-mode`,{method:'PATCH',headers:{origin:started.origin,cookie:auth.cookie,'x-weftmate-csrf':auth.csrfToken,'content-type':'application/json'},body:JSON.stringify({mode:'ask'})});assert.equal(mode.status,200);
