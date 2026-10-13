@@ -767,9 +767,14 @@ final class AppleAppModel: ObservableObject {
     }
     func pollOffline() async {
         guard let session, let directory = timelineStateDirectory else { return }
+        #if os(iOS)
+        let phoneFirst=true
+        #else
+        let phoneFirst=false
+        #endif
         await offline.poll(session: session, client: client, directory: directory.appendingPathComponent("Offline"),
             store: KeychainCredentialStore(service: cloudNamespace + ".offline"),
-            allowLoopback: permitsSyntheticLoopback, control: offlineAuthorization)
+            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, control: offlineAuthorization)
         #if os(iOS)
         await phoneChat.synchronize(app:self)
         if offline.hostOffline { _ = await watchSnapshotBytes() }
@@ -2167,7 +2172,7 @@ final class AppleAppModel: ObservableObject {
             return
         }
         #if os(iOS)
-        phoneChat.stop()
+        phoneChat.deactivate()
         #endif
         clearVisibleAccount()
         var cloudCleanupFailure = false

@@ -4,13 +4,15 @@ import WeftMateCore
 struct PhoneWorkspace: View {
     @ObservedObject var model: AppleAppModel
     @ObservedObject private var cloud: CloudLoginModel
-    init(model: AppleAppModel) { self.model=model; cloud=model.cloudLogin }
+    @ObservedObject private var phone: PhoneStandaloneModel
+    init(model: AppleAppModel) { self.model=model; cloud=model.cloudLogin;phone=model.phoneChat }
     @State private var tab: PhoneTab = .chat
     @State private var chatRoot = UUID()
     @State private var keyboardVisible = false
     @State private var visited: Set<PhoneTab> = [.chat]
     var body: some View {
         VStack(spacing:AppleTokens.Space.p0) {
+            PhoneMemoryHandoffBanner(model:model.phoneChat)
             ZStack {
                 ForEach(PhoneTab.allCases.filter { visited.contains($0) }) { item in
                     page(item).opacity(tab == item ? 1 : 0).allowsHitTesting(tab == item).accessibilityHidden(tab != item)
@@ -18,7 +20,7 @@ struct PhoneWorkspace: View {
             }.frame(maxWidth:.infinity,maxHeight:.infinity)
             if !keyboardVisible { PhoneBottomTabs(selection:$tab).background(Weave.canvas) }
         }
-        .onChange(of:tab) { _,value in visited.insert(value) }
+        .onChange(of:tab) { old,value in if old == .chat { model.phoneChat.finishConversation() };visited.insert(value) }
         // UIKit notifications are delivered as values; only the explicit MainActor task changes UI state.
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = true } }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = false } }
@@ -31,7 +33,7 @@ struct PhoneWorkspace: View {
         switch item {
         case .chat:
             Group {
-                if model.session == nil { PhoneStandaloneChat(app:model,model:model.phoneChat,tab:$tab) }
+                if model.session == nil || (phone.usesPhoneMemory && !phone.state.threads.isEmpty) { PhoneStandaloneChat(app:model,model:model.phoneChat,tab:$tab) }
                 else if model.offline.hostOffline || model.offline.showHistory { OfflineChatView(app:model,model:model.offline) }
                 else { PhoneChatWorkspace(model:model,tab:$tab) }
             }.id(chatRoot)

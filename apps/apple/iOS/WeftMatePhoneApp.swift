@@ -10,7 +10,8 @@ struct WeftMatePhoneApp: App {
     var body: some Scene {
         WindowGroup {
             #if DEBUG && targetEnvironment(simulator)
-            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-addendum") { Apple5AddendumFixture(health:health) }
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple7-fixture") { PhoneMemoryScreenshotFixture(app:model) }
+            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-addendum") { Apple5AddendumFixture(health:health) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-fixture") { Apple5Fixture(health:health) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple4-fixture") { Apple4Fixture(health: health) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple3-fixture") { Apple3Fixture(health:health) }
@@ -23,7 +24,7 @@ struct WeftMatePhoneApp: App {
             content
             #endif
         }
-        .onChange(of: logScenePhase) { _, phase in RunLogRuntime.shared.phase(phase) }
+        .onChange(of: logScenePhase) { _, phase in RunLogRuntime.shared.phase(phase);if phase == .background || phase == .active { model.phoneChat.finishConversation() } }
     }
     private var healthContent: some View {
         WeftMateRootView(model: model)

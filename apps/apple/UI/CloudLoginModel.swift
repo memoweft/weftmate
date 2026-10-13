@@ -189,6 +189,9 @@ final class CloudLoginModel: ObservableObject {
             seenDeviceIDs.formUnion(directory.devices.map(\.id)); directoryLoaded = true
             try store.save(JSONEncoder().encode(seenDeviceIDs), key: "seen-devices:" + (subject ?? ""))
             devices = directory.devices; hosts = directory.hosts
+            #if os(iOS)
+            if let app { app.phoneChat.activate(app:app);app.phoneChat.computerDirectoryChanged(hostIDs:Set(directory.hosts.map { $0.hostId ?? $0.id })) }
+            #endif
             if let current = devices.first(where: { $0.isCurrent }) { deviceName = current.name }
             let address=try await account.accountEmail()
             guard ticket == operation, authenticated else { return };email=address
