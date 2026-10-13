@@ -1,0 +1,20 @@
+{
+  "syntheticAccount": true,
+  "nativeEntry": true,
+  "model": "mimo-v2.6-flash",
+  "mimoRequests": 2,
+  "keySource": "Machine environment; no plaintext log or repository secret. The actual model configuration uses encrypted isolated QA settings, removed when the test package is uninstalled.",
+  "checksPassed": [
+    "native-register-no-computer-enters-chat",
+    "native-empty-model-cta-actual-settings-return",
+    "native-model-key-is-encrypted",
+    "native-mimo-stream-and-final-reply",
+    "native-stop-preserves-partial"
+  ],
+  "realStreamScreenshot": "native-390-light-mimo-stream.png",
+  "laterScenarioFailure": {
+    "stage": "regenerate button visibility",
+    "resolved": "final native synthetic-stream run covers regenerate and copy; real model not called again"
+  },
+  "coverage": "Real model configuration test, streaming reply, final reply and stopping; full account/navigation/handoff matrix uses controlled synthetic streams."
+}

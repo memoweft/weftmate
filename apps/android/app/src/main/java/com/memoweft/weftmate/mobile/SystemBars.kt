@@ -37,7 +37,9 @@ internal fun savedAppearance(context: Context): String {
 /** Transparent bars on API 26+, including Android 15's enforced edge-to-edge.
  * Insets are geometry; their backgrounds belong to the actual page, never a system colour. */
 internal object SystemBars {
-    fun surface(activity: Activity, dark: Boolean) = activity.getColor(systemBarStyle(dark).surface)
+    fun surface(activity: Activity, dark: Boolean) = if(activity is NativeActivity || activity is MainActivity)
+        (if(dark) DesignTokens.nativeDarkCanvas else DesignTokens.nativeSurface)
+        else activity.getColor(systemBarStyle(dark).surface)
 
     fun prepare(activity: Activity, selected: String) {
         activity.setTheme(if (resolvedAppearanceDark(selected, systemAppearanceDark()))

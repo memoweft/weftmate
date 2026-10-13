@@ -20,13 +20,14 @@ object Weave {
     val secondary get() = if (dark) DesignTokens.nativeDarkSecondary else DesignTokens.nativeSecondary
     val muted get() = if (dark) DesignTokens.nativeDarkMuted else DesignTokens.nativeMuted
     val canvas get() = if (dark) DesignTokens.nativeDarkCanvas else DesignTokens.nativeCanvas
-    val surface get() = if (dark) DesignTokens.nativeWebSurfaceDark else DesignTokens.nativeWebSurfaceLight
+    val surface get() = if (dark) DesignTokens.nativeDarkSurface else DesignTokens.nativeSurface
+    val onAccent get() = if(dark) DesignTokens.nativeDarkOnAccent else DesignTokens.nativeOnAccent
     val soft get() = if (dark) DesignTokens.nativeDarkSoft else DesignTokens.nativeSoft
     val accentSoft get() = if (dark) DesignTokens.nativeDarkAccentSoft else DesignTokens.nativeAccentSoft
     val line get() = if (dark) DesignTokens.nativeDarkLine else DesignTokens.nativeLine
-    const val lineStrong = DesignTokens.nativeLineStrong
+    val lineStrong get() = if(dark) DesignTokens.nativeDarkLineStrong else DesignTokens.nativeLineStrong
     val danger get() = if (dark) DesignTokens.nativeDarkDanger else DesignTokens.nativeDanger
-    const val overlay = DesignTokens.nativeOverlay
+    val overlay get() = if(dark) DesignTokens.nativeDarkOverlay else DesignTokens.nativeOverlay
 
     fun dp(context: Context, value: Int): Int = (context.resources.displayMetrics.density * value).toInt()
     fun shape(context: Context, color: Int, radius: Int, stroke: Int? = null) = GradientDrawable().apply {
@@ -68,7 +69,7 @@ object Weave {
         background = shape(context, if (softMark) accentSoft else accent, if (size >= DesignTokens.space48) DesignTokens.radius19 else DesignTokens.radius10)
         addView(ImageView(context).apply {
             setImageResource(R.drawable.weftmate_foreground)
-            imageTintList = ColorStateList.valueOf(if (softMark) accent else surface)
+            imageTintList = ColorStateList.valueOf(if (softMark) accent else onAccent)
             scaleType = ImageView.ScaleType.FIT_CENTER
         }, FrameLayout.LayoutParams(dp(context, size), dp(context, size), Gravity.CENTER))
     }
