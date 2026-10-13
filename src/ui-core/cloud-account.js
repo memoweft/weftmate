@@ -185,9 +185,12 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     if (ticket !== journey) return;
     if (result.status === 'pending_approval') throw { code: environment.deviceType === 'android' && !result.requestId ? 'NATIVE_LOGIN_UPGRADE_REQUIRED' : 'UPDATE_REQUIRED' };
     if (result.status === 'cloud_only') {
-      auth.mode = 'authenticated'; auth.modal = false; paint();
-      await effects.enterCloudOnly?.(); return;
+      auth.mode = 'authenticated'; auth.modal = false; auth.cloudOnly = true; paint();
+      await effects.enterCloudOnly?.({ accountId: saved.sub, email: auth.email, deviceId: (await client.key()).deviceId, origin: new URL(client.config.issuer).origin });
+      scheduleRenewal(); return;
     }
+    auth.cloudOnly = false;
+    await effects.preparePhoneAccount?.({ accountId: saved.sub, email: auth.email, deviceId: (await client.key()).deviceId, origin: new URL(client.config.issuer).origin });
     clearTimeout(waitTimer); waitTimer = null;
     if (pairing) { await saveCloudPairingPin(pairing); environment.initialPairing = null; }
     auth.mode = 'authenticated'; auth.modal = false; paint();
@@ -198,6 +201,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     const draft = await environment.cloudCredentials('draft:' + saved.sub);
     if (draft) { effects.restoreCloudDraft?.(draft); await environment.cloudCredentials('draft:' + saved.sub, undefined, true); }
   }
+  async function resumeCloudComputer() { return finishCloudLogin(); }
   async function retryCloudApproval(ticket = journey) {
     if (ticket !== journey || auth.mode !== 'waiting') return;
     try { await finishCloudLogin(ticket); }
@@ -291,6 +295,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await client.authorized('/hosts/remove',{method:'POST',body:{hostId}});return cloudDirectory();
   };
   core.probeCloudPresence = async () => {
+    if (auth.cloudOnly) return null;
     if (!client?.config?.hostId || !await client.saved()) return null;
     return cloudConnect(client.config.hostId);
   };
@@ -466,7 +471,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return client.authorized('/feedback', { method: 'POST', body: payload });
   }
   return { cloudSendFeedback, initializeCloudAccount, cloudAuthView, cloudDeviceTime, cloudError, cloudPasswordHint, startCloudJourney, dismissCloudLogin, localAccounts, switchLocalAccount, localDeviceDirectory, logoutLocalDevice, cloudBindDesktop, cloudRequestCode, cloudVerifyCode, cloudComplete, cloudLogin,
-    retryCloudApproval, cancelCloudJourney, renewCloudSession, cloudOfflineLogin, cloudDirectory, cloudRename, cloudRemove, cloudConnect, cloudTrust,
+    resumeCloudComputer, retryCloudApproval, cancelCloudJourney, renewCloudSession, cloudOfflineLogin, cloudDirectory, cloudRename, cloudRemove, cloudConnect, cloudTrust,
     cloudEmailRequest, cloudEmailConfirm, cloudChangePassword, cloudLogout, cloudLogoutOthers, cloudDeleteAccount, cloudEmergencyPassword, cloudPairing, cloudRedeemPairing, cloudConnectTrusted,
     cloudTrustMaterial, cloudImportTrust, cloudApproveOffline };
 };
