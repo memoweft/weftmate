@@ -36,6 +36,6 @@ internal fun nativeFileIcon(row:JSONObject):Int = when(nativeFileKind(row.optStr
     Column(Modifier.fillMaxWidth().padding(DesignTokens.space24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(DesignTokens.space16.dp)) {
         Icon(painterResource(icon),null,Modifier.size(DesignTokens.space32.dp),tint=MaterialTheme.colorScheme.onSurfaceVariant)
         Text(message,fontSize=DesignTokens.font16.sp,lineHeight=DesignTokens.font24.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
-        if(retry!=null)OutlinedButton(onClick=retry,shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.heightIn(min=DesignTokens.space44.dp)){Text("重试")}
+        if(retry!=null)OutlinedButton(onClick=retry,shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.height(DesignTokens.space44.dp)){NativeFileLabel("重试")}
     }
 }
