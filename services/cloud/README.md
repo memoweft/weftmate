@@ -113,3 +113,19 @@ Mac Node 24.21.0 本地 30/30 通过，独立依赖审计 0 漏洞。[Linux Clou
 `npm test` 当前常规 cloud 测试 36/36（全链路 E2E 默认显式跳过）；`.github/workflows/relay.yml` 下载已校验的官方 frp，单独跑实际 TCP 443 全链路，不使用用户运行数据。Mac 相同链路在 18443 通过，示例域名全部用 --resolve / 测试连接地址覆盖；见 `../../src/personal-relay/README.md`。
 
 S3a：schema（存储结构）8 新增 `push_registrations`，当前 DPoP（设备持钥证明）身份绑定登记 / 轮换 / 撤销，设备撤销与账号注销级联删除。`/personal/v1/cloud/auth/push/registration` 响应不回显令牌；共享 PushProvider（推送提供方接口）当前明确未配置。未来派发只接受 `{eventId,type}`，不向云或提供方传正文；方法和接线见 CLIENT_API 9.8.2。生产升级需运行现有迁移流程，未部署。
+
+S7：schema（存储结构）9 新增 `009-offline-tasks.sql`，不改变旧表字段与既有客户端响应。启动时原迁移账本只应用一次，反复启动保持相同迁移校验；升级需发布此服务源码与迁移文件并重启服务，不新增环境配置。迁移不能从 9 降回 8；回退服务代码时保留迁移文件与账本兼容，部署由编排安排，本包未连接或部署生产。
+
+| POST `/personal/v1/cloud/hosts/offline/tasks/…` | 认证与请求 | 响应 |
+|---|---|---|
+| `submit` | 原 DPoP 已批准成员设备；`{hostId,id,generation,envelope}`，信封格式与 CLIENT_API 3.19 相同；随机任务 ID、64 KiB 信封、每账号100件尚未终结事项、默认7天 | `{id,hostId,createdAt,expiresAt,state:"waiting"}`，相同密文重试幂等 |
+| `list` | 同设备；`{hostId}` | `{items:[{id,hostId,createdAt,expiresAt,state}]}`，无正文 |
+| `cancel` | 同设备；`{hostId,id}` | 同条状态；云正文密文立即置空；已确认领取409 `TASK_ALREADY_RECEIVED` |
+| `clear` | 同设备；`{}` | `{deleted:true}`，删除此账户当前物理设备的全部事项 |
+| `claim` | 原宿主安装签名 `{hostId,proof}`，proof 的 `action` 为完整路径 | `{items:[{id,claimId,accountId,deviceId,jkt,generation,hostId,createdAt,expiresAt,state,envelope}]}`，按序最多20件，30秒租期 |
+| `ack` | 安装签名载荷 `{action,id,claimId,receiptId}`，只绑定目标电脑 | `{accepted:boolean}`；成功删密文、保留回执，取消／过期胜出则false |
+| `result` | 安装签名 `{action,id,receiptId,state:"started"\|"completed"\|"failed"}` | `{accepted:boolean}`，只发最小事件身份推送，不接收通知正文 |
+
+任务接口每账户120次／分钟，安装每电脑600次／分钟；越限429 `RATE_LIMITED`。过期自动置空正文密文，领取回执保留到执行终结，最小终态7天后删除；授权／代次变更及账户／设备外键删除会立即删记录。服务日志只保留原操作字段；所有非法请求错误只返回固定代码，不能回显请求体。安全边界、原生接线与故障恢复详见 `docs/M3_OFFLINE.md` 的 S7 节。
+
+S7兼容能力：已有 /hosts/offline/status 与 /hosts/offline/publish 回执、签名 /hosts/revocations 事件令牌兼容增加 capabilities.offlineTasks:1。旧云没有字段，新客户端不显示或请求任务功能；刷新重新判定，没有404探测或永久负缓存。
