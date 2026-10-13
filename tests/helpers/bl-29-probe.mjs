@@ -16,7 +16,7 @@ export function probe(name, output, timeout = 60000, args = []) {
     delete env.ELECTRON_RUN_AS_NODE;
     const result = spawnSync(process.execPath, ['--report-on-fatalerror', '--report-exclude-env', `--report-directory=${root}`,
       `tests/integration/bl29-rework/${name}.mjs`, ...args], {
-      env, windowsHide:true, encoding:'utf8', timeout, maxBuffer:8 * 1024 * 1024,
+      env, windowsHide:true, encoding:'utf8', timeout, killSignal:'SIGKILL', maxBuffer:8 * 1024 * 1024,
     });
     assert.equal(result.status, 0, JSON.stringify({probe:name,status:result.status,
       hex:typeof result.status==='number'?'0x'+(result.status>>>0).toString(16).toUpperCase().padStart(8,'0'):null,
