@@ -7,6 +7,7 @@ import { healthScores } from '../src/personal-health/analysis.mjs';
 import { HEALTH_DEFAULTS } from '../src/personal-health/records-schema.mjs';
 import { generateHealthSequence } from './helpers/health-sequence.mjs';
 import { weeklyDayPhrase } from '../src/personal-access/daily-digest.mjs';
+import { observedHealthEvidence } from '../src/personal-health/summary.mjs';
 
 function ui() {
   const context:any = { WeftUiCore:{factories:{}}, Intl, Date, URL, setTimeout, clearTimeout, setInterval, clearInterval };
@@ -71,4 +72,9 @@ test('FIX-34 already repaired full-week and terminal queue projections remain co
   assert.equal(weeklyDayPhrase(['2026-10-05','2026-10-06','2026-10-07','2026-10-08','2026-10-09','2026-10-10','2026-10-11']),'这周每天');
   const {core}=ui();const events=[{seq:1,type:'task.queued',sessionId:'s',data:{receiptId:'r',taskId:'r'}},{seq:2,type:'user.message',sessionId:'s',data:{receiptId:'r'}},{seq:3,type:'turn.ended',sessionId:'s',data:{reason:'completed'}}];
   assert.equal(core.projectTimeline(events).cards.some(row=>row.type==='task.queued'),false);
+});
+test('FIX-34 persisted health evidence preserves zero duration parts for byte validation',()=>{
+  const summary={schemaVersion:1,date:'2026-10-12',timeZone:'UTC',sourceDeviceId:'synthetic',sourceDevices:['synthetic'],summarizedAt:'2026-10-12T12:00:00Z',cloudModelAllowed:true,
+    readStates:{sleep:'dataAvailable'},metrics:{sleep:{value:60,unit:'min',baselineDays:0}},sleep:{totalMinutes:60}};
+  assert.equal(observedHealthEvidence('synthetic',summary).content,'2026-10-12 睡眠 1 小时 0 分。');
 });

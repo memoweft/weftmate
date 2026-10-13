@@ -64,11 +64,33 @@
       ],
       "passed": 6,
       "failed": 0
+    },
+    {
+      "files": [
+        "tests/fix-34.test.ts",
+        "tests/quiet-background.test.ts",
+        "tests/polish-1.test.ts",
+        "tests/next-suggestions.test.ts",
+        "tests/personal-second-opinion.test.ts"
+      ],
+      "passed": 49,
+      "failed": 0,
+      "phase": "post-main before evidence compatibility regression"
+    },
+    {
+      "files": [
+        "tests/fix-34.test.ts",
+        "tests/personal-health.test.ts"
+      ],
+      "passed": 20,
+      "failed": 0,
+      "phase": "persisted evidence compatibility"
     }
   ],
   "typecheck": true,
   "publicHygiene": {
     "localIdentities": 0
   },
-  "fullLocalSuiteRun": false
+  "fullLocalSuiteRun": false,
+  "compatibility": "Persisted observed health evidence retains includeZeroParts=true to preserve existing byte validation; UI uses concise default."
 }
