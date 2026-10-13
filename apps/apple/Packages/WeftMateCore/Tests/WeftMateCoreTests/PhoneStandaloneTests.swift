@@ -34,6 +34,15 @@ struct PhoneStandaloneTests {
         #expect(state.prepareMigration(host:"computer-a",generation:2).isEmpty)
         #expect(state.threads.isEmpty);#expect(state.selected == nil)
     }
+    @Test func deletionGenerationKeepsUnsharedIndependentThreads() {
+        var state=PhoneChatState(),shared=PhoneChatThread(),independent=PhoneChatThread()
+        shared.messages=[.init(role:"user",text:"already shared")];independent.messages=[.init(role:"user",text:"never shared")]
+        state.threads=[shared];_=state.prepareMigration(host:"computer-a",generation:1)
+        state.threads.append(independent);state.selected=independent.id
+        state.applyMigrationGeneration(host:"computer-a",generation:2)
+        #expect(state.threads == [independent]);#expect(state.selected == independent.id)
+        #expect(state.migrations?["computer-a"]?.turns.isEmpty == true)
+    }
     @Test func streamParsesContentAndRejectsTools() throws {
         #expect(try PhoneStreamDelta.text("data: {\"choices\":[{\"delta\":{\"content\":\"你好🌿\"}}]}") == "你好🌿")
         #expect(try PhoneStreamDelta.text("data: [DONE]") == nil)
@@ -59,4 +68,17 @@ struct PhoneStandaloneTests {
         #expect(PhoneHealthText.time("2026-10-11T23:05:00Z",zone:TimeZone(identifier:"Asia/Shanghai")!) == "7:05")
         #expect(PhoneHealthText.time("2026-10-11T23:05:00Z",zone:TimeZone(identifier:"America/Los_Angeles")!) == "16:05")
     }
+}
+
+@Test func nativeJSONIntegerConversionRejectsUnrepresentableValues() {
+    #expect(JSONValue.number(.infinity).int == nil)
+    #expect(JSONValue.number(-1).int == nil)
+    #expect(JSONValue.number(1.5).int == nil)
+    #expect(JSONValue.number(2_147_483_647).int == 2_147_483_647)
+    #if arch(arm64_32)
+    #expect(JSONValue.number(2_147_483_648).int == nil)
+    #else
+    #expect(JSONValue.number(2_147_483_648).int == 2_147_483_648)
+    #endif
+    #expect(JSONValue.number(9_007_199_254_740_992).int == nil)
 }

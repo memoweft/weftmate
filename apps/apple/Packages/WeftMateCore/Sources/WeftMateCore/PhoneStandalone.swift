@@ -104,13 +104,8 @@ public struct PhoneChatMigration: Codable, Sendable {
 }
 extension PhoneChatState {
     public mutating func prepareMigration(host: String, generation: Int) -> [OfflineTurn] {
-        var prior=migrations?[host]
-        if let existing=prior, existing.generation != generation {
-            // The same M3 deletion generation clears history already offered to this computer.
-            threads.removeAll { existing.conversationIDs.contains($0.id) }
-            if !threads.contains(where: { $0.id == selected }) { selected=nil }
-            prior=nil
-        }
+        applyMigrationGeneration(host:host,generation:generation)
+        let prior=migrations?[host]
         var migration=prior ?? PhoneChatMigration(generation:generation,turns:[],accepted:[],conversationIDs:[])
         let offered=Set(migration.turns.map(\.id))
         for thread in threads {
@@ -123,6 +118,12 @@ extension PhoneChatState {
         }
         if migrations == nil { migrations=[:] };migrations?[host]=migration
         return migration.turns.filter { !migration.accepted.contains($0.id) }
+    }
+    public mutating func applyMigrationGeneration(host: String,generation: Int) {
+        guard let existing=migrations?[host],existing.generation != generation else { return }
+        threads.removeAll { existing.conversationIDs.contains($0.id) }
+        if !threads.contains(where: { $0.id == selected }) { selected=nil }
+        migrations?[host]=PhoneChatMigration(generation:generation,turns:[],accepted:[],conversationIDs:[])
     }
     public mutating func acknowledgeMigration(host: String, ids: Set<String>) {
         guard var value=migrations?[host] else { return };value.accepted.formUnion(ids.intersection(Set(value.turns.map(\.id))));migrations?[host]=value

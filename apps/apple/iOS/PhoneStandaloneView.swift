@@ -56,7 +56,7 @@ struct PhoneStandaloneChat: View {
                                     Picker("模型",selection:$model.modelID) { ForEach(model.models) { value in Text(value.name+" · "+value.model).tag(value.id) } }
                                     Button("配置模型") { focused=false; modelsOpen=true }
                                 } label: { WeftIcon("model").phoneMenuLabel(circle:true,onCard:true) }.phoneIcon().accessibilityLabel("模型选择，"+(model.currentModel?.model ?? "尚未配置")).accessibilityIdentifier("phoneChat.model")
-                                Menu { Text("手机聊天没有电脑操作，无需审批。"); Text("连上电脑后可选择操作模式。") } label: { Image(systemName:"slider.horizontal.3").font(.system(size:20,weight:.regular)).phoneMenuLabel(circle:true,onCard:true) }.phoneIcon().accessibilityLabel("操作模式，手机聊天").accessibilityIdentifier("phoneChat.mode")
+                                Menu { Text("手机聊天没有电脑操作，无需审批。"); Text("连上电脑后可选择操作模式。") } label: { PhoneOperationModeIcon().phoneMenuLabel(circle:true,onCard:true) }.phoneIcon().accessibilityLabel("操作模式，手机聊天").accessibilityIdentifier("phoneChat.mode")
                                 Spacer()
                                 Button { focused=false } label: { WeftIcon("chevron") }.phoneIcon().accessibilityLabel("收起键盘")
                             }
@@ -167,7 +167,7 @@ struct PhoneComputerEmptyPage: View {
     var explanation: String
     @State private var devices=false
     var body: some View {
-        VStack(spacing:AppleTokens.Space.p20) { EmptyState(symbol:"chat",title:title,message:explanation+"连上电脑后可用。"); Button("怎么连上电脑") { devices=true }.buttonStyle(OutlineActionStyle()).padding(AppleTokens.Space.p20) }
+        VStack(spacing:AppleTokens.Space.p20) { EmptyState(symbol:PhoneTab.allCases.first(where: { $0.title == title })?.icon ?? "desktop",title:title,message:explanation+"连上电脑后可用。"); Button("怎么连上电脑") { devices=true }.buttonStyle(OutlineActionStyle()).padding(AppleTokens.Space.p20) }
             .navigationTitle(title).background(Weave.canvas).toolbar { PhoneAccountMenu(model:app) }
             .sheet(isPresented:$devices) { SettingsView(model:app,route:.init(categoryID:"devices"),onClose:{devices=false}) }
     }

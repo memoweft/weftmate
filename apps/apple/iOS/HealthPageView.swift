@@ -73,7 +73,7 @@ struct HealthPageView: View {
                     Text("深睡 "+minutes(o.sleep?.deepMinutes ?? page.cache.series["deepMinutes-7"]?.points.last?.value)+" · 快速眼动 "+minutes(o.sleep?.remMinutes ?? page.cache.series["remMinutes-7"]?.points.last?.value))
                     Text(time(o.sleep?.start)+" — "+time(o.sleep?.end)).foregroundStyle(.secondary)
                     if let used=o.usage?.lastUsedAt { Text("最近一次向 WeftMate 发消息 "+time(used)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
-                    else if let late=o.usage?.lateNightMinutes,o.usage?.activeMinutes != nil { Text("深夜使用电脑 "+minutes(late)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
+                    else if let late=o.usage?.lateNightMinutes,(o.usage?.activeMinutes ?? 0) > 0 || late > 0 { Text("深夜使用电脑 "+minutes(late)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
                     Text("设备本地时间").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                 }.frame(maxWidth:.infinity,alignment:.leading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("health.sleepDuration")
