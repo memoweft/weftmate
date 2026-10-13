@@ -25,7 +25,7 @@ for path in sorted(root.glob('and7-*.png')):
         statusRGB=status, headerRGB=header, delta=delta))
 (root/'screenshots.json').write_text(json.dumps(records, ensure_ascii=False, indent=2)+'\n', encoding='utf8')
 
-pairs = [(scene, scene, theme) for theme in ['light'] for scene in ['library-list','row-menu','library-empty','viewer-markdown']]
+pairs = [(scene, scene, theme) for theme in ['light'] for scene in ['library-list','row-menu','library-empty','viewer-markdown','viewer-code']]
 (root/'pairs').mkdir(exist_ok=True)
 for stale in (root/'pairs').glob('dark-*.png'):
     stale.unlink()
@@ -39,7 +39,7 @@ for android, apple, theme in pairs:
     imgs = [im.resize((round(im.width*target_height/im.height), target_height)) for im in imgs]
     combined = Image.new('RGB', (sum(im.width for im in imgs)+24,target_height+36), 'white')
     draw = ImageDraw.Draw(combined)
-    draw.text((4,8),'Existing web UI / same account and files',fill='black');draw.text((imgs[0].width+28,8),'Native Android / same theme',fill='black')
+    draw.text((4,8),'Existing web UI / same account and files',fill='black');draw.text((imgs[0].width+28,8),'Android actual destination / same theme',fill='black')
     combined.paste(imgs[0],(0,36));combined.paste(imgs[1],(imgs[0].width+24,36))
     combined.save(root/'pairs'/f'{theme}-{android}.png')
 

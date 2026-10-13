@@ -1,0 +1,120 @@
+{
+  "baseMain": "d254f387",
+  "localScope": "related tests only; prior full reports retained as historical",
+  "androidJvm": {
+    "tests": 115,
+    "failures": 0,
+    "errors": 0,
+    "packageTests": 11
+  },
+  "offlineGradle": {
+    "passed": true,
+    "tasks": [
+      ":app:testDebugUnitTest",
+      ":app:assembleDebug",
+      ":app:assembleDebugAndroidTest"
+    ]
+  },
+  "nodeRelated": {
+    "files": [
+      "tests/android-route-inventory.test.ts",
+      "tests/mobile-android-bridge.test.ts"
+    ],
+    "passed": 8,
+    "failed": 0
+  },
+  "typecheck": true,
+  "publicHygiene": {
+    "textFiles": 9186,
+    "localIdentities": 0
+  },
+  "historicalFullReports": {
+    "date": "2026-10-13",
+    "required": "required.json",
+    "vendor": "vendor.json",
+    "mobilePassed": 115
+  },
+  "cloudChecks": "pending final push status",
+  "deviceVariants": [
+    {
+      "width": 360,
+      "theme": "light",
+      "passed": true,
+      "seconds": 37.154,
+      "device": {
+        "passed": true,
+        "widthDp": 360,
+        "systemVersion": "15",
+        "navigationBottom": 0
+      },
+      "menu": {
+        "statusBarMeanDelta": 0,
+        "statusBarPreserved": true,
+        "backdrop": "shared panel-only GPU blur",
+        "scrollingContentBlurred": false
+      }
+    },
+    {
+      "width": 360,
+      "theme": "dark",
+      "passed": true,
+      "seconds": 41.043,
+      "device": {
+        "passed": true,
+        "widthDp": 360,
+        "systemVersion": "15",
+        "navigationBottom": 0
+      },
+      "menu": {
+        "statusBarMeanDelta": 0,
+        "statusBarPreserved": true,
+        "backdrop": "shared panel-only GPU blur",
+        "scrollingContentBlurred": false
+      }
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "passed": true,
+      "seconds": 40.931,
+      "device": {
+        "passed": true,
+        "widthDp": 390,
+        "systemVersion": "15",
+        "navigationBottom": 0
+      },
+      "menu": {
+        "statusBarMeanDelta": 0,
+        "statusBarPreserved": true,
+        "backdrop": "shared panel-only GPU blur",
+        "scrollingContentBlurred": false
+      }
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "passed": true,
+      "seconds": 42.933,
+      "device": {
+        "passed": true,
+        "widthDp": 390,
+        "systemVersion": "15",
+        "navigationBottom": 0
+      },
+      "menu": {
+        "statusBarMeanDelta": 0,
+        "statusBarPreserved": true,
+        "backdrop": "shared panel-only GPU blur",
+        "scrollingContentBlurred": false
+      }
+    }
+  ],
+  "screenshots": {
+    "count": 128,
+    "nonzeroStatusBarDelta": 0
+  },
+  "darkTokens": {
+    "checked": 15,
+    "failed": 0
+  }
+}

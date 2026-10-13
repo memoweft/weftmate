@@ -23,6 +23,7 @@ try {
  await writeFile('.local/and-7/installed-packages.txt',packages.split('\n').filter(line=>line.includes('weftmate')).join('\n'));
  const other=packages.split('\n').filter(line=>/weftmate.*(?:and\d|qa|probe)/i.test(line)&&!line.includes(pkg));
  if(other.length)throw Error('MUMU_BUSY: '+other.join(', '));
+ if(packages.includes(pkg)){await call(['-s',serial,'uninstall',`${pkg}.test`]).catch(()=>{});await call(['-s',serial,'uninstall',pkg]).catch(()=>{});console.log('Removed previous AND-7 test identity');}
  fixture=await startAnd7Fixture();const port=new URL(fixture.origin).port;
  await call(['-s',serial,'reverse',`tcp:${port}`,`tcp:${port}`]);
  await call(['-s',serial,'install','-r','apps/android/app/build/outputs/apk/debug/app-debug.apk'],60000);installed=true;
@@ -30,7 +31,7 @@ try {
  for(const [width,theme] of variants){
   if(Date.now()-started>18*60000)throw Error('MuMu batch reached 18 minutes; release before the 20 minute limit');
   await call(['-s',serial,'shell','am','force-stop',pkg]);
-  const instrument=call(['-s',serial,'shell','am','instrument','-w','-e','class','com.memoweft.weftmate.mobile.NativeLibraryInstrumentedTest','-e','and7Origin',fixture.origin,'-e','and7User',fixture.credentials.username,'-e','and7Password',fixture.credentials.password,'-e','and7MarkdownId',fixture.outputs['虚构周计划.md'],'-e','and7Width',String(width),'-e','and7Theme',theme,`${pkg}.test/androidx.test.runner.AndroidJUnitRunner`],240000);
+  const instrument=call(['-s',serial,'shell','am','instrument','-w','-e','class','com.memoweft.weftmate.mobile.NativeLibraryInstrumentedTest','-e','and7Origin',fixture.origin,'-e','and7User',fixture.credentials.username,'-e','and7Password',fixture.credentials.password,'-e','and7MarkdownId',fixture.outputs['虚构周计划.md'],'-e','and7TextId',fixture.outputs['虚构便签.txt'],'-e','and7CodeId',fixture.outputs['synthetic-example.py'],'-e','and7Width',String(width),'-e','and7Theme',theme,`${pkg}.test/androidx.test.runner.AndroidJUnitRunner`],240000);
   await sleep(1000);
   const pid=(await call(['-s',serial,'shell','pidof',pkg]).catch(()=>({stdout:''}))).stdout.trim();
   const result=await instrument;

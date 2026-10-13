@@ -10,6 +10,9 @@ import java.time.Instant
 import java.time.ZoneId
 
 class NativeLibraryUnitTest {
+    @Test fun markdownAndCodeKeepExistingWebActionsWhileOtherFilesStayNative() {
+        NativeFileKind.entries.forEach { kind -> assertEquals(kind in setOf(NativeFileKind.MARKDOWN,NativeFileKind.CODE),useOriginalFileViewer(kind)) }
+    }
     @Test fun phoneOnlyIdentityIsNormalEmptyState() {
         assertTrue(libraryHasNoComputer(JSONObject().put("authSource","phone")))
         assertTrue(libraryHasNoComputer(JSONObject().put("hostAttached",false)))
