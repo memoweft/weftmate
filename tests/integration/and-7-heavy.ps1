@@ -31,4 +31,4 @@ try {
     $result=$LASTEXITCODE
     Get-Content -LiteralPath $log -Tail 28
     exit $result
-} finally { if($owned){Remove-Item -LiteralPath $owned -ErrorAction SilentlyContinue} }
+} finally { Set-Location $repo; if($owned){Remove-Item -LiteralPath $owned -ErrorAction SilentlyContinue} }

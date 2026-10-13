@@ -78,6 +78,10 @@ class NativeActivity : HybridActivity() {
         getSharedPreferences("native-ui", MODE_PRIVATE).edit().putBoolean("enabled", false).commit()
         startActivity(Intent(this, HybridActivity::class.java)); finish()
     }
+    internal fun originalLibrary() {
+        startActivity(Intent(this, HybridActivity::class.java).putExtra("openLibraryPage",true)
+            .putExtra("lg1bHostOrigin",intent.getStringExtra("lg1bHostOrigin")))
+    }
     override fun onResume() { super.onResume(); nativeForeground = true }
     override fun onPause() { nativeForeground = false; if (::model.isInitialized) model.saveDraft(); super.onPause() }
     @Suppress("DEPRECATION") override fun onBackPressed() {

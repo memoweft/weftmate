@@ -30,8 +30,12 @@ try {
  for(const [width,theme] of variants){
   if(Date.now()-started>18*60000)throw Error('MuMu batch reached 18 minutes; release before the 20 minute limit');
   await call(['-s',serial,'shell','am','force-stop',pkg]);
-  const result=await call(['-s',serial,'shell','am','instrument','-w','-e','class','com.memoweft.weftmate.mobile.NativeLibraryInstrumentedTest','-e','and7Origin',fixture.origin,'-e','and7User',fixture.credentials.username,'-e','and7Password',fixture.credentials.password,'-e','and7MarkdownId',fixture.outputs['虚构周计划.md'],'-e','and7Width',String(width),'-e','and7Theme',theme,`${pkg}.test/androidx.test.runner.AndroidJUnitRunner`],240000);
+  const instrument=call(['-s',serial,'shell','am','instrument','-w','-e','class','com.memoweft.weftmate.mobile.NativeLibraryInstrumentedTest','-e','and7Origin',fixture.origin,'-e','and7User',fixture.credentials.username,'-e','and7Password',fixture.credentials.password,'-e','and7MarkdownId',fixture.outputs['虚构周计划.md'],'-e','and7Width',String(width),'-e','and7Theme',theme,`${pkg}.test/androidx.test.runner.AndroidJUnitRunner`],240000);
+  await sleep(1000);
+  const pid=(await call(['-s',serial,'shell','pidof',pkg]).catch(()=>({stdout:''}))).stdout.trim();
+  const result=await instrument;
   await writeFile(`.local/and-7/instrumentation-${width}-${theme}.txt`,result.stdout+result.stderr);
+  if(pid){const log=(await call(['-s',serial,'logcat','-d','--pid='+pid,'-t','300']).catch(()=>({stdout:''}))).stdout;await writeFile(`.local/and-7/logcat-${width}-${theme}.txt`,log);}
   const names=(await call(['-s',serial,'shell','run-as',pkg,'ls','files'])).stdout.trim().split(/\r?\n/).filter(name=>name.startsWith(`and7-${width}-${theme}-`)&&/\.(png|json)$/.test(name));
   for(const name of names){const contents=await exec(adb,['-P',String(adbPort),'-s',serial,'exec-out','run-as',pkg,'cat',`files/${name}`],{windowsHide:true,encoding:'buffer',maxBuffer:16*1024*1024});await writeFile(join(evidence,name),contents.stdout);}
   if(!result.stdout.includes('OK (1 test)'))throw Error(`Instrumentation failed: ${width} ${theme}. See .local/and-7.`);

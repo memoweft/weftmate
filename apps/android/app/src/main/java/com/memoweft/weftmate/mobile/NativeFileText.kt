@@ -61,11 +61,12 @@ internal fun fileInlineMarkdown(text:String):SpannableStringBuilder {
     Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(DesignTokens.space16.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space12.dp)) {
         blocks.forEach { block ->
             val color=MaterialTheme.colorScheme.onSurface.toArgb();val link=MaterialTheme.colorScheme.primary.toArgb();val selection=MaterialTheme.colorScheme.surfaceVariant.toArgb()
-            val size=if(block.heading==1)DesignTokens.font24 else if(block.heading>0)DesignTokens.font18 else if(block.code||block.table)DesignTokens.font13 else DesignTokens.font16
+            val size=if(block.heading==1)DesignTokens.font24 else if(block.heading>0)DesignTokens.font18 else if(block.code||block.table)DesignTokens.font13 else DesignTokens.font14
             AndroidView(factory={context->TextView(context).apply{setTextIsSelectable(true);setPadding(0,0,0,0)}},modifier=if(block.code||block.table)Modifier.horizontalScroll(rememberScrollState()) else Modifier.fillMaxWidth(),update={view->
                 view.text=if(block.code||block.table)block.text else fileInlineMarkdown(block.text)
                 view.setTextColor(color);view.setLinkTextColor(link);view.textSize=size
                 view.highlightColor=selection
+                androidx.core.widget.TextViewCompat.setLineHeight(view,((if(block.heading>0)DesignTokens.space32 else DesignTokens.space24)*view.resources.displayMetrics.scaledDensity).toInt())
                 view.typeface=if(block.code||block.table)Typeface.MONOSPACE else if(block.heading>0)Typeface.DEFAULT_BOLD else Typeface.DEFAULT
                 view.movementMethod=LinkMovementMethod.getInstance()
             })

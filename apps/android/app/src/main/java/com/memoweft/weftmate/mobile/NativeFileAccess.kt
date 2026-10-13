@@ -46,7 +46,7 @@ internal class NativeFileAccess(private val context: Context, private val api: P
                     when (preview.optString("kind")) {
                         "missing" -> throw ApiFailure(404,"FILE_MISSING")
                         "image","pdf" -> { mime=preview.getString("contentType"); target.writeBytes(Base64.decode(preview.getString("data"),Base64.DEFAULT)) }
-                        "text","code","markdown" -> { mime=artifactSaveMimeType(name);target.writeText(preview.getString("text"),Charsets.UTF_8) }
+                        "text","code","markdown" -> { mime=nativeFileMime(name);target.writeText(preview.getString("text"),Charsets.UTF_8) }
                         else -> {
                             // Old verified artifacts have a download endpoint; native Office/archives do not yet.
                             try { target.writeBytes(api.artifactBytes(host,libraryId)) }
