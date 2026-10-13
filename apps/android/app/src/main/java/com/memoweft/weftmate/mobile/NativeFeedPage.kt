@@ -94,7 +94,7 @@ private data class FeedEntry(val key: String, val day: String, val row: JSONObje
             item(key = "heading") {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("动态", Modifier.weight(1f), fontSize = DesignTokens.font24.sp, fontWeight = FontWeight.Bold)
-                    FeedControlIconButton(R.drawable.wm_check_circle, "全部标为已读", enabled = feed.unread > 0 && !feed.loading && !feed.busy) { feed.markAll() }
+                    FeedControlButton("全部已读", enabled = feed.unread > 0 && !feed.loading && !feed.busy, contentDescription = "全部已读") { feed.markAll() }
                     FeedControlIconButton(R.drawable.wm_refresh, "刷新动态", enabled = !feed.loading && !feed.noComputer) { feed.refresh(full = true) }
                 }
                 Text("提醒、任务结果和需要你处理的事项，都在这里。", Modifier.padding(top = DesignTokens.space12.dp), fontSize = DesignTokens.font16.sp, lineHeight = feedBodyLeading, color = feedMuted(feed.dark))
