@@ -8,6 +8,7 @@ globalThis.WeftUiCore.factories.goals = (core,effects,environment) => {
         core.syncMobileIdentity?.();if(identity!==scope()){identity=scope();resetGoals();}if(flight)return flight;
         const token=scope(),generation=model.generation;model.loading=true;effects.renderGoals?.();
         const work=(async()=>{
+            await core.refreshOfflineTasks?.().catch(()=>{});
             const paths=[['tasks','/tasks','taskOverview'],['schedules','/schedules','scheduleEditing'],['goals','/goals','goals'],['sessions','/sessions',null]];
             const results=await Promise.allSettled(paths.map(([,path,cap])=>Promise.resolve().then(()=>{if(cap&&core.state.personalCapabilities?.[cap]!==1)throw {code:'CAPABILITY_UNAVAILABLE'};return core.accessApi(path);})));
             if(scope()!==token||model.generation!==generation)return;

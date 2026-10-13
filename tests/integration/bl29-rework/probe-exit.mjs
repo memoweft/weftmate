@@ -39,17 +39,16 @@ if (!process.env.BL29_OWNED_ROOT) {
  console.log(JSON.stringify(result));process.exit(result.status ?? 1);
 }
 const ownedRoot=resolve(process.env.BL29_OWNED_ROOT);
-let currentProfile, currentMethod;
-const stage=(name,extra={})=>appendFileSync(join(ownedRoot,'stages.jsonl'),JSON.stringify({at:new Date().toISOString(),stage:name,method:currentMethod,rss:process.memoryUsage().rss,...extra})+'\n');
 const {_electron}=await import('playwright');
 if (!process.argv.includes('--head-only')) {
  const baseline=createBl29Baseline().changedSources(['src','apps/mobile-ui/www']);writeFileSync(outputPath('baseline.json'),JSON.stringify(baseline));process.env.BL29_BASELINE_FILE=outputPath('baseline.json');
 }
 const report=[];
 const methods=process.argv.find(arg=>arg.startsWith('--methods='))?.slice(10).split(',') ?? (process.argv.includes('--orders-only')?['runtime-first','access-first']:['window-tray-exit','tray-exit','update-restart','runtime-first','access-first']);
-for(const version of (process.argv.includes('--head-only')?['head']:['main','head']))for(const method of methods){
+async function runCase(version,method){
+ const stage=(name,extra={})=>appendFileSync(join(ownedRoot,'stages.jsonl'),JSON.stringify({at:new Date().toISOString(),stage:name,method,rss:process.memoryUsage().rss,...extra})+'\n');
  const root=mkdtempSync(join(ownedRoot,'weftmate-case-')),profile=join(root,'profile'),credentials={username:'rev-'+randomUUID(),password:'synthetic-'+randomUUID(),deviceName:'synthetic-host'};
- currentProfile=profile;currentMethod=method;stage('prepare',{profile});
+ stage('prepare',{profile});
  const prep=await createPersonalAccessService({root:join(profile,'personal-access'),port:0,hostName:'synthetic-host',backend:Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(k=>[k,async()=>k==='listModels'?[]:{}]))});
  const info=await prep.start(),grant=await prep.issueSetupGrant();await fetch(info.origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin:info.origin,'content-type':'application/json'},body:JSON.stringify({...credentials,grant:grant.grant})});await prep.close();writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
  const env={...process.env,BL29_EXIT_METHOD:method};for(const k of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_|ELECTRON_RUN_AS_NODE)/.test(k))delete env[k];env.WEFTMATE_TEST_HOST_NAME='synthetic-host';env.REV_BASELINE=version==='main'?'1':'0';
@@ -67,12 +66,8 @@ for(const version of (process.argv.includes('--head-only')?['head']:['main','hea
   stage('first-window');await p.waitForURL('**/personal/v1/ui*');
   if(version==='main') await localUiSession(p,credentials,'synthetic-host',{interceptLegacyStatus:false,mainChat:true});
   else {
-   await p.route('**/personal/v1/ui/app.js',route=>route.fulfill({contentType:'text/javascript',
-    body:readFileSync('src/personal-access-ui/app.js','utf8').replace('ui.loadAttachmentHasher =',
-     'globalThis.__revExitCore=core;ui.loadAttachmentHasher =')}));
-   // Reload installs only the diagnostic projection; the actual native
-   // bootstrap, credentials and ordinary overview/history timers run again.
-   await p.reload();
+   // The fixture adds the diagnostic projection while serving the first app.js;
+   // native bootstrap and its real timers only run once per launch.
    await p.locator('#assistant-view').waitFor({state:'visible'});
    row.nativeSession=await p.evaluate(async()=>{const response=await fetch('/personal/v1/auth/me');const body=await response.json();
     return {status:response.status,authKind:body.device?.authKind,local:body.local};});
@@ -106,3 +101,7 @@ for(const version of (process.argv.includes('--head-only')?['head']:['main','hea
   await closed;row.ms=Date.now()-at;row.exitCode=child.exitCode;stage('closed',{exitCode:child.exitCode});app=null;
  }catch(e){row.error=scrub(e.message);if(version==='head'&&app)row.failedReadiness=await app.firstWindow().then(nativeReadiness).catch(()=>null);process.exitCode=1;}finally{await app?.close();row.shutdownStages=shutdownStages(profile);rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:100});writeFileSync(outputPath(process.argv.includes('--orders-only')?'orders.json':'exit.json'),JSON.stringify(report,null,2));console.log(row);}
 }
+const cases=(process.argv.includes('--head-only')?['head']:['main','head']).flatMap(version=>methods.map(method=>({version,method})));
+// Each case has its own profile, cookies and runtime. Two independent launches
+// fit the existing total deadline without changing any close/wait assertions.
+for(let index=0;index<cases.length;index+=2)await Promise.all(cases.slice(index,index+2).map(({version,method})=>runCase(version,method)));

@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { uiCoreAssets } from '../src/ui-core/manifest.mjs';
+import '../src/ui-core/offline.js';
 
 const component = readFileSync(new URL('../src/personal-access-ui/components/offline.js', import.meta.url), 'utf8');
 class Node {
@@ -35,6 +36,60 @@ test('sync errors distinguish connectivity from permission, request and replica 
   }
   assert.equal(classify({code:'UNAUTHORIZED',status:401}).clear,true);
 });
+
+test('phone plus menu and goals expose no task feature without support and appear after refreshed support',async()=>{
+  const f=fixture();let supported=false,entries:any[]=[];
+  const pending={id:'cached',state:'waiting',text:'合成事项',conversationId:'tasks'};
+  const view=()=>({ready:true,chatReady:true,taskReady:supported,tasks:[pending],targets:[],conversations:[],turns:[],snapshot:{recent:[]}});
+  f.environment.WeftOffline.create=async()=>({view,sync:async()=>true,check:async()=>({}),close(){}});
+  f.environment.WeftPopover={menu:(_anchor:any,values:any[])=>entries=values};f.core.connectionView=()=>({kind:'host_offline'});
+  const mounted=f.environment.WeftOfflineView.mount({core:f.core,identity:async()=>({origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'})});
+  await new Promise(resolve=>setImmediate(resolve));const more=f.body.children[0].children.at(-1).children.at(-1);more.listeners.click();
+  assert.equal(JSON.stringify(entries.map(e=>e.name)),JSON.stringify(['继续聊聊']));assert.equal(f.core.offlineTasksView().length,0);
+  supported=true;await mounted.tick();more.listeners.click();assert.ok(entries.some(e=>e.name==='交给电脑，上线后做'));assert.equal(f.core.offlineTasksView().length,1);
+  supported=false;await mounted.tick();more.listeners.click();assert.equal(entries.some(e=>e.name.includes('交给电脑')),false);assert.equal(f.core.offlineTasksView().length,0);mounted.close();
+});
+
+test('restoring a cached phone waits for host login before replica sync and keeps accepted tasks', async () => {
+  const f=fixture(), cached={origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'};
+  f.environment.localStorage.setItem('weftmate-offline-identity',JSON.stringify(cached));
+  let connected=false,syncs=0,checks=0,clears=0;
+  const accepted=[{id:'task',state:'waiting',conversationId:'tasks',text:'合成事项'}];
+  f.environment.WeftOffline.create=async()=>({view:()=>({ready:true,conversations:[],turns:[],tasks:accepted,snapshot:{recent:[]}}),
+    sync:async()=>{syncs++;if(!connected)throw {code:'UNAUTHORIZED',status:401};return true;},
+    check:async()=>{checks++;return {authorized:true};},clear:async()=>{clears++;accepted.splice(0);},close(){}});
+  const mounted=f.environment.WeftOfflineView.mount({core:f.core,identity:async()=>connected?cached:null});
+  await new Promise(resolve=>setImmediate(resolve));await mounted.tick();
+  assert.equal(syncs,0);assert.ok(checks>0);assert.equal(clears,0);assert.equal(accepted.length,1);
+  connected=true;await mounted.tick();assert.equal(syncs,1);assert.equal(accepted.length,1);mounted.close();
+});
+
+test('native phone vault without seal keeps cloud-supported tasks hidden and offline chat working without bridge errors', async () => {
+  const f=fixture(),calls:string[]=[],entries:any[]=[];
+  const current={origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'};
+  const status={authorized:true,accountId:'account',hostId:'host',generation:1,capabilities:{offlineTasks:1}};
+  const value={snapshot:{generation:1,items:[],recent:[],taskRecipient:{kty:'RSA'},model:{modelId:'synthetic-chat'},control:status},tasks:[],turns:[],conversations:[]};
+  const W=(globalThis as any).WeftOffline;let engine:any;
+  f.environment.WeftOffline={...W,create:async(options:any)=>engine=await W.create(options)};
+  f.environment.WeftPopover={menu:(_anchor:any,values:any[])=>entries.splice(0,entries.length,...values)};
+  f.core.connectionView=()=>({kind:'host_offline'});f.core.cloudOfflineStatus=async()=>status;
+  f.core.cloudOfflineTasks=async(action:string)=>{assert.equal(action,'list');return {items:[]};};
+  const nativeCall=async(method:string)=>{
+    calls.push(method);
+    if(method==='offline.load')return value;if(method==='offline.key')return {};
+    if(method==='offline.save')return {};if(method==='offline.complete')return {choices:[{message:{content:'合成聊天回复'}}]};
+    throw Error('Unsupported native call: '+method);
+  };
+  const mounted=f.environment.WeftOfflineView.mount({core:f.core,identity:async()=>current,nativeCall,host:async()=>{throw {code:'HOST_OFFLINE'};}});
+  await new Promise(resolve=>setImmediate(resolve));await mounted.tick();f.core.openOfflineMode();
+  assert.equal(engine.view().taskReady,false);assert.equal(engine.view().chatReady,true);
+  const more=f.body.children[0].children.at(-1).children.at(-1);more.listeners.click();
+  assert.equal(JSON.stringify(entries.map(e=>e.name)),JSON.stringify(['继续聊聊']));assert.equal(f.core.offlineTasksView().length,0);
+  await engine.send('继续聊天');assert.ok(calls.includes('offline.complete'));
+  assert.ok(!calls.some(method=>['offline.seal','offline.targets','offline.clearAccount'].includes(method)));
+  const text=(node:any):string=>node.textContent+' '+(node.children||[]).map(text).join(' ');
+  assert.ok(!/失败|错误|暂时无法|回复未完成/.test(text(f.body)));mounted.close();
+});
 test('polling never navigates over approvals; return stays closed on repeated offline ticks', async () => {
   const f = fixture();
   const mounted = f.environment.WeftOfflineView.mount({ core: f.core, identity: async () => ({ origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host' }) });
@@ -65,6 +120,13 @@ test('a replica transport timeout does not declare a responsive host offline',as
   await new Promise(resolve=>setImmediate(resolve));f.fail({code:'NETWORK'});await mounted.tick();
   const [section,launcher,notice]=f.body.children;assert.equal(section.hidden,true);assert.equal(launcher.hidden,true);assert.equal(notice.hidden,false);
   mounted.close();
+});
+
+test('offline repaints preserve the unified picker hiding its original select',async()=>{
+  const f=fixture(),mounted=f.environment.WeftOfflineView.mount({core:f.core,identity:async()=>({origin:'synthetic',ownerId:'owner',deviceId:'phone',hostId:'host'})});
+  await new Promise(resolve=>setImmediate(resolve));
+  const selector=f.body.children[0].children[0].children.at(-1).children[0];selector.hidden=true;
+  await mounted.tick();assert.equal(selector.hidden,true,'only the picker container may control visibility');mounted.close();
 });
 test('both production mount transports pass objects and protected writes through requestJson', async () => {
   const context: any = { AbortSignal, URL, URLSearchParams };

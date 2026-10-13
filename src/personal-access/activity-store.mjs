@@ -5,7 +5,7 @@ import { chatForSession } from './chat-identity.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { activityNotificationContent } from './notification-content.mjs';
 
-export const ACTIVITY_TYPES = ['reminder.triggered','task.completed','task.failed','task.stopped','approval.pending','question.pending','memory.paused','memory.submission.completed','memory.report','system.update.available','system.reconnected','system.device.signed_in','system.dnd.summary','system.notification.test','system.data.operation','companion.greeting'];
+export const ACTIVITY_TYPES = ['reminder.triggered','task.started','task.completed','task.failed','task.stopped','approval.pending','question.pending','memory.paused','memory.submission.completed','memory.report','system.update.available','system.reconnected','system.device.signed_in','system.dnd.summary','system.notification.test','system.data.operation','companion.greeting'];
 const short = value => Array.from(String(value ?? '').replace(/\s+/g, ' ').trim()).slice(0,160).join('');
 export function activityState(account) {
   return account.activity ??= { version:1, secret:randomBytes(32).toString('hex'), sequence:0, generation:0, items:{}, changes:[], sources:{}, operations:{},suppressed:{} };
@@ -35,7 +35,7 @@ export function nativeTaskActivity(account,sessionId,terminal){
 }
 export function putActivity(account, key, input) {
   const state=activityState(account);
-  const priorTask=input.source?.taskId && input.type?.startsWith('task.') ? Object.values(state.items).find(row=>row.source.taskId===input.source.taskId&&row.type.startsWith('task.')) : null;
+  const priorTask=input.source?.taskId && input.type?.startsWith('task.') ? Object.values(state.items).find(row=>row.source.taskId===input.source.taskId&&row.type.startsWith('task.')&&(row.type==='task.started')===(input.type==='task.started')) : null;
   const id=priorTask?.id ?? input.id ?? `activity-${digest(key)}`, previous=state.items[id];
   if(state.suppressed?.[id] || input.source?.taskId&&state.suppressed?.[`task:${input.source.taskId}`])return null;
   if(input.source?.sessionId&&state.erasedBefore?.[input.source.sessionId]&&input.at<=state.erasedBefore[input.source.sessionId])return null;

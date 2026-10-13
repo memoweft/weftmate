@@ -5,6 +5,7 @@ export function activityNotificationContent(account, row) {
   if(row.memoryDigest)return {title:'本周记忆周报已生成',body:'本周记忆周报已生成'};
   const session = account.sessions?.[row.source?.sessionId];
   const task = account.commands?.[row.source?.taskId];
+  if(task?.offlineSource)return {title:'你交代的一件事',body:({'task.started':'电脑已开始 · 点开查看','task.completed':'做完了 · 点开查看结果','task.failed':'没做成 · 点开查看原因','task.stopped':'已停止 · 点开查看','approval.pending':'需要你批准 · 点开查看'}[row.type]||'有新进展 · 点开查看')};
   const taskTitle = row.temporary ? '临时对话中的任务' : text(session?.title || task?.payload?.text || row.title, 80);
   if (row.type === 'task.completed') return { title: taskTitle, body: '已完成 · 点开查看结果' };
   if (row.type === 'task.failed') {
