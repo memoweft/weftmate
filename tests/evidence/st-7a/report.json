@@ -1,0 +1,22 @@
+{
+  "realElectron": true,
+  "pinnedDsh": true,
+  "realModel": "mimo-v2.6-flash",
+  "scenarios": [
+    "visible custom add, real test failure/success, vault masking and individual rule controls",
+    "MiMo invoked read-only native connector without approval",
+    "MiMo external tool asked, user approved, synthetic file and execution record agree",
+    "per-tool deny prevented a second send and recorded the denial",
+    "phone webpage lists and toggles, does not expose add/remove or credential input",
+    "disabled tools disappeared, removal erased credentials and tool rules"
+  ],
+  "errors": [],
+  "modelRequests": 11,
+  "requestCountSource": "authenticated usage ledger",
+  "ok": true,
+  "cleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  }
+}
