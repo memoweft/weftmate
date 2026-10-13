@@ -7,6 +7,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun phoneMemoryHandoverAndErasureKeepTheExistingExactRoutes() {
+        for (route in listOf("/personal/v1/offline/sync", "/personal/v1/offline/turns", "/personal/v1/memory/status", "/personal/v1/memory/backfill")) assertTrue(route, validBusinessPath(route))
+        for (route in listOf("/personal/v1/offline/forget", "/personal/v1/offline/turns?ownerId=other", "/personal/v1/offline/turns/raw", "/personal/v1/offline%2Fturns")) assertFalse(route, validBusinessPath(route))
+    }
     @Test fun replyChangeWaitOutlivesTheServerBudgetWithoutChangingOtherReads() {
         assertEquals(30_000, businessReadTimeout("/personal/v1/chats/main/changes?afterSeq=1&waitMs=25000", "GET"))
         assertEquals(30_000, businessReadTimeout("/personal/v1/chats/chat-one/events?waitMs=25000", "GET"))
