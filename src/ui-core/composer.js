@@ -263,17 +263,38 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         try { return await action(); }
         finally { if (intent && core.conversationTaskCurrent(context)) core.state.messageMode = previous; }
     }
+    function sendBlocker(text, main = false) {
+        if (core.state.sessionSelecting) return '正在打开对话，请稍候再发送。';
+        if (core.state.sideCreating) return '正在创建对话，请稍候再发送。';
+        if (core.folderMutationPending?.()) return '正在准备文件夹，请稍候再发送。';
+        if (core.state.submitting) return '上一条消息正在发送，请稍候。';
+        if (core.state.attachmentUpload) return '附件正在上传，完成后再发送。';
+        if (core.state.unresolvedSubmission) return '上一条消息的发送结果还在核对，请稍候。';
+        if (!core.state.online || ['restarting','unavailable'].includes(core.state.connection?.host?.runtime)) return '电脑暂时无法连接，消息仍在草稿里。';
+        if (core.state.capabilities?.chat?.available !== true) return '暂时无法发送，请稍候再试。';
+        if (!core.state.modelProfileId || !core.state.models.some(model => model.id === core.state.modelProfileId)) return '先选择一个模型，再发送消息。';
+        if (main ? core.state.personalCapabilities?.chatSend !== 1 || !core.state.mainChat?.sendAvailable
+            : !core.state.newConversation && core.state.sessions.find(item => item.sessionId === core.state.selectedSessionId)?.sendAvailable !== true)
+            return '这段对话暂时无法发送，请重新打开或新建对话。';
+        if (thinkingView().busy) return '正在保存模型设置，请稍候再发送。';
+        if (optimisticMessages(main ? false : true).some(row => row.text === text && row.status === 'sending')) return '这条消息正在发送，请稍候。';
+        if (!text.trim() && !core.currentAttachmentDrafts().length) return '先输入消息或添加附件。';
+        return '';
+    }
+    function explainSendBlocker(reason) {
+        effects.toast(reason);
+        effects.updateAvailability();
+        return { sent: false, reason };
+    }
     async function sendDraft(text = effects.readMessageDraft(), intent, legacy = false) {
-        if(core.folderMutationPending?.())return;
         if (!legacy && core.sendMainDraft) return core.sendMainDraft(text, intent);
-        if (core.state.activeChatSource === 'phone')
+        if (core.state.activeChatSource === 'phone') {
+            if (core.folderMutationPending?.()) return explainSendBlocker('正在准备文件夹，请稍候再发送。');
             return sendIntentAction(() => core.sendPhoneMessage(), intent);
+        }
+        const blocker = sendBlocker(text);
+        if (blocker) return explainSendBlocker(blocker);
         const attachments = core.currentAttachmentDrafts();
-        if (optimisticMessages().some(row=>row.text===text && row.status==='sending')) return;
-        if ((!text.trim() && attachments.length === 0) || core.state.submitting || core.state.attachmentUpload || core.state.unresolvedSubmission ||
-            core.state.capabilities?.chat?.available !== true ||
-            (!core.state.newConversation && core.state.sessions.find((item) => item.sessionId === core.state.selectedSessionId)?.sendAvailable !== true))
-            return;
         const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration,
             sessionId: core.state.selectedSessionId, modelProfileId: core.state.modelProfileId,
             projectId: core.state.newConversationProjectId,
@@ -359,7 +380,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             messageDisabled, voiceDisabled: messageDisabled || core.state.submitting || core.state.phoneSending,
             sendDisabled: phoneChat
                 ? !phoneReady || (!!pendingPhone && !pendingHere) || (!!recovery && !recoveryHere) || (!pendingPhone && !recovery && !text.trim())
-                : !chat || !model || !canSendHere || core.state.submitting || core.folderMutationPending?.() || attachmentBusy || (!text.trim() && attachmentCount === 0) || core.state.unresolvedSubmission || thinkingView().busy,
+                : !!sendBlocker(text),
             sendText: phoneChat ? bound ? '发送到电脑' : recoveryHere && !pendingPhone ? '核对旧请求' : pendingHere ? '核对并重试' : '同步文字' : '发送',
             attachmentsDisabled: phoneChat || !chat || !model || !canSendHere || core.state.submitting || attachmentBusy || core.state.unresolvedSubmission || attachmentCount >= 4,
             desktopText: blockedDesktop ? '查看原事情' : '打开记事本',
@@ -413,7 +434,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         return `这台电脑由账号 ${name} 负责执行；当前账号只能聊天。切回 ${name} 或在 ${name} 的设置里移交。`;
     }
     return { executionAccountHint, refreshThinkingModels, thinkingView, setDeepThinking, handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
-        addAttachmentFiles, composerInputMode, conversationRunning, messageModePreference, loadMessageModePreference, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };
+        addAttachmentFiles, composerInputMode, conversationRunning, messageModePreference, loadMessageModePreference, sendBlocker, explainSendBlocker, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };
 };
 
 globalThis.WeftUiCore.contextUsageView = value => {

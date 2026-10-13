@@ -101,7 +101,7 @@ try {
             { env: fileEnv, timeoutMs: 600000, commandRoots: [scope, resolve(file), process.cwd()], executables: [process.execPath, createRequire(import.meta.url)('electron'), createRequire(import.meta.url)('playwright').chromium.executablePath()],
               onOutput: (stream, chunk) => process[stream].write(chunk) });
           return { ...parseTap(run.stdout + run.stderr), status: run.timedOut ? 1 : run.status ?? 1, signal: run.signal,
-            error: run.error?.message, timedOut: run.timedOut, seconds: (Date.now() - started) / 1000 };
+            error: run.error?.message, timedOut: run.timedOut, evidence: run.evidence, seconds: (Date.now() - started) / 1000 };
         } finally { stopFileLease(); disposeManagedTemp(scope); if (existsSync(scope)) throw Error('File test temp cleanup failed'); }
       },
       onRecovered: row => console.log(`PASSED ONLY ON RETRY: ${JSON.stringify(row)}`),

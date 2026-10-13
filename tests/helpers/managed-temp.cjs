@@ -144,6 +144,9 @@ function startManagedTempLease(directory, { intervalMs = 60000 } = {}) {
   canonicalRoot(directory);
   const owner = readOwner(directory);
   if (!owner) throw Error('Cannot lease an unregistered managed temp directory');
+  // An inherited file scope belongs to its runner. Descendants must not race
+  // that creator's atomic heartbeat replacement (Windows denies the rename).
+  if (owner.pid !== process.pid || owner.processStartedAt !== ownProcessStart()) return () => {};
   const refresh = () => refreshManagedTempLease(directory, owner.id);
   refresh();
   const timer = setInterval(() => {

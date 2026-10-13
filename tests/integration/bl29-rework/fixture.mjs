@@ -12,7 +12,7 @@ let fixture=source('tests/integration/timeline-ui-candidate.mjs').replace(pathTo
  .replace('backend, backupManager, libraryNativeActions:', 'backend, cloudIdentity:options.cloudIdentity??null, backupManager, libraryNativeActions:')
  .replace("const command = async (body, route = '/commands') =>", "const command = async (body, route = '/commands', requestForCommand = request) =>")
  .replace("const value = await request(route, body);", "const value = await requestForCommand(route, body);")
- .replace("const row = (await request(`/commands/${value.command.commandId}`)).command;", "const row = (await requestForCommand(`/commands/${value.command.commandId}`)).command;");
+ .replace("await request(`/commands/${value.command.commandId}`)", "await requestForCommand(`/commands/${value.command.commandId}`)");
 const bridgeStart=fixture.indexOf('  const bridge = async'),bridgeEnd=fixture.indexOf('  if (options.usageSamples)',bridgeStart);
 fixture=fixture.slice(0,bridgeStart)+'  let mobileRequest=request, mobileAuth=auth; const mobileCommand=(body,route)=>command(body,route,mobileRequest);\n'+
  fixture.slice(bridgeStart,bridgeEnd).replace(/\brequest\(/g,'mobileRequest(').replace(/\bcommand\(/g,'mobileCommand(').replace(/\bauth\./g,'mobileAuth.')+fixture.slice(bridgeEnd);
