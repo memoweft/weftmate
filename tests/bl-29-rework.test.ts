@@ -99,6 +99,8 @@ test('BL-29b M1 real Electron empty main keeps eight immediate errors within old
   assert.equal(rows.length, 8);
   for (const row of rows) {
     assert.equal(row.failure, undefined);
+    assert.deepEqual(row.nativeWindow,{visible:true,minimized:false},JSON.stringify(row));
+    assert.equal(row.debug.background,false,JSON.stringify(row));
     assert.ok(row.count <= 3, JSON.stringify(row));
     if (row.code === 'UNAUTHORIZED') assert.ok(row.count <= 1);
     if (!['NOT_FOUND','UNAUTHORIZED'].includes(row.code)) assert.ok(row.recoveredWaitMs!==null&&row.recoveredWaitMs<=2000, JSON.stringify(row));
