@@ -1,0 +1,117 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "transport": "isolated direct Windows host; Linux 443 relay is verified by CI",
+  "switches": [],
+  "approvals": [],
+  "commands": [],
+  "baseline": true,
+  "baselineHelperLoads": 2,
+  "baselineScriptLoads": 2,
+  "restoredLegacyPress": true,
+  "trace": [
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "BUTTON",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "pointerdown",
+      "target": "path",
+      "id": "",
+      "time": 2962.7999999523163,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mousedown",
+      "target": "path",
+      "id": "",
+      "time": 2962.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 2969
+    },
+    {
+      "type": "mutation",
+      "time": 2977.2999999523163
+    },
+    {
+      "type": "mutation",
+      "time": 2978.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 2980.399999976158
+    },
+    {
+      "type": "pointerup",
+      "target": "path",
+      "id": "",
+      "time": 3071,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mouseup",
+      "target": "path",
+      "id": "",
+      "time": 3071,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    }
+  ],
+  "state": {
+    "view": {
+      "placeholder": "向 WeftMate 说说你的目标",
+      "phoneChat": false,
+      "running": false,
+      "hint": "",
+      "attachmentBusy": false,
+      "newSessionDisabled": false,
+      "modelDisabled": false,
+      "modelName": "合成中继模型",
+      "messageDisabled": false,
+      "voiceDisabled": false,
+      "sendDisabled": false,
+      "sendText": "发送",
+      "attachmentsDisabled": false,
+      "desktopText": "打开记事本",
+      "desktopDisabled": true,
+      "cancelHidden": true,
+      "cancelDisabled": true
+    },
+    "selected": "session-f0b7fc0d-2c59-4672-8c0f-fcc468ed8fc1"
+  },
+  "passed": false,
+  "error": "first send complete",
+  "messageRequests": 0
+}
