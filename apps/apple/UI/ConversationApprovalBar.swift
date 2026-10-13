@@ -4,6 +4,7 @@ import WeftMateCore
 struct ConversationApprovalBar: View {
     @ObservedObject var model: TaskInteractionModel
     let events: [TimelineEvent]
+    var computerName: String? = nil
     @State private var expanded = false
     @FocusState private var approveFocused: Bool
     @FocusState private var rejectFocused: Bool
@@ -23,6 +24,7 @@ struct ConversationApprovalBar: View {
             let warning = false
             #endif
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+                if let computerName { Text(computerName).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                 HStack(alignment: .center, spacing: AppleTokens.Space.p8) {
                     Button { expanded.toggle() } label: {
                         HStack(spacing: AppleTokens.Space.p5) {

@@ -186,6 +186,12 @@ public actor CloudAccountClient {
     public func connect(hostID: String) async throws -> CloudHostConnection {
         try JSONDecoder().decode(CloudHostConnection.self, from: await appJSON("/hosts/connect", body: ["hostId": hostID], authorized: true).body)
     }
+    public func renameComputer(hostID: String,name: String) async throws {
+        _ = try await appJSON("/hosts/rename",body:["hostId":hostID,"name":name],authorized:true)
+    }
+    public func removeComputer(hostID: String) async throws {
+        _ = try await appJSON("/hosts/remove",body:["hostId":hostID],authorized:true)
+    }
     public func changePassword(current: String, password: String) async throws {
         _ = try await appJSON("/auth/password/change", body: ["currentPassword": current, "password": password], authorized: true)
     }

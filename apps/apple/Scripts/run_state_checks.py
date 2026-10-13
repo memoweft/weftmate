@@ -11,6 +11,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 APP_MODEL = ["OfflineChatModel", "A14TestSupport", "CloudBrowser", "CloudLoginModel", "AppleAppModel", "MainChatModel", "ConversationSendState", "ConversationAdoptionState", "ConversationAttachmentState", "TaskWorkspaceModel"]
 CHECKS = {
+    "PhoneModelServicesModelChecks": [],
     "PhoneAttachmentModelChecks": [],
     "PhoneStandaloneModelChecks": [],
     "PhoneMemoryModelChecks": [],
@@ -68,9 +69,9 @@ def main():
             sources.append(ROOT / "UI/ConversationResourcesModel.swift")
         if name == "DesignTokenChecks":
             sources.append(ROOT.parent.parent / "design/tokens/generated/apple/DesignTokens.swift")
-        if name in ("PhoneStandaloneModelChecks", "PhoneMemoryModelChecks", "PhoneAttachmentModelChecks"):
+        if name in ("PhoneModelServicesModelChecks", "PhoneStandaloneModelChecks", "PhoneMemoryModelChecks", "PhoneAttachmentModelChecks"):
             sources.append(ROOT / "iOS/PhoneStandaloneModel.swift")
-        if name in ("PhoneStandaloneModelChecks", "PhoneAttachmentModelChecks"):
+        if name in ("PhoneModelServicesModelChecks", "PhoneStandaloneModelChecks", "PhoneAttachmentModelChecks"):
             sources.append(ROOT / "Tests/PhoneStandaloneCheckSupport.swift")
         if name == "PhoneAttachmentModelChecks":
             sources.append(ROOT / "iOS/PhoneAttachmentInput.swift")

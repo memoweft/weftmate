@@ -610,6 +610,10 @@ struct ConversationView: View {
                     }
                     #endif
                     if composerExpanded {
+                    if model.modelServicesSupported == true {
+                        ServiceModelMenuButton(services:model.modelServices,current:model.sendTargets[key]?.modelProfileID,label:model.sendTargets[key]?.modelName ?? "当前模型",usesImages:(model.attachmentDrafts[key] ?? []).contains(where: {$0.original.isImage}) || model.messages.contains(where: {!$0.images.isEmpty || $0.originalAttachments.contains(where: \.isImage)}),thinkingSupported:model.modelServices.flatMap(\.models).first(where: {$0.matches(model.sendTargets[key]?.modelProfileID)})?.deepThinking?.supported == true,thinking:Binding(get:{model.thinking.confirmed?.enabled == true},set:{value in Task { await model.refreshThinking(conversation,enabled:value) }}),select:{service,item in Task { await model.chooseServiceModel(service,item,conversation:conversation) }},add:{showingModels=true},refresh:{Task { await model.refreshServiceMenus() }},identifier:"composerModel")
+                        ComputerMenuButton(cloud:model.cloudLogin)
+                    } else {
                     Menu {
                         Label(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型",systemImage:"checkmark")
                         Button("配置模型") {
@@ -633,6 +637,7 @@ struct ConversationView: View {
                     .phoneIcon().phoneComposerControl(circle:true)
                     #endif
                     .font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择，"+(model.sendTargets[key]?.modelName ?? "当前模型")).accessibilityIdentifier("composerModel")
+                    }
                     }
                     if showsSmallMic {
                     Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic", size: AppleTokens.Space.p16).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44) }
@@ -767,7 +772,7 @@ struct ConversationView: View {
                     }
                 }
                 #else
-                ConversationApprovalBar(model: interactions, events: model.timeline.events)
+                ConversationApprovalBar(model: interactions, events: model.timeline.events,computerName:model.cloudLogin.computerName(model.session?.hostId))
                 #endif
             }
             else { Text(ProjectPresentation.restrictedNotice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("restrictedSessionNotice") }
