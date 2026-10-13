@@ -17,8 +17,10 @@ test('two computers share one account: identity, addressing, rename, removal and
   assert.equal(directory.hosts.length,2);assert.equal(directory.capabilities.multiHost,1);
   await control(phone,'/hosts/rename',{hostId:aid,name:'synthetic-computer'});
   await control(phone,'/hosts/rename',{hostId:bid,name:'synthetic-computer'});
+  await desk.host.syncCloudRevocations();await laptop.host.syncCloudRevocations();
   directory=(await control(phone,'/devices')).data;
   assert.equal(new Set(directory.hosts.map(h=>h.displayName || h.name)).size,2);
+  assert.ok(directory.hosts.every(h=>h.name==='synthetic-computer'),'later computer heartbeat keeps the name chosen in settings');
   assert.deepEqual(new Set(directory.devices.filter(d=>d.hostId).map(d=>d.hostId)),new Set([aid,bid]));
   await control(phone,'/hosts/connect',{hostId:aid});await refresh(phone,`${f.config.audience}/hosts/${aid}`);
   const wrong=await laptop.exchange(phone,'/auth/cloud-channel');assert.equal(wrong.status,401);
