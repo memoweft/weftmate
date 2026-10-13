@@ -1,0 +1,9 @@
+{
+  "package": "tlds",
+  "version": "1.261.0",
+  "dataset": "node_modules/tlds/index.json",
+  "sha256": "39498bb22800167e8b6fa73740b2686decb4ffdbea3e8333f32020f5714938f2",
+  "registryIntegrityMatchesLock": true,
+  "source": "https://data.iana.org/TLD/tlds-alpha-by-domain.txt",
+  "scope": "Exact unmodified public dataset only; all modified bytes and other files keep identity checks"
+}

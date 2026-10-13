@@ -1,0 +1,80 @@
+{
+  "required": {
+    "mode": "required",
+    "files": 339,
+    "exitCode": 0,
+    "passed": 1925,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 35,
+    "exitCode": 0,
+    "passed": 241,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "mobile": {
+    "files": 5,
+    "passed": 114,
+    "failed": 0,
+    "skipped": 0
+  },
+  "postMainRelated": {
+    "files": 8,
+    "passed": 121,
+    "failed": 0
+  },
+  "finalNative": {
+    "passed": 2,
+    "failed": 0
+  },
+  "packagePolicy": {
+    "passed": 9,
+    "failed": 0
+  },
+  "protocolCases": {
+    "mail": 12,
+    "calendar": 8,
+    "presets": 3,
+    "native": 2,
+    "failed": 0
+  },
+  "typecheck": true,
+  "sharedMobileAssets": 61,
+  "publicHygieneHits": 0,
+  "designDetectorHits": 0,
+  "modelRequests": 44,
+  "modelAttempts": [
+    {
+      "file": "attempt-1791856705377.json",
+      "ok": true,
+      "requests": 24
+    },
+    {
+      "file": "attempt-1791856939123.json",
+      "ok": true,
+      "requests": 20
+    }
+  ],
+  "visualOnlyModelRequests": 0,
+  "screenshots": 68,
+  "heavySlots": {
+    "required": 3,
+    "electron": [
+      3,
+      1
+    ],
+    "vendor": 1,
+    "visual": 1,
+    "mobile": 1,
+    "package": [
+      1,
+      1
+    ]
+  },
+  "mergedMain": "c1e96a36"
+}

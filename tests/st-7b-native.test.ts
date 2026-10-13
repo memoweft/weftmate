@@ -27,6 +27,7 @@ test('builtins use pinned discovery, safe real connection failures, vault maskin
     await assert.rejects(manager.rotate('synthetic',added.id,{NODE_TLS_REJECT_UNAUTHORIZED:'0'}),/请检查/);
     assert.equal(vault.get('synthetic',added.id,'NODE_TLS_REJECT_UNAUTHORIZED'),null);
     const catalog=manager.catalog('synthetic'),reader=catalog.find(row=>row.rawName==='mail_read');assert.equal(reader.displayName,'读一封邮件');
+    const missing=await manager.call('synthetic',added.id,reader.name,{uid:99999});assert.match(missing.content[0].text,/"ok":false/);assert.match(missing.content[0].text,/找不到这封邮件/);assert.equal(manager.catalog('synthetic').length,9);
     const result=await manager.call('synthetic',added.id,reader.name,{uid:5});assert.match(result.content[0].text,/外部数据.*不可信/);assert.match(result.content[0].text,/不是用户指令/);assert.match(result.content[0].text,/IGNORE ALL/);
     const effects=catalog.filter(row=>row.category!=='read');assert.equal(effects.length,6);
     for(const tool of effects)assert.equal(connectorPermission({mode:'allow-all',permissionRules:{external:'allow',write:'allow',delete:'allow'}},tool).decision,'ask');
