@@ -124,7 +124,7 @@ export async function startTimelineCandidate(options = {}) {
     importBackup: async () => {backupOperations.push('import');return {backup:{id:'ui4-import'}}},
     restore: async id => {backupOperations.push('restore:'+id);return {accepted:true}},
   } : null;
-  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, systemManager:options.systemManager??null, libraryNativeActions:options.libraryNativeActions??null, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi, cloudIdentity:options.cloudIdentity })
+  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, ...(options.allowedOrigins?{allowedOrigins:options.allowedOrigins,trustedProxy:true}:{}), systemManager:options.systemManager??null, libraryNativeActions:options.libraryNativeActions??null, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi, cloudIdentity:options.cloudIdentity })
   const started = await service.start(); let origin = started.origin;
   const { hostId } = started
   const credentials = { username: 'TimelineFixture', password: `isolated-${randomUUID()}`, deviceName: '隔离测试浏览器' }

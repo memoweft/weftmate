@@ -84,7 +84,7 @@ async function refreshAttachmentDrafts(generation=attachmentViewGeneration){if(!
 function selectConversation(id){uiCore.cancelNextSuggestions?.();closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.sharedGeneration++;state.chatSource='phone';state.restorePending=false;state.sharedAwaiting=null;state.scrollPinned=true;
   try{localStorage.removeItem(chatSourceKey())}catch{}status('');closeToast();
   state.activeSend=null;state.sendUncertain=false;state.conversationId=id;try{if(id)localStorage.setItem(selectionKey(),id);else localStorage.removeItem(selectionKey())}catch{}
-  closeAttachmentMenu();loadDraft();page('chat');scrollBottom(true);if(id)void refreshHandoff(id)}
+  closeAttachmentMenu();loadDraft();page('chat');scrollBottom(true);if(id&&!globalThis.WeftPhone?.owns(id))void refreshHandoff(id)}
 
 function safeError(error) {
   const code = error?.message || error?.code || 'OPERATION_FAILED';
@@ -374,7 +374,7 @@ function placeModelMenu(){globalThis.WeftPopover.position($('model-popover'),$('
 const coreFolderPending=()=>uiCore.folderMutationPending?.()===true;
 let mobileFolderChoice;
 function updateComposer(){uiCore.syncMobileIdentity();
-  if(globalThis.WeftFolderChoice && $('composer-dock')){mobileFolderChoice ||= WeftFolderChoice.create(uiCore,{form:$('draft').closest('.composer')||$('draft').parentElement,tools:$('plus-button').parentElement,toast,mobile:true});mobileFolderChoice.paint();}mobileMessageActions?.refresh();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
+  if(globalThis.WeftFolderChoice && $('composer-dock')){mobileFolderChoice ||= WeftFolderChoice.create(uiCore,{form:$('draft').closest('.composer')||$('draft').parentElement,tools:$('plus-button').parentElement,toast,mobile:true});mobileFolderChoice.paint();}mobileMessageActions?.refresh();const view=uiCore.mobile.composerState($('draft').value);if(globalThis.WeftPhone?.owns(state.conversationId)&&!WeftPhone.active&&state.chatSource==='phone'){view.ready=false;view.draftDisabled=true;view.placeholder='这段手机对话仍可查看，请回到聊天开始新对话';view.attachmentsDisabled=true;view.voiceDisabled=true;view.modelDisabled=true;}if(globalThis.WeftPhone?.active){view.attachmentsDisabled=true;if(!window.weftNative)view.voiceDisabled=true;}reportDraftState();
   renderQueuedTasks();
   const button=$('send-button'), stop=view.sendHidden;
   globalThis.WeftMobileMotion?.changed(button,String(stop),'160ms');
@@ -500,13 +500,14 @@ function sendShared(...args){return uiCore.mobile.sendShared(...args)}
 function sendLinked(...args){return uiCore.mobile.sendLinked(...args)}
 
 function send(...args){
+  if(globalThis.WeftPhone?.active)return WeftPhone.send();
   if(window.weftNative&&state.connection==='expired'){
     globalThis.WeftMobileCloud.core?.startCloudJourney();return;
   }
   return uiCore.mobile.send(...args)
 }
 
-function stop(...args){return uiCore.mobile.stop(...args)}
+function stop(...args){if(globalThis.WeftPhone?.active)return WeftPhone.stop();return uiCore.mobile.stop(...args)}
 
 async function restoreSharedSelection(sessionId,owner,epoch){await listSharedSessions();
   if(!state.restorePending||state.owner!==owner||state.authEpoch!==epoch||state.page!=='chat')return;

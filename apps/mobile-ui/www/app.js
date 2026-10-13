@@ -105,6 +105,7 @@ uiCore.cloudSendFeedback = payload => {
   return account.cloudSendFeedback(payload);
 };
 function startMobileConnection() {
+  if(globalThis.WeftPhone?.active)return;
   uiCore.syncMobileIdentity();
   uiCore.startConnection(async()=>{
     await listSharedSessions();
@@ -282,7 +283,7 @@ function syncMobileTabs(){
 async function selectMobileTab(name){
   if(!state.loggedIn||!mobilePageNames[name])return;
   state.tabSource=null;state.settingsChild=false;
-  if(name==='chat'&&state.logicalChats&&!uiCore.inMainChat()){
+  if(name==='chat'&&state.logicalChats&&(!uiCore.inMainChat()||state.chatSource==='phone'&&globalThis.WeftPhone?.owns(state.conversationId))){
     state.selectingMainTab=true;try{await uiCore.selectMainChat();}finally{state.selectingMainTab=false;}
   }else page(name);
   syncMobileTabs();
@@ -297,7 +298,7 @@ function mountMobileTabs(){
     tab.append(icon,el('span','mobile-tab-label',name));tab.onclick=()=>void selectMobileTab(id);tabs.append(tab);
   }
   tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.querySelectorAll('[role=tab]')],index=buttons.indexOf(document.activeElement),next=buttons[event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+(event.key==='ArrowLeft'?-1:1)+buttons.length)%buttons.length];next.focus();void selectMobileTab(next.dataset.tab);});
-  const refresh=async()=>{if(!state.loggedIn||document.visibilityState==='hidden')return;
+  const refresh=async()=>{if(!state.loggedIn||globalThis.WeftPhone?.active||document.visibilityState==='hidden')return;
     if(['chat','home'].includes(state.page))await listSharedSessions();
     if(state.page!=='activity')await uiCore.refreshActivity();syncMobileTabs();};
   clearInterval(mobileBadgeTimer);mobileBadgeTimer=setInterval(()=>void refresh(),uiCore.polling.overview);
@@ -341,7 +342,7 @@ const receiptIdPattern=/^[A-Za-z0-9._:-]{1,160}$/;
 
 
 
-function call(method, params={}, timeoutMs=45000) { return mobileWebBridge?mobileWebBridge.call(method,params):androidBridge.call(method,params,timeoutMs); }
+function call(method, params={}, timeoutMs=45000) { if(['auth.logout','auth.login','auth.register'].includes(method)&&globalThis.WeftPhone?.hasData)return WeftPhone.clear().then(()=>mobileWebBridge?mobileWebBridge.call(method,params):androidBridge.call(method,params,timeoutMs));if(method==='conversations.list'&&globalThis.WeftPhone?.hasData&&!WeftPhone.active)return Promise.resolve(mobileWebBridge?mobileWebBridge.call(method,params):androidBridge.call(method,params,timeoutMs)).then(result=>({...result,conversations:[...WeftPhone.list(),...(result.conversations||[])]}));if(globalThis.WeftPhone?.active && !method.startsWith("phone.") && !["clipboard.copy","conversation.export","settings.appearance","app.ready","app.bootstrap"].includes(method) && !method.startsWith("cloud."))return WeftPhone.routeCall(method,params); return mobileWebBridge?mobileWebBridge.call(method,params):androidBridge.call(method,params,timeoutMs); }
 globalThis.WeftLocalDiagnostics?.configure((method,params)=>call(method,params,5000));
 
 
@@ -462,7 +463,7 @@ function page(name,{dataLoaded=false}={}){
 
 
 
-function processEvent(message){const {event,data}=message;if(state.page==='health')void uiCore.readHealth();if(state.page==='goals')void uiCore.readGoals();
+function processEvent(message){if(globalThis.WeftPhone?.event(message))return;const {event,data}=message;if(state.page==='health')void uiCore.readHealth();if(state.page==='goals')void uiCore.readGoals();
   if(state.page==='system'&&/^(system|host|connection|model|memory|relay|certificate)\./.test(event))refreshMobileSystemStatus();
   if(event==='conversation.exported')toast(data.saved?'对话已保存':'导出未完成，请重试',!data.saved);
   if(event==='cloud.callback')void resumeCloudLogin();if(event==='chat.started'){
@@ -607,7 +608,7 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 
-function renderPage(name){if(['activity','health','goals','library'].includes(name))return renderMobileTab(name);const target=$('page-content');target.className='';clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
+function renderPage(name){if(globalThis.WeftPhone?.active&&!['models','phoneModels','account','devices','settings','appearance','about','help','releases'].includes(name)){const target=$('page-content');target.className='';WeftPhone.empty(target,name);return;}if(['activity','health','goals','library'].includes(name))return renderMobileTab(name);const target=$('page-content');target.className='';clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
   case 'help':return mobileHelpPage('help',target);
   case 'releases':return mobileHelpPage('releases',target);
   case 'library':return libraryPage(target);
@@ -623,6 +624,7 @@ function renderPage(name){if(['activity','health','goals','library'].includes(na
   case 'password':return passwordPage(target);
   case 'connect':return connectPage(target);
   case 'models':return modelsPage(target);
+  case 'phoneModels':return phoneModelsPage(target);
   case 'sync':return syncPage(target);
   case 'appearance':return appearancePage(target);
   case 'updates':return updatesPage(target);
