@@ -11,6 +11,7 @@ import { packageRelease } from '../scripts/release/package.mjs'
 import { verifyRelease } from '../scripts/release/verify.mjs'
 import { verifyDownloadedApp } from '../src/personal-update/app-package.mjs'
 import { publishMobileUi, validateMobileManifest } from '../src/personal-access/mobile-ui-release.mjs'
+import { personalAccessUiResources, servePersonalAccessUi, setPersonalAccessUiResourceReader } from '../src/personal-access-ui/index.mjs'
 
 async function fixture(t: any) {
   const root = await mkdtemp(join(tmpdir(), 'upd-1-unit-'))
@@ -121,4 +122,31 @@ test('release scripts verify all three layers, generate changed files and preser
   const app = await packageRelease({ layer: 'app', version: '1.1.0', outputDir, sourceDir: installerDir, privateKey: f.privateKey })
   await verifyDownloadedApp(app, installer)
   await writeFile(installer, 'tampered'); await assert.rejects(verifyDownloadedApp(app, installer), /hash/)
+})
+
+test('shipped UI release keeps catalog browser paths separate from physical source paths', async t => {
+  const f = await fixture(t), outputDir = join(f.root, 'catalog-feed')
+  const name = 'ui-core/model-service-catalog.mjs'
+  const source = personalAccessUiResources.get(name)
+  assert.ok(source)
+  assert.ok(!personalAccessUiResources.has('ui-core/../model-service-catalog.mjs'))
+  const expected = await readFile(source)
+  const manifest = await packageRelease({ layer: 'ui', version: '1.0.0', outputDir, privateKey: f.privateKey })
+  const directory = join(outputDir, 'files/ui/1.0.0')
+  await verifyRelease({ manifest, trustedKeys: f.trustedKeys, directory })
+  assert.equal(manifest.files.find((file: { path: string }) => file.path === name)?.sha256, sha256(expected))
+  assert.deepEqual(await readFile(join(directory, name)), expected)
+
+  let requested: string | null = null, status: number | null = null, body: Buffer | null = null
+  setPersonalAccessUiResourceReader(async (resource: string) => {
+    requested = resource
+    return readFile(join(directory, resource))
+  })
+  t.after(() => setPersonalAccessUiResourceReader(null))
+  assert.equal(await servePersonalAccessUi({ method: 'GET', url: '/personal/v1/ui/' + name }, {
+    writeHead(value: number) { status = value }, end(value: Buffer) { body = value },
+  }), true)
+  assert.equal(requested, name); assert.equal(status, 200); assert.deepEqual(body, expected)
+  await assert.rejects(packageRelease({ layer: 'ui', version: '1.0.1', outputDir, privateKey: f.privateKey,
+    resources: new Map([['ui-core/../model-service-catalog.mjs', source]]) }), /invalid release resource/)
 })

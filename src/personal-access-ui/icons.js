@@ -46,7 +46,7 @@
   "memory": "<path d=\"M6 3h12v18l-6-4-6 4Z\"/>",
   "mic": "<rect x=\"9\" y=\"3.5\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5\"/>",
   "minus": "<path d=\"M5 12h14\"/>",
-  "model": "<rect x=\"6.5\" y=\"6.5\" width=\"11\" height=\"11\" rx=\"2\"/><path d=\"M10 10h4v4h-4z\"/><path d=\"M9.5 3.5v3M14.5 3.5v3M9.5 17.5v3M14.5 17.5v3M3.5 9.5h3M3.5 14.5h3M17.5 9.5h3M17.5 14.5h3\"/>",
+  "model": "<path d=\"M12 3.5c.7 4.4 3.9 7.6 8.5 8.5-4.6.9-7.8 4.1-8.5 8.5-.7-4.4-3.9-7.6-8.5-8.5 4.6-.9 7.8-4.1 8.5-8.5z\"/>",
   "moon": "<path d=\"M19.5 14.5A7.5 7.5 0 1 1 9.5 4.5a6 6 0 0 0 10 10z\"/>",
   "more": "<circle fill=\"currentColor\" stroke=\"none\" cx=\"6\" cy=\"12\" r=\"1.4\"/><circle fill=\"currentColor\" stroke=\"none\" cx=\"12\" cy=\"12\" r=\"1.4\"/><circle fill=\"currentColor\" stroke=\"none\" cx=\"18\" cy=\"12\" r=\"1.4\"/>",
   "offline": "<path d=\"M7.5 18.5h9.5a3.5 3.5 0 0 0 .4-7 5.5 5.5 0 0 0-10.6-1.2A4 4 0 0 0 7.5 18.5z\"/><path d=\"m4 4 16 16\"/>",

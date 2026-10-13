@@ -29,7 +29,7 @@ async function check(page, locator, name, size, enforce = true) {
   if (capture) await page.screenshot({ path: join(evidence, `${phase}-${size}-${name}.png`) });
 }
 try {
-  candidate = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, baseTime: Date.now() - 80000 });
+  candidate = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, modelServices: true, baseTime: Date.now() - 80000 });
   const profile = mkdtempSync(join(tmpdir(), 'weftmate-fix5-'));
   writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
   app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: root, env, timeout: 90000,
@@ -53,9 +53,12 @@ try {
     for (const [width, height] of [[1200,800], [720,600]]) {
       await app.evaluate(({ BrowserWindow }, size) => { const window = BrowserWindow.getAllWindows()[0]; window.setMinimumSize(0,0); window.setContentSize(...size); }, [width,height]);
       const size = `${width}x${height}`, enforce = phase === 'after';
-      await page.getByRole('button', { name: '合成会话', exact: true }).click();
-      await check(page, page.getByRole('listbox', { name: '选择模型' }).locator('..'), 'model', size, enforce);
-      if (enforce) assert.equal(await page.getByRole('listbox', { name: '选择模型' }).locator('..').evaluate(n => n.dataset.popoverSide), 'top');
+      const modelTrigger = enforce ? page.getByRole('button', { name: /^模型：/ }) : page.getByRole('button', { name: '合成会话', exact: true });
+      const modelMenu = enforce ? page.getByRole('menu', { name: '选择模型', exact: true }) : page.getByRole('listbox', { name: '选择模型' }).locator('..');
+      await modelTrigger.click();
+      if (enforce) await modelMenu.getByRole('menuitemradio', { name: '合成会话', exact: true }).waitFor();
+      await check(page, modelMenu, 'model', size, enforce);
+      if (enforce) assert.equal(await modelMenu.evaluate(n => n.dataset.popoverSide), 'top');
       await page.keyboard.press('Escape');
       await page.getByRole('button', { name: '自动', exact: true }).click();
       await check(page, page.getByRole('menu', { name: '审批模式' }), 'approval', size, enforce); await page.keyboard.press('Escape');
@@ -80,14 +83,18 @@ try {
       await check(page, page.getByRole('dialog', { name: '输出与来源' }), 'panel-menu', size, enforce);
       await page.getByRole('button', { name: '关闭列表' }).click(); await page.getByRole('button', { name: '收起右侧面板' }).click();
       if (enforce) {
-        await page.getByRole('button', { name: '合成会话', exact: true }).click();
-        await page.getByRole('listbox', { name: '选择模型' }).evaluate(list => {
+        const catalogRead = page.waitForResponse(response => response.request().method() === 'GET' && new URL(response.url()).pathname === '/personal/v1/model-services');
+        await modelTrigger.click();
+        await (await catalogRead).finished();
+        const modelList = modelMenu.locator('.wm-model-list');
+        await modelMenu.getByRole('menuitemradio', { name: '合成会话', exact: true }).waitFor();
+        await modelList.evaluate(list => {
           for (let i=0;i<40;i++) { const option=list.firstElementChild.cloneNode(true);option.textContent=`合成模型 ${i}`;list.append(option); }
         });
-        await check(page, page.getByRole('listbox', { name: '选择模型' }).locator('..'), 'model-long', size);
-        assert.ok(await page.getByRole('listbox', { name: '选择模型' }).evaluate(n => n.scrollHeight > n.clientHeight));
+        await check(page, modelMenu, 'model-long', size);
+        assert.ok(await modelList.evaluate(n => n.scrollHeight > n.clientHeight));
         await app.evaluate(({ BrowserWindow }) => { const window = BrowserWindow.getAllWindows()[0]; window.setMinimumSize(0,0); window.setContentSize(460,400); });
-        await check(page, page.getByRole('listbox', { name: '选择模型' }).locator('..'), 'model-resize', '460x400'); await page.keyboard.press('Escape');
+        await check(page, modelMenu, 'model-resize', '460x400'); await page.keyboard.press('Escape');
       }
     }
   }
@@ -101,7 +108,7 @@ try {
     try {
       let body = readFileSync(file);
       if (phase==='before' && ['/components/chat.js','/components/decisions.js','/styles.css'].includes(path)) body=execFileSync('git',['show',`${baseline}:apps/mobile-ui/www${path}`],{cwd:root});
-      res.setHeader('content-type',{'.js':'text/javascript','.css':'text/css','.html':'text/html','.svg':'image/svg+xml'}[extname(file)]||'application/octet-stream');res.end(body);
+      res.setHeader('content-type',{'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.html':'text/html','.svg':'image/svg+xml'}[extname(file)]||'application/octet-stream');res.end(body);
     } catch {res.writeHead(404).end();}
   });
   await new Promise(done=>server.listen(0,'127.0.0.1',done));
@@ -111,12 +118,14 @@ try {
     phone = await app.firstWindow(); await app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows()[0].show()); await phone.setViewportSize({width:390,height:844});
   } else { browser=await chromium.launch({headless:true,...(process.argv.includes('--chrome')?{channel:'chrome'}:{})});phone=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}); }
   phone.setDefaultTimeout(15000);phone.on('pageerror',e=>errors.push(e.message));
-  await phone.addInitScript(()=>{window.weftNative={postMessage(raw){const message=JSON.parse(raw);const result=message.method==='host.business'&&message.params?.path==='/personal/v1/settings/personalization'?{settings:{...WeftPersonalization.defaults,...message.params.body},updatedAt:'2026-10-10T00:00:00.000Z',synced:true}:message.method==='app.bootstrap'?{loggedIn:false}:message.method==='models.list'?{models:[{source:'phone',modelId:'fixture',displayName:'MiMo 定时验收',selected:true}]}:message.method==='models.host'?{models:[]}:{};queueMicrotask(()=>window.weftNative.onmessage({data:JSON.stringify({id:message.id,ok:true,result})}));}};});
+  await phone.addInitScript(()=>{window.weftNative={postMessage(raw){const message=JSON.parse(raw);const model={modelId:'fixture',name:'MiMo 定时验收',profileId:'local',enabled:true};const service={serviceId:'model-service-00000000-0000-4000-8000-000000000001',name:'合成模型服务',models:[model],catalog:{status:'available'}};const result=message.method==='host.business'&&message.params?.path==='/personal/v1/settings/personalization'?{settings:{...WeftPersonalization.defaults,...message.params.body},updatedAt:'2026-10-10T00:00:00.000Z',synced:true}:message.method==='host.business'&&message.params?.path==='/personal/v1/model-services'?{services:[service],canManage:true}:message.method==='host.business'&&message.params?.path.endsWith('/refresh')?{service}:message.method==='app.bootstrap'?{loggedIn:false}:message.method==='models.list'?{models:[{source:'phone',modelId:'fixture',displayName:'MiMo 定时验收',selected:true}]}:message.method==='models.host'?{models:[]}:{};queueMicrotask(()=>window.weftNative.onmessage({data:JSON.stringify({id:message.id,ok:true,result})}));}};});
   for(phase of capture?['before','after']:['after']) {
     await phone.goto(`http://127.0.0.1:${server.address().port}/`);await phone.waitForFunction(()=>typeof state!=='undefined'&&state.booted);
-    await phone.evaluate(()=>{state.logicalChats=false;state.model={source:'phone',modelId:'fixture',displayName:'MiMo 定时验收'};state.loggedIn=true;state.owner='synthetic-fix5';state.deviceId='synthetic-phone';state.transitionPending=false;state.chatSource='phone';state.restorePending=false;page('chat');updateComposer();});
+    await phone.evaluate(after=>{state.logicalChats=false;state.model={source:after?'host':'phone',modelId:'fixture',displayName:'MiMo 定时验收',...(after?{profileId:'local'}:{})};state.loggedIn=true;state.owner='synthetic-fix5';state.deviceId='synthetic-phone';state.transitionPending=false;state.chatSource=after?'host':'phone';state.restorePending=false;if(after){state.sharedSessionId='synthetic-session';state.sharedSessions=[{sessionId:'synthetic-session',modelProfileId:'local',modelDisplayName:'MiMo 定时验收',sendAvailable:true}];}page('chat');updateComposer();},phase==='after');
     await phone.locator('#draft').focus();
-    await phone.getByRole('button',{name:'选择模型',exact:true}).click();await check(phone,phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..'),'model','390x844',phase==='after');
+    const phoneModelTrigger=phase==='after'?phone.getByRole('button',{name:/^模型：/}):phone.getByRole('button',{name:'选择模型',exact:true});
+    const phoneModelMenu=phase==='after'?phone.getByRole('menu',{name:'选择模型',exact:true}):phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..');
+    await phoneModelTrigger.click();if(phase==='after')await phoneModelMenu.getByRole('menuitemradio',{name:'MiMo 定时验收',exact:true}).waitFor();await check(phone,phoneModelMenu,'model','390x844',phase==='after');
     await phone.getByRole('button',{name:'添加图片或文件',exact:true}).click();await check(phone,phone.getByRole('menu',{name:'添加附件'}),'attachment','390x844',phase==='after');
     await phone.getByRole('button',{name:/^审批模式/}).click();await check(phone,phone.getByRole('menu',{name:'审批模式'}),'approval','390x844',phase==='after');
     await phone.evaluate(()=>{closeApprovalModeMenu();mobileSessionMenu({sessionId:'synthetic',title:'合成会话'});});
@@ -130,16 +139,16 @@ try {
       assert.match(await phone.getByRole('combobox',{name:'回复进行中时发送的消息'}).textContent(),/排队/);
       await phone.getByRole('button',{name:'返回',exact:true}).click();await phone.getByRole('button',{name:'返回',exact:true}).click();
       await phone.evaluate(()=>page('chat'));
-      await phone.evaluate(()=>{state.chatSource='phone';state.sharedRunning=false;updateComposer();});
+      await phone.evaluate(()=>{state.chatSource='host';state.sharedRunning=false;updateComposer();});
       await phone.locator('#draft').focus();
-      await phone.getByRole('button',{name:'选择模型',exact:true}).click();
-      await phone.setViewportSize({width:280,height:300});await check(phone,phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..'),'model-resize','280x300');
+      await phoneModelTrigger.click();
+      await phone.setViewportSize({width:280,height:300});await check(phone,phoneModelMenu,'model-resize','280x300');
       await phone.setViewportSize({width:390,height:844});
       // Force edge anchors through the same production helper, including horizontal
       // flip, both vertical directions, scrollable content and visual viewport events.
       await phone.evaluate(()=>{closeModelMenu();const menu=$('model-popover'),trigger=$('model-button');menu.hidden=false;trigger.style.position='fixed';trigger.style.left='370px';trigger.style.top='8px';WeftPopover.position(menu,trigger);});
-      await check(phone,phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..'),'edge-flip','390x844');
-      assert.equal(await phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..').evaluate(n=>n.dataset.popoverSide),'bottom');
+      await check(phone,phoneModelMenu,'edge-flip','390x844');
+      assert.equal(await phoneModelMenu.evaluate(n=>n.dataset.popoverSide),'bottom');
     }
   }
   assert.deepEqual(errors,[]);
