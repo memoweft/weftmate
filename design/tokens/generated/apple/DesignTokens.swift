@@ -161,7 +161,9 @@ public enum WeftDesignTokens {
         "mobile-composer": "0 8px 22px rgba(31,49,81,.07)",
         "mobile-toast": "0 10px 28px rgba(20,30,50,.18)",
         "mobile-approval-menu": "0 12px 32px rgba(0,0,0,.16)",
-        "mobile-attachment-remove": "-2px 2px 9px rgba(20,34,58,.16)"
+        "mobile-attachment-remove": "-2px 2px 9px rgba(20,34,58,.16)",
+        "model-picker-light": "0 24px 72px rgba(27,48,90,.16)",
+        "model-picker-dark": "0 12px 36px rgba(0,0,0,.28)"
     ]
     public static let desktopLight: [String: String] = [
         "--canvas": "#faf9f7",

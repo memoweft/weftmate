@@ -1,7 +1,7 @@
 import { desktopFeatureSource, desktopHtml, mountDesktopTestTree } from './helpers/desktop-ui-source.mjs'
 import assert from 'node:assert/strict'
 import { Blob, File } from 'node:buffer'
-import { createHash } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -10,7 +10,7 @@ import test from 'node:test'
 import { hashBlobSha256 } from '../src/personal-access-ui/file-sha256.js'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
-const source = desktopFeatureSource()
+const source = desktopFeatureSource({ modelEditor: true })
 const executableSource = source.replace("import('./file-sha256.js')",
   'Promise.resolve({ hashBlobSha256: globalThis.__weftmateTestHashBlobSha256 })')
 assert.notEqual(executableSource, source, 'the attachment test harness replaces only the browser module loader')
@@ -51,7 +51,7 @@ function officialQrSvg(platform: string) {
 class Element {
   id: string
   tagName: string
-  ownerDocument: { body: Element; activeElement: Element } | null = null
+  ownerDocument: { body: Element; activeElement: Element; dispatchTestEvent?: (name: string, event: any) => void } | null = null
   root = false
   children: Element[] = []
   listeners = new Map<string, Array<(event: any) => unknown>>()
@@ -62,7 +62,7 @@ class Element {
   textContent = ''
   type = ''
   className = ''
-  style = { right: '', maxHeight: '' }
+  style = { right: '', maxHeight: '', setProperty(name: string, value: string) { this[name] = value } }
   dataset: Record<string, string> = {}
   attributes = new Map<string, string>()
   files: any[] = []
@@ -71,22 +71,37 @@ class Element {
   focusOptions: { preventScroll?: boolean } | undefined
   scrollTop = 0
   decodeHandler: (() => Promise<void>) | null = null
-  classList = { add() {}, remove() {}, toggle() {}, contains: (value: string) => this.className.split(/\s+/).includes(value) }
+  classList = {
+    add: (...values: string[]) => { this.className = [...new Set([...this.className.split(/\s+/).filter(Boolean), ...values])].join(' ') },
+    remove: (...values: string[]) => { this.className = this.className.split(/\s+/).filter(value => !values.includes(value)).join(' ') },
+    toggle: (value: string, force?: boolean) => { const present = this.classList.contains(value), enabled = force ?? !present; if (enabled) this.classList.add(value); else this.classList.remove(value); return enabled },
+    contains: (value: string) => this.className.split(/\s+/).includes(value),
+  }
   constructor(id = '', tagName = 'div') { this.id = id; this.tagName = tagName.toUpperCase() }
   addEventListener(name: string, listener: (event: any) => unknown) {
     this.listeners.set(name, [...(this.listeners.get(name) ?? []), listener])
   }
   fire(name: string, extra: Record<string, unknown> = {}) {
-    for (const listener of this.listeners.get(name) ?? []) listener({ currentTarget: this, target: this, preventDefault() {}, ...extra })
+    let stopped = false;
+    const event = { currentTarget: this as any, target: this, preventDefault() {}, stopPropagation() { stopped = true }, ...extra };
+    const path: Element[] = []; for (let node: Element | null = this; node; node = node.parentNode) path.push(node);
+    const bubbles = ['click', 'input', 'change', 'submit', 'keydown'].includes(name);
+    for (const node of bubbles ? path : [this]) {
+      event.currentTarget = node;
+      for (const listener of node.listeners.get(name) ?? []) listener(event);
+      if (stopped) break;
+    }
+    if (bubbles && !stopped) this.ownerDocument?.dispatchTestEvent?.(name, event);
   }
   dispatchEvent(event: Event) { this.fire(event.type); return true }
-  append(...children: Element[]) { for (const child of children) child.parentNode = this; this.children.push(...children) }
-  prepend(...children: Element[]) { for (const child of children) child.parentNode = this; this.children.unshift(...children) }
+  append(...children: Element[]) { for (const child of children) { child.remove(); child.parentNode = this; this.children.push(child) } }
+  prepend(...children: Element[]) { for (const child of [...children].reverse()) { child.remove(); child.parentNode = this; this.children.unshift(child) } }
   replaceChildren(...children: Element[]) { for (const child of [...this.children]) child.remove(); this.children = []; this.append(...children) }
   cloneNode(deep = false) { const copy=new Element(this.id,this.tagName);copy.ownerDocument=this.ownerDocument;copy.hidden=this.hidden;copy.disabled=this.disabled;copy.value=this.value;copy.textContent=this.textContent;copy.className=this.className;copy.src=this.src;copy.attributes=new Map(this.attributes);copy.dataset={...this.dataset};if(deep)copy.append(...this.children.map(child=>child.cloneNode(true)));return copy }
-  setAttribute(name: string, value: string) { this.attributes.set(name, value) }
-  getAttribute(name: string) { return this.attributes.get(name) ?? null }
+  setAttribute(name: string, value: string) { this.attributes.set(name, value);if(name==='class')this.className=value }
+  getAttribute(name: string) { if (name.startsWith('data-')) return this.dataset[name.slice(5).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] ?? this.attributes.get(name) ?? null; return this.attributes.get(name) ?? null }
   removeAttribute(name: string) { this.attributes.delete(name); if (name === 'src') this.src = '' }
+  toggleAttribute(name: string, force?: boolean) { const present = this.getAttribute(name) !== null, enabled = force ?? !present; if (enabled) this.setAttribute(name, ''); else this.removeAttribute(name); return enabled }
   decode() { return this.decodeHandler ? this.decodeHandler() : Promise.resolve() }
   focus(options?: { preventScroll?: boolean }) {
     if (!this.isConnected) return
@@ -103,7 +118,8 @@ class Element {
   closest(selector: string): Element | null { return selector.split(',').some(part => matchesTestSelector(this, part.trim())) ? this : this.parentNode?.closest(selector) ?? null }
   contains(node: Element | null): boolean { return !!node && (node === this || this.children.some((child) => child.contains(node))) }
   get isConnected(): boolean { return this.root || this.parentNode?.isConnected === true }
-  close() { this.open = false; if (this.ownerDocument && this.contains(this.ownerDocument.activeElement)) this.ownerDocument.activeElement = this.ownerDocument.body; this.fire('close') }
+  returnValue = ''
+  close(value = '') { this.returnValue = value; this.open = false; if (this.ownerDocument && this.contains(this.ownerDocument.activeElement)) this.ownerDocument.activeElement = this.ownerDocument.body; this.fire('close') }
   showModal() { this.open = true; this.focus() }
   reset() { this.value = '' }
   open = false
@@ -111,6 +127,7 @@ class Element {
   get parentElement() { return this.parentNode }
   get firstElementChild() { return this.children[0] || null }
   get nextSibling() { return this.parentNode?.children[this.parentNode.children.indexOf(this) + 1] ?? null }
+  get nextElementSibling() { return this.nextSibling }
   insertBefore(child: Element, next: Element | null) {
     child.remove()
     const index = next ? this.children.indexOf(next) : -1
@@ -128,9 +145,12 @@ class Element {
 }
 
 function matchesTestSelector(node: Element, selector: string) {
+  if(selector==='button:not(:disabled)')return node.tagName==='BUTTON'&&!node.disabled;
+  const attribute=/^(\w+)?\[([\w-]+)="([^"]*)"\]$/.exec(selector);
+  if(attribute)return (!attribute[1]||node.tagName===attribute[1].toUpperCase())&&node.getAttribute(attribute[2])===attribute[3];
   if(selector.split(',').length>1)return selector.split(',').some(part=>matchesTestSelector(node,part.trim()));
   if(/^#[A-Za-z][\w-]*$/.test(selector))return node.id===selector.slice(1);
-  if(/^[a-z]+$/.test(selector))return node.tagName===selector.toUpperCase();
+  if(/^[a-z][a-z0-9]*$/.test(selector))return node.tagName===selector.toUpperCase();
   if (selector === 'dialog[open]') return node.tagName === 'DIALOG' && node.open
   if (/^(button|form|pre|a|textarea|img)$/.test(selector)) return node.tagName === selector.toUpperCase()
   if (selector.startsWith('.')) return node.className.split(' ').includes(selector.slice(1))
@@ -159,6 +179,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     eventPageSize?: number; syncAvailable?: boolean; syncEvents?: object[]; downloadAvailable?: boolean;
     conversationViews?: Record<string, object>;
     modelCatalog?: object[];
+    modelServices?: any[]; modelServiceWrite?: (url:string,options:any)=>object; modelServiceCheck?: object | ((url:string,options:any)=>object);
     systemRead?: object; restartRead?: (url: string, options: any) => Promise<ReturnType<typeof reply>>;
     abortSignal?: { timeout: (ms: number) => AbortSignal };
     accountModels?: object[]; accountModelWrite?: (url: string, options: any) => object;
@@ -182,6 +203,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   const nodes = new Map<string, Element>()
   let focusDocument: { body: Element; activeElement: Element } | null = null
   const get = (id: string) => {
+    const dynamic=nodes.get('body')?.querySelector('#'+id);if(dynamic)return dynamic;
     if (!nodes.has(id)) { const node = new Element(id, id.endsWith('-dialog') ? 'dialog' : 'div');
       node.root = true; node.ownerDocument = focusDocument; nodes.set(id, node) }
     return nodes.get(id)!
@@ -227,6 +249,14 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
         uncleanCount7Days: 0, summary: 'Synthetic test host: no abnormal exit records.' },
     }))
     if (url.endsWith('/settings/models')) return Promise.resolve(reply({ backgroundModelProfileId: null }))
+    const modelCatalog=config.modelCatalog??[{id:'model-test',name:'Synthetic',configured:true}];
+    const services=config.modelServices??[{serviceId:'model-service-00000000-0000-4000-8000-000000000001',name:'Synthetic service',baseUrl:'https://synthetic.example.test/v1',interfaceType:'openai-compatible',revision:1,
+      models:modelCatalog.filter((row:any)=>row.configured).map((row:any)=>({modelId:row.model||row.id,name:row.name,profileId:row.id,enabled:true})),catalog:{status:'available',message:'已读取模型'}}];
+    if(url.endsWith('/model-services/check'))return Promise.resolve(reply(typeof config.modelServiceCheck==='function'?config.modelServiceCheck(url,options):config.modelServiceCheck??{status:'unsupported',models:[],message:'这个服务不提供模型清单，请填写型号。'}));
+    if(url.includes('/model-services/')&&url.endsWith('/select')){const body=JSON.parse(options.body),service=services.find(row=>url.includes(row.serviceId)),model=service?.models.find(row=>row.modelId===body.modelId);return Promise.resolve(reply({profileId:model?.profileId,service,models:modelCatalog}));}
+    if(url.includes('/model-services/')&&url.endsWith('/refresh'))return Promise.resolve(reply(config.modelServiceWrite?.(url,options)??{service:services.find(row=>url.includes(row.serviceId))}));
+    if(url.includes('/model-services')&&options.method&&options.method!=='GET')return Promise.resolve(reply(config.modelServiceWrite?.(url,options)??{error:{code:'NOT_FOUND'}},config.modelServiceWrite?200:404));
+    if(url.endsWith('/model-services'))return Promise.resolve(reply({services,canManage:true,models:modelCatalog,modelSettings:{backgroundModelProfileId:null,defaultModelProfileId:modelCatalog[0]?.id}}));
     if (/\/system\/(model|host|memory)\/restart$/.test(url) && config.restartRead) return config.restartRead(url, options)
     if (url.endsWith('/cloud/devices/pending')) return Promise.resolve(reply({ devices: config.pendingDevices?.[profileOwner] ?? [] }))
     if (/\/cloud\/devices\/[^/]+\/decision$/.test(url) && options.method === 'POST') {
@@ -434,7 +464,9 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     throw new Error(`unexpected test URL ${url}`)
   }
   const body = get('body')
-  const document = { body, activeElement: body, visibilityState: 'visible', getElementById: get,
+  const documentListeners = new Map<string, Array<(event: any) => unknown>>();
+  const document = { body, activeElement: body, documentElement: new Element('document-root', 'html'), visibilityState: 'visible', getElementById:(id:string)=>id.startsWith('service-')?nodes.get(id)||body.querySelector('#'+id):get(id),
+    createTextNode:(text:string)=>{const node=new Element('','#text');node.textContent=text;return node;},
     createElementNS: (_namespace: string, tagName: string) => { const node = new Element('', tagName); node.ownerDocument = document; return node },
     createElement: (tagName: string) => { const node = new Element('', tagName); node.ownerDocument = document; return node },
     querySelector: (selector: string): Element | null => {
@@ -446,7 +478,11 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
       const question = /^(\[data-conversation-question="[^"]+"\]) (\[data-conversation-question-action="[^"]+"\])$/.exec(selector)
       if (question) return get('transcript').querySelector(question[1])?.querySelector(question[2]) ?? null
       return get('badge')
-    }, querySelectorAll: () => [], addEventListener() {} }
+    }, querySelectorAll: () => [],
+    addEventListener(name: string, listener: (event: any) => unknown) { documentListeners.set(name, [...(documentListeners.get(name) ?? []), listener]); },
+    removeEventListener(name: string, listener: (event: any) => unknown) { documentListeners.set(name, (documentListeners.get(name) ?? []).filter(item => item !== listener)); },
+    dispatchTestEvent(name: string, event: any) { event.currentTarget = document; for (const listener of documentListeners.get(name) ?? []) listener(event); },
+  }
   focusDocument = document
   for (const node of nodes.values()) node.ownerDocument = document
   // Build the static element tree from production markup so component mounting
@@ -535,23 +571,26 @@ test('model menu preserves the draft, selects a configured model and opens exist
     { id: 'cloud-model', name: '云端模型', configured: true },
     { id: 'unconfigured', name: '未配置模型', configured: false },
   ] })
-  for (let attempt = 0; attempt < 20 && page.get('model-label').textContent !== '本地模型'; attempt++) await flush()
+  for (let attempt = 0; attempt < 20 && page.get('model-trigger').getAttribute('aria-label') !== '模型：本地模型'; attempt++) await flush()
   page.getByRole('textbox', { name: '输入消息' }).value = '继续我的目标'
   page.get('model-trigger').fire('click')
-  const choices = page.get('model-options').children
+  const choices = page.get('model-popover').querySelectorAll('button').filter(row=>row.dataset.modelId)
   assert.equal(choices.length, 2)
-  assert.equal(choices[0].getAttribute('aria-selected'), 'true')
+  assert.equal(choices[0].getAttribute('aria-checked'), 'true')
   assert.equal(choices[0].focused, true)
   choices[1].fire('click')
+  for(let attempt=0;attempt<30&&page.get('model-select').value!=='cloud-model';attempt++)await flush()
   assert.equal(page.get('model-select').value, 'cloud-model')
-  assert.equal(page.get('model-label').textContent, '云端模型')
+  assert.equal(page.get('model-trigger').getAttribute('aria-label'), '模型：云端模型')
   assert.equal(page.get('model-popover').hidden, true)
   assert.equal(page.get('model-trigger').getAttribute('aria-expanded'), 'false')
   assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '继续我的目标')
-  assert.equal(page.requests.filter(({ options }) => options.method === 'POST').length, 0)
+  const selects=page.requests.filter(({url,options})=>url.endsWith('/select')&&options.method==='POST');
+  assert.equal(selects.length,1);assert.equal(JSON.parse(selects[0].options.body).modelId,'cloud-model');
+  assert.equal(JSON.parse(selects[0].options.body).sessionId,'A');
   page.get('model-trigger').fire('click')
-  assert.equal(page.get('model-options').children[1].getAttribute('aria-selected'), 'true')
-  page.getByRole('button', { name: '配置模型' }).fire('click')
+  assert.equal(page.get('model-popover').querySelectorAll('button').find(row=>row.dataset.modelId==='cloud-model')?.getAttribute('aria-checked'), 'true')
+  page.get('model-popover').querySelector('.wm-model-add')!.fire('click')
   await flush()
   assert.equal(page.get('account-view').hidden, false)
   assert.equal(page.get('model-popover').hidden, true)
@@ -1388,61 +1427,70 @@ test('phone handoff prefers only one exact original route and never defaults to 
   assert.equal(multiple.select.value, '', 'multiple exact routes require a deliberate selection')
 })
 
-test('desktop account model form sends a typed secret once and recovers only public operation fields', async () => {
-  const models: any[] = []
-  const receipts: Record<string, object> = {}
-  const writes: Array<{ url: string; body: any }> = []
-  const page = harness([], [], false, { accountModels: models, accountModelByRequest: receipts,
-    accountModelWrite: (url, options) => {
-      const body = JSON.parse(options.body)
-      writes.push({ url, body })
-      if (url.endsWith('/check')) return { configured: true, reachable: false, modelListed: false, inferenceVerified: false,
-        address: 'unreachable', authentication: 'unchecked', catalog: 'unchecked', model: 'unchecked' }
-      const model = { accountModelId: 'account-model-one', revision: 1, profileId: 'private-one',
-        name: '我的 MiMo', provider: 'openai-compatible', baseUrl: 'http://192.168.1.10:18080/v1', modelTier: 'cloud',
-        modelId: 'mimo-v2.6-flash', routeFingerprint: 'a'.repeat(64), configured: true,
-        status: 'active', createdAt: '2026-10-03T00:00:00Z', updatedAt: '2026-10-03T00:00:00Z' }
-      if (url.endsWith('/account/models')) models.push(model)
-      const result = { operation: { requestId: body.requestId,
-        kind: url.endsWith('/test') ? 'test' : 'create', accountModelId: model.accountModelId,
-        status: 'succeeded', resultRevision: 1,
-        ...(url.endsWith('/test') ? { testResult: { configured: true, reachable: false, modelListed: false } } : {}) }, model }
-      receipts[body.requestId] = result
-      return result
-    } })
-  for (let attempt = 0; attempt < 15 && page.get('assistant-view').hidden; attempt++) await flush()
-  page.get('rail-account').fire('click')
-  for (let attempt = 0; attempt < 30 &&
-      !page.get('account-models-status').textContent.includes('可把手机已保存'); attempt++) await flush()
-  assert.equal(page.get('account-model-form').hidden, false)
-  page.get('account-model-name').value = '我的 MiMo'
-  page.get('account-model-base-url').value = 'http://192.168.1.10:18080/v1'
-  page.get('account-model-tier').value = 'cloud'
-  page.get('account-model-id').value = 'mimo-v2.6-flash'
-  page.get('account-model-key').value = 'synthetic-private-key'
-  assert.ok(page.get('account-model-form').listeners.get('submit')?.length)
-  page.get('account-model-form').fire('submit')
-  for (let attempt = 0; attempt < 35 && models.length < 1; attempt++) await flush()
-  assert.equal(writes.length, 1, `form=${page.get('account-model-form-status').textContent}; list=${page.get('account-models-status').textContent}; requests=${page.requests.filter((item) => item.url.includes('/account/models')).map((item) => item.url).join(',')}`)
-  assert.equal(writes[0].body.apiKey, 'synthetic-private-key')
-  assert.equal(writes[0].body.modelTier, 'cloud')
-  assert.equal(writes[0].body.baseUrl, 'http://192.168.1.10:18080/v1')
-  assert.equal([...page.storage.values()].some((value) => value.includes('synthetic-private-key')), false)
-  for (let attempt = 0; attempt < 25 && !visibleText(page.get('account-models-list')).includes('我的 MiMo'); attempt++) await flush()
-  assert.match(visibleText(page.get('account-models-list')), /我的 MiMo/)
-  const edit = page.get('account-models-list').children.find(item => visibleText(item).includes('我的 MiMo'))!.children[1].children
-    .find((item) => item.textContent === '编辑')!
-  edit.fire('click')
-  assert.equal(page.get('account-model-tier').value, 'cloud', 'editing restores the saved override')
-  const test = page.get('account-models-list').children.find(item => visibleText(item).includes('我的 MiMo'))!.children[1].children
-    .find((item) => item.textContent === '测试连接')!
-  test.fire('click')
-  for (let attempt = 0; attempt < 25 && writes.length < 2; attempt++) await flush()
-  assert.equal(writes.length, 2)
-  assert.equal(writes[1].body.apiKey, undefined)
-  for (let attempt = 0; attempt < 25 && !visibleText(page.get('account-models-list')).includes('地址连不上'); attempt++) await flush()
-  assert.match(visibleText(page.get('account-models-list')), /地址连不上/)
-  assert.equal(writes[1].body.sendTestMessage, false)
+test('desktop model service form sends the typed secret only for draft discovery and one create, then uses saved service identity', async () => {
+  const secret = randomBytes(32).toString('hex'), services: any[] = [], catalog: any[] = [];
+  const checks: any[] = [], writes: Array<{ url: string; method: string; body: any }> = [];
+  const serviceId = 'model-service-00000000-0000-4000-8000-000000000001';
+  const models = [{ modelId: 'mimo-v2.6-flash', name: 'MiMo v2.6 Flash', enabled: true }, { modelId: 'mimo-v2.6-pro', name: 'MiMo v2.6 Pro', enabled: true }];
+  const page = harness([], [], false, { modelServices: services, modelCatalog: catalog,
+    modelServiceCheck: (_url, options) => { checks.push(JSON.parse(options.body)); return { status: 'available', models, message: '已读取两个模型' }; },
+    modelServiceWrite: (url, options) => {
+      const body = JSON.parse(options.body); writes.push({ url, method: options.method, body });
+      if (url.endsWith('/refresh')) return { service: services[0] };
+      if (options.method === 'POST') {
+        const installed = models.map((model, index) => ({ ...model, profileId: `private-model-${String(index + 1).repeat(40)}` }));
+        services.push({ serviceId, name: body.name, baseUrl: body.baseUrl, interfaceType: body.interfaceType, revision: 1,
+          models: installed, selectedModelId: installed[0].modelId, catalog: { status: 'available', message: '已读取两个模型' } });
+        catalog.push(...installed.map(model => ({ id: model.profileId, model: model.modelId, name: model.name, configured: true })));
+      } else { assert.equal(options.method, 'PATCH'); services[0] = { ...services[0], name: body.name, revision: services[0].revision + 1 }; }
+      return { service: services[0] };
+    } });
+  for (let attempt = 0; attempt < 20 && page.get('assistant-view').hidden; attempt++) await flush();
+  page.get('rail-account').fire('click'); await flush();
+  page.get('account-model-add').fire('click');
+  assert.equal(page.get('account-model-dialog').open, true);
+  assert.ok(page.get('account-model-form').querySelector('.model-editor-body'), 'the production model editor initialization ran');
+  page.get('account-model-name').value = '我的模型服务'; page.get('account-model-base-url').value = 'https://synthetic.example.test/v1';
+  page.get('account-model-key').value = secret; page.get('account-model-key').fire('blur');
+  for (let attempt = 0; attempt < 30 && page.get('service-model-choices').querySelectorAll('input').length !== 2; attempt++) await flush();
+  assert.equal(checks.length, 1); assert.equal(checks[0].apiKey === secret, true);
+  assert.equal(checks[0].serviceId, undefined); assert.equal(page.get('service-model-choices').querySelectorAll('input').length, 2);
+  assert.match(visibleText(page.get('service-model-choices')), /MiMo v2\.6 Flash.*MiMo v2\.6 Pro/);
+  assert.ok(page.get('account-model-form').listeners.get('submit')?.length);
+  page.get('account-model-form').fire('submit');
+  for (let attempt = 0; attempt < 40 && page.get('account-model-dialog').open; attempt++) await flush();
+  assert.equal(page.get('account-model-dialog').open, false); assert.equal(page.get('account-model-key').value, '');
+  assert.equal(writes.length, 1); assert.equal(writes[0].method, 'POST'); assert.equal(writes[0].url, '/personal/v1/model-services');
+  assert.equal(writes[0].body.apiKey === secret, true); assert.equal(writes[0].body.baseUrl, 'https://synthetic.example.test/v1');
+  assert.equal(writes[0].body.interfaceType, 'openai-compatible'); assert.equal(typeof writes[0].body.requestId, 'string');
+  assert.deepEqual(writes[0].body.models, models.map(({ modelId, enabled }) => ({ modelId, enabled })));
+  assert.equal(checks.length, 1, 'saving an already discovered draft does not send another copy of its key');
+  assert.equal([...page.storage.values()].some(value => value.includes(secret)), false);
+  assert.equal(JSON.stringify(page.core.state).includes(secret), false); assert.equal(visibleText(page.document.body).includes(secret), false);
+  assert.match(visibleText(page.get('account-models-list')), /我的模型服务/);
+  page.get('account-models-list').querySelectorAll('button').find(button => visibleText(button).includes('我的模型服务'))!.fire('click');
+  assert.equal(page.get('account-model-dialog').open, true); assert.equal(page.get('account-model-key').value, '');
+  assert.equal(page.get('account-model-name').value, '我的模型服务'); assert.equal(page.get('account-model-base-url').value, 'https://synthetic.example.test/v1');
+  assert.equal(page.get('account-model-form').dataset.interfaceType, 'openai-compatible', 'editing restores the saved interface');
+  page.get('account-model-draft-test').fire('click');
+  for (let attempt = 0; attempt < 30 && checks.length < 2; attempt++) await flush();
+  assert.equal(checks.length, 2); assert.equal(checks[1].serviceId, serviceId); assert.equal(checks[1].apiKey, undefined);
+  page.get('account-model-name').value = '我的模型服务 · 修改'; page.get('account-model-form').fire('submit');
+  for (let attempt = 0; attempt < 40 && page.get('account-model-dialog').open; attempt++) await flush();
+  assert.equal(page.get('account-model-dialog').open, false); assert.equal(writes.length, 2);
+  assert.equal(writes[1].method, 'PATCH'); assert.equal(writes[1].url, `/personal/v1/model-services/${serviceId}`);
+  assert.equal(writes[1].body.expectedRevision, 1); assert.equal(writes[1].body.apiKey, undefined);
+  page.get('account-models-list').querySelectorAll('button').find(button => button.getAttribute('aria-label') === '更多我的模型服务 · 修改操作')!.fire('click');
+  page.document.body.querySelectorAll('button').find(button => button.getAttribute('role') === 'menuitem' && visibleText(button).trim() === '重新查询模型')!.fire('click');
+  for (let attempt = 0; attempt < 30 && writes.length < 3; attempt++) await flush();
+  assert.equal(writes.length, 3); assert.equal(writes[2].url, `/personal/v1/model-services/${serviceId}/refresh`); assert.deepEqual(writes[2].body, {});
+  const secretRequests = page.requests.filter(request => typeof request.options.body === 'string' && request.options.body.includes(secret));
+  assert.deepEqual(secretRequests.map(request => ({ url: request.url, method: request.options.method })), [
+    { url: '/personal/v1/model-services/check', method: 'POST' }, { url: '/personal/v1/model-services', method: 'POST' },
+  ]);
+  assert.equal([...page.storage.values()].some(value => value.includes(secret)), false);
+  assert.equal(JSON.stringify({ services: page.core.state.modelServices, models: page.core.state.models }).includes(secret), false);
+  assert.equal(page.requests.some(request => request.url.includes('/account/models') && ['POST', 'PATCH', 'DELETE'].includes(request.options.method)), false, 'the form writes only through the public model-service flow');
 })
 
 test('phone image timeline bounds large originals and recovers small images without display sidecars', async () => {
