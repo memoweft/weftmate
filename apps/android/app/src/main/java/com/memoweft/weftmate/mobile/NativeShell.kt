@@ -113,6 +113,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
         val focus=LocalFocusManager.current
         var drawer by remember { mutableStateOf(false) }
         var overflow by remember { mutableStateOf(false) }
+        androidx.activity.compose.BackHandler(overflow) { overflow=false }
         SideEffect { activity.overlayBack=if(drawer) ({drawer=false}) else null }
         DisposableEffect(activity) { onDispose { activity.overlayBack=null } }
         var preview by remember { mutableStateOf<JSONObject?>(null) }
@@ -120,19 +121,14 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
         LaunchedEffect(m.tab) { paneAlpha.snapTo(.8f);paneAlpha.animateTo(1f,tween(DesignTokens.durationFast.toInt())) }
         LaunchedEffect(m.dark) { activity.reportRenderedSystemBars(m.dark) }
         val imeInsets=WindowInsets.ime
-        val imeSource=WindowInsets.imeAnimationSource
         val imeTarget=WindowInsets.imeAnimationTarget
         LaunchedEffect(m) {
-            var wasVisible=false
-            snapshotFlow { Triple(imeInsets.getBottom(density),imeSource.getBottom(density),imeTarget.getBottom(density)) }.collect { (current,source,target) ->
+            snapshotFlow { imeInsets.getBottom(density) to imeTarget.getBottom(density) }.collect { (current,target) ->
                 frost.keyboardAnimating=current!=target
-                // Collapse the empty editor during the exit, rather than after it.
-                if(source>0 && target==0 || wasVisible && current==0) { focus.clearFocus();m.focused=false }
-                wasVisible=current>0
             }
         }
         LaunchedEffect(m.tab,preview) { if(m.tab!="chat" || preview!=null) { focus.clearFocus();m.focused=false;activity.hideKeyboard() } }
-        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).windowInsetsPadding(WindowInsets.systemBars).imePadding().then(if(drawer)Modifier.clearAndSetSemantics{} else Modifier)) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).windowInsetsPadding(WindowInsets.systemBars).then(if(android.os.Build.VERSION.SDK_INT>=30)Modifier.imePadding() else Modifier.windowInsetsPadding(WindowInsets.imeAnimationTarget)).then(if(drawer)Modifier.clearAndSetSemantics{} else Modifier)) {
           if(m.tab=="chat") NativeConversation(m,Modifier.fillMaxSize().frostSource(frost).alpha(paneAlpha.value),bottom={with(density){dockHeight.intValue.toDp()}},onPreview={preview=it})
           Column(Modifier.fillMaxSize()) {
             if(m.tab=="activity" || m.tab=="activity-web") NativeFeedToolbar(activity.feed,
@@ -147,10 +143,10 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 }
                 Box {
                     NativeIconButton(R.drawable.wm_more,"更多",Modifier.nativeFrost(CircleShape)){overflow=true}
-                    NativeMenu(expanded=overflow,onDismissRequest={overflow=false}) {
+                    NativeMenu(expanded=overflow,keepEditorFocus=true,onDismissRequest={overflow=false}) {
                         if(m.running) NativeMenuItem(text={Text("停止回复")},onClick={overflow=false;m.stop()},leadingIcon={Icon(painterResource(R.drawable.wm_stop),null)})
                         NativeMenuItem(text={Text("设置")},onClick={overflow=false;focus.clearFocus();m.tab="settings"},leadingIcon={Icon(painterResource(R.drawable.wm_settings),null)})
-                        NativeMenuItem(text={Text("新对话")},onClick={overflow=false;m.newChat()},leadingIcon={Icon(painterResource(R.drawable.wm_plus),null)})
+                        NativeMenuItem(text={Text("新对话")},onClick={overflow=false;focus.clearFocus();activity.hideKeyboard();m.focused=false;m.newChat()},leadingIcon={Icon(painterResource(R.drawable.wm_plus),null)})
                         NativeMenuItem(text={Text("完整对话功能")},onClick={overflow=false;m.tab="web-chat"},leadingIcon={Icon(painterResource(R.drawable.wm_chat),null)})
                     }
                 }
@@ -388,10 +384,14 @@ private fun inlineMarkdown(text:String):AnnotatedString=buildAnnotatedString {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable private fun NativeComposer(m:NativeChatModel,onPreview:(JSONObject)->Unit) {
     var plus by remember{mutableStateOf(false)};var modelMenu by remember{mutableStateOf(false)};var modeMenu by remember{mutableStateOf(false)};var allowRisk by remember{mutableStateOf(false)}
     androidx.activity.compose.BackHandler(plus || modelMenu || modeMenu || allowRisk) { plus=false;modelMenu=false;modeMenu=false;allowRisk=false }
-    val expanded=m.composer.height!=ComposerHeight.Capsule
+    var editorFocused by remember { mutableStateOf(false) }
+    // Visibility drives the shape; only explicit navigation/list actions blur.
+    // A language/voice panel transition must keep the composing session alive.
+    val expanded=m.composer.copy(focused=editorFocused && WindowInsets.isImeVisible).height!=ComposerHeight.Capsule
     val inputFocus=remember { FocusRequester() }
     val keyboard=LocalSoftwareKeyboardController.current
     val context=LocalContext.current
@@ -401,13 +401,13 @@ private fun inlineMarkdown(text:String):AnnotatedString=buildAnnotatedString {
     }
     Column(Modifier.fillMaxWidth().semantics{contentDescription="聊天输入区"}.animateContentSize(tween(DesignTokens.durationFast.toInt())).padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).nativeFrost(if(expanded)RoundedCornerShape(DesignTokens.radius24.dp) else pill).padding(if(expanded)gap else DesignTokens.space4.dp)) {
         if(m.attachments.isNotEmpty())NativeAttachments(m.attachments,true,onPreview,m::remove)
-        val input:@Composable ()->Unit={BasicTextField(m.draft,onValueChange=m::edit,modifier=Modifier.fillMaxWidth().heightIn(min=if(expanded)DesignTokens.space64.dp else touch,max=DesignTokens.space150.dp).focusRequester(inputFocus).onFocusChanged{m.focused=it.isFocused}.padding(if(expanded)gap else DesignTokens.space4.dp).semantics{contentDescription="消息输入"},textStyle=TextStyle(color=MaterialTheme.colorScheme.onSurface,fontSize=LocalReadingSize.current.sp,lineHeight=(LocalReadingSize.current * 1.5f).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),maxLines=5,decorationBox={inner->Box{if(m.draft.isEmpty())Text(if(m.running)"可以继续补充…" else "说说你的目标…",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=LocalReadingSize.current.sp);inner()}})}
+        val input:@Composable ()->Unit={BasicTextField(m.draft,onValueChange=m::edit,modifier=Modifier.fillMaxWidth().heightIn(min=if(expanded)DesignTokens.space64.dp else touch,max=DesignTokens.space150.dp).focusRequester(inputFocus).onFocusChanged{editorFocused=it.isFocused;m.focused=it.isFocused}.padding(if(expanded)gap else DesignTokens.space4.dp).semantics{contentDescription="消息输入"},textStyle=TextStyle(color=MaterialTheme.colorScheme.onSurface,fontSize=LocalReadingSize.current.sp,lineHeight=(LocalReadingSize.current * 1.5f).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),maxLines=5,decorationBox={inner->Box{if(m.draft.isEmpty())Text(if(m.running)"可以继续补充…" else "说说你的目标…",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=LocalReadingSize.current.sp);inner()}})}
         NativeComposerLayout(expanded,input,leading={
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)) {
-            Box{NativeIconButton(R.drawable.wm_plus,"添加附件",enabled=!m.standalone && !m.phoneArchive){plus=true};NativeMenu(plus,keepEditorFocus=true,onDismissRequest={plus=false}){listOf("image" to "照片","camera" to "拍照","file" to "文件").forEach{(kind,label)->NativeMenuItem(text={Text(label)},onClick={plus=false;m.pick(kind)})}}}
+            Box{NativeIconButton(R.drawable.wm_plus,"添加附件",enabled=!m.standalone && !m.phoneArchive){plus=true};NativeMenu(plus,keepEditorFocus=true,onDismissRequest={plus=false}){listOf("image" to "照片","camera" to "拍照","file" to "文件").forEach{(kind,label)->NativeMenuItem(text={Text(label)},leadingIcon={Icon(painterResource(when(kind){"image"->R.drawable.wm_image;"camera"->R.drawable.wm_camera;else->R.drawable.wm_file}),null,Modifier.size(DesignTokens.iconTouch.dp))},onClick={plus=false;m.pick(kind)})}}}
             if(expanded) {
-                Box{NativeIconButton(R.drawable.wm_approval,"审批方式：${modeName(m.mode)}",enabled=!m.standalone && !m.phoneArchive){modeMenu=true};NativeMenu(modeMenu || allowRisk,keepEditorFocus=true,onDismissRequest={modeMenu=false;allowRisk=false}){if(allowRisk){Text("删除、覆盖、系统修改、安装、发送和付款可能直接执行，且无法撤销。",Modifier.widthIn(max=DesignTokens.space150.dp*2).padding(pad));NativeMenuItem(text={Text("全部允许")},onClick={allowRisk=false;m.launch{if(m.sessionId.isNotBlank())m.business("/sessions/${m.sessionId}/approval-mode","PATCH",JSONObject().put("mode","allow-all"));m.mode="allow-all"}});NativeMenuItem(text={Text("取消")},onClick={allowRisk=false})}else listOf("auto","ask","accept-edits","plan","allow-all").forEach{id->NativeMenuItem(text={Text(modeName(id))},trailingIcon={if(m.mode==id)Icon(painterResource(R.drawable.wm_check),"当前模式")},onClick={modeMenu=false;if(id=="allow-all")allowRisk=true else m.launch{if(m.sessionId.isNotBlank())m.business("/sessions/${m.sessionId}/approval-mode","PATCH",JSONObject().put("mode",id));m.mode=id}})}}}
-                Box{NativeIconButton(R.drawable.wm_model,"模型：${m.modelLabel}"){modelMenu=true};NativeMenu(modelMenu,keepEditorFocus=true,onDismissRequest={modelMenu=false}){m.models.forEach{row->val id=row.optString("profileId",row.optString("modelId"));NativeMenuItem(text={Text(row.optString("displayName",id))},trailingIcon={if(if(m.standalone)row.optBoolean("selected") else id==m.modelId)Icon(painterResource(R.drawable.wm_check),"当前模型")},onClick={modelMenu=false;m.selectModel(row)})};NativeMenuItem(text={Text("管理模型")},onClick={modelMenu=false;m.openModels()})}}
+                Box{NativeIconButton(R.drawable.wm_approval,"审批方式：${modeName(m.mode)}",enabled=!m.standalone && !m.phoneArchive){modeMenu=true};NativeMenu(modeMenu || allowRisk,keepEditorFocus=true,onDismissRequest={modeMenu=false;allowRisk=false}){if(allowRisk){Text("删除、覆盖、系统修改、安装、发送和付款可能直接执行，且无法撤销。",Modifier.widthIn(max=DesignTokens.space150.dp*2).padding(pad));NativeMenuItem(text={Text("全部允许")},onClick={allowRisk=false;m.launch{if(m.sessionId.isNotBlank())m.business("/sessions/${m.sessionId}/approval-mode","PATCH",JSONObject().put("mode","allow-all"));m.mode="allow-all"}});NativeMenuItem(text={Text("取消")},onClick={allowRisk=false})}else listOf("auto","ask","accept-edits","plan","allow-all").forEach{id->NativeMenuItem(text={Text(modeName(id))},trailingIcon={if(m.mode==id)Icon(painterResource(R.drawable.wm_check),"当前模式",Modifier.size(DesignTokens.iconTouch.dp))},onClick={modeMenu=false;if(id=="allow-all")allowRisk=true else m.launch{if(m.sessionId.isNotBlank())m.business("/sessions/${m.sessionId}/approval-mode","PATCH",JSONObject().put("mode",id));m.mode=id}})}}}
+                Box{NativeIconButton(R.drawable.wm_model,"模型：${m.modelLabel}"){modelMenu=true};NativeMenu(modelMenu,keepEditorFocus=true,onDismissRequest={modelMenu=false}){m.models.forEach{row->val id=row.optString("profileId",row.optString("modelId"));NativeMenuItem(text={Text(row.optString("displayName",id))},trailingIcon={if(if(m.standalone)row.optBoolean("selected") else id==m.modelId)Icon(painterResource(R.drawable.wm_check),"当前模型",Modifier.size(DesignTokens.iconTouch.dp))},onClick={modelMenu=false;m.selectModel(row)})};NativeMenuItem(text={Text("管理模型")},onClick={modelMenu=false;m.openModels()})}}
             }
         }
         },trailing={

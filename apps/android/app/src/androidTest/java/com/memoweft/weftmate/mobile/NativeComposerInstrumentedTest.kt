@@ -39,7 +39,7 @@ class NativeComposerInstrumentedTest {
     private fun click(label:String)=compose.onNodeWithContentDescription(label).performTouchInput{click()}
     private fun item(label:String)=compose.onAllNodesWithText(label,useUnmergedTree=true).onLast().performTouchInput{click()}
     private fun keep(label:String,text:String) {
-        compose.waitForIdle();editor().assertIsFocused();editor().assertTextEquals(text)
+        compose.waitForIdle();editor().assertIsFocused();editor().assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.EditableText,androidx.compose.ui.text.AnnotatedString(text)))
         main {
             assertTrue("$label: IME must remain visible",activity.window.decorView.rootWindowInsets.isVisible(WindowInsets.Type.ime()))
             assertTrue("$label: original window keeps focus",activity.window.decorView.hasWindowFocus())
@@ -50,7 +50,7 @@ class NativeComposerInstrumentedTest {
     private fun shot(name:String) {
         if(!name.startsWith("web"))compose.waitForIdle();Thread.sleep(180)
         val image=i.uiAutomation.takeScreenshot()
-        File(activity.filesDir,"and12-$theme-$name.png").outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}
+        File(activity.getExternalFilesDir(null) ?: activity.filesDir,"and12-$theme-$name.png").outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}
     }
     private fun motion(name:String,action:()->Unit):JSONArray {
         val coordinates=compose.onNodeWithContentDescription("聊天输入区").fetchSemanticsNode().layoutInfo.coordinates
@@ -82,11 +82,11 @@ class NativeComposerInstrumentedTest {
         main{activity.window.removeOnFrameMetricsAvailableListener(metricsListener)}
         metricsThread.quitSafely();metricsThread.join(1000)
         val frameBudget=1_000_000_000.0 / activity.window.decorView.display.refreshRate
-        val timing=JSONObject().put("measurement","900ms around action; debug emulator, includes test clock overhead")
+        val timing=JSONObject().put("measurement","900ms around action; Compose test clock overhead, not the real-time performance sample")
             .put("frameBudgetNs",frameBudget).put("frames",durations.size).put("jankFrames",durations.count{it>frameBudget})
             .put("durationsNs",JSONArray(durations))
-        File(activity.filesDir,"and12-$theme-$name-metrics.json").writeText(timing.toString(2))
-        File(activity.filesDir,"and12-$theme-$name-frames.json").writeText(frames.toString(2))
+        File(activity.getExternalFilesDir(null) ?: activity.filesDir,"and12-$theme-$name-metrics.json").writeText(timing.toString(2))
+        File(activity.getExternalFilesDir(null) ?: activity.filesDir,"and12-$theme-$name-frames.json").writeText(frames.toString(2))
         val positions=(0 until frames.length()).map{frames.getJSONObject(it).getDouble(if(name.startsWith("multiline"))"top" else "bottom")}.distinct()
         if(name.startsWith("keyboard"))keyboardMotions[name]=frames
         else assertTrue("$name must have intermediate positions: $positions",positions.size>3)
@@ -120,7 +120,7 @@ class NativeComposerInstrumentedTest {
             val draft="保留正在输入的草稿"
             editor().performTextInput(draft);keep("typed",draft)
             for(mode in listOf("每次询问","自动","接受文件修改","先出计划")) {
-                val label=run{var value="";main{value="审批方式："+mapOf("auto" to "自动","ask" to "每次询问","accept-edits" to "接受文件修改","plan" to "先出计划")[activity.model.mode]};value}
+                val label=run{var value="";main{value="审批方式："+mapOf("auto" to "自动","ask" to "每次询问","accept-edits" to "接受文件修改","plan" to "先出计划","allow-all" to "全部允许")[activity.model.mode]};value}
                 click(label);keep("approval-menu-$mode",draft)
                 if(mode=="每次询问")shot("approval-menu")
                 item(mode);waitFor("mode $mode"){activity.model.mode==mapOf("每次询问" to "ask","自动" to "auto","接受文件修改" to "accept-edits","先出计划" to "plan")[mode]};keep("approval-item-$mode",draft)
@@ -142,15 +142,18 @@ class NativeComposerInstrumentedTest {
             main{connection!!.finishComposingText();connection!!.deleteSurroundingText(3,0)};keep("composition-survives-model-menu",draft)
             i.uiAutomation.grantRuntimePermission(activity.packageName,android.Manifest.permission.CAMERA)
             // Block external activities, with the product still executing each picker bridge.
-            val monitors=listOf(Intent.ACTION_CHOOSER,Intent.ACTION_OPEN_DOCUMENT,"android.media.action.IMAGE_CAPTURE").map {
-                i.addMonitor(IntentFilter(it).apply{addCategory(Intent.CATEGORY_OPENABLE);addCategory(Intent.CATEGORY_DEFAULT)},Instrumentation.ActivityResult(Activity.RESULT_CANCELED,null),true)
+            val pickerMonitor=object:Instrumentation.ActivityMonitor() {
+                override fun onStartActivity(intent:Intent):Instrumentation.ActivityResult? =
+                    if(intent.action in listOf(Intent.ACTION_CHOOSER,Intent.ACTION_OPEN_DOCUMENT,"android.media.action.IMAGE_CAPTURE"))
+                        Instrumentation.ActivityResult(Activity.RESULT_CANCELED,null) else null
             }
+            i.addMonitor(pickerMonitor)
             try {
                 for(label in listOf("照片","拍照","文件")) {
                     click("添加附件");keep("plus-menu-$label",draft);if(label=="照片")shot("plus-menu")
                     item(label);Thread.sleep(350);keep("plus-item-$label-canceled-picker",draft)
                 }
-            } finally { monitors.forEach{i.removeMonitor(it)} }
+            } finally { i.removeMonitor(pickerMonitor) }
             click("添加附件");click("消息输入");keep("outside-dismiss-on-editor",draft)
             click("语音补充草稿");keep("voice-keeps-input",draft)
             motion("multiline-expand"){main{activity.model.edit((1..5).joinToString("\n"){"第 $it 行草稿"})}}
@@ -187,14 +190,14 @@ class NativeComposerInstrumentedTest {
             main{legacy.embeddedWeb.evaluateJavascript("applyTheme('$theme');uiCore.selectMainChat()",null)};Thread.sleep(1000);shot("web-content")
             main{legacy.embeddedWeb.evaluateJavascript("openDrawer()",null)};Thread.sleep(450);shot("web-sidebar")
             main{legacy.finish()}
-            File(activity.filesDir,"and12-$theme-ui-checks.json").writeText(JSONObject().put("checks",checks).put("uiAssertionsPassed",true)
+            File(activity.getExternalFilesDir(null) ?: activity.filesDir,"and12-$theme-ui-checks.json").writeText(JSONObject().put("checks",checks).put("uiAssertionsPassed",true)
                 .put("statusHeight",activity.window.decorView.rootWindowInsets.getInsets(WindowInsets.Type.statusBars()).top)
                 .put("navigationHeight",activity.window.decorView.rootWindowInsets.getInsets(WindowInsets.Type.navigationBars()).bottom).toString(2))
             for((name,frames) in keyboardMotions) {
                 assertTrue("$name requires a nonzero system IME region",(0 until frames.length()).any{frames.getJSONObject(it).optInt("imeBottom")>0})
                 assertTrue("$name requires continuous positions",(0 until frames.length()).map{frames.getJSONObject(it).getDouble("bottom")}.distinct().size>3)
             }
-            File(activity.filesDir,"and12-$theme-checks.json").writeText(JSONObject().put("checks",checks).put("passed",true)
+            File(activity.getExternalFilesDir(null) ?: activity.filesDir,"and12-$theme-checks.json").writeText(JSONObject().put("checks",checks).put("passed",true)
                 .put("statusHeight",activity.window.decorView.rootWindowInsets.getInsets(WindowInsets.Type.statusBars()).top)
                 .put("navigationHeight",activity.window.decorView.rootWindowInsets.getInsets(WindowInsets.Type.navigationBars()).bottom).toString(2))
         } finally { main{activity.finish();android.webkit.WebView.setWebContentsDebuggingEnabled(false)} }
