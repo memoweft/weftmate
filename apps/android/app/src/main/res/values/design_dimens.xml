@@ -38,6 +38,13 @@
     <dimen name="wm_font11">11sp</dimen>
     <dimen name="wm_fallback_padding">48px</dimen>
     <dimen name="wm_fallback_top">96px</dimen>
+    <dimen name="wm_space150">150dp</dimen>
+    <dimen name="wm_space80">80dp</dimen>
+    <dimen name="wm_font15">15sp</dimen>
+    <dimen name="wm_font17">17sp</dimen>
+    <dimen name="wm_icon_touch">22dp</dimen>
+    <dimen name="wm_frost_radius">20dp</dimen>
+    <dimen name="wm_space18">18dp</dimen>
     <dimen name="wm_radius4">4dp</dimen>
     <dimen name="wm_radius5">5dp</dimen>
     <dimen name="wm_radius6">6dp</dimen>
