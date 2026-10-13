@@ -840,7 +840,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('draft').addEventListener('focus',()=>{composerKeyboardDismissed=false;syncComposerExpansion();});
   $('draft').addEventListener('blur',()=>requestAnimationFrame(syncComposerExpansion));
   $('send-button').addEventListener('click',()=> $('send-button').dataset.action==='stop'?stop():$('send-button').dataset.action==='voice'?$('voice-button').click():send());
-  $('pending-decision').addEventListener('click',()=>{const target=pendingDecisionTarget();if(!target)return;const scroll=$('chat-scroll');ensureConversationScroll().hold();scroll.scrollTo({top:scroll.scrollTop+target.getBoundingClientRect().top-scroll.getBoundingClientRect().top-16,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});
+  $('pending-decision').addEventListener('click',()=>{const target=pendingDecisionTarget();if(!target)return;const scroll=$('chat-scroll');ensureConversationScroll().hold();
+    // Decision updates preserve the current scroll position and can interrupt
+    // a smooth scroll. Jump atomically so the requested card is reached.
+    scroll.scrollTo({top:scroll.scrollTop+target.getBoundingClientRect().top-scroll.getBoundingClientRect().top-16,behavior:'instant'});syncPendingDecision();});
   $('draft').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){
     event.preventDefault();if(!$('send-button').disabled)void send({intent:event.ctrlKey||event.metaKey?'queue':undefined});}});
   $('model-button').addEventListener('click',openModels);$('plus-button').addEventListener('click',openAttachmentMenu);
