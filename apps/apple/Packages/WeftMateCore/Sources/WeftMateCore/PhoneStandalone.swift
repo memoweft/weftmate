@@ -26,6 +26,7 @@ public struct PhoneChatMessage: Codable, Equatable, Identifiable, Sendable {
     public var role: String
     public var text: String
     public var date: Date = Date()
+    public var attachments: [PhoneAttachment]?
     public var memoryRefs: [OfflineMemoryRef]?
     public var dependencyComplete: Bool?
     public init(role: String, text: String) { self.role=role; self.text=text }
@@ -34,12 +35,16 @@ public struct PhoneChatThread: Codable, Equatable, Identifiable, Sendable {
     public var id: String = UUID().uuidString
     public var messages: [PhoneChatMessage] = []
     public init() {}
-    public var title: String { messages.first(where: { $0.role == "user" })?.text ?? "新对话" }
+    public var title: String {
+        guard let message=messages.first(where: { $0.role == "user" }) else { return "新对话" }
+        return message.text.isEmpty ? message.attachments?.first?.name ?? "新对话" : message.text
+    }
 }
 public struct PhoneChatState: Codable, Sendable {
     public var threads: [PhoneChatThread] = []
     public var selected: String?
     public var migrations: [String:PhoneChatMigration]?
+    public var pending: PhoneChatDraft?
     public var memory: PhoneMemoryState?
     public init() {}
 }
@@ -119,7 +124,7 @@ extension PhoneChatState {
         let offered=Set(migration.turns.map(\.id))
         for thread in threads {
             for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) {
-                var messages=[OfflineMessage(role:"user",text:message.text)]
+                var messages=[OfflineMessage(role:"user",text:([message.text]+(message.attachments ?? []).map(\.placeholder)).filter { !$0.isEmpty }.joined(separator:"\n"))]
                 if thread.messages.indices.contains(index+1),thread.messages[index+1].role == "assistant",!thread.messages[index+1].text.isEmpty { messages.append(.init(role:"assistant",text:thread.messages[index+1].text)) }
                 migration.turns.append(.init(id:message.id,conversationId:thread.id,timestamp:Int64(message.date.timeIntervalSince1970*1000),messages:messages,memoryRefs:thread.messages.indices.contains(index+1) ? thread.messages[index+1].memoryRefs ?? [] : [],dependencyComplete:thread.messages.indices.contains(index+1) ? thread.messages[index+1].dependencyComplete ?? true : true))
                 migration.conversationIDs.insert(thread.id)

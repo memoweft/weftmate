@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('weftmateDesktop', {
   openLogs: () => ipcRenderer.invoke('wm:desktop:open-logs'),
   repairSystem: id => ipcRenderer.invoke('wm:desktop:system-repair', id),
   exportSystemDiagnostics: () => ipcRenderer.invoke('wm:desktop:system-export'),
+  exportRecoveryCode: input => ipcRenderer.invoke('wm:desktop:recovery-export', input),
   notificationPermission: () => ipcRenderer.invoke('wm:desktop:notification-permission'),
   openNotificationSettings: () => ipcRenderer.invoke('wm:desktop:notification-settings'),
   settings: () => ipcRenderer.invoke('wm:desktop:settings'),
