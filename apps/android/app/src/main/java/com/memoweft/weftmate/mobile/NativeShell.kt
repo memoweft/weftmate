@@ -69,6 +69,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
         var overflow by remember { mutableStateOf(false) }
         var preview by remember { mutableStateOf<JSONObject?>(null) }
         LaunchedEffect(m.dark) { activity.reportRenderedSystemBars(m.dark) }
+        LaunchedEffect(m.loggedIn,m.owner) { activity.feed.prepare() }
         if(!m.loggedIn) {
             AndroidView(factory={ activity.webPage("login", false) },modifier=Modifier.fillMaxSize())
             return@NativeTheme
@@ -77,7 +78,8 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
         var keyboardWasVisible by remember { mutableStateOf(false) }
         LaunchedEffect(ime) { if(keyboardWasVisible && !ime)m.focused=false;keyboardWasVisible=ime }
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).windowInsetsPadding(WindowInsets.systemBars).imePadding()) {
-            Row(Modifier.fillMaxWidth().padding(horizontal=pad,vertical=gap),verticalAlignment=Alignment.CenterVertically) {
+            if(m.tab=="activity" || m.tab=="activity-web") NativeFeedToolbar(activity.feed,back={if(m.tab=="activity-web")activity.feed.closeWeb() else activity.feed.closeDetail()},onDrawer={drawer=true;m.launch{m.refreshChats()}},onSettings={focus.clearFocus();m.tab="settings"})
+            else Row(Modifier.fillMaxWidth().padding(horizontal=pad,vertical=gap),verticalAlignment=Alignment.CenterVertically) {
                 NativeIconButton(if(m.tab=="settings") R.drawable.wm_back else R.drawable.wm_panel,if(m.tab=="settings")"返回聊天" else "打开侧栏",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)) { if(m.tab=="settings")m.tab="chat" else { drawer=true;m.launch { m.refreshChats() } } }
                 Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally) {
                     Text(if(m.tab=="chat" || m.tab=="web-chat")m.title else tabs.find{it.first==m.tab}?.second?.first ?: "设置",fontSize=DesignTokens.font18.sp,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
@@ -96,6 +98,10 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             if(m.tab=="chat") {
                 NativeConversation(m,Modifier.weight(1f),onPreview={preview=it})
                 NativeComposer(m,onPreview={preview=it})
+            } else if(m.tab=="activity") {
+                NativeFeedPage(activity.feed,Modifier.weight(1f))
+            } else if(m.tab=="activity-web") {
+                NativeFeedWeb(activity.feed,activity,Modifier.weight(1f).fillMaxWidth())
             } else {
                 if(m.tab=="settings") Row(Modifier.fillMaxWidth().padding(horizontal=pad),verticalAlignment=Alignment.CenterVertically) {
                     Text("使用原生聊天界面",Modifier.weight(1f));Switch(checked=true,onCheckedChange={activity.fallback()})
@@ -104,7 +110,10 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             }
             if(!ime && m.tab!="settings") {
                 Row(Modifier.fillMaxWidth().padding(horizontal=pad,vertical=gap).clip(pill).background(MaterialTheme.colorScheme.surfaceVariant).padding(DesignTokens.space4.dp),horizontalArrangement=Arrangement.SpaceEvenly) {
-                    tabs.forEach{(id,v)->NativeIconButton(v.second,v.first,Modifier.weight(1f).semantics{selected=m.tab==id},selected=m.tab==id){focus.clearFocus();m.tab=id}}
+                    tabs.forEach{(id,v)->Box(Modifier.weight(1f),contentAlignment=Alignment.Center){
+                        NativeIconButton(v.second,v.first,Modifier.semantics{selected=m.tab==id},selected=m.tab==id){focus.clearFocus();m.tab=id}
+                        if(id=="activity" && activity.feed.unread>0)Box(Modifier.align(Alignment.TopEnd).padding(DesignTokens.space4.dp).size(DesignTokens.space8.dp).background(MaterialTheme.colorScheme.primary,CircleShape).semantics{contentDescription="${activity.feed.unread} 条动态未读"})
+                    }}
                 }
             }
         }
@@ -137,12 +146,16 @@ private fun displayRows(m: NativeChatModel): List<JSONObject> {
 @Composable private fun NativeConversation(m: NativeChatModel, modifier: Modifier, onPreview:(JSONObject)->Unit) {
     val list=rememberLazyListState();val scope=rememberCoroutineScope()
     val rows=displayRows(m)
+    val feed=(LocalContext.current as? NativeActivity)?.feed
     val pending=rows.indexOfFirst{r->val d=r.optJSONObject("data");m.approvals.any{it.optString("approvalId")==d?.optString("approvalId")&&it.optString("status")=="pending"} || m.questions.any{it.optString("questionRpcId")==d?.optString("questionRpcId")&&it.optString("status")=="pending"}}
     val visible by remember { derivedStateOf { list.layoutInfo.visibleItemsInfo.map{it.index} } }
     val atEnd by remember { derivedStateOf { !list.canScrollForward } }
     var lastDecision by remember(m.chatId) { mutableStateOf("") }
     LaunchedEffect(rows.size,rows.lastOrNull()?.toString()) { if(atEnd && rows.isNotEmpty())list.scrollToItem(list.layoutInfo.totalItemsCount-1) }
-    LaunchedEffect(pending) { if(pending>=0 && rows[pending].optString("eventId")!=lastDecision){lastDecision=rows[pending].optString("eventId");list.animateScrollToItem(pending+1)} }
+    LaunchedEffect(pending) { if(feed?.focusTarget==null && pending>=0 && rows[pending].optString("eventId")!=lastDecision){lastDecision=rows[pending].optString("eventId");list.animateScrollToItem(pending+1)} }
+    LaunchedEffect(m.chatId,rows.size,feed?.focusTarget) {
+        feed?.focusTarget?.let{target->val index=rows.indexOfFirst{feedTargetMatches(it,target)};if(index>=0){list.scrollToItem(index+1);feed.focusTarget=null}}
+    }
     Box(modifier.fillMaxWidth()) {
         LazyColumn(state=list,modifier=Modifier.fillMaxSize().semantics{contentDescription="消息列表"},contentPadding=PaddingValues(horizontal=pad,vertical=pad),verticalArrangement=Arrangement.spacedBy(pad)) {
             item { if(m.hasOlder) OutlinedButton(onClick={m.launch{m.refresh(true)}}){Text("较早的消息")} }

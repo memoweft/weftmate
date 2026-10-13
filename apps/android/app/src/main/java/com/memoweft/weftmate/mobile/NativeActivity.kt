@@ -7,6 +7,9 @@ import android.view.inputmethod.InputMethodManager
 import android.webkit.WebView
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.view.ViewCompat
 import kotlinx.coroutines.*
 import org.json.JSONObject
@@ -16,10 +19,15 @@ class NativeActivity : HybridActivity() {
     private val nativeScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     internal var nativeForeground = false
     internal lateinit var model: NativeChatModel
+    internal lateinit var feed: NativeFeedModel
+    internal var embeddedFeedLoaded: (() -> Unit)? = null
+    internal var embeddedWebIdentity by mutableStateOf<WebView?>(null)
+        private set
+    internal var displayedFeedWeb: WebView? = null
     private var webRoute="login"
     private var webEmbedded=false
     override fun attachBaseContext(base: android.content.Context) {
-        if (BuildConfig.DEBUG && base.packageName == "com.memoweft.weftmate.mobile.and4qa") {
+        if (BuildConfig.DEBUG && base.packageName in setOf("com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and5qa")) {
             val width = base.getSharedPreferences("native-qa", MODE_PRIVATE).getInt("width", 360)
             val configuration = android.content.res.Configuration(base.resources.configuration)
             configuration.densityDpi = (base.resources.displayMetrics.widthPixels * 160f / width).toInt()
@@ -30,11 +38,13 @@ class NativeActivity : HybridActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        embeddedWebIdentity = embeddedWeb
         if (!getSharedPreferences("native-ui", MODE_PRIVATE).getBoolean("enabled", BuildConfig.NATIVE_UI)) {
             startActivity(Intent(this, HybridActivity::class.java).apply { data = intent.data; putExtras(intent) }); finish(); return
         }
         model = NativeChatModel(this, nativeScope)
-        nativeObserver = { type, data -> model.event(type, data) }
+        feed = NativeFeedModel(model, this)
+        nativeObserver = { type, data -> model.event(type, data); feed.event(type, data) }
         // Compose owns system/IME insets; the embedded page receives a zero local safe area.
         presentationContainer.setPadding(0, 0, 0, 0)
         ViewCompat.setOnApplyWindowInsetsListener(presentationContainer) { _, insets -> insets }
@@ -51,7 +61,7 @@ class NativeActivity : HybridActivity() {
         applyWebFrame()
         return web
     }
-    override fun embeddedPageFinished() { applyWebFrame() }
+    override fun embeddedPageFinished() { embeddedWebIdentity=embeddedWeb;applyWebFrame(); embeddedFeedLoaded?.invoke() }
     private fun applyWebFrame() {
         val web=embeddedWeb
         val name=webRoute
@@ -81,7 +91,9 @@ class NativeActivity : HybridActivity() {
     override fun onPause() { nativeForeground = false; if (::model.isInitialized) model.saveDraft(); super.onPause() }
     @Suppress("DEPRECATION") override fun onBackPressed() {
         if (!::model.isInitialized || !model.loggedIn) { super.onBackPressed(); return }
-        if (model.tab != "chat") model.tab = "chat" else moveTaskToBack(true)
+        if (model.tab == "activity-web") feed.closeWeb()
+        else if (model.tab == "activity" && feed.detail != null) feed.closeDetail()
+        else if (model.tab != "chat") model.tab = "chat" else moveTaskToBack(true)
     }
-    override fun onDestroy() { if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
+    override fun onDestroy() { if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
 }
