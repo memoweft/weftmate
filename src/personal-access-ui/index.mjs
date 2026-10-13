@@ -1,7 +1,7 @@
 /** Static, public account shell. All account data comes from authenticated API calls. */
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { uiCoreBrowserAssets as uiCoreAssets } from '../ui-core/manifest.mjs'
+import { uiCoreBrowserAssets as uiCoreAssets, uiCoreSourceAsset } from '../ui-core/manifest.mjs'
 import renderAssets from './render-assets.json' with {type: 'json'};
 
 const files = new Map([
@@ -50,7 +50,7 @@ const files = new Map([
   ['/personal/v1/ui/components/backup.js', ['components/backup.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/motion.js', ['motion.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/popovers.js', ['popovers.js', 'text/javascript; charset=utf-8']],
-  ...uiCoreAssets.map(name => [`/personal/v1/ui/ui-core/${name}`, [`../ui-core/${name}`, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
+  ...uiCoreAssets.map(name => [`/personal/v1/ui/ui-core/${name}`, [`../ui-core/${uiCoreSourceAsset(name)}`, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/components/steps.js', ['components/steps.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/artifacts.js', ['components/artifacts.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/context.js', ['components/context.js', 'text/javascript; charset=utf-8']],

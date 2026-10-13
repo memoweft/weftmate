@@ -2064,7 +2064,7 @@ async function bootstrap() {
         routeProjection: {
           route: route.provider,
           displayName: profile.name,
-          baseURL: profile.baseUrl,
+          baseURL: profile.baseUrl, ...(profile.interfaceType === 'anthropic' ? { api: 'anthropic-messages' } : {}),
           models: [{ ...modelReasoning(profile), id: profile.model, name: profile.name, ...await readModelCapacity({
             baseUrl: profile.baseUrl, modelId: profile.model,
             apiKey: configStoreMod.getCredential(profile.id) ?? undefined }) }],
@@ -3214,8 +3214,8 @@ async function bootstrap() {
     if (idle) console.log(`[weftmate] ✓ account-model route gate idle previous=${previous}`);
     else console.warn(`[weftmate] ⚠ account-model route gate blocked reason=${reasonCode}`);
   }
-  async function assertAccountModelReloadSafe() {
-    if (personalAccessService?.hasUnissuedDshCommands?.()) {
+  async function assertAccountModelReloadSafe(allowedPendingSessionId = null, allowedPendingModelProfileId = null) {
+    if (personalAccessService?.hasUnissuedDshCommands?.({ allowedPendingSessionId, allowedPendingModelProfileId })) {
       noteAccountModelGate('host_command_pending'); throw accountModelBusy();
     }
     try { await assertRouteReloadSafe(); }
@@ -3224,12 +3224,16 @@ async function bootstrap() {
       { idle: false, reason: 'runtime_unavailable' };
     noteAccountModelGate(snapshot?.reason);
     if (snapshot?.idle !== true || snapshot.reason !== 'idle') throw accountModelBusy();
-    if (personalAccessService?.hasUnissuedDshCommands?.()) {
+    if (personalAccessService?.hasUnissuedDshCommands?.({ allowedPendingSessionId, allowedPendingModelProfileId })) {
       noteAccountModelGate('host_command_pending'); throw accountModelBusy();
     }
   }
 
   const accountModelManager = accessPort === null ? null : {
+    listProfiles() { return settingsMod.listModelProfiles().profiles; },
+    selectedProfileId() { return settingsMod.listModelProfiles().activeId; },
+    readStagedSecret({ stageRef }) { configStoreMod.preflightVault(); return configStoreMod.getCredential(stageRef); },
+    disableService(input) { return this.disable({ ...input, allowLegacy: true }); },
     hasCredential(profileId) {
       if (typeof profileId !== 'string' || !/^private-model-[a-f0-9]{40}$/.test(profileId)) return false;
       const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === profileId);
@@ -3249,10 +3253,11 @@ async function bootstrap() {
         if (!existing) configStoreMod.saveSubmittedCredential(stageRef, apiKey);
       });
     },
-    async apply({ target, stageRef, previousProfileId }) {
-      if (!target || !/^private-model-[a-f0-9]{40}$/.test(target.profileId) ||
+    async apply({ target, targets, stageRef, previousProfileId, allowedPendingSessionId = null, allowedPendingModelProfileId = null }) {
+      const batch = targets ?? [target];
+      if (!batch.length || batch.some(item => !item || !/^private-model-[a-f0-9]{40}$/.test(item.profileId)) ||
           (stageRef && !/^pending-model-[a-f0-9]{48}$/.test(stageRef)) ||
-          (previousProfileId && !/^private-model-[a-f0-9]{40}$/.test(previousProfileId))) {
+          (previousProfileId && !/^[A-Za-z0-9._-]{1,128}$/.test(previousProfileId))) {
         throw Object.assign(new Error('invalid account model target'), { code: 'INVALID_REQUEST', definite: true });
       }
       return enqueueRouteMutation(async () => {
@@ -3265,51 +3270,55 @@ async function bootstrap() {
             ? 'reference_scan_failed' : 'reference_scan_incomplete');
           throw accountModelBusy();
         }
-        await assertAccountModelReloadSafe();
-        const route = routeForProfile(target.profileId);
-        const credentialRef = officialCredentialRef(route.provider);
+        await assertAccountModelReloadSafe(allowedPendingSessionId, allowedPendingModelProfileId);
+        const sourceProfile = settingsMod.listModelProfiles().profiles.find(item => item.id === previousProfileId);
         const secret = stageRef ? configStoreMod.getCredential(stageRef)
-          : previousProfileId ? configStoreMod.getCredential(
-            officialCredentialRef(routeForProfile(previousProfileId).provider)) : null;
+          : sourceProfile ? credentialForModelProfile(sourceProfile) : null;
         if (!secret) throw Object.assign(new Error('model credential unavailable'),
           { code: 'ACCOUNT_MODEL_SECRET_REQUIRED', definite: true });
-        const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl,
-          models: [{ ...modelReasoning(target), id: target.modelId, name: target.name, ...await readModelCapacity({ ...target, apiKey: secret }) }] };
+        const projections = await Promise.all(batch.map(async item => ({ route: routeForProfile(item.profileId).provider,
+          displayName: item.name, baseURL: item.baseUrl, ...(item.interfaceType === 'anthropic' ? { api: 'anthropic-messages' } : {}),
+          models: [{ ...modelReasoning(item), id: item.modelId, name: item.name, ...await readModelCapacity({ ...item, apiKey: secret }) }] })));
         const previousActive = settingsMod.listModelProfiles().activeId;
         const routeBefore = await createOfficialDshSettingsClient({ origin: runtimeOrigin }).describeSettings();
         let addedOfficialRoute = false;
         try {
           await mutateModelRouteTransaction(async () => {
-            configStoreMod.saveCredential(credentialRef, secret);
+            for (const projection of projections) configStoreMod.saveCredential(officialCredentialRef(projection.route), secret);
             const official = createOfficialDshSettingsClient({ origin: runtimeOrigin });
-            const installed = await migrateLegacyRoutes(official, [projection]);
+            const installed = await migrateLegacyRoutes(official, projections);
             addedOfficialRoute = installed.mutated;
-            settingsMod.upsertModelProfile({ id: target.profileId, name: target.name,
-              provider: 'openai-compatible', baseUrl: target.baseUrl,
-              model: target.modelId, reasoningEffort: 'off',
-              ...(target.modelTier !== undefined ? { modelTier: target.modelTier } : {}) }, { preserveActive: true });
+            for (const item of batch) settingsMod.upsertModelProfile({ id: item.profileId, name: item.name,
+              provider: 'openai-compatible', baseUrl: item.baseUrl,
+              model: item.modelId, reasoningEffort: 'off', ...(item.interfaceType ? { interfaceType: item.interfaceType } : {}),
+              ...(item.deepThinking ? { deepThinking: item.deepThinking } : {}),
+              ...(item.modelTier !== undefined ? { modelTier: item.modelTier } : {}) }, { preserveActive: true });
             if (settingsMod.listModelProfiles().activeId !== previousActive) {
               throw new Error('product default model changed while registering account route');
             }
             await ensureSharedRuntime({ reload: true });
             const restarted = createOfficialDshSettingsClient({ origin: runtimeOrigin });
-            const [snapshot, credentials] = await Promise.all([
-              restarted.describeSettings(), restarted.describeCredentials([credentialRef]),
+            const credentialRefs = projections.map(item => officialCredentialRef(item.route));
+            const batches = [];
+            for (let offset = 0; offset < credentialRefs.length; offset += 64) batches.push(credentialRefs.slice(offset, offset + 64));
+            const [snapshot, credentialBatches] = await Promise.all([
+              restarted.describeSettings(), Promise.all(batches.map(refs => restarted.describeCredentials(refs))),
             ]);
-            const verified = verifyLegacyRouteMigration([projection], snapshot, credentials);
+            const credentials = Object.assign({}, ...credentialBatches);
+            const verified = verifyLegacyRouteMigration(projections, snapshot, credentials);
             if (!verified.ok || settingsMod.listModelProfiles().activeId !== previousActive) {
               throw new Error('account model route not verified after restart');
             }
           });
         } catch (error) {
-          if (addedOfficialRoute && !Object.hasOwn(routeBefore.userProviders, route.provider) && runtimeOrigin) {
+          if (addedOfficialRoute && runtimeOrigin) {
             try {
               const official = createOfficialDshSettingsClient({ origin: runtimeOrigin });
               const snapshot = await official.describeSettings();
-              if (isDeepStrictEqual(snapshot.userProviders[route.provider],
-                projectOfficialProviderConfig(projection))) {
-                await official.mutateSettings([{ op: 'unset', path: ['providers', route.provider] }], snapshot.revision);
-              }
+              const changes = projections.filter(projection => !Object.hasOwn(routeBefore.userProviders, projection.route) &&
+                isDeepStrictEqual(snapshot.userProviders[projection.route], projectOfficialProviderConfig(projection)))
+                .map(projection => ({ op: 'unset', path: ['providers', projection.route] }));
+              if (changes.length) await official.mutateSettings(changes, snapshot.revision);
             } catch { /* Failed compensation is observed, never retried as a new route. */ }
           }
           throw error;
@@ -3335,12 +3344,13 @@ async function bootstrap() {
         // compares the installed limits; a temporarily offline service must not
         // make an already committed route look unapplied.
         const installed = snapshot.userProviders[route.provider]?.models?.[0];
-        const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl,
+        const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl, ...(target.interfaceType === 'anthropic' ? { api: 'anthropic-messages' } : {}),
           models: [{ ...modelReasoning(target), id: target.modelId, name: target.name, ...modelCapacityFor({ ...target,
             contextWindow: installed?.contextWindow, maxTokens: installed?.maxTokens }) }] };
         const exact = isDeepStrictEqual(snapshot.userProviders[route.provider],
           projectOfficialProviderConfig(projection)) && profile?.baseUrl === target.baseUrl &&
-          profile.model === target.modelId && profile.modelTier === target.modelTier && !!configStoreMod.getCredential(ref);
+          profile.model === target.modelId && profile.modelTier === target.modelTier && profile.interfaceType === target.interfaceType &&
+          isDeepStrictEqual(profile.deepThinking, target.deepThinking) && !!configStoreMod.getCredential(ref);
         const clean = !Object.hasOwn(snapshot.userProviders, route.provider) && !profile &&
           !configStoreMod.getCredential(ref);
         return { applied: exact, clean };
@@ -3371,11 +3381,11 @@ async function bootstrap() {
     async test({ profileId, ownerId }) {
       return accessBackend.verifyModelProfile(profileId, ownerId);
     },
-    async disable({ ownerId, profileIds, stageRefs = [] }) {
+    async disable({ ownerId, profileIds, stageRefs = [], allowLegacy = false }) {
       return enqueueRouteMutation(async () => {
         configStoreMod.preflightVault();
         await personalMemoryManager?.invalidateOwnerRoute(ownerId);
-        if (profileIds.every((profileId) => /^private-model-[a-f0-9]{40}$/.test(profileId) &&
+        if (profileIds.every((profileId) => (allowLegacy || /^private-model-[a-f0-9]{40}$/.test(profileId)) &&
             !configStoreMod.getCredential(officialCredentialRef(routeForProfile(profileId).provider)) &&
             !configStoreMod.getCredential(profileId)) &&
             stageRefs.every((ref) => /^pending-model-[a-f0-9]{48}$/.test(ref) &&
@@ -3388,7 +3398,7 @@ async function bootstrap() {
         await mutateModelRouteTransaction(async () => {
           const refs = [];
           for (const profileId of profileIds) {
-            if (!/^private-model-[a-f0-9]{40}$/.test(profileId)) throw new Error('invalid private model identity');
+            if (!(allowLegacy ? /^[A-Za-z0-9._-]{1,128}$/ : /^private-model-[a-f0-9]{40}$/).test(profileId)) throw new Error('invalid model identity');
             const ref = officialCredentialRef(routeForProfile(profileId).provider);
             refs.push(ref);
             configStoreMod.removeCredential(ref);
@@ -3412,9 +3422,10 @@ async function bootstrap() {
       });
     },
     async readSecret({ profileId }) {
-      if (!/^private-model-[a-f0-9]{40}$/.test(profileId)) return null;
+      if (!/^[A-Za-z0-9._-]{1,128}$/.test(profileId)) return null;
       configStoreMod.preflightVault();
-      return configStoreMod.getCredential(officialCredentialRef(routeForProfile(profileId).provider));
+      const profile = settingsMod.listModelProfiles().profiles.find(item => item.id === profileId);
+      return profile ? credentialForModelProfile(profile) : null;
     },
     async readOfflineModel({ profileId }) {
       const profile = settingsMod.listModelProfiles().profiles.find(item => item.id === profileId);

@@ -726,7 +726,8 @@ export function createHttpHandler(context) {
         const sessionId = thinkingMatch[1], account = context.accountState(ownerId), session = account.sessions[sessionId];
         if (!session || session.deleting || session.archived || !['personal-remote', 'shared-chat'].includes(session.origin)) throw failure('SESSION_UNAVAILABLE', 404);
         const models = await context.callBackend(() => context.backend.listModels({ ownerId }));
-        const supported = context.modelVisible(ownerId, session.modelProfileId) && models.find(row => row.id === session.modelProfileId)?.deepThinking?.supported === true;
+        const selectedProfileId = session.pendingModelProfileId ?? session.modelProfileId;
+        const supported = context.modelVisible(ownerId, selectedProfileId) && context.visibleModels(ownerId, models).find(row => row.id === selectedProfileId)?.deepThinking?.supported === true;
         if (request.method === 'PATCH') {
           const body = await context.readJson(request); exactKeys(body, ['enabled'], ['enabled']);
           if (typeof body.enabled !== 'boolean' || body.enabled && !supported) throw failure('INVALID_REQUEST');
@@ -876,6 +877,33 @@ export function createHttpHandler(context) {
             failedCorrectionCount: memoryStatus.failedCorrectionCount ?? 0, formationIssues: memoryStatus.formationIssues ?? [] },
           updates: await context.updateStatus(), nativeMinimumVersions: context.nativeMinimumVersions,
         });
+      }
+      const serviceMatch = /^\/personal\/v1\/model-services\/(model-service-[0-9a-f-]{36})(?:\/(refresh|select))?$/.exec(pathname);
+      if (pathname === '/personal/v1/model-services' || pathname === '/personal/v1/model-services/check' || serviceMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const management = request.method !== 'GET';
+        const current = context.authenticate(request, management ? 'account:manage' : 'sessions:read');
+        if (management && (current.via !== 'cookie' || !['password', 'cloud', 'desktop'].includes(current.device.authKind))) throw failure('FORBIDDEN', 403);
+        if (request.method === 'GET' && pathname === '/personal/v1/model-services') return context.json(response, 200, {
+          services: await context.modelServices.list(ownerId), canManage: current.via === 'cookie' && current.device.scopes.includes('account:manage') });
+        if (!context.accountModelManager) throw failure('ACCOUNT_MODEL_UNAVAILABLE', 503);
+        if (request.method === 'GET' && serviceMatch && !serviceMatch[2]) {
+          const service = (await context.modelServices.list(ownerId)).find(row => row.serviceId === serviceMatch[1]);
+          if (!service) throw failure('NOT_FOUND', 404);
+          return context.json(response, 200, { service });
+        }
+        const body = await context.readJson(request, 64 * 1024);
+        let value;
+        if (request.method === 'POST' && pathname === '/personal/v1/model-services/check') value = await context.modelServices.check(ownerId, body);
+        else if (request.method === 'POST' && pathname === '/personal/v1/model-services') value = await context.modelServices.configure(ownerId, body);
+        else if (serviceMatch && request.method === 'PATCH' && !serviceMatch[2]) value = await context.modelServices.configure(ownerId, body, serviceMatch[1]);
+        else if (serviceMatch && request.method === 'DELETE' && !serviceMatch[2]) value = await context.modelServices.remove(ownerId, serviceMatch[1], body);
+        else if (serviceMatch && request.method === 'POST' && serviceMatch[2] === 'refresh') {
+          exactKeys(body, [], []); value = { service: await context.modelServices.refresh(ownerId, serviceMatch[1]) };
+        } else if (serviceMatch && request.method === 'POST' && serviceMatch[2] === 'select') value = await context.modelServices.select(ownerId, serviceMatch[1], body);
+        else throw failure('NOT_FOUND', 404);
+        context.authenticate(request, 'account:manage');
+        return context.json(response, pathname === '/personal/v1/model-services' && request.method === 'POST' ? 201 : 200, value);
       }
       if (request.method === 'GET' && pathname === '/personal/v1/models') {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -1038,6 +1066,8 @@ export function createHttpHandler(context) {
             action === 'create' ? 1 : priorModel.runtimeRevision + 1),
           baseUrl, modelId, name, ...(modelTier !== undefined ? { modelTier } : {}), routeFingerprint: modelRouteFingerprint(
             openAICompatibleEndpoint(baseUrl, 'chat/completions').href, modelId),
+          ...(currentRuntime?.interfaceType ? { interfaceType: currentRuntime.interfaceType } : {}),
+          ...(currentRuntime?.deepThinking && baseUrl === currentRuntime.baseUrl && modelId === currentRuntime.modelId ? { deepThinking: currentRuntime.deepThinking } : {}),
         } : null;
         const stageRef = body.apiKey !== undefined
           ? `pending-model-${digest(`${ownerId}|${body.requestId}|${hash}`).slice(0, 48)}` : null;
@@ -1430,6 +1460,7 @@ export function createHttpHandler(context) {
               hostId: state.hostId,
               archived: state.sessions[sessionId].archived === true,
               modelProfileId: state.sessions[sessionId].modelProfileId ?? described.modelProfileId ?? null,
+              selectedModelProfileId: state.sessions[sessionId].pendingModelProfileId ?? state.sessions[sessionId].modelProfileId ?? described.modelProfileId ?? null,
               title: bounded(described.title, 256) ?? '',
               ...await context.sessionOperations.summary(ownerId, sessionId),
               running: described.running === true,

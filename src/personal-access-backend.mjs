@@ -4,6 +4,8 @@ import { discoverOpenAICompatibleModels, openAICompatibleEndpoint } from './open
 import { modelTierFor } from './model-tier.ts'
 import { modelRouteFingerprint } from './model-route-fingerprint.mjs'
 import { reasoningCapability, modelReasoning } from './model-reasoning.mjs'
+import { anthropicCompletionBody, openAIAnthropicResponse } from './anthropic-compatible-client.mjs';
+import { queryServiceCatalog } from './model-service-catalog.mjs';
 import path from 'node:path'
 import { mkdir, rm, cp, access } from 'node:fs/promises'
 import { sessionWorkspace } from './personal-access/session-workspace.mjs'
@@ -129,7 +131,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       const capability = profile => {
         const model = settings[routeForProfile?.(profile.id)?.provider]?.models?.find(row => row.id === profile.model);
         return model?.reasoningEfforts !== undefined ? {supported:!!model.reasoningEfforts?.high,
-          ...(model.reasoningEfforts?.high ? {effort:'high'} : {})} : reasoningCapability(profile);
+          ...(model.reasoningEfforts?.high ? {effort:'high',...(profile.deepThinking?.type ? {type:profile.deepThinking.type} : {})} : {})} : reasoningCapability(profile);
       };
       return profiles().map((profile) => ({ id: profile.id, name: profile.name, model: profile.model,
       configured: hasCredential(profile), source: 'host', deepThinking: capability(profile),
@@ -146,6 +148,12 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (typeof credentialForProfile !== 'function') fail('MODEL_UNAVAILABLE')
       const apiKey = credentialForProfile(profile)
       if (!apiKey) fail('MODEL_UNAVAILABLE')
+      if (profile.interfaceType === 'anthropic') {
+        const result = await queryServiceCatalog({ baseUrl: profile.baseUrl, apiKey, interfaceType: 'anthropic', fetchImpl: modelFetch });
+        return { configured: true, reachable: !['offline', 'unchecked'].includes(result.status), modelListed: result.models.some(row => row.modelId === profile.model),
+          inferenceVerified: false, authentication: result.status === 'authentication_failed' ? 'rejected' : result.status === 'available' ? 'accepted' : 'unchecked',
+          address: result.status === 'offline' ? 'unreachable' : 'reachable', catalog: result.status === 'available' ? 'available' : result.status === 'unsupported' ? 'unsupported' : 'failed', httpStatus: result.httpStatus };
+      }
       return checkModelConnection({ baseUrl: profile.baseUrl, modelId: profile.model, apiKey, fetchImpl: modelFetch })
     },
     async modelCompletion({ profileId, body, signal, ownerId, priority, purpose, onStart }) {
@@ -155,6 +163,13 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       const apiKey = credentialForProfile(profile)
       if (!apiKey) fail('MODEL_UNAVAILABLE')
       requireModelAllowed(ownerId, profileId, 'new')
+      if (profile.interfaceType === 'anthropic') {
+        const response = await modelFetch(openAICompatibleEndpoint(profile.baseUrl, 'messages'), {
+          method: 'POST', redirect: 'error', signal, ...(priority ? { priority } : {}), ...(onStart ? { onStart } : {}),
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }, body: JSON.stringify(anthropicCompletionBody(body)),
+        });
+        return openAIAnthropicResponse(response, body.stream === true);
+      }
       let declaredEfforts;
       if (priority === 'suggestion' && modelReasoning(profile)?.compat?.thinkingFormat === 'openai' && reasoningSettings && currentOrigin()) {
         signal?.throwIfAborted();
@@ -225,6 +240,26 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         if (title) await gateway(`/sessions/${encodeURIComponent(sessionId)}/rename`, { method: 'POST', body: JSON.stringify({ title }) })
         return { sessionId }
       })
+    },
+    async selectSessionModel({ sessionId, ownerId, modelProfileId }) {
+      requireRuntime();
+      return queue(async () => {
+        await requireSession(sessionId, ownerId);
+        requireModelAllowed(ownerId, modelProfileId, 'new');
+        const current = await readSession(sessionId);
+        if (current.running === true) return { pending: true };
+        const profile = modelProfile(modelProfileId); await requireCatalogRoute(profile);
+        // A route registration can restart the shared runtime. Reading native
+        // models resumes its handle, but the gateway's writable session record
+        // is re-established only by the supported resume path.
+        await ensureKnownSession(sessionId);
+        if ((await readSession(sessionId)).running === true) return { pending: true };
+        const route = routeForProfile(profile.id);
+        await gateway(`/sessions/${encodeURIComponent(sessionId)}/models`, { method: 'PUT',
+          body: JSON.stringify({ provider: route.provider, model: profile.model }) });
+        bindSession(sessionId, profile.id);
+        return { modelProfileId: profile.id };
+      });
     },
     async renameSession({ sessionId, ownerId, title }) {
       await requireSession(sessionId, ownerId)

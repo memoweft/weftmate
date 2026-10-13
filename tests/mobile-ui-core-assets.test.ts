@@ -6,7 +6,7 @@ import test from 'node:test'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
-import { uiCoreBrowserAssets as uiCoreAssets } from '../src/ui-core/manifest.mjs'
+import { uiCoreBrowserAssets as uiCoreAssets, uiCoreSourceAsset } from '../src/ui-core/manifest.mjs'
 import { buildUiCoreAssets, checkUiCoreAssets, uiCoreSourceDir } from '../apps/mobile-ui/src/build-ui-core.mjs'
 import { checkMobileUi } from '../apps/mobile-ui/src/check.mjs'
 import { publishMobileUi } from '../src/personal-access/mobile-ui-release.mjs'
@@ -22,7 +22,7 @@ async function fixture(t: { after: (fn: () => Promise<void>) => void }) {
   const wwwDir = path.join(root, 'www')
   const targetDir = path.join(wwwDir, 'ui-core')
   for (const name of uiCoreAssets) {
-    const file = path.join(sourceDir, name)
+    const file = path.join(sourceDir, uiCoreSourceAsset(name))
     await mkdir(path.dirname(file), { recursive: true })
     await writeFile(file, `// synthetic ${name}\n`)
   }
@@ -38,7 +38,7 @@ test('mobile generated assets match every canonical ui-core file byte for byte',
   assert.equal(await buildUiCoreAssets({ targetDir }), uiCoreAssets.length)
   assert.equal(await checkUiCoreAssets({ targetDir }), uiCoreAssets.length)
   for (const name of uiCoreAssets) {
-    assert.deepEqual(await readFile(path.join(targetDir, name)), await readFile(path.join(uiCoreSourceDir, name)), name)
+    assert.deepEqual(await readFile(path.join(targetDir, name)), await readFile(path.join(uiCoreSourceDir, uiCoreSourceAsset(name))), name)
   }
 })
 
@@ -68,7 +68,7 @@ test('mobile check validates nested component syntax as well as generated source
   await writeFile(component, 'function {\n')
   await assert.rejects(checkMobileUi({ sourceDir, wwwDir }), /mobile UI syntax check failed: .*composer\.js/)
   await writeFile(component, 'globalThis.syntheticComposer = () => {};\n')
-  assert.equal(await checkMobileUi({ sourceDir, wwwDir }), uiCoreAssets.filter(name=>name.endsWith('.js')).length + 1)
+  assert.equal(await checkMobileUi({ sourceDir, wwwDir }), uiCoreAssets.filter(name=>/\.(?:m?js)$/.test(name)).length + 1)
 })
 
 test('published mobile bundle includes the verified shared assets at their ui-core paths', async (t) => {
@@ -82,7 +82,7 @@ test('published mobile bundle includes the verified shared assets at their ui-co
   const bundle = path.join(outputDir, 'bundles', manifest.assetBase.split('/')[5])
   for (const name of uiCoreAssets) {
     assert.ok(manifest.assets.some((asset: { path: string }) => asset.path === `ui-core/${name}`), name)
-    assert.deepEqual(await readFile(path.join(bundle, 'ui-core', name)), await readFile(path.join(sourceDir, name)), name)
+    assert.deepEqual(await readFile(path.join(bundle, 'ui-core', name)), await readFile(path.join(sourceDir, uiCoreSourceAsset(name))), name)
   }
 })
 
@@ -95,6 +95,7 @@ test('publish command refuses stale generated assets before creating a release',
     await cp(path.join(repository,name),path.join(isolatedRepository,name));
   }
   await cp(sourceDir, copiedSources, { recursive: true })
+  await copyFile(path.join(sourceDir, uiCoreSourceAsset('model-service-catalog.mjs')), path.join(isolatedRepository, 'src/model-service-catalog.mjs'))
   for (const name of ['src/personal-access-ui/components/data.js','src/personal-access-ui/data.css','apps/mobile-ui/www/components/data.js','apps/mobile-ui/www/data.css','scripts/build-release-notes.mjs', 'src/personal-access-ui/components/help-view.js', 'src/personal-access-ui/help.css', 'apps/mobile-ui/www/components/help-view.js', 'apps/mobile-ui/www/help.css', 'src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
     'src/personal-access-ui/permission.css', 'apps/mobile-ui/www/permission.css',
     ...['phone-files.js','phone-files.css','phone-pdf.js'].flatMap(name=>[`src/personal-access-ui/${name}`,`apps/mobile-ui/www/${name}`]),

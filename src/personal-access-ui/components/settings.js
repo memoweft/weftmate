@@ -1,5 +1,105 @@
 /* Desktop settings component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.settings = (core, ui) => {
+    let serviceEditing = null, draftCatalog = null, queryGeneration = 0, serviceSelectPopup;
+    function selectorLabel(button,text){button.replaceChildren(document.createTextNode(text),WeftIcons.create('chevron',18));}
+    function serviceSelectMenu(trigger,entries){
+        WeftPopover.closeMenu();serviceSelectPopup?.close(false);
+        const opened=WeftPopover.openMenu(trigger,entries,{onClose:()=>{serviceSelectPopup=null;}});serviceSelectPopup=opened;opened.menu.classList.add('wm-model-service-select-menu');
+        for(const [index,item] of [...opened.menu.querySelectorAll(':scope > button')].entries()){
+            for(const svg of item.querySelectorAll(':scope > svg'))svg.remove();
+            const check=ui.element('span','wm-model-service-choice-check');if(entries[index].checked)check.append(WeftIcons.create('allow',18));item.append(check);
+        }
+        return opened;
+    }
+    function serviceFields() {
+        const name = ui.byId('account-model-name').value.trim(), baseUrl = ui.byId('account-model-base-url').value.trim();
+        const key = ui.byId('account-model-key').value;
+        return {name,baseUrl,interfaceType:ui.byId('account-model-form').dataset.interfaceType || 'openai-compatible',...(key ? {apiKey:key} : {})};
+    }
+    function serviceModelChoices(models = []) {
+        const list = ui.byId('service-model-choices'); list.replaceChildren();
+        for (const model of models) {
+            const label = ui.element('label','wm-model-service-check'), check = ui.element('input'); check.type = 'checkbox'; check.checked = model.enabled !== false; check.dataset.modelId = model.modelId;
+            label.append(check,ui.element('span','',model.name || model.modelId)); list.append(label);
+        }
+        ui.byId('account-model-id').parentElement.dataset.catalogStatus = draftCatalog?.status || serviceEditing?.catalog?.status || '';
+    }
+    async function queryModelServiceDraft() {
+        const generation = ++queryGeneration, token = core.accountToken(), fields = serviceFields();
+        const result = ui.byId('account-model-draft-result'); result.textContent = '正在读取这个服务的模型…';
+        try {
+            const value = await core.checkModelService({...fields,...(serviceEditing ? {serviceId:serviceEditing.serviceId} : {})});
+            if (generation !== queryGeneration || !core.accountCurrent(token) || !ui.byId('account-model-dialog').open) return;
+            draftCatalog = value.catalog || value; serviceModelChoices(draftCatalog.models || []);
+            result.textContent = draftCatalog.message || (draftCatalog.status === 'available' ? `找到 ${draftCatalog.models?.length || 0} 个模型` : '暂时读不到模型清单，可以填写一个模型名称。');
+            ui.byId('service-manual-model').hidden = draftCatalog.status === 'available' && draftCatalog.models?.length > 0;
+        } catch {
+            if (generation === queryGeneration && core.accountCurrent(token)) { result.textContent = '暂时连不上这个模型服务。检查地址后重试，也可以填写模型名称。'; ui.byId('service-manual-model').hidden = false; }
+        }
+    }
+    function ensureServiceEditor() {
+        const form = ui.byId('account-model-form'); if (ui.byId('service-model-choices')) return;
+        const dialog = ui.byId('account-model-dialog'); dialog.classList.add('wm-model-service-editor');
+        const body = form.querySelector('.model-editor-body');
+        const preset = ui.element('button','button secondary small','选择模型服务'); preset.type='button';preset.id='service-preset';preset.setAttribute('aria-haspopup','menu');
+        const choices = ui.element('div','wm-model-service-models'); choices.id='service-model-choices';choices.setAttribute('aria-label','显示的模型');
+        const manual = ui.element('div');manual.id='service-manual-model';manual.hidden=true;
+        const input = ui.byId('account-model-id'), label = body.querySelector('label[for="account-model-id"]'); label.textContent='模型名称（这个服务不提供清单时填写）'; manual.append(label,input);
+        const type = ui.element('button','button secondary small','接口：OpenAI 兼容');type.type='button';type.id='service-interface-type';type.setAttribute('aria-haspopup','menu');
+        selectorLabel(preset,'选择模型服务');selectorLabel(type,'接口：OpenAI 兼容');
+        type.addEventListener('click',()=>serviceSelectMenu(type,[['openai-compatible','OpenAI 兼容'],['anthropic','Claude']].map(([id,name])=>({name,checked:(form.dataset.interfaceType||'openai-compatible')===id,action:()=>{form.dataset.interfaceType=id;selectorLabel(type,`接口：${name}`);draftCatalog=null;}}))));
+        preset.addEventListener('click',()=>serviceSelectMenu(preset,[...globalThis.WeftOnboardingCopy.presets,{id:'custom',name:'自定义',baseUrl:'',help:''}].map(p=>({name:p.name,checked:(form.dataset.servicePreset||'custom')===p.id,action:()=>{
+            ui.byId('account-model-name').value=p.name;ui.byId('account-model-base-url').value=p.baseUrl;ui.byId('account-model-key').value='';ui.byId('account-model-id').value='';form.dataset.interfaceType=p.id==='anthropic'?'anthropic':'openai-compatible';form.dataset.servicePreset=p.id;selectorLabel(type,`接口：${p.id==='anthropic'?'Claude':'OpenAI 兼容'}`);selectorLabel(preset,p.name);draftCatalog=null;choices.replaceChildren();ui.byId('account-model-key').focus();
+        }}))));
+        body.prepend(preset);body.insertBefore(type,body.querySelector('label[for="account-model-key"]'));body.append(choices,manual);
+        const tier = ui.byId('account-model-tier');tier.dataset.controlHidden='true';tier.dispatchEvent(new Event('weft:sync'));
+        for (const el of [tier,body.querySelector('label[for="account-model-tier"]')]) el.hidden=true;
+        for(const help of body.querySelectorAll('.field-help'))if(help.textContent.includes('本机和局域网地址'))help.hidden=true;
+        body.querySelector('label[for="account-model-base-url"]').textContent='服务地址';body.querySelector('label[for="account-model-name"]').textContent='服务名称';
+        ui.byId('account-model-draft-test').textContent='重新查询模型';
+        ui.byId('account-model-key').addEventListener('blur',()=>{if(ui.byId('account-model-key').value&&ui.byId('account-model-base-url').value)void queryModelServiceDraft();});
+    }
+    function openModelServiceEditor(service = null) {
+        ensureServiceEditor();serviceEditing=service;draftCatalog=null;queryGeneration++;
+        const form=ui.byId('account-model-form');form.hidden=false;form.reset();form.dataset.interfaceType=service?.interfaceType||'openai-compatible';
+        ui.byId('account-model-name').value=service?.name||'';ui.byId('account-model-base-url').value=service?.baseUrl||'';ui.byId('account-model-key').placeholder=service?'留空沿用已保存的密钥':'填写这个服务的密钥';ui.byId('account-model-id').value='';
+        ui.byId('model-editor-title').textContent=service?'编辑模型服务':'添加模型服务';ui.byId('account-model-submit').textContent=service?'保存修改':'保存并使用';ui.byId('account-model-form-status').textContent='';ui.byId('account-model-draft-result').textContent=service?.catalog?.message||'';
+        selectorLabel(ui.byId('service-interface-type'),`接口：${service?.interfaceType==='anthropic'?'Claude':'OpenAI 兼容'}`);
+        form.dataset.servicePreset=globalThis.WeftOnboardingCopy.presets.find(p=>p.baseUrl===service?.baseUrl)?.id||'custom';selectorLabel(ui.byId('service-preset'),service?.name||'选择模型服务');
+        serviceModelChoices(service?.models||[]);ui.byId('service-manual-model').hidden=!service||!!service.models?.length;
+        ui.byId('account-model-dialog').showModal();ui.byId(service?'account-model-name':'service-preset').focus();
+    }
+    async function saveModelServiceDraft() {
+        const token=core.accountToken(),fields=serviceFields();if(!fields.name||!fields.baseUrl){accountModelFormNotice('请填写服务名称和地址。');return;}
+        accountModelFormBusy(true);accountModelFormNotice('正在保存模型服务…');
+        try {
+            if (!draftCatalog && !serviceEditing) await queryModelServiceDraft();
+            const models=[...ui.byId('service-model-choices').querySelectorAll('input')].map(c=>({modelId:c.dataset.modelId,enabled:c.checked}));
+            const manual=ui.byId('account-model-id').value.trim();
+            const result=await core.writeModelService(serviceEditing?.serviceId,{...fields,...(serviceEditing?{expectedRevision:serviceEditing.revision}:{}),...(models.length?{models}:{}),...(manual?{modelId:manual}:{})});
+            if(!core.accountCurrent(token))return;
+            if (!serviceEditing && result.service?.models?.length) {
+                const recommended=result.service.models.find(m=>m.recommended&&m.enabled!==false)||result.service.models.find(m=>m.enabled!==false);
+                if(recommended)await core.selectServiceModel({serviceId:result.service.serviceId,modelId:recommended.modelId});
+            }
+            if(core.accountCurrent(token)){ui.byId('account-model-key').value='';ui.byId('account-model-dialog').close();ui.toast('模型服务已保存');}
+        } catch {if(core.accountCurrent(token))accountModelFormNotice('模型服务没保存成功，原来的设置仍可使用。请检查地址和密钥后重试。');}
+        finally {if(core.accountCurrent(token))accountModelFormBusy(false);}
+    }
+    function renderModelServices() {
+        const heading=ui.byId('account-model-section').querySelector('h2');heading.textContent='模型服务';
+        heading.nextElementSibling.textContent='填一个地址和密钥，自动列出可用模型。';
+        const list=ui.byId('account-models-list');list.replaceChildren();list.classList.add('wm-model-service-list');
+        ui.byId('account-model-add').hidden=!core.state.modelServicesCanManage;ui.byId('account-models-status').textContent='';
+        if(!core.state.modelServices.length){list.append(ui.element('li','wm-model-empty','添加一个模型服务，就可以开始聊天。'));return;}
+        for(const service of core.state.modelServices){
+            const row=ui.element('li','wm-model-service-card'),open=ui.element('button','wm-model-service-open');open.type='button';
+            const main=ui.element('span','wm-model-service-main');main.append(ui.element('strong','',service.name),ui.element('small','',service.baseUrl),ui.element('small','',`${service.models.filter(m=>m.enabled!==false).length} / ${service.models.length} 个模型 · ${service.catalog?.message||'尚未查询'}`));
+            if(service.catalog?.checkedAt)main.append(ui.element('small','',`上次查询：${core.dateText(service.catalog.checkedAt)}`));open.append(main);open.addEventListener('click',()=>openModelServiceEditor(service));row.append(open);
+            const more=ui.element('button','icon-button');more.type='button';more.setAttribute('aria-label',`更多${service.name}操作`);more.setAttribute('aria-haspopup','menu');more.append(WeftIcons.create('more',18));more.disabled=!core.state.modelServicesCanManage;
+            more.addEventListener('click',()=>WeftPopover.menu(more,[{name:'重新查询模型',icon:'sync',action:async()=>{await core.accessApi(`/model-services/${encodeURIComponent(service.serviceId)}/refresh`,{method:'POST',protectedWrite:true,body:{}});await core.refreshModelServices();}},{name:more.dataset.confirm?'确认删除模型服务':'删除模型服务',icon:'trash',danger:true,action:async()=>{if(!more.dataset.confirm){more.dataset.confirm='yes';ui.toast('再次打开菜单并确认删除此模型服务');return;}try{await core.writeModelService(service.serviceId,{expectedRevision:service.revision},'DELETE');ui.toast('模型服务已删除');}catch{ui.toast('删除未完成，请稍后重试。');}}}]));row.append(more);list.append(row);
+        }
+    }
     let runRecords;
     function records() { return runRecords ||= globalThis.WeftRunRecords?.mount(ui.byId('system-heading').closest('section'), {core,toast:ui.toast,retry:()=>core.refreshSystem()}); }
     function paintSystem(system, settings, catalog, token) {
@@ -66,6 +166,8 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
         }
         paintPerformance(system.metrics);
         paintDiagnosticExport(system);
+        const services=core.state.modelServices||[];
+        catalog={...catalog,models:catalog.models.map(model=>{const found=services.flatMap(s=>s.models).find(row=>row.profileId===model.id||row.profileIds?.includes(model.id));return found?{...model,name:found.name}:model;})};
         const select = ui.byId('background-model-select');
         const currentId = settings.currentChatModelProfileId ?? core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.modelProfileId;
         const currentName = catalog.models.find(row => row.id === currentId)?.name;
@@ -217,7 +319,7 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
                     select.disabled = false;
             }
         });
-        ui.byId('account-models-refresh').addEventListener('click', () => { void core.refreshAccountModels(); });
+        ui.byId('account-models-refresh').addEventListener('click', () => { void core.refreshModelServices(true).catch(()=>ui.toast('模型服务暂时无法读取，请重试。')); });
         document.addEventListener('change', async event => {
             if (event.target.id !== 'default-model-select') return;
             const token = core.accountToken(); event.target.disabled = true;
@@ -225,10 +327,10 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
             catch { if (core.accountCurrent(token)) ui.byId('background-model-notice').textContent = '保存失败，请刷新后重试。'; }
             finally { if (core.accountCurrent(token)) event.target.disabled = false; }
         });
-        ui.byId('account-model-add').addEventListener('click', () => { core.state.accountModelEditing = null; resetAccountModelForm(); ui.byId('model-editor-title').textContent = '添加模型'; ui.byId('account-model-dialog').showModal(); ui.byId('account-model-name').focus(); });
+        ui.byId('account-model-add').addEventListener('click', () => { openModelServiceEditor(); });
         ui.byId('account-model-cancel').addEventListener('click', () => ui.byId('account-model-dialog').close());
-        document.addEventListener('click', event => { if (event.target.closest('#account-model-draft-test')) void core.checkModelDraft(modelDraft()); });
-        ui.byId('account-model-form').addEventListener('submit', event => { event.preventDefault(); void core.saveAccountModelDraft({ name: ui.byId('account-model-name').value, baseUrl: ui.byId('account-model-base-url').value, modelId: ui.byId('account-model-id').value, modelTier: ui.byId('account-model-tier').value, apiKey: ui.byId('account-model-key').value }); });
+        document.addEventListener('click', event => { if (event.target.closest('#account-model-draft-test')) void queryModelServiceDraft(); });
+        ui.byId('account-model-form').addEventListener('submit', event => { event.preventDefault(); void saveModelServiceDraft(); });
     }
     function modelDraft() {
         const draft = { baseUrl: ui.byId('account-model-base-url').value.trim(), modelId: ui.byId('account-model-id').value.trim() };
@@ -254,5 +356,5 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
     function resetProjectDraft() { ui.byId('project-name').value = ''; ui.byId('project-root').value = ''; }
     function browserDraftBusy(busy) { ui.byId('browser-workspace-form').querySelector('button[type="submit"]').disabled = busy; }
     function showBrowserNotice() { ui.byId('browser-workspace-status').hidden = false; }
-    return { modelDraftCheckResult, paintSystem, systemVisible, systemLoading, systemNotice, updateOtherDeviceInstall, resetOtherDeviceInstall, element, mountSettings, accountModelFormNotice, accountModelFormBusy, resetAccountModelForm, projectDraftNotice, projectDraftBusy, resetProjectDraft, browserDraftBusy, showBrowserNotice };
+    return { renderModelServices, openModelServiceEditor, modelDraftCheckResult, paintSystem, systemVisible, systemLoading, systemNotice, updateOtherDeviceInstall, resetOtherDeviceInstall, element, mountSettings, accountModelFormNotice, accountModelFormBusy, resetAccountModelForm, projectDraftNotice, projectDraftBusy, resetProjectDraft, browserDraftBusy, showBrowserNotice };
 };

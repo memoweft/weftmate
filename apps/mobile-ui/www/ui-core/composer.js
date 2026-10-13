@@ -9,7 +9,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     }
     function thinkingView() {
         const session = core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId);
-        const model = core.state.models.find(row => row.id === (session?.modelProfileId || core.state.modelProfileId));
+        const model = core.state.models.find(row => row.id === (core.state.modelProfileId || session?.selectedModelProfileId || session?.modelProfileId));
         return { supported: model?.deepThinking?.supported === true,
             enabled: core.state.newConversation ? core.state.newConversationThinking === true : session?.deepThinking === true,
             busy: thinkingWrites.has(`${core.state.ownerId}/${core.state.selectedSessionId}`) };

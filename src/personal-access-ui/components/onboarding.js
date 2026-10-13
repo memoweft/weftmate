@@ -86,71 +86,40 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     attach(); core.show('login'); core.startCloudJourney(); next.disabled = true;
   }
   function models(token) {
-    const select = node('select'); select.setAttribute('aria-label', copy.modelProvider);
-    const label = node('label', 'onboarding-field', copy.modelProvider); label.append(select); content.append(label);
-    for (const preset of copy.presets) select.append(new Option(preset.name, preset.id));
-    const help = node('p', 'muted'), link = node('a', '', copy.getKey); link.target = '_blank'; link.rel = 'noopener noreferrer'; content.append(help, link);
-    const name = field(copy.modelName), baseUrl = field(copy.modelAddress, 'url'), modelId = field(copy.modelId), apiKey = field(copy.modelKey, 'password'); apiKey.autocomplete = 'off';
-    const advanced = node('details', 'onboarding-advanced'), summary = node('summary', '', copy.advanced); advanced.append(summary, name.parentNode, baseUrl.parentNode, modelId.parentNode); content.insertBefore(advanced, apiKey.parentNode);
-    const diagnostic = node('div', 'onboarding-diagnostic'); diagnostic.setAttribute('role', 'status');
-    const markerKey = 'weftmate.onboarding.model:' + core.state.account.ownerId;
-    async function reconcileSavedModel(requestId) {
-      let receipt;
-      do {
-        receipt = await core.accessApi('/account/models/by-request/' + requestId); if (!current(token)) return;
-        if (['pending', 'applying'].includes(receipt.operation?.status)) await new Promise(resolve => setTimeout(resolve, 250));
-      } while (['pending', 'applying'].includes(receipt.operation?.status));
-      if (receipt.operation?.status === 'uncertain') { say(copy.modelUncertain); return false; }
-      localStorage.removeItem(markerKey);
-      if (receipt.operation?.status !== 'succeeded' || !receipt.model?.profileId) throw new Error('save failed');
-      await core.saveDefaultModel(receipt.model.profileId); await core.refreshModels(); if (current(token)) say(copy.modelSaved); return true;
+    const presets=[...copy.presets,{id:'custom',name:'自定义',baseUrl:'',url:'',help:'填写模型服务的地址和密钥。'}];
+    let preset=presets[0],catalog=null,checking=0;
+    const choose=button(preset.name,()=>WeftPopover.menu(choose,presets.map(p=>({name:p.name,action:()=>setPreset(p)}))));
+    choose.setAttribute('aria-label','选择模型服务');choose.setAttribute('aria-haspopup','menu');content.append(choose);
+    const help=node('p','muted'),link=node('a','',copy.getKey);link.target='_blank';link.rel='noopener noreferrer';content.append(help,link);
+    const name=field('模型服务名称'),baseUrl=field('服务地址','url'),apiKey=field('密钥','password'),manual=field('模型名称（服务不提供清单时填写）');apiKey.autocomplete='off';
+    manual.parentNode.hidden=true;
+    const diagnostic=node('div','onboarding-diagnostic');diagnostic.setAttribute('role','status');content.append(diagnostic);
+    const draft=()=>({name:name.value.trim(),baseUrl:baseUrl.value.trim(),apiKey:apiKey.value || (preset.id==='local'?'local-no-auth':''),interfaceType:preset.id==='anthropic'?'anthropic':'openai-compatible'});
+    const fingerprint=()=>JSON.stringify(draft());
+    function setPreset(p){preset=p;choose.textContent=p.name;name.value=p.name;baseUrl.value=p.baseUrl;apiKey.value='';manual.value='';help.textContent=p.help;link.href=p.url;link.hidden=!p.url;reset();}
+    function reset(){catalog=null;checking++;diagnostic.textContent='';manual.parentNode.hidden=true;next.disabled=!baseUrl.value.trim();}
+    async function query(){const generation=++checking,snapshot=fingerprint();diagnostic.textContent='正在读取模型…';try{
+      const result=await core.checkModelService(draft());if(!current(token)||generation!==checking||snapshot!==fingerprint())return;
+      catalog=result.catalog||result;diagnostic.textContent=catalog.message;manual.parentNode.hidden=catalog.status==='available'&&catalog.models?.length>0;
+      next.disabled=catalog.status==='authentication_failed';
+    }catch{if(current(token)&&generation===checking){diagnostic.textContent='暂时连不上这个服务，可以检查地址后重试，或填写模型名称。';manual.parentNode.hidden=false;}}
     }
-    const draft = () => ({ baseUrl: baseUrl.value.trim(), modelId: modelId.value.trim(), apiKey: apiKey.value || (select.value === 'local' ? 'local-no-auth' : '') });
-    const fingerprint = () => JSON.stringify(draft());
-    const reset = () => { tested = null; next.disabled = true; diagnostic.replaceChildren(); };
-    const choosePreset = () => { const p = copy.presets.find(p => p.id === select.value); name.value = p.name; baseUrl.value = p.baseUrl; modelId.value = p.modelId; apiKey.value = ''; help.textContent = p.help; link.href = p.url; advanced.open = ['local', 'openai', 'anthropic', 'doubao'].includes(p.id); reset(); };
-    select.addEventListener('change', choosePreset);
-    for (const input of [baseUrl, modelId, apiKey]) input.addEventListener('input', reset);
-    const check = button(copy.check, async () => {
-      check.disabled = true; say(copy.checking); const snapshot = fingerprint();
-      try {
-        const result = await core.checkModelConnection(draft());
-        if (!current(token) || snapshot !== fingerprint()) return;
-        diagnostic.replaceChildren();
-        for (const [label, detail] of core.modelConnectionSteps(result)) diagnostic.append(node('p', '', label + '：' + detail));
-        if (result.modelListed || result.inferenceVerified) { tested = snapshot; next.disabled = false; say(''); }
-        else if (result.requiresTestMessage) {
-          diagnostic.append(button(copy.testMessage, async () => {
-            try { const verified = await core.checkModelConnection({ ...draft(), sendTestMessage: true }); if (current(token) && snapshot === fingerprint()) { diagnostic.replaceChildren(...core.modelConnectionSteps(verified).map(([a,b]) => node('p','',a+'：'+b))); if (verified.inferenceVerified) { tested = snapshot; next.disabled = false; } } } catch { if (current(token)) say(copy.error); }
-          })); say('');
-        } else say(copy.checkFirst);
-      } catch { if (current(token)) say(copy.error); } finally { if (current(token)) check.disabled = false; }
-    });
-    proceedModel = async () => {
-      if (tested !== fingerprint()) { say(copy.checkFirst); return; }
-      next.disabled = back.disabled = skip.disabled = true; check.disabled = true; say(copy.saving);
-      const requestId = crypto.randomUUID(), body = { requestId, name: name.value.trim() || modelId.value.trim(), ...draft(), modelTier: select.value === 'local' ? 'local' : 'cloud' };
-      try {
-        localStorage.setItem(markerKey, requestId);
-        await core.saveAccountModel(null, body); apiKey.value = '';
-        if (await reconcileSavedModel(requestId) && current(token)) await move(3);
-      } catch (error) { if (error.status && [400, 403, 422].includes(error.status)) localStorage.removeItem(markerKey); if (current(token)) say(copy.error); } finally { if (current(token)) { back.disabled = skip.disabled = false; if (!localStorage.getItem(markerKey)) check.disabled = false; } }
+    const check=button('重新查询模型',()=>void query());content.append(check);
+    for(const input of [baseUrl,apiKey]){input.addEventListener('input',reset);input.addEventListener('blur',()=>{if(baseUrl.value&&apiKey.value)void query();});}
+    proceedModel=async()=>{
+      if(!draft().baseUrl){say('请填写模型服务地址。');return;}
+      next.disabled=back.disabled=skip.disabled=true;say('正在保存模型服务…');
+      try{if(!catalog)await query();if(!current(token))return;
+        if(catalog?.status==='authentication_failed'){say(catalog.message);return;}
+        if((!catalog?.models?.length)&&!manual.value.trim()){manual.parentNode.hidden=false;say('这个服务没有提供可用清单，请填写一个模型名称。');return;}
+        const result=await core.writeModelService(null,{...draft(),...(manual.value.trim()?{modelId:manual.value.trim()}:{})});
+        if(!current(token))return;apiKey.value='';const selected=result.service?.models?.find(m=>m.modelId===result.service.selectedModelId)||result.service?.models?.[0];
+        if(selected)await core.selectServiceModel({serviceId:result.service.serviceId,modelId:selected.modelId});
+        if(current(token))await move(3);
+      }catch{if(current(token))say('模型服务没保存成功，请检查地址和密钥后重试。');}
+      finally{if(current(token))next.disabled=back.disabled=skip.disabled=false;}
     };
-    content.append(node('p', 'muted', copy.localKeyHint), check, diagnostic);
-    choosePreset();
-    const savedRequest = localStorage.getItem(markerKey);
-    if (savedRequest) { check.disabled = next.disabled = true; say(copy.modelPending); void reconcileSavedModel(savedRequest).then(saved => { if (saved && current(token)) { proceedModel = () => move(3); next.disabled = false; } }).catch(() => { if (current(token)) say(copy.modelUncertain); }).finally(() => { if (current(token) && !localStorage.getItem(markerKey)) check.disabled = false; }); }
-    content.append(node('hr'), node('p', 'muted', copy.discoveryHint)); const additional = field(copy.additional, 'url');
-    const discovered = node('div');
-    const discover = button(copy.discover, async () => {
-      discover.disabled = true; say(copy.discoveryBusy);
-      try {
-        const value = await core.accessApi('/models/discover', { method: 'POST', protectedWrite: true, body: { addresses: additional.value.trim() ? [additional.value.trim()] : [] }, timeoutMs: 30000 });
-        if (!current(token)) return; discovered.replaceChildren();
-        for (const result of value.results) for (const id of result.models) discovered.append(button(copy.choose + ' ' + id, () => { select.value = 'local'; choosePreset(); baseUrl.value = result.baseUrl; modelId.value = id; name.value = id; baseUrl.focus(); }, 'quiet'));
-        say(value.results.length ? '' : copy.discoveryEmpty);
-      } catch { if (current(token)) say(copy.error); } finally { if (current(token)) discover.disabled = false; }
-    }); content.append(discover, discovered);
+    setPreset(preset);
   }
   function memory(token) {
     const list = node('dl', 'onboarding-memory'); for (const [label, text] of copy.memoryItems) list.append(node('dt', '', label), node('dd', '', text)); content.append(list);

@@ -31,11 +31,30 @@ export function createAccountModelOperations(context) {
 
   // The public /models response and its invalidation marker share this exact
   // projection. A caller holding a committed snapshot supplies both objects.
-  const visibleModels = (ownerId, models, account = context.accountState(ownerId), root = context.rootState) =>
-    modelProjection(models).filter(item => modelSelectable(ownerId, item.id, account, root)).map(item => {
+  const visibleModels = (ownerId, models, account = context.accountState(ownerId), root = context.rootState) => {
+    if (!Array.isArray(models)) throw failure('BACKEND_UNAVAILABLE', 503);
+    const projected = models.flatMap(row => modelProjection([row]));
+    for (const service of Object.values(account.modelServices ?? {})) if (service.status === 'active') for (const row of service.models) {
+      if (!row.pendingInstallation || !row.profileId || projected.some(model => model.id === row.profileId)) continue;
+      const record = accountModelForProfile(ownerId, row.profileId, account);
+      if (!record) continue;
+      const publicRow = publicAccountModel(record, true);
+      projected.push({ id: row.profileId, name: row.name, model: row.modelId, configured: true, source: 'host', pendingInstallation: true,
+        deepThinking: row.deepThinking ?? publicRow.deepThinking, routeFingerprint: publicRow.routeFingerprint,
+        modelTier: publicRow.modelTier, sourceKind: publicRow.sourceKind });
+    }
+    const result = projected.filter(item => modelSelectable(ownerId, item.id, account, root)).map(item => {
       const owned = item.id.startsWith('private-model-') ? accountModelForProfile(ownerId, item.id, account) : null;
       return owned ? { ...item, name: owned.name, accountModelId: owned.accountModelId, revision: owned.revision } : item;
     });
+    if (result.length <= 500) return result;
+    const required = new Set([account.defaultModelProfileId, account.backgroundModelProfileId,
+      ...Object.values(account.sessions ?? {}).flatMap(session => [session.modelProfileId, session.pendingModelProfileId])]);
+    const used = new Set(Object.values(account.modelServices ?? {}).flatMap(service => service.models.filter(row => row.lastUsedAt).flatMap(row => row.profileIds ?? [row.profileId])));
+    const rank = row => required.has(row.id) ? 0 : !row.id.startsWith('private-model-') ||
+      accountModelForProfile(ownerId, row.id, account)?.revisions?.['1']?.interfaceType === undefined ? 1 : used.has(row.id) ? 2 : 3;
+    return result.map((row, index) => ({ row, index })).sort((a, b) => rank(a.row) - rank(b.row) || a.index - b.index).slice(0, 500).map(item => item.row);
+  };
 
   const messageModelUsable = (ownerId, session, account = context.accountState(ownerId)) => !!session &&
     (modelVisible(ownerId, session.modelProfileId, account) ||
@@ -67,6 +86,8 @@ export function createAccountModelOperations(context) {
           revision: target.runtimeRevision, profileId: target.profileId,
           baseUrl: target.baseUrl, modelId: target.modelId,
           ...(target.modelTier !== undefined ? { modelTier: target.modelTier } : {}),
+          ...(target.interfaceType ? { interfaceType: target.interfaceType } : {}),
+          ...(target.deepThinking ? { deepThinking: target.deepThinking } : {}),
           routeFingerprint: target.routeFingerprint, createdAt: now,
         };
         model.runtimeRevision = target.runtimeRevision;
