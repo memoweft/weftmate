@@ -38,7 +38,13 @@ try{
   // another work package, and release both scarce slots before waiting again.
   while(true){
     while(!heavy){for(let i=1;i<=3;i++)try{heavy=await acquire(join(locks,`heavy-${i}.lock`),'MuMu native activity verification');break;}catch(e){if(e.code!=='EEXIST')throw e;}if(!heavy){process.stdout.write('Waiting for heavy slot (2 minutes)\n');await pause(120000);}}
-    while(!mumu){try{mumu=await acquire(join(locks,'mumu.lock'),'native activity + notification screenshots');}catch(e){if(e.code!=='EEXIST')throw e;process.stdout.write('Waiting for MuMu lock (2 minutes)\n');await pause(120000);}}
+    try{mumu=await acquire(join(locks,'mumu.lock'),'native activity + notification screenshots');}
+    catch(e){
+      if(e.code!=='EEXIST')throw e;
+      await unlink(heavy);heavy=null;
+      process.stdout.write('Waiting for MuMu lock; heavy slot released (2 minutes)\n');
+      await pause(120000);continue;
+    }
     const allocator=createServer();await new Promise(r=>allocator.listen(0,'127.0.0.1',r));adbPort=allocator.address().port;await new Promise(r=>allocator.close(r));
     const info=readMuMuInfo();serial=info.serial;execFileSync(adbExecutable,[...serverArgs(),'connect',serial],{windowsHide:true,timeout:30000});
     const other=run('shell','pm','list','packages').split(/\r?\n/).filter(s=>s.includes('weftmate')&&!s.includes('and5qa'));
