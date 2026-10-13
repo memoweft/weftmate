@@ -18,6 +18,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
@@ -46,14 +47,17 @@ import java.io.File
     }
     Dialog(onDismissRequest=onClose,properties=DialogProperties(usePlatformDefaultWidth=false,decorFitsSystemWindows=false)) {
         NativeDialogBars()
+        val layer=rememberGraphicsLayer()
+        val backdrop=remember(layer){NativeFrost(layer)}
+        CompositionLocalProvider(LocalNativeFrost provides backdrop,LocalNativeDark provides chat.dark) {
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding().semantics{contentDescription="文件查看"}) {
             Row(Modifier.fillMaxWidth().padding(horizontal=DesignTokens.space8.dp,vertical=DesignTokens.space8.dp),verticalAlignment=Alignment.CenterVertically) {
-                NativeFileIconButton(R.drawable.wm_close,"关闭预览",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape),action=onClose)
+                NativeFileIconButton(R.drawable.wm_close,"关闭预览",Modifier.nativeFrost(CircleShape),action=onClose)
                 val name=file?.name ?: row.optString("fileName",row.optString("name","文件"))
                 BoxWithConstraints(Modifier.weight(1f).padding(horizontal=DesignTokens.space12.dp)) {
                     Text(middleFileName(name,maxOf(8,(maxWidth.value/DesignTokens.font16).toInt())),Modifier.fillMaxWidth().semantics{contentDescription="文件名：$name"},fontSize=DesignTokens.font16.sp,maxLines=1,overflow=TextOverflow.Clip)
                 }
-                Box {NativeFileIconButton(R.drawable.wm_more,"更多文件操作",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)){menu=true}
+                Box {NativeFileIconButton(R.drawable.wm_more,"更多文件操作",Modifier.nativeFrost(CircleShape)){menu=true}
                     NativeFileMenu(menu,{menu=false}) {
                         NativeFileMenuAction("保存到手机",R.drawable.wm_down,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.save(it)}})
                         NativeFileMenuAction("分享",R.drawable.wm_external,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.share(it)}})
@@ -64,16 +68,18 @@ import java.io.File
                     }
                 }
             }
+            val body=Modifier.weight(1f).frostSource(backdrop).background(MaterialTheme.colorScheme.background)
             when {
-                history -> Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(pad)) {
+                history -> Column(body.verticalScroll(rememberScrollState()).padding(pad)) {
                     Text("历史版本",fontSize=DesignTokens.font18.sp)
                     realFileVersions(initial).forEach{version->ListItem(headlineContent={Text(version.optString("fileName",version.optString("name","文件")))},supportingContent={Text(nativeFileTime(version.optString("createdAt")))},modifier=Modifier.clickable{row=JSONObject(version.toString()).put("libraryId",version.optString("artifactId",version.optString("id")));history=false})}
                     OutlinedButton(onClick={history=false},shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.heightIn(min=DesignTokens.space44.dp)){Text("返回文件")}
                 }
-                loading -> Box(Modifier.weight(1f).fillMaxWidth()){NativeFileLoading()}
-                error.isNotBlank() -> Box(Modifier.weight(1f).fillMaxWidth()){NativeFileState(error,R.drawable.wm_warning){retry++}}
-                file!=null -> NativeFileBody(file!!,Modifier.weight(1f),activity){retry++}
+                loading -> Box(body.fillMaxWidth()){NativeFileLoading()}
+                error.isNotBlank() -> Box(body.fillMaxWidth()){NativeFileState(error,R.drawable.wm_warning){retry++}}
+                file!=null -> NativeFileBody(file!!,body,activity){retry++}
             }
+        }
         }
     }
 }
