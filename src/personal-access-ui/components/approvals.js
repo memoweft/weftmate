@@ -82,7 +82,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             const reason = ui.element('p','approval-explanation'), details = ui.element('details','approval-detail'); details.open = expanded;
             const summary = ui.element('summary',''); summary.append(ui.element('span','','查看详情'),WeftIcons.create('chevron',16));
             const raw = ui.element('pre','timeline-raw'); details.append(summary,raw);
-            const paint = value => { text.textContent = `要${value.summary}`; reason.textContent = value.reason; reason.hidden = !value.reason; raw.textContent = core.executionDetailText(typeof value.raw === 'string' ? value.raw : JSON.stringify(value.raw,null,2)); };
+            const paint = value => { text.textContent = `${core.hasMultipleComputers?.()?core.computerName(core.currentExecutionComputer())+' · ':''}要${value.summary}`; reason.textContent = value.reason; reason.hidden = !value.reason; raw.textContent = core.executionDetailText(typeof value.raw === 'string' ? value.raw : JSON.stringify(value.raw,null,2)); };
             paint(core.approvalPresentation(row)); card.append(title,reason,details);
             void core.readApprovalPresentation(row).then(value => { if (card.dataset.signature === signature && core.approvalContextCurrent(context)) paint(value); });
             if (review) { const note = ui.element('p','approval-review',review.text); note.setAttribute('role',review.warning ? 'alert':'note'); card.append(note); }
@@ -164,7 +164,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         const summary = ui.element('summary', '', `要${presentation.summary}`), raw = ui.element('pre', 'timeline-raw');
         summary.dataset.conversationApprovalAction = 'parameters';
         const reason = ui.element('p', 'approval-explanation');
-        const paint = value => { summary.textContent = `要${value.summary}`; raw.textContent = core.executionDetailText(typeof value.raw === 'string' ? value.raw : JSON.stringify(value.raw, null, 2)); reason.textContent = value.reason; reason.hidden = !value.reason; };
+        const paint = value => { summary.textContent = `${core.hasMultipleComputers?.()?core.computerName(core.currentExecutionComputer())+' · ':''}要${value.summary}`; raw.textContent = core.executionDetailText(typeof value.raw === 'string' ? value.raw : JSON.stringify(value.raw, null, 2)); reason.textContent = value.reason; reason.hidden = !value.reason; };
         paint(presentation); details.append(summary, reason, raw); card.append(details);
         void core.readApprovalPresentation(row).then(value => { if (bar.dataset.signature === signature && core.approvalContextCurrent(context)) paint(value); });
         if (rows.length > 1) card.append(ui.element('small', 'approval-remaining', `还有 ${rows.length - 1} 个待批准`));
