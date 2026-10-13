@@ -68,7 +68,7 @@ private val touch = DesignTokens.space44.dp
 private val pill = RoundedCornerShape(DesignTokens.radius26.dp)
 private val card = RoundedCornerShape(DesignTokens.radius16.dp)
 private val bubble = RoundedCornerShape(DesignTokens.radius26.dp)
-private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity" to ("动态" to R.drawable.wm_bell), "health" to ("健康" to R.drawable.wm_heart), "goals" to ("目标" to R.drawable.wm_check_circle), "library" to ("成果库" to R.drawable.wm_folder))
+private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity" to ("动态" to R.drawable.wm_bell), "health" to ("健康" to R.drawable.wm_heart), "goals" to ("目标" to R.drawable.wm_goal), "library" to ("成果库" to R.drawable.wm_folder))
 
 @Composable private fun NativeTheme(dark: Boolean, content: @Composable () -> Unit) {
     val accent=Color(if(dark)DesignTokens.nativeDarkAccent else DesignTokens.nativeAccent)

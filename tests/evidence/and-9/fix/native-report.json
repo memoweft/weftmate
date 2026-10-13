@@ -1,0 +1,606 @@
+{
+  "synthetic": true,
+  "instrumentation": [
+    {
+      "width": 360,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "and9-360-light-account.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-appearance.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-devices.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-general.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-services-more.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-services.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-settings-home.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-web-account.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-web-appearance.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-web-devices.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-web-general.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-web-services.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-web-settings-home.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-account.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-appearance.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-devices.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-general.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-services-more.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-services.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-settings-home.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-web-account.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-web-appearance.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-web-devices.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-web-general.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-web-services.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-web-settings-home.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-account.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-appearance.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-devices.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-general.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-services-more.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-services.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-settings-home.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-web-account.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-web-appearance.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-web-devices.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-web-general.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-web-services.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-web-settings-home.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-account.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-appearance.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-devices.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-general.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-services-more.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-services.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-settings-home.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-web-account.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-web-appearance.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-web-devices.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-web-general.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-web-services.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-web-settings-home.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    }
+  ],
+  "occupancy": {
+    "startedAt": "2026-10-13T21:56:39.724Z",
+    "heavySlot": "heavy-1.lock",
+    "releasedAt": "2026-10-13T21:58:52.633Z"
+  },
+  "installedOtherPackages": 2,
+  "systemVersion": "15",
+  "systemTheme": "Night mode: yes",
+  "apkHashes": {
+    "app": "27beeca2216650788250bd20ca5ef07276117cd2a5957b43033f1355d25ec5eb",
+    "test": "8a0b8ee2acff7e60403749736fcc16872282b2d609ce47d9af7501c68087991d"
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    }
+  ],
+  "privateAdbClosed": true
+}
