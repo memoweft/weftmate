@@ -1,0 +1,87 @@
+{
+  "before": {
+    "method": "update-restart",
+    "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+    "failedReadiness": {
+      "coreReady": true,
+      "view": "assistant",
+      "visible": "visible",
+      "foreground": false,
+      "models": 0,
+      "mainReady": false,
+      "mainSelected": false,
+      "canWait": false,
+      "refreshing": false,
+      "online": true,
+      "background": true,
+      "connection": "online",
+      "refreshTimer": true,
+      "liveTimer": true,
+      "historyKind": "cancelled",
+      "historyWait": false,
+      "timelineReady": false,
+      "onboardingVisible": false
+    },
+    "remaining": 0
+  },
+  "after": {
+    "remaining": 0,
+    "rows": [
+      {
+        "method": "tray-exit",
+        "ms": 645,
+        "exitCode": 0,
+        "pendingWaitRequests": 1
+      },
+      {
+        "method": "window-tray-exit",
+        "ms": 682,
+        "exitCode": 0,
+        "pendingWaitRequests": 1
+      },
+      {
+        "method": "runtime-first",
+        "ms": 157,
+        "exitCode": 0,
+        "pendingWaitRequests": 1,
+        "accessCloseMs": 3,
+        "runtimeCloseMs": 514,
+        "gatewayWait": {
+          "status": 503,
+          "body": {
+            "error": {
+              "code": "SERVICE_CLOSING"
+            }
+          }
+        }
+      },
+      {
+        "method": "update-restart",
+        "ms": 655,
+        "exitCode": 0,
+        "pendingWaitRequests": 1
+      },
+      {
+        "method": "access-first",
+        "ms": 143,
+        "exitCode": 0,
+        "pendingWaitRequests": 1,
+        "accessCloseMs": 4,
+        "runtimeCloseMs": 298,
+        "gatewayWait": {
+          "status": 503,
+          "body": {
+            "error": {
+              "code": "SERVICE_CLOSING"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "fixedFile": {
+    "passed": 3,
+    "failed": 0
+  },
+  "assertionsAndBudgetsUnchanged": true
+}

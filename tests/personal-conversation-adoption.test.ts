@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
+import { waitForCommand } from './helpers/wait-for-command.mjs'
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 import { buildConversationContext, MAX_CONVERSATION_CONTEXT_BYTES } from '../src/personal-conversations/context.mjs'
 import { canonicalSyncEvent } from '../src/personal-sync/index.mjs'
@@ -52,12 +53,8 @@ async function api(origin: string, auth: Record<string, string>, method: string,
   return { status: response.status, body: await response.json() }
 }
 async function waitCommand(origin: string, auth: Record<string, string>, commandId: string) {
-  for (let n = 0; n < 100; n++) {
-    const result = await api(origin, auth, 'GET', `/personal/v1/commands/${commandId}`)
-    if (!['pending', 'dispatching'].includes(result.body.command.state)) return result.body.command
-    await new Promise((resolve) => setTimeout(resolve, 20))
-  }
-  throw new Error('command did not settle')
+  return waitForCommand(async () => (await api(origin, auth, 'GET', `/personal/v1/commands/${commandId}`)).body.command,
+    {accepted: row => !['pending', 'dispatching'].includes(row.state)})
 }
 async function setup(root: string, backend: object, clock?: () => number,
   registerCapability = true) {

@@ -76,6 +76,12 @@
       thinking:()=>currentServiceModel()?.deepThinking,toggleThinking:async enabled=>{if(native)await serviceCall('update',{...serviceDirectory.selected,deepThinkingEnabled:enabled});else{modelServices.setDeepThinking(enabled);serviceDirectory=modelServices.view();}},toast});
     await phonePicker.open();
   }
+  const sendBlocker = text => !engine ? '正在打开对话，请稍候再发送。'
+    : !state.model ? '先在设置里添加一个模型，再开始聊天。'
+    : state.modelSwitching ? '正在测试或切换模型，请稍候再发送。'
+    : engine.view().running ? '当前回复还在进行，请先停止或等待。'
+    : !text.trim() ? '先输入消息。'
+    : text.trim().length>16384 ? '消息过长，请缩短后发送。' : '';
   const show = () => {
     if (!engine) return;
     const value = engine.view(); state.busy = value.running;
@@ -186,6 +192,20 @@
     if (method.startsWith('shared.')) return { source: 'host', hostAvailable: false, sessions: [], commands: [], projects: [] };
     const action = { 'models.list': 'list', 'models.configure': 'configure', 'models.select': 'select', 'models.account.removeLocal': 'remove', 'models.verifyPhone': 'test' }[method];
     if (action) {
+      if (action === 'test') {
+        const previous=state.modelSwitching;state.modelSwitching=true;updateComposer();
+        try {
+          if(native)return await nativeCall('phone.models.test',p);
+          const model=currentModel();if(!model)throw Error('MODEL_NOT_CONFIGURED');
+          const anthropic=model.interfaceType==='anthropic';
+          const response=await fetch(model.baseUrl+(anthropic?'/messages':'/chat/completions'),{method:'POST',redirect:'error',cache:'no-store',
+            headers:anthropic?{'content-type':'application/json','x-api-key':model.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}:{'content-type':'application/json',authorization:`Bearer ${model.apiKey}`},
+            body:JSON.stringify({model:model.modelId,messages:[{role:'user',content:'只回复 OK'}],...(anthropic?{max_tokens:16}:{})})});
+          if(!response.ok)throw Error('MODEL_UNAVAILABLE');const reply=await response.json();
+          if(anthropic?!reply.content?.some(row=>row.type==='text'&&row.text):!reply.choices?.[0]?.message?.content)throw Error('MODEL_UNAVAILABLE');
+          return {available:true};
+        } finally {state.modelSwitching=previous;updateComposer();}
+      }
       if (native) return nativeCall('phone.models.' + action, p);
       if (action === 'list') return { models: serviceDirectory.services.flatMap(service=>service.models.map(model=>({source:'phone',endpoint:service.baseUrl,serviceId:service.serviceId,modelId:model.modelId,displayName:model.name,selected:serviceDirectory.selected?.serviceId===service.serviceId&&serviceDirectory.selected?.modelId===model.modelId}))),selected:modelServices?.selectedView(),services:serviceDirectory.services };
       if (action === 'configure') {
@@ -196,12 +216,6 @@
         memoryModel = { baseUrl: p.endpoint.replace(/\/$/, ''), modelId: p.modelId, apiKey, displayName: p.displayName || p.modelId }; return modelView(memoryModel);
       }
       if (action === 'remove') { if(modelServices){const service=serviceDirectory.services.find(row=>row.serviceId===p.serviceId||row.baseUrl===p.endpoint);if(service)return serviceCall('remove',{serviceId:service.serviceId});}memoryModel = null; state.model = null; return {}; }
-      if (action === 'test') {
-        const model=currentModel();const response = await fetch(model.baseUrl + '/chat/completions', { method: 'POST', redirect: 'error', cache: 'no-store',
-          headers: { 'content-type': 'application/json', authorization: `Bearer ${model.apiKey}` },
-          body: JSON.stringify({ model: model.modelId, messages: [{ role: 'user', content: '只回复 OK' }] }) });
-        if (!response.ok || !(await response.json()).choices?.[0]?.message?.content) throw Error('MODEL_UNAVAILABLE'); return { available: true };
-      }
       if(action==='select'&&modelServices){const service=serviceDirectory.services.find(row=>row.serviceId===p.serviceId||row.baseUrl===p.endpoint);return serviceCall('select',{serviceId:service.serviceId,modelId:p.modelId});}
       return modelServices?.selectedView()||modelView(memoryModel);
     }
@@ -212,9 +226,10 @@
     modelCall: (method,p={})=>routeCall(method,p),
     servicesView:()=>serviceDirectory,refreshServices:params=>serviceCall('refresh',params),selectServiceModel:item=>serviceCall('select',item),serviceCall,openModelMenu,catalogMessage,
     get active() { return state.connection === 'phone' && !!engine; }, get hasData() { return !!data(); }, owns: id => !!data()?.conversations.some(c=>c.id===id), list, start, connected, routeCall, render,
+    sendBlocker,
     restoreArchive: async (info, client) => { if (engine) return; try {const identity=window.weftNative?await nativeCall('phone.identity'):info;if(!identity?.accountId)return;await attachEngine(identity,client,false);} catch {} },
     event: value => { if (value.event === 'phone.progress') { progress?.(value.data.text); return true; } return false; },
-    send: () => { const text = $('draft').value.trim(); if (!text || engine?.view().running || !state.model) return; $('draft').value = ''; return run(() => engine.send(text, state.conversationId)); },
+    send: () => { const text = $('draft').value.trim(), reason=sendBlocker(text); if(reason){toast(reason);updateComposer();return {sent:false,reason};} $('draft').value = ''; return run(() => engine.send(text, state.conversationId)); },
     stop: () => engine?.stop(),
     clear: async () => { clearInterval(poll); const previous = engine, hadArchive = archive; engine = null; archive = null; modelServices?.clear();modelServices=null;serviceDirectory={services:[],selected:null};memoryModel = null; account = null; sessionKey = null; state.model = null;
       uiCore.phoneAccountConnection(false); if (previous) { await previous.clear(); previous.close(); } else if (hadArchive && window.weftNative) await nativeCall('phone.offline.clear'); },
