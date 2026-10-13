@@ -94,11 +94,12 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
       val frost=remember(contentLayer) { NativeFrost(contentLayer) }
       var dockHeight by remember { mutableIntStateOf(0) }
       val density=LocalDensity.current
+      LaunchedEffect(m.loggedIn,m.owner) { activity.feed.prepare() }
         if(!m.loggedIn) {
             AndroidView(factory={ activity.webPage("login", false) },onRelease={activity.parkWeb()},modifier=Modifier.fillMaxSize())
             return@NativeTheme
         }
-      CompositionLocalProvider(LocalNativeFrost provides if(m.tab=="chat")frost else null,LocalReadingSize provides m.textSize,LocalCodeSize provides m.codeSize) {
+      CompositionLocalProvider(LocalNativeFrost provides if(m.tab in listOf("chat","activity"))frost else null,LocalReadingSize provides m.textSize,LocalCodeSize provides m.codeSize) {
         val focus=LocalFocusManager.current
         var drawer by remember { mutableStateOf(false) }
         var overflow by remember { mutableStateOf(false) }
@@ -114,7 +115,11 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).windowInsetsPadding(WindowInsets.systemBars).imePadding().then(if(drawer)Modifier.clearAndSetSemantics{} else Modifier)) {
           if(m.tab=="chat") NativeConversation(m,Modifier.fillMaxSize().frostSource(frost).alpha(paneAlpha.value),bottom=with(density){dockHeight.toDp()},onPreview={preview=it})
           Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().height(DesignTokens.space80.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
+            if(m.tab=="activity" || m.tab=="activity-web") NativeFeedToolbar(activity.feed,
+                back={if(m.tab=="activity-web")activity.feed.closeWeb() else activity.feed.closeDetail()},
+                onDrawer={focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch{m.refreshChats()}},
+                onSettings={focus.clearFocus();m.tab="settings"})
+            else Row(Modifier.fillMaxWidth().height(DesignTokens.space80.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
                 NativeIconButton(if(m.tab in listOf("settings","models")) R.drawable.wm_back else R.drawable.wm_panel,if(m.tab in listOf("settings","models"))"返回聊天" else "打开侧栏",Modifier.nativeFrost(CircleShape)) { if(m.tab in listOf("settings","models"))m.returnToChat() else { focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch { m.refreshChats() } } }
                 Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally) {
                     Text(if(m.tab=="chat" || m.tab=="web-chat")m.title else if(m.tab=="models")"模型" else if(m.tab=="web-home")"对话" else if(m.tab=="help")"帮助" else tabs.find{it.first==m.tab}?.second?.first ?: "设置",fontSize=DesignTokens.font17.sp,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
@@ -132,6 +137,10 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             }
             if(m.tab=="chat") {
                 Spacer(Modifier.weight(1f))
+            } else if(m.tab=="activity") {
+                NativeFeedPage(activity.feed,Modifier.weight(1f).alpha(paneAlpha.value))
+            } else if(m.tab=="activity-web") {
+                NativeFeedWeb(activity.feed,activity,Modifier.weight(1f).fillMaxWidth().alpha(paneAlpha.value))
             } else {
                 if(m.tab=="settings") Row(Modifier.fillMaxWidth().padding(horizontal=pad),verticalAlignment=Alignment.CenterVertically) {
                     Text("使用原生聊天界面",Modifier.weight(1f));Switch(checked=true,onCheckedChange={activity.fallback()})
@@ -142,7 +151,11 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             if(m.tab=="chat")NativeComposer(m,onPreview={preview=it})
             if(!ime && m.tab!="settings") {
                 Row(Modifier.fillMaxWidth().padding(start=DesignTokens.space12.dp,end=DesignTokens.space12.dp,top=DesignTokens.space4.dp,bottom=DesignTokens.space12.dp).nativeFrost(pill).padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space4.dp),horizontalArrangement=Arrangement.SpaceEvenly) {
-                    tabs.forEach{(id,v)->NativeIconButton(v.second,v.first,Modifier.weight(1f).semantics{selected=m.tab==id},selected=m.tab==id){focus.clearFocus();m.focused=false;m.tab=id}}
+                    tabs.forEach{(id,v)->Box(Modifier.weight(1f),contentAlignment=Alignment.Center){
+                        val active=m.tab==id || id=="activity"&&m.tab=="activity-web"
+                        NativeIconButton(v.second,v.first,Modifier.semantics{selected=active},selected=active){focus.clearFocus();m.focused=false;m.tab=id}
+                        if(id=="activity" && activity.feed.unread>0)Box(Modifier.align(Alignment.TopEnd).padding(DesignTokens.space4.dp).size(DesignTokens.space8.dp).background(MaterialTheme.colorScheme.primary,CircleShape).semantics{contentDescription="${activity.feed.unread} 条动态未读"})
+                    }}
                 }
             }
         }
@@ -182,6 +195,7 @@ private fun displayRows(m: NativeChatModel): List<JSONObject> {
     LaunchedEffect(list.isScrollInProgress) { frost?.paused=list.isScrollInProgress }
     DisposableEffect(frost) { onDispose { frost?.paused=false } }
     val rows=displayRows(m)
+    val feed=(LocalContext.current as? NativeActivity)?.feed
     val pending=rows.indexOfFirst{r->val d=r.optJSONObject("data");m.approvals.any{it.optString("approvalId")==d?.optString("approvalId")&&it.optString("status")=="pending"} || m.questions.any{it.optString("questionRpcId")==d?.optString("questionRpcId")&&it.optString("status")=="pending"}}
     val visible by remember { derivedStateOf { list.layoutInfo.visibleItemsInfo.map{it.index} } }
     val atEnd by remember { derivedStateOf { !list.canScrollForward } }
@@ -191,9 +205,15 @@ private fun displayRows(m: NativeChatModel): List<JSONObject> {
     LaunchedEffect(dragged) { if(dragged){follow=false;wasDragged=true}else if(wasDragged){follow=atEnd;wasDragged=false} }
     LaunchedEffect(m.scrollVersion) { follow=true }
     var lastDecision by remember(m.chatId) { mutableStateOf("") }
-    LaunchedEffect(rows.size,rows.lastOrNull()?.toString(),m.running,m.error) { if(follow && rows.isNotEmpty()){withFrameNanos{};list.scrollToItem((list.layoutInfo.totalItemsCount-1).coerceAtLeast(0))} }
-    LaunchedEffect(bottom) { if(follow && rows.isNotEmpty()){withFrameNanos{};list.scrollToItem((list.layoutInfo.totalItemsCount-1).coerceAtLeast(0))} }
-    LaunchedEffect(pending) { if(pending>=0 && rows[pending].optString("eventId")!=lastDecision){lastDecision=rows[pending].optString("eventId");list.animateScrollToItem(pending+1)} }
+    LaunchedEffect(rows.size,rows.lastOrNull()?.toString(),m.running,m.error) { if(follow && feed?.focusTarget==null && rows.isNotEmpty()){withFrameNanos{};list.scrollToItem((list.layoutInfo.totalItemsCount-1).coerceAtLeast(0))} }
+    LaunchedEffect(bottom) { if(follow && feed?.focusTarget==null && rows.isNotEmpty()){withFrameNanos{};list.scrollToItem((list.layoutInfo.totalItemsCount-1).coerceAtLeast(0))} }
+    LaunchedEffect(pending) { if(feed?.focusTarget==null && pending>=0 && rows[pending].optString("eventId")!=lastDecision){lastDecision=rows[pending].optString("eventId");list.animateScrollToItem(pending+1)} }
+    LaunchedEffect(m.chatId,rows.size,feed?.focusTarget) {
+        feed?.focusTarget?.let{target->
+            val index=rows.indexOfFirst{feedTargetMatches(it,target)}
+            if(index>=0){follow=false;withFrameNanos{};list.scrollToItem(index+1);feed.focusTarget=null}
+        }
+    }
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val bubbleMaxWidth=(maxWidth-DesignTokens.space20.dp*2)*.9f
         LazyColumn(state=list,modifier=Modifier.fillMaxSize().semantics{contentDescription="消息列表"},contentPadding=PaddingValues(start=DesignTokens.space20.dp,end=DesignTokens.space20.dp,top=(DesignTokens.space80+DesignTokens.space24).dp,bottom=bottom+DesignTokens.space24.dp),verticalArrangement=Arrangement.spacedBy(pad)) {
