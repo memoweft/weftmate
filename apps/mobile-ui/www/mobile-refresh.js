@@ -22,7 +22,7 @@
   syncMobileTabs();
   // Decorate the existing modal family once, without replacing its close/confirm actions.
   function decorate(dialog){
-    if(dialog.classList.contains('mobile-sheet')||!dialog.querySelector('h2'))return;
+    if(dialog.classList.contains('mobile-sheet')||dialog.classList.contains('is-phone')||dialog.classList.contains('phone-file-page')||!dialog.querySelector('h2'))return;
     dialog.classList.add('mobile-sheet');
     const close=el('button','mobile-sheet-close');close.type='button';close.setAttribute('aria-label','关闭面板');close.append(WeftIcons.create('close',20));
     close.replaceChildren(el('span','icon icon-close'));close.onclick=()=>dialog.close();dialog.append(close);

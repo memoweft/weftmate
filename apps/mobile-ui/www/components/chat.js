@@ -250,7 +250,7 @@ function openImagePreview(url,name,button,scope,{original=false,display=false,no
   if(!safe||!scope||state.page!=='chat'||source!==state.chatSource||state.transitionPending||
     scope.owner!==state.owner||scope.epoch!==state.authEpoch||scope.conversationId!==attachmentConversationId())return;
   closeImagePreview({restoreFocus:false});state.previewScope=scope;state.previewReturnFocus=button;
-  if(globalThis.WeftContent){const images=[...(button?.closest('.message-thumbnails,.synced-image-gallery,.message')?.querySelectorAll('img')||[])];const items=images.map(image=>({url:image.src,name:image.alt||name}));const index=Math.max(0,images.findIndex(image=>image.parentElement===button));items[index]={url:safe,name,alt:`${name} 的${original?'原图':display?'预览图':'缩略图'}`};WeftContent.openGallery(items,index,button,{note:note||(original?'原图':'旧图片仅保留缩略图'),onClose:()=>{state.previewScope=null;state.previewReturnFocus=null;},downloadImage:globalThis.weftNative?saveRenderedImage:undefined});return;}
+  if(globalThis.WeftContent){const images=[...(button?.closest('.message-thumbnails,.synced-image-gallery,.message')?.querySelectorAll('img')||[])];const items=images.map(image=>({url:image.src,name:image.alt||name}));const index=Math.max(0,images.findIndex(image=>image.parentElement===button));items[index]={url:safe,name,alt:`${name} 的${original?'原图':display?'预览图':'缩略图'}`};WeftContent.openGallery(items,index,button,{phone:true,note:note||(original?'原图':'旧图片仅保留缩略图'),onClose:()=>{state.previewScope=null;state.previewReturnFocus=null;},downloadImage:globalThis.weftNative?saveRenderedImage:undefined});return;}
   $('image-preview-name').textContent=name;$('image-preview-image').src=safe;
   $('image-preview-image').alt=`${name} 的${original?'原图':display?'预览图':'缩略图'}`;
   $('image-preview-note').textContent=note|| (original?'原图':'旧图片仅保留缩略图');
@@ -289,6 +289,8 @@ async function openAttachmentMenu(){if(state.chatSource==='host'&&!selectedShare
   closeApprovalModeMenu();
   if(state.attachmentPick)return;if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}
   closeModelMenu();state.attachmentMenu=true;const popup=$('attachment-popover');popup.hidden=false;
+  let followup=$('pick-send-followup');if(!followup){followup=el('button');followup.id='pick-send-followup';followup.type='button';followup.setAttribute('role','menuitem');followup.append(WeftIcons.create('send',20),document.createTextNode('发送这条补充'));followup.onclick=()=>{closeAttachmentMenu();void send();};popup.append(followup);}
+  followup.hidden=!(state.sharedRunning||state.busy)||!$('draft').value.trim()&&!currentAttachments().length;
   if(!$('pick-folder')){const folder=el('button');folder.id='pick-folder';folder.type='button';folder.setAttribute('role','menuitem');folder.append(WeftIcons.create('folder',20),document.createTextNode('选择电脑上的文件夹'));folder.onclick=()=>{closeAttachmentMenu({restoreFocus:true});mobileFolderChoice.open($('plus-button'));};$('pick-file').after(folder);}
   $('pick-folder').disabled=state.hostAvailable===false||uiCore.state.online===false; $('pick-folder').title=$('pick-folder').disabled?'电脑离线，连接后再选择文件夹':'';
   $('pick-file').hidden=false;$('attachment-note').hidden=state.chatSource!=='host';
@@ -299,25 +301,30 @@ async function openAttachmentMenu(){if(state.chatSource==='host'&&!selectedShare
 
 function placeAttachmentMenu(){globalThis.WeftPopover.position($('attachment-popover'),$('plus-button'))}
 
+const mobileDraftThumbnails=new Map();
 function renderAttachmentDrafts(){const box=$('attachment-drafts');clear(box);const items=state.loggedIn&&!state.transitionPending?currentAttachments():[];
+  for(const [id,url]of mobileDraftThumbnails)if(!items.some(item=>item.attachmentId===id)){URL.revokeObjectURL(url);mobileDraftThumbnails.delete(id);}
   const scope={owner:state.owner,epoch:state.authEpoch,conversationId:attachmentConversationId(),source:state.chatSource};
   box.hidden=!items.length;for(const item of items){const chip=el('div',`attachment-chip${item.kind==='image'?' attachment-image-draft':''}`);
     const original=item.kind==='image'?safeImagePreviewUrl(item.previewUrl,item.attachmentId,scope.conversationId):null;
     const display=item.kind==='image'?safeImagePreviewUrl(item.displayUrl,item.attachmentId,scope.conversationId,undefined,true):null;
-    const thumbnail=safeThumbnailDataUrl(item.thumbnailDataUrl),inline=display||thumbnail;
+    const thumbnail=safeThumbnailDataUrl(item.thumbnailDataUrl);let inline=display||thumbnail;
+    if(!inline&&item.kind==='image'&&typeof Blob!=='undefined'&&item.file instanceof Blob){if(!mobileDraftThumbnails.has(item.attachmentId))mobileDraftThumbnails.set(item.attachmentId,URL.createObjectURL(item.file));inline=mobileDraftThumbnails.get(item.attachmentId);}
     if(item.kind==='image'&&(inline||original)){const preview=el('button','attachment-preview-trigger');preview.type='button';
       preview.setAttribute('aria-label',`预览待发送图片 ${item.name}`);
       if(inline){const thumb=el('img','attachment-thumb');thumb.alt='';thumb.src=inline;thumb.loading='lazy';thumb.decoding='async';preview.append(thumb)}
       else{const placeholder=el('span','attachment-image-unavailable');placeholder.setAttribute('aria-hidden','true');preview.append(placeholder)}
-      preview.addEventListener('click',()=>openImagePreview(original||display||thumbnail,item.name,preview,scope,
+      preview.addEventListener('click',()=>typeof Blob!=='undefined'&&item.file instanceof Blob?WeftContent.openGallery([{url:inline,name:item.name}],0,preview,{downloadImage:saveRenderedImage}):openImagePreview(original||display||thumbnail,item.name,preview,scope,
         {original:!!original,display:!original&&!!display,note:original?'待发送原图':'这台手机保存的缩略图',
           attachmentId:item.attachmentId,draft:true}));chip.append(preview)}
     else if(item.kind==='image'){const unavailable=el('div','attachment-image-unavailable');unavailable.setAttribute('role','img');
       unavailable.setAttribute('aria-label',`图片缩略图不可用：${item.name}`);chip.append(unavailable)}
-    if(item.kind!=='image')chip.append(el('span','attachment-kind','文件'),el('span','attachment-name',item.name));
-    const remove=el('button','attachment-remove',item.kind==='image'?'':'移除');remove.type='button';remove.disabled=state.busy||state.transitionPending;
+    if(item.kind!=='image'){const preview=el('button','attachment-file-trigger');preview.type='button';preview.setAttribute('aria-label',`预览待发送文件 ${item.name}`);preview.append(WeftIcons.create('file',24),el('span','attachment-name',item.name));preview.onclick=()=>openAttachmentFile(item,preview,{draft:true});chip.append(preview);}
+    const failed=!uiCore.state.attachmentUpload&&typeof Blob!=='undefined'&&item.file instanceof Blob&&/未完成|不足|超过|未通过|失败/.test(uiCore.state.attachmentStatus||'');
+    if(item.status||uiCore.state.attachmentUpload||failed){const status=el('small','attachment-state',item.status==='failed'||failed?'上传失败':uiCore.state.attachmentUpload?'上传中…':item.status);status.setAttribute('role','status');chip.append(status);}
+    const remove=el('button','attachment-remove');remove.type='button';remove.disabled=state.busy||state.transitionPending;
     remove.setAttribute('aria-label',`移除附件 ${item.name}`);
-    if(item.kind==='image'){const icon=el('span','icon icon-close');icon.setAttribute('aria-hidden','true');remove.append(icon)}
+    const icon=el('span','icon icon-close');icon.setAttribute('aria-hidden','true');remove.append(icon);
     remove.addEventListener('click',()=>removeAttachment(item.attachmentId));chip.append(remove);box.append(chip)}syncChatInsets()}
 
 function clearAcceptedHostAttachments(attachmentIds){if(state.chatSource!=='host'||!attachmentIds.length)return;
@@ -325,9 +332,25 @@ function clearAcceptedHostAttachments(attachmentIds){if(state.chatSource!=='host
   if(remaining.length)attachmentDrafts.set(key,remaining);else attachmentDrafts.delete(key);
   markAttachmentRevision(key);renderAttachmentDrafts()}
 
+let composerKeyboardDismissed=false;
+function syncComposerExpansion(){const field=$('draft'),card=field.closest('.composer-card');if(!card)return;
+  const expanded=!!field.value||currentAttachments().length>0||card.contains(document.activeElement)&&!composerKeyboardDismissed||!!state.menu||!!state.attachmentMenu||!!approvalModeState.menu;
+  card.classList.toggle('is-expanded',expanded);card.classList.toggle('has-attachments',currentAttachments().length>0);
+  field.style.height='auto';field.style.height=`${expanded?Math.min(150,Math.max(64,field.scrollHeight)):44}px`;
+  syncChatInsets();
+}
+function pendingDecisionCards(){return [...(!$('approval-bar')?.hidden?$('approval-bar').querySelectorAll('.tool-approval'):[])].filter(card=>!card.classList.contains('is-resolved')).concat(!$('question-bar')?.hidden?[$('question-bar')]:[]);}
+function decisionInView(card){const viewport=$('chat-scroll').getBoundingClientRect(),bounds=card.getBoundingClientRect();return bounds.bottom>viewport.top&&bounds.top<viewport.bottom;}
+function pendingDecisionTarget(){return pendingDecisionCards().find(card=>!decisionInView(card));}
+function syncPendingDecision(){const cards=pendingDecisionCards(),entry=$('pending-decision');if(!entry)return;
+  const outside=cards.filter(card=>!decisionInView(card)),inView=cards.some(decisionInView);
+  entry.hidden=state.page!=='chat'||!outside.length;entry.textContent=outside.length>1?`有 ${outside.length} 项等你决定`:'有一项等你决定';
+  // A floating return control must never sit over decision buttons.
+  if(inView)$('jump-latest').hidden=true;
+}
 function syncChatInsets(){const height=$('composer-dock').getBoundingClientRect().height;
   if(Number.isFinite(height)&&height>0){const value=`${Math.ceil(height)}px`;
-    $('chat-page').style.setProperty('--composer-height',value);document.documentElement.style.setProperty('--composer-height',value)}}
+    $('chat-page').style.setProperty('--composer-height',value);document.documentElement.style.setProperty('--composer-height',value)}syncPendingDecision();}
 
 async function pickAttachment(kind){if(state.chatSource==='host'&&!selectedSharedSession()?.sendAvailable){
     toast('这段电脑会话仅可查看，无法添加附件',true);return}
@@ -376,11 +399,14 @@ let mobileFolderChoice;
 function updateComposer(){uiCore.syncMobileIdentity();
   if(globalThis.WeftFolderChoice && $('composer-dock')){mobileFolderChoice ||= WeftFolderChoice.create(uiCore,{form:$('draft').closest('.composer')||$('draft').parentElement,tools:$('plus-button').parentElement,toast,mobile:true});mobileFolderChoice.paint();}mobileMessageActions?.refresh();const view=uiCore.mobile.composerState($('draft').value);if(globalThis.WeftPhone?.owns(state.conversationId)&&!WeftPhone.active&&state.chatSource==='phone'){view.ready=false;view.draftDisabled=true;view.placeholder='这段手机对话仍可查看，请回到聊天开始新对话';view.attachmentsDisabled=true;view.voiceDisabled=true;view.modelDisabled=true;}if(globalThis.WeftPhone?.active){view.attachmentsDisabled=true;if(!window.weftNative)view.voiceDisabled=true;}reportDraftState();
   renderQueuedTasks();
-  const button=$('send-button'), stop=view.sendHidden;
+  const button=$('send-button'), stop=view.sendHidden||state.sharedRunning||state.busy;
   globalThis.WeftMobileMotion?.changed(button,String(stop),'160ms');
   button.hidden=false;button.disabled=stop?!!state.sharedStopping||state.transitionPending:coreFolderPending()||(!view.ready&&!(window.weftNative&&state.loggedIn&&state.connection==='expired'&&$('draft').value.trim()));
   button.classList.toggle('ready',stop||view.ready);button.classList.toggle('is-stop',stop);button.dataset.action=stop?'stop':'send';
-  button.setAttribute('aria-label',stop?'停止回复':'发送');button.replaceChildren(el('span',`icon icon-${stop?'stop':'send'}`));
+  const voice=!stop&&!$('draft').value.trim()&&!currentAttachments().length&&!view.voiceDisabled;
+  if(voice){button.dataset.action='voice';button.disabled=false;button.classList.add('ready');}
+  button.setAttribute('aria-label',stop?'停止回复':voice?'语音输入':'发送');button.replaceChildren(el('span',`icon icon-${stop?'stop':voice?'mic':'send'}`));
+  $('voice-button').hidden=voice;
   $('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
   renderContextUsage();
   paintMobileThinking();
@@ -391,7 +417,7 @@ function updateComposer(){uiCore.syncMobileIdentity();
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;
   WeftPopover.modelGate({missing:state.loggedIn && (view.host?uiCore.state.modelsKnown===true&&!uiCore.state.models.some(model=>model.configured!==false&&model.available!==false):!state.model),
     field:$('draft'),send:button,empty:!$('chat-content').querySelector('.message'),content:$('chat-content'),composer:$('composer-dock'),openSettings:()=>page('models')});
-  mobileNextSuggestions?.sync();syncChatInsets();updateApprovalModeButton();updatePageHeader();
+  mobileNextSuggestions?.sync();syncComposerExpansion();syncChatInsets();updateApprovalModeButton();updatePageHeader();
 }
 
 function renderQueuedTasks(){uiCore.syncMobileIdentity();const context=conversationTaskContext(),box=$('queued-tasks'),cards=$('queued-cards');
@@ -416,7 +442,7 @@ let conversationScroll;
 function ensureConversationScroll(){return conversationScroll ||= globalThis.WeftConversationScroll($('chat-scroll'),$('chat-content'),$('jump-latest'),pinned=>state.scrollPinned=pinned)}
 function scrollBottom(force=false){const wasPinned=state.scrollPinned,scroll=ensureConversationScroll();
   if(force)scroll.latest();else if(wasPinned)scroll.follow(true);else scroll.hold()}
-function handleChatScroll(){const scroll=ensureConversationScroll();scroll.scrolled();if(!scroll.pinned&&$('chat-scroll').scrollTop<40)void loadOlderHistory()}
+function handleChatScroll(){const scroll=ensureConversationScroll();scroll.scrolled();syncPendingDecision();if(!scroll.pinned&&$('chat-scroll').scrollTop<40)void loadOlderHistory()}
 function renderContextUsage(){const value=globalThis.WeftUiCore.contextUsageView(selectedSharedSession()?.contextUsage),button=$('context-usage');
   button.setAttribute('aria-label',value.label);button.classList.toggle('is-warning',value.warning);button.classList.toggle('is-indeterminate',value.ratio===null);
   const fill=button.querySelector('.context-fill');if(fill)fill.style.strokeDasharray=`${Math.min(1,Math.max(0,value.ratio||0))*100} 100`;
@@ -443,11 +469,11 @@ async function saveSharedFile(sessionId,file,button){if(button.disabled)return;b
 
 function appendSharedFiles(row,event,sessionId){const refs=Array.isArray(event.data?.originalAttachments)?event.data.originalAttachments:[];
   const files=refs.map(normalizedSharedFile).filter(Boolean);if(!files.length)return 0;
-  const list=el('div','message-thumbnails');
+  const list=row.querySelector('.message-thumbnails')||el('div','message-thumbnails');
   for(const file of files){const button=el('button','attachment-chip');button.type='button';
-    button.setAttribute('aria-label',`保存文件 ${file.name}`);button.append(el('span','attachment-kind','文件'),
-      el('span','attachment-name',`${file.name} · ${attachmentSize(file.size)}`));
-    button.addEventListener('click',()=>{void saveSharedFile(sessionId,file,button)});list.append(button)}
+    button.setAttribute('aria-label',`预览文件 ${file.name}`);button.append(WeftIcons.create('file',24),
+      el('span','attachment-name',file.name));
+    button.addEventListener('click',()=>{void openAttachmentFile(file,button,{sessionId})});list.append(button)}
   row.append(list);return files.length}
 
 function displayedPhoneMessage(text,images){const value=String(text||''),match=/(?:^|\n)\[本机附件：([^\n]*)；跨端暂不可见\]$/.exec(value);
