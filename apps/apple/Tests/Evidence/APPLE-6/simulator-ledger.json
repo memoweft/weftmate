@@ -1,0 +1,61 @@
+{
+  "boots": 6,
+  "batches": [
+    {
+      "boot": 1,
+      "headless": true,
+      "device": "WeftMate shots iPhone 16 Pro",
+      "simultaneousDevices": 1,
+      "uptimeBefore": "18:25  up  6:27, 1 user, load averages: 3.07 3.10 4.80",
+      "uptimeAfter": "18:30  up  6:32, 1 user, load averages: 2.82 6.25 6.41",
+      "rebootObserved": false,
+      "gpuRestartOrWindowServerAdded": 0,
+      "weftmateCrashAdded": 0
+    },
+    {
+      "boot": 2,
+      "headless": true,
+      "device": "WeftMate shots iPhone 16 Pro",
+      "simultaneousDevices": 1,
+      "uptimeBefore": "18:34  up  6:35, 1 user, load averages: 3.08 4.89 5.79",
+      "uptimeAfter": "18:39  up  6:40, 1 user, load averages: 1.99 6.38 6.84",
+      "rebootObserved": false,
+      "gpuRestartOrWindowServerAdded": 0,
+      "weftmateCrashAdded": 0
+    },
+    {
+      "boot": 3,
+      "headless": true,
+      "device": "WeftMate shots iPhone 16 Pro",
+      "simultaneousDevices": 1,
+      "uptimeBefore": "18:42  up  6:44, 1 user, load averages: 2.41 4.16 5.74",
+      "uptimeAfter": "18:45  up  6:47, 1 user, load averages: 9.29 11.19 8.80",
+      "rebootObserved": false,
+      "gpuRestartOrWindowServerAdded": 0,
+      "weftmateCrashAdded": 0
+    },
+    {
+      "boot": 4,
+      "headless": true,
+      "device": "WeftMate shots iPhone 16 Pro",
+      "simultaneousDevices": 1,
+      "uptimeBefore": "18:49  up  6:50, 1 user, load averages: 2.82 6.93 7.47",
+      "uptimeAfter": "18:51  up  6:53, 1 user, load averages: 13.99 19.18 13.31",
+      "rebootObserved": false,
+      "gpuRestartOrWindowServerAdded": 0,
+      "weftmateCrashAdded": 0
+    },
+    {
+      "boot": 5,
+      "headless": true,
+      "device": "WeftMate shots iPhone 16 Pro",
+      "simultaneousDevices": 1,
+      "uptimeBefore": "18:57  up  6:58, 1 user, load averages: 3.14 8.57 10.04",
+      "uptimeAfter": "19:11  up  7:12, 1 user, load averages: 1.79 4.23 8.01",
+      "rebootObserved": false,
+      "gpuRestartOrWindowServerAdded": 3,
+      "weftmateCrashAdded": 0
+    }
+  ],
+  "coolUntil": 1791858075.975722
+}
