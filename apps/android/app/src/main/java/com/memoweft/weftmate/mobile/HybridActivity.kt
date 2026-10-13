@@ -105,7 +105,7 @@ internal fun activityCommandProjection(row: JSONObject): JSONObject {
 /** The updateable UI is presentation; account secrets, local history, model calls and tools stay native. */
 open class HybridActivity : androidx.activity.ComponentActivity() {
     override fun attachBaseContext(base: android.content.Context) {
-        if (BuildConfig.DEBUG && base.packageName in setOf("com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and5qa")) {
+        if (BuildConfig.DEBUG && base.packageName in setOf("com.memoweft.weftmate.mobile.and4qa","com.memoweft.weftmate.mobile.and7qa", "com.memoweft.weftmate.mobile.and5qa")) {
             val width = base.getSharedPreferences("native-qa", MODE_PRIVATE).getInt("width", 360)
             val configuration = android.content.res.Configuration(base.resources.configuration)
             configuration.densityDpi = (base.resources.displayMetrics.widthPixels * 160f / width).toInt()
@@ -120,6 +120,22 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     internal val embeddedWeb: WebView get() = web
     protected open fun embeddedPageFinished() {}
     internal val presentationContainer: FrameLayout get() = container
+    internal fun nativeFileCurrent(file: NativeFile): Boolean = !closed.get() && !accountTransition.get() &&
+        file.epoch == accountEpoch.get() && file.owner == owner(secrets.host())
+    internal fun nativeFileLoad(row: JSONObject, complete: (Result<NativeFile>) -> Unit) {
+        val epoch = accountEpoch.get()
+        val host = secrets.host()
+        worker.execute {
+            fun current() = !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() && host == secrets.host()
+            val result = runCatching {
+                if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
+                val file = NativeFileAccess(this, api, attachments, store).load(host ?: throw ApiFailure(401,"LOGIN_REQUIRED"), row, ::current).copy(epoch=epoch)
+                if (!current()) { file.file?.parentFile?.deleteRecursively(); throw ApiFailure(409,"ACCOUNT_SWITCHED") }
+                file
+            }
+            runOnUiThread { if (!closed.get()) complete(result) }
+        }
+    }
     internal fun nativeRequest(method: String, params: JSONObject, complete: (Result<JSONObject>) -> Unit) {
         val epoch = accountEpoch.get()
         val host = secrets.host()
@@ -359,6 +375,23 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 syncSafeInsets()
                 view.evaluateJavascript(assets.open("native-frame.js").bufferedReader().use { it.readText() }, null)
                 embeddedPageFinished()
+                intent.getStringExtra("openOriginalTextFile")?.let { value ->
+                    nativeFileLoad(JSONObject(value)) { result ->
+                        result.onSuccess { file ->
+                            if(nativeFileCurrent(file) && useOriginalFileViewer(file.kind) && file.file!=null) {
+                                val data=JSONObject().put("kind",if(file.kind==NativeFileKind.MARKDOWN)"markdown" else "code")
+                                    .put("text",file.file.readText(Charsets.UTF_8)).put("contentType",file.mime)
+                                val name=JSONObject.quote(file.name)
+                                view.evaluateJavascript("""
+                                    (()=>{function open(){if(typeof state==='undefined'||!state.booted||typeof WeftContent==='undefined'){setTimeout(open,100);return;}showResourcePage($name,conversationTaskContext());const data=$data;const blob=new Blob([data.text],{type:data.contentType});configureResourceFile({name:$name},{blob});WeftContent.preview(document.getElementById('resource-content'),data,{name:$name});}open();})()
+                                """.trimIndent(),null)
+                            }
+                        }
+                    }
+                }
+                if(intent.getBooleanExtra("openLibraryPage",false))view.evaluateJavascript("""
+                    (()=>{async function open(){if(typeof page!=='function' || typeof state==='undefined' || !state.booted){setTimeout(open,100);return;}page('library');const id=${JSONObject.quote(intent.getStringExtra("openLibraryFileId").orEmpty())};if(id){try{await libraryPage(document.getElementById('page-content'));const detail=await uiCore.accessApi('/library/'+encodeURIComponent(id));await libraryView.preview(detail.item,document.activeElement);}catch{}}}open();})()
+                """.trimIndent(),null)
                 val expected = pageGeneration
                 web.postDelayed({
                     if (!closed.get() && !currentPageReady && expected == pageGeneration) {
@@ -446,6 +479,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             if (authMutation) {
                 accountTransition.set(true)
                 accountEpoch.incrementAndGet()
+                NativeFileCache.forContext(this).clear()
                 stopped = true
                 activeModel?.cancel()
                 phoneRequest.getAndSet(null)?.disconnect()
@@ -771,6 +805,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     private fun useScope(host: HostIdentity?) {
         val scope = owner(host) ?: "local"
         if (activeScope == scope) return
+        NativeFileCache.forContext(this).clear()
         activeScope = scope
         currentPageReady = false
         draftKnowledgeReady = false
@@ -1729,7 +1764,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
             .put("nativeEmailCodeLogin", true)
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
-            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.and5qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.mob4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
+            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.and7qa", "com.memoweft.weftmate.mobile.and5qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.mob4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
                 else secrets.host()?.takeIf { it.authSource == "local" }?.origin ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
         "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))

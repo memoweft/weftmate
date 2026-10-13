@@ -45,6 +45,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     var sendAvailable by mutableStateOf(true)
     var timeZone by mutableStateOf("Asia/Shanghai")
     var uncertain by mutableStateOf(emptyList<JSONObject>())
+    var fileAnchor by mutableStateOf("")
     var scrollVersion by mutableStateOf(0)
     var copyVersion by mutableStateOf(0)
     private val timeline = NativeTimeline()
@@ -206,6 +207,23 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             composerSave?.cancel()
             if (standalone && phoneOwner.isNotBlank()) { val p = phoneParams().put("draft", draft); composerSave = scope.launch { delay(150); runCatching { activity.phonePresentation("composer", p) } } }
         } else if (owner.isNotBlank() && chatId.isNotBlank()) prefs.edit().putString("draft:$owner:$chatId", draft).apply()
+    }
+    suspend fun locateFile(source: JSONObject) {
+        val started=generation;val sourceOwner=owner
+        val id=source.optString("chatId").takeIf { it.isNotBlank() && it!="null" }
+        val target=if(id!=null)business("/chats/$id").getJSONObject("chat") else
+            business("/sessions/${source.getString("sessionId")}/chat").getJSONObject("chat")
+        if(started!=generation || sourceOwner!=owner)return
+        select(target)
+        val selectedGeneration=generation
+        val anchor=source.optString("eventId")
+        if(anchor.isNotBlank()) {
+            val page=business("/chats/$chatId/events?around=${java.net.URLEncoder.encode(anchor,"UTF-8")}&limit=100")
+            if(selectedGeneration!=generation || sourceOwner!=owner)return
+            timeline.reset();timeline.merge(page);rows=timeline.rows();olderCursor=page.optString("olderCursor").takeUnless{it=="null"}.orEmpty();hasOlder=page.optBoolean("hasOlder")
+            fileAnchor=anchor
+        }
+        tab="chat"
     }
     /** Preserve continuous history: the existing UI pages from latest to older. */
     suspend fun locateActivityTarget(target: JSONObject): Boolean {

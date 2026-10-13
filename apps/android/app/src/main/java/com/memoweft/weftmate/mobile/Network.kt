@@ -264,7 +264,9 @@ class JsonHttp : SseTransport {
                 while (true) {
                     val n = source.read(buffer)
                     if (n < 0) break
-                    if (output.size() + n > 1024 * 1024) throw ApiFailure(status, "RESPONSE_TOO_LARGE")
+                    // Existing preview contract: PDFs up to 20 MB are returned as base64.
+                    val limit = if (connection.url.path.matches(Regex("/personal/v1/library/[A-Za-z0-9_-]{1,128}/preview"))) 28 * 1024 * 1024 else 1024 * 1024
+                    if (output.size() + n > limit) throw ApiFailure(status, "RESPONSE_TOO_LARGE")
                     output.write(buffer, 0, n)
                 }
                 output.toByteArray()
