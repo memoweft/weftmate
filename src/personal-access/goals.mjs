@@ -18,7 +18,7 @@ export function createGoalOperations(context) {
       const session = account.sessions[command.sessionId];
       if (command.kind !== 'session.message' || command.rootTaskId || !session || session.origin !== 'personal-remote' || session.deleting) continue;
       if (command.createdAt <= (account.activity?.erasedBefore?.[command.sessionId] ?? '')) continue;
-      const terminal = Object.values(account.activity?.items ?? {}).find(row => row.source.taskId === command.commandId && row.type.startsWith('task.'));
+      const terminal = Object.values(account.activity?.items ?? {}).find(row => row.source.taskId === command.commandId && ['task.completed','task.failed','task.stopped'].includes(row.type));
       if (terminal && Date.parse(terminal.at) < since) continue;
       const task = await context.taskDetail(account, command.commandId), e = task.replyEvidence, jobs = task.control.backgroundJobs;
       const pending = (command.toolApprovals ?? []).some(row => row.status === 'pending');

@@ -1,4 +1,4 @@
-import { createCipheriv, createHash, createPublicKey, publicEncrypt, randomBytes, constants } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, createPublicKey, createPrivateKey, publicEncrypt, privateDecrypt, randomBytes, constants, generateKeyPairSync } from 'node:crypto';
 
 export const hash = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 export function publicDeviceKey(jwk) {
@@ -18,4 +18,23 @@ export function sealReplica(payload, jwk, identity) {
   key.fill(0);
   return { version: 1, algorithm: 'RSA-OAEP-256+A256GCM', aad: aad.toString('base64url'),
     wrappedKey: wrappedKey.toString('base64url'), iv: iv.toString('base64url'), ciphertext: ciphertext.toString('base64url') };
+}
+
+// S7 uses the same device envelope as replicas, with the computer as recipient.
+export function taskRecipient() {
+  const pair = generateKeyPairSync('rsa', {modulusLength:2048});
+  return {publicJwk:publicDeviceKey(pair.publicKey.export({format:'jwk'})),privateJwk:pair.privateKey.export({format:'jwk'})};
+}
+export function openTask(envelope, recipient, identity) {
+  let key;
+  try {
+    if(envelope.version!==1||envelope.algorithm!=='RSA-OAEP-256+A256GCM')throw new Error();
+    const aad=Buffer.from(envelope.aad,'base64url'), header=JSON.parse(aad.toString());
+    if(header.version!==1||header.keyId!==hash(recipient.publicJwk)||Object.entries(identity).some(([k,v])=>header[k]!==v))throw new Error();
+    key=privateDecrypt({key:createPrivateKey({key:recipient.privateJwk,format:'jwk'}),padding:constants.RSA_PKCS1_OAEP_PADDING,oaepHash:'sha256'},Buffer.from(envelope.wrappedKey,'base64url'));
+    const ciphertext=Buffer.from(envelope.ciphertext,'base64url'),cipher=createDecipheriv('aes-256-gcm',key,Buffer.from(envelope.iv,'base64url'));
+    cipher.setAAD(aad);cipher.setAuthTag(ciphertext.subarray(-16));
+    return JSON.parse(Buffer.concat([cipher.update(ciphertext.subarray(0,-16)),cipher.final()]).toString());
+  }catch{throw Object.assign(new Error('OFFLINE_TASK_INVALID'),{code:'OFFLINE_TASK_INVALID',status:400});}
+  finally{key?.fill(0);}
 }

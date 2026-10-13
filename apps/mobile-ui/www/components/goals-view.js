@@ -3,7 +3,7 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
     const el=(tag,cls,text)=>{const n=document.createElement(tag);n.className=cls||'';if(text!==undefined)n.textContent=text;return n;};
     const notify=message=>toast?.(message);
     const notice={set textContent(message){if(message)notify(message);}};
-    const button=(text,action,cls='button secondary small')=>{const n=el('button',cls,text);n.type='button';n.onclick=()=>Promise.resolve().then(action).catch(error=>notify(core.failureMessage(error)));return n;};
+    const button=(text,action,cls='button secondary small')=>{const n=el('button',cls,text);n.type='button';n.onclick=()=>Promise.resolve().then(action).catch(error=>notify(error.userMessage||core.failureMessage(error)));return n;};
     const iconButton=(name,icon,action)=>{const n=button('',action,'button quiet small goals-icon');n.setAttribute('aria-label',name);n.title=name;n.append(WeftIcons.create(icon,16));return n;};
     const refresh=iconButton('刷新目标','sync',()=>core.readGoals());
     const head=el('div','goals-heading'),title=el('h1','','目标');title.tabIndex=-1;head.append(title,refresh);
@@ -12,14 +12,16 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
         const section=el('section','goals-section'),header=el('div','goals-heading'),heading=el('h2','',name),list=el('div','goals-list');section.setAttribute('aria-label',name);header.append(heading);section.append(header,list);target.append(section);sections[id]={section,header,list};
     }
     const recent=el('div','goals-recent'),recentList=el('div','goals-list');recentList.hidden=true;recentList.id=`goals-recent-${crypto.randomUUID()}`;
+    const offlineSection=el('section','goals-section'),offlineList=el('div','goals-list');offlineSection.setAttribute('aria-label','等电脑上线');offlineSection.append(el('h3','','等电脑上线'),offlineList);sections.tasks.section.append(offlineSection);offlineSection.hidden=true;
+    core.offlineTasksChanged=()=>{render();};
     const recentToggle=button('最近完成 · 保留 7 天',()=>{recentList.hidden=!recentList.hidden;recentToggle.setAttribute('aria-expanded',String(!recentList.hidden));},'chat-day-toggle goals-collapse');
     recentToggle.prepend(WeftIcons.create('chevron',16));recentToggle.setAttribute('aria-expanded','false');recentToggle.setAttribute('aria-controls',recentList.id);recent.append(recentToggle,recentList);sections.tasks.section.append(recent);
     let form=null,signature='';
     const stateNames={running:'进行中',queued:'排队中',approval:'等待审批',question:'等待回答',stopping:'正在停止',unconfirmed:'结果待确认',completed:'已完成',failed:'失败',stopped:'已停止',active:'进行中',paused:'已暂停',blocked:'需要处理',complete:'已完成'};
-    function confirmDelete(text,action){
+    function confirmDelete(text,action,offlineTask=false){
         const returnFocus=document.activeElement,dialog=el('dialog','dialog confirm-dialog message-action-dialog goals-confirm');dialog.setAttribute('aria-label',text);
-        const head=el('div','dialog-head'),body=el('div','dialog-body'),footer=el('div','dialog-footer');head.append(el('h2','',text));body.append(el('p','muted','删除后不会再按这个安排运行。已完成的对话记录会保留。'));
-        const cancel=button('取消',()=>dialog.close()),remove=button('确认删除',async()=>{remove.disabled=true;try{await action();dialog.close();notify('定时任务已删除');}finally{remove.disabled=false;}},'button danger');footer.append(cancel,remove);dialog.append(head,body,footer);target.append(dialog);dialog.onclose=()=>{dialog.remove();if(returnFocus?.isConnected)returnFocus.focus();};dialog.onkeydown=e=>{if(e.key==='Escape')e.stopPropagation();};dialog.showModal();cancel.focus();
+        const head=el('div','dialog-head'),body=el('div','dialog-body'),footer=el('div','dialog-footer');head.append(el('h2','',text));body.append(el('p','muted',offlineTask?'取消后，电脑上线也不会做这件事。':'删除后不会再按这个安排运行。已完成的对话记录会保留。'));
+        const cancel=button(offlineTask?'继续等':'取消',()=>dialog.close()),remove=button(offlineTask?'取消这件事':'确认删除',async()=>{remove.disabled=true;try{await action();dialog.close();notify(offlineTask?'已取消':'定时任务已删除');}finally{remove.disabled=false;}},'button danger');footer.append(cancel,remove);dialog.append(head,body,footer);target.append(dialog);dialog.onclose=()=>{dialog.remove();if(returnFocus?.isConnected)returnFocus.focus();};dialog.onkeydown=e=>{if(e.key==='Escape')e.stopPropagation();};dialog.showModal();cancel.focus();
     }
     // Date and time use the application's shared combobox controls, with no system picker.
     function dateTimeField(label,type,value){
@@ -97,7 +99,14 @@ globalThis.WeftGoalsView={mount({target,core,openSource,toast}){
     }
     function render(){
         const model=core.goalsPage;refresh.disabled=model.loading;newSchedule.disabled=core.state.personalCapabilities?.scheduleEditing!==1||!model.sessions.some(s=>s.taskAvailable!==false);newGoal.disabled=core.state.personalCapabilities?.goals!==1||!model.sessions.some(s=>s.taskAvailable!==false);
-        const next=JSON.stringify([model.loading,model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy]]);if(signature===next)return;signature=next;
+        const offlineTasks=(core.offlineTasksView?.()||[]).filter(t=>['waiting','claimed','sending','expired'].includes(t.state));
+        const next=JSON.stringify([model.loading,model.tasks,model.recent,model.schedules,model.goals,model.errors,[...model.busy],offlineTasks]);if(signature===next)return;signature=next;
+        offlineSection.hidden=!offlineTasks.length;offlineList.replaceChildren();
+        for(const task of offlineTasks){
+          const item=el('article','goals-row'),copy=button('',()=>core.openOfflineTask(task),'goals-row-content');copy.setAttribute('aria-label',`查看 ${task.text}`);
+          copy.append(el('h3','',Array.from(task.text).slice(0,72).join('')),el('span','goals-meta',new Intl.DateTimeFormat('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(task.createdAt))),el('span','goals-meta',task.state==='expired'?'过期了，没做':task.state==='sending'?'还没确认记下，请回对话重试':'等电脑上线'));
+          const actions=el('div','goals-row-actions');if(['waiting','claimed'].includes(task.state))actions.append(menuButton({title:task.text},[{name:'打开对话',action:()=>core.openOfflineTask(task)},{name:'取消这件事',danger:true,action:()=>confirmDelete('取消等电脑做的这件事？',async()=>{await core.cancelOfflineTask(task.id);render();},true)}]));item.append(copy,actions);offlineList.append(item);
+        }
         const focused=document.activeElement,focusedLabel=focused?.getAttribute('aria-label')??focused?.textContent,focusedRow=focused?.closest('article')?.dataset.goalKey;
         for(const [key,{list}]of Object.entries(sections)){
             list.replaceChildren();list.setAttribute('aria-busy',String(model.loading));if(model.errors[key]){list.append(stateBlock('error',key,model.errors[key]));continue;}
