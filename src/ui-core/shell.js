@@ -80,6 +80,8 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         const changed = Object.fromEntries(['models','modelSettings','personalization'].map(key => [key, snapshot[key] !== undefined && previous[key] !== snapshot[key]]));
         if (Object.values(changed).some(Boolean)) void refreshConfiguration(changed).catch(() => {});
         if (previous.sessions !== snapshot.sessions) void (environment.mobileState ? core.listMobileSessions() : refreshAssistantOverview()).catch(() => {});
+        if (foreground() && snapshot.phoneSync !== undefined && previous.phoneSync !== snapshot.phoneSync && core.state.syncAvailable)
+            void core.refreshPhoneRecords().catch(() => {});
     }
     const polling = globalThis.WeftUiCore.polling;
     const canWaitForReply=()=>core.state.personalCapabilities?.replyWait===1&&environment.canWaitForReply?.()!==false;

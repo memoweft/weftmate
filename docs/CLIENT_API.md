@@ -1005,7 +1005,7 @@ AND-3：Android（安卓）原生 `cloud.app.configure` 与 `cloud.app.identity`
 
 | 提供者 / 方法与路径 | 请求 / 响应 |
 |---|---|
-| 宿主 GET `/personal/v1/cloud/config` | 无认证；200 `{issuer,hostId,clientId}`。只公开固定发行者与公开客户端 ID，不含绑定账号、公钥、凭据；未启用云为原 404 |
+| 宿主 GET `/personal/v1/cloud/config` | 无认证；200 `{issuer,hostId,clientId,capabilities?}`。电脑可声明 `capabilities.cloudChannel:1`（内容令牌通道）、`offlinePhoneFirst:1`（手机自配模型的离线补交）。缺失时按旧电脑处理，云端 `multiHost` 不能替代电脑声明；只公开固定发行者、公开客户端 ID 与能力，不含绑定账号、公钥、凭据；未启用云为原 404 |
 | 宿主 GET `/personal/v1/cloud/binding` | 本账号 Cookie；200 `{status:"unbound"\|"pending"\|"active",canManage,hostId}`。只返回当前账号；canManage 仅电脑直接地址的本地密码 Cookie 为 true，实际写权限仍按 7.4 检查 |
 
 浏览器从宿主同 origin 的 `/personal/v1/ui/` 登录。`WEFTMATE_CLOUD_WEB_CLIENT_ID` 默认 `weftmate-web`；云 `CLOUD_OIDC_CLIENTS` 增加可选 `application_type:"web"\|"native"`（旧配置默认 native），**预登记精确回调 URI**。浏览器回调固定 `<宿主 origin>/personal/v1/ui/`，包括实际直接地址与中继地址；禁止通配符。Android 客户端 ID 为 `weftmate-android`，回调为 `com.memoweft.weftmate:/oauth`。部署配置需同时登记两个公开客户端；开发的回环 HTTP 仅在已有隔离测试开关下使用。

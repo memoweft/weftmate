@@ -151,8 +151,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
             checked(row, command)
         }
         catch (error: Exception) {
-            val rejected = error is ApiFailure && error.safeCode in setOf("SESSION_READ_ONLY",
-                "SESSION_UNAVAILABLE", "MODEL_UNAVAILABLE", "REQUEST_CONFLICT", "INVALID_REQUEST")
+            val rejected = sharedSendRejected(error)
             store.updateSharedCommand(row, if (rejected) "rejected" else "uncertain")
             throw error
         }

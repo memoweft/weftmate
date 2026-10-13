@@ -19,7 +19,7 @@ test('public cloud configuration exposes no account data; binding status require
   t.after(async () => { await host.close(); await new Promise<void>(done => { cloud.close(done); cloud.closeAllConnections() }); await rm(root, { recursive: true, force: true }) })
   const { origin, hostId } = await host.start()
   const configuration = await fetch(origin + '/personal/v1/cloud/config')
-  assert.deepEqual(await configuration.json(), { issuer, hostId, clientId: 'web-fixture' })
+  assert.deepEqual(await configuration.json(), { issuer, hostId, clientId: 'web-fixture', capabilities:{cloudChannel:1,offlinePhoneFirst:1} })
   assert.equal((await fetch(origin + '/personal/v1/cloud/binding')).status, 401)
   const grant = await host.issueSetupGrant()
   const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: { origin, 'content-type': 'application/json' },

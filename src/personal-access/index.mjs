@@ -171,7 +171,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       snapshot = Object.freeze({ revision,
         modelSettings: changeDigest(ownerId, 'modelSettings', [account.defaultModelProfileId, account.backgroundModelProfileId]),
         personalization: changeDigest(ownerId, 'personalization', account.personalization ?? {}),
-        sessions: changeDigest(ownerId, 'sessions', [account.sessions, account.chatIdentity, account.projects]) });
+        sessions: changeDigest(ownerId, 'sessions', [account.sessions, account.chatIdentity, account.projects]),
+        phoneSync: changeDigest(ownerId, 'phoneSync', context.syncStores.get(ownerId)?.watermark ?? 0) });
       accountSnapshots.set(ownerId, snapshot);
     }
     let catalog = configCatalogs.get(ownerId);
@@ -220,6 +221,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     accountRevisionFor: revisionFor,
     closingSignal: closingController.signal,
     accountChanges,
+    notifyPhoneSync(ownerId) {
+      accountRevisions.set(ownerId, revisionFor(ownerId) + 1);
+      accountSnapshots.delete(ownerId);
+      for (const wake of [...accountWaiters]) if (wake.ownerId === ownerId) wake();
+    },
     waitAccountChange(revision, signal, ownerId) {
       if (revision !== revisionFor(ownerId) || signal.aborted || closingController.signal.aborted) return Promise.resolve();
       return new Promise(resolve => {
