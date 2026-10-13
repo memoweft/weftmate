@@ -9,6 +9,13 @@ export async function startComposerFixture() {
   let contentRevision=1;
   const server=createServer(async (req,res)=>{
     try {
+      if(req.url==='/personal/v1/model-services') {
+        const auth=await fetch(`${base.origin}/personal/v1/auth/me`,{headers:{cookie:req.headers.cookie||''}});
+        if(!auth.ok){res.writeHead(auth.status,{'content-type':'application/json'});res.end(JSON.stringify({error:{code:'UNAUTHORIZED'}}));return;}
+        res.writeHead(200,{'content-type':'application/json'});
+        res.end(JSON.stringify({services:[{serviceId:'synthetic-service',name:'合成 MiMo 服务',baseUrl:'https://model.example/v1',interfaceType:'openai-compatible',configured:true,hasCredential:true,
+          models:[{modelId:'mimo-v2.6-flash',name:'MiMo v2.6 Flash',displayName:'MiMo v2.6 Flash',profileId:'synthetic',profileIds:['synthetic'],configured:true,available:true}]}]}));return;
+      }
       if(req.url==='/personal/v1/models/synthetic/verify') {
         const response=await fetch(`${base.origin}/personal/v1/auth/me`,{headers:{cookie:req.headers.cookie||''}});
         const identity=await response.json();
@@ -25,9 +32,10 @@ export async function startComposerFixture() {
       const output=Object.fromEntries(response.headers);delete output['content-length'];delete output['content-encoding'];
       if(response.headers.getSetCookie().length)output['set-cookie']=response.headers.getSetCookie();
       if(req.url==='/__qa/long' && response.ok)contentRevision++;
-      if(req.url==='/personal/v1/status' || /\/personal\/v1\/(chats|sessions)\/[^/]+\/(events|changes)/.test(req.url)) {
+      if(req.url==='/personal/v1/status' || /^\/personal\/v1\/sessions\/[^/?]+$/.test(req.url) || /\/personal\/v1\/(chats|sessions)\/[^/]+\/(events|changes)/.test(req.url)) {
         const value=await response.json();
         if(req.url==='/personal/v1/status')value.presence={...value.presence,runtime:'ready',model:'ready'};
+        else if(/^\/personal\/v1\/sessions\/[^/?]+$/.test(req.url))value.modelProfileId='synthetic';
         else {
           value.contentRevision=contentRevision;
           for(const event of value.items || value.upserts || value.events || [])

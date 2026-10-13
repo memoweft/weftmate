@@ -1,0 +1,440 @@
+{
+  "comparisons": [
+    {
+      "file": "comparison-light-content.png",
+      "left": "web",
+      "right": "native",
+      "sameAccountAndData": true
+    },
+    {
+      "file": "comparison-light-sidebar.png",
+      "left": "web",
+      "right": "native",
+      "sameAccountAndData": true
+    },
+    {
+      "file": "comparison-dark-content.png",
+      "left": "web",
+      "right": "native",
+      "sameAccountAndData": true
+    },
+    {
+      "file": "comparison-dark-sidebar.png",
+      "left": "web",
+      "right": "native",
+      "sameAccountAndData": true
+    }
+  ],
+  "frames": [
+    {
+      "theme": "light",
+      "action": "keyboard-open",
+      "observedFrames": 157,
+      "positions": 20,
+      "start": 1141.25,
+      "end": 941.25,
+      "nonzeroIme": true,
+      "measuredFrames": 31,
+      "jankFrames": 1,
+      "frameBudgetMs": 14.591396290322582,
+      "measurement": "650ms actual system IME animation; no Compose test clock; emulator"
+    },
+    {
+      "theme": "light",
+      "action": "keyboard-close",
+      "observedFrames": 163,
+      "positions": 8,
+      "start": 941.25,
+      "end": 1141.25,
+      "nonzeroIme": true,
+      "measuredFrames": 48,
+      "jankFrames": 0,
+      "frameBudgetMs": 10.11111,
+      "measurement": "650ms actual system IME animation; no Compose test clock; emulator"
+    },
+    {
+      "theme": "light",
+      "action": "multiline-expand",
+      "observedFrames": 162,
+      "positions": 12,
+      "start": 711.75,
+      "end": 569.75,
+      "nonzeroIme": true,
+      "measuredFrames": 77,
+      "jankFrames": 1,
+      "frameBudgetMs": 5.555555084605316,
+      "measurement": "900ms around action; Compose test clock overhead, not the real-time performance sample"
+    },
+    {
+      "theme": "light",
+      "action": "multiline-collapse",
+      "observedFrames": 163,
+      "positions": 12,
+      "start": 569.75,
+      "end": 711.75,
+      "nonzeroIme": true,
+      "measuredFrames": 24,
+      "jankFrames": 1,
+      "frameBudgetMs": 5.555555084605316,
+      "measurement": "900ms around action; Compose test clock overhead, not the real-time performance sample"
+    },
+    {
+      "theme": "dark",
+      "action": "keyboard-open",
+      "observedFrames": 145,
+      "positions": 13,
+      "start": 1141.25,
+      "end": 941.25,
+      "nonzeroIme": true,
+      "measuredFrames": 31,
+      "jankFrames": 2,
+      "frameBudgetMs": 14.949819193548388,
+      "measurement": "650ms actual system IME animation; no Compose test clock; emulator"
+    },
+    {
+      "theme": "dark",
+      "action": "keyboard-close",
+      "observedFrames": 163,
+      "positions": 8,
+      "start": 941.25,
+      "end": 1141.25,
+      "nonzeroIme": true,
+      "measuredFrames": 48,
+      "jankFrames": 0,
+      "frameBudgetMs": 10.11111,
+      "measurement": "650ms actual system IME animation; no Compose test clock; emulator"
+    },
+    {
+      "theme": "dark",
+      "action": "multiline-expand",
+      "observedFrames": 161,
+      "positions": 12,
+      "start": 711.75,
+      "end": 569.75,
+      "nonzeroIme": true,
+      "measuredFrames": 74,
+      "jankFrames": 3,
+      "frameBudgetMs": 5.555555084605316,
+      "measurement": "900ms around action; Compose test clock overhead, not the real-time performance sample"
+    },
+    {
+      "theme": "dark",
+      "action": "multiline-collapse",
+      "observedFrames": 163,
+      "positions": 12,
+      "start": 569.75,
+      "end": 711.75,
+      "nonzeroIme": true,
+      "measuredFrames": 24,
+      "jankFrames": 3,
+      "frameBudgetMs": 5.555555084605316,
+      "measurement": "900ms around action; Compose test clock overhead, not the real-time performance sample"
+    }
+  ],
+  "systemBars": [
+    {
+      "file": "and12-light-approval-menu.png",
+      "pageTheme": "light",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "headerRgb": [
+        255,
+        255,
+        255
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-light-model-menu.png",
+      "pageTheme": "light",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "headerRgb": [
+        255,
+        255,
+        255
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-light-plus-menu.png",
+      "pageTheme": "light",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "headerRgb": [
+        255,
+        255,
+        255
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-light-page-activity.png",
+      "pageTheme": "light",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "headerRgb": [
+        255,
+        255,
+        255
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-light-page-health.png",
+      "pageTheme": "light",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "headerRgb": [
+        255,
+        255,
+        255
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-light-page-library.png",
+      "pageTheme": "light",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "headerRgb": [
+        255,
+        255,
+        255
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-light-settings-general.png",
+      "pageTheme": "light",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "headerRgb": [
+        255,
+        255,
+        255
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-light-sidebar.png",
+      "pageTheme": "light",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        255,
+        255,
+        255
+      ],
+      "headerRgb": [
+        255,
+        255,
+        255
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-dark-approval-menu.png",
+      "pageTheme": "dark",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        28,
+        28,
+        30
+      ],
+      "headerRgb": [
+        28,
+        28,
+        30
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-dark-model-menu.png",
+      "pageTheme": "dark",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        28,
+        28,
+        30
+      ],
+      "headerRgb": [
+        28,
+        28,
+        30
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-dark-plus-menu.png",
+      "pageTheme": "dark",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        28,
+        28,
+        30
+      ],
+      "headerRgb": [
+        28,
+        28,
+        30
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-dark-page-activity.png",
+      "pageTheme": "dark",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        28,
+        28,
+        30
+      ],
+      "headerRgb": [
+        28,
+        28,
+        30
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-dark-page-health.png",
+      "pageTheme": "dark",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        28,
+        28,
+        30
+      ],
+      "headerRgb": [
+        28,
+        28,
+        30
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-dark-page-library.png",
+      "pageTheme": "dark",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        28,
+        28,
+        30
+      ],
+      "headerRgb": [
+        28,
+        28,
+        30
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-dark-settings-general.png",
+      "pageTheme": "dark",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        28,
+        28,
+        30
+      ],
+      "headerRgb": [
+        28,
+        28,
+        30
+      ],
+      "maxChannelDifference": 0,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    },
+    {
+      "file": "and12-dark-sidebar.png",
+      "pageTheme": "dark",
+      "systemTheme": "unchanged",
+      "android": "15",
+      "fullScreen": true,
+      "statusRgb": [
+        40.08,
+        40.08,
+        42
+      ],
+      "headerRgb": [
+        41,
+        41,
+        42.18
+      ],
+      "maxChannelDifference": 0.9200000000000017,
+      "navigationRegion": "MuMu reports 0; real gesture bar needs device confirmation"
+    }
+  ]
+}
