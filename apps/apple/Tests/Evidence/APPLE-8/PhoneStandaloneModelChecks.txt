@@ -1,0 +1,1 @@
+PASS PhoneStandaloneModelChecks: 23 assertions; HTTP 5; SSE 4; encrypted files 1; plaintext/key hits 0; cloud/Keychain/simulator/GUI: 0
