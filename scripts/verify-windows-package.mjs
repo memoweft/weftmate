@@ -75,11 +75,11 @@ async function scanTextTree(root, identity) {
   return { scannedFiles, runtimeTextFiles, binaryFiles }
 }
 
-export async function verifyWindowsPackage({ unpacked, installer, identity = buildMachineIdentity() }) {
+export async function verifyWindowsPackage({ unpacked, installer, resourcesDirectory = null, identity = buildMachineIdentity() }) {
   unpacked = resolve(unpacked)
   installer = resolve(installer)
   identity = { ...identity, roots: [...(identity.roots ?? []), resolve(here, '..')] }
-  const resources = join(unpacked, 'resources')
+  const resources = resourcesDirectory ? resolve(resourcesDirectory) : join(unpacked, 'resources')
   const asar = join(resources, 'app.asar')
   const runtime = join(resources, 'dsh-runtime')
   const vendorManifest = join(runtime, 'VENDOR-MANIFEST.json')

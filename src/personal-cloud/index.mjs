@@ -22,6 +22,8 @@ export async function createHostCloudIdentity(context, options) {
   let poll;
   let syncing = null;
   let offlineTasksSupported=false, cloudBackupSupported=false;
+  let multiHostSupported=false;
+  const computerLabels = new Map();
   let desktopQueue = Promise.resolve();
   const activeResponses = new Map();
   async function edit(change) {
@@ -56,7 +58,7 @@ export async function createHostCloudIdentity(context, options) {
     const binding = next.bindings[key];
     // Offlining is durable for this cloud device ID, including key rotation.
     // A legacy pairing challenge cannot turn a revoked/denied device back on.
-    if (Object.values(next.devices).some(d => d.bindingKey === key &&
+    if (!isHost && Object.values(next.devices).some(d => d.bindingKey === key &&
         d.cloudDeviceId === identity.device_id && ['denied', 'revoked'].includes(d.status)))
       throw failure('DEVICE_NOT_TRUSTED', 403);
     let trustId = Object.keys(next.devices).find(id => {
@@ -109,7 +111,8 @@ export async function createHostCloudIdentity(context, options) {
   }
   function sessionReply(response, request, result) {
     const { token, ...body } = result;
-    context.json(response, 200, body, { 'set-cookie': context.sessionCookie(token,
+    if (request.url === '/personal/v1/auth/cloud-channel') context.json(response, 200, {...body, token});
+    else context.json(response, 200, body, { 'set-cookie': context.sessionCookie(token,
       context.requestAuthority(request).startsWith('https:')) });
   }
   async function callCloud(route, body, token) {
@@ -162,6 +165,9 @@ export async function createHostCloudIdentity(context, options) {
               for (const device of Object.values(next.devices)) if (device.bindingKey === key) device.status = 'revoked';
               for (const [id, event] of Object.entries(next.outbox)) if (event.sub === binding.sub) delete next.outbox[id];
             } else next.epochs[key] = Math.max(next.epochs[key] ?? 0, member.epoch);
+            if(member?.computers?.length>1 && member.computers.every(c=>typeof c.hostId==='string'&&typeof c.name==='string'&&c.name.length<=128)) {
+              const self=member.computers.find(c=>c.hostId===hostId);if(self)computerLabels.set(binding.ownerId,self.displayName||self.name);
+            } else computerLabels.delete(binding.ownerId);
           }
         }
         let previous = -1;
@@ -188,6 +194,7 @@ export async function createHostCloudIdentity(context, options) {
     });
     closeInvalidResponses();
     offlineTasksSupported=envelope.capabilities?.offlineTasks===1;
+    multiHostSupported=envelope.capabilities?.multiHost===1;
     cloudBackupSupported=envelope.capabilities?.cloudBackup===1;
   }
   async function syncRevocations() {
@@ -258,7 +265,7 @@ export async function createHostCloudIdentity(context, options) {
     const pathname = url.pathname;
     if (!(pathname.startsWith('/personal/v1/cloud/') ||
         ['/personal/v1/auth/cloud-session', '/personal/v1/auth/cloud-nonce', '/personal/v1/auth/cloud-desktop',
-          '/personal/v1/auth/cloud-offline'].includes(pathname))) return false;
+          '/personal/v1/auth/cloud-offline', '/personal/v1/auth/cloud-channel'].includes(pathname))) return false;
     try {
       if (url.search) throw failure('INVALID_REQUEST');
       const route = pathname.replace('/personal/v1', '');
@@ -336,7 +343,11 @@ export async function createHostCloudIdentity(context, options) {
         const task = desktopQueue.then(async () => {
           const key = bindingKey(config.issuer, identity.sub);
           let binding = store.state.bindings[key];
-          if (binding?.status === 'unbound') throw failure('CLOUD_NOT_BOUND', 403);
+          if (binding?.status === 'unbound') {
+            if(binding.ownerId !== current.ownerId)throw failure('CLOUD_BINDING_CONFLICT',409);
+            await context.serial(()=>edit(next=>{next.bindings[key].status='pending';}));
+            binding=store.state.bindings[key];
+          }
           if (binding && binding.ownerId !== current.ownerId ||
               Object.values(store.state.bindings).some(b => b.ownerId === current.ownerId && b.sub !== identity.sub && b.status !== 'unbound'))
             throw failure('CLOUD_BINDING_CONFLICT', 409);
@@ -496,7 +507,7 @@ export async function createHostCloudIdentity(context, options) {
           publicJwk: store.state.installation.publicJwk, origin: context.requestAuthority(request),
           relay: context.service.relayStatus() }); return true;
       }
-      if (route === '/auth/cloud-session' || route === '/cloud/pairings/redeem') {
+      if (route === '/auth/cloud-session' || route === '/auth/cloud-channel' || route === '/cloud/pairings/redeem') {
         const fields = ['accessToken', 'deviceName', ...(route.endsWith('/redeem') ? ['challenge'] : [])];
         exactKeys(body, fields, fields);
         // Browsers cannot remove a revoked HttpOnly Cookie. It is never used as
@@ -584,6 +595,7 @@ export async function createHostCloudIdentity(context, options) {
     relayReady: () => Object.values(store.state.bindings).some(binding => binding.status === 'active'),
     tls: () => structuredClone(store.state.tls), relayRequest: signedRequest, handle, assertSession, revokeLocalDevice, applyEvents, syncRevocations, closeInvalidResponses,
     offlineTasksSupported:()=>offlineTasksSupported,
+    computerLabel:ownerId=>computerLabels.get(ownerId),
     cloudBackupSupported:()=>cloudBackupSupported,
     backupAccount(ownerId) {
       const binding=Object.values(store.state.bindings).find(b=>b.ownerId===ownerId&&b.status==='active');

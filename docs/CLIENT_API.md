@@ -1080,13 +1080,18 @@ Windows（视窗系统）日用桌面部署使用 `weftmate-desktop`、`applicat
 | 提供者 / 方法与完整路径 | 请求 / 授权 | 响应 / 语义 |
 |---|---|---|
 | 云 GET `/personal/v1/cloud/devices` | 云 DPoP 授权 | 200 `{devices,hosts,sharing:{supported:false}}`。devices 每项 `{id,name,type,online,firstUsedAt,lastUsedAt,isCurrent}`；hosts 每项同字段及 `hostId`，type=computer。仅同账号已登录设备/已认领宿主；不返回邮箱、安装 key、pin、内容、frpc 凭据 |
+| 云 POST `/personal/v1/cloud/hosts/rename` | 云 DPoP + `{hostId,name}` | 能力 `multiHost:1` 下启用；200 `{renamed:true,hostId}`；名称1–128字符，非成员404 |
+| 云 POST `/personal/v1/cloud/hosts/remove` | 云 DPoP + `{hostId}` | 能力 `multiHost:1` 下启用；200 `{removed:true,hostId,localDataPreserved:true,tasksCanceled:true}`；撤销该电脑登录授权、成员与远程连接，保留本机数据；离线任务取消并清除密文 |
+| 电脑 POST `/personal/v1/auth/cloud-channel` | `{accessToken,deviceName}` + 该电脑受众云令牌与 DPoP 一次性挑战 | 与原 `cloud-session` 相同身份/成员/设备/撤权校验；200 原 `Auth` + `hostTrust` + `token`，不设置Cookie。token为本机内容Bearer，只保存在当前页面内存；既有读写路由与requestId幂等规则不变。安卓为cloud-account（云账号通道），不是host.business（电脑业务通道） |
+| 电脑 POST `/personal/v1/offline/sync` | 原正文；原 Cookie 或已核对云设备的电脑内容凭据 | 仍要求原账户管理范围及有效云设备/账户映射，普通接入Bearer不能取得副本。每次异步读取、发布和回执前重核对；信封、代次及物理设备身份不变 |
+| 电脑 POST `/personal/v1/offline/turns` | 原正文及相同认证要求 | 原代次核对、来源、依赖和幂等补交语义不变；回执只表示已同步 |
 | 云 POST `/personal/v1/cloud/hosts/connect` | `{hostId}` + 云 DPoP 授权 | 200 `{hostId,baseUrl,status,resource,approval,pairingRequired}`；status=online/offline/revoked（无中继配置或尚无地址时 offline/null）；AUTH-1 登录过邮箱核对后 approval=trusted / pairingRequired=false；denied/revoked 拒绝，旧 pending 元数据仅作历史。非成员 404；旧非 App grant 403 APP_LOGIN_REQUIRED。增加本设备现有 provider grant 与尚未消费 refresh model（刷新记录）的该宿主 resource，不另发令牌/改变生命周期或消费状态 |
 | 宿主 POST `/personal/v1/auth/cloud-desktop` | `{accessToken,deviceName}` + 云 audience access token 的宿主 nonce/DPoP（htu 为本路径），无 Authorization | 要求与原生动作相同的私有桌面能力、环回 socket、直接 Host/Origin、无转发头，以及当前已选本机 Cookie/CSRF。云声明与 DPoP 有效后，绑定当前本机 owner；绝不创建空账户替换已有数据。不同本机账户/云身份冲突 409。200 `{account,device,csrfToken,local:true,cloudAuthenticated:true,hostTrust}`，保留原本机 Cookie；pending 重登转 trusted，denied/revoked 403。原执行账户隔离规则保留 |
 | 宿主 POST `/personal/v1/cloud/devices/{requestId}/trust` | `{}` + 同账号已受信宿主 Cookie/CSRF（电脑/受信设备） | 200 `{sub,hostId,deviceId,jkt,tlsSpki,publicJwk,origin,relay,trustToken,expiresIn:120}`。仅已批准的指定 recipient（接收设备）；pending 403，跨 owner 404。返回值只能从已有信任的宿主 TLS（传输层安全）连接取得，再经可信设备通道转交 |
 | 宿主 POST `/personal/v1/cloud/emergency-password` | `{password}` + 自动绑定电脑的直接地址受信 Cookie/CSRF | 200 `{configured:true}`；云创建账号可首次设置本机独立离线密码，后续改密码走原本地接口；手机/旧密码账号/再次初始设置 403。创建时随机不可用的本地密码不会交给客户端 |
 | 宿主 POST `/personal/v1/auth/cloud-offline` | `{cloudAccountId,password,deviceName}`，直接地址 Origin/JSON | 200 原本地登录响应；只查本机已设置应急密码的云映射并走原密码校验/限速，不调用云。旧本地账号继续原 `/auth/login`；cloudAccountId 仅用于选择账号，不构成认证 |
 
-devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近 90 秒安装签名心跳（宿主默认 60 秒同步），lastUsedAt 为 UTC ISO8601，旧未上报宿主可为 null。isCurrent 使用令牌设备指纹；电脑宿主通过签名的 device-host 映射标「这台设备」，客户端无需传可伪造的 currentHostId。这是最近活动提示，不能当作内容连接成功证明。可每 30 秒以新 proof 读取目录维持前台设备状态。
+devices 的 online 指最近60秒云 API（接口）/登录/刷新活动；hosts 在配置中继时取该电脑15秒内连接/心跳，无中继时沿原90秒安装活动投影。目录可选带 `capabilities.multiHost:1`；多台时 devices 增加关联 `hostId:null|string`，同名电脑增加 `displayName`。可选 `removedHosts:[{hostId,name}]` 供显示电脑移除及任务取消。单台条目字段不变，只有多台时客户端才增加电脑名与选择控件。旧云缺少能力字段则不请求电脑管理或认证通道新接口。lastUsedAt 为 UTC ISO8601，旧未上报电脑可为 null。isCurrent 使用令牌设备指纹和签名的 device-host 映射，客户端不传 currentHostId。这是最近连接提示，不能当作请求完成证明。可每30秒以新 proof（证明）读取目录维持前台设备状态。
 
 连接时从目录选择 hostId，调用 `/hosts/connect`，以同一个轮换 refresh family（刷新授权族）取得宿主 resource token。经过云邮箱核对、未被下线且有成员资格的设备返回 `approval:trusted,pairingRequired:false`；宿主继续独立核对声明、绑定、公钥持有与撤销状态。
 

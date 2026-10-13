@@ -169,6 +169,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             const row = ui.element('li', 'sidebar-project'); row.dataset.projectId = project.projectId;
             const title = ui.element('div', 'sidebar-project-heading');
             const toggle = ui.element('button', 'sidebar-project-toggle'); toggle.type = 'button'; toggle.setAttribute('aria-expanded', String(!collapsedProjects.has(project.projectId))); toggle.append(WeftIcons.create(collapsedProjects.has(project.projectId) ? 'folder' : 'folder-open', 16), ui.element('span', '', project.name));
+            if(core.hasMultipleComputers?.())toggle.append(ui.element('small','session-computer-name',`${core.computerName(project.hostId)}${project.computerOffline?' · 不在线':''}`));
             toggle.onclick = () => { collapsedProjects.has(project.projectId) ? collapsedProjects.delete(project.projectId) : collapsedProjects.add(project.projectId); renderSessions(); };
             const add = ui.element('button', 'project-action'); add.type = 'button'; add.setAttribute('aria-label', `在项目 ${project.name} 新建对话`); add.append(WeftIcons.create('plus', 16)); add.disabled = !core.state.models.length; add.onclick = () => newProjectConversation(project, add); title.append(toggle); if (collapsedProjects.has(project.projectId)) { title.dataset.statusKey = `project:${project.projectId}`; appendStatus(title, core.sidebarStatus('projects',project.projectId,sessions)); } title.append(add);
             const projectMenu = trigger => WeftPopover.openMenu(trigger, [
@@ -407,6 +408,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             button.type = 'button';
             const label = ui.element('span', 'session-title');
             label.append(ui.element('span', 'session-title-text', title));
+            if(core.hasMultipleComputers?.())label.append(ui.element('small','session-computer-name',`${core.computerName(session.hostId)}${session.computerOffline?' · 不在线':''}`));
             button.append(label);
             button.addEventListener('click', () => { void core.selectSession(session.sessionId); });
             row.append(button);

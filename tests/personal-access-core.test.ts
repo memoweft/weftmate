@@ -8,6 +8,26 @@ import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 
 const ownerStore = (store: any) => store.accounts[store.legacyOwnerId]
 
+test('M3-2 two online computers execute one addressed phone message once despite concurrent retries',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'personal-access-m3-2-')),a=fixture(),b=fixture();let first,second;
+  a.backend.describeSession=async sessionId=>a.sessions.has(sessionId)?{sessionId,title:'Synthetic',agentPreset:'personal-remote',modelProfileId:'local',running:false}:null;
+  b.backend.describeSession=async sessionId=>b.sessions.has(sessionId)?{sessionId,title:'Synthetic',agentPreset:'personal-remote',modelProfileId:'local',running:false}:null;
+  try {
+    first=await createPersonalAccessService({root:join(root,'desk'),port:0,backend:a.backend});second=await createPersonalAccessService({root:join(root,'laptop'),port:0,backend:b.backend});
+    const desk=await first.start(),laptop=await second.start();
+    async function authenticate(service,identity){const grant=await service.issueSetupGrant();const response=await fetch(identity.origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin:identity.origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,username:'synthetic',password:'synthetic long password',deviceName:'synthetic-phone'})});assert.equal(response.status,201);const auth=await response.json();return {origin:identity.origin,cookie:response.headers.get('set-cookie').split(';')[0],'x-weftmate-csrf':auth.csrfToken};}
+    const da=await authenticate(first,desk),db=await authenticate(second,laptop);
+    const created=await request(desk.origin,null,'POST','/personal/v1/commands',{requestId:'m3-create',kind:'session.create',targetDeviceId:desk.hostId,modelProfileId:'local',waitForReceipt:true},da);
+    const body={requestId:'m3-same-message',kind:'session.message',targetDeviceId:desk.hostId,sessionId:created.body.command.sessionId,text:'synthetic one-computer message'};
+    const replies=await Promise.all([request(desk.origin,null,'POST','/personal/v1/commands',body,da),request(desk.origin,null,'POST','/personal/v1/commands',body,da),request(desk.origin,null,'POST','/personal/v1/commands',body,da)]);
+    assert.ok(replies.every(r=>r.status===202),JSON.stringify(replies));
+    assert.equal(new Set(replies.map(r=>r.body.command.commandId)).size,1);
+    const wrong=await request(laptop.origin,null,'POST','/personal/v1/commands',body,db);assert.equal(wrong.status,409);assert.equal(wrong.body.error.code,'TARGET_UNAVAILABLE');
+    for(let n=0;n<100&&a.calls.message!==1;n++)await new Promise(done=>setTimeout(done,10));
+    assert.equal(a.calls.message,1);assert.equal(b.calls.message,0);assert.equal(b.calls.create,0);
+  } finally {await first?.close();await second?.close();rmSync(root,{recursive:true,force:true});}
+});
+
 test('FX-19 receipt wait returns only durable completion, preserves retry identity and survives disconnect/restart', async()=>{
   const root=mkdtempSync(join(tmpdir(),'personal-access-fx19-receipt-')),f=fixture();let service;
   let release,started;const gate=new Promise(resolve=>release=resolve),entered=new Promise(resolve=>started=resolve);

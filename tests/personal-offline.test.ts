@@ -25,7 +25,7 @@ async function fixture(t: any) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'weftmate-m3a-unit-')); t.after(() => rm(root, { recursive: true, force: true }));
   let items = [memory(), memory('travel', '用户去青海旅行。')], generation = 1, accepted: any[] = [];
   const context: any = { root, timestamp: Date.now, rootState: { hostId: identity.hostId },
-    authenticate: () => ({ ...identity, via: 'cookie', device: { authKind: 'cloud' } }),
+    authenticate: () => ({ ...identity, via: 'cookie', device: { authKind: 'cloud',scopes:['sessions:read','commands:write','account:manage'] } }),
     accountState: () => ({ sessions: {} }), modelSelectable: () => true,
     backend: { listModels: () => [{ id: 'mimo', configured: true, sourceKind: 'cloud', name: 'MiMo' }] },
     service: { currentChatModelProfile: () => 'mimo' },
@@ -52,6 +52,20 @@ test('device envelope authenticates contents and identity; storage is encrypted 
   await vault.save(payload); assert.deepEqual(await vault.load(), payload);
   await vault.clear(); assert.equal((await vault.load()).snapshot, null);
   await assert.rejects(vault.open(envelope, identity), 'destroyed device key cannot reopen an old envelope'); vault.close();
+});
+test('native phone composer shares the encrypted conversation vault, restores and clears at the account boundary', async () => {
+  const indexedDB = new IDBFactory(), vault = await W.browserVault('native-composer', { indexedDB, crypto: webcrypto });
+  const engine = await W.create({ vault, identity, phoneModel: () => null, accountCheck: async () => ({}), crypto: webcrypto });
+  await engine.saveComposer('phone-conversation', '合成账号的私有草稿');
+  await engine.saveComposer('second-conversation', '另一条合成草稿');
+  assert.equal((await vault.load()).nativeDrafts['phone-conversation'], '合成账号的私有草稿');
+  await engine.saveComposer('phone-conversation', '合成账号的私有草稿');
+  assert.deepEqual((await vault.load()).nativeComposer, { conversationId: 'phone-conversation', draft: '合成账号的私有草稿' });
+  engine.close();
+  const restoredVault = await W.browserVault('native-composer', { indexedDB, crypto: webcrypto });
+  const restored = await W.create({ vault: restoredVault, identity, phoneModel: () => null, accountCheck: async () => ({}), crypto: webcrypto });
+  assert.equal(restored.view().nativeComposer.draft, '合成账号的私有草稿');
+  await restored.clear(); assert.equal((await restoredVault.load()).nativeComposer, undefined); restored.close();
 });
 test('S7 text tasks work without a cloud chat model, while old replica callers retain the model-required contract',async t=>{
   const f=await fixture(t),sessions={ 'local-dialogue':{origin:'personal-remote',modelProfileId:'local',title:'合成本地对话'} };
@@ -199,7 +213,7 @@ test('offline import uses the original Core boundary hash and stable event id', 
 test('renewing a host cookie preserves the physical device import identity and deduplication', async t => {
   const f = await fixture(t), mutableIdentity = { ...identity };
   f.context.cloudIdentity.offlineDeviceId = () => 'trusted-physical-device';
-  f.context.authenticate = () => ({ ...mutableIdentity, via: 'cookie', device: { authKind: 'cloud' } });
+  f.context.authenticate = () => ({ ...mutableIdentity, via: 'cookie', device: { authKind: 'cloud',scopes:['sessions:read','commands:write','account:manage'] } });
   const vault = await W.browserVault('renewal', { indexedDB: new IDBFactory(), crypto: webcrypto });
   vault.complete = async () => ({ choices: [{ message: { content: '已收到偏好' } }] });
   const engine = await W.create({ vault, identity: mutableIdentity, host: f.host,
