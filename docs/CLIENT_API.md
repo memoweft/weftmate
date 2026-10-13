@@ -1120,7 +1120,44 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 包包含账号/设置、DSH（助手运行时）会话与日志、对话工作目录/经验、成果、用量、健康和 MemoWeft Core（记忆核心）数据库。数据库使用 SQLite（嵌入式数据库）安全在线备份，不复制活动 WAL（预写日志）或 SHM（共享内存文件）。模型密钥、云令牌、设备私钥、浏览器登录与缓存、自动生成的 DSH 依赖链接不进包；账号密码哈希保留供重新登录，历史设备仅留撤销后的元数据与不可用的校验值以维持命令引用；来源会话不能继续使用。换机后重新填写模型密钥；云端重新验证 subject（账号标识）与 issuer（发行者）、重新认领新安装后，使用包内不含凭据的归属映射接回原账号，不能靠邮箱推断归属。当前安装 ID 与其本机私钥保持，来源安装私钥不会被导入。
 
-默认保留最近 7 天全部成功包，再加最近 4 个日历周各最新一份；UTC 周从周一开始，始终保留最新成功包，坏包不自动删除。临时文件落盘后原子改名，包内含版本、时间、原因、逐文件大小/SHA-256 与清单 SHA-256。坏包 409 `BACKUP_CORRUPT`，数据中的链接 409 `BACKUP_SYMLINK`，活动任务 409 `SESSION_BUSY`，已有操作 409 `CONFLICT`，暂停写入超时 409 `BACKUP_PAUSE_TIMEOUT`，无备份能力 503 `CAPABILITY_UNAVAILABLE`，关闭期间 503 `SERVICE_CLOSING`。本地包未加密，应保存在可信磁盘；S4 云端加密备份尚未实现。
+默认保留最近 7 天全部成功包，再加最近 4 个日历周各最新一份；UTC 周从周一开始，始终保留最新成功包，坏包不自动删除。临时文件落盘后原子改名，包内含版本、时间、原因、逐文件大小/SHA-256 与清单 SHA-256。坏包 409 `BACKUP_CORRUPT`，数据中的链接 409 `BACKUP_SYMLINK`，活动任务 409 `SESSION_BUSY`，已有操作 409 `CONFLICT`，暂停写入超时 409 `BACKUP_PAUSE_TIMEOUT`，无备份能力 503 `CAPABILITY_UNAVAILABLE`，关闭期间 503 `SERVICE_CLOSING`。本地包未加密，应保存在可信磁盘；S4 云端加密备份见 8.1 节，保持本机备份语义不变。
+
+### 8.1 云端备份（S4，仅电脑）
+
+采用 [CLOUD_BACKUP.md](CLOUD_BACKUP.md) 的恢复码与密文协议。以下电脑接口要求当前本机账户、账号管理权限、直接环回来源和原有 CSRF（跨站请求伪造防护），只有整机备份管理者可操作。Android（安卓）与 Apple（苹果端）本包不调用，归入 `specialized-or-desktop`（专用或电脑通道），不加入手机业务白名单。设置在已有备份分类，新电脑登录后进入应用再显示可关闭的恢复提示。
+
+| 方法与完整路径 | 请求／响应 |
+|---|---|
+| GET `/personal/v1/backups/cloud` | `{available:false,reason?}` 或 `{available:true,enabled,busy,lastBackupAt,status,items,usage,recoveryAvailable,keyAvailable,restoreSuggested}`；旧云下新接口请求为零 |
+| POST `/personal/v1/backups/cloud/prepare` | `{}` → `{recoveryCode,draftId,confirmGroup,purpose:"enable"}`；已有钥匙不能重复开启 |
+| POST `/personal/v1/backups/cloud/enable` | `{draftId,confirmation}` → `{enabled:true}`；指定组确认和云端包裹保存成功后启用 |
+| POST `/personal/v1/backups/cloud/run` | `{}` → `{state:"succeeded",backup,usage}` 或 `{state:"unchanged"}`；失败保留待传密文，不重启 |
+| POST `/personal/v1/backups/cloud/reveal` | `{password}` → `{recoveryCode}`；云账号密码重新验证 |
+| POST `/personal/v1/backups/cloud/rotate` | `{password}` → 同 prepare，`purpose:"rotate"`；enable 确认后原子替换，主钥匙不变 |
+| POST `/personal/v1/backups/cloud/restore` | `{id,recoveryCode,confirm:true}` → `{state:"pending",restartsHost:true,requiresLogin:true,restoring:true}`；沿 BK-1 安全备份、暂存切换、启动失败回滚；凭据同事务 |
+| POST `/personal/v1/backups/cloud/delete` | `{confirm:true}` → `{deleted:true,verification:{backups:0,chunks:0,keys:0,quotaBytes:0},usage}`；核对后停用并删除本机备份钥匙 |
+| POST `/personal/v1/backups/cloud/remove` | `{id,confirm:true}` → `{deleted:true,verification:{backups:0,chunks:0},usage}`；核对这一份，保留钥匙及其他备份，释放空间 |
+| POST `/personal/v1/backups/cloud/dismiss` | `{id}` → `{dismissed:true}`；设置仍可恢复 |
+
+错误码包括 `CLOUD_BACKUP_RECOVERY_CODE`（`error.invalidGroups:[1..8]` 指出组）、`CLOUD_BACKUP_RECOVERY_MISMATCH`、`CLOUD_BACKUP_CORRUPT`、`CLOUD_BACKUP_CHUNKS_MISSING`、`CLOUD_BACKUP_NEWER_VERSION`、`CLOUD_BACKUP_POWER_NETWORK`、`BACKUP_QUOTA_EXCEEDED`、`BACKUP_GLOBAL_QUOTA_EXCEEDED`（`error.usage` 给当前占用）。页面不持久保存恢复码。界面分别提示重输、重试／换份、升级、接电并回私人网络、删除旧备份／先做本机备份。
+
+读取官方模型配置所需的运行时组件缺失时，返回既有 `RUNTIME_UNAVAILABLE`，状态为 `failed`，界面提示「这次备份没成功，请稍后重试」。这次捕获不产出备份、不导出凭据，也不以遗漏配置或复制整个配置文件替代；已有备份保持完整，下次可重试。
+
+云接口均要求云账号 DPoP（设备持钥证明）登录；已登录电脑后台可用已有安装签名，载荷绑定精确 action、账号 sub 和有效成员资格。服务只保存密文及最少传输状态，不能通过账号密码解开主钥匙。
+
+| 方法与完整路径 | 业务载荷／响应 |
+|---|---|
+| POST `/personal/v1/cloud/backups/key/read` | `{}` 或 `{password}` → `{key,revision,generation,sensitiveAuthorized?}`；key 为包裹信封或 null |
+| POST `/personal/v1/cloud/backups/key/write` | `{key,expectedRevision}` → `{revision}`；比较并替换，有现存包时不能改主钥匙标识 |
+| POST `/personal/v1/cloud/backups/start` | `{id,version:1,keyId,createdAt,totalBytes,chunkCount,packageHash,chunks:[{index,size,hash,iv}],generation?}` → `{id,state,received:[index],usage}`；createdAt 是 ISO（标准日期格式）字符串，generation 缺省 0，旧代次拒绝 |
+| POST `/personal/v1/cloud/backups/chunk/upload` | `{id,index,ciphertext,hash}` → `{id,index,accepted:true}`；密文 Base64URL（网址安全编码），同块同哈希幂等 |
+| POST `/personal/v1/cloud/backups/complete` | `{id}` → `{backup,usage}`；全部块和顺序哈希通过才完成 |
+| POST `/personal/v1/cloud/backups/list` | `{}` → `{items,usage,keyAvailable}`；items 是完整密文清单，另有 state、completedAt |
+| POST `/personal/v1/cloud/backups/chunk/download` | `{id,index}` → `{id,index,ciphertext,hash}`；只下载本人完整包 |
+| POST `/personal/v1/cloud/backups/delete` | `{id}` → `{deleted:true,verification:{backups:0,chunks:0},usage}`；只核对这一份 |
+| POST `/personal/v1/cloud/backups/clear` | `{}` → `{deleted:true,verification:{backups:0,chunks:0,keys:0,quotaBytes:0},usage}`；包裹钥匙一起真删除 |
+
+宿主用 `{hostId,proof}` 包住业务载荷，沿 `wm-host-request+jwt`（既有安装签名格式），action 为上述 `/backups/` 后缀的完整路径。云 schema（结构版本）10，`healthz`、签名撤权和离线控制回执兼容增加 `capabilities.cloudBackup:1`；客户端仅信已有签名回执，缺字段不发新请求、不按未找到探测，刷新重新判断。默认每账号 300 MiB（兆字节）、全站 6 GiB（吉字节），最多 512 块，每块 1 MiB + 16 字节认证值；元数据 120／分钟、块 600／分钟，保留最近 3 份完整包，七天待传包清理并释放额度。遗忘／删除副本沿现有清理代次删除旧云包和待传包，旧代次不能接续；包裹钥匙保留，下一份只捕获当前数据。
 
 ## 9. 逻辑主对话与旁聊（IA-2）
 

@@ -13,7 +13,7 @@ npm test
 npm start
 ```
 
-默认监听 `127.0.0.1:8787`，健康检查 `GET /healthz` 返回 `{"status":"ok","service":"weftmate-cloud","schemaVersion":8}`。Ctrl+C / SIGTERM 关闭中继入口、HTTP 和数据库。默认 issuer 为 `http://localhost:8787/personal/v1/cloud/oidc`，账号交互须通过这个 origin 访问。随机端口测试先分配端口再配置 issuer；`CLOUD_PORT=0` 只用于健康检查启动测试，账号登录须配置实际公开端口。
+默认监听 `127.0.0.1:8787`，健康检查 `GET /healthz` 返回 `{"status":"ok","service":"weftmate-cloud","schemaVersion":10,"capabilities":{"cloudBackup":1,"offlineTasks":1}}`。Ctrl+C / SIGTERM 关闭中继入口、HTTP 和数据库。默认 issuer 为 `http://localhost:8787/personal/v1/cloud/oidc`，账号交互须通过这个 origin 访问。随机端口测试先分配端口再配置 issuer；`CLOUD_PORT=0` 只用于健康检查启动测试，账号登录须配置实际公开端口。
 
 配置只读环境变量，不自动加载 `.env`。可复制 `.env.example` 到被忽略的 `.env`，使用 `node --env-file=.env src/main.mjs`。没有登记客户端时仍可注册/验证，但不能开始 OIDC 授权；不会默认开放生产 redirect URI。
 
@@ -28,6 +28,8 @@ npm start
 | `CLOUD_MAIL_FROM` | `WeftMate <no-reply@example.com>`；Resend 必须显式配置 |
 | `CLOUD_MAIL_DIR` | `<CLOUD_DATA_DIR>/mail-outbox`；显式相对路径按工作目录解析 |
 | `CLOUD_RESEND_API_KEY` | 无默认值；Resend 必填，仅放运行环境，不进 Git |
+| `CLOUD_BACKUP_ACCOUNT_BYTES` | `314572800`（300 MiB，每账号），完整备份加待传整包预留的上限 |
+| `CLOUD_BACKUP_GLOBAL_BYTES` | `6442450944`（6 GiB，全站），所有账号完整备份加待传预留的总上限 |
 
 不要将数据/邮件目录指向现有个人资料、仓库根、系统或共享目录：服务将目录设为 0700。数据库、开发邮件和 `identity-keys/keys.json` 为 0600；入口 umask 0077，SQLite WAL/SHM 随之保持私有。Windows 本地还依赖系统 ACL。测试与服务开发均不使用日用数据。
 
@@ -129,3 +131,5 @@ S7：schema（存储结构）9 新增 `009-offline-tasks.sql`，不改变旧表�
 任务接口每账户120次／分钟，安装每电脑600次／分钟；越限429 `RATE_LIMITED`。过期自动置空正文密文，领取回执保留到执行终结，最小终态7天后删除；授权／代次变更及账户／设备外键删除会立即删记录。服务日志只保留原操作字段；所有非法请求错误只返回固定代码，不能回显请求体。安全边界、原生接线与故障恢复详见 `docs/M3_OFFLINE.md` 的 S7 节。
 
 S7兼容能力：已有 /hosts/offline/status 与 /hosts/offline/publish 回执、签名 /hosts/revocations 事件令牌兼容增加 capabilities.offlineTasks:1。旧云没有字段，新客户端不显示或请求任务功能；刷新重新判定，没有404探测或永久负缓存。
+
+S4：结构 10 的 `010-cloud-backups.sql` 只增加云备份密文、包裹后的主钥匙、清单及配额表。精确 POST（提交）路由 `/personal/v1/cloud/backups/{key/read,key/write,start,chunk/upload,complete,list,chunk/download,delete,clear}` 使用现有 DPoP（设备持钥证明），或绑定到已登录账号成员资格的宿主安装签名；后者签名 `sub`（账号标识）和精确 `action`（请求路径），拒绝重放。`key/read {password}` 可沿现有云密码核对授权本机敏感查看，服务仍没有恢复码或解密钥匙。其他请求仅最少传输状态与密文；每块 1 MiB 加 16 字节，最多 512 块，一份待传、最近三份完整备份；7 天未完成上传自动清除。整包先预留额度，完成时按序核对密文哈希，重试返回已收索引。全部删除与账号注销核对清单、块、包裹钥匙和额度均为零。能力 `capabilities.cloudBackup:1` 加到健康检查与原签名控制回执；旧云客户端不探测新接口。完整设计／接口见 [CLOUD_BACKUP.md](../../docs/CLOUD_BACKUP.md)，部署与回退见 [deploy/README.md](deploy/README.md#s4-云端加密备份上线尚未部署)。
