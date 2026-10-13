@@ -1,0 +1,7 @@
+{
+  "completed": false,
+  "electronHeadlessLaunches": 1,
+  "phase": "model-probe",
+  "failure": "Synthetic model fixture omitted GET /props; fixture corrected before retry.",
+  "ownedProcessesSignaled": 5
+}
