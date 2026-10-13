@@ -1797,3 +1797,30 @@ DATA-2原生查询补充：未接入身体测量、但查询范围（含目标�
 原生桌面内部增加 `connector_call` 进程通信动作，绑定原生执行记录、账号、原始用户回执和参数摘要；不向客户端开放工具执行或凭据读取路由。SEC-1 第二模型复核、批准／拒绝和执行记录仍使用原接口。服务器返回内容被标为外部资料，原生资源和提示词能力未增加。
 
 连接器工具还携带可选 `network`：远程地址以及明确标注会联网的工具同时遵守通用／项目的联网规则。类型和项目的禁止优先，项目「每次问」不会被全局单工具放行覆盖。连接器审批只接受 `scope:"once"`，不提供类型级长期放行捷径；长期选择在连接器的单工具规则中保存。`last4` 对不超过四个字符的凭据返回空串，界面仅显示「已保存」，避免把整个短凭据展示出来。
+
+ST-7b：内置目录新增 `mail`、`calendar`、`calendar-ics`。工具投影可带 `displayName`（使用者名称），凭据投影可带 `label`；旧客户端可以忽略。表单字段兼容增加 `type`、`hidden`、`options:[{value,label,help?,helpUrl?}]`、`visibleWhen:{field,values}`；默认选服务商，高级字段仅在「其它」显示。秘密表单字段仅通过 `credentials` 传入，非秘密字段通过 `fields` 传入；内置项拒绝未登记的凭据名称。账号日历时区在宿主按账号设置补入，客户端不能用草稿覆盖账号时区。邮箱 `AUTH_CODE` 与订阅地址 `ICS_URL` 只进加密凭证库；订阅地址不写连接配置。测试连接实际登录收件和发件服务器，或登录发现日历／下载解析订阅文件。错误仅返回固定安全代码与中文原因。既有路径、鉴权及手机只读目录／总开关保持兼容，无新增业务路径或原生壳要求。
+
+### MOB-4 手机独立使用
+
+云账号登录成功后，即使 `/cloud/devices` 的 `hosts` 为空，也进入完整手机应用。`cloud_only` 只表示没有电脑内容会话，不表示云账号失效；电脑接口的 401（未认证）不能清除有效云账号。云刷新与设备状态继续使用已有 DPoP（设备密钥持有证明）链路。
+
+`POST /personal/v1/offline/sync` 增加可选 `phoneFirst:boolean`。`true` 时电脑没有可下发的云模型也可取得当前清理代次／设备登记，解密后的 `model` 可为 `null`；仍需本账户真实认证及控制面可用。随后沿已有 `/offline/turns` 提交原轮次 ID（标识）和正文，不上交手机模型密钥。电脑尚未启用记忆时仍返回 `MEMORY_UNAVAILABLE`，手机保留队列及原对话重试。旧请求、权限与代次清理不变。
+
+安卓新增本机 bridge（桥接）方法：
+
+| 方法 | 参数／返回 | 边界 |
+|---|---|---|
+| `phone.identity` | `{origin,accountId,email,deviceId}` | 读取当前账号的手机归属；拒绝另一云账号读取旧归属 |
+| `phone.adopt` | `{origin,accountId,email,deviceId}` → 本机身份 | `accountId` 必须对应原生已保存的当前云凭据；独立账号归属不依赖电脑 Cookie（会话凭据） |
+| `phone.models.list` | `{models,selected}` | 仅当前云账号模型，返回不含密钥 |
+| `phone.models.configure` | `{endpoint,modelId,apiKey,displayName?}` → 模型展示 | 复用 `SecureSettings` 模型库及 Android Keystore（安卓密钥库）；正式壳仅 HTTPS（加密网络协议） |
+| `phone.models.select` | `{endpoint,modelId}` → 展示 | 仅本账号已保存模型 |
+| `phone.models.remove` | `{endpoint,modelId}` → `{removed:true}` | 可删除当前手机模型，删除后聊天回到模型空状态 |
+| `phone.models.test` | `{}` → `{available:true}` | 直连提供方发送一条短消息，云端不接触密钥或正文 |
+| `phone.offline.key/load/save/open/clear` | 与已有 `offline.*` 一致；`clear` 可带 `{accountId,origin}`，旧账号迟到的清理对新账号无效 | 复用 M3-A（手机加密对话）容器；归属为云来源＋账号，接电脑后仍使用原容器，解包身份核对真实电脑／设备 |
+| `phone.complete` | `{body}` → OpenAI（兼容提供方）回复 | 原生读取当前手机密钥；只接受无工具的当前模型请求；进度事件 `phone.progress:{text}` 留在当前账号网页视图 |
+| `phone.stop` | `{}` → `{}` | 取消本机正在进行的模型连接，已有文字保留在加密对话中 |
+
+手机浏览器的自填模型密钥只留在当前页面内存；刷新／关闭／退出清空，不写入 IndexedDB（浏览器结构化存储）、localStorage（网页键值存储）、日志或缓存。对话仍经 M3-A 的不可导出 WebCrypto（浏览器密码接口）钥匙加密保存；该边界不承诺同源恶意脚本隔离。提供方必须允许浏览器直连。
+
+上传回执目前只有轮次 `state:"synced"`，没有电脑可继续发送的普通会话标识。MOB-4 保留原手机对话可读；原会话自动接力到电脑仍需后续契约支持，不声称已形成记忆。
