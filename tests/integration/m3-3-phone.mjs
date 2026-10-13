@@ -16,7 +16,7 @@ import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/ho
 
 assert.equal(process.platform, 'darwin');
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-mac';
-const repository = resolve(import.meta.dirname, '../..'), root = await realpath(await mkdtemp(join(tmpdir(), 'weftmate-m3-3-phone-')));
+const repository = resolve(import.meta.dirname, '../..'), root = await realpath(await mkdtemp(join(tmpdir(), 'weftmate-synthetic-stop-m3-3-phone-')));
 const profile = join(root, 'profile'); await mkdir(profile);
 await writeFile(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const cleanups = [], password = randomBytes(24).toString('base64url'), modelKey = randomBytes(24).toString('hex');
@@ -33,7 +33,8 @@ const port = reservePort(); await new Promise(r => port.listen(0, '127.0.0.1', r
 const hostPort = port.address().port; await new Promise(r => port.close(r));
 const origin = `http://127.0.0.1:${hostPort}`;
 const model = createServer(async (req, res) => {
-  if (req.url.endsWith('/models')) return res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ data: [{ id: 'synthetic-mac-phone' }] }));
+  if (req.url.endsWith('/models')) return res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ data: [{ id: 'synthetic-stop-model' }] }));
+  if (req.method === 'GET') return res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ total_slots: 1, n_ctx: 8192, currentModelId: 'synthetic-stop-model', probe: { health: true } }));
   let body = ''; for await (const part of req) body += part;
   const input = JSON.parse(body); report.modelRequests = (report.modelRequests || 0) + 1;
   res.writeHead(200, { 'content-type': 'text/event-stream' });
@@ -74,17 +75,23 @@ try {
   const env = { ...process.env };
   for (const name of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|MIMO_API_KEY|ELECTRON_RUN_AS_NODE|NODE_OPTIONS)/.test(name)) delete env[name];
   Object.assign(env, { WEFTMATE_TEST_HOST_NAME: 'synthetic-mac', WEFTMATE_CLOUD_ISSUER: cloud.config.issuer,
-    WEFTMATE_CLOUD_WEB_CLIENT_ID: 'm3-3-web', WEFTMATE_CLOUD_ALLOW_INSECURE_LOOPBACK: 'true', M3_3_TEST_VAULT_KEY: randomBytes(32).toString('base64') });
+    WEFTMATE_CLOUD_WEB_CLIENT_ID: 'm3-3-web', WEFTMATE_CLOUD_ALLOW_INSECURE_LOOPBACK: 'true',
+    WEFTMATE_DOGFOOD_CONTROL: '1', WEFTMATE_SYNTHETIC_STOP_FIXTURE: '1', M3_3_TEST_VAULT_KEY: randomBytes(32).toString('base64') });
   child = spawn(createRequire(import.meta.url)('electron'), [join(repository, 'tests/helpers/m3-3-electron-bootstrap.mjs'),
     '--disable-gpu', '--disable-gpu-compositing', '--use-mock-keychain', '--headless', '--personal-host', `--access-port=${hostPort}`, `--user-data-dir=${profile}`],
     { cwd: repository, env, stdio: ['ignore','pipe','pipe','ipc'] });
   report.electronHeadlessLaunches++;
   for (const stream of [child.stdout, child.stderr]) stream.on('data', data => { log = (log + data).slice(-100000); });
   await until(() => /personal-access listening/.test(log), 'source Mac host');
-  const id = randomUUID(), added = await api('/account/models', { requestId: id, name: '合成手机模型', baseUrl: `http://127.0.0.1:${model.address().port}/v1`, modelId: 'synthetic-mac-phone', modelTier: 'local', apiKey: modelKey });
-  assert.equal(added.status, 202, JSON.stringify(added));
-  await until(async () => (await api('/account/models/by-request/' + id)).operation?.status === 'succeeded', 'model operation');
-  const modelId = (await api('/models')).models.find(m => m.name === '合成手机模型').id;
+  // Configure through the existing process-local fixture management seam.
+  // A cloud cookie deliberately cannot act as native model administration.
+  await new Promise((resolve, reject) => {
+    const requestId = randomUUID(), timer = setTimeout(() => { child.off('message', listener); reject(Error('fixture model management timeout')); }, 30000);
+    const listener = value => { if (value?.type !== 'weftmate:manage-result' || value.requestId !== requestId) return;
+      clearTimeout(timer); child.off('message', listener); value.ok ? resolve(value.result) : reject(Error(value.code)); };
+    child.on('message', listener); child.send({ type: 'weftmate:manage', requestId, action: 'model.configure-synthetic-stop-fixture', baseUrl: `http://127.0.0.1:${model.address().port}/v1` });
+  });
+  const modelId = (await until(async () => (await api('/models')).models?.find(m => m.id === 'synthetic-stop-fixture'), 'model catalog')).id;
   assert.equal((await api('/settings/models', { defaultModelProfileId: modelId, backgroundModelProfileId: modelId }, local, {}, 'PATCH')).status, 200);
   phase = 'phone-login';
   browser = await chromium.launch({ headless: true, args: ['--disable-gpu'] });
