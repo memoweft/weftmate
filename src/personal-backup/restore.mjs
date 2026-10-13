@@ -1,8 +1,10 @@
 import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readdir, lstat, readFile, rename, rm, cp } from 'node:fs/promises';
-import { verify, included, durableWrite, backupError } from './archive.mjs';
+import { verify, included, durableWrite, backupError, sqliteWorkerLease } from './archive.mjs';
 import { rehomeSessions } from './rehome.mjs';
+import { preserveCloudTarget } from './cloud-restore.mjs';
+import { commitCloudVaultRestore, cloudVaultRestoreCommitted } from '../personal-cloud-backup/vault-restore.mjs';
 
 const exists = file => lstat(file).then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; });
 async function move(source, target) {
@@ -21,7 +23,7 @@ async function preserveExcluded(source, target, relative = '') {
     const info = await lstat(from);
     if (info.isSymbolicLink()) throw backupError('BACKUP_SYMLINK');
     if (!included(rel)) {
-      if (!relative || /^dsh-home\/profiles\/(?:[^/]+\/)?node_modules(?:\/|$)/.test(rel) || /(?:-wal|-shm|\.tmp|\.log)$/.test(rel)) continue;
+      if (!relative || sqliteWorkerLease(rel) || /^dsh-home\/profiles\/(?:[^/]+\/)?node_modules(?:\/|$)/.test(rel) || /(?:-wal|-shm|-journal|\.tmp|\.log)$/.test(rel)) continue;
       await mkdir(path.dirname(to), { recursive: true }); await cp(from, to, { recursive: true });
     }
     else if (info.isDirectory()) { await mkdir(to, { recursive: true }); await preserveExcluded(from, to, rel); }
@@ -55,6 +57,7 @@ export async function beginRestore({ root, control, file, validate = async () =>
           }
         }
       }
+      await preserveCloudTarget({ root, stage, manifest, next });
       await durableWrite(store, next);
     }
     await preserveExcluded(root, stage);
@@ -77,7 +80,7 @@ export async function beginRestore({ root, control, file, validate = async () =>
     }
     await validate(stage, manifest);
     const names = [...new Set([...(await readdir(root)), ...(await readdir(stage))])].filter(included);
-    const journal = { version: 1, root, transaction, state: 'applying', rows: names.map(name => ({ name, hadOld: false, installed: false })) };
+    const journal = { version: 1, root, transaction, sourceFile: path.resolve(file), state: 'applying', rows: names.map(name => ({ name, hadOld: false, installed: false })) };
     await durableWrite(journalFile, journal);
     for (const row of journal.rows) {
       // Journal intent BEFORE each rename; recovery uses directory existence, including crashes between writes.
@@ -101,6 +104,12 @@ export async function rollbackRestore({ root, control }) {
   const journal = JSON.parse(await readFile(file, 'utf8'));
   if (path.resolve(journal.root) !== root || path.resolve(path.dirname(journal.transaction)) !== control ||
     journal.rows.some(row => !included(row.name) || path.basename(row.name) !== row.name)) throw backupError('BACKUP_CORRUPT');
+  if (await cloudVaultRestoreCommitted(root,journal.sourceFile)) {
+    // Startup failure can follow a committed restore whose journal/preimage
+    // cleanup failed. The joint decision is durable: retry forward cleanup,
+    // never undo only the data while the matching vault remains committed.
+    await commitRestore({ root, control }); return false;
+  }
   for (const row of [...journal.rows].reverse()) {
     const previous = path.join(journal.transaction, 'old', row.name), target = path.join(root, row.name);
     if (await exists(previous)) { await rm(target, { recursive: true, force: true }); await move(previous, target); }
@@ -114,5 +123,8 @@ export async function commitRestore({ root, control }) {
   if (!await exists(file)) return;
   const journal = JSON.parse(await readFile(file, 'utf8'));
   if (path.resolve(journal.root) !== root || path.resolve(path.dirname(journal.transaction)) !== control) throw backupError('BACKUP_CORRUPT');
+  // Write the joint data/vault commit intent before discarding either data
+  // rollback journal or its preimage. A crash after this point rolls forward.
+  await commitCloudVaultRestore(root,journal.sourceFile);
   await rm(file); await rm(journal.transaction, { recursive: true, force: true });
 }

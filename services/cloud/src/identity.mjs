@@ -14,6 +14,7 @@ import { createFeedback } from './feedback.mjs';
 import { deviceProof } from './device-proof.mjs';
 import { appAuthorization, widenAppResumeCookies } from './app-authorization.mjs';
 import { accountLifecycle } from './account-lifecycle.mjs';
+import { createCloudBackups, BACKUP_LIMITS } from './cloud-backups.mjs';
 
 export const CLOUD_PATH = '/personal/v1/cloud';
 const OIDC_PATH = `${CLOUD_PATH}/oidc`;
@@ -355,6 +356,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
   const relay = createRelay({ database, config, secret: keys.cookieSecret, now, dns: relayDns });
   const lifecycle = accountLifecycle({ database, accounts, relay });
   const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider, accounts });
+  const backups = createCloudBackups({ database, config, authenticate, accounts, now });
   const feedback = createFeedback({ config, limiter: new FailureLimiter(database, keys.cookieSecret, now), fetch: feedbackFetch });
   const authorizeInApp = appAuthorization({ config });
   const allowedOrigin = origin => origin === new URL(config.issuer).origin || config.clients
@@ -401,7 +403,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       const match = new RegExp(`^${CLOUD_PATH}/interactions/([A-Za-z0-9_-]+)$`).exec(url.pathname);
       const route = url.pathname === `${CLOUD_PATH}/feedback` ? 'feedback' : routes.get(url.pathname);
       const hostRoute = url.pathname.startsWith(`${CLOUD_PATH}/hosts/`);
-      if (!route && !match && !hostRoute) return false;
+      const backupRoute = /^\/backups\/(key\/read|key\/write|start|chunk\/upload|complete|list|chunk\/download|delete|clear)$/.test(url.pathname.slice(CLOUD_PATH.length));
+      if (!route && !match && !hostRoute && !backupRoute) return false;
       try {
         if (req.headers.origin && !allowedOrigin(req.headers.origin))
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
@@ -410,6 +413,13 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
           const account = await authenticate(req, true);
           reply(res, 201, await feedback(account, await bodyOf(req, 262144)));
+          return true;
+        }
+        if (backupRoute) {
+          if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
+          if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
+          reply(res, 200, await backups.handle(url.pathname.slice(CLOUD_PATH.length), req,
+            await bodyOf(req, url.pathname.endsWith('/chunk/upload') ? BACKUP_LIMITS.requestBytes : BACKUP_LIMITS.manifestBytes)));
           return true;
         }
         if (hostRoute) {
@@ -626,7 +636,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           reply(
             res,
             known ? error.status : 503,
-            { error: { code: known ? error.code : 'SERVICE_UNAVAILABLE' } },
+            { error: { code: known ? error.code : 'SERVICE_UNAVAILABLE', ...(known && error.details ? { details: error.details } : {}) } },
             error.retryAfter ? { 'retry-after': String(error.retryAfter) } : {},
           );
         else res.end();

@@ -336,6 +336,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.stopAccountPairing?.();
     }
     function paintScreen(view) {
+        void ui.checkCloudBackupPrompt?.();
         for (const name of ui.views)
             ui.byId(`${name}-view`).hidden = name !== view && !(['account', 'memory'].includes(view) && name === 'assistant') && !(view === 'memory' && name === 'account');
         if (ui.motionView !== view) globalThis.WeftMotion?.reveal(ui.byId(`${view}-view`), 'base');

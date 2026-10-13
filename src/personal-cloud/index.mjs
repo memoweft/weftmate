@@ -21,7 +21,7 @@ export async function createHostCloudIdentity(context, options) {
   const installationKey = await importJWK(store.state.installation.privateJwk, 'ES256');
   let poll;
   let syncing = null;
-  let offlineTasksSupported=false;
+  let offlineTasksSupported=false, cloudBackupSupported=false;
   let multiHostSupported=false;
   const computerLabels = new Map();
   let desktopQueue = Promise.resolve();
@@ -195,6 +195,7 @@ export async function createHostCloudIdentity(context, options) {
     closeInvalidResponses();
     offlineTasksSupported=envelope.capabilities?.offlineTasks===1;
     multiHostSupported=envelope.capabilities?.multiHost===1;
+    cloudBackupSupported=envelope.capabilities?.cloudBackup===1;
   }
   async function syncRevocations() {
     if (syncing) {
@@ -586,6 +587,7 @@ export async function createHostCloudIdentity(context, options) {
       if (!binding) throw failure('CLOUD_NOT_BOUND', 409);
       const result=await signedRequest('/hosts/offline/publish', { sub: binding.sub, generation });
       offlineTasksSupported=result.capabilities?.offlineTasks===1;
+      cloudBackupSupported=result.capabilities?.cloudBackup===1;
       return { url: `${config.base}/hosts/offline/status`, hostId, accountId: binding.sub, generation, ...(offlineTasksSupported?{capabilities:{offlineTasks:1}}:{}) };
     },
     isInstallationOwner: ownerId => Object.values(store.state.bindings).some(binding => binding.ownerId === ownerId && binding.desktop === true && binding.status === 'active'),
@@ -594,6 +596,25 @@ export async function createHostCloudIdentity(context, options) {
     tls: () => structuredClone(store.state.tls), relayRequest: signedRequest, handle, assertSession, revokeLocalDevice, applyEvents, syncRevocations, closeInvalidResponses,
     offlineTasksSupported:()=>offlineTasksSupported,
     computerLabel:ownerId=>computerLabels.get(ownerId),
+    cloudBackupSupported:()=>cloudBackupSupported,
+    backupAccount(ownerId) {
+      const binding=Object.values(store.state.bindings).find(b=>b.ownerId===ownerId&&b.status==='active');
+      return binding ? { accountId:binding.sub, issuer:binding.issuer } : null;
+    },
+    async backupRequest(ownerId, action, body={}) {
+      if (!cloudBackupSupported) throw failure('CLOUD_BACKUP_UNAVAILABLE',503);
+      const account=this.backupAccount(ownerId);
+      if (!account || !/^\/backups\/(?:key\/(?:read|write)|start|chunk\/(?:upload|download)|complete|list|delete|clear)$/.test(action)) throw failure('CLOUD_NOT_BOUND',409);
+      const proof=await new SignJWT({...body,sub:account.accountId,action}).setProtectedHeader({alg:'ES256',typ:'wm-host-request+jwt'})
+        .setIssuer(hostId).setAudience(config.issuer).setIssuedAt().setExpirationTime('60s').setJti(randomUUID()).sign(installationKey);
+      let response;
+      try { response=await fetch(`${config.base}${action}`,{method:'POST',redirect:'error',signal:AbortSignal.timeout(30000),
+        headers:{'content-type':'application/json',origin:new URL(config.issuer).origin},body:JSON.stringify({hostId,proof})}); }
+      catch { throw failure('CLOUD_UNAVAILABLE',503); }
+      const result=await response.json();
+      if (!response.ok) throw Object.assign(failure(result.error?.code ?? 'CLOUD_UNAVAILABLE',response.status),{usage:result.error?.details?.usage ?? result.error?.usage ?? result.usage});
+      return result;
+    },
     cloudDeviceId(ownerId, deviceId) {
       const session = store.state.sessions[deviceId], device = store.state.devices[session?.trustId];
       return device?.ownerId === ownerId ? device.cloudDeviceId : undefined;

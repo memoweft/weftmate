@@ -63,7 +63,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
       if (!member || device?.status !== 'trusted') throw new CloudError(403, 'DEVICE_NOT_TRUSTED');
       const control = db.prepare('SELECT generation FROM offline_controls WHERE host_id=? AND account_id=?').get(body.hostId, account.id);
       if (!control) throw new CloudError(404, 'NOT_FOUND');
-      return { hostId: body.hostId, accountId: account.id, generation: control.generation, authorized: true, capabilities:{offlineTasks:1} };
+      return { hostId: body.hostId, accountId: account.id, generation: control.generation, authorized: true, capabilities:multiHostCapabilities };
     }
     if (route === '/hosts/claims') {
       requireFields(body, ['claimId', 'hostId', 'publicJwk', 'tlsSpki']);
@@ -178,9 +178,11 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
       if (typeof payload.sub !== 'string' || !Number.isSafeInteger(payload.generation) || payload.generation < 1 ||
           !db.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(body.hostId, payload.sub))
         throw new CloudError(400, 'INVALID_REQUEST');
+      const priorGeneration=db.prepare('SELECT generation FROM offline_controls WHERE host_id=? AND account_id=?').get(body.hostId,payload.sub)?.generation??1;
       db.prepare(`INSERT INTO offline_controls VALUES(?,?,?) ON CONFLICT(host_id,account_id)
         DO UPDATE SET generation=MAX(generation,excluded.generation)`).run(body.hostId, payload.sub, payload.generation);
-      return { updated: true, capabilities:{offlineTasks:1} };
+      if(payload.generation>priorGeneration)db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+      return { updated: true, capabilities:multiHostCapabilities };
     }
     if (route === '/hosts/status') {
       if (typeof payload.name !== 'string' || !payload.name.trim() || payload.name.length > 128 ||
