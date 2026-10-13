@@ -6,7 +6,7 @@ globalThis.WeftUiComponents.factories.goals=(core,ui)=>{
     const selected=ui.paintSelectedSession,reset=ui.resetIdentityControls;
     return {mountGoals(){
         const select=core.selectSession;core.selectSession=(...args)=>{close();return select(...args);};const main=core.selectMainChat;core.selectMainChat=(...args)=>{close();return main(...args);};
-        entry=ui.element('button','rail-link goals-entry');entry.type='button';entry.append(WeftIcons.create('chart',16),ui.element('span','','目标'));entry.onclick=()=>void open();ui.fixedPageNavigation().append(entry);
+        entry=ui.element('button','rail-link goals-entry');entry.type='button';entry.append(WeftIcons.create('goal',16),ui.element('span','','目标'));entry.onclick=()=>void open();ui.fixedPageNavigation().append(entry);
         panel=ui.element('section','goals-surface');panel.hidden=true;panel.setAttribute('aria-label','目标');chat().after(panel);view=WeftGoalsView.mount({target:panel,core,toast:ui.toast,openSource:target=>{close();return ui.openActivitySource(target,'open_chat');}});
         const paintTimeline=ui.renderTimeline;let eventSignature;
         ui.renderTimeline=(...args)=>{const result=paintTimeline(...args),latest=core.timelineEventsForContext?.().at(-1),next=JSON.stringify([latest?.seq,latest?.type,core.state.tasks?.map(row=>[row.commandId,row.state])]);if(opened&&eventSignature!==next){eventSignature=next;void core.readGoals();}return result;};

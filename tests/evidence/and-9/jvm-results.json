@@ -1,0 +1,20 @@
+[
+  {
+    "suite": "com.memoweft.weftmate.mobile.BusinessRouteUnitTest",
+    "tests": 23,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.memoweft.weftmate.mobile.NativeSettingsStateTest",
+    "tests": 7,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "suite": "com.memoweft.weftmate.mobile.PhoneModelServiceCatalogUnitTest",
+    "tests": 2,
+    "failures": 0,
+    "skipped": 0
+  }
+]

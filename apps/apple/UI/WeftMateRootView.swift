@@ -372,7 +372,7 @@ struct MacWorkspace: View {
                 }.buttonStyle(.plain).accessibilityIdentifier("mainChat.navigation").accessibilityValue(selected == .conversation(main.id) ? "已选择" : "")
             }
             VStack(spacing: AppleTokens.Space.p4) {
-                ForEach([("动态", "bell"), ("目标", "plan"), ("成果库", "outputs")], id: \.0) { title, icon in
+                ForEach([("动态", "bell"), ("目标", "goal"), ("成果库", "outputs")], id: \.0) { title, icon in
                     Button {} label: { WeftLabel(title, icon: icon).frame(maxWidth: .infinity, alignment: .leading) }
                         .buttonStyle(.plain).disabled(true).help("Apple 页面即将支持")
                         .padding(.horizontal, AppleTokens.Space.p12).padding(.vertical, AppleTokens.Space.p6)
