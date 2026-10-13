@@ -21,6 +21,10 @@ try {
     $log=Join-Path $repo ".local/and-7/$Mode.txt"
     if($Mode -eq 'gradle') {
         . 'D:/AIProjects/AIGame/Repository/runtime/toolchains/activate-android.ps1'
+        # Windows PowerShell treats harmless native stderr as NativeCommandError.
+        # The process exit code, rather than an SDK metadata warning, decides success.
+        $ErrorActionPreference='Continue'
+        $env:JAVA_TOOL_OPTIONS="-Dweftmate.and7.workspace=$repo"
         Set-Location apps/android
         gradle --offline --no-daemon '-PweftmateApplicationId=com.memoweft.weftmate.mobile.and7qa' :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest --console=plain *> $log
     } elseif($Mode -eq 'mobile') {

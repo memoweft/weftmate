@@ -374,7 +374,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 view.evaluateJavascript(assets.open("native-frame.js").bufferedReader().use { it.readText() }, null)
                 embeddedPageFinished()
                 if(intent.getBooleanExtra("openLibraryPage",false))view.evaluateJavascript("""
-                    (()=>{async function open(){if(typeof page!=='function' || typeof state==='undefined' || !state.booted){setTimeout(open,100);return;}page('library');const id=${JSONObject.quote(intent.getStringExtra("openLibraryFileId").orEmpty())};if(id){try{const detail=await uiCore.accessApi('/library/'+encodeURIComponent(id));await libraryView.preview(detail.item,document.activeElement);}catch{}}}open();})()
+                    (()=>{async function open(){if(typeof page!=='function' || typeof state==='undefined' || !state.booted){setTimeout(open,100);return;}page('library');const id=${JSONObject.quote(intent.getStringExtra("openLibraryFileId").orEmpty())};if(id){try{await libraryPage(document.getElementById('page-content'));const detail=await uiCore.accessApi('/library/'+encodeURIComponent(id));await libraryView.preview(detail.item,document.activeElement);}catch{}}}open();})()
                 """.trimIndent(),null)
                 val expected = pageGeneration
                 web.postDelayed({

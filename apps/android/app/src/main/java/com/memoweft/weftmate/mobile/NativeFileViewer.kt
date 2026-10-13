@@ -46,7 +46,7 @@ import java.io.File
     }
     Dialog(onDismissRequest=onClose,properties=DialogProperties(usePlatformDefaultWidth=false,decorFitsSystemWindows=false)) {
         NativeDialogBars()
-        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).systemBarsPadding().semantics{contentDescription="文件查看"}) {
+        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding().semantics{contentDescription="文件查看"}) {
             Row(Modifier.fillMaxWidth().padding(horizontal=DesignTokens.space8.dp,vertical=DesignTokens.space8.dp),verticalAlignment=Alignment.CenterVertically) {
                 NativeFileIconButton(R.drawable.wm_close,"关闭预览",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape),action=onClose)
                 val name=file?.name ?: row.optString("fileName",row.optString("name","文件"))
