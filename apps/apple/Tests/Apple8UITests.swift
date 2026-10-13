@@ -11,8 +11,8 @@ final class Apple8UITests: XCTestCase {
             XCTAssertTrue(plus.waitForExistence(timeout:20));XCTAssertTrue(plus.isEnabled)
             if scene == "menu" || scene == "text" {
                 plus.tap();XCTAssertTrue(app.buttons["文件"].waitForExistence(timeout:5))
-                XCTAssertTrue(app.buttons["拍照"].exists);XCTAssertTrue(app.buttons["照片图库"].exists)
-                if scene == "text" { XCTAssertFalse(app.buttons["拍照"].isEnabled);XCTAssertFalse(app.buttons["照片图库"].isEnabled);XCTAssertTrue(app.staticTexts["当前模型看不了图片"].exists) }
+                XCTAssertTrue(app.buttons["phoneChat.camera"].exists);XCTAssertTrue(app.buttons["phoneChat.photos"].exists)
+                if scene == "text" { XCTAssertFalse(app.buttons["phoneChat.camera"].isEnabled);XCTAssertFalse(app.buttons["phoneChat.photos"].isEnabled);XCTAssertTrue(app.buttons["phoneChat.camera"].label.contains("当前模型看不了图片"));XCTAssertTrue(app.buttons["phoneChat.photos"].label.contains("当前模型看不了图片")) }
             } else {
                 XCTAssertTrue(app.descendants(matching:.any).matching(NSPredicate(format:"label CONTAINS %@","合成色块.jpg")).firstMatch.waitForExistence(timeout:5));XCTAssertTrue(app.descendants(matching:.any).matching(NSPredicate(format:"label CONTAINS %@","虚构周报.md")).firstMatch.exists)
                 if scene == "draft" { XCTAssertTrue(app.buttons["attachment.remove.合成色块.jpg"].exists) }
