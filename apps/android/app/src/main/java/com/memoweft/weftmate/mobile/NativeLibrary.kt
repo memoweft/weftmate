@@ -32,10 +32,10 @@ internal fun nativeFileIcon(row:JSONObject):Int = when(nativeFileKind(row.optStr
         repeat(4){Row(verticalAlignment=Alignment.CenterVertically){Box(Modifier.size(DesignTokens.space24.dp).background(MaterialTheme.colorScheme.surfaceVariant));Spacer(Modifier.width(DesignTokens.space12.dp));Column(verticalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp)){Box(Modifier.fillMaxWidth(0.8f).height(DesignTokens.space16.dp).background(MaterialTheme.colorScheme.surfaceVariant));Box(Modifier.fillMaxWidth(0.5f).height(DesignTokens.space8.dp).background(MaterialTheme.colorScheme.surfaceVariant))}}}
     }
 }
-@Composable internal fun NativeFileState(message:String,icon:Int,retry:(()->Unit)?=null) {
-    Column(Modifier.fillMaxWidth().padding(DesignTokens.space24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(DesignTokens.space16.dp)) {
-        Icon(painterResource(icon),null,Modifier.size(DesignTokens.space32.dp),tint=MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(message,fontSize=DesignTokens.font16.sp,lineHeight=DesignTokens.font24.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
+@Composable internal fun NativeFileState(message:String,icon:Int,library:Boolean=false,retry:(()->Unit)?=null) {
+    Column(Modifier.fillMaxWidth().padding(if(library)DesignTokens.space8.dp else DesignTokens.space24.dp),horizontalAlignment=if(library)Alignment.Start else Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(DesignTokens.space16.dp)) {
+        Icon(painterResource(icon),null,Modifier.size((if(library)DesignTokens.space24 else DesignTokens.space32).dp),tint=MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(message,fontSize=(if(library)(DesignTokens.font14+DesignTokens.font16)/2 else DesignTokens.font16).sp,lineHeight=DesignTokens.font24.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
         if(retry!=null)OutlinedButton(onClick=retry,shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.height(DesignTokens.space44.dp)){NativeFileLabel("重试")}
     }
 }

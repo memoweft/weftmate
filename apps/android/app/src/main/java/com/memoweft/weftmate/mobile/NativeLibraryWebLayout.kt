@@ -52,12 +52,12 @@ internal fun libraryTypeLabel(row:JSONObject):String {
                 }
             }
             Text(if(model.loading)"正在读取成果…" else if(model.error.isNotBlank())"读取失败" else "${model.total} 个文件",Modifier.padding(top=DesignTokens.space20.dp,bottom=gap),fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
-            if(model.error.isNotBlank() && model.rows.isNotEmpty())NativeFileState(model.error,R.drawable.wm_warning){model.refresh()}
+            if(model.error.isNotBlank() && model.rows.isNotEmpty())NativeFileState(model.error,R.drawable.wm_warning,true){model.refresh()}
         }
         when {
             model.rows.isEmpty() && model.loading -> item{NativeFileLoading()}
-            model.rows.isEmpty() && model.error.isNotBlank() -> item{NativeFileState(model.error,R.drawable.wm_warning){model.refresh()}}
-            model.rows.isEmpty() -> item{NativeFileState(if(model.search.isNotBlank()||model.type.isNotBlank()||model.project.isNotBlank()||model.days!=0)"没有找到符合条件的文件。试试其他筛选或文件名。" else if(model.noComputer)"让电脑上的 WeftMate 帮你做事后，产出的文件会出现在这里。" else "还没有成果。让助手写文档、整理表格或生成图片，完成的文件会出现在这里。",R.drawable.wm_layers)}
+            model.rows.isEmpty() && model.error.isNotBlank() -> item{NativeFileState(model.error,R.drawable.wm_warning,true){model.refresh()}}
+            model.rows.isEmpty() -> item{NativeFileState(if(model.search.isNotBlank()||model.type.isNotBlank()||model.project.isNotBlank()||model.days!=0)"没有找到符合条件的文件。试试其他筛选或文件名。" else if(model.noComputer)"让电脑上的 WeftMate 帮你做事后，产出的文件会出现在这里。" else "还没有成果。让助手写文档、整理表格或生成图片，完成的文件会出现在这里。",R.drawable.wm_folder,true)}
             else -> items(model.rows,key={it.getString("id")}) { row ->
                 var menu by remember(row.getString("id")){mutableStateOf(false)}
                 val ref=remember(row.toString()){JSONObject(row.toString()).put("libraryId",row.getString("id"))}
