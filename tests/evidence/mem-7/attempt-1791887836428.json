@@ -1,0 +1,413 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realMemoryCore": true,
+  "syntheticCloud": true,
+  "syntheticAccount": true,
+  "requests": [
+    {
+      "phase": "phone-register",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "desktop-start",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    },
+    {
+      "phase": "handover",
+      "transport": "computer"
+    }
+  ],
+  "checks": [
+    "phone-light-memory-recalled-new-conversation",
+    "real-electron-without-cloud-model-registers-receiver-and-returns-model-null",
+    "desktop-phone-history-visible-searchable-readonly"
+  ],
+  "screenshots": [
+    {
+      "file": "phone-360-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-handover.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-handover-completed.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "electron-1200-light-phone-import-activity.png",
+      "surface": "Electron",
+      "width": 1200
+    },
+    {
+      "file": "electron-480-light-phone-import-activity.png",
+      "surface": "Electron",
+      "width": 480
+    },
+    {
+      "file": "electron-1200-dark-phone-import-activity.png",
+      "surface": "Electron",
+      "width": 1200
+    },
+    {
+      "file": "electron-480-dark-phone-import-activity.png",
+      "surface": "Electron",
+      "width": 480
+    }
+  ],
+  "errors": [],
+  "lightItems": [
+    "姓名：林舟。",
+    "鹦鹉的名字叫青瓷。",
+    "正在做一个叫「纸舟」的练习项目。",
+    "喜欢乌龙茶，已不再喜欢茉莉花茶。"
+  ],
+  "localReceiverProbe": "loopback model profile backed by real MiMo transport; no cloud model was configured",
+  "importId": "9f2f8310-d7db-4538-8586-cbfbd881b3d2",
+  "jobUsage": {
+    "requests": 4,
+    "inputTokens": 23244,
+    "outputTokens": 1659,
+    "cost": 0.00730696,
+    "unpricedRequests": 0,
+    "unknownRequests": 0
+  },
+  "importDiagnostics": [
+    {
+      "id": "9f2f8310-d7db-4538-8586-cbfbd881b3d2",
+      "routeId": "import-9f2f8310-d7db-4538-8586-cbfbd881b3d2",
+      "app": "phone",
+      "deviceName": "这个浏览器",
+      "handoverId": "5e63bc23-6e93-4dbb-bd2a-982781052d8b",
+      "expectedTurns": 3,
+      "createdAt": "2026-10-13T10:35:53.367Z",
+      "state": "completed",
+      "items": [
+        {
+          "key": "14953fe95c908c425402c15d9959b222f1fbb1bae011d09ec01e68da116412c9",
+          "id": "5a135cce-405e-49e6-8b94-63f364ed9530",
+          "turnId": "0109f214-4a52-496f-9a3a-0a01eb03bfbc",
+          "at": "2026-10-13T10:35:04.477Z",
+          "until": "2026-10-13T10:35:04.477Z",
+          "characters": 50,
+          "bytes": 389,
+          "chunks": 1,
+          "cursor": 1,
+          "done": true,
+          "receipts": [
+            {
+              "eventId": "weftmate-turn-boundary-v1:7fb934a93f29b576834c2f8e8b6a2a90:5d309e79c352dc738b7c59d2e69de55966de353ae729a3cf12b5bd079093f07c",
+              "evidenceIds": [
+                "85ce6e9d-a636-4a81-9222-67e43ef0b645"
+              ],
+              "done": true
+            }
+          ]
+        },
+        {
+          "key": "aa1032955149e34a4ec5f3392787d6df17941bb16db4d4c35dc00dd74a413156",
+          "id": "5a135cce-405e-49e6-8b94-63f364ed9530",
+          "turnId": "1d8297f0-bdad-41dc-8e54-3e56751c073a",
+          "at": "2026-10-13T10:35:09.851Z",
+          "until": "2026-10-13T10:35:09.851Z",
+          "characters": 38,
+          "bytes": 353,
+          "chunks": 1,
+          "cursor": 1,
+          "done": true,
+          "receipts": [
+            {
+              "eventId": "weftmate-turn-boundary-v1:6a0980341b27d887189e64bb90c028bb:cfffd433521b744455723c594941f4a6cc3c23c20b5716619a574dbba8c35d6b",
+              "evidenceIds": [
+                "e4a37872-0084-4e08-a580-486a2346ece8"
+              ],
+              "done": true
+            }
+          ]
+        },
+        {
+          "key": "1d6b3ee405b4aac128e8f6fa3ddc278ece66f73cc060b1d1e79bd8cb4f9acb52",
+          "id": "e755312b-9d4f-43e1-b4e0-7a89cce10938",
+          "turnId": "223137ba-f44c-43da-b2c4-6305dd0ac8b2",
+          "at": "2026-10-13T10:35:28.789Z",
+          "until": "2026-10-13T10:35:28.789Z",
+          "characters": 76,
+          "bytes": 440,
+          "chunks": 1,
+          "cursor": 1,
+          "done": true,
+          "receipts": [
+            {
+              "eventId": "weftmate-turn-boundary-v1:b61b4ccff8367b4bf368ad56f3d2572d:cc4bef65a1c540f7dc2a6d0bbefb67da30958fee6fd8eae12d151c5ca4c70559",
+              "evidenceIds": [
+                "c41d56cc-4d68-46ba-9771-916ddbc1c6d0"
+              ],
+              "done": true
+            }
+          ]
+        }
+      ],
+      "skipped": 0,
+      "memoryCount": 10,
+      "failures": 0,
+      "estimate": {
+        "characters": 164,
+        "modelName": "MiMo 合成验收",
+        "profileId": "private-model-75a4774fe5f4cda82d8146431ddae28c861ba083",
+        "local": false,
+        "approximate": true,
+        "inputTokens": [
+          18066,
+          54246
+        ],
+        "outputTokens": [
+          1800,
+          9000
+        ],
+        "cost": [
+          0.004026,
+          0.072246
+        ],
+        "seconds": [
+          36,
+          1265
+        ],
+        "price": {
+          "cachedInput": 0.02,
+          "input": 1,
+          "output": 2
+        }
+      },
+      "from": "2026-10-13T10:35:04.477Z",
+      "to": "2026-10-13T10:35:28.789Z",
+      "confirmationRequired": false,
+      "error": null,
+      "attemptLimit": 3,
+      "retryBaseline": 0
+    }
+  ],
+  "failure": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '更多回复操作', exact: true }).first() to be visible\u001b[22m\n",
+  "phase": "handover",
+  "processExit": {
+    "decimal": null,
+    "unsignedDecimal": null,
+    "hexadecimal": null,
+    "signal": null,
+    "meaning": "未取得退出码"
+  },
+  "commitMemory": {
+    "available": true,
+    "availableBytes": 15098638336,
+    "limitBytes": 97770655744,
+    "committedBytes": 82672017408
+  },
+  "phoneMemory": {
+    "memory": {
+      "version": 1,
+      "enabled": true,
+      "items": [],
+      "processed": [],
+      "suppressedSources": [],
+      "suppressedText": [],
+      "handover": true,
+      "transferred": true,
+      "resumeAfter": null
+    },
+    "extractions": [
+      {
+        "input": "{\"原话\":[{\"id\":\"0109f214-4a52-496f-9a3a-0a01eb03bfbc\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"},{\"id\":\"1d8297f0-bdad-41dc-8e54-3e56751c073a\",\"text\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "{\"upsert\":[{\"id\":null,\"text\":\"姓名：林舟。\",\"sourceIDs\":[\"0109f214-4a52-496f-9a3a-0a01eb03bfbc\"],\"evidence\":\"我叫林舟。\"},{\"id\":null,\"text\":\"鹦鹉的名字叫青瓷。\",\"sourceIDs\":[\"0109f214-4a52-496f-9a3a-0a01eb03bfbc\"],\"evidence\":\"我的鹦鹉叫青瓷\"},{\"id\":null,\"text\":\"正在做一个叫「纸舟」的练习项目。\",\"sourceIDs\":[\"0109f214-4a52-496f-9a3a-0a01eb03bfbc\"],\"evidence\":\"我正在做一个叫纸舟的练习项目。\"},{\"id\":null,\"text\":\"喜欢乌龙茶，已不再喜欢茉莉花茶。\",\"sourceIDs\":[\"1d8297f0-bdad-41dc-8e54-3e56751c073a\"],\"evidence\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。\"}],\"invalidate\":[]}"
+      },
+      {
+        "input": "{\"原话\":[{\"id\":\"223137ba-f44c-43da-b2c4-6305dd0ac8b2\",\"text\":\"我的鹦鹉叫什么？我更喜欢什么茶？只根据已知内容回答。\"}],\"已有记忆\":[{\"id\":\"0c5f40a2-9eca-4558-b4e1-58b23294c079\",\"text\":\"鹦鹉的名字叫青瓷。\"},{\"id\":\"bed10313-e021-488b-9931-60c614e904b5\",\"text\":\"喜欢乌龙茶，已不再喜欢茉莉花茶。\"},{\"id\":\"217dc3ef-9036-4b02-8bf8-3c5e27f0b9e2\",\"text\":\"姓名：林舟。\"},{\"id\":\"e6159887-d3d9-4b44-bd14-bb2dcfbd53a9\",\"text\":\"正在做一个叫「纸舟」的练习项目。\"}]}",
+        "output": "{\"upsert\":[],\"invalidate\":[]}"
+      }
+    ],
+    "failures": [],
+    "identity": {
+      "origin": "http://127.0.0.1:64323",
+      "ownerId": "owner-558b6c0f-dc35-44b5-b72d-ee30de17b158",
+      "deviceId": "device-d257bc72-c4cf-4de3-bff8-de8384e3b55a",
+      "hostId": "host-3d408cba-b947-416e-81ff-29fed0b50779"
+    },
+    "connection": "connected",
+    "cloudOnly": false
+  },
+  "hostOutput": "[weftmate] ✓ 模型凭据保险库已就绪\n[weftmate] ✓ 伴侣状态就绪:星瑶\n[weftmate] DSH_HOME = C:\\Users\\<user>\\AppData\\Local\\Temp\\weftmate-mem7-Qf6VYE\\profile\\dsh-home\n[weftmate] [dsh] profile weftmate 已写入（[PATH]\n[weftmate] [dsh:stdout] dsh web: [URL]\n[weftmate] ✓ personal-host ready origin=http://127.0.0.1:52389\n[weftmate] ✓ personal-access listening origin=http://127.0.0.1:64323\n[weftmate] personal-host active; managed shutdown via launcher IPC\n[weftmate] ✓ account-model route gate idle previous=unknown\n[weftmate] [dsh:stdout] dsh web: [URL]\n[weftmate] [dsh:stdout] dsh web: [URL]\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] [dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n[weftmate] gateway GET /sessions/phone-db56086149577f28a40027e2c9dca4cf7073882c17feb4fb: HTTP 404 session-not-found\n",
+  "cleanedProcesses": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  },
+  "requestCount": 10
+}
