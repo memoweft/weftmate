@@ -3,7 +3,7 @@
   "nativeEntry": true,
   "model": "mimo-v2.6-flash",
   "mimoRequests": 2,
-  "keySource": "Machine environment only; not logged or stored",
+  "keySource": "Machine environment; no plaintext log or repository secret. The actual model configuration uses encrypted isolated QA settings, removed when the test package is uninstalled.",
   "checksPassed": [
     "native-register-no-computer-enters-chat",
     "native-empty-model-cta-actual-settings-return",
