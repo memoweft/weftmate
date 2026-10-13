@@ -12,6 +12,9 @@ final class PhoneCheckCredentials: CredentialStore, @unchecked Sendable {
 struct PhoneCheckSession { enum Verification { case verified };var verification: Verification = .verified;var hostId="synthetic-computer" }
 @MainActor final class PhoneCheckCloud { var subject: String?="account-a";var authenticated=true }
 @MainActor final class PhoneCheckOffline {
+    var memoryItems: [OfflineMemory]=[]
+    func authorizeMemory(control: (String) async throws -> OfflineAuthorization) async throws {}
+    func erase() { enqueued=[];synced=[];memoryItems=[];ready=false }
     var generation: Int?=1
     var ready=true
     var hostOffline=false

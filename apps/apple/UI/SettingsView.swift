@@ -249,8 +249,8 @@ private struct SettingsCategoryView: View {
             PhoneComputerEmptyPage(app:app,title:title,explanation:"这里显示电脑保存的内容和设置。")
         } else if route.categoryID == "phone-chats" {
             PhoneStandaloneChat(app:app,model:app.phoneChat)
-        } else if app.session == nil && route.categoryID == "memory" {
-            Text("手机上的对话保存在本机；连上电脑后才能形成和查看记忆。").padding(AppleTokens.Space.p20)
+        } else if route.categoryID == "memory" {
+            PhoneMemoryWorkspaceView(app:app)
         } else { standardContent }
         #else
         standardContent

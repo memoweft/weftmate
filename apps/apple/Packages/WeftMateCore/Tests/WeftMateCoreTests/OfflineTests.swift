@@ -49,6 +49,44 @@ private actor OfflineTransport: HTTPTransport {
         #expect(process.terminationStatus == 0)
         return try JSONDecoder().decode(OfflineEnvelope.self, from: result)
     }
+    @Test func phoneFirstNoComputerModelStillRegistersReceivesAndChatsWithPhoneModel() async throws {
+        let (vault,_,dir,_)=try fixture();defer { try? FileManager.default.removeItem(at:dir) }
+        let transport=OfflineTransport(),engine=try OfflineReplica(vault:vault,transport:transport,phoneFirst:true)
+        let value=try snapshot()
+        var object=try JSONSerialization.jsonObject(with:JSONEncoder().encode(value)) as! [String:Any];object["model"]=NSNull()
+        let noModel=try JSONDecoder().decode(OfflineSnapshot.self,from:JSONSerialization.data(withJSONObject:object))
+        let envelope=try seal(noModel,vault:vault)
+        var requests: [OfflineSyncRequest]=[]
+        try await engine.sync(identity:identity,fetch:{ requests.append($0);return envelope },submit:{ .init(generation:1,receipts:$0.turns.map { .init(id:$0.id,state:"synced") }) },control:{ _ in status() })
+        #expect(requests.count == 1 && requests[0].phoneFirst == true)
+        #expect(engine.state.snapshot?.model == nil);#expect(!engine.state.snapshot!.items.isEmpty)
+        let fallback=PhoneModelConfiguration(name:"手机模型",baseURL:"https://model.example.com/v1",model:"phone-synthetic",apiKey:"phone-only-key")
+        try await engine.send("茉莉花茶",conversationID:"phone-chat",fallbackModel:fallback,control:{ _ in status() })
+        let posted=await transport.requests
+        #expect(posted.count == 1);#expect(posted[0].value(forHTTPHeaderField:"Authorization") == "Bearer phone-only-key")
+        let body=try JSONSerialization.jsonObject(with:posted[0].httpBody!) as! [String:Any]
+        #expect(body["model"] as? String == "phone-synthetic")
+        #expect(engine.state.turns.first?.memoryRefs.contains { $0.id == "tea" } == true)
+        try await engine.sync(identity:identity,fetch:{ _ in envelope },submit:{ .init(generation:1,receipts:$0.turns.map { .init(id:$0.id,state:"synced") }) },control:{ _ in status() })
+        #expect(engine.state.synced == Set(engine.state.turns.map(\.id)))
+        #expect(try Data(contentsOf:vault.file).range(of:Data(fallback.apiKey.utf8)) == nil)
+    }
+    @Test func phoneFirstFallsBackOnlyForLegacyUnknownFieldRejection() async throws {
+        let (vault,_,dir,_)=try fixture();defer { try? FileManager.default.removeItem(at:dir) }
+        let engine=try OfflineReplica(vault:vault,phoneFirst:true),envelope=try seal(snapshot(),vault:vault)
+        var shapes: [Bool?]=[]
+        try await engine.sync(identity:identity,fetch:{ request in
+            shapes.append(request.phoneFirst)
+            if request.phoneFirst == true { throw APIFailure.server(status:400,code:"INVALID_REQUEST") }
+            return envelope
+        },submit:{ _ in .init(generation:1,receipts:[]) },control:{ _ in status() })
+        #expect(shapes.count == 2 && shapes[0] == true && shapes[1] == nil)
+        var denied=0
+        await #expect(throws:(any Error).self) {
+            try await engine.sync(identity:identity,fetch:{ _ in denied+=1;throw APIFailure.server(status:403,code:"FORBIDDEN") },submit:{ _ in .init(generation:1,receipts:[]) },control:{ _ in status() })
+        }
+        #expect(denied == 1)
+    }
     @Test func windowsEnvelopeOriginalAADTagTamperAndIdentity() throws {
         let (vault, _, dir, _) = try fixture(); defer { try? FileManager.default.removeItem(at: dir) }
         let envelope = try seal(snapshot(), vault: vault)
