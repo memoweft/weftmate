@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
+import { waitForCommand } from './helpers/wait-for-command.mjs'
 import { createPersonalAccessService } from './helpers/personal-access-test-service.mjs'
 import { createDshSessionAdapter } from '../src/runtime/dsh-adapter/sessions.mjs'
 import { questionSourceAsOf } from '../src/runtime/dsh-adapter/agents.mjs'
@@ -107,12 +108,7 @@ async function fixture({ useReplyEvidence = true, clockFn = Date.now, newExecuti
   const command = async (payload: object) => {
     const accepted = await request('commands', payload)
     assert.equal(accepted.status, 202, JSON.stringify(accepted.body))
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const result = await request(`commands/${accepted.body.command.commandId}`)
-      if (result.body.command.state === 'accepted_by_dsh') return result.body.command
-      await new Promise(resolve => setTimeout(resolve, 10))
-    }
-    throw new Error('synthetic command did not acquire a receipt')
+    return waitForCommand(async () => (await request(`commands/${accepted.body.command.commandId}`)).body.command)
   }
   if (newExecutionOwner) {
     const registered = await request('auth/register', {username:'FX9CloudOwner',password:'synthetic new owner password',deviceName:'Synthetic new computer'});

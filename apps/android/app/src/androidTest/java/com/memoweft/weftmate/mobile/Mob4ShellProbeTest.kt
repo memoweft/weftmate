@@ -111,6 +111,7 @@ class Mob4ShellProbeTest {
                                     "nativePreference" -> context.getSharedPreferences("native-ui",0).edit().putBoolean("enabled",true).commit()
                                     "theme" -> instrumentation.runOnMainSync { (activity as NativeActivity).model.dark=command.getBoolean("dark") }
                                     "state" -> Unit
+                                    "staleSend" -> instrumentation.runOnMainSync { (activity as NativeActivity).model.apply { sendAvailable=true;send() } }
                                     else -> error("Unknown test action")
                                 }
                             } catch(error:Throwable) { failure=error.javaClass.simpleName }

@@ -3,7 +3,7 @@ import test from 'node:test';
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { startTimelineCandidate } from './integration/timeline-ui-candidate.mjs';
+import { startTimelineCandidate } from './integration/bl29-rework/fixture.mjs';
 import { activityState, putActivity, reconcileActivity, activityToken, readActivityToken, removeActivity } from '../src/personal-access/activity-store.mjs';
 import { observeActivityEvents } from '../src/personal-access/activity.mjs';
 import { eraseChatCopies } from '../src/personal-access/chat-erasure.mjs';
@@ -81,6 +81,7 @@ test('MEM-D formation pending does not masquerade as pause; model unavailability
   let status:any={state:'degraded',reasonCode:'MEMORY_FORMATION_PENDING'};
   const memoryManager={enabled:false,peek:()=>status.state,status:async()=>status,query:async()=>({}),submitCommand:async()=>({}),receiptByRequest:async()=>({}),retryCleanupByRequest:async()=>({})};
   const f=await startTimelineCandidate({interactive:true,historyCount:0,memoryManager});t.after(()=>f.close());
+  await f.debug.service.__reviewContext.activity.close();
   assert.equal((await f.request('/activity?type=memory')).items.length,0);
   status={state:'degraded',reasonCode:'MEMORY_MODEL_UNAVAILABLE'};
   const paused=(await f.request('/activity?type=memory')).items;assert.equal(paused.length,1);assert.equal(paused[0].type,'memory.paused');

@@ -465,8 +465,8 @@
     "file": "apps/apple/iOS/HealthScoreRangeBar.swift",
     "line": 23,
     "api": "GeometryReader",
-    "sha256": "5596b3f020bc69e3fa32588b80cf664fb92e0ece829e26402aa829bfdc9e4d57",
-    "reason": "Explicit @Sendable geometry builder captures only immutable Sendable score fractions and Color values computed by the UI body. It reads geometry and constructs primitive shapes without reading or changing model or actor state."
+    "sha256": "c43ef97eb0855f966846e69f553247889f3e98a193647af96aaeb2a24bc95643",
+    "reason": "Sendable geometry builder captures immutable score positions and token colors only; no model or mutable UI actor state is accessed."
   },
   {
     "file": "apps/apple/iOS/HealthPageNavigation.swift",
@@ -488,5 +488,33 @@
     "api": "observe",
     "sha256": "7d8838c956e5f5faa0a0947c4a58fc8638ddadc3befedb0866cb60b21f4c29ed",
     "reason": "Viewport bounds KVO uses an explicitly Sendable callback and hops to MainActor before scheduling the UIKit measurement; no UI state is read on the SDK callback executor."
+  },
+  {
+    "file": "apps/apple/iOS/PhoneStandaloneModel.swift",
+    "line": 118,
+    "api": "urlSession",
+    "sha256": "a4b938f0d3f17ef1c46464e2c7f32313f9369a8634a0db5d1e9112fac120099c",
+    "reason": "Nonisolated Sendable URLSession redirect delegate rejects redirects with nil; it captures no UI model, credentials, or mutable actor state."
+  },
+  {
+    "file": "apps/apple/iOS/PhoneStandaloneMedia.swift",
+    "line": 16,
+    "api": "imagePickerControllerDidCancel",
+    "sha256": "11a615cd20146e1d830e25f97c85b68c671dacf5f6e98d134d985df4d366acdf",
+    "reason": "UIImagePickerControllerDelegate is NS_SWIFT_UI_ACTOR in the iOS SDK; explicitly MainActor coordinator receives native camera delegates and keeps JPEG bytes in memory."
+  },
+  {
+    "file": "apps/apple/iOS/PhoneStandaloneMedia.swift",
+    "line": 17,
+    "api": "imagePickerController",
+    "sha256": "40ee08396d4f9a9c13f29cb2e667b694a8377f59d37025e8bbef770b3e99eaed",
+    "reason": "UIImagePickerControllerDelegate is NS_SWIFT_UI_ACTOR in the iOS SDK; explicitly MainActor coordinator receives native camera delegates and keeps JPEG bytes in memory."
+  },
+  {
+    "file": "apps/apple/iOS/PhoneStandaloneView.swift",
+    "line": 111,
+    "api": "fileImporter",
+    "sha256": "1b83651975cbbf483f9d4181b22c78cfdb7b7c0f4a61e344e4a3a9b17b1c243b",
+    "reason": "File-service completion is supplied by a nonisolated factory returning an explicit @Sendable closure. It hops to MainActor before accessing state and checks immutable account/thread scope."
   }
 ]
