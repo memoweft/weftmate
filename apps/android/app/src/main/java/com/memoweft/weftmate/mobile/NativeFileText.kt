@@ -55,7 +55,7 @@ internal fun fileInlineMarkdown(text:String):SpannableStringBuilder {
     var text by remember(file){mutableStateOf<String?>(null)}
     var error by remember(file){mutableStateOf("")}
     LaunchedEffect(file){try{text=withContext(Dispatchers.IO){if(file.length()>1024*1024)throw ApiFailure(413,"FILE_TOO_LARGE");file.readText()}}catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){error=nativeFileFailure(e)}}
-    if(error.isNotBlank()){Box(modifier){NativeFileState(error,R.drawable.wm_file,onRetry)};return}
+    if(error.isNotBlank()){Box(modifier){NativeFileState(error,R.drawable.wm_file,retry=onRetry)};return}
     if(text==null){Box(modifier){NativeFileLoading()};return}
     val blocks=remember(text,kind){if(kind==NativeFileKind.MARKDOWN)fileMarkdownBlocks(text!!) else listOf(FileTextBlock(text!!,code=kind==NativeFileKind.CODE))}
     Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(DesignTokens.space16.dp),verticalArrangement=Arrangement.spacedBy(DesignTokens.space12.dp)) {
