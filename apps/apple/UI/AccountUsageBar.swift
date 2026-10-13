@@ -7,8 +7,13 @@ struct AccountUsageBar: View {
     init(app: AppleAppModel) { self.app = app; _usage = StateObject(wrappedValue: AccountUsageModel(app: app)) }
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p4) {
-            if let summary = usage.summary {
+            if app.session == nil { Text("电脑上的用量，连上电脑后可用。").foregroundStyle(Weave.muted) }
+            else if let summary = usage.summary {
+                #if os(iOS)
+                Text(AccountUsagePresentation.text(summary,phone:true)).accessibilityIdentifier("accountUsageTotal")
+                #else
                 Text(AccountUsagePresentation.text(summary)).accessibilityIdentifier("accountUsageTotal")
+                #endif
                 if let notice = summary.total.uncertaintyNotice { Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             } else { Text(usage.error ?? "正在读取本月用量…").foregroundStyle(Weave.muted) }
         }.font(AppleTokens.Fonts.callout).accessibilityElement(children: .contain).accessibilityIdentifier("accountUsageBar")
