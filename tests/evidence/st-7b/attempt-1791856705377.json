@@ -1,0 +1,25 @@
+{
+  "realElectron": true,
+  "pinnedDsh": true,
+  "realModel": "mimo-v2.6-flash",
+  "scenarios": [
+    "visible mailbox provider form, real wrong-code failure, both servers log in, encrypted credential masking",
+    "MiMo reads today mailbox in main conversation without approval",
+    "reply approval precedes actual SMTP receipt; fixed sender and original recipient match",
+    "calendar free query and create in account timezone; approval precedes actual event",
+    "MiMo summarizes injected external email without extra sends, deletions, or calendar effects",
+    "removal erases both connectors and all credential slots"
+  ],
+  "errors": [],
+  "modelRequests": 24,
+  "modelRequestCountSource": "authenticated account ledger (all attempts preserved in separate reports)",
+  "sentMessages": 1,
+  "calendarWrites": 1,
+  "ok": true,
+  "cleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  },
+  "privateFilesChecked": 294
+}

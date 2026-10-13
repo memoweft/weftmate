@@ -7,7 +7,7 @@ globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
   function composerState(text) {
     state.draft = text;
     const key = state.chatSource === 'host' ? sharedDraftKey() : draftKey();
-    if (state.loggedIn) try { if(text) environment.storage.setItem(key,text); else environment.storage.removeItem(key); } catch {}
+    if (state.loggedIn && state.connection !== 'phone') try { if(text) environment.storage.setItem(key,text); else environment.storage.removeItem(key); } catch {}
     const linked=!!selectedBinding(), host=state.chatSource==='host'||linked, session=selectedSharedSession();
     const attachments=currentAttachments().length;
     const busy=host?!!state.sharedPending||!!state.linkedPending||state.sharedOutboxLoading||state.busy:state.busy;

@@ -122,7 +122,11 @@ try {
       const data=await response.json();return route.fulfill({response,json:{...data,personalCapabilities:{}}});
     }
     if (url.pathname === '/personal/v1/sessions') {
-      const data = await response.json(); data.sessions.push({ sessionId: '22222222-2222-4222-8222-222222222222', title: '合成空白对话', running: false });
+      const data = await response.json();
+      // A request from the retired fixture can finish after the phase changes.
+      // Preserve its authentication failure; only decorate actual session lists.
+      if (!response.ok() || !Array.isArray(data.sessions)) return route.fulfill({ response, json: data });
+      data.sessions.push({ sessionId: '22222222-2222-4222-8222-222222222222', title: '合成空白对话', running: false });
       return route.fulfill({ response, json: data });
     }
     if (/\/events$/.test(url.pathname)) {

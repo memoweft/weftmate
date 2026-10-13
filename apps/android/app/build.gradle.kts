@@ -6,6 +6,8 @@ plugins {
 
 val updateChannel = providers.gradleProperty("weftmateUpdateChannel").orElse("stable").get()
 require(updateChannel in listOf("stable", "preview"))
+val qaProfile = providers.gradleProperty("weftmateQaProfile").orElse("false").get().toBooleanStrict()
+require(!qaProfile || providers.gradleProperty("weftmateApplicationId").orNull == "com.memoweft.weftmate.mobile.and4qa")
 
 android {
     namespace = "com.memoweft.weftmate.mobile"
@@ -17,14 +19,25 @@ android {
             .orElse("com.memoweft.weftmate.mobile.debug").get()
         minSdk = 26
         targetSdk = 35
-        versionCode = 43
-        versionName = "0.8.30"
+        versionCode = 44
+        versionName = "0.8.31"
         buildConfigField("String", "UPDATE_CHANNEL", "\"$updateChannel\"")
         buildConfigField("boolean", "NATIVE_UI", providers.gradleProperty("weftmateNativeUi").orElse("true").get())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes { release { isMinifyEnabled = false } }
+    buildTypes {
+        release { isMinifyEnabled = false }
+        debug {
+            isDebuggable = !qaProfile
+            // Keep the disposable package's existing loopback fixture hooks. This
+            // property is rejected for every production application id above.
+            if(qaProfile) buildConfigField("boolean", "DEBUG", "true")
+        }
+    }
+    // Profiling is a disposable synthetic variant, not a release validation build.
+    // Normal debug/release checks retain their existing lint configuration.
+    lint { if(qaProfile) checkReleaseBuilds = false }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
     testOptions { unitTests.isReturnDefaultValues = true }

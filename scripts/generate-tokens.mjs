@@ -32,13 +32,13 @@ const mobileThemes = tokens.surfaces.mobile.themes;
 const mobileColor = (dark, name) => mobileThemes.find(t => t.selector.includes('dark') === dark).variables['--' + name];
 const argb = color => '#ff' + (color.length === 4 ? [...color.slice(1)].map(c => c + c).join('') : color.slice(1));
 const webColors = { webSurfaceLight: argb(mobileColor(false, 'surface')), webSurfaceDark: argb(mobileColor(true, 'surface')) };
-const nativeDark = Object.fromEntries(['accent','ink','secondary','muted','canvas','surface','soft','accent-soft','line','danger'].map(name => ['dark' + name.split('-').map(n => n[0].toUpperCase() + n.slice(1)).join(''), argb(mobileColor(true, name))]));
+const nativeDark = Object.fromEntries(entries(tokens.android.darkColors).map(([name,value]) => ['dark' + name[0].toUpperCase() + name.slice(1), value]));
 const colors = { ...tokens.android.colors, ...webColors, ...nativeDark, brand: tokens.shared.color['brand-light'] };
 await put(`${res}/values/design_colors.xml`, xml(entries(colors).map(([name, value]) =>
   `    <color name="${androidName(name)}">${value}</color>`).join('\n')));
-// Only resources with an existing explicit theme counterpart vary in night mode.
 await put(`${res}/values-night/design_colors.xml`, xml(
-  `    <color name="wm_brand">${tokens.shared.color['brand-dark']}</color>`));
+  entries(tokens.android.darkColors).map(([name,value])=>`    <color name="${androidName(name)}">${value}</color>`).join('\n') +
+  `\n    <color name="wm_brand">${tokens.shared.color['brand-dark']}</color>`));
 const dimensions = { ...tokens.android.dimensions,
   ...Object.fromEntries(entries(tokens.shared.radius).filter(([, v]) => v.endsWith('px'))
     .map(([name, value]) => [`radius${name}`, { value: parseFloat(value), unit: 'dp' }])) };

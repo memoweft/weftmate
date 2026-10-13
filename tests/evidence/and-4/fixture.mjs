@@ -25,6 +25,8 @@ export async function startNativeFixture(mimoKey) {
     const u=new URL(req.url,'http://localhost'),p=u.pathname;
     if(p==='/__qa/reset'){reset();return json(res,{ok:true});}
     if(p==='/__qa/long'){reset();for(let i=0;i<80;i++)add(i%2?'assistant.message':'user.message',{text:`第 ${i+1} 条合成记录。\n\n这是一段用来检查长对话滚动的文字。`});return json(res,{ok:true});}
+    // Both entry points must scroll the same long history, not the base fixture's short thread.
+    if(events.length>=80 && p===`/personal/v1/sessions/${sid}/events`)return json(res,{events,nextSeq:seq,hasMore:false,hasOlder:false});
     if(p==='/personal/v1/auth/login') {
       let raw='';for await(const chunk of req)raw+=chunk;
       const response=await fetch(`${base.origin}${p}`,{method:'POST',headers:{origin:base.origin,'content-type':'application/json'},body:raw});

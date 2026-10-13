@@ -9,6 +9,9 @@ globalThis.WeftMobileCloudSettings = (core, ui) => {
         panel.innerHTML = '<nav class="actions" aria-label="设置分类"><button class="button secondary" type="button" id="cloud-account-tab">账户</button><button class="button secondary" type="button" id="cloud-devices-tab">设备</button></nav><p id="cloud-settings-status" class="form-error" role="status"></p><section id="cloud-account-panel" aria-label="账户"><h2>账户</h2><p class="account-row"><span>邮箱</span><strong id="cloud-email"></strong></p><div class="actions" id="cloud-account-actions"></div><div id="cloud-account-flow"></div></section><section id="cloud-devices-panel" aria-label="设备" hidden><div class="group-heading"><h2>设备</h2><button class="button secondary" type="button" id="cloud-directory-refresh">刷新设备</button></div><p id="cloud-directory-status" class="muted" role="status"></p><ul id="cloud-directory" class="device-list" aria-live="polite"></ul></section>';
 
         panel.querySelector('nav').hidden = true;
+        const help=ui.element('p','muted','在电脑上安装 WeftMate 并用同一个账号登录，就会出现在这里。');
+        const website=ui.element('a','button secondary','WeftMate 官网');website.href='https://weftmate.com';website.target='_blank';website.rel='noopener';
+        ui.byId('cloud-devices-panel').append(help,website);
         const refresh = ui.byId('cloud-directory-refresh'); refresh.className = 'icon-button'; refresh.replaceChildren(WeftIcons.create('sync', 18)); refresh.setAttribute('aria-label', '刷新设备');
         ui.byId('cloud-account-tab').addEventListener('click', () => select('account'));
         ui.byId('cloud-devices-tab').addEventListener('click', () => { select('devices'); void refreshDirectory(); });

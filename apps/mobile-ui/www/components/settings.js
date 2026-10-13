@@ -41,7 +41,7 @@ function renderModels(){const list=$('model-options');clear(list);if(!state.mode
 
 function subNotice(title,text){const target=$('page-content');clear(target);target.append(heading(title),notice(text,'尚未接入'))}
 
-function connectionLabel(){return {connected:'电脑连接正常',checking:'已保存登录，待核对',offline:'电脑暂不可达，可离线使用',
+function connectionLabel(){return {phone:'已登录',connected:'电脑连接正常',checking:'已保存登录，待核对',offline:'电脑暂不可达，可离线使用',
   expired:'登录已失效，请重新登录',local:'未登录'}[state.connection]||'连接状态待确认'}
 
 const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
@@ -452,7 +452,7 @@ function transferAccountModel(...args){return uiCore.mobileSettings.transferAcco
 
 function testAccountModel(...args){return uiCore.mobileSettings.testAccountModel(...args)}
 
-function modelsPage(target){target.append(heading('对话模型','手机直连模型与电脑模型分开列出；密钥不会出现在账户模型目录中。'));
+function modelsPage(target){if(globalThis.WeftPhone?.active)return phoneModelsPage(target);if(globalThis.WeftPhone?.hasData)target.append(row('手机上的模型','查看或修改这台手机保存的模型',()=>page('phoneModels')));target.append(heading('对话模型','手机直连模型与电脑模型分开列出；密钥不会出现在账户模型目录中。'));
   if(!state.loggedIn){target.append(notice('请登录或注册账户后选择模型。原有未绑定的模型配置会原样保留，不会自动交给新账户。'),
     action('连接账户',()=>page('connect')));return}
   const pageOwner=state.owner,pageEpoch=state.authEpoch,pageGeneration=state.generation;
@@ -697,4 +697,35 @@ async function phoneAction(kind){if(kind==='settings'){
         selectConversation(opened.conversationId);toast(`${app.name}：${receiptStatus(opened.status)}`);await listConversations();await renderConversation()}
       catch(e){toast(safeError(e),true)}}))));
   }catch(e){loading.textContent=safeError(e);loading.className='inline-error'}
+}
+
+function phoneModelsPage(target){
+  const copy=WeftOnboardingCopy, owner=state.owner,epoch=state.authEpoch;
+  const current=()=>state.owner===owner&&state.authEpoch===epoch&&['models','phoneModels'].includes(state.page);
+  const modelCall=(method,params={})=>WeftPhone.modelCall(method,params);
+  target.append(heading('对话模型',window.weftNative?'密钥保存在这台手机的安全存储中，对话直接发给所选模型提供方。':'密钥只在这次打开期间有效，关闭或刷新页面后需要重新填写；对话加密保存在此浏览器。提供方需要允许浏览器直连。'));
+  const list=group('手机模型',[]);target.append(list);
+  const body=list.querySelector('.group-body');
+  void modelCall('models.list').then(result=>{if(!current())return;body.replaceChildren();
+    if(!result.models?.length)body.append(el('p','muted','还没有模型。选提供方并填写密钥，就能开始聊天。'));
+    for(const item of result.models||[]){const entry=row(item.displayName||item.modelId,item.modelId,()=>{preset.value='custom';preset.dispatchEvent(new Event('change'));address.input.value=item.endpoint.replace(/\/chat\/completions$/,'');id.input.value=item.modelId;key.input.value='';form.scrollIntoView({block:'start'});});
+      const remove=el('button','icon-button');remove.type='button';remove.setAttribute('aria-label',`删除 ${item.displayName||item.modelId}`);remove.append(WeftIcons.create('more',18));
+      remove.onclick=event=>{event.stopPropagation();WeftPopover.menu(remove,[{icon:'delete',name:'删除模型',danger:true,action:()=>{
+        const confirm=action('确认删除这个手机模型',async()=>{if(!current())return;await modelCall('models.account.removeLocal',item);if(!current())return;if(WeftPhone.active)state.model=null;toast('模型已删除');page('models');},false);body.append(confirm);
+      }}]);};entry.append(remove);body.append(entry);}
+  });
+  const form=group('添加或修改模型',[]), fields=form.querySelector('.group-body');
+  const preset=el('select','workspace-model-select');preset.setAttribute('aria-label',copy.modelProvider);
+  for(const item of copy.presets.filter(item=>item.id!=='local')){const option=el('option','',item.name);option.value=item.id;preset.append(option);}const custom=el('option','','自定义');custom.value='custom';preset.append(custom);
+  const address=field(copy.modelAddress,'url'),id=field(copy.modelId,'text'),key=field(copy.modelKey,'password');
+  key.input.autocomplete='off';const help=el('p','field-help'),link=el('a','button secondary',copy.getKey);link.target='_blank';link.rel='noopener';
+  const choose=()=>{const item=copy.presets.find(item=>item.id===preset.value);if(!item)return;address.input.value=item.baseUrl;id.input.value=item.modelId;help.textContent=item.help;link.href=item.url;key.input.value='';};preset.onchange=choose;choose();
+  const feedback=el('p','field-help');feedback.setAttribute('role','status');let checking=false;
+  const save=action(WeftPhone.active?'测试连接并使用':'测试连接并保存',async()=>{if(checking)return;checking=true;save.disabled=true;feedback.textContent='正在测试连接…';
+    try{const selected=await modelCall('models.configure',{endpoint:address.input.value,modelId:id.input.value,apiKey:key.input.value});key.input.value='';if(!current())return;if(WeftPhone.active)state.model=selected;
+      const result=await modelCall('models.verifyPhone');if(!current())return;if(!result.available)throw Error('MODEL_UNAVAILABLE');toast(WeftPhone.active?'连接成功，可以开始聊天':'手机模型已保存');page(WeftPhone.active?'chat':'models');}
+    catch(error){key.input.value='';if(current())feedback.textContent='连接未完成，请核对地址、模型名称和密钥后重试。';}
+    finally{checking=false;save.disabled=false;updateComposer();}
+  });
+  fields.append(preset,help,link,address.box,id.box,key.box,save,feedback);target.append(form);WeftPopover.bindSettingsSelect(preset,{mobile:true});
 }
