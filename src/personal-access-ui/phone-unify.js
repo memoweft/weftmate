@@ -67,6 +67,9 @@
         const update = ui.updateAvailability;
         ui.updateAvailability = (...args) => { if (press.active) return; const result = update(...args); syncComposer(); return result; };
         field.addEventListener('focus', syncComposer);
+        // The input listener was registered before updateAvailability was wrapped.
+        // Update the action and submit type immediately on the first keystroke.
+        field.addEventListener('input', syncComposer);
         field.addEventListener('blur', () => requestAnimationFrame(syncComposer));
         form.addEventListener('focusin', () => requestAnimationFrame(syncComposer));
         form.addEventListener('focusout', () => requestAnimationFrame(syncComposer));

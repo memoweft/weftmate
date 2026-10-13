@@ -57,7 +57,7 @@ test('Relay phone first input and file task', {
     await phone.addInitScript(() => {
       globalThis.__ciR1SendTrace = [];
       for (const type of ['pointerdown', 'pointerup', 'click', 'submit']) document.addEventListener(type, event => {
-        if (event.target.closest?.('#message-form')) globalThis.__ciR1SendTrace.push({type, target:event.target.tagName, id:event.target.id, action:document.getElementById('send-message')?.dataset.action, disabled:document.getElementById('send-message')?.disabled});
+        if (event.target.closest?.('#message-form')) globalThis.__ciR1SendTrace.push({type, target:event.target.tagName, id:event.target.id, action:document.getElementById('send-message')?.dataset.action, buttonType:document.getElementById('send-message')?.type, disabled:document.getElementById('send-message')?.disabled});
       }, true);
       let value;
       Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true,
@@ -175,6 +175,7 @@ test('Relay phone first input and file task', {
       assert.ok(delayed.count > 0, 'the 2s history delay must actually run');
       const text = `CI_R1_FIRST_INPUT_${i}_解锁后第一次输入，中文和 ASCII 全部保留。`;
       await draft.fill(text); await pause(300); assert.equal(await draft.inputValue(), text, 'first input lost characters');
+      assert.equal(await send.getAttribute('type'),'submit','first typing must immediately select a submit action');
       await waitFor(() => send.isEnabled(), 'first input cannot be sent');
       if (i === 0) {
         const before = await send.boundingBox();
@@ -208,7 +209,9 @@ test('Relay phone first input and file task', {
     assert.equal((await phoneApi(`/sessions/${created.sessionId}/approval-mode`, { mode: 'ask' }, 'PATCH')).status, 200);
     await phone.reload(); await enterApprovedSession(); await select(fileSession);
     await waitFor(() => draft.isEnabled(), 'file task composer locked');
-    await draft.fill('CI_R1_FILE_TASK：在合成项目里读取 input.txt，新建 result.txt，再读回核验内容。'); await send.click();
+    await draft.fill('CI_R1_FILE_TASK：在合成项目里读取 input.txt，新建 result.txt，再读回核验内容。');
+    assert.equal(await send.getAttribute('type'),'submit','file task first typing must immediately select a submit action');
+    await send.click();
     const approvedIds = new Set();
     await waitFor(async () => {
       const rows = (await phoneApi(`/sessions/${created.sessionId}/approvals`)).data.approvals ?? [];
