@@ -158,10 +158,10 @@ function fillApprovalCard(card,row,context,cache){card.decisionContext=context;c
     const heading=el('div','decision-title');heading.append(WeftIcons.create('approval',20),description);
     card.append(heading);if(presentation.reason)card.append(el('p','approval-description',presentation.reason));
     const details=el('details','approval-detail'),raw=el('pre','timeline-raw');
-    raw.textContent=uiCore.executionDetailText(typeof presentation.raw==='string'?presentation.raw:JSON.stringify(presentation.raw,null,2));
+    raw.textContent=typeof presentation.raw==='string'?presentation.raw:JSON.stringify(presentation.raw,null,2);
     details.open=!!expanded;details.append(el('summary','','详情'),raw);card.append(details);
     void uiCore.readApprovalPresentation(row).then(value=>{if(!approvalViewCurrent(context)||card.dataset.approvalId!==row.approvalId||!card.contains?.(description))return;
-      description.textContent=value.summary;raw.textContent=uiCore.executionDetailText(typeof value.raw==='string'?value.raw:JSON.stringify(value.raw,null,2));});}
+      description.textContent=value.summary;raw.textContent=typeof value.raw==='string'?value.raw:JSON.stringify(value.raw,null,2);});}
   if(row.status==='pending')card.append(el('p','approval-risk-copy',approvalRiskCopy(row)));
   card.classList.toggle('is-resolved',approvalTerminal(row));
   const message=el('p','approval-status',approvalMeaning(row,cache,attempt));message.setAttribute('role','status');message.setAttribute('aria-live','polite');

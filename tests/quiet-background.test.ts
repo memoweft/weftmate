@@ -48,7 +48,7 @@ test('FIX-24 missing provider model falls back on first 404; deleted local catal
 });
 test('FIX-24 known tools speak in human terms while an unknown extension keeps generic wording',()=>{
  const core:any=timeline.WeftUiCore;
- for(const [name,label]of [['health_query','查了健康数据'],['calendar_query','查了日程'],['recall_memory','查询或更新了 1 次记忆'],['unknown_extension','调用了 1 次扩展服务']]){
+ for(const [name,label]of [['health_query','查了健康数据'],['calendar_query','查了日历'],['recall_memory','查询或更新了 1 次记忆'],['unknown_extension','用了一个扩展工具']]){
   assert.equal(core.progressText([{toolName:name,state:'completed'}],{state:'completed',terminal:true}).text,label);
  }
 });

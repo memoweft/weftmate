@@ -4,14 +4,14 @@ import {readFile} from 'node:fs/promises';
 import {runInNewContext} from 'node:vm';
 import {health6Synthetic} from './helpers/health-6-synthetic.mjs';
 async function setup(options:any={}){
- const context:any={WeftUiCore:{factories:{}},Intl,URLSearchParams};runInNewContext(await readFile(new URL('../src/ui-core/health.js',import.meta.url),'utf8'),context);
+ const context:any={WeftUiCore:{factories:{}},Intl,URLSearchParams};runInNewContext(await readFile(new URL('../src/ui-core/human-format.js',import.meta.url),'utf8'),context);runInNewContext(await readFile(new URL('../src/ui-core/health.js',import.meta.url),'utf8'),context);
  const fixture=health6Synthetic(options),quotes:string[]=[],core:any={state:{ownerId:'synthetic-account',identityGeneration:0},accessApi:async(path:string,options:any)=>fixture.reply(path,options),failureMessage:()=> '连接暂时中断',selectMainChat:async()=>{}};
  if(options.prior)core.saveHealthSettings=async(patch:any)=>{core.priorWrites??=[];core.priorWrites.push(patch);return fixture.reply('/settings/health',{method:'PATCH',body:patch});};
  Object.assign(core,context.WeftUiCore.factories.health(core,{quoteHealth:(text:string)=>quotes.push(text)},{crypto:{randomUUID:()=> 'synthetic'}}));return {core,fixture,quotes,H:context.WeftHealth};
 }
 test('health display rounds scores, ranges, blood oxygen and minutes; only three metrics retain one decimal',async()=>{
  const {H}=await setup();for(const id of ['recovery','sleep','load','stress','energy','fitnessAge','hrvSdnnMs','restingHeartRateBpm','spo2Pct','exerciseMinutes','steps'])assert.equal(H.value(37.8,id),'38');
- for(const id of ['wristTempC','respiratoryRateBrpm','vo2Max']){assert.equal(H.value(37.8,id),'37.8');assert.equal(H.value(38,id),'38.0');}assert.equal(H.value(null),'—');assert.equal(H.duration(37.8),'0小时38分钟');
+ for(const id of ['wristTempC','respiratoryRateBrpm','vo2Max']){assert.equal(H.value(37.8,id),'37.8');assert.equal(H.value(38,id),'38.0');}assert.equal(H.value(null),'—');assert.equal(H.duration(37.8),'38 分');
 });
 test('item analysis is off by default, disclosure never writes, enabling generates only the selected scope',async()=>{
  const {core,fixture}=await setup();await core.readHealth();assert.equal(core.health.settings.itemAnalysisEnabled,false);assert.equal(fixture.calls.filter(c=>c.method==='POST').length,0);
