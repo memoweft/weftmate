@@ -44,7 +44,7 @@ test('FIX-34 sleep templates and recovery reasons share hours and minutes',async
   assert.match(healthScores(state,day,'Asia/Shanghai').recovery.reasons.find(row=>row.inputs.includes('sleepMinutes')).text,/7 小时 46 分/);
 });
 test('FIX-34 health guidance distinguishes latest from average and formats duration',()=>{
-  const source=readFileSync('src/plugins/personal-prompt.mjs','utf8');assert.match(source,/latest.*最近一次/);assert.match(source,/average.*平均/);assert.match(source,/score.*最近一次/);assert.match(source,/小时.*分/);
+  const source=readFileSync('src/plugins/personal-prompt.mjs','utf8');assert.match(source,/latest.*最近一次/);assert.match(source,/average.*平均/);assert.match(source,/score.*最近一次/);assert.match(source,/metric=stress.*items\[\]\.value.*最近一次/);assert.match(source,/小时.*分/);
 });
 test('FIX-34 authenticated device directories explain the absence of computers and clear it when one appears',()=>{
   for(const file of ['src/personal-access-ui/components/cloud-settings.js','apps/mobile-ui/www/components/cloud-settings.js']) {
