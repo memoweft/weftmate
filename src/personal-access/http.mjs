@@ -183,6 +183,27 @@ export function createHttpHandler(context) {
         if (!context.backupManager) throw failure('CAPABILITY_UNAVAILABLE', 503);
         if (url.search) throw failure('INVALID_REQUEST');
         try {
+          if (pathname === '/personal/v1/backups/cloud' || pathname.startsWith('/personal/v1/backups/cloud/')) {
+            const manager=context.cloudBackupManager;
+            if (request.method==='GET' && pathname==='/personal/v1/backups/cloud') return context.json(response,200,manager?await manager.view(current.ownerId):{available:false});
+            if (!manager) throw failure('CAPABILITY_UNAVAILABLE',503);
+            const input=await context.readJson(request);
+            const action=pathname.slice('/personal/v1/backups/cloud/'.length);
+            const fields={prepare:['password','purpose'],enable:['draftId','confirmation'],run:[],reveal:['password'],rotate:['password'],restore:['id','recoveryCode','confirm'],delete:['confirm'],remove:['id','confirm'],dismiss:['id']};
+            if (request.method!=='POST'||!fields[action])throw failure('NOT_FOUND',404);
+            exactKeys(input,fields[action],action==='prepare'?[]:fields[action]);
+            try {
+              const result=action==='rotate'?await manager.prepare(current.ownerId,{...input,purpose:'rotate'}):
+                action==='delete'?(input.confirm===true?await manager.clear(current.ownerId):(()=>{throw failure('INVALID_REQUEST');})()):
+                await manager[action](current.ownerId,input);
+              return context.json(response,200,result);
+            }catch(error){
+              const code=error.code;
+              if (typeof code==='string' && (/^(?:CLOUD_BACKUP_|BACKUP_|CLOUD_|KEY_CHANGED|KEY_IN_USE|KEY_REQUIRED|UPLOAD_IN_PROGRESS|RATE_LIMITED|REQUEST_CONFLICT|SESSION_BUSY|CONFLICT|INVALID_CREDENTIALS|INVALID_REQUEST|NOT_FOUND|SERVICE_CLOSING)/.test(code)))
+                return context.json(response,error.status??409,{error:{code,...(error.invalidGroups?{invalidGroups:error.invalidGroups}:{}),...(error.usage?{usage:error.usage}:{})}});
+              throw error;
+            }
+          }
           if (request.method === 'GET' && pathname === '/personal/v1/backups') return context.json(response, 200, await context.backupManager.view());
           const body = await context.readJson(request);
           if (request.method === 'PATCH' && pathname === '/personal/v1/backups/settings') return context.json(response, 200, { settings: await context.backupManager.configure(body) });
@@ -1102,7 +1123,7 @@ export function createHttpHandler(context) {
           if (prior.kind !== 'register' || prior.payloadHash !== hash) throw failure('REQUEST_CONFLICT', 409);
           return context.json(response, 200, { project: publicProject(state.projects[prior.projectId]) });
         }
-        const inspected = await inspectProjectRoot(body.rootPath);
+        const inspected = await (context.projectRootInspector ?? inspectProjectRoot)(body.rootPath);
         const project = await context.serial(() => context.mutate(ownerId, (next) => {
           const latest = context.authenticate(request, 'account:manage');
           if (latest.ownerId !== ownerId || latest.deviceId !== current.deviceId || !context.hostOwner(ownerId)) {

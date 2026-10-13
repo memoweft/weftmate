@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { snapshot, verify, listBackups, prune, durableWrite, backupError } from './archive.mjs';
 import { beginRestore, rollbackRestore, commitRestore } from './restore.mjs';
 import { validateStore } from '../personal-access/store.mjs';
+import { cloudVaultRestoreCommitted } from '../personal-cloud-backup/vault-restore.mjs';
 
 export async function createBackupManager({ root, isIdle, requestRestart, clock = Date.now, appVersion = '0', onShutdownFailure = () => {}, captureBoundary = work => work(), pauseTimeoutMs = 2000, validate = async stage => {
   validateStore(JSON.parse(await readFile(path.join(stage, 'personal-access', 'store.json'), 'utf8')));
@@ -17,7 +18,10 @@ export async function createBackupManager({ root, isIdle, requestRestart, clock 
   let pending = await read(pendingFile, null), status = await read(statusFile, null), timer, busy = false, stopping = false, activeCapture = null, operationDone = Promise.resolve(), finishOperation;
   // If a restore crashed mid-replacement or failed to launch, recover before any writer opens.
   const transaction = await read(path.join(control, 'restore.json'), null);
-  if (transaction?.state === 'applying' || transaction?.state === 'starting') {
+  if (transaction && await cloudVaultRestoreCommitted(root,transaction.sourceFile)) {
+    await commitRestore({ root, control });
+    status = { ...status, state: 'succeeded', restored: true, at: new Date(clock()).toISOString() }; await durableWrite(statusFile, status);
+  } else if (transaction?.state === 'applying' || transaction?.state === 'starting') {
     await rollbackRestore({ root, control }); status = { state: 'rolled-back', at: new Date(clock()).toISOString() }; await durableWrite(statusFile, status);
   } else if (transaction?.state === 'awaiting-start') {
     transaction.state = 'starting'; await durableWrite(path.join(control, 'restore.json'), transaction);
@@ -40,8 +44,8 @@ export async function createBackupManager({ root, isIdle, requestRestart, clock 
   }
   await durableWrite(versionFile, { appVersion });
   let restoredStartup = status?.restored === true && transaction?.state === 'awaiting-start' || !!restoreRequest && status?.restored === true;
-  async function onlineSnapshot(reason) {
-    return snapshot({ root, directory: settings.directory, reason, now: clock(), withCapture: async (work, stage) => {
+  async function onlineSnapshot(reason, options = {}) {
+    return snapshot({ root, directory: settings.directory, reason, now: clock(), ...options, withCapture: async (work, stage) => {
       const controller = new AbortController(), deadline = Date.now() + pauseTimeoutMs;
       activeCapture = controller;
       const timeout = backupError('BACKUP_PAUSE_TIMEOUT');
@@ -60,6 +64,18 @@ export async function createBackupManager({ root, isIdle, requestRestart, clock 
         } finally { resume(); }
       } finally { clearTimeout(timer); if (activeCapture === controller) activeCapture = null; }
     } });
+  }
+  async function cloudSnapshot(ownerId, { captureSecrets = null } = {}) {
+    if (busy || pending || stopping) throw backupError('CONFLICT');
+    if (typeof ownerId !== 'string' || !/^[A-Za-z0-9_-]{1,160}$/.test(ownerId)) throw backupError('INVALID_REQUEST');
+    if (captureSecrets !== null && typeof captureSecrets !== 'function') throw backupError('INVALID_REQUEST');
+    busy = true; operationDone = new Promise(resolve => { finishOperation = resolve; });
+    const directory = path.join(control, 'cloud-capture');
+    try {
+      if (!await isIdle()) throw backupError('SESSION_BUSY');
+      const result = await onlineSnapshot('cloud', { directory, cloudOwnerId: ownerId, captureSecrets });
+      return { ...result, file: path.join(directory, result.id) };
+    } finally { busy = false; finishOperation(); }
   }
   async function configure(input) {
     if (busy || pending || stopping) throw backupError('CONFLICT');
@@ -104,6 +120,12 @@ export async function createBackupManager({ root, isIdle, requestRestart, clock 
     if (typeof id !== 'string' || path.basename(id) !== id || !id.endsWith('.wmb')) throw backupError('INVALID_REQUEST');
     return request('restore', path.join(settings.directory, id));
   }
+  async function restoreFile(file) {
+    if (typeof file !== 'string' || !path.isAbsolute(file)) throw backupError('INVALID_REQUEST');
+    const info = await lstat(file);
+    if (!info.isFile() || info.isSymbolicLink()) throw backupError('INVALID_REQUEST');
+    return request('cloud-restore', file);
+  }
   async function importBackup(file) {
     if (typeof file !== 'string' || !path.isAbsolute(file) || !(await lstat(file)).isFile()) throw backupError('INVALID_REQUEST');
     await verify(file); await mkdir(settings.directory, { recursive: true, mode: 0o700 });
@@ -144,7 +166,7 @@ export async function createBackupManager({ root, isIdle, requestRestart, clock 
     // Only a restore stops HTTP admission; online copies queue writers briefly.
     isPending: () => pending !== null,
     isRestoredStartup: () => restoredStartup,
-    configure, request, restore, importBackup, finishShutdown, checkDaily,
+    configure, request, restore, restoreFile, cloudSnapshot, importBackup, finishShutdown, checkDaily,
     async stopOnline() {
       stopping = true; clearInterval(timer);
       activeCapture?.abort(backupError('SERVICE_CLOSING'));
