@@ -7,6 +7,8 @@ struct CloudDevicesView: View {
     @State private var renameTarget: CloudDirectoryDevice?
     @State private var removeTarget: CloudDirectoryDevice?
     @State private var newName = ""
+    @State private var computerRename: CloudDirectoryDevice?
+    @State private var computerRemove: CloudDirectoryDevice?
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
@@ -29,6 +31,10 @@ struct CloudDevicesView: View {
                     WeaveCard {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                             row(host)
+                            if cloud.multipleComputers {
+                                Button("电脑改名") { newName=host.name;computerRename=host }.buttonStyle(ServiceActionStyle()).accessibilityIdentifier("computer.rename."+host.id)
+                                Button("移除电脑") { computerRemove=host }.buttonStyle(ServiceActionStyle()).accessibilityIdentifier("computer.remove."+host.id)
+                            }
                             Button("重新连接") { Task { await cloud.connectHost(id: host.hostId ?? host.id) } }
                                 .buttonStyle(AccountActionStyle()).disabled(cloud.busy)
                                 .accessibilityIdentifier("connectHost." + host.id)
@@ -47,6 +53,10 @@ struct CloudDevicesView: View {
                     do { try await Task.sleep(for: .seconds(3)) } catch { return }
                 }
             }
+            .sheet(item:$computerRename) { host in
+                NavigationStack { VStack(spacing:AppleTokens.Space.p16) { TextField("电脑名称",text:$newName).weaveField();Button("保存") { Task { await cloud.renameComputer(host,name:newName);computerRename=nil } }.buttonStyle(ServiceActionStyle(primary:true)) }.padding(AppleTokens.Space.p20).navigationTitle("电脑名称") }
+            }
+            .confirmationDialog("移除这台电脑？不会删除这台电脑上的对话、文件和其他内容；未开始的事项会取消，已经开始的操作在那台电脑上收尾。",isPresented:Binding(get:{computerRemove != nil},set:{if !$0 {computerRemove=nil}}),titleVisibility:.visible) { Button("移除电脑",role:.destructive) { if let host=computerRemove { Task { await cloud.removeComputer(host) } };computerRemove=nil };Button("取消",role:.cancel) {} }
             .alert("设备名称", isPresented: Binding(get: { renameTarget != nil }, set: { if !$0 { renameTarget = nil } })) {
                 TextField("名称", text: $newName)
                 Button("保存") { if let device = renameTarget { Task { await cloud.renameDevice(device, name: newName) } }; renameTarget = nil }
@@ -67,14 +77,14 @@ struct CloudDevicesView: View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
             HStack(spacing: AppleTokens.Space.p12) {
                 WeftIcon(device.icon).foregroundStyle(Weave.accent)
-                Text(device.name).font(AppleTokens.Fonts.headline)
+                Text(device.computerName).font(AppleTokens.Fonts.headline)
                 if device.isCurrent { Text("这台设备").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             }
             Text(device.online ? "在线" : "离线").foregroundStyle(Weave.secondary)
             if device.type == "computer" { Text("可执行任务").font(AppleTokens.Fonts.caption) }
             if let first = device.firstUsedAt { Text("首次登录：\(Self.date(first))").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             if let last = device.lastUsedAt { Text("最近使用：\(Self.date(last))").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-            if device.hostId == nil {
+            if device.type != "computer" {
                 HStack {
                     Button("改名") { newName = device.name; renameTarget = device }
                         .accessibilityIdentifier("renameDevice." + device.id)
