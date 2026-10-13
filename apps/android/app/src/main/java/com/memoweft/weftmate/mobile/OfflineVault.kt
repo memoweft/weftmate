@@ -25,7 +25,7 @@ import javax.crypto.spec.PSource
 import javax.crypto.spec.SecretKeySpec
 
 /** Replica and outbox never enter LocalStore, WebView storage, logs or Android backups. */
-internal class OfflineVault(context: Context, private val host: HostIdentity) {
+internal class OfflineVault(context: Context, private val host: HostIdentity, private val recipient: HostIdentity = host) {
     companion object { private val locks = ConcurrentHashMap<String, Any>() }
     private val scope = MessageDigest.getInstance("SHA-256").digest("${host.origin}:${host.ownerId}".toByteArray()).joinToString("") { "%02x".format(it) }
     private val prefix = "weftmate-offline-$scope"
@@ -88,7 +88,7 @@ internal class OfflineVault(context: Context, private val host: HostIdentity) {
         if (snapshot != null && prior != null) {
             require(snapshot.getLong("generation") == prior.getLong("generation"))
             // Credential selection only comes from the authenticated host envelope.
-            snapshot.put("model", prior.getJSONObject("model"))
+            snapshot.put("model", prior.optJSONObject("model") ?: JSONObject.NULL)
         }
         write(value); return JSONObject().put("saved", true)
     }
@@ -97,7 +97,7 @@ internal class OfflineVault(context: Context, private val host: HostIdentity) {
         key()
         val aad = decode(envelope.getString("aad"))
         val header = JSONObject(String(aad))
-        for ((name, expected) in listOf("ownerId" to host.ownerId, "hostId" to host.hostId, "deviceId" to host.deviceId))
+        for ((name, expected) in listOf("ownerId" to recipient.ownerId, "hostId" to recipient.hostId, "deviceId" to recipient.deviceId))
             require(header.getString(name) == expected && identity.getString(name) == expected)
         require(header.getInt("version") == 1)
         val unwrap = Cipher.getInstance("RSA/ECB/OAEPPadding")
