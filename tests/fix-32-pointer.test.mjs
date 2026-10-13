@@ -50,3 +50,14 @@ test('FIX-32 first typing changes the microphone button into a working send acti
  await page.locator('#send-message').click();assert.equal(await page.evaluate(()=>submits),1);
  }finally{await browser.close()}
 });
+
+test('FIX-32 a blocked send notice keeps its fixed position when its text starts with 正在',async()=>{
+ const browser=await chromium.launch({headless:true});try{
+ const page=await browser.newPage({viewport:{width:360,height:780}});
+ await page.setContent(`<style>.toast{position:fixed;top:16px;left:16px;margin:0} ${readFileSync('src/ui-core/reply-motion.css','utf8')}</style><div style="height:780px"></div><p id="toast" class="toast" role="status"></p>`);
+ await page.addScriptTag({content:readFileSync('src/ui-core/reply-motion.js','utf8')});
+ await page.evaluate(()=>document.getElementById('toast').textContent='正在准备文件夹，请稍候再发送。');await page.waitForTimeout(50);
+ const notice=await page.locator('#toast').evaluate(n=>({classified:n.classList.contains('reply-status'),position:getComputedStyle(n).position,top:n.getBoundingClientRect().top}));
+ assert.equal(notice.classified,false,'send notices must not become reply progress rows');assert.equal(notice.position,'fixed');assert.equal(notice.top,16);
+ }finally{await browser.close()}
+});
