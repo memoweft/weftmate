@@ -75,6 +75,11 @@ private actor NativeAccountTransport: HTTPTransport {
             return try reply(["access_token": token(access, type: "at+jwt"), "id_token": token(id),
                 "refresh_token": "rotation-\(rotation)", "token_type": fault == "bearer" ? "Bearer" : "DPoP"])
         }
+        if path.hasSuffix("/hosts/rename") || path.hasSuffix("/hosts/remove") {
+            #expect(request.value(forHTTPHeaderField:"Authorization")?.hasPrefix("DPoP ") == true)
+            #expect(request.value(forHTTPHeaderField:"DPoP") != nil)
+            return try reply(["updated":true])
+        }
         if path.hasSuffix("devices") {
             #expect(request.value(forHTTPHeaderField: "Authorization")?.hasPrefix("DPoP ") == true)
             #expect(request.value(forHTTPHeaderField: "DPoP") != nil)
@@ -90,6 +95,22 @@ private actor NativeAccountTransport: HTTPTransport {
 }
 
 @Suite struct AppAccountTests {
+    @Test func computerManagementUsesExactAccountRoutesAndStableHostID() async throws {
+        let config=CloudConfiguration(server:try ServerConfiguration(input:"https://cloud.example.com"))
+        let key=try CloudDeviceKey(softwareStore:MemoryStore()),fixture=try NativeAccountTransport(configuration:config,thumbprint:key.thumbprint)
+        let client=CloudAccountClient(configuration:config,key:key,store:MemoryStore(),transport:fixture)
+        try await client.beginAppLogin()
+        let reply=try await client.appLogin(email:"synthetic@example.com",password:UUID().uuidString,name:"Test",type:"ios")
+        guard let resume=reply.resumeUrl else { throw APIFailure.invalidResponse };try await client.finishAppLogin(resumeURL:resume)
+        try await client.renameComputer(hostID:"host-two",name:"合成电脑")
+        try await client.removeComputer(hostID:"host-two")
+        let requests=await fixture.recorded().filter {$0.url?.path.hasSuffix("/hosts/rename") == true || $0.url?.path.hasSuffix("/hosts/remove") == true}
+        #expect(requests.map {$0.url?.path} == ["/personal/v1/cloud/hosts/rename","/personal/v1/cloud/hosts/remove"])
+        for request in requests {
+            let data=try #require(request.httpBody),body=try #require(JSONSerialization.jsonObject(with:data) as? [String:Any])
+            #expect(body["hostId"] as? String == "host-two");#expect(body["deviceId"] == nil)
+        }
+    }
     @Test func offlineStatusUsesNativeDPoPAndRestoredAccount() async throws {
         let config = CloudConfiguration(server: try ServerConfiguration(input: "https://cloud.example.com"))
         let store = MemoryStore(), key = try CloudDeviceKey(softwareStore: MemoryStore())

@@ -3,6 +3,9 @@ import Foundation
 public struct CloudDirectory: Codable, Sendable {
     public let devices: [CloudDirectoryDevice]
     public let hosts: [CloudDirectoryDevice]
+    public var capabilities: [String:Int]? = nil
+    public var removedHosts: [RemovedComputer]? = nil
+    public struct RemovedComputer: Codable, Sendable { public var hostId: String;public var name: String }
 }
 public struct CloudDirectoryDevice: Codable, Sendable, Identifiable {
     public let id: String
@@ -13,6 +16,8 @@ public struct CloudDirectoryDevice: Codable, Sendable, Identifiable {
     public let lastUsedAt: String?
     public let isCurrent: Bool
     public let hostId: String?
+    public var displayName: String? = nil
+    public var computerName: String { displayName ?? name }
     public var icon: String {
         switch type { case "computer", "macos", "windows": "desktop"; case "web": "web"; case "watch": "watch"; default: "phone" }
     }
