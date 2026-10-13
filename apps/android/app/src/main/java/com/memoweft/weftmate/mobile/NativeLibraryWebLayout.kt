@@ -61,7 +61,7 @@ internal fun libraryTypeLabel(row:JSONObject):String {
             else -> items(model.rows,key={it.getString("id")}) { row ->
                 var menu by remember(row.getString("id")){mutableStateOf(false)}
                 val ref=remember(row.toString()){JSONObject(row.toString()).put("libraryId",row.getString("id"))}
-                Row(Modifier.fillMaxWidth().padding(vertical=DesignTokens.space6.dp).clip(RoundedCornerShape(DesignTokens.radius26.dp)).background(MaterialTheme.colorScheme.surfaceVariant).clickable{onPreview(ref)}.padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth().padding(vertical=DesignTokens.space6.dp).clip(RoundedCornerShape(DesignTokens.radius26.dp)).background(if(chat.dark)MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant).clickable{onPreview(ref)}.padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
                     LibraryThumbnail(row,activity)
                     Column(Modifier.weight(1f).padding(horizontal=gap),verticalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)) {
                         Text(row.optString("fileName","文件"),fontWeight=FontWeight.Medium,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,maxLines=2,overflow=TextOverflow.Ellipsis)

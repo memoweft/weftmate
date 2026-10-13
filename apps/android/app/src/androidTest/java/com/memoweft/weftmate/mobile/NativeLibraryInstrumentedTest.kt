@@ -105,6 +105,11 @@ class NativeLibraryInstrumentedTest {
         compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasContentDescription("按项目筛选"))
         compose.onNodeWithContentDescription("按文件类型筛选").performClick();shot("type-menu");compose.onNodeWithText("全部",useUnmergedTree=true).performClick()
         compose.onNodeWithContentDescription("按项目筛选").performClick();shot("filter-menu");compose.onAllNodesWithText("全部项目").onLast().performClick()
+        control("error");compose.onNodeWithContentDescription("刷新成果库").performClick()
+        compose.waitUntil(30000){compose.onAllNodesWithText("那台电脑不在线，连接后再试。").fetchSemanticsNodes().isNotEmpty()}
+        shot("library-offline-cached");reveal("虚构文档.docx");compose.onNodeWithText("虚构文档.docx").assertExists()
+        control("normal");compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasContentDescription("刷新成果库"));compose.onNodeWithContentDescription("刷新成果库").performClick()
+        compose.waitUntil(30000){compose.onAllNodesWithText("那台电脑不在线，连接后再试。").fetchSemanticsNodes().isEmpty()}
         for((name,label) in listOf("虚构风景.png" to "image","虚构便签.txt" to "text","虚构周计划.md" to "markdown","synthetic-example.py" to "code","虚构阅读.pdf" to "pdf","虚构文档.docx" to "other")) {
             reveal(name)
             compose.onNodeWithText(name).performClick()

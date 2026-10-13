@@ -49,7 +49,12 @@ internal class NativeFileAccess(private val context: Context, private val api: P
                         "text","code","markdown" -> { mime=nativeFileMime(name);target.writeText(preview.getString("text"),Charsets.UTF_8) }
                         else -> {
                             // Old verified artifacts have a download endpoint; native Office/archives do not yet.
-                            try { target.writeBytes(api.artifactBytes(host,libraryId)) }
+                            try {
+                                val record=api.artifactPreview(host,libraryId).getJSONObject("artifact")
+                                val bytes=api.artifactBytes(host,libraryId)
+                                require(bytes.size.toLong()==record.getLong("size") && MessageDigest.getInstance("SHA-256").digest(bytes).joinToString(""){"%02x".format(it)}==record.getString("sha256").lowercase())
+                                target.writeBytes(bytes)
+                            }
                             catch (e: Exception) {
                                 if (e is ApiFailure && e.status in setOf(401,403)) throw e
                                 target.parentFile?.deleteRecursively()
