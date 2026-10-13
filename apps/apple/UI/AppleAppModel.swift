@@ -771,11 +771,18 @@ final class AppleAppModel: ObservableObject {
             store: KeychainCredentialStore(service: cloudNamespace + ".offline"),
             allowLoopback: permitsSyntheticLoopback, control: offlineAuthorization)
         #if os(iOS)
+        await phoneChat.synchronize(app:self)
         if offline.hostOffline { _ = await watchSnapshotBytes() }
         #endif
     }
     private var cloudNamespace = "com.weftmate.apple.cloud"
     lazy var mainChat = MainChatModel(app: self)
+    #if os(iOS)
+    @Published var phonePreviewRequest=UUID()
+    lazy var phoneChat = PhoneStandaloneModel()
+    var phoneCredentialNamespace: String { cloudNamespace + ".phone" }
+    var phoneAccountIdentity: String { cloudLogin.subject.map { cloudLogin.cloudAddress + "|" + $0 } ?? "device-local" }
+    #endif
     lazy var cloudLogin = CloudLoginModel(app: self, namespace: cloudNamespace)
     @Published var timelineRootCommands: [TaskRootCommandMetadata] = []
     @Published var stoppingActiveTask = false
@@ -2159,6 +2166,9 @@ final class AppleAppModel: ObservableObject {
             authBusy = false
             return
         }
+        #if os(iOS)
+        phoneChat.stop()
+        #endif
         clearVisibleAccount()
         var cloudCleanupFailure = false
         do { try await cloudLogin.signOut() } catch { cloudCleanupFailure = true }

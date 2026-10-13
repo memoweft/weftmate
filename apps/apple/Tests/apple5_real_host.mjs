@@ -12,6 +12,7 @@ import {putActivity} from '../../../src/personal-access/activity-store.mjs';
 import {reconcileChatIdentity} from '../../../src/personal-access/chat-identity.mjs';
 import {validateStore} from '../../../src/personal-access/store.mjs';
 const root=await realpath(await mkdtemp(join(tmpdir(),'weftmate-apple5-')));
+const healthZone=process.env.WEFTMATE_APPLE6_HEALTH_ZONE ?? 'UTC';
 const day='2026-10-12', now=Date.parse(day+'T12:00:00Z'), goals=new Map(), schedules=new Map();
 const sessionId='apple5-session', goalId='apple5-goal', scheduleId='apple5-reminder';
 let modelCalls=0, sends=0, scheduleCreates=0;
@@ -42,8 +43,8 @@ const setup=await fetch(origin+'/personal/v1/auth/setup',{method:'POST',headers:
 if(setup.status!==201)throw Error('synthetic setup failed');
 const auth=await setup.json(),cookie=setup.headers.get('set-cookie').split(';')[0];
 const req=async(path,method='GET',body)=>{const response=await fetch(origin+'/personal/v1'+path,{method,headers:{origin,cookie,'content-type':'application/json','x-weftmate-csrf':auth.csrfToken},...(body===undefined?{}:{body:JSON.stringify(body)})});const data=await response.json();if(response.status>=400)throw Error(path+' '+response.status+' '+data.error?.code);return data;};
-await req('/settings/usage','PATCH',{timeZone:'UTC'});await req('/settings/models','PATCH',{defaultModelProfileId:'local',backgroundModelProfileId:'local'});await req('/settings/health','PATCH',{modelInsightsEnabled:false});
-const fixture=generateHealthV3Fixture({to:day,timeZone:'UTC'}),sequence=generateHealthV3Sequence({to:day,timeZone:'UTC'});
+await req('/settings/usage','PATCH',{timeZone:healthZone});await req('/settings/models','PATCH',{defaultModelProfileId:'local',backgroundModelProfileId:'local'});await req('/settings/health','PATCH',{modelInsightsEnabled:false});
+const fixture=generateHealthV3Fixture({to:day,timeZone:healthZone}),sequence=generateHealthV3Sequence({to:day,timeZone:healthZone});
 await req('/health/profile','PUT',sequence.profile);await req('/health/records/batch','PUT',{items:sequence.items});
 // Seed isolated native receipts using the real persisted schema, then restart before reading.
 await service.close();const storeFile=join(root,'store.json'),store=JSON.parse(await readFile(storeFile,'utf8')),account=store.accounts[auth.account.ownerId];

@@ -27,6 +27,7 @@ struct HealthPageView: View {
                 }
             }.padding(AppleTokens.Space.p20)
         }.background(Weave.canvas).navigationTitle("健康")
+            .toolbarBackground(Weave.canvas,for:.navigationBar).toolbarBackground(.visible,for:.navigationBar)
             .toolbar {
                 ToolbarItem(placement:.primaryAction) {
                     Button { Task { await health.activate(app:app); await page.refresh(app:app) } } label: { WeftIcon("sync") }
@@ -71,26 +72,26 @@ struct HealthPageView: View {
                     HealthScoreNumber(text:minutes(o.sleep?.minutes))
                     Text("深睡 "+minutes(o.sleep?.deepMinutes ?? page.cache.series["deepMinutes-7"]?.points.last?.value)+" · 快速眼动 "+minutes(o.sleep?.remMinutes ?? page.cache.series["remMinutes-7"]?.points.last?.value))
                     Text(time(o.sleep?.start)+" — "+time(o.sleep?.end)).foregroundStyle(.secondary)
-                    Text(o.usage?.lastUsedAt == nil ? "深夜使用电脑 "+minutes(o.usage?.lateNightMinutes) : "最近一次向 WeftMate 发消息 "+time(o.usage?.lastUsedAt)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary)
+                    if let used=o.usage?.lastUsedAt { Text("最近一次向 WeftMate 发消息 "+time(used)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
+                    else if let late=o.usage?.lateNightMinutes,o.usage?.activeMinutes != nil { Text("深夜使用电脑 "+minutes(late)).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
+                    Text("设备本地时间").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                 }.frame(maxWidth:.infinity,alignment:.leading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("health.sleepDuration")
         }
         Text("身体指标").font(AppleTokens.Fonts.title2.bold())
-        ScrollView(.horizontal) {
-            HStack(alignment:.top,spacing:AppleTokens.Space.p12) {
+        LazyVGrid(columns:[GridItem(.flexible(minimum:0)),GridItem(.flexible(minimum:0))],alignment:.leading,spacing:AppleTokens.Space.p12) {
                 ForEach(vitalIDs,id:\.self) { id in
                     let metric=o.vital(id)
                     card {
                         NavigationLink { detail(id,title(id)) } label: {
                             VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
                                 Text(title(id)).font(AppleTokens.Fonts.headline)
-                                HealthScoreNumber(text:number(metric?.value)+unit(id))
+                                HealthScoreNumber(text:PhoneHealthText.number(metric?.value,metric:id),unit:unit(id))
                                 HStack { Circle().fill(stateColor(metric?.state)).frame(width:8,height:8); Text(metric?.value == nil ? "暂时没有测量" : metric?.label ?? "再戴几天就有对比了").font(AppleTokens.Fonts.footnote).foregroundStyle(stateColor(metric?.state)) }
                             }.contentShape(Rectangle())
                         }.buttonStyle(.plain).accessibilityIdentifier("health.vital."+id)
-                    }.frame(width:210)
+                    }.frame(maxWidth:.infinity,minHeight:150,alignment:.topLeading)
                 }
-            }
         }
         card {
             NavigationLink { detail("steps","步数") } label: {
@@ -124,7 +125,7 @@ struct HealthPageView: View {
                     Text(value?.label ?? "再戴几天就有对比了").foregroundStyle(stateColor(value?.state)).font(AppleTokens.Fonts.caption)
                     HealthScoreNumber(text:number(value?.score))
                     HealthScoreRangeBar(score:value?.score,low:value?.low,high:value?.high,state:value?.state)
-                }.contentShape(Rectangle())
+                }.frame(maxWidth:.infinity,minHeight:210,alignment:.topLeading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("health.score."+id)
         }
     }
@@ -132,17 +133,17 @@ struct HealthPageView: View {
         card {
             NavigationLink { detail(id,name) } label: {
                 VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
-                    Text(name).font(AppleTokens.Fonts.title2.bold())
+                    Text(name).font(AppleTokens.Fonts.headline)
+                    Text(label ?? "还没有足够的测量").foregroundStyle(stateColor(state)).font(AppleTokens.Fonts.caption)
                     HealthScoreNumber(text:number(value))
-                    if id != "fitnessAge" { HealthScoreRangeBar(score:value,low:nil,high:nil,state:state) }
-                    Text(label ?? "还没有足够的测量").foregroundStyle(stateColor(state))
+                    HealthScoreRangeBar(score:id == "fitnessAge" ? nil : value,low:nil,high:nil,state:state)
                     if id == "stress" { Text("最近一次测量 "+time(page.cache.overview?.stress?.latest?.time)).font(AppleTokens.Fonts.footnote) }
-                    if id == "energy", let curve=page.cache.overview?.energy?.curve {
+                    if id == "energy", let curve=page.cache.overview?.energy?.curve,curve.compactMap(\.value).count >= 2 {
                         Chart(Array(curve.enumerated()),id:\.offset) { i,p in
                             if let v=p.value { LineMark(x:.value("时刻",i),y:.value("电能",v)).lineStyle(StrokeStyle(lineWidth:AppleTokens.Space.p4,lineCap:.round,lineJoin:.round)) }
-                        }.frame(height:80).accessibilityLabel("当日电能曲线")
+                        }.chartXAxis(.hidden).chartYAxis(.hidden).frame(height:32).accessibilityLabel("当日电能曲线")
                     }
-                }.contentShape(Rectangle())
+                }.frame(maxWidth:.infinity,minHeight:210,alignment:.topLeading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("health.extra."+id)
         }
     }
@@ -158,10 +159,10 @@ private func title(_ id: String) -> String {
     ["recovery":"恢复","sleep":"睡眠","load":"负荷","restingHeartRateBpm":"静息心率","hrvSdnnMs":"心率变异性","respiratoryRateBrpm":"呼吸频率","spo2Pct":"血氧","wristTempC":"手腕温度"][id] ?? "身体变化"
 }
 private func unit(_ id: String) -> String { ["restingHeartRateBpm":" 次/分","hrvSdnnMs":" 毫秒","respiratoryRateBrpm":" 次/分","spo2Pct":"%","wristTempC":"°C"][id] ?? "" }
-private func number(_ value: Double?) -> String { value.map { $0.formatted(.number.precision(.fractionLength(0...1))) } ?? "—" }
-private func minutes(_ value: Double?) -> String { value.map { $0 >= 60 ? "\(Int($0)/60) 小时 \(Int($0)%60) 分" : "\(Int($0)) 分钟" } ?? "—" }
-private func time(_ value: String?) -> String { guard let value,let date=HealthInputMath.parseISO(value) else { return "—" }; let f=DateFormatter(); f.dateFormat="H:mm"; return f.string(from:date) }
-private func stateColor(_ state: String?) -> Color { switch HealthPagePolicy.statusTint(state) { case .green: .green; case .amber: .orange; case .muted: Weave.muted } }
+private func number(_ value: Double?) -> String { PhoneHealthText.number(value) }
+private func minutes(_ value: Double?) -> String { value.map { let n=Int($0.rounded()); return n >= 60 ? "\(n/60) 小时 \(n%60) 分" : "\(n) 分钟" } ?? "—" }
+private func time(_ value: String?) -> String { PhoneHealthText.time(value,zone:.current) }
+private func stateColor(_ state: String?) -> Color { switch HealthPagePolicy.statusTint(state) { case .green: AppleTokens.Colors.healthRecovery; case .amber: AppleTokens.Colors.healthStressModerate; case .muted: Weave.muted } }
 extension JSONValue { var healthNumber: Double? { if case .number(let v)=self { v } else { nil } } }
 
 struct HealthAnalysisRow: View {
@@ -217,7 +218,7 @@ struct HealthDetailView: View {
         ScrollView {
             VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
                 Text(series?.points.last?.label ?? "看看它相对你平时的变化").font(AppleTokens.Fonts.title2.bold())
-                HealthScoreNumber(text:number(series?.points.last?.value)+unit(id))
+                HealthScoreNumber(text:PhoneHealthText.number(series?.points.last?.value,metric:id),unit:unit(id))
                 if let low=series?.points.last?.low, let high=series?.points.last?.high {
                     Text("你平时的范围 "+number(low)+" — "+number(high)).foregroundStyle(.secondary)
                     Gauge(value:series?.points.last?.value ?? low,in:min(low,series?.points.last?.value ?? low)...max(high,low+0.1,series?.points.last?.value ?? high)) { Text("相对平时的位置") }.tint(Weave.accent)
