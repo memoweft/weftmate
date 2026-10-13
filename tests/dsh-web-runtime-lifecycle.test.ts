@@ -9,12 +9,14 @@ import { after, before, describe, test } from 'node:test'
 import { DshWebRuntime } from '../src/dsh-web-runtime.ts'
 
 let root: string
+const runtimes = new Set<DshWebRuntime>()
 
 before(async () => {
   root = await mkdtemp(join(tmpdir(), 'weftmate-dsh-runtime-lifecycle-'))
 })
 
 after(async () => {
+  await Promise.all([...runtimes].map(web => web.close()))
   await rm(root, { recursive: true, force: true })
 })
 
@@ -79,12 +81,17 @@ async function makeCheckout(name: string): Promise<string> {
   return checkout
 }
 
-async function waitForFile(path: string): Promise<string> {
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    if (existsSync(path)) return (await readFile(path, 'utf8')).trim()
+async function waitForFile(path: string, startup?: Promise<unknown>): Promise<string> {
+  let failure: unknown
+  startup?.catch(error => { failure = error })
+  for (;;) {
+    if (failure) throw failure
+    if (existsSync(path)) {
+      const text = (await readFile(path, 'utf8')).trim()
+      if (text) return text
+    }
     await new Promise<void>((resolve) => setTimeout(resolve, 20))
   }
-  throw new Error(`timed out waiting for ${path}`)
 }
 
 async function waitForCredentialResponse(path: string): Promise<Record<string, unknown>> {
@@ -111,13 +118,15 @@ function isAlive(pid: number): boolean {
 }
 
 function runtime(checkoutPath: string, env: NodeJS.ProcessEnv): DshWebRuntime {
-  return new DshWebRuntime({
+  const web = new DshWebRuntime({
     checkoutPath,
     homeDir: join(root, `home-${Math.random().toString(16).slice(2)}`),
     workspaceDir: join(root, `workspace-${Math.random().toString(16).slice(2)}`),
     readyTimeoutMs: 15_000,
     credentialEnv: () => env,
   })
+  runtimes.add(web)
+  return web
 }
 
 describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
@@ -217,7 +226,7 @@ describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
     // Attach before either startup or close can settle the expected rejection.
     const start = web.start()
     const rejectedStart = assert.rejects(start, /DshWebRuntime is closed/)
-    const rootPid = Number(await waitForFile(rootPidFile))
+    const rootPid = Number(await waitForFile(rootPidFile, start))
     const closeA = web.close()
     const closeB = web.close()
     assert.strictEqual(closeA, closeB)

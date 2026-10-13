@@ -184,6 +184,28 @@
       const token = await this.access(), url = this.base + path;
       return this.request(url, { method, body, headers: { Authorization: 'DPoP ' + token, DPoP: await this.proof(url, { method, token }) } });
     }
+    async channel(connection, request) {
+      const generation = this.generation, saved = await this.saved();
+      await this.authorized('/hosts/connect', {method:'POST',body:{hostId:connection.hostId}});
+      const token = await this.access(this.base + '/hosts/' + connection.hostId);
+      const nonce = await request('/personal/v1/auth/cloud-nonce', {method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+      const url = connection.baseUrl + '/personal/v1/auth/cloud-channel';
+      const proof = await this.proof(url, {token,nonce:nonce.nonce});
+      const session = await request('/personal/v1/auth/cloud-channel', {method:'POST',headers:{'content-type':'application/json',DPoP:proof},
+        body:JSON.stringify({accessToken:token,deviceName:saved.deviceName || '这台设备'})});
+      if (generation !== this.generation) fail('CLOUD_TOKEN_INVALID');
+      const trust = session.hostTrust, key = await this.key();
+      if (!trust?.publicJwk || !session.token) fail('HOST_TRUST_INVALID');
+      const jkt = await this.hash(JSON.stringify({crv:key.publicJwk.crv,kty:key.publicJwk.kty,x:key.publicJwk.x,y:key.publicJwk.y}));
+      const {payload} = await this.vendor.jwtVerify(trust.trustToken,this.vendor.createLocalJWKSet({keys:[trust.publicJwk]}),{
+        algorithms:['ES256'],typ:'wm-host-trust+jwt',issuer:connection.hostId,audience:jkt,maxTokenAge:'120s',clockTolerance:30,currentDate:new Date(this.now())});
+      if(payload.sub!==saved.sub || payload.deviceId!==key.deviceId || payload.hostId!==connection.hostId || payload.jkt!==jkt) fail('HOST_TRUST_INVALID');
+      const prior = await this.credentials('trusted-host:'+connection.hostId);
+      if(prior?.publicJwk && await this.hash(JSON.stringify({crv:prior.publicJwk.crv,kty:prior.publicJwk.kty,x:prior.publicJwk.x,y:prior.publicJwk.y})) !==
+        await this.hash(JSON.stringify({crv:trust.publicJwk.crv,kty:trust.publicJwk.kty,x:trust.publicJwk.x,y:trust.publicJwk.y}))) fail('HOST_TRUST_INVALID');
+      await this.credentials('trusted-host:'+connection.hostId,{tlsSpki:payload.tlsSpki,publicJwk:trust.publicJwk,origin:connection.baseUrl});
+      return session;
+    }
     async exchange(desktop = false, pairing = null) {
       const generation = this.generation, csrf = desktop ? this.localCsrf?.() : undefined;
       const saved = await this.saved();

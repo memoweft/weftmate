@@ -1,11 +1,17 @@
 /* The existing phone UI presents account-owned M3 conversations in its main chat. */
 (() => {
-  let engine, account, cloud, native, sessionKey, memoryModel, progress, poll, archive, handoffNotice=false, memoryTimer;
+  let engine, account, cloud, native, sessionKey, memoryModel, progress, poll, archive, handoffNotice=false, nativeError='', memoryTimer;
   const data = () => engine?.view() || archive;
   const list = () => (data()?.conversations || []).map(c => ({ id: c.id, createdAt: new Date(c.turns[0]?.timestamp || Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
   const nativeCall = (...args) => androidBridge.call(...args);
   const modelView = model => model && { source: 'phone', endpoint: model.baseUrl, modelId: model.modelId, displayName: model.displayName || model.modelId };
   const currentModel = () => native ? state.model && { modelId: state.model.modelId, baseUrl: state.model.endpoint } : memoryModel;
+  const sendBlocker = text => !engine ? '正在打开对话，请稍候再发送。'
+    : !state.model ? '先在设置里添加一个模型，再开始聊天。'
+    : state.modelSwitching ? '正在测试或切换模型，请稍候再发送。'
+    : engine.view().running ? '当前回复还在进行，请先停止或等待。'
+    : !text.trim() ? '先输入消息。'
+    : text.trim().length>16384 ? '消息过长，请缩短后发送。' : '';
   const show = () => {
     if (!engine) return;
     const value = engine.view(); state.busy = value.running;
@@ -34,9 +40,9 @@
     scrollBottom();
   }
   async function run(action) {
-    status('');
+    status(''); nativeError='';
     try { const result = await action(); if (result) state.conversationId = result.conversationId; }
-    catch (error) { const stopped=error.name==='AbortError'||error.message==='CANCELLED';status(stopped?'已停止，生成的文字已保存。':'回复未完成，已保存生成的文字。请检查网络或模型配置后重试。',!stopped); }
+    catch (error) { const stopped=error.name==='AbortError'||error.message==='CANCELLED';nativeError=stopped?'已停止，生成的文字已保存。':'回复未完成，已保存生成的文字。请检查网络或模型配置后重试。';status(nativeError,!stopped); }
     finally { show();clearTimeout(memoryTimer);const id=state.conversationId;memoryTimer=setTimeout(()=>void engine?.extractMemory(id),20000); }
   }
   async function attachEngine(info, client, adopt = true) {
@@ -52,6 +58,7 @@
         save: value => nativeCall('phone.offline.save', { value }), clear: () => nativeCall('phone.offline.clear',phoneScope), close() {},
         open: (envelope, identity) => nativeCall('phone.offline.open', { envelope, identity }),
         complete: async (body, _snapshot, signal, onProgress) => {
+          if(signal.aborted)throw new DOMException('CANCELLED','AbortError');
           progress = onProgress; const stop = () => void nativeCall('phone.stop'); signal.addEventListener('abort', stop, { once: true });
           try { return await nativeCall('phone.complete', { body }, 180000); }
           finally { progress = null; signal.removeEventListener('abort', stop); }
@@ -109,6 +116,18 @@
     if (method.startsWith('shared.')) return { source: 'host', hostAvailable: false, sessions: [], commands: [], projects: [] };
     const action = { 'models.list': 'list', 'models.configure': 'configure', 'models.select': 'select', 'models.account.removeLocal': 'remove', 'models.verifyPhone': 'test' }[method];
     if (action) {
+      if (action === 'test') {
+        const previous=state.modelSwitching;state.modelSwitching=true;updateComposer();
+        try {
+          if(native)return await nativeCall('phone.models.test',p);
+          if(!memoryModel)throw Error('MODEL_NOT_CONFIGURED');
+          const response=await fetch(memoryModel.baseUrl+'/chat/completions',{method:'POST',redirect:'error',cache:'no-store',
+            headers:{'content-type':'application/json',authorization:`Bearer ${memoryModel.apiKey}`},
+            body:JSON.stringify({model:memoryModel.modelId,messages:[{role:'user',content:'只回复 OK'}]})});
+          if(!response.ok||!(await response.json()).choices?.[0]?.message?.content)throw Error('MODEL_UNAVAILABLE');
+          return {available:true};
+        } finally {state.modelSwitching=previous;updateComposer();}
+      }
       if (native) return nativeCall('phone.models.' + action, p);
       if (action === 'list') return { models: memoryModel ? [{ ...modelView(memoryModel), selected: true }] : [] };
       if (action === 'configure') {
@@ -118,17 +137,34 @@
         memoryModel = { baseUrl: p.endpoint.replace(/\/$/, ''), modelId: p.modelId, apiKey, displayName: p.displayName || p.modelId }; return modelView(memoryModel);
       }
       if (action === 'remove') { memoryModel = null; state.model = null; return {}; }
-      if (action === 'test') {
-        const response = await fetch(memoryModel.baseUrl + '/chat/completions', { method: 'POST', redirect: 'error', cache: 'no-store',
-          headers: { 'content-type': 'application/json', authorization: `Bearer ${memoryModel.apiKey}` },
-          body: JSON.stringify({ model: memoryModel.modelId, messages: [{ role: 'user', content: '只回复 OK' }] }) });
-        if (!response.ok || !(await response.json()).choices?.[0]?.message?.content) throw Error('MODEL_UNAVAILABLE'); return { available: true };
-      }
       return modelView(memoryModel);
     }
     throw Error('HOST_UNAVAILABLE');
   }
   const api = globalThis.WeftPhone = {
+    // Compose uses the existing account engine as its state service. Secrets and
+    // completion transport remain in the phone bridge; this is presentation only.
+    presentation: async (action, p = {}) => {
+      let sent=true;
+      const authBusy=!!globalThis.WeftMobileCloud?.core?.cloudAuthView?.()?.busy;
+      if (!state.booted || !state.loggedIn || !engine || !account) return { ready: false, authBusy };
+      if (p.owner && p.owner !== sessionKey) throw Error('ACCOUNT_SWITCHED');
+      if (action === 'model') state.model = await nativeCall('phone.models.select', p);
+      else if (action === 'composer') await engine.saveComposer(p.conversationId || null, p.draft || '');
+      else if (action === 'send' || action === 'regenerate') {
+        if (!api.active) throw Error('HOST_AVAILABLE');
+        const reason=sendBlocker(action==='send'?String(p.text||''):'重新生成');
+        if(reason){nativeError=reason;sent=false;}
+        else {
+          state.conversationId = p.conversationId || null;
+          void run(() => action === 'send' ? engine.send(p.text, state.conversationId) : engine.regenerate(state.conversationId));
+        }
+      } else if (action === 'stop') engine.stop();
+      else if (action !== 'view') throw Error('INVALID_REQUEST');
+      const value = engine.view();
+      return { ready: true, active: api.active, authBusy, owner: sessionKey, page: state.page, selectedId: state.conversationId,
+        running: value.running, sent, modelSwitching:!!state.modelSwitching, conversations: value.conversations, composer: value.nativeComposer || null, drafts: value.nativeDrafts || {}, error: nativeError };
+    },
     ensureAccount: async info => {if(sessionKey&&sessionKey!==`${info.origin}:${info.accountId}`)await api.clear();},
     modelCall: (method,p={})=>routeCall(method,p),
     get memory(){return engine?.view().phoneMemory;},get handover(){return engine?.view().handover;},
@@ -137,11 +173,12 @@
     flushMemory:id=>engine?.extractMemory(id||state.conversationId),
     removeConversation:async id=>{await engine.removeConversation(id);if(state.conversationId===id)selectConversation(null);show();if(!api.active)await connected();},
     get active() { return state.connection === 'phone' && !!engine; }, get hasData() { return !!data(); }, owns: id => !!data()?.conversations.some(c=>c.id===id), list, start, connected, routeCall, render,
+    sendBlocker,
     restoreArchive: async (info, client) => { if (engine) return; try {const identity=window.weftNative?await nativeCall('phone.identity'):info;if(!identity?.accountId)return;await attachEngine(identity,client,false);} catch {} },
     event: value => { if (value.event === 'phone.progress') { progress?.(value.data.text); return true; } return false; },
-    send: () => { const text = $('draft').value.trim(); if (!text || engine?.view().running || !state.model) return; $('draft').value = ''; return run(() => engine.send(text, state.conversationId)); },
+    send: () => { const text = $('draft').value.trim(), reason=sendBlocker(text); if(reason){toast(reason);updateComposer();return {sent:false,reason};} $('draft').value = ''; return run(() => engine.send(text, state.conversationId)); },
     stop: () => engine?.stop(),
-    clear: async () => { clearInterval(poll);clearTimeout(memoryTimer); const previous = engine, hadArchive = archive; engine = null; archive = null; memoryModel = null; account = null; sessionKey = null; state.model = null;
+    clear: async () => { clearInterval(poll);clearTimeout(memoryTimer); const previous = engine, hadArchive = archive; engine = null; archive = null; memoryModel = null; account = null; sessionKey = null; state.model = null; nativeError='';
       uiCore.phoneAccountConnection(false); if (previous) { previous.close(); } else if (hadArchive && window.weftNative) await nativeCall('phone.offline.clear'); },
     empty(target, name) {
       if(name==='memory')return WeftPhoneMemoryView(target);

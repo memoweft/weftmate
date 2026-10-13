@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application android:networkSecurityConfig="@xml/debug_network_security">
         <receiver android:name="com.memoweft.weftmate.mobile.DiagnosticQaReceiver" android:exported="true" />
+        <receiver android:name="com.memoweft.weftmate.mobile.And4QaReceiver" android:exported="true" />
+        <receiver android:name="com.memoweft.weftmate.mobile.And5QaReceiver" android:exported="true" />
+        <activity android:name="com.memoweft.weftmate.mobile.And5LegacyActivity" android:exported="false" />
         <activity android:name="com.memoweft.weftmate.mobile.St4RemoteBrowserActivity" android:process=":st4remote" android:exported="true" />
     </application>
 </manifest>

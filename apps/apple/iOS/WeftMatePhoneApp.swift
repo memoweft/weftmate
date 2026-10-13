@@ -10,7 +10,9 @@ struct WeftMatePhoneApp: App {
     var body: some Scene {
         WindowGroup {
             #if DEBUG && targetEnvironment(simulator)
-            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-addendum") { Apple5AddendumFixture(health:health) }
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple8-fixture") { PhoneAttachmentScreenshotFixture(app:model) }
+            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple7-fixture") { PhoneMemoryScreenshotFixture(app:model) }
+            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-addendum") { Apple5AddendumFixture(health:health) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-fixture") { Apple5Fixture(health:health) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple4-fixture") { Apple4Fixture(health: health) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple3-fixture") { Apple3Fixture(health:health) }
@@ -23,11 +25,12 @@ struct WeftMatePhoneApp: App {
             content
             #endif
         }
-        .onChange(of: logScenePhase) { _, phase in RunLogRuntime.shared.phase(phase) }
+        .onChange(of: logScenePhase) { _, phase in RunLogRuntime.shared.phase(phase);if phase == .background || phase == .active { model.phoneChat.finishConversation() } }
     }
     private var healthContent: some View {
         WeftMateRootView(model: model)
             .environmentObject(health)
+            .modifier(PhoneCloudHealthActivation(app:model,cloud:model.cloudLogin,health:health))
             // Restored accounts also prepare observers when iOS starts the app in the background.
             .task(id: "health-account-\(model.accountEpoch)-\(model.session?.verification.rawValue ?? "none")") {
                 await health.activate(app: model)
@@ -44,5 +47,14 @@ struct WeftMatePhoneApp: App {
         #else
         healthContent
         #endif
+    }
+}
+
+private struct PhoneCloudHealthActivation: ViewModifier {
+    @ObservedObject var app: AppleAppModel
+    @ObservedObject var cloud: CloudLoginModel
+    @ObservedObject var health: DailyHealthModel
+    func body(content: Content) -> some View {
+        content.task(id:cloud.subject) { await health.activate(app:app) }
     }
 }

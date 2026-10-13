@@ -1,0 +1,74 @@
+{
+  "status": "six-valid-native-images",
+  "simulatorBoots": 1,
+  "limit": 2,
+  "reboots": 0,
+  "productCrashes": 0,
+  "screenshots": [
+    {
+      "path": "phone-memory-entries-light.png",
+      "scene": "entries",
+      "theme": "light",
+      "sha256": "f8eba7210247bbd6c32adb47122dddada8b2ef5465aaa3eb2a2bcda5ed4eedcc",
+      "bytes": 239665,
+      "review": "visually inspected; valid native content with status bar",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "path": "phone-memory-empty-light.png",
+      "scene": "empty",
+      "theme": "light",
+      "sha256": "0f5b8f5b708397c0216352e8122b71fe5babd184cbd0a6e8fa42b5e0398d9a81",
+      "bytes": 151465,
+      "review": "visually inspected; valid native content with status bar",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "path": "phone-memory-edit-light.png",
+      "scene": "edit",
+      "theme": "light",
+      "sha256": "af14177069c350dfe4bc1cfc9830aca43867d96f1c7d1cb212da3b39dfa90c1d",
+      "bytes": 176946,
+      "review": "visually inspected; valid native content with status bar",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "path": "phone-memory-settings-light.png",
+      "scene": "settings",
+      "theme": "light",
+      "sha256": "485c3881fb99abc02f9f866f4c0dc775f32e7fdaa96d7021a7b03248a57cef15",
+      "bytes": 292602,
+      "review": "visually inspected; valid native content with status bar",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "path": "phone-memory-entries-dark.png",
+      "scene": "entries",
+      "theme": "dark",
+      "sha256": "d451aa0bb0a99662b0e66e69e6bb8ddbec8783a7fd5032fd7191db7f898d273f",
+      "bytes": 240333,
+      "review": "visually inspected; valid native content with status bar",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "path": "phone-memory-edit-dark.png",
+      "scene": "edit",
+      "theme": "dark",
+      "sha256": "654d92ad060c5e6065ebc7be8b881a0950e2c89e0ce33679d1b726664eb8480c",
+      "bytes": 160847,
+      "review": "visually inspected; valid native content with status bar",
+      "width": 1206,
+      "height": 2622
+    }
+  ],
+  "startedAt": "2026-10-12T22:01:13.504149-07:00",
+  "preBootRecent15MinutesReports": [],
+  "shutdownAt": "2026-10-12T22:02:22.998827-07:00",
+  "cooldownUntilEpoch": 1791867922.998911,
+  "cooldownComplete": true
+}

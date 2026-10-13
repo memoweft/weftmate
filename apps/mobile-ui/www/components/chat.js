@@ -334,7 +334,10 @@ function clearAcceptedHostAttachments(attachmentIds){if(state.chatSource!=='host
   markAttachmentRevision(key);renderAttachmentDrafts()}
 
 let composerKeyboardDismissed=false;
+let composerPress;
+function mountComposerPress(){composerPress=WeftComposerPress.mount($('send-button'),updateComposer);}
 function syncComposerExpansion(){const field=$('draft'),card=field.closest('.composer-card');if(!card)return;
+  if(composerPress?.active)return;
   const expanded=!!field.value||currentAttachments().length>0||card.contains(document.activeElement)&&!composerKeyboardDismissed||!!state.menu||!!state.attachmentMenu||!!approvalModeState.menu;
   card.classList.toggle('is-expanded',expanded);card.classList.toggle('has-attachments',currentAttachments().length>0);
   field.style.height='auto';field.style.height=`${expanded?Math.min(150,Math.max(64,field.scrollHeight)):44}px`;
@@ -397,8 +400,8 @@ function placeModelMenu(){globalThis.WeftPopover.position($('model-popover'),$('
 
 const coreFolderPending=()=>uiCore.folderMutationPending?.()===true;
 let mobileFolderChoice;
-function updateComposer(){uiCore.syncMobileIdentity();
-  if(globalThis.WeftFolderChoice && $('composer-dock')){mobileFolderChoice ||= WeftFolderChoice.create(uiCore,{form:$('draft').closest('.composer')||$('draft').parentElement,tools:$('plus-button').parentElement,toast,mobile:true});mobileFolderChoice.paint();}mobileMessageActions?.refresh();const view=uiCore.mobile.composerState($('draft').value);if(globalThis.WeftPhone?.owns(state.conversationId)&&!WeftPhone.active&&state.chatSource==='phone'){view.ready=false;view.draftDisabled=true;view.placeholder='这段手机对话仍可查看，请回到聊天开始新对话';view.attachmentsDisabled=true;view.voiceDisabled=true;view.modelDisabled=true;}if(globalThis.WeftPhone?.active){view.attachmentsDisabled=true;if(!window.weftNative)view.voiceDisabled=true;}reportDraftState();
+function updateComposer(){if(composerPress?.active)return;uiCore.syncMobileIdentity();
+  if(globalThis.WeftFolderChoice && $('composer-dock')){mobileFolderChoice ||= WeftFolderChoice.create(uiCore,{form:$('draft').closest('.composer')||$('draft').parentElement,tools:$('plus-button').parentElement,toast,mobile:true});mobileFolderChoice.paint();}mobileMessageActions?.refresh();const view=uiCore.mobile.composerState($('draft').value);if(globalThis.WeftPhone?.owns(state.conversationId)&&!WeftPhone.active&&state.chatSource==='phone'){view.ready=false;view.draftDisabled=true;view.placeholder='这段手机对话仍可查看，请回到聊天开始新对话';view.attachmentsDisabled=true;view.voiceDisabled=true;view.modelDisabled=true;}if(globalThis.WeftPhone?.active){view.ready=!WeftPhone.sendBlocker($('draft').value);view.attachmentsDisabled=true;if(!window.weftNative)view.voiceDisabled=true;}reportDraftState();
   renderQueuedTasks();
   const button=$('send-button'), stop=view.sendHidden||state.sharedRunning||state.busy;
   globalThis.WeftMobileMotion?.changed(button,String(stop),'160ms');

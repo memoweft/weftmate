@@ -1,0 +1,66 @@
+[
+  {
+    "file": "phone-web-360-light-single-computer.png",
+    "baseline": "before-phone-web-360-light-single-computer.png",
+    "pageTheme": "light",
+    "sameDimensions": true,
+    "changedPixels": 2690,
+    "pixels": 280800,
+    "changedBounds": [
+      84,
+      222,
+      262,
+      736
+    ],
+    "composerAndNavigationChangedPixels": 26,
+    "note": "existing notification badge count differs (2 vs 3) between synthetic login batches; the 360 light welcome animation also differs; no additional computer control"
+  },
+  {
+    "file": "phone-web-360-dark-single-computer.png",
+    "baseline": "before-phone-web-360-dark-single-computer.png",
+    "pageTheme": "dark",
+    "sameDimensions": true,
+    "changedPixels": 26,
+    "pixels": 280800,
+    "changedBounds": [
+      127,
+      729,
+      133,
+      736
+    ],
+    "composerAndNavigationChangedPixels": 26,
+    "note": "existing notification badge count differs (2 vs 3) between synthetic login batches; the 360 light welcome animation also differs; no additional computer control"
+  },
+  {
+    "file": "phone-web-390-light-single-computer.png",
+    "baseline": "before-phone-web-390-light-single-computer.png",
+    "pageTheme": "light",
+    "sameDimensions": true,
+    "changedPixels": 26,
+    "pixels": 329160,
+    "changedBounds": [
+      136,
+      793,
+      142,
+      800
+    ],
+    "composerAndNavigationChangedPixels": 26,
+    "note": "existing notification badge count differs (2 vs 3) between synthetic login batches; the 360 light welcome animation also differs; no additional computer control"
+  },
+  {
+    "file": "phone-web-390-dark-single-computer.png",
+    "baseline": "before-phone-web-390-dark-single-computer.png",
+    "pageTheme": "dark",
+    "sameDimensions": true,
+    "changedPixels": 26,
+    "pixels": 329160,
+    "changedBounds": [
+      136,
+      793,
+      142,
+      800
+    ],
+    "composerAndNavigationChangedPixels": 26,
+    "note": "existing notification badge count differs (2 vs 3) between synthetic login batches; the 360 light welcome animation also differs; no additional computer control"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "realMacSourceHost": true,
+  "realCloudImplementation": true,
+  "phone": "headless Chromium 390x844",
+  "computerName": "synthetic-mac",
+  "relay": "direct loopback; production relay not exercised",
+  "electronHeadlessLaunches": 1,
+  "mimoRequests": 0,
+  "checks": [
+    "verified synthetic account binds and registers exactly one synthetic-mac host"
+  ],
+  "completed": false,
+  "hostId": "host-9643c746-23ab-47cc-95e4-b3b27bc92285",
+  "phase": "source-host",
+  "failure": "M3-3 phone timeout: model catalog"
+}

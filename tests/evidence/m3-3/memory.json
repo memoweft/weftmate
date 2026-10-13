@@ -1,0 +1,42 @@
+{
+  "core": "real Python Core and host RPC v2",
+  "model": "synthetic HTTP",
+  "coreCommit": "ddd919d88ade73f26ce98e213a8768102287cda9",
+  "pythonVersion": "Python 3.11.17",
+  "systemPythonEligible": false,
+  "mimoRequests": 0,
+  "completed": true,
+  "ingest": {
+    "state": "accepted",
+    "jobState": "pending"
+  },
+  "worldRevision": 0,
+  "formalMemories": 1,
+  "newConversationAnswer": "你希望我称呼你为小禾。",
+  "restoredAfterRestart": true,
+  "health": {
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 1,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null,
+    "pendingFormationCount": 0,
+    "recoveringFormationCount": 0,
+    "failedFormationCount": 0,
+    "failedCorrectionCount": 0,
+    "formationIssues": []
+  },
+  "formationRequests": 1,
+  "chatRequests": 1
+}
