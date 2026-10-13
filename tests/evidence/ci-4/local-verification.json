@@ -1,0 +1,77 @@
+{
+  "node": "v24.15.0",
+  "rows": [
+    {
+      "file": "backup-fixed.log",
+      "tests": 25,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "file": "tls-geometry.log",
+      "tests": 16,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "file": "related-final.log",
+      "tests": 38,
+      "passed": 38,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "file": "final-general-memory.log",
+      "tests": 20,
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "file": "policy-final.log",
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "file": "electron-related.log",
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "file": "bl29-file-final.log",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "focusedRepeats": {
+    "rounds": 5,
+    "leavesPerRound": 6,
+    "passed": 30,
+    "failed": 0
+  },
+  "preMem7": {
+    "sha": "e280fba2^1",
+    "passed": 3,
+    "failed": 0,
+    "fixedInitializationMs": 2100
+  },
+  "realElectron": {
+    "lock": "heavy slot acquired and released",
+    "passed": 2,
+    "exitCode": 0,
+    "signal": null
+  },
+  "limits": [
+    "No local complete required/vendor suite",
+    "No production host,18186,real model requests or vendor edits",
+    "Historical approval geometry and 6s list readiness lack unique timing evidence"
+  ]
+}
