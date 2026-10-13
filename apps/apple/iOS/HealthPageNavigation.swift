@@ -3,6 +3,8 @@ import WeftMateCore
 
 struct PhoneWorkspace: View {
     @ObservedObject var model: AppleAppModel
+    @ObservedObject private var cloud: CloudLoginModel
+    init(model: AppleAppModel) { self.model=model; cloud=model.cloudLogin }
     @State private var tab: PhoneTab = .chat
     @State private var chatRoot = UUID()
     @State private var keyboardVisible = false
@@ -20,6 +22,7 @@ struct PhoneWorkspace: View {
         // UIKit notifications are delivered as values; only the explicit MainActor task changes UI state.
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = true } }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = false } }
+        .onChange(of:cloud.subject) { _,_ in dismissPhonePreviewKeyboard(); keyboardVisible=false }
         .onChange(of:model.openedSessionID) { _,id in if id != nil { tab = .chat } }
         .onChange(of:model.phoneLibrarySelection) { _,id in if id != nil { tab = .resources } }
         .background(Weave.canvas).tint(Weave.accent).buttonStyle(PhoneActionStyle())
@@ -28,13 +31,14 @@ struct PhoneWorkspace: View {
         switch item {
         case .chat:
             Group {
-                if model.offline.hostOffline || model.offline.showHistory { OfflineChatView(app:model,model:model.offline) }
+                if model.session == nil { PhoneStandaloneChat(app:model,model:model.phoneChat,tab:$tab) }
+                else if model.offline.hostOffline || model.offline.showHistory { OfflineChatView(app:model,model:model.offline) }
                 else { PhoneChatWorkspace(model:model,tab:$tab) }
             }.id(chatRoot)
-        case .activity: NavigationStack { PhoneActivityView(app:model) }
-        case .health: NavigationStack { HealthPageView(app:model,ask:{text in Task { await ask(text) }}).toolbar { PhoneAccountMenu(model:model) } }
-        case .goals: NavigationStack { PhoneGoalsView(app:model) }
-        case .resources: PhoneLibraryView(app:model)
+        case .activity: NavigationStack { if model.session == nil { PhoneComputerEmptyPage(app:model,title:"动态",explanation:"这里会显示提醒、任务进展和回顾。") } else { PhoneActivityView(app:model) } }
+        case .health: NavigationStack { if model.session == nil { PhoneLocalHealthView(app:model) } else { HealthPageView(app:model,ask:{text in Task { await ask(text) }}).toolbar { PhoneAccountMenu(model:model) } } }
+        case .goals: NavigationStack { if model.session == nil { PhoneComputerEmptyPage(app:model,title:"目标",explanation:"这里会显示目标和定时安排。") } else { PhoneGoalsView(app:model) } }
+        case .resources: if model.session == nil { NavigationStack { PhoneComputerEmptyPage(app:model,title:"成果库",explanation:"这里会保存电脑完成的文件。") } } else { PhoneLibraryView(app:model) }
         }
     }
     private func ask(_ text: String) async {

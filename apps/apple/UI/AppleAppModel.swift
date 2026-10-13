@@ -771,11 +771,18 @@ final class AppleAppModel: ObservableObject {
             store: KeychainCredentialStore(service: cloudNamespace + ".offline"),
             allowLoopback: permitsSyntheticLoopback, control: offlineAuthorization)
         #if os(iOS)
+        await phoneChat.synchronize(app:self)
         if offline.hostOffline { _ = await watchSnapshotBytes() }
         #endif
     }
     private var cloudNamespace = "com.weftmate.apple.cloud"
     lazy var mainChat = MainChatModel(app: self)
+    #if os(iOS)
+    @Published var phonePreviewRequest=UUID()
+    lazy var phoneChat = PhoneStandaloneModel()
+    var phoneCredentialNamespace: String { cloudNamespace + ".phone" }
+    var phoneAccountIdentity: String { cloudLogin.subject.map { cloudLogin.cloudAddress + "|" + $0 } ?? "device-local" }
+    #endif
     lazy var cloudLogin = CloudLoginModel(app: self, namespace: cloudNamespace)
     @Published var timelineRootCommands: [TaskRootCommandMetadata] = []
     @Published var stoppingActiveTask = false
@@ -2159,6 +2166,9 @@ final class AppleAppModel: ObservableObject {
             authBusy = false
             return
         }
+        #if os(iOS)
+        phoneChat.stop()
+        #endif
         clearVisibleAccount()
         var cloudCleanupFailure = false
         do { try await cloudLogin.signOut() } catch { cloudCleanupFailure = true }
@@ -2262,7 +2272,13 @@ final class AppleAppModel: ObservableObject {
 
     func beginServerOperation() -> Bool {
         if serverLoginExpired {
-            cloudLogin.requireLogin(); return false
+            #if os(iOS)
+            if cloudLogin.authenticated { Task { await cloudLogin.retryConnection() } }
+            else { cloudLogin.requireLogin() }
+            #else
+            cloudLogin.requireLogin()
+            #endif
+            return false
         }
         return true
     }
@@ -2273,7 +2289,14 @@ final class AppleAppModel: ObservableObject {
     }
     func handleLogicalChatFailure(_ error: Error, prompt: Bool = false) async -> Bool {
         let expired = await expireSessionIfNeeded(error)
-        if expired && prompt { cloudLogin.requireLogin() }
+        if expired && prompt {
+            #if os(iOS)
+            if cloudLogin.authenticated { await cloudLogin.retryConnection() }
+            else { cloudLogin.requireLogin() }
+            #else
+            cloudLogin.requireLogin()
+            #endif
+        }
         return expired
     }
 
@@ -2286,7 +2309,11 @@ final class AppleAppModel: ObservableObject {
             return true
         case .notAuthenticated, .server(401, _):
             await retainLocalContentAfterExpiry()
+            #if os(iOS)
+            authError = cloudLogin.authenticated ? "电脑连接需要更新。手机上的内容仍可查看，可以重新连接电脑。" : "登录已过期。已保存的内容仍可查看，联网操作需要重新登录。"
+            #else
             authError = "登录已过期。已保存的内容仍可查看，联网操作需要重新登录。"
+            #endif
             return true
         default: return false
         }

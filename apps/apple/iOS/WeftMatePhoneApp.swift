@@ -28,6 +28,7 @@ struct WeftMatePhoneApp: App {
     private var healthContent: some View {
         WeftMateRootView(model: model)
             .environmentObject(health)
+            .modifier(PhoneCloudHealthActivation(app:model,cloud:model.cloudLogin,health:health))
             // Restored accounts also prepare observers when iOS starts the app in the background.
             .task(id: "health-account-\(model.accountEpoch)-\(model.session?.verification.rawValue ?? "none")") {
                 await health.activate(app: model)
@@ -44,5 +45,14 @@ struct WeftMatePhoneApp: App {
         #else
         healthContent
         #endif
+    }
+}
+
+private struct PhoneCloudHealthActivation: ViewModifier {
+    @ObservedObject var app: AppleAppModel
+    @ObservedObject var cloud: CloudLoginModel
+    @ObservedObject var health: DailyHealthModel
+    func body(content: Content) -> some View {
+        content.task(id:cloud.subject) { await health.activate(app:app) }
     }
 }

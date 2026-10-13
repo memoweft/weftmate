@@ -61,6 +61,24 @@ private actor OfflineTransport: HTTPTransport {
         try vault.clear()
         #expect(throws: (any Error).self) { try vault.open(envelope, identity: identity) }
     }
+    @Test func standalonePhoneTurnsUseExistingEncryptedOutboxAndReceipts() async throws {
+        let (vault,engine,dir,_) = try fixture();defer { try? FileManager.default.removeItem(at:dir) }
+        try engine.merge(snapshot())
+        var phone=PhoneChatState(),thread=PhoneChatThread();thread.messages=[.init(role:"user",text:"合成手机偏好"),.init(role:"assistant",text:"合成手机回复")];phone.threads=[thread]
+        let turns=phone.prepareMigration(host:identity.hostId,generation:1)
+        try engine.enqueuePhoneTurns(turns,generation:1);try engine.enqueuePhoneTurns(turns,generation:1)
+        #expect(engine.state.turns.count == 1);#expect(try vault.load().turns[0].messages == turns[0].messages)
+        let envelope=try seal(snapshot(),vault:vault)
+        var submissions=0
+        try await engine.sync(identity:identity,fetch:{ _ in envelope },submit:{ body in
+            submissions+=1;#expect(body.generation == 1);#expect(body.turns[0].id == turns[0].id);#expect(body.turns[0].memoryRefs.isEmpty)
+            return .init(generation:1,receipts:[.init(id:turns[0].id,state:"synced")])
+        },control:{ _ in status() })
+        #expect(submissions == 1);#expect(engine.state.synced.contains(turns[0].id))
+        try engine.merge(snapshot(generation:2,reset:true))
+        #expect(engine.state.turns.isEmpty)
+        #expect(throws:(any Error).self) { try engine.enqueuePhoneTurns(turns,generation:1) }
+    }
     @Test func receiptLossRetriesIdenticalTurnAndCookieRenewalKeepsKey() async throws {
         let (vault, engine, dir, store) = try fixture(); defer { try? FileManager.default.removeItem(at: dir) }
         try engine.merge(snapshot()); try await engine.send("喝茶喜欢什么？", conversationID: "chat", control: { _ in status() })

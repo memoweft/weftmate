@@ -104,6 +104,19 @@ import Foundation
         guard try JSONEncoder().encode(next).count <= 2 * 1024 * 1024 else { throw OfflineFailure.invalid }
         state.snapshot = next
     }
+    /// Only independent phone conversation messages, with no recalled memory or computer tools.
+    public func enqueuePhoneTurns(_ turns: [OfflineTurn], generation: Int) throws {
+        guard !busy, state.snapshot?.generation == generation else { throw OfflineFailure.notReady }
+        let encoder=JSONEncoder();encoder.outputFormatting=[.sortedKeys]
+        for turn in turns {
+            guard turn.memoryRefs.isEmpty,turn.dependencyComplete,!turn.messages.isEmpty,turn.messages.first?.role == "user",
+                  turn.messages.count <= 2,turn.messages.allSatisfy({ ["user","assistant"].contains($0.role) && $0.text.utf16.count <= 16384 }) else { throw OfflineFailure.invalid }
+            if let existing=state.turns.first(where: { $0.id == turn.id }) {
+                guard try encoder.encode(existing) == encoder.encode(turn) else { throw OfflineFailure.invalid }
+            } else { state.turns.append(turn) }
+        }
+        try vault.save(state)
+    }
     public func send(_ text: String, conversationID: String, recentID: String? = nil,
                      control: (String) async throws -> OfflineAuthorization) async throws {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)

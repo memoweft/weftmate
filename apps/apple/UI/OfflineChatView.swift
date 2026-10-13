@@ -10,7 +10,13 @@ struct OfflineWorkspace: View {
                 HStack {
                     Text("已保存的内容仍可查看").font(AppleTokens.Fonts.callout)
                     Spacer()
+                    #if os(iOS)
+                    if app.cloudLogin.authenticated {
+                        Button("重新连接电脑") { Task { await app.cloudLogin.retryConnection() } }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("reconnectComputer")
+                    } else { Button("联网使用") { app.cloudLogin.requireLogin() }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("expiredLogin") }
+                    #else
                     Button("联网使用") { app.cloudLogin.requireLogin() }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("expiredLogin")
+                    #endif
                 }.padding(AppleTokens.Space.p12)
             }
             #if os(iOS)
@@ -38,14 +44,25 @@ struct OfflineWorkspace: View {
 struct OfflineChatView: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var model: OfflineChatModel
+    private var defaultConversationTitle: String {
+        #if os(iOS)
+        "手机对话"
+        #else
+        "离线对话"
+        #endif
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
             HStack {
+                #if os(iOS)
+                Text("手机对话").font(AppleTokens.Fonts.title3)
+                #else
                 Text(model.hostOffline ? "离线模式" : "离线对话").font(AppleTokens.Fonts.title3)
+                #endif
                 Spacer()
                 Menu("对话") {
                     ForEach(model.conversationIDs, id: \.self) { id in
-                        Button(model.turns.first { $0.conversationId == id }?.messages.first?.text ?? "离线对话") { model.conversationID = id }
+                        Button(model.turns.first { $0.conversationId == id }?.messages.first?.text ?? defaultConversationTitle) { model.conversationID = id }
                     }
                     ForEach(model.recent) { row in Button(row.title ?? "近期对话") { model.newConversation(recent: row.id) } }
                 }
