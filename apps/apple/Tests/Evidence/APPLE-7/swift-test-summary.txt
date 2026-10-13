@@ -1,0 +1,12 @@
+✔ Test receiptLossRetriesIdenticalTurnAndCookieRenewalKeepsKey() passed after 12.472 seconds.
+✔ Test phoneFirstNoComputerModelStillRegistersReceivesAndChatsWithPhoneModel() passed after 12.484 seconds.
+✔ Test invalidSignedTokensCannotPersist(fault:) with 5 test cases passed after 12.554 seconds.
+✔ Test logoutDuringModelRequestCannotResurrect() passed after 12.482 seconds.
+✔ Test modelResponseAfterRemoteRevocationIsDiscarded() passed after 12.481 seconds.
+✔ Test relatedRecallBoundedContextAndDependencies() passed after 12.482 seconds.
+✔ Suite OfflineTests passed after 12.710 seconds.
+✔ Test rotatedRefreshSurvivesRestartAndDirectoryCannotSupplyPin() passed after 12.635 seconds.
+✔ Suite CloudTokenTests passed after 12.782 seconds.
+✔ Test journalSymlinkAndRecordLimitFailWithoutDeletingPriorRequests() passed after 27.922 seconds.
+✔ Suite TaskStopSDKTests passed after 27.956 seconds.
+✔ Test run with 499 tests in 26 suites passed after 27.957 seconds.

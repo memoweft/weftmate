@@ -52,8 +52,8 @@ public enum AccountUsagePresentation {
     public static func matches(_ summary: UsageSummary, month: String, timeZone: String) -> Bool {
         summary.month == month && summary.timeZone == timeZone && summary.sessionId == nil
     }
-    public static func text(_ summary: UsageSummary) -> String {
-        let amount = String(format: "本月 ¥%.6f", summary.total.cost)
+    public static func text(_ summary: UsageSummary,phone: Bool = false) -> String {
+        let amount = phone ? "本月 "+PhoneCurrencyText.money(summary.total.cost) : String(format: "本月 ¥%.6f", summary.total.cost)
         guard let limit = summary.budget.effectiveLimit else { return amount + " · \(summary.total.requests) 次请求" }
         let remaining = limit > 0 ? max(0, min(1, 1 - summary.total.cost / limit)) : 0
         return amount + String(format: " · 剩余 %.0f%%", remaining * 100)

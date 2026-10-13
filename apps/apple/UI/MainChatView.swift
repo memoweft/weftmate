@@ -182,6 +182,9 @@ struct MainChatView: View {
             }
         }
         .onChange(of: model.window.generation) { _, _ in interactions.cancel(); positions.frames.removeAll(); restore = nil; searching = false; importing = false; importEpoch = nil; importGeneration = nil }
+        #if os(iOS)
+        .onChange(of:app.phonePreviewRequest) { _,_ in draftFocused=false }
+        #endif
         .onChange(of: app.accountEpoch) { _, _ in importing = false; importEpoch = nil; importGeneration = nil }
         .onDisappear {
             interactions.suspend(); showingPhotos = false; showingCamera = false; importEpoch = nil; importGeneration = nil
@@ -438,7 +441,7 @@ struct MainChatView: View {
                 #endif
                 .phoneIcon().phoneComposerControl(circle: true).menuOrder(.fixed).disabled(!model.models.contains(where: \.configured)).accessibilityLabel("添加").accessibilityIdentifier("mainChat.plus")
                 #if os(iOS)
-                if composerExpanded && !dynamicTypeSize.isAccessibilitySize { modelSelection }
+                if composerExpanded && !dynamicTypeSize.isAccessibilitySize { modelSelection; ApprovalModeControl(model:app,sessionID:model.chat?.activeSessionId,compact:true) }
                 #else
                 if !dynamicTypeSize.isAccessibilitySize { modelSelection }
                 #endif
@@ -498,16 +501,14 @@ struct MainChatView: View {
         #if os(iOS)
         if model.models.contains(where: \.configured) {
             Menu {
+                if model.chat?.activeSessionId != nil { Label(model.models.first(where: { $0.id == model.chat?.modelProfileId })?.name ?? "当前模型",systemImage:"checkmark") }
                 if model.chat?.activeSessionId == nil {
                     Picker("模型", selection: $model.modelID) { ForEach(model.models.filter(\.configured)) { Text($0.name).tag($0.id) } }
                 }
                 Button("配置模型") { showingModels = true }
             } label: {
-                HStack(spacing: AppleTokens.Space.p4) {
-                    Text(model.models.first(where: { $0.id == (model.chat?.modelProfileId ?? model.modelID) })?.name ?? "模型").font(AppleTokens.Fonts.caption).lineLimit(1)
-                    WeftIcon("chevron", size: AppleTokens.Space.p12)
-                }.phoneMenuLabel(onCard: true)
-            }.buttonStyle(PhoneActionStyle()).phoneComposerControl().accessibilityLabel("模型选择").accessibilityIdentifier("mainChat.model")
+                WeftIcon("model").phoneMenuLabel(circle:true,onCard:true)
+            }.phoneIcon().phoneComposerControl(circle:true).accessibilityLabel("模型选择，"+(model.models.first(where: { $0.id == (model.chat?.modelProfileId ?? model.modelID) })?.name ?? "尚未配置")).accessibilityIdentifier("mainChat.model")
         }
         #else
         if model.models.contains(where: \.configured) {
@@ -595,22 +596,22 @@ struct MainChatEventRow: View {
                 if !originals.isEmpty || !images.isEmpty {
                 ScrollView(.horizontal) { HStack(alignment:.top,spacing:AppleTokens.Space.p8) {
                 ForEach(originals) { file in
-                    ConversationAttachmentTile(model: app, reference: .original(file)) { attachmentPreview = .original(file) }
+                    ConversationAttachmentTile(model: app, reference: .original(file)) { preparePreviewFocus(); attachmentPreview = .original(file) }
                 }
                 if originals.isEmpty, let session = event.sessionID {
                     ForEach(images, id: \.attachmentId) { image in
-                        ConversationAttachmentTile(model: app, reference: .sessionImage(image, session)) { attachmentPreview = .sessionImage(image, session) }
+                        ConversationAttachmentTile(model: app, reference: .sessionImage(image, session)) { preparePreviewFocus(); attachmentPreview = .sessionImage(image, session) }
                     }
                 }
                 } }.scrollIndicators(.hidden)
                 }
                 #else
                 ForEach(originals) { file in
-                    ConversationAttachmentTile(model: app, reference: .original(file)) { attachmentPreview = .original(file) }
+                    ConversationAttachmentTile(model: app, reference: .original(file)) { preparePreviewFocus(); attachmentPreview = .original(file) }
                 }
                 if originals.isEmpty, let session = event.sessionID {
                     ForEach(images, id: \.attachmentId) { image in
-                        ConversationAttachmentTile(model: app, reference: .sessionImage(image, session)) { attachmentPreview = .sessionImage(image, session) }
+                        ConversationAttachmentTile(model: app, reference: .sessionImage(image, session)) { preparePreviewFocus(); attachmentPreview = .sessionImage(image, session) }
                     }
                 }
                 #endif
@@ -647,11 +648,17 @@ struct MainChatEventRow: View {
             regenerate: { Task { await model.regenerate(event) } },
             extra: { AnyView(messageActions) }))
             .accessibilityElement(children: .contain).accessibilityIdentifier("mainChat.event." + event.id)
-            .sheet(isPresented: Binding(get: { attachmentPreview != nil }, set: { if !$0 { attachmentPreview = nil } })) {
+            .attachmentCover(isPresented: Binding(get: { attachmentPreview != nil }, set: { if !$0 { attachmentPreview = nil } })) {
                 if let reference = attachmentPreview { MainChatAttachmentPreview(app: app, model: model, reference: reference) { attachmentPreview = nil } }
             }
             .onChange(of: model.window.generation) { _, _ in attachmentPreview = nil; detail = nil; expanded = false }
 
+    }
+    private func preparePreviewFocus() {
+        #if os(iOS)
+        app.phonePreviewRequest=UUID()
+        #endif
+        dismissPhonePreviewKeyboard()
     }
     private var originals: [OriginalAttachment] {
         guard let value = event.data["originalAttachments"], let data = try? JSONEncoder().encode(value) else { return [] }

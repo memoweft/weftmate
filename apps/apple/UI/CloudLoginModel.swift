@@ -7,6 +7,7 @@ final class CloudLoginModel: ObservableObject {
     @Published private(set) var emailChangeChallenge: String?
     @Published private(set) var emailResendAt = Date.distantPast
     @Published var deviceName = ""
+    @Published private(set) var subject: String?
     @Published private(set) var email = ""
     @Published private(set) var devices: [CloudDirectoryDevice] = []
     @Published private(set) var hosts: [CloudDirectoryDevice] = []
@@ -67,6 +68,10 @@ final class CloudLoginModel: ObservableObject {
         do {
             let account = try accountClient()
             guard try await account.savedSubject() != nil else { return }
+            subject = try await account.savedSubject()
+            #if os(iOS)
+            if let app { app.phoneChat.activate(app:app) }
+            #endif
             authenticated = true; cloudSignedIn = true
             await refreshDirectory()
             if let hostID, app?.session == nil { await connectHost(id: hostID) }
@@ -130,6 +135,10 @@ final class CloudLoginModel: ObservableObject {
         try await account.finishAppLogin(resumeURL: resume)
         guard id == operation else { return }
         email = form.email; form.reset(to: .login)
+        subject = try await account.savedSubject()
+        #if os(iOS)
+        if let app { app.phoneChat.activate(app:app) }
+        #endif
         authenticated = true; cloudSignedIn = true; showLogin = false
         busy = false
         await refreshDirectory()
@@ -160,9 +169,12 @@ final class CloudLoginModel: ObservableObject {
     }
     func refreshDirectory() async {
         guard authenticated else { return }
+        let ticket=operation
         do {
             let account = try accountClient()
             let subject = try await account.savedSubject()
+            guard ticket == operation, authenticated else { return }
+            self.subject = subject
             if subject != directorySubject {
                 directorySubject = subject
                 let saved = try store.load(key: "seen-devices:" + (subject ?? ""))
@@ -170,15 +182,20 @@ final class CloudLoginModel: ObservableObject {
                 directoryLoaded = saved != nil
             }
             let directory = try await account.directory()
+            guard ticket == operation, authenticated else { return }
             if directoryLoaded, let newDevice = directory.devices.first(where: { !$0.isCurrent && !seenDeviceIDs.contains($0.id) }) {
                 newDeviceNotice = newDevice.name + " 已登录。若不是你使用的设备，可以将它下线。"
             }
             seenDeviceIDs.formUnion(directory.devices.map(\.id)); directoryLoaded = true
             try store.save(JSONEncoder().encode(seenDeviceIDs), key: "seen-devices:" + (subject ?? ""))
             devices = directory.devices; hosts = directory.hosts
+            #if os(iOS)
+            if let app { app.phoneChat.activate(app:app);app.phoneChat.computerDirectoryChanged(hostIDs:Set(directory.hosts.map { $0.hostId ?? $0.id })) }
+            #endif
             if let current = devices.first(where: { $0.isCurrent }) { deviceName = current.name }
-            email = try await account.accountEmail()
-        } catch { await sessionFailure(error) }
+            let address=try await account.accountEmail()
+            guard ticket == operation, authenticated else { return };email=address
+        } catch { if ticket == operation { await sessionFailure(error) } }
     }
     private func sessionFailure(_ failure: Error) async {
         if case APIFailure.server(400, "invalid_grant") = failure { await expireSession() }
@@ -288,7 +305,13 @@ final class CloudLoginModel: ObservableObject {
         guard !busy, authenticated else { return }
         if let host = hosts.first(where: { $0.hostId == hostID }) ?? hosts.first {
             await connectHost(id: host.hostId ?? host.id)
-        } else { await refreshDirectory() }
+        } else {
+            #if os(iOS)
+            waiting=false
+            #else
+            await refreshDirectory()
+            #endif
+        }
     }
     func requireLogin() { showLogin = true }
     private func exchange(id: UUID) async throws {
@@ -328,6 +351,7 @@ final class CloudLoginModel: ObservableObject {
             let config = CloudConfiguration(server: try ServerConfiguration(input: cloud, allowLoopbackHTTP: allowLoopback))
             try store.delete(key: CloudAccountClient.credentialKey(configuration: config))
         }
+        subject = nil; waiting = false
         client = nil; key = nil; cloudSignedIn = false; authenticated = false; devices = []; hosts = []; email = ""; emailChangeChallenge = nil; selectedHost = nil; form.reset(to: .login)
         hostID = nil; newDeviceNotice = nil; directoryLoaded = false; seenDeviceIDs = []
         try store.delete(key: "trusted-host")
