@@ -82,7 +82,8 @@ import { formatHarnessStartupError } from './harness-startup-error.ts';
 import { checkForUpdates, initUpdater, quitAndInstall, updateState, preparedInstallerPath, preparedInstallerHash, requiresManualAppInstall } from './update.ts';
 import { manualUpdateMessage } from './desktop-installation.mjs';
 import { createDesktopUpdates } from './personal-update/desktop.mjs';
-import { applyDesktopConfig } from './desktop-config.mjs';
+import { macApplicationMenu } from './mac-desktop.mjs';
+import { applyDesktopConfig, desktopConfigPath } from './desktop-config.mjs';
 import { appBootSignal, prepareAppRollback } from './personal-update/app-rollback.mjs';
 import { initPerception } from './perception.ts';
 import { initDevices } from './devices.ts';
@@ -104,11 +105,17 @@ import { memoryRecallDestination, memoryRecallModelTier, memorySessionPolicy } f
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
+// This Intel-only local trial follows the machine's GPU constraint on Finder launch too.
+if (process.platform === 'darwin' && packageInfo.macTrial) {
+  app.disableHardwareAcceleration();
+  // The local trial points at an existing read-only Core checkout.
+  process.env.PYTHONDONTWRITEBYTECODE = '1';
+}
 const desktopControlAppData = packageInfo.desktopIdentity ? join(app.getPath('appData'), packageInfo.desktopIdentity) : app.getPath('appData');
 // Maintenance commands must not boot a host, rewrite its run marker or show UI.
 if (process.argv.includes('--quit')) {
   try {
-    const configFile = process.argv.find(arg => arg.startsWith('--desktop-config='))?.slice(17) || join(desktopControlAppData, 'WeftMate', 'desktop-config.json');
+    const configFile = process.argv.find(arg => arg.startsWith('--desktop-config='))?.slice(17) || desktopConfigPath(desktopControlAppData);
     const config = existsSync(configFile) ? JSON.parse(readFileSync(configFile, 'utf8')) : null;
     const profile = process.argv.find(arg => arg.startsWith('--user-data-dir='))?.slice(16) || config?.dataDirectory || join(desktopControlAppData, 'com.memoweft.weftmate');
     app.setPath('userData', resolve(profile));
@@ -258,8 +265,13 @@ if (wipeLaunch) {
   }
 }
 
-// 去掉 Electron 默认应用菜单(顶栏那条 File/Edit/View/Window)——桌面产品不该露原生菜单,不像成品。
-Menu.setApplicationMenu(null);
+// macOS uses the native application/edit menu for standard Command shortcuts.
+Menu.setApplicationMenu(process.platform === 'darwin' ? Menu.buildFromTemplate(macApplicationMenu({
+  show: () => showWindow(),
+  settings: () => { showWindow(); personalDesktop?.openSettings(); },
+  quit: () => app.quit(),
+})) : null);
+if (process.platform === 'darwin') app.on('activate', () => showWindow());
 // electron-builder removes build metadata from the packaged package.json.
 if (process.platform === 'win32') app.setAppUserModelId(packageInfo.desktopAppId ?? packageInfo.build?.appId ?? 'com.memoweft.weftmate');
 
@@ -3557,7 +3569,7 @@ async function bootstrap() {
           const setupGrant = null;
           await desktopUpdates.prepareWindow();
           personalDesktop = createPersonalDesktop({ computerUsageService: personalAccessService, systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
-            startInTray: process.argv.includes('--start-in-tray'),
+            startInTray: process.argv.includes('--start-in-tray') || process.platform === 'darwin' && app.isPackaged && app.getLoginItemSettings().wasOpenedAtLogin,
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
           win = personalDesktop.window;
           trackUserInterfaceReady(win);
