@@ -58,13 +58,14 @@ public struct OfflineSnapshot: Codable, Sendable {
     public let hashes: [String: String]
     public let truncated: Bool
     public let recent: [OfflineRecent]
-    public let model: OfflineModelConfiguration
+    public let model: OfflineModelConfiguration?
     public let control: OfflineControl
 }
 public struct OfflineSyncRequest: Encodable, Sendable {
     public let publicJwk: [String: String]
     public let generation: Int
     public let hashes: [String: String]
+    public var phoneFirst: Bool? = nil
 }
 public struct OfflineSubmission: Encodable, Sendable {
     public let generation: Int

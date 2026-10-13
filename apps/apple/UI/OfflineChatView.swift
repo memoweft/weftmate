@@ -75,7 +75,7 @@ struct OfflineChatView: View {
                 Text(OfflineChatModel.warning).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
                     .accessibilityIdentifier("offlineTopWarning")
             }
-            if model.truncated { Text("已同步部分记忆，副本不包含全部记忆。") .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+            if model.truncated { Text("这里暂时只有部分记忆，电脑上线后会继续更新。") .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             ScrollView {
                 VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                     ForEach(model.turns.filter { $0.conversationId == model.conversationID }) { turn in
@@ -95,11 +95,18 @@ struct OfflineChatView: View {
             if model.hostOffline {
                 Text(OfflineChatModel.warning).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                     .accessibilityIdentifier("offlineInputWarning")
-                if !model.ready { Text("请联网核对授权，或先连接电脑同步副本与云模型。") .font(AppleTokens.Fonts.callout) }
+                if !model.ready { Text("请联网核对账号，或先连上电脑读取记忆。") .font(AppleTokens.Fonts.callout) }
                 HStack(alignment: .bottom) {
                     TextField("聊一聊…", text: $model.draft, axis: .vertical).lineLimit(1...5)
                         .textFieldStyle(.plain).autocorrectionDisabled().accessibilityIdentifier("offlineInput")
-                    Button { Task { await model.send(control: app.offlineAuthorization) } } label: { WeftIcon("send", size: AppleTokens.Space.p20) }
+                    Button { Task {
+                        #if os(iOS)
+                        app.phoneChat.activate(app:app)
+                        await model.send(control:app.offlineAuthorization,fallbackModel:app.phoneChat.currentModel)
+                        #else
+                        await model.send(control:app.offlineAuthorization)
+                        #endif
+                    } } label: { WeftIcon("send", size: AppleTokens.Space.p20) }
                         .disabled(!model.ready || model.busy || model.polling || model.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         .accessibilityLabel("发送").accessibilityIdentifier("offlineSend")
                 }.padding(AppleTokens.Space.p12).background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))

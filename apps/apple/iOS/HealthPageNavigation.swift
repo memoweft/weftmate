@@ -4,7 +4,8 @@ import WeftMateCore
 struct PhoneWorkspace: View {
     @ObservedObject var model: AppleAppModel
     @ObservedObject private var cloud: CloudLoginModel
-    init(model: AppleAppModel) { self.model=model; cloud=model.cloudLogin }
+    @ObservedObject private var phone: PhoneStandaloneModel
+    init(model: AppleAppModel) { self.model=model; cloud=model.cloudLogin;phone=model.phoneChat }
     @State private var tab: PhoneTab = .chat
     @State private var chatRoot = UUID()
     @State private var keyboardVisible = false
@@ -32,7 +33,7 @@ struct PhoneWorkspace: View {
         switch item {
         case .chat:
             Group {
-                if model.session == nil { PhoneStandaloneChat(app:model,model:model.phoneChat,tab:$tab) }
+                if model.session == nil || (phone.usesPhoneMemory && !phone.state.threads.isEmpty) { PhoneStandaloneChat(app:model,model:model.phoneChat,tab:$tab) }
                 else if model.offline.hostOffline || model.offline.showHistory { OfflineChatView(app:model,model:model.offline) }
                 else { PhoneChatWorkspace(model:model,tab:$tab) }
             }.id(chatRoot)

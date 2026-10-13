@@ -1,6 +1,6 @@
 {
   "swift": {
-    "total": 497,
+    "total": 499,
     "failures": 0,
     "externalFixtureSkips": 3,
     "jobs": 2
@@ -9,7 +9,7 @@
     "phoneMemoryAssertions": 43,
     "phoneStandaloneAssertions": 23,
     "paletteChecks": 114,
-    "directory": "Build/APPLE-7/apple-state-dzy91zs0",
+    "directory": "Build/APPLE-7/apple-state-d6mcbxiw",
     "syntheticQuality": {
       "cases": 10,
       "expectedMechanismMatches": 10,
@@ -17,18 +17,29 @@
       "liveModelRequests": 0
     },
     "wholeMemoryCheckExtractionRequests": 20,
-    "plaintextHits": 0
+    "plaintextHits": 0,
+    "appleContractChecks": "passed"
   },
   "nodeTests": 14,
   "callbackSites": 69,
-  "simulatorBoots": 0,
+  "simulatorBoots": 1,
   "buildJobs": 4,
   "builds": {
     "iPhone": "generic iOS SDK; unsigned; success",
     "Watch": "generic watchOS SDK; unsigned; success",
     "Mac": "native macOS SDK; unsigned; success",
-    "screenshotCandidate": "generic iOS Simulator build; no boot; success"
+    "screenshotCandidate": "six native images captured from d816b1fd6 UI; later protocol-only changes built with native SDKs; no second simulator boot"
   },
   "realAccountCloudHostModelRequests": 0,
-  "ci": "not waited; Claude receives"
+  "ci": "not waited; Claude receives",
+  "validNativeScreenshots": 6,
+  "reboots": 0,
+  "productCrashes": 0,
+  "phoneFirstContract": {
+    "source": "MOB-4 / #277, origin/main 221b80c5d",
+    "nullableComputerModel": true,
+    "phoneFallbackCredentialLeavesForComputer": false,
+    "legacy400Fallback": "tested",
+    "403NoRetry": "tested"
+  }
 }

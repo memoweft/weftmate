@@ -1,5 +1,5 @@
 xcodebuild build; -jobs 4; -parallel-testing-enabled NO; CODE_SIGNING_ALLOWED=NO
-    /usr/bin/touch -c /Users/yun/Desktop/WeftMate/weftmate-h3/apps/apple/Build/APPLE-7/SimulatorBuild/Build/Products/Debug-iphonesimulator/WeftMatePhone.app
+    /usr/bin/touch -c <repo>/apps/apple/Build/APPLE-7/SimulatorBuild/Build/Products/Debug-iphonesimulator/WeftMatePhone.app
 
 ** BUILD SUCCEEDED **
 

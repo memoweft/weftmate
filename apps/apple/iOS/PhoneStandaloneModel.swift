@@ -70,7 +70,7 @@ import WeftMateCore
     }
     func clearLocalData() {
         cancelExtraction();stop()
-        do { guard let store else { return };try store.clear();state = .init();models=[];modelID="";draft="";notice=nil;handoffCount=0;handoffBytes=0 }
+        do { guard let store else { return };try store.clear();app?.offline.erase();state = .init();models=[];modelID="";draft="";notice=nil;handoffCount=0;handoffBytes=0 }
         catch { notice="手机上的内容没能清除，请重试。" }
     }
     /// Called only after a successful authenticated account directory read, never on a network failure.
