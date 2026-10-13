@@ -72,5 +72,17 @@
     "skipped": 4,
     "typecheck": "passed",
     "phoneProductFilesUnchanged": true
+  },
+  "s4MergeValidation": {
+    "mainCommit": "cde97cf0",
+    "mergeCommit": "9047f0716c13bc0e35e4eb6ba3f78b701aca848c",
+    "relatedPassed": 104,
+    "relatedFailed": 0,
+    "vendorIncrementPassed": 3,
+    "vendorIncrementFailed": 0,
+    "phoneInteractionsPassed": 133,
+    "phoneInteractionsFailed": 0,
+    "typecheck": "passed",
+    "sendAndPressProductFilesUnchanged": true
   }
 }
