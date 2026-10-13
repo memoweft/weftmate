@@ -115,6 +115,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         if (editingId && editingGeneration === core.state.identityGeneration) return;
         editingId = null;
         const identity = core.state.identityGeneration, list = ui.byId('cloud-directory'); list.replaceChildren();
+        ui.byId('cloud-directory-status').textContent = core.state.cloudAuth.mode === 'authenticated' && !hosts.length ? '这个账号还没有连上电脑。在电脑上用同一个账号登录后，这里会出现。' : '';
         const currentHost = hosts.find(host => host.isCurrent), currentDevice = devices.find(device => device.isCurrent), linked = new Set();
         const rows = devices.map(device => {
             const matches = hosts.filter(host => host.name === device.name);

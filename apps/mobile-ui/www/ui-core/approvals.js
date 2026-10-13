@@ -3,6 +3,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
     function approvalReview(row) {
         const review = row.secondOpinion;
         if (!review || !['对得上','对不上','拿不准'].includes(review.alignment) || !['有','没有'].includes(review.externalInfluence) || typeof review.reason !== 'string') return null;
+        if (review.reason === '这次没来得及复核，由你决定') return {warning:false,text:review.reason};
         const warning = review.alignment === '对不上' || review.externalInfluence === '有';
         return { warning, text: warning ? `另一个模型提醒：${review.reason}` : review.alignment === '对得上'
             ? '另一个模型看过：和你的要求一致' : `另一个模型暂时拿不准：${review.reason}` };
@@ -14,11 +15,15 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         const rawArguments = offset >= 0 ? fullReason.slice(offset + 1) : fullReason;
         const args = core.toolArguments(detail || row.arguments || row.parameters || rawArguments);
         const hasArguments = Object.keys(args).length > 0;
+        const raw = detail || row.arguments || row.parameters || fullReason;
+        const rawText = typeof raw === 'string' ? raw : JSON.stringify(raw,null,2);
+        const connector = row.toolName?.startsWith('mcp__');
+        const detailText = connector ? `${row.toolName}\n${rawText}` : raw;
         const service = /操作：((?:邮箱|日历) · [^\n]+)/.exec(reason)?.[1];
-        if (service && /· (?:收件人|日历)：/.test(service)) return { summary: service, reason: '', raw: detail || row.arguments || row.parameters || fullReason };
-        const connector = row.toolName?.startsWith('mcp__c_') && /操作：([^\n]+)/.exec(reason)?.[1];
-        return { summary: connector ? `${connector}${hasArguments ? ' · ' + JSON.stringify(args).slice(0, 240) : ''}` : hasArguments ? core.toolSummary(row.toolName, args) : reason && !reason.startsWith('{') ? reason : core.toolSummary(row.toolName, args),
-            reason: hasArguments && !reason.startsWith('{') ? reason : '', raw: detail || row.arguments || row.parameters || fullReason };
+        if (service && /· (?:收件人|日历)：/.test(service)) return { summary: service, reason: '', raw: detailText };
+        return { summary: connector || hasArguments ? core.toolSummary(row.toolName, args) : reason && !reason.startsWith('{') ? reason : core.toolSummary(row.toolName, args),
+            reason: !connector && hasArguments && !reason.startsWith('{') ? reason : '', raw: detailText };
+
     }
     async function readApprovalPresentation(row) {
         const step = core.timelineEventsForContext().filter(event => event.type.startsWith('step.') || event.data?.completedStep).map(event => event.data?.completedStep || event.data)

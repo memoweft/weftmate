@@ -2,7 +2,7 @@
 globalThis.WeftUiCore.factories.usage = (core, effects) => {
     let generation = 0, lastBudgetRead = 0, warned = '';
     const current = token => { const now = core.accountToken(); return ['generation', 'ownerId', 'deviceId', 'csrf'].every(key => now[key] === token[key]); };
-    const money = value => `¥${Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}`;
+    const money = globalThis.WeftHumanFormat.formatMoney;
     const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
     async function loadUsageStrip() {
         core.syncMobileIdentity?.();
