@@ -11,6 +11,7 @@ export function exampleRoute(template) {
   return template.replace(/\$\{[^}]*\}|\{[^}]*\}|:[A-Za-z][A-Za-z0-9_]*/g, match =>
     /day/.test(match) ? '2026-10-12' : /seq/.test(match) ? '1' : /approval|question|device|request/i.test(match) ? uuid : 'sample-one')
     .replace(/YYYY-MM-DD/g, '2026-10-12').replace(/YYYY-MM/g, '2026-10')
+    .replace(/model-services\/sample-one(?=\/|$)/, 'model-services/model-service-' + uuid)
     .replace(/health\/metrics\/sample-one/, 'health/metrics/sleep')
     .replace(/health\/suggestions\/sample-one/, 'health/suggestions/health-' + 'a'.repeat(32));
 }

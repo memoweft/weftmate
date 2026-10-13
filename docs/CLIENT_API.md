@@ -373,7 +373,7 @@ MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 
 
 | 方法与路径 | 请求 | 响应 |
 |---|---|---|
-| GET `/model-services` | 无 | `{services:[ModelService],canManage}`；缓存立即可读，过期目录后台刷新 |
+| GET `/model-services` | 无 | `{services:[ModelService],canManage,models:[旧模型投影],modelSettings}`；缓存可读，过期目录后台刷新；一次读取模型目录与账户选择 |
 | GET `/model-services/{serviceId}` | 无 | `{service:ModelService}` |
 | POST `/model-services/check` | `{baseUrl?,apiKey?,interfaceType?,serviceId?}`；新草稿必须给地址与密钥，已保存服务可用 `serviceId` 复用本机密钥 | `{status,models,message,checkedAt,httpStatus?}`；只查目录，不保存草稿或发送聊天消息 |
 | POST `/model-services` | `{requestId,name,baseUrl,apiKey,interfaceType?,modelId?,models?,selectedModelId?}` | 201 `{service:ModelService}`；默认选清单中推荐的聊天型号，目录不可用时可用 `modelId` 手填 |
@@ -381,6 +381,8 @@ MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 
 | DELETE `/model-services/{serviceId}` | `{requestId,expectedRevision}` | `{removed:true}`；停止该服务的模型使用，保留旧对话与历史型号标识 |
 | POST `/model-services/{serviceId}/refresh` | `{}` | `{service:ModelService}`；并发查询合并，失败保留原清单与手填型号；客户端打开菜单时可后台调用 |
 | POST `/model-services/{serviceId}/select` | `{modelId,sessionId?,requestId?}` | `{profileId,service:ModelService,models:[旧模型投影]}`；设为新对话默认；给 `sessionId` 时当前对话的下一条消息采用此型号 |
+
+`GET /model-services` 加法返回 `models` 与 `modelSettings`。`models` 复用现有 `GET /models` 的权限过滤与兼容投影；`modelSettings:{defaultModelProfileId,backgroundModelProfileId,backgroundModelFallback,currentChatModelProfileId}` 与现有 `GET /settings/models` 同义，缺省值为 `null`。目录、模型投影与选择属于同一当前账户，选择与服务元数据在原生目录读取结束后从同一个账户快照生成，返回前重新核验登录。新客户端可用一次请求代替三次读取；旧宿主缺少新增字段时，客户端仍读取既有接口补齐。原接口及权限保持原样，新增字段不含密钥或内部凭据引用；原生目录读取失败沿既有 `/models` 错误返回。
 
 `ModelService` 为 `{serviceId:"model-service-<uuid>",name,baseUrl,interfaceType:"openai-compatible"|"anthropic",revision,models:[{modelId,name,enabled,profileId?,profileIds?,capabilities?,deepThinking?,capabilitySource?,lastUsedAt?,manual?}],selectedModelId,catalog:{status,checkedAt,message,httpStatus?},createdAt,updatedAt}`。公开响应省略内部凭据引用；`profileIds` 是同型号迁移前保留的旧配置标识，可用于匹配当前对话的勾选；其中 `profileId` 沿用旧模型投影的 `id` 和会话的 `modelProfileId`，仅已登记的型号具有该字段。`capabilities.vision`、`capabilities.contextWindow`、`deepThinking.supported` 仅在服务明确声明时出现；缺失沿用既有默认处理，不按型号名猜能力。深度思考的明确声明会进入型号的持久元数据、桌面设置与 DSH 原生声明，并通过旧 `/models` 与账户模型接口返回；会话开关核对输入区选中的下一条型号。已知服务的既有思考协议保持原样，未声明能力的通用服务不按名称推测。按 [Claude 模型目录接口](https://platform.claude.com/docs/en/api/models/list)，Claude 目录另读取 `capabilities.image_input.supported`、`capabilities.thinking.supported`、`max_input_tokens`；仅明确为 adaptive-only（仅自适应思考）时透传 `deepThinking.type:"adaptive"`，不增加档位控件。显示名优先使用服务返回的名称，否则整理型号字符串，例如「MiMo v2.6 Flash」。明显的向量、语音、绘图、审核和重排型号不进入聊天清单。
 
