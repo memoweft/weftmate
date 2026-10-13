@@ -55,12 +55,22 @@ test('Relay phone first input and file task', {
     // UI core only to hydrate it from the approved host's real /auth/me result;
     // no cloud tokens, UI behavior, history or business responses are faked.
     await phone.addInitScript(() => {
+      globalThis.__ciR1SendTrace = [];
+      for (const type of ['pointerdown', 'pointerup', 'click', 'submit']) document.addEventListener(type, event => {
+        if (event.target.closest?.('#message-form')) globalThis.__ciR1SendTrace.push({type, target:event.target.tagName, id:event.target.id, action:document.getElementById('send-message')?.dataset.action, buttonType:document.getElementById('send-message')?.type, disabled:document.getElementById('send-message')?.disabled});
+      }, true);
       let value;
       Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true,
         get: () => value, set: module => {
           value = module; const create = module.create;
           module.create = function(...args) {
             const core = create.apply(this, args), initialize = core.initializeCloudAccount;
+            globalThis.__ciR1Ui = args[0].effects;
+            const sendDraft = core.sendDraft;
+            core.sendDraft = function(...params) {
+              globalThis.__ciR1SendTrace.push({type:'sendDraft',reason:core.sendBlocker(params[0] ?? globalThis.__ciR1Ui.readMessageDraft(),core.inMainChat?.())});
+              return sendDraft.apply(this,params);
+            };
             // The fixture supplies its approved session after normal startup. A
             // still-pending cloud credential read may otherwise return to login
             // after this injection, even though all business requests succeeded.
@@ -165,7 +175,19 @@ test('Relay phone first input and file task', {
       assert.ok(delayed.count > 0, 'the 2s history delay must actually run');
       const text = `CI_R1_FIRST_INPUT_${i}_解锁后第一次输入，中文和 ASCII 全部保留。`;
       await draft.fill(text); await pause(300); assert.equal(await draft.inputValue(), text, 'first input lost characters');
-      await waitFor(() => send.isEnabled(), 'first input cannot be sent'); await send.click();
+      assert.equal(await send.getAttribute('type'),'submit','first typing must immediately select a submit action');
+      await waitFor(() => send.isEnabled(), 'first input cannot be sent');
+      if (i === 0) {
+        const before = await send.boundingBox();
+        await phone.evaluate(() => { globalThis.__ciR1PressedIcon = document.getElementById('send-message').firstElementChild; });
+        await phone.mouse.move(before.x+before.width/2,before.y+before.height/2); await phone.mouse.down();
+        await phone.evaluate(() => globalThis.__ciR1Ui.updateAvailability());
+        await pause(100);
+        const during = await send.boundingBox();
+        assert.ok(Math.abs(before.x-during.x)<1 && Math.abs(before.y-during.y)<1,'composer refresh moved the pressed send button');
+        assert.equal(await phone.evaluate(() => __ciR1PressedIcon.isConnected),true,'composer refresh replaced the pressed icon');
+        await phone.mouse.up();
+      } else await send.click();
       await waitFor(async () => {
         const events = (await phoneApi(`/sessions/${session.sessionId}/events?limit=100`)).data.events;
         return events.some(e => e.type === 'user.message' && e.data?.text === text) && events.at(-1)?.type === 'turn.ended';
@@ -187,7 +209,9 @@ test('Relay phone first input and file task', {
     assert.equal((await phoneApi(`/sessions/${created.sessionId}/approval-mode`, { mode: 'ask' }, 'PATCH')).status, 200);
     await phone.reload(); await enterApprovedSession(); await select(fileSession);
     await waitFor(() => draft.isEnabled(), 'file task composer locked');
-    await draft.fill('CI_R1_FILE_TASK：在合成项目里读取 input.txt，新建 result.txt，再读回核验内容。'); await send.click();
+    await draft.fill('CI_R1_FILE_TASK：在合成项目里读取 input.txt，新建 result.txt，再读回核验内容。');
+    assert.equal(await send.getAttribute('type'),'submit','file task first typing must immediately select a submit action');
+    await send.click();
     const approvedIds = new Set();
     await waitFor(async () => {
       const rows = (await phoneApi(`/sessions/${created.sessionId}/approvals`)).data.approvals ?? [];
@@ -224,6 +248,7 @@ test('Relay phone first input and file task', {
     await phone.screenshot({ path: join(evidence, 'file-task-completed.png') }); report.passed = true;
   } catch (error) {
     report.passed = false; report.error = error.stack;
+    report.sendTrace = await phone?.evaluate(() => globalThis.__ciR1SendTrace).catch(() => []);
     report.ui = await phone?.evaluate(() => { const s = globalThis.__ciR1Core?.state; return s && { currentView: s.currentView, refreshing: s.refreshing,
       online: s.online, modelCount: s.models.length, sessions: s.sessions.map(row => ({ sessionId: row.sessionId, title: row.title })) }; }).catch(() => null);
     await phone?.screenshot({ path: join(evidence, 'failure.png') }).catch(() => {});

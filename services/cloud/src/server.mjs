@@ -63,7 +63,7 @@ export function createCloudServer({ database, schemaVersion, logger, identity })
             .prepare('SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1')
             .get();
           status = 200;
-          body = { status: 'ok', service: 'weftmate-cloud', schemaVersion };
+          body = { status: 'ok', service: 'weftmate-cloud', schemaVersion, capabilities: { cloudBackup: 1, offlineTasks: 1, multiHost: 1 } };
         } catch {
           status = 503;
           body = { status: 'unavailable', service: 'weftmate-cloud' };

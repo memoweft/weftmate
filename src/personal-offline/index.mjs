@@ -79,21 +79,27 @@ export async function createOfflineService(context) {
       for (const device of Object.values(current.devices)) device.hashes = {};
       await save();
       await context.memoryManager?.discardOfflinePending?.(ownerId);
-      if (Object.keys(current.devices).length) await publish(ownerId);
+      if (Object.keys(current.devices).length ||
+          context.cloudIdentity?.cloudBackupSupported?.() === true && context.cloudIdentity.backupAccount?.(ownerId)) await publish(ownerId);
       return { generation: current.generation };
     }); },
     async handle(request, response, url, ownerId) {
       const route = url.pathname.slice('/personal/v1/offline'.length);
       if (request.method !== 'POST' || url.search || !['/sync', '/turns'].includes(route)) throw failure('NOT_FOUND', 404);
-      const current = context.authenticate(request, 'account:manage');
+      const authorize=()=>{
+        const auth=context.authenticate(request,request.headers?.authorization?'sessions:read':'account:manage');
+        const channel=auth.via==='bearer'&&auth.device.authKind==='cloud'&&context.cloudIdentity?.validSession(ownerId,auth.deviceId);
+        if(auth.ownerId!==ownerId||!auth.device.scopes.includes('account:manage')||auth.via!=='cookie'&&!channel||!['cloud','password','desktop'].includes(auth.device.authKind))throw failure('FORBIDDEN',403);
+        return auth;
+      };
+      const current = authorize();
       // authenticate() enforces the native desktop boundary on every request;
       // offline publication must remain available when cloud login keeps the
       // independently usable local desktop Cookie.
-      if (current.ownerId !== ownerId || current.via !== 'cookie' || !['cloud', 'password', 'desktop'].includes(current.device.authKind)) throw failure('FORBIDDEN', 403);
       const body = await context.readJson(request, 256 * 1024);
       if (!plainObject(body)) throw failure('INVALID_REQUEST');
       const result = await serial(async () => {
-        context.authenticate(request, 'account:manage');
+        authorize();
         const account = owner(ownerId), deviceId = context.cloudIdentity?.offlineDeviceId?.(ownerId, current.deviceId) ?? current.deviceId;
         if (route === '/sync') {
           if (Object.keys(body).some(k => !['publicJwk', 'generation', 'hashes', 'taskSupport', 'phoneFirst'].includes(k)) || body.taskSupport !== undefined && body.taskSupport !== 1 || body.phoneFirst !== undefined && typeof body.phoneFirst !== 'boolean') throw failure('INVALID_REQUEST');
@@ -123,7 +129,7 @@ export async function createOfflineService(context) {
             snapshot.truncated = true;
             payload = { ...replicaDelta(snapshot, known), ...metadata };
           }
-          context.authenticate(request, 'account:manage');
+          authorize();
           account.devices[deviceId] = { publicJwk, keyId: hash(publicJwk) };
           await save();
           return sealReplica(payload, publicJwk, { ownerId, hostId: context.rootState.hostId, deviceId: current.deviceId });
@@ -151,10 +157,10 @@ export async function createOfflineService(context) {
           }
           receipts.push({ id: turn.id, state: 'synced' });
         }
-        context.authenticate(request, 'account:manage');
+        authorize();
         return { generation: account.generation, receipts };
       });
-      context.authenticate(request, 'account:manage');
+      authorize();
       if (route !== '/sync') for (const receipt of result.receipts ?? []) await context.activity?.record(ownerId, {
         key: `offline:${current.deviceId}:${receipt.id}`, type: 'memory.submission.completed', title: '手机对话已保存到电脑',
         summary: '离线对话已同步到电脑。', level: 'silent',

@@ -7,6 +7,9 @@ import android.view.inputmethod.InputMethodManager
 import android.webkit.WebView
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.view.ViewCompat
 import kotlinx.coroutines.*
 import org.json.JSONObject
@@ -17,6 +20,11 @@ class NativeActivity : HybridActivity() {
     private val nativeScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     internal var nativeForeground = false
     internal lateinit var model: NativeChatModel
+    internal lateinit var feed: NativeFeedModel
+    internal var embeddedFeedLoaded: (() -> Unit)? = null
+    internal var embeddedWebIdentity by mutableStateOf<WebView?>(null)
+        private set
+    internal var displayedFeedWeb: WebView? = null
     internal var overlayBack: (() -> Unit)? = null
     private var webRoute="login"
     private var webEmbedded=false
@@ -46,11 +54,13 @@ class NativeActivity : HybridActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        embeddedWebIdentity = embeddedWeb
         if (!getSharedPreferences("native-ui", MODE_PRIVATE).getBoolean("enabled", BuildConfig.NATIVE_UI)) {
             startActivity(Intent(this, HybridActivity::class.java).apply { data = intent.data; putExtras(intent) }); finish(); return
         }
         model = NativeChatModel(this, nativeScope)
-        nativeObserver = { type, data -> model.event(type, data) }
+        feed = NativeFeedModel(model, this)
+        nativeObserver = { type, data -> model.event(type, data); feed.event(type, data) }
         // Compose owns system/IME insets; the embedded page receives a zero local safe area.
         presentationContainer.setPadding(0, 0, 0, 0)
         ViewCompat.setOnApplyWindowInsetsListener(presentationContainer) { _, insets -> insets }
@@ -68,7 +78,7 @@ class NativeActivity : HybridActivity() {
         applyWebFrame()
         return web
     }
-    override fun embeddedPageFinished() { applyWebFrame() }
+    override fun embeddedPageFinished() { embeddedWebIdentity=embeddedWeb;applyWebFrame();embeddedFeedLoaded?.invoke() }
     internal fun parkWeb() {
         if (!::model.isInitialized || model.tab != "chat") return
         val web = embeddedWeb
@@ -119,7 +129,9 @@ class NativeActivity : HybridActivity() {
     @Suppress("DEPRECATION") override fun onBackPressed() {
         overlayBack?.let { it(); return }
         if (!::model.isInitialized || !model.loggedIn) { super.onBackPressed(); return }
-        if (model.tab != "chat") model.returnToChat() else moveTaskToBack(true)
+        if (model.tab == "activity-web") feed.closeWeb()
+        else if (model.tab == "activity" && feed.detail != null) feed.closeDetail()
+        else if (model.tab != "chat") model.returnToChat() else moveTaskToBack(true)
     }
-    override fun onDestroy() { overlayBack=null; if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
+    override fun onDestroy() { overlayBack=null; if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
 }

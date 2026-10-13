@@ -1,0 +1,58 @@
+{
+  "platform": "darwin-x64",
+  "sizeKiB": 747272,
+  "signing": "ad-hoc; no Developer ID; not notarized",
+  "audit": {
+    "schemaVersion": 1,
+    "installer": {
+      "file": "Contents/MacOS/WeftMate",
+      "bytes": 31488,
+      "sha256": "b31cf811b37349d924bbf5a05fedd5145f53048054c28cd9e27620c42e4949ba"
+    },
+    "appArchive": {
+      "entries": 6438,
+      "directories": 981,
+      "links": 0,
+      "scannedTextFiles": 5411,
+      "scannedBinaryFiles": 46,
+      "forbiddenEntries": 0,
+      "unsafeLinks": 0
+    },
+    "vendor": {
+      "packageVersion": "0.1.0-rc.5",
+      "commit": "47f943859bef60e4160492346772ded9b24f765a",
+      "closureCount": 197,
+      "carriedButNotMounted": 0,
+      "manifestSha256": "b3db5a718be5a4145642fe0221846a7d15d111e2b2635528487f427bffade5ae",
+      "scannedTextFiles": 32740,
+      "reparsePoints": 0
+    },
+    "looseResources": {
+      "scannedTextFiles": 32749,
+      "scannedBinaryFiles": 162
+    },
+    "boundaries": {
+      "developmentPaths": 0,
+      "buildMachineIdentityHits": 0,
+      "userDataFiles": 0,
+      "dogfoodOrRepositoryTests": 0,
+      "credentialsFiles": 0
+    }
+  },
+  "includes": [
+    "Electron + Node",
+    "WeftMate desktop/host",
+    "pinned patched DSH closure"
+  ],
+  "external": [
+    "existing Python 3.11 venv",
+    "read-only MemoWeft Core"
+  ],
+  "absent": [
+    "Python distribution",
+    "semantic recall model",
+    "Mac relay binary",
+    "updates",
+    "developer certificate"
+  ]
+}

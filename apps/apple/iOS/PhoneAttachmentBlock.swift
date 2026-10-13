@@ -4,12 +4,13 @@ import SwiftUI
 struct PhoneAttachmentBlock: View {
     var name: String
     var image: URL?
+    var memoryImage: Data? = nil
     var isImage: Bool
     var status: String? = nil
     var remove: (() -> Void)?
     var body: some View {
         VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
-            if isImage, let image, let content=UIImage(contentsOfFile:image.path) {
+            if isImage, let content=memoryImage.flatMap(UIImage.init(data:)) ?? image.flatMap({UIImage(contentsOfFile:$0.path)}) {
                 Image(uiImage:content).resizable().scaledToFill().frame(width:AppleTokens.Space.p32*5,height:AppleTokens.Space.p64+AppleTokens.Space.p32).clipped()
             } else {
                 WeftIcon(isImage ? "image" : "file",size:AppleTokens.Space.p32).frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p64)
@@ -22,9 +23,9 @@ struct PhoneAttachmentBlock: View {
             .clipShape(RoundedRectangle(cornerRadius:AppleTokens.Radius.r16))
             .overlay(alignment:.topTrailing) {
                 if let remove { Button(action:remove) {
-                    WeftIcon("deny",size:AppleTokens.Space.p16).foregroundStyle(Weave.ink)
+                    WeftIcon("deny",size:AppleTokens.Space.p16).foregroundStyle(Color.white)
                         .frame(width:AppleTokens.Space.p28,height:AppleTokens.Space.p28)
-                        .background(Weave.surface.opacity(AppleTokens.Opacity.disabled),in:Circle())
+                        .background(Color.black.opacity(0.24),in:Circle())
                         .frame(width:AppleTokens.Space.p44,height:AppleTokens.Space.p44).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityElement(children:.ignore).accessibilityLabel("移除 "+name).accessibilityIdentifier("attachment.remove."+name) }
             }

@@ -11,7 +11,9 @@ struct MemoryWorkspaceView: View {
     @State private var confirmingItemDeletion = false
     @State private var confirmingMute = false
 
-    init(appModel: AppleAppModel) {
+    private let phoneRouting: Bool
+    init(appModel: AppleAppModel, phoneRouting: Bool = true) {
+        self.phoneRouting=phoneRouting
         self.appModel = appModel
         _model = StateObject(wrappedValue: MemoryWorkspaceModel(client: appModel.assistantClient,
             journal: try? LocalMemoryOperationStore(directory: appModel.assistantStateDirectory),
@@ -21,6 +23,13 @@ struct MemoryWorkspaceView: View {
     }
 
     var body: some View {
+        #if os(iOS)
+        if phoneRouting { PhoneMemoryWorkspaceView(app:appModel) } else { computerBody }
+        #else
+        computerBody
+        #endif
+    }
+    private var computerBody: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
                 HStack(spacing: AppleTokens.Space.p12) {

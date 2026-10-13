@@ -839,6 +839,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelector('[data-action="new-chat"]').addEventListener('click',()=>selectConversation(null));
 
   $('draft').addEventListener('input',updateComposer);
+  mountComposerPress();
   $('draft').addEventListener('focus',()=>{composerKeyboardDismissed=false;syncComposerExpansion();});
   $('draft').addEventListener('blur',()=>requestAnimationFrame(syncComposerExpansion));
   $('send-button').addEventListener('click',()=> $('send-button').dataset.action==='stop'?stop():$('send-button').dataset.action==='voice'?$('voice-button').click():send());

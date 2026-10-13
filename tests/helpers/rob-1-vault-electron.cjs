@@ -49,4 +49,5 @@ app.whenReady().then(async () => {
   if (store.initializeCredentialStorage) await store.initializeCredentialStorage();
   store.saveCredential('synthetic-model', action==='normal'?'synthetic-rob1-old-key':'synthetic-rob1-key');
   if (action === 'normal') app.quit();
-}).catch(error => { process.stdout.write(JSON.stringify({stage:'fixture-failure',name:error?.name||'Error',code:error?.code||null})+'\n'); app.exit(74); });
+}).catch(error => { process.stdout.write(JSON.stringify({stage:'fixture-failure',action,timing,name:error?.name||'Error',code:error?.code||null,
+  encryptionAvailable:safeStorage.isEncryptionAvailable(),files:metadata()})+'\n'); app.exit(74); });
