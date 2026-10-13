@@ -5,6 +5,17 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {createPersonalAccessService} from '../src/personal-access/index.mjs';
+import vm from 'node:vm';
+import {readFile} from 'node:fs/promises';
+
+test('a saved native login initializes the cloud client and reconnects after restoring cache; failure retains that cache',async()=>{
+ const context:any=vm.createContext({WeftUiCore:{}});vm.runInContext(await readFile('src/ui-core/adapters/android-bridge.js','utf8'),context);
+ for(const unavailable of [false,true]) {
+  const calls:string[]=[];let cache=false;
+  await context.WeftUiCore.resumeCachedMobileCloudSession({configure:async()=>calls.push('configure'),restore:async()=>{cache=true;calls.push('restore');},reconnect:async()=>{calls.push('reconnect');if(unavailable)throw {code:'NETWORK'};},failed:()=>calls.push('visible failure')});
+  assert.equal(cache,true);assert.deepEqual(calls,unavailable?['configure','restore','reconnect','visible failure']:['configure','restore','reconnect']);
+ }
+});
 
 test('phone sync commit wakes the existing chat wait; duplicate upload does not wake idle clients',async t=>{
  const root=await mkdtemp(join(tmpdir(),'weftmate-fix33-sync-'));

@@ -115,8 +115,9 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (chatId.isBlank()) {
             val main = runCatching { business("/chats/main").getJSONObject("chat") }.getOrNull()
             if (main != null) select(main) else {
-                val locals = call("conversations.list").optJSONArray("conversations")?.objects().orEmpty()
-                select(locals.firstOrNull() ?: call("conversations.create"))
+                connected = false; sendAvailable = false; loading = false
+                error = "正在连接电脑，请稍候。"
+                return
             }
         }
         loading = false
@@ -356,7 +357,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     }
     fun event(type: String, data: JSONObject) {
         when {
-            type == "result.app.ready" || type == "result.auth.login" || type == "result.cloud.adopt" || type == "result.auth.logout" -> launch { bootstrap() }
+            type == "result.app.ready" || type == "result.auth.login" || type == "result.cloud.adopt" || type == "result.phone.adopt" || type == "result.auth.logout" -> launch { bootstrap() }
             type.startsWith("result.phone.models.") && standalone -> {
                 if(tab=="models" && type in listOf("result.phone.models.test","result.phone.models.select")) modelSettingsFinished=true
                 launch { refreshPhoneModels() }
