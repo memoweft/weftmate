@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 APP_MODEL = ["OfflineChatModel", "A14TestSupport", "CloudBrowser", "CloudLoginModel", "AppleAppModel", "MainChatModel", "ConversationSendState", "ConversationAdoptionState", "ConversationAttachmentState", "TaskWorkspaceModel"]
 CHECKS = {
     "PhoneStandaloneModelChecks": [],
+    "PhoneMemoryModelChecks": [],
     "A16ChatStateChecks": APP_MODEL,
     "AppleUX23StateChecks": APP_MODEL,
     "AppleSettingsSummaryChecks": APP_MODEL,
@@ -66,7 +67,7 @@ def main():
             sources.append(ROOT / "UI/ConversationResourcesModel.swift")
         if name == "DesignTokenChecks":
             sources.append(ROOT.parent.parent / "design/tokens/generated/apple/DesignTokens.swift")
-        if name == "PhoneStandaloneModelChecks":
+        if name in ("PhoneStandaloneModelChecks", "PhoneMemoryModelChecks"):
             sources.append(ROOT / "iOS/PhoneStandaloneModel.swift")
         sources.append(ROOT / "Tests" / (name + ".swift"))
         compile_command = ["swiftc", "-swift-version", "6", "-D", "DEBUG", "-parse-as-library",
