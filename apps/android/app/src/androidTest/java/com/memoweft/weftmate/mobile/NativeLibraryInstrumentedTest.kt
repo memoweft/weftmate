@@ -39,12 +39,19 @@ class NativeLibraryInstrumentedTest {
         fun ready(code:String){var done=false;waitFor("web library state"){legacy!!.embeddedWeb.evaluateJavascript(code){done=it=="true"};done}}
         fun capture(name:String){Thread.sleep(350);val image=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-web-$name.png").outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}}
         ready("Boolean(typeof state!=='undefined' && state.booted)")
+        main{legacy!!.embeddedWeb.settings.useWideViewPort=true}
+        js("(()=>{const w=${args.getString("and7Width","360")},s=innerWidth/w*visualViewport.scale;document.querySelector('meta[name=viewport]').content='width='+w+',initial-scale='+s;})()")
         js("applyTheme('${args.getString("and7Theme","light")}');page('library')")
         ready("Boolean(document.querySelector('.library-row'))")
+        main{legacy!!.embeddedWeb.evaluateJavascript("JSON.stringify({width:innerWidth,dpr:devicePixelRatio,scale:visualViewport.scale,styles:Object.fromEntries(['.library-page','.library-heading h1','.library-toolbar','.library-type','.library-row','.library-file-name','.library-file-icon'].map(s=>{const e=document.querySelector(s),c=getComputedStyle(e);return [s,{font:c.fontSize,weight:c.fontWeight,padding:c.padding,radius:c.borderRadius,background:c.backgroundColor,border:c.borderBottomWidth,display:c.display,columns:c.gridTemplateColumns,gap:c.gap}]}))})"){value->File(activity.filesDir,"and7-$variant-web-styles.json").writeText(org.json.JSONTokener(value).nextValue().toString())}}
         capture("library-list")
         js("(()=>{const row=document.querySelector('.library-row[data-library-id=\"${args.getString("and7MarkdownId")}\"]');row.scrollIntoView({block:'center'});row.querySelector('.library-row-actions button').click()})()")
         Thread.sleep(300);capture("row-menu")
         js("WeftPopover.closeMenu()")
+        js("document.querySelector('.library-row[data-library-id=\"${args.getString("and7MarkdownId")}\"] .library-file').click()")
+        ready("Boolean(document.getElementById('resource-content')?.textContent.includes('虚构周计划'))")
+        capture("viewer-markdown")
+        js("closeResourcePage()")
         control("empty");js("uiCore.readLibrary()")
         ready("Boolean(document.querySelector('.library-empty') && !document.querySelector('.library-row'))")
         capture("library-empty")
@@ -80,6 +87,11 @@ class NativeLibraryInstrumentedTest {
         compose.waitUntil(30000){runCatching{compose.onAllNodesWithText("虚构文档.docx").fetchSemanticsNodes().isNotEmpty()}.getOrDefault(false)};shot("library-list")
         reveal("虚构周计划.md")
         compose.onNodeWithContentDescription("文件操作：虚构周计划.md").performClick();shot("row-menu")
+        if(android.os.Build.VERSION.SDK_INT>=31)main {
+            val panels=android.view.inspector.WindowInspector.getGlobalWindowViews().mapNotNull{it.layoutParams as? android.view.WindowManager.LayoutParams}.filter{it.type==android.view.WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL}
+            assertTrue("Floating menu requests background blur",panels.any{it.flags and android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND!=0 && it.blurBehindRadius>0})
+            File(activity.filesDir,"and7-$variant-menu-blur.json").writeText(JSONObject().put("requested",true).put("systemSupportsBlur",activity.getSystemService(android.view.WindowManager::class.java).isCrossWindowBlurEnabled).put("scrollingContentBlurred",false).toString())
+        }
         i.uiAutomation.performGlobalAction(1)
         compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasContentDescription("按项目筛选"))
         compose.onNodeWithContentDescription("按项目筛选").performClick();shot("filter-menu");compose.onAllNodesWithText("全部项目").onLast().performClick()
@@ -121,22 +133,26 @@ class NativeLibraryInstrumentedTest {
         compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(500)
         // Phone-only identity follows the same bootstrap contract, and makes no library request.
         SecureSettings(i.targetContext).saveHost(host.copy(authSource="phone"))
-        main{activity.model.tab="chat"};compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(700)
+        compose.onNodeWithContentDescription("聊天").performClick();compose.waitForIdle();compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(700)
+        val phoneBoot=runBlocking{activity.model.call("app.bootstrap")};File(activity.filesDir,"and7-$variant-phone.json").writeText(JSONObject().put("authSource",phoneBoot.optString("authSource")).put("noComputer",libraryHasNoComputer(phoneBoot)).put("tab",activity.model.tab).toString())
+        compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasText("让电脑上的 WeftMate 帮你做事后，产出的文件会出现在这里。"))
         compose.onNodeWithText("让电脑上的 WeftMate 帮你做事后，产出的文件会出现在这里。").assertExists();shot("phone-only-empty")
         SecureSettings(i.targetContext).saveHost(host)
         // Missing, failure and loading are distinct real network responses, not fake screen state.
-        control("empty");main{activity.model.tab="chat"};compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(900);shot("library-empty")
-        control("loading");main{activity.model.tab="chat"};compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(600);shot("library-loading")
-        control("error");main{activity.model.tab="chat"};compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(900);shot("library-error")
-        control("normal");main{activity.model.tab="chat"};compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(900)
-        control("missing");reveal("虚构便签.txt");compose.onNodeWithText("虚构便签.txt").performClick();Thread.sleep(700);shot("viewer-missing");compose.onNodeWithContentDescription("关闭预览").performClick()
-        control("file-error");reveal("虚构便签.txt");compose.onNodeWithText("虚构便签.txt").performClick();Thread.sleep(700);shot("viewer-error");control("normal");compose.onNodeWithText("重试").performClick();Thread.sleep(500);compose.onNodeWithContentDescription("关闭预览").performClick()
+        control("empty");main{activity.model.tab="chat"};compose.waitForIdle();compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(900);shot("library-empty")
+        control("loading");main{activity.model.tab="chat"};compose.waitForIdle();compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(600);shot("library-loading")
+        control("error");main{activity.model.tab="chat"};compose.waitForIdle();compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(900);shot("library-error")
+        control("normal");main{activity.model.tab="chat"};compose.waitForIdle();compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(900)
+        control("file-loading");reveal("虚构便签.txt");compose.onNodeWithText("虚构便签.txt").performClick();Thread.sleep(600);shot("viewer-loading");compose.onNodeWithContentDescription("关闭预览").performClick();control("normal")
+        control("missing");reveal("虚构便签.txt");compose.onNodeWithText("虚构便签.txt").performClick();compose.waitUntil(30000){compose.onAllNodesWithText("文件已不在原位置，可以回到对话查看。").fetchSemanticsNodes().isNotEmpty()};shot("viewer-missing");compose.onNodeWithContentDescription("关闭预览").performClick()
+        control("file-error");reveal("虚构便签.txt");compose.onNodeWithText("虚构便签.txt").performClick();compose.waitUntil(30000){compose.onAllNodesWithText("重试").fetchSemanticsNodes().isNotEmpty()};shot("viewer-error");control("normal");compose.onNodeWithText("重试").performClick();Thread.sleep(500);compose.onNodeWithContentDescription("关闭预览").performClick()
         // Actual chat attachment uses the same viewer and byte loader, including original binary files.
         main{activity.model.tab="chat"}
         val camera=File(activity.cacheDir,"composer-camera").apply{mkdirs()};val text=File(camera,"来自聊天的虚构便签.txt").apply{writeText("聊天附件的原始内容。")}
-        val store=AttachmentStore(activity,LocalStore(activity));store.import(androidx.core.content.FileProvider.getUriForFile(activity,"${activity.packageName}.composer-camera",text),activity.model.owner,activity.model.chatId,"file")
+        val store=AttachmentStore(activity,LocalStore(activity));store.list(activity.model.owner,activity.model.chatId).forEach{store.remove(activity.model.owner,it.id)}
+        store.import(androidx.core.content.FileProvider.getUriForFile(activity,"${activity.packageName}.composer-camera",text),activity.model.owner,activity.model.chatId,"file")
         main{activity.model.launch{activity.model.refreshAttachments()}};waitFor("composer file"){activity.model.attachments.isNotEmpty()}
-        compose.onNodeWithContentDescription("来自聊天的虚构便签.txt").performClick();Thread.sleep(700);compose.onNodeWithContentDescription("消息输入").assertDoesNotExist();shot("chat-file-viewer");compose.onNodeWithContentDescription("关闭预览").performClick()
+        compose.waitForIdle();shot("chat-attachment");compose.onNodeWithText("来自聊天的虚构便签.txt").performTouchInput{click(androidx.compose.ui.geometry.Offset(width*0.25f,height*0.8f))};Thread.sleep(700);shot("chat-file-viewer");compose.onNodeWithContentDescription("文件查看").assertExists();compose.onNode(hasContentDescription("消息输入") and hasAnyAncestor(hasContentDescription("文件查看"))).assertDoesNotExist();compose.onNodeWithContentDescription("关闭预览").performClick()
         // A raw Office attachment can be opened/shared even though the library server cannot export one yet.
         val office=File(camera,"synthetic.docx").apply{writeBytes(byteArrayOf(80,75,3,4,0,1,2,3))}
         val original=store.import(androidx.core.content.FileProvider.getUriForFile(activity,"${activity.packageName}.composer-camera",office),activity.model.owner,activity.model.chatId,"file")

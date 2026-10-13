@@ -65,14 +65,18 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
 @Composable internal fun NativeShell(m: NativeChatModel, activity: NativeActivity) {
     // Observe the route here; a forwarded theme lambda must also change when navigation changes.
     val selectedTab=m.tab
+    val signedIn=m.loggedIn
+    val account=m.owner
+    var overflow by remember { mutableStateOf(false) }
+    var preview by remember(account,signedIn) { mutableStateOf<JSONObject?>(null) }
+    val showOverflow=overflow
+    val openedFile=preview
     NativeTheme(m.dark) {
         val focus=LocalFocusManager.current
         var drawer by remember { mutableStateOf(false) }
-        var overflow by remember { mutableStateOf(false) }
-        var preview by remember(m.owner,m.loggedIn) { mutableStateOf<JSONObject?>(null) }
-        LaunchedEffect(preview) { if(preview!=null){focus.clearFocus();activity.hideKeyboard()} }
+        LaunchedEffect(openedFile) { if(openedFile!=null){focus.clearFocus();activity.hideKeyboard()} }
         LaunchedEffect(m.dark) { activity.reportRenderedSystemBars(m.dark) }
-        if(!m.loggedIn) {
+        if(!signedIn) {
             AndroidView(factory={ activity.webPage("login", false) },modifier=Modifier.fillMaxSize())
             return@NativeTheme
         }
@@ -88,7 +92,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 }
                 Box {
                     NativeIconButton(R.drawable.wm_more,"更多",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)){overflow=true}
-                    DropdownMenu(expanded=overflow,onDismissRequest={overflow=false}) {
+                    DropdownMenu(expanded=showOverflow,onDismissRequest={overflow=false}) {
                         if(m.running && selectedTab!="library") DropdownMenuItem(text={Text("停止回复")},onClick={overflow=false;m.stop()},leadingIcon={Icon(painterResource(R.drawable.wm_stop),null)})
                         DropdownMenuItem(text={Text("设置")},onClick={overflow=false;focus.clearFocus();m.tab="settings"},leadingIcon={Icon(painterResource(R.drawable.wm_settings),null)})
                         if(selectedTab=="library")DropdownMenuItem(text={Text("打开原网页成果库")},onClick={overflow=false;activity.originalLibrary()},leadingIcon={Icon(painterResource(R.drawable.wm_layers),null)})
@@ -130,7 +134,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             Spacer(Modifier.weight(1f).fillMaxHeight().background(Color(DesignTokens.nativeOverlay)).clickable{drawer=false})
             }
         }
-        preview?.let{row->NativeFileViewer(row,m,activity,onClose={preview=null})}
+        openedFile?.let{row->NativeFileViewer(row,m,activity,onClose={preview=null})}
     }
 }
 
