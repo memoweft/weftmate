@@ -1,6 +1,6 @@
 /* The existing phone UI presents account-owned M3 conversations in its main chat. */
 (() => {
-  let engine, account, cloud, native, sessionKey, memoryModel, progress, poll, archive, handoffNotice=false;
+  let engine, account, cloud, native, sessionKey, memoryModel, progress, poll, archive, handoffNotice=false, nativeError='';
   const data = () => engine?.view() || archive;
   const list = () => (data()?.conversations || []).map(c => ({ id: c.id, createdAt: new Date(c.turns[0]?.timestamp || Date.now()).toISOString(), title: c.turns[0]?.messages[0]?.text.slice(0, 40) || '新对话', source: 'phone' }));
   const nativeCall = (...args) => androidBridge.call(...args);
@@ -33,9 +33,9 @@
     scrollBottom();
   }
   async function run(action) {
-    status('');
+    status(''); nativeError='';
     try { const result = await action(); if (result) state.conversationId = result.conversationId; }
-    catch (error) { const stopped=error.name==='AbortError'||error.message==='CANCELLED';status(stopped?'已停止，生成的文字已保存。':'回复未完成，已保存生成的文字。请检查网络或模型配置后重试。',!stopped); }
+    catch (error) { const stopped=error.name==='AbortError'||error.message==='CANCELLED';nativeError=stopped?'已停止，生成的文字已保存。':'回复未完成，已保存生成的文字。请检查网络或模型配置后重试。';status(nativeError,!stopped); }
     finally { show(); }
   }
   async function attachEngine(info, client, adopt = true) {
@@ -51,6 +51,7 @@
         save: value => nativeCall('phone.offline.save', { value }), clear: () => nativeCall('phone.offline.clear',phoneScope), close() {},
         open: (envelope, identity) => nativeCall('phone.offline.open', { envelope, identity }),
         complete: async (body, _snapshot, signal, onProgress) => {
+          if(signal.aborted)throw new DOMException('CANCELLED','AbortError');
           progress = onProgress; const stop = () => void nativeCall('phone.stop'); signal.addEventListener('abort', stop, { once: true });
           try { return await nativeCall('phone.complete', { body }, 180000); }
           finally { progress = null; signal.removeEventListener('abort', stop); }
@@ -132,6 +133,29 @@
     throw Error('HOST_UNAVAILABLE');
   }
   const api = globalThis.WeftPhone = {
+    // Compose uses the existing account engine as its state service. Secrets and
+    // completion transport remain in the phone bridge; this is presentation only.
+    presentation: async (action, p = {}) => {
+      let sent=true;
+      const authBusy=!!globalThis.WeftMobileCloud?.core?.cloudAuthView?.()?.busy;
+      if (!state.booted || !state.loggedIn || !engine || !account) return { ready: false, authBusy };
+      if (p.owner && p.owner !== sessionKey) throw Error('ACCOUNT_SWITCHED');
+      if (action === 'model') state.model = await nativeCall('phone.models.select', p);
+      else if (action === 'composer') await engine.saveComposer(p.conversationId || null, p.draft || '');
+      else if (action === 'send' || action === 'regenerate') {
+        if (!api.active) throw Error('HOST_AVAILABLE');
+        const reason=sendBlocker(action==='send'?String(p.text||''):'重新生成');
+        if(reason){nativeError=reason;sent=false;}
+        else {
+          state.conversationId = p.conversationId || null;
+          void run(() => action === 'send' ? engine.send(p.text, state.conversationId) : engine.regenerate(state.conversationId));
+        }
+      } else if (action === 'stop') engine.stop();
+      else if (action !== 'view') throw Error('INVALID_REQUEST');
+      const value = engine.view();
+      return { ready: true, active: api.active, authBusy, owner: sessionKey, page: state.page, selectedId: state.conversationId,
+        running: value.running, sent, modelSwitching:!!state.modelSwitching, conversations: value.conversations, composer: value.nativeComposer || null, drafts: value.nativeDrafts || {}, error: nativeError };
+    },
     ensureAccount: async info => {if(sessionKey&&sessionKey!==`${info.origin}:${info.accountId}`)await api.clear();},
     modelCall: (method,p={})=>routeCall(method,p),
     get active() { return state.connection === 'phone' && !!engine; }, get hasData() { return !!data(); }, owns: id => !!data()?.conversations.some(c=>c.id===id), list, start, connected, routeCall, render,
@@ -140,7 +164,7 @@
     event: value => { if (value.event === 'phone.progress') { progress?.(value.data.text); return true; } return false; },
     send: () => { const text = $('draft').value.trim(), reason=sendBlocker(text); if(reason){toast(reason);updateComposer();return {sent:false,reason};} $('draft').value = ''; return run(() => engine.send(text, state.conversationId)); },
     stop: () => engine?.stop(),
-    clear: async () => { clearInterval(poll); const previous = engine, hadArchive = archive; engine = null; archive = null; memoryModel = null; account = null; sessionKey = null; state.model = null;
+    clear: async () => { clearInterval(poll); const previous = engine, hadArchive = archive; engine = null; archive = null; memoryModel = null; account = null; sessionKey = null; state.model = null; nativeError='';
       uiCore.phoneAccountConnection(false); if (previous) { await previous.clear(); previous.close(); } else if (hadArchive && window.weftNative) await nativeCall('phone.offline.clear'); },
     empty(target, name) {
       const copy = { activity: '助手的回复、提醒和完成的事情会出现在这里。连上电脑后可使用定时任务。',

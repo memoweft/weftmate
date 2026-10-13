@@ -48,7 +48,7 @@ class ActivityNotifications(private val context: Context) {
     private fun pending(host: HostIdentity, id: String, outcome: String? = null): PendingIntent {
         val nonceKey = "${tag(host)}:$id:intent"
         val nonce = prefs.getString(nonceKey, null) ?: UUID.randomUUID().toString().also { check(prefs.edit().putString(nonceKey, it).commit()) }
-        val intent = Intent(context, HybridActivity::class.java).apply {
+        val intent = Intent(context, NativeActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             data = android.net.Uri.parse("weftmate-notification://activity/$id/${outcome ?: "open"}")
             putExtra("activityId", id); putExtra("ownerScope", Endpoints.ownerKey(host.origin, host.ownerId))
