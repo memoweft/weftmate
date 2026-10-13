@@ -1,0 +1,17 @@
+{
+  "realMacSourceHost": true,
+  "realCloudImplementation": true,
+  "phone": "headless Chromium 390x844",
+  "computerName": "synthetic-mac",
+  "relay": "direct loopback; production relay not exercised",
+  "electronHeadlessLaunches": 1,
+  "mimoRequests": 0,
+  "checks": [
+    "verified synthetic account binds and registers exactly one synthetic-mac host",
+    "headless phone webpage completes password + synthetic mailbox verification into the Mac account"
+  ],
+  "completed": false,
+  "hostId": "host-a1682e63-fee8-4617-9b85-23721c726ba7",
+  "phase": "phone-directory",
+  "failure": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('synthetic-mac', { exact: true }).first() to be visible\u001b[22m\n\u001b[2m    63 × locator resolved to hidden <span id=\"rail-account-name\">synthetic-mac</span>\u001b[22m\n"
+}
