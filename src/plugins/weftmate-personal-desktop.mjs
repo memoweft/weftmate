@@ -1,5 +1,5 @@
 import { decidePermission, permissionCategories, permissionSummary, permissionApprovalCategories } from './personal-permission-rules.mjs';
-import { connectorToolFor } from './personal-connectors.mjs';
+import { connectorToolFor, connectorCallSummary } from './personal-connectors.mjs';
 import { connectorPermission } from '../personal-connectors/policy.mjs';
 import { installPersonalization } from './personal-personalization.mjs';
 import { createHash, randomUUID } from 'node:crypto';
@@ -764,7 +764,7 @@ export function apply(ctx) {
       { createdFiles: conversationCreatedFiles(exec.agent.session), operationTypes });
     const connector = connectorToolFor(exec.agent, exec.name);
     const selected = connector ? connectorPermission(policy, connector) : decidePermission(policy, [...new Set([...permissionCategories(exec.name, exec.arguments, risks), ...operationTypes])], risks);
-    const summary = connector ? `${connector.connectorName} · ${connector.rawName} · ${JSON.stringify(exec.arguments).slice(0, 300)}` : permissionSummary(exec.name, exec.arguments);
+    const summary = connector ? connectorCallSummary(connector, exec.arguments) : permissionSummary(exec.name, exec.arguments);
     const metadata = { types: selected.types, decision: selected.decision, source: selected.source, summary };
     rememberPermission(exec, metadata);
     if (selected.decision === 'deny') {
@@ -780,7 +780,7 @@ export function apply(ctx) {
     const required = permissionApprovalCategories(selected);
     if (!required.length) return decision;
     const connectorLabels = { read: '读取连接器中的资料', network: '连接网络', overwrite: '修改连接器中的资料，可能无法撤销', delete: '删除连接器中的资料，可能无法恢复' };
-    const reason = `[weftmate:${required.join(',')}] ${required.map(risk => (connector && connectorLabels[risk]) || (RISK_LABELS[risk] ?? ({read:'读取文件',network:'连接网络'}[risk] ?? risk))).join('；')}。操作：${connector ? `${connector.connectorName} · ${connector.rawName}` : exec.name}\n${JSON.stringify(exec.arguments).slice(0, 700)}`;
+    const reason = `[weftmate:${required.join(',')}] ${required.map(risk => (connector && connectorLabels[risk]) || (RISK_LABELS[risk] ?? ({read:'读取文件',network:'连接网络'}[risk] ?? risk))).join('；')}。操作：${connector ? connectorCallSummary(connector, exec.arguments) : exec.name}\n${JSON.stringify(exec.arguments).slice(0, 700 - (connector?.displayName ? Math.min(500,summary.length) : 0))}`;
     if (delegated) {
       const outcome = await ctx.approval.request({ agent: owner, toolName: delegated.name,
         callId: delegated.callId, reason, signal: exec.signal });

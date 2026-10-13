@@ -6,9 +6,9 @@ import org.json.JSONObject
 internal fun JSONArray.objects(): List<JSONObject> = (0 until length()).mapNotNull { optJSONObject(it) }
 internal enum class ComposerHeight { Capsule, Draft, Attachments }
 internal enum class ComposerAction { Voice, Send, Stop }
-internal data class NativeComposerState(val text: String, val focused: Boolean, val attachments: Int, val running: Boolean) {
+internal data class NativeComposerState(val text: String, val focused: Boolean, val attachments: Int, val running: Boolean, val queueSupported: Boolean = true) {
     val height get() = when { attachments > 0 -> ComposerHeight.Attachments; focused || text.isNotEmpty() -> ComposerHeight.Draft; else -> ComposerHeight.Capsule }
-    val action get() = when { text.isNotBlank() || attachments > 0 -> ComposerAction.Send; running -> ComposerAction.Stop; else -> ComposerAction.Voice }
+    val action get() = when { running && !queueSupported -> ComposerAction.Stop; text.isNotBlank() || attachments > 0 -> ComposerAction.Send; running -> ComposerAction.Stop; else -> ComposerAction.Voice }
 }
 
 /** Public cumulative snapshots replace a node. Neither live watermarks nor anchors are history cursors. */

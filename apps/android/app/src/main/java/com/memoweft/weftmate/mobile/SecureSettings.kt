@@ -277,13 +277,15 @@ class SecureSettings(context: Context, storageName: String = "private-settings",
         return ModelImportResult("saved", ModelSettings(endpoint, value.modelId, value.apiKey, selectedLabel))
     }
 
-    @Synchronized fun removeModelProfile(endpoint: String, modelId: String, scope: String = activeModelScope()) {
+    @Synchronized fun removeModelProfile(endpoint: String, modelId: String, scope: String = activeModelScope(), allowSelected: Boolean = false) {
         val old = library(scope)
-        require(old.activeEndpoint == null || canonical(old.activeEndpoint) != canonical(endpoint) || old.activeModelId != modelId)
+        val selected = old.activeEndpoint != null && canonical(old.activeEndpoint) == canonical(endpoint) && old.activeModelId == modelId
+        require(!selected || allowSelected)
         val providers = old.providers.mapNotNull { profile ->
             if (canonical(profile.endpoint) != canonical(endpoint)) profile
             else profile.copy(models = profile.models.filterNot { it.id == modelId }).takeIf { it.models.isNotEmpty() }
         }
-        persist(old.copy(providers = providers), scope)
+        persist(old.copy(providers = providers, activeEndpoint = if (selected) null else old.activeEndpoint,
+            activeModelId = if (selected) null else old.activeModelId), scope)
     }
 }

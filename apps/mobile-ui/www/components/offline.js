@@ -122,13 +122,13 @@
         if (!nativeCall) localStorage.setItem('weftmate-offline-identity', JSON.stringify(current));
       }
       async function tick() {
-        if (polling || document.visibilityState === 'hidden' || !core.foreground()) return;
+        if (core.state?.cloudAuth?.cloudOnly || polling || document.visibilityState === 'hidden' || !core.foreground()) return;
         polling = true;
         try {
           const connectedIdentity = await readIdentity();
           let current = connectedIdentity;
           if (!current && !nativeCall) { try { current = JSON.parse(localStorage.getItem('weftmate-offline-identity')); } catch {} }
-          if (!current?.ownerId || !current.hostId || !current.deviceId) return;
+          if (!current?.ownerId || !current.hostId || current.hostId === 'unconnected' || !current.deviceId) return;
           await start(current);
           // A cached identity permits cloud-only use while host login restores.
           // Sending a replica request before that login would turn a transient

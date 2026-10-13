@@ -17,17 +17,32 @@ class NativeActivity : HybridActivity() {
     private val nativeScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     internal var nativeForeground = false
     internal lateinit var model: NativeChatModel
+    internal var overlayBack: (() -> Unit)? = null
     private var webRoute="login"
     private var webEmbedded=false
-    override fun attachBaseContext(base: android.content.Context) {
-        if (BuildConfig.DEBUG && base.packageName in setOf("com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and7qa")) {
-            val width = base.getSharedPreferences("native-qa", MODE_PRIVATE).getInt("width", 360)
-            val configuration = android.content.res.Configuration(base.resources.configuration)
-            configuration.densityDpi = (base.resources.displayMetrics.widthPixels * 160f / width).toInt()
-            configuration.screenWidthDp = width
-            configuration.screenHeightDp = (base.resources.displayMetrics.heightPixels * 160f / configuration.densityDpi).toInt()
-            super.attachBaseContext(base.createConfigurationContext(configuration))
-        } else super.attachBaseContext(base)
+    internal suspend fun phonePresentation(action: String, params: JSONObject = JSONObject()): JSONObject {
+        val token = java.util.UUID.randomUUID().toString()
+        val key = JSONObject.quote(token)
+        embeddedWeb.evaluateJavascript("""
+          (()=>{window.weftPhoneResults??={};const result=window.weftPhoneResults;result[$key]=null;
+          Promise.resolve(globalThis.WeftPhone?.presentation(${JSONObject.quote(action)},$params) || {ready:false})
+            .then(value=>{Object.assign(value,{fontSize:typeof mobileAppearanceStore==='undefined'?${DesignTokens.font15}:mobileAppearanceStore.value.fontSize,codeFontSize:typeof mobileAppearanceStore==='undefined'?${DesignTokens.font13}:mobileAppearanceStore.value.codeFontSize});if(Object.hasOwn(result,$key))result[$key]={value}}).catch(()=>{if(Object.hasOwn(result,$key))result[$key]={error:true}});})()
+        """.trimIndent(), null)
+        try { return withTimeout(15000) {
+            while (true) {
+                val result = suspendCancellableCoroutine<JSONObject?> { continuation ->
+                    embeddedWeb.evaluateJavascript("""(()=>{const result=window.weftPhoneResults?.[$key];if(result)delete window.weftPhoneResults[$key];return result||null})()""") { value ->
+                        if (continuation.isActive) continuation.resumeWith(Result.success(runCatching { JSONObject(value) }.getOrNull()))
+                    }
+                }
+                if (result != null) {
+                    check(!result.optBoolean("error")) { "PHONE_PRESENTATION_FAILED" }
+                    return@withTimeout result.getJSONObject("value")
+                }
+                delay(50)
+            }
+            @Suppress("UNREACHABLE_CODE") JSONObject()
+        } } finally { embeddedWeb.evaluateJavascript("delete window.weftPhoneResults?.[$key]", null) }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,14 +64,26 @@ class NativeActivity : HybridActivity() {
         webRoute=name;webEmbedded=embedded
         val web = embeddedWeb
         (web.parent as? ViewGroup)?.removeView(web)
+        web.visibility = android.view.View.VISIBLE
         applyWebFrame()
         return web
     }
     override fun embeddedPageFinished() { applyWebFrame() }
+    internal fun parkWeb() {
+        if (!::model.isInitialized || model.tab != "chat") return
+        val web = embeddedWeb
+        (web.parent as? ViewGroup)?.removeView(web)
+        // Keep the shared phone engine attached, but stop painting the covered web UI.
+        // evaluateJavascript/native events still drive the existing account/vault engine.
+        web.visibility = android.view.View.INVISIBLE
+        presentationContainer.addView(web, 0, ViewGroup.LayoutParams(-1, -1))
+    }
     private fun applyWebFrame() {
         val web=embeddedWeb
         val name=webRoute
         val embedded=webEmbedded
+        val phoneId=if(::model.isInitialized && model.phoneArchive) model.chatId.takeUnless{it=="phone-new"} else null
+        val hostSession=if(::model.isInitialized && !model.phoneArchive) model.sessionId else ""
         web.evaluateJavascript("""
             (() => {
               const route=${JSONObject.quote(name)};window.weftNativeRoute=route;
@@ -66,7 +93,11 @@ class NativeActivity : HybridActivity() {
               document.querySelectorAll('.topbar,#mobile-bottom-tabs').forEach(el=>el.style.setProperty('display',${JSONObject.quote(if(embedded)"none" else "")},'important'));
               const app=document.getElementById('app');if(app)app.style.setProperty('padding',${JSONObject.quote(if(embedded)"0" else "")},'important');
               for(const edge of ['top','bottom','left','right'])document.documentElement.style.setProperty('--safe-'+edge,${JSONObject.quote(if(embedded)"0px" else "")},'important');
-              if(typeof page==='function' && state.booted && ${JSONObject.quote(name)}!=='login') page(${JSONObject.quote(name)});
+              if(typeof page==='function' && state.booted && route!=='login') {
+                if(route==='chat' && globalThis.WeftPhone?.hasData && ${if(::model.isInitialized && model.phoneArchive)"true" else "false"}) {state.conversationId=${phoneId?.let(JSONObject::quote) ?: "null"};state.chatSource='phone';}
+                if(route==='chat' && ${JSONObject.quote(hostSession)} && globalThis.uiCore?.selectLogicalSession) void uiCore.selectLogicalSession(${JSONObject.quote(hostSession)});
+                page(route);
+              }
               else if(route!=='login')setTimeout(apply,100);
               }apply();
             })()
@@ -86,8 +117,9 @@ class NativeActivity : HybridActivity() {
     override fun onResume() { super.onResume(); nativeForeground = true }
     override fun onPause() { nativeForeground = false; if (::model.isInitialized) model.saveDraft(); super.onPause() }
     @Suppress("DEPRECATION") override fun onBackPressed() {
+        overlayBack?.let { it(); return }
         if (!::model.isInitialized || !model.loggedIn) { super.onBackPressed(); return }
-        if (model.tab != "chat") model.tab = "chat" else moveTaskToBack(true)
+        if (model.tab != "chat") model.returnToChat() else moveTaskToBack(true)
     }
-    override fun onDestroy() { if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
+    override fun onDestroy() { overlayBack=null; if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
 }

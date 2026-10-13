@@ -1,0 +1,37 @@
+{
+  "ok": true,
+  "packages": [
+    {
+      "name": "imapflow",
+      "version": "2.4.0",
+      "license": "MIT",
+      "entry": "./dist/cjs/imap-flow.js"
+    },
+    {
+      "name": "nodemailer",
+      "version": "10.1.0",
+      "license": "MIT-0",
+      "entry": "./dist/cjs/nodemailer.js"
+    },
+    {
+      "name": "mailparser",
+      "version": "3.9.38",
+      "license": "MIT",
+      "entry": "index.js"
+    },
+    {
+      "name": "tsdav",
+      "version": "2.4.0",
+      "license": "MIT",
+      "entry": "dist/tsdav.cjs.js"
+    },
+    {
+      "name": "ical.js",
+      "version": "2.2.1",
+      "license": "MPL-2.0",
+      "entry": "dist/ical.js"
+    }
+  ],
+  "serviceModulesPresent": true,
+  "testServersAbsent": true
+}

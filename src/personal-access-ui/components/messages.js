@@ -195,12 +195,14 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             .map(core.normalizedOriginalFile).filter(Boolean);
         if (!files.length)
             return 0;
-        const list = ui.element('div', 'synced-file-list');
+        const phone=globalThis.WeftPhoneUnify?.isPhone();
+        const list = phone&&row.querySelector('.synced-image-gallery')||ui.element('div', 'synced-file-list');
         for (const file of files) {
             const link = ui.element('a', 'synced-file');
             link.href = core.syncAttachmentUrl(file.attachmentId);
             link.setAttribute('download', file.name);
             link.setAttribute('aria-label', `下载文件 ${file.name}`);
+            if(phone){link.setAttribute('aria-label',`预览文件 ${file.name}`);link.setAttribute('role','button');link.addEventListener('keydown',event=>{if(event.key===' '){event.preventDefault();link.click();}});}
             link.append(ui.element('strong', '', file.name), ui.element('small', '', core.originalFileSize(file.size)), ui.element('span', '', '下载'));
             list.append(link);
         }
