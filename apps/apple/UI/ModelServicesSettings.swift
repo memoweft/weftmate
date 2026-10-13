@@ -67,13 +67,13 @@ import WeftMateCore
 }
 struct ModelServicesSettingsView: View {
     @StateObject var store: ModelServiceSettingsModel
+    @Environment(\.colorScheme) private var scheme
     @State private var editing: ModelService?
     @State private var editor=false
     @State private var removing: ModelService?
     var body: some View {
         ScrollView {
             VStack(alignment:.leading,spacing:20) {
-                Text("模型服务").font(AppleTokens.Fonts.title2.bold())
                 Text("一个地址和密钥，就能选用这个服务的全部聊天模型。").foregroundStyle(Weave.muted)
                 ForEach(store.services) { service in
                     VStack(alignment:.leading,spacing:12) {
@@ -82,13 +82,13 @@ struct ModelServicesSettingsView: View {
                         Text("\(service.models.count) 个模型 · \(service.models.filter(\.enabled).count) 个显示在菜单里")
                         Text(service.catalog.message).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         if let checked=service.catalog.checkedAt { Text(HealthInputMath.parseISO(checked)?.formatted(date:.abbreviated,time:.shortened) ?? "").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-                        Button("管理模型服务") { editing=service;editor=true }.buttonStyle(ServiceActionStyle()).accessibilityIdentifier("modelServices.edit."+service.id)
-                    }.padding(16).background(Weave.surface,in:RoundedRectangle(cornerRadius:16))
+                        Button("管理模型服务") { editing=service;editor=true }.buttonStyle(ServiceActionStyle()).disabled(!store.canManage).accessibilityIdentifier("modelServices.edit."+service.id)
+                    }.padding(16).background(ServiceControlPalette(dark:scheme == .dark).surface,in:RoundedRectangle(cornerRadius:16))
                 }
                 Button("添加模型服务…") { editing=nil;editor=true }.buttonStyle(ServiceActionStyle(primary:true)).disabled(!store.canManage).accessibilityIdentifier("modelServices.new")
                 if let notice=store.notice { Text(notice).foregroundStyle(Weave.muted) }
             }.padding(20)
-        }.background(Weave.canvas).navigationTitle("模型服务").task { await store.load() }
+        }.background(ServiceControlPalette(dark:scheme == .dark).canvas).navigationTitle("模型服务").task { await store.load() }
             .sheet(isPresented:$editor) { NavigationStack { ModelServiceEditor(store:store,existing:editing,onClose:{editor=false}) } }
     }
 }
@@ -131,8 +131,8 @@ struct ModelServiceEditor: View {
                     ServiceMenuRow(title:"自定义") { name="自定义服务";base="";type="openai-compatible";result=nil;presets=false }
                 }
                 TextField("服务名称",text:$name).weaveField().accessibilityIdentifier("modelServices.name")
-                TextField("服务地址",text:$base).weaveField().autocorrectionDisabled().accessibilityIdentifier("modelServices.address")
-                SecureField(existing == nil ? "粘贴密钥" : "新密钥（留空保留原密钥）",text:$key).weaveField().accessibilityIdentifier("modelServices.key")
+                TextField("服务地址",text:$base).accountInput().weaveField().autocorrectionDisabled().accessibilityIdentifier("modelServices.address")
+                SecureField(existing == nil ? "粘贴密钥" : "新密钥（留空保留原密钥）",text:$key).accountInput().weaveField().accessibilityIdentifier("modelServices.key")
                 Text("密钥保存在钥匙串或电脑的加密存储中。查询清单不会发送聊天消息。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                 Button(store.busy ? "正在查询…" : "查询模型清单") { Task { await queryModels() } }.buttonStyle(ServiceActionStyle()).disabled(store.busy || (key.isEmpty && (existing == nil || existing?.baseUrl != base)) || base.isEmpty).accessibilityIdentifier("modelServices.query")
                 if let result { Text(result.message).font(AppleTokens.Fonts.callout).accessibilityIdentifier("modelServices.queryResult") }
@@ -147,7 +147,7 @@ struct ModelServiceEditor: View {
                     }
                 }
                 if result?.status != "available" || existing != nil {
-                    TextField("手填一个型号",text:$manual).weaveField().autocorrectionDisabled().accessibilityIdentifier("modelServices.manual")
+                    TextField("手填一个型号",text:$manual).accountInput().weaveField().autocorrectionDisabled().accessibilityIdentifier("modelServices.manual")
                 }
                 Button(existing == nil ? "完成并使用" : "保存") { Task { if await store.save(existing:existing,name:name,base:base,key:key,type:type,result:result,manual:manual,selected:selected,enabled:enabled) { key="";onClose() } } }.buttonStyle(ServiceActionStyle(primary:true)).disabled(!valid || store.busy).accessibilityIdentifier("modelServices.save")
                 if let notice=store.notice { Text(notice).foregroundStyle(Weave.muted) }
@@ -156,6 +156,14 @@ struct ModelServiceEditor: View {
         }.background(Weave.canvas).navigationTitle(existing == nil ? "添加模型服务" : "管理模型服务")
             .toolbar { ToolbarItem(placement:.cancellationAction) { Button("关闭") { key="";onClose() }.foregroundStyle(Weave.secondary) } }
             .onAppear { if let existing { name=existing.name;base=existing.baseUrl;type=existing.interfaceType;selected=existing.selectedModelId;enabled=Set(existing.models.filter(\.enabled).map(\.modelId)) } }
+            #if DEBUG
+            .onAppear {
+                let args=ProcessInfo.processInfo.arguments
+                if existing == nil,args.contains("--ui-testing"),args.contains("--apple9-fixture"),let i=args.firstIndex(of:"--apple9-model-url"),args.indices.contains(i+1),let url=URL(string:args[i+1]),url.host == "127.0.0.1",url.scheme == "http" {
+                    name="合成模型服务";base=url.absoluteString;key=UUID().uuidString
+                }
+            }
+            #endif
             .onChange(of:base) { _,_ in result=nil }
             .onChange(of:key) { _,_ in
                 result=nil;queryTask?.cancel()

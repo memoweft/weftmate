@@ -91,7 +91,8 @@ public struct ModelServiceWrite: Encodable, Sendable {
 public enum ModelCatalog {
     public static func displayName(_ id: String) -> String {
         if id.hasPrefix("mimo-") { return "MiMo " + id.dropFirst(5).split(separator:"-").map { $0.hasPrefix("v") ? String($0) : $0.capitalized }.joined(separator:" ") }
-        return id
+        let brands=["gpt":"GPT","claude":"Claude","deepseek":"DeepSeek","qwen":"Qwen","gemini":"Gemini","llama":"Llama"]
+        return id.replacingOccurrences(of:"_",with:"-").split(separator:"-").map { part in brands[String(part).lowercased()] ?? (part.first?.isNumber == true ? String(part) : part.capitalized) }.joined(separator:" ")
     }
     public static func chatModel(_ id: String) -> Bool {
         let text=id.lowercased()
@@ -129,13 +130,17 @@ public enum ModelCatalog {
                 if [404,405,501].contains(http.statusCode) { return .init(status:"unsupported",httpStatus:http.statusCode) }
                 guard (200...299).contains(http.statusCode),let object=try JSONSerialization.jsonObject(with:data) as? [String:Any],let rows=object["data"] as? [[String:Any]] else { return .init(status:"failed",httpStatus:http.statusCode) }
                 for row in rows {
-                    guard let id=row["id"] as? String,!id.isEmpty,chatModel(id),seen.insert(id).inserted else { continue }
+                    guard let id=row["id"] as? String,!id.isEmpty,chatModel(id),![(row["type"] as? String ?? ""),(row["task"] as? String ?? ""),(row["category"] as? String ?? "")].contains(where: { ["embedding","speech","audio","image","moderation","rerank","transcription"].contains($0.lowercased()) }),seen.insert(id).inserted else { continue }
                     var model=ServiceModel(modelId:id,name:row["display_name"] as? String ?? row["name"] as? String)
                     let caps=row["capabilities"] as? [String:Any]
-                    let vision=caps?["vision"] as? Bool ?? (caps?["image_input"] as? [String:Any])?["supported"] as? Bool
-                    let thinking=(caps?["thinking"] as? [String:Any])?["supported"] as? Bool ?? (row["deepThinking"] as? [String:Any])?["supported"] as? Bool
-                    if vision != nil || row["max_input_tokens"] != nil { model.capabilities = .init(vision:vision,contextWindow:row["max_input_tokens"] as? Int ?? caps?["contextWindow"] as? Int) }
-                    if let thinking { model.deepThinking = .init(supported:thinking,type:(row["deepThinking"] as? [String:Any])?["type"] as? String ?? (caps?["thinking"] as? [String:Any])?["type"] as? String) }
+                    let vision=caps?["vision"] as? Bool ?? (caps?["image_input"] as? [String:Any])?["supported"] as? Bool ?? (row["input_modalities"] as? [String]).map {$0.contains("image")}
+                    let thinking=caps?["reasoning"] as? Bool ?? (caps?["thinking"] as? [String:Any])?["supported"] as? Bool ?? row["supports_reasoning"] as? Bool ?? (row["deepThinking"] as? [String:Any])?["supported"] as? Bool
+                    if vision != nil || ["max_input_tokens","context_window","context_length","max_context_length"].contains(where: {row[$0] != nil}) || caps?["contextWindow"] != nil { model.capabilities = .init(vision:vision,contextWindow:row["max_input_tokens"] as? Int ?? row["context_window"] as? Int ?? row["context_length"] as? Int ?? row["max_context_length"] as? Int ?? caps?["contextWindow"] as? Int) }
+                    if let thinking {
+                        let types=(caps?["thinking"] as? [String:Any])?["types"] as? [String:Any]
+                        let adaptive=(types?["adaptive"] as? [String:Any])?["supported"] as? Bool == true && (types?["enabled"] as? [String:Any])?["supported"] as? Bool != true
+                        model.deepThinking = .init(supported:thinking,type:adaptive ? "adaptive" : (row["deepThinking"] as? [String:Any])?["type"] as? String ?? (caps?["thinking"] as? [String:Any])?["type"] as? String)
+                    }
                     if model.capabilities != nil || model.deepThinking != nil { model.capabilitySource="catalog" }
                     values.append(model)
                 }

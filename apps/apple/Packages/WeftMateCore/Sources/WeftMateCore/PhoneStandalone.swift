@@ -30,7 +30,13 @@ extension PhoneModelConfiguration {
         guard interfaceType == "anthropic" else {
             var request=source
             if deepThinking?.supported == true,let enabled=thinkingEnabled,let data=request.httpBody,var body=try JSONSerialization.jsonObject(with:data) as? [String:Any] {
-                body["thinking"]=["type":enabled ? "enabled" : "disabled"];request.httpBody=try JSONSerialization.data(withJSONObject:body)
+                if enabled {
+                    switch URL(string:baseURL)?.host {
+                    case "api.xiaomimimo.com","api.deepseek.com": body["thinking"]=["type":"enabled"]
+                    case "dashscope.aliyuncs.com": body["enable_thinking"]=true
+                    default: body["reasoning_effort"]="high"
+                    }
+                };request.httpBody=try JSONSerialization.data(withJSONObject:body)
             };return request
         }
         var request=source;request.url=try ModelCatalog.normalizedURL(baseURL,allowLoopback:source.url?.scheme == "http").appendingPathComponent("messages")
@@ -181,6 +187,7 @@ extension PhoneChatState {
         var migration=prior ?? PhoneChatMigration(generation:generation,turns:[],accepted:[],conversationIDs:[])
         let offered=Set(migration.turns.map(\.id))
         for thread in threads {
+            guard !(migrations ?? [:]).contains(where: { $0.key != host && $0.value.conversationIDs.contains(thread.id) }) else { continue }
             for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) {
                 var messages=[OfflineMessage(role:"user",text:([message.text]+(message.attachments ?? []).map(\.placeholder)).filter { !$0.isEmpty }.joined(separator:"\n"))]
                 if thread.messages.indices.contains(index+1),thread.messages[index+1].role == "assistant",!thread.messages[index+1].text.isEmpty { messages.append(.init(role:"assistant",text:thread.messages[index+1].text)) }

@@ -2,7 +2,7 @@ import SwiftUI
 import WeftMateCore
 
 /// Values from the supplied controls-spec tokens, scoped to APPLE-9 controls.
-private struct ServiceControlPalette {
+struct ServiceControlPalette {
     let dark: Bool
     private func color(_ light: UInt32,_ darkValue: UInt32) -> Color {
         let value=dark ? darkValue : light
@@ -69,6 +69,8 @@ struct ServiceModelMenuButton: View {
     var label: String
     var usesImages=false
     var thinkingSupported=false
+    var thinkingAvailable=true
+    var thinkingUnavailableReason: String? = nil
     @Binding var thinking: Bool
     var select: (ModelService,ServiceModel) -> Void
     var add: () -> Void
@@ -82,7 +84,7 @@ struct ServiceModelMenuButton: View {
     var body: some View {
         Button { open.toggle();all=false;query="";refresh() } label: { WeftIcon("model",size:22).frame(width:44,height:44).contentShape(Circle()) }
             .buttonStyle(.plain).foregroundStyle(colors.secondary).accessibilityLabel("模型："+label).accessibilityIdentifier(identifier)
-            .popover(isPresented:$open,arrowEdge:.bottom) { menuContent.presentationCompactAdaptation(.popover) }
+            .popover(isPresented:$open,arrowEdge:.bottom) { menuContent.presentationCompactAdaptation(.popover).presentationBackground(.clear).presentationCornerRadius(12) }
     }
     private var listHeight: CGFloat {
         let rows=services.reduce(0) { $0+ModelCatalog.menuModels($1.models,current:current,all:all,query:query).count }
@@ -93,7 +95,10 @@ struct ServiceModelMenuButton: View {
             if all { TextField("搜索全部模型",text:$query).textFieldStyle(.plain).padding(12).background(colors.soft,in:RoundedRectangle(cornerRadius:8)).accessibilityIdentifier("modelServices.search") }
             ScrollView { LazyVStack(alignment:.leading,spacing:0) { ForEach(services) { service in serviceRows(service) } } }.frame(height:listHeight)
             if !all,services.contains(where: {$0.models.filter(\.enabled).count > 12}) { ServiceMenuRow(title:"全部模型") { all=true }.accessibilityIdentifier("modelServices.all") }
-            if thinkingSupported { Divider();ServiceSwitch(title:"深度思考",enabled:$thinking).accessibilityIdentifier("modelServices.thinking") }
+            if thinkingSupported {
+                Divider();ServiceSwitch(title:"深度思考",enabled:$thinking).disabled(!thinkingAvailable).accessibilityIdentifier("modelServices.thinking")
+                if let thinkingUnavailableReason { Text(thinkingUnavailableReason).font(.system(size:12)).foregroundStyle(colors.muted) }
+            }
             Divider()
             ServiceMenuRow(title:"添加模型服务…") { open=false;add() }.accessibilityIdentifier("modelServices.add")
         }.padding(12).frame(width:300).foregroundStyle(colors.ink).background(colors.surface,in:RoundedRectangle(cornerRadius:12))

@@ -85,17 +85,15 @@ struct PhoneStandaloneChat: View {
                         Text("手机上可以聊天和记住你说过的事；操作电脑，连上电脑后可用。")
                             .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         if !model.attachments.isEmpty { attachmentRow(model.attachments,removable:true) }
-                        HStack(spacing:AppleTokens.Space.p8) {
+                        TextField("聊一聊…",text:$model.draft,axis:.vertical).lineLimit(1...5).focused($focused).accessibilityIdentifier("phoneChat.draft")
+                        HStack(spacing:AppleTokens.Space.p4) {
                             plusMenu
-                            TextField("聊一聊…",text:$model.draft,axis:.vertical).lineLimit(1...5).focused($focused).accessibilityIdentifier("phoneChat.draft")
+                            Menu { Text("手机聊天没有电脑操作，无需审批。"); Text("连上电脑后可选择操作模式。") } label: { PhoneOperationModeIcon().phoneMenuLabel(circle:true,onCard:true) }.phoneIcon().accessibilityLabel("操作模式，手机聊天").accessibilityIdentifier("phoneChat.mode")
+                            ServiceModelMenuButton(services:model.services,current:model.modelID,label:model.currentModel?.model ?? "尚未配置",usesImages:model.conversationUsesImages,thinkingSupported:model.selectedServiceModel?.deepThinking?.supported == true,thinking:$model.thinkingEnabled,select:{service,item in model.selectServiceModel(service,item)},add:{focused=false;modelsOpen=true},refresh:{Task { for service in model.services { await model.refreshService(service) } }},identifier:"phoneChat.model")
+                            ComputerMenuButton(cloud:app.cloudLogin)
+                            Spacer(minLength:4)
+                            if focused { Button { focused=false } label: { WeftIcon("chevron") }.phoneIcon().accessibilityLabel("收起键盘") }
                             Button { focused=false; model.busy ? model.stop() : model.send() } label: { WeftIcon(model.busy ? "stop" : "send") }.phoneIcon(primary:true).disabled(!model.busy && model.draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && model.attachments.isEmpty).accessibilityLabel(model.busy ? "停止回复" : "发送").accessibilityIdentifier("phoneChat.send")
-                        }
-                        HStack(spacing:AppleTokens.Space.p8) {
-                                ServiceModelMenuButton(services:model.services,current:model.modelID,label:model.currentModel?.model ?? "尚未配置",usesImages:model.conversationUsesImages,thinkingSupported:model.selectedServiceModel?.deepThinking?.supported == true,thinking:$model.thinkingEnabled,select:{service,item in model.selectServiceModel(service,item)},add:{focused=false;modelsOpen=true},refresh:{Task { for service in model.services { await model.refreshService(service) } }},identifier:"phoneChat.model")
-                                ComputerMenuButton(cloud:app.cloudLogin)
-                                Menu { Text("手机聊天没有电脑操作，无需审批。"); Text("连上电脑后可选择操作模式。") } label: { PhoneOperationModeIcon().phoneMenuLabel(circle:true,onCard:true) }.phoneIcon().accessibilityLabel("操作模式，手机聊天").accessibilityIdentifier("phoneChat.mode")
-                                Spacer()
-                                Button { focused=false } label: { WeftIcon("chevron") }.phoneIcon().accessibilityLabel("收起键盘")
                         }
                     }.padding(AppleTokens.Space.p12).background(Weave.soft,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r24)).padding(AppleTokens.Space.p12)
                 }
@@ -204,12 +202,16 @@ struct PhoneLocalDrawer: View {
     }
 }
 struct PhoneModelsView: View {
+    @State private var clearing=false
     @ObservedObject var model: PhoneStandaloneModel
     var body: some View {
         VStack(spacing:12) {
             ServiceSwitch(title:"在手机上记住我说过的事",enabled:Binding(get:{model.memory.enabled},set:{model.setMemoryEnabled($0)})).padding(.horizontal,20)
             Text("每段对话会多用一次小的模型请求。连上电脑后，由电脑负责记忆。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,20)
             ModelServicesSettingsView(store:ModelServiceSettingsModel(app:nil,phone:model))
+            Button("清除手机上的模型、对话与记忆") { clearing=true }.buttonStyle(ServiceActionStyle()).padding(.horizontal,20).accessibilityIdentifier("phoneModel.clearLocalData")
+        }.confirmationDialog("清除这台手机当前账号的模型、对话与记忆？电脑上的内容不受影响。",isPresented:$clearing,titleVisibility:.visible) {
+            Button("清除本机内容",role:.destructive) { model.clearLocalData() };Button("取消",role:.cancel) {}
         }
     }
 }

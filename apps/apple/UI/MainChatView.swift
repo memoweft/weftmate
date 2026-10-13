@@ -363,7 +363,7 @@ struct MainChatView: View {
                 }.padding(.horizontal,AppleTokens.Space.p12)
             }
             #else
-            ConversationApprovalBar(model: interactions, events: model.nativeEvents)
+            ConversationApprovalBar(model: interactions, events: model.nativeEvents,computerName:app.cloudLogin.computerName(app.session?.hostId))
             #endif
             if model.chat?.contextOrganizing == true { Text("正在整理上下文，消息将排队发送。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             if model.chat?.relayError != nil { Text("上下文整理未完成，草稿已保留。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
@@ -498,6 +498,12 @@ struct MainChatView: View {
             .disabled(!model.models.contains(where: \.configured)).accessibilityIdentifier("mainChat.draft")
     }
     @ViewBuilder private var modelSelection: some View {
+        if app.modelServicesSupported == true {
+            ServiceModelMenuButton(services:app.modelServices,current:model.modelID,label:app.modelServices.flatMap(\.models).first(where: {$0.matches(model.modelID)})?.name ?? "尚未配置",usesImages:model.attachments.contains(where: {$0.original.isImage}),thinkingSupported:app.modelServices.flatMap(\.models).first(where: {$0.matches(model.modelID)})?.deepThinking?.supported == true,thinkingAvailable:model.chat?.activeSessionId != nil,thinkingUnavailableReason:model.chat?.activeSessionId == nil ? "先发第一条消息，再切换深度思考。" : nil,thinking:Binding(get:{model.thinking?.enabled == true},set:{enabled in Task { await model.refreshThinking(enabled:enabled) }}),select:{service,item in Task { await app.chooseServiceModel(service,item,conversation:model.chat?.summary) }},add:{showingModels=true},refresh:{Task { await app.refreshServiceMenus() }},identifier:"mainChat.model")
+            ComputerMenuButton(cloud:app.cloudLogin)
+        } else { legacyModelSelection }
+    }
+    @ViewBuilder private var legacyModelSelection: some View {
         #if os(iOS)
         if model.models.contains(where: \.configured) {
             Menu {
