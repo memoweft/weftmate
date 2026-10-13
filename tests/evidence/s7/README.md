@@ -41,3 +41,13 @@
 - [新云结构9：「+」菜单出现交给电脑](mobile-cloud9-plus.png)
 
 两图是390×844浅色浏览器内容视口，使用生产菜单组件和样式，不作为系统栏整屏或原生客户端验收；没有修改模拟器设置。本次模型请求0。补充复验：相关固定测试51通过／0失败，云95项中91通过／0失败／4既有条件跳过，手机五文件114通过／0失败，共享手机资源生成、类型与公开卫生通过。未重跑完整必过组。日志为 `cloudcompat-related.log`、`cloudcompat-cloud.log`、`cloudcompat-mobile.log`、`cloudcompat-typecheck.log`、`cloudcompat-hygiene.log`。
+
+## 安卓白名单
+
+四条手机任务接口（submit/list/cancel/clear）归 `cloud-account`（云账号原生通道），使用原生设备签名与固定云来源，只允许精确POST，由 `CloudAppCrypto.kt` 校验；不加入 `Network.kt` 电脑业务白名单。电脑安装签名的 claim/ack/result 保留 `specialized-or-desktop`（专用或桌面通道）分类，不能经手机云通道调用。共享客户端改为四条明确调用，文档方法／路径明确填写；未放宽清单或白名单。
+
+原清单会把拼接任务路径误识别成GET sample-one；第一轮补齐四条路径后，JVM单测另发现能力文档短路径被误识别成不存在的POST /personal/v1/hosts/offline/status。文档改为完整云路径后，最终路由301项与真实Kotlin校验通过。没有新增跳过、放宽断言或允许虚构路径。
+
+最终 `:app:testDebugUnitTest` 78通过／0失败／0跳过；Node（JavaScript运行环境）路由与离线定向27通过／0失败；手机交互五文件114通过／0失败；类型与公开卫生通过，共享手机资源生成58项。Android（安卓）固定测试直接使用产品nativeVault与离线组件，云端支持且缓存有接收公钥时仍因没有seal而隐藏任务入口；菜单只保留继续聊聊、目标任务投影为空，离线聊天经原native complete可用，无缺失接口调用或失败提示。未运行模拟器，不将固定测试称为原生整屏验收。本次模型请求0。
+
+保管库offline.seal／targets／clearAccount等原生能力仍待后续，安卓暂不显示此功能。需要新壳版本（精确云路由新增），版本号与界面默认值未改，由编排统一升号。验证计数与七条路径分类见 `android-verification.json`；日志 `android-jvm.log`、`android-related.log`、`android-mobile.log`、`android-typecheck.log`、`android-hygiene.log`。本轮按指示不重跑完整必过组。
