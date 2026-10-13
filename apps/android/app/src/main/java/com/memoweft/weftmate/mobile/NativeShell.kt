@@ -104,11 +104,12 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
       val density=LocalDensity.current
       LaunchedEffect(signedIn,account) { activity.feed.prepare() }
       LaunchedEffect(signedIn,account) { activity.goals.prepare() }
+      LaunchedEffect(signedIn,account) { activity.health.prepare() }
         if(!signedIn) {
             AndroidView(factory={ activity.webPage("login", false) },onRelease={activity.parkWeb()},modifier=Modifier.fillMaxSize())
             return@NativeTheme
         }
-      CompositionLocalProvider(LocalNativeFrost provides if(selectedTab in listOf("chat","library","activity","goals"))frost else null,LocalReadingSize provides m.textSize,LocalCodeSize provides m.codeSize) {
+      CompositionLocalProvider(LocalNativeFrost provides if(selectedTab in listOf("chat","library","activity","goals","health"))frost else null,LocalReadingSize provides m.textSize,LocalCodeSize provides m.codeSize) {
         val focus=LocalFocusManager.current
         var drawer by remember { mutableStateOf(false) }
         SideEffect { activity.overlayBack=if(drawer) ({drawer=false}) else null }
@@ -128,6 +129,9 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 onDrawer={focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch{m.refreshChats()}},
                 onSettings={focus.clearFocus();m.tab="settings"})
             else if(selectedTab in listOf("goals","goals-web")) NativeGoalsToolbar(activity.goals,
+                onDrawer={focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch{m.refreshChats()}},
+                onSettings={focus.clearFocus();m.tab="settings"})
+            else if(selectedTab in listOf("health","health-web")) NativeHealthToolbar(activity.health,
                 onDrawer={focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch{m.refreshChats()}},
                 onSettings={focus.clearFocus();m.tab="settings"})
             else Row(Modifier.fillMaxWidth().height(DesignTokens.space80.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
@@ -159,6 +163,10 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 NativeGoalsPage(activity.goals,Modifier.weight(1f).alpha(paneAlpha.value))
             } else if(selectedTab=="goals-web") {
                 NativeGoalsWeb(activity.goals,activity,Modifier.weight(1f).fillMaxWidth())
+            } else if(selectedTab=="health") {
+                NativeHealthPage(activity.health,Modifier.weight(1f).alpha(paneAlpha.value))
+            } else if(selectedTab=="health-web") {
+                NativeHealthWeb(activity.health,activity,Modifier.weight(1f).fillMaxWidth())
             } else {
                 if(selectedTab=="settings") Row(Modifier.fillMaxWidth().padding(horizontal=pad),verticalAlignment=Alignment.CenterVertically) {
                     Text("使用原生聊天界面",Modifier.weight(1f));Switch(checked=true,onCheckedChange={activity.fallback()})
@@ -170,7 +178,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             if(!ime && selectedTab!="settings") {
                 Row(Modifier.fillMaxWidth().padding(start=DesignTokens.space12.dp,end=DesignTokens.space12.dp,top=DesignTokens.space4.dp,bottom=DesignTokens.space12.dp).nativeFrost(pill).padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space4.dp),horizontalArrangement=Arrangement.SpaceEvenly) {
                     tabs.forEach{(id,v)->Box(Modifier.weight(1f),contentAlignment=Alignment.Center){
-                        val active=selectedTab==id || id=="activity"&&selectedTab=="activity-web" || id=="goals"&&selectedTab=="goals-web"
+                        val active=selectedTab==id || id=="activity"&&selectedTab=="activity-web" || id=="goals"&&selectedTab=="goals-web" || id=="health"&&selectedTab=="health-web"
                         NativeIconButton(v.second,v.first,Modifier.semantics{selected=active},selected=active){focus.clearFocus();m.focused=false;m.tab=id}
                         if(id=="activity" && activity.feed.unread>0)Box(Modifier.align(Alignment.TopEnd).padding(DesignTokens.space4.dp).size(DesignTokens.space8.dp).background(MaterialTheme.colorScheme.primary,CircleShape).semantics{contentDescription="${activity.feed.unread} 条动态未读"})
                     }}
