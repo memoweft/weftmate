@@ -354,6 +354,9 @@ public enum AppleTokens {
         public static let p64: CGFloat = 64
         public static let p72: CGFloat = 72
         public static let psettings_nav_gap: CGFloat = 4
+        public static let pcontrol_switch_width: CGFloat = 42
+        public static let pmodel_menu_extent: CGFloat = 300
+        public static let pphone_drawer_width: CGFloat = 320
     }
     public enum Radius {
         public static let r4: CGFloat = 4
@@ -437,6 +440,12 @@ public enum AppleTokens {
         public static let disabled: Double = 0.45
         public static let pressed: Double = 0.78
         public static let notice: Double = 0.07
+        public static let opaque: Double = 1
+        public static let controlAccentLight: Double = 0.84
+        public static let controlLineDark: Double = 0.14
+        public static let controlSoftDark: Double = 0.26
+        public static let controlShadowLight: Double = 0.16
+        public static let controlShadowDark: Double = 0.28
     }
     public enum Scale {
         public static let pressed: CGFloat = 0.985
@@ -527,6 +536,16 @@ public enum AppleTokens {
         public static let healthInk = adaptive(light: 0x202D26, dark: 0xF1F5F2)
         public static let healthMuted = adaptive(light: 0x58665D, dark: 0xB5C0B9)
         public static let healthCanvas = adaptive(light: 0xF0F4F1, dark: 0x1D2420)
+        public static let controlSurface = adaptive(light: 0xFFFFFF, dark: 0x2A2A2C)
+        public static let controlCanvas = adaptive(light: 0xFAF9F7, dark: 0x1C1C1E)
+        public static let controlInk = adaptive(light: 0x272724, dark: 0xF2F2F4)
+        public static let controlSecondary = adaptive(light: 0x575752, dark: 0xC4C4C9)
+        public static let controlMuted = adaptive(light: 0x676762, dark: 0xA3A3A9)
+        public static let controlAccent = adaptive(light: 0x2C2C2E, dark: 0xE6E6E8)
+        public static let controlOnAccent = adaptive(light: 0xFFFFFF, dark: 0x1C1C1E)
+        public static let controlLine = adaptive(light: 0xE1E0DB, dark: 0xFFFFFF)
+        public static let controlSoft = adaptive(light: 0xF1F0ED, dark: 0x787880)
+        public static let controlShadow = adaptive(light: 0x000000, dark: 0x000000)
         private static func adaptive(light: UInt32, dark: UInt32) -> Color {
             #if os(macOS)
             return Color(nsColor: NSColor(name: nil) { appearance in

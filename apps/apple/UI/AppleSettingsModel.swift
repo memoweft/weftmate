@@ -37,10 +37,12 @@ import WeftMateCore
                 let reply = try await app.assistantClient.settingsBackups()
                 if self.current { self.backups = reply; self.backupPreferences = reply.settings }
             case "models":
-                let models = try await app.assistantClient.hostModels()
+                let models = try await app.readModelCatalogue()
                 let prices = try await app.assistantClient.usageSettings()
-                let preference = try await app.assistantClient.backgroundModelPreference()
-                if self.current { self.models = models; self.prices = prices.models; self.backgroundModelID = preference.backgroundModelProfileId ?? ""; self.backgroundModelFallback = preference.backgroundModelFallback }
+                var background: String?,fallback: BackgroundModelFallback?
+                if let preference=app.serviceModelSettings { background=preference.backgroundModelProfileId;fallback=preference.backgroundModelFallback }
+                else { let preference=try await app.assistantClient.backgroundModelPreference();background=preference.backgroundModelProfileId;fallback=preference.backgroundModelFallback }
+                if self.current { self.models = models; self.prices = prices.models; self.backgroundModelID = background ?? ""; self.backgroundModelFallback = fallback }
             case "system":
                 let reply = try await app.assistantClient.settingsStatus()
                 if self.current { self.status = reply; self.backgroundModelFallback = reply.backgroundModelFallback }

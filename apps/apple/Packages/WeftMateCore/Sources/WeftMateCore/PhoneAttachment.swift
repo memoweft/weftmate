@@ -48,6 +48,7 @@ public enum PhoneAttachmentFailure: Error, Equatable {
 extension PhoneModelConfiguration {
     /// Only exact known text models on official preset endpoints are disabled; custom services remain unknown.
     public var supportsImages: Bool? {
+        if let vision { return vision }
         let host=URL(string:baseURL)?.host, name=model.lowercased()
         if host == "dashscope.aliyuncs.com", ["qwen-plus","qwen-turbo","qwen-max"].contains(name) { return false }
         if host == "api.deepseek.com", ["deepseek-chat","deepseek-reasoner"].contains(name) { return false }
@@ -75,7 +76,7 @@ extension PhoneModelConfiguration {
         }
         var request=try self.request(messages:[],stream:stream,allowLoopback:allowLoopback)
         request.httpBody=try JSONSerialization.data(withJSONObject:["model":model,"stream":stream,"messages":[["role":"system","content":system]]+history])
-        return request
+        return try adaptRequest(request)
     }
 }
 
