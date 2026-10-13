@@ -29,7 +29,7 @@ class NativeLibraryInstrumentedTest {
     private fun reveal(name:String){compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasText(name))}
     private fun webComparisons() {
         compose.onNodeWithContentDescription("成果库").performClick()
-        compose.waitUntil(30000){compose.onAllNodesWithText("虚构周计划.md").fetchSemanticsNodes().isNotEmpty()}
+        compose.waitUntil(30000){compose.onAllNodesWithText("虚构文档.docx").fetchSemanticsNodes().isNotEmpty()}
         reveal("虚构周计划.md");compose.onNodeWithText("虚构周计划.md").performClick()
         compose.waitUntil(30000){compose.onAllNodesWithContentDescription("正在读取文件").fetchSemanticsNodes().isEmpty()}
         compose.onNodeWithContentDescription("更多文件操作").performClick()
@@ -51,7 +51,7 @@ class NativeLibraryInstrumentedTest {
         js("(()=>{const w=${args.getString("and7Width","360")},s=innerWidth/w*visualViewport.scale;document.querySelector('meta[name=viewport]').content='width='+w+',initial-scale='+s;})()")
         js("applyTheme('${args.getString("and7Theme","light")}');page('library')")
         ready("Boolean(document.querySelector('.library-row'))")
-        main{legacy!!.embeddedWeb.evaluateJavascript("JSON.stringify({width:innerWidth,dpr:devicePixelRatio,scale:visualViewport.scale,styles:Object.fromEntries(['.library-page','.library-heading h1','.library-toolbar','.library-type','.library-row','.library-file-name','.library-file-icon'].map(s=>{const e=document.querySelector(s),c=getComputedStyle(e);return [s,{font:c.fontSize,weight:c.fontWeight,padding:c.padding,radius:c.borderRadius,background:c.backgroundColor,border:c.borderBottomWidth,display:c.display,columns:c.gridTemplateColumns,gap:c.gap}]}))})"){value->File(activity.filesDir,"and7-$variant-web-styles.json").writeText(org.json.JSONTokener(value).nextValue().toString())}}
+        main{legacy!!.embeddedWeb.evaluateJavascript("JSON.stringify({width:innerWidth,dpr:devicePixelRatio,scale:visualViewport.scale,styles:Object.fromEntries(['.library-page','.library-heading h1','.library-toolbar','.library-type','.library-row','.library-file-name','.library-file-icon'].map(s=>{const e=document.querySelector(s),c=getComputedStyle(e);return [s,{font:c.fontSize,color:c.color,weight:c.fontWeight,padding:c.padding,radius:c.borderRadius,background:c.backgroundColor,borderColor:c.borderColor,border:c.borderBottomWidth,display:c.display,columns:c.gridTemplateColumns,gap:c.gap}]}))})"){value->File(activity.filesDir,"and7-$variant-web-styles.json").writeText(org.json.JSONTokener(value).nextValue().toString())}}
         capture("library-list")
         js("(()=>{const row=document.querySelector('.library-row[data-library-id=\"${args.getString("and7MarkdownId")}\"]');row.scrollIntoView({block:'center'});row.querySelector('.library-row-actions button').click()})()")
         Thread.sleep(300);capture("row-menu")
@@ -118,8 +118,11 @@ class NativeLibraryInstrumentedTest {
                 val captured=mutableListOf<Intent>();main{activity.fileActions.systemIntent={captured.add(it)}}
                 compose.onNodeWithText("保存到手机").performClick();assertEquals(Intent.ACTION_CREATE_DOCUMENT,captured.last().action);assertEquals("虚构周计划.md",captured.last().getStringExtra(Intent.EXTRA_TITLE));assertTrue(captured.last().categories.contains(Intent.CATEGORY_OPENABLE))
                 compose.onNodeWithContentDescription("更多文件操作").performClick();compose.onNodeWithText("分享").performClick()
-                val send=captured.last();assertEquals(Intent.ACTION_SEND,send.action);assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION,send.flags)
+                val chooser=captured.last();assertEquals(Intent.ACTION_CHOOSER,chooser.action)
+                assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION,chooser.flags)
+                val send=chooser.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!;assertEquals(Intent.ACTION_SEND,send.action);assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION,send.flags)
                 val uri=send.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)!!;assertEquals(uri,send.clipData!!.getItemAt(0).uri)
+                assertEquals(1,chooser.clipData!!.itemCount);assertEquals(uri,chooser.clipData!!.getItemAt(0).uri)
                 assertEquals("${activity.packageName}.native-files",uri.authority)
                 val content=activity.contentResolver.openInputStream(uri)!!.use{it.readBytes()};assertTrue(String(content).contains("虚构周计划"))
                 val loaded=runBlocking{activity.fileActions.load(JSONObject().put("libraryId",args.getString("and7MarkdownId"))) }
@@ -169,7 +172,8 @@ class NativeLibraryInstrumentedTest {
         val row=original.bridge().put("conversationId",activity.model.chatId)
         val loaded=runBlocking{activity.fileActions.load(row)};assertArrayEquals(office.readBytes(),loaded.file!!.readBytes())
         var open:Intent?=null;main{activity.fileActions.systemIntent={open=it};activity.fileActions.share(loaded,true)}
-        assertEquals(Intent.ACTION_VIEW,open!!.action);assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION,open!!.flags)
+        assertEquals(Intent.ACTION_CHOOSER,open!!.action);assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION,open!!.flags)
+        assertEquals(Intent.ACTION_VIEW,open!!.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!.action)
         webComparisons()
         // Logout cleanup and delayed old-account export are exercised without a real system panel.
         assertTrue(activity.nativeFileCurrent(loaded))

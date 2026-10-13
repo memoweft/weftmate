@@ -56,8 +56,9 @@ internal class NativeFileActions(private val activity: NativeActivity) {
         try {
             val uri=FileProvider.getUriForFile(activity,"${activity.packageName}.native-files",file.file!!)
             val intent=nativeShareIntent(file,uri,open)
-            systemIntent?.let { it(intent);return }
-            activity.startActivity(Intent.createChooser(intent,if(open)"用其它应用打开" else "分享文件"))
+            val chooser=Intent.createChooser(intent,if(open)"用其它应用打开" else "分享文件")
+            systemIntent?.let { it(chooser);return }
+            activity.startActivity(chooser)
         }catch(_:Exception){notice(if(open)"没有找到能打开这份文件的应用。" else "暂时无法分享，请重试。")}
     }
     private fun usable(file:NativeFile):Boolean {
