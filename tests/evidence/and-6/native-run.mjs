@@ -6,7 +6,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import {createServer} from 'node:net';
 import {readMuMuInfo} from '../../../scripts/nightly/mumu.mjs';
 import {startGoalsFixture} from './fixture.mjs';
-import {startFeedFixture} from '../and-5/fixture.mjs';
+import {startFiltersFixture} from './filters-fixture.mjs';
 delete process.env.WEFTMATE_TEST_TEMP_SCOPE;
 process.env.WEFTMATE_MANAGED_TEMP_ROOT=join('C:/weftmate-temp','weftmate-and6-'+randomUUID());
 const exec=promisify(execFile),root=resolve(import.meta.dirname,'../../..'),out=import.meta.dirname;
@@ -20,6 +20,7 @@ const report={synthetic:true,instrumentation:[],screenshots:[]};
 const filters=process.argv.includes('--filters');
 async function lock(path,label){const f=await open(path,'wx');await f.writeFile(`AND-6 ${new Date().toISOString()} ${label}`);await f.close();return path;}
 try{
+  while(true){
   while(!mumu){
     for(let i=1;i<=3&&!heavy;i++)try{heavy=await lock(join(locks,`heavy-${i}.lock`),'native goal walkthrough')}catch(e){if(e.code!=='EEXIST')throw e}
     if(heavy)try{mumu=await lock(join(locks,'mumu.lock'),'native goals 360/390 light/dark')}catch(e){if(e.code!=='EEXIST')throw e;await unlink(heavy);heavy=null}
@@ -29,11 +30,19 @@ try{
   const allocator=createServer();await new Promise(r=>allocator.listen(0,'127.0.0.1',r));adbPort=allocator.address().port;await new Promise(r=>allocator.close(r));
   serial=readMuMuInfo().serial;
   execFileSync(adb,['-P',String(adbPort),'connect',serial],{windowsHide:true,timeout:30000});
-  const other=run('shell','pm','list','packages').split(/\r?\n/).filter(s=>s.includes('weftmate')&&!s.includes('and6qa'));
-  if(other.length)throw Error(`Another work package has ${other.length} emulator applications; release before installing`);
-  report.systemVersion=run('shell','getprop','ro.build.version.release').trim();report.systemTheme='unchanged emulator setting';
+  const installedOthers=run('shell','pm','list','packages').split(/\r?\n/).filter(s=>s.includes('weftmate')&&!s.includes('and6qa'));
+  const other=installedOthers.filter(s=>/qa$/.test(s)).filter(s=>{try{return Boolean(run('shell','pidof',s.replace(/^package:/,'')).trim())}catch{return false}});
+  report.installedOtherPackages=installedOthers.length;
+  if(!other.length)break;
+  report.packageQueue=(report.packageQueue||0)+1;
+  process.stdout.write(`Waiting for ${other.length} other WeftMate application(s) to be cleaned; all slots released\n`);
+  execFileSync(adb,['-P',String(adbPort),'disconnect',serial],{windowsHide:true,timeout:5000});
+  execFileSync(adb,['-P',String(adbPort),'kill-server'],{windowsHide:true,timeout:5000});serial=null;adbPort=null;
+  await unlink(mumu);await unlink(heavy);mumu=heavy=null;await pause(120000);
+  }
+  report.systemVersion=run('shell','getprop','ro.build.version.release').trim();report.systemTheme=run('shell','cmd','uimode','night').trim();
   await mkdir(process.env.WEFTMATE_MANAGED_TEMP_ROOT,{recursive:true});
-  fixture=await (filters?startFeedFixture():startGoalsFixture());port=new URL(fixture.origin).port;run('reverse',`tcp:${port}`,`tcp:${port}`);
+  fixture=await (filters?startFiltersFixture():startGoalsFixture());port=new URL(fixture.origin).port;run('reverse',`tcp:${port}`,`tcp:${port}`);
   report.apkHashes={};for(const [type,file]of [['app','debug/app-debug.apk'],['test','androidTest/debug/app-debug-androidTest.apk']]){const path=join(root,'apps/android/app/build/outputs/apk',file);report.apkHashes[type]=createHash('sha256').update(await readFile(path)).digest('hex');run('install','-r',path);installed=true}
   const only=process.argv.find(a=>a.startsWith('--variant='))?.split('=').at(-1);
   const variants=only?[[Number(only.split('-')[0]),only.split('-')[1]]]:filters?[[390,'light'],[390,'dark']]:[360,390].flatMap(w=>['light','dark'].map(t=>[w,t]));

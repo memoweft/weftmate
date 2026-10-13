@@ -20,7 +20,7 @@ class NativeFiltersInstrumentedTest {
     private val theme get()=args.getString("and6Theme","light")
     private fun main(action:()->Unit)=instrumentation.runOnMainSync(action)
     private fun js(web:android.webkit.WebView,script:String):String {var result:String?=null;main{web.evaluateJavascript(script){result=it}};val end=System.currentTimeMillis()+10000;while(result==null&&System.currentTimeMillis()<end)Thread.sleep(50);return result ?: error("javascript timed out")}
-    private fun waitFor(label:String,condition:()->Boolean){val end=System.currentTimeMillis()+30000;while(System.currentTimeMillis()<end){if(condition()){compose.waitForIdle();if(condition())return};Thread.sleep(100)};error("Timed out: $label")}
+    private fun waitFor(label:String,condition:()->Boolean){val end=System.currentTimeMillis()+30000;while(System.currentTimeMillis()<end){if(condition()){compose.waitForIdle();if(condition())return};Thread.sleep(100)};main{File(activity.filesDir,"and6-390-$theme-filter-failure.json").writeText(JSONObject().put("stage",label).put("loggedIn",activity.model.loggedIn).put("loading",activity.model.loading).put("standalone",activity.model.standalone).put("rows",activity.model.rows.size).put("error",activity.model.error).toString())};shot("filter-failure");error("Timed out: $label")}
     private fun shot(name:String){compose.waitForIdle();Thread.sleep(300);val image=instrumentation.uiAutomation.takeScreenshot();assertNotNull(image);File(activity.filesDir,"and6-390-$theme-$name.png").outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}}
     @Test fun pageFiltersStayInOneRow(){
         val context=instrumentation.targetContext;check(context.packageName=="com.memoweft.weftmate.mobile.and6qa")
@@ -33,11 +33,19 @@ class NativeFiltersInstrumentedTest {
         compose.onNodeWithContentDescription("动态",useUnmergedTree=true).performClick();waitFor("feed"){!activity.feed.loading&&activity.feed.items.isNotEmpty()}
         compose.onNodeWithText("全部").assertIsSelected();for(name in listOf("待处理","任务","提醒","记忆"))compose.onNodeWithText(name).assertExists()
         compose.onNodeWithText("记忆").performScrollTo().performClick();waitFor("memory filter"){activity.feed.filter=="memory"&&!activity.feed.loading};compose.onNodeWithText("记忆").assertIsSelected();compose.onNodeWithText("全部").performScrollTo().performClick();waitFor("all filter"){activity.feed.filter=="all"&&!activity.feed.loading};shot("feed-filters")
+        compose.onNodeWithContentDescription("成果库",useUnmergedTree=true).performClick()
+        waitFor("library loaded"){compose.onAllNodesWithText("合成项目计划.md").fetchSemanticsNodes().isNotEmpty()}
+        compose.onNodeWithText("全部").assertIsSelected();for(name in listOf("文档","表格","图片","代码","其它"))compose.onNodeWithText(name).assertExists()
+        compose.onNodeWithText("代码").performScrollTo().performClick();compose.mainClock.advanceTimeBy(300);waitFor("code filter"){compose.onAllNodesWithText("synthetic-example.py").fetchSemanticsNodes().isNotEmpty()&&compose.onAllNodesWithText("合成项目计划.md").fetchSemanticsNodes().isEmpty()};compose.onNodeWithText("代码").assertIsSelected()
+        compose.onNodeWithText("其它").performScrollTo().performClick();compose.mainClock.advanceTimeBy(300);waitFor("other filter"){compose.onAllNodesWithText("合成资料.zip").fetchSemanticsNodes().isNotEmpty()&&compose.onAllNodesWithText("synthetic-example.py").fetchSemanticsNodes().isEmpty()};compose.onNodeWithText("其它").assertIsSelected()
+        compose.onNodeWithText("全部").performScrollTo().performClick();compose.mainClock.advanceTimeBy(300);waitFor("all files"){compose.onAllNodesWithText("合成项目计划.md").fetchSemanticsNodes().isNotEmpty()};compose.onNodeWithContentDescription("按项目筛选").assertExists();compose.onNodeWithContentDescription("按时间筛选").assertExists();shot("library-filters")
         // Capture the actual previous shell, not a browser viewport or a control-spec mockup.
         val webActivity=instrumentation.startActivitySync(Intent(context,HybridActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("lg1bHostOrigin",args.getString("and6Origin"))) as HybridActivity
         waitFor("old shell booted"){js(webActivity.embeddedWeb,"Boolean(typeof state!=='undefined'&&state.booted&&state.loggedIn)")=="true"}
         js(webActivity.embeddedWeb,"applyTheme('$theme');page('activity')")
         waitFor("old feed loaded"){js(webActivity.embeddedWeb,"Boolean(document.querySelector('.activity-filters')&&uiCore.activity.items.length)")=="true"};shot("web-feed-filters")
+        js(webActivity.embeddedWeb,"page('library')")
+        waitFor("old library loaded"){js(webActivity.embeddedWeb,"Boolean(document.querySelector('.library-types')&&document.body.textContent.includes('合成项目计划.md'))")=="true"};shot("web-library-filters")
         main{webActivity.finish();activity.finish()}
     }
 }

@@ -88,7 +88,7 @@ internal class NativeGoalsModel(private val chat: NativeChatModel, private val a
                 primaryHost=status.stringOrEmpty("hostId").ifEmpty{SecureSettings(activity).host()?.hostId.orEmpty()};timeZone=status.stringOrEmpty("timeZone").ifEmpty{timeZone}
                 selectedHost=directory.stringOrEmpty("selected").ifEmpty{primaryHost}
                 val hosts=if(computers.size>1)computers else listOf(JSONObject().put("hostId",primaryHost).put("online",status.length()>0).put("name",status.optString("hostName","这台电脑")))
-                val failed=mutableListOf<String>();val failedHosts=mutableSetOf<String>();val nextErrors=mutableMapOf<String,String>();val next=mutableMapOf<String,MutableList<JSONObject>>()
+                val failed=mutableListOf<String>();val failedHosts=mutableSetOf<String>();val invalidatedHosts=mutableSetOf<String>();val nextErrors=mutableMapOf<String,String>();val next=mutableMapOf<String,MutableList<JSONObject>>()
                 val nextSessions=mutableListOf<JSONObject>()
                 val validIds=hosts.map{it.stringOrEmpty("hostId")}.toSet();snapshots.keys.removeAll{it.substringBefore('|') !in validIds}
                 for(host in hosts) {
@@ -105,14 +105,14 @@ internal class NativeGoalsModel(private val chat: NativeChatModel, private val a
                             val rows=(result.optJSONArray(if(section=="sessions")"sessions" else "items")?.objects().orEmpty()).map{JSONObject(it.toString()).put("hostId",id)}
                             snapshots[key]=rows
                             if(section=="tasks"){zones[id]=result.stringOrEmpty("timeZone").ifEmpty{timeZone};if(id==selectedHost)timeZone=zones[id].orEmpty();snapshots["$id|recent"]=result.optJSONArray("recent")?.objects().orEmpty().map{JSONObject(it.toString()).put("hostId",id)}}
-                        }catch(e:CancellationException){throw e}catch(e:Exception){nextErrors[section]=failure(e);if((e as? ApiFailure)?.status in listOf(401,403)||(e as? ApiFailure)?.safeCode=="CURSOR_RESET_REQUIRED"){snapshots.keys.removeAll{it.startsWith("$id|")}}else{failedHosts.add(id);if(!failed.contains(name))failed.add(name)}}
+                        }catch(e:CancellationException){throw e}catch(e:Exception){nextErrors[section]=failure(e);if((e as? ApiFailure)?.status in listOf(401,403)||(e as? ApiFailure)?.safeCode=="CURSOR_RESET_REQUIRED"){invalidatedHosts.add(id);snapshots.keys.removeAll{it.startsWith("$id|")}}else{failedHosts.add(id);if(!failed.contains(name))failed.add(name)}}
                         val rows=snapshots[key].orEmpty().map{JSONObject(it.toString()).put("computerOffline",unavailable||failed.contains(name))}
                         if(section=="sessions")nextSessions.addAll(rows) else next.getOrPut(section){mutableListOf()}.addAll(rows)
                     }
                     next.getOrPut("recent"){mutableListOf()}.addAll(snapshots["$id|recent"].orEmpty())
                 }
                 if(g!=epoch)return@launch
-                sections=next.mapValues{goalMerge(it.value)};sessions=nextSessions;offline=failed;unavailableHosts=failedHosts;errors=nextErrors
+                sections=next.mapValues{goalMerge(it.value,invalidatedHosts)};sessions=nextSessions.filter{it.stringOrEmpty("hostId") !in invalidatedHosts};offline=failed;unavailableHosts=failedHosts+invalidatedHosts;errors=nextErrors
                 if(selectedHost in failedHosts)selectedHost=hosts.firstOrNull{it.stringOrEmpty("hostId") !in failedHosts&&it.optBoolean("online",true)}?.stringOrEmpty("hostId") ?: selectedHost
                 if(sessions.none{goalSession(it)==chat.sessionId}&&chat.sessionId.isNotBlank())sessions=sessions+JSONObject().put("sessionId",chat.sessionId).put("hostId",primaryHost).put("title","WeftMate 主对话").put("taskAvailable",true)
             }catch(e:CancellationException){throw e}catch(e:Exception){if(g==epoch){offline=listOf(computers.firstOrNull{it.stringOrEmpty("hostId")==primaryHost}?.stringOrEmpty("name").orEmpty().ifEmpty{"这台电脑"});if(sections.isEmpty())errors=mapOf("all" to failure(e))}}
