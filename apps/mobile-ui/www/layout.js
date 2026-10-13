@@ -50,9 +50,9 @@ const mobileMarkup = String.raw`
         <button id="home-settings" class="profile-link"><span class="icon icon-settings"></span><span>设置与账户</span></button>
       </section>
       <section id="chat-page" class="page" aria-label="对话">
+        <button id="pending-decision" class="pending-decision secondary" type="button" hidden>有一项等你决定</button>
         <div id="chat-scroll" class="chat-scroll"><div id="chat-content" class="chat-content"></div></div>
         <button id="jump-latest" class="jump-latest" aria-label="回到底部" hidden>回到底部</button>
-        <button id="pending-decision" class="pending-decision secondary" type="button" hidden>有一项等你决定</button>
         <div id="composer-dock" class="composer-dock">
           <section id="approval-bar" class="approval-bar" aria-label="待批准操作" hidden></section>
           <section id="question-bar" class="approval-bar question-bar" role="region" aria-label="待回答问题" hidden></section>
