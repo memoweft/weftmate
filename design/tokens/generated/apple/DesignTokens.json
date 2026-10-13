@@ -1045,6 +1045,46 @@
       "healthCanvas": {
         "light": "#F0F4F1",
         "dark": "#1D2420"
+      },
+      "controlSurface": {
+        "light": "#FFFFFF",
+        "dark": "#2A2A2C"
+      },
+      "controlCanvas": {
+        "light": "#FAF9F7",
+        "dark": "#1C1C1E"
+      },
+      "controlInk": {
+        "light": "#272724",
+        "dark": "#F2F2F4"
+      },
+      "controlSecondary": {
+        "light": "#575752",
+        "dark": "#C4C4C9"
+      },
+      "controlMuted": {
+        "light": "#676762",
+        "dark": "#A3A3A9"
+      },
+      "controlAccent": {
+        "light": "#2C2C2E",
+        "dark": "#E6E6E8"
+      },
+      "controlOnAccent": {
+        "light": "#FFFFFF",
+        "dark": "#1C1C1E"
+      },
+      "controlLine": {
+        "light": "#E1E0DB",
+        "dark": "#FFFFFF"
+      },
+      "controlSoft": {
+        "light": "#F1F0ED",
+        "dark": "#787880"
+      },
+      "controlShadow": {
+        "light": "#000000",
+        "dark": "#000000"
       }
     },
     "systemColors": {
@@ -1072,7 +1112,10 @@
     },
     "spacing": {
       "0": 0,
-      "23": 23
+      "23": 23,
+      "control_switch_width": 42,
+      "model_menu_extent": 300,
+      "phone_drawer_width": 320
     },
     "radius": {},
     "tracking": {
@@ -1082,7 +1125,13 @@
     "opacity": {
       "disabled": 0.45,
       "pressed": 0.78,
-      "notice": 0.07
+      "notice": 0.07,
+      "opaque": 1,
+      "controlAccentLight": 0.84,
+      "controlLineDark": 0.14,
+      "controlSoftDark": 0.26,
+      "controlShadowLight": 0.16,
+      "controlShadowDark": 0.28
     },
     "scale": {
       "pressed": 0.985

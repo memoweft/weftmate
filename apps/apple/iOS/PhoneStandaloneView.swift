@@ -91,7 +91,7 @@ struct PhoneStandaloneChat: View {
                             Menu { Text("手机聊天没有电脑操作，无需审批。"); Text("连上电脑后可选择操作模式。") } label: { PhoneOperationModeIcon().phoneMenuLabel(circle:true,onCard:true) }.phoneIcon().accessibilityLabel("操作模式，手机聊天").accessibilityIdentifier("phoneChat.mode")
                             ServiceModelMenuButton(services:model.services,current:model.modelID,label:model.selectedServiceModel?.name ?? model.currentModel?.model ?? "尚未配置",usesImages:model.conversationUsesImages,thinkingSupported:model.selectedServiceModel?.deepThinking?.supported == true,thinking:$model.thinkingEnabled,select:{service,item in model.selectServiceModel(service,item)},add:{focused=false;modelsOpen=true},refresh:{Task { for service in model.services { await model.refreshService(service) } }},identifier:"phoneChat.model")
                             ComputerMenuButton(cloud:app.cloudLogin)
-                            Spacer(minLength:4)
+                            Spacer(minLength:AppleTokens.Space.p4)
                             if focused { Button { focused=false } label: { WeftIcon("chevron") }.phoneIcon().accessibilityLabel("收起键盘") }
                             Button { focused=false; model.busy ? model.stop() : model.send() } label: { WeftIcon(model.busy ? "stop" : "send") }.phoneIcon(primary:true).disabled(!model.busy && model.draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty && model.attachments.isEmpty).accessibilityLabel(model.busy ? "停止回复" : "发送").accessibilityIdentifier("phoneChat.send")
                         }
@@ -184,17 +184,17 @@ struct PhoneLocalDrawer: View {
                 ScrollView {
                     VStack(alignment:.leading,spacing:AppleTokens.Space.p4) {
                         ForEach(PhoneTab.allCases) { item in
-                            Button { tab=item; close() } label: { HStack(spacing:AppleTokens.Space.p12) { WeftIcon(item.icon); Text(item.title); Spacer(minLength:0) }.frame(maxWidth:.infinity,minHeight:44,alignment:.leading).padding(.horizontal,AppleTokens.Space.p12).background(tab == item ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12)) }.buttonStyle(.plain)
+                            Button { tab=item; close() } label: { HStack(spacing:AppleTokens.Space.p12) { WeftIcon(item.icon); Text(item.title); Spacer(minLength:AppleTokens.Space.p0) }.frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p44,alignment:.leading).padding(.horizontal,AppleTokens.Space.p12).background(tab == item ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12)) }.buttonStyle(.plain)
                         }
                         if app.cloudLogin.multipleComputers { ComputerConversationList(cloud:app.cloudLogin,query:search,close:close) }
                         Text("手机上的对话").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p12)
                         ForEach(model.state.threads.filter { search.isEmpty || $0.title.localizedCaseInsensitiveContains(search) }) { thread in
-                            Button { model.select(thread.id); close() } label: { HStack(spacing:AppleTokens.Space.p12) { WeftIcon("chat"); Text(thread.title).lineLimit(2); Spacer(minLength:0) }.frame(maxWidth:.infinity,minHeight:44,alignment:.leading).padding(.horizontal,AppleTokens.Space.p12).background(thread.id == model.state.selected ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12)) }.buttonStyle(.plain)
+                            Button { model.select(thread.id); close() } label: { HStack(spacing:AppleTokens.Space.p12) { WeftIcon("chat"); Text(thread.title).lineLimit(2); Spacer(minLength:AppleTokens.Space.p0) }.frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p44,alignment:.leading).padding(.horizontal,AppleTokens.Space.p12).background(thread.id == model.state.selected ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12)) }.buttonStyle(.plain)
                         }
                     }.padding(.horizontal,AppleTokens.Space.p12)
                 }
                 HStack(spacing:AppleTokens.Space.p8) {
-                    HStack { WeftIcon("search"); TextField("搜索对话",text:$search).textFieldStyle(.plain) }.padding(.horizontal,AppleTokens.Space.p12).frame(minHeight:44).background(Weave.surface,in:Capsule())
+                    HStack { WeftIcon("search"); TextField("搜索对话",text:$search).textFieldStyle(.plain) }.padding(.horizontal,AppleTokens.Space.p12).frame(minHeight:AppleTokens.Space.p44).background(Weave.surface,in:Capsule())
                     Button { model.newThread(); close() } label: { WeftIcon("plus") }.phoneIcon().accessibilityLabel("新建对话").accessibilityIdentifier("phoneChat.new")
                 }.padding(AppleTokens.Space.p12)
             }.frame(maxWidth:320).background(Weave.soft)
@@ -205,11 +205,11 @@ struct PhoneModelsView: View {
     @State private var clearing=false
     @ObservedObject var model: PhoneStandaloneModel
     var body: some View {
-        VStack(spacing:12) {
-            ServiceSwitch(title:"在手机上记住我说过的事",enabled:Binding(get:{model.memory.enabled},set:{model.setMemoryEnabled($0)})).padding(.horizontal,20)
-            Text("每段对话会多用一次小的模型请求。连上电脑后，由电脑负责记忆。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,20)
+        VStack(spacing:AppleTokens.Space.p12) {
+            ServiceSwitch(title:"在手机上记住我说过的事",enabled:Binding(get:{model.memory.enabled},set:{model.setMemoryEnabled($0)})).padding(.horizontal,AppleTokens.Space.p20)
+            Text("每段对话会多用一次小的模型请求。连上电脑后，由电脑负责记忆。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p20)
             ModelServicesSettingsView(store:ModelServiceSettingsModel(app:nil,phone:model))
-            Button("清除手机上的模型、对话与记忆") { clearing=true }.buttonStyle(ServiceActionStyle()).padding(.horizontal,20).accessibilityIdentifier("phoneModel.clearLocalData")
+            Button("清除手机上的模型、对话与记忆") { clearing=true }.buttonStyle(ServiceActionStyle()).padding(.horizontal,AppleTokens.Space.p20).accessibilityIdentifier("phoneModel.clearLocalData")
         }.confirmationDialog("清除这台手机当前账号的模型、对话与记忆？电脑上的内容不受影响。",isPresented:$clearing,titleVisibility:.visible) {
             Button("清除本机内容",role:.destructive) { model.clearLocalData() };Button("取消",role:.cancel) {}
         }

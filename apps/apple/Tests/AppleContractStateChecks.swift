@@ -96,6 +96,7 @@ private actor ContractHTTP: HTTPTransport {
         do { try await run() } catch { print("FAIL AppleContractStateChecks: \(error)");exit(1) }
     }
     @MainActor static func run() async throws {
+        guard CommandLine.arguments.count == 2 else { throw Failed(message: "需要一个隔离检查目录参数。") }
         let directory = URL(fileURLWithPath: CommandLine.arguments[1])
         let store = try LocalConversationStore(directory: directory)
         let http = ContractHTTP()
