@@ -7,6 +7,19 @@ import java.security.Signature
 import java.security.spec.ECGenParameterSpec
 
 class CloudAppUnitTest {
+    @Test fun computerManagementUsesExactCloudRoutesAndChannelUsesTheSelectedComputer() {
+        for (path in listOf("/personal/v1/cloud/hosts/rename", "/personal/v1/cloud/hosts/remove")) {
+            val url = "https://cloud.example.com$path"
+            assertTrue(cloudAppRouteAllowed(url, "POST", host, issuer))
+            assertFalse(validBusinessPath(path))
+            for (method in listOf("GET", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "post")) assertFalse(cloudAppRouteAllowed(url, method, host, issuer))
+            for (bad in listOf(url + "/raw", url + "?other=1", url + "#fragment", url.replace("/hosts/", "/hosts%2F"), url.replace("cloud.example.com", "evil.example.com"))) assertFalse(cloudAppRouteAllowed(bad, "POST", host, issuer))
+        }
+        val channel = "$host/personal/v1/auth/cloud-channel"
+        assertTrue(cloudAppRouteAllowed(channel, "POST", host, issuer))
+        assertFalse(cloudAppRouteAllowed(channel, "GET", host, issuer))
+        assertFalse(cloudAppRouteAllowed(channel.replace(host, "https://evil.example.com"), "POST", host, issuer))
+    }
     private val host = "https://host.example.com"
     private val issuer = "https://cloud.example.com/personal/v1/cloud/oidc"
     @Test fun offlinePhoneTasksUseOnlyFourExactCloudPostRoutes() {

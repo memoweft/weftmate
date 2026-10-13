@@ -26,7 +26,9 @@ import { createHostLog, redactSecretText, diagnosticPlatform } from './host-log.
 import { readLocalServiceKey } from './local-service-key.mjs';
 import { selectBackgroundProfile, backgroundModelReady, suggestionModelReady, createBackgroundRouteRecorder } from './background-model-selection.mjs';
 import { checkModelConnection } from './model-connection-check.mjs';
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, crashReporter } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session, crashReporter, powerMonitor } from 'electron';
+import { stageCloudVaultRestore, reconcileCloudVaultRestore, finishCloudVaultRestore } from './personal-cloud-backup/vault-restore.mjs';
+import { privateNetworkOnPower } from './personal-cloud-backup/upload-conditions.mjs';
 import packageInfo from '../package.json' with { type: 'json' };
 import { createBackupManager } from './personal-backup/index.mjs';
 import { windowIcon, trayIcon } from './app-icons.mjs';
@@ -82,7 +84,8 @@ import { formatHarnessStartupError } from './harness-startup-error.ts';
 import { checkForUpdates, initUpdater, quitAndInstall, updateState, preparedInstallerPath, preparedInstallerHash, requiresManualAppInstall } from './update.ts';
 import { manualUpdateMessage } from './desktop-installation.mjs';
 import { createDesktopUpdates } from './personal-update/desktop.mjs';
-import { applyDesktopConfig } from './desktop-config.mjs';
+import { macApplicationMenu } from './mac-desktop.mjs';
+import { applyDesktopConfig, desktopConfigPath } from './desktop-config.mjs';
 import { appBootSignal, prepareAppRollback } from './personal-update/app-rollback.mjs';
 import { initPerception } from './perception.ts';
 import { initDevices } from './devices.ts';
@@ -104,11 +107,17 @@ import { memoryRecallDestination, memoryRecallModelTier, memorySessionPolicy } f
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
+// This Intel-only local trial follows the machine's GPU constraint on Finder launch too.
+if (process.platform === 'darwin' && packageInfo.macTrial) {
+  app.disableHardwareAcceleration();
+  // The local trial points at an existing read-only Core checkout.
+  process.env.PYTHONDONTWRITEBYTECODE = '1';
+}
 const desktopControlAppData = packageInfo.desktopIdentity ? join(app.getPath('appData'), packageInfo.desktopIdentity) : app.getPath('appData');
 // Maintenance commands must not boot a host, rewrite its run marker or show UI.
 if (process.argv.includes('--quit')) {
   try {
-    const configFile = process.argv.find(arg => arg.startsWith('--desktop-config='))?.slice(17) || join(desktopControlAppData, 'WeftMate', 'desktop-config.json');
+    const configFile = process.argv.find(arg => arg.startsWith('--desktop-config='))?.slice(17) || desktopConfigPath(desktopControlAppData);
     const config = existsSync(configFile) ? JSON.parse(readFileSync(configFile, 'utf8')) : null;
     const profile = process.argv.find(arg => arg.startsWith('--user-data-dir='))?.slice(16) || config?.dataDirectory || join(desktopControlAppData, 'com.memoweft.weftmate');
     app.setPath('userData', resolve(profile));
@@ -258,8 +267,13 @@ if (wipeLaunch) {
   }
 }
 
-// 去掉 Electron 默认应用菜单(顶栏那条 File/Edit/View/Window)——桌面产品不该露原生菜单,不像成品。
-Menu.setApplicationMenu(null);
+// macOS uses the native application/edit menu for standard Command shortcuts.
+Menu.setApplicationMenu(process.platform === 'darwin' ? Menu.buildFromTemplate(macApplicationMenu({
+  show: () => showWindow(),
+  settings: () => { showWindow(); personalDesktop?.openSettings(); },
+  quit: () => app.quit(),
+})) : null);
+if (process.platform === 'darwin') app.on('activate', () => showWindow());
 // electron-builder removes build metadata from the packaged package.json.
 if (process.platform === 'win32') app.setAppUserModelId(packageInfo.desktopAppId ?? packageInfo.build?.appId ?? 'com.memoweft.weftmate');
 
@@ -1450,9 +1464,13 @@ async function bootstrap() {
   try {
     configStoreMod = await import('./config-store.ts');
     await configStoreMod.initializeCredentialStorage(error => logCrash('credential-storage', error));
+    await reconcileCloudVaultRestore(userDataDir,configStoreMod,personalBackupManager?.isRestoredStartup()===true);
     console.log('[weftmate] ✓ 模型凭据保险库已就绪');
   } catch (e) {
     logCrash('credential-storage', e);
+    if(existsSync(join(userDataDir,'personal-backup','cloud-vault-restore.json'))) {
+      requestFatalStartupExit('云端备份恢复失败',e,'恢复的密钥未能安全保存，程序将保留恢复前的数据。');return;
+    }
   }
 
   // Stage 4A development seam: an operator may seed the AI-Game capability
@@ -3536,6 +3554,23 @@ async function bootstrap() {
           connectorVault: (await import('./personal-connectors/vault.mjs')).createConnectorVault(configStoreMod),
           connectorRuntime: productDshRuntime,
           backupManager: personalBackupManager,
+          cloudBackup: {
+            appVersion:app.getVersion(),
+            vault:configStoreMod,
+            canUpload:()=>privateNetworkOnPower(powerMonitor),
+            stageCredentials:(credentials,metadata)=>stageCloudVaultRestore(userDataDir,configStoreMod,credentials,metadata),
+            abortCredentials:()=>finishCloudVaultRestore(userDataDir,configStoreMod,true),
+            exportCredentials:({ownerId,modelProfileIds,modelCredentialRefs,connectors})=>{
+              configStoreMod.preflightVault();
+              const values={};
+              for(const ref of modelCredentialRefs?.map(row=>row.credentialRef)??modelProfileIds.map(id=>officialCredentialRef(routeForProfile(id).provider))){const secret=configStoreMod.getCredential(ref);if(secret)values[ref]=secret;}
+              for(const connector of connectors){
+                const prefix=`thirdparty-${createHash('sha256').update(JSON.stringify([ownerId,connector.id])).digest('hex').slice(0,40)}-`;
+                for(const slot of connector.slots){const ref=prefix+Buffer.from(slot).toString('base64url'),secret=configStoreMod.getCredential(ref);if(secret)values[ref]=secret;}
+              }
+              return values;
+            },
+          },
           systemManager: systemDiagnostics,
            sharedProfileIsFormal: (marker) => {
              const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === marker.id);
@@ -3557,7 +3592,7 @@ async function bootstrap() {
           const setupGrant = null;
           await desktopUpdates.prepareWindow();
           personalDesktop = createPersonalDesktop({ computerUsageService: personalAccessService, systemManager: systemDiagnostics, dataManager: personalAccessService?.dataControls, libraryDesktopToken: personalAccessService?.libraryDesktopToken, origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
-            startInTray: process.argv.includes('--start-in-tray'),
+            startInTray: process.argv.includes('--start-in-tray') || process.platform === 'darwin' && app.isPackaged && app.getLoginItemSettings().wasOpenedAtLogin,
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
           win = personalDesktop.window;
           trackUserInterfaceReady(win);
@@ -3586,6 +3621,7 @@ async function bootstrap() {
   }
 
   await personalBackupManager?.started();
+  if(configStoreMod)await finishCloudVaultRestore(app.getPath('userData'),configStoreMod,true);
 
   // R6-02 · 桌宠自愈：上次可见（设置里 visible=true）→ 启动补唤醒（v2 等价路径的恢复）。
   if (!headless && desktopCompanion && settingsMod?.getDesktopPetWindowState?.().visible) {
@@ -3826,7 +3862,7 @@ app.on('before-quit', (e) => {
     modelObservationRecorder?.close?.();
     modelObservationRecorder = null;
     nextShutdownStep('backup-final');
-    if (startupFailureReported && await personalBackupManager?.startupFailed()) backupRestartRequested = true;
+    if (startupFailureReported && await personalBackupManager?.startupFailed()) { if(configStoreMod)await finishCloudVaultRestore(app.getPath('userData'),configStoreMod,false); backupRestartRequested = true; }
     else await personalBackupManager?.finishShutdown({ safe: backupSafe });
     shutdownComplete = !shutdownFailed;
   })();

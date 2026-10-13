@@ -1,0 +1,264 @@
+{
+  "synthetic": true,
+  "modelRequests": 0,
+  "browserSystemBars": false,
+  "engine": "Chromium emulated touch viewport; production Electron desktop",
+  "screenshots": [
+    "remote-360-780-light-blocked.png",
+    "bundle-360-780-light-blocked.png",
+    "remote-360-780-dark-blocked.png",
+    "bundle-360-780-dark-blocked.png",
+    "remote-390-844-light-blocked.png",
+    "bundle-390-844-light-blocked.png",
+    "remote-390-844-dark-blocked.png",
+    "bundle-390-844-dark-blocked.png",
+    "electron-1200-light-blocked.png",
+    "electron-1200-dark-blocked.png",
+    "electron-480-light-blocked.png",
+    "electron-480-dark-blocked.png"
+  ],
+  "gestures": [
+    {
+      "surface": "remote",
+      "width": 360,
+      "theme": "light",
+      "before": {
+        "x": 295,
+        "y": 719,
+        "width": 44,
+        "height": 44
+      },
+      "during": {
+        "x": 295,
+        "y": 719,
+        "width": 44,
+        "height": 44
+      },
+      "blockedFeedback": true,
+      "toast": {
+        "hidden": false,
+        "rect": {
+          "x": 16,
+          "y": 16,
+          "width": 328,
+          "height": 46.75,
+          "top": 16,
+          "right": 344,
+          "bottom": 62.75,
+          "left": 16
+        },
+        "className": "toast",
+        "position": "fixed",
+        "top": "16px",
+        "bodyTransform": "none",
+        "display": "block",
+        "visibility": "visible",
+        "parents": [
+          "P#toast",
+          "BODY#",
+          "HTML#"
+        ]
+      }
+    },
+    {
+      "surface": "bundle",
+      "width": 360,
+      "theme": "light",
+      "before": {
+        "x": 295,
+        "y": 651,
+        "width": 44,
+        "height": 44
+      },
+      "during": {
+        "x": 295.821044921875,
+        "y": 651.821044921875,
+        "width": 42.35791015625,
+        "height": 42.35791015625
+      },
+      "blockedFeedback": true
+    },
+    {
+      "surface": "remote",
+      "width": 360,
+      "theme": "dark",
+      "before": {
+        "x": 295,
+        "y": 719,
+        "width": 44,
+        "height": 44
+      },
+      "during": {
+        "x": 295,
+        "y": 719,
+        "width": 44,
+        "height": 44
+      },
+      "blockedFeedback": true,
+      "toast": {
+        "hidden": false,
+        "rect": {
+          "x": 16,
+          "y": 16,
+          "width": 328,
+          "height": 46.75,
+          "top": 16,
+          "right": 344,
+          "bottom": 62.75,
+          "left": 16
+        },
+        "className": "toast",
+        "position": "fixed",
+        "top": "16px",
+        "bodyTransform": "none",
+        "display": "block",
+        "visibility": "visible",
+        "parents": [
+          "P#toast",
+          "BODY#",
+          "HTML#"
+        ]
+      }
+    },
+    {
+      "surface": "bundle",
+      "width": 360,
+      "theme": "dark",
+      "before": {
+        "x": 295,
+        "y": 651,
+        "width": 44,
+        "height": 44
+      },
+      "during": {
+        "x": 295.7793273925781,
+        "y": 651.779296875,
+        "width": 42.44134521484375,
+        "height": 42.44140625
+      },
+      "blockedFeedback": true
+    },
+    {
+      "surface": "remote",
+      "width": 390,
+      "theme": "light",
+      "before": {
+        "x": 325,
+        "y": 783,
+        "width": 44,
+        "height": 44
+      },
+      "during": {
+        "x": 325,
+        "y": 783,
+        "width": 44,
+        "height": 44
+      },
+      "blockedFeedback": true,
+      "toast": {
+        "hidden": false,
+        "rect": {
+          "x": 16,
+          "y": 16,
+          "width": 358,
+          "height": 46.75,
+          "top": 16,
+          "right": 374,
+          "bottom": 62.75,
+          "left": 16
+        },
+        "className": "toast",
+        "position": "fixed",
+        "top": "16px",
+        "bodyTransform": "none",
+        "display": "block",
+        "visibility": "visible",
+        "parents": [
+          "P#toast",
+          "BODY#",
+          "HTML#"
+        ]
+      }
+    },
+    {
+      "surface": "bundle",
+      "width": 390,
+      "theme": "light",
+      "before": {
+        "x": 325,
+        "y": 715,
+        "width": 44,
+        "height": 44
+      },
+      "during": {
+        "x": 325.8210144042969,
+        "y": 715.8209838867188,
+        "width": 42.358001708984375,
+        "height": 42.3580322265625
+      },
+      "blockedFeedback": true
+    },
+    {
+      "surface": "remote",
+      "width": 390,
+      "theme": "dark",
+      "before": {
+        "x": 325,
+        "y": 783,
+        "width": 44,
+        "height": 44
+      },
+      "during": {
+        "x": 325,
+        "y": 783,
+        "width": 44,
+        "height": 44
+      },
+      "blockedFeedback": true,
+      "toast": {
+        "hidden": false,
+        "rect": {
+          "x": 16,
+          "y": 16,
+          "width": 358,
+          "height": 46.75,
+          "top": 16,
+          "right": 374,
+          "bottom": 62.75,
+          "left": 16
+        },
+        "className": "toast",
+        "position": "fixed",
+        "top": "16px",
+        "bodyTransform": "none",
+        "display": "block",
+        "visibility": "visible",
+        "parents": [
+          "P#toast",
+          "BODY#",
+          "HTML#"
+        ]
+      }
+    },
+    {
+      "surface": "bundle",
+      "width": 390,
+      "theme": "dark",
+      "before": {
+        "x": 325,
+        "y": 715,
+        "width": 44,
+        "height": 44
+      },
+      "during": {
+        "x": 325.8210754394531,
+        "y": 715.821044921875,
+        "width": 42.35784912109375,
+        "height": 42.35791015625
+      },
+      "blockedFeedback": true
+    }
+  ],
+  "errors": [],
+  "passed": true
+}

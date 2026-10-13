@@ -7,6 +7,7 @@ import WeftMateCore
 import Quartz
 #else
 import QuickLook
+import PDFKit
 #endif
 
 enum ConversationAttachmentReference: Identifiable, Equatable {
@@ -111,6 +112,8 @@ struct ConversationAttachmentPreview: View {
     let error: String?
     let close: () -> Void
     var sourceAction: (() -> Void)? = nil
+    var memoryData: Data? = nil
+    var memoryText: String? = nil
     @State private var exporting = false
     @State private var exportError: String?
     var body: some View {
@@ -120,6 +123,7 @@ struct ConversationAttachmentPreview: View {
             HStack(spacing:AppleTokens.Space.p8) {
                 Button(action:close) { WeftIcon("deny") }.buttonStyle(PhoneIconStyle()).accessibilityLabel("关闭预览").accessibilityIdentifier("filePreview.close")
                 Text(name).font(AppleTokens.Fonts.headline).lineLimit(1).truncationMode(.middle).frame(maxWidth:.infinity,alignment:.leading)
+                if memoryData == nil {
                 Menu {
                     if let file {
                         ShareLink(item:file) { WeftLabel("分享",icon:"open") }.accessibilityIdentifier("filePreview.share")
@@ -127,13 +131,29 @@ struct ConversationAttachmentPreview: View {
                     }
                     if let sourceAction { Button("来自哪个对话",action:sourceAction).accessibilityIdentifier("library.source") }
                 } label: { WeftIcon("more").phoneMenuLabel(circle:true) }.accessibilityLabel("文件操作").accessibilityIdentifier("filePreview.more")
+                }
             }.padding(AppleTokens.Space.p12)
             if loading { ProgressView("正在下载…").padding(AppleTokens.Space.p20) }
             if let error { Text(error).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.danger).padding(AppleTokens.Space.p16) }
-            if let file { NativeAttachmentPreview(file:file).frame(maxWidth:.infinity,maxHeight:.infinity) }
-            else { Spacer() }
+            if let file {
+                if contentType == "application/pdf" { PhonePDFPreview(file:file).frame(maxWidth:.infinity,maxHeight:.infinity) }
+                else { NativeAttachmentPreview(file:file).frame(maxWidth:.infinity,maxHeight:.infinity) }
+            }
+            else if let memoryData {
+                if contentType.hasPrefix("image/"), let image=UIImage(data:memoryData) { Image(uiImage:image).resizable().scaledToFit().frame(maxWidth:.infinity,maxHeight:.infinity) }
+                else if contentType == "application/pdf" { PhoneMemoryPDFPreview(data:memoryData).frame(maxWidth:.infinity,maxHeight:.infinity) }
+                else {
+                    let original=String(data:memoryData,encoding:.utf8) ?? String(data:memoryData,encoding:.utf16) ?? memoryText ?? ""
+                    ScrollView {
+                        VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
+                            Text(String(original.prefix(128*1024))).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading)
+                            if original.count > 128*1024 { Text("仅预览开头，完整文件仍保存在手机上。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+                        }.padding(AppleTokens.Space.p16)
+                    }
+                }
+            } else { Spacer() }
             if let exportError { Text(exportError).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger).padding(AppleTokens.Space.p12) }
-        }.background(Weave.surface)
+        }.background(Weave.surface).onAppear { dismissPhonePreviewKeyboard() }
             #else
         VStack(spacing: AppleTokens.Space.p12) {
             HStack {
@@ -232,5 +252,82 @@ private struct NativeAttachmentPreview: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: QLPreviewController, context: Context) {
         context.coordinator.file = file; controller.reloadData()
     }
+}
+#endif
+
+@MainActor func dismissPhonePreviewKeyboard() {
+    #if os(iOS)
+    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),to:nil,from:nil,for:nil)
+    #endif
+}
+#if os(iOS)
+private struct PhonePDFPreview: View {
+    let file: URL
+    @State private var pages=0
+    @State private var loading=true
+    var body: some View {
+        Group {
+            if pages > 0 {
+                ScrollView {
+                    LazyVStack(spacing:AppleTokens.Space.p12) {
+                        ForEach(0..<pages,id:\.self) { index in PhonePDFPage(file:file,index:index,total:pages) }
+                    }.padding(AppleTokens.Space.p12)
+                }
+            } else if loading { ProgressView("正在打开文件…").frame(maxWidth:.infinity,maxHeight:.infinity) }
+            else { Text("文件暂时打不开，请关闭后重试。") }
+        }.task(id:file) { pages=CGPDFDocument(file as CFURL)?.numberOfPages ?? 0; loading=false }
+    }
+}
+/// Core Graphics renders pages on demand; no PDFView tile layer or repeated layout/redraw loop.
+private struct PhonePDFPage: View {
+    let file: URL
+    let index: Int
+    let total: Int
+    @State private var image: UIImage?
+    @State private var text=""
+    @State private var failed=false
+    var body: some View {
+        Group {
+            if let image { Image(uiImage:image).resizable().scaledToFit().accessibilityLabel("第 \(index+1) 页，共 \(total) 页。"+text) }
+            else if failed { Text("这一页暂时打不开，请重新打开文件。") }
+            else { ProgressView("正在绘制第 \(index+1) 页…").frame(maxWidth:.infinity,minHeight:160) }
+        }.task(id:"\(file)-\(index)") {
+            guard image == nil else { return }
+            guard let document=CGPDFDocument(file as CFURL),let page=document.page(at:index+1) else { failed=true;return }
+            let bounds=page.getBoxRect(.mediaBox)
+            guard bounds.width > 0,bounds.height > 0 else { failed=true;return }
+            let width=UIScreen.main.bounds.width-AppleTokens.Space.p24
+            let size=CGSize(width:width,height:width*bounds.height/bounds.width)
+            let format=UIGraphicsImageRendererFormat();format.preferredRange = .standard
+            let rendered=UIGraphicsImageRenderer(size:size,format:format).image { renderer in
+                let context=renderer.cgContext
+                UIColor.white.setFill();context.fill(CGRect(origin:.zero,size:size))
+                context.translateBy(x:0,y:size.height);context.scaleBy(x:1,y:-1)
+                context.concatenate(page.getDrawingTransform(.mediaBox,rect:CGRect(origin:.zero,size:size),rotate:0,preserveAspectRatio:true))
+                context.drawPDFPage(page)
+            }
+            guard !Task.isCancelled else { return };image=rendered
+            text=PDFDocument(url:file)?.page(at:index)?.string ?? ""
+        }.onDisappear { image=nil; text="" }
+    }
+}
+
+#endif
+
+extension View {
+    @ViewBuilder func attachmentCover<Content: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View {
+        #if os(iOS)
+        self.fullScreenCover(isPresented:isPresented,content:content)
+        #else
+        self.sheet(isPresented:isPresented,content:content)
+        #endif
+    }
+}
+
+#if os(iOS)
+private struct PhoneMemoryPDFPreview: UIViewRepresentable {
+    let data: Data
+    func makeUIView(context: Context) -> PDFView { let view=PDFView();view.autoScales=true;view.document=PDFDocument(data:data);return view }
+    func updateUIView(_ view: PDFView,context: Context) {}
 }
 #endif

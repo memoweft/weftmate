@@ -3,17 +3,27 @@ import assert from 'node:assert/strict';
 import {rmSync,readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {startTimelineCandidate} from './integration/timeline-ui-candidate.mjs';
+import { waitForCommand } from './helpers/wait-for-command.mjs';
 
 test('BL-29 existing chat changes wait for a native delta, wake immediately and retain exact cursor semantics',async()=>{
-  const f=await startTimelineCandidate({daily:true,inlineProgress:true});
+  const f=await startTimelineCandidate({daily:true,inlineProgress:true,historyCount:0,baseTime:Date.now()});
   try{
     const chat=(await f.request('/chats/main')).chat,host=(await f.request('/status')).hostId;
     const sent=await f.request('/commands',{requestId:'bl29-wait-test',kind:'chat.message',chatId:chat.chatId,text:'synthetic',modelProfileId:'local',targetDeviceId:host});
-    for(let n=0;n<100;n++){if((await f.request('/commands/'+sent.command.commandId)).command.state==='accepted_by_dsh')break;await new Promise(r=>setTimeout(r,10));}
-    f.progress.text('已完成。');f.progress.finish();
-    const page=await f.request(`/chats/${chat.chatId}/events?limit=100`),at=Date.now();
-    const pending=f.request(`/chats/${chat.chatId}/changes?cursor=${page.syncCursor}&liveRevision=${page.liveRevision}&waitMs=2000&limit=100`);
-    await new Promise(r=>setTimeout(r,100));f.progress.chunk('即时增量。');
+    await waitForCommand(async()=>(await f.request('/commands/'+sent.command.commandId)).command);
+    // A native streaming delta needs a live turn. Ending it here lets the
+    // activity observer seal the source before the synthetic chunk arrives.
+    f.progress.text('已完成。');
+    let page=await f.request(`/chats/${chat.chatId}/events?limit=100`),pending,settled,early;
+    // Drain the asynchronous source projection first. An immediate changes
+    // response is a valid cursor update, not a registered native long poll.
+    do {
+      settled=false;early=null;
+      pending=f.request(`/chats/${chat.chatId}/changes?cursor=${page.nextCursor??page.syncCursor}&liveRevision=${page.liveRevision}&waitMs=2000&limit=100`).then(value=>{settled=true;early=value;return value;});
+      while(!settled&&!f.nativeWaitRegistered())await new Promise(r=>setTimeout(r,1));
+      if(settled)page=early;
+    } while(settled);
+    const at=Date.now();f.progress.chunk('即时增量。');
     let changed=await pending;
     // The finished reply above is projected asynchronously and may wake the wait first: follow the cursor to the chunk itself.
     for(let n=0;n<5&&!changed.liveEvents?.length;n++)changed=await f.request(`/chats/${chat.chatId}/changes?cursor=${changed.nextCursor}&liveRevision=${changed.liveRevision}&waitMs=2000&limit=100`);

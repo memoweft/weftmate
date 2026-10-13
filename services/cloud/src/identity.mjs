@@ -2,6 +2,7 @@ import { cloudPush } from './push.mjs';
 import { Provider, interactionPolicy, errors } from 'oidc-provider';
 import { calculateJwkThumbprint, createLocalJWKSet, jwtVerify } from 'jose';
 import { createHosts } from './hosts.mjs';
+import { computerNames } from './multi-host.mjs';
 import { createRelay } from './relay.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
@@ -13,6 +14,7 @@ import { createFeedback } from './feedback.mjs';
 import { deviceProof } from './device-proof.mjs';
 import { appAuthorization, widenAppResumeCookies } from './app-authorization.mjs';
 import { accountLifecycle } from './account-lifecycle.mjs';
+import { createCloudBackups, BACKUP_LIMITS } from './cloud-backups.mjs';
 
 export const CLOUD_PATH = '/personal/v1/cloud';
 const OIDC_PATH = `${CLOUD_PATH}/oidc`;
@@ -353,7 +355,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
   ]);
   const relay = createRelay({ database, config, secret: keys.cookieSecret, now, dns: relayDns });
   const lifecycle = accountLifecycle({ database, accounts, relay });
-  const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider });
+  const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider, accounts });
+  const backups = createCloudBackups({ database, config, authenticate, accounts, now });
   const feedback = createFeedback({ config, limiter: new FailureLimiter(database, keys.cookieSecret, now), fetch: feedbackFetch });
   const authorizeInApp = appAuthorization({ config });
   const allowedOrigin = origin => origin === new URL(config.issuer).origin || config.clients
@@ -400,7 +403,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       const match = new RegExp(`^${CLOUD_PATH}/interactions/([A-Za-z0-9_-]+)$`).exec(url.pathname);
       const route = url.pathname === `${CLOUD_PATH}/feedback` ? 'feedback' : routes.get(url.pathname);
       const hostRoute = url.pathname.startsWith(`${CLOUD_PATH}/hosts/`);
-      if (!route && !match && !hostRoute) return false;
+      const backupRoute = /^\/backups\/(key\/read|key\/write|start|chunk\/upload|complete|list|chunk\/download|delete|clear)$/.test(url.pathname.slice(CLOUD_PATH.length));
+      if (!route && !match && !hostRoute && !backupRoute) return false;
       try {
         if (req.headers.origin && !allowedOrigin(req.headers.origin))
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
@@ -409,6 +413,13 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
           const account = await authenticate(req, true);
           reply(res, 201, await feedback(account, await bodyOf(req, 262144)));
+          return true;
+        }
+        if (backupRoute) {
+          if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
+          if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
+          reply(res, 200, await backups.handle(url.pathname.slice(CLOUD_PATH.length), req,
+            await bodyOf(req, url.pathname.endsWith('/chunk/upload') ? BACKUP_LIMITS.requestBytes : BACKUP_LIMITS.manifestBytes)));
           return true;
         }
         if (hostRoute) {
@@ -472,7 +483,13 @@ export async function createIdentity({ database, config, mailer, logger, now = D
                 .get(h.host_id, account.id, req.cloudToken.device_id, req.cloudToken.cnf.jkt) &&
                 h.host_id === database.prepare('SELECT host_id FROM device_host_links WHERE account_id=? AND fingerprint=?')
                   .get(account.id, req.cloudToken.device_fingerprint)?.host_id }));
-          reply(res, 200, { devices, hosts: computers, sharing: { supported: false } }); return true;
+          const linkedDevices = computers.length > 1 ? devices.map(d => ({...d, hostId: database.prepare(`SELECT l.host_id FROM device_host_links l
+            JOIN cloud_devices c ON c.account_id=l.account_id AND c.fingerprint=l.fingerprint WHERE c.account_id=? AND c.device_id=?`).get(account.id,d.id)?.host_id ?? null})) : devices;
+          for (const computer of computers) {
+            if (config.relay) computer.online = relay.discover(computer.hostId,account.id).status === 'online';
+          }
+          const removed = database.prepare('SELECT host_id AS hostId,name FROM removed_computers WHERE account_id=?').all(account.id);
+          reply(res, 200, { devices: linkedDevices, hosts: computerNames(computers), sharing: { supported: false }, capabilities:{multiHost:1}, ...(removed.length ? {removedHosts:removed} : {}) }); return true;
         }
         if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
         // All credential writes are same-origin, including native browser interactions.
@@ -619,7 +636,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           reply(
             res,
             known ? error.status : 503,
-            { error: { code: known ? error.code : 'SERVICE_UNAVAILABLE' } },
+            { error: { code: known ? error.code : 'SERVICE_UNAVAILABLE', ...(known && error.details ? { details: error.details } : {}) } },
             error.retryAfter ? { 'retry-after': String(error.retryAfter) } : {},
           );
         else res.end();

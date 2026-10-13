@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { waitForCommand } from './helpers/wait-for-command.mjs'
 import { mkdtemp, readFile, writeFile, mkdir, rm, realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -273,6 +274,23 @@ test('AUTH-1 desktop cloud login keeps the selected owner and requires native ca
     {'x-weftmate-desktop':f.service.libraryDesktopToken})).status,403,'password cookie does not establish native selected-owner authority')
 })
 
+test('M3-2 changing the computer account unbinds the old cloud account and preserves separate selected local owners', async t => {
+  const f = await fixture(t);
+  await f.bind();
+  const oldLocal = await f.desktop(f.a.account.ownerId);
+  assert.equal((await f.requests('DELETE', '/cloud/binding', {}, oldLocal)).status, 200);
+  const oldKey = await generateKeyPair('ES256');
+  const oldToken = await f.access('cloud-a', 'synthetic-old-phone', oldKey);
+  assert.equal((await f.exchange(oldToken, oldKey)).result.status, 403, 'the previous cloud account has no content authority after unbinding');
+  const nextLocal = await f.desktop(f.b.account.ownerId);
+  const nextKey = await generateKeyPair('ES256');
+  const nextToken = await f.access('cloud-b', 'synthetic-new-desktop', nextKey, {scope:'cloud:account'}, f.issuer.slice(0,-5));
+  const next = (await f.exchange(nextToken, nextKey, '/auth/cloud-desktop', {}, {}, nextLocal)).result;
+  assert.equal(next.status, 200, JSON.stringify(next));
+  assert.equal(next.account.ownerId, f.b.account.ownerId);
+  assert.equal((await f.requests('GET', '/auth/me', undefined, oldLocal)).account.ownerId, f.a.account.ownerId, 'the previous local account still works and its data is not reassigned');
+});
+
 test('AUTH-1 verified devices enter only their bound account; historical pending promotes on login; legacy deny remains durable', { timeout: 60_000 }, async t => {
   const f = await fixture(t)
   assert.equal((await f.bind()).result.status, 200)
@@ -485,13 +503,11 @@ async function createdCloudSession(f: any, auth: any) {
   const sent = await f.requests('POST', '/commands', {requestId: randomUUID(), kind: 'session.create',
     targetDeviceId: f.hostId, modelProfileId: 'synthetic'}, auth);
   assert.equal(sent.status, 202, JSON.stringify(sent));
-  for (let i = 0; i < 100; i++) {
+  return (await waitForCommand(async () => {
     const found = await f.requests('GET', '/commands/' + sent.command.commandId, undefined, auth);
     assert.equal(found.status, 200, JSON.stringify(found));
-    if (found.command.state === 'accepted_by_dsh') return found.command.sessionId;
-    await new Promise(resolve => setTimeout(resolve, 10));
-  }
-  assert.fail('session was not accepted');
+    return found.command;
+  })).sessionId;
 }
 
 test('AUTH-1 cloud login on a fresh native desktop keeps its durable local owner; another cloud identity cannot replace it', async t => {

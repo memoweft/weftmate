@@ -214,6 +214,7 @@ struct ConversationView: View {
         if let previewDirectory { try? FileManager.default.removeItem(at: previewDirectory) }; previewDirectory = nil
     }
     private func openAttachment(_ reference: ConversationAttachmentReference) {
+        draftFocused=false; dismissPhonePreviewKeyboard()
         closePreview(); previewReference = reference; showingPreview = true; previewBusy = true
         let epoch = model.accountEpoch
         previewWorker = Task {
@@ -610,7 +611,7 @@ struct ConversationView: View {
                     #endif
                     if composerExpanded {
                     Menu {
-                        Text(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型")
+                        Label(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型",systemImage:"checkmark")
                         Button("配置模型") {
                             #if os(macOS)
                             model.settingsRoute = .init(categoryID: "models"); openWindow(id: "settings")
@@ -622,16 +623,16 @@ struct ConversationView: View {
                         #if os(macOS)
                         Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1)
                         #else
-                        HStack(spacing: AppleTokens.Space.p3) { Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1); WeftIcon("chevron", size: 12) }.phoneMenuLabel(onCard: true)
+                        WeftIcon("model").phoneMenuLabel(circle:true,onCard:true)
                         #endif
                     }
                     #if os(macOS)
                     .menuStyle(.borderlessButton)
                     #endif
                     #if os(iOS)
-                    .buttonStyle(PhoneActionStyle()).phoneComposerControl()
+                    .phoneIcon().phoneComposerControl(circle:true)
                     #endif
-                    .font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择").accessibilityIdentifier("composerModel")
+                    .font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择，"+(model.sendTargets[key]?.modelName ?? "当前模型")).accessibilityIdentifier("composerModel")
                     }
                     if showsSmallMic {
                     Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic", size: AppleTokens.Space.p16).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44) }

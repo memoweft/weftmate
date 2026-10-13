@@ -72,10 +72,12 @@ async function runCase(version,method){
    row.nativeSession=await p.evaluate(async()=>{const response=await fetch('/personal/v1/auth/me');const body=await response.json();
     return {status:response.status,authKind:body.device?.authKind,local:body.local};});
    assert.equal(row.nativeSession.status,200);assert.equal(row.nativeSession.authKind,'desktop');assert.equal(row.nativeSession.local,true);
-   await p.waitForFunction(()=>{const core=globalThis.__revExitCore;return core?.state.mainChat&&core.state.modelsKnown&&
-    !core.state.refreshing&&!core.state.sessionSelecting;});
+   // The first window may still be hidden. Initial native reads honor the
+   // foreground gate, so establish visibility before waiting for those reads.
    await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows()[0];w.restore();w.show();});
    await p.waitForFunction(()=>document.visibilityState==='visible'&&globalThis.__revExitCore.foreground());
+   await p.waitForFunction(()=>{const core=globalThis.__revExitCore;return core?.state.mainChat&&core.state.modelsKnown&&
+    !core.state.refreshing&&!core.state.sessionSelecting;});
    if(!await p.evaluate(()=>__revExitCore.inMainChat())) await p.evaluate(()=>__revExitCore.selectMainChat());
    row.nativeReadiness=await nativeReadiness(p);
   }
