@@ -88,7 +88,7 @@ Android 主机名感知的信任检查依据 [X509TrustManagerExtensions 官方�
 
 **回归和复验**
 
-必过组覆盖 `fix-33-host-compat.test.ts` 的缓存续接、旧电脑字段缺省、先声明能力、新同步水位唤醒及重复上传不唤醒；`multi-computer-host.test.ts`、`multi-computer-cloud-compat.test.ts`、手机交互五文件、桌面交互和模型服务用例已运行。原生 `NativeHostChatTest`、`NativeChatStateTest`、`CloudAppUnitTest` 最终 **31/0**；MuMu `SharedChatOutboxTest` **7/0**，包括首条+连发、同编号重试、重启隔离、拒绝/未知、只读、撤权、原图与压缩预览。授权的 `Fix33LiveChatTest` **1/0**。相关 Node 手机+桌面交互 **196/0**，UI/模型服务/目录 **83/0**，MEM-7/MOB-4/离线 **21/0**，FIX-33/多电脑/资源 **15/0**，文件任务/目录 **18/0**，菜单/唤醒复验 **5/0**，主题/桌面/BL-29 复验 **78/0**；各组有重叠，不能相加当独立总数。类型检查通过，公开卫生0命中；完整必过和固定运行时交给 GitHub Actions（自动检查），最终链接在编排结果中。
+必过组覆盖 `fix-33-host-compat.test.ts` 的缓存续接、旧电脑字段缺省、先声明能力、新同步水位唤醒及重复上传不唤醒；`multi-computer.test.ts`、`multi-computer-cloud-compat.test.ts`、手机交互五文件、桌面交互和模型服务用例已运行。原生 `NativeHostChatTest`、`NativeChatStateTest`、`CloudAppUnitTest` 最终 **31/0**；MuMu `SharedChatOutboxTest` **7/0**，包括首条+连发、同编号重试、重启隔离、拒绝/未知、只读、撤权、原图与压缩预览。授权的 `Fix33LiveChatTest` **1/0**。相关 Node 手机+桌面交互 **196/0**，UI/模型服务/目录 **83/0**，MEM-7/MOB-4/离线 **21/0**，FIX-33/多电脑/资源 **15/0**，文件任务/目录 **18/0**，菜单/唤醒复验 **5/0**，主题/桌面/BL-29 复验 **78/0**，合主线后能力/新旧云/资源 **16/0**；各组有重叠，不能相加当独立总数。类型检查通过，公开卫生0命中；完整必过和固定运行时交给 GitHub Actions（自动检查），最终链接在编排结果中。
 
 复跑版本窗口：先 `npm ci`、`npm run vendor:dsh`，设置 `FIX33_UI=1` 后运行 `node tests/integration/fix-33-versions.mjs`；设置 `FIX33_TIMING_BASELINE=1` 得到旧计时，`FIX33_BASELINE=1` 得到错误原生命令形状。测试会归档旧树，所有目录都先解除联接再删除，不保留旧源码。
 
