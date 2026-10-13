@@ -49,7 +49,10 @@
       "!node_modules/get-windows/build/**/*"
     ],
     "extraResources": [
-      { "from": "src/personal-update/trusted-keys.json", "to": "update-trusted-keys.json" },
+      {
+        "from": "src/personal-update/trusted-keys.json",
+        "to": "update-trusted-keys.json"
+      },
       {
         "from": ".stage",
         "to": "",
@@ -117,7 +120,12 @@
     "@root/csr": "0.8.1",
     "electron-updater": "^6.8.9",
     "get-windows": "^9.3.0",
-    "jose": "6.2.12"
+    "ical.js": "2.2.1",
+    "imapflow": "2.4.0",
+    "jose": "6.2.12",
+    "mailparser": "3.9.38",
+    "nodemailer": "10.1.0",
+    "tsdav": "2.4.0"
   },
   "overrides": {
     "@mapbox/node-pre-gyp": "2.0.3",
@@ -129,9 +137,11 @@
     "electron": "43.7.8",
     "electron-builder": "^26.15.3",
     "fake-indexeddb": "6.2.4",
+    "hoodiecrow-imap": "3.3.1",
     "js-tiktoken": "1.0.21",
     "pdfjs-dist": "6.4.299",
     "playwright": "^1.63.0",
+    "smtp-server": "3.19.21",
     "typescript": "^5.9.3",
     "ws": "^8.21.3"
   }
