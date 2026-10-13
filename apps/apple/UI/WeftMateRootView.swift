@@ -565,6 +565,9 @@ struct PhoneChatWorkspace: View {
                             .background(tab == item && path.isEmpty ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
                     }.buttonStyle(.plain).accessibilityIdentifier("phone.sidebar.tab."+item.id)
                 }
+                if model.cloudLogin.multipleComputers {
+                    ComputerConversationList(cloud:model.cloudLogin,query:search,close:{showingSidebar=false})
+                } else {
                 if let main=model.conversations.first(where: \.isMainChat) { drawerRow(main) }
                 ForEach(model.sections(query:search)) { section in
                     Text(section.title).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p12).padding(.top,AppleTokens.Space.p12)
@@ -574,6 +577,7 @@ struct PhoneChatWorkspace: View {
                     Text(project.name).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p12).padding(.top,AppleTokens.Space.p12)
                     ForEach(model.projectRows(project,query:search)) { row in drawerRow(row) }
                     ProjectMoreRows(app:model,project:project,search:search).buttonStyle(.plain)
+                }
                 }
                 if model.conversations.isEmpty { Text("还没有旁聊").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).padding(AppleTokens.Space.p12) }
             }.padding(.horizontal,AppleTokens.Space.p12)
