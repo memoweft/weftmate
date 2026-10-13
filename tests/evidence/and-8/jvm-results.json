@@ -1,0 +1,20 @@
+[
+  {
+    "suite": "com.memoweft.weftmate.mobile.BusinessRouteUnitTest",
+    "tests": 23,
+    "failures": 0,
+    "errors": 0
+  },
+  {
+    "suite": "com.memoweft.weftmate.mobile.ClientRouteInventoryUnitTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0
+  },
+  {
+    "suite": "com.memoweft.weftmate.mobile.NativeHealthStateTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0
+  }
+]

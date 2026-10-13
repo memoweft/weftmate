@@ -1,0 +1,6 @@
+{
+  "failure": "Runner ended without final report",
+  "ownReversePort": 54312,
+  "privateAdbPort": 57541,
+  "cleanupComplete": true
+}
