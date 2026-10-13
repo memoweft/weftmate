@@ -1,8 +1,9 @@
 /* Generated from docs/changelog/*.json. Run node scripts/build-release-notes.mjs. */
 globalThis.WeftUiCore.releaseNotes = [
   {
-    "date": "2026-10-10",
+    "date": "2026-10-13",
     "added": [
+      "电脑离线时，可以在手机上记下要做的事、查看和取消；电脑上线后按顺序处理，需要批准时仍会问你。",
       "可以从 ChatGPT、Claude、Codex 和 Claude Code 导入聊天记录，开始前先看用量估算，可暂停、继续或忘掉整次导入。",
       "健康记录可独立保存、查看自己的恢复与睡眠趋势，聊天里能查询健康数字；解读不可用时仍有统计版，可把合适的建议变成提醒。",
       "Windows 可以右键把文件或文件夹发送到 WeftMate，普通操作也能直接在通知中允许或拒绝。",
@@ -70,11 +71,12 @@ globalThis.WeftUiCore.releaseNotes = [
       "修复回顾与健康设置中健康开关、睡眠目标和清空操作未能保存的问题；每周回顾保留真实的深夜使用提醒，电脑使用时刻按当地时间整理。"
     ],
     "audience": "mobile",
-    "version": "0.8.25"
+    "version": "0.8.30"
   },
   {
-    "date": "2026-10-10",
+    "date": "2026-10-13",
     "added": [
+      "电脑离线时，可以在手机上记下要做的事、查看和取消；电脑上线后按顺序处理，需要批准时仍会问你。",
       "可以从 ChatGPT、Claude、Codex 和 Claude Code 导入聊天记录，开始前先看用量估算，可暂停、继续或忘掉整次导入。",
       "健康记录可独立保存、查看自己的恢复与睡眠趋势，聊天里能查询健康数字；解读不可用时仍有统计版，可把合适的建议变成提醒。",
       "Windows 可以右键把文件或文件夹发送到 WeftMate，普通操作也能直接在通知中允许或拒绝。",
@@ -142,6 +144,6 @@ globalThis.WeftUiCore.releaseNotes = [
       "修复回顾与健康设置中健康开关、睡眠目标和清空操作未能保存的问题；每周回顾保留真实的深夜使用提醒，电脑使用时刻按当地时间整理。"
     ],
     "audience": "desktop",
-    "version": "0.1.0"
+    "version": "0.2.0-preview.6"
   }
 ];
