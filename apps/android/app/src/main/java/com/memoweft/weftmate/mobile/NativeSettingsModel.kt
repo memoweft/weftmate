@@ -95,7 +95,7 @@ internal class SettingsConfirmation(val title:String,val message:String,val labe
             }
             if(owner==chat.owner&&stale.isNotEmpty())loadServices()
         }
-    }catch(_:Exception){if(owner==chat.owner)error="暂时无法读取模型，请重试。"}finally{if(owner==chat.owner)menuLoading=false} } }
+    }catch(e:CancellationException){throw e}catch(_:Exception){if(owner==chat.owner)error="暂时无法读取模型，请重试。"}finally{if(owner==chat.owner)menuLoading=false} } }
     fun currentModel()=services.find{it.optString("serviceId")==selected.optString("serviceId")}?.optJSONArray("models")?.objects()?.find{it.optString("modelId")==selected.optString("modelId")}
     fun select(service:JSONObject,model:JSONObject,done:()->Unit) = run {chooseModel(service,model);done()}
     suspend fun chooseModel(service:JSONObject,model:JSONObject) {

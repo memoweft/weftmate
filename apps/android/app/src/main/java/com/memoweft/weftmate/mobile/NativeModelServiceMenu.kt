@@ -56,7 +56,7 @@ import androidx.compose.ui.unit.sp
         }
         if(!all&&s.services.any{it.optJSONArray("models")?.objects().orEmpty().count{row->row.optBoolean("enabled",true)}>12})FeedControlMenuItem("全部模型",icon=R.drawable.wm_search){all=true}
         if(s.currentModel()?.optJSONObject("deepThinking")?.optBoolean("supported")==true)SettingsToggle("深度思考","",s.thinking,!s.busy){s.toggleThinking(it)}
-        if(s.error.isNotEmpty())SettingsNote(s.error)
+        if(s.error.isNotEmpty()){SettingsNote(s.error);FeedControlMenuItem("重试",icon=R.drawable.wm_refresh){s.menuOpened()}}
         FeedControlMenuItem("添加模型服务…",icon=R.drawable.wm_plus){close();s.open("models",add=true)}
     }
 }
