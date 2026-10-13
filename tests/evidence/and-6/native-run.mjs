@@ -14,7 +14,7 @@ const pkg='com.memoweft.weftmate.mobile.and6qa',locks='D:/AIProjects/WeftMate/Ru
 let heavy,mumu,serial,fixture,port,adbPort,installed=false;
 const args=()=>['-P',String(adbPort),'-s',serial];
 const run=(...a)=>execFileSync(adb,[...args(),...a],{encoding:'utf8',windowsHide:true,maxBuffer:8*1024*1024,timeout:30000});
-const safe=s=>String(s).replace(/C:[\\/]Users[\\/][^\\/\s]+/gi,'C:/Users/<user>').replace(/DESKTOP-[A-Z0-9-]+/gi,'<host>');
+const safe=s=>String(s).replaceAll(fixture?.credentials?.password||'<unset-password>','<synthetic-password>').replace(/C:[\\/]Users[\\/][^\\/\s]+/gi,'C:/Users/<user>').replace(/DESKTOP-[A-Z0-9-]+/gi,'<host>');
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const report={synthetic:true,instrumentation:[],screenshots:[]};
 const filters=process.argv.includes('--filters');
@@ -26,7 +26,7 @@ try{
     if(heavy)try{mumu=await lock(join(locks,'mumu.lock'),'native goals 360/390 light/dark')}catch(e){if(e.code!=='EEXIST')throw e;await unlink(heavy);heavy=null}
     if(!mumu){process.stdout.write('Waiting for MuMu/heavy slot; no slot held\n');await pause(120000)}
   }
-  report.occupancy={startedAt:new Date().toISOString(),heavySlot:heavy.split('/').at(-1)};
+  report.occupancy={startedAt:new Date().toISOString(),heavySlot:heavy.split(/[\\/]/).at(-1)};
   const allocator=createServer();await new Promise(r=>allocator.listen(0,'127.0.0.1',r));adbPort=allocator.address().port;await new Promise(r=>allocator.close(r));
   serial=readMuMuInfo().serial;
   execFileSync(adb,['-P',String(adbPort),'connect',serial],{windowsHide:true,timeout:30000});

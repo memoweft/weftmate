@@ -26,8 +26,12 @@ for theme in ['light','dark']:
   html += [f'<figure><h2>{theme} · {scene}</h2><div class="labels"><span>原网页</span><span>原生</span></div><img src="pairs/{file}" alt="{theme} {scene} 并排图"><figcaption><p>一致：{same}</p><p>故意更好：{better}</p><p>还差：{gap}</p></figcaption></figure>']
 html.append('</html>');(root/'pairs.html').write_text('\n'.join(html),encoding='utf-8')
 bars=[]
+capture_metadata={}
+for report_file in ['native-report.json','filters-report.json']:
+ report=json.loads((root/report_file).read_text(encoding='utf-8-sig'))
+ for shot in report['screenshots']:capture_metadata[shot['file']]=shot
 for file in sorted(root.glob('and6-*.png')):
  im=Image.open(file).convert('RGB');status=im.getpixel((im.width//2,5));header=im.getpixel((5,100))
- bars.append({'file':file.name,'physicalSize':list(im.size),'statusBackgroundRGB':list(status),'headerBackgroundRGB':list(header),'meanChannelDifference':sum(abs(a-b) for a,b in zip(status,header))/3,'bottomSystemNavigation':'not visible in this MuMu instance; real-device gesture area unverified'})
+ bars.append({**capture_metadata.get(file.name,{}),'file':file.name,'physicalSize':list(im.size),'logicalSize':[int(file.name.split('-')[1]),round(im.height*int(file.name.split('-')[1])/im.width)],'statusBackgroundRGB':list(status),'headerBackgroundRGB':list(header),'meanChannelDifference':sum(abs(a-b) for a,b in zip(status,header))/3,'bottomSystemNavigation':'not visible in this MuMu instance; real-device gesture area unverified'})
 (root/'system-bars.json').write_text(json.dumps(bars,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 print(json.dumps({'pairs':len(scenes)*2,'rawScreenshots':len(bars),'maxStatusHeaderChannelDifference':max(r['meanChannelDifference'] for r in bars)},ensure_ascii=False))

@@ -6,6 +6,10 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 internal fun goalSession(row: JSONObject) = row.stringOrEmpty("sessionId").ifEmpty { row.optJSONObject("source")?.stringOrEmpty("sessionId").orEmpty() }
+internal fun goalSource(row:JSONObject)=JSONObject((row.optJSONObject("source") ?: JSONObject()).toString()).apply {
+    if(stringOrEmpty("sessionId").isEmpty())put("sessionId",goalSession(row))
+    if(!has("seq")&&row.has("seq")&&!row.isNull("seq"))put("seq",row.getLong("seq"))
+}
 internal fun goalRowKey(row: JSONObject) = "${row.stringOrEmpty("hostId")}:${goalSession(row)}:${row.stringOrEmpty("id").ifEmpty { row.stringOrEmpty("taskId") }}"
 internal fun goalMerge(rows: List<JSONObject>, invalidatedHosts:Set<String> = emptySet()) = rows.filter{it.stringOrEmpty("hostId") !in invalidatedHosts}.associateBy(::goalRowKey).values.toList()
 internal fun goalComputerLabel(row: JSONObject, computers: List<JSONObject>): String = if(computers.size <= 1) "" else computers.firstOrNull { it.stringOrEmpty("hostId") == row.stringOrEmpty("hostId") }?.let { it.stringOrEmpty("displayName").ifEmpty { it.stringOrEmpty("name") } }.orEmpty()

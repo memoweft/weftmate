@@ -40,7 +40,7 @@ private val gap=DesignTokens.space8.dp
     LaunchedEffect(Unit){model.refresh()}
     var confirmation by remember{mutableStateOf<Pair<String,JSONObject>?>(null)}
     val frost=LocalNativeFrost.current
-    Box(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
+    Box(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).then(if(frost!=null)Modifier.frostSource(frost) else Modifier)) {
         when {
             model.draft!=null -> GoalForm(model,model.draft!!)
             model.detail!=null -> GoalDetail(model)
@@ -48,7 +48,7 @@ private val gap=DesignTokens.space8.dp
                 val list=rememberLazyListState()
                 LaunchedEffect(list.isScrollInProgress){frost?.paused=list.isScrollInProgress}
                 DisposableEffect(frost){onDispose{frost?.paused=false}}
-                LazyColumn(Modifier.fillMaxSize().then(if(frost!=null)Modifier.frostSource(frost) else Modifier).semantics{contentDescription="目标列表"},state=list,contentPadding=PaddingValues(DesignTokens.space20.dp),verticalArrangement=Arrangement.spacedBy(gap)) {
+                LazyColumn(Modifier.fillMaxSize().semantics{contentDescription="目标列表"},state=list,contentPadding=PaddingValues(DesignTokens.space20.dp),verticalArrangement=Arrangement.spacedBy(gap)) {
                     item {Row(verticalAlignment=Alignment.CenterVertically){Text("目标",Modifier.weight(1f),fontSize=DesignTokens.font28.sp,fontWeight=FontWeight.SemiBold);FeedControlIconButton(R.drawable.wm_sync,"刷新目标",enabled=!model.loading&&!model.busy){model.refresh()}}}
                     item {GoalCaption("看看正在做的事，安排之后的事，持续推进想完成的目标。")}
                     if(model.noComputer) item {GoalStateBlock(R.drawable.wm_clock,"安排之后的事","连上电脑后，可以让它按时帮你做事。",actionLabel="去聊天",action={model.returnToChat()})}
@@ -174,7 +174,9 @@ private val gap=DesignTokens.space8.dp
 @Composable private fun GoalSwitch(checked:Boolean,label:String,enabled:Boolean,change:(Boolean)->Unit) {
     Box(Modifier.size(DesignTokens.space44.dp).semantics{contentDescription=label;stateDescription=if(checked)"已启用" else "已暂停";toggleableState=if(checked)androidx.compose.ui.state.ToggleableState.On else androidx.compose.ui.state.ToggleableState.Off}.clip(goalPill).clickable(enabled=enabled,role=Role.Switch){change(!checked)},contentAlignment=Alignment.Center){Box(Modifier.width(DesignTokens.space40.dp).height(DesignTokens.space24.dp).background(if(checked)MaterialTheme.colorScheme.primary else Color(if(LocalNativeDark.current)DesignTokens.nativeDarkMuted else DesignTokens.nativeMuted),goalPill).padding(DesignTokens.space3.dp)){Box(Modifier.size(DesignTokens.space18.dp).align(if(checked)Alignment.CenterEnd else Alignment.CenterStart).background(if(checked)MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surface,goalPill))}}
 }
-@Composable private fun GoalMenu(open:Boolean,dismiss:()->Unit,content:@Composable ColumnScope.()->Unit) {FeedControlMenu(open,dismiss,dark=LocalNativeDark.current,floatColor=Color(if(LocalNativeDark.current)DesignTokens.nativeDarkSurfaceFloat else DesignTokens.nativeSurfaceFloat),fallbackColor=Color(if(LocalNativeDark.current)DesignTokens.nativeDarkFloatOpaque else DesignTokens.nativeFloatOpaque),content=content)}
+@Composable private fun GoalMenu(open:Boolean,dismiss:()->Unit,content:@Composable ColumnScope.()->Unit) {
+    NativeFileMenu(open,dismiss) { Column(Modifier.widthIn(min=(DesignTokens.space220+DesignTokens.space12).dp),content=content) }
+}
 @Composable private fun GoalCaption(text:String){if(text.isNotEmpty())Text(text,color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=DesignTokens.font13.sp,lineHeight=DesignTokens.font18.sp)}
 @Composable private fun GoalStateBlock(icon:Int,title:String,text:String,actionLabel:String?=null,action:()->Unit={}) {
     Row(Modifier.fillMaxWidth().padding(vertical=DesignTokens.space20.dp),horizontalArrangement=Arrangement.spacedBy(DesignTokens.space12.dp)) {

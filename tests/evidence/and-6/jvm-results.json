@@ -13,7 +13,7 @@
   },
   {
     "suite": "com.memoweft.weftmate.mobile.NativeGoalsStateTest",
-    "tests": 12,
+    "tests": 13,
     "failures": 0,
     "errors": 0
   },
