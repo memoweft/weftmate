@@ -1,0 +1,2 @@
+xcodebuild build -jobs 4 -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO
+** BUILD SUCCEEDED **

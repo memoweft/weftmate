@@ -1,0 +1,6 @@
+PASS message UTF-16 and JSON byte overflow: input notice, no command
+PASS add file, attachment-only send, upload lost reply retry, original/staged references, history and verified download
+PASS attachment count and UTF-8 model prefix limits
+PASS lost upload followed by edited text and added file retains original binding, sends current draft
+PASS A7 session preview failure blocks confirmation, default original snippets remain unchecked
+PASS shared-chat has no task entry and no /tasks request; isolated HTTP/account/data only

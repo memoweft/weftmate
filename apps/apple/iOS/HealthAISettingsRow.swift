@@ -7,7 +7,8 @@ struct HealthAISettingsRow: View {
     @State private var message: String?
     @State private var updating=false
     var body: some View {
-        if let settings {
+        if app.session == nil { Text("分数和 AI 解读，连上电脑后可用。").font(AppleTokens.Fonts.footnote).foregroundStyle(Weave.muted) }
+        else if let settings {
             Toggle("今日解读用模型写",isOn:Binding(get:{self.settings?.modelInsightsEnabled == true},set:{value in Task { await change(top:value) } })).disabled(updating).accessibilityIdentifier("health.modelInsightsEnabled")
             if settings.itemAnalysisEnabled != nil {
                 Toggle("各项 AI 分析",isOn:Binding(get:{self.settings?.itemAnalysisEnabled == true},set:{value in Task { await change(item:value) } })).disabled(updating)
@@ -16,6 +17,7 @@ struct HealthAISettingsRow: View {
         }
         if let message { Text(message).font(AppleTokens.Fonts.footnote).foregroundStyle(.secondary) }
         Color.clear.frame(height:0).task(id:app.accountEpoch) {
+            guard app.session != nil else { return }
             let token=app.accountEpoch; settings=nil; message=nil
             if let reply=try? await app.assistantClient.healthPageSettings(),token == app.accountEpoch { settings=reply.settings }
         }

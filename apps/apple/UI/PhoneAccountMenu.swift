@@ -5,9 +5,10 @@ import WeftMateCore
 /// Auxiliary pages keep the current conversation underneath the sheet.
 struct PhoneAccountMenu: View {
     @ObservedObject var model: AppleAppModel
+    @ObservedObject private var cloud: CloudLoginModel
     @EnvironmentObject private var health: DailyHealthModel
     @StateObject private var usage: AccountUsageModel
-    init(model: AppleAppModel) { self.model = model; _usage = StateObject(wrappedValue: AccountUsageModel(app: model)) }
+    init(model: AppleAppModel) { self.model = model; cloud=model.cloudLogin; _usage = StateObject(wrappedValue: AccountUsageModel(app: model)) }
     @State private var confirmingLogout = false
     @State private var route: Route?
 
@@ -28,8 +29,8 @@ struct PhoneAccountMenu: View {
         .accessibilityIdentifier("phoneAccountMenu")
         .sheet(item: $route) { item in
             Group {
-                if (item.destination == .settings || item.destination == .about) && item.epoch == model.accountEpoch && model.session != nil {
-                    SettingsView(model: model, route: item.destination == .about ? .init(categoryID: "about") : nil, onClose: { route = nil })
+                if (item.destination == .settings || item.destination == .about) && item.epoch == model.accountEpoch {
+                    SettingsView(model: model, route: item.destination == .about ? .init(categoryID: "about") : nil, onClose: { dismissPhonePreviewKeyboard(); route = nil })
                 } else {
                     NavigationStack {
                 Group {
@@ -61,6 +62,7 @@ struct PhoneAccountMenu: View {
             Button("退出登录", role: .destructive) { Task { await model.signOut() } }
             Button("取消", role: .cancel) {}
         }
+        .onChange(of:cloud.authenticated) { _,value in if value { dismissPhonePreviewKeyboard(); route=nil } }
         .onChange(of: model.accountEpoch) { _, _ in route = nil; confirmingLogout = false }
     }
 
