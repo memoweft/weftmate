@@ -21,12 +21,24 @@ import WeftMateCore
     private func diagnose(_ stage: String) {}
     #endif
     private var transferring=false
-    private let network=URLSession(configuration:.ephemeral,delegate:PhoneModelRedirectPolicy(),delegateQueue:nil)
+    private let network: URLSession
+    private let credentialsOverride: (any CredentialStore)?
+    private let loopbackOverride: Bool
+    init() {
+        network=URLSession(configuration:.ephemeral,delegate:PhoneModelRedirectPolicy(),delegateQueue:nil)
+        credentialsOverride=nil;loopbackOverride=false
+    }
+    #if DEBUG
+    init(testCredentials: any CredentialStore, testLoopback: Bool) {
+        network=URLSession(configuration:.ephemeral,delegate:PhoneModelRedirectPolicy(),delegateQueue:nil)
+        credentialsOverride=testCredentials;loopbackOverride=testLoopback
+    }
+    #endif
     var messages: [PhoneChatMessage] { state.threads.first { $0.id == state.selected }?.messages ?? [] }
     var currentModel: PhoneModelConfiguration? { models.first { $0.id == modelID } ?? models.first }
     private var allowLoopback: Bool {
         #if DEBUG
-        ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--apple6-fixture")
+        loopbackOverride || (ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--apple6-fixture"))
         #else
         false
         #endif
@@ -37,7 +49,7 @@ import WeftMateCore
         guard account != identity || store == nil else { return }
         diagnose("activate");stop(); epoch=UUID(); account=identity; state = .init(); models=[]; modelID=""; draft=""; notice=nil; store=nil
         do {
-            let next=try PhoneChatStore(account:identity,directory:app.healthStateDirectory.deletingLastPathComponent().appendingPathComponent("PhoneChats"),credentials:KeychainCredentialStore(service:app.phoneCredentialNamespace))
+            let next=try PhoneChatStore(account:identity,directory:app.healthStateDirectory.deletingLastPathComponent().appendingPathComponent("PhoneChats"),credentials:credentialsOverride ?? KeychainCredentialStore(service:app.phoneCredentialNamespace))
             state=try next.load(); models=try next.loadModels(); modelID=models.first?.id ?? ""; store=next
         } catch { notice="手机上的内容暂时打不开，请重试。" }
     }
@@ -52,20 +64,22 @@ import WeftMateCore
             guard ticket == epoch, account == app.phoneAccountIdentity, !busy else { return }
             guard control.authorized,control.hostId == host,control.accountId == subject else { return }
             let generation=control.generation
-            let pending=state.prepareMigration(host:host,generation:generation)
+            state.applyMigrationGeneration(host:host,generation:generation)
             state.acknowledgeMigration(host:host,ids:app.offline.synced)
             try persist()
-            if !pending.isEmpty,app.offline.ready,!app.offline.hostOffline,app.offline.generation == generation { try app.offline.enqueuePhoneTurns(pending,generation:generation) }
+            guard app.offline.ready,!app.offline.hostOffline,app.offline.generation == generation else { return }
+            let pending=state.prepareMigration(host:host,generation:generation);try persist()
+            if !pending.isEmpty { try app.offline.enqueuePhoneTurns(pending,generation:generation) }
         } catch { if ticket == epoch { notice="手机上的对话仍在这里，电脑准备好后会自动同步。" } }
     }
     private func authorizeTransferredHistory(ticket: UUID) async throws {
         guard let app,let migrations=state.migrations,!migrations.isEmpty else { return }
         let subject=app.cloudLogin.subject
-        for (host,migration) in migrations {
+        for (host,migration) in migrations where migration.conversationIDs.contains(state.selected ?? "") {
             let control=try await app.offlineAuthorization(host)
             guard ticket == epoch,account == app.phoneAccountIdentity,control.authorized,control.accountId == subject,control.hostId == host else { throw OfflineFailure.authorization }
             if migration.generation != control.generation {
-                _=state.prepareMigration(host:host,generation:control.generation);try persist();throw OfflineFailure.authorization
+                state.applyMigrationGeneration(host:host,generation:control.generation);try persist();throw OfflineFailure.authorization
             }
         }
     }

@@ -21,7 +21,7 @@ struct ApprovalModeControl: View {
                 showingMenu = true
             } label: {
                 #if os(iOS)
-                Image(systemName:"slider.horizontal.3").font(.system(size:20,weight:.regular)).frame(width:20,height:20)
+                PhoneOperationModeIcon()
                 #else
                 HStack(spacing: AppleTokens.Space.p3) {
                     WeftIcon("approval", size: compact ? AppleTokens.Space.p16 : AppleTokens.Space.p20)
@@ -39,7 +39,7 @@ struct ApprovalModeControl: View {
             .buttonStyle(ApprovalModeButtonStyle(compact: compact))
             .disabled(busy || !isVerified)
             .accessibilityLabel(sessionID == nil ? "默认审批模式" : "审批模式")
-            .accessibilityValue(settings?.mode.rawValue ?? "尚未读取")
+            .accessibilityValue(settings?.mode.title ?? "尚未读取")
             .accessibilityIdentifier(sessionID == nil ? "defaultApprovalMode" : "approvalMode")
             .popover(isPresented: $showingMenu, arrowEdge: .bottom) {
                 ScrollView {
