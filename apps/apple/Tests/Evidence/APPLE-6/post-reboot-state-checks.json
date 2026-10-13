@@ -1,0 +1,104 @@
+[
+  {
+    "check": "PhoneStandaloneModelChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 4.42
+  },
+  {
+    "check": "A16ChatStateChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 18.78
+  },
+  {
+    "check": "AppleUX23StateChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 19.67
+  },
+  {
+    "check": "AppleSettingsSummaryChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 21.92
+  },
+  {
+    "check": "AppleContractStateChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 21.03
+  },
+  {
+    "check": "AppleAdoptionStateChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 22.56
+  },
+  {
+    "check": "AppleDraftStateChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 21.1
+  },
+  {
+    "check": "AppleSendStateChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 26.57
+  },
+  {
+    "check": "AppleTaskEntryChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 20.14
+  },
+  {
+    "check": "AppleTimelineStateChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 20.67
+  },
+  {
+    "check": "MemoryWorkspaceStateChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 14.21
+  },
+  {
+    "check": "MessageMarkdownChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 0.9
+  },
+  {
+    "check": "DesignTokenChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 2.78
+  },
+  {
+    "check": "ToolProgressChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 1.08
+  },
+  {
+    "check": "TaskDirectoryChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 2.88
+  },
+  {
+    "check": "TaskInteractionChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 4.99
+  },
+  {
+    "check": "TaskWorkspaceChecks",
+    "compileExit": 0,
+    "runExit": 0,
+    "seconds": 11.97
+  }
+]

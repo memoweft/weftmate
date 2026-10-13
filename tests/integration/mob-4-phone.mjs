@@ -9,7 +9,8 @@ import { fixture } from '../helpers/auth-1-https-cloud.mjs';
 import { startAnd3Fixture } from './and-3-fixture.mjs';
 import { systemBarDifference } from '../../scripts/nightly/system-bars.mjs';
 const nativeEntry=process.argv.includes('--native-entry'), native = nativeEntry || process.argv.includes('--native'), repo = resolve(import.meta.dirname, '../..');
-const out = join(repo, nativeEntry?'tests/evidence/and-4/standalone':'tests/evidence/mob-4'); mkdirSync(out, { recursive: true });
+const postMainSmoke=process.argv.includes('--post-main-smoke');
+const out = join(repo, nativeEntry?'tests/evidence/and-4/standalone'+(postMainSmoke?'/post-main':''):'tests/evidence/mob-4'); mkdirSync(out, { recursive: true });
 const report = { native, nativeEntry, testDiscovery:'synthetic computer presence and loopback address; authentication and content use product APIs', syntheticCloud: true, syntheticAccount: true, mimoRequests: 0, checks: [], screenshots: [], errors: [] };
 const pkg = 'com.memoweft.weftmate.mobile.'+(nativeEntry?'and4qa':'mob4qa'), adb = process.env.AND4_ADB_EXE || 'D:/Software/MuMuPlayer/nx_main/adb.exe';
 const adbServer=process.env.AND4_ADB_SERVER_PORT?['-P',process.env.AND4_ADB_SERVER_PORT]:[];
@@ -227,6 +228,16 @@ async function nativeStandaloneFlow(){
   report.checks.push('native-empty-model-cta-actual-settings-return');
   console.log('Native model settings returned to chat');
   const stored=run('shell','run-as',pkg,'tar','-cf','-','no_backup','shared_prefs');assert.equal(stored.includes(Buffer.from(configuredKey))||stored.includes(Buffer.from(configuredKey,'utf16le')),false);report.checks.push('native-model-key-is-encrypted');
+  if(postMainSmoke) {
+    await ui('input',{text:'模型测试期间保留的草稿'});
+    await page.evaluate(()=>{state.modelSwitching=true;});
+    await ui('staleSend');
+    await until(async()=>{const s=await nativeState();return s.draft==='模型测试期间保留的草稿'&&!s.running&&!s.sendAvailable&&s.error.includes('测试')&&s.rows.length===0;},'native rejected send preserves draft and explains model test');
+    assert.equal(report.syntheticModelRequests,1,'blocked activation must not send a model request');
+    await page.evaluate(()=>{state.modelSwitching=false;});
+    await until(async()=> (await nativeState()).sendAvailable,'model test unblock');
+    report.checks.push('native-main-send-blocker-stale-activation-keeps-draft');
+  }
   await ui('input',{text:'请用四段简短中文说明如何安排本周的工作和休息，每段两句话。'});if(!fixtureMode)report.mimoRequests++;await ui('click',{label:'发送消息'});
   await until(async()=>{const s=await nativeState();return s.rows.some(r=>r.type==='assistant.delta'&&r.data.text);},'real native streaming',90000);
   await screenshot(fixtureMode?'synthetic-stream':'mimo-stream',390,false);
@@ -253,6 +264,7 @@ async function nativeStandaloneFlow(){
   await ui('input',{text:'重开后保留的合成草稿'});await pause(600);
   await finishProbe();await nativeStart();await until(async()=>{const s=await nativeState();return s.standalone&&!s.loading&&s.rows.some(r=>r.data.text===savedText)&&s.rows.some(r=>r.data.text===savedUser)&&s.draft==='重开后保留的合成草稿';},'native identity-chat-draft restore');
   report.checks.push('native-kill-reopen-identity-encrypted-chat-draft');
+  if(postMainSmoke)return;
   console.log('Native identity, chat and draft restored');
   await ui('input',{text:'重开以后继续聊天。'});await ui('click',{label:'发送消息'});await until(async()=>{const s=await nativeState();return !s.running&&s.rows.some(r=>r.data.text==='重开以后继续聊天。');},'continue after restart');
   for(width of [360,390]){

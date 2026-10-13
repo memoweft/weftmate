@@ -1,0 +1,118 @@
+{
+  "packagedDesktop": true,
+  "realDSH": true,
+  "account": "synthetic local owner",
+  "computerName": "synthetic-mac",
+  "credentialStorage": "real Electron safeStorage; Security API search/add scoped only to disposable keychain",
+  "startedAt": "2026-10-13T09:06:14.448Z",
+  "electronLaunches": 2,
+  "mimoRequests": 0,
+  "mimoKeyAvailable": false,
+  "checks": [
+    "first open and model connection/configuration through visible onboarding controls",
+    "packaged first open; real safeStorage without mock; autostart off; close hides, Dock activates; native settings/edit menu",
+    "main chat received two separate synthetic SSE content chunks",
+    "trusted project registration, native read/write tools, visible approvals, physical file bytes and SHA-256",
+    "real DSH bash shell executed after native approval",
+    "same synthetic account phone login, Mac selection, streaming chat, real project read approved from phone",
+    "bundled host ingests completed turn, real Core forms memory, new DSH conversation receives recalled context",
+    "model key absent from ciphertext/plain settings; real safeStorage uses isolated temporary OS keychain",
+    "native Command+Q menu action closes every observed owned process",
+    "graceful quit/reopen retains main conversation, model credential/configuration and project"
+  ],
+  "screenshots": [
+    "electron-1200-light-first-open.png",
+    "electron-1200-dark-first-open.png",
+    "electron-1200-light-main-chat.png",
+    "electron-1200-dark-main-chat.png",
+    "electron-1200-light-native-file-drop.png",
+    "electron-1200-dark-native-file-drop.png",
+    "electron-1200-light-read-approval.png",
+    "electron-1200-dark-read-approval.png",
+    "electron-1200-light-write-approval.png",
+    "electron-1200-dark-write-approval.png",
+    "electron-1200-light-project-output.png",
+    "electron-1200-dark-project-output.png",
+    "electron-1200-light-shell-approval.png",
+    "electron-1200-dark-shell-approval.png",
+    "electron-1200-light-memory-new-chat.png",
+    "electron-1200-dark-memory-new-chat.png",
+    "electron-1200-light-restart.png",
+    "electron-1200-dark-restart.png"
+  ],
+  "syntheticRequests": 20,
+  "tools": [
+    "read",
+    "write"
+  ],
+  "errors": [],
+  "native": {
+    "packaged": true,
+    "profile": "<synthetic-temp>/profile",
+    "encryption": true,
+    "mock": false,
+    "menuLabels": [
+      "WeftMate",
+      "编辑",
+      "窗口"
+    ],
+    "autoStart": false
+  },
+  "fileDrop": "Chromium native file-backed drag IPC; Finder mouse gesture not exercised",
+  "readReachedModel": true,
+  "approvals": 2,
+  "outputSha256": "a03ecdb5fcb0279aa75f927ddcbca014744fee115d2aa406877404188e4e4ddc",
+  "shellOutputReachedModel": true,
+  "phoneCatalog": [
+    {
+      "name": "合成 Mac 模型",
+      "configured": true
+    }
+  ],
+  "phoneHelloRequests": 1,
+  "phoneSelection": "existing shared core.selectSession action invoked by test; narrow drawer navigation unverified",
+  "phoneReadReachedModel": true,
+  "phoneCompleted": true,
+  "memoryInterpretations": 1,
+  "memoryFormed": true,
+  "memoryContextReachedModel": true,
+  "notifications": [
+    {
+      "title": "需要审批",
+      "body": "需要你批准：[weftmate:execute] 执行工具操作，影响与可撤销性见操作详情。操作：bash {\"command\":\"printf \\\"M3_3B_SHELL_OK\\\\n\\\"\",\"description\":\"输出合成验证标记\",\"workdir\":\"[项目文件夹]\"}"
+    },
+    {
+      "title": "M3-3_READ_WRITE 读取 brief.md，并在项目里新建 result.md。每步先等待我批准。",
+      "body": "已完成 · 点开查看结果"
+    },
+    {
+      "title": "有一台新设备登录",
+      "body": "这个浏览器 已登录。可以在设备设置中查看并将它下线。"
+    },
+    {
+      "title": "有一台新设备登录",
+      "body": "synthetic-mac 已登录。可以在设备设置中查看并将它下线。"
+    },
+    {
+      "title": "M3-3B_SHELL 请运行一条 shell 命令验证，先等我批准。",
+      "body": "已完成 · 点开查看结果"
+    },
+    {
+      "title": "M3-3B_PHONE_READ 请读取项目中的 brief.md，先等我批准。",
+      "body": "已完成 · 点开查看结果"
+    }
+  ],
+  "commandQuitExitedProcesses": 6,
+  "memoryRestoredAfterAppRestart": true,
+  "completed": true,
+  "newGpuOrWindowServerReports": 0,
+  "machineRestarted": false,
+  "keychainServiceNames": [
+    "weftmate Safe Storage"
+  ],
+  "keychainOperations": {
+    "finds": 1,
+    "adds": 1
+  },
+  "finishedAt": "2026-10-13T09:06:48.972Z"
+}

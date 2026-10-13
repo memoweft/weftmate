@@ -112,6 +112,8 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
     }
     function failureMessage(error, context) {
         switch (error?.code) {
+            case 'COMPUTER_OFFLINE': return '这台电脑不在线，连接后再试。';
+            case 'COMPUTER_REMOVED': return '这台电脑已移除，请选择另一台电脑开始新对话。';
             case 'CLOUD_LOGIN_REQUIRED': return '请更新客户端并使用邮箱登录，远程访问需要云账号。';
             case 'LOCAL_SESSION_REQUIRED': return '请在装着数据的电脑上操作。';
             case 'USAGE_LIMIT_REACHED': return '本月用量已达到上限，云端模型请求已暂停。请在设置 → 用量提高本月上限，或切换本地模型。';
@@ -167,7 +169,9 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         const payload = await response.json().catch(() => ({}));
         if (!response.ok)
-            throw { code: payload?.error?.code || 'REQUEST_FAILED', status: response.status };
+            throw { code: payload?.error?.code || 'REQUEST_FAILED', status: response.status,
+                ...(Array.isArray(payload?.error?.invalidGroups)?{invalidGroups:payload.error.invalidGroups}:{}),
+                ...(payload?.error?.usage?{usage:payload.error.usage}:{}) };
         return payload;
         } finally { releaseSignal(); }
     }

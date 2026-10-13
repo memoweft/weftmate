@@ -19,6 +19,9 @@ import {
 } from './identity-helpers.mjs';
 
 test('registration → verification → device-confirmed code/PKCE login → refresh → reset → new device', async (t) => {
+  // OIDC expires_in is remaining lifetime. Keep issuance and token exchange
+  // on the same deterministic instant; HTTP and crypto timers still run.
+  t.mock.timers.enable({apis:['Date'],now:Date.now()});
   const app = await fixture(t);
   const registration = await app.register('  Account@EXAMPLE.COM  ');
   const pending = app.db.prepare('SELECT * FROM cloud_accounts').get();

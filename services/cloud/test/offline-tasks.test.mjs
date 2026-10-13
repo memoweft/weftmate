@@ -7,8 +7,19 @@ import { createOfflineTasks, TASK_LIMITS, pruneOfflineTasks } from '../src/offli
 import { sealReplica, taskRecipient } from '../../../src/personal-offline/crypto.mjs';
 import { fixture as identityFixture, P } from './identity-helpers.mjs';
 import { registration, appDevice, control, refresh, hostFixture } from './app-helpers.mjs';
+import { createComputerActions } from '../src/multi-host.mjs';
 
 const secret='S7_PRIVATE_TASK_BODY_不得出现在云端';
+test('removing a target cancels its queued task, deletes ciphertext, retains a phone-visible cancellation and never claims elsewhere',async t=>{
+  const f=await fixture(t),body=f.body();await f.device('submit',body);
+  const remove=createComputerActions({database:f.db,now:()=>1000,authenticate:async req=>{req.cloudToken={device_fingerprint:'fingerprint'};return {id:'account'};},lifecycle:{revokeComputer:async()=>{}},relay:{revoke:()=>({revoked:true})}});
+  await remove('/hosts/remove',{}, {hostId:'host'});
+  assert.equal(f.db.prepare('SELECT count(*) AS n FROM offline_tasks').get().n,0);
+  assert.equal((await f.host('claim')).items.length,0);
+  const canceled=(await f.device('list',{hostId:'host'})).items[0];assert.equal(canceled.id,body.id);assert.equal(canceled.state,'canceled');assert.equal(canceled.reason,'COMPUTER_REMOVED');
+  await assert.rejects(f.device('submit',f.body()),{code:'COMPUTER_REMOVED'});
+  assert.ok(!JSON.stringify(f.db.prepare('SELECT * FROM removed_computer_tasks').all()).includes(secret));
+});
 async function fixture(t){
   const db=new DatabaseSync(':memory:');db.exec('PRAGMA foreign_keys=ON');await migrate(db);await migrate(db);t.after(()=>db.close());
   db.prepare('INSERT INTO cloud_accounts(id,email,password,active,created_at) VALUES(?,?,?,?,?)').run('account','synthetic@example.com','{}',1,0);

@@ -452,9 +452,9 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         finally { row.retrying = false;notify(); }
     }
     async function sendDraft(text = effects.readMessageDraft(), intent) {
-        if (core.state.sessionSelecting || core.state.sideCreating) return;
         if (!inMain()) return legacy.sendDraft(text, intent, true);
-        if (!core.state.online || !supports('chatSend') || core.folderMutationPending?.() || core.state.submitting || core.state.unresolvedSubmission || !core.state.modelProfileId || (!text.trim() && !core.currentAttachmentDrafts().length)) return;
+        const blocker = core.sendBlocker(text, true);
+        if (blocker) return core.explainSendBlocker(blocker);
         const attachments = core.currentAttachmentDrafts();
         const row = { ownerId: core.state.ownerId, chatId: core.state.selectedChatId, requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), text, status: 'sending', files: attachments.map(item => item.file.name) };
         pending.set(row.requestId, row); notify(); effects.scrollToLatest();
@@ -487,7 +487,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         const available = supports('chatSend') && core.state.mainChat.sendAvailable && core.state.models.some(model => model.id === core.state.modelProfileId);
         return { ...view, messageDisabled: !available || !!core.state.attachmentUpload, attachmentsDisabled: !available || !!core.state.attachmentUpload || core.state.submitting,
             modelDisabled: view.modelDisabled || !!core.state.mainChat.activeSessionId,
-            sendDisabled: !core.state.online || ['restarting','unavailable'].includes(core.state.connection?.host?.runtime) || core.state.capabilities?.chat?.available === false || !available || core.folderMutationPending?.() || core.state.submitting || core.state.unresolvedSubmission || (!text.trim() && !core.currentAttachmentDrafts().length),
+            sendDisabled: !!core.sendBlocker(text, true),
             hint: core.executionAccountHint?.() || (core.state.mainChat.contextOrganizing ? '正在整理上下文，消息将继续排队。' : !supports('chatSend') ? '请更新电脑程序以发送主对话消息。' : !core.state.modelProfileId ? '选择模型后开始聊天。' : '') };
     }
     async function loadConversationResources() {

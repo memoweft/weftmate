@@ -8,6 +8,7 @@ const fields = (body, names) => { if (!body || Object.keys(body).sort().join() !
 const binary = (value, size) => typeof value === 'string' && /^[A-Za-z0-9_-]+$/.test(value) && (!size || Buffer.from(value,'base64url').length === size);
 const projection = row => ({ id:row.id, hostId:row.host_id, createdAt:row.created_at, expiresAt:row.expires_at, state:row.state });
 export function pruneOfflineTasks(db, now) {
+  db.prepare('DELETE FROM removed_computer_tasks WHERE expires_at<=?').run(now - TASK_LIMITS.ttl);
   db.prepare("UPDATE offline_tasks SET ciphertext=NULL,state='expired',claim_id=NULL WHERE expires_at<=? AND state IN ('waiting','claimed')").run(now);
   db.prepare("DELETE FROM offline_tasks WHERE expires_at<=? AND ciphertext IS NULL AND state IN ('completed','failed','expired','canceled')").run(now - TASK_LIMITS.ttl);
 }
@@ -31,13 +32,18 @@ export function createOfflineTasks({ database:db, authenticate, now, push = clou
       if(suffix==='clear') {
         fields(body,[]);
         db.prepare('DELETE FROM offline_tasks WHERE account_id=? AND fingerprint=?').run(account.id,token.device_fingerprint);
+        db.prepare('DELETE FROM removed_computer_tasks WHERE account_id=? AND fingerprint=?').run(account.id,token.device_fingerprint);
         return {deleted:true};
       }
-      if(!id(body.hostId)||!trusted(body.hostId,account.id,token.device_id,token.cnf.jkt))throw new CloudError(403,'DEVICE_NOT_TRUSTED');
+      const removed = id(body.hostId) && db.prepare('SELECT 1 FROM removed_computers WHERE account_id=? AND host_id=?').get(account.id,body.hostId);
+      if(!id(body.hostId)||!removed&&!trusted(body.hostId,account.id,token.device_id,token.cnf.jkt))throw new CloudError(403,'DEVICE_NOT_TRUSTED');
       if(suffix==='list') {
         fields(body,['hostId']);
-        return {items:db.prepare('SELECT * FROM offline_tasks WHERE host_id=? AND account_id=? AND fingerprint=? ORDER BY seq').all(body.hostId,account.id,token.device_fingerprint).map(projection)};
+        const canceled = db.prepare('SELECT * FROM removed_computer_tasks WHERE host_id=? AND account_id=? AND fingerprint=?').all(body.hostId,account.id,token.device_fingerprint)
+          .map(row=>({...projection({...row,state:'canceled'}),reason:'COMPUTER_REMOVED'}));
+        return {items:[...db.prepare('SELECT * FROM offline_tasks WHERE host_id=? AND account_id=? AND fingerprint=? ORDER BY seq').all(body.hostId,account.id,token.device_fingerprint).map(projection),...canceled]};
       }
+      if(removed)throw new CloudError(410,'COMPUTER_REMOVED');
       if(suffix==='cancel') {
         fields(body,['hostId','id']); if(!id(body.id))throw new CloudError(400,'INVALID_REQUEST');
         const row=db.prepare('SELECT * FROM offline_tasks WHERE id=? AND host_id=? AND account_id=? AND fingerprint=?').get(body.id,body.hostId,account.id,token.device_fingerprint);

@@ -1,0 +1,27 @@
+{
+  "main": "fac34522",
+  "androidVersion": "0.8.32",
+  "versionCode": 45,
+  "versionInheritedFromMain": true,
+  "nativeChecks": 9,
+  "nativeFailures": 0,
+  "realMimoRequests": 0,
+  "relatedTests": 53,
+  "relatedFailures": 0,
+  "androidJVM": 93,
+  "androidFailures": 0,
+  "typecheck": "passed",
+  "publicHygiene": 0,
+  "publicHygieneFiles": 9047,
+  "apkBytes": 18122952,
+  "cleanup": [
+    {
+      "package": "com.memoweft.weftmate.mobile.and4qa.test",
+      "result": "Success"
+    },
+    {
+      "package": "com.memoweft.weftmate.mobile.and4qa",
+      "result": "Success"
+    }
+  ]
+}
