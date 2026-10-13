@@ -45,6 +45,7 @@ import { migrateProjects } from '../personal-projects/projects.mjs';
 import { sessionWorkspace } from './session-workspace.mjs';
 import { createCommandOperations } from './commands.mjs';
 import { createAccountModelOperations } from './account-models.mjs';
+import { createModelServiceOperations } from './model-services.mjs';
 import { createArtifactOperations } from './artifacts.mjs';
 import { createNativeBrowserOperations } from './native-browser.mjs';
 import { createHttpHandler } from './http.mjs';
@@ -265,6 +266,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get cloudIdentity() { return hostCloudIdentity; },
     get accountModelForProfile() { return accountModelForProfile; },
     get accountModelManager() { return accountModelManager; },
+    get modelServices() { return modelServices; },
     get systemManager() { return systemManager; },
     get nativeMinimumVersions() { return nativeMinimumVersions; },
     async updateStatus() {
@@ -469,6 +471,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     modelOperationResponse, completeModelOperation, reconcileModelOperation, driveModelOperation,
     scheduleModelOperation,
   } = accountModels;
+  const modelServices = createModelServiceOperations(context);
   const artifacts = createArtifactOperations(context);
   const nativeBrowser = createNativeBrowserOperations(context);
   const http = createHttpHandler(context);
@@ -690,7 +693,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     return result;
   }
 
-  async function mutateRoot(change, assertCurrent = () => {}) {
+  async function mutateRoot(change, assertCurrent = () => {}, { recoverableMigration = false } = {}) {
     requireOpen();
     assertCurrent();
     if (storageFault) throw failure('STORAGE_UNAVAILABLE', 503);
@@ -722,7 +725,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       return true;
     }); }
     catch (error) {
-      if (!['SERVICE_CLOSING', 'TOOL_SOURCE_UNAVAILABLE', 'APPROVAL_NOT_PENDING', 'QUESTION_NOT_PENDING'].includes(error?.code)) storageFault = true;
+      if (!recoverableMigration && !['SERVICE_CLOSING', 'TOOL_SOURCE_UNAVAILABLE', 'APPROVAL_NOT_PENDING', 'QUESTION_NOT_PENDING'].includes(error?.code)) storageFault = true;
       throw error;
     }
     const previousRoot = rootState;
@@ -737,7 +740,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     return value;
   }
 
-  async function mutate(ownerId, change, assertCurrent) {
+  async function mutate(ownerId, change, assertCurrent, options) {
     return mutateRoot(async (nextRoot) => {
       const account = nextRoot.accounts[ownerId];
       if (!account) throw failure('UNAUTHORIZED', 401);
@@ -747,7 +750,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const { version: _version, hostId: _hostId, ownerId: _ownerId, ...updated } = next;
       nextRoot.accounts[ownerId] = updated;
       return value;
-    }, assertCurrent);
+    }, assertCurrent, options);
   }
 
   const scheduleOperations = createScheduleOperations(context);
@@ -1027,6 +1030,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        const modelServicesClosed = modelServices.close();
         await connectors?.close();
         await dataControls.close();
         nextSuggestions.close();
@@ -1079,7 +1083,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           ]);
           clearTimeout(timer);
           await Promise.race([
-            Promise.allSettled([listeningClosed, ...active, ...stopping.values(),
+            Promise.allSettled([modelServicesClosed, listeningClosed, ...active, ...stopping.values(),
               ...activeModelOperations.values()]),
             new Promise((resolve) => { timer = setTimeout(resolve, CLOSE_TIMEOUT_MS); }),
           ]);
@@ -1099,5 +1103,6 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   }
   if (relay) hostRelay = await createHostRelay({ root, identity: hostCloudIdentity, options: relay,
     setPublicOrigin(value) { if (!allowedOrigins.includes(value)) allowedOrigins.push(value); trustedProxy = true; } });
+  for (const ownerId of Object.keys(rootState.accounts)) await modelServices.migrate(ownerId);
   return service;
 }

@@ -29,6 +29,26 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 const deferred = () => { let resolve!: (value: any) => void; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 
+test('MODEL-1 combined service read supplies models and default/background settings without legacy requests',async()=>{
+  const f=fixture(path=>{
+    assert.equal(path,'/personal/v1/model-services');
+    return response({services:[],models:[{id:'cloud',name:'Synthetic cloud',configured:true}],canManage:true,
+      modelSettings:{defaultModelProfileId:'cloud',backgroundModelProfileId:'background',currentChatModelProfileId:'local'}});
+  });
+  f.core.state.modelProfileId=null;await f.core.refreshModels();
+  assert.deepEqual(f.requests.map(row=>row.path),['/personal/v1/model-services']);
+  assert.equal(f.core.state.modelProfileId,'cloud');assert.equal(f.core.state.modelSettings.backgroundModelProfileId,'background');
+  assert.equal(f.core.state.models[0].id,'cloud');assert.equal(f.core.state.modelsKnown,true);
+});
+
+test('MODEL-1 failed combined read keeps usable models and does not start immediate legacy retries',async()=>{
+  const f=fixture(()=>response({error:{code:'BACKEND_UNAVAILABLE'}},503));
+  await assert.rejects(f.core.refreshModels(),error=>error.code==='BACKEND_UNAVAILABLE');
+  await f.core.refreshModels();await f.core.refreshModels();
+  assert.deepEqual(f.requests.map(row=>row.path),['/personal/v1/model-services']);
+  assert.equal(f.core.state.models[0].id,'local');assert.equal(f.core.state.modelProfileId,'local');
+});
+
 function sideFixture() {
   const f=fixture();Object.assign(f.core.state,{personalCapabilities:{chats:1,sideChats:1,chatSend:1,creationReceipt:1},
     mainChat:{chatId:'main',activeSessionId:'session-test',sendAvailable:true},selectedChatId:'main',chats:[]});

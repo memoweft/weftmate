@@ -365,7 +365,36 @@ MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 
 
 模型配置的可选 `modelTier` 为 `auto / local / cloud`：POST 省略或设 auto 按地址判断，PATCH 省略保留原值、auto 恢复自动判断，local/cloud 为用户覆盖（例如把 loopback 云端代理设为 cloud）。`AccountModel` 与 GET `/models` 返回 modelTier（旧配置显示 auto）和最终 `sourceKind: local | cloud`。自动判断使用实际 base URL 主机：127.0.0.0/8、::1、localhost、10/8、172.16/12、192.168/16、`*.local` 为 local，其余为 cloud；不要求正式本地 profile。HTTP 地址可用于上述本机/局域网范围，其他地址仍要求 HTTPS。字段跟随模型 runtime 修订持久化、可转移；仅改变位置也生成新的 profileId，旧会话保留原配置。无字段的旧请求/存储继续兼容，非法值返回 400 `INVALID_REQUEST`。
 
-`ModelOperation`：`{"operation":{"requestId":"model-1","kind":"create","accountModelId":"account-model-…","status":"pending","createdAt":"…","updatedAt":"…"},"model":AccountModel}`；状态 `pending / applying / succeeded / failed / uncertain`，可有 `expectedRevision,resultRevision,reasonCode,errorCode,testResult`。模型选择是创建会话时的 `modelProfileId`，当前没有独立的会话换模型 `/personal/v1` 路由。
+`ModelOperation`：`{"operation":{"requestId":"model-1","kind":"create","accountModelId":"account-model-…","status":"pending","createdAt":"…","updatedAt":"…"},"model":AccountModel}`；状态 `pending / applying / succeeded / failed / uncertain`，可有 `expectedRevision,resultRevision,reasonCode,errorCode,testResult`。旧客户端仍在创建会话时提交 `modelProfileId`；MODEL-1 的服务选择接口见下一节。
+
+#### 3.10.1 模型服务（MODEL-1，加法兼容）
+
+使用者填写一个模型服务的名字、地址与密钥；型号由该服务的目录发现。以下路径均以 `/personal/v1` 为前缀，没有查询参数。读取需要 `sessions:read`；检查、创建、修改、刷新、选择和删除需要已有 Cookie（会话凭据）、CSRF（跨站请求防护）及 `account:manage`，没有新增权限。
+
+| 方法与路径 | 请求 | 响应 |
+|---|---|---|
+| GET `/model-services` | 无 | `{services:[ModelService],canManage,models:[旧模型投影],modelSettings}`；缓存可读，过期目录后台刷新；一次读取模型目录与账户选择 |
+| GET `/model-services/{serviceId}` | 无 | `{service:ModelService}` |
+| POST `/model-services/check` | `{baseUrl?,apiKey?,interfaceType?,serviceId?}`；新草稿必须给地址与密钥，已保存服务可用 `serviceId` 复用本机密钥 | `{status,models,message,checkedAt,httpStatus?}`；只查目录，不保存草稿或发送聊天消息 |
+| POST `/model-services` | `{requestId,name,baseUrl,apiKey,interfaceType?,modelId?,models?,selectedModelId?}` | 201 `{service:ModelService}`；默认选清单中推荐的聊天型号，目录不可用时可用 `modelId` 手填 |
+| PATCH `/model-services/{serviceId}` | `{requestId,expectedRevision,name?,baseUrl?,apiKey?,interfaceType?,modelId?,models?,selectedModelId?}`；`models:[{modelId,enabled}]` 控制菜单显示，`modelId` 加入一个手填型号 | `{service:ModelService}`；改地址必须重填密钥；同请求同体重放，异体409 `REQUEST_CONFLICT` |
+| DELETE `/model-services/{serviceId}` | `{requestId,expectedRevision}` | `{removed:true}`；停止该服务的模型使用，保留旧对话与历史型号标识 |
+| POST `/model-services/{serviceId}/refresh` | `{}` | `{service:ModelService}`；并发查询合并，失败保留原清单与手填型号；客户端打开菜单时可后台调用 |
+| POST `/model-services/{serviceId}/select` | `{modelId,sessionId?,requestId?}` | `{profileId,service:ModelService,models:[旧模型投影]}`；设为新对话默认；给 `sessionId` 时当前对话的下一条消息采用此型号 |
+
+`GET /model-services` 加法返回 `models` 与 `modelSettings`。`models` 复用现有 `GET /models` 的权限过滤与兼容投影；`modelSettings:{defaultModelProfileId,backgroundModelProfileId,backgroundModelFallback,currentChatModelProfileId}` 与现有 `GET /settings/models` 同义，缺省值为 `null`。目录、模型投影与选择属于同一当前账户，选择与服务元数据在原生目录读取结束后从同一个账户快照生成，返回前重新核验登录。新客户端可用一次请求代替三次读取；旧宿主缺少新增字段时，客户端仍读取既有接口补齐。原接口及权限保持原样，新增字段不含密钥或内部凭据引用；原生目录读取失败沿既有 `/models` 错误返回。
+
+`ModelService` 为 `{serviceId:"model-service-<uuid>",name,baseUrl,interfaceType:"openai-compatible"|"anthropic",revision,models:[{modelId,name,enabled,profileId?,profileIds?,capabilities?,deepThinking?,capabilitySource?,lastUsedAt?,manual?}],selectedModelId,catalog:{status,checkedAt,message,httpStatus?},createdAt,updatedAt}`。公开响应省略内部凭据引用；`profileIds` 是同型号迁移前保留的旧配置标识，可用于匹配当前对话的勾选；其中 `profileId` 沿用旧模型投影的 `id` 和会话的 `modelProfileId`，仅已登记的型号具有该字段。`capabilities.vision`、`capabilities.contextWindow`、`deepThinking.supported` 仅在服务明确声明时出现；缺失沿用既有默认处理，不按型号名猜能力。深度思考的明确声明会进入型号的持久元数据、桌面设置与 DSH 原生声明，并通过旧 `/models` 与账户模型接口返回；会话开关核对输入区选中的下一条型号。已知服务的既有思考协议保持原样，未声明能力的通用服务不按名称推测。按 [Claude 模型目录接口](https://platform.claude.com/docs/en/api/models/list)，Claude 目录另读取 `capabilities.image_input.supported`、`capabilities.thinking.supported`、`max_input_tokens`；仅明确为 adaptive-only（仅自适应思考）时透传 `deepThinking.type:"adaptive"`，不增加档位控件。显示名优先使用服务返回的名称，否则整理型号字符串，例如「MiMo v2.6 Flash」。明显的向量、语音、绘图、审核和重排型号不进入聊天清单。
+
+目录缓存为一小时；打开菜单时刷新不阻塞菜单。`catalog.status` 为 `unchecked / available / unsupported / authentication_failed / offline / failed / invalid`。`authentication_failed` 提示检查密钥与权限；`unsupported` 表示服务不提供目录，提示手填型号；两者不混为「连接失败」。目录响应正文、密钥与请求头不进入诊断结果。OpenAI（开放式模型接口）兼容目录使用 Bearer（持有者）认证；Anthropic（模型服务）目录使用该接口的密钥头与版本头，原生 DSH（助手运行时）路由使用 `anthropic-messages`。旧个人模型代理继续返回 OpenAI 形状，在内部转换 Claude 的消息、工具调用、用量及 SSE（服务端事件流）；隐藏思考不进入正文。
+
+迁移先写私有 `model-services-v1.before.json` 原状态备份，再原子提交服务元数据。同一规范化地址、同一密钥的旧配置合并，旧型号全部启用；密钥仅在进程内比较，服务元数据不保存密钥或密钥散列。旧 `accountModels`、配置 ID（标识）、会话 `modelProfileId`、默认和后台模型引用保留，重复执行不重复建服务；失败保留旧结构供旧路径继续使用。回退可恢复这份原状态备份；密钥仍在原来的加密保管库。
+
+服务选择只记录下条消息的目标型号。正在回复时不改原生模型；下一条派发等待旧回复结束，再经 DSH（助手运行时）原生模型接口切换。新发现的型号尚未登记且运行时忙时，选择仍持久受理，型号可带 `pendingInstallation:true`；下一条已受理消息等待空闲、登记路由后发送，登记期间不会改动旧回复。尚无执行段的新对话也沿现有命令队列等待登记，再创建执行段和发送。用于登记的重启只忽略同一会话尚未派发的等待消息，或目标型号对应尚未派发的主对话消息；其它未派发命令、已派发命令及 DSH 原生繁忙状态仍阻止重启。会话与逻辑对话响应加可选 `selectedModelProfileId`，表示输入区下一条要用的型号；原 `modelProfileId` 保持当前实际绑定。 运行中旧客户端发送主对话 `chat.message` 时，可仍带当前实际绑定的型号，或带已选中的下一条型号；服务器按已保存的下一条选择发送。其它不匹配的型号仍返回409 `REQUEST_CONFLICT`，原请求体保留供同 `requestId` 重放。切换后原创建命令的型号保持其历史身份。已有 `/models`、`/account/models`、`/settings/models`、`/models/{id}/verify|chat/completions` 响应及请求形状继续可读，不要求已发布安卓或 Apple（苹果客户端）接新路径。
+
+旧 Apple 模型读取已有 500 项上限，`/models` 继续提供最多 500 个已登记或已选用的兼容型号，优先保留当前对话、新对话默认、后台、迁移前配置与最近使用的标识；`/model-services` 完整保留服务目录，长目录全部可搜索、选择。初次登记在这一既有预算内一次批量写入并重启；隐藏的型号不登记，预算外型号在选择时登记，不按目录大小限制用户的菜单选择。旧字段 `profileId / modelProfileId` 仍对应每个具体型号，服务的 `serviceId` 不能作为发送消息的模型标识。
+
+Android（安卓）业务白名单已精确加入本节路径与允许／拒绝用例。新版界面调用这些路径**需要新壳版本**，版本号由合并发布统一调整；Apple 原生菜单另包接入。原生客户端菜单采用星芒 `model` 图标、无文字按钮、读屏名带当前模型；按服务分组，单服务省略标题，当前项打勾，长清单在同一菜单中搜索，支持时才显示深度思考开关，底部保留「添加模型服务…」。
 
 模型代理是受限 OpenAI 兼容体：`model` 必须对应所选profile；messages 1–40条、文字≤16,384 UTF-16，角色 `system/user/assistant/tool`；最多8个function工具，`tool_choice` 仅 `auto/none/required`；`max_tokens` 1–8192，temperature 0–2。它是手机本地循环的模型请求通道，不是宿主DSH办事消息接口。`verify` 明确没有验证实际推理。
 

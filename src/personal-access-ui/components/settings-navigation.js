@@ -5,6 +5,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     let updateGeneration = 0;
     const node = (tag, className, text) => ui.element(tag, className, text);
     function selectSettings(id, options = {}) {
+        if(id==='models')void core.refreshModelServices?.().catch(()=>ui.toast('模型服务暂时无法读取，请重试。'));
         if (id === 'healthData') id = 'reviewHealth';
         const category = registry.get(id);
         if (!category || !registry.list({ desktop: !!globalThis.weftmateDesktop }).includes(category)) return;
