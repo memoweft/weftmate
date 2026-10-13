@@ -114,6 +114,8 @@ import WeftMateCore
         var ownMemory=PhoneMemoryState()
         try ownMemory.apply("{\"upsert\":[{\"id\":null,\"text\":\"喜欢淡茶\",\"sourceIDs\":[\"\(message.id)\"],\"evidence\":\"我喜欢淡茶。\"}],\"invalidate\":[]}",batch:ownBatch,threadID:thread.id)
         try require(ownMemory.items.count == 1,"file quotation still needs exact evidence")
+        var denied=message;denied.text="这份文件不是我写的，只帮我总结。"
+        try require(denied.phoneMemoryText == denied.text,"negated authorship cannot introduce file evidence")
         var empty=PhoneChatThread();var onlyImage=PhoneChatMessage(role:"user",text:"");onlyImage.attachments=[image];empty.messages=[onlyImage]
         try require(PhoneMemoryState().batch(empty).isEmpty,"image-only chat makes no memory request")
         empty.messages=Array(repeating:onlyImage,count:8)+[.init(role:"user",text:"我正在学习钢琴")]

@@ -50,3 +50,5 @@
 系统相机、拒绝→设置→允许、PhotosPicker/文档选择器取消与iCloud文件、HEIC真照片；真实Keychain/强杀重开/换号退出清本机；大字/VoiceOver/浅深菜单/×/全屏返回与长PDF；真实模型图片格式与拒绝措辞；真实Windows接手及Core整理，均需本人真机确认。没有 MIMO_API_KEY，未寻找密钥或调用真实模型；没有真实账号、云或本人电脑连接。
 
 最终构建、断言数字、截图尺寸/SHA、模拟器与系统报告台账见 validation.json / screenshots.json 和相应检查摘要。完整CI由Claude收取，不等待。
+
+图片消息格式核对官方文档：[OpenAI Chat image_url](https://developers.openai.com/api/docs/guides/images-vision?api-mode=chat)、[Claude OpenAI SDK compatibility](https://platform.claude.com/docs/en/cli-sdks-libraries/libraries/openai-sdk)。仅处理图片输入，不增加生成图片功能。
