@@ -40,15 +40,15 @@ internal fun libraryTypeLabel(row:JSONObject):String {
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text("成果库",Modifier.weight(1f),fontSize=DesignTokens.font24.sp,fontWeight=FontWeight.SemiBold);NativeFileIconButton(R.drawable.wm_sync,"刷新成果库",enabled=!model.loading){model.refresh()}}
             Text("对话里做好的文件，都在这里。",Modifier.padding(top=gap,bottom=DesignTokens.space24.dp),fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
             LibrarySelect("文件类型："+(libraryTypes.find{it.first==model.type}?.second ?: "全部"),Modifier.fillMaxWidth().padding(bottom=DesignTokens.space16.dp),"按文件类型筛选") { dismiss ->
-                libraryTypes.forEach{(id,label)->DropdownMenuItem(modifier=Modifier.height(DesignTokens.space44.dp),text={Text(label,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp)},trailingIcon={if(model.type==id)Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.type=id;dismiss()})}
+                libraryTypes.forEach{(id,label)->DropdownMenuItem(modifier=Modifier.height(DesignTokens.space44.dp),text={NativeFileLabel(label)},trailingIcon={if(model.type==id)Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.type=id;dismiss()})}
             }
             BasicTextField(model.search,{model.search=it.take(200)},Modifier.fillMaxWidth().heightIn(min=DesignTokens.space44.dp).border((DesignTokens.space2/2).dp,MaterialTheme.colorScheme.outline,RoundedCornerShape(DesignTokens.radius8.dp)).padding(horizontal=DesignTokens.space12.dp,vertical=gap).semantics{contentDescription="搜索文件名"},singleLine=true,textStyle=LocalTextStyle.current.copy(color=MaterialTheme.colorScheme.onSurface,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),decorationBox={inner->Box(Modifier.fillMaxWidth()){if(model.search.isEmpty())Text("搜索文件名",fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,color=MaterialTheme.colorScheme.onSurfaceVariant);inner()}})
             Row(Modifier.fillMaxWidth().padding(top=gap),horizontalArrangement=Arrangement.spacedBy(gap)) {
                 LibrarySelect(model.projects.firstOrNull{it.optString("id")==model.project}?.optString("name") ?: "全部项目",Modifier.weight(1f),"按项目筛选") { dismiss ->
-                    (listOf(JSONObject().put("id","").put("name","全部项目"))+model.projects).forEach{row->DropdownMenuItem(modifier=Modifier.height(DesignTokens.space44.dp),text={Text(row.getString("name"),fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp)},trailingIcon={if(model.project==row.getString("id"))Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.project=row.getString("id");dismiss()})}
+                    (listOf(JSONObject().put("id","").put("name","全部项目"))+model.projects).forEach{row->DropdownMenuItem(modifier=Modifier.height(DesignTokens.space44.dp),text={NativeFileLabel(row.getString("name"))},trailingIcon={if(model.project==row.getString("id"))Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.project=row.getString("id");dismiss()})}
                 }
                 LibrarySelect(if(model.days==0)"全部时间" else "最近 ${model.days} 天",Modifier.weight(1f),"按时间筛选") { dismiss ->
-                    listOf(0,7,30,90).forEach{days->DropdownMenuItem(modifier=Modifier.height(DesignTokens.space44.dp),text={Text(if(days==0)"全部时间" else "最近 $days 天",fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp)},trailingIcon={if(model.days==days)Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.days=days;dismiss()})}
+                    listOf(0,7,30,90).forEach{days->DropdownMenuItem(modifier=Modifier.height(DesignTokens.space44.dp),text={NativeFileLabel(if(days==0)"全部时间" else "最近 $days 天")},trailingIcon={if(model.days==days)Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.days=days;dismiss()})}
                 }
             }
             Text(if(model.loading)"正在读取成果…" else if(model.error.isNotBlank())"读取失败" else "${model.total} 个文件",Modifier.padding(top=DesignTokens.space20.dp,bottom=gap),fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
@@ -81,7 +81,7 @@ internal fun libraryTypeLabel(row:JSONObject):String {
                 }
             }
         }
-        if(model.next.isNotBlank())item{OutlinedButton(onClick={model.refresh(true)},enabled=!model.loading,shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.heightIn(min=DesignTokens.space44.dp)){Text(if(model.loading)"正在读取…" else "加载更多")}}
+        if(model.next.isNotBlank())item{OutlinedButton(onClick={model.refresh(true)},enabled=!model.loading,shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.height(DesignTokens.space44.dp)){NativeFileLabel(if(model.loading)"正在读取…" else "加载更多")}}
     }
 }
 @Composable private fun LibrarySelect(label:String,modifier:Modifier,description:String,content:@Composable ((()->Unit))->Unit) {

@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 }
 
 @Composable internal fun NativeFileMenuAction(label:String,icon:Int,enabled:Boolean=true,onClick:()->Unit) {
-    DropdownMenuItem(text={Text(label,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,fontWeight=FontWeight.Medium)},
+    DropdownMenuItem(text={NativeFileLabel(label)},
         leadingIcon={Icon(painterResource(icon),null,Modifier.size((DesignTokens.space24-DesignTokens.space2).dp))},
         modifier=Modifier.height(DesignTokens.space44.dp),enabled=enabled,onClick=onClick,
         colors=MenuDefaults.itemColors(disabledTextColor=MaterialTheme.colorScheme.onSurface.copy(alpha=.45f),disabledLeadingIconColor=MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha=.45f)))
@@ -36,4 +36,8 @@ import androidx.compose.ui.unit.sp
         colors=IconButtonDefaults.iconButtonColors(contentColor=MaterialTheme.colorScheme.onSurfaceVariant,disabledContentColor=MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha=.45f))) {
         Icon(painterResource(icon),label,Modifier.size((DesignTokens.space24-DesignTokens.space2).dp))
     }
+}
+
+@Composable internal fun NativeFileLabel(label:String) {
+    Text(label,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,lineHeight=DesignTokens.space20.sp,fontWeight=FontWeight.Medium)
 }

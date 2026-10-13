@@ -57,7 +57,7 @@ import java.io.File
                 BoxWithConstraints(Modifier.weight(1f).padding(horizontal=DesignTokens.space12.dp)) {
                     Text(middleFileName(name,maxOf(8,(maxWidth.value/DesignTokens.font16).toInt())),Modifier.fillMaxWidth().semantics{contentDescription="文件名：$name"},fontSize=DesignTokens.font16.sp,maxLines=1,overflow=TextOverflow.Clip)
                 }
-                Box {NativeFileIconButton(R.drawable.wm_more,"更多文件操作",Modifier.nativeFrost(CircleShape)){menu=true}
+                Box {NativeFileIconButton(R.drawable.wm_more,"更多文件操作",Modifier.nativeFrost(CircleShape),enabled=file?.file!=null || row.optString("libraryId").isNotBlank() || realFileVersions(initial).isNotEmpty()){menu=true}
                     NativeFileMenu(menu,{menu=false}) {
                         NativeFileMenuAction("保存到手机",R.drawable.wm_down,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.save(it)}})
                         NativeFileMenuAction("分享",R.drawable.wm_external,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.share(it)}})
@@ -73,7 +73,7 @@ import java.io.File
                 history -> Column(body.verticalScroll(rememberScrollState()).padding(pad)) {
                     Text("历史版本",fontSize=DesignTokens.font18.sp)
                     realFileVersions(initial).forEach{version->ListItem(headlineContent={Text(version.optString("fileName",version.optString("name","文件")))},supportingContent={Text(nativeFileTime(version.optString("createdAt")))},modifier=Modifier.clickable{row=JSONObject(version.toString()).put("libraryId",version.optString("artifactId",version.optString("id")));history=false})}
-                    OutlinedButton(onClick={history=false},shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.heightIn(min=DesignTokens.space44.dp)){Text("返回文件")}
+                    OutlinedButton(onClick={history=false},shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.height(DesignTokens.space44.dp)){NativeFileLabel("返回文件")}
                 }
                 loading -> Box(body.fillMaxWidth()){NativeFileLoading()}
                 error.isNotBlank() -> Box(body.fillMaxWidth()){NativeFileState(error,R.drawable.wm_warning){retry++}}
@@ -91,7 +91,7 @@ import java.io.File
             Text(file.name,fontSize=DesignTokens.font18.sp)
             Text(nativeFileSize(file.size),fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
             Text(file.unavailable ?: "这种文件可以用其它应用打开。",fontSize=DesignTokens.font16.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
-            listOf("用其它应用打开" to {activity.fileActions.share(file,true)},"保存到手机" to {activity.fileActions.save(file)},"分享" to {activity.fileActions.share(file)}).forEach{(label,action)->OutlinedButton(onClick=action,enabled=path!=null,shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.heightIn(min=DesignTokens.space44.dp)){Text(label)}}
+            listOf("用其它应用打开" to {activity.fileActions.share(file,true)},"保存到手机" to {activity.fileActions.save(file)},"分享" to {activity.fileActions.share(file)}).forEach{(label,action)->OutlinedButton(onClick=action,enabled=path!=null,shape=RoundedCornerShape(DesignTokens.radius999.dp),modifier=Modifier.height(DesignTokens.space44.dp)){NativeFileLabel(label)}}
         }
         file.kind==NativeFileKind.IMAGE -> NativeImageFile(path,modifier,onRetry)
         file.kind==NativeFileKind.PDF -> NativePdfFile(path,modifier)
