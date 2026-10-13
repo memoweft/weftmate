@@ -1,0 +1,57 @@
+{
+  "realElectron": true,
+  "pinnedDsh": true,
+  "realModel": false,
+  "scenarios": [
+    "visible custom add, real test failure/success, vault masking and individual rule controls",
+    "phone webpage lists and toggles, does not expose add/remove or credential input",
+    "disabled tools disappeared, removal erased credentials and tool rules"
+  ],
+  "errors": [],
+  "modelRequests": 0,
+  "testResultLayout": {
+    "display": "grid",
+    "children": [
+      {
+        "tag": "P",
+        "display": "block",
+        "top": 495.5
+      },
+      {
+        "tag": "P",
+        "display": "block",
+        "top": 528.25
+      },
+      {
+        "tag": "P",
+        "display": "block",
+        "top": 561
+      },
+      {
+        "tag": "P",
+        "display": "block",
+        "top": 593.75
+      },
+      {
+        "tag": "P",
+        "display": "block",
+        "top": 626.5
+      },
+      {
+        "tag": "P",
+        "display": "block",
+        "top": 659.25
+      }
+    ],
+    "sheets": [
+      "http://127.0.0.1:65208/personal/v1/ui/ui-core/connectors.css"
+    ]
+  },
+  "requestCountSource": "authenticated usage ledger",
+  "ok": true,
+  "cleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  }
+}

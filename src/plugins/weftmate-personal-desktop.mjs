@@ -1,4 +1,6 @@
 import { decidePermission, permissionCategories, permissionSummary, permissionApprovalCategories } from './personal-permission-rules.mjs';
+import { connectorToolFor } from './personal-connectors.mjs';
+import { connectorPermission } from '../personal-connectors/policy.mjs';
 import { installPersonalization } from './personal-personalization.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -133,13 +135,15 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
         const identity = personalExecutionIdentity(exec);
         let calls = callsByAgent.get(exec.agent);
         if (!calls) { calls = new Map(); callsByAgent.set(exec.agent, calls); }
-        const call = { ...identity, toolName: exec.name, argumentsHash: executionHash(exec.arguments), types: permissionCategories(exec.name, exec.arguments) };
+        const connector = connectorToolFor(exec.agent, exec.name);
+        const call = { ...identity, toolName: exec.name, argumentsHash: executionHash(exec.arguments), types: connector ? [connector.category, ...(connector.network ? ['network'] : [])] : permissionCategories(exec.name, exec.arguments) };
         calls.set(exec.callId, call);
         try {
           const folder = executionDirectory(exec.agent.session) ?? process.cwd();
           const cwd = resolve(folder, exec.arguments?.workdir ?? '.');
           call.reviewArguments = structuredClone(exec.arguments);
           call.reviewRisks = classifyPersonalRisk(exec.name, exec.arguments, cwd, new Set(), { createdFiles: conversationCreatedFiles(exec.agent.session) });
+          if (connector) call.reviewRisks = connector.category === 'read' ? [] : [connector.category === 'write' ? 'overwrite' : connector.category];
           call.outsideProjectWrite = false;
           if (['pwsh','bash','shell'].includes(exec.name)) for (const write of shellWriteTargets(exec.arguments?.command ?? '', cwd, exec.name !== 'bash')) {
             if (!write.target || !await insideProject(folder, write.target)) { call.outsideProjectWrite = true; break; }
@@ -158,10 +162,11 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250, 
       const identity = callsByAgent.get(request.agent)?.get(request.callId);
       const risks = /\[weftmate:([^\]]+)\]/.exec(request.reason ?? '')?.[1].split(',') ?? [];
       const categories = [...new Set([...(identity?.types ?? []), ...(/\[weftmate:([^\]]+)\]/.exec(request.reason ?? '')?.[1].split(',') ?? []).map(type => ({overwrite:'write',execute:'command'}[type] ?? type))])];
-      const selected = decidePermission(policy, categories, risks);
+      const connector = connectorToolFor(request.agent, request.toolName);
+      const selected = connector ? connectorPermission(policy, connector) : decidePermission(policy, categories, risks);
       if (selected.decision === 'deny') return 'rejected';
       if (selected.decision === 'allow' && categories.some(type => (policy.projectPermissionRules?.[type] ?? policy.permissionRules?.[type]) === 'allow')) return 'allowed-once';
-      if (policy.mode === 'allow-all' && !policy.project && selected.decision === 'allow') return 'allowed-once';
+      if (!connector && policy.mode === 'allow-all' && !policy.project && selected.decision === 'allow') return 'allowed-once';
     }
     const identity = callsByAgent.get(request.agent)?.get(request.callId);
     // The shipped WeftMod script producer asks through its shared "weftmod" approval seam.
@@ -603,7 +608,7 @@ export class PersonalDesktopBridge {
         signal?.removeEventListener?.('abort', entry.abort);
         reject(error);
       };
-      const timeout = ['browse', 'register_file', 'list_project', 'read_project', 'open_page', 'follow_link', 'read_segment'].includes(payload.action) ||
+      const timeout = ['connector_call', 'browse', 'register_file', 'list_project', 'read_project', 'open_page', 'follow_link', 'read_segment'].includes(payload.action) ||
         payload.action === 'write_document' && payload.sourceSnapshotIds?.length > 0 ? 20_000 : 12_000;
       const timer = setTimeout(() => finish(refused('PERSONAL_TOOL_TIMEOUT')), timeout);
       const abort = () => finish(refused('PERSONAL_TOOL_CANCELLED'));
@@ -757,8 +762,10 @@ export function apply(ctx) {
     const operationTypes = new Set();
     const risks = classifyPersonalRisk(exec.name, exec.arguments, cwd, new Set(),
       { createdFiles: conversationCreatedFiles(exec.agent.session), operationTypes });
-    const selected = decidePermission(policy, [...new Set([...permissionCategories(exec.name, exec.arguments, risks), ...operationTypes])], risks);
-    const metadata = { types: selected.types, decision: selected.decision, source: selected.source, summary: permissionSummary(exec.name, exec.arguments) };
+    const connector = connectorToolFor(exec.agent, exec.name);
+    const selected = connector ? connectorPermission(policy, connector) : decidePermission(policy, [...new Set([...permissionCategories(exec.name, exec.arguments, risks), ...operationTypes])], risks);
+    const summary = connector ? `${connector.connectorName} · ${connector.rawName} · ${JSON.stringify(exec.arguments).slice(0, 300)}` : permissionSummary(exec.name, exec.arguments);
+    const metadata = { types: selected.types, decision: selected.decision, source: selected.source, summary };
     rememberPermission(exec, metadata);
     if (selected.decision === 'deny') {
       if (!delegated) {
@@ -772,7 +779,8 @@ export function apply(ctx) {
       return { kind: 'deny', reason: 'Present the plan with exit_plan_mode and wait for approval before executing this operation.' };
     const required = permissionApprovalCategories(selected);
     if (!required.length) return decision;
-    const reason = `[weftmate:${required.join(',')}] ${required.map(risk => RISK_LABELS[risk] ?? ({read:'读取文件',network:'连接网络'}[risk] ?? risk)).join('；')}。操作：${exec.name}\n${JSON.stringify(exec.arguments).slice(0, 700)}`;
+    const connectorLabels = { read: '读取连接器中的资料', network: '连接网络', overwrite: '修改连接器中的资料，可能无法撤销', delete: '删除连接器中的资料，可能无法恢复' };
+    const reason = `[weftmate:${required.join(',')}] ${required.map(risk => (connector && connectorLabels[risk]) || (RISK_LABELS[risk] ?? ({read:'读取文件',network:'连接网络'}[risk] ?? risk))).join('；')}。操作：${connector ? `${connector.connectorName} · ${connector.rawName}` : exec.name}\n${JSON.stringify(exec.arguments).slice(0, 700)}`;
     if (delegated) {
       const outcome = await ctx.approval.request({ agent: owner, toolName: delegated.name,
         callId: delegated.callId, reason, signal: exec.signal });
