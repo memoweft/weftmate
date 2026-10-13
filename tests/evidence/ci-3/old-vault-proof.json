@@ -1,0 +1,9 @@
+{
+  "baseline": "3062ea4a99b43b75b9d38761eb84b34eb73dd564",
+  "originalPerProofMs": 3000,
+  "totalReadinessMs": 15000,
+  "fixedValidProofMs": 3001,
+  "exitCode": 1,
+  "originalFailsWithExpectedReadinessError": true,
+  "newFixedTestPassed": true
+}

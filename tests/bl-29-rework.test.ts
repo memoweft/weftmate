@@ -107,8 +107,9 @@ test('BL-29b M1 real Electron empty main keeps eight immediate errors within old
   }
 });
 
-test('BL-29b M1/S3 shipped mobile full lifecycle empty main budgets errors, recovery and healthy idle', {timeout:150000}, () => {
+test('BL-29b M1/S3 shipped mobile full lifecycle empty main budgets errors, recovery and healthy idle', {timeout:150000}, t => {
   const r = probe('probe-browser', 'browser.json', 140000, ['--budget-only','--empty-main']);
+  t.diagnostic(JSON.stringify({kind:'healthy-idle-method-census',idleMethods:r.idleMethods,background10s:r.background10s,initial:r.initial}));
   assert.equal(r.failure, undefined); assert.deepEqual(r.errors, []);
   assert.equal(r.cases.length, 8);
   for (const row of r.cases) {

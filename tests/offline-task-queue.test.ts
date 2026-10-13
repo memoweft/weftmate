@@ -9,6 +9,7 @@ import { activityNotificationContent } from '../src/personal-access/notification
 import { observeActivityEvents } from '../src/personal-access/activity.mjs';
 import { putActivity } from '../src/personal-access/activity-store.mjs';
 import '../src/ui-core/offline.js';
+import { tamperCiphertext } from './helpers/tamper-ciphertext.mjs';
 const W=(globalThis as any).WeftOffline;
 const identity={ownerId:'owner',hostId:'host',deviceId:'cookie'};
 const secret='S7_DEVICE_ONLY_把合成项目里的说明读给我';
@@ -20,7 +21,7 @@ test('phone encrypts using the existing replica envelope; wrong key, host and ci
     assert.deepEqual(openTask(envelope,recipient,header(id)),{text:secret,sessionId:'session'});assert.ok(!JSON.stringify(envelope).includes(secret));
     for(const key of [taskRecipient(),{...recipient,publicJwk:taskRecipient().publicJwk}])assert.throws(()=>openTask(envelope,key,header(id)),{code:'OFFLINE_TASK_INVALID'});
     assert.throws(()=>openTask(envelope,recipient,{...header(id),hostId:'other'}),{code:'OFFLINE_TASK_INVALID'});
-    assert.throws(()=>openTask({...envelope,ciphertext:'A'+envelope.ciphertext.slice(1,-1)+'B'},recipient,header(id)),{code:'OFFLINE_TASK_INVALID'});
+    assert.throws(()=>openTask({...envelope,ciphertext:tamperCiphertext(envelope.ciphertext)},recipient,header(id)),{code:'OFFLINE_TASK_INVALID'});
   }finally{vault.close();}
 });
 test('phone persists encrypted retry identity, closes immediately after acceptance, restores status and clears on erasure',async()=>{
