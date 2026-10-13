@@ -81,6 +81,13 @@ export function loadConfig(env = process.env, cwd = process.cwd()) {
     throw new Error('Invalid CLOUD_OIDC_CLIENTS');
   if (new Set(clients.map((client) => client.client_id)).size !== clients.length)
     throw new Error('Duplicate cloud client');
+  const backupLimits = { CLOUD_BACKUP_ACCOUNT_BYTES: 300 * 1024 * 1024, CLOUD_BACKUP_GLOBAL_BYTES: 6 * 1024 * 1024 * 1024 };
+  for (const key of Object.keys(backupLimits)) {
+    if (env[key] === undefined) continue;
+    if (!/^\d+$/.test(env[key]) || !Number.isSafeInteger(Number(env[key])) || Number(env[key]) < 1)
+      throw new Error(`${key} must be a positive safe integer`);
+    backupLimits[key] = Number(env[key]);
+  }
   let relay = null;
   if (env.CLOUD_RELAY_DOMAIN) {
     const domain = env.CLOUD_RELAY_DOMAIN;
@@ -99,6 +106,8 @@ export function loadConfig(env = process.env, cwd = process.cwd()) {
   return Object.freeze({
     feedbackRepository: env.CLOUD_FEEDBACK_REPOSITORY && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(env.CLOUD_FEEDBACK_REPOSITORY) ? env.CLOUD_FEEDBACK_REPOSITORY : undefined,
     feedbackToken: env.CLOUD_FEEDBACK_TOKEN?.trim() || undefined,
+    backupAccountBytes: backupLimits.CLOUD_BACKUP_ACCOUNT_BYTES,
+    backupGlobalBytes: backupLimits.CLOUD_BACKUP_GLOBAL_BYTES,
     relay,
     host,
     port: Number(portText),
