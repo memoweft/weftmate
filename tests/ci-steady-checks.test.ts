@@ -13,6 +13,13 @@ import { managedMkdtempSync, disposeManagedTemp } from './helpers/managed-temp.m
 import { waitForCommand } from './helpers/wait-for-command.mjs';
 import { runManagedTestProcess } from './helpers/managed-test-process.mjs';
 import { phasedTestProcess } from './helpers/phased-test-process.mjs';
+import {waitForPublishedText} from './helpers/wait-for-published-text.mjs';
+
+test('foreground timing waits for the exact published reply instead of a synthetic append or old projection',async()=>{
+  let reads=0;
+  const page=await waitForPublishedText(async()=>({upserts:[{data:{content:[{text:++reads<3?'old reply':'exact new reply'}]}}]}),'exact new reply');
+  assert.equal(reads,3);assert.equal(page.upserts[0].data.content[0].text,'exact new reply');
+});
 
 test('fixed authenticated ciphertext survives the old A/B replacement but byte tampering always rejects', () => {
   const {envelope,recipient,identity,payload}=JSON.parse(readFileSync('tests/evidence/ci-3/fixed-ciphertext.json','utf8'));
