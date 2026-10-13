@@ -1,4 +1,5 @@
 import Foundation
+import CoreFoundation
 
 public struct ServiceModel: Codable, Equatable, Identifiable, Sendable {
     public var id: String { modelId }
@@ -16,7 +17,7 @@ public struct ServiceModel: Codable, Equatable, Identifiable, Sendable {
     public struct Capabilities: Codable, Equatable, Sendable { public var vision: Bool?; public var contextWindow: Int? }
     public struct DeepThinking: Codable, Equatable, Sendable { public var supported: Bool?; public var type: String? }
     public init(modelId: String, name: String? = nil, enabled: Bool = true, profileId: String? = nil) {
-        self.modelId=modelId;self.name=name ?? ModelCatalog.displayName(modelId);self.enabled=enabled;self.profileId=profileId
+        self.modelId=modelId;if let name,!name.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty { self.name=name } else { self.name=ModelCatalog.displayName(modelId) };self.enabled=enabled;self.profileId=profileId
     }
     public func matches(_ profile: String?) -> Bool { guard let profile else { return false };return profileId == profile || profileIds?.contains(profile) == true }
 }
@@ -95,8 +96,9 @@ public enum ModelCatalog {
         return id.replacingOccurrences(of:"_",with:"-").split(separator:"-").map { part in brands[String(part).lowercased()] ?? (part.first?.isNumber == true ? String(part) : part.capitalized) }.joined(separator:" ")
     }
     public static func chatModel(_ id: String) -> Bool {
-        let text=id.lowercased()
-        return !["embedding","embed-","whisper","tts","dall-e","moderation","rerank","speech","transcribe","image-generation"].contains(where:text.contains)
+        let pattern = #"(?:^|[-_/.])(embedding|embeddings|embed|rerank|tts|stt|asr|audio|whisper|dall-e|moderation|image|imagegen|imagen|flux|stable-diffusion|video|veo|sora|speech|transcription)(?:$|[-_/.\d])"#
+        return id.range(of:pattern,options:[.regularExpression,.caseInsensitive]) == nil
+            && id.range(of:#"^(?:text-embedding|omni-moderation|gpt-image)"#,options:[.regularExpression,.caseInsensitive]) == nil
     }
     public static func menuModels(_ models: [ServiceModel], current: String?, all: Bool, query: String) -> [ServiceModel] {
         let enabled=models.filter { $0.enabled }
@@ -108,11 +110,22 @@ public enum ModelCatalog {
         }
         return result
     }
+    /// MODEL-1 selection rule: preserve an enabled preference, then flash/mini/haiku, then first enabled.
+    public static func recommendedModel(_ models: [ServiceModel],preferred: String? = nil) -> String? {
+        let enabled=models.filter(\.enabled)
+        if let preferred,enabled.contains(where: {$0.modelId == preferred}) { return preferred }
+        return enabled.first(where: {$0.modelId.range(of:"(?:flash|mini|haiku)(?:$|[-_.])",options:[.regularExpression,.caseInsensitive]) != nil})?.modelId ?? enabled.first?.modelId
+    }
     public static func normalizedURL(_ raw: String,allowLoopback: Bool = false) throws -> URL {
         guard var parts=URLComponents(string:raw.trimmingCharacters(in:.whitespacesAndNewlines)),parts.user == nil,parts.password == nil,parts.query == nil,parts.fragment == nil,
               parts.host != nil,parts.scheme == "https" || (allowLoopback && parts.scheme == "http" && parts.host == "127.0.0.1") else { throw OfflineFailure.model }
         parts.host=parts.host?.lowercased();while parts.path.hasSuffix("/") { parts.path.removeLast() }
         guard let url=parts.url else { throw OfflineFailure.model };return url
+    }
+    /// JSON numbers/strings are unknown capability declarations, matching MODEL-1's boolean-only rule.
+    public static func declaredBoolean(_ value: Any?) -> Bool? {
+        guard let number=value as? NSNumber,CFGetTypeID(number) == CFBooleanGetTypeID() else { return nil }
+        return number.boolValue
     }
     public static func query(baseUrl: String,apiKey: String,interfaceType: String,network: URLSession,allowLoopback: Bool = false) async -> ModelCatalogResult {
         do {
@@ -133,18 +146,18 @@ public enum ModelCatalog {
                     guard let id=row["id"] as? String,!id.isEmpty,chatModel(id),![(row["type"] as? String ?? ""),(row["task"] as? String ?? ""),(row["category"] as? String ?? "")].contains(where: { ["embedding","speech","audio","image","moderation","rerank","transcription"].contains($0.lowercased()) }),seen.insert(id).inserted else { continue }
                     var model=ServiceModel(modelId:id,name:row["display_name"] as? String ?? row["name"] as? String)
                     let caps=row["capabilities"] as? [String:Any]
-                    let vision=caps?["vision"] as? Bool ?? (caps?["image_input"] as? [String:Any])?["supported"] as? Bool ?? (row["input_modalities"] as? [String]).map {$0.contains("image")}
-                    let thinking=caps?["reasoning"] as? Bool ?? (caps?["thinking"] as? [String:Any])?["supported"] as? Bool ?? row["supports_reasoning"] as? Bool ?? (row["deepThinking"] as? [String:Any])?["supported"] as? Bool
+                    let vision=declaredBoolean(caps?["vision"]) ?? declaredBoolean((caps?["image_input"] as? [String:Any])?["supported"]) ?? (row["input_modalities"] as? [String]).map {$0.contains("image")}
+                    let thinking=declaredBoolean(caps?["reasoning"]) ?? declaredBoolean((caps?["thinking"] as? [String:Any])?["supported"]) ?? declaredBoolean(row["supports_reasoning"]) ?? declaredBoolean((row["deepThinking"] as? [String:Any])?["supported"])
                     if vision != nil || ["max_input_tokens","context_window","context_length","max_context_length"].contains(where: {row[$0] != nil}) || caps?["contextWindow"] != nil { model.capabilities = .init(vision:vision,contextWindow:row["max_input_tokens"] as? Int ?? row["context_window"] as? Int ?? row["context_length"] as? Int ?? row["max_context_length"] as? Int ?? caps?["contextWindow"] as? Int) }
                     if let thinking {
                         let types=(caps?["thinking"] as? [String:Any])?["types"] as? [String:Any]
-                        let adaptive=(types?["adaptive"] as? [String:Any])?["supported"] as? Bool == true && (types?["enabled"] as? [String:Any])?["supported"] as? Bool != true
+                        let adaptive=declaredBoolean((types?["adaptive"] as? [String:Any])?["supported"]) == true && declaredBoolean((types?["enabled"] as? [String:Any])?["supported"]) != true
                         model.deepThinking = .init(supported:thinking,type:adaptive ? "adaptive" : (row["deepThinking"] as? [String:Any])?["type"] as? String ?? (caps?["thinking"] as? [String:Any])?["type"] as? String)
                     }
                     if model.capabilities != nil || model.deepThinking != nil { model.capabilitySource="catalog" }
                     values.append(model)
                 }
-                if interfaceType == "anthropic",object["has_more"] as? Bool == true {
+                if interfaceType == "anthropic",declaredBoolean(object["has_more"]) == true {
                     guard let cursor=object["last_id"] as? String,cursor != last else { return .init(status:"failed") };last=cursor
                 } else { last=nil }
             } while last != nil
@@ -169,6 +182,7 @@ public struct PhoneModelLibrary: Codable, Sendable {
     public var version=1
     public var services: [PhoneModelService]=[]
     public var selectedProfileId: String?
+    public var threadSelections: [String:String]?
     public init() {}
     public static func migrate(_ old: [PhoneModelConfiguration]) throws -> Self {
         var next=Self()

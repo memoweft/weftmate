@@ -16,7 +16,7 @@ struct ServiceControlPalette {
     var accent: Color { dark ? color(0x2c2c2e,0xe6e6e8) : color(0x2c2c2e,0xe6e6e8).opacity(0.84) }
     var onAccent: Color { color(0xffffff,0x1c1c1e) }
     var line: Color { dark ? Color.white.opacity(0.14) : color(0xe1e0db,0xe1e0db) }
-    var soft: Color { dark ? Color.gray.opacity(0.26) : color(0xf1f0ed,0xf1f0ed) }
+    var soft: Color { dark ? Color(red:120/255,green:120/255,blue:128/255).opacity(0.26) : color(0xf1f0ed,0xf1f0ed) }
 }
 struct ServiceActionStyle: ButtonStyle {
     var primary=false

@@ -117,7 +117,7 @@ struct ModelServiceEditor: View {
         let capturedBase=base,capturedKey=key,capturedType=type,identity=store.identity
         let found=await store.check(existing:existing,base:capturedBase,key:capturedKey,type:capturedType)
         guard capturedBase == base,capturedKey == key,capturedType == type,identity == store.identity,!Task.isCancelled else { return }
-        result=found;if selected == nil { selected=result?.models?.first?.modelId };enabled.formUnion(result?.models?.map(\.modelId) ?? [])
+        result=found;if selected == nil { selected=ModelCatalog.recommendedModel(result?.models ?? []) };enabled.formUnion(result?.models?.map(\.modelId) ?? [])
     }
     var body: some View {
         ScrollView {

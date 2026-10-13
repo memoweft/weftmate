@@ -33,6 +33,13 @@ import WeftMateCore
         try require(model.messages.last?.text == "mimo-v2.6-pro","next-message-selected-model")
         let restored=PhoneStandaloneModel(testCredentials:keys,testLoopback:true);restored.activate(app:app)
         try require(restored.currentModel?.model == "mimo-v2.6-pro" && restored.messages == model.messages,"restart-default-and-history")
+        let originalThread=model.state.selected
+        model.newThread();try require(model.currentModel?.model == pro.modelId,"new-thread-uses-new-default")
+        guard let flash=model.services.first?.models.first(where: {$0.modelId == "mimo-v2.6-flash"}) else { throw NSError(domain:"FlashMissing",code:1) }
+        model.selectServiceModel(service,flash)
+        if let originalThread { model.select(originalThread) }
+        try require(model.currentModel?.model == pro.modelId,"other-thread-keeps-its-selection")
+        model.newThread();try require(model.currentModel?.model == flash.modelId,"thread-navigation-does-not-replace-new-default")
         await model.refreshService(service,force:true)
         try require(model.services.first?.models.first(where:{$0.modelId == pro.modelId})?.profileId == pro.profileId,"refresh-keeps-profile")
         try model.saveService(existing:model.services.first,name:service.name,baseUrl:service.baseUrl,apiKey:"",interfaceType:service.interfaceType,result:nil,manual:"manual-model",selected:nil,enabled:Set([pro.modelId]))

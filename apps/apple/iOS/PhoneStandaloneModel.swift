@@ -181,7 +181,7 @@ import WeftMateCore
         do {
             let next=try PhoneChatStore(account:identity,directory:app.healthStateDirectory.deletingLastPathComponent().appendingPathComponent("PhoneChats"),credentials:credentialsOverride ?? KeychainCredentialStore(service:app.phoneCredentialNamespace))
             state=try next.load();store=next
-            do { library=try next.loadLibrary();models=library.services.flatMap(\.configurations);modelID=library.selectedProfileId ?? models.first?.id ?? "" }
+            do { library=try next.loadLibrary();models=library.services.flatMap(\.configurations);modelID=library.threadSelections?[state.selected ?? ""] ?? library.selectedProfileId ?? models.first?.id ?? "" }
             catch { models=try next.loadModels();library=(try? PhoneModelLibrary.migrate(models)) ?? .init();modelID=models.first?.id ?? "";notice="旧模型仍可使用，模型服务整理暂未完成，稍后再试。" }
             draft=state.pending?.text ?? ""
         } catch { notice="手机上的内容暂时打不开，请重试。" }
@@ -232,7 +232,7 @@ import WeftMateCore
     }
     private func saveLibrary(_ next: PhoneModelLibrary) throws {
         guard let store else { throw APIFailure.credentialStorage };try store.saveLibrary(next)
-        library=next;models=next.services.flatMap(\.configurations);modelID=next.selectedProfileId ?? models.first?.id ?? ""
+        library=next;models=next.services.flatMap(\.configurations);modelID=next.threadSelections?[state.selected ?? ""] ?? next.selectedProfileId ?? models.first?.id ?? ""
     }
     func selectServiceModel(_ service: ModelService,_ model: ServiceModel) {
         guard model.enabled else { return }
@@ -240,7 +240,12 @@ import WeftMateCore
         guard let i=next.services.firstIndex(where: {$0.service.id == service.id}),let m=next.services[i].service.models.firstIndex(where: {$0.modelId == model.modelId}) else { return }
         next.services[i].service.selectedModelId=model.modelId
         next.services[i].service.models[m].lastUsedAt=ISO8601DateFormatter().string(from:Date())
+        if let priorDefault=next.selectedProfileId {
+            if next.threadSelections == nil { next.threadSelections=[:] }
+            for thread in state.threads where next.threadSelections?[thread.id] == nil { next.threadSelections?[thread.id]=priorDefault }
+        }
         next.selectedProfileId=model.profileId ?? service.id+":"+model.modelId
+        if let selected=state.selected { if next.threadSelections == nil { next.threadSelections=[:] };next.threadSelections?[selected]=next.selectedProfileId }
         do { try saveLibrary(next);thinkingEnabled=false } catch { notice="模型选择没能保存，请重试。" }
     }
     func queryService(baseUrl: String,apiKey: String,interfaceType: String) async -> ModelCatalogResult {
@@ -284,7 +289,7 @@ import WeftMateCore
         if !manual.isEmpty,!value.service.models.contains(where: {$0.modelId == manual}) { var item=ServiceModel(modelId:manual,profileId:value.service.id+":"+manual);item.manual=true;value.service.models.append(item) }
         if let enabled { for i in value.service.models.indices { value.service.models[i].enabled=enabled.contains(value.service.models[i].modelId) || value.service.models[i].modelId == manual } }
         guard !value.service.models.isEmpty else { throw OfflineFailure.model }
-        let chosen=selected ?? (!manual.isEmpty ? manual : value.service.selectedModelId) ?? value.service.models.first?.modelId
+        let chosen=selected ?? (!manual.isEmpty ? manual : value.service.selectedModelId) ?? ModelCatalog.recommendedModel(value.service.models)
         value.service.selectedModelId=chosen;value.service.revision += 1
         var next=library;next.services.removeAll {$0.service.id == value.service.id};next.services.append(value)
         if existing == nil,let item=value.service.models.first(where: {$0.modelId == chosen}) { next.selectedProfileId=item.profileId }
@@ -294,6 +299,7 @@ import WeftMateCore
         do {
             var next=library;next.services.removeAll {$0.service.id == service.id}
             if !next.services.flatMap(\.configurations).contains(where: {$0.id == next.selectedProfileId}) { next.selectedProfileId=next.services.flatMap(\.configurations).first?.id }
+            let available=Set(next.services.flatMap(\.configurations).map(\.id));next.threadSelections=next.threadSelections?.filter { available.contains($0.value) }
             try saveLibrary(next)
         } catch { notice="模型服务没能删除，请重试。" }
     }
@@ -321,8 +327,20 @@ import WeftMateCore
         } catch { diagnose("test-failed");if ticket == epoch { notice="连接没成功，请核对地址、模型名称和密钥。" }; return false }
     }
     private func persist() throws { guard let store else { throw APIFailure.credentialStorage }; try store.save(state) }
-    func newThread() { guard !busy else { return }; finishConversation(); let thread=PhoneChatThread(); state.threads.append(thread); state.selected=thread.id; do { try persist() } catch { notice="对话没能保存，请重试。" } }
-    func select(_ id: String) { guard !busy else { return }; finishConversation(); state.selected=id; do { try persist() } catch { notice="对话没能保存，请重试。" } }
+    func newThread() {
+        guard !busy else { return };finishConversation()
+        let thread=PhoneChatThread();state.threads.append(thread);state.selected=thread.id
+        do {
+            try persist();var next=library
+            if let chosen=next.selectedProfileId { if next.threadSelections == nil { next.threadSelections=[:] };next.threadSelections?[thread.id]=chosen }
+            try saveLibrary(next);thinkingEnabled=false
+        } catch { notice="对话或模型选择没能保存，请重试。" }
+    }
+    func select(_ id: String) {
+        guard !busy else { return };finishConversation();state.selected=id
+        modelID=library.threadSelections?[id] ?? library.selectedProfileId ?? models.first?.id ?? "";thinkingEnabled=false
+        do { try persist() } catch { notice="对话没能保存，请重试。" }
+    }
     func stop() { cancelExtraction();let wasBusy=busy; epoch=UUID(); task?.cancel(); task=nil; busy=false; testing=false; if wasBusy { notice="已停止，已收到的内容保留。" } }
     func send(regenerate: Bool = false) {
         guard !busy, let model=currentModel else { return }

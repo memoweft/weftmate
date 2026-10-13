@@ -46,6 +46,20 @@ import WeftMateCore
     private var transferDraft: String?
     private var transferFiles: [ConversationAttachmentDraft] = []
     init(app: AppleAppModel) { self.app = app }
+    var conversationUsesImages: Bool {
+        if attachments.contains(where: {$0.original.isImage}) { return true }
+        for event in window.events where event.type == "user.message" {
+            if case .array(let images)? = event.data["images"],!images.isEmpty { return true }
+            for key in ["originalAttachments","attachments"] {
+                if case .array(let values)? = event.data[key] {
+                    for value in values {
+                        if case .object(let metadata)=value,(metadata["contentType"]?.string ?? metadata["mimeType"]?.string ?? "").hasPrefix("image/") { return true }
+                    }
+                }
+            }
+        }
+        return false
+    }
     var nativeEvents: [TimelineEvent] {
         window.displayEvents.compactMap { row in
             guard row.sessionID == chat?.activeSessionId, let seq = row.sourceRef["seq"]?.int else { return nil }

@@ -84,7 +84,7 @@ struct CloudDevicesView: View {
             if device.type == "computer" { Text("可执行任务").font(AppleTokens.Fonts.caption) }
             if let first = device.firstUsedAt { Text("首次登录：\(Self.date(first))").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             if let last = device.lastUsedAt { Text("最近使用：\(Self.date(last))").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-            if device.hostId == nil {
+            if device.type != "computer" {
                 HStack {
                     Button("改名") { newName = device.name; renameTarget = device }
                         .accessibilityIdentifier("renameDevice." + device.id)
