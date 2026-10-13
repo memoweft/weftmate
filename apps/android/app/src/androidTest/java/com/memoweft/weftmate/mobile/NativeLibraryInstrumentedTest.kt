@@ -135,7 +135,7 @@ class NativeLibraryInstrumentedTest {
         }
         i.uiAutomation.performGlobalAction(1)
         compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasContentDescription("按项目筛选"))
-        compose.onNodeWithContentDescription("按文件类型筛选").performClick();shot("type-menu");compose.onNodeWithText("全部",useUnmergedTree=true).performClick()
+        compose.onNodeWithText("全部").assertIsSelected();for(label in listOf("文档","表格","图片","代码","其它"))compose.onNodeWithText(label).assertExists();shot("type-row");compose.onNodeWithText("代码").performScrollTo().performClick();compose.onNodeWithText("代码").assertIsSelected();compose.onNodeWithText("全部").performScrollTo().performClick();compose.onNodeWithText("全部").assertIsSelected()
         compose.onNodeWithContentDescription("按项目筛选").performClick();shot("filter-menu");compose.onAllNodesWithText("全部项目").onLast().performClick()
         control("error");compose.onNodeWithContentDescription("刷新成果库").performClick()
         compose.waitUntil(30000){compose.onAllNodesWithText("那台电脑不在线，连接后再试。").fetchSemanticsNodes().isNotEmpty()}

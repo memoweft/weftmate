@@ -7,7 +7,7 @@ import java.util.UUID
 
 internal fun goalSession(row: JSONObject) = row.stringOrEmpty("sessionId").ifEmpty { row.optJSONObject("source")?.stringOrEmpty("sessionId").orEmpty() }
 internal fun goalRowKey(row: JSONObject) = "${row.stringOrEmpty("hostId")}:${goalSession(row)}:${row.stringOrEmpty("id").ifEmpty { row.stringOrEmpty("taskId") }}"
-internal fun goalMerge(rows: List<JSONObject>) = rows.associateBy(::goalRowKey).values.toList()
+internal fun goalMerge(rows: List<JSONObject>, invalidatedHosts:Set<String> = emptySet()) = rows.filter{it.stringOrEmpty("hostId") !in invalidatedHosts}.associateBy(::goalRowKey).values.toList()
 internal fun goalComputerLabel(row: JSONObject, computers: List<JSONObject>): String = if(computers.size <= 1) "" else computers.firstOrNull { it.stringOrEmpty("hostId") == row.stringOrEmpty("hostId") }?.let { it.stringOrEmpty("displayName").ifEmpty { it.stringOrEmpty("name") } }.orEmpty()
 internal fun goalState(row: JSONObject): String = when(row.stringOrEmpty("state").ifEmpty { row.stringOrEmpty("phase").ifEmpty { row.stringOrEmpty("status") } }) {
     "scheduled" -> "已启用"; "active", "running" -> "进行中"; "paused" -> "已暂停"; "complete", "completed" -> "已完成"; "blocked" -> "需要处理"
