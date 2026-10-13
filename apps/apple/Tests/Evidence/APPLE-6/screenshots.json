@@ -1,0 +1,250 @@
+[
+  {
+    "file": "apple6-baseline-no-computer.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "0515936a652a4a2e6529b1d6f92da92b4a7404b1da467ef98592a5c322262f10",
+    "reviewed": true,
+    "classification": "reviewed-valid-historical"
+  },
+  {
+    "file": "apple6-light-attachments-before-query.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "05b90a6441b6447c5dbf1a91c926402dde5b16213d1a8bd7d01094b43925e9ab",
+    "reviewed": true,
+    "classification": "reviewed-valid-historical"
+  },
+  {
+    "file": "mode-icon-candidates.png",
+    "width": 960,
+    "height": 320,
+    "sha256": "549880f227af763dd7f57e6bdb0a8f6a0dd8aa404b91ec777ebf5f4a31d186a9",
+    "reviewed": true,
+    "classification": "icon-candidates"
+  },
+  {
+    "file": "apple6-light-connected-attachments-keyboard.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "52e460a5336ab538a66471b82b890fa59b20c80b7b79d431a7c6df2536c3fa14",
+    "reviewed": true,
+    "classification": "reviewed-valid-historical"
+  },
+  {
+    "file": "apple6-dark-registered-no-computer.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "286319d34cbd9adeca6845431c624bc04563f204e586491a53e27845a76a3e65",
+    "reviewed": true,
+    "classification": "reviewed-valid-historical"
+  },
+  {
+    "file": "partial/apple6-light-connected-composer-expanded.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "bad045fc8c7b31c22357fd62d7043cf5ce599b3259ca45354fa18540c13690dc",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "partial/apple6-light-connected-composer-collapsed.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "397c001e8a277d8f85326a3dd365c3d902441d89409deee584ae87ef398d69d9",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "partial/simctl-boot-5/light-connected-composer-expanded.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "fd5ae68dc8da75418258f95e97a653ce79b0912216e6624fcd56dc0aa6eda503",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "partial/simctl-boot-5/light-connected-composer-collapsed.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "3c21e33cc947a7f90a99b8596345f565ce271f7271b63ccfc7dc7e7f65f7d4a1",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "simctl-boot-5/light-connected-attachments-keyboard.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "bca8dbaf2809c2c1cf9728f45c4d161eb4876efb7265d6510a672968b58b5a55",
+    "reviewed": true,
+    "classification": "reviewed-valid-historical"
+  },
+  {
+    "file": "simctl-boot-5/light-attachments-before-query.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "e8a9dab9407c6a590f227e7f4969d88a93f62be775bfff3bfbc275e3f9e634a3",
+    "reviewed": true,
+    "classification": "reviewed-valid-historical"
+  },
+  {
+    "file": "simctl-boot-2/dark-registered-no-computer.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "822e2bb26773947ba5851d2898626b335f99c51ebbcec8009ef3817dcf7689d7",
+    "reviewed": true,
+    "classification": "reviewed-valid-historical"
+  },
+  {
+    "file": "simctl-boot-2/light-connected-composer-expanded.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "8e938048a78f34208e37d3a179f58f32cbfed2259edabb4f8192b4ef2d6de5b0",
+    "reviewed": true,
+    "classification": "reviewed-valid-historical"
+  },
+  {
+    "file": "simctl-boot-2/baseline-no-computer.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "a419c8b10a86f293f17b320e5b0e274faff58211c7b41f0c0ff86d0cdcf65aa8",
+    "reviewed": true,
+    "classification": "reviewed-valid-historical"
+  },
+  {
+    "file": "partial/simctl-boot-2/light-connected-composer-collapsed.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "d52fe179f6be024f13856fa6bc43c5c1b41b9047ac98c1acbde520a5a62434a1",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "failed/apple6-light-pdf-menu.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "e9f3e9c5900922a709c24b136dccb22e35454a65464b6b7fe7c17903ebb8577b",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "failed/apple6-light-registered-no-computer.png",
+    "width": 1,
+    "height": 1,
+    "sha256": "01c1db774919661035ca79df7eb79830f1709147423208825cf72c227a8818bf",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "failed/apple6-light-pdf-fullscreen.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "db8bb238a01c81c401bd0aaf9dc323c988672ca8dcafe7a7fb5d233aa1f8399f",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "failed/apple6-light-connected-attachments-collapsed.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "45eb4d73f738bc613690174c96f4ae2433937349f7f3a8fda09c21bc1d07f247",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "failed/simctl-boot-4/light-registered-no-computer.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "d584fc45a7216219843d55513e18307521ceb340b7e23d7b8d5a5b00aeb05b91",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "failed/simctl-boot-5/light-pdf-fullscreen.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "262f6cf10c1816ec0ec76388f2fceafa6bee94cb9347c9a66acae87a8c728224",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "failed/simctl-boot-5/light-connected-attachments-collapsed.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "1fd45b6f6076531254862db77c12b3500ce694c3b232ffe903c83a8df787e13a",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "failed/simctl-boot-5/light-pdf-menu.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "8c4b4d19c5a2aa8451b9b11b2b5240bc435fbb0205a8e9cfcbcfba88453e86fd",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "failed/simctl-boot-2/light-registered-no-computer.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "9e0bf4f6f3b65660d410209e0f0011a39c61041c42dc3b516506e9c4ba2235f5",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "attempts/apple6-light-model-test-result.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "943ec9a39bbf8ac9c0dc115935bd49145e72ff27f5058038a465a33279b31ea1",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "attempts/apple6-light-model-before-test.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "943ec9a39bbf8ac9c0dc115935bd49145e72ff27f5058038a465a33279b31ea1",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "attempts/simctl-boot-3/light-model-before-test.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "a9fe842e3c50781f0db740cd6002c1b4d860cb37fe1d5b21200114ae42223082",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "attempts/simctl-boot-3/light-model-test-result.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "bde519001d0af48dda7dbf2f72b4dceae6085db7bb95203537729e910ae61081",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "attempts/simctl-boot-3/light-registered-no-computer.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "262c0b42a758cd0162b3dfc8e44282d13f319fe0043c6b2ba791c6126c33b3b3",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "attempts/simctl-boot-4/light-model-before-test.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "73ae2e94c585df7c79643f8ad72a0ba5e47cb5aa43aa1fd3f39d0b297add13b5",
+    "reviewed": true,
+    "classification": "rejected"
+  },
+  {
+    "file": "attempts/simctl-boot-4/light-model-test-result.png",
+    "width": 1206,
+    "height": 2622,
+    "sha256": "73ae2e94c585df7c79643f8ad72a0ba5e47cb5aa43aa1fd3f39d0b297add13b5",
+    "reviewed": true,
+    "classification": "rejected"
+  }
+]

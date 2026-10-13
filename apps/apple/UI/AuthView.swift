@@ -31,10 +31,10 @@ struct AuthView: View {
                         if model.form.page == .login {
                             HStack(spacing: AppleTokens.Space.p8) {
                                 Button("密码登录") { model.form.loginMethod = .password; model.form.password = "" }
-                                    .buttonStyle(AccountActionStyle(primary: model.form.loginMethod == .password))
+                                    .buttonStyle(AccountActionStyle(primary: model.form.loginMethod == .password,selection:true))
                                     .frame(maxWidth: .infinity).accessibilityValue(model.form.loginMethod == .password ? "已选择" : "")
                                 Button("验证码登录") { model.form.loginMethod = .emailCode; model.form.password = "" }
-                                    .buttonStyle(AccountActionStyle(primary: model.form.loginMethod == .emailCode))
+                                    .buttonStyle(AccountActionStyle(primary: model.form.loginMethod == .emailCode,selection:true))
                                     .frame(maxWidth: .infinity).accessibilityValue(model.form.loginMethod == .emailCode ? "已选择" : "")
                             }.accessibilityIdentifier("loginMethod")
                         }
@@ -169,8 +169,22 @@ struct LegalDocumentView: View {
 /// Capsule controls are shared only by the login and device pages.
 struct AccountActionStyle: ButtonStyle {
     var primary = false
+    var selection = false
     @Environment(\.isEnabled) private var enabled
-    func makeBody(configuration: Configuration) -> some View {
+    @ViewBuilder func makeBody(configuration: Configuration) -> some View {
+        #if os(iOS)
+        if selection {
+            configuration.label.font(AppleTokens.Fonts.body.weight(.semibold))
+                .padding(.horizontal,AppleTokens.Space.p20).frame(maxWidth:.infinity,minHeight:48)
+                .foregroundStyle(primary ? Weave.ink : Weave.muted)
+                .background(primary ? Weave.accentSoft : .clear,in:Capsule()).contentShape(Capsule())
+                .opacity(enabled ? (configuration.isPressed ? AppleTokens.Opacity.pressed : 1) : AppleTokens.Opacity.disabled)
+        } else { ordinary(configuration) }
+        #else
+        ordinary(configuration)
+        #endif
+    }
+    private func ordinary(_ configuration: Configuration) -> some View {
         configuration.label.font(AppleTokens.Fonts.body.weight(.semibold))
             .padding(.horizontal, AppleTokens.Space.p20).frame(minHeight: 48)
             .frame(maxWidth: primary ? .infinity : nil)

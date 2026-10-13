@@ -1,0 +1,2 @@
+Synthetic labelled quality scenarios: 10/10 expected; no live MiMo invocation or secret search
+PASS PhoneMemoryModelChecks: 43 assertions; synthetic HTTP/SSE only; plaintext hits 0; report 20 extraction requests; cloud/Keychain/simulator/GUI: 0

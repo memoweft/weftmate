@@ -1484,7 +1484,7 @@ public actor PersonalClient {
     }
     private func validateCursor(_ seqs: [Int], after: Int, next: Int, hasMore: Bool) throws {
         var prior = after
-        guard seqs.count <= 100, next >= after, next <= 9_007_199_254_740_991,
+        guard seqs.count <= 100, next >= after, next <= SharedValidation.maximumSequence,
               !hasMore || next > after else { throw APIFailure.invalidResponse }
         for seq in seqs { guard seq > prior, seq <= next else { throw APIFailure.invalidResponse }; prior = seq }
     }
