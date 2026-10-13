@@ -1,4 +1,4 @@
-"""Join unmodified full-screen captures: existing web on left, native on right."""
+"""Join full-screen captures: light web or dark controls reference beside native."""
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
@@ -32,5 +32,5 @@ for state, control in (("list-unread-pending", "button"), ("empty", "iconbutton"
     pair.paste(reference, (0, 48)); pair.paste(native, (reference.width + 24, 48))
     name = f"dark-{state}.png"; pair.save(target / name)
     sections.append(f'<section><h2>深色 · {state}</h2><img src="pairs/{name}" alt="左控件规范深色预览右原生"><p>一致：左图直接渲染 controls-spec 的深色预览与令牌；右图是本包原生整屏。页面、卡片、文字和浮面板的取值见颜色核对表。</p><p>更好：菜单使用安卓系统背景模糊；文字保持清晰。滚动内容自身不模糊，关闭菜单还原窗口属性。</p><p>还差：原网页复杂详情保留旧主题，因为本包不改网页；相应入口已保留。安卓窗口模糊的真实范围是菜单后面的整屏背景；不冒称局部模糊。</p></section>')
-(root / "pairs.html").write_text('''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>动态：网页与原生对比</title><style>body{margin:24px;background:#eee;color:#222;font:16px system-ui}img{display:block;width:100%;max-width:1464px}p{line-height:1.7}section{margin:36px 0}</style><h1>动态：网页与原生对比</h1><p>左边是原 HybridActivity（网页界面）在独立测试包里的整屏图，右边是原生。只增加测试包的逻辑宽度，没有改变网页代码；两边登录同一合成账号，使用同一固定活动快照与主题。原始图保留状态栏，拼接未裁切、未改像素。</p>''' + '\n'.join(sections) + '</html>', encoding="utf-8")
+(root / "pairs.html").write_text('''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>动态：网页／控件规范与原生对比</title><style>body{margin:24px;background:#eee;color:#222;font:16px system-ui}img{display:block;width:100%;max-width:1464px}p{line-height:1.7}section{margin:36px 0}</style><h1>动态：网页／控件规范与原生对比</h1><p>浅色左边是原 HybridActivity（网页界面）在独立测试包里的整屏图，右边是原生。只增加测试包的逻辑宽度，没有改变网页代码；两边登录同一合成账号，使用同一固定活动快照与主题。深色按后续验收要求，左边直接渲染提供的中性灰控件规范，右边是原生，不对照旧网页的墨绿主题。原始图保留状态栏，拼接未裁切、未改像素。</p>''' + '\n'.join(sections) + '</html>', encoding="utf-8")
 print(f"Created {len(sections)} light web/native and dark spec/native pairs")
