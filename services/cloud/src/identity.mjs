@@ -2,6 +2,7 @@ import { cloudPush } from './push.mjs';
 import { Provider, interactionPolicy, errors } from 'oidc-provider';
 import { calculateJwkThumbprint, createLocalJWKSet, jwtVerify } from 'jose';
 import { createHosts } from './hosts.mjs';
+import { computerNames } from './multi-host.mjs';
 import { createRelay } from './relay.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
@@ -353,7 +354,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
   ]);
   const relay = createRelay({ database, config, secret: keys.cookieSecret, now, dns: relayDns });
   const lifecycle = accountLifecycle({ database, accounts, relay });
-  const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider });
+  const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider, accounts });
   const feedback = createFeedback({ config, limiter: new FailureLimiter(database, keys.cookieSecret, now), fetch: feedbackFetch });
   const authorizeInApp = appAuthorization({ config });
   const allowedOrigin = origin => origin === new URL(config.issuer).origin || config.clients
@@ -472,7 +473,13 @@ export async function createIdentity({ database, config, mailer, logger, now = D
                 .get(h.host_id, account.id, req.cloudToken.device_id, req.cloudToken.cnf.jkt) &&
                 h.host_id === database.prepare('SELECT host_id FROM device_host_links WHERE account_id=? AND fingerprint=?')
                   .get(account.id, req.cloudToken.device_fingerprint)?.host_id }));
-          reply(res, 200, { devices, hosts: computers, sharing: { supported: false } }); return true;
+          const linkedDevices = computers.length > 1 ? devices.map(d => ({...d, hostId: database.prepare(`SELECT l.host_id FROM device_host_links l
+            JOIN cloud_devices c ON c.account_id=l.account_id AND c.fingerprint=l.fingerprint WHERE c.account_id=? AND c.device_id=?`).get(account.id,d.id)?.host_id ?? null})) : devices;
+          for (const computer of computers) {
+            if (config.relay) computer.online = relay.discover(computer.hostId,account.id).status === 'online';
+          }
+          const removed = database.prepare('SELECT host_id AS hostId,name FROM removed_computers WHERE account_id=?').all(account.id);
+          reply(res, 200, { devices: linkedDevices, hosts: computerNames(computers), sharing: { supported: false }, capabilities:{multiHost:1}, ...(removed.length ? {removedHosts:removed} : {}) }); return true;
         }
         if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
         // All credential writes are same-origin, including native browser interactions.

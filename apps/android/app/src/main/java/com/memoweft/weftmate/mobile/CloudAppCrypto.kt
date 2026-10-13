@@ -55,7 +55,7 @@ internal fun cloudAppRouteAllowed(target: String, method: String, host: String, 
         "/auth/login/code/request", "/auth/login/code/confirm", "/hosts/offline/status", "/feedback",
         "/hosts/offline/tasks/submit", "/hosts/offline/tasks/list", "/hosts/offline/tasks/cancel", "/hosts/offline/tasks/clear",
         "/auth/logout", "/auth/logout/others", "/auth/account/delete", "/auth/email/change/request",
-        "/auth/email/change/confirm", "/auth/devices/revoke", "/devices/rename", "/hosts/connect")
-    return cloudPaths.any { target == cloud + it } || setOf("/auth/cloud-nonce", "/auth/cloud-session",
+        "/auth/email/change/confirm", "/auth/devices/revoke", "/devices/rename", "/hosts/connect", "/hosts/rename", "/hosts/remove")
+    return cloudPaths.any { target == cloud + it } || setOf("/auth/cloud-nonce", "/auth/cloud-session", "/auth/cloud-channel",
         "/cloud/pairings/redeem").any { target == "$host/personal/v1$it" }
 }

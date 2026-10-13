@@ -5,6 +5,8 @@ import { uiCoreBrowserAssets as uiCoreAssets } from '../ui-core/manifest.mjs'
 import renderAssets from './render-assets.json' with {type: 'json'};
 
 const files = new Map([
+  ['/personal/v1/ui/computer-channel.html', ['computer-channel.html','text/html; charset=utf-8']],
+  ['/personal/v1/ui/computer-channel.js', ['computer-channel.js','text/javascript; charset=utf-8']],
   ...['history-import-view.js','history-import.css'].map(name => [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/mobile-refresh.css', ['mobile-refresh.css','text/css; charset=utf-8']],
   ['/personal/v1/ui/mobile-refresh.js', ['mobile-refresh.js','text/javascript; charset=utf-8']],
@@ -143,6 +145,10 @@ self.addEventListener('fetch',event=>{const u=new URL(event.request.url);if(even
     const resource = asset[0].startsWith('../ui-core/') ? asset[0].slice(3) : `personal-access-ui/${asset[0]}`
     const body = await verifiedResource?.(resource) ?? await readFile(join(import.meta.dirname, asset[0]))
     const headers = { ...securityHeaders };
+    if (url.pathname.endsWith('/computer-channel.html')) {
+      delete headers['x-frame-options'];
+      headers['content-security-policy'] = "default-src 'none'; script-src 'self'; connect-src 'self'; frame-ancestors *; base-uri 'none'; form-action 'none'; object-src 'none'";
+    } else headers['content-security-policy'] = headers['content-security-policy'].replace('frame-src blob:', 'frame-src blob: https: http://127.0.0.1:*');
     if (cloud?.issuer) headers['content-security-policy'] = headers['content-security-policy']
       .replace("connect-src 'self'", `connect-src 'self' ${new URL(cloud.issuer).origin}`);
     response.writeHead(200, { ...headers, 'content-type': asset[1], 'content-length': String(body.length) })

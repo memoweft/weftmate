@@ -2,6 +2,8 @@ import { randomBytes } from 'node:crypto';
 import { calculateJwkThumbprint, importJWK, jwtVerify, SignJWT } from 'jose';
 import { CloudError } from './security.mjs';
 import { createOfflineTasks } from './offline-tasks.mjs';
+import { multiHostCapabilities, createComputerActions } from './multi-host.mjs';
+import { accountLifecycle } from './account-lifecycle.mjs';
 
 const publicKey = jwk => jwk && typeof jwk === 'object' && !Array.isArray(jwk) &&
   !['d', 'p', 'q', 'dp', 'dq', 'qi', 'oth', 'k'].some(key => key in jwk) &&
@@ -11,8 +13,9 @@ const requireFields = (body, fields) => {
 };
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
 
-export function createHosts({ database: db, config, keys, authenticate, now, relay, provider }) {
+export function createHosts({ database: db, config, keys, authenticate, now, relay, provider, accounts }) {
   const tasks = createOfflineTasks({database:db,authenticate,now});
+  const computerAction = createComputerActions({database:db,authenticate,now,relay,lifecycle:accountLifecycle({database:db,accounts,relay})});
   async function revocations(hostId, afterSeq) {
     if (!Number.isSafeInteger(afterSeq) || afterSeq < 0) throw new CloudError(400, 'INVALID_REQUEST');
     const rows = db.prepare(`SELECT r.* FROM cloud_revocations r JOIN host_memberships m ON m.account_id=r.account_id
@@ -22,7 +25,11 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
     const events = rows.map(r => ({ seq: r.seq, sub: r.account_id, kind: r.kind,
       ...(r.kind === 'epoch' ? { epoch: r.epoch } : { deviceId: r.device_id, ...(r.jkt ? { jkt: r.jkt } : {}) }) }));
     const memberships = db.prepare('SELECT a.id AS sub,a.auth_epoch AS epoch FROM cloud_accounts a JOIN host_memberships m ON m.account_id=a.id WHERE m.host_id=?').all(hostId);
-    const eventToken = await new SignJWT({ events, watermark, memberships, capabilities:{offlineTasks:1} }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
+    for(const membership of memberships) {
+      const computers=db.prepare('SELECT h.host_id AS hostId,h.name FROM cloud_hosts h JOIN host_memberships m ON m.host_id=h.host_id WHERE m.account_id=? ORDER BY h.host_id').all(membership.sub);
+      if(computers.length>1)membership.computers=computers;
+    }
+    const eventToken = await new SignJWT({ events, watermark, memberships, capabilities:multiHostCapabilities }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
       .setIssuer(config.issuer).setAudience(`${config.audience}/hosts/${hostId}`).setIssuedAt()
       .setExpirationTime('300s').sign(await importJWK(keys.privateJwks.keys[0], 'RS256'));
     return { eventToken };
@@ -45,6 +52,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
     return payload;
   }
   return { async handle(route, req, body) {
+    if (['/hosts/rename','/hosts/remove'].includes(route)) return computerAction(route,req,body);
     if (/^\/hosts\/offline\/tasks\/(submit|list|cancel|clear)$/.test(route)) return tasks.device(route,req,body);
     if (route === '/hosts/offline/status') {
       requireFields(body, ['hostId']);
@@ -104,6 +112,8 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
           ON CONFLICT(host_id,account_id) DO UPDATE SET claim_id=excluded.claim_id`).run(claim.host_id, account.id, claim.claim_id);
         if (firstMember) db.prepare("UPDATE host_memberships SET role='owner' WHERE host_id=? AND account_id=?").run(claim.host_id, account.id);
         db.prepare("UPDATE host_claims SET status='active',account_id=? WHERE claim_id=?").run(account.id, body.claimId);
+        db.prepare('DELETE FROM removed_computers WHERE account_id=? AND host_id=?').run(account.id, claim.host_id);
+        db.prepare("UPDATE host_relays SET status='active',generation=generation+1,last_seen=NULL WHERE host_id=? AND status='revoked'").run(claim.host_id);
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
       return { confirmed: true, hostId: claim.host_id, sub: account.id };
