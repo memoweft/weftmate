@@ -2,11 +2,22 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { createCalendar } from '../src/personal-connectors/calendar.mjs';
+import { createCalendar, calendarError } from '../src/personal-connectors/calendar.mjs';
 import { calendarTlsFixture, createCalendarFixture, calendarEvent, calendarIcs } from './fixtures/st-7b/calendar-server.mjs';
 import { classifyConnectorTool, connectorPermission, externalConnectorContent } from '../src/personal-connectors/policy.mjs';
 
 if (!process.env.ST_7B_CALENDAR_TEST_CHILD) {
+  test('calendar transport failures containing HTTP-looking port digits remain network failures', () => {
+    for (const code of ['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'EHOSTUNREACH', 'ENETUNREACH', 'ETIMEDOUT', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET']) {
+      const cause = Object.assign(new Error('connect failed 127.0.0.1:40437'), { code });
+      assert.equal(calendarError(cause).code, 'CALENDAR_NETWORK');
+      assert.equal(calendarError(new TypeError('fetch failed', { cause })).code, 'CALENDAR_NETWORK');
+    }
+    for (const code of ['CALENDAR_ADDRESS_INVALID', 'CALENDAR_AUTH_FAILED', 'CALENDAR_TLS']) {
+      const cause = Object.assign(new Error('synthetic classified failure'), { code });
+      assert.strictEqual(calendarError(cause), cause);
+    }
+  });
   test('ST-7b calendar runs against generated trusted HTTPS fixtures', async () => {
     const tls = await calendarTlsFixture();
     try {

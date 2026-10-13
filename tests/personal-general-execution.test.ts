@@ -5,13 +5,20 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { createPersonalAccessService } from '../src/personal-access/index.mjs'
+import { waitForCommand } from './helpers/wait-for-command.mjs'
+// Expose the existing observer only in this isolated fixture, as the timeline
+// fixture does. Rejected-tool snapshots must exclude unrelated background writes.
+const serviceUrl = new URL('../src/personal-access/index.mjs', import.meta.url)
+const serviceSource = readFileSync(serviceUrl, 'utf8').replaceAll('import.meta.url', JSON.stringify(serviceUrl.href))
+  .replace(/from (['"])(\.\.?\/[^'"]+)\1/g, (_, _quote, name) => `from '${new URL(name, serviceUrl).href}'`)
+  .replace('const service = {', 'const service = { __reviewContext: context,')
+const { createPersonalAccessService } = await import('data:text/javascript;base64,' + Buffer.from(serviceSource).toString('base64'))
 import { claimReceiptBackgroundJob, createTaskStopHandler, stopReceiptBackgroundJobs } from '../src/plugins/weftmate-personal-task-control.mjs'
 
 const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 const fixtureSourceText = '请观察当前环境并完成一个通用文件工作流'
 
-async function fixture() {
+async function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'personal-general-execution-'))
   const sessions = new Set<string>()
   const backend = { getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready' }), listModels: async () => [],
@@ -25,6 +32,7 @@ async function fixture() {
     describeSession: async (sessionId: string) => sessions.has(sessionId)
       ? { sessionId, title: 'General execution', running: false, agentPreset: 'personal-remote' } : null }
   let service = await createPersonalAccessService({ root, port: 0, backend })
+  t.after(async () => { await service.close(); rmSync(root, { recursive: true, force: true }) })
   let { origin, hostId } = await service.start()
   const grant = await service.issueSetupGrant()
   const setup = await fetch(`${origin}/personal/v1/auth/setup`, { method: 'POST',
@@ -40,27 +48,24 @@ async function fixture() {
   const command = async (payload: object) => {
     const accepted = await request('commands', payload)
     assert.equal(accepted.status, 202)
-    for (let index = 0; index < 100; index++) {
-      const read = await request(`commands/${accepted.body.command.commandId}`)
-      if (read.body.command.state === 'accepted_by_dsh') return read.body.command
-      await new Promise(resolve => setTimeout(resolve, 10))
-    }
-    throw new Error('fixture command not accepted')
+    return waitForCommand(async () => (await request(`commands/${accepted.body.command.commandId}`)).body.command,
+      { label: 'fixture command' })
   }
   const created = await command({ requestId: 'general-session', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'local' })
   const source = await command({ requestId: 'general-source', kind: 'session.message', targetDeviceId: hostId,
     sessionId: created.sessionId, text: fixtureSourceText })
+  await service.__reviewContext.activity.close()
   return { root, backend, source, auth, request,
     input: { sessionId: created.sessionId, turn: 1, callId: 'general-call', rootCallId: 'general-call',
       receiptId: source.receiptId, messageHash: hash(fixtureSourceText), toolName: 'pwsh', argumentsHash: hash('private command body') },
     get service() { return service },
     restart: async () => { await service.close(); service = await createPersonalAccessService({ root, port: 0, backend });
-      ({ origin } = await service.start()) },
+      ({ origin } = await service.start()); await service.__reviewContext.activity.close() },
     close: async () => { await service.close(); rmSync(root, { recursive: true, force: true }) } }
 }
 
-test('parallel native roots finish independently through their original account receipt', async () => {
-  const f = await fixture()
+test('parallel native roots finish independently through their original account receipt', async t => {
+  const f = await fixture(t)
   try {
     const calls = ['parallel-first', 'parallel-second'].map(callId => ({ ...f.input, callId, rootCallId: callId }))
     const grants = await Promise.all(calls.map(input => f.service.trackToolExecution({ ...input, action: 'authorize_execution' })))
@@ -75,8 +80,8 @@ test('parallel native roots finish independently through their original account 
   } finally { await f.close() }
 })
 
-test('generic execution uses the original account receipt, returns metadata only and never claims the goal verified', async () => {
-  const f = await fixture()
+test('generic execution uses the original account receipt, returns metadata only and never claims the goal verified', async t => {
+  const f = await fixture(t)
   try {
     await assert.rejects(f.service.trackToolExecution({ ...f.input, action: 'authorize_execution', ownerId: 'other-owner' }),
       (error: any) => error.code === 'INVALID_REQUEST')
@@ -117,8 +122,8 @@ test('generic execution uses the original account receipt, returns metadata only
   } finally { await f.close() }
 })
 
-test('a stopped generic task rejects future execution but retains the cancelled tool receipt', async () => {
-  const f = await fixture()
+test('a stopped generic task rejects future execution but retains the cancelled tool receipt', async t => {
+  const f = await fixture(t)
   try {
     const started = await f.service.trackToolExecution({ ...f.input, action: 'authorize_execution' })
     const stopped = await f.request(`tasks/${f.source.commandId}/stop`, { requestId: 'general-stop' })
@@ -134,8 +139,8 @@ test('a stopped generic task rejects future execution but retains the cancelled 
   } finally { await f.close() }
 })
 
-test('restart marks an unfinished generic tool uncertain and never permits replay', async () => {
-  const f = await fixture()
+test('restart marks an unfinished generic tool uncertain and never permits replay', async t => {
+  const f = await fixture(t)
   try {
     await f.service.trackToolExecution({ ...f.input, action: 'authorize_execution' })
     await f.restart()
@@ -147,8 +152,8 @@ test('restart marks an unfinished generic tool uncertain and never permits repla
   } finally { await f.close() }
 })
 
-test('tool completion and background job activity persist separately; terminal job observations cannot be downgraded', async () => {
-  const f = await fixture()
+test('tool completion and background job activity persist separately; terminal job observations cannot be downgraded', async t => {
+  const f = await fixture(t)
   try {
     const started = await f.service.trackToolExecution({ ...f.input, action: 'authorize_execution' })
     await f.service.trackToolExecution({ ...f.input, action: 'finish_execution', executionId: started.executionId,
