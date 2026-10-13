@@ -7,7 +7,7 @@
     "xcodebuild": 4
   },
   "checks": {
-    "attachments": 35,
+    "attachments": 36,
     "standalone": 23,
     "memory": 43,
     "palette": 114,
@@ -36,5 +36,6 @@
     "totalFileTextUTF16": 32000,
     "pdfPages": 30,
     "historyMessages": 20
-  }
+  },
+  "pr": "https://github.com/memoweft/weftmate/pull/282"
 }
