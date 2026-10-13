@@ -112,6 +112,8 @@ struct ConversationAttachmentPreview: View {
     let error: String?
     let close: () -> Void
     var sourceAction: (() -> Void)? = nil
+    var memoryData: Data? = nil
+    var memoryText: String? = nil
     @State private var exporting = false
     @State private var exportError: String?
     var body: some View {
@@ -121,6 +123,7 @@ struct ConversationAttachmentPreview: View {
             HStack(spacing:AppleTokens.Space.p8) {
                 Button(action:close) { WeftIcon("deny") }.buttonStyle(PhoneIconStyle()).accessibilityLabel("关闭预览").accessibilityIdentifier("filePreview.close")
                 Text(name).font(AppleTokens.Fonts.headline).lineLimit(1).truncationMode(.middle).frame(maxWidth:.infinity,alignment:.leading)
+                if memoryData == nil {
                 Menu {
                     if let file {
                         ShareLink(item:file) { WeftLabel("分享",icon:"open") }.accessibilityIdentifier("filePreview.share")
@@ -128,6 +131,7 @@ struct ConversationAttachmentPreview: View {
                     }
                     if let sourceAction { Button("来自哪个对话",action:sourceAction).accessibilityIdentifier("library.source") }
                 } label: { WeftIcon("more").phoneMenuLabel(circle:true) }.accessibilityLabel("文件操作").accessibilityIdentifier("filePreview.more")
+                }
             }.padding(AppleTokens.Space.p12)
             if loading { ProgressView("正在下载…").padding(AppleTokens.Space.p20) }
             if let error { Text(error).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.danger).padding(AppleTokens.Space.p16) }
@@ -135,7 +139,19 @@ struct ConversationAttachmentPreview: View {
                 if contentType == "application/pdf" { PhonePDFPreview(file:file).frame(maxWidth:.infinity,maxHeight:.infinity) }
                 else { NativeAttachmentPreview(file:file).frame(maxWidth:.infinity,maxHeight:.infinity) }
             }
-            else { Spacer() }
+            else if let memoryData {
+                if contentType.hasPrefix("image/"), let image=UIImage(data:memoryData) { Image(uiImage:image).resizable().scaledToFit().frame(maxWidth:.infinity,maxHeight:.infinity) }
+                else if contentType == "application/pdf" { PhoneMemoryPDFPreview(data:memoryData).frame(maxWidth:.infinity,maxHeight:.infinity) }
+                else {
+                    let original=String(data:memoryData,encoding:.utf8) ?? String(data:memoryData,encoding:.utf16) ?? memoryText ?? ""
+                    ScrollView {
+                        VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
+                            Text(String(original.prefix(128*1024))).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading)
+                            if original.count > 128*1024 { Text("仅预览开头，完整文件仍保存在手机上。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+                        }.padding(AppleTokens.Space.p16)
+                    }
+                }
+            } else { Spacer() }
             if let exportError { Text(exportError).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger).padding(AppleTokens.Space.p12) }
         }.background(Weave.surface).onAppear { dismissPhonePreviewKeyboard() }
             #else
@@ -307,3 +323,11 @@ extension View {
         #endif
     }
 }
+
+#if os(iOS)
+private struct PhoneMemoryPDFPreview: UIViewRepresentable {
+    let data: Data
+    func makeUIView(context: Context) -> PDFView { let view=PDFView();view.autoScales=true;view.document=PDFDocument(data:data);return view }
+    func updateUIView(_ view: PDFView,context: Context) {}
+}
+#endif
