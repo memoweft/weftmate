@@ -65,18 +65,23 @@ private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
     trailingIcon: Int? = null,
     contentDescription: String? = null,
     secondary: Boolean = false,
+    primary: Boolean = false,
+    danger: Boolean = false,
+    choice: Boolean = false,
+    loading: Boolean = false,
     action: () -> Unit
 ) {
     val semantics = if (contentDescription == null) Modifier else Modifier.semantics { this.contentDescription = contentDescription }
     FeedControlSurface(enabled, modifier.then(semantics).height(controlHeight), controlShape,
-        if (secondary) MaterialTheme.colorScheme.surface else Color.Transparent,
+        if (danger) MaterialTheme.colorScheme.errorContainer else if (primary) MaterialTheme.colorScheme.primary else if (secondary) MaterialTheme.colorScheme.surface else Color.Transparent,
         softColor, MaterialTheme.colorScheme.primary, action,
-        borderColor = if (secondary) MaterialTheme.colorScheme.outline else null) { active ->
-        Row(Modifier.padding(horizontal = ((DesignTokens.space16 + DesignTokens.space20) / 2).dp),
+        borderColor = if (secondary && !primary && !danger) MaterialTheme.colorScheme.outline else null) { active ->
+        Row((if(choice) Modifier.fillMaxWidth() else Modifier).padding(horizontal = ((DesignTokens.space16 + DesignTokens.space20) / 2).dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DesignTokens.space8.dp)) {
-            val ink = if (active || secondary) MaterialTheme.colorScheme.onSurface else inkSecondary
+            val ink = if (danger) MaterialTheme.colorScheme.error else if (primary && !active) MaterialTheme.colorScheme.onPrimary else if (active || secondary) MaterialTheme.colorScheme.onSurface else inkSecondary
+            if (loading) androidx.compose.material3.CircularProgressIndicator(Modifier.size(controlIcon), color = ink, strokeWidth = DesignTokens.space2.dp)
             if (icon != null) Icon(painterResource(icon), null, Modifier.size(controlIcon), tint = ink)
-            Text(label, fontSize = controlLabel, lineHeight = DesignTokens.space20.sp, fontWeight = FontWeight.Medium,
+            Text(label, modifier=if(choice)Modifier.weight(1f) else Modifier, fontSize = controlLabel, lineHeight = DesignTokens.space20.sp, fontWeight = FontWeight.Medium,
                 color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (trailingIcon != null) Icon(painterResource(trailingIcon), null, Modifier.size(controlIcon), tint = ink)
         }

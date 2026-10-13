@@ -1,0 +1,761 @@
+{
+  "synthetic": true,
+  "instrumentation": [
+    {
+      "width": 360,
+      "theme": "light",
+      "passed": false
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "and6-360-light-archive-confirm.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-content.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-delete-confirm.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-detail.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-edited.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-empty.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-error.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-goal-detail.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-goal-form.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-hour-menu.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-loading.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-minute-menu.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-new-form.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-records.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-repeat-menu.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-row-menu.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-schedule-list.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-source-chat.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-toggle-resumed.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-validation.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-web-content.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-web-empty.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-web-new-form.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-web-row-menu.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    },
+    {
+      "file": "and6-360-light-weekday-menu.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "unchanged emulator setting"
+    }
+  ],
+  "occupancy": {
+    "startedAt": "2026-10-13T17:00:44.263Z",
+    "heavySlot": "D:\\AIProjects\\WeftMate\\Runtime\\Orchestrator\\heavy-2.lock",
+    "releasedAt": "2026-10-13T17:01:31.575Z"
+  },
+  "systemVersion": "15",
+  "systemTheme": "unchanged emulator setting",
+  "apkHashes": {
+    "app": "6d549f2b50d6f193fd07172f02d7682fc92f0d4046dcec3052319284ca9dc9af",
+    "test": "e6c34e605b10728738c2b191785853ab0641cfabb35f693a1f87005be9600465"
+  },
+  "failure": "Native goal flow failed 360 light",
+  "requests": [
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules/session-11111111-1111-4111-8111-111111111111/water/pause",
+      "method": "POST",
+      "body": {
+        "requestId": "6cb35991-dde4-4b88-adbb-474da27c7efa"
+      }
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules/session-11111111-1111-4111-8111-111111111111/water/resume",
+      "method": "POST",
+      "body": {
+        "requestId": "82160b85-fe3b-4ada-a405-6533167d567e"
+      }
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/notifications",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules/session-11111111-1111-4111-8111-111111111111/water/run",
+      "method": "POST",
+      "body": {
+        "requestId": "7af2fe2f-a956-4171-bfe9-ed77e65f6e37"
+      }
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "POST",
+      "body": {
+        "requestId": "1454498f-94c7-4f4e-8f94-fb78ea0e6ed8",
+        "sessionId": "session-11111111-1111-4111-8111-111111111111",
+        "text": "晚上整理阅读记录",
+        "kind": "reminder",
+        "repeat": {
+          "kind": "weekly",
+          "time": "09:00:00",
+          "weekday": 5
+        }
+      }
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules/session-11111111-1111-4111-8111-111111111111/created-895ab8eb-185a-4474-ac80-db407d652f7a",
+      "method": "PATCH",
+      "body": {
+        "requestId": "91b3212f-680b-4452-88a9-2617207762bf",
+        "sessionId": "session-11111111-1111-4111-8111-111111111111",
+        "text": "晚上整理阅读记录与笔记",
+        "kind": "reminder",
+        "expectedRevision": 1,
+        "repeat": {
+          "kind": "weekly",
+          "time": "09:00:00",
+          "weekday": 5
+        }
+      }
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules/session-11111111-1111-4111-8111-111111111111/created-895ab8eb-185a-4474-ac80-db407d652f7a",
+      "method": "DELETE",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals/session-11111111-1111-4111-8111-111111111111/complete",
+      "method": "POST",
+      "body": {
+        "requestId": "107ff340-3c9a-401a-9365-93398c4e39a0",
+        "ref": {
+          "id": "long",
+          "revision": 1
+        }
+      }
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals/session-11111111-1111-4111-8111-111111111111/archive",
+      "method": "POST",
+      "body": {
+        "requestId": "af1e780e-286f-4b18-9311-79a6a50cd7d6",
+        "ref": {
+          "id": "long",
+          "revision": 2
+        }
+      }
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "POST",
+      "body": {
+        "requestId": "48c747aa-b526-4250-974e-a2e9c36a6e0b",
+        "sessionId": "session-11111111-1111-4111-8111-111111111111",
+        "title": "学习计划",
+        "description": "检查点：完成第一章。"
+      }
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "body": {}
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "body": {}
+    }
+  ],
+  "privateAdbClosed": true
+}
