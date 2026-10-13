@@ -1,0 +1,44 @@
+{
+  "sourceDesktop": true,
+  "realDSH": true,
+  "account": "synthetic local owner",
+  "computerName": "synthetic-mac",
+  "credentialStorage": "test-only injected AES-256-GCM; production safeStorage remains unchanged",
+  "startedAt": "2026-10-13T05:47:57.115Z",
+  "electronLaunches": 2,
+  "mimoRequests": 0,
+  "mimoKeyAvailable": false,
+  "checks": [
+    "first open and model connection/configuration through visible onboarding controls",
+    "main chat received two separate synthetic SSE content chunks",
+    "trusted project registration, native read/write tools, visible approvals, physical file bytes and SHA-256",
+    "model key absent from ciphertext/plain settings; injected store does not call system keychain",
+    "graceful quit/reopen retains main conversation, model credential/configuration and project"
+  ],
+  "screenshots": [
+    "electron-1200-light-first-open.png",
+    "electron-1200-dark-first-open.png",
+    "electron-1200-light-main-chat.png",
+    "electron-1200-dark-main-chat.png",
+    "electron-1200-light-between-file-steps.png",
+    "electron-1200-dark-between-file-steps.png",
+    "electron-1200-light-project-output.png",
+    "electron-1200-dark-project-output.png",
+    "electron-1200-light-restart.png",
+    "electron-1200-dark-restart.png"
+  ],
+  "syntheticRequests": 4,
+  "tools": [
+    "read",
+    "write"
+  ],
+  "errors": [],
+  "readReachedModel": true,
+  "approvals": 2,
+  "outputSha256": "a03ecdb5fcb0279aa75f927ddcbca014744fee115d2aa406877404188e4e4ddc",
+  "completed": true,
+  "newGpuOrWindowServerReports": 0,
+  "machineRestarted": false,
+  "finishedAt": "2026-10-13T05:48:16.267Z",
+  "approvalScreenshotBoundary": "Captured frames fall between file steps; approval waits/clicks and prevented-before-approval write are behavioral evidence, not a stable approval-bar screenshot."
+}
