@@ -2,7 +2,7 @@
 // six sequential rounds. No automatic workflow/job reruns or test exceptions.
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {mkdirSync,readFileSync,writeFileSync,existsSync,readdirSync} from 'node:fs';
+import {mkdirSync,readFileSync,writeFileSync,existsSync,readdirSync,openSync,closeSync,unlinkSync,mkdtempSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {setTimeout as pause} from 'node:timers/promises';
 import {redactEvidenceText} from '../../tests/helpers/process-evidence.mjs';
@@ -10,6 +10,18 @@ const execute=promisify(execFile),gh=async args=>(await execute('gh',args,{encod
 const branch=process.argv[2]||'wp/ci-3-steady-checks',destination='tests/evidence/ci-3/cloud',cache='.local/ci-3/cloud';
 const workflows=['ci.yml','review-gallery.yml','windows-package.yml','s1c-web.yml','relay.yml','host-certs.yml','vendor-tests.yml'];
 mkdirSync(destination,{recursive:true});mkdirSync(cache,{recursive:true});
+// A repeated controller already cancelled real acceptance runs through workflow
+// concurrency and collided while downloading artifacts. Fail before dispatch.
+const leasePath=join(cache,'controller.lock');
+const leaseText=JSON.stringify({pid:process.pid,startedAt:new Date().toISOString()});
+try {
+  const lease=openSync(leasePath,'wx');
+  try {writeFileSync(lease,leaseText);} finally {closeSync(lease);}
+} catch(error) {
+  if(error.code==='EEXIST')throw Error(`Acceptance controller already has a lease: ${leasePath}. Inspect its PID before removing a stale lease; do not start overlapping rounds.`);
+  throw error;
+}
+process.once('exit',()=>{if(existsSync(leasePath)&&readFileSync(leasePath,'utf8')===leaseText)unlinkSync(leasePath);});
 const repo=(await gh(['repo','view','--json','nameWithOwner','--jq','.nameWithOwner'])).trim();
 const sha=JSON.parse(await gh(['api',`repos/${repo}/commits/${branch}`])).sha;
 const rounds=[];
@@ -54,7 +66,7 @@ for(let round=1;round<=6;round++){
     const metadata=JSON.parse(await gh(['api',`repos/${repo}/actions/runs/${run.databaseId}`]));
     let reports=[];
     if(run.workflow==='ci.yml'){
-      const dir=resolve(cache,`round-${round}-unit`);mkdirSync(dir,{recursive:true});
+      const dir=mkdtempSync(resolve(cache,`round-${round}-unit-`));
       try{await gh(['run','download',String(run.databaseId),'--pattern','unit-*','--dir',dir]);
         reports=readdirSync(dir,{recursive:true}).filter(f=>f.endsWith('.json')).map(f=>JSON.parse(readFileSync(join(dir,f),'utf8')));
       }catch(error){writeFileSync(join(dir,'retrieval-error.txt'),redactEvidenceText(error.message));}

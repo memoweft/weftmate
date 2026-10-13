@@ -282,7 +282,7 @@
       "38269978124/1"
     ],
     "classification": "产品里的真问题",
-    "basis": "Windows 项目调用没有等待协议：src/personal-projects/index.mjs 每请求独立启动 PowerShell 并编译 C#，15s 从 spawn 起同时支付初始化和读取。reader.ps1 编译后报告真实就绪，初始化和实际操作各受原 15s 限制（合计最大约 30s），不重试操作；固定虚拟时钟测试稳定复现 10s 初始化＋10s 读取原来超时、新版通过。文件身份／边界／大小／扫描期限原样。"
+    "basis": "Windows 项目调用没有等待协议：src/personal-projects/index.mjs 每请求独立启动 PowerShell 并编译 C#，15s 从 spawn 起同时支付初始化和读取。reader.ps1 编译后报告真实就绪，初始化限30s、实际操作保留原15s限制（合计最大约45s），不重试操作；固定虚拟时钟测试稳定复现 10s 初始化＋10s 读取原来超时、新版通过。文件身份／边界／大小／扫描期限原样。"
   },
   {
     "id": 8,
@@ -458,7 +458,7 @@
       "38298416230/2"
     ],
     "classification": "产品里的真问题",
-    "basis": "Windows 项目调用没有等待协议：src/personal-projects/index.mjs 每请求独立启动 PowerShell 并编译 C#，15s 从 spawn 起同时支付初始化和读取。reader.ps1 编译后报告真实就绪，初始化和实际操作各受原 15s 限制（合计最大约 30s），不重试操作；固定虚拟时钟测试稳定复现 10s 初始化＋10s 读取原来超时、新版通过。文件身份／边界／大小／扫描期限原样。"
+    "basis": "Windows 项目调用没有等待协议：src/personal-projects/index.mjs 每请求独立启动 PowerShell 并编译 C#，15s 从 spawn 起同时支付初始化和读取。reader.ps1 编译后报告真实就绪，初始化限30s、实际操作保留原15s限制（合计最大约45s），不重试操作；固定虚拟时钟测试稳定复现 10s 初始化＋10s 读取原来超时、新版通过。文件身份／边界／大小／扫描期限原样。"
   },
   {
     "id": 18,
@@ -526,7 +526,7 @@
       "38298416230/1"
     ],
     "classification": "产品里的真问题",
-    "basis": "Windows 项目调用没有等待协议：src/personal-projects/index.mjs 每请求独立启动 PowerShell 并编译 C#，15s 从 spawn 起同时支付初始化和读取。reader.ps1 编译后报告真实就绪，初始化和实际操作各受原 15s 限制（合计最大约 30s），不重试操作；固定虚拟时钟测试稳定复现 10s 初始化＋10s 读取原来超时、新版通过。文件身份／边界／大小／扫描期限原样。"
+    "basis": "Windows 项目调用没有等待协议：src/personal-projects/index.mjs 每请求独立启动 PowerShell 并编译 C#，15s 从 spawn 起同时支付初始化和读取。reader.ps1 编译后报告真实就绪，初始化限30s、实际操作保留原15s限制（合计最大约45s），不重试操作；固定虚拟时钟测试稳定复现 10s 初始化＋10s 读取原来超时、新版通过。文件身份／边界／大小／扫描期限原样。"
   },
   {
     "id": 22,
@@ -757,7 +757,7 @@
       "38324429475/1"
     ],
     "classification": "产品里的真问题",
-    "basis": "Windows 项目调用没有等待协议：src/personal-projects/index.mjs 每请求独立启动 PowerShell 并编译 C#，15s 从 spawn 起同时支付初始化和读取。reader.ps1 编译后报告真实就绪，初始化和实际操作各受原 15s 限制（合计最大约 30s），不重试操作；固定虚拟时钟测试稳定复现 10s 初始化＋10s 读取原来超时、新版通过。文件身份／边界／大小／扫描期限原样。"
+    "basis": "Windows 项目调用没有等待协议：src/personal-projects/index.mjs 每请求独立启动 PowerShell 并编译 C#，15s 从 spawn 起同时支付初始化和读取。reader.ps1 编译后报告真实就绪，初始化限30s、实际操作保留原15s限制（合计最大约45s），不重试操作；固定虚拟时钟测试稳定复现 10s 初始化＋10s 读取原来超时、新版通过。文件身份／边界／大小／扫描期限原样。"
   },
   {
     "id": 35,
