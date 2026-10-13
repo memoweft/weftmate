@@ -12,7 +12,7 @@ Required unit tests (summary)	Total passed, failed, skipped and retry recoveries
 Required unit tests (summary)	Total passed, failed, skipped and retry recoveries	2026-10-13T02:37:25.7234799Z file:///home/runner/work/weftmate/weftmate/.github/scripts/ci-test-summary.mjs:11
 Required unit tests (summary)	Total passed, failed, skipped and retry recoveries	2026-10-13T02:37:25.7236042Z   if (new Set(keys).size !== keys.length || expected.some(key => !keys.includes(key)) || keys.some(key => !expected.includes(key))) throw Error(`Missing, duplicate or unexpected shard report: expected ${expected}; received ${keys}`);
 Required unit tests (summary)	Total passed, failed, skipped and retry recoveries	2026-10-13T02:37:25.7237254Z                                                                                                                                           ^
-Required unit tests (summary)	Total passed, failed, skipped and retry recoveries	2026-10-13T02:37:25.7237720Z 
+Required unit tests (summary)	Total passed, failed, skipped and retry recoveries	2026-10-13T02:37:25.7237720Z
 Required unit tests (summary)	Total passed, failed, skipped and retry recoveries	2026-10-13T02:37:25.7239192Z Error: Missing, duplicate or unexpected shard report: expected ubuntu-latest:1/3,ubuntu-latest:2/3,ubuntu-latest:3/3,windows-latest:1/3,windows-latest:2/3,windows-latest:3/3; received ubuntu-latest:1/3,ubuntu-latest:2/3,ubuntu-latest:3/3
 Required unit tests (summary)	Total passed, failed, skipped and retry recoveries	2026-10-13T02:37:25.7240991Z     at aggregateReports (file:///home/runner/work/weftmate/weftmate/.github/scripts/ci-test-summary.mjs:11:139)
 Required unit tests (summary)	Total passed, failed, skipped and retry recoveries	2026-10-13T02:37:25.7241766Z     at file:///home/runner/work/weftmate/weftmate/.github/scripts/ci-test-summary.mjs:19:17
@@ -94,9 +94,9 @@ not ok 1 - BL-29c account commit after an early native approval frame invalidate
       "stdout": "BL-29 lifecycle: startup / synthetic cloud authentication started (1ms)\nBL-29 lifecycle: fixture / verified synthetic cloud authentication ready (19910ms)\nBL-29 lifecycle: main warmup started (19910ms)\nBL-29 lifecycle: main warmup ready (20114ms)\nBL-29 lifecycle: desktop launch started (20115ms)\nBL-29 lifecycle: desktop window ready (21222ms)\nBL-29 lifecycle: desktop native initialization started (21334ms)\ndesktop logged in\nBL-29 lifecycle: desktop ready / mobile launch started (23625ms)\n",
       "stderr": ""
     }
-    
+
     null !== 0
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: 0
@@ -174,9 +174,9 @@ not ok 8 - UX-9 new-folder API uses existing permission revisions and never retu
   failureType: 'testCodeFailure'
   error: |-
     Expected values to be strictly equal:
-    
+
     503 !== 201
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: 201
@@ -203,9 +203,9 @@ not ok 2 - r: consecutive weekly observations use all-week, date range or day co
   failureType: 'testCodeFailure'
   error: |-
     The input did not match the regular expression /这周每天凌晨一点后/. Input:
-    
+
     '主要在忙：这周还没有对话记录。\n完成 0 件事，产出 0 份成果；没有记录到卡住的任务。\n这一周的使用主要在白天和晚间。'
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
@@ -238,9 +238,9 @@ not ok 2 - r: consecutive weekly observations use all-week, date range or day co
   failureType: 'testCodeFailure'
   error: |-
     The input did not match the regular expression /这周每天凌晨一点后/. Input:
-    
+
     '主要在忙：这周还没有对话记录。\n完成 0 件事，产出 0 份成果；没有记录到卡住的任务。\n这一周的使用主要在白天和晚间。'
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
@@ -273,9 +273,9 @@ not ok 5 - resources HTTP API requires account session ownership, validates curs
   failureType: 'testCodeFailure'
   error: |-
     fresh personal conversations have no native log yet
-    
+
     1 !== 0
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: 0
@@ -303,7 +303,7 @@ not ok 10 - answer IDs collide in both directions with commands, task stops and 
   error: |-
     Expected values to be strictly equal:
     + actual - expected
-    
+
     + '{"version":3,"hostId":"host-2eee617a-e617-4fac-99c9-aa557431b670","legacyOwnerId":"owner-05d98cef-f384-45cc-a220-187cdef38bba","unknownAuthLimits":{"failures":0,"lastFailureAt":0,"lockUntil":0},"sharedModelProfiles":[],"accounts":{"owner-05d98cef-f384-45cc-a220-187cdef38bba":{"devices":{"device-4f7bec20-f16b-429f-957f-82779dfe485e":{"name":"Synthetic question phone","tokenHash":"f2bcc0ce1ff0362edacd4d0c5e1863e4be4a62a7a69177247641a0014ca147a1","csrfHash":"cfcea4fcc3eb82ee616bdb9a87e6fd08e6b33eaaaa7456ba1967f9c966dd97ca","scopes":["sessions:read","commands:write","account:manage"],"revoked":false,"enrolledAt":"2026-10-12T21:33:40.398Z","authKind":"password","authEpoch":1,"expiresAt":"2026-11-11T21:33:40.398Z"}},"sessions":{"session-7b239c64-8053-415e-aee6-1e96e2ff8b2e":{"ownerId":"owner-05d98cef-f384-45cc-a220-187cdef38bba","attachedAt":"2026-10-12T21:33:40.827Z","approvalMode":"auto","deepThinking":false,"origin":"personal-remote","modelProfileId":"local"}},"commands":{"cmd-9f902312-f85b-466c-9a0f-66790485180a":{"commandId":"cmd-9f902312-f85b-466c-9a0f-66790485180a","ownerId":"owner-05d98cef-f384-45cc-a220-187cdef38bba","requestId":"question-session","payloadHash":"c0cb68855a314d6f2a754130ff413ac42a9154e72eabeb5cc9e49704cf3c21f4","payload":{"requestId":"question-session","kind":"session.create","targetDeviceId":"host-2eee617a-e617-4fac-99c9-aa557431b670","modelProfileId":"local"},"sourceDeviceId":"device-4f7bec20-f16b-429f-957f-82779dfe485e","sourceAuthEpoch":1,"targetDeviceId":"host-2eee617a-e617-4fac-99c9-aa557431b670","kind":"session.create","sessionId":"session-7b239c64-8053-415e-aee6-1e96e2ff8b2e","state":"accepted_by_dsh","createdAt":"2026-10-12T21:33:40.482Z","updatedAt":"2026-10-12T21:33:40.827Z"},"cmd-b4011613-0346-42bd-b100-27929c716d92":{"commandId":"cmd-b4011613-0346-42bd-b100-27929c716d92","ownerId":"owner-05d98cef-f384-45cc-a220-187cdef38bba","requestId":"question-source","payloadHash":"06667987adf065df0ea5cd2971822754204fefe59c671a75187a2b8eb0c54f77","payload":{"requestId":"question-source","kind
 ```
 
@@ -320,7 +320,7 @@ not ok 4 - Apple views consume generated typed tokens compiled by all three nati
   failureType: 'testCodeFailure'
   error: |-
     The input was expected to not match the regular expression /\.font\(\.(?:body|caption|callout|title|headline|footnote|subheadline)/. Input:
-    
+
     'import SwiftUI\n' +
       'import WeftMateCore\n' +
       '\n' +
@@ -350,7 +350,7 @@ not ok 4 - Apple views consume generated typed tokens compiled by all three nati
       '            if let top { reply=try await app.assistantClient.healthTopInsightSetting(top) }\n' +
       '            else { reply=try await app.assistantClient.healthPageSettings(enabled:item) }\n' +
       '            if [secret] app.accountEpoch { settings=reply.settings;message=nil }\n' +
- 
+
 ```
 
 ## 13 · tests/personal-mobile-ui-release.test.ts · authenticated mobile UI A to B and rollback use immutable assets, SSE and no host restart
@@ -425,9 +425,9 @@ not ok 4 - BL-29b M5/S2 gateway shutdown and runtime dispose respond SERVICE_CLO
   failureType: 'testCodeFailure'
   error: |-
     Expected values to be strictly equal:
-    
+
     false !== true
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: true
@@ -551,9 +551,9 @@ not ok 16 - FX-11 first native write registers a cloud owner's artifact in proje
   failureType: 'testCodeFailure'
   error: |-
     {"error":{"code":"PROJECT_READER_TIMEOUT"},"status":503}
-    
+
     503 !== 201
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: 201
@@ -581,10 +581,10 @@ not ok 6 - FX-18 recovered memory appears as one quiet progress event and comple
   error: |-
     Expected values to be strictly equal:
     + actual - expected
-    
+
     + '正在继续整理上次没做完的记忆'
     - '上次没做完的记忆已整理完成'
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: '上次没做完的记忆已整理完成'
@@ -657,14 +657,14 @@ not ok 1 - real Windows Electron survives first-run and legacy-upgrade interrupt
     node:internal/modules/run_main:107
         triggerUncaughtException(
         ^
-    
+
     AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
     + actual - expected
-    
+
     + '0x0000004A'
     - '0x00000000'
                ^
-    
+
         at file:///D:/a/weftmate/weftmate/tests/integration/rob-1-vault-matrix.mjs:26:28
         at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
       generatedMessage: true,
@@ -674,12 +674,12 @@ not ok 1 - real Windows Electron survives first-run and legacy-upgrade interrupt
       operator: 'strictEqual',
       diff: 'simple'
     }
-    
+
     Node.js v24.21.0
-    
-    
+
+
     1 !== 0
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: 0
@@ -1014,7 +1014,7 @@ run / attempt（运行 / 尝试）：38324429450/1
 
 ```text
 Android debug and JVM tests	UNKNOWN STEP	2026-10-12T23:59:54.4203232Z w: file:///home/runner/work/weftmate/weftmate/apps/android/app/src/main/java/com/memoweft/weftmate/mobile/MainActivity.kt:792:80 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
-Android debug and JVM tests	UNKNOWN STEP	2026-10-12T23:59:55.8959603Z 
+Android debug and JVM tests	UNKNOWN STEP	2026-10-12T23:59:55.8959603Z
 Android debug and JVM tests	UNKNOWN STEP	2026-10-12T23:59:55.8961046Z > Task :app:compileDebugJavaWithJavac
 Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:00.2972506Z > Task :app:dexBuilderDebug
 Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:00.3033227Z > Task :app:mergeDebugGlobalSynthetics
@@ -1026,13 +1026,13 @@ Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:01.1993448Z > Task :ap
 Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:01.9973387Z > Task :app:packageDebug
 Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:02.0973323Z > Task :app:createDebugApkListingFileRedirect
 Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:02.1032917Z > Task :app:assembleDebug
-Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:02.7967608Z 
+Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:02.7967608Z
 Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:02.7993054Z > Task :app:compileDebugUnitTestKotlin
 Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:02.8023544Z w: file:///home/runner/work/weftmate/weftmate/apps/android/app/src/test/java/com/memoweft/weftmate/mobile/ClientRouteInventoryUnitTest.kt:10:25 Java type mismatch: inferred type is 'kotlin.String?', but 'kotlin.String' was expected.
-Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:02.8052323Z 
+Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:02.8052323Z
 Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:02.8052703Z > Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
 Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:02.8053286Z > Task :app:processDebugUnitTestJavaRes
-Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:04.7960057Z 
+Android debug and JVM tests	UNKNOWN STEP	2026-10-13T00:00:04.7960057Z
 Android debug and JVM tests	UNK
 ```
 
@@ -1125,7 +1125,7 @@ run / attempt（运行 / 尝试）：38329373626/2
   locator.waitFor: Timeout 15000ms exceeded.
   Call log:
     - waiting for getByRole('button', { name: '批准', exact: true }) to be visible
-  
+
       at /home/runner/work/weftmate/weftmate/services/cloud/test/relay-phone.test.mjs:195:95
       at async waitFor (/home/runner/work/weftmate/weftmate/services/cloud/test/relay-fixture.mjs:32:39)
       at async TestContext.<anonymous> (/home/runner/work/weftmate/weftmate/services/cloud/test/relay-phone.test.mjs:191:5) {
