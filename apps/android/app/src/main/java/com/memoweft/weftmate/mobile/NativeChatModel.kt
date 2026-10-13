@@ -177,7 +177,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         sendAvailable = phone || chat.optBoolean("sendAvailable")
         title = if (chat.optString("kind") == "main") "WeftMate" else chat.optString("title", "新对话")
         timeZone = chat.optString("timeZone", java.time.ZoneId.systemDefault().id)
-        modelId = chat.optString("modelProfileId").ifBlank { modelId }
+        modelId = chat.stringOrEmpty("selectedModelProfileId").ifEmpty { chat.stringOrEmpty("modelProfileId") }.ifEmpty { modelId }
         modelLabel = models.firstOrNull { it.optString("profileId",it.optString("modelId")) == modelId }?.optString("displayName") ?: modelLabel
         draft = prefs.getString("draft:$owner:$chatId", startingDraft) ?: startingDraft
         rows = emptyList(); approvals = emptyList(); questions = emptyList(); uncertain = emptyList(); phoneLive = ""; focused = false
