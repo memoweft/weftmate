@@ -42,7 +42,14 @@ export async function runManagedTestProcess(command, args, { env, commandRoots =
   try {
     const result = await new Promise(resolve => child.once('close', (status, signal) => resolve({ status, signal })));
     if (timedOut) console.error(`Timed-out process exit: ${JSON.stringify(describeExit(result.status, result.signal))}`);
-    return { ...result, stdout, stderr, error, interrupted, timedOut };
+    const evidence = result.status !== 0 || result.signal || error ? {
+      ...describeExit(result.status, result.signal), phase: timedOut ? 'file-timeout' : 'file-exit',
+      elapsedMs: Date.now() - startedAt, spawnErrorCode: error?.code ?? null,
+      systemCommit: systemCommitMemory(), stdoutTail: redactEvidenceText(stdout.slice(-8192), commandRoots),
+      stderrTail: redactEvidenceText(stderr.slice(-8192), commandRoots),
+    } : undefined;
+    if (evidence) console.error(`Failed test process evidence: ${JSON.stringify(evidence)}`);
+    return { ...result, stdout, stderr, error, interrupted, timedOut, evidence };
   } finally {
     clearTimeout(deadline); clearTimeout(escalation);
     for (const [signal, handler] of handlers) process.off(signal, handler);

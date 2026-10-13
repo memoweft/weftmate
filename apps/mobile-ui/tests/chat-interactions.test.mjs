@@ -317,7 +317,7 @@ test('M3-1c explicit read failures stay inline online and join connection state 
 });
 
 test('M3-1c timed out shared send shows one original-message explanation and keeps its request',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="pc1";state.sharedSessions=[{sessionId:"pc1",sendAvailable:true,source:"host"}]');
+  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="pc1";state.sharedHostAvailable=true;state.sharedSessions=[{sessionId:"pc1",sendAvailable:true,source:"host"}]');
   h.node('draft').value='超时的原消息';const sending=h.run('send()');
   assert.equal(h.node('chat-status').textContent,'正在提交到电脑会话…');
   const request=h.bridge.find(item=>item.method==='shared.send');h.advance(45000);await sending;
@@ -747,7 +747,7 @@ test('supplement and resume commands stay in their root file task card',()=>{
 });
 
 test('older outbox snapshot cannot clear a newly submitted shared request',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="pc1";state.sharedSessions=[{sessionId:"pc1",title:"电脑",sendAvailable:true,source:"host"}]');
+  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="pc1";state.sharedHostAvailable=true;state.sharedSessions=[{sessionId:"pc1",title:"电脑",sendAvailable:true,source:"host"}]');
   const loading=h.run('loadSharedOutbox()');const old=h.bridge.findIndex(item=>item.method==='shared.outbox.list');
   h.node('draft').value='新消息';const sending=h.run('send()');
   const sendRequest=h.bridge.find(item=>item.method==='shared.send');
@@ -1644,7 +1644,7 @@ function countNodes(node,predicate){return Number(predicate(node))+(node.childre
 
 
 test('manual shared status check reconciles the saved request once and refreshes connectivity',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="chat";state.chatSource="host";state.sharedSessionId="pc1";state.sharedSessions=[{sessionId:"pc1",title:"电脑",sendAvailable:true,source:"host"}];state.sharedPending={requestId:"saved-1",state:"uncertain",text:"离线消息"}');
+  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="chat";state.chatSource="host";state.sharedSessionId="pc1";state.sharedHostAvailable=true;state.sharedSessions=[{sessionId:"pc1",title:"电脑",sendAvailable:true,source:"host"}];state.sharedPending={requestId:"saved-1",state:"uncertain",text:"离线消息"}');
   h.node('draft').value='离线消息';const checking=h.run('checkSharedPending()');await h.run('checkSharedPending()');
   assert.equal(h.bridge.filter(item=>item.method==='shared.outbox.reconcile').length,1);
   h.reply(h.bridge.findIndex(item=>item.method==='shared.outbox.reconcile'),{source:'host',commands:[{source:'host',sessionId:'pc1',requestId:'saved-1',kind:'session.message',state:'accepted'}]});
@@ -1701,7 +1701,7 @@ test('owner switch and removed shared session fall back without showing old acco
 });
 
 test('switching chat source clears transient acceptance and matching turn end clears it',()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="pc1";state.sharedSessions=[{sessionId:"pc1",title:"电脑",sendAvailable:true,source:"host"}];status("电脑已受理消息，等待会话记录更新")');
+  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="pc1";state.sharedHostAvailable=true;state.sharedSessions=[{sessionId:"pc1",title:"电脑",sendAvailable:true,source:"host"}];status("电脑已受理消息，等待会话记录更新")');
   h.run('waitForSharedTurn("pc1","hello",0);trackSharedAcceptedTurn({seq:1,type:"user.message",data:{text:"hello"}});trackSharedAcceptedTurn({seq:2,type:"turn.ended",data:{reason:"completed"}})');
   assert.equal(h.node('chat-status').textContent,'');
   h.run('status("电脑已受理消息，等待会话记录更新");selectConversation("phone1")');
@@ -1800,4 +1800,44 @@ test('late system status does not repaint a different account or page',async()=>
   const h=harness();h.run(`state.page='system';state.loggedIn=true;state.owner='fixture-owner';document.getElementById('page-content').isConnected=true;void systemStatusSection(document.getElementById('page-content'));state.owner='next-owner'`);
   h.reply(0,{components:[{id:'model',name:'回复模型',state:'problem',description:'旧账户的状态'}]});await h.flush();
   assert.doesNotMatch(allText(h.node('page-content')),/旧账户的状态/);
+});
+
+for (const [name, flag] of [
+ ['opening','uiCore.state.sessionSelecting=true'],['creating','uiCore.state.sideCreating=true'],
+ ['folder','uiCore.folderMutationPending=()=>true'],['saving','state.sharedPending={requestId:"existing"}'],
+ ['outbox','state.sharedOutboxLoading=true'],['model test','state.modelSwitching=true'],
+ ['account transition','state.transitionPending=true'],['restoring','state.restorePending=true'],
+ ['offline','state.sharedHostAvailable=false'],['read only','state.sharedSessions[0].sendAvailable=false'],
+ ['chat unavailable','uiCore.state.capabilities={chat:{available:false}}'],['empty',"$('draft').value=''"],
+]) test(`FIX-32 phone host send explains ${name} and retains text`,async()=>{
+ const h=harness();h.run('Object.assign(state,{loggedIn:true,owner:"synthetic",chatSource:"host",sharedHostAvailable:true,sharedSessionId:"s1",sharedSessions:[{sessionId:"s1",sendAvailable:true}]});uiCore.syncMobileIdentity();');
+ h.node('draft').value='合成首句';h.run(flag);h.run('updateComposer()');
+ assert.equal(h.run("uiCore.mobile.composerState($('draft').value).ready"),false);
+ if(name!=='empty')assert.equal(h.node('send-button').disabled,true);
+ const before=h.node('draft').value;await h.run('send()');
+ assert.equal(h.bridge.some(row=>row.method==='shared.send'),false);
+ assert.ok(h.node('toast').textContent,'blocked entry must show a reason');assert.equal(h.node('draft').value,before);
+});
+
+test('FIX-32 newly unlocked phone sends immediately while unrelated models refresh',async()=>{
+ const h=harness();h.run('Object.assign(state,{loggedIn:true,owner:"synthetic",chatSource:"host",sharedHostAvailable:true,sharedSessionId:"s1",sharedSessions:[{sessionId:"s1",sendAvailable:true}]});uiCore.syncMobileIdentity();uiCore.state.sessionSelecting=true;');
+ h.node('draft').value='刚解锁的第一句';h.run('updateComposer()');assert.equal(h.node('send-button').disabled,true);
+ h.run('uiCore.state.sessionSelecting=false;state.modelsRefreshing=true;updateComposer()');assert.equal(h.node('send-button').disabled,false);
+ const sent=h.run('send()'),request=h.bridge.find(row=>row.method==='shared.send');assert.ok(request);
+ h.reply(h.bridge.indexOf(request),{source:'host',sessionId:'s1',requestId:request.params.requestId,state:'accepted'});await sent;
+ assert.equal(h.bridge.filter(row=>row.method==='shared.send').length,1);
+});
+
+test('FIX-32 standalone send explains missing model, model test and running reply',async()=>{
+ const h=harness({autoBoot:true});
+ h.run('window.weftNative.onmessage=event=>androidBridge.receive(event)');
+ h.run(`globalThis.fix32Running=false;globalThis.fix32Sends=0;
+ WeftOffline.create=async()=>({view:()=>({conversations:[],turns:[],running:fix32Running}),send:async()=>{fix32Sends++},close(){},clear:async()=>{}});`);
+ await h.run('WeftPhone.start({origin:"https://cloud.example",accountId:"synthetic",email:"synthetic@example.com",deviceId:"phone"},{authorized:async()=>({devices:[]})})');
+ h.node('draft').value='保留我的消息';h.run('state.model=null;updateComposer()');assert.equal(h.node('send-button').disabled,true);
+ await h.run('WeftPhone.send()');assert.match(h.node('toast').textContent,/添加.*模型/);assert.equal(h.node('draft').value,'保留我的消息');
+ h.run('state.model={modelId:"synthetic",endpoint:"https://model.example/v1"};state.modelSwitching=true;updateComposer()');assert.equal(h.node('send-button').disabled,true);
+ await h.run('WeftPhone.send()');assert.match(h.node('toast').textContent,/测试|切换/);
+ h.run('state.modelSwitching=false;fix32Running=true;state.busy=true;updateComposer()');assert.equal(h.node('send-button').dataset.action,'stop');
+ await h.run('WeftPhone.send()');assert.match(h.node('toast').textContent,/回复.*进行/);assert.equal(h.run('fix32Sends'),0);assert.equal(h.node('draft').value,'保留我的消息');
 });

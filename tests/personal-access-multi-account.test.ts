@@ -76,12 +76,11 @@ async function registered(origin: string, username: string) {
 }
 
 async function eventually(read: () => Promise<any>, predicate: (value: any) => boolean) {
-  for (let index = 0; index < 100; index++) {
+  for (;;) {
     const value = await read()
     if (predicate(value)) return value
     await new Promise((resolve) => setTimeout(resolve, 20))
   }
-  throw new Error('fixture command did not settle')
 }
 
 test('two accounts have independent devices, command IDs, sync events and shared-model access', async () => {

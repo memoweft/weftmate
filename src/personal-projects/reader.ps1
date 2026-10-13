@@ -1,4 +1,4 @@
-param([string]$RequestJson)
+param([string]$RequestJson, [switch]$ReportReady)
 $ErrorActionPreference = 'Stop'
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -244,6 +244,8 @@ public static class SafeProjectReader {
   }
 }
 '@
+
+if ($ReportReady) { [Console]::Out.WriteLine('WEFTMATE_PROJECT_READER_READY'); [Console]::Out.Flush() }
 
 try {
   $request = $(if ($RequestJson) { $RequestJson } else { [Console]::In.ReadToEnd() }) | ConvertFrom-Json

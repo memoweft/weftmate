@@ -4,7 +4,8 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { createPersonalAccessService } from '../src/personal-access/index.mjs'
+import { createPersonalAccessService } from './helpers/personal-access-fixture.mjs'
+import { waitForCommand } from './helpers/wait-for-command.mjs'
 import { createPersonalAccessBackend } from '../src/personal-access-backend.mjs'
 
 const hash = (value: string) => createHash('sha256').update(value).digest('hex')
@@ -54,6 +55,7 @@ async function fixture(questions: any[] = defaultQuestions) {
   }
   let service = await createPersonalAccessService({ root, port: 0, backend, accountModelManager: modelManager })
   let { origin, hostId } = await service.start()
+  await service.__testContext.activity.close()
   const grant = await service.issueSetupGrant()
   const setup = await fetch(`${origin}/personal/v1/auth/setup`, { method: 'POST',
     headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: grant.grant,
@@ -69,12 +71,7 @@ async function fixture(questions: any[] = defaultQuestions) {
   const command = async (body: any) => {
     const accepted = await request('commands', body)
     assert.equal(accepted.status, 202, JSON.stringify(accepted.body))
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const result = await request(`commands/${accepted.body.command.commandId}`)
-      if (result.body.command.state === 'accepted_by_dsh') return result.body.command
-      await new Promise(resolve => setTimeout(resolve, 10))
-    }
-    throw new Error('synthetic source not accepted')
+    return waitForCommand(async () => (await request(`commands/${accepted.body.command.commandId}`)).body.command)
   }
   const created = await command({ requestId: 'question-session', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'local' })
   const source = await command({ requestId: 'question-source', kind: 'session.message', targetDeviceId: hostId, sessionId: created.sessionId, text: sourceText })

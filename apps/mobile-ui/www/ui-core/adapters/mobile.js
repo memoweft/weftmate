@@ -4,6 +4,22 @@ globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
   const state = environment.mobileState;
   const MEMORY_KINDS = {all:'全部',cognition:'理解',entity:'人物与对象',relationship:'关系',event:'共同经历'};
   let requestSequence = 0;
+  function sendBlocker(text) {
+    const linked = !!selectedBinding(), host = state.chatSource === 'host' || linked;
+    if (core.state.sessionSelecting || core.state.sideCreating) return '正在打开对话，请稍候再发送。';
+    if (core.folderMutationPending?.()) return '正在准备文件夹，请稍候再发送。';
+    if (!state.loggedIn) return '请先登录，再发送消息。';
+    if (state.transitionPending || state.restorePending) return '正在恢复对话，请稍候再发送。';
+    if (state.modelSwitching) return '正在测试或切换模型，请稍候再发送。';
+    if (host && (!core.state.online || ['restarting','unavailable'].includes(core.state.connection?.host?.runtime))) return '电脑暂时无法连接，消息仍在草稿里。';
+    if (host && (core.state.capabilities?.chat?.available === false || !selectedSharedSession()?.sendAvailable)) return '这段对话暂时无法发送，请重新打开或新建对话。';
+    if (state.busy || host && (state.sharedPending || state.linkedPending)) return '上一条消息正在处理，请稍候。';
+    if (host && state.sharedOutboxLoading || !host && state.sendUncertain) return '上一条消息的发送结果还在核对，请稍候。';
+    if (linked && currentAttachments().length) return '这段对话暂时无法发送附件，附件仍在草稿里。';
+    if (!text.trim() && !currentAttachments().length) return '先输入消息或添加附件。';
+    return '';
+  }
+  function explainSendBlocker(reason) { effects.status(reason, true); effects.updateComposer(); return {sent:false, reason}; }
   function composerState(text) {
     state.draft = text;
     const key = state.chatSource === 'host' ? sharedDraftKey() : draftKey();
@@ -11,8 +27,7 @@ globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
     const linked=!!selectedBinding(), host=state.chatSource==='host'||linked, session=selectedSharedSession();
     const attachments=currentAttachments().length;
     const busy=host?!!state.sharedPending||!!state.linkedPending||state.sharedOutboxLoading||state.busy:state.busy;
-    const ready=(!!text.trim()||attachments>0)&&state.loggedIn&&(!host || core.state.online&&!['restarting','unavailable'].includes(core.state.connection?.host?.runtime)&&core.state.capabilities?.chat?.available!==false)&&!busy&&!state.modelSwitching&&!state.transitionPending&&
-      !state.restorePending&&!core.state.sessionSelecting&&!core.state.sideCreating&&(host?!!session?.sendAvailable:!state.sendUncertain)&&(!linked||attachments===0);
+    const ready=!sendBlocker(text);
     return {ready, host, busy,
       processingHint:core.executionAccountHint() || (core.state.sessionSelecting?'正在打开对话…':host&&state.sharedRunning?core.processingLabel(session?.processing):''),
       sendHidden:host?state.sharedRunning&&!text.trim()&&!attachments:busy,
@@ -239,9 +254,9 @@ function acceptSend(attempt,conversationId,turnId){if(state.activeSend!==attempt
 
 function newSharedRequestId(){return `ui-${Date.now().toString(36)}-${(++requestSequence).toString(36)}-${Math.random().toString(36).slice(2,10)}`}
 
-async function sendShared(options={}){if(core.state.sessionSelecting||core.state.sideCreating)return;core.syncMobileIdentity();const intent=options.intent==='queue'||options.intent==='steer'?options.intent:core.composerInputMode(state.sharedSessionId);const text=(options.retryRow?.text ?? effects.readMessageDraft()).trim(),session=selectedSharedSession();
+async function sendShared(options={}){core.syncMobileIdentity();const intent=options.intent==='queue'||options.intent==='steer'?options.intent:core.composerInputMode(state.sharedSessionId);const text=(options.retryRow?.text ?? effects.readMessageDraft()).trim(),session=selectedSharedSession();
+  const blocker=sendBlocker(text);if(blocker)return explainSendBlocker(blocker);
   const items=[...currentAttachments()];
-  if((!text&&!items.length)||!session?.sendAvailable||state.sharedPending||state.sharedOutboxLoading||state.transitionPending)return;
   if(text.length>16384){effects.status('消息过长，请缩短后发送',true);return}
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration,sessionId=session.sessionId,
     requestId=options.retryRow?.requestId || newSharedRequestId(),key=sharedDraftKey(),attachmentIds=options.retryRow?.attachmentIds || items.map(item=>item.attachmentId);
@@ -274,8 +289,8 @@ async function sendShared(options={}){if(core.state.sessionSelecting||core.state
     else effects.status(effects.safeError(e),true)}
   finally{if(sharedViewCurrent(owner,epoch,generation,sessionId)){effects.updateComposer();effects.renderSharedConversation();effects.scheduleSharedPoll()}}}
 
-async function sendLinked(options={}){if(core.state.sessionSelecting||core.state.sideCreating)return;core.syncMobileIdentity();const intent=options.intent==='queue'||options.intent==='steer'?options.intent:core.composerInputMode(state.sharedSessionId);const binding=selectedBinding(),session=selectedSharedSession(),text=effects.readMessageDraft().trim();
-  if(!binding||!session?.sendAvailable||!text||state.linkedPending||currentAttachments().length)return;
+async function sendLinked(options={}){core.syncMobileIdentity();const intent=options.intent==='queue'||options.intent==='steer'?options.intent:core.composerInputMode(state.sharedSessionId);const binding=selectedBinding(),session=selectedSharedSession(),text=effects.readMessageDraft().trim();
+  const blocker=sendBlocker(text)||(!binding?'这段对话暂时无法发送，请重新打开对话。':'');if(blocker)return explainSendBlocker(blocker);
   const owner=state.owner,epoch=state.authEpoch,conversationId=state.conversationId,
     sessionId=binding.sessionId,key=`weftmate-linked-send:${owner}:${conversationId}`;
   let marker;try{marker=JSON.parse(environment.storage.getItem(key)||'null')}catch{marker=null}
@@ -298,9 +313,9 @@ async function sendLinked(options={}){if(core.state.sessionSelecting||core.state
   }catch(error){if(current())effects.status(error?.message==='TIMEOUT'?'发送结果待核对；原请求编号已保留':effects.safeError(error),true)}
   finally{if(state.owner===owner&&state.authEpoch===epoch){state.linkedPending=null;effects.updateComposer()}}}
 
-async function send(options={}){if(core.folderMutationPending?.())return;if(state.chatSource==='host')return sendShared(options);
+async function send(options={}){if(state.chatSource==='host')return sendShared(options);
   if(selectedBinding())return sendLinked(options);
-  const text=effects.readMessageDraft().trim(),items=[...currentAttachments()];if((!text&&!items.length)||state.busy||state.sendUncertain)return;
+  const text=effects.readMessageDraft().trim(),items=[...currentAttachments()];const blocker=sendBlocker(text);if(blocker)return explainSendBlocker(blocker);
   if(text.length>16384){effects.status('消息过长，请缩短后发送',true);return}
   const owner=state.owner,epoch=state.authEpoch,conversationId=state.conversationId||'',attachmentIds=items.map(item=>item.attachmentId);
   const attempt={owner,epoch,conversationId,key:attachmentKey(),draftKey:draftKey(),text,acceptedId:null,turnId:null,adopted:false};
