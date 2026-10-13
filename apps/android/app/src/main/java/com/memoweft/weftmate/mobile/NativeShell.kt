@@ -63,6 +63,8 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable internal fun NativeShell(m: NativeChatModel, activity: NativeActivity) {
+    // Observe the route here; a forwarded theme lambda must also change when navigation changes.
+    val selectedTab=m.tab
     NativeTheme(m.dark) {
         val focus=LocalFocusManager.current
         var drawer by remember { mutableStateOf(false) }
@@ -79,37 +81,38 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
         LaunchedEffect(ime) { if(keyboardWasVisible && !ime)m.focused=false;keyboardWasVisible=ime }
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).windowInsetsPadding(WindowInsets.systemBars).imePadding()) {
             Row(Modifier.fillMaxWidth().padding(horizontal=pad,vertical=gap),verticalAlignment=Alignment.CenterVertically) {
-                NativeIconButton(if(m.tab=="settings") R.drawable.wm_back else R.drawable.wm_panel,if(m.tab=="settings")"返回聊天" else "打开侧栏",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)) { if(m.tab=="settings")m.tab="chat" else { drawer=true;m.launch { m.refreshChats() } } }
+                NativeIconButton(if(selectedTab=="settings") R.drawable.wm_back else R.drawable.wm_panel,if(selectedTab=="settings")"返回聊天" else "打开侧栏",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)) { if(selectedTab=="settings")m.tab="chat" else { drawer=true;m.launch { m.refreshChats() } } }
                 Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally) {
-                    Text(if(m.tab=="chat" || m.tab=="web-chat")m.title else tabs.find{it.first==m.tab}?.second?.first ?: "设置",fontSize=DesignTokens.font18.sp,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
-                    if(m.tab=="chat") Text(if(m.connected)"已连接" else "正在重连",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if(selectedTab=="chat" || selectedTab=="web-chat")m.title else tabs.find{it.first==selectedTab}?.second?.first ?: "设置",fontSize=DesignTokens.font18.sp,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
+                    if(selectedTab=="chat") Text(if(m.connected)"已连接" else "正在重连",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Box {
                     NativeIconButton(R.drawable.wm_more,"更多",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)){overflow=true}
                     DropdownMenu(expanded=overflow,onDismissRequest={overflow=false}) {
-                        if(m.running && m.tab!="library") DropdownMenuItem(text={Text("停止回复")},onClick={overflow=false;m.stop()},leadingIcon={Icon(painterResource(R.drawable.wm_stop),null)})
+                        if(m.running && selectedTab!="library") DropdownMenuItem(text={Text("停止回复")},onClick={overflow=false;m.stop()},leadingIcon={Icon(painterResource(R.drawable.wm_stop),null)})
                         DropdownMenuItem(text={Text("设置")},onClick={overflow=false;focus.clearFocus();m.tab="settings"},leadingIcon={Icon(painterResource(R.drawable.wm_settings),null)})
-                        if(m.tab!="library") {
+                        if(selectedTab=="library")DropdownMenuItem(text={Text("打开原网页成果库")},onClick={overflow=false;activity.originalLibrary()},leadingIcon={Icon(painterResource(R.drawable.wm_layers),null)})
+                        if(selectedTab!="library") {
                             DropdownMenuItem(text={Text("新对话")},onClick={overflow=false;m.launch{m.select(m.call("conversations.create"));m.tab="chat"}},leadingIcon={Icon(painterResource(R.drawable.wm_plus),null)})
                             DropdownMenuItem(text={Text("完整对话功能")},onClick={overflow=false;m.tab="web-chat"},leadingIcon={Icon(painterResource(R.drawable.wm_chat),null)})
                         }
                     }
                 }
             }
-            if(m.tab=="chat") {
+            if(selectedTab=="chat") {
                 NativeConversation(m,Modifier.weight(1f),onPreview={preview=it})
                 NativeComposer(m,onPreview={preview=it})
-            } else if(m.tab=="library") {
+            } else if(selectedTab=="library") {
                 NativeLibrary(m,activity,Modifier.weight(1f),onPreview={preview=it})
             } else {
-                if(m.tab=="settings") Row(Modifier.fillMaxWidth().padding(horizontal=pad),verticalAlignment=Alignment.CenterVertically) {
+                if(selectedTab=="settings") Row(Modifier.fillMaxWidth().padding(horizontal=pad),verticalAlignment=Alignment.CenterVertically) {
                     Text("使用原生聊天界面",Modifier.weight(1f));Switch(checked=true,onCheckedChange={activity.fallback()})
                 }
-                key(m.tab) { AndroidView(factory={ activity.webPage(if(m.tab=="web-chat")"chat" else m.tab) },modifier=Modifier.weight(1f).fillMaxWidth()) }
+                key(selectedTab) { AndroidView(factory={ activity.webPage(if(selectedTab=="web-chat")"chat" else selectedTab) },modifier=Modifier.weight(1f).fillMaxWidth()) }
             }
-            if(!ime && m.tab!="settings") {
+            if(!ime && selectedTab!="settings") {
                 Row(Modifier.fillMaxWidth().padding(horizontal=pad,vertical=gap).clip(pill).background(MaterialTheme.colorScheme.surfaceVariant).padding(DesignTokens.space4.dp),horizontalArrangement=Arrangement.SpaceEvenly) {
-                    tabs.forEach{(id,v)->NativeIconButton(v.second,v.first,Modifier.weight(1f).semantics{selected=m.tab==id},selected=m.tab==id){focus.clearFocus();m.tab=id}}
+                    tabs.forEach{(id,v)->NativeIconButton(v.second,v.first,Modifier.weight(1f).semantics{selected=selectedTab==id},selected=selectedTab==id){focus.clearFocus();m.tab=id}}
                 }
             }
         }

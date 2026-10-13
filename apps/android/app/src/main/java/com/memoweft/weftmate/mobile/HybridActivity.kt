@@ -104,6 +104,17 @@ internal fun activityCommandProjection(row: JSONObject): JSONObject {
 
 /** The updateable UI is presentation; account secrets, local history, model calls and tools stay native. */
 open class HybridActivity : androidx.activity.ComponentActivity() {
+    override fun attachBaseContext(base: android.content.Context) {
+        if(BuildConfig.DEBUG && base.packageName=="com.memoweft.weftmate.mobile.and7qa") {
+            val width=base.getSharedPreferences("native-qa",MODE_PRIVATE).getInt("width",360)
+            val config=Configuration(base.resources.configuration).apply {
+                densityDpi=(base.resources.displayMetrics.widthPixels*160f/width).toInt()
+                screenWidthDp=width
+                screenHeightDp=(base.resources.displayMetrics.heightPixels*160f/densityDpi).toInt()
+            }
+            super.attachBaseContext(base.createConfigurationContext(config))
+        } else super.attachBaseContext(base)
+    }
     /** Native presentation shares the existing owner/epoch guarded business executor. */
     internal var nativeObserver: ((String, JSONObject) -> Unit)? = null
     private var nativeHasDraft = false
@@ -362,6 +373,9 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 syncSafeInsets()
                 view.evaluateJavascript(assets.open("native-frame.js").bufferedReader().use { it.readText() }, null)
                 embeddedPageFinished()
+                if(intent.getBooleanExtra("openLibraryPage",false))view.evaluateJavascript("""
+                    (()=>{function open(){if(typeof page==='function' && typeof state!=='undefined' && state.booted)page('library');else setTimeout(open,100);}open();})()
+                """.trimIndent(),null)
                 val expected = pageGeneration
                 web.postDelayed({
                     if (!closed.get() && !currentPageReady && expected == pageGeneration) {
@@ -1701,7 +1715,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
             .put("nativeEmailCodeLogin", true)
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
-            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
+            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.and7qa", "com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
                 else secrets.host()?.takeIf { it.authSource == "local" }?.origin ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
         "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))

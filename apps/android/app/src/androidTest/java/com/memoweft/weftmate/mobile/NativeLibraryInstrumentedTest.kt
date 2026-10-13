@@ -26,20 +26,65 @@ class NativeLibraryInstrumentedTest {
     private fun waitFor(label:String,condition:()->Boolean){val end=System.currentTimeMillis()+30000;while(System.currentTimeMillis()<end){var done=false;main{done=condition()};if(done)return;Thread.sleep(100)};error("Timed out: $label")}
     private fun shot(name:String){compose.waitForIdle();Thread.sleep(300);val b=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-$name.png").outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}}
     private fun control(mode:String){URL("$origin/and7-control?mode=$mode").openConnection().getInputStream().use{it.readBytes()}}
+    private fun reveal(name:String){compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasText(name))}
+    private fun webComparisons() {
+        main{activity.originalLibrary()}
+        var legacy:HybridActivity?=null
+        waitFor("original library window") {
+            val field=WeftMateApplication::class.java.getDeclaredField("visible").apply{isAccessible=true}
+            legacy=(field.get(i.targetContext.applicationContext) as Set<*>).filterIsInstance<HybridActivity>().firstOrNull{it !is NativeActivity}
+            legacy!=null
+        }
+        fun js(code:String){main{legacy!!.embeddedWeb.evaluateJavascript(code,null)}}
+        fun ready(code:String){var done=false;waitFor("web library state"){legacy!!.embeddedWeb.evaluateJavascript(code){done=it=="true"};done}}
+        fun capture(name:String){Thread.sleep(350);val image=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-web-$name.png").outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}}
+        ready("Boolean(typeof state!=='undefined' && state.booted)")
+        js("applyTheme('${args.getString("and7Theme","light")}');page('library')")
+        ready("Boolean(document.querySelector('.library-row'))")
+        capture("library-list")
+        js("(()=>{const row=document.querySelector('.library-row[data-library-id=\"${args.getString("and7MarkdownId")}\"]');row.scrollIntoView({block:'center'});row.querySelector('.library-row-actions button').click()})()")
+        Thread.sleep(300);capture("row-menu")
+        js("WeftPopover.closeMenu()")
+        control("empty");js("uiCore.readLibrary()")
+        ready("Boolean(document.querySelector('.library-empty') && !document.querySelector('.library-row'))")
+        capture("library-empty")
+        control("normal")
+        main{legacy!!.finish()}
+    }
     @Test fun libraryAndUnifiedFiles() {
         check(i.targetContext.packageName=="com.memoweft.weftmate.mobile.and7qa")
         i.targetContext.getSharedPreferences("native-qa",0).edit().putInt("width",args.getString("and7Width","360").toInt()).commit()
-        val host=PersonalApi().login(origin,args.getString("and7User")!!,args.getString("and7Password")!!,"Synthetic Android")
-        SecureSettings(i.targetContext).saveHost(host)
-        activity=i.startActivitySync(Intent(i.targetContext,NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as NativeActivity
+        SecureSettings(i.targetContext).clearHost()
+        // Existing notification prompt is outside this package: synthesize the already-asked state.
+        ActivityNotifications(i.targetContext).markPermissionAsked()
+        activity=i.startActivitySync(Intent(i.targetContext,NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("lg1bHostOrigin",origin)) as NativeActivity
+        var booted=false
+        waitFor("web login booted"){activity.embeddedWeb.evaluateJavascript("Boolean(typeof state!=='undefined' && state.booted)"){booted=it=="true"};booted}
+        val credentials=JSONObject().put("origin",origin).put("username",args.getString("and7User")).put("password",args.getString("and7Password")).put("deviceName","Synthetic Android")
+        main{activity.embeddedWeb.evaluateJavascript("call('auth.login',$credentials).then(()=>location.reload())",null)}
         waitFor("logged in"){activity.model.loggedIn && !activity.model.loading}
+        val host=SecureSettings(i.targetContext).host()!!
+        runBlocking{activity.model.call("settings.appearance",JSONObject().put("value",args.getString("and7Theme","light")))}
         main{activity.model.dark=args.getString("and7Theme")=="dark"}
         compose.onNodeWithContentDescription("成果库").performClick()
-        compose.waitUntil(30000){compose.onAllNodesWithText("虚构周计划.md").fetchSemanticsNodes().isNotEmpty()};shot("library-list")
+        main{androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()}
+        compose.mainClock.advanceTimeBy(100)
+        compose.waitForIdle()
+        Thread.sleep(500)
+        main{
+            val field=WeftMateApplication::class.java.getDeclaredField("visible").apply{isAccessible=true}
+            val visible=(field.get(i.targetContext.applicationContext) as Set<*>).filterIsInstance<NativeActivity>()
+            File(activity.filesDir,"and7-$variant-entry.json").writeText(JSONObject().put("loggedIn",activity.model.loggedIn).put("tab",activity.model.tab).put("error",activity.model.error).put("destroyed",activity.isDestroyed).put("finishing",activity.isFinishing).put("children",activity.presentationContainer.childCount).put("focus",activity.window.decorView.hasWindowFocus()).put("compositions",org.json.JSONArray((0 until activity.presentationContainer.childCount).map{(activity.presentationContainer.getChildAt(it) as? androidx.compose.ui.platform.ComposeView)?.hasComposition})).put("visible",org.json.JSONArray(visible.map{JSONObject().put("same",it===activity).put("tab",it.model.tab)})).toString())
+        }
+        val entry=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-entry.png").outputStream().use{entry.compress(Bitmap.CompressFormat.PNG,100,it)}
+        compose.waitUntil(30000){runCatching{compose.onAllNodesWithText("虚构文档.docx").fetchSemanticsNodes().isNotEmpty()}.getOrDefault(false)};shot("library-list")
+        reveal("虚构周计划.md")
         compose.onNodeWithContentDescription("文件操作：虚构周计划.md").performClick();shot("row-menu")
         i.uiAutomation.performGlobalAction(1)
-        compose.onNodeWithContentDescription("筛选文件").performClick();shot("filter-menu");compose.onNodeWithText("全部文件").performClick()
+        compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasContentDescription("按项目筛选"))
+        compose.onNodeWithContentDescription("按项目筛选").performClick();shot("filter-menu");compose.onAllNodesWithText("全部项目").onLast().performClick()
         for((name,label) in listOf("虚构风景.png" to "image","虚构便签.txt" to "text","虚构周计划.md" to "markdown","synthetic-example.py" to "code","虚构阅读.pdf" to "pdf","虚构文档.docx" to "other")) {
+            reveal(name)
             compose.onNodeWithText(name).performClick()
             compose.waitUntil(30000){compose.onAllNodesWithContentDescription("正在读取文件").fetchSemanticsNodes().isEmpty()};Thread.sleep(500)
             compose.onNodeWithContentDescription("文件查看").assertExists();compose.onNodeWithContentDescription("消息输入").assertDoesNotExist();shot("viewer-$label")
@@ -67,20 +112,25 @@ class NativeLibraryInstrumentedTest {
             }
             compose.onNodeWithContentDescription("关闭预览").performClick()
         }
-        compose.onNodeWithContentDescription("文件操作：虚构周计划.md").performClick()
+        reveal("虚构周计划.md");compose.onNodeWithContentDescription("文件操作：虚构周计划.md").performClick()
         compose.onNodeWithText("在对话中定位").performClick()
         waitFor("file source chat"){activity.model.tab=="chat"}
         compose.onNodeWithText("虚构周计划.md").performScrollTo().performClick()
         Thread.sleep(700);compose.onNodeWithContentDescription("文件查看").assertExists();shot("chat-artifact-viewer")
         compose.onNodeWithContentDescription("关闭预览").performClick()
         compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(500)
+        // Phone-only identity follows the same bootstrap contract, and makes no library request.
+        SecureSettings(i.targetContext).saveHost(host.copy(authSource="phone"))
+        main{activity.model.tab="chat"};compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(700)
+        compose.onNodeWithText("让电脑上的 WeftMate 帮你做事后，产出的文件会出现在这里。").assertExists();shot("phone-only-empty")
+        SecureSettings(i.targetContext).saveHost(host)
         // Missing, failure and loading are distinct real network responses, not fake screen state.
         control("empty");main{activity.model.tab="chat"};compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(900);shot("library-empty")
         control("loading");main{activity.model.tab="chat"};compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(600);shot("library-loading")
         control("error");main{activity.model.tab="chat"};compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(900);shot("library-error")
         control("normal");main{activity.model.tab="chat"};compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(900)
-        control("missing");compose.onNodeWithText("虚构便签.txt").performClick();Thread.sleep(700);shot("viewer-missing");compose.onNodeWithContentDescription("关闭预览").performClick()
-        control("file-error");compose.onNodeWithText("虚构便签.txt").performClick();Thread.sleep(700);shot("viewer-error");control("normal");compose.onNodeWithText("重试").performClick();Thread.sleep(500);compose.onNodeWithContentDescription("关闭预览").performClick()
+        control("missing");reveal("虚构便签.txt");compose.onNodeWithText("虚构便签.txt").performClick();Thread.sleep(700);shot("viewer-missing");compose.onNodeWithContentDescription("关闭预览").performClick()
+        control("file-error");reveal("虚构便签.txt");compose.onNodeWithText("虚构便签.txt").performClick();Thread.sleep(700);shot("viewer-error");control("normal");compose.onNodeWithText("重试").performClick();Thread.sleep(500);compose.onNodeWithContentDescription("关闭预览").performClick()
         // Actual chat attachment uses the same viewer and byte loader, including original binary files.
         main{activity.model.tab="chat"}
         val camera=File(activity.cacheDir,"composer-camera").apply{mkdirs()};val text=File(camera,"来自聊天的虚构便签.txt").apply{writeText("聊天附件的原始内容。")}
@@ -94,6 +144,7 @@ class NativeLibraryInstrumentedTest {
         val loaded=runBlocking{activity.fileActions.load(row)};assertArrayEquals(office.readBytes(),loaded.file!!.readBytes())
         var open:Intent?=null;main{activity.fileActions.systemIntent={open=it};activity.fileActions.share(loaded,true)}
         assertEquals(Intent.ACTION_VIEW,open!!.action);assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION,open!!.flags)
+        webComparisons()
         // Logout cleanup and delayed old-account export are exercised without a real system panel.
         assertTrue(activity.nativeFileCurrent(loaded))
         runBlocking{activity.model.call("auth.logout")}

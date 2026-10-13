@@ -18,6 +18,7 @@ internal class NativeLibraryModel(private val chat:NativeChatModel, private val 
     var error by mutableStateOf("")
     var noComputer by mutableStateOf(false)
     var next by mutableStateOf("")
+    var total by mutableIntStateOf(0)
     private var generation=0
     private val owner=chat.owner
     private val prefs=activity.getSharedPreferences("native-library-cache",0)
@@ -46,6 +47,7 @@ internal class NativeLibraryModel(private val chat:NativeChatModel, private val 
                 if(g!=generation || owner!=chat.owner)return@launch
                 rows=mergeLibraryRows(if(more)rows else emptyList(),page.optJSONArray("items")?.objects().orEmpty())
                 projects=page.optJSONArray("projects")?.objects().orEmpty()
+                total=page.optInt("total",rows.size)
                 next=page.optString("nextCursor").takeUnless{it=="null"}.orEmpty();noComputer=false
                 if(search.isBlank() && type.isBlank() && project.isBlank() && days==0)prefs.edit().putString(owner,JSONArray(rows).toString()).apply()
             }catch(e:CancellationException){throw e}catch(e:Exception){
