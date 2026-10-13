@@ -7,6 +7,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 internal enum class NativeFileKind { IMAGE, MARKDOWN, TEXT, CODE, PDF, OTHER }
+/** Preserve the existing table/code actions until native rendering reaches feature parity. */
+internal fun useOriginalFileViewer(kind:NativeFileKind):Boolean = kind in setOf(NativeFileKind.MARKDOWN,NativeFileKind.CODE)
 internal fun nativeFileKind(name: String, mime: String = ""): NativeFileKind {
     val ext = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
     return when {

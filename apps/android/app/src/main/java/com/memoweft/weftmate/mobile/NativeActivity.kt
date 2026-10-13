@@ -124,6 +124,12 @@ class NativeActivity : HybridActivity() {
             .putExtra("openLibraryFileId",fileId)
             .putExtra("lg1bHostOrigin",intent.getStringExtra("lg1bHostOrigin")))
     }
+    internal fun originalFile(row:JSONObject) {
+        if(row.optString("libraryId").isNotBlank())originalLibrary(row.getString("libraryId"))
+        else startActivity(Intent(this,HybridActivity::class.java)
+            .putExtra("openOriginalTextFile",row.toString())
+            .putExtra("lg1bHostOrigin",intent.getStringExtra("lg1bHostOrigin")))
+    }
     override fun onResume() { super.onResume(); nativeForeground = true }
     override fun onPause() { nativeForeground = false; if (::model.isInitialized) model.saveDraft(); super.onPause() }
     @Suppress("DEPRECATION") override fun onBackPressed() {

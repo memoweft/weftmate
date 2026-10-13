@@ -27,13 +27,29 @@ class NativeLibraryInstrumentedTest {
     private fun shot(name:String){compose.waitForIdle();Thread.sleep(300);val b=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-$name.png").outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}}
     private fun control(mode:String){URL("$origin/and7-control?mode=$mode").openConnection().getInputStream().use{it.readBytes()}}
     private fun reveal(name:String){compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasText(name))}
+    private fun originalViewer(name:String,label:String,assertActions:Boolean=true) {
+        compose.waitForIdle()
+        var legacy:HybridActivity?=null
+        waitFor("original file window") {
+            val field=WeftMateApplication::class.java.getDeclaredField("visible").apply{isAccessible=true}
+            legacy=(field.get(i.targetContext.applicationContext) as Set<*>).filterIsInstance<HybridActivity>().firstOrNull{it !is NativeActivity}
+            legacy!=null
+        }
+        var ready=false
+        waitFor("original renderer") { legacy!!.embeddedWeb.evaluateJavascript("Boolean(document.getElementById('resource-content')?.textContent.includes("+JSONObject.quote(if(label=="markdown")"虚构周计划" else "fictional test only")+"))"){ready=it=="true"};ready }
+        if(assertActions) {
+            var controls=false
+            val check=if(label=="markdown")"Boolean(document.querySelector('#resource-content table') && document.getElementById('resource-content').textContent.includes('复制为 Markdown') && document.getElementById('resource-content').textContent.includes('复制为 CSV') && document.getElementById('resource-content').textContent.includes('复制代码') && document.getElementById('resource-content').textContent.includes('自动换行'))" else "Boolean(document.getElementById('resource-content').textContent.includes('复制代码') && document.getElementById('resource-content').textContent.includes('自动换行'))"
+            waitFor("table/code actions preserved") { legacy!!.embeddedWeb.evaluateJavascript(check){controls=it=="true"};controls }
+        }
+        Thread.sleep(350);val b=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-$name.png").outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}
+        main{legacy!!.finish()};waitFor("native return"){activity.nativeForeground};compose.waitForIdle()
+    }
     private fun webComparisons() {
         compose.onNodeWithContentDescription("成果库").performClick()
         compose.waitUntil(30000){compose.onAllNodesWithText("虚构文档.docx").fetchSemanticsNodes().isNotEmpty()}
         reveal("虚构周计划.md");compose.onNodeWithText("虚构周计划.md").performClick()
-        compose.waitUntil(30000){compose.onAllNodesWithContentDescription("正在读取文件").fetchSemanticsNodes().isEmpty()}
-        compose.onNodeWithContentDescription("更多文件操作").performClick()
-        compose.onNodeWithText("在原网页中查看").performClick()
+        compose.waitForIdle()
         var legacy:HybridActivity?=null
         waitFor("original library window") {
             val field=WeftMateApplication::class.java.getDeclaredField("visible").apply{isAccessible=true}
@@ -60,12 +76,16 @@ class NativeLibraryInstrumentedTest {
         ready("Boolean(document.getElementById('resource-content')?.textContent.includes('虚构周计划'))")
         capture("viewer-markdown")
         js("closeResourcePage()")
+        js("document.querySelector('.library-row[data-library-id=\"${args.getString("and7CodeId")}\"] .library-file').click()")
+        ready("Boolean(document.getElementById('resource-content')?.textContent.includes('fictional test only'))")
+        capture("viewer-code")
+        js("closeResourcePage()")
         control("empty");js("uiCore.readLibrary()")
         ready("Boolean(document.querySelector('.library-empty') && !document.querySelector('.library-row'))")
         capture("library-empty")
         control("normal")
         main{legacy!!.finish()}
-        compose.waitForIdle();compose.onNodeWithContentDescription("关闭预览").performClick()
+        compose.waitForIdle()
     }
     @Test fun libraryAndUnifiedFiles() {
         check(i.targetContext.packageName=="com.memoweft.weftmate.mobile.and7qa")
@@ -123,15 +143,16 @@ class NativeLibraryInstrumentedTest {
         for((name,label) in listOf("虚构风景.png" to "image","虚构便签.txt" to "text","虚构周计划.md" to "markdown","synthetic-example.py" to "code","虚构阅读.pdf" to "pdf","虚构文档.docx" to "other")) {
             reveal(name)
             compose.onNodeWithText(name).performClick()
+            if(label=="markdown" || label=="code") {originalViewer("viewer-$label",label);continue}
             compose.waitUntil(30000){compose.onAllNodesWithContentDescription("正在读取文件").fetchSemanticsNodes().isEmpty()};Thread.sleep(500)
             compose.onNodeWithContentDescription("文件查看").assertExists();compose.onNodeWithContentDescription("消息输入").assertDoesNotExist();shot("viewer-$label")
             if(label=="image") {compose.onNodeWithContentDescription(name).performTouchInput{doubleClick()};shot("viewer-image-zoom")}
             if(label=="pdf") {compose.onNodeWithContentDescription("下一页").performClick();Thread.sleep(500);compose.onNodeWithText("2 / 2").assertExists();shot("viewer-pdf-page2")}
-            if(label=="markdown") {
+            if(label=="text") {
                 compose.onNodeWithContentDescription("更多文件操作").performClick();shot("viewer-menu")
                 compose.onNodeWithText("查看历史版本").assertDoesNotExist()
                 val captured=mutableListOf<Intent>();main{activity.fileActions.systemIntent={captured.add(it)}}
-                compose.onNodeWithText("保存到手机").performClick();assertEquals(Intent.ACTION_CREATE_DOCUMENT,captured.last().action);assertEquals("虚构周计划.md",captured.last().getStringExtra(Intent.EXTRA_TITLE));assertTrue(captured.last().categories.contains(Intent.CATEGORY_OPENABLE))
+                compose.onNodeWithText("保存到手机").performClick();assertEquals(Intent.ACTION_CREATE_DOCUMENT,captured.last().action);assertEquals("虚构便签.txt",captured.last().getStringExtra(Intent.EXTRA_TITLE));assertTrue(captured.last().categories.contains(Intent.CATEGORY_OPENABLE))
                 compose.onNodeWithContentDescription("更多文件操作").performClick();compose.onNodeWithText("分享").performClick()
                 val chooser=captured.last();assertEquals(Intent.ACTION_CHOOSER,chooser.action)
                 assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION,chooser.flags)
@@ -139,8 +160,8 @@ class NativeLibraryInstrumentedTest {
                 val uri=send.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)!!;assertEquals(uri,send.clipData!!.getItemAt(0).uri)
                 assertEquals(1,chooser.clipData!!.itemCount);assertEquals(uri,chooser.clipData!!.getItemAt(0).uri)
                 assertEquals("${activity.packageName}.native-files",uri.authority)
-                val content=activity.contentResolver.openInputStream(uri)!!.use{it.readBytes()};assertTrue(String(content).contains("虚构周计划"))
-                val loaded=runBlocking{activity.fileActions.load(JSONObject().put("libraryId",args.getString("and7MarkdownId"))) }
+                val content=activity.contentResolver.openInputStream(uri)!!.use{it.readBytes()};assertTrue(String(content).contains("虚构便签"))
+                val loaded=runBlocking{activity.fileActions.load(JSONObject().put("libraryId",args.getString("and7TextId"))) }
                 val destination=File(activity.cacheDir,"composer-camera/synthetic-saved.md").apply{parentFile!!.mkdirs()}
                 val destinationUri=androidx.core.content.FileProvider.getUriForFile(activity,"${activity.packageName}.composer-camera",destination)
                 main{activity.fileActions.write(loaded,destinationUri)}
@@ -156,8 +177,7 @@ class NativeLibraryInstrumentedTest {
         compose.onNodeWithText("在对话中定位").performClick()
         waitFor("file source chat"){activity.model.tab=="chat"}
         compose.onNodeWithText("虚构周计划.md").performScrollTo().performClick()
-        Thread.sleep(700);compose.onNodeWithContentDescription("文件查看").assertExists();shot("chat-artifact-viewer")
-        compose.onNodeWithContentDescription("关闭预览").performClick()
+        originalViewer("chat-artifact-viewer","markdown")
         compose.onNodeWithContentDescription("成果库").performClick();Thread.sleep(500)
         // Phone-only identity follows the same bootstrap contract, and makes no library request.
         SecureSettings(i.targetContext).saveHost(host.copy(authSource="phone"))
@@ -181,6 +201,10 @@ class NativeLibraryInstrumentedTest {
         store.import(androidx.core.content.FileProvider.getUriForFile(activity,"${activity.packageName}.composer-camera",text),activity.model.owner,activity.model.chatId,"file")
         main{activity.model.launch{activity.model.refreshAttachments()}};waitFor("composer file"){activity.model.attachments.isNotEmpty()}
         compose.waitForIdle();shot("chat-attachment");compose.onNodeWithText("来自聊天的虚构便签.txt").performTouchInput{click(androidx.compose.ui.geometry.Offset(width*0.25f,height*0.8f))};Thread.sleep(700);shot("chat-file-viewer");compose.onNodeWithContentDescription("文件查看").assertExists();compose.onNode(hasContentDescription("消息输入") and hasAnyAncestor(hasContentDescription("文件查看"))).assertDoesNotExist();compose.onNodeWithContentDescription("关闭预览").performClick()
+        val md=File(camera,"draft-plan.md").apply{writeText("# 虚构周计划\n\n| 项目 | 时间 |\n| --- | --- |\n| 阅读 | 9:00 |\n\n```python\nprint('synthetic')\n```\n")}
+        val mdAttachment=store.import(androidx.core.content.FileProvider.getUriForFile(activity,"${activity.packageName}.composer-camera",md),activity.model.owner,activity.model.chatId,"file")
+        main{activity.originalFile(mdAttachment.bridge().put("conversationId",activity.model.chatId))}
+        originalViewer("chat-markdown-viewer","markdown")
         // A raw Office attachment can be opened/shared even though the library server cannot export one yet.
         val office=File(camera,"synthetic.docx").apply{writeBytes(byteArrayOf(80,75,3,4,0,1,2,3))}
         val original=store.import(androidx.core.content.FileProvider.getUriForFile(activity,"${activity.packageName}.composer-camera",office),activity.model.owner,activity.model.chatId,"file")

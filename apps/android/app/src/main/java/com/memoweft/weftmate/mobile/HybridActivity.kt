@@ -375,6 +375,20 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 syncSafeInsets()
                 view.evaluateJavascript(assets.open("native-frame.js").bufferedReader().use { it.readText() }, null)
                 embeddedPageFinished()
+                intent.getStringExtra("openOriginalTextFile")?.let { value ->
+                    nativeFileLoad(JSONObject(value)) { result ->
+                        result.onSuccess { file ->
+                            if(nativeFileCurrent(file) && useOriginalFileViewer(file.kind) && file.file!=null) {
+                                val data=JSONObject().put("kind",if(file.kind==NativeFileKind.MARKDOWN)"markdown" else "code")
+                                    .put("text",file.file.readText(Charsets.UTF_8)).put("contentType",file.mime)
+                                val name=JSONObject.quote(file.name)
+                                view.evaluateJavascript("""
+                                    (()=>{function open(){if(typeof state==='undefined'||!state.booted||typeof WeftContent==='undefined'){setTimeout(open,100);return;}showResourcePage($name,conversationTaskContext());const data=$data;const blob=new Blob([data.text],{type:data.contentType});configureResourceFile({name:$name},{blob});WeftContent.preview(document.getElementById('resource-content'),data,{name:$name});}open();})()
+                                """.trimIndent(),null)
+                            }
+                        }
+                    }
+                }
                 if(intent.getBooleanExtra("openLibraryPage",false))view.evaluateJavascript("""
                     (()=>{async function open(){if(typeof page!=='function' || typeof state==='undefined' || !state.booted){setTimeout(open,100);return;}page('library');const id=${JSONObject.quote(intent.getStringExtra("openLibraryFileId").orEmpty())};if(id){try{await libraryPage(document.getElementById('page-content'));const detail=await uiCore.accessApi('/library/'+encodeURIComponent(id));await libraryView.preview(detail.item,document.activeElement);}catch{}}}open();})()
                 """.trimIndent(),null)

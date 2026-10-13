@@ -43,7 +43,11 @@ import java.io.File
     val scope=rememberCoroutineScope();val pad=DesignTokens.space16.dp
     LaunchedEffect(row.toString(),retry) {
         loading=true;error=""
-        try{file=activity.fileActions.load(row)}catch(e:CancellationException){throw e}catch(e:Exception){error=nativeFileFailure(e)}finally{loading=false}
+        try{
+            val loaded=activity.fileActions.load(row)
+            if(useOriginalFileViewer(loaded.kind)) { activity.originalFile(row);onClose() }
+            else file=loaded
+        }catch(e:CancellationException){throw e}catch(e:Exception){error=nativeFileFailure(e)}finally{loading=false}
     }
     Dialog(onDismissRequest=onClose,properties=DialogProperties(usePlatformDefaultWidth=false,decorFitsSystemWindows=false)) {
         NativeDialogBars()
