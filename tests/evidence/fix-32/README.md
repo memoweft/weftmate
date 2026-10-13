@@ -6,7 +6,7 @@ MOB-3 的手机呈现有两处可重复的故障。旧 `src/personal-access-ui/p
 
 ## 可重复的回归
 
-- `node --test tests/fix-32-pointer.test.mjs`：鼠标／触摸点按期间刷新、失焦／收起，以及空输入的语音按钮首次变成发送。旧代码必红，修复后必绿。
+- `node --test apps/mobile-ui/tests/fix-32-pointer.test.mjs`：鼠标／触摸点按期间刷新、失焦／收起，以及空输入的语音按钮首次变成发送。旧代码必红，修复后必绿。
 - `node --test tests/ui-core-send-feedback.test.ts`：每个共用会话／主对话阻挡条件、同文重复点击、模型设置保存中，均检查禁用和明确反馈。
 - `node --test apps/mobile-ui/tests/chat-interactions.test.mjs`：手机阻挡原因、刚解锁立即发送、刷新进行中发送，以及独立使用时无模型／模型测试／回复进行中的表现。
 - `node tests/integration/fix-32-phone-send.mjs`：真实手机网页与生产 DSH（助手运行时），随机端口、临时目录、合成模型；十次延迟解锁后发送，每次一个消息请求、一个模型回合。`FIX32_BASELINE=1` 的负向夹具在合成页面加载 `73b72738` 的旧手机呈现脚本，并在脚本初始化前明确禁用本包新增的点按保护（旧版本没有它）；夹具检查该保护确已禁用，在按下期间调用真实同步函数，稳定重现 0 个消息请求。
