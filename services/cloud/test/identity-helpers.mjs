@@ -29,7 +29,7 @@ export const PASSWORD = 'a test password with 20 chars';
 export const NEXT_PASSWORD = 'another test password 20 chars';
 export const EMAIL = 'account@example.com';
 export const P = '/personal/v1/cloud';
-export async function fixture(t, { env = {}, relayDns, feedbackFetch, realProcess = false, listenHost = '127.0.0.1' } = {}) {
+export async function fixture(t, { env = {}, relayDns, feedbackFetch, realProcess = false, listenHost = '127.0.0.1', implementation, observeRequest } = {}) {
   const root = await mkdtemp(path.join(tmpdir(), 'weftmate-cloud-identity-'));
   let server,
     child,
@@ -48,12 +48,13 @@ export async function fixture(t, { env = {}, relayDns, feedbackFetch, realProces
     },
   });
   async function start() {
-    opened = await openDatabase(path.join(root, 'cloud.sqlite'));
+    opened = await (implementation?.openDatabase??openDatabase)(path.join(root, 'cloud.sqlite'));
     server = createCloudServer({
       ...opened,
       logger,
       identity: { handle: (...args) => identity.handle(...args) },
     });
+    if(observeRequest)server.on('request',request=>observeRequest(request.url));
     server.listen(port, listenHost);
     await once(server, 'listening');
     port = server.address().port;
@@ -87,7 +88,7 @@ export async function fixture(t, { env = {}, relayDns, feedbackFetch, realProces
       identity = { keys: { cookieSecret: state.cookieSecret } };
       return;
     }
-    identity = await createIdentity({
+    identity = await (implementation?.createIdentity??createIdentity)({
       database: opened.database,
       feedbackFetch,
       relayDns: typeof relayDns === 'function' ? relayDns(opened.database) : relayDns,

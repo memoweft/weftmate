@@ -1,0 +1,94 @@
+{
+  "jvm": {
+    "tests": 78,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "inventoryTotal": 301,
+  "offlineRoutes": [
+    {
+      "path": "/personal/v1/cloud/hosts/offline/tasks/ack",
+      "method": "POST",
+      "sources": [
+        "docs/CLIENT_API.md"
+      ],
+      "transport": "specialized-or-desktop"
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/offline/tasks/cancel",
+      "method": "POST",
+      "sources": [
+        "src/ui-core/cloud-account.js",
+        "apps/mobile-ui/www/ui-core/cloud-account.js",
+        "docs/CLIENT_API.md"
+      ],
+      "cloudClient": true,
+      "transport": "cloud-account"
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/offline/tasks/claim",
+      "method": "POST",
+      "sources": [
+        "docs/CLIENT_API.md"
+      ],
+      "transport": "specialized-or-desktop"
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/offline/tasks/clear",
+      "method": "POST",
+      "sources": [
+        "src/ui-core/cloud-account.js",
+        "apps/mobile-ui/www/ui-core/cloud-account.js",
+        "docs/CLIENT_API.md"
+      ],
+      "cloudClient": true,
+      "transport": "cloud-account"
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/offline/tasks/list",
+      "method": "POST",
+      "sources": [
+        "src/ui-core/cloud-account.js",
+        "apps/mobile-ui/www/ui-core/cloud-account.js",
+        "docs/CLIENT_API.md"
+      ],
+      "cloudClient": true,
+      "transport": "cloud-account"
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/offline/tasks/result",
+      "method": "POST",
+      "sources": [
+        "docs/CLIENT_API.md"
+      ],
+      "transport": "specialized-or-desktop"
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/offline/tasks/submit",
+      "method": "POST",
+      "sources": [
+        "src/ui-core/cloud-account.js",
+        "apps/mobile-ui/www/ui-core/cloud-account.js",
+        "docs/CLIENT_API.md"
+      ],
+      "cloudClient": true,
+      "transport": "cloud-account"
+    }
+  ],
+  "related": {
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0
+  },
+  "mobile": {
+    "passed": 114,
+    "failed": 0,
+    "skipped": 0
+  },
+  "nativeVaultEntryHidden": true,
+  "nativeVaultChatWorking": true,
+  "modelRequests": 0,
+  "versionChanged": false,
+  "emulatorUsed": false
+}

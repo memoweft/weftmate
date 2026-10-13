@@ -1,10 +1,11 @@
 import { accountPersonalization } from '../personal-access/personalization.mjs';
 import { hasPrivateContent } from '../personal-access/temporary-chats.mjs';
 import path from 'node:path';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdir } from 'node:fs/promises';
 import { failure, plainObject } from '../personal-access/common.mjs';
 import { durableWrite } from '../personal-access/store.mjs';
-import { hash, publicDeviceKey, sealReplica } from './crypto.mjs';
+import { hash, publicDeviceKey, sealReplica, taskRecipient } from './crypto.mjs';
+import { createOfflineTaskReceiver } from './tasks.mjs';
 import { memorySnapshot, offlineBoundary, replicaDelta, REPLICA_LIMITS } from './snapshot.mjs';
 
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
@@ -14,6 +15,13 @@ export async function createOfflineService(context) {
   try { state = JSON.parse(await readFile(file, 'utf8')); }
   catch (error) { if (error.code !== 'ENOENT') throw error; state = { version: 1, owners: {} }; }
   if (state.version !== 1 || !state.owners) throw failure('STORE_CORRUPT', 500);
+  const recipientFile=path.join(context.root,'cloud-identity','offline-task-recipient.json');
+  let recipientWork;
+  function recipient(){return recipientWork??=(async()=>{
+    try{return JSON.parse(await readFile(recipientFile,'utf8'));}
+    catch(error){if(error.code!=='ENOENT')throw error;const key=taskRecipient();await mkdir(path.dirname(recipientFile),{recursive:true,mode:0o700});await durableWrite(recipientFile,key);return key;}
+  })();}
+  const tasks=createOfflineTaskReceiver(context,recipient);
   let queue = Promise.resolve();
   const serial = fn => { const work = queue.then(fn); queue = work.catch(() => {}); return work; };
   const owner = id => state.owners[id] ??= { generation: 1, devices: {}, receipts: {} };
@@ -44,16 +52,29 @@ export async function createOfflineService(context) {
       if (!currentSession || hasPrivateContent(currentSession)) continue;
       const messages = (page?.events ?? []).filter(e => ['user.message', 'assistant.message'].includes(e.type) && typeof e.data?.text === 'string' &&
         (!owner(ownerId).purgedAt || Date.parse(e.at ?? e.timestamp ?? '') > owner(ownerId).purgedAt))
-        .slice(-20).map(e => ({ role: e.type === 'user.message' ? 'user' : 'assistant', text: e.data.text.slice(0, 4000) }));
-      if (messages.length) result.push({ id: sessionId, messages });
+        .slice(-20).map(e => {
+          const source=e.type==='user.message'&&Object.values(context.accountState(ownerId).commands??{}).find(c=>c.sessionId===sessionId&&c.receiptId===e.data.receiptId&&c.offlineSource);
+          return {role:e.type==='user.message'?'user':'assistant',text:e.data.text.slice(0,4000),...(source?{offlineTaskId:source.offlineSource.id}:{})};
+        });
+      if (messages.length) result.push({ id: sessionId, messages, title:session.title||'最近对话', ...(session.projectId?{projectId:session.projectId}:{}) });
       if (result.length === REPLICA_LIMITS.conversations) break;
     }
     return result;
   }
   return {
-    close: () => queue,
+    generation: ownerId => owner(ownerId).generation,
+    canDispatch:tasks.canDispatch,
+    start: tasks.start,
+    tasksTick: tasks.tick,
+    async close(){await tasks.close();await queue;},
     invalidate(ownerId) { return serial(async () => {
       const current = owner(ownerId); current.generation++; current.receipts = {}; current.purgedAt = context.timestamp();
+      for(const command of Object.values(context.accountState(ownerId).commands??{}))if(command.offlineSource&&command.receiptId&&context.backend.stopTask){
+        await context.backend.stopTask({ownerId,sessionId:command.sessionId,requestId:'offline-forget-'+hash(command.commandId).slice(0,40),receiptIds:[command.receiptId],queuedOnly:true});
+      }
+      if(context.serial)await context.serial(()=>context.mutate(ownerId,next=>{
+        for(const [id,command] of Object.entries(next.commands))if(command.offlineSource&&command.state==='pending')delete next.commands[id];
+      }));
       // No recalled text or source text is kept here, including failed cleanup retries.
       for (const device of Object.values(current.devices)) device.hashes = {};
       await save();
@@ -75,16 +96,21 @@ export async function createOfflineService(context) {
         context.authenticate(request, 'account:manage');
         const account = owner(ownerId), deviceId = context.cloudIdentity?.offlineDeviceId?.(ownerId, current.deviceId) ?? current.deviceId;
         if (route === '/sync') {
-          if (Object.keys(body).some(k => !['publicJwk', 'generation', 'hashes'].includes(k))) throw failure('INVALID_REQUEST');
+          if (Object.keys(body).some(k => !['publicJwk', 'generation', 'hashes','taskSupport'].includes(k)) || body.taskSupport!==undefined&&body.taskSupport!==1) throw failure('INVALID_REQUEST');
           if (!Number.isSafeInteger(body.generation) || body.generation < 0) throw failure('INVALID_REQUEST');
           const publicJwk = publicDeviceKey(body.publicJwk);
           const control = await publish(ownerId);
-          const snapshot = await memorySnapshot(context.memoryManager, ownerId);
-          const model = await cloudModel(ownerId);
+          const taskSupport=body.taskSupport===1&&control.capabilities?.offlineTasks===1;
+          let model;
+          try{model=await cloudModel(ownerId);}catch(error){if(!taskSupport||error.code!=='OFFLINE_MODEL_REQUIRED')throw error;model=null;}
+          const snapshot = model?await memorySnapshot(context.memoryManager, ownerId):{worldRevision:null,items:[],truncated:false};
           const generation = account.generation;
           const known = body.generation === generation ? body.hashes ?? {} : {};
-          const recentMessages = await recent(ownerId);
+          const recentMessages = model?await recent(ownerId):[];
+          const taskReferences=body.taskSupport===1?Object.entries(context.accountState(ownerId).sessions).filter(([,s])=>s.origin==='personal-remote'&&!s.archived&&!s.deleting&&!hasPrivateContent(s)).slice(-100).map(([id,s])=>({id,title:s.title||'电脑上的对话',...(s.projectId?{projectId:s.projectId}:{})})):undefined;
           const metadata = { generation, reset: body.generation !== generation, model, recent: recentMessages,
+            taskRecipient:(await recipient()).publicJwk,
+            ...(taskReferences?{taskReferences}:{}),
             personalization: accountPersonalization(context.accountState(ownerId)), control, syncedAt: new Date(context.timestamp()).toISOString() };
           let payload = { ...replicaDelta(snapshot, known), ...metadata };
           // Bound the resulting replica, not just this delta; otherwise small

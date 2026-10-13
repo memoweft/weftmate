@@ -7,6 +7,7 @@ import { DISPATCH_TIMEOUT_MS, ID, IMAGE_REASONS, MAX_COMMANDS } from './constant
 import { canonicalCommand, explicitNotepadOpenIntent, publicCommand } from './command-policy.mjs';
 import { randomUUID } from 'node:crypto';
 import { inspectProjectRoot } from '../personal-projects/index.mjs';
+import { offlineCommandSource } from '../personal-offline/tasks.mjs';
 
 export function createCommandOperations(context) {
   const messageDispatches = new Map();
@@ -28,6 +29,11 @@ export function createCommandOperations(context) {
       let callback;
       const pending = context.accountState(ownerId).commands[commandId];
       if (!pending || pending.state !== 'pending') return;
+      if(pending.offlineSource && !pending.offlineSource.confirmed)return;
+      if(pending.offlineSource&&context.offline?.canDispatch?.(ownerId,commandId)===false)return;
+      if(pending.offlineSource && !offlineCommandSource(context,ownerId,pending)){
+        await context.serial(()=>context.mutate(ownerId,next=>{if(next.commands[commandId]?.state==='pending'){next.commands[commandId].state='rejected';next.commands[commandId].errorCode='DEVICE_REVOKED';}}));return;
+      }
       const pendingSession = pending.kind === 'session.message'
         ? context.accountState(ownerId).sessions[pending.sessionId] : null;
       if (pending.toolSource) {
@@ -141,7 +147,7 @@ export function createCommandOperations(context) {
           (pending.sourceAuthEpoch !== undefined &&
             context.accountState(ownerId).devices[pending.sourceDeviceId]?.authEpoch !== pending.sourceAuthEpoch) ||
           (['password', 'cloud', 'desktop'].includes(context.accountState(ownerId).devices[pending.sourceDeviceId]?.authKind) &&
-            !scheduledCommandSource(context.accountState(ownerId), pending) && Date.parse(context.accountState(ownerId).devices[pending.sourceDeviceId].expiresAt) <= context.timestamp())) {
+            !scheduledCommandSource(context.accountState(ownerId), pending) && !offlineCommandSource(context,ownerId,pending) && Date.parse(context.accountState(ownerId).devices[pending.sourceDeviceId].expiresAt) <= context.timestamp())) {
         await context.serial(() => context.mutate(ownerId, (next) => {
           if (next.commands[commandId]?.state !== 'pending') return;
           next.commands[commandId].state = 'rejected';
@@ -178,6 +184,9 @@ export function createCommandOperations(context) {
         if (context.storageFault) throw failure('STORAGE_UNAVAILABLE', 503);
         const command = context.accountState(ownerId).commands[commandId];
         if (!command || command.state !== 'pending') return;
+        if(command.offlineSource&&!offlineCommandSource(context,ownerId,command)){
+          await context.mutate(ownerId,next=>{next.commands[commandId].state='rejected';next.commands[commandId].errorCode='DEVICE_REVOKED';});return;
+        }
         if (context.accountState(ownerId).memoryCleanupPending) return;
         if (command.payload.projectId && (context.accountState(ownerId).projects?.[command.payload.projectId]?.revoked ||
             context.accountState(ownerId).projects?.[command.payload.projectId]?.revision !== command.payload.projectRevision)) {
@@ -279,7 +288,7 @@ export function createCommandOperations(context) {
             (command.sourceAuthEpoch !== undefined &&
               context.accountState(ownerId).devices[command.sourceDeviceId]?.authEpoch !== command.sourceAuthEpoch) ||
             (['password', 'cloud', 'desktop'].includes(context.accountState(ownerId).devices[command.sourceDeviceId]?.authKind) &&
-              !scheduledCommandSource(context.accountState(ownerId), command) && Date.parse(context.accountState(ownerId).devices[command.sourceDeviceId].expiresAt) <= context.timestamp())) {
+              !scheduledCommandSource(context.accountState(ownerId), command) && !offlineCommandSource(context,ownerId,command) && Date.parse(context.accountState(ownerId).devices[command.sourceDeviceId].expiresAt) <= context.timestamp())) {
           await context.mutate(ownerId, (next) => {
             next.commands[commandId].state = 'rejected';
             next.commands[commandId].errorCode = next.devices[command.sourceDeviceId]?.revoked
