@@ -356,7 +356,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             if (g != generation) return@launch
             if (result.optString("state") == "rejected") { error = if(result.optString("errorCode") in setOf("UNAUTHORIZED","DEVICE_NOT_TRUSTED")) "电脑连接已失效，请重新连接后发送。草稿已保留。" else "消息没能发送，草稿已保留。"; return@launch }
             if (!phone && result.optString("state") != "accepted") uncertain = uncertain.filter { it.optString("requestId") != result.optString("requestId") } + result
-            draft = ""; saveDraft(); sending = false; focused = false; activity.hideKeyboard(); running = result.optString("state") != "uncertain"
+            draft = ""; saveDraft(); sending = false; running = result.optString("state") != "uncertain"
             launch { call("native.draft",JSONObject().put("hasDraft",false)); if (g == generation) { refreshAttachments(); refresh() } }
         } finally { sending = false }
     }
