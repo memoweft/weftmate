@@ -8,6 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
+| Codex · Windows-9 | ST-7a · 连接器底座 | `wp/st-7a-connectors`：通用命令／地址连接、实际测试与工具目录、单工具权限和原生审批／复核／执行记录、同库加密凭据与账号隔离、内置本机时间登记、电脑管理与手机列表／开关完成；完整必过323文件1837／0失败／14既有跳过，运行时34文件239／0／0，手机五文件114／0；两次合主线后相关230／0与81／0，类型／61个共享资源／公开卫生通过。真实MiMo成功闭环11请求，已记录失败调试10，早期失败计数未保留；64张浅深1200／480和手机网页360／390图。无新路由／壳／版本／vendor改动，邮件日历留ST-7b；原生系统栏未验收。已合ae2c7f67，提交后由Claude接收。[证据](../tests/evidence/st-7a/README.md)。 |
 | Codex · Windows-3 | DATA-2 · 真实电脑使用时段 | [PR #262](https://github.com/memoweft/weftmate/pull/262) · `wp/data-2-computer-usage`：Windows（视窗系统）每分钟空闲采样、十五分钟时间格合并写盘，托盘隐藏仍记录；不采集应用／窗口内容，账号隔离、默认开、保留／清空与旧批次撤权完成。每日设备项、健康／趋势／今日解读／周回顾／原生查询优先真实观察、无数据退聊天估算并标来源；当地时刻避免模型误换算。主入口／监护副本／辅助入口断管道防护，警告仅名称与代码，真实父进程退出后EPIPE（管道断开）仍就绪、0错误框／1警告。完整必过1847／0／14既有跳过，固定DSH（助手运行时）230／0／0、手机114／0、类型／公开卫生通过；关闭顺序另14／0、五条原退出断言通过。真实三天／托盘、MiMo（云端模型）7次与1200／480浅深4图、真实空闲源3分钟通过。[证据](../tests/evidence/data-2/README.md)。合主线后相关108／0、等待协议3／0、手机114／0与类型／卫生再次通过。应用类别／其它设备未做，无新路由／新壳；合并与发布交编排。 |
 | Codex · Windows-7 | QA-8 · 早间真实程序走查 | [PR #269](https://github.com/memoweft/weftmate/pull/269) · `wp/qa-8-morning-walkthrough`：真实桌面程序与手机360／390浅深走查完成，首句流式、跨端消息、新建审批／同类允许、暖账号复核与覆盖、六卡／详情／趋势／月历、健康开关与缓存、真实使用时刻／停止记录、回顾清空背景、正常退出重开已有证据。健康保存问题随主线FIX-29补齐，保留组合回归；本包修周回顾模型遗漏深夜句、当地时刻及关闭健康解读后的输入。压力回答口径混用、手机长模型名和复核超时无说明仍列明显；云登录／原生系统栏／手机长列表滚动未放行。合主线ff0bc657，新三包未合未等。定向61＋41＋12、类型／公开卫生预检通过，完整必过1886／0失败／14既有跳过，固定运行时230／0，手机五文件114／0，类型／公开卫生0命中通过；MiMo推理38次，已清理确认进程19，原走查残留0，首轮75MB夹具清理被自动审批拒绝暂留；[证据与57句核对](../tests/evidence/qa-8/walkthrough.md)。 |
 | Codex · Windows-9 | WEB-1 · 官网重做 | [PR #239](https://github.com/memoweft/weftmate/pull/239) · `wp/web-1-official-site`：返工一已完成，中英静态官网与产品令牌浅深主题；三段11／7／8步可玩演示，成果预览／建议定时任务／记忆更正与遗忘／手机通知批准和手表完成；三屏界面示意替换全部夹具配图，手机导航与页面节奏重做。法律原文、更新生成、相对路径、随机端口预览及保护下载／更新的备份回退部署脚本完成，未连接服务器。相关19／0失败、类型与公开卫生0命中；241张无头浏览器截图，首页非图片168,870字节。获取仅即将开放，旧MemoWeft保留，下载资产仅README一句交接更新。[证据](../tests/evidence/web-1/README.md)，[依据表](../site/CLAIMS.md)。返工与主线7fb2628d已合入推送，合后19／0、类型及公开卫生0命中复验；CI（持续集成）状态见本包结果报告。 |
@@ -126,6 +127,8 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 - **HEALTH-5 / Windows-4**：CLIENT_API第16.4节增加v3／profile／capabilities、stress／energy（含sleepPeriods）／fitnessAge（含referenceRange）、各项analysis与itemAnalysisEnabled默认关；原顶部modelInsightsEnabled默认开不变。metrics增to、独立weekly、提醒可省sessionId；Android（安卓）精确路径／PUT方法同步，需要新壳版本；Apple（苹果端）按新增字段接线。
 - **HEALTH-2 / Windows-4**：CLIENT_API第16节新增独立健康v2／100天批量、overview／metrics／calendar、健康设置及建议转提醒；v1原请求与回执不变。沿sessions:read与account:manage，默认400天，DATA-1清空不删健康库；Android（安卓）精确路由／健康PUT方法与拒绝用例已补，需要新壳版本，Apple（苹果端）按16节接线。
+
+- **ST-7a / Windows-9**：复用 `GET/PATCH /personal/v1/settings/approvals`，新增连接器目录、添加／测试／停用／轮换／移除动作及单工具规则；手机只读目录与总开关，秘密值不返回。无新增业务路径或壳能力，Android／Apple 原生可沿现有路径读取可选字段。详见 CLIENT_API。
 
 - **SEC-1 / Windows-4**：现有审批读取可选 `secondOpinion:{alignment,externalInfluence,reason}`，现有 GET/PATCH `/settings/approvals` 可选 `secondOpinionEnabled`，缺字段默认开启；不新增路由，不授予执行权限。Apple 需呈现与开关接线，安卓界面包更新即可。详见 CLIENT_API。
 

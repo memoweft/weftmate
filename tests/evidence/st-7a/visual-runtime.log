@@ -1,0 +1,12 @@
+[weftmate] ✓ 模型凭据保险库已就绪
+[weftmate] ✓ 伴侣状态就绪:星瑶
+[weftmate] DSH_HOME = C:\Users\<user>\AppData\Local\Temp\weftmate-st7a-electron-yD2x9e\profile\dsh-home
+[weftmate] [dsh] profile weftmate 已写入（[PATH]
+[weftmate] [dsh:stdout] dsh web: [URL]
+[weftmate] ✓ personal-host ready origin=http://127.0.0.1:65203
+[weftmate] ✓ personal-access listening origin=http://127.0.0.1:65208
+[weftmate] personal-host active; managed shutdown via launcher IPC
+Debugger ending on ws://127.0.0.1:65180/4813cdc2-9952-410f-9bf5-cee98334fc2a
+For help, see: https://nodejs.org/learn/getting-started/debugging
+[weftmate] [dsh] personal approval runtime invalidation failed
+[weftmate] ✓ 退出收尾:DSH web 运行时收口完成

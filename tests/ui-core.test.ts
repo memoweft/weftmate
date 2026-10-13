@@ -244,8 +244,8 @@ test('composed health settings keep serialized writes and reject queued work aft
     calls.push(options)
     return calls.length === 1 ? first.promise : { settings: options.body }
   }
-  const active = f.core.saveHealthSettings({ itemAnalysisEnabled: true })
-  const queued = f.core.saveHealthSettings({ modelInsightsEnabled: false })
+  const active = f.core.saveHealthViewSettings({ itemAnalysisEnabled: true })
+  const queued = f.core.saveHealthViewSettings({ modelInsightsEnabled: false })
   const rejected = assert.rejects(queued, /ACCOUNT_CHANGED/)
   await new Promise(resolve => setImmediate(resolve))
   assert.equal(calls.length, 1)

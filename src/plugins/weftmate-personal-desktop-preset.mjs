@@ -1,5 +1,6 @@
 /** DSH keeps execution/approval native; only model presentation is deferred. */
-import { PersonalDesktopBridge, registerPersonalBrowserTool } from './weftmate-personal-desktop.mjs';
+import { PersonalDesktopBridge, registerPersonalBrowserTool, personalExecutionIdentity } from './weftmate-personal-desktop.mjs';
+import { syncConnectorTools } from './personal-connectors.mjs';
 import { presentPersonalPrompt } from './personal-prompt.mjs';
 import { defineTool } from '@deepseek-ai/dsh-tools';
 export const name = 'weftmate-personal-desktop-preset';
@@ -28,8 +29,18 @@ export function apply(ctx) {
     presentCall: () => ({ card: 'generic', title: '加载所需工具', kind: 'read' }),
   }));
   ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
-    const assembly = await next();
+    let assembly = await next();
     if (!context.scope || !['personal-remote'].includes(context.scope.session?.header?.agentPreset)) return assembly;
+    if (context.scope.session.header.origin !== 'subagent') {
+      const policy = await bridge.request({ action: 'approval_policy', sessionId: context.scope.session.id,
+        turn: 0, callId: 'approval-policy', messageHash: '0'.repeat(64) });
+      syncConnectorTools(context.scope, policy, bridge, personalExecutionIdentity);
+      const names = new Set((policy.connectorTools ?? []).map(tool => tool.name));
+      // DSH collects tool providers before this waterfall. Refresh only our
+      // namespace, before the native loader captures its catalog and projects it.
+      assembly = { ...assembly, tools: [...assembly.tools.filter(tool => !tool.name.startsWith('mcp__c_')),
+        ...ctx.tools.schemas(context.scope).filter(tool => names.has(tool.name))] };
+    }
     schemas.set(context.scope, assembly.tools);
     return presentPersonalPrompt(assembly, loaded.get(context.scope));
   });

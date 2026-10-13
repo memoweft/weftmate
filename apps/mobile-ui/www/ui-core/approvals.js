@@ -14,7 +14,8 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         const rawArguments = offset >= 0 ? fullReason.slice(offset + 1) : fullReason;
         const args = core.toolArguments(detail || row.arguments || row.parameters || rawArguments);
         const hasArguments = Object.keys(args).length > 0;
-        return { summary: hasArguments ? core.toolSummary(row.toolName, args) : reason && !reason.startsWith('{') ? reason : core.toolSummary(row.toolName, args),
+        const connector = row.toolName?.startsWith('mcp__c_') && /操作：([^\n]+)/.exec(reason)?.[1];
+        return { summary: connector ? `${connector}${hasArguments ? ' · ' + JSON.stringify(args).slice(0, 240) : ''}` : hasArguments ? core.toolSummary(row.toolName, args) : reason && !reason.startsWith('{') ? reason : core.toolSummary(row.toolName, args),
             reason: hasArguments && !reason.startsWith('{') ? reason : '', raw: detail || row.arguments || row.parameters || fullReason };
     }
     async function readApprovalPresentation(row) {
