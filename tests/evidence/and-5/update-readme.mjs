@@ -22,8 +22,8 @@ lines.push('','这些是共享机器同一轮的观测值，不把单轮结果�
 '| 令牌 | 规范深色值 | 安卓绑定 | 核对 |','|---|---|---|---|');
 for(const row of v.darkControls.colors)lines.push(`| ${row.name} | ${row.css} | ${row.field} | ${row.passed?'一致':'不一致'} |`);
 lines.push('','## 逐张系统栏','','原始整屏图均未裁切。系统版本、应用读取的系统深浅与实际底部区域写在 `screenshots.json`；测试没有修改模拟器系统主题。下面的色差比较真实状态栏与相邻顶栏中央背景。系统通知面板属于系统界面，其差值单独列出，不与应用主题作一致性判定。','',
-'| 原始图 | 逻辑宽度 | 页面主题 | 系统版本／读取主题 | 状态栏色差 | 底部系统区域 |','|---|---:|---|---|---:|---|');
-for(const row of shots)lines.push(`| [${row.file}](${row.file}) | ${row.widthDp} | ${row.systemPanel?'系统通知面板':row.actualPageTheme==='dark'?'深':'浅'} | ${row.systemVersion}／${row.systemTheme==='dark'?'深':'浅'} | ${row.difference.delta.toFixed(3)} | ${row.bottomNavigationVisible?'可见':'不可见，未验真机手势条'} |`);
+'| 原始图 | 实际像素／逻辑尺寸 | 页面主题 | 系统版本／读取主题 | 状态栏色差 | 底部系统区域 |','|---|---|---|---|---:|---|');
+for(const row of shots)lines.push(`| [${row.file}](${row.file}) | ${row.pixelWidth}×${row.pixelHeight}／${row.widthDp}×${row.heightDp} | ${row.systemPanel?'系统通知面板':row.actualPageTheme==='dark'?'深':'浅'} | ${row.systemVersion}／${row.systemTheme==='dark'?'深':'浅'} | ${row.difference.delta.toFixed(3)} | ${row.bottomNavigationVisible?'可见':'不可见，未验真机手势条'} |`);
 lines.push('','两组尺寸每一种原生状态均已保留：未读与待处理、行菜单、类别菜单、已读待处理、各类对话去向、更多页、周回顾正文与来源、记忆正文／菜单／确认、原网页完整操作、全部已读、下拉刷新、自动更新、空、加载、错误与重试、手机独立空状态与最终底栏点。浅色三组网页并排、深色三组规范并排及每组三行说明见 `pairs.html`。','');
 await writeFile(join(dir,'README.md'),lines.join('\n'));
 console.log(`Wrote validation and ${shots.length} per-capture system-bar rows`);
