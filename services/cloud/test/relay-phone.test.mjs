@@ -10,6 +10,7 @@ import { registration, appDevice, control, refresh, proof } from './app-helpers.
 import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
 import { servePersonalAccessUi } from '../../../src/personal-access-ui/index.mjs';
 import { phoneRuntime, scenarioUserText } from './relay-phone-runtime.mjs';
+import { approvePhoneOperation } from '../../../tests/helpers/phone-approval.mjs';
 
 const pause = ms => new Promise(r => setTimeout(r, ms));
 test('Relay phone first input and file task', {
@@ -192,9 +193,9 @@ test('Relay phone first input and file task', {
       const rows = (await phoneApi(`/sessions/${created.sessionId}/approvals`)).data.approvals ?? [];
       const pending = rows.find(row => row.status === 'pending' && !approvedIds.has(row.approvalId));
       if (pending) {
-        const approve = phone.getByRole('button', { name: '批准', exact: true }); await approve.waitFor();
-        await phone.screenshot({ path: join(evidence, `approval-${approvedIds.size + 1}.png`) });
-        await approve.click(); approvedIds.add(pending.approvalId); report.approvals.push({ approvalId: pending.approvalId, toolName: pending.toolName });
+        const geometry=await approvePhoneOperation(phone,pending,async()=>phone.screenshot({path:join(evidence,`approval-${approvedIds.size+1}.png`)}));
+        approvedIds.add(pending.approvalId); report.approvals.push({ approvalId: pending.approvalId, toolName: pending.toolName, scope:'once', geometry });
+        await waitFor(async()=>{const rows=(await phoneApi(`/sessions/${created.sessionId}/approvals`)).data.approvals??[];const answered=rows.find(row=>row.approvalId===pending.approvalId);if(answered?.status!=='answered')return false;assert.equal(answered.decisionOutcome,'allowed-once');assert.equal(answered.decisionScope,'once');return true;},'phone approval answer was not accepted');
       }
       const events = (await phoneApi(`/sessions/${created.sessionId}/events?limit=100`)).data.events;
       const terminal = events.find(e => e.type === 'turn.ended');
