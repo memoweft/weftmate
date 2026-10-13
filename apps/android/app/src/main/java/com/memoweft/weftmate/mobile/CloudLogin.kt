@@ -33,7 +33,8 @@ internal object CloudPins {
     private val factories = ConcurrentHashMap<String, javax.net.ssl.SSLSocketFactory>()
     fun install(origin: String, pin: String) {
         require(pin.matches(Regex("[A-Za-z0-9_-]{43}")))
-        pins[origin] = pin
+        val previous = pins.put(origin, pin)
+        if (previous != null && previous != pin) factories.remove(previous)
     }
     fun clear(origin: String) { pins.remove(origin)?.let { factories.remove(it) } }
     fun has(origin: String): Boolean = pins.containsKey(origin)

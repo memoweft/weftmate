@@ -52,7 +52,8 @@ test('phone sync commit wakes the existing chat wait; duplicate upload does not 
  const chat=(await api('/chats/main')).chat,page=await api(`/chats/${chat.chatId}/events?limit=100`);
  const event={eventId:'event-'+randomUUID(),conversationId:'conversation-'+randomUUID(),clientSeq:1,kind:'message.created',occurredAt:new Date().toISOString(),payload:{messageId:'message-'+randomUUID(),role:'user',text:'合成手机消息'}};
  const waiting=api(`/chats/${chat.chatId}/changes?cursor=${page.syncCursor}&liveRevision=${page.liveRevision}&waitMs=3000&accountRevision=${page.accountChanges.revision}`);
- await new Promise(r=>setTimeout(r,100));const begin=performance.now();await api('/sync/events',{events:[event]});const changed=await waiting;
+ await new Promise(r=>setTimeout(r,100));await api('/sync/events',{events:[event]});const begin=performance.now();const changed=await waiting;
+ assert.ok(['changed','snapshot'].includes(changed.waitOutcome),'the wait must report content invalidation, never merely finish its timer');
  assert.ok(performance.now()-begin<1000,'new phone content must wake the existing wait instead of waiting for the timeout');
  assert.notEqual(changed.accountChanges.phoneSync,page.accountChanges.phoneSync);
  const duplicateWait=api(`/chats/${chat.chatId}/changes?cursor=${changed.nextCursor}&liveRevision=${changed.liveRevision}&waitMs=300&accountRevision=${changed.accountChanges.revision}`);
