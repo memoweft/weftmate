@@ -1,0 +1,76 @@
+{
+  "synthetic": true,
+  "productCommit": "bc9dee98323ae7989777b0633fd2aafb8eaab3fa",
+  "required": {
+    "mode": "required",
+    "files": 342,
+    "exitCode": 0,
+    "passed": 1980,
+    "failed": 0,
+    "skipped": 14,
+    "failures": []
+  },
+  "vendor": {
+    "mode": "vendor",
+    "files": 35,
+    "exitCode": 0,
+    "passed": 241,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "phoneInteractions": {
+    "files": 5,
+    "passed": 133,
+    "failed": 0,
+    "skipped": 0
+  },
+  "regressions": {
+    "pressAndMotion": {
+      "passed": 11,
+      "failed": 0
+    },
+    "coreSendConditions": {
+      "passed": 28,
+      "failed": 0
+    }
+  },
+  "productionPhone": {
+    "negativeMessageRequests": 0,
+    "fixedMessageRequests": 10,
+    "fixedModelTurns": 10,
+    "lostCharacters": 0
+  },
+  "ui": {
+    "screenshots": 12,
+    "pageErrors": 0,
+    "browserSystemBars": false,
+    "realElectron": true
+  },
+  "buildUiCore": {
+    "assets": 62,
+    "passed": true
+  },
+  "typecheck": "passed",
+  "publicHygiene": {
+    "checked": 8880,
+    "violations": 0
+  },
+  "relay": {
+    "required": 15,
+    "passed": 15,
+    "failed": 0,
+    "productCommit": "bc9dee98323ae7989777b0633fd2aafb8eaab3fa",
+    "index": "relay-rounds.json"
+  },
+  "mergeValidation": {
+    "mainCommit": "27025fb418ea305e99b38a5ff9ab75996ec77906",
+    "mergeCommit": "874c5ebaade0d5e5c159eddb8c00f17e92b86851",
+    "files": 8,
+    "passed": 34,
+    "failed": 0,
+    "skipped": 4,
+    "typecheck": "passed",
+    "phoneProductFilesUnchanged": true
+  }
+}

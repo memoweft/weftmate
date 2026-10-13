@@ -43,4 +43,24 @@ MOB-3 的手机呈现有两处可重复的故障。旧 `src/personal-access-ui/p
 
 原生聊天页不使用网页的图标替换和表单 `type`，这两个网页故障不能当成原生页的根因。原生页仍应核对发送按钮与入口对模型测试、发送中和回复中状态的一致处理。
 
-验证计数、最终截图索引及 15 轮 S2 Relay（中继验证）的逐轮链接随交付结果更新。
+最终验证：必过单测 342 文件 1980 通过／0 失败／14 既有平台跳过；固定运行时 35 文件 241／0；手机五文件含点按回归 133／0；点按与回复动效 11／0，发送条件 28／0；共享生成 62 资源、类型与公开卫生通过。12 张截图已逐张查看，界面异常 0。
+
+最终产品提交 `bc9dee98` 的 S2 Relay（中继验证）15／15，逐轮索引：
+
+- 第 1 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38364962985)
+- 第 2 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38365336583)
+- 第 3 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38365775560)
+- 第 4 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38366144166)
+- 第 5 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38366588621)
+- 第 6 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38366972342)
+- 第 7 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38367407402)
+- 第 8 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38367790082)
+- 第 9 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38368293792)
+- 第 10 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38368681559)
+- 第 11 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38369064547)
+- 第 12 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38370118280)
+- 第 13 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38371324848)
+- 第 14 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38371852027)
+- 第 15 轮：[两组均通过](https://github.com/memoweft/weftmate/actions/runs/38372310698)
+
+推送前合入主线 `27025fb4` 的 M3-3：发送产品文件与证明提交完全一致；主线变动的八个相关文件复验 34 通过／0 失败／4 平台跳过，类型检查通过。完整必过组与固定运行时组的最终通过数如上，没有把平台跳过算作通过。
