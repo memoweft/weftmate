@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
 import { getCACertificates, setDefaultCACertificates } from 'node:tls';
+import { randomUUID } from 'node:crypto';
 
 export const MAIL_EMAIL = 'owner@synthetic.invalid';
 export const MAIL_PASSWORD = 'synthetic-mail-app-password';
@@ -32,7 +33,9 @@ export async function mailFixture(t, options = {}) {
   t?.after(close);
   try {
     await exec('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-sha256', '-days', '1',
-      '-keyout', keyPath, '-out', caPath, '-subj', '/CN=synthetic-mail',
+      // Distinct issuers prevent older macOS OpenSSL/LibreSSL from choosing
+      // another simultaneous fixture's self-signed CA with the same subject.
+      '-keyout', keyPath, '-out', caPath, '-subj', '/CN=synthetic-mail-' + randomUUID(),
       '-addext', 'subjectAltName=IP:127.0.0.1,DNS:localhost',
       '-addext', 'basicConstraints=critical,CA:TRUE', '-addext', 'extendedKeyUsage=serverAuth'],
     { windowsHide: true, timeout: 15000 });

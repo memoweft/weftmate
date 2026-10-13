@@ -2439,20 +2439,32 @@ export class DshWebRuntime {
     // bootstrap deliberately stays alive after its persistence acknowledgement;
     // repeating SIGTERM would only consume the grace deadline. Root exit by
     // disconnect also loses the carrier before inherited streams are collected.
+    // Every real POSIX carrier owns a process group. Collect descendants even
+    // when they inherited no stdio, or the native dispose acknowledgement is
+    // followed by a root that deliberately stays connected. Mock carriers may
+    // have no PID; their existing local kill seam remains available.
+    const signal = (name: NodeJS.Signals) => {
+      try {
+        if (typeof pid === 'number') process.kill(-pid, name)
+        else child.kill(name)
+      } catch { try { child.kill(name) } catch { /* 已退出 */ } }
+    }
     if (nativeDisposed) {
-      try { child.kill('SIGKILL') } catch { /* 已退出 */ }
+      signal('SIGKILL')
       await this.waitForChildClose(child)
       return
     }
-    try { child.kill('SIGTERM') } catch { /* 已退出 */ }
+    signal('SIGTERM')
     const exitedGracefully = await Promise.race([
       this.waitForChildClose(child).then(() => true),
       delay(1_000).then(() => false),
     ])
     if (!exitedGracefully) {
-      try { child.kill('SIGKILL') } catch { /* 已退出 */ }
+      signal('SIGKILL')
       await this.waitForChildClose(child)
     }
+    // A root may close before a descendant finishes its TERM handler.
+    if (typeof pid === 'number') { try { process.kill(-pid, 'SIGKILL') } catch { /* group exited */ } }
   }
 
   /** Spawn one frozen secure snapshot (or the legacy CLI for non-secure/test-only callers). */
@@ -2497,6 +2509,7 @@ export class DshWebRuntime {
         // it is process-local and never opens a localhost listener. Electron-as-node supports this stdio form.
         stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
         windowsHide: true,
+        detached: process.platform !== 'win32',
       })
       if (secureBootstrap !== undefined) this.secureChildren.add(child)
       this.registerChild(child)

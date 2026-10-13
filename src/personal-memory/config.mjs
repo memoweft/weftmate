@@ -1,4 +1,4 @@
-import { lstat, readFile } from 'node:fs/promises';
+import { lstat, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 
 const invalid = () => Object.assign(new Error('MEMORY_CONFIGURATION_INVALID'), {
@@ -36,7 +36,12 @@ export async function loadPersonalMemoryConfig(file) {
     lstat(path.join(value.pythonPath, 'memoweft', 'integrations', 'dsh_bridge', '__main__.py'))
       .catch(() => null),
   ]);
-  if (!python?.isFile() || python.isSymbolicLink() || !bridge?.isFile() || bridge.isSymbolicLink()) throw invalid();
+  // A macOS venv normally symlinks its interpreter. Preserve that executable
+  // path so Python still discovers the venv's dependencies; validate its final
+  // target instead of replacing the path with the base interpreter.
+  const interpreter = process.platform === 'darwin' && python?.isSymbolicLink()
+    ? await realpath(value.python).then(file => lstat(file)).catch(() => null) : python;
+  if (!interpreter?.isFile() || interpreter.isSymbolicLink() || !bridge?.isFile() || bridge.isSymbolicLink()) throw invalid();
   return Object.freeze({ python: path.resolve(value.python), pythonPath: path.resolve(value.pythonPath),
     baseUrl: value.baseUrl, model: value.model, authRef: value.authRef });
 }
