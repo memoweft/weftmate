@@ -15,6 +15,8 @@ const serverArgs=()=>adbPort?['-P',String(adbPort)]:[];
 const notificationXml=`/sdcard/and5-notification-${randomUUID()}.xml`;
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const report={synthetic:true,instrumentation:[],screenshots:[],notifications:[]};
+const notificationProbe=process.argv.includes('--notifications-probe');
+if(notificationProbe)report.diagnosticOnly=true;
 const safe=s=>String(s).replace(/C:[\\/]Users[\\/][^\\/\s]+/gi,'C:/Users/<user>').replace(/DESKTOP-[A-Z0-9-]+/gi,'<host>');
 const run=(...args)=>execFileSync(adbExecutable,[...serverArgs(),'-s',serial,...args],{encoding:'utf8',windowsHide:true,maxBuffer:8*1024*1024,timeout:30000});
 async function acquire(path,label){const f=await open(path,'wx');await f.writeFile(`AND-5 ${new Date().toISOString()} ${label}`);await f.close();return path;}
@@ -32,14 +34,26 @@ async function clickNotification(cold){
 }
 try{
   await mkdir(out,{recursive:true});
-  while(!heavy){for(let i=1;i<=3;i++)try{heavy=await acquire(join(locks,`heavy-${i}.lock`),'MuMu native activity verification');break;}catch(e){if(e.code!=='EEXIST')throw e;}if(!heavy){process.stdout.write('Waiting for heavy slot (2 minutes)\n');await pause(120000);}}
-  while(!mumu){try{mumu=await acquire(join(locks,'mumu.lock'),'native activity + notification screenshots');}catch(e){if(e.code!=='EEXIST')throw e;process.stdout.write('Waiting for MuMu lock (2 minutes)\n');await pause(120000);}}
-  const start=Date.now();const allocator=createServer();await new Promise(r=>allocator.listen(0,'127.0.0.1',r));adbPort=allocator.address().port;await new Promise(r=>allocator.close(r));
-  const info=readMuMuInfo();serial=info.serial;execFileSync(adbExecutable,[...serverArgs(),'connect',serial],{windowsHide:true,timeout:30000});
+  // A released lock can precede its owner's package cleanup. Queue without changing
+  // another work package, and release both scarce slots before waiting again.
+  while(true){
+    while(!heavy){for(let i=1;i<=3;i++)try{heavy=await acquire(join(locks,`heavy-${i}.lock`),'MuMu native activity verification');break;}catch(e){if(e.code!=='EEXIST')throw e;}if(!heavy){process.stdout.write('Waiting for heavy slot (2 minutes)\n');await pause(120000);}}
+    while(!mumu){try{mumu=await acquire(join(locks,'mumu.lock'),'native activity + notification screenshots');}catch(e){if(e.code!=='EEXIST')throw e;process.stdout.write('Waiting for MuMu lock (2 minutes)\n');await pause(120000);}}
+    const allocator=createServer();await new Promise(r=>allocator.listen(0,'127.0.0.1',r));adbPort=allocator.address().port;await new Promise(r=>allocator.close(r));
+    const info=readMuMuInfo();serial=info.serial;execFileSync(adbExecutable,[...serverArgs(),'connect',serial],{windowsHide:true,timeout:30000});
+    const other=run('shell','pm','list','packages').split(/\r?\n/).filter(s=>s.includes('weftmate')&&!s.includes('and5qa'));
+    if(!other.length)break;
+    process.stdout.write(`Waiting for emulator owner to clean ${other.length} other WeftMate packages (2 minutes)\n`);
+    report.packageQueue=(report.packageQueue||0)+1;
+    execFileSync(adbExecutable,[...serverArgs(),'disconnect',serial],{windowsHide:true,timeout:5000});
+    execFileSync(adbExecutable,[...serverArgs(),'kill-server'],{windowsHide:true,timeout:5000});serial=null;adbPort=null;
+    await unlink(mumu);mumu=null;await unlink(heavy);heavy=null;
+    await pause(120000);
+  }
+  const start=Date.now();
   report.adbIsolation={privateServer:true,portableSdk:true};
   report.occupancy={heavySlot:heavy.split(/[\\/]/).at(-1),mumuStartedAt:new Date(start).toISOString()};
-  const other=run('shell','pm','list','packages').split(/\r?\n/).filter(s=>s.includes('weftmate')&&!s.includes('and5qa'));
-  if(other.length)throw Error(`Other WeftMate packages installed; release emulator and retry (${other.length})`);
+  report.otherWeftMatePackages=[];
   report.systemVersion=run('shell','getprop','ro.build.version.release').trim();
   fixture=await startFeedFixture();const port=new URL(fixture.origin).port;
   run('reverse',`tcp:${port}`,`tcp:${port}`);reversed=true;
@@ -48,7 +62,7 @@ try{
   run('shell','pm','clear',pkg);
   run('install','-r',join(root,'apps/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'));
   run('shell','pm','grant',pkg,'android.permission.POST_NOTIFICATIONS');
-  for(const width of [360,390])for(const theme of ['light','dark']){
+  for(const [width,theme] of notificationProbe?[[360,'light']]:[360,390].flatMap(width=>['light','dark'].map(theme=>[width,theme]))){
     if(Date.now()-start>16*60*1000)throw Error('Release MuMu before 20 minute ownership limit');
     await fetch(`${fixture.origin}/__and5/reset`);run('shell','am','force-stop',pkg);
     const c=fixture.credentials,args=[...serverArgs(),'-s',serial,'shell','am','instrument','-w','-r','-e','class','com.memoweft.weftmate.mobile.NativeFeedInstrumentedTest','-e','and5Width',String(width),'-e','and5Theme',theme,'-e','and5Origin',c.origin,'-e','and5Username',c.username,'-e','and5Password',c.password,`${pkg}.test/androidx.test.runner.AndroidJUnitRunner`];
@@ -61,7 +75,7 @@ try{
   // Same synthetic long conversation, light baseline and dark fixed-panel blur.
   report.longScroll=[];
   await fetch(`${fixture.origin}/__qa/long`);
-  for(const theme of ['light','dark']){
+  for(const theme of notificationProbe?[]:['light','dark']){
     run('shell','am','start','-n',`${pkg}/com.memoweft.weftmate.mobile.NativeActivity`);
     await until(()=>probe().ready,'long conversation setup');
     run('shell','am','broadcast','-n',`${pkg}/com.memoweft.weftmate.mobile.And5QaReceiver`,'--es','command','scroll-chat','--es','theme',theme);
@@ -73,7 +87,8 @@ try{
   // Real production Notification contentIntent; no fabricated navigation extras.
   for(const cold of [false,true]){
     run('shell','am','start','-n',`${pkg}/com.memoweft.weftmate.mobile.NativeActivity`);
-    await until(()=>probe().ready,'notification setup');await fetch(`${fixture.origin}/__and5/notify`);
+    await until(()=>probe().ready,'notification setup');
+    const notification=await(await fetch(`${fixture.origin}/__and5/notify`)).json();
     run('shell','am','broadcast','-n',`${pkg}/com.memoweft.weftmate.mobile.And5QaReceiver`,'--es','command','poll');
     await until(()=>probe().noticeFound,'production notification');
     const polling=JSON.parse(run('shell','run-as',pkg,'cat','files/and5-notification-poll.json'));report.notificationPolling=polling;
@@ -81,8 +96,10 @@ try{
     if(cold){run('shell','am','kill',pkg);await pause(700);let stopped=false;try{stopped=!run('shell','pidof',pkg).trim()}catch{stopped=true}if(!stopped)throw Error('Synthetic process did not stop');}
     await clickNotification(cold);
     await until(()=>{const p=probe();return p.ready&&p.tab==='chat'},'notification opens native conversation');await pause(500);
+    await until(()=>fixture.reads.some(row=>row.id===notification.notificationId),'clicked notification read receipt');
     const after=probe();
-    report.notifications.push({cold,oldPid,newPid:after.pid,method:'tap actual system notification row',tab:after.tab,passed:after.tab==='chat'&&(!cold||after.pid!==oldPid)});
+    if(after.chatId!==notification.chatId)throw Error('Notification opened a different synthetic conversation');
+    report.notifications.push({cold,oldPid,newPid:after.pid,activityId:notification.notificationId,chatId:after.chatId,readReceipt:true,method:'tap actual system notification row',tab:after.tab,passed:after.tab==='chat'&&(!cold||after.pid!==oldPid)});
     await screenshot(`and5-390-dark-notification-${cold?'cold':'background'}.png`,'dark',390);
   }
 }catch(e){report.failure=safe(e.message);process.stderr.write(report.failure+'\n');process.exitCode=1;

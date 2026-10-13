@@ -27,7 +27,7 @@ export async function startFeedFixture(){
       if(command==='history')history=Array.from({length:220},(_,index)=>{const seq=index+1;return {eventId:`event-${seq}`,chatId:chat.chatId,orderKey:String(seq).padStart(20,'0'),revision:1,seq,type:seq%2?'user.message':'assistant.message',at:snapshotAt,sourceRef:{kind:'native',sessionId:chat.activeSessionId,seq},data:{text:seq===1?'帮我整理这周的计划。':seq===2?'这周的计划已经整理好。':`第 ${seq} 条合成记录。`}}});
       if(command==='update'){const row=rows.find(r=>r.id==='reminder');row.title='提醒已更新';row.attentionRevision=++revision;changed.set(row.id,revision);}
       if(command==='notify'){for(const id of changed.keys())if(id.startsWith('notice-')&&!rows.some(r=>r.id===id))removed.set(id,revision);changed.set(rows[0].id,revision);}
-      return json(res,{ok:true,...counts()});
+      return json(res,{ok:true,...counts(),...(command==='notify'?{notificationId:rows[0].id,chatId:chat.chatId}:{})});
     }
     if(p.startsWith('/personal/v1/activity')){
       const me=await authenticated(req);if(!me)return json(res,{error:{code:'UNAUTHORIZED'}},401);
