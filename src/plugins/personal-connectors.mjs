@@ -9,8 +9,8 @@ function calendarTime(value, accountZone) {
 }
 export function connectorCallSummary(tool, args = {}) {
   const title = `${tool.connectorName} · ${tool.displayName || tool.rawName}`;
-  if (/^mail_(send|reply|forward)$/.test(tool.rawName)) return `${title} · 收件人：${(args.to ?? []).join('、').slice(0,170)} · 主题：${String(args.subject ?? '').slice(0,100)} · 正文：${String(args.body ?? '').replace(/\s+/g,' ').slice(0,140)}`.slice(0,500);
-  if (/^calendar_(create|update|delete)$/.test(tool.rawName)) return `${title} · ${String(args.title ?? args.approvalTitle ?? '').slice(0,120)} · ${calendarTime(args.start ?? args.approvalStart,tool.timeZone)} 至 ${calendarTime(args.end ?? args.approvalEnd,tool.timeZone)} · 日历：${String(args.calendarName ?? args.calendarId ?? '').slice(0,80)}`.replace(/\s+/g,' ').slice(0,500);
+  if (tool.builtinId==='mail' && /^mail_(send|reply|forward)$/.test(tool.rawName)) return `${title} · 收件人：${(args.to ?? []).join('、').slice(0,170)} · 主题：${String(args.subject ?? '').slice(0,100)} · 正文：${String(args.body ?? '').replace(/\s+/g,' ').slice(0,140)}`.slice(0,500);
+  if (tool.builtinId==='calendar' && /^calendar_(create|update|delete)$/.test(tool.rawName)) return `${title} · ${String(args.title ?? args.approvalTitle ?? '').slice(0,120)} · ${calendarTime(args.start ?? args.approvalStart,tool.timeZone)} 至 ${calendarTime(args.end ?? args.approvalEnd,tool.timeZone)} · 日历：${String(args.calendarName ?? args.calendarId ?? '').slice(0,80)}`.replace(/\s+/g,' ').slice(0,500);
   return `${title} · ${JSON.stringify(args).slice(0,300)}`;
 }
 /** Agent-scoped tools retain DSH native load_tools and Code Mode presentation. */

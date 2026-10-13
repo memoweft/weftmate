@@ -29,8 +29,11 @@ test('calendar drafts inherit account timezone and approval summaries show recip
   const context={connectors:{test:async(_owner,input)=>{operation=input;return {ok:true};}},authenticate:()=>{},accountState:()=>({}),usage:{settings:()=>({timeZone:'America/New_York'})}};
   await connectorSettings(context,{}, {ownerId:'synthetic',device:{authKind:'desktop'}},{action:'test',builtinId:'calendar',fields:{provider:'icloud',username:'synthetic',timeZone:'UTC'},credentials:{AUTH_CODE:'synthetic-code'}});
   assert.equal(operation.fields.timeZone,'America/New_York');
-  const mail=connectorCallSummary({connectorName:'邮箱',rawName:'mail_reply',displayName:'回复邮件'},{to:['friend@synthetic.invalid'],subject:'合成主题',body:'批准的正文'});
+  const mail=connectorCallSummary({builtinId:'mail',connectorName:'邮箱',rawName:'mail_reply',displayName:'回复邮件'},{to:['friend@synthetic.invalid'],subject:'合成主题',body:'批准的正文'});
   for(const part of ['回复邮件','friend@synthetic.invalid','合成主题','批准的正文'])assert.ok(mail.includes(part));
-  const calendar=connectorCallSummary({connectorName:'日历',rawName:'calendar_create',displayName:'新建日程'},{title:'合成会议',start:'2026-10-15T13:00',end:'2026-10-15T14:00',calendarName:'工作日历'});
+  assert.ok(!connectorCallSummary({builtinId:'mail',connectorName:'邮箱',rawName:'mail_reply',displayName:'回复邮件'},{to:['friend@synthetic.invalid'],subject:'合成主题',body:'你好，\n这是回复'}).includes('\n'));
+  const calendar=connectorCallSummary({builtinId:'calendar',connectorName:'日历',rawName:'calendar_create',displayName:'新建日程'},{title:'合成会议',start:'2026-10-15T13:00',end:'2026-10-15T14:00',calendarName:'工作日历'});
   for(const part of ['合成会议','13:00','14:00','工作日历'])assert.ok(calendar.includes(part));
+  assert.ok(!calendar.includes('T13:00'));assert.ok(!calendar.includes('13:00:00'));
+  assert.doesNotThrow(()=>connectorCallSummary({connectorName:'自定义',rawName:'mail_send'},{to:'another schema'}));
 });

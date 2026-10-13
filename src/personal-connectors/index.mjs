@@ -187,7 +187,7 @@ export async function createConnectors({ root, runtime, vault, idleMs = 120000, 
       for (const row of rows(owner)) if (row.enabled) {
         const entry = live.get(key(owner, row.id));
         if (!entry && !row.problem) void start(owner, row).catch(() => {});
-        if (!row.problem && !['failed','recovering'].includes(entry?.status)) tools.push(...(row.tools ?? []).slice(0, 16).map(tool => ({ ...tool, connectorId: row.id, connectorName: row.name, ...(row.fields?.timeZone ? {timeZone:row.fields.timeZone} : {}) })));
+        if (!row.problem && !['failed','recovering'].includes(entry?.status)) tools.push(...(row.tools ?? []).slice(0, 16).map(tool => ({ ...tool, connectorId: row.id, connectorName: row.name, ...(row.builtinId ? {builtinId:row.builtinId} : {}), ...(row.fields?.timeZone ? {timeZone:row.fields.timeZone} : {}) })));
       }
       return tools;
     },

@@ -22,7 +22,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 });
 server.setRequestHandler(CallToolRequestSchema, async request => {
   try { await connect(); const result = await service.call(request.params.name, request.params.arguments ?? {}); return { content: [{ type: 'text', text: JSON.stringify(result) }] }; }
-  catch (error) { const safe = /^(MAIL|CALENDAR)_/.test(error?.code ?? '') ? error : connectorError(error); return { isError: true, content: [{type:'text',text:safe.message}] }; }
+  catch (error) {
+    const safe = /^(MAIL|CALENDAR)_/.test(error?.code ?? '') ? error : connectorError(error);
+    // An unavailable event or unsupported edit is a completed request with a
+    // failed business result, not a broken connector transport. Preserve the
+    // safe reason through the native bridge so the assistant can recover.
+    return { content: [{type:'text',text:JSON.stringify({ok:false,code:safe.code,message:safe.message})}] };
+  }
 });
 await server.connect(new StdioServerTransport());
 process.once('SIGTERM', async () => { await service.close(); process.exit(0); });
