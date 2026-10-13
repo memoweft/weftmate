@@ -112,7 +112,7 @@ internal class NativeFeedModel(private val chat:NativeChatModel,private val acti
         }finally{if(g==epoch)busy=false}
     }
     fun mark(row:JSONObject) { if(row.optBoolean("read"))return;launch { markNow(row,epoch) } }
-    private suspend fun markNow(row:JSONObject,g:Int) {
+    private suspend fun markNow(row:JSONObject,g:Int,resolvedApproval:Boolean=false) {
         if(row.optBoolean("read"))return
         val key="${row.optString("id")}:${row.optLong("attentionRevision")}"
         val id=requests.getOrPut(key){UUID.randomUUID().toString()}
@@ -120,7 +120,7 @@ internal class NativeFeedModel(private val chat:NativeChatModel,private val acti
             val result=chat.business("/activity/${encode(row.getString("id"))}/read","PATCH",feedReadBody(row,id));if(g!=epoch)return
             result.optJSONObject("item")?.let { state.acknowledge(it);if(detail?.optString("id")==it.optString("id"))detail=it }
             val counts=chat.business("/activity/unread");if(g==epoch){state.counts(counts);publish();requests.remove(key)}
-        }catch(e:ApiFailure){if(e.status==409){refresh(full=true);error="这条动态刚有更新，请重新打开。"}else throw e}
+        }catch(e:ApiFailure){if(e.status==409){refresh(full=true);if(!resolvedApproval)error="这条动态刚有更新，请重新打开。"}else throw e}
     }
     fun markAll()=launch {
         if(state.snapshotCursor.isEmpty()||busy)return@launch
@@ -146,7 +146,7 @@ internal class NativeFeedModel(private val chat:NativeChatModel,private val acti
             } else if(kind in listOf("view_memory","memory_item","view_settings","view_library")) {
                 webDetail=JSONObject().put("row",row).put("action",action).apply{outcome?.let{put("outcome",it)}};chat.tab="activity-web"
             } else return@launch
-            if(g==epoch){detail=null;markNow(row,g)}
+            if(g==epoch){detail=null;markNow(row,g,kind=="respond_approval"&&outcome!=null)}
         }finally{if(g==epoch)busy=false}
     }
     private suspend fun openChat(target:JSONObject,g:Int) {
@@ -155,11 +155,11 @@ internal class NativeFeedModel(private val chat:NativeChatModel,private val acti
         check(id.isNotEmpty())
         val conversation=chat.business("/chats/${encode(id)}").getJSONObject("chat");if(g!=epoch)return
         chat.select(conversation);if(g!=epoch)return
-        target.stringOrEmpty("eventId").takeIf{it.isNotEmpty()}?.let { chat.locateActivityEvent(it) }
+        val projected=target.stringOrEmpty("approvalId").let{it.isNotEmpty()&&chat.approvals.any{row->row.optString("approvalId")==it}} || target.stringOrEmpty("questionRpcId").let{it.isNotEmpty()&&chat.questions.any{row->row.optString("questionRpcId")==it}}
+        val found=projected || if(target.stringOrEmpty("eventId").isNotEmpty()||target.has("seq"))chat.locateActivityTarget(target) else false
         if(g!=epoch)return
-        // Legacy sources have seq rather than eventId: load existing older pages until found.
-        while(target.has("seq")&&chat.hasOlder&&chat.rows.none{feedTargetMatches(it,target)}){chat.refresh(true);if(g!=epoch)return}
-        focusTarget=target;chat.tab="chat"
+        focusTarget=if(found)target else null;chat.tab="chat"
+        if(!found&&(target.stringOrEmpty("eventId").isNotEmpty()||target.has("seq")))chat.error="这条记录已不在对话里，可以查看最新进展。"
     }
     fun closeDetail(){detail=null}
     fun closeWeb(){webDetail=null;chat.tab="activity";refresh(full=true)}

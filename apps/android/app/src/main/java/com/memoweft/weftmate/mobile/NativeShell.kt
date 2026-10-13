@@ -111,7 +111,8 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             if(!ime && m.tab!="settings") {
                 Row(Modifier.fillMaxWidth().padding(horizontal=pad,vertical=gap).clip(pill).background(MaterialTheme.colorScheme.surfaceVariant).padding(DesignTokens.space4.dp),horizontalArrangement=Arrangement.SpaceEvenly) {
                     tabs.forEach{(id,v)->Box(Modifier.weight(1f),contentAlignment=Alignment.Center){
-                        NativeIconButton(v.second,v.first,Modifier.semantics{selected=m.tab==id},selected=m.tab==id){focus.clearFocus();m.tab=id}
+                        val active=m.tab==id || id=="activity"&&m.tab=="activity-web"
+                        NativeIconButton(v.second,v.first,Modifier.semantics{selected=active},selected=active){focus.clearFocus();m.tab=id}
                         if(id=="activity" && activity.feed.unread>0)Box(Modifier.align(Alignment.TopEnd).padding(DesignTokens.space4.dp).size(DesignTokens.space8.dp).background(MaterialTheme.colorScheme.primary,CircleShape).semantics{contentDescription="${activity.feed.unread} 条动态未读"})
                     }}
                 }

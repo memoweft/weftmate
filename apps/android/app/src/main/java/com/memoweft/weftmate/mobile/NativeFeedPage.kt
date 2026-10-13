@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -36,14 +37,14 @@ private data class FeedEntry(val key: String, val day: String, val row: JSONObje
 
 @Composable internal fun NativeFeedToolbar(feed: NativeFeedModel, back: () -> Unit, onDrawer: () -> Unit = {}, onSettings: () -> Unit = {}) {
     val detail = feed.detail != null || feed.webDetail != null
-    Row(Modifier.fillMaxWidth().heightIn(min = (DesignTokens.space64 + DesignTokens.space16).dp).padding(DesignTokens.space12.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (detail) NativeIconButton(R.drawable.wm_back, "返回动态", action = back)
-        else NativeIconButton(R.drawable.wm_panel, "打开侧栏", action = onDrawer)
+    Row(Modifier.fillMaxWidth().background(Color(if(feed.dark)DesignTokens.nativeDarkCanvas else DesignTokens.nativeSurface)).heightIn(min = (DesignTokens.space64 + DesignTokens.space16).dp).padding(DesignTokens.space12.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (detail) FeedControlIconButton(R.drawable.wm_back, "返回动态", floating = true, action = back)
+        else FeedControlIconButton(R.drawable.wm_panel, "打开侧栏", floating = true, action = onDrawer)
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
             Text(if (detail) "动态详情" else "动态", fontSize = DesignTokens.font18.sp, fontWeight = FontWeight.SemiBold)
         }
         if (detail) Spacer(Modifier.size(feedTouch))
-        else NativeIconButton(R.drawable.wm_user, "打开个人设置", action = onSettings)
+        else FeedControlIconButton(R.drawable.wm_user, "打开个人设置", floating = true, action = onSettings)
     }
 }
 
@@ -53,11 +54,20 @@ private data class FeedEntry(val key: String, val day: String, val row: JSONObje
     val listState = rememberLazyListState()
     val refreshState = rememberPullToRefreshState()
     val entries = remember(feed.items, feed.timeZone) {
-        val days = feed.items.groupBy { feedDate(it.optString("at"), feed.timeZone) }
         buildList {
-            days.forEach { (day, rows) ->
-                add(FeedEntry("day:$day", day))
-                rows.forEach { add(FeedEntry("row:${it.getString("id")}", day, it)) }
+            var previousDay: String? = null
+            val headers = mutableMapOf<String, Int>()
+            // Keep pending rows ahead of completed rows even across dates. A
+            // groupBy(day) would bury an older pending card under today's results.
+            feed.items.forEach { row ->
+                val day = feedDate(row.optString("at"), feed.timeZone)
+                if (day != previousDay) {
+                    val occurrence = headers.getOrDefault(day, 0)
+                    headers[day] = occurrence + 1
+                    add(FeedEntry("day:$day:$occurrence", day))
+                    previousDay = day
+                }
+                add(FeedEntry("row:${row.getString("id")}", day, row))
             }
         }
     }
@@ -73,33 +83,32 @@ private data class FeedEntry(val key: String, val day: String, val row: JSONObje
         onRefresh = { feed.refresh(full = true, gesture = true) },
         state = refreshState,
         indicator = { PullToRefreshDefaults.Indicator(state = refreshState, isRefreshing = feed.refreshingGesture, modifier = Modifier.align(Alignment.TopCenter), containerColor = MaterialTheme.colorScheme.surface, color = MaterialTheme.colorScheme.primary) },
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth().background(Color(if(feed.dark)DesignTokens.nativeDarkCanvas else DesignTokens.nativeSurface))
     ) {
         LazyColumn(Modifier.fillMaxSize().semantics { contentDescription = "动态列表" }, state = listState,
             contentPadding = PaddingValues(start = DesignTokens.space20.dp, top = DesignTokens.space24.dp, end = DesignTokens.space20.dp, bottom = DesignTokens.space32.dp)) {
             item(key = "heading") {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("动态", Modifier.weight(1f), fontSize = DesignTokens.font24.sp, fontWeight = FontWeight.Bold)
-                    NativeIconButton(R.drawable.wm_check_circle, "全部标为已读", enabled = feed.unread > 0 && !feed.loading && !feed.busy) { feed.markAll() }
-                    NativeIconButton(R.drawable.wm_refresh, "刷新动态", enabled = !feed.loading && !feed.noComputer, compact = true) { feed.refresh(full = true) }
+                    FeedControlIconButton(R.drawable.wm_check_circle, "全部标为已读", enabled = feed.unread > 0 && !feed.loading && !feed.busy) { feed.markAll() }
+                    FeedControlIconButton(R.drawable.wm_refresh, "刷新动态", enabled = !feed.loading && !feed.noComputer) { feed.refresh(full = true) }
                 }
-                Text("提醒、任务结果和需要你处理的事项，都在这里。", Modifier.padding(top = DesignTokens.space12.dp), fontSize = DesignTokens.font16.sp, lineHeight = feedBodyLeading, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("提醒、任务结果和需要你处理的事项，都在这里。", Modifier.padding(top = DesignTokens.space12.dp), fontSize = DesignTokens.font16.sp, lineHeight = feedBodyLeading, color = feedMuted(feed.dark))
             }
             item(key = "filters") {
-                FlowRow(Modifier.fillMaxWidth().padding(top = DesignTokens.space24.dp, bottom = DesignTokens.space12.dp), horizontalArrangement = Arrangement.spacedBy(DesignTokens.space4.dp), verticalArrangement = Arrangement.spacedBy(DesignTokens.space4.dp)) {
+                var menu by remember { mutableStateOf(false) }
+                Box(Modifier.fillMaxWidth().padding(top = DesignTokens.space24.dp, bottom = DesignTokens.space12.dp)) {
+                    FeedControlButton(feedFilters.first { it.first == feed.filter }.second, enabled = !feed.loading && !feed.busy, secondary = true, trailingIcon = R.drawable.wm_down, contentDescription = "筛选动态：${feedFilters.first { it.first == feed.filter }.second}") { menu = true }
+                    FeedMenu(menu, { menu = false }) {
                     feedFilters.forEach { (id, label) ->
-                        Text(label, Modifier.heightIn(min = feedTouch).clip(feedPill)
-                            .background(if (feed.filter == id) feedSelected(feed.dark) else Color.Transparent)
-                            .selectable(selected = feed.filter == id, enabled = !feed.loading && !feed.busy, role = Role.Tab, onClick = { feed.choose(id) })
-                            .padding(horizontal = DesignTokens.space12.dp, vertical = feedGap),
-                            fontSize = DesignTokens.font16.sp, lineHeight = feedBodyLeading,
-                            color = if (feed.filter == id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                        FeedControlMenuItem(label, enabled = !feed.loading && !feed.busy, checked = feed.filter == id) { menu = false; feed.choose(id) }
+                    }
                     }
                 }
             }
             item(key = "notice") {
                 if (!feed.noComputer) Text(if (feed.error.isNotEmpty()) feed.error else if (feed.loading) "正在读取动态…" else "${feed.unread} 条未读" + if (feed.actionable > 0) " · ${feed.actionable} 项待处理" else "",
-                    Modifier.heightIn(min = DesignTokens.space24.dp), fontSize = DesignTokens.font13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Modifier.heightIn(min = DesignTokens.space24.dp), fontSize = DesignTokens.font13.sp, color = feedMuted(feed.dark))
             }
             if (entries.isEmpty()) item(key = "empty") {
                 when {
@@ -110,7 +119,7 @@ private data class FeedEntry(val key: String, val day: String, val row: JSONObje
                 }
             }
             items(entries, key = { it.key }) { entry ->
-                if (entry.row == null) Text(feedDayLabel(entry.day, feed.timeZone), Modifier.padding(top = DesignTokens.space32.dp, bottom = feedGap), fontSize = DesignTokens.font14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (entry.row == null) Text(feedDayLabel(entry.day, feed.timeZone), Modifier.padding(top = DesignTokens.space32.dp, bottom = feedGap), fontSize = DesignTokens.font14.sp, fontWeight = FontWeight.SemiBold, color = feedMuted(feed.dark))
                 else FeedRow(entry.row, feed)
             }
             if (entries.isNotEmpty() && feed.error.isNotEmpty()) item(key = "retry") { FeedEmpty(R.drawable.wm_warning, feed.error, "重试") { feed.refresh(full = true) } }
@@ -119,8 +128,8 @@ private data class FeedEntry(val key: String, val day: String, val row: JSONObje
     }
 }
 
-private fun feedSelected(dark: Boolean) = Color(if (dark) DesignTokens.nativeDarkAccentSoft else DesignTokens.nativeAccentSoft)
-private fun feedSoft(dark: Boolean) = Color(if (dark) DesignTokens.nativeDarkSoft else DesignTokens.nativeSoft)
+private fun feedSoft(dark: Boolean) = Color(if (dark) DesignTokens.nativeDarkSurface else DesignTokens.nativeSoft)
+private fun feedMuted(dark: Boolean) = Color(if (dark) DesignTokens.nativeDarkMuted else DesignTokens.nativeMuted)
 private fun feedDate(at: String, zone: String) = runCatching { Instant.parse(at).atZone(ZoneId.of(zone)).toLocalDate().toString() }.getOrDefault("")
 private fun feedDayLabel(date: String, zone: String): String = runCatching {
     val day = LocalDate.parse(date); val today = Instant.now().atZone(ZoneId.of(zone)).toLocalDate()
@@ -146,25 +155,27 @@ private fun feedReportDate(value: String, zone: String, subtractDay: Boolean = f
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(feedGap), verticalAlignment = Alignment.Top) {
                     if (unread) Box(Modifier.size(DesignTokens.space6.dp).align(Alignment.CenterVertically).background(MaterialTheme.colorScheme.primary, CircleShape).semantics { contentDescription = "未读" })
                     Text(row.optString("title"), Modifier.weight(1f).alignByBaseline(), fontSize = DesignTokens.font16.sp, fontWeight = FontWeight.SemiBold)
-                    Text(feedClock(row.optString("at"), feed.timeZone), Modifier.alignByBaseline(), fontSize = DesignTokens.font12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(feedClock(row.optString("at"), feed.timeZone), Modifier.alignByBaseline(), fontSize = DesignTokens.font12.sp, color = feedMuted(feed.dark))
                 }
                 Text(if (report == null) row.optString("summary") else "${feedReportDate(report.optString("from"), "UTC")} — ${feedReportDate(report.optString("to"), "UTC", true)}",
                     Modifier.padding(top = feedGap), fontSize = DesignTokens.font16.sp, lineHeight = feedBodyLeading, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 val reason = when (row.optJSONObject("notification")?.optString("reason")) { "dnd" -> "因勿扰未提醒"; "daily_limit" -> "已达每日主动提醒上限"; "type_disabled" -> "已设为只进动态"; else -> "" }
-                if (reason.isNotEmpty()) Text(reason, fontSize = DesignTokens.font12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (reason.isNotEmpty()) Text(reason, fontSize = DesignTokens.font12.sp, color = feedMuted(feed.dark))
                 val status = when { row.optString("state") == "pending" -> "待处理"; row.optString("state") == "unavailable" -> "已失效"; row.optString("type").startsWith("approval.") || row.optString("type").startsWith("question.") -> "已完成"; else -> "" }
-                if (status.isNotEmpty()) Text(status, fontSize = DesignTokens.font12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (status.isNotEmpty()) Text(status, fontSize = DesignTokens.font12.sp, color = feedMuted(feed.dark))
             }
             Box {
-                NativeIconButton(R.drawable.wm_more, "更多操作 ${row.optString("title")}", enabled = !feed.busy && (actions.isNotEmpty() || unread || row.has("memoryDigest") || row.has("weeklyInsight")), compact = true) { menu = true }
+                FeedControlIconButton(R.drawable.wm_more, "更多操作 ${row.optString("title")}", enabled = !feed.busy && (actions.isNotEmpty() || unread || row.has("memoryDigest") || row.has("weeklyInsight"))) { menu = true }
                 FeedMenu(menu, { menu = false }) {
                     if (row.optString("type") == "approval.pending" && row.optString("state") == "pending") actions.firstOrNull { it.optString("kind") == "respond_approval" }?.let { action ->
                         FeedMenuItem("批准", !feed.busy) { menu = false; feed.action(row, action, "allowed-once") }
-                        FeedMenuItem("拒绝", !feed.busy, danger = true) { menu = false; feed.action(row, action, "rejected") }
                     }
                     actions.filter { it.optString("kind") != "respond_approval" }.forEach { action -> FeedMenuItem(action.optString("label", "查看"), !feed.busy) { menu = false; feed.action(row, action) } }
                     if (unread) FeedMenuItem("标为已读", !feed.busy) { menu = false; feed.mark(row) }
                     if(row.has("memoryDigest")||row.has("weeklyInsight"))FeedMenuItem("完整操作",!feed.busy){menu=false;feed.openOriginalRow(row)}
+                    if (row.optString("type") == "approval.pending" && row.optString("state") == "pending") actions.firstOrNull { it.optString("kind") == "respond_approval" }?.let { action ->
+                        FeedMenuItem("拒绝", !feed.busy, danger = true) { menu = false; feed.action(row, action, "rejected") }
+                    }
                 }
             }
         }
@@ -174,18 +185,15 @@ private fun feedReportDate(value: String, zone: String, subtractDay: Boolean = f
 }
 
 @Composable private fun FeedMenu(expanded: Boolean, dismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    DropdownMenu(expanded, onDismissRequest = dismiss, containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(DesignTokens.radius26.dp), tonalElevation = 0.dp, shadowElevation = DesignTokens.space8.dp) { Column(Modifier.padding(horizontal = feedGap), content = content) }
+    val dark = MaterialTheme.colorScheme.background.luminance() < .5f
+    FeedControlMenu(expanded, dismiss, dark = dark, floatColor = Color(if(dark)DesignTokens.nativeDarkSurfaceFloat else DesignTokens.nativeSurfaceFloat),fallbackColor = Color(if(dark)DesignTokens.nativeDarkFloatOpaque else DesignTokens.nativeSurfaceFloat), content = content)
 }
 @Composable private fun FeedMenuItem(label: String, enabled: Boolean = true, danger: Boolean = false, action: () -> Unit) {
-    DropdownMenuItem(text = { Text(label, fontSize = DesignTokens.font16.sp, color = if (!enabled) MaterialTheme.colorScheme.onSurfaceVariant else if (danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface) }, onClick = action, enabled = enabled,
-        modifier = Modifier.heightIn(min = DesignTokens.space48.dp).clip(RoundedCornerShape(DesignTokens.radius16.dp)), contentPadding = PaddingValues(DesignTokens.space12.dp))
+    val icon = when(label) { "批准", "标为已读" -> R.drawable.wm_check_circle; "拒绝" -> R.drawable.wm_close; "不对，改一下" -> R.drawable.wm_edit; "忘掉" -> R.drawable.wm_trash; else -> R.drawable.wm_right }
+    FeedControlMenuItem(label, enabled = enabled, danger = danger, icon = icon, dangerSoftColor = MaterialTheme.colorScheme.errorContainer, action = action)
 }
 @Composable private fun FeedTextAction(label: String, enabled: Boolean = true, icon: Int? = null, action: () -> Unit) {
-    TextButton(onClick = action, enabled = enabled, modifier = Modifier.heightIn(min = feedTouch), shape = feedPill, contentPadding = PaddingValues(horizontal = DesignTokens.space12.dp, vertical = feedGap)) {
-        if (icon != null) { Icon(painterResource(icon), null, Modifier.size(DesignTokens.space16.dp)); Spacer(Modifier.width(feedGap)) }
-        Text(label, fontSize = DesignTokens.font16.sp)
-    }
+    FeedControlButton(label, enabled, icon = icon, action = action)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -244,7 +252,7 @@ private fun feedReportDate(value: String, zone: String, subtractDay: Boolean = f
         }
         if (review && status in listOf("current", "corrected")) FeedTextAction("还对", !feed.busy) { feed.confirmMemory(row, value) }
         if (!disabled) Box {
-            NativeIconButton(R.drawable.wm_more, "记忆操作 ${value.optString("text")}", enabled = !feed.busy, compact = true) { menu = true }
+            FeedControlIconButton(R.drawable.wm_more, "记忆操作 ${value.optString("text")}", enabled = !feed.busy) { menu = true }
             FeedMenu(menu, { menu = false }) {
                 FeedMenuItem("不对，改一下", !feed.busy && value.optString("kind") != "entity") { menu = false; feed.openMemoryItem(row, value, "correct") }
                 FeedMenuItem("忘掉", !feed.busy, danger = true) { menu = false; feed.openMemoryItem(row, value, "delete") }

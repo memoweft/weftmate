@@ -29,6 +29,7 @@ class And5QaReceiver:BroadcastReceiver(){
             notice?.notification?.contentIntent?.send()
         }
         val m=activity?.model;val feed=activity?.feed
-        File(context.filesDir,"and5-ready.json").writeText(JSONObject().put("pid",android.os.Process.myPid()).put("ready",m!=null&&!m.loading&&m.chatId.isNotEmpty()).put("tab",m?.tab ?: "").put("unread",feed?.unread ?: -1).put("hasDetail",feed?.detail!=null).put("noComputer",feed?.noComputer==true).put("noticeFound",notice!=null).put("systemAllowed",ActivityNotifications(context).allowed()).put("loading",feed?.loading==true).put("error",feed?.error ?: "").toString())
+        if(intent.getStringExtra("command")=="scroll-chat"&&m!=null){m.tab="chat";m.dark=intent.getStringExtra("theme")=="dark";m.launch{m.call("settings.appearance",JSONObject().put("value",if(m.dark)"dark" else "light"));m.refresh()}}
+        File(context.filesDir,"and5-ready.json").writeText(JSONObject().put("pid",android.os.Process.myPid()).put("ready",m!=null&&!m.loading&&m.chatId.isNotEmpty()).put("tab",m?.tab ?: "").put("rows",m?.rows?.size ?: 0).put("unread",feed?.unread ?: -1).put("hasDetail",feed?.detail!=null).put("noComputer",feed?.noComputer==true).put("noticeFound",notice!=null).put("systemAllowed",ActivityNotifications(context).allowed()).put("loading",feed?.loading==true).put("error",feed?.error ?: "").toString())
     }
 }
