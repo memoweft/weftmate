@@ -40,6 +40,7 @@ import {
 import { normalizeUsername, validPasswordRecord } from './password.mjs';
 import { validStoredProfile } from './profile.mjs';
 import { validAccountModel, validModelOperation } from '../personal-account-models/index.mjs';
+import { validModelService } from './model-services.mjs';
 import { modelRouteFingerprint } from '../model-route-fingerprint.mjs';
 import { openAICompatibleEndpoint } from '../openai-compatible-client.ts';
 import { validConversationContext } from '../personal-conversations/context.mjs';
@@ -85,6 +86,11 @@ export async function durableWrite(file, state, shouldCommit = () => true) {
 
 export function validateSingleStore(store) {
   if (!plainObject(store)) throw failure('STORE_CORRUPT', 500);
+  if (store.modelServices !== undefined && (!plainObject(store.modelServices) ||
+    Object.entries(store.modelServices).some(([id, record]) => !validModelService(record, id)))) throw failure('STORE_CORRUPT', 500);
+  if (store.modelServiceOperations !== undefined && (!plainObject(store.modelServiceOperations) ||
+    Object.entries(store.modelServiceOperations).some(([id, row]) => !REQUEST_ID.test(id) || !plainObject(row) ||
+      !/^[a-f0-9]{64}$/.test(row.fingerprint ?? '') || !plainObject(row.response)))) throw failure('STORE_CORRUPT', 500);
   validateChatIdentity(store);
   if (store.notificationSettings !== undefined) { try { validateNotificationSettings(store.notificationSettings); } catch { throw failure('STORE_CORRUPT', 500); } }
   if (store.notificationSettingsUpdatedAt !== undefined && !validTime(store.notificationSettingsUpdatedAt)) throw failure('STORE_CORRUPT', 500);
@@ -236,7 +242,7 @@ export function validateSingleStore(store) {
         !REQUEST_ID.test(binding.adoptRequestId ?? '') || !validId(binding.adoptCommandId) ||
         !validTime(binding.createdAt) || !validTime(binding.updatedAt) ||
         Object.keys(binding).some((key) => !['conversationId', 'ownerId', 'sessionId',
-          'modelProfileId', 'revision', 'status', 'cutoverSyncSeq', 'contextText',
+          'modelProfileId', 'originalModelProfileId', 'revision', 'status', 'cutoverSyncSeq', 'contextText',
           'contextHash', 'throughSeq', 'historyMessageCount', 'truncated', 'omittedImages',
           'adoptRequestId', 'adoptCommandId', 'createdAt', 'updatedAt'].includes(key))) {
       throw failure('STORE_CORRUPT', 500);
@@ -530,7 +536,7 @@ export function validateSingleStore(store) {
             ['accepted_by_dsh', 'observed'].includes(command.state) &&
             (!Object.hasOwn(store.sessions, command.sessionId) ||
               (store.sessions[command.sessionId].modelProfileId !== undefined &&
-                 store.sessions[command.sessionId].modelProfileId !== payload.modelProfileId) ||
+                 (store.sessions[command.sessionId].modelSelection?.originalProfileId ?? store.sessions[command.sessionId].modelProfileId) !== payload.modelProfileId) ||
                currentBinding && (store.sessions[command.sessionId].projectId ?? null) !== (payload.projectId ?? null) ||
                currentBinding && (store.sessions[command.sessionId].projectRevision ?? null) !== (payload.projectRevision ?? null) ||
                currentBinding && (store.sessions[command.sessionId].workspaceKind ?? null) !== (payload.workspaceKind ?? null))) ||
@@ -626,7 +632,7 @@ export function validateSingleStore(store) {
         command.payload.conversationId !== binding.conversationId ||
         command.payload.cutoverSyncSeq !== binding.cutoverSyncSeq ||
         command.payload.contextHash !== binding.contextHash ||
-        command.payload.modelProfileId !== binding.modelProfileId ||
+        command.payload.modelProfileId !== (binding.originalModelProfileId ?? binding.modelProfileId) ||
         (binding.status === 'active' &&
           (command.state !== 'accepted_by_dsh' ||
             store.sessions[binding.sessionId]?.conversationId !== binding.conversationId)) ||

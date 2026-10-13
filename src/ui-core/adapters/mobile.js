@@ -39,7 +39,7 @@ globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
       attachmentsDisabled:(core.state.sessionSelecting||core.state.sideCreating)||!state.loggedIn||state.restorePending||state.transitionPending||!!state.attachmentPick||
         (host?!session?.sendAvailable||!!state.sharedPending||linked:state.busy),
       attachmentItemDisabled:state.busy||state.transitionPending||host&&!!state.sharedPending,
-      modelDisabled:host||!state.loggedIn||state.busy||state.modelSwitching||state.transitionPending,
+      modelDisabled:!state.loggedIn||state.modelSwitching||state.transitionPending||host&&session?.sendAvailable!==true,
       voiceDisabled:(core.state.sessionSelecting||core.state.sideCreating)||!state.loggedIn||busy||state.modelSwitching||state.transitionPending||state.restorePending||host&&!session?.sendAvailable,
     };
   }

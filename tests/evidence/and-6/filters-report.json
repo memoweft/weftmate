@@ -1,0 +1,1521 @@
+{
+  "synthetic": true,
+  "instrumentation": [
+    {
+      "width": 390,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "and6-390-light-feed-filters.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and6-390-light-library-filters.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and6-390-light-web-feed-filters.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and6-390-light-web-library-filters.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and6-390-dark-feed-filters.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and6-390-dark-library-filters.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and6-390-dark-web-feed-filters.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and6-390-dark-web-library-filters.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    }
+  ],
+  "occupancy": {
+    "startedAt": "2026-10-13T17:57:28.334Z",
+    "heavySlot": "heavy-1.lock",
+    "releasedAt": "2026-10-13T17:58:08.997Z"
+  },
+  "installedOtherPackages": 2,
+  "systemVersion": "15",
+  "systemTheme": "Night mode: yes",
+  "apkHashes": {
+    "app": "81d4b45cc9c100cd8409924857c06286304d514826ff17486f0b3b8714063444",
+    "test": "f86b367a8eca1234cc83b1e01c59c87976fcc3138609b959dd99c6a2b65c4ad9"
+  },
+  "requests": [
+    {
+      "path": "/__and5/reset",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/config",
+      "method": "GET",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/app/manifest",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/app/updates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/settings/personalization",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/personalization",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/events",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/events",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/events",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/usage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/message-branches",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/dates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/dates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": null
+    },
+    {
+      "path": "/personal/v1/library/synthetic-file-2/preview",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/artifacts/synthetic-file-2/preview",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": "code"
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": "other"
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": null
+    },
+    {
+      "path": "/personal/v1/library/synthetic-file-2/preview",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/artifacts/synthetic-file-2/preview",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/app/manifest",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/app/updates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/settings/personalization",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/personalization",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/events",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/events",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/usage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/message-branches",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/dates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/dates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/app/updates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": null
+    },
+    {
+      "path": "/personal/v1/library/synthetic-file-2/preview",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/app/updates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": null
+    },
+    {
+      "path": "/__and5/reset",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/app/manifest",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/app/manifest",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/app/updates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/events",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/personalization",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/personalization",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/events",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/events",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/usage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/message-branches",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/dates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/dates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/tasks",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/schedules",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/goals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/library/synthetic-file-2/preview",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/artifacts/synthetic-file-2/preview",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": null
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": "code"
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": "other"
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": null
+    },
+    {
+      "path": "/personal/v1/library/synthetic-file-2/preview",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/artifacts/synthetic-file-2/preview",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/app/manifest",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/app/updates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/capabilities",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/settings/personalization",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/personalization",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/events",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/events",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/usage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/message-branches",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/dates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/dates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/chat-5bd03166-dbc0-4969-8ced-2c6f36d9512f/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/activity",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/app/updates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": null
+    },
+    {
+      "path": "/personal/v1/library/synthetic-file-2/preview",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/offline/sync",
+      "method": "POST",
+      "status": 500
+    },
+    {
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/app/updates",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/activity/changes",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/library",
+      "type": null
+    }
+  ],
+  "privateAdbClosed": true
+}

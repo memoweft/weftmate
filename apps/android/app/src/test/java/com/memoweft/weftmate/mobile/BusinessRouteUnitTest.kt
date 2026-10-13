@@ -7,6 +7,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun modelServicesUseOnlyExactServiceDirectoryAndSelectionRoutes() {
+        val service = "/personal/v1/model-services/model-service-00000000-0000-4000-8000-000000000001"
+        for (route in listOf("/personal/v1/model-services", "/personal/v1/model-services/check", service, "$service/refresh", "$service/select")) assertTrue(route, validBusinessPath(route))
+        for (route in listOf("/personal/v1/model-services?ownerId=other", "/personal/v1/model-services/check/raw", "/personal/v1/model-services/model-one/select", "$service/secret", "$service/select?modelId=other", "/personal/v1/model-services%2Fcheck", "/personal/v1/model-services/../select")) assertFalse(route, validBusinessPath(route))
+    }
     @Test fun phoneMemoryHandoverAndErasureKeepTheExistingExactRoutes() {
         for (route in listOf("/personal/v1/offline/sync", "/personal/v1/offline/turns", "/personal/v1/memory/status", "/personal/v1/memory/backfill")) assertTrue(route, validBusinessPath(route))
         for (route in listOf("/personal/v1/offline/forget", "/personal/v1/offline/turns?ownerId=other", "/personal/v1/offline/turns/raw", "/personal/v1/offline%2Fturns")) assertFalse(route, validBusinessPath(route))

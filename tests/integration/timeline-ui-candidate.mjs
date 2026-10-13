@@ -125,7 +125,18 @@ export async function startTimelineCandidate(options = {}) {
     importBackup: async () => {backupOperations.push('import');return {backup:{id:'ui4-import'}}},
     restore: async id => {backupOperations.push('restore:'+id);return {accepted:true}},
   } : null;
-  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, ...(options.allowedOrigins?{allowedOrigins:options.allowedOrigins,trustedProxy:true}:{}), accountModelManager:options.accountModelManager??null, systemManager:options.systemManager??null, libraryNativeActions:options.libraryNativeActions??null, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi, cloudIdentity:options.cloudIdentity })
+  // Popover acceptance projects the same legacy local profile through the real
+  // service migration/catalog endpoints, while keeping /models unchanged.
+  const unexpectedModelWrite = async () => { throw Error('Unexpected synthetic model configuration'); };
+  const modelServiceSecret = options.modelServices ? randomUUID() : null;
+  const modelServiceManager = options.modelServices ? {
+    stageSecret:unexpectedModelWrite,apply:unexpectedModelWrite,inspect:unexpectedModelWrite,
+    test:unexpectedModelWrite,disable:unexpectedModelWrite,hasCredential:async()=>true,
+    readSecret:async()=> modelServiceSecret,selectedProfileId:()=> 'local',
+    listProfiles:async()=> (await backend.listModels()).map(model=>({...model,baseUrl:'https://synthetic.invalid/v1'})),
+    fetchCatalog:async()=> new Response(JSON.stringify({data:(await backend.listModels()).map(model=>({id:model.model,name:model.name}))}),{headers:{'content-type':'application/json'}}),
+  } : null;
+  service = await createPersonalAccessService({ root, port: 0, ...(options.clock?{clock:options.clock}:{}), backend, backupManager, ...(options.allowedOrigins?{allowedOrigins:options.allowedOrigins,trustedProxy:true}:{}), accountModelManager:options.accountModelManager??modelServiceManager, systemManager:options.systemManager??null, libraryNativeActions:options.libraryNativeActions??null, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi, cloudIdentity:options.cloudIdentity })
   const started = await service.start(); let origin = started.origin;
   const { hostId } = started
   const credentials = { username: 'TimelineFixture', password: `isolated-${randomUUID()}`, deviceName: '隔离测试浏览器' }

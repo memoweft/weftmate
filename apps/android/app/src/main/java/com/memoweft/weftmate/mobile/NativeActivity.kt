@@ -21,6 +21,7 @@ class NativeActivity : HybridActivity() {
     internal var nativeForeground = false
     internal lateinit var model: NativeChatModel
     internal lateinit var feed: NativeFeedModel
+    internal lateinit var goals: NativeGoalsModel
     internal var embeddedFeedLoaded: (() -> Unit)? = null
     internal var embeddedWebIdentity by mutableStateOf<WebView?>(null)
         private set
@@ -61,7 +62,8 @@ class NativeActivity : HybridActivity() {
         }
         model = NativeChatModel(this, nativeScope)
         feed = NativeFeedModel(model, this)
-        nativeObserver = { type, data -> model.event(type, data); feed.event(type, data) }
+        goals = NativeGoalsModel(model, this)
+        nativeObserver = { type, data -> model.event(type, data); feed.event(type, data); goals.event(type, data) }
         // Compose owns system/IME insets; the embedded page receives a zero local safe area.
         presentationContainer.setPadding(0, 0, 0, 0)
         ViewCompat.setOnApplyWindowInsetsListener(presentationContainer) { _, insets -> insets }
@@ -83,7 +85,7 @@ class NativeActivity : HybridActivity() {
     }
     override fun embeddedPageFinished() { embeddedWebIdentity=embeddedWeb;applyWebFrame();if(::model.isInitialized && model.loggedIn && model.tab=="chat")parkWeb();embeddedFeedLoaded?.invoke() }
     internal fun parkWeb() {
-        if (!::model.isInitialized || model.tab != "chat") return
+        if (!::model.isInitialized || model.tab !in listOf("chat", "activity", "goals")) return
         coveredHostHistory = true
         val web = embeddedWeb
         (web.parent as? ViewGroup)?.removeView(web)
@@ -140,9 +142,11 @@ class NativeActivity : HybridActivity() {
     @Suppress("DEPRECATION") override fun onBackPressed() {
         overlayBack?.let { it(); return }
         if (!::model.isInitialized || !model.loggedIn) { super.onBackPressed(); return }
-        if (model.tab == "activity-web") feed.closeWeb()
+        if (model.tab == "goals-web") goals.closeWeb()
+        else if (model.tab == "goals" && (goals.detail != null || goals.draft != null)) goals.closeDetail()
+        else if (model.tab == "activity-web") feed.closeWeb()
         else if (model.tab == "activity" && feed.detail != null) feed.closeDetail()
         else if (model.tab != "chat") model.returnToChat() else moveTaskToBack(true)
     }
-    override fun onDestroy() { overlayBack=null; if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
+    override fun onDestroy() { overlayBack=null; if (::goals.isInitialized) goals.close(); if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
 }

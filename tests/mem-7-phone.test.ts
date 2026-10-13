@@ -15,6 +15,42 @@ import '../src/ui-core/phone-memory.js';
 import '../src/ui-core/offline.js';
 const W=(globalThis as any).WeftOffline,M=(globalThis as any).WeftPhoneMemory;
 const turn=(id:string,c=id,text='我喜欢茉莉花茶')=>({id,conversationId:c,timestamp:Date.UTC(2025,4,1),messages:[{role:'user',text},{role:'assistant',text:'知道了。'}],memoryRefs:[],dependencyComplete:true});
+const modelGate=()=>{let resolve!:()=>void;const promise=new Promise<void>(done=>resolve=done);return{promise,resolve};};
+
+test('MODEL-1 and MEM-7 keep the submitted chat model during authorization and use a new selection on the next turn',async t=>{
+ const authorization=modelGate(),started=modelGate(),used:any[]=[];let first=true;
+ let selected={modelId:'synthetic-chat-a',interfaceType:'openai-compatible'};
+ const vault={load:async()=>({snapshot:null,turns:[],conversations:[],tasks:[],forgetConversations:[],phoneMemory:M.fresh()}),save:async()=>{},close(){},
+  complete:async(body:any,snapshot:any)=>{used.push({modelId:body.model,interfaceType:snapshot.model.interfaceType});return{choices:[{message:{content:'合成回答'}}]};}};
+ const engine=await W.create({vault,identity:{ownerId:'synthetic',hostId:'host',deviceId:'phone'},crypto:webcrypto,phoneModel:()=>selected,
+  accountCheck:async()=>{if(first){first=false;started.resolve();await authorization.promise;}return{};}});t.after(()=>engine.close());
+ const sending=engine.send('第一条');await started.promise;selected={modelId:'synthetic-chat-b',interfaceType:'anthropic'};authorization.resolve();
+ const sent=await sending;await engine.send('下一条',sent.conversationId);
+ assert.deepEqual(used,[{modelId:'synthetic-chat-a',interfaceType:'openai-compatible'},{modelId:'synthetic-chat-b',interfaceType:'anthropic'}]);
+ assert.equal(engine.view().conversations[0].turns.length,2);
+});
+
+test('MODEL-1 memory selection stays fixed and MEM-7 computer handover aborts an in-flight extraction without committing stale memory',async t=>{
+ const authorization=modelGate(),checking=modelGate(),completing=modelGate(),completion=modelGate();let extracting=false,checked=false,memoryRequests=0;
+ let selected={modelId:'synthetic-chat-a',interfaceType:'openai-compatible'};let extractionSignal:AbortSignal|undefined,extractionModel:any;
+ const vault={load:async()=>({snapshot:null,turns:[],conversations:[],tasks:[],forgetConversations:[],phoneMemory:M.fresh()}),save:async()=>{},close(){},key:async()=>({}),open:async(value:any)=>value,
+  complete:async(body:any,snapshot:any,signal:AbortSignal)=>{
+   if(!body.max_tokens)return{choices:[{message:{content:'合成回答'}}]};
+   memoryRequests++;extractionSignal=signal;extractionModel={modelId:body.model,interfaceType:snapshot.model.interfaceType};completing.resolve();await completion.promise;
+   const source=JSON.parse(body.messages[1].content)['原话'][0];return{choices:[{message:{content:JSON.stringify({upsert:[{id:null,text:'喜欢茉莉花茶',evidence:'茉莉花茶',sourceIDs:[source.id]}],invalidate:[]})}}]};
+  }};
+ const engine=await W.create({vault,identity:{ownerId:'synthetic',hostId:'host',deviceId:'phone'},crypto:webcrypto,phoneModel:()=>selected,
+  accountCheck:async()=>{if(extracting&&!checked){checked=true;checking.resolve();await authorization.promise;}return{};},
+  control:async()=>({authorized:true,accountId:'synthetic-account',hostId:'host',generation:1}),
+  host:async(path:string)=>path==='/offline/sync'?{generation:1,reset:false,items:[],remove:[],hashes:{},control:{accountId:'synthetic-account'},memoryAuthority:{ready:true}}:{receipts:[]}});t.after(()=>engine.close());
+ const sent=await engine.send('我喜欢茉莉花茶');extracting=true;const reading=engine.extractMemory(sent.conversationId);await checking.promise;
+ selected={modelId:'synthetic-chat-b',interfaceType:'anthropic'};authorization.resolve();await completing.promise;
+ assert.deepEqual(extractionModel,{modelId:'synthetic-chat-a',interfaceType:'openai-compatible'});
+ await engine.sync();assert.equal(engine.view().phoneMemory.handover,true);assert.equal(extractionSignal?.aborted,true);
+ completion.resolve();assert.equal(await reading,false);assert.equal(engine.view().phoneMemory.items.length,0);assert.equal(engine.view().phoneMemory.processed.length,0);
+ assert.equal(await engine.extractMemory(sent.conversationId),false);assert.equal(memoryRequests,1);
+ assert.equal(engine.view().conversations[0].turns[0].messages[0].text,'我喜欢茉莉花茶','handover retains the original conversation');
+});
 test('MEM-7 compound recall keeps each filtered topic before extra claims and retains exact Core references',()=>{
  const snapshots=[{preview:{rendered_recall:'记忆：主题甲\n记忆：甲的补充',selected_item_ids:[['cognition','a'],['entity','a-extra']]}},{preview:{rendered_recall:'记忆：姓名',selected_item_ids:[['cognition','name']]}}];
  const entries=recallEntries(snapshots);assert.deepEqual(entries.slice(0,2).map(e=>e.pair),[['cognition','a'],['cognition','name']]);
