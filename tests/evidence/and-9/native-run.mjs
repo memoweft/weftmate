@@ -10,7 +10,7 @@ import {startSettingsFixture} from './fixture.mjs';
 
 delete process.env.WEFTMATE_TEST_TEMP_SCOPE;
 process.env.WEFTMATE_MANAGED_TEMP_ROOT=join('C:/weftmate-temp','weftmate-and9-'+randomUUID());
-const exec=promisify(execFile),root=resolve(import.meta.dirname,'../../..'),out=import.meta.dirname;
+const exec=promisify(execFile),root=resolve(import.meta.dirname,'../../..'),out=process.argv.includes('--fix')?join(import.meta.dirname,'fix'):import.meta.dirname;
 const pkg='com.memoweft.weftmate.mobile.and9qa',locks='D:/AIProjects/WeftMate/Runtime/Orchestrator',adb='D:/AIProjects/AIGame/Repository/runtime/toolchains/android-sdk/platform-tools/adb.exe';
 let heavy,mumu,serial,fixture,port,adbPort,installed=false;
 const args=()=>['-P',String(adbPort),'-s',serial];
@@ -18,7 +18,7 @@ const run=(...a)=>execFileSync(adb,[...args(),...a],{encoding:'utf8',windowsHide
 const safe=s=>String(s).replaceAll(fixture?.credentials?.password||'<unset-password>','<synthetic-password>').replace(/C:[\\/]Users[\\/][^\\/\s]+/gi,'C:/Users/<user>').replace(/DESKTOP-[A-Z0-9-]+/gi,'<host>');
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const report={synthetic:true,instrumentation:[],screenshots:[]};
-const filters=false,revision=process.argv.includes('--revision'),bars=process.argv.includes('--bars');
+const filters=false,revision=process.argv.includes('--revision'),bars=process.argv.includes('--bars'),fix=process.argv.includes('--fix');
 async function lock(path,label){const f=await open(path,'wx');await f.writeFile(`AND-9 ${new Date().toISOString()} ${label}`);await f.close();return path;}
 try{
   while(true){
@@ -27,6 +27,7 @@ try{
     if(heavy)try{mumu=await lock(join(locks,'mumu.lock'),'native settings 360/390 light/dark')}catch(e){if(e.code!=='EEXIST')throw e;await unlink(heavy);heavy=null}
     if(!mumu){process.stdout.write('Waiting for MuMu/heavy slot; no slot held\n');await pause(120000)}
   }
+  await mkdir(out,{recursive:true});
   report.occupancy={startedAt:new Date().toISOString(),heavySlot:heavy.split(/[\\/]/).at(-1)};
   const allocator=createServer();await new Promise(r=>allocator.listen(0,'127.0.0.1',r));adbPort=allocator.address().port;await new Promise(r=>allocator.close(r));
   serial=readMuMuInfo().serial;
@@ -52,7 +53,7 @@ try{
     await fetch(`${fixture.origin}/${filters?'__and5':'__and9'}/reset`);run('shell','am','force-stop',pkg);run('shell','cmd','statusbar','collapse');
     const c=fixture.credentials;
     process.stdout.write(`Native settings ${width} ${theme}\n`);
-    const r=await exec(adb,[...args(),'shell','am','instrument','-w','-r','-e','class',`com.memoweft.weftmate.mobile.${bars?'NativeSettingsBarsInstrumentedTest':revision?'NativeSettingsRevisionInstrumentedTest':'NativeSettingsInstrumentedTest'}`,'-e','width',String(width),'-e','theme',theme,'-e','origin',c.origin,'-e','username',c.username,'-e','password',c.password,`${pkg}.test/androidx.test.runner.AndroidJUnitRunner`],{windowsHide:true,timeout:270000,maxBuffer:4*1024*1024});
+    const r=await exec(adb,[...args(),'shell','am','instrument','-w','-r','-e','class',`com.memoweft.weftmate.mobile.${fix?'NativeSettingsFixInstrumentedTest':bars?'NativeSettingsBarsInstrumentedTest':revision?'NativeSettingsRevisionInstrumentedTest':'NativeSettingsInstrumentedTest'}`,'-e','width',String(width),'-e','theme',theme,'-e','origin',c.origin,'-e','username',c.username,'-e','password',c.password,`${pkg}.test/androidx.test.runner.AndroidJUnitRunner`],{windowsHide:true,timeout:270000,maxBuffer:4*1024*1024});
     const log=safe(r.stdout+r.stderr);await writeFile(join(out,`${bars?'bars-':revision?'revision-':''}instrumentation-${width}-${theme}.txt`),log);
     const files=run('shell','run-as',pkg,'ls','files').trim().split(/\s+/).filter(f=>f.startsWith(`and9-${width}-${theme}-`));
     for(const file of files){const data=execFileSync(adb,[...args(),'exec-out','run-as',pkg,'cat',`files/${file}`],{windowsHide:true,maxBuffer:12*1024*1024});await writeFile(join(out,file),data);if(file.endsWith('.png'))report.screenshots.push({file,pageTheme:theme,widthDp:width,systemVersion:report.systemVersion,systemTheme:report.systemTheme})}
