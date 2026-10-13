@@ -1,0 +1,35 @@
+✔ Android inventory discovers interface and contract paths and runs the shipped native dispatcher (77.4305ms)
+✔ Android inventory resolves opaque IDs, dates, numeric detail anchors and health identifiers (0.3063ms)
+✔ offline phone task inventory covers all four exact cloud POST calls and keeps computer receipt routes separate (53.588ms)
+✔ phone encrypts using the existing replica envelope; wrong key, host and ciphertext fail without leaking text (75.6323ms)
+✔ phone persists encrypted retry identity, closes immediately after acceptance, restores status and clears on erasure (67.6141ms)
+✔ previously connected computers retain authenticated recipient keys; explicit target is inside the authenticated envelope (72.0809ms)
+✔ another computer's forget clears its phone tasks and encrypted replica while the current computer stays connected (117.8277ms)
+✔ another computer's revoke clears its phone tasks and encrypted replica while the current computer stays connected (105.3189ms)
+✔ computer persists receipt before cloud ack, preserves order and deduplicates repeat pulls, two ticks and restart (4.4022ms)
+✔ cancel racing receipt never schedules execution and removes local plaintext (1.0518ms)
+✔ host makes zero task requests without explicit cloud support, and enables after a fresh supported receipt (1.1369ms)
+✔ phone ignores cached task keys until cloud advertises support; refresh can enable and disable without any 404 probe (42.5368ms)
+✔ two receiver connections racing the same delivered task persist one original command (1.931ms)
+✔ restart keeps confirmed-but-unissued work blocked until authoritative cloud revalidation (1.4064ms)
+✔ offline source uses current physical device authorization and same generation, without broadening approval mode (0.819ms)
+✔ unavailable computer model is rejected through normal dispatch and reports a generic failure in the original conversation (1.0269ms)
+✔ offline completion is observed even for a text-only native task, and notifications including approvals omit task content (0.8667ms)
+✔ start and completion keep different activity IDs so native persistent notification deduplication can show both (0.5957ms)
+✔ sync errors distinguish connectivity from permission, request and replica errors (2.4119ms)
+✔ phone plus menu and goals expose no task feature without support and appear after refreshed support (3.9211ms)
+✔ restoring a cached phone waits for host login before replica sync and keeps accepted tasks (1.6835ms)
+✔ native phone vault without seal keeps cloud-supported tasks hidden and offline chat working without bridge errors (5.1544ms)
+✔ polling never navigates over approvals; return stays closed on repeated offline ticks (1.7248ms)
+✔ manually opened offline content belongs to the chat scroller, outside approval and settings layers (1.2272ms)
+✔ a replica transport timeout does not declare a responsive host offline (1.3812ms)
+✔ offline repaints preserve the unified picker hiding its original select (2.0277ms)
+✔ both production mount transports pass objects and protected writes through requestJson (29.5381ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 715.9806

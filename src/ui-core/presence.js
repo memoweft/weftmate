@@ -3,7 +3,7 @@
     const labels = { online: '在线', connecting: '正在连接', host_offline: '电脑离线', network_unavailable: '网络不可用', login_required: '需要重新登录', approval_required: '需要批准这台设备' };
     const descriptions = {
         connecting: '正在连接：可以继续写草稿、查看已读取的内容；暂时不能发送或操作电脑。连接后会从原位置接续。',
-        host_offline: '电脑离线：可以用云端模型聊天并用上已同步的记忆，不能操作电脑。电脑上线后会自动同步。',
+        host_offline: '电脑离线：可以继续聊天和用记忆，也可以记下要做的事，等电脑上线后去做。',
         network_unavailable: '网络不可用：可以继续写草稿、查看已读取的内容；联网后会自动接续，暂时不能发送消息。',
         login_required: '需要重新登录：草稿已保留。登录后才能发送消息和读取最新内容。',
         approval_required: '需要批准这台设备：请在已登录设备的「设置 → 设备」允许访问，批准前不能读取或发送电脑内容。',

@@ -9,6 +9,23 @@ import java.security.spec.ECGenParameterSpec
 class CloudAppUnitTest {
     private val host = "https://host.example.com"
     private val issuer = "https://cloud.example.com/personal/v1/cloud/oidc"
+    @Test fun offlinePhoneTasksUseOnlyFourExactCloudPostRoutes() {
+        for (action in listOf("submit", "list", "cancel", "clear")) {
+            val path = "/personal/v1/cloud/hosts/offline/tasks/$action"
+            val url = "https://cloud.example.com$path"
+            assertTrue(url, cloudAppRouteAllowed(url, "POST", host, issuer))
+            for (method in listOf("GET", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "post"))
+                assertFalse(method, cloudAppRouteAllowed(url, method, host, issuer))
+            for (bad in listOf(url + "/raw", url + "/", url + "-other", url + "?ownerId=other", url + "#fragment",
+                url.replace("/tasks/", "/task/"), url.replace("/tasks/", "/tasks%2F"),
+                url.replace("/tasks/", "/tasks/../tasks/"), url.replace("cloud.example.com", "evil.example.com"),
+                "$host$path"))
+                assertFalse(bad, cloudAppRouteAllowed(bad, "POST", host, issuer))
+            assertFalse(path, validBusinessPath(path))
+        }
+        for (action in listOf("claim", "ack", "result", "all"))
+            assertFalse(action, cloudAppRouteAllowed("https://cloud.example.com/personal/v1/cloud/hosts/offline/tasks/$action", "POST", host, issuer))
+    }
     @Test fun emailCodeLoginUsesExactPostRoutesOnTheConfiguredIssuer() {
         for (path in listOf("auth/login/code/request", "auth/login/code/confirm", "hosts/offline/status", "feedback")) {
             val url = "https://cloud.example.com/personal/v1/cloud/$path"

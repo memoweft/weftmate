@@ -46,7 +46,7 @@ test('real entrypoint starts on an isolated port, serves health, and closes on S
   // Linux still verifies the service's graceful handler exits successfully.
   assert.deepEqual(await exited, process.platform === 'win32' ? [null, 'SIGTERM'] : [0, null]);
   const db = new DatabaseSync(path.join(root, 'cloud.sqlite'));
-  try { assert.equal(db.prepare('SELECT count(*) AS count FROM schema_migrations').get().count, 8); }
+  try { assert.equal(db.prepare('SELECT count(*) AS count FROM schema_migrations').get().count, 9); }
   finally { db.close(); }
 });
 

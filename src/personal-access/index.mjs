@@ -891,6 +891,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       activity.start();
       for (const ownerId of Object.keys(rootState.accounts)) void sessions.initialize(ownerId);
       hostCloudIdentity?.start();
+      offline.start();
       hostRelay?.start(origin);
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
         for (const operation of Object.values(account.modelOperations ?? {})) {
