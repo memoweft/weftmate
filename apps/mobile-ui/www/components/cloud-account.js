@@ -134,7 +134,7 @@
     core.connectionView=()=>uiCore.connectionView();
     core.observeConnection=listener=>uiCore.observeConnection(listener);
     core.retryConnection=()=>uiCore.retryConnection();
-    globalThis.WeftOfflineView?.mount({ core, nativeCall: native ? call : null,
+    globalThis.WeftOfflineView?.mount({ core, goalsCore:uiCore, nativeCall: native ? call : null,
       openConversation: () => page('chat'),
       identity: async () => native ? call('offline.identity') : core.cloudOfflineIdentity(),
       host: (path, body) => core.accessApi(path, { method: 'POST', body, protectedWrite: true }) });

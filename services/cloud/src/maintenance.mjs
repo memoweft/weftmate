@@ -1,4 +1,6 @@
+import { pruneOfflineTasks } from './offline-tasks.mjs';
 export async function pruneEphemeral(database, mailer, now = Date.now()) {
+  pruneOfflineTasks(database, now);
   database.prepare('DELETE FROM failure_limits WHERE window_start<=? AND blocked_until<=?').run(now - 3600000, now);
   database.prepare('DELETE FROM host_proof_replays WHERE expires_at<=?').run(now);
   database.prepare('DELETE FROM interaction_forms WHERE expires_at<=?').run(now);

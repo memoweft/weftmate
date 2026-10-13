@@ -414,7 +414,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         if (hostRoute) {
           if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
           if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
-          reply(res, 200, await hosts.handle(url.pathname.slice(CLOUD_PATH.length), req, await bodyOf(req)));
+          reply(res, 200, await hosts.handle(url.pathname.slice(CLOUD_PATH.length), req, await bodyOf(req, url.pathname.endsWith('/offline/tasks/submit') ? 70 * 1024 : 16384)));
           return true;
         }
         if (match) {

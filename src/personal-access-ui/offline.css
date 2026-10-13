@@ -1,8 +1,11 @@
 .offline-chat{position:relative;box-sizing:border-box;height:100%;min-height:100%;display:flex;flex-direction:column;background:var(--canvas,var(--bg));color:var(--ink,var(--text));padding:var(--wm-space-16);padding-bottom:var(--safe-bottom, env(safe-area-inset-bottom, 0px));gap:var(--wm-space-12)}
 .offline-chat[hidden],.offline-launcher[hidden]{display:none}
+.offline-history-open .composer-area{display:none}
 .offline-chat header{display:flex;flex-wrap:wrap;align-items:center;gap:var(--wm-space-12)}
 .offline-chat h1{font-size:var(--wm-font-size-18);margin:0;flex:1}
 .offline-chat header p{flex-basis:100%;margin:0;font-size:var(--wm-font-size-14)}
+.offline-reference{width:100%;flex-basis:100%}
+.offline-reference[hidden]{display:none}
 .offline-chat select{max-width:100%;width:100%;padding:var(--wm-space-8);background:inherit;color:inherit;border:1px solid var(--line,var(--wm-color-control-border));border-radius:var(--wm-radius-8)}
 .offline-messages{flex:1;overflow:auto;min-height:0;}
 .offline-message{max-width:72ch;margin:var(--wm-space-20) auto;overflow-wrap:anywhere}
@@ -13,7 +16,12 @@
 .offline-chat button,.offline-launcher{text-decoration:none}
 .offline-message.user{padding:var(--wm-space-12);background:var(--surface,var(--card));border-radius:var(--wm-radius-12)}
 .offline-empty{max-width:36ch;margin:var(--wm-space-24) auto;line-height:1.6}
-.offline-composer{max-width:72ch;width:100%;margin:0 auto;padding-bottom:var(--wm-space-12);display:grid;grid-template-columns:1fr auto;gap:var(--wm-space-8)}
+.offline-composer{max-width:72ch;width:100%;margin:0 auto;padding-bottom:var(--wm-space-12);display:grid;grid-template-columns:auto 1fr auto;gap:var(--wm-space-8)}
+.offline-composer>.composer-icon{grid-column:1;grid-row:2}
+.offline-composer>p{grid-column:2;grid-row:2}
+.offline-composer>button[type=submit]{grid-column:3;grid-row:2}
+.offline-chat select{appearance:none}
+.offline-chat button:active{background:var(--surface,var(--card))}
 .offline-composer label{grid-column:1/-1;font-size:var(--wm-font-size-14)}
 .offline-composer textarea{display:block;box-sizing:border-box;width:100%;resize:none;overflow:auto;margin-top:var(--wm-space-8);padding:var(--wm-space-12);font:inherit;color:inherit;caret-color:var(--wm-color-brand-light);background:inherit;border:1px solid var(--line,var(--wm-color-control-border));border-radius:var(--wm-radius-12)}
 .offline-composer p{font-size:var(--wm-font-size-14);margin:0;align-self:center}
