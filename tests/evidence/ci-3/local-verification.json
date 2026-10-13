@@ -56,6 +56,12 @@
       "skipped": 0,
       "durationMs": 5310.1592,
       "log": ".local/ci-3/fixed-final.log"
+    },
+    {
+      "label": "additional-lifecycle-cloud",
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0
     }
   ],
   "slots": [

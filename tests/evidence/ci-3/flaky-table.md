@@ -59,3 +59,4 @@
 | vendor-tests.yml | Pinned DSH vendor unit tests | tests/bl-29-runtime-close.test.ts | BL-29c N5 parent cleans the whole owned Electron set when the driver is terminated after first window | assertion | 1 | 38290471674/1 |
 
 原始日志只存本包 .local；公开 JSON（结构化数据）保留清理身份后的诊断片段、完整运行链接和每次任务结论。
+起点统计之后的新增现场与定性：[补充观测](additional-observations.md)，详情也保存在 flaky-table.json 的 additionalObservations（补充观测）中。

@@ -51,3 +51,4 @@
 日志片段按表编号保留在 diagnostics.md，完整清理身份后的诊断位于 flaky-table.json。产品修改仅 personal-projects/index.mjs、reader.ps1、windows-vault-storage.mjs；新增固定回归见 ci-steady-checks.test.ts、rob-1-storage.test.ts。清单增0、删0，原六项。
 
 CI-1 第六轮 next-suggestions 的 f.aborted false≠true 早于本表起点：38c844d0 / FIX-24 已在 main 修复异步 admission（请求准入）期间中止与夹具信号注册竞态。本包保留 await f.started、注销等待和 FIX-24 固定测试；没有把它当计时失败或重新更改产品。
+本包预检期间新增两类同源夹具失败，逐项日志、定性、修复及作业取消说明见 [补充观测](additional-observations.md)。
