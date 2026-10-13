@@ -7,7 +7,8 @@ plugins {
 val updateChannel = providers.gradleProperty("weftmateUpdateChannel").orElse("stable").get()
 require(updateChannel in listOf("stable", "preview"))
 val qaProfile = providers.gradleProperty("weftmateQaProfile").orElse("false").get().toBooleanStrict()
-require(!qaProfile || providers.gradleProperty("weftmateApplicationId").orNull == "com.memoweft.weftmate.mobile.and4qa")
+require(!qaProfile || providers.gradleProperty("weftmateApplicationId").orNull in
+    setOf("com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and12qa"))
 
 android {
     namespace = "com.memoweft.weftmate.mobile"

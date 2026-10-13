@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imeAnimationTarget
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -37,8 +39,9 @@ import androidx.compose.ui.unit.dp
 }
 
 /** Read animated insets in measurement, never in the shell's composition. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable internal fun Modifier.keyboardNavigation(): Modifier {
-    val ime = WindowInsets.ime
+    val ime = if(android.os.Build.VERSION.SDK_INT>=30)WindowInsets.ime else WindowInsets.imeAnimationTarget
     val navigation = WindowInsets.navigationBars
     val density = LocalDensity.current
     return clipToBounds().layout { measurable, constraints ->
