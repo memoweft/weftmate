@@ -237,7 +237,7 @@ class MainActivity : Activity() {
         this.text = text; isAllCaps = false; textSize = DesignTokens.font13
         backgroundTintList = null
         stateListAnimator = null
-        setTextColor(if (primary) Weave.surface else Weave.accent)
+        setTextColor(if (primary) Weave.onAccent else Weave.accent)
         background = GradientDrawable().apply {
             setColor(if (primary) Weave.accent else Weave.surface)
             if (!primary) setStroke(dp(DesignTokens.space1), Weave.line)
@@ -258,7 +258,7 @@ class MainActivity : Activity() {
     private fun buildUi() = buildWeaveUi()
 
     private fun buildWeaveUi() {
-        root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Weave.surface) }
+        root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(if(Weave.dark)Weave.canvas else Weave.surface) }
         setContentView(root)
         SystemBars.apply(this, Weave.dark, savedAppearance(this))
         SystemBars.nativeInsets(root)
@@ -302,7 +302,7 @@ class MainActivity : Activity() {
         }.apply { visibility = View.GONE }
         header.addView(readonlyStopButton, LinearLayout.LayoutParams(dp(DesignTokens.space48), dp(DesignTokens.space48)))
 
-        chatPanel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Weave.surface) }
+        chatPanel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(if(Weave.dark)Weave.canvas else Weave.surface) }
         root.addView(chatPanel, LinearLayout.LayoutParams(-1, 0, 1f))
         scroll = ScrollView(this).apply {
             id = R.id.chat_scroll
@@ -345,7 +345,7 @@ class MainActivity : Activity() {
         gravity = Gravity.CENTER
         setPadding(0, 0, 0, 0)
         background = Weave.shape(this@MainActivity, Weave.accent, DesignTokens.radius24)
-        val drawable = getDrawable(icon)?.mutate()?.apply { setTint(Weave.surface) }
+        val drawable = getDrawable(icon)?.mutate()?.apply { setTint(Weave.onAccent) }
         setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
         setOnClickListener { action() }
     }

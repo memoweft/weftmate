@@ -1,0 +1,1421 @@
+{
+  "native": true,
+  "testDiscovery": "synthetic computer presence and loopback address; authentication and content use product APIs",
+  "syntheticCloud": true,
+  "syntheticAccount": true,
+  "mimoRequests": 2,
+  "checks": [
+    "register-with-no-computers-enters-chat-and-five-tabs",
+    "phone-configure-test-stream-and-persist",
+    "native-key-byte-scan-and-backup-disabled",
+    "all-five-tabs-settings-empty-states-light-dark-360-390",
+    "restart-preserves-encrypted-phone-chat",
+    "first-computer-imports-original-phone-turn",
+    "phone-original-still-readable-after-computer"
+  ],
+  "screenshots": [
+    {
+      "file": "native-390-light-model-empty.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "11ce33aa15b9475efcecf71f7a35868660cdd77e177b76f221be022dbbd8ef47"
+    },
+    {
+      "file": "native-390-light-provider-menu.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "e62cfd9a9f61772ace4e4814666e752b10fd1201d2fa94ba219b0f1a59ee3bfd"
+    },
+    {
+      "file": "native-390-dark-provider-menu.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "57fd8c80031a2d9ec06a393ab27df3f1d8e685e2de86517eb04ea06f6b75b4de"
+    },
+    {
+      "file": "native-360-light-chat.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "8ea89929059b2e634efdf293ea66944c68d81f5dadaa5a178cd4d36efb656229"
+    },
+    {
+      "file": "native-360-light-activity.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "7435fe07fd0cc11be6e209301dd0f45ad0d6b463ced56a66754cac6f6089d3d9"
+    },
+    {
+      "file": "native-360-light-health.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "05cead2ff83c65da18d0a04ca275717e86ea553690ddd46fb96847a5eaac4c34"
+    },
+    {
+      "file": "native-360-light-goals.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "8f3b42652300531c1c39af7741257877ba431d2db635c77d204a750d61a001d0"
+    },
+    {
+      "file": "native-360-light-library.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "948a569d403e2f7db821bb82b32206809bce352bc6c3635c6945b0523e373029"
+    },
+    {
+      "file": "native-360-light-models.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "cb7a5db4e194201b050a8aea195b10ed084d79177b9a41fe16e84e0fca949411"
+    },
+    {
+      "file": "native-360-light-devices.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "530ef964a22e611d9436ee05a1ddad81360052416b8c69824147568053bf1025"
+    },
+    {
+      "file": "native-360-light-memory.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "d2a04cd8805b3fb164fbf4bb72d8a123ec3e3281a5301bb81bc78dcf6955a66f"
+    },
+    {
+      "file": "native-360-dark-chat.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "1ca1764634f7647090ac000ef17bdb2f9f445d9fb13a90f77b4b652699571c5a"
+    },
+    {
+      "file": "native-360-dark-activity.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "d77329e9a97a3bb163929d83a2efbd5a2f22fc76e5a16eea4ed4fd9cad432ed7"
+    },
+    {
+      "file": "native-360-dark-health.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "bc43f1c327b1e2f77f6048a07a9240823a31b3cd5861de124f79d998291b9996"
+    },
+    {
+      "file": "native-360-dark-goals.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "6ec892d5853a56479e12d642b413ba4bc4c50ff4175f4326fa182ac8b98a9abc"
+    },
+    {
+      "file": "native-360-dark-library.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "01fb13f699215c28331cf26bccfb18a19a79baf49866147e1e3bba2724684927"
+    },
+    {
+      "file": "native-360-dark-models.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "ab67ca5b6da9c2e348c7a3f2def9e32bb29fe587c124da329ec5c488424c1822"
+    },
+    {
+      "file": "native-360-dark-devices.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "8208893a4a8ae0c278383991a3a7979545cc20466da480bc8cb1753c7f55105e"
+    },
+    {
+      "file": "native-360-dark-memory.png",
+      "viewportWidth": 360,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "304a2dfed418c73b1c794ce0df33a8933436ca75ba5229d4d6be1eb8d077fca7"
+    },
+    {
+      "file": "native-390-light-chat.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "b854d4d8747a95fe92d6ed0c11affd57c7a61b92137fa23861a51e3eb7923d25"
+    },
+    {
+      "file": "native-390-light-activity.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "7435fe07fd0cc11be6e209301dd0f45ad0d6b463ced56a66754cac6f6089d3d9"
+    },
+    {
+      "file": "native-390-light-health.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "05cead2ff83c65da18d0a04ca275717e86ea553690ddd46fb96847a5eaac4c34"
+    },
+    {
+      "file": "native-390-light-goals.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "8f3b42652300531c1c39af7741257877ba431d2db635c77d204a750d61a001d0"
+    },
+    {
+      "file": "native-390-light-library.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "948a569d403e2f7db821bb82b32206809bce352bc6c3635c6945b0523e373029"
+    },
+    {
+      "file": "native-390-light-models.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "cb7a5db4e194201b050a8aea195b10ed084d79177b9a41fe16e84e0fca949411"
+    },
+    {
+      "file": "native-390-light-devices.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "530ef964a22e611d9436ee05a1ddad81360052416b8c69824147568053bf1025"
+    },
+    {
+      "file": "native-390-light-memory.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "d2a04cd8805b3fb164fbf4bb72d8a123ec3e3281a5301bb81bc78dcf6955a66f"
+    },
+    {
+      "file": "native-390-dark-chat.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "1ca1764634f7647090ac000ef17bdb2f9f445d9fb13a90f77b4b652699571c5a"
+    },
+    {
+      "file": "native-390-dark-activity.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "d77329e9a97a3bb163929d83a2efbd5a2f22fc76e5a16eea4ed4fd9cad432ed7"
+    },
+    {
+      "file": "native-390-dark-health.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "bc43f1c327b1e2f77f6048a07a9240823a31b3cd5861de124f79d998291b9996"
+    },
+    {
+      "file": "native-390-dark-goals.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "6ec892d5853a56479e12d642b413ba4bc4c50ff4175f4326fa182ac8b98a9abc"
+    },
+    {
+      "file": "native-390-dark-library.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "01fb13f699215c28331cf26bccfb18a19a79baf49866147e1e3bba2724684927"
+    },
+    {
+      "file": "native-390-dark-models.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "ab67ca5b6da9c2e348c7a3f2def9e32bb29fe587c124da329ec5c488424c1822"
+    },
+    {
+      "file": "native-390-dark-devices.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "8208893a4a8ae0c278383991a3a7979545cc20466da480bc8cb1753c7f55105e"
+    },
+    {
+      "file": "native-390-dark-memory.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "dark",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": true,
+      "keyboardVisible": false,
+      "darkStatusIcons": false,
+      "darkNavigationIcons": false,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          38,
+          39,
+          35
+        ],
+        "header": [
+          38,
+          39,
+          35
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "304a2dfed418c73b1c794ce0df33a8933436ca75ba5229d4d6be1eb8d077fca7"
+    },
+    {
+      "file": "native-390-light-phone-history-after-computer.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": false,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          255,
+          255,
+          255
+        ],
+        "header": [
+          255,
+          255,
+          255
+        ],
+        "delta": 0,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false,
+      "sha256": "2740ce9823f2d5cb4defa80263527fc021ecbe766e338230b92fc7615d6fdffe"
+    }
+  ],
+  "errors": [],
+  "modelSetup": {
+    "ok": true,
+    "throughActualSettings": true
+  },
+  "hostDirectory": {
+    "devices": [
+      {
+        "id": "android-f4ef2a47-c48c-47d6-8de7-495640e32790",
+        "name": "V2241A",
+        "type": "android",
+        "online": true,
+        "firstUsedAt": "2026-10-13T03:17:45.689Z",
+        "lastUsedAt": "2026-10-13T03:18:37.732Z",
+        "isCurrent": true
+      },
+      {
+        "id": "synthetic-desktop",
+        "name": "synthetic-desktop",
+        "type": "ios",
+        "online": true,
+        "firstUsedAt": "2026-10-13T03:18:29.310Z",
+        "lastUsedAt": "2026-10-13T03:18:36.121Z",
+        "isCurrent": false
+      },
+      {
+        "id": "synthetic-seed-phone",
+        "name": "synthetic-seed-phone",
+        "type": "ios",
+        "online": true,
+        "firstUsedAt": "2026-10-13T03:18:36.421Z",
+        "lastUsedAt": "2026-10-13T03:18:36.523Z",
+        "isCurrent": false
+      }
+    ],
+    "hosts": [
+      {
+        "id": "host-11b67fb3-9170-4118-ad79-6b94501b4b22",
+        "hostId": "host-11b67fb3-9170-4118-ad79-6b94501b4b22",
+        "name": "synthetic-host",
+        "type": "computer",
+        "online": true,
+        "lastUsedAt": "2026-10-13T03:18:36.523Z",
+        "isCurrent": false,
+        "status": "online"
+      }
+    ],
+    "sharing": {
+      "supported": false
+    }
+  },
+  "exchange": {
+    "ok": true
+  },
+  "handoffState": {
+    "connection": "connected",
+    "cloudOnly": false,
+    "failures": [
+      {
+        "path": "/offline/sync",
+        "code": "OFFLINE_MODEL_REQUIRED",
+        "status": 409
+      },
+      {
+        "path": "/offline/sync",
+        "code": "OFFLINE_MODEL_REQUIRED",
+        "status": 409
+      }
+    ]
+  },
+  "accountIsolationInstrumented": true
+}

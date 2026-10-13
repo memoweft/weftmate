@@ -76,6 +76,11 @@ class FakeElement {
   scrollIntoView() { this.scrolledIntoView++ }
   getBoundingClientRect() { return { top: 500, height: 132 } }
   contains(value: FakeElement) { return value === this || this.children.some((child) => child.contains(value)) }
+  closest(selector: string): FakeElement | null {
+    const matches = selector.startsWith('.') ? this.classList.contains(selector.slice(1)) :
+      selector.startsWith('#') ? this.id === selector.slice(1) : this.tagName === selector.toUpperCase()
+    return matches ? this : this.parentNode?.closest(selector) ?? null
+  }
   querySelector(selector: string): FakeElement | null {
     const matches = (node: FakeElement) => selector.startsWith('.') ? node.classList.contains(selector.slice(1)) :
       selector.startsWith('#') ? node.id === selector.slice(1) :

@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { managedMkdtempSync, disposeManagedTemp } from './managed-temp.mjs';
 import { createRequire } from 'node:module';
 import { cleanupOwnedProcesses } from './process-evidence.mjs';
 
 export function probe(name, output, timeout = 60000, args = []) {
-  const root = mkdtempSync(join(tmpdir(), 'weftmate-bl29-regression-'));
+  const root = managedMkdtempSync('weftmate-bl29-regression-');
   const startedAt = Date.now();
   try {
     // Every nested Electron profile belongs to this probe, including when its
@@ -31,7 +31,7 @@ export function probe(name, output, timeout = 60000, args = []) {
       assert.equal(cleanup.available, true, 'probe process cleanup must be available');
       assert.equal(cleanup.failed, 0, 'probe must not leave its owned processes running');
     }
-    rmSync(root, {recursive:true, force:true, maxRetries:5, retryDelay:100});
+    disposeManagedTemp(root);
   }
 }
 

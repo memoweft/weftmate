@@ -63,6 +63,10 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
       const generated = await readFile(path.join(mobileWwwDir, 'legal', `${kind}-zh.txt`));
       if (!source.equals(generated)) problems.push(`differs legal/${kind}-zh.txt`);
     }
+    for (const name of ['phone-files.js','phone-files.css','phone-pdf.js']) {
+      const source=await readFile(new URL(`../../../src/personal-access-ui/${name}`,import.meta.url));
+      const generated=await readFile(path.join(mobileWwwDir,name));if(!source.equals(generated))problems.push(`differs ${name}`);
+    }
   }
   if (problems.length) throw new Error(`ui-core assets: ${problems.join('; ')}; run npm run build in apps/mobile-ui`);
   return uiCoreAssets.length;
@@ -81,6 +85,7 @@ export async function buildUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     await copyFile(new URL('../../../src/personal-access-ui/components/settings-controls.js', import.meta.url), path.join(mobileWwwDir, 'components/settings-controls.js'));
     await copyFile(new URL('../../../src/personal-access-ui/usage.css', import.meta.url), path.join(mobileWwwDir, 'usage.css'));
     for (const name of ['composer-subtasks.js','composer-extras.css','next-suggestions.js','next-suggestions.css']) await copyFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url), path.join(mobileWwwDir,name));
+    for (const name of ['phone-files.js','phone-files.css','phone-pdf.js']) await copyFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url), path.join(mobileWwwDir,name));
     await copyFile(new URL('../../../src/personal-access-ui/popovers.js', import.meta.url), path.join(mobileWwwDir, 'popovers.js'));
     await copyFile(new URL('../../../src/personal-access-ui/conversation-scroll.js', import.meta.url), path.join(mobileWwwDir, 'conversation-scroll.js'));
     await mkdir(path.join(mobileWwwDir, 'legal'), { recursive: true });

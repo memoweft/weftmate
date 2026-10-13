@@ -1,0 +1,42 @@
+{
+  "actualRequests": 18,
+  "tlsHandshakeFailuresBeforeHttp": 3,
+  "runs": [
+    {
+      "native": true,
+      "mimoRequests": 2,
+      "checks": 5,
+      "success": true
+    },
+    {
+      "native": true,
+      "mimoRequests": 0,
+      "checks": 0,
+      "success": false
+    },
+    {
+      "native": false,
+      "mimoRequests": 2,
+      "checks": 6,
+      "success": true
+    },
+    {
+      "native": true,
+      "mimoRequests": 2,
+      "checks": 7,
+      "success": true
+    },
+    {
+      "native": true,
+      "mimoRequests": 2,
+      "checks": 7,
+      "success": true
+    },
+    {
+      "native": false,
+      "mimoRequests": 2,
+      "checks": 6,
+      "success": true
+    }
+  ]
+}

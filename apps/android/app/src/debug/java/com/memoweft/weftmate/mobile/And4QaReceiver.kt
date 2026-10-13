@@ -10,6 +10,7 @@ import java.io.File
 class And4QaReceiver : BroadcastReceiver() {
     override fun onReceive(context:Context,intent:Intent) {
         if(context.packageName!="com.memoweft.weftmate.mobile.and4qa")return
+        if(intent.getStringExtra("command")=="inspect")android.webkit.WebView.setWebContentsDebuggingEnabled(true)
         val visible=WeftMateApplication::class.java.getDeclaredField("visible").apply{isAccessible=true}.get(context.applicationContext) as Set<*>
         val activity=visible.filterIsInstance<NativeActivity>().firstOrNull()
         if(intent.getStringExtra("command")=="login" && activity!=null) {
@@ -17,13 +18,18 @@ class And4QaReceiver : BroadcastReceiver() {
             activity.embeddedWeb.evaluateJavascript("(function login(){if(typeof call==='function' && typeof state!=='undefined' && state.booted)call('auth.login',$params).then(()=>location.reload());else setTimeout(login,100)})()",null)
         }
         if(intent.getStringExtra("command")=="draft" && activity!=null)activity.model.edit("重开保留的草稿")
+        if(intent.getStringExtra("command")=="theme" && activity!=null)activity.model.dark=intent.getBooleanExtra("dark",false)
+        if(intent.getStringExtra("command")=="legacy" && activity!=null)activity.fallback()
         val model=activity?.model
         val insets=activity?.presentationContainer?.let{androidx.core.view.ViewCompat.getRootWindowInsets(it)}
-        File(context.filesDir,"and4-ready.json").writeText(JSONObject().put("pid",android.os.Process.myPid())
+        val state=JSONObject().put("pid",android.os.Process.myPid())
             .put("ready",model!=null&&!model.loading&&model.chatId.isNotBlank())
+            .put("rows",model?.rows?.size ?: 0).put("error",model?.error ?: "").put("dark",model?.dark==true)
             .put("loggedIn",model?.loggedIn==true).put("loading",model?.loading==true)
             .put("restoredDraft",model?.draft=="重开保留的草稿")
             .put("statusHeight",insets?.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())?.top ?: -1)
-            .put("navigationBottom",insets?.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())?.bottom ?: -1).toString())
+            .put("navigationBottom",insets?.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())?.bottom ?: -1)
+        File(context.filesDir,"and4-ready.json").writeText(state.toString())
+        resultData=state.toString()
     }
 }

@@ -139,7 +139,7 @@ try {
         await questionPage.getByRole('tab',{name:/^动态(?:，|$)/}).click();
         await questionPage.getByRole('heading',{name:'动态',exact:true}).waitFor();await questionPage.getByText('记忆已暂停',{exact:true}).waitFor();
       },questionPage);
-      await shot('question', async () => {
+      const questionRecord = await shot('question', async () => {
         await navigate(questionPage, candidate.mobileUrl);
         await questionPage.waitForFunction(() => state.booted && state.loggedIn);
         await questionPage.getByRole('tab',{name:/^动态(?:，|$)/}).click();
@@ -149,9 +149,19 @@ try {
         // Finish that real action before opening the independent question.
         await questionPage.waitForFunction(()=>uiCore.activity.busy.size===0&&!uiCore.activity.loading);
         await questionPage.getByRole('button',{name:'打开动态 需要回答',exact:true}).click();
-        await questionPage.getByRole('region',{name:'待回答问题'}).waitFor();
-        await questionPage.getByRole('radio',{name:'简要报告',exact:true}).waitFor();
+        const card=questionPage.getByRole('region',{name:'待回答问题',exact:true});
+        await card.waitFor();
+        assert.equal(await card.evaluate(node=>!!node.closest('#chat-scroll')),true,'phone questions belong to the conversation');
+        await card.getByRole('button',{name:'简要报告',exact:true}).waitFor();
+        await card.getByRole('button',{name:'完整记录',exact:true}).waitFor();
       }, questionPage);
+      if(questionRecord?.status!=='failed'&&questionRecord){
+        const answer=questionPage.waitForResponse(response=>response.request().method()==='POST'&&response.request().postDataJSON()?.method==='shared.questions.answer');
+        await questionPage.getByRole('region',{name:'待回答问题',exact:true}).getByRole('button',{name:'简要报告',exact:true}).click();
+        const response=await answer;assert.equal(response.status(),200);
+        const result=await response.json();assert.equal(result.result?.question?.status,'answered');
+        assert.deepEqual(result.result.question.answer.answers[0].selected,['简要报告']);
+      }
       await shot('next-suggestions', async () => { suggestionFixture=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await suggestionFixture.complete();await mockUx7Requests(questionPage); await navigate(questionPage, suggestionFixture.mobileUrl); await questionPage.waitForFunction(()=>state.booted); await questionPage.evaluate(async id=>{await selectSharedSession(id);closeDrawer()},suggestionFixture.sessionId); try { await prepareUx7Suggestions(questionPage); }
         catch(error) { if(android) console.error('Suggestion readiness:',JSON.stringify(await questionPage.evaluate(()=>({booted:state.booted,loggedIn:state.loggedIn,sharedRunning:state.sharedRunning,sharedLoading:state.sharedLoading,hostAvailable:state.sharedHostAvailable,chatSource:state.chatSource,owner:!!uiCore.state.ownerId,session:!!uiCore.state.selectedSessionId,online:uiCore.state.online,selecting:uiCore.state.sessionSelecting,submitting:uiCore.state.submitting,historyCount:uiCore.state.historyEvents.size,capability:uiCore.state.personalCapabilities?.nextSuggestions,enabled:uiCore.nextSuggestionsView().enabled,replies:uiCore.nextSuggestionsView().suggestions.length,crypto:typeof crypto.randomUUID,abortAny:typeof AbortSignal.any,abortTimeout:typeof AbortSignal.timeout,csrf:!!uiCore.state.csrfToken,coreSource:uiCore.state.activeChatSource,running:uiCore.conversationRunning(uiCore.state.selectedSessionId),lastHistory:[...uiCore.state.historyEvents.values()].slice(-3).map(e=>e.type)}))));throw error; } }, questionPage);
       const mainPage=android?.page || await context.newPage();

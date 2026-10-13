@@ -1,0 +1,605 @@
+{
+  "synthetic": true,
+  "model": "mimo-v2.6-flash",
+  "instrumentation": [],
+  "screenshots": [],
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/personal/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "failure": "ECONNRESET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/changes"
+    },
+    {
+      "failure": "ECONNRESET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/changes"
+    },
+    {
+      "failure": "ECONNRESET",
+      "path": "/personal/v1/app/updates"
+    },
+    {
+      "failure": "ECONNRESET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "failure": "ECONNRESET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/changes"
+    },
+    {
+      "failure": "ECONNRESET",
+      "path": "/personal/v1/system"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/changes"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/changes"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/commands"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/main"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/status"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/events"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/chats/chat-38f1d9ed-53aa-430f-afa7-d4d82674eb59/dates"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+    }
+  ],
+  "mimoRequests": 0,
+  "systemVersion": "15",
+  "emulatorAlreadyRunning": true,
+  "debuggable": false,
+  "nativeColdStart": {
+    "amStart": "Starting: Intent { cmp=com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity (has extras) }\r\nStatus: ok\r\nLaunchState: COLD\r\nActivity: com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity\r\nTotalTime: 417\r\nWaitTime: 421\r\nComplete\r\n",
+    "inputReadyUpperBoundMs": 1242
+  },
+  "metricScene": {
+    "pid": 3041,
+    "ready": true,
+    "rows": 82,
+    "error": "",
+    "dark": true,
+    "loggedIn": true,
+    "loading": false,
+    "restoredDraft": false,
+    "statusHeight": 31,
+    "navigationBottom": 0
+  },
+  "frameComparison": [
+    {
+      "theme": "light",
+      "stats": "Applications Graphics Acceleration Info:\r\nUptime: 218721342 Realtime: 218721342\r\n\r\n** Graphics info for pid 3041 [com.memoweft.weftmate.mobile.and4qa] **\r\n\r\nStats since: 218717570071655ns\r\nTotal frames rendered: 503\r\nJanky frames: 1 (0.20%)\r\nJanky frames (legacy): 38 (7.55%)\r\n50th percentile: 5ms\r\n90th percentile: 5ms\r\n95th percentile: 6ms\r\n99th percentile: 7ms\r\nNumber Missed Vsync: 0\r\nNumber High input latency: 83\r\nNumber Slow UI thread: 1\r\nNumber Slow bitmap uploads: 0\r\nNumber Slow issue draw commands: 0\r\nNumber Frame deadline missed: 1\r\nNumber Frame deadline missed (legacy): 25\r\nHISTOGRAM: 5ms=473 6ms=16 7ms=9 8ms=1 9ms=2 10ms=0 11ms=0 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=2 22ms=0 23ms=0 24ms=0 25ms=0 26ms=0 27ms=0 28ms=0 29ms=0 30ms=0 31ms=0 32ms=0 34ms=0 36ms=0 38ms=0 40ms=0 42ms=0 44ms=0 46ms=0 48ms=0 53ms=0 57ms=0 61ms=0 65ms=0 69ms=0 73ms=0 77ms=0 81ms=0 85ms=0 89ms=0 93ms=0 97ms=0 101ms=0 105ms=0 109ms=0 113ms=0 117ms=0 121ms=0 125ms=0 129ms=0 133ms=0 150ms=0 200ms=0 250ms=0 300ms=0 350ms=0 400ms=0 450ms=0 500ms=0 550ms=0 600ms=0 650ms=0 700ms=0 750ms=0 800ms=0 850ms=0 900ms=0 950ms=0 1000ms=0 1050ms=0 1100ms=0 1150ms=0 1200ms=0 1250ms=0 1300ms=0 1350ms=0 1400ms=0 1450ms=0 1500ms=0 1550ms=0 1600ms=0 1650ms=0 1700ms=0 1750ms=0 1800ms=0 1850ms=0 1900ms=0 1950ms=0 2000ms=0 2050ms=0 2100ms=0 2150ms=0 2200ms=0 2250ms=0 2300ms=0 2350ms=0 2400ms=0 2450ms=0 2500ms=0 2550ms=0 2600ms=0 2650ms=0 2700ms=0 2750ms=0 2800ms=0 2850ms=0 2900ms=0 2950ms=0 3000ms=0 3050ms=0 3100ms=0 3150ms=0 3200ms=0 3250ms=0 3300ms=0 3350ms=0 3400ms=0 3450ms=0 3500ms=0 3550ms=0 3600ms=0 3650ms=0 3700ms=0 3750ms=0 3800ms=0 3850ms=0 3900ms=0 3950ms=0 4000ms=0 4050ms=0 4100ms=0 4150ms=0 4200ms=0 4250ms=0 4300ms=0 4350ms=0 4400ms=0 4450ms=0 4500ms=0 4550ms=0 4600ms=0 4650ms=0 4700ms=0 4750ms=0 4800ms=0 4850ms=0 4900ms=0 4950ms=0\r\n50th gpu percentile: 1ms\r\n90th gpu percentile: 1ms\r\n95th gpu percentile: 1ms\r\n99th gpu percentile: 1ms\r\nGPU HISTOGRAM: 1ms=503 2ms=0 3ms=0 4ms=0 5ms=0 6ms=0 7ms=0 8ms=0 9ms=0 10ms=0 11ms=0 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=0 22ms=0 23ms=0 24ms=0 25ms=0 4950ms=0\r\n\r\nPipeline=Skia (OpenGL)\r\nMemory policy:\r\n  Max surface area: 2073600\r\n  Max resource usage: 99.53MB (x48)\r\n  Background retention: 50% (altUiHidden = true)\r\n  GPU Context timeout: 10\r\nContexts: 1 (stopped = 0)\r\nCPU Caches:\r\n  Glyph Cache: 115.20 KB (1 entry)\r\n  Glyph Count: 28 \r\nTotal CPU memory usage:\r\n  117960 bytes, 115.20 KB (0.00 bytes is purgeable)\r\nGPU Caches:\r\n  Other:\r\n    Other: 14.98 KB (1 entry)\r\n    Buffer Object: 2.05 KB (2 entries)\r\n  Image:\r\n    Texture: 34.87 KB (31 entries)\r\n  Scratch:\r\n    RenderTarget: 7.46 MB (21 entries)\r\n    Texture: 2.01 MB (8 entries)\r\n    Buffer Object: 48.03 KB (2 entries)\r\nTotal GPU memory usage:\r\n  10034027 bytes, 9.57 MB (7.48 MB is purgeable)\r\n\r\nGraphicBufferAllocator buffers:\r\n            Handle |         Size |     W (Stride) x H | Layers |   Format |      Usage | Requestor\r\n    0x73b4563ef7d0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563effb0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563f0170 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563f0aa0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\nTotal allocated by GraphicBufferAllocator (estimate): 14400.00 KB\r\n\r\nProfile data in ms:\r\n\r\n\tcom.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity/android.view.ViewRootImpl@b8b7731 (visibility=0)\r\nView hierarchy:\r\n\r\n  com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity/android.view.ViewRootImpl@b8b7731\r\n  9 views, 16.39 kB of render nodes\r\n\r\n\r\nTotal ViewRootImpl   : 1\r\nTotal attached Views : 9\r\nTotal RenderNode     : 16.39 kB (used) / 48.38 kB (capacity)\r\n\r\n"
+    },
+    {
+      "theme": "dark",
+      "stats": "Applications Graphics Acceleration Info:\r\nUptime: 218728069 Realtime: 218728069\r\n\r\n** Graphics info for pid 3041 [com.memoweft.weftmate.mobile.and4qa] **\r\n\r\nStats since: 218724363017464ns\r\nTotal frames rendered: 491\r\nJanky frames: 1 (0.20%)\r\nJanky frames (legacy): 9 (1.83%)\r\n50th percentile: 5ms\r\n90th percentile: 5ms\r\n95th percentile: 5ms\r\n99th percentile: 6ms\r\nNumber Missed Vsync: 1\r\nNumber High input latency: 43\r\nNumber Slow UI thread: 1\r\nNumber Slow bitmap uploads: 0\r\nNumber Slow issue draw commands: 0\r\nNumber Frame deadline missed: 1\r\nNumber Frame deadline missed (legacy): 8\r\nHISTOGRAM: 5ms=485 6ms=5 7ms=0 8ms=0 9ms=0 10ms=0 11ms=1 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=0 22ms=0 23ms=0 24ms=0 25ms=0 26ms=0 27ms=0 28ms=0 29ms=0 30ms=0 31ms=0 32ms=0 34ms=0 36ms=0 38ms=0 40ms=0 42ms=0 44ms=0 46ms=0 48ms=0 53ms=0 57ms=0 61ms=0 65ms=0 69ms=0 73ms=0 77ms=0 81ms=0 85ms=0 89ms=0 93ms=0 97ms=0 101ms=0 105ms=0 109ms=0 113ms=0 117ms=0 121ms=0 125ms=0 129ms=0 133ms=0 150ms=0 200ms=0 250ms=0 300ms=0 350ms=0 400ms=0 450ms=0 500ms=0 550ms=0 600ms=0 650ms=0 700ms=0 750ms=0 800ms=0 850ms=0 900ms=0 950ms=0 1000ms=0 1050ms=0 1100ms=0 1150ms=0 1200ms=0 1250ms=0 1300ms=0 1350ms=0 1400ms=0 1450ms=0 1500ms=0 1550ms=0 1600ms=0 1650ms=0 1700ms=0 1750ms=0 1800ms=0 1850ms=0 1900ms=0 1950ms=0 2000ms=0 2050ms=0 2100ms=0 2150ms=0 2200ms=0 2250ms=0 2300ms=0 2350ms=0 2400ms=0 2450ms=0 2500ms=0 2550ms=0 2600ms=0 2650ms=0 2700ms=0 2750ms=0 2800ms=0 2850ms=0 2900ms=0 2950ms=0 3000ms=0 3050ms=0 3100ms=0 3150ms=0 3200ms=0 3250ms=0 3300ms=0 3350ms=0 3400ms=0 3450ms=0 3500ms=0 3550ms=0 3600ms=0 3650ms=0 3700ms=0 3750ms=0 3800ms=0 3850ms=0 3900ms=0 3950ms=0 4000ms=0 4050ms=0 4100ms=0 4150ms=0 4200ms=0 4250ms=0 4300ms=0 4350ms=0 4400ms=0 4450ms=0 4500ms=0 4550ms=0 4600ms=0 4650ms=0 4700ms=0 4750ms=0 4800ms=0 4850ms=0 4900ms=0 4950ms=0\r\n50th gpu percentile: 1ms\r\n90th gpu percentile: 1ms\r\n95th gpu percentile: 1ms\r\n99th gpu percentile: 1ms\r\nGPU HISTOGRAM: 1ms=491 2ms=0 3ms=0 4ms=0 5ms=0 6ms=0 7ms=0 8ms=0 9ms=0 10ms=0 11ms=0 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=0 22ms=0 23ms=0 24ms=0 25ms=0 4950ms=0\r\n\r\nPipeline=Skia (OpenGL)\r\nMemory policy:\r\n  Max surface area: 2073600\r\n  Max resource usage: 99.53MB (x48)\r\n  Background retention: 50% (altUiHidden = true)\r\n  GPU Context timeout: 10\r\nContexts: 1 (stopped = 0)\r\nCPU Caches:\r\n  Glyph Cache: 134.31 KB (1 entry)\r\n  Glyph Count: 36 \r\nTotal CPU memory usage:\r\n  137536 bytes, 134.31 KB (0.00 bytes is purgeable)\r\nGPU Caches:\r\n  Other:\r\n    Other: 16.48 KB (1 entry)\r\n    Buffer Object: 2.05 KB (2 entries)\r\n  Image:\r\n    Texture: 40.15 KB (37 entries)\r\n  Scratch:\r\n    RenderTarget: 7.71 MB (20 entries)\r\n    Texture: 2.02 MB (15 entries)\r\n    Buffer Object: 78.03 KB (3 entries)\r\nTotal GPU memory usage:\r\n  10347156 bytes, 9.87 MB (7.75 MB is purgeable)\r\n\r\nGraphicBufferAllocator buffers:\r\n            Handle |         Size |     W (Stride) x H | Layers |   Format |      Usage | Requestor\r\n    0x73b4563ef7d0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563effb0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563f0170 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563f0aa0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\nTotal allocated by GraphicBufferAllocator (estimate): 14400.00 KB\r\n\r\nProfile data in ms:\r\n\r\n\tcom.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity/android.view.ViewRootImpl@b8b7731 (visibility=0)\r\nView hierarchy:\r\n\r\n  com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity/android.view.ViewRootImpl@b8b7731\r\n  9 views, 16.39 kB of render nodes\r\n\r\n\r\nTotal ViewRootImpl   : 1\r\nTotal attached Views : 9\r\nTotal RenderNode     : 16.39 kB (used) / 48.38 kB (capacity)\r\n\r\n"
+    }
+  ],
+  "frameStats": "Applications Graphics Acceleration Info:\r\nUptime: 218728069 Realtime: 218728069\r\n\r\n** Graphics info for pid 3041 [com.memoweft.weftmate.mobile.and4qa] **\r\n\r\nStats since: 218724363017464ns\r\nTotal frames rendered: 491\r\nJanky frames: 1 (0.20%)\r\nJanky frames (legacy): 9 (1.83%)\r\n50th percentile: 5ms\r\n90th percentile: 5ms\r\n95th percentile: 5ms\r\n99th percentile: 6ms\r\nNumber Missed Vsync: 1\r\nNumber High input latency: 43\r\nNumber Slow UI thread: 1\r\nNumber Slow bitmap uploads: 0\r\nNumber Slow issue draw commands: 0\r\nNumber Frame deadline missed: 1\r\nNumber Frame deadline missed (legacy): 8\r\nHISTOGRAM: 5ms=485 6ms=5 7ms=0 8ms=0 9ms=0 10ms=0 11ms=1 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=0 22ms=0 23ms=0 24ms=0 25ms=0 26ms=0 27ms=0 28ms=0 29ms=0 30ms=0 31ms=0 32ms=0 34ms=0 36ms=0 38ms=0 40ms=0 42ms=0 44ms=0 46ms=0 48ms=0 53ms=0 57ms=0 61ms=0 65ms=0 69ms=0 73ms=0 77ms=0 81ms=0 85ms=0 89ms=0 93ms=0 97ms=0 101ms=0 105ms=0 109ms=0 113ms=0 117ms=0 121ms=0 125ms=0 129ms=0 133ms=0 150ms=0 200ms=0 250ms=0 300ms=0 350ms=0 400ms=0 450ms=0 500ms=0 550ms=0 600ms=0 650ms=0 700ms=0 750ms=0 800ms=0 850ms=0 900ms=0 950ms=0 1000ms=0 1050ms=0 1100ms=0 1150ms=0 1200ms=0 1250ms=0 1300ms=0 1350ms=0 1400ms=0 1450ms=0 1500ms=0 1550ms=0 1600ms=0 1650ms=0 1700ms=0 1750ms=0 1800ms=0 1850ms=0 1900ms=0 1950ms=0 2000ms=0 2050ms=0 2100ms=0 2150ms=0 2200ms=0 2250ms=0 2300ms=0 2350ms=0 2400ms=0 2450ms=0 2500ms=0 2550ms=0 2600ms=0 2650ms=0 2700ms=0 2750ms=0 2800ms=0 2850ms=0 2900ms=0 2950ms=0 3000ms=0 3050ms=0 3100ms=0 3150ms=0 3200ms=0 3250ms=0 3300ms=0 3350ms=0 3400ms=0 3450ms=0 3500ms=0 3550ms=0 3600ms=0 3650ms=0 3700ms=0 3750ms=0 3800ms=0 3850ms=0 3900ms=0 3950ms=0 4000ms=0 4050ms=0 4100ms=0 4150ms=0 4200ms=0 4250ms=0 4300ms=0 4350ms=0 4400ms=0 4450ms=0 4500ms=0 4550ms=0 4600ms=0 4650ms=0 4700ms=0 4750ms=0 4800ms=0 4850ms=0 4900ms=0 4950ms=0\r\n50th gpu percentile: 1ms\r\n90th gpu percentile: 1ms\r\n95th gpu percentile: 1ms\r\n99th gpu percentile: 1ms\r\nGPU HISTOGRAM: 1ms=491 2ms=0 3ms=0 4ms=0 5ms=0 6ms=0 7ms=0 8ms=0 9ms=0 10ms=0 11ms=0 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=0 22ms=0 23ms=0 24ms=0 25ms=0 4950ms=0\r\n\r\nPipeline=Skia (OpenGL)\r\nMemory policy:\r\n  Max surface area: 2073600\r\n  Max resource usage: 99.53MB (x48)\r\n  Background retention: 50% (altUiHidden = true)\r\n  GPU Context timeout: 10\r\nContexts: 1 (stopped = 0)\r\nCPU Caches:\r\n  Glyph Cache: 134.31 KB (1 entry)\r\n  Glyph Count: 36 \r\nTotal CPU memory usage:\r\n  137536 bytes, 134.31 KB (0.00 bytes is purgeable)\r\nGPU Caches:\r\n  Other:\r\n    Other: 16.48 KB (1 entry)\r\n    Buffer Object: 2.05 KB (2 entries)\r\n  Image:\r\n    Texture: 40.15 KB (37 entries)\r\n  Scratch:\r\n    RenderTarget: 7.71 MB (20 entries)\r\n    Texture: 2.02 MB (15 entries)\r\n    Buffer Object: 78.03 KB (3 entries)\r\nTotal GPU memory usage:\r\n  10347156 bytes, 9.87 MB (7.75 MB is purgeable)\r\n\r\nGraphicBufferAllocator buffers:\r\n            Handle |         Size |     W (Stride) x H | Layers |   Format |      Usage | Requestor\r\n    0x73b4563ef7d0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563effb0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563f0170 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563f0aa0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\nTotal allocated by GraphicBufferAllocator (estimate): 14400.00 KB\r\n\r\nProfile data in ms:\r\n\r\n\tcom.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity/android.view.ViewRootImpl@b8b7731 (visibility=0)\r\nView hierarchy:\r\n\r\n  com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity/android.view.ViewRootImpl@b8b7731\r\n  9 views, 16.39 kB of render nodes\r\n\r\n\r\nTotal ViewRootImpl   : 1\r\nTotal attached Views : 9\r\nTotal RenderNode     : 16.39 kB (used) / 48.38 kB (capacity)\r\n\r\n",
+  "blur": "API 31 RenderEffect, GPU conversation display-list sampled only by fixed chrome and popup backgrounds; scrolling uses opaque composites and resumes frost on settling",
+  "nativeApkBytes": 14655851,
+  "packageCompilation": "Success",
+  "nativeCompiledFrameStats": "Applications Graphics Acceleration Info:\r\nUptime: 218739261 Realtime: 218739261\r\n\r\n** Graphics info for pid 3590 [com.memoweft.weftmate.mobile.and4qa] **\r\n\r\nStats since: 218735596523824ns\r\nTotal frames rendered: 485\r\nJanky frames: 3 (0.62%)\r\nJanky frames (legacy): 10 (2.06%)\r\n50th percentile: 5ms\r\n90th percentile: 5ms\r\n95th percentile: 5ms\r\n99th percentile: 7ms\r\nNumber Missed Vsync: 2\r\nNumber High input latency: 49\r\nNumber Slow UI thread: 3\r\nNumber Slow bitmap uploads: 0\r\nNumber Slow issue draw commands: 1\r\nNumber Frame deadline missed: 3\r\nNumber Frame deadline missed (legacy): 9\r\nHISTOGRAM: 5ms=476 6ms=3 7ms=2 8ms=1 9ms=0 10ms=0 11ms=0 12ms=0 13ms=0 14ms=0 15ms=1 16ms=0 17ms=1 18ms=0 19ms=0 20ms=0 21ms=1 22ms=0 23ms=0 24ms=0 25ms=0 26ms=0 27ms=0 28ms=0 29ms=0 30ms=0 31ms=0 32ms=0 34ms=0 36ms=0 38ms=0 40ms=0 42ms=0 44ms=0 46ms=0 48ms=0 53ms=0 57ms=0 61ms=0 65ms=0 69ms=0 73ms=0 77ms=0 81ms=0 85ms=0 89ms=0 93ms=0 97ms=0 101ms=0 105ms=0 109ms=0 113ms=0 117ms=0 121ms=0 125ms=0 129ms=0 133ms=0 150ms=0 200ms=0 250ms=0 300ms=0 350ms=0 400ms=0 450ms=0 500ms=0 550ms=0 600ms=0 650ms=0 700ms=0 750ms=0 800ms=0 850ms=0 900ms=0 950ms=0 1000ms=0 1050ms=0 1100ms=0 1150ms=0 1200ms=0 1250ms=0 1300ms=0 1350ms=0 1400ms=0 1450ms=0 1500ms=0 1550ms=0 1600ms=0 1650ms=0 1700ms=0 1750ms=0 1800ms=0 1850ms=0 1900ms=0 1950ms=0 2000ms=0 2050ms=0 2100ms=0 2150ms=0 2200ms=0 2250ms=0 2300ms=0 2350ms=0 2400ms=0 2450ms=0 2500ms=0 2550ms=0 2600ms=0 2650ms=0 2700ms=0 2750ms=0 2800ms=0 2850ms=0 2900ms=0 2950ms=0 3000ms=0 3050ms=0 3100ms=0 3150ms=0 3200ms=0 3250ms=0 3300ms=0 3350ms=0 3400ms=0 3450ms=0 3500ms=0 3550ms=0 3600ms=0 3650ms=0 3700ms=0 3750ms=0 3800ms=0 3850ms=0 3900ms=0 3950ms=0 4000ms=0 4050ms=0 4100ms=0 4150ms=0 4200ms=0 4250ms=0 4300ms=0 4350ms=0 4400ms=0 4450ms=0 4500ms=0 4550ms=0 4600ms=0 4650ms=0 4700ms=0 4750ms=0 4800ms=0 4850ms=0 4900ms=0 4950ms=0\r\n50th gpu percentile: 1ms\r\n90th gpu percentile: 1ms\r\n95th gpu percentile: 1ms\r\n99th gpu percentile: 1ms\r\nGPU HISTOGRAM: 1ms=485 2ms=0 3ms=0 4ms=0 5ms=0 6ms=0 7ms=0 8ms=0 9ms=0 10ms=0 11ms=0 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=0 22ms=0 23ms=0 24ms=0 25ms=0 4950ms=0\r\n\r\nPipeline=Skia (OpenGL)\r\nMemory policy:\r\n  Max surface area: 2073600\r\n  Max resource usage: 99.53MB (x48)\r\n  Background retention: 50% (altUiHidden = true)\r\n  GPU Context timeout: 10\r\nContexts: 1 (stopped = 0)\r\nCPU Caches:\r\n  Glyph Cache: 80.44 KB (1 entry)\r\n  Glyph Count: 22 \r\nTotal CPU memory usage:\r\n  82369 bytes, 80.44 KB (0.00 bytes is purgeable)\r\nGPU Caches:\r\n  Other:\r\n    Other: 14.98 KB (1 entry)\r\n    Buffer Object: 2.05 KB (2 entries)\r\n  Image:\r\n    Texture: 29.60 KB (25 entries)\r\n  Scratch:\r\n    RenderTarget: 7.46 MB (21 entries)\r\n    Texture: 2.00 MB (5 entries)\r\n    Buffer Object: 48.03 KB (2 entries)\r\nTotal GPU memory usage:\r\n  10025927 bytes, 9.56 MB (7.48 MB is purgeable)\r\n\r\nGraphicBufferAllocator buffers:\r\n            Handle |         Size |     W (Stride) x H | Layers |   Format |      Usage | Requestor\r\n    0x73b4563eccf0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563edb60 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563edcb0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\n    0x73b4563ef290 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[NativeActivity]#0(BLAST Consumer)0\r\nTotal allocated by GraphicBufferAllocator (estimate): 14400.00 KB\r\n\r\nProfile data in ms:\r\n\r\n\tcom.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity/android.view.ViewRootImpl@b4897d7 (visibility=0)\r\nView hierarchy:\r\n\r\n  com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity/android.view.ViewRootImpl@b4897d7\r\n  9 views, 16.39 kB of render nodes\r\n\r\n\r\nTotal ViewRootImpl   : 1\r\nTotal attached Views : 9\r\nTotal RenderNode     : 16.39 kB (used) / 48.38 kB (capacity)\r\n\r\n",
+  "webColdStart": {
+    "amStart": "Starting: Intent { cmp=com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.NativeActivity (has extras) }\r\nStatus: ok\r\nLaunchState: COLD\r\nActivity: com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.HybridActivity\r\nTotalTime: 387\r\nWaitTime: 389\r\nComplete\r\n",
+    "inputReadyUpperBoundMs": 1576
+  },
+  "webMetricScene": {
+    "loggedIn": true,
+    "messages": 82,
+    "visibleDomMessages": 6,
+    "hasLongHistory": true
+  },
+  "webFrameStats": "Applications Graphics Acceleration Info:\r\nUptime: 218747159 Realtime: 218747159\r\n\r\n** Graphics info for pid 3949 [com.memoweft.weftmate.mobile.and4qa] **\r\n\r\nStats since: 218743441246799ns\r\nTotal frames rendered: 344\r\nJanky frames: 1 (0.29%)\r\nJanky frames (legacy): 39 (11.34%)\r\n50th percentile: 5ms\r\n90th percentile: 5ms\r\n95th percentile: 6ms\r\n99th percentile: 8ms\r\nNumber Missed Vsync: 0\r\nNumber High input latency: 261\r\nNumber Slow UI thread: 0\r\nNumber Slow bitmap uploads: 0\r\nNumber Slow issue draw commands: 1\r\nNumber Frame deadline missed: 1\r\nNumber Frame deadline missed (legacy): 10\r\nHISTOGRAM: 5ms=313 6ms=19 7ms=6 8ms=4 9ms=1 10ms=1 11ms=0 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=0 22ms=0 23ms=0 24ms=0 25ms=0 26ms=0 27ms=0 28ms=0 29ms=0 30ms=0 31ms=0 32ms=0 34ms=0 36ms=0 38ms=0 40ms=0 42ms=0 44ms=0 46ms=0 48ms=0 53ms=0 57ms=0 61ms=0 65ms=0 69ms=0 73ms=0 77ms=0 81ms=0 85ms=0 89ms=0 93ms=0 97ms=0 101ms=0 105ms=0 109ms=0 113ms=0 117ms=0 121ms=0 125ms=0 129ms=0 133ms=0 150ms=0 200ms=0 250ms=0 300ms=0 350ms=0 400ms=0 450ms=0 500ms=0 550ms=0 600ms=0 650ms=0 700ms=0 750ms=0 800ms=0 850ms=0 900ms=0 950ms=0 1000ms=0 1050ms=0 1100ms=0 1150ms=0 1200ms=0 1250ms=0 1300ms=0 1350ms=0 1400ms=0 1450ms=0 1500ms=0 1550ms=0 1600ms=0 1650ms=0 1700ms=0 1750ms=0 1800ms=0 1850ms=0 1900ms=0 1950ms=0 2000ms=0 2050ms=0 2100ms=0 2150ms=0 2200ms=0 2250ms=0 2300ms=0 2350ms=0 2400ms=0 2450ms=0 2500ms=0 2550ms=0 2600ms=0 2650ms=0 2700ms=0 2750ms=0 2800ms=0 2850ms=0 2900ms=0 2950ms=0 3000ms=0 3050ms=0 3100ms=0 3150ms=0 3200ms=0 3250ms=0 3300ms=0 3350ms=0 3400ms=0 3450ms=0 3500ms=0 3550ms=0 3600ms=0 3650ms=0 3700ms=0 3750ms=0 3800ms=0 3850ms=0 3900ms=0 3950ms=0 4000ms=0 4050ms=0 4100ms=0 4150ms=0 4200ms=0 4250ms=0 4300ms=0 4350ms=0 4400ms=0 4450ms=0 4500ms=0 4550ms=0 4600ms=0 4650ms=0 4700ms=0 4750ms=0 4800ms=0 4850ms=0 4900ms=0 4950ms=0\r\n50th gpu percentile: 1ms\r\n90th gpu percentile: 1ms\r\n95th gpu percentile: 1ms\r\n99th gpu percentile: 1ms\r\nGPU HISTOGRAM: 1ms=344 2ms=0 3ms=0 4ms=0 5ms=0 6ms=0 7ms=0 8ms=0 9ms=0 10ms=0 11ms=0 12ms=0 13ms=0 14ms=0 15ms=0 16ms=0 17ms=0 18ms=0 19ms=0 20ms=0 21ms=0 22ms=0 23ms=0 24ms=0 25ms=0 4950ms=0\r\n\r\nPipeline=Skia (OpenGL)\r\nMemory policy:\r\n  Max surface area: 2073600\r\n  Max resource usage: 99.53MB (x48)\r\n  Background retention: 50% (altUiHidden = true)\r\n  GPU Context timeout: 10\r\nContexts: 1 (stopped = 0)\r\nCPU Caches:\r\n  Glyph Cache: 0.00 bytes (1 entry)\r\n  Glyph Count: 0 \r\nTotal CPU memory usage:\r\n  0 bytes, 0.00 bytes (0.00 bytes is purgeable)\r\nGPU Caches:\r\n  Other:\r\n    Other: 0.00 bytes (1 entry)\r\nTotal GPU memory usage:\r\n  0 bytes, 0.00 bytes (0.00 bytes is purgeable)\r\n\r\nGraphicBufferAllocator buffers:\r\n            Handle |         Size |     W (Stride) x H | Layers |   Format |      Usage | Requestor\r\n    0x73b4563ea4b0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[HybridActivity]#0(BLAST Consumer)0\r\n    0x73b4563eaad0 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[HybridActivity]#0(BLAST Consumer)0\r\n    0x73b4563ecb30 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[HybridActivity]#0(BLAST Consumer)0\r\n    0x73b4563f5340 |  3600.00 KiB |  720 ( 720) x 1280 |      1 |        1 | 0x     900 | VRI[HybridActivity]#0(BLAST Consumer)0\r\nTotal allocated by GraphicBufferAllocator (estimate): 14400.00 KB\r\n\r\nProfile data in ms:\r\n\r\n\tcom.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.HybridActivity/android.view.ViewRootImpl@a4aa6f7 (visibility=0)\r\nView hierarchy:\r\n\r\n  com.memoweft.weftmate.mobile.and4qa/com.memoweft.weftmate.mobile.HybridActivity/android.view.ViewRootImpl@a4aa6f7\r\n  6 views, 12.62 kB of render nodes\r\n\r\n\r\nTotal ViewRootImpl   : 1\r\nTotal attached Views : 6\r\nTotal RenderNode     : 12.62 kB (used) / 40.60 kB (capacity)\r\n\r\n",
+  "decisions": [],
+  "profilePackage": true
+}

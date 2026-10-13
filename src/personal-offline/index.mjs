@@ -96,14 +96,15 @@ export async function createOfflineService(context) {
         context.authenticate(request, 'account:manage');
         const account = owner(ownerId), deviceId = context.cloudIdentity?.offlineDeviceId?.(ownerId, current.deviceId) ?? current.deviceId;
         if (route === '/sync') {
-          if (Object.keys(body).some(k => !['publicJwk', 'generation', 'hashes','taskSupport'].includes(k)) || body.taskSupport!==undefined&&body.taskSupport!==1) throw failure('INVALID_REQUEST');
+          if (Object.keys(body).some(k => !['publicJwk', 'generation', 'hashes', 'taskSupport', 'phoneFirst'].includes(k)) || body.taskSupport !== undefined && body.taskSupport !== 1 || body.phoneFirst !== undefined && typeof body.phoneFirst !== 'boolean') throw failure('INVALID_REQUEST');
           if (!Number.isSafeInteger(body.generation) || body.generation < 0) throw failure('INVALID_REQUEST');
           const publicJwk = publicDeviceKey(body.publicJwk);
           const control = await publish(ownerId);
           const taskSupport=body.taskSupport===1&&control.capabilities?.offlineTasks===1;
           let model;
-          try{model=await cloudModel(ownerId);}catch(error){if(!taskSupport||error.code!=='OFFLINE_MODEL_REQUIRED')throw error;model=null;}
-          const snapshot = model?await memorySnapshot(context.memoryManager, ownerId):{worldRevision:null,items:[],truncated:false};
+          try { model = await cloudModel(ownerId); }
+          catch (error) { if ((taskSupport || body.phoneFirst === true) && error.code === 'OFFLINE_MODEL_REQUIRED') model = null; else throw error; }
+          const snapshot = model || body.phoneFirst === true ? await memorySnapshot(context.memoryManager, ownerId) : {worldRevision:null,items:[],truncated:false};
           const generation = account.generation;
           const known = body.generation === generation ? body.hashes ?? {} : {};
           const recentMessages = model?await recent(ownerId):[];
@@ -155,7 +156,7 @@ export async function createOfflineService(context) {
       });
       context.authenticate(request, 'account:manage');
       if (route !== '/sync') for (const receipt of result.receipts ?? []) await context.activity?.record(ownerId, {
-        key: `offline:${current.deviceId}:${receipt.id}`, type: 'memory.submission.completed', title: '补交完成',
+        key: `offline:${current.deviceId}:${receipt.id}`, type: 'memory.submission.completed', title: '手机对话已保存到电脑',
         summary: '离线对话已同步到电脑。', level: 'silent',
       });
       return context.json(response, 200, result);

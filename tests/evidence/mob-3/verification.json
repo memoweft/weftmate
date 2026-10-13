@@ -1,0 +1,755 @@
+{
+  "synthetic": true,
+  "modelRequests": 0,
+  "engine": "Chromium",
+  "browserSystemBars": false,
+  "keyboard": "visualViewport simulation; native IME separately reported",
+  "screenshots": [
+    "bundle-360-780-light-composer-idle.png",
+    "bundle-360-780-light-composer-empty-expanded.png",
+    "bundle-360-780-light-composer-multiline.png",
+    "bundle-360-780-light-composer-attachments.png",
+    "bundle-360-780-light-attachments-uploading.png",
+    "bundle-360-780-light-attachments-failed.png",
+    "bundle-360-780-light-file-open.png",
+    "bundle-360-780-light-file-menu.png",
+    "bundle-360-780-light-image-open.png",
+    "bundle-360-780-light-image-menu.png",
+    "bundle-360-780-light-sent-attachments.png",
+    "bundle-360-780-light-pdf-open.png",
+    "bundle-360-780-light-pdf-zoom.png",
+    "bundle-360-780-light-composer-streaming-stop.png",
+    "bundle-360-780-light-composer-followup-menu.png",
+    "bundle-360-780-light-keyboard-layout.png",
+    "bundle-360-780-light-approval-pending.png",
+    "bundle-360-780-light-approval-expanded-composer.png",
+    "bundle-360-780-light-approval-attachment-composer.png",
+    "bundle-360-780-light-approval-review.png",
+    "bundle-360-780-light-approval-details.png",
+    "bundle-360-780-light-choice-three.png",
+    "bundle-360-780-light-pending-entry.png",
+    "bundle-360-780-light-approval-receipt.png",
+    "bundle-360-780-light-question-three.png",
+    "bundle-360-780-light-nav-chat.png",
+    "bundle-360-780-light-nav-activity.png",
+    "bundle-360-780-light-nav-health.png",
+    "bundle-360-780-light-nav-goals.png",
+    "bundle-360-780-light-nav-library.png",
+    "bundle-360-780-light-nav-unread.png",
+    "bundle-360-780-dark-composer-idle.png",
+    "bundle-360-780-dark-composer-empty-expanded.png",
+    "bundle-360-780-dark-composer-multiline.png",
+    "bundle-360-780-dark-composer-attachments.png",
+    "bundle-360-780-dark-attachments-uploading.png",
+    "bundle-360-780-dark-attachments-failed.png",
+    "bundle-360-780-dark-file-open.png",
+    "bundle-360-780-dark-file-menu.png",
+    "bundle-360-780-dark-image-open.png",
+    "bundle-360-780-dark-image-menu.png",
+    "bundle-360-780-dark-sent-attachments.png",
+    "bundle-360-780-dark-pdf-open.png",
+    "bundle-360-780-dark-pdf-zoom.png",
+    "bundle-360-780-dark-composer-streaming-stop.png",
+    "bundle-360-780-dark-composer-followup-menu.png",
+    "bundle-360-780-dark-keyboard-layout.png",
+    "bundle-360-780-dark-approval-pending.png",
+    "bundle-360-780-dark-approval-expanded-composer.png",
+    "bundle-360-780-dark-approval-attachment-composer.png",
+    "bundle-360-780-dark-approval-review.png",
+    "bundle-360-780-dark-approval-details.png",
+    "bundle-360-780-dark-choice-three.png",
+    "bundle-360-780-dark-pending-entry.png",
+    "bundle-360-780-dark-approval-receipt.png",
+    "bundle-360-780-dark-question-three.png",
+    "bundle-360-780-dark-nav-chat.png",
+    "bundle-360-780-dark-nav-activity.png",
+    "bundle-360-780-dark-nav-health.png",
+    "bundle-360-780-dark-nav-goals.png",
+    "bundle-360-780-dark-nav-library.png",
+    "bundle-360-780-dark-nav-unread.png",
+    "bundle-390-844-light-composer-idle.png",
+    "bundle-390-844-light-composer-empty-expanded.png",
+    "bundle-390-844-light-composer-multiline.png",
+    "bundle-390-844-light-composer-attachments.png",
+    "bundle-390-844-light-attachments-uploading.png",
+    "bundle-390-844-light-attachments-failed.png",
+    "bundle-390-844-light-file-open.png",
+    "bundle-390-844-light-file-menu.png",
+    "bundle-390-844-light-image-open.png",
+    "bundle-390-844-light-image-menu.png",
+    "bundle-390-844-light-sent-attachments.png",
+    "bundle-390-844-light-pdf-open.png",
+    "bundle-390-844-light-pdf-zoom.png",
+    "bundle-390-844-light-composer-streaming-stop.png",
+    "bundle-390-844-light-composer-followup-menu.png",
+    "bundle-390-844-light-keyboard-layout.png",
+    "bundle-390-844-light-approval-pending.png",
+    "bundle-390-844-light-approval-expanded-composer.png",
+    "bundle-390-844-light-approval-attachment-composer.png",
+    "bundle-390-844-light-approval-review.png",
+    "bundle-390-844-light-approval-details.png",
+    "bundle-390-844-light-choice-three.png",
+    "bundle-390-844-light-pending-entry.png",
+    "bundle-390-844-light-approval-receipt.png",
+    "bundle-390-844-light-question-three.png",
+    "bundle-390-844-light-nav-chat.png",
+    "bundle-390-844-light-nav-activity.png",
+    "bundle-390-844-light-nav-health.png",
+    "bundle-390-844-light-nav-goals.png",
+    "bundle-390-844-light-nav-library.png",
+    "bundle-390-844-light-nav-unread.png",
+    "bundle-390-844-dark-composer-idle.png",
+    "bundle-390-844-dark-composer-empty-expanded.png",
+    "bundle-390-844-dark-composer-multiline.png",
+    "bundle-390-844-dark-composer-attachments.png",
+    "bundle-390-844-dark-attachments-uploading.png",
+    "bundle-390-844-dark-attachments-failed.png",
+    "bundle-390-844-dark-file-open.png",
+    "bundle-390-844-dark-file-menu.png",
+    "bundle-390-844-dark-image-open.png",
+    "bundle-390-844-dark-image-menu.png",
+    "bundle-390-844-dark-sent-attachments.png",
+    "bundle-390-844-dark-pdf-open.png",
+    "bundle-390-844-dark-pdf-zoom.png",
+    "bundle-390-844-dark-composer-streaming-stop.png",
+    "bundle-390-844-dark-composer-followup-menu.png",
+    "bundle-390-844-dark-keyboard-layout.png",
+    "bundle-390-844-dark-approval-pending.png",
+    "bundle-390-844-dark-approval-expanded-composer.png",
+    "bundle-390-844-dark-approval-attachment-composer.png",
+    "bundle-390-844-dark-approval-review.png",
+    "bundle-390-844-dark-approval-details.png",
+    "bundle-390-844-dark-choice-three.png",
+    "bundle-390-844-dark-pending-entry.png",
+    "bundle-390-844-dark-approval-receipt.png",
+    "bundle-390-844-dark-question-three.png",
+    "bundle-390-844-dark-nav-chat.png",
+    "bundle-390-844-dark-nav-activity.png",
+    "bundle-390-844-dark-nav-health.png",
+    "bundle-390-844-dark-nav-goals.png",
+    "bundle-390-844-dark-nav-library.png",
+    "bundle-390-844-dark-nav-unread.png",
+    "bundle-320-780-light-composer-idle.png",
+    "bundle-320-780-light-composer-empty-expanded.png",
+    "bundle-320-780-light-composer-multiline.png",
+    "bundle-320-780-light-composer-attachments.png",
+    "bundle-320-780-light-attachments-uploading.png",
+    "bundle-320-780-light-attachments-failed.png",
+    "bundle-320-780-light-file-open.png",
+    "bundle-320-780-light-file-menu.png",
+    "bundle-320-780-light-image-open.png",
+    "bundle-320-780-light-image-menu.png",
+    "bundle-320-780-light-sent-attachments.png",
+    "bundle-320-780-light-pdf-open.png",
+    "bundle-320-780-light-pdf-zoom.png",
+    "bundle-320-780-light-composer-streaming-stop.png",
+    "bundle-320-780-light-composer-followup-menu.png",
+    "bundle-320-780-light-keyboard-layout.png",
+    "bundle-320-780-light-approval-pending.png",
+    "bundle-320-780-light-approval-expanded-composer.png",
+    "bundle-320-780-light-approval-attachment-composer.png",
+    "bundle-320-780-light-approval-review.png",
+    "bundle-320-780-light-approval-details.png",
+    "bundle-320-780-light-choice-three.png",
+    "bundle-320-780-light-pending-entry.png",
+    "bundle-320-780-light-approval-receipt.png",
+    "bundle-320-780-light-question-three.png",
+    "bundle-320-780-light-nav-chat.png",
+    "bundle-320-780-light-nav-activity.png",
+    "bundle-320-780-light-nav-health.png",
+    "bundle-320-780-light-nav-goals.png",
+    "bundle-320-780-light-nav-library.png",
+    "bundle-320-780-light-nav-unread.png",
+    "bundle-320-780-dark-composer-idle.png",
+    "bundle-320-780-dark-composer-empty-expanded.png",
+    "bundle-320-780-dark-composer-multiline.png",
+    "bundle-320-780-dark-composer-attachments.png",
+    "bundle-320-780-dark-attachments-uploading.png",
+    "bundle-320-780-dark-attachments-failed.png",
+    "bundle-320-780-dark-file-open.png",
+    "bundle-320-780-dark-file-menu.png",
+    "bundle-320-780-dark-image-open.png",
+    "bundle-320-780-dark-image-menu.png",
+    "bundle-320-780-dark-sent-attachments.png",
+    "bundle-320-780-dark-pdf-open.png",
+    "bundle-320-780-dark-pdf-zoom.png",
+    "bundle-320-780-dark-composer-streaming-stop.png",
+    "bundle-320-780-dark-composer-followup-menu.png",
+    "bundle-320-780-dark-keyboard-layout.png",
+    "bundle-320-780-dark-approval-pending.png",
+    "bundle-320-780-dark-approval-expanded-composer.png",
+    "bundle-320-780-dark-approval-attachment-composer.png",
+    "bundle-320-780-dark-approval-review.png",
+    "bundle-320-780-dark-approval-details.png",
+    "bundle-320-780-dark-choice-three.png",
+    "bundle-320-780-dark-pending-entry.png",
+    "bundle-320-780-dark-approval-receipt.png",
+    "bundle-320-780-dark-question-three.png",
+    "bundle-320-780-dark-nav-chat.png",
+    "bundle-320-780-dark-nav-activity.png",
+    "bundle-320-780-dark-nav-health.png",
+    "bundle-320-780-dark-nav-goals.png",
+    "bundle-320-780-dark-nav-library.png",
+    "bundle-320-780-dark-nav-unread.png",
+    "bundle-390-844-light-large-font-composer-idle.png",
+    "bundle-390-844-light-large-font-composer-empty-expanded.png",
+    "bundle-390-844-light-large-font-composer-multiline.png",
+    "bundle-390-844-light-large-font-composer-attachments.png",
+    "bundle-390-844-light-large-font-attachments-uploading.png",
+    "bundle-390-844-light-large-font-attachments-failed.png",
+    "bundle-390-844-light-large-font-file-open.png",
+    "bundle-390-844-light-large-font-file-menu.png",
+    "bundle-390-844-light-large-font-image-open.png",
+    "bundle-390-844-light-large-font-image-menu.png",
+    "bundle-390-844-light-large-font-sent-attachments.png",
+    "bundle-390-844-light-large-font-pdf-open.png",
+    "bundle-390-844-light-large-font-pdf-zoom.png",
+    "bundle-390-844-light-large-font-composer-streaming-stop.png",
+    "bundle-390-844-light-large-font-composer-followup-menu.png",
+    "bundle-390-844-light-large-font-keyboard-layout.png",
+    "bundle-390-844-light-large-font-approval-pending.png",
+    "bundle-390-844-light-large-font-approval-expanded-composer.png",
+    "bundle-390-844-light-large-font-approval-attachment-composer.png",
+    "bundle-390-844-light-large-font-approval-review.png",
+    "bundle-390-844-light-large-font-approval-details.png",
+    "bundle-390-844-light-large-font-choice-three.png",
+    "bundle-390-844-light-large-font-pending-entry.png",
+    "bundle-390-844-light-large-font-approval-receipt.png",
+    "bundle-390-844-light-large-font-question-three.png",
+    "bundle-390-844-light-large-font-nav-chat.png",
+    "bundle-390-844-light-large-font-nav-activity.png",
+    "bundle-390-844-light-large-font-nav-health.png",
+    "bundle-390-844-light-large-font-nav-goals.png",
+    "bundle-390-844-light-large-font-nav-library.png",
+    "bundle-390-844-light-large-font-nav-unread.png",
+    "bundle-390-844-dark-large-font-composer-idle.png",
+    "bundle-390-844-dark-large-font-composer-empty-expanded.png",
+    "bundle-390-844-dark-large-font-composer-multiline.png",
+    "bundle-390-844-dark-large-font-composer-attachments.png",
+    "bundle-390-844-dark-large-font-attachments-uploading.png",
+    "bundle-390-844-dark-large-font-attachments-failed.png",
+    "bundle-390-844-dark-large-font-file-open.png",
+    "bundle-390-844-dark-large-font-file-menu.png",
+    "bundle-390-844-dark-large-font-image-open.png",
+    "bundle-390-844-dark-large-font-image-menu.png",
+    "bundle-390-844-dark-large-font-sent-attachments.png",
+    "bundle-390-844-dark-large-font-pdf-open.png",
+    "bundle-390-844-dark-large-font-pdf-zoom.png",
+    "bundle-390-844-dark-large-font-composer-streaming-stop.png",
+    "bundle-390-844-dark-large-font-composer-followup-menu.png",
+    "bundle-390-844-dark-large-font-keyboard-layout.png",
+    "bundle-390-844-dark-large-font-approval-pending.png",
+    "bundle-390-844-dark-large-font-approval-expanded-composer.png",
+    "bundle-390-844-dark-large-font-approval-attachment-composer.png",
+    "bundle-390-844-dark-large-font-approval-review.png",
+    "bundle-390-844-dark-large-font-approval-details.png",
+    "bundle-390-844-dark-large-font-choice-three.png",
+    "bundle-390-844-dark-large-font-pending-entry.png",
+    "bundle-390-844-dark-large-font-approval-receipt.png",
+    "bundle-390-844-dark-large-font-question-three.png",
+    "bundle-390-844-dark-large-font-nav-chat.png",
+    "bundle-390-844-dark-large-font-nav-activity.png",
+    "bundle-390-844-dark-large-font-nav-health.png",
+    "bundle-390-844-dark-large-font-nav-goals.png",
+    "bundle-390-844-dark-large-font-nav-library.png",
+    "bundle-390-844-dark-large-font-nav-unread.png",
+    "browser-360-light-idle.png",
+    "browser-360-light-expanded.png",
+    "browser-360-light-approval.png",
+    "browser-360-dark-idle.png",
+    "browser-360-dark-expanded.png",
+    "browser-360-dark-approval.png",
+    "browser-390-light-idle.png",
+    "browser-390-light-expanded.png",
+    "browser-390-light-approval.png",
+    "browser-390-dark-idle.png",
+    "browser-390-dark-expanded.png",
+    "browser-390-dark-approval.png",
+    "electron-1200-light-approval.png",
+    "electron-1200-light-composer.png",
+    "electron-1200-dark-approval.png",
+    "electron-1200-dark-composer.png",
+    "electron-480-light-approval.png",
+    "electron-480-light-composer.png",
+    "electron-480-dark-approval.png",
+    "electron-480-dark-composer.png"
+  ],
+  "errors": [],
+  "geometry": [
+    {
+      "scene": "draft-image",
+      "nodes": [
+        {
+          "kind": "attachment-chip attachment-image-draft",
+          "image": true,
+          "srcSize": 2462,
+          "width": 130,
+          "height": 102
+        },
+        {
+          "kind": "attachment-chip",
+          "image": false
+        }
+      ],
+      "saved": [
+        {
+          "kind": "image",
+          "thumbnailSize": 2462,
+          "valid": true
+        },
+        {
+          "kind": "file",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "variant": {
+        "w": 360,
+        "h": 780
+      },
+      "theme": "light",
+      "scrollWidth": 360,
+      "width": 360,
+      "tabs": [
+        {
+          "width": 56,
+          "height": 44
+        },
+        {
+          "width": 56,
+          "height": 44
+        },
+        {
+          "width": 56,
+          "height": 44
+        },
+        {
+          "width": 56,
+          "height": 44
+        },
+        {
+          "width": 56,
+          "height": 44
+        }
+      ],
+      "composerHeight": 151
+    },
+    {
+      "scene": "draft-image",
+      "nodes": [
+        {
+          "kind": "attachment-chip attachment-image-draft",
+          "image": true,
+          "srcSize": 2462,
+          "width": 130,
+          "height": 102
+        },
+        {
+          "kind": "attachment-chip",
+          "image": false
+        }
+      ],
+      "saved": [
+        {
+          "kind": "image",
+          "thumbnailSize": 2462,
+          "valid": true
+        },
+        {
+          "kind": "file",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "variant": {
+        "w": 360,
+        "h": 780
+      },
+      "theme": "dark",
+      "scrollWidth": 360,
+      "width": 360,
+      "tabs": [
+        {
+          "width": 56,
+          "height": 44
+        },
+        {
+          "width": 56,
+          "height": 44
+        },
+        {
+          "width": 56,
+          "height": 44
+        },
+        {
+          "width": 56,
+          "height": 44
+        },
+        {
+          "width": 56,
+          "height": 44
+        }
+      ],
+      "composerHeight": 151
+    },
+    {
+      "scene": "draft-image",
+      "nodes": [
+        {
+          "kind": "attachment-chip attachment-image-draft",
+          "image": true,
+          "srcSize": 2462,
+          "width": 130,
+          "height": 102
+        },
+        {
+          "kind": "attachment-chip",
+          "image": false
+        }
+      ],
+      "saved": [
+        {
+          "kind": "image",
+          "thumbnailSize": 2462,
+          "valid": true
+        },
+        {
+          "kind": "file",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "variant": {
+        "w": 390,
+        "h": 844
+      },
+      "theme": "light",
+      "scrollWidth": 390,
+      "width": 390,
+      "tabs": [
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        }
+      ],
+      "composerHeight": 151
+    },
+    {
+      "scene": "draft-image",
+      "nodes": [
+        {
+          "kind": "attachment-chip attachment-image-draft",
+          "image": true,
+          "srcSize": 2462,
+          "width": 130,
+          "height": 102
+        },
+        {
+          "kind": "attachment-chip",
+          "image": false
+        }
+      ],
+      "saved": [
+        {
+          "kind": "image",
+          "thumbnailSize": 2462,
+          "valid": true
+        },
+        {
+          "kind": "file",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "variant": {
+        "w": 390,
+        "h": 844
+      },
+      "theme": "dark",
+      "scrollWidth": 390,
+      "width": 390,
+      "tabs": [
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        }
+      ],
+      "composerHeight": 151
+    },
+    {
+      "scene": "draft-image",
+      "nodes": [
+        {
+          "kind": "attachment-chip attachment-image-draft",
+          "image": true,
+          "srcSize": 2462,
+          "width": 130,
+          "height": 102
+        },
+        {
+          "kind": "attachment-chip",
+          "image": false
+        }
+      ],
+      "saved": [
+        {
+          "kind": "image",
+          "thumbnailSize": 2462,
+          "valid": true
+        },
+        {
+          "kind": "file",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "variant": {
+        "w": 320,
+        "h": 780
+      },
+      "theme": "light",
+      "scrollWidth": 320,
+      "width": 320,
+      "tabs": [
+        {
+          "width": 48,
+          "height": 44
+        },
+        {
+          "width": 48,
+          "height": 44
+        },
+        {
+          "width": 48,
+          "height": 44
+        },
+        {
+          "width": 48,
+          "height": 44
+        },
+        {
+          "width": 48,
+          "height": 44
+        }
+      ],
+      "composerHeight": 151
+    },
+    {
+      "scene": "draft-image",
+      "nodes": [
+        {
+          "kind": "attachment-chip attachment-image-draft",
+          "image": true,
+          "srcSize": 2462,
+          "width": 130,
+          "height": 102
+        },
+        {
+          "kind": "attachment-chip",
+          "image": false
+        }
+      ],
+      "saved": [
+        {
+          "kind": "image",
+          "thumbnailSize": 2462,
+          "valid": true
+        },
+        {
+          "kind": "file",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "variant": {
+        "w": 320,
+        "h": 780
+      },
+      "theme": "dark",
+      "scrollWidth": 320,
+      "width": 320,
+      "tabs": [
+        {
+          "width": 48,
+          "height": 44
+        },
+        {
+          "width": 48,
+          "height": 44
+        },
+        {
+          "width": 48,
+          "height": 44
+        },
+        {
+          "width": 48,
+          "height": 44
+        },
+        {
+          "width": 48,
+          "height": 44
+        }
+      ],
+      "composerHeight": 151
+    },
+    {
+      "scene": "draft-image",
+      "nodes": [
+        {
+          "kind": "attachment-chip attachment-image-draft",
+          "image": true,
+          "srcSize": 2462,
+          "width": 130,
+          "height": 102
+        },
+        {
+          "kind": "attachment-chip",
+          "image": false
+        }
+      ],
+      "saved": [
+        {
+          "kind": "image",
+          "thumbnailSize": 2462,
+          "valid": true
+        },
+        {
+          "kind": "file",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "variant": {
+        "w": 390,
+        "h": 844,
+        "large": true
+      },
+      "theme": "light",
+      "scrollWidth": 390,
+      "width": 390,
+      "tabs": [
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        }
+      ],
+      "composerHeight": 151
+    },
+    {
+      "scene": "draft-image",
+      "nodes": [
+        {
+          "kind": "attachment-chip attachment-image-draft",
+          "image": true,
+          "srcSize": 2462,
+          "width": 130,
+          "height": 102
+        },
+        {
+          "kind": "attachment-chip",
+          "image": false
+        }
+      ],
+      "saved": [
+        {
+          "kind": "image",
+          "thumbnailSize": 2462,
+          "valid": true
+        },
+        {
+          "kind": "file",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "variant": {
+        "w": 390,
+        "h": 844,
+        "large": true
+      },
+      "theme": "dark",
+      "scrollWidth": 390,
+      "width": 390,
+      "tabs": [
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        },
+        {
+          "width": 62,
+          "height": 44
+        }
+      ],
+      "composerHeight": 151
+    }
+  ],
+  "result": "passed"
+}
