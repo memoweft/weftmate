@@ -24,6 +24,12 @@ import javax.crypto.spec.OAEPParameterSpec
 import javax.crypto.spec.PSource
 import javax.crypto.spec.SecretKeySpec
 
+/** The phone container owns original conversations; a computer's replica reset
+ * must not erase those originals before the webpage persists its new state. */
+internal fun offlineOpeningState(previous: JSONObject, reset: Boolean, phoneSource: Boolean): JSONObject =
+    if (reset && !phoneSource) JSONObject().put("snapshot", JSONObject.NULL).put("turns", JSONArray()).put("conversations", JSONArray())
+    else previous
+
 /** Replica and outbox never enter LocalStore, WebView storage, logs or Android backups. */
 internal class OfflineVault(context: Context, private val host: HostIdentity, private val recipient: HostIdentity = host) {
     companion object { private val locks = ConcurrentHashMap<String, Any>() }
@@ -110,7 +116,7 @@ internal class OfflineVault(context: Context, private val host: HostIdentity, pr
         cipher.updateAAD(aad)
         val payload = JSONObject(String(cipher.doFinal(decode(envelope.getString("ciphertext"))), Charsets.UTF_8)); rawKey.fill(0)
         val previous = read()
-        val value = if (payload.optBoolean("reset")) empty() else previous
+        val value = offlineOpeningState(previous, payload.optBoolean("reset"), host.authSource == "phone")
         previous.optJSONObject("_deviceKey")?.let { value.put("_deviceKey", it) }
         // JS applies the item delta; preserve the secret in native encrypted storage only.
         val persisted = JSONObject(payload.toString())

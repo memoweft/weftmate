@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { inflateRawSync } from 'node:zlib';
 
-export const importApps = Object.freeze({ chatgpt: 'ChatGPT', claude: 'Claude', codex: 'Codex', 'claude-code': 'Claude Code' });
+export const importApps = Object.freeze({ chatgpt: 'ChatGPT', claude: 'Claude', codex: 'Codex', 'claude-code': 'Claude Code', phone: '手机上的对话' });
 export const formatError = () => Object.assign(new Error('这个文件的格式认不出'), { code: 'IMPORT_FORMAT_UNKNOWN', status: 422 });
 const hash = value => createHash('sha256').update(value).digest('hex');
 const instant = value => {

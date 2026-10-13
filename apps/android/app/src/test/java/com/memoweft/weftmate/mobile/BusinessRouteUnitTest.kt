@@ -7,6 +7,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun phoneMemoryHandoverAndErasureKeepTheExistingExactRoutes() {
+        for (route in listOf("/personal/v1/offline/sync", "/personal/v1/offline/turns", "/personal/v1/memory/status", "/personal/v1/memory/backfill")) assertTrue(route, validBusinessPath(route))
+        for (route in listOf("/personal/v1/offline/forget", "/personal/v1/offline/turns?ownerId=other", "/personal/v1/offline/turns/raw", "/personal/v1/offline%2Fturns")) assertFalse(route, validBusinessPath(route))
+    }
     @Test fun computerCloudRoutesAreNotComputerBusinessRoutes() {
         for (path in listOf("/personal/v1/cloud/hosts/rename", "/personal/v1/cloud/hosts/remove", "/personal/v1/auth/cloud-channel")) assertFalse(path, validBusinessPath(path))
     }

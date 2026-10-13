@@ -55,6 +55,7 @@ export function createChatOperations(context) {
     const chat = requireChat(ownerId, chatId), account = context.accountState(ownerId), identity = account.chatIdentity;
     const segment = identity.segments[chat.activeSegmentId], session = account.sessions[segment?.sessionId];
     const base = { chatId, kind: chat.kind, revision: chat.revision, contentRevision: chat.contentRevision,
+      ...(session?.phoneHistory ? {phoneHistory:true,readOnly:true,source:'phone'} : {}),
       activeSegmentId: segment?.segmentId ?? null, activeSessionId: segment?.sessionId ?? null,
       ...(session?.sideChat ? { originRefs: session.sideChat.contextTransfer.sourceRefs,
         contextTransfer: session.sideChat.contextTransfer } : {}),
