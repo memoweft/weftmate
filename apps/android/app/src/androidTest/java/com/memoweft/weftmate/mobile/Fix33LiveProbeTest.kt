@@ -30,6 +30,28 @@ class Fix33LiveProbeTest {
             }
         }
         check(done.await(10,TimeUnit.SECONDS))
+        val peer=JSONObject()
+        // Public configuration only: standard CA/domain checks, no Cookie, token or content.
+        // Comparing certificate metadata diagnoses a stored pin; it never changes that pin.
+        val host=CloudAppLogin(SecureSettings(a),PersonalApi()).hostOrigin()
+        if(host!=null && host!="https://api.weftmate.com") {
+            val connection=java.net.URL(host+"/personal/v1/cloud/config").openConnection() as javax.net.ssl.HttpsURLConnection
+            try {
+                connection.connectTimeout=5000;connection.readTimeout=5000
+                peer.put("status",connection.responseCode)
+                val certificate=connection.serverCertificates[0] as java.security.cert.X509Certificate
+                peer.put("caAndDomainValid",true).put("pinKnown",CloudPins.has(host)).put("pinMatches",CloudPins.matches(host,certificate))
+                    .put("certificateExpired",certificate.notAfter.time<System.currentTimeMillis())
+            } catch(e:Exception) { peer.put("caAndDomainValid",false).put("code",cloudAppFailure(e).safeCode) }
+            finally {connection.disconnect()}
+        }
+        File(a.filesDir,"fix33-live-peer.json").writeText(peer.toString(2))
+        if(host!=null && host!="https://api.weftmate.com") {
+            val pinned=java.net.URL(host+"/personal/v1/cloud/config").openPinnedConnection()
+            try {pinned.connectTimeout=5000;pinned.readTimeout=5000;peer.put("pinnedStatus",pinned.responseCode)}
+            catch(e:Exception){peer.put("pinnedCode",cloudAppFailure(e).safeCode)}finally{pinned.disconnect()}
+            File(a.filesDir,"fix33-live-peer.json").writeText(peer.toString(2))
+        }
         val hold=InstrumentationRegistry.getArguments().getString("holdMs")?.toLongOrNull() ?: 0L
         if(hold>0) Thread.sleep(hold)
         // Leave the app and logged-in account available for the authorized follow-up.

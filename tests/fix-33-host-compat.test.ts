@@ -15,6 +15,20 @@ test('a saved native login initializes the cloud client and reconnects after res
   await context.WeftUiCore.resumeCachedMobileCloudSession({configure:async()=>calls.push('configure'),restore:async()=>{cache=true;calls.push('restore');},reconnect:async()=>{calls.push('reconnect');if(unavailable)throw {code:'NETWORK'};},failed:()=>calls.push('visible failure')});
   assert.equal(cache,true);assert.deepEqual(calls,unavailable?['configure','restore','reconnect','visible failure']:['configure','restore','reconnect']);
  }
+ const calls:string[]=[];
+ await context.WeftUiCore.resumeCachedMobileCloudSession({configure:async()=>calls.push('configure'),restore:async()=>calls.push('restore'),verify:async()=>{calls.push('verify content session');return true;},reconnect:async()=>{throw Error('valid legacy content session must not wait on cloud token refresh');},failed:()=>{throw Error('unexpected failure');}});
+ assert.deepEqual(calls,['configure','restore','verify content session']);
+});
+
+test('new phone model sync uses the declared computer protocol and never sends phoneFirst to the legacy host',async()=>{
+ const context:any=vm.createContext({TextEncoder});vm.runInContext(await readFile('src/ui-core/offline.js','utf8'),context);
+ for(const capabilities of [{},{offlinePhoneFirst:1}]){
+  const requests:any[]=[];
+  const engine=await context.WeftOffline.create({identity:{hostId:'synthetic'},phoneModel:()=>({modelId:'synthetic'}),hostCapabilities:()=>capabilities,
+   vault:{load:async()=>({snapshot:null,turns:[],conversations:[],tasks:[]}),key:async()=>({}),save:async()=>{},close:()=>{},open:async()=>({items:[],remove:[],hashes:{},generation:1,model:null,control:{accountId:'synthetic'}})},
+   host:async(path:string,body:any)=>{requests.push({path,body});if(!capabilities.offlinePhoneFirst&&body.phoneFirst)throw {code:'INVALID_REQUEST',status:400};return {};},});
+  await engine.sync();assert.equal(requests.length,1);assert.equal(requests[0].path,'/offline/sync');assert.equal(requests[0].body.phoneFirst,capabilities.offlinePhoneFirst?true:undefined);engine.close();
+ }
 });
 
 test('phone sync commit wakes the existing chat wait; duplicate upload does not wake idle clients',async t=>{

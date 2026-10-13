@@ -12,6 +12,7 @@ import {fixture} from '../../services/cloud/test/identity-helpers.mjs';
 import {registration, appDevice, control, refresh, proof} from '../../services/cloud/test/app-helpers.mjs';
 import {createPersonalAccessService as currentService} from '../../src/personal-access/index.mjs';
 import {servePersonalAccessUi} from '../../src/personal-access-ui/index.mjs';
+import {phoneRuntime} from '../../services/cloud/test/relay-phone-runtime.mjs';
 
 const root=await mkdtemp(join(tmpdir(),'weftmate-fix33-')), cleanup=[], trace=[];
 const report={synthetic:true, model:'synthetic backend with durable user/assistant events', baseline:'3062ea4a', scenarios:[],trace};
@@ -45,9 +46,14 @@ try{
  };cleanup.push(async()=>{globalThis.fetch=originalFetch;});await registration(f);
  const desktop=await appDevice(f,'desktop'), phone=await appDevice(f,'phone');
  for(const [version,create] of [['old',oldService],['current',currentService]]){
-  const b=backend(),data=join(root,version+'-data');await mkdir(data);
+  const data=join(root,version+'-data');await mkdir(data);
+  const runtime=process.env.FIX33_UI==='1'?await phoneRuntime(data,[]):null;
+  if(runtime)cleanup.push(()=>runtime.close());
+  const b=runtime?Object.assign(runtime.backend,{starts:[]}):backend();
+  if(runtime){const push=runtime.requests.push.bind(runtime.requests);runtime.requests.push=(...rows)=>{for(const row of rows)b.starts.push(performance.now());return push(...rows);};}
   const desktopUi=version==='old'?(await import(pathToFileURL(join(old,'src/personal-access-ui/index.mjs')).href)).servePersonalAccessUi:servePersonalAccessUi;
   const host=await create({root:data,port:0,backend:b,uiHandler:desktopUi,cloudIdentity:{issuer:f.config.issuer,allowInsecureLoopback:true}});cleanup.push(()=>host.close());
+  if(runtime){runtime.setHost(host);await runtime.start();}
   const started=await host.start();
   async function api(path,body,auth,headers={}){const begin=performance.now(),response=await fetch(started.origin+'/personal/v1'+path,{method:body===undefined?'GET':'POST',headers:{origin:started.origin,'content-type':'application/json',...(auth?{cookie:auth.cookie,'x-weftmate-csrf':auth.csrfToken}:{}),...headers},body:body===undefined?undefined:JSON.stringify(body)});const data=await response.json();trace.push({host:version,method:body===undefined?'GET':'POST',path,status:response.status,ms:Math.round(performance.now()-begin),requestFields:Object.keys(body||{}),responseFields:Object.keys(data),commandFields:Object.keys(data.command||{}),code:data.error?.code});return {...data,status:response.status,cookie:response.headers.get('set-cookie')?.split(';')[0]||auth?.cookie};}
   const native=await api('/auth/desktop',{deviceName:'synthetic-host'},null,{'x-weftmate-desktop':host.libraryDesktopToken});assert.equal(native.status,200);
@@ -73,12 +79,13 @@ try{
    if(baseline&&kind==='side')assert.equal(result.error?.code,'CHAT_UNAVAILABLE');
   }
   }
+  report.scenarios.push(scenario);
   if(process.env.FIX33_UI==='1') {
    const environment={...process.env};delete environment.ELECTRON_RUN_AS_NODE;
    const electron=await _electron.launch({args:[resolve('tests/helpers/fix33-electron.cjs')],env:environment});
    const browser=await chromium.launch({headless:true}),phonePage=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),desktopPage=await electron.firstWindow();
    try {
-    for(const [surface,page,identity] of [['desktop',desktopPage,bound],['phone',phonePage,auth]]) {
+    for(const [surface,page,identity] of [['desktop',desktopPage,auth],['phone',phonePage,auth]]) {
      page.on('response',async response=>{const request=response.request(),url=new URL(response.url());if(url.pathname.startsWith('/personal/v1/')&&!url.pathname.includes('/ui/'))trace.push({host:version,surface,method:request.method(),path:url.pathname,status:response.status(),requestFields:Object.keys(request.postDataJSON?.()||{})});});
      await page.addInitScript(()=>{let module;Object.defineProperty(globalThis,'WeftUiCore',{configurable:true,get:()=>module,set:value=>{module=value;const original=value.create;value.create=(...args)=>{const core=original(...args);globalThis.__fix33Core=core;return core;};}});});
      await page.context().addCookies([{name:'wm_personal_session',value:identity.cookie.split('=')[1],url:started.origin}]);
@@ -89,7 +96,7 @@ try{
        const target=file.startsWith('ui-core/')?resolve('src',file):resolve('src/personal-access-ui',file);
        try{return route.fulfill({status:200,body:await readFile(target),contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.html')?'text/html':file.endsWith('.svg')?'image/svg+xml':undefined});}catch{}
       }
-      return route.continue(surface==='desktop'&&url.pathname.startsWith('/personal/v1/')?{headers:{...route.request().headers(),'x-weftmate-desktop':host.libraryDesktopToken}}:undefined);
+      return route.continue(surface==='desktop'&&url.pathname.startsWith('/personal/v1/')?{headers:{...route.request().headers(),origin:started.origin,'x-weftmate-desktop':host.libraryDesktopToken}}:undefined);
      });
      await page.goto(started.origin+'/personal/v1/ui/');await page.waitForFunction(()=>globalThis.__fix33Core);
      await page.evaluate(async identity=>{const c=globalThis.__fix33Core;c.acceptSession(identity);await c.enterAssistant();},identity);
@@ -99,19 +106,26 @@ try{
     scenario.latency=[];
     const visible=async(page,text)=>page.waitForFunction(text=>document.getElementById('transcript')?.textContent.includes(text),text,{timeout:20000});
     for(const [source,target,label] of [[phonePage,desktopPage,'phone-to-desktop'],[desktopPage,phonePage,'desktop-to-phone']]) {
+     const replies=await target.evaluate(()=>Array.from(globalThis.__fix33Core.state.historyEvents.values()).filter(e=>e.type==='assistant.message').length);
      const text='合成来回消息-'+randomUUID(),begin=performance.now();await source.locator('#message-text').fill(text);await source.locator('#send-message').click();
      await source.screenshot({path:join(out,`${version}-${label}-sending.png`)});
-     await visible(target,text);const userMs=Math.round(performance.now()-begin);await visible(target,'合成回复 '+text);
+     await visible(target,text);const userMs=Math.round(performance.now()-begin);await target.waitForFunction(count=>Array.from(globalThis.__fix33Core.state.historyEvents.values()).filter(e=>e.type==='assistant.message').length>count,replies,{timeout:20000});
      scenario.latency.push({label,userMs,replyMs:Math.round(performance.now()-begin)});await target.screenshot({path:join(out,`${version}-${label}.png`)});
     }
     const conversationId='conversation-'+randomUUID(),at=new Date().toISOString(),body={events:[{eventId:'event-'+randomUUID(),conversationId,clientSeq:1,kind:'conversation.created',occurredAt:at,payload:{title:'合成手机独立对话'}},{eventId:'event-'+randomUUID(),conversationId,clientSeq:2,kind:'message.created',occurredAt:at,payload:{messageId:'message-'+randomUUID(),role:'user',text:'合成手机独立消息'}},{eventId:'event-'+randomUUID(),conversationId,clientSeq:3,kind:'message.created',occurredAt:at,payload:{messageId:'message-'+randomUUID(),role:'assistant',text:'合成手机独立回复'}}]};
-    const begin=performance.now();await api('/sync/events',body,auth);
-    await desktopPage.waitForFunction(id=>globalThis.__fix33Core.phoneConversations().some(c=>c.id===id),conversationId,{timeout:20000});
-    scenario.latency.push({label:'phone-independent-upload-to-desktop-list',ms:Math.round(performance.now()-begin)});
+    const begin=performance.now();const uploaded=await api('/sync/events',body,auth);assert.equal(uploaded.status,200);
+    try {
+     await desktopPage.waitForFunction(id=>globalThis.__fix33Core.phoneConversations().some(c=>c.id===id),conversationId,{timeout:10000});
+     scenario.latency.push({label:'phone-independent-upload-to-desktop-list',ms:Math.round(performance.now()-begin)});
+    }catch(error){
+     if(version!=='old')throw error;
+     scenario.latency.push({label:'phone-independent-upload-to-desktop-list',ms:null,notVisibleWithinMs:10000,requiresDesktopUpdate:true});
+     const refresh=performance.now();await desktopPage.evaluate(()=>globalThis.__fix33Core.refreshPhoneRecords());scenario.latency.push({label:'legacy-manual-phone-history-read',ms:Math.round(performance.now()-refresh)});
+    }
     await desktopPage.evaluate(id=>globalThis.__fix33Core.selectPhoneConversation(id),conversationId);await desktopPage.screenshot({path:join(out,`${version}-phone-history.png`)});
    } finally {await browser.close();await electron.close();}
   }
-  report.scenarios.push(scenario);await host.close();cleanup.pop();
+  await host.close();cleanup.pop();if(runtime){await runtime.close();cleanup.pop();}
  }
 }finally{
  for(const close of cleanup.reverse())await close();
