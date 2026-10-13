@@ -36,7 +36,7 @@
     status(''); nativeError='';
     try { const result = await action(); if (result) state.conversationId = result.conversationId; }
     catch (error) { const stopped=error.name==='AbortError'||error.message==='CANCELLED';nativeError=stopped?'已停止，生成的文字已保存。':'回复未完成，已保存生成的文字。请检查网络或模型配置后重试。';status(nativeError,!stopped); }
-    finally { show(); }
+    finally { show(); if (!api.active && engine?.view().turns.length) await connected(); }
   }
   async function attachEngine(info, client, adopt = true) {
     native = !!window.weftNative; cloud = client;

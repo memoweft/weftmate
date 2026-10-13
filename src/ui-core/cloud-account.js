@@ -25,6 +25,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       HOST_TRUST_INVALID: '无法确认电脑身份，请检查连接后重试。',
       INVALID_DEVICE: '设备名称须为 1–128 个字符。',
       UPDATE_REQUIRED: '请更新电脑上的 WeftMate 后重新登录。',
+      COMPUTER_UPDATE_REQUIRED: '这台电脑的 WeftMate 需要更新，连接后仍可继续聊天。',
       NATIVE_LOGIN_UPGRADE_REQUIRED: '请更新手机程序后使用这个登录入口。现在可以使用密码登录并确认邮箱。',
       CLOUD_LOGIN_REQUIRED: '请更新客户端并使用邮箱登录，远程访问需要云账号。',
       PASSWORD_MISMATCH: '两次输入的密码不一致。', EMERGENCY_PASSWORD_INVALID: '离线密码须为 15–128 个字符。',
@@ -287,6 +288,11 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   async function cloudConnect(hostId) { return client.authorized('/hosts/connect', { method: 'POST', body: { hostId } }); }
   core.cloudCurrentComputer = () => client?.config?.hostId;
   core.cloudComputerChannel = (connection,request) => client.channel(connection,request);
+  core.cloudComputerCapabilities = async connection => {
+    const config = await client.request(connection.baseUrl + '/personal/v1/cloud/config');
+    if (config.hostId !== connection.hostId || config.issuer !== client.config.issuer) throw {code:'HOST_TRUST_INVALID'};
+    return config.capabilities || {};
+  };
   core.cloudRenameComputer = async (hostId,name) => {
     if(!core.state.computers?.length)throw {code:'FORBIDDEN'};
     await client.authorized('/hosts/rename',{method:'POST',body:{hostId,name:name.trim()}});return cloudDirectory();

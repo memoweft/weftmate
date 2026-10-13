@@ -32,6 +32,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     var modelId by mutableStateOf("")
     var mode by mutableStateOf("auto")
     var chatId by mutableStateOf("")
+    private var chatKind = ""
     var sessionId by mutableStateOf("")
     var phone by mutableStateOf(false)
     var standalone by mutableStateOf(false)
@@ -49,13 +50,14 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     var copyVersion by mutableStateOf(0)
     private val timeline = NativeTimeline()
     private var cursor = ""
+    private var liveRevision = 0L
+    private var replyWait = false
     private var seq = -1L
     private var generation = 0
     private var poll: Job? = null
     private var sending by mutableStateOf(false)
     val submitting get() = sending
     private var refreshing = false
-    private var nextReconcile = 0L
     private var phoneLive = ""
     private var phoneOwner = ""
     private var phoneModelSwitching = false
@@ -108,6 +110,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         modelId = selected?.optString("profileId") ?: ""
         if (modelId.isBlank()) modelId = models.firstOrNull { it.optBoolean("configured") }?.optString("profileId") ?: ""
         modelLabel = selected?.optString("displayName")?.takeIf { it.isNotBlank() } ?: models.firstOrNull { it.optString("profileId") == modelId }?.optString("displayName") ?: "选择模型"
+        replyWait = runCatching { business("/status").optJSONObject("personalCapabilities")?.optInt("replyWait") == 1 }.getOrDefault(false)
         refreshChats()
         if (chatId.isBlank()) {
             val main = runCatching { business("/chats/main").getJSONObject("chat") }.getOrNull()
@@ -168,10 +171,11 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     }
     suspend fun select(chat: JSONObject) {
         val startingDraft = if(chatId.isBlank())draft else ""
-        saveDraft(); generation++; poll?.cancel(); timeline.reset(); cursor = ""; seq = -1
+        saveDraft(); generation++; poll?.cancel(); timeline.reset(); cursor = ""; liveRevision = 0; seq = -1
         phoneArchive = chat.optBoolean("nativePhone")
         phone = chat.optString("source") == "phone" || !chat.has("chatId") && chat.has("id")
         chatId = if (phone) chat.getString("id") else chat.optString("chatId")
+        chatKind = chat.optString("kind")
         sessionId = chat.optString("activeSessionId").takeUnless { it == "null" } ?: ""
         sendAvailable = phone || chat.optBoolean("sendAvailable")
         title = if (chat.optString("kind") == "main") "WeftMate" else chat.optString("title", "新对话")
@@ -199,7 +203,12 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (sessionId.isNotBlank()) mode = runCatching { business("/sessions/$sessionId/approval-mode").optString("mode", "auto") }.getOrDefault("auto")
         refresh()
         val g = generation
-        poll = scope.launch { while (isActive && g == generation) { delay(if (running) 250 else 2500); if (tab == "chat" && activity.nativeForeground) refresh() } }
+        poll = scope.launch { while (isActive && g == generation) {
+            if (refreshing) { delay(50); continue }
+            if (tab == "chat" && activity.nativeForeground && replyWait && !phone && cursor.isNotBlank()) refresh(wait = true)
+            else { delay(if (running) 250 else 2500); if (tab == "chat" && activity.nativeForeground) refresh() }
+            if (!connected) delay(1500)
+        } }
     }
     fun saveDraft() {
         if (phoneArchive) {
@@ -223,7 +232,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     }
     fun edit(text: String) { draft = text; saveDraft(); launch { call("native.draft",JSONObject().put("hasDraft",text.isNotEmpty() || attachments.isNotEmpty())) } }
     suspend fun refreshAttachments() { attachments = call("attachments.list", JSONObject().put("conversationId", chatId)).optJSONArray("attachments")?.objects().orEmpty() }
-    suspend fun refresh(older: Boolean = false) {
+    suspend fun refresh(older: Boolean = false, wait: Boolean = false) {
         if (refreshing) return
         refreshing = true
         val g = generation
@@ -240,11 +249,12 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                 if (running && phoneLive.isNotBlank()) rows = rows + JSONObject().put("eventId","phone-live").put("type","assistant.delta").put("data",JSONObject().put("text",phoneLive))
             } else {
                 val path = if (older) "/chats/$chatId/events?before=${java.net.URLEncoder.encode(olderCursor, "UTF-8")}&limit=100"
-                    else if (cursor.isBlank()) "/chats/$chatId/events?limit=100" else "/chats/$chatId/changes?cursor=${java.net.URLEncoder.encode(cursor, "UTF-8")}&limit=100"
+                    else if (cursor.isBlank()) "/chats/$chatId/events?limit=100" else "/chats/$chatId/changes?cursor=${java.net.URLEncoder.encode(cursor, "UTF-8")}&limit=100" +
+                        if (wait && replyWait) "&waitMs=15000&liveRevision=$liveRevision" else ""
                 val p = business(path); if (g != generation) return
                 timeline.merge(p, older); rows = timeline.rows()
                 if (p.has("olderCursor")) { olderCursor = p.optString("olderCursor").takeUnless { it == "null" } ?: ""; hasOlder = p.optBoolean("hasOlder") }
-                if (!older) cursor = p.optString("nextCursor", p.optString("syncCursor", cursor))
+                if (!older) { cursor = p.optString("nextCursor", p.optString("syncCursor", cursor)); liveRevision = p.optLong("liveRevision", liveRevision) }
                 val current = business("/chats/$chatId").getJSONObject("chat"); if (g != generation) return
                 sessionId = current.optString("activeSessionId").takeUnless { it == "null" } ?: ""
                 sendAvailable = current.optBoolean("sendAvailable")
@@ -258,10 +268,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                     val q = call("shared.questions.list", JSONObject().put("sessionId", sessionId)); if (g != generation) return
                     questions = q.optJSONArray("questions")?.objects().orEmpty()
                 }
-                uncertain = call("shared.outbox.list").optJSONArray("commands")?.objects().orEmpty().filter { it.optString("sessionId") == chatId && it.optString("state") == "uncertain" }
-                if (uncertain.isNotEmpty() && android.os.SystemClock.elapsedRealtime() >= nextReconcile) {
-                    nextReconcile = android.os.SystemClock.elapsedRealtime() + 5000
-                    call("shared.outbox.reconcile")
+                uncertain = call("shared.outbox.list").optJSONArray("commands")?.objects().orEmpty().filter {
+                    it.optString("sessionId") in setOf(chatId, sessionId) && it.optString("state") !in setOf("accepted")
                 }
             }
             connected = true; error = ""
@@ -274,7 +282,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         } finally { refreshing = false }
     }
     fun send() = launch {
-        if (sending || !sendAvailable || draft.isBlank() && attachments.isEmpty()) return@launch
+        if (sending || !sendAvailable || uncertain.any { it.optString("state") != "rejected" } || draft.isBlank() && attachments.isEmpty()) return@launch
         if(standalone && running)return@launch
         scrollVersion++
         sending = true
@@ -291,18 +299,38 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             val p = JSONObject().put("text", text).put("attachmentIds", JSONArray(files)).put("requestId", "native-${UUID.randomUUID()}")
             val result = if (phone) call("chat.send", p.put("conversationId", chatId)) else {
                 val intent = runCatching { business("/settings/personalization").optJSONObject("settings")?.optString("messageMode", "queue") ?: "queue" }.getOrDefault("queue")
-                call("shared.send", p.put("chatId", chatId).put("modelProfileId", modelId).put("intent", intent))
+                val target = hostChatSendTarget(chatKind, chatId, sessionId)
+                for (key in target.keys()) p.put(key, target.get(key))
+                call("shared.send", p.put("modelProfileId", modelId).put("intent", intent))
             }
             if (g != generation) return@launch
             if (result.optString("state") == "rejected") { error = "消息没能发送，草稿已保留。"; return@launch }
-            draft = ""; saveDraft(); call("native.draft",JSONObject().put("hasDraft",false)); focused = false; activity.hideKeyboard(); running = true
+            draft = ""; saveDraft(); call("native.draft",JSONObject().put("hasDraft",false)); focused = false; activity.hideKeyboard(); running = result.optString("state") != "uncertain"
             refreshAttachments(); refresh()
         } finally { sending = false }
     }
     fun stop() = launch { if (phoneArchive) activity.phonePresentation("stop", phoneParams()) else if (phone) call("chat.stop") else if (sessionId.isNotBlank()) call("shared.stop", JSONObject().put("sessionId", sessionId).put("requestId", "stop-${UUID.randomUUID()}")); refresh() }
     fun regenerate() = launch { if (canRegenerate) { scrollVersion++;activity.phonePresentation("regenerate", phoneParams()); refresh() } }
     fun copyReply(text:String) = launch { call("clipboard.copy",JSONObject().put("text",text));copyVersion++ }
-    fun newChat() = launch { select(if(standalone) JSONObject().put("id","phone-new").put("nativePhone",true).put("title","小纬") else call("conversations.create")); tab="chat" }
+    fun checkDelivery() = launch { call("shared.outbox.reconcile"); refresh() }
+    fun newChat() = launch {
+        if (standalone || !connected) {
+            select(if(standalone) JSONObject().put("id","phone-new").put("nativePhone",true).put("title","小纬") else call("conversations.create"))
+        } else {
+            val status = business("/status")
+            val id = "native-${UUID.randomUUID()}"
+            var command = business("/commands", "POST", JSONObject().put("requestId", id).put("kind", "session.create")
+                .put("targetDeviceId", status.getString("hostId")).put("modelProfileId", modelId)).getJSONObject("command")
+            val deadline = android.os.SystemClock.elapsedRealtime() + 15000
+            while (command.optString("state") in setOf("pending","preflight","dispatching") && android.os.SystemClock.elapsedRealtime() < deadline) {
+                delay(100); command = call("shared.commands.byRequest", JSONObject().put("requestId", id)).getJSONObject("command")
+            }
+            if (command.optString("state") !in setOf("accepted_by_dsh","observed")) { error="电脑还没能创建对话，请稍后重试。"; return@launch }
+            val resolved = business("/sessions/${command.getString("sessionId")}/chat")
+            select(business("/chats/${resolved.getString("chatId")}").getJSONObject("chat"))
+        }
+        tab="chat"
+    }
     fun returnToChat() { tab="chat"; launch { readingPreferences(activity.phonePresentation("view"));if(standalone)refreshPhoneModels(); refresh() } }
     fun openModels() { modelSettingsFinished=false; tab="models" }
     fun selectModel(row: JSONObject) = launch {

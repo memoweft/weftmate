@@ -123,7 +123,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 NativeIconButton(if(m.tab in listOf("settings","models")) R.drawable.wm_back else R.drawable.wm_panel,if(m.tab in listOf("settings","models"))"返回聊天" else "打开侧栏",Modifier.nativeFrost(CircleShape)) { if(m.tab in listOf("settings","models"))m.returnToChat() else { focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch { m.refreshChats() } } }
                 Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally) {
                     Text(if(m.tab=="chat" || m.tab=="web-chat")m.title else if(m.tab=="models")"模型" else if(m.tab=="web-home")"对话" else if(m.tab=="help")"帮助" else tabs.find{it.first==m.tab}?.second?.first ?: "设置",fontSize=DesignTokens.font17.sp,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
-                    if(m.tab=="chat") Text(if(m.standalone)"已登录 · 仅手机" else if(m.phoneArchive)"手机上的对话" else if(m.connected)"已连接" else "正在重连",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    if(m.tab=="chat") Text(if(m.standalone || m.phone)"手机自己答的" else if(m.connected)"已连接" else "正在重连",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Box {
                     NativeIconButton(R.drawable.wm_more,"更多",Modifier.nativeFrost(CircleShape)){overflow=true}
@@ -239,7 +239,8 @@ private fun displayRows(m: NativeChatModel): List<JSONObject> {
                     }
                 }
             }
-            items(m.uncertain){row->Column { Text(row.optString("text"),fontSize=DesignTokens.font18.sp);Text("消息还在确认中，正在自动续查。",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=DesignTokens.font12.sp) } }
+            items(m.uncertain){row->Column { Text(row.optString("text"),fontSize=DesignTokens.font18.sp);Text(hostDeliveryMessage(row),color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=DesignTokens.font12.sp);if(row.optString("state")!="rejected") NativeSecondary(onClick={m.checkDelivery()}){Text("核对消息")} } }
+            if(m.phone && !m.standalone) item { Text("这段是在手机上聊的。要用电脑的能力，请新开对话，或在电脑上继续这段对话。",fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) }
             item { if(m.error.isNotBlank()) Column(verticalArrangement=Arrangement.spacedBy(gap)) { Text(m.error,fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);if(m.phoneArchive) { if(m.canRegenerate && m.rows.lastOrNull()?.optString("type")=="user.message") NativeSecondary(onClick={m.regenerate()},modifier=Modifier.semantics{contentDescription="重新生成回复"}){Text("重试回复")} } else NativeSecondary(onClick={m.launch{m.refresh()}}){Text("重试连接")} } else if(m.running)Text("正在回复…",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         if(pending>=0 && pending+1 !in visible) FilledTonalButton(onClick={scope.launch{list.animateScrollToItem(pending+1)}},modifier=Modifier.align(Alignment.BottomCenter).padding(bottom=bottom+gap,start=gap,end=gap)){Text("有一项等你决定")}

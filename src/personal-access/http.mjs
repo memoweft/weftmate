@@ -599,8 +599,11 @@ export function createHttpHandler(context) {
             if (latest.ownerId !== ownerId || latest.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
           };
           authorize();
-          return context.syncStores.get(ownerId).append({ events: body.events, sourceDeviceId: deviceId, authorize,
+          const store = context.syncStores.get(ownerId), before = store.watermark;
+          const result = await store.append({ events: body.events, sourceDeviceId: deviceId, authorize,
             validateAttachment: (reference) => context.attachmentStores.get(ownerId).referenced(reference) });
+          if (store.watermark > before) context.notifyPhoneSync(ownerId);
+          return result;
         });
         return context.json(response, 200, accepted);
       }
