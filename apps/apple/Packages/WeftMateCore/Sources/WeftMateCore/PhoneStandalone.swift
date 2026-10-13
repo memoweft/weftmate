@@ -10,13 +10,15 @@ public struct PhoneModelConfiguration: Codable, Equatable, Identifiable, Sendabl
     public init(id: String = UUID().uuidString, name: String, baseURL: String, model: String, apiKey: String) {
         self.id=id; self.name=name; self.baseURL=baseURL; self.model=model; self.apiKey=apiKey
     }
-    public func request(messages: [[String:String]], stream: Bool, allowLoopback: Bool = false) throws -> URLRequest {
+    public func request(messages: [[String:String]], stream: Bool, allowLoopback: Bool = false, maxTokens: Int? = nil) throws -> URLRequest {
         guard let base=URL(string:baseURL), base.user == nil, base.password == nil, base.query == nil, base.fragment == nil,
               base.scheme == "https" || (allowLoopback && base.scheme == "http" && base.host == "127.0.0.1"),
               !model.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty, !apiKey.isEmpty else { throw OfflineFailure.model }
         var r=URLRequest(url:base.appendingPathComponent("chat/completions"),cachePolicy:.reloadIgnoringLocalCacheData,timeoutInterval:180)
         r.httpMethod="POST"; r.setValue("application/json",forHTTPHeaderField:"Content-Type"); r.setValue("Bearer "+apiKey,forHTTPHeaderField:"Authorization")
-        r.httpBody=try JSONSerialization.data(withJSONObject:["model":model,"stream":stream,"messages":messages]); return r
+        var body: [String:Any]=["model":model,"stream":stream,"messages":messages]
+        if let maxTokens { body["max_tokens"]=maxTokens }
+        r.httpBody=try JSONSerialization.data(withJSONObject:body); return r
     }
 }
 public struct PhoneChatMessage: Codable, Equatable, Identifiable, Sendable {
@@ -24,6 +26,8 @@ public struct PhoneChatMessage: Codable, Equatable, Identifiable, Sendable {
     public var role: String
     public var text: String
     public var date: Date = Date()
+    public var memoryRefs: [OfflineMemoryRef]?
+    public var dependencyComplete: Bool?
     public init(role: String, text: String) { self.role=role; self.text=text }
 }
 public struct PhoneChatThread: Codable, Equatable, Identifiable, Sendable {
@@ -36,6 +40,7 @@ public struct PhoneChatState: Codable, Sendable {
     public var threads: [PhoneChatThread] = []
     public var selected: String?
     public var migrations: [String:PhoneChatMigration]?
+    public var memory: PhoneMemoryState?
     public init() {}
 }
 /// Account identity is the cloud issuer and subject, never email or a computer ID.
@@ -50,6 +55,10 @@ public final class PhoneChatStore {
         prefix="phone-chat.v1."+digest; file=directory.appendingPathComponent(digest+".sealed")
         try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true,attributes:[.posixPermissions:0o700])
         var dir=directory; var attrs=URLResourceValues(); attrs.isExcludedFromBackup=true; try dir.setResourceValues(attrs)
+    }
+    public func clear() throws {
+        if FileManager.default.fileExists(atPath:file.path) { try FileManager.default.removeItem(at:file) }
+        try credentials.delete(key:prefix+".aes");try credentials.delete(key:prefix+".models")
     }
     public func loadModels() throws -> [PhoneModelConfiguration] {
         guard let data=try credentials.load(key:prefix+".models") else { return [] }
@@ -112,7 +121,7 @@ extension PhoneChatState {
             for (index,message) in thread.messages.enumerated() where message.role == "user" && !offered.contains(message.id) {
                 var messages=[OfflineMessage(role:"user",text:message.text)]
                 if thread.messages.indices.contains(index+1),thread.messages[index+1].role == "assistant",!thread.messages[index+1].text.isEmpty { messages.append(.init(role:"assistant",text:thread.messages[index+1].text)) }
-                migration.turns.append(.init(id:message.id,conversationId:thread.id,timestamp:Int64(message.date.timeIntervalSince1970*1000),messages:messages,memoryRefs:[],dependencyComplete:true))
+                migration.turns.append(.init(id:message.id,conversationId:thread.id,timestamp:Int64(message.date.timeIntervalSince1970*1000),messages:messages,memoryRefs:thread.messages.indices.contains(index+1) ? thread.messages[index+1].memoryRefs ?? [] : [],dependencyComplete:thread.messages.indices.contains(index+1) ? thread.messages[index+1].dependencyComplete ?? true : true))
                 migration.conversationIDs.insert(thread.id)
             }
         }
@@ -121,6 +130,7 @@ extension PhoneChatState {
     }
     public mutating func applyMigrationGeneration(host: String,generation: Int) {
         guard let existing=migrations?[host],existing.generation != generation else { return }
+        memory?.items.removeAll { existing.conversationIDs.contains($0.threadID ?? "") }
         threads.removeAll { existing.conversationIDs.contains($0.id) }
         if !threads.contains(where: { $0.id == selected }) { selected=nil }
         migrations?[host]=PhoneChatMigration(generation:generation,turns:[],accepted:[],conversationIDs:[])

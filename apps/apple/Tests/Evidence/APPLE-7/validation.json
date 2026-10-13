@@ -1,0 +1,34 @@
+{
+  "swift": {
+    "total": 497,
+    "failures": 0,
+    "externalFixtureSkips": 3,
+    "jobs": 2
+  },
+  "state": {
+    "phoneMemoryAssertions": 43,
+    "phoneStandaloneAssertions": 23,
+    "paletteChecks": 114,
+    "directory": "Build/APPLE-7/apple-state-dzy91zs0",
+    "syntheticQuality": {
+      "cases": 10,
+      "expectedMechanismMatches": 10,
+      "extractionRequests": 10,
+      "liveModelRequests": 0
+    },
+    "wholeMemoryCheckExtractionRequests": 20,
+    "plaintextHits": 0
+  },
+  "nodeTests": 14,
+  "callbackSites": 69,
+  "simulatorBoots": 0,
+  "buildJobs": 4,
+  "builds": {
+    "iPhone": "generic iOS SDK; unsigned; success",
+    "Watch": "generic watchOS SDK; unsigned; success",
+    "Mac": "native macOS SDK; unsigned; success",
+    "screenshotCandidate": "generic iOS Simulator build; no boot; success"
+  },
+  "realAccountCloudHostModelRequests": 0,
+  "ci": "not waited; Claude receives"
+}

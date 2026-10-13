@@ -11,6 +11,7 @@ struct PhoneWorkspace: View {
     @State private var visited: Set<PhoneTab> = [.chat]
     var body: some View {
         VStack(spacing:AppleTokens.Space.p0) {
+            PhoneMemoryHandoffBanner(model:model.phoneChat)
             ZStack {
                 ForEach(PhoneTab.allCases.filter { visited.contains($0) }) { item in
                     page(item).opacity(tab == item ? 1 : 0).allowsHitTesting(tab == item).accessibilityHidden(tab != item)
@@ -18,7 +19,7 @@ struct PhoneWorkspace: View {
             }.frame(maxWidth:.infinity,maxHeight:.infinity)
             if !keyboardVisible { PhoneBottomTabs(selection:$tab).background(Weave.canvas) }
         }
-        .onChange(of:tab) { _,value in visited.insert(value) }
+        .onChange(of:tab) { old,value in if old == .chat { model.phoneChat.finishConversation() };visited.insert(value) }
         // UIKit notifications are delivered as values; only the explicit MainActor task changes UI state.
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = true } }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { @Sendable _ in Task { @MainActor in keyboardVisible = false } }
