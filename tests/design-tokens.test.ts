@@ -5,6 +5,16 @@ import { resolve } from 'node:path';
 import test from 'node:test';
 
 const root = resolve(import.meta.dirname, '..');
+test('Android light keeps the incumbent phone palette and dark uses neutral controls',()=>{
+  const tokens=JSON.parse(readFileSync(resolve(root,'design/tokens/tokens.json'),'utf8'));
+  const web=tokens.surfaces.mobile.themes.find((t:any)=>!t.selector.includes('dark')).variables;
+  const fields:any={accent:'accent',ink:'ink',secondary:'secondary',muted:'muted',canvas:'canvas',surface:'surface',soft:'soft',accentSoft:'accent-soft',line:'line',danger:'danger'};
+  for(const [native,key] of Object.entries(fields)) assert.equal(tokens.android.colors[native],'#ff'+(web['--'+key].length===4?[...web['--'+key].slice(1)].map(c=>c+c).join(''):web['--'+key].slice(1)),native);
+  const dark=tokens.android.darkColors;
+  for(const [key,value] of Object.entries({canvas:'#ff1c1c1e',surface:'#ff2a2a2c',soft:'#42787880',surfaceFloat:'#bd2c2c2e',selectedOnSoft:'#2effffff',line:'#24ffffff',ink:'#fff2f2f4',secondary:'#ffc4c4c9',muted:'#ffa3a3a9',accent:'#ffe6e6e8',onAccent:'#ff1c1c1e',accentSoft:'#29ffffff',danger:'#ffffa3ad',dangerSoft:'#33ff6e7d'})) assert.equal(dark[key],value,key);
+  assert.equal(dark.softOpaque,'#ff343437');assert.equal(dark.floatOpaque,'#ff28282a');
+});
+
 test('search highlights meet 4.5:1 text contrast in every desktop and mobile theme',()=>{
   const tokens=JSON.parse(readFileSync(resolve(root,'design/tokens/tokens.json'),'utf8'));
   const luminance=(hex:string)=>{const rgb=hex.slice(1).match(/../g)!.map(v=>parseInt(v,16)/255).map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4);return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722};

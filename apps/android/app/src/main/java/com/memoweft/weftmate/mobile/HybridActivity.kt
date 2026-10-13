@@ -104,6 +104,16 @@ internal fun activityCommandProjection(row: JSONObject): JSONObject {
 
 /** The updateable UI is presentation; account secrets, local history, model calls and tools stay native. */
 open class HybridActivity : androidx.activity.ComponentActivity() {
+    override fun attachBaseContext(base: android.content.Context) {
+        if (BuildConfig.DEBUG && base.packageName == "com.memoweft.weftmate.mobile.and4qa") {
+            val width = base.getSharedPreferences("native-qa", MODE_PRIVATE).getInt("width", 360)
+            val configuration = android.content.res.Configuration(base.resources.configuration)
+            configuration.densityDpi = (base.resources.displayMetrics.widthPixels * 160f / width).toInt()
+            configuration.screenWidthDp = width
+            configuration.screenHeightDp = (base.resources.displayMetrics.heightPixels * 160f / configuration.densityDpi).toInt()
+            super.attachBaseContext(base.createConfigurationContext(configuration))
+        } else super.attachBaseContext(base)
+    }
     /** Native presentation shares the existing owner/epoch guarded business executor. */
     internal var nativeObserver: ((String, JSONObject) -> Unit)? = null
     private var nativeHasDraft = false
@@ -281,6 +291,8 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 forceDark = android.webkit.WebSettings.FORCE_DARK_OFF
             }
         }
+        // Per-package screenshot density must also scale WebView's CSS pixels; no emulator setting changes.
+        if (packageName.endsWith(".and4qa")) web.setInitialScale((resources.displayMetrics.density * 100).toInt())
         web.webChromeClient = object : android.webkit.WebChromeClient() {
             override fun onConsoleMessage(message: android.webkit.ConsoleMessage): Boolean = true
             override fun onPermissionRequest(request: android.webkit.PermissionRequest) {
