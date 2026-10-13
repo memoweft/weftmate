@@ -31,7 +31,11 @@ export function phasedTestProcess(command, args, {env, roots = []} = {}) {
   };
   return {child,done,evidence,ready:()=>phase('ready'),
     async run(timeoutMs){
-      const timer=setTimeout(()=>child.kill('SIGTERM'),timeoutMs);
+      const timer=setTimeout(()=>{
+        // Playwright and the temp lease install SIGTERM handlers. A probe's
+        // hard deadline must collect its controller even if graceful quit stalls.
+        child.kill('SIGKILL'); child.stdout.destroy(); child.stderr.destroy();
+      },timeoutMs);
       try{child.send({phase:'run'});return await phase('measured');}
       finally{clearTimeout(timer);}
     },

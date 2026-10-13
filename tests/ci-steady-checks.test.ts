@@ -12,6 +12,7 @@ import { invokeProjectReader } from '../src/personal-projects/index.mjs';
 import { managedMkdtempSync, disposeManagedTemp } from './helpers/managed-temp.mjs';
 import { waitForCommand } from './helpers/wait-for-command.mjs';
 import { runManagedTestProcess } from './helpers/managed-test-process.mjs';
+import { phasedTestProcess } from './helpers/phased-test-process.mjs';
 
 test('fixed authenticated ciphertext survives the old A/B replacement but byte tampering always rejects', () => {
   const {envelope,recipient,identity,payload}=JSON.parse(readFileSync('tests/evidence/ci-3/fixed-ciphertext.json','utf8'));
@@ -65,4 +66,11 @@ test('a child with no assertion output retains nonzero exit and its final stderr
   const result=await runManagedTestProcess(process.execPath,['-e','process.stderr.write("synthetic last cause");process.exit(7)']);
   assert.equal(result.status,7);assert.equal(result.evidence.decimal,7);assert.equal(result.evidence.signal,null);
   assert.equal(result.evidence.stderrTail,'synthetic last cause');assert.ok(result.evidence.systemCommit);
+});
+test('a prepared probe ignoring SIGTERM still returns a hard deadline failure and closes its pipes', {timeout:4000}, async t=>{
+  const probe=phasedTestProcess(process.execPath,['-e',`process.on('SIGTERM',()=>{});process.send({phase:'ready'});process.on('message',()=>{});setInterval(()=>{},1000);`]);
+  t.after(async()=>{if(probe.child.exitCode===null&&probe.child.signalCode===null)probe.child.kill('SIGKILL');await probe.done;});
+  await probe.ready();
+  await assert.rejects(probe.run(100),/SIGKILL/);
+  const exit=await probe.done;assert.equal(exit.signal,'SIGKILL');
 });
