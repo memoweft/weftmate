@@ -9,16 +9,16 @@
   ],
   "screenshots": [],
   "occupancy": {
-    "startedAt": "2026-10-13T21:14:48.099Z",
+    "startedAt": "2026-10-13T21:31:09.604Z",
     "heavySlot": "heavy-1.lock",
-    "releasedAt": "2026-10-13T21:15:00.065Z"
+    "releasedAt": "2026-10-13T21:31:23.028Z"
   },
   "installedOtherPackages": 2,
   "systemVersion": "15",
   "systemTheme": "Night mode: yes",
   "apkHashes": {
-    "app": "4bcf04f16bc17631915d8e4fc1c8d4240cdf0fcbf9f4f9b8ff8c5034713ed87a",
-    "test": "427d7dba71b7da66fa0356765fd510cdbb1923e5c20528426e845344132f3375"
+    "app": "e660ef08f9f00af17904b9786a95b7cc8f8517945584a4c2ac9b10fc2a34e9c6",
+    "test": "223f92d4865c23578761b627b77999ea8495c6141af3a4bf7f175c8abb26ed11"
   },
   "requests": [
     {
@@ -88,7 +88,7 @@
     },
     {
       "method": "PATCH",
-      "path": "/personal/v1/model-services/model-service-ae51a3f9-653c-4dff-8579-52da1fc8ef60",
+      "path": "/personal/v1/model-services/model-service-6a39db4c-b74a-4cad-b742-dff1b88c1692",
       "modelId": "manual-first",
       "expectedRevision": 1
     },
@@ -98,8 +98,22 @@
     },
     {
       "method": "POST",
-      "path": "/personal/v1/model-services/model-service-ae51a3f9-653c-4dff-8579-52da1fc8ef60/select",
+      "path": "/personal/v1/model-services/model-service-6a39db4c-b74a-4cad-b742-dff1b88c1692/select",
       "modelId": "manual-first",
+      "sessionId": "session-11111111-1111-4111-8111-111111111111"
+    },
+    {
+      "method": "POST",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "POST",
+      "path": "/personal/v1/model-services/model-service-aff39b86-f574-4ac0-a2f0-edc217a27811/select",
+      "modelId": "mimo-v2.6-flash",
       "sessionId": "session-11111111-1111-4111-8111-111111111111"
     }
   ],

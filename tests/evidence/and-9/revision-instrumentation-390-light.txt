@@ -15,7 +15,7 @@ INSTRUMENTATION_STATUS: test=editingAfterModelVisibilityAndManualAddition
 INSTRUMENTATION_STATUS_CODE: 0
 INSTRUMENTATION_RESULT: stream=
 
-Time: 5.165
+Time: 6.42
 
 OK (1 test)
 
