@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
         }
         if(all)SettingsInput("搜索模型",query){query=it}
         Column(Modifier.weight(1f,fill=false).verticalScroll(rememberScrollState())) {
-        if(s.services.isEmpty())SettingsNote(if(s.error.isNotEmpty())s.error else if(s.loading)"正在读取模型服务…" else "还没有模型服务。")
+        if(s.services.isEmpty())SettingsNote(if(s.error.isNotEmpty())s.error else if(s.menuLoading)"正在读取模型服务…" else "还没有模型服务。")
         val multiple=s.services.size>1
         val vision=serviceRequiresVision(chat.attachments,chat.rows)
         s.services.forEach{service->
