@@ -48,12 +48,12 @@ import java.io.File
         NativeDialogBars()
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).systemBarsPadding().semantics{contentDescription="文件查看"}) {
             Row(Modifier.fillMaxWidth().padding(horizontal=DesignTokens.space8.dp,vertical=DesignTokens.space8.dp),verticalAlignment=Alignment.CenterVertically) {
-                NativeIconButton(R.drawable.wm_close,"关闭预览",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape),action=onClose)
+                NativeFileIconButton(R.drawable.wm_close,"关闭预览",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape),action=onClose)
                 val name=file?.name ?: row.optString("fileName",row.optString("name","文件"))
                 BoxWithConstraints(Modifier.weight(1f).padding(horizontal=DesignTokens.space12.dp)) {
                     Text(middleFileName(name,maxOf(8,(maxWidth.value/DesignTokens.font16).toInt())),Modifier.fillMaxWidth().semantics{contentDescription="文件名：$name"},fontSize=DesignTokens.font16.sp,maxLines=1,overflow=TextOverflow.Clip)
                 }
-                Box {NativeIconButton(R.drawable.wm_more,"更多文件操作",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)){menu=true}
+                Box {NativeFileIconButton(R.drawable.wm_more,"更多文件操作",Modifier.background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)){menu=true}
                     NativeFileMenu(menu,{menu=false}) {
                         NativeFileMenuAction("保存到手机",R.drawable.wm_down,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.save(it)}})
                         NativeFileMenuAction("分享",R.drawable.wm_external,enabled=file?.file!=null,onClick={menu=false;file?.let{activity.fileActions.share(it)}})
@@ -132,9 +132,9 @@ import java.io.File
     Column(modifier.fillMaxWidth()) {
         when {error.isNotBlank()->Box(Modifier.weight(1f)){NativeFileState(error,R.drawable.wm_book){retry++}};bitmap==null->Box(Modifier.weight(1f)){NativeFileLoading()};else->NativeZoomImage(bitmap!!,Modifier.weight(1f),"第 ${page+1} 页")}
         Row(Modifier.fillMaxWidth().padding(DesignTokens.space8.dp),horizontalArrangement=Arrangement.Center,verticalAlignment=Alignment.CenterVertically) {
-            NativeIconButton(R.drawable.wm_back,"上一页",enabled=page>0){page--}
+            NativeFileIconButton(R.drawable.wm_back,"上一页",enabled=page>0){page--}
             Text(if(count==0)"正在读取…" else "${page+1} / $count",Modifier.padding(horizontal=DesignTokens.space16.dp),fontSize=DesignTokens.font13.sp)
-            NativeIconButton(R.drawable.wm_right,"下一页",enabled=page+1<count){page++}
+            NativeFileIconButton(R.drawable.wm_right,"下一页",enabled=page+1<count){page++}
         }
     }
 }

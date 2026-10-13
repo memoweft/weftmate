@@ -3,6 +3,9 @@ package com.memoweft.weftmate.mobile
 import android.os.Build
 import android.view.WindowManager
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -10,7 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,7 +32,14 @@ internal object NativeFileControlTokens {
     val colors=MaterialTheme.colorScheme
     val dark=colors.surface.luminance()<0.5f
     val float=Color(if(dark)NativeFileControlTokens.darkFloat else NativeFileControlTokens.lightFloat)
-    val background=if(Build.VERSION.SDK_INT>=31)float else float.compositeOver(Color(if(dark)DesignTokens.nativeDarkCanvas else DesignTokens.nativeCanvas))
+    val windowManager=LocalContext.current.getSystemService(WindowManager::class.java)
+    var blurEnabled by remember(windowManager){mutableStateOf(Build.VERSION.SDK_INT>=31 && windowManager.isCrossWindowBlurEnabled)}
+    DisposableEffect(windowManager) {
+        val listener=java.util.function.Consumer<Boolean>{blurEnabled=it}
+        if(Build.VERSION.SDK_INT>=31)windowManager.addCrossWindowBlurEnabledListener(listener)
+        onDispose{if(Build.VERSION.SDK_INT>=31)windowManager.removeCrossWindowBlurEnabledListener(listener)}
+    }
+    val background=if(blurEnabled)float else float.compositeOver(Color(if(dark)DesignTokens.nativeDarkCanvas else DesignTokens.nativeCanvas))
     DropdownMenu(expanded,onDismiss,shape=RoundedCornerShape(DesignTokens.radius12.dp),containerColor=background) {
         val view=LocalView.current
         DisposableEffect(view) {
@@ -56,5 +68,16 @@ internal object NativeFileControlTokens {
 @Composable internal fun NativeFileMenuAction(label:String,icon:Int,enabled:Boolean=true,onClick:()->Unit) {
     DropdownMenuItem(text={Text(label,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,fontWeight=FontWeight.Medium)},
         leadingIcon={Icon(painterResource(icon),null,Modifier.size((DesignTokens.space24-DesignTokens.space2).dp))},
-        modifier=Modifier.heightIn(min=DesignTokens.space44.dp),enabled=enabled,onClick=onClick)
+        modifier=Modifier.height(DesignTokens.space44.dp),enabled=enabled,onClick=onClick,
+        colors=MenuDefaults.itemColors(disabledTextColor=MaterialTheme.colorScheme.onSurface.copy(alpha=.45f),disabledLeadingIconColor=MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha=.45f)))
+}
+
+@Composable internal fun NativeFileIconButton(icon:Int,label:String,modifier:Modifier=Modifier,enabled:Boolean=true,action:()->Unit) {
+    val source=remember{MutableInteractionSource()}
+    val pressed by source.collectIsPressedAsState()
+    IconButton(onClick=action,enabled=enabled,interactionSource=source,
+        modifier=modifier.size(DesignTokens.space44.dp).graphicsLayer{scaleX=if(pressed).97f else 1f;scaleY=scaleX},
+        colors=IconButtonDefaults.iconButtonColors(contentColor=MaterialTheme.colorScheme.onSurfaceVariant,disabledContentColor=MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha=.45f))) {
+        Icon(painterResource(icon),label,Modifier.size((DesignTokens.space24-DesignTokens.space2).dp))
+    }
 }

@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
                 Text(row.optString("fileName","成果文件"),maxLines=2,overflow=TextOverflow.Ellipsis,fontSize=DesignTokens.font16.sp)
                 Text(nativeFileSize(row.optLong("size",-1)),fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Box {NativeIconButton(R.drawable.wm_more,"查看文件操作：${row.optString("fileName")}"){menu=true}
+            Box {NativeFileIconButton(R.drawable.wm_more,"查看文件操作：${row.optString("fileName")}"){menu=true}
                 NativeFileMenu(menu,{menu=false}) {
                     NativeFileMenuAction("保存到手机",R.drawable.wm_down,onClick={menu=false;scope.launch{try{activity?.fileActions?.let{it.save(it.load(row))}}catch(e:Exception){activity?.fileActions?.notice(nativeFileFailure(e))}}})
                     NativeFileMenuAction("分享",R.drawable.wm_external,onClick={menu=false;scope.launch{try{activity?.fileActions?.let{it.share(it.load(row))}}catch(e:Exception){activity?.fileActions?.notice(nativeFileFailure(e))}}})
