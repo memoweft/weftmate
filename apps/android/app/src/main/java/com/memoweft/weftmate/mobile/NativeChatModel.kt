@@ -54,7 +54,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         activity.nativeRequest(method, params) { r -> if (c.isActive) r.fold({ c.resume(it) }, { c.resumeWithException(it) }) }
     }
     suspend fun business(path: String, method: String = "GET", body: JSONObject? = null) = call("host.business", JSONObject().put("path", "/personal/v1$path").put("method", method).apply { body?.let { put("body", it) } })
-    fun launch(action: suspend () -> Unit) { scope.launch { try { action() } catch (e: CancellationException) { throw e } catch (_: Exception) { error = "暂时没能完成，请重试。" } } }
+    fun launch(action: suspend () -> Unit): Job = scope.launch { try { action() } catch (e: CancellationException) { throw e } catch (_: Exception) { error = "暂时没能完成，请重试。" } }
     fun start() { launch { bootstrap() } }
     suspend fun bootstrap() {
         val b = call("app.bootstrap")
@@ -106,6 +106,14 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         poll = scope.launch { while (isActive && g == generation) { delay(if (running) 250 else 2500); if (tab == "chat" && activity.nativeForeground) refresh() } }
     }
     fun saveDraft() { if (owner.isNotBlank() && chatId.isNotBlank()) prefs.edit().putString("draft:$owner:$chatId", draft).apply() }
+    /** Activity sources use the existing timeline anchor endpoint; keep its history cursor. */
+    suspend fun locateActivityEvent(eventId: String) {
+        val g = generation
+        val page = business("/chats/$chatId/events?around=${java.net.URLEncoder.encode(eventId, "UTF-8")}&limit=100")
+        if (g != generation) return
+        timeline.merge(page, true); rows = timeline.rows()
+        olderCursor = page.stringOrEmpty("olderCursor"); hasOlder = page.optBoolean("hasOlder")
+    }
     fun edit(text: String) { draft = text; saveDraft(); launch { call("native.draft",JSONObject().put("hasDraft",text.isNotEmpty() || attachments.isNotEmpty())) } }
     suspend fun refreshAttachments() { attachments = call("attachments.list", JSONObject().put("conversationId", chatId)).optJSONArray("attachments")?.objects().orEmpty() }
     suspend fun refresh(older: Boolean = false) {
