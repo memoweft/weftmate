@@ -42,7 +42,9 @@ class NativeLibraryInstrumentedTest {
             val check=if(label=="markdown")"Boolean(document.querySelector('#resource-content table') && document.getElementById('resource-content').textContent.includes('复制为 Markdown') && document.getElementById('resource-content').textContent.includes('复制为 CSV') && document.getElementById('resource-content').textContent.includes('复制代码') && document.getElementById('resource-content').textContent.includes('自动换行'))" else "Boolean(document.getElementById('resource-content').textContent.includes('复制代码') && document.getElementById('resource-content').textContent.includes('自动换行'))"
             waitFor("table/code actions preserved") { legacy!!.embeddedWeb.evaluateJavascript(check){controls=it=="true"};controls }
         }
-        Thread.sleep(350);val b=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-$name.png").outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}
+        // Both sides use the same logical viewport in MuMu's unchanged physical display.
+        main{legacy!!.embeddedWeb.settings.useWideViewPort=true;legacy!!.embeddedWeb.evaluateJavascript("(()=>{const w=${args.getString("and7Width","360")},s=innerWidth/w*visualViewport.scale;document.querySelector('meta[name=viewport]').content='width='+w+',initial-scale='+s;})()",null)}
+        Thread.sleep(2000);val b=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-$name.png").outputStream().use{b.compress(Bitmap.CompressFormat.PNG,100,it)}
         main{legacy!!.finish()};waitFor("native return"){activity.nativeForeground};compose.waitForIdle()
     }
     private fun webComparisons() {

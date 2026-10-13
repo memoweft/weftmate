@@ -11,7 +11,10 @@ import java.time.ZoneId
 
 class NativeLibraryUnitTest {
     @Test fun markdownAndCodeKeepExistingWebActionsWhileOtherFilesStayNative() {
-        NativeFileKind.entries.forEach { kind -> assertEquals(kind in setOf(NativeFileKind.MARKDOWN,NativeFileKind.CODE),useOriginalFileViewer(kind)) }
+        NativeFileKind.entries.forEach { kind ->
+            assertEquals(kind in setOf(NativeFileKind.MARKDOWN,NativeFileKind.CODE),useOriginalFileViewer(kind))
+            assertFalse("Version selection precedes the actual file destination",useOriginalFileViewer(kind,true))
+        }
     }
     @Test fun phoneOnlyIdentityIsNormalEmptyState() {
         assertTrue(libraryHasNoComputer(JSONObject().put("authSource","phone")))

@@ -41,11 +41,11 @@ import java.io.File
     var menu by remember{mutableStateOf(false)}
     var history by remember{mutableStateOf(initial.optBoolean("showHistory"))}
     val scope=rememberCoroutineScope();val pad=DesignTokens.space16.dp
-    LaunchedEffect(row.toString(),retry) {
+    LaunchedEffect(row.toString(),retry,history) {
         loading=true;error=""
         try{
             val loaded=activity.fileActions.load(row)
-            if(useOriginalFileViewer(loaded.kind)) { activity.originalFile(row);onClose() }
+            if(useOriginalFileViewer(loaded.kind,history)) { activity.originalFile(row);onClose() }
             else file=loaded
         }catch(e:CancellationException){throw e}catch(e:Exception){error=nativeFileFailure(e)}finally{loading=false}
     }
