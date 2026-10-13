@@ -79,6 +79,12 @@ try {
   const creation=await h.api(`/projects/${registered.projectId}/sessions`,{requestId:randomUUID(),modelProfileId:h.modelId});const session=await h.receipt(creation.body.command);
   await h.page.reload();await h.page.locator('#assistant-view').waitFor({state:'visible'});
   await h.page.locator(`.session-row[data-session-id="${session.sessionId}"] > button`).first().click();
+  // Clicking starts an asynchronous history selection. The synthetic provider
+  // must not emit its approval into a page still loading another conversation.
+  await h.page.waitForFunction(id=>{
+    const row=document.querySelector(`.session-row[data-session-id="${id}"] > button`);
+    return row?.classList.contains('is-current') && !document.querySelector('#message-text')?.disabled;
+  },session.sessionId);
   assert.equal((await h.api(`/sessions/${session.sessionId}/approval-mode`,{mode:'ask'},'PATCH')).status,200);
   let calls=0;
   h.respond=async input=>{
@@ -134,7 +140,13 @@ try {
   for(const theme of ['light','dark']){await h.page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await h.page.screenshot({path:join(out,`desktop-480-${theme}.png`)});}
   report.smokePassed=true;report.passed=report.buildPassed!==false;
   if(!report.passed)process.exitCode=1;
-}catch(error){report.error=error.stack;report.electronProcessCleanup=error.processCleanup;report.passed=false;process.exitCode=1;}
+}catch(error){report.error=error.stack;report.electronProcessCleanup=error.processCleanup;report.passed=false;process.exitCode=1;
+  report.failureView=await h?.page?.evaluate(()=>({title:document.querySelector('#assistant-title')?.textContent,
+    selectedSessions:[...document.querySelectorAll('.session-row > button.is-current')].map(row=>row.parentElement.dataset.sessionId),
+    messageDisabled:document.querySelector('#message-text')?.disabled,transcript:document.querySelector('#transcript')?.innerText,
+    approvalCards:[...document.querySelectorAll('[data-conversation-approval]')].map(row=>({id:row.dataset.conversationApproval,text:row.innerText}))})).catch(()=>null);
+  console.error('Packaged smoke failure:',redactBuildMachineIdentity(JSON.stringify({error:report.error,failureView:report.failureView})).replaceAll(temp,'%TEMP%'));
+}
 finally{
   if(h)report.modelCalls=h.requests.map(r=>({stream:r.stream,toolResponses:r.messages?.filter(m=>m.role==='tool').map(m=>({name:m.name,content:String(m.content).slice(0,1000)}))}));
   try{

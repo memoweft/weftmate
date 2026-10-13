@@ -4,12 +4,13 @@ import SwiftUI
 struct PhoneAttachmentBlock: View {
     var name: String
     var image: URL?
+    var memoryImage: Data? = nil
     var isImage: Bool
     var status: String? = nil
     var remove: (() -> Void)?
     var body: some View {
         VStack(alignment:.leading,spacing:AppleTokens.Space.p8) {
-            if isImage, let image, let content=UIImage(contentsOfFile:image.path) {
+            if isImage, let content=memoryImage.flatMap(UIImage.init(data:)) ?? image.flatMap({UIImage(contentsOfFile:$0.path)}) {
                 Image(uiImage:content).resizable().scaledToFill().frame(width:AppleTokens.Space.p32*5,height:AppleTokens.Space.p64+AppleTokens.Space.p32).clipped()
             } else {
                 WeftIcon(isImage ? "image" : "file",size:AppleTokens.Space.p32).frame(maxWidth:.infinity,minHeight:AppleTokens.Space.p64)

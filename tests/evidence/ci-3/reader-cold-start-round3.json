@@ -1,0 +1,162 @@
+{
+  "purpose": "Third observation before final reader cold-start fix; package PROJECT_READER_TIMEOUT",
+  "sha": "49ecbf56c909060a9624fdff66b4343441842fac",
+  "allGreen": false,
+  "runs": [
+    {
+      "workflow": "ci.yml",
+      "id": 38354388375,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38354388375",
+      "sha": "49ecbf56c909060a9624fdff66b4343441842fac",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Observed bridge (real MemoWeft Core)",
+          "conclusion": "success",
+          "seconds": 72
+        },
+        {
+          "name": "test (windows-latest, shard 1/3)",
+          "conclusion": "success",
+          "seconds": 1236
+        },
+        {
+          "name": "test (ubuntu-latest, shard 2/3)",
+          "conclusion": "success",
+          "seconds": 584
+        },
+        {
+          "name": "test (windows-latest, shard 2/3)",
+          "conclusion": "success",
+          "seconds": 1231
+        },
+        {
+          "name": "test (windows-latest, shard 3/3)",
+          "conclusion": "success",
+          "seconds": 1265
+        },
+        {
+          "name": "test (ubuntu-latest, shard 1/3)",
+          "conclusion": "success",
+          "seconds": 263
+        },
+        {
+          "name": "test (ubuntu-latest, shard 3/3)",
+          "conclusion": "success",
+          "seconds": 292
+        },
+        {
+          "name": "test (macos-latest, shard 1/1)",
+          "conclusion": "success",
+          "seconds": 849
+        },
+        {
+          "name": "Required unit tests (summary)",
+          "conclusion": "success",
+          "seconds": 41
+        }
+      ]
+    },
+    {
+      "workflow": "review-gallery.yml",
+      "id": 38354451397,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38354451397",
+      "sha": "49ecbf56c909060a9624fdff66b4343441842fac",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Synthetic multi-device review gallery",
+          "conclusion": "success",
+          "seconds": 284
+        }
+      ]
+    },
+    {
+      "workflow": "windows-package.yml",
+      "id": 38354459535,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38354459535",
+      "sha": "49ecbf56c909060a9624fdff66b4343441842fac",
+      "status": "completed",
+      "conclusion": "failure",
+      "jobs": [
+        {
+          "name": "Windows package and startup smoke",
+          "conclusion": "failure",
+          "seconds": 498
+        }
+      ]
+    },
+    {
+      "workflow": "s1c-web.yml",
+      "id": 38354467652,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38354467652",
+      "sha": "49ecbf56c909060a9624fdff66b4343441842fac",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Android debug and JVM tests",
+          "conclusion": "success",
+          "seconds": 116
+        },
+        {
+          "name": "Web cloud login interactions",
+          "conclusion": "success",
+          "seconds": 126
+        }
+      ]
+    },
+    {
+      "workflow": "relay.yml",
+      "id": 38354476871,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38354476871",
+      "sha": "49ecbf56c909060a9624fdff66b4343441842fac",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Relay full chain (443)",
+          "conclusion": "success",
+          "seconds": 77
+        },
+        {
+          "name": "Relay phone first input and file task",
+          "conclusion": "success",
+          "seconds": 211
+        }
+      ]
+    },
+    {
+      "workflow": "host-certs.yml",
+      "id": 38354485000,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38354485000",
+      "sha": "49ecbf56c909060a9624fdff66b4343441842fac",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Host certificates (Pebble DNS-01)",
+          "conclusion": "success",
+          "seconds": 57
+        }
+      ]
+    },
+    {
+      "workflow": "vendor-tests.yml",
+      "id": 38354492983,
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38354492983",
+      "sha": "49ecbf56c909060a9624fdff66b4343441842fac",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Pinned DSH vendor unit tests",
+          "conclusion": "success",
+          "seconds": 392
+        }
+      ]
+    }
+  ]
+}

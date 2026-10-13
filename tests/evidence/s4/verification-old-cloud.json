@@ -1,0 +1,45 @@
+{
+  "syntheticCloud": true,
+  "realElectron": true,
+  "realDSH": true,
+  "durableSystemVault": true,
+  "model": "mimo-v2.6-flash",
+  "checks": [
+    "actual schema 9 cloud source: authenticated desktop shows unavailable, sends zero backup endpoint requests and emits no UI errors"
+  ],
+  "screenshots": [
+    "desktop-1200-light-old-cloud-unavailable.png",
+    "desktop-480-light-old-cloud-unavailable.png",
+    "desktop-1200-dark-old-cloud-unavailable.png",
+    "desktop-480-dark-old-cloud-unavailable.png"
+  ],
+  "pageErrors": [],
+  "modelRequests": 0,
+  "heavySlot": "heavy-1",
+  "oldCloud": {
+    "baseline": "c1e96a36",
+    "schemaVersion": 9,
+    "backupRequests": 0,
+    "showsUnavailable": true
+  },
+  "status": "passed",
+  "lastElectronExit": {
+    "decimal": 0,
+    "unsignedDecimal": 0,
+    "hexadecimal": "0x00000000",
+    "signal": null,
+    "meaning": "正常退出"
+  },
+  "proxyRequests": {
+    "model": 0,
+    "catalog": 0,
+    "upstreamCatalog": 0,
+    "statuses": {}
+  },
+  "cleanup": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  },
+  "heavyMinutes": 0.4
+}

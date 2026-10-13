@@ -40,7 +40,10 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
     }
 }
 @main struct PhoneMemoryModelChecks {
-    @MainActor static func main() async throws {
+    @MainActor static func main() async {
+        do { try await run() } catch { print("FAIL: \(error)");exit(1) }
+    }
+    @MainActor static func run() async throws {
         let root=URL(fileURLWithPath:CommandLine.arguments[1],isDirectory:true)
         let process=Process(),output=Pipe()
         let fixture=URL(fileURLWithPath:#filePath).deletingLastPathComponent().appendingPathComponent("phone_memory_state_server.mjs")
