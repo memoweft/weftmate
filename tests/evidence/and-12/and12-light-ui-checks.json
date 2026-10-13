@@ -1,7 +1,7 @@
 {
   "checks": [
     "old-rollback-preference-migrated",
-    "keyboard-open-continuous-20-positions",
+    "keyboard-open-continuous-19-positions",
     "typed",
     "approval-menu-每次询问",
     "approval-item-每次询问",
@@ -37,6 +37,7 @@
     "send-keeps-input",
     "stop-keeps-input",
     "primary-voice-keeps-input",
+    "merged-native-goals-entry-retained",
     "retired-setting-absent"
   ],
   "uiAssertionsPassed": true,

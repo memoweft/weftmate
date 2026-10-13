@@ -15,7 +15,7 @@ INSTRUMENTATION_STATUS: test=composerKeyboardAndNativeDefault
 INSTRUMENTATION_STATUS_CODE: 0
 INSTRUMENTATION_RESULT: stream=
 
-Time: 22.92
+Time: 23.002
 
 OK (1 test)
 
