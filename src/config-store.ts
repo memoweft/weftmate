@@ -161,6 +161,13 @@ export function encryptionAvailable(): boolean { return safeStorage.isEncryption
  * never a decoded secret, and are not exported through preload. */
 export function preflightVault(): void { if (existsSync(configPath())) void readSecrets(); }
 export function snapshotVaultBytes(): Buffer | null { return existsSync(configPath()) ? readFileSync(configPath()) : null; }
+/** Main-process-only: portable cloud secrets are validated and encrypted for THIS installation before restore. */
+export function prepareCloudVaultBytes(credentials: Record<string, string>): Buffer {
+  const current = readSecrets();
+  const document = validateCredentialVaultDocument({ schemaVersion: 2, credentials: { ...current.credentials, ...credentials } }, validLegacyPayload);
+  if (!safeStorage.isEncryptionAvailable()) throw Object.assign(new Error('本机无法安全保存恢复的密钥。'), { code: 'CREDENTIAL_STORAGE_NOT_READY' });
+  return encryptVaultText(JSON.stringify(document));
+}
 export function restoreVaultBytes(snapshot: Buffer | null): void {
   const target = configPath();
   if (snapshot === null) { if (existsSync(target)) rmSync(target, { force: true }); return; }

@@ -15,42 +15,48 @@ export function parseFailures(log, sources = []) {
   });
   const failures = [];
   for (let i = 0; i < lines.length; i++) {
-    const match = /^\s*not ok \d+ - (.+)$/.exec(lines[i].text);
+    const match = /^\s*not ok \d+ - (.+)$/.exec(lines[i].text)
+      || /^\s*✖ (.+?) \([\d.]+m?s\)$/.exec(lines[i].text);
     if (!match) continue;
     const block = [lines[i].text];
     for (let j = i + 1; j < Math.min(lines.length, i + 180); j++) {
       block.push(lines[j].text);
-      if (/^\s*\.\.\.$/.test(lines[j].text)) break;
+      if (/^\s*\.\.\.$/.test(lines[j].text) || /^[✔✖ℹ]/.test(lines[j + 1]?.text ?? '')) break;
     }
-    const diagnostic = block.join('\n');
+    let diagnostic = block.join('\n');
+    if (/exitCode:/.test(diagnostic) && /error: 'test failed'/.test(diagnostic))
+      diagnostic += '\nPreceding file output:\n' + lines.slice(Math.max(0, i - 120), i).filter(line => line.job === lines[i].job).map(line=>line.text).join('\n');
     if (/type: 'suite'|subtestsFailed/.test(diagnostic)) continue;
     const name = match[1].replace(/ # (SKIP|TODO).*$/, '');
-    const file = /(?:tests|apps\/[^\s:]+\/tests)[\\/][^\s:'"]+\.(?:test|integration\.test)\.(?:ts|mjs)/.exec(diagnostic)?.[0]?.replace(/[\\/]+/g, '/')
+    const file = /(?:tests|apps\/[^\s:]+\/tests|services\/cloud\/test)[\\/][^\s:'"]+\.(?:test|integration\.test)\.(?:ts|mjs)/.exec(diagnostic)?.[0]?.replace(/[\\/]+/g, '/')
       || sources.find(source => source.text.includes(name))?.file || /tests[\\/][^\s]+\.test\.(?:ts|mjs)/.exec(name)?.[0]?.replaceAll('\\', '/') || 'unresolved';
     const type = /testTimeoutFailure|ETIMEDOUT|timed out|TimeoutError|Timeout \d+ms exceeded|timeout of/i.test(diagnostic) ? 'timeout'
       : /0xC000|actual:\s*'0x(?!00000000)[0-9a-f]{8}'|exitCode:|signal:|SIGABRT|process exited|Aborted|Error: spawn E[A-Z]+/i.test(diagnostic) ? 'process-exit' : 'assertion';
     failures.push({ job: lines[i].job, file, name, type, diagnostic: redactEvidenceText(diagnostic) });
   }
-  return failures;
+  // The spec reporter repeats failures after its totals, with the detailed
+  // diagnostic only in that final block. Keep that block once per job/name.
+  return [...new Map(failures.map(row=>[JSON.stringify([row.job,row.name]),row])).values()];
 }
 
-export async function survey({ workflow = 'ci.yml', limit = 80, destination = 'tests/evidence/ci-1', cache = '.local/ci-1/survey' } = {}) {
+export async function survey({ workflow = 'ci.yml', limit = 80, since, allJobs = false, destination = 'tests/evidence/ci-1', cache = '.local/ci-1/survey' } = {}) {
   mkdirSync(cache, { recursive: true }); mkdirSync(destination, { recursive: true });
-  const cached = async (name, args) => {
+  const cached = async (name, args, refresh = false) => {
     const file = resolve(cache, name);
-    if (!existsSync(file)) writeFileSync(file, await gh(args));
+    if (refresh || !existsSync(file)) writeFileSync(file, await gh(args));
     return readFileSync(file, 'utf8');
   };
-  const runs = JSON.parse(await cached('runs.json', ['run', 'list', '--workflow', workflow, '--limit', String(limit), '--json', 'databaseId,conclusion,status,createdAt,headSha,headBranch,url,event']));
+  const runs = JSON.parse(await cached('runs.json', ['run', 'list', '--workflow', workflow, '--limit', String(limit), ...(since ? ['--created', `>${since}`] : []), '--json', 'databaseId,conclusion,status,createdAt,headSha,headBranch,url,event']));
+  if (since && runs.length === limit) throw Error('Survey limit reached; increase it to retain every run since merge');
   const cohortSelectedAt = statSync(resolve(cache,'runs.json')).mtime.toISOString();
   const repo = (await gh(['repo','view','--json','nameWithOwner','--jq','.nameWithOwner'])).trim();
   const history = new Map();
   for (let page = 1; runs.some(run=>!history.has(run.databaseId)); page++) {
-    const data=JSON.parse(await cached(`attempt-index-${page}.json`, ['api',`repos/${repo}/actions/workflows/${workflow}/runs?per_page=100&page=${page}`]));
+    const data=JSON.parse(await cached(`attempt-index-${page}.json`, ['api',`repos/${repo}/actions/workflows/${workflow}/runs?per_page=100&page=${page}`], true));
     for(const run of data.workflow_runs)history.set(run.id,run);
     if(!data.workflow_runs.length)throw Error('Historical cohort run missing from workflow API');
   }
-  const sources = readdirSync('tests').filter(file => /\.test\.(ts|mjs)$/.test(file)).map(file => ({ file: `tests/${file}`, text: readFileSync(`tests/${file}`, 'utf8') }));
+  const sources = ['tests', 'apps/mobile-ui/tests', 'services/cloud/test'].flatMap(root => readdirSync(root, {recursive:true}).filter(file => /\.(?:ts|mjs)$/.test(file)).map(file => ({ file: `${root}/${file}`.replaceAll('\\', '/'), text: readFileSync(`${root}/${file}`, 'utf8') })));
   const observations = [], errors = [];
   let cursor = 0;
   await Promise.all(Array.from({ length: 4 }, async () => {
@@ -60,17 +66,18 @@ export async function survey({ workflow = 'ci.yml', limit = 80, destination = 't
       try {
         for(let attempt=1;attempt<=latest.run_attempt;attempt++) {
         const refreshed = latest.run_attempt>1 || original.status!==latest.status || original.conclusion!==latest.conclusion;
-        const { jobs } = JSON.parse(await cached(refreshed?`${run.databaseId}-attempt-${attempt}.json`:`${run.databaseId}.json`, ['run', 'view', String(run.databaseId), '--attempt',String(attempt),'--json', 'jobs']));
-        let failures = [];
+        const { jobs } = JSON.parse(await cached(refreshed?`${run.databaseId}-attempt-${attempt}.json`:`${run.databaseId}.json`, ['run', 'view', String(run.databaseId), '--attempt',String(attempt),'--json', 'jobs'], original.status !== 'completed'));
+        let failures = [], failedLog = '';
         if (run.status === 'completed' && jobs.some(job => job.conclusion === 'failure')) {
-          failures = parseFailures(await cached(refreshed?`${run.databaseId}-attempt-${attempt}.log`:`${run.databaseId}.log`, ['run', 'view', String(run.databaseId),'--attempt',String(attempt), '--log-failed']), sources);
+          failedLog = await cached(refreshed?`${run.databaseId}-attempt-${attempt}.log`:`${run.databaseId}.log`, ['run', 'view', String(run.databaseId),'--attempt',String(attempt), '--log-failed'], original.status !== 'completed');
+          failures = parseFailures(failedLog, sources);
         }
         for (const job of jobs) {
           const step = job.steps.find(step => step.name === 'Required unit tests');
           const seconds = (Date.parse(job.completedAt) - Date.parse(job.startedAt)) / 1000;
           const requiredSeconds = step ? (Date.parse(step.completedAt) - Date.parse(step.startedAt)) / 1000 : null;
           const relevant = /windows-latest|ubuntu-latest|Windows package and startup smoke/.test(job.name);
-          if (!relevant) continue;
+          if (!allJobs && !relevant) continue;
           const cases = failures.filter(item => item.job === job.name);
           if (job.conclusion === 'failure' && !cases.length) {
             if (workflow === 'windows-package.yml') {
@@ -91,7 +98,12 @@ export async function survey({ workflow = 'ci.yml', limit = 80, destination = 't
               const diagnostic = redactEvidenceText(detail.error ?? 'No smoke error recorded');
               cases.push({job:job.name, file:/(?:scripts|tests)[\\/][^\s:]+\.mjs/.exec(diagnostic)?.[0]?.replace(/[\\/]+/g,'/') ?? 'workflow',
                 name:diagnostic.split('\n')[0],type:/Timeout|TIMEDOUT/.test(diagnostic)?'timeout':'step-failure',diagnostic});
-            } else cases.push({ job: job.name, file: 'workflow', name: job.steps.find(step => step.conclusion === 'failure')?.name || 'unknown step', type: 'step-failure', diagnostic: 'No TAP leaf failure in failed log.' });
+            } else {
+              const diagnostic = redactEvidenceText(failedLog.split(/\r?\n/).filter(line => line.startsWith(job.name + '\t')).slice(-100).join('\n')) || 'No TAP leaf failure in failed log.';
+              const sceneFailures = [...diagnostic.matchAll(/Mobile scenes failed: (\[[^\n]+\])/g)].flatMap(match=>{try{return JSON.parse(match[1]);}catch{return [];}});
+              if (sceneFailures.length) for (const scene of sceneFailures) cases.push({job:job.name,file:'tests/integration/review-capture-mobile.mjs',name:`${scene.scene} (${scene.theme}): ${scene.reason}`,type:'timeout',diagnostic});
+              else cases.push({ job: job.name, file: 'workflow', name: /command not accepted/.test(diagnostic) ? 'synthetic command not accepted' : job.steps.find(step => step.conclusion === 'failure')?.name || 'unknown step', type: 'step-failure', diagnostic });
+            }
           }
           if (job.conclusion === 'cancelled' && seconds > 3600) cases.push({ job: job.name, file: 'workflow', name: 'cancelled after >60 minutes (suspected hang; not proven)', type: 'hang-suspected', diagnostic: `Job ran ${seconds}s before cancellation.` });
           observations.push({ runId: run.databaseId, attempt, url: run.url, sha: run.headSha, createdAt: run.createdAt, job: job.name, conclusion: job.conclusion, seconds, requiredSeconds, failures: cases });
@@ -118,7 +130,7 @@ export async function survey({ workflow = 'ci.yml', limit = 80, destination = 't
     const stats = key => { const values = successful.map(item => item[key]).filter(value => value > 0).sort((a,b) => a-b); return { samples: values.length, median: values[Math.floor(values.length / 2)] ?? null, p95: values[Math.min(values.length-1, Math.floor(values.length * .95))] ?? null, max: values.at(-1) ?? null }; };
     return { job, jobSeconds: stats('seconds'), requiredSeconds: stats('requiredSeconds') };
   });
-  const result = { generatedAt: new Date().toISOString(), cohortSelectedAt, workflow, limit, runs, errors, durations, table, observations };
+  const result = { generatedAt: new Date().toISOString(), cohortSelectedAt, workflow, limit, since, runs, errors, durations, table, observations };
   writeFileSync(`${destination}/flaky-table.json`, JSON.stringify(result, null, 2) + '\n');
   const cell = value => String(value).replaceAll('|', '\\|').replaceAll('\n', ' ');
   writeFileSync(`${destination}/flaky-table.md`, [

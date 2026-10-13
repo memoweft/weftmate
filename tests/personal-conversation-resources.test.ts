@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { conversationResources } from '../src/personal-access/resources.mjs'
-import { createPersonalAccessService } from '../src/personal-access/index.mjs'
+import { createPersonalAccessService } from './helpers/personal-access-fixture.mjs'
+import { waitForCommand } from './helpers/wait-for-command.mjs'
 
 test('conversation resources project files, webpages and tools without returning raw output or other sessions', async () => {
   const step = { taskId: 'turn-1', stepId: 'read-1', toolName: 'read', summary: '读取 2 个文件', detailRef: { seq: 1 } }
@@ -95,6 +96,7 @@ test('resources HTTP API requires account session ownership, validates cursors a
   const service = await createPersonalAccessService({ root, port: 0, backend })
   try {
     const { origin, hostId } = await service.start(), setup = await service.issueSetupGrant()
+    await service.__testContext.activity.close()
     const request = async (path: string, cookie = '', body?: any) => fetch(origin + '/personal/v1' + path, {
       method: body ? 'POST' : 'GET', headers: { origin, cookie, 'content-type': 'application/json', ...(csrf ? { 'x-weftmate-csrf': csrf } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),
@@ -104,8 +106,7 @@ test('resources HTTP API requires account session ownership, validates cursors a
     assert.equal(registered.status, 201); const cookie = registered.headers.get('set-cookie')!.split(';')[0]; csrf = (await registered.json()).csrfToken
     const created = await request('/commands', cookie, { requestId: 'resource-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId })
     assert.equal(created.status, 202); const command = (await created.json()).command
-    for (let i = 0; i < 100; i++) { const row = await (await request(`/commands/${command.commandId}`, cookie)).json();
-      if (row.command.state === 'accepted_by_dsh') break; await new Promise(done => setTimeout(done, 10)) }
+    await waitForCommand(async () => (await (await request(`/commands/${command.commandId}`, cookie)).json()).command)
     const sessionId = [...sessions][0]; assert.ok(sessionId)
     const empty = await request(`/sessions/${sessionId}/resources`, cookie)
     assert.equal(empty.status, 200); assert.deepEqual(await empty.json(), { outputs: [], sources: [], nextSeq: -1, hasMore: false })

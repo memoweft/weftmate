@@ -52,11 +52,13 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     private var seq = -1L
     private var generation = 0
     private var poll: Job? = null
-    private var sending = false
+    private var sending by mutableStateOf(false)
+    val submitting get() = sending
     private var refreshing = false
     private var nextReconcile = 0L
     private var phoneLive = ""
     private var phoneOwner = ""
+    private var phoneModelSwitching = false
     private var composerSave: Job? = null
     private var bootstrapping = false
     private var modelSettingsFinished = false
@@ -123,13 +125,15 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         val selected = result.optJSONObject("selected")
         modelId = selected?.optString("modelId").orEmpty()
         modelLabel = selected?.optString("displayName")?.ifBlank { modelId } ?: "选择模型"
-        sendAvailable = modelId.isNotBlank()
+        sendAvailable = modelId.isNotBlank() && !phoneModelSwitching
     }
     private fun phoneParams() = JSONObject().put("owner", phoneOwner).put("conversationId", chatId.takeUnless { it == "phone-new" })
     private fun readingPreferences(view:JSONObject) { textSize=view.optDouble("fontSize",DesignTokens.font15.toDouble()).toFloat();codeSize=view.optDouble("codeFontSize",DesignTokens.font13.toDouble()).toFloat() }
     private fun refreshPhone(view: JSONObject) {
         readingPreferences(view)
         if (!view.optBoolean("ready") || view.optString("owner") != phoneOwner) return
+        phoneModelSwitching=view.optBoolean("modelSwitching")
+        sendAvailable=modelId.isNotBlank() && !phoneModelSwitching
         val conversations = view.optJSONArray("conversations")?.objects().orEmpty()
         if (chatId == "phone-new" && view.optBoolean("running")) {
             val next = view.optString("selectedId").takeUnless { it == "null" }.orEmpty()
@@ -280,6 +284,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                 val accepted=activity.phonePresentation("send", phoneParams().put("text",text))
                 if(g!=generation)return@launch
                 check(accepted.optBoolean("ready") && accepted.optString("owner")==phoneOwner) { "ACCOUNT_SWITCHED" }
+                if(!accepted.optBoolean("sent",true)) { refreshPhone(accepted);return@launch }
                 draft = ""; saveDraft(); call("native.draft",JSONObject().put("hasDraft",false)); focused = false; activity.hideKeyboard(); running = true
                 refresh(); return@launch
             }

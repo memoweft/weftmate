@@ -8,3 +8,15 @@
 .backup-settings .actions, .backup-settings [data-import] { margin-top: var(--wm-space-16); }
 .backup-settings .field-help { margin-top: var(--wm-space-8); }
 @media (max-width: 600px) { .backup-settings form { grid-template-columns: 1fr; } }
+.cloud-backup-settings { margin-top:var(--wm-space-32);padding-top:var(--wm-space-24);border-top:var(--wm-space-1) solid var(--line); }
+.cloud-recovery-code { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--wm-space-8);margin:var(--wm-space-16) 0; }
+.cloud-recovery-code > span { display:flex;align-items:center;gap:var(--wm-space-12);padding:var(--wm-space-8);background:var(--surface);border-radius:var(--wm-radius-8); }
+.cloud-recovery-code code { font:var(--wm-font-size-14)/var(--wm-line-height-1_5,1.5) var(--wm-font-family-mono);letter-spacing:.04em;white-space:nowrap; }
+.cloud-backup-dialog { max-width:min(100% - var(--wm-space-32),var(--wm-size-dialog,560px)); }
+.cloud-backup-dialog input { width:100%;margin:var(--wm-space-8) 0; }
+.cloud-backup-dialog .actions,.cloud-backup-settings .actions { display:flex;flex-wrap:wrap;gap:var(--wm-space-8); }
+.cloud-backup-prompt { position:fixed;right:var(--wm-space-24);bottom:var(--wm-space-24);max-width:min(420px,calc(100% - var(--wm-space-32)));z-index:20;background:var(--floating-surface);padding:var(--wm-space-16);border-radius:var(--wm-radius-12);box-shadow:var(--shadow-float); }
+.cloud-backup-prompt p { margin:0 0 var(--wm-space-12); }
+.cloud-backup-prompt button+button { margin-left:var(--wm-space-8); }
+.cloud-recovery-print { position:fixed;width:1px;height:1px;left:-10000px; }
+@media(max-width:600px){.cloud-recovery-code {gap:var(--wm-space-4);}.cloud-recovery-code > span {gap:var(--wm-space-6);padding:var(--wm-space-6);}.cloud-backup-prompt {right:var(--wm-space-16);bottom:var(--wm-space-16);} }

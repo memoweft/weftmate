@@ -49,18 +49,23 @@ export function cleanupOwned(root) {
   if (resolve(root) !== ownership.root) throw Error('Ownership root mismatch');
   if (windows) return ps('cleanup', root);
   // Linux CI has /proc identities; cleanup never relies on the parent PID.
-  const recorded = remainingOwned(root);
   const killed = [];
+  const pause = new Int32Array(new SharedArrayBuffer(4)), deadline = Date.now() + 2000;
+  do {
+  // The interrupted Electron root can still fork a renderer while the first
+  // snapshot is being killed. Re-read ownership until the owned set is empty.
+  const recorded = remainingOwned(root);
+  if (!recorded.length) break;
   for (const row of recorded) {
     const current = posixIdentity(row.pid);
     if (!current || current.createdAt !== row.createdAt || current.executable !== row.executable) continue;
     if (!readFileSync(`/proc/${row.pid}/cmdline`, 'utf8').includes(root)) continue;
-    try { process.kill(row.pid, 'SIGKILL'); killed.push(row.pid); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+    try { process.kill(row.pid, 'SIGKILL'); if (!killed.includes(row.pid)) killed.push(row.pid); } catch (error) { if (error.code !== 'ESRCH') throw error; }
   }
   // SIGKILL is delivered asynchronously: give the kernel a bounded moment to tear the
   // processes down before the caller checks /proc for leftovers.
-  const pause = new Int32Array(new SharedArrayBuffer(4)), deadline = Date.now() + 2000;
-  while (Date.now() < deadline && killed.some(pid => posixIdentity(pid))) Atomics.wait(pause, 0, 0, 25);
+  Atomics.wait(pause, 0, 0, 25);
+  } while (Date.now() < deadline);
   return { matched: killed.length, killed };
 }
 export function remainingOwned(root) {

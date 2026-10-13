@@ -18,14 +18,14 @@ struct AccountSettingsView: View {
             Section("账户") { LabeledContent("邮箱", value: cloud.email).accessibilityIdentifier("signedInEmail") }
             Section("修改密码") {
                 SecureField("当前密码", text: $currentPassword).accessibilityLabel("当前密码").focused($field, equals: .current)
-                SecureField("新密码（至少 8 位）", text: $password).accessibilityLabel("新密码").focused($field, equals: .password)
+                SecureField("新密码（至少 15 位）", text: $password).accessibilityLabel("新密码").focused($field, equals: .password)
                 SecureField("再次输入新密码", text: $repeatedPassword).accessibilityLabel("再次输入新密码").focused($field, equals: .repeated)
                 Button("修改密码") {
                     Task {
                         await cloud.changePassword(current: currentPassword, password: password, repeatPassword: repeatedPassword)
                         currentPassword = ""; password = ""; repeatedPassword = ""
                     }
-                }.disabled(cloud.busy || currentPassword.isEmpty || password.count < 8 || password != repeatedPassword)
+                }.disabled(cloud.busy || currentPassword.isEmpty || password.count < 15 || password != repeatedPassword)
             }
             Section("换绑邮箱") {
                 TextField("新邮箱", text: $newEmail).accountInput().accessibilityLabel("新邮箱").focused($field, equals: .email)

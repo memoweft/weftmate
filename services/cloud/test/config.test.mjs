@@ -10,6 +10,18 @@ test('defaults and relative paths use only the supplied cloud working directory'
   assert.equal(config.databasePath, path.resolve('/tmp/cloud-fixture/.runtime/cloud.sqlite'));
   assert.equal(config.mailDir, path.resolve('/tmp/cloud-fixture/.runtime/mail-outbox'));
   assert.equal(config.mailTransport, 'file');
+  assert.equal(config.backupAccountBytes, 300 * 1024 * 1024);
+  assert.equal(config.backupGlobalBytes, 6 * 1024 * 1024 * 1024);
+});
+
+test('cloud backup byte quotas accept only positive safe integers', () => {
+  for (const name of ['CLOUD_BACKUP_ACCOUNT_BYTES','CLOUD_BACKUP_GLOBAL_BYTES']) {
+    for (const value of ['0','-1','1.5','abc','9007199254740992',' 32'])
+      assert.throws(() => loadConfig({ [name]: value }), new RegExp(name));
+  }
+  const config = loadConfig({ CLOUD_BACKUP_ACCOUNT_BYTES:'123', CLOUD_BACKUP_GLOBAL_BYTES:'456' });
+  assert.equal(config.backupAccountBytes,123);
+  assert.equal(config.backupGlobalBytes,456);
 });
 
 test('environment overrides support isolated ephemeral listeners and independent outboxes', () => {
