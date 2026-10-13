@@ -76,7 +76,7 @@ globalThis.WeftUiCore.releaseNotes = [
       "手机上点发送偶尔没有反应。"
     ],
     "audience": "mobile",
-    "version": "0.8.31"
+    "version": "0.8.32"
   },
   {
     "date": "2026-10-13",
