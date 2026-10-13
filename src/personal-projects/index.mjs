@@ -44,13 +44,18 @@ export function invokeProjectReader(input, { spawnProcess = spawn, setTimer = se
     let done = false, readyAt, phase = 'initialization';
     const startedAt = now();
     const expire = () => { child.kill(); finish(issue('PROJECT_READER_TIMEOUT')); };
-    let timer = setTimer(expire, 15_000);
+    let timer = setTimer(expire, 30_000);
     function finish(error, result) {
       if (done) return;
       done = true;
       clearTimer(timer);
-      if (error) reject(Object.assign(error, { readerEvidence: { phase, initializationMs:(readyAt ?? now())-startedAt,
-        operationMs:readyAt === undefined ? null : now()-readyAt, stdoutBytes:Buffer.byteLength(stdout), stderrBytes:Buffer.byteLength(stderr) } }));
+      if (error) {
+        const readerEvidence={phase,initializationMs:(readyAt ?? now())-startedAt,
+          operationMs:readyAt === undefined ? null : now()-readyAt,stdoutBytes:Buffer.byteLength(stdout),stderrBytes:Buffer.byteLength(stderr)};
+        // Metadata only: no project paths, source text or credentials in logs.
+        console.warn('Project reader failure:',JSON.stringify({code:error.code,...readerEvidence}));
+        reject(Object.assign(error,{readerEvidence}));
+      }
       else resolve(result);
     }
     child.on('error', () => finish(issue('PROJECT_FILE_UNAVAILABLE')));
