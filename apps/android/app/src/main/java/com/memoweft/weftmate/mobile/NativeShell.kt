@@ -249,7 +249,7 @@ private fun displayRows(m: NativeChatModel): List<JSONObject> {
                     }
                 }
             }
-            items(m.uncertain){row->Column { Text(row.optString("text"),fontSize=DesignTokens.font18.sp);Text(hostDeliveryMessage(row),color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=DesignTokens.font12.sp);if(row.optString("state")!="rejected") NativeSecondary(onClick={m.checkDelivery()}){Text("核对消息")} } }
+            items(m.uncertain){row->Column { Text(row.optString("text"),fontSize=DesignTokens.font18.sp);Text(hostDeliveryMessage(row),color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=DesignTokens.font12.sp);if(row.optString("state")=="uncertain") NativeSecondary(onClick={m.checkDelivery()}){Text("核对消息")} } }
             if(m.phone && !m.standalone && m.rows.isNotEmpty()) item { Text("这段是在手机上聊的。要用电脑的能力，请新开对话，或在电脑上继续这段对话。",fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) }
             item { if(m.error.isNotBlank()) Column(verticalArrangement=Arrangement.spacedBy(gap)) { Text(m.error,fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);if(m.phoneArchive) { if(m.canRegenerate && m.rows.lastOrNull()?.optString("type")=="user.message") NativeSecondary(onClick={m.regenerate()},modifier=Modifier.semantics{contentDescription="重新生成回复"}){Text("重试回复")} } else NativeSecondary(onClick={m.launch{m.refresh()}}){Text("重试连接")} } else if(m.running)Text("正在回复…",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) }
         }

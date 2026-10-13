@@ -38,5 +38,6 @@ class NativeHostChatTest {
         val row=JSONObject().put("state","uncertain").put("text","你好")
         assertTrue(hostDeliveryMessage(row).contains("点按核对"));assertFalse(hostDeliveryMessage(row).contains("自动续查"));assertEquals("你好",row.getString("text"))
         assertTrue(hostDeliveryMessage(row.put("state","rejected")).contains("没有发出"))
+        assertTrue(hostDeliveryMessage(row.put("state","pending")).contains("电脑已收到"))
     }
 }

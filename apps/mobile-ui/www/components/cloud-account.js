@@ -29,7 +29,7 @@
   async function enterAssistant() {
     if(native)await nativeAdoption;
     await globalThis.WeftPhone?.restoreArchive(core.state.cloudAuth.sub?{accountId:core.state.cloudAuth.sub,email:core.state.cloudAuth.email,origin:new URL(client.config.issuer).origin,deviceId:(await client.key()).deviceId}:null,client);
-    await globalThis.WeftPhone?.connected();
+    void globalThis.WeftPhone?.connected();
     if (core.state.cloudAuth.mode !== 'offline') core.state.cloudAuth.mode = 'authenticated';
     const account = native ? await nativeAdoption : { ...core.state.account, owner: core.state.account.ownerId, deviceId: core.state.device.id, connectionVerified: true };
     state.authEpoch++; state.loggedIn = true; state.username = account.username; state.owner = account.owner || account.ownerId || '';

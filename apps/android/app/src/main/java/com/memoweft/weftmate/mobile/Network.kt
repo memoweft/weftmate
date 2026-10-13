@@ -846,13 +846,13 @@ class PersonalApi(transport: JsonTransport = JsonHttp()) {
     }
 
     /** Only future business routes, never auth, credentials, model configuration or arbitrary URLs. */
-    fun business(host: HostIdentity, path: String, method: String, body: JSONObject?): JSONObject {
+    fun business(host: HostIdentity, path: String, method: String, body: JSONObject?, active: AtomicReference<HttpURLConnection?>? = null): JSONObject {
         require(validBusinessMethod(path, method))
         require(validBusinessPath(path))
         if (body != null) require(body.toString().toByteArray(Charsets.UTF_8).size <= if (path == "/personal/v1/health/records/batch") 1280 * 1024 else if (path.startsWith("/personal/v1/offline/")) 256 * 1024 else 64 * 1024)
         return http.request("${host.origin}$path", method, body,
             if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host),
-            readTimeoutMs = businessReadTimeout(path, method)).body
+            active = active, readTimeoutMs = businessReadTimeout(path, method)).body
     }
 
     private fun authWriteHeaders(host: HostIdentity) = mapOf("Cookie" to host.cookie,
