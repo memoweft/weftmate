@@ -1,0 +1,86 @@
+{
+  "synthetic": true,
+  "realModelRequests": 0,
+  "fullRequiredTestedMain": "0ea09b9a",
+  "finalMergedMain": "4a9a7928",
+  "required": {
+    "files": 335,
+    "passed": 1900,
+    "failed": 0,
+    "skipped": 14,
+    "strict": true,
+    "retries": 0
+  },
+  "requiredShards": [
+    {
+      "shard": "1/3",
+      "files": 106,
+      "passed": 629,
+      "failed": 0,
+      "skipped": 11,
+      "exitCode": 0
+    },
+    {
+      "shard": "2/3",
+      "files": 110,
+      "passed": 583,
+      "failed": 0,
+      "skipped": 1,
+      "exitCode": 0
+    },
+    {
+      "shard": "3/3",
+      "files": 119,
+      "passed": 688,
+      "failed": 0,
+      "skipped": 2,
+      "exitCode": 0
+    }
+  ],
+  "vendor": {
+    "mode": "vendor",
+    "files": 33,
+    "exitCode": 0,
+    "passed": 230,
+    "failed": 0,
+    "skipped": 0,
+    "failures": []
+  },
+  "mobileFiveFiles": {
+    "passed": 115,
+    "failed": 0
+  },
+  "chatInteractions": {
+    "passed": 105,
+    "failed": 0
+  },
+  "latencyAndPopovers": {
+    "passed": 2,
+    "failed": 0
+  },
+  "lastMainRelated": {
+    "passed": 41,
+    "failed": 0
+  },
+  "sharedAssets": {
+    "passed": 5,
+    "failed": 0
+  },
+  "buildUiCore": "passed",
+  "typecheck": "passed",
+  "publicHygiene": {
+    "files": 8669,
+    "identityHits": 0
+  },
+  "visualReview": {
+    "browserAndElectronImages": 268,
+    "nativeImages": 8,
+    "allOriginalsViewed": true,
+    "keyboard": "simulated viewport plus native focus; real software keyboard and candidate strip remain unverified",
+    "systemNavigation": "MuMu navigationHeight 0; real gesture bar remains unverified"
+  },
+  "nativeFileLimitations": [
+    "original attachment bytes unavailable in current native bridge",
+    "system share unavailable in current native bridge"
+  ]
+}
