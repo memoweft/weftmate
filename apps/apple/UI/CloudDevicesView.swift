@@ -35,7 +35,7 @@ struct CloudDevicesView: View {
                         }
                     }
                 }
-                if cloud.hosts.isEmpty { Text("请在电脑上的 WeftMate 登录同一账号。") }
+                if cloud.hosts.isEmpty { Text("在电脑上安装 WeftMate 并用同一个账号登录，就会出现在这里。") }
                 if let error = cloud.error { InlineNotice(message: error, isError: true) }
             }.padding(AppleTokens.Space.p20).frame(maxWidth: 620).frame(maxWidth: .infinity)
         }.background(Weave.canvas).navigationTitle("设备").font(AppleTokens.Fonts.body)

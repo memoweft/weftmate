@@ -110,7 +110,7 @@ private struct PhoneTabStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.foregroundStyle(selected ? Weave.ink : Weave.muted)
-            .background(selected ? Weave.surface : Weave.soft, in: Capsule())
+            .background(selected ? Weave.surface : .clear, in: Capsule())
             .opacity(!enabled ? AppleTokens.Opacity.disabled : configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
     }
 }

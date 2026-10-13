@@ -7,6 +7,7 @@ import WeftMateCore
 import Quartz
 #else
 import QuickLook
+import PDFKit
 #endif
 
 enum ConversationAttachmentReference: Identifiable, Equatable {
@@ -130,10 +131,13 @@ struct ConversationAttachmentPreview: View {
             }.padding(AppleTokens.Space.p12)
             if loading { ProgressView("正在下载…").padding(AppleTokens.Space.p20) }
             if let error { Text(error).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.danger).padding(AppleTokens.Space.p16) }
-            if let file { NativeAttachmentPreview(file:file).frame(maxWidth:.infinity,maxHeight:.infinity) }
+            if let file {
+                if contentType == "application/pdf" { PhonePDFPreview(file:file).frame(maxWidth:.infinity,maxHeight:.infinity) }
+                else { NativeAttachmentPreview(file:file).frame(maxWidth:.infinity,maxHeight:.infinity) }
+            }
             else { Spacer() }
             if let exportError { Text(exportError).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger).padding(AppleTokens.Space.p12) }
-        }.background(Weave.surface)
+        }.background(Weave.surface).onAppear { dismissPhonePreviewKeyboard() }
             #else
         VStack(spacing: AppleTokens.Space.p12) {
             HStack {
@@ -234,3 +238,38 @@ private struct NativeAttachmentPreview: UIViewControllerRepresentable {
     }
 }
 #endif
+
+@MainActor func dismissPhonePreviewKeyboard() {
+    #if os(iOS)
+    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),to:nil,from:nil,for:nil)
+    #endif
+}
+#if os(iOS)
+private struct PhonePDFPreview: View {
+    let file: URL
+    @State private var document: PDFDocument?
+    @State private var loading=true
+    var body: some View {
+        Group {
+            if let document { PhonePDFDocument(document:document) }
+            else if loading { ProgressView("正在打开文件…").frame(maxWidth:.infinity,maxHeight:.infinity) }
+            else { Text("文件暂时打不开，请关闭后重试。") }
+        }.task(id:file) { document=PDFDocument(url:file); loading=false }
+    }
+}
+private struct PhonePDFDocument: UIViewRepresentable {
+    let document: PDFDocument
+    func makeUIView(context: Context) -> PDFView { let view=PDFView(); view.autoScales=true; view.displayMode = .singlePageContinuous; view.document=document; return view }
+    func updateUIView(_ view: PDFView,context: Context) { if view.document !== document { view.document=document }; view.layoutDocumentView() }
+}
+#endif
+
+extension View {
+    @ViewBuilder func attachmentCover<Content: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View {
+        #if os(iOS)
+        self.fullScreenCover(isPresented:isPresented,content:content)
+        #else
+        self.sheet(isPresented:isPresented,content:content)
+        #endif
+    }
+}

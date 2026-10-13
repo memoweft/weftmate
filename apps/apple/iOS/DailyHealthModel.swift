@@ -23,10 +23,9 @@ import WeftMateCore
     func cancelBackgroundRead() { operation?.cancel() }
     private func prepare(_ app: AppleAppModel) throws -> Bool {
         self.app = app; DailyHealthBackground.attach(self)
-        guard let session = app.session else {
-            operation?.cancel(); reader.stop(); local = nil; scope = nil; epoch = nil; generation = UUID(); state = .init(); return false
-        }
-        let account = try LocalAccountScope(server: session.server, ownerId: session.account.ownerId)
+        let account: LocalAccountScope
+        if let session=app.session { account=try LocalAccountScope(server:session.server,ownerId:session.account.ownerId) }
+        else { account=try LocalAccountScope(server:ServerConfiguration(input:"https://phone.weftmate.invalid"),ownerId:app.phoneAccountIdentity) }
         if scope != account || epoch != app.accountEpoch {
             operation?.cancel(); reader.stop(); generation = UUID(); scope = account; epoch = app.accountEpoch
             local = DailyHealthStore(directory: app.healthStateDirectory, account: account)
@@ -35,8 +34,7 @@ import WeftMateCore
         return true
     }
     private func matches(_ app: AppleAppModel, _ token: UUID) -> Bool {
-        generation == token && app.accountEpoch == epoch && app.session?.account.ownerId == scope?.ownerId
-            && app.session?.server.originString == scope?.originString
+        generation == token && app.accountEpoch == epoch && (app.session.map { $0.account.ownerId == scope?.ownerId && $0.server.originString == scope?.originString } ?? (app.phoneAccountIdentity == scope?.ownerId))
     }
     private func save() throws { try local?.save(state) }
     func connect(app: AppleAppModel) async {
@@ -115,6 +113,15 @@ import WeftMateCore
     private func run(app: AppleAppModel, token: UUID) async {
         var sent = 0
         do {
+            if app.session == nil {
+                if state.enabled, state.connected, reader.available {
+                    var calendar=Calendar(identifier:.gregorian); calendar.timeZone = .current
+                    let values=try await reader.read(calendar:calendar,version:3)
+                    guard matches(app,token), state.enabled, !Task.isCancelled else { return }
+                    state.timeZone=calendar.timeZone.identifier; state.enqueue(values); state.prune(now:Date(),calendar:calendar); try save()
+                }
+                return
+            }
             guard app.session?.verification == .verified else { return }
             if state.enabled, state.connected, reader.available {
                 await reader.observe(update: Self.makeObserverUpdate(model: self, app: app))

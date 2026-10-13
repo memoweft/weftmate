@@ -22,7 +22,7 @@ import WeftMateCore
     private var current: Bool { app?.accountEpoch == epoch }
     func refresh(_ category: String) async {
         await perform {
-            guard let app = self.app else { return }
+            guard let app = self.app,app.session != nil else { return }
             switch category {
             case "approvals":
                 let reply = try await app.assistantClient.approvalMode()

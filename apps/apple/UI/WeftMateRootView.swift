@@ -254,8 +254,16 @@ private struct AccountEntry: View {
     @ObservedObject var cloud: CloudLoginModel
     var body: some View {
         Group {
+            #if os(iOS)
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing"),ProcessInfo.processInfo.arguments.contains("--apple6-legacy-entry"),cloud.authenticated { CloudAccountHome(app:app,cloud:cloud) } else { PhoneWorkspace(model:app) }
+            #else
+            PhoneWorkspace(model:app)
+            #endif
+            #else
             if cloud.authenticated && !cloud.useLocalWorkspace { CloudAccountHome(app: app, cloud: cloud) }
             else { LocalAccountWorkspace(app: app, cloud: cloud) }
+            #endif
         }.task {
             while !Task.isCancelled {
                 await cloud.poll()
@@ -492,11 +500,13 @@ struct PhoneChatWorkspace: View {
                 .refreshable { await model.refresh() }
                 .accessibilityElement(children: .contain)
         }
-        .environment(\.phoneSidebar, { showingSidebar = true })
+        .allowsHitTesting(!showingSidebar)
+        .opacity(showingSidebar ? 0 : 1)
+        .environment(\.phoneSidebar, { dismissPhonePreviewKeyboard(); showingSidebar = true })
         .overlay(alignment: .leading) {
             if showingSidebar {
                 ZStack(alignment: .leading) {
-                    Weave.ink.opacity(AppleTokens.Opacity.notice).ignoresSafeArea()
+                    Color.black.opacity(0.65).ignoresSafeArea()
                         .onTapGesture { showingSidebar = false }.accessibilityLabel("关闭侧栏")
                     VStack(spacing: AppleTokens.Space.p0) {
                         HStack {
@@ -512,13 +522,14 @@ struct PhoneChatWorkspace: View {
                                 TextField("搜索旁聊", text: $search).textFieldStyle(.plain).accessibilityIdentifier("phone.sidebar.search")
                             }.padding(.horizontal, AppleTokens.Space.p12).frame(minHeight: AppleTokens.Space.p44).background(Weave.soft, in: Capsule())
                             Button { Task { await model.mainChat.createSide(); showingSidebar = false } } label: { WeftIcon("plus") }
-                                .phoneIcon(primary: true).disabled(!model.mainChat.capabilities.supports("sideChats")).accessibilityLabel("新建旁聊").accessibilityIdentifier("phone.sidebar.new")
+                                .phoneIcon().disabled(!model.mainChat.capabilities.supports("sideChats")).accessibilityLabel("新建旁聊").accessibilityIdentifier("phone.sidebar.new")
                         }.padding(AppleTokens.Space.p12)
-                    }.frame(maxWidth: AppleTokens.Space.p64 * 5).background(Weave.canvas)
+                    }.frame(maxWidth: AppleTokens.Space.p64 * 5).background(Weave.soft)
                         .accessibilityElement(children: .contain).accessibilityIdentifier("phone.sidebar.panel")
                 }
             }
         }
+        .gesture(DragGesture().onEnded { value in if showingSidebar && value.translation.width < -50 { showingSidebar=false } })
         .onChange(of: path) { _, _ in showingSidebar = false }
         .onChange(of: model.openedSessionID) { _, id in
             guard let id else { return }; let epoch = model.accountEpoch
@@ -545,56 +556,41 @@ struct PhoneChatWorkspace: View {
     }
 
     private var sideList: some View {
-                VStack(spacing: AppleTokens.Space.p12) {
-                    VStack(spacing: AppleTokens.Space.p4) {
-                        ForEach(PhoneTab.allCases) { item in
-                            Button { tab = item; path = []; showingSidebar = false } label: {
-                                WeftLabel(item.title, icon: item.icon).font(AppleTokens.Fonts.body).frame(maxWidth: .infinity, alignment: .leading)
-                            }.buttonStyle(PhoneActionStyle(selected: tab == item))
-                        }
-                    }.padding(.horizontal, AppleTokens.Space.p12)
-                List {
-                    if let error = model.lifecycleError { InlineNotice(message: error, isError: true) }
-                    ConversationListContent(model: model, search: $search)
-                    ForEach(model.sections(query: search)) { section in
-                        Section {
-                            DisclosureGroup(isExpanded: Binding(get: { !model.collapsedSessionGroups.contains(section.id) }, set: { if $0 { model.collapsedSessionGroups.remove(section.id) } else { model.collapsedSessionGroups.insert(section.id) } })) {
-                                ForEach(section.rows) { conversation in
-                                    if model.renamingSessionID == conversation.id {
-                                        EditableSessionRow(app: model, conversation: conversation)
-                                    } else {
-                                        Button { path.append(conversation.id) } label: { ConversationRow(conversation: conversation, selected: path.last == conversation.id) }.buttonStyle(.plain).listRowSeparator(.hidden).listRowBackground(AppleTokens.Colors.clear)
-                                            .contextMenu { SessionActions(app: model, conversation: conversation) }
-                                            .swipeActions(allowsFullSwipe: false) { Button("对话操作") { model.sessionMenuCandidate = conversation }.tint(Weave.accent) }
-                                            .accessibilityIdentifier("conversationRow.\(conversation.id)")
-                                    }
-                                }
-                            } label: { Text(section.title) }
-                        }
-                    }
-                    Section {
-                        ProjectsEmpty(app: model)
-                        ForEach(model.projects.filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) || !model.projectRows($0, query: search).isEmpty }) { project in
-                            ProjectHeading(app: model, project: project)
-                            if !model.collapsedProjects.contains(project.id) || !search.isEmpty {
-                                ForEach(model.projectRows(project, query: search)) { conversation in
-                                    Button { path.append(conversation.id) } label: { ConversationRow(conversation: conversation, selected: path.last == conversation.id) }.buttonStyle(.plain).listRowSeparator(.hidden).listRowBackground(AppleTokens.Colors.clear)
-                                        .contextMenu { SessionActions(app: model, conversation: conversation) }
-                                        .swipeActions(allowsFullSwipe: false) { Button("对话操作") { model.sessionMenuCandidate = conversation }.tint(Weave.accent) }
-                                        .accessibilityIdentifier("conversationRow." + conversation.id)
-                                }
-                                ProjectMoreRows(app: model, project: project, search: search)
-                            }
-                        }
-                    } header: { ProjectsSectionTitle(app: model) }
+        ScrollView {
+            VStack(alignment:.leading,spacing:AppleTokens.Space.p4) {
+                ForEach(PhoneTab.allCases) { item in
+                    Button { tab=item; path=[]; showingSidebar=false } label: {
+                        HStack(spacing:AppleTokens.Space.p12) { WeftIcon(item.icon); Text(item.title); Spacer(minLength:0) }
+                            .frame(maxWidth:.infinity,minHeight:44,alignment:.leading).padding(.horizontal,AppleTokens.Space.p12)
+                            .background(tab == item && path.isEmpty ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
+                    }.buttonStyle(.plain).accessibilityIdentifier("phone.sidebar.tab."+item.id)
                 }
-                .listStyle(.plain).scrollContentBackground(.hidden).background(Weave.canvas)
-                .environment(\.defaultMinListRowHeight, AppleTokens.Space.p56)
-                .navigationTitle("WeftMate")
-                .toolbar(.hidden, for: .navigationBar)
-                .navigationBarTitleDisplayMode(.inline)
-                .accessibilityElement(children: .contain).accessibilityIdentifier("conversationList")
+                if let main=model.conversations.first(where: \.isMainChat) { drawerRow(main) }
+                ForEach(model.sections(query:search)) { section in
+                    Text(section.title).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p12).padding(.top,AppleTokens.Space.p12)
+                    ForEach(section.rows) { row in drawerRow(row) }
                 }
+                ForEach(model.projects.filter { search.isEmpty || $0.name.localizedCaseInsensitiveContains(search) || !model.projectRows($0,query:search).isEmpty }) { project in
+                    Text(project.name).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.horizontal,AppleTokens.Space.p12).padding(.top,AppleTokens.Space.p12)
+                    ForEach(model.projectRows(project,query:search)) { row in drawerRow(row) }
+                }
+                if model.conversations.isEmpty { Text("还没有旁聊").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).padding(AppleTokens.Space.p12) }
+            }.padding(.horizontal,AppleTokens.Space.p12)
+        }.background(Weave.soft).toolbar(.hidden,for:.navigationBar)
+            .accessibilityElement(children:.contain).accessibilityIdentifier("conversationList")
+    }
+    private func drawerRow(_ row: ConversationSummary) -> some View {
+        Button {
+            if row.isMainChat { path=[] } else { path.append(row.id) }; showingSidebar=false
+        } label: {
+            HStack(spacing:AppleTokens.Space.p12) {
+                WeftIcon("chat")
+                Text(row.title.isEmpty ? "未命名对话" : row.title).lineLimit(2).frame(maxWidth:.infinity,alignment:.leading)
+                if row.pinned { WeftIcon("pin",size:20).foregroundStyle(Weave.muted) }
+                if row.unread { Circle().fill(Weave.accent).frame(width:8,height:8) }
+            }.frame(minHeight:44).padding(.horizontal,AppleTokens.Space.p12)
+                .background((row.isMainChat ? path.isEmpty : path.last == row.id) ? Weave.accentSoft : .clear,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r12))
+        }.buttonStyle(.plain).contextMenu { SessionActions(app:model,conversation:row) }.accessibilityIdentifier("conversationRow."+row.id)
     }
 
     private var filteredConversations: [WeftMateCore.ConversationSummary] {

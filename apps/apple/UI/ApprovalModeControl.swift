@@ -20,6 +20,9 @@ struct ApprovalModeControl: View {
             Button {
                 showingMenu = true
             } label: {
+                #if os(iOS)
+                Image(systemName:"slider.horizontal.3").font(.system(size:20,weight:.regular)).frame(width:20,height:20)
+                #else
                 HStack(spacing: AppleTokens.Space.p3) {
                     WeftIcon("approval", size: compact ? AppleTokens.Space.p16 : AppleTokens.Space.p20)
                     Text(settings?.mode.shortTitle ?? "审批模式")
@@ -31,6 +34,7 @@ struct ApprovalModeControl: View {
                     #endif
                     if busy { ProgressView().controlSize(.mini) }
                 }.font(AppleTokens.Fonts.caption).foregroundStyle(settings?.mode == .allowAll ? Weave.danger : Weave.ink)
+                #endif
             }
             .buttonStyle(ApprovalModeButtonStyle(compact: compact))
             .disabled(busy || !isVerified)
@@ -134,7 +138,7 @@ private struct ApprovalModeButtonStyle: ButtonStyle {
     let compact: Bool
     func makeBody(configuration: Configuration) -> some View {
         #if os(iOS)
-        PhoneActionStyle(onCard: compact, horizontalPadding: compact ? AppleTokens.Space.p8 : AppleTokens.Space.p12).makeBody(configuration: configuration)
+        PhoneIconStyle(onCard:compact).makeBody(configuration: configuration)
         #else
         if compact {
             configuration.label.frame(minHeight: AppleTokens.Space.p44).opacity(configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
