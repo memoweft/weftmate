@@ -28,6 +28,16 @@ export function connectorPermission(policy, tool) {
 
 export function connectorError(error) {
   const messages = {
+    MAIL_ADDRESS_INVALID: '邮箱或服务器地址不对，请检查后重试。',
+    MAIL_AUTH_FAILED: '授权码未被接受，请重新生成授权码后重试。',
+    MAIL_DISABLED: '邮箱尚未开启收件服务，请到邮箱设置中开启后重试。',
+    MAIL_NETWORK: '暂时连不上邮箱，请检查网络和服务器地址后重试。',
+    MAIL_TLS: '无法确认邮箱服务器的安全证书，请联系邮箱服务商。',
+    MAIL_UNSUPPORTED: '这个邮箱暂不支持，之后提供网页登录。',
+    CALENDAR_ADDRESS_INVALID: '日历地址不对，请填写完整的加密地址。',
+    CALENDAR_AUTH_FAILED: '日历账号或授权码未被接受，请检查后重试。',
+    CALENDAR_NETWORK: '暂时连不上日历，请检查网络和地址后重试。',
+    CALENDAR_TLS: '无法确认日历服务器的安全证书，请联系服务商。',
     CONNECTOR_COMMAND_MISSING: '找不到启动命令，请确认程序已安装，并检查命令。',
     CONNECTOR_AUTH_FAILED: '凭据未被接受，请检查并重新保存。',
     CONNECTOR_TIMEOUT: '连接器响应太慢，请稍后测试连接。',
@@ -35,6 +45,7 @@ export function connectorError(error) {
   };
   if (messages[error?.code]) return { code: error.code, message: messages[error.code] };
   const text = `${error?.name ?? ''} ${error?.code ?? ''} ${error?.message ?? ''} ${error?.cause?.code ?? ''} ${error?.cause?.name ?? ''} ${error?.cause?.message ?? ''} ${error?.cause?.cause?.message ?? ''}`;
+  for (const [code, message] of Object.entries(messages)) if (text.includes(code)) return { code, message };
   if (/ENOENT|not found|cannot find|could not determine executable/i.test(text)) return { code: 'CONNECTOR_COMMAND_MISSING', message: '找不到启动命令，请确认程序已安装，并检查命令。' };
   if (/\b(?:401|403)\b|unauthor|forbidden|authenticat/i.test(text)) return { code: 'CONNECTOR_AUTH_FAILED', message: '凭据未被接受，请检查并重新保存。' };
   if (/timeout|timed out|超时|-32001/i.test(text)) return { code: 'CONNECTOR_TIMEOUT', message: '连接器响应太慢，请稍后测试连接。' };

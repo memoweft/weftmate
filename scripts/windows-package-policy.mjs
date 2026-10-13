@@ -1,5 +1,6 @@
 import { isAbsolute, parse, relative, resolve, sep } from 'node:path'
 import { homedir, hostname, userInfo } from 'node:os'
+import { createHash } from 'node:crypto'
 
 export const CANDIDATE_VERSION_RE = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-[a-z][a-z0-9-]*\.(?:0|[1-9]\d*)$/i
 
@@ -92,6 +93,14 @@ export function isThirdPartyPackageFile(file) {
 }
 
 export function packagedTextViolation(text, file, identity = buildMachineIdentity()) {
+  // mailparser's immutable public TLD data can contain a label equal to the
+  // builder's short account/host name. Only these exact upstream 1.261.0 bytes
+  // have public-data provenance; modified bytes and every other file retain
+  // all identity checks. Never change the domain list or exempt its directory.
+  if (String(file).replaceAll('\\','/').replace(/^\/+/, '') === 'node_modules/tlds/index.json' &&
+      createHash('sha256').update(text).digest('hex') === '39498bb22800167e8b6fa73740b2686decb4ffdbea3e8333f32020f5714938f2') {
+    return containsBuildMachineIdentity(text, {...identity, username:null, hostname:null}) ? 'build-machine-identity' : null
+  }
   if (containsBuildMachineIdentity(text, identity)) return 'build-machine-identity'
   if (!isThirdPartyPackageFile(file) && containsDevelopmentPath(text)) return 'development-path'
   return null
