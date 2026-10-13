@@ -40,6 +40,7 @@ class NativeChatInstrumentedTest {
         waitFor("native signed in"){activity.model.loggedIn && !activity.model.loading && activity.model.chatId.isNotBlank() && activity.model.rows.isNotEmpty()}
         onMain{activity.model.launch{activity.model.call("settings.appearance",JSONObject().put("value",args.getString("and4Theme","light")));activity.model.dark=args.getString("and4Theme")=="dark";activity.embeddedWeb.evaluateJavascript("applyTheme('${args.getString("and4Theme","light")}')",null)}}
         Thread.sleep(700)
+        if(args.getString("and4MetricSetup")=="1")return
         compose.onNodeWithContentDescription("语音输入").assertExists();shot("capsule")
         compose.onNodeWithContentDescription("消息输入").performClick();shot("focused")
         compose.onNodeWithContentDescription("消息输入").performTextInput("草稿保持展开")
@@ -52,6 +53,13 @@ class NativeChatInstrumentedTest {
         send("合成流式")
         waitFor("stream snapshot"){activity.model.rows.any{it.optString("type")=="assistant.delta"}};shot("stream")
         waitFor("stream finalized"){!activity.model.running && activity.model.rows.any{it.optString("type")=="assistant.message"&&it.optJSONObject("data")?.optString("text")?.contains("收到。") == true}}
+        if(args.getString("and4Regression")=="1") {
+            send("三项审批");waitFor("three approval"){activity.model.approvals.any{it.optBoolean("canAlwaysAllow")}};Thread.sleep(700);shot("approval-three")
+            compose.onNodeWithText("以后这类都允许").performClick();compose.onNodeWithText("确认",useUnmergedTree=true).performClick()
+            waitFor("approval consumed"){activity.model.approvals.any{it.optString("status")!="pending"}};shot("approval-receipt")
+            onMain{activity.startActivity(Intent(activity,MainActivity::class.java))};Thread.sleep(900);shot("compat-native-connection")
+            onMain{activity.finish()};return
+        }
         // System picker test substitute: import synthetic URIs into the production AttachmentStore.
         val syntheticFiles=File(activity.cacheDir,"composer-camera").apply{mkdirs()}
         val png=File(syntheticFiles,"synthetic-image.png");val bitmap=Bitmap.createBitmap(320,200,Bitmap.Config.ARGB_8888);Canvas(bitmap).drawColor(Color.rgb(150,175,157));png.outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)};bitmap.recycle()

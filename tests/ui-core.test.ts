@@ -615,6 +615,15 @@ test('UI-3 native approval reasons keep the risk prose and fold embedded raw par
   assert.ok(presentation.raw.includes('{"command"'))
 })
 
+test('ST-7b approvals keep mailbox and calendar facts readable when native Code Mode owns the call', () => {
+  const f=fixture();
+  for(const summary of ['邮箱 · owner@synthetic.invalid · 回复邮件 · 收件人：friend@synthetic.invalid · 主题：合成主题 · 正文：批准的正文',
+    '日历 · calendar-user · 新建日程 · 合成会议 · 10月15日 13:00 至 10月15日 14:00 · 日历：工作日历']){
+    const row={toolName:'execute',reason:'[weftmate:external] 需要你批准。操作：'+summary+'\n{"calendarId":"opaque","body":"raw-detail"}'};
+    const presentation=f.core.approvalPresentation(row);assert.equal(presentation.summary,summary);assert.equal(presentation.reason,'');assert.ok(presentation.raw.includes('raw-detail'));assert.ok(!presentation.summary.includes('calendarId'));
+  }
+})
+
 
 test('UI-3 attachment shortcuts respect unresolved submissions and restore the selected intent', async () => {
   const f = fixture(), intents: string[] = []

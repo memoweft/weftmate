@@ -1,0 +1,7 @@
+{
+  "tests": 78,
+  "failed": 0,
+  "debugBuild": true,
+  "instrumentationBuild": true,
+  "routeInventory": true
+}

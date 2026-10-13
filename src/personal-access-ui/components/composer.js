@@ -41,6 +41,8 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
             item('照片', 'image', () => pick('composer-photos'));
         }
         item(phone ? '文件' : '添加文件', 'attach', () => pick('message-attachments'));
+        if(globalThis.WeftPhoneUnify?.isPhone()&&core.composerState(ui.readMessageDraft()).running&&(ui.readMessageDraft().trim()||core.currentAttachmentDrafts().length))
+            item('发送这条补充','send',()=>{closeComposerMenu();void core.sendDraft();});
         const folderItem=item(native ? '选择文件夹' : '选择电脑上的文件夹', 'folder', () => {closeComposerMenu(true);native ? folderChoice.pick() : folderChoice.open(ui.byId('attachment-add'));});
         folderItem.disabled=core.state.online===false||core.folderChoiceBusy?.();
         if(core.state.online===false)folderItem.title='电脑离线，连接后再选择文件夹';
@@ -201,6 +203,8 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
             return core.sendDraft();
         });
         ui.mountConversationScroll();
+        globalThis.WeftPhoneUnify?.mount(core, ui);
+        globalThis.WeftPhoneFiles?.mount(core, ui);
     }
     function renderContextUsage() {
         const session = core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId);

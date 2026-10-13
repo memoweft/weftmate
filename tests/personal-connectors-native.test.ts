@@ -100,7 +100,7 @@ test('a slow native call times out without delaying the catalog or leaking proce
 test('built-in registration launches the bundled harmless server with no external service', async () => {
   const root=await mkdtemp(join(tmpdir(),'weftmate-st7a-builtin-')),manager=await createConnectors({root,runtime,vault:syntheticVault(),startupMs:3000});
   try {
-    assert.equal(manager.builtins()[0].id,'local-clock');assert.deepEqual(manager.builtins()[0].fields,[]);
+    const clock=manager.builtins().find(item=>item.id==='local-clock');assert.equal(clock.id,'local-clock');assert.deepEqual(clock.fields,[]);
     const connector=await manager.add('owner',{builtinId:'local-clock'});assert.equal(connector.tools[0].category,'read');
     const tool=manager.catalog('owner')[0],result=await manager.call('owner',connector.id,tool.name,{});assert.match(result.content[0].text,/timezone/);
     await manager.remove('owner',connector.id);assert.deepEqual(manager.catalog('owner'),[]);
