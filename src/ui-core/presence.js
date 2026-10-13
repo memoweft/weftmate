@@ -46,9 +46,11 @@
     globalThis.WeftUiCore.Presence = { create, labels, descriptions, transportFailure, authState };
     globalThis.WeftUiCore.factories.presence = (core, effects, environment) => {
         const timerApi = environment.clock || globalThis;
-        let timer = null, running = null, active = false, generation = 0, background = false, needsRecovery = false, recover = async () => {};
+        let timer = null, running = null, active = false, generation = 0, background = false, needsRecovery = false, phone = false, recover = async () => {};
+        const phoneView = () => ({ kind: 'phone', label: '已登录', description: '可以在手机上聊天。', canSend: true, canExecute: false });
         const listeners = new Set();
         const model = create({ now: environment.now || Date.now, random: environment.random || Math.random, notify(view, previous) {
+            if (phone) view = phoneView();
             if (['login_required','approval_required'].includes(view.kind)) needsRecovery = false;
             else if (['host_offline','network_unavailable'].includes(view.kind) || view.kind === 'connecting' && view.failures > 0) needsRecovery = true;
             core.state.connection = view; core.state.online = view.kind === 'online';
@@ -60,6 +62,7 @@
         const clear = () => { if (timer !== null) timerApi.clearTimeout(timer); timer = null; };
         const schedule = delay => { clear(); if (active) timer = timerApi.setTimeout(() => { timer = null; void retryConnection(); }, delay); };
         async function retryConnection() {
+            if (phone) return false;
             if (running) return running;
             clear(); const ticket = generation, identity = core.state.identityGeneration;
             const current = () => ticket === generation && identity === core.state.identityGeneration;
@@ -105,7 +108,11 @@
         }
         return {
             presence: model,
-            connectionView: () => model.view(),
+            connectionView: () => phone ? phoneView() : model.view(),
+            phoneAccountConnection: enabled => { phone = enabled; active = false; generation++; clear();
+                const view = phone ? phoneView() : model.view(); core.state.connection = view;
+                for (const listener of listeners) listener(view);
+            },
             observeConnection: listener => { listeners.add(listener); return () => listeners.delete(listener); },
             connectionSucceeded: host => { if (!['network_unavailable', 'login_required', 'approval_required'].includes(model.view().kind) || host) model.success(host); },
             connectionFailed: error => { const previous=model.view().kind;model.failure(error);if(active&&!running&&(timer===null||previous==='online'&&model.view().kind!=='online'))schedule(model.delay(background)); },

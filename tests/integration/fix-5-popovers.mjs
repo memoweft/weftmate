@@ -114,7 +114,8 @@ try {
   await phone.addInitScript(()=>{window.weftNative={postMessage(raw){const message=JSON.parse(raw);const result=message.method==='host.business'&&message.params?.path==='/personal/v1/settings/personalization'?{settings:{...WeftPersonalization.defaults,...message.params.body},updatedAt:'2026-10-10T00:00:00.000Z',synced:true}:message.method==='app.bootstrap'?{loggedIn:false}:message.method==='models.list'?{models:[{source:'phone',modelId:'fixture',displayName:'MiMo 定时验收',selected:true}]}:message.method==='models.host'?{models:[]}:{};queueMicrotask(()=>window.weftNative.onmessage({data:JSON.stringify({id:message.id,ok:true,result})}));}};});
   for(phase of capture?['before','after']:['after']) {
     await phone.goto(`http://127.0.0.1:${server.address().port}/`);await phone.waitForFunction(()=>typeof state!=='undefined'&&state.booted);
-    await phone.evaluate(()=>{state.loggedIn=true;state.owner='synthetic-fix5';state.deviceId='synthetic-phone';state.transitionPending=false;state.chatSource='phone';state.restorePending=false;page('chat');updateComposer();});
+    await phone.evaluate(()=>{state.logicalChats=false;state.model={source:'phone',modelId:'fixture',displayName:'MiMo 定时验收'};state.loggedIn=true;state.owner='synthetic-fix5';state.deviceId='synthetic-phone';state.transitionPending=false;state.chatSource='phone';state.restorePending=false;page('chat');updateComposer();});
+    await phone.locator('#draft').focus();
     await phone.getByRole('button',{name:'选择模型',exact:true}).click();await check(phone,phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..'),'model','390x844',phase==='after');
     await phone.getByRole('button',{name:'添加图片或文件',exact:true}).click();await check(phone,phone.getByRole('menu',{name:'添加附件'}),'attachment','390x844',phase==='after');
     await phone.getByRole('button',{name:/^审批模式/}).click();await check(phone,phone.getByRole('menu',{name:'审批模式'}),'approval','390x844',phase==='after');
@@ -130,6 +131,7 @@ try {
       await phone.getByRole('button',{name:'返回',exact:true}).click();await phone.getByRole('button',{name:'返回',exact:true}).click();
       await phone.evaluate(()=>page('chat'));
       await phone.evaluate(()=>{state.chatSource='phone';state.sharedRunning=false;updateComposer();});
+      await phone.locator('#draft').focus();
       await phone.getByRole('button',{name:'选择模型',exact:true}).click();
       await phone.setViewportSize({width:280,height:300});await check(phone,phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..'),'model-resize','280x300');
       await phone.setViewportSize({width:390,height:844});

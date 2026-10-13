@@ -131,6 +131,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     private val entry = "$origin/ui/index.html"
     private val worker = Executors.newFixedThreadPool(2)
     private val modelWorker = Executors.newSingleThreadExecutor()
+    private val phoneRequest = AtomicReference<java.net.HttpURLConnection?>()
     private val attachmentWorker = Executors.newSingleThreadExecutor()
     private val syncWorker = Executors.newSingleThreadExecutor()
     private val updateWorker = Executors.newSingleThreadExecutor()
@@ -424,7 +425,8 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 } } catch (_: RejectedExecutionException) { updateChecking.set(false) }
                 return@addWebMessageListener
             }
-            val authMutation = method in setOf("auth.login", "cloud.adopt", "auth.register", "auth.logout", "auth.changePassword", "auth.revokeDevice")
+            if (method == "phone.stop") { stopped = true; phoneRequest.getAndSet(null)?.disconnect(); respond(reply, id, true, JSONObject()); return@addWebMessageListener }
+            val authMutation = method in setOf("phone.adopt", "auth.login", "cloud.adopt", "auth.register", "auth.logout", "auth.changePassword", "auth.revokeDevice")
             if (authMutation && !authInFlight.compareAndSet(false, true)) {
                 respond(reply, id, false, JSONObject().put("code", "AUTH_IN_PROGRESS"))
                 return@addWebMessageListener
@@ -434,16 +436,18 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 accountEpoch.incrementAndGet()
                 stopped = true
                 activeModel?.cancel()
+                phoneRequest.getAndSet(null)?.disconnect()
                 emit("account.transition", JSONObject().put("pending", true))
             }
             val requestEpoch = accountEpoch.get()
             val requestHost = secrets.host()
-            try { worker.execute {
+            try { (if (method == "phone.complete" || method == "phone.models.test") modelWorker else worker).execute {
                 if (closed.get()) {
                     if (authMutation) { accountTransition.set(false); authInFlight.set(false) }
                     return@execute
                 }
                 try {
+                    if(method.startsWith("phone.") && !authMutation && requestEpoch != accountEpoch.get()) throw ApiFailure(403,"ACCOUNT_SWITCHED")
                     val result = handle(method, request.optJSONObject("params") ?: JSONObject(), requestEpoch, requestHost)
                     if (!authMutation && requestEpoch != accountEpoch.get())
                         respond(reply, id, false, JSONObject().put("code", "ACCOUNT_SWITCHED"))
@@ -456,7 +460,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                     if (method == "shared.approvals.decide") RunDiagnostics.failed("approval.failure", "bridge", error)
                     if (method.startsWith("offline.")) RunDiagnostics.failed("sync.failure", "offline-copy", error)
                     respond(reply, id, false, JSONObject().put("code", safeCode(error))
-                        .apply { if (error is ApiFailure) put("status", error.status) })
+                        .apply { if (error is ApiFailure) put("status", error.status); if(BuildConfig.DEBUG && packageName == "com.memoweft.weftmate.mobile.mob4qa") put("exceptionType",error.javaClass.simpleName) })
                 } finally { if (authMutation) {
                     accountTransition.set(false)
                     authInFlight.set(false)
@@ -832,6 +836,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         return view
     }
     private fun profileFor(host: HostIdentity): JSONObject {
+        if (host.authSource == "phone") return JSONObject().put("loggedIn", true).put("username", host.username).put("displayName", host.username).put("connectionVerified", false).put("phoneOnly", true)
         val remote = try { api.me(host) } catch (error: Exception) {
             RunDiagnostics.connection(false, error)
             if (error is ApiFailure && (error.status == 401 || error.safeCode == "ACCOUNT_IDENTITY_MISMATCH"))
@@ -959,7 +964,36 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             failure.get()?.let { throw it }
             JSONObject().put("opened", true)
         }
-        "offline.identity" -> secrets.host()?.let { host -> JSONObject().put("ownerId", host.ownerId).put("hostId", host.hostId)
+        "phone.identity" -> PhoneAccount(this, secrets).identity().let { identity -> JSONObject().put("origin",identity.origin).put("accountId",identity.ownerId).put("email",identity.username).put("deviceId",identity.deviceId) }
+        "phone.adopt" -> {
+            val identity = PhoneAccount(this, secrets).adopt(params)
+            SyncJobService.cancel(this)
+            if (secrets.host()?.authSource != "cloud") secrets.saveHost(identity)
+            useScope(secrets.host())
+            savedIdentityView(identity).put("phoneOnly", true)
+        }
+        "phone.models.list", "phone.models.configure", "phone.models.select", "phone.models.remove", "phone.models.test" ->
+            PhoneAccount(this, secrets).models(method.removePrefix("phone.models."), params)
+        "phone.complete" -> {
+            stopped = false
+            try { PhoneAccount(this, secrets).complete(params.getJSONObject("body"), phoneRequest) { text ->
+                emitForAccount(requestEpoch, "phone.progress", JSONObject().put("text", text))
+            } } catch(error: Exception) { if(stopped) throw ApiFailure(499,"CANCELLED"); throw error }
+        }
+        "phone.offline.key", "phone.offline.load", "phone.offline.save", "phone.offline.open", "phone.offline.clear" -> {
+            val account = PhoneAccount(this, secrets).let { if(method == "phone.offline.clear") it.storedIdentity() else it.identity() }
+            if(method == "phone.offline.clear" && params.has("accountId") && (params.optString("accountId") != account.ownerId || params.optString("origin") != account.origin)) JSONObject().put("cleared",true) else {
+            val vault = OfflineVault(this, account, secrets.host() ?: account)
+            when (method) {
+                "phone.offline.key" -> vault.key()
+                "phone.offline.load" -> vault.load()
+                "phone.offline.save" -> vault.save(params.getJSONObject("value"))
+                "phone.offline.open" -> vault.open(params.getJSONObject("envelope"), params.getJSONObject("identity"))
+                else -> vault.clear()
+            }
+            }
+        }
+        "offline.identity" -> secrets.host()?.takeIf { it.authSource != "phone" }?.let { host -> JSONObject().put("ownerId", host.ownerId).put("hostId", host.hostId)
             .put("deviceId", host.deviceId).put("origin", host.origin) } ?: JSONObject()
         "offline.key", "offline.load", "offline.save", "offline.open", "offline.complete", "offline.clear" -> {
             val host = requireHost()
@@ -1683,7 +1717,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
             .put("nativeEmailCodeLogin", true)
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
-            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
+            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.mob4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
                 else secrets.host()?.takeIf { it.authSource == "local" }?.origin ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
         "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))
@@ -1827,11 +1861,12 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             requireHost()
             JSONObject().put("backgroundSync", SyncJobService.status(this))
         }
-        "host.status" -> api.status(requireHost())
+        "host.status" -> { val host = requireHost(); if (host.authSource == "phone") throw ApiFailure(503, "HOST_UNAVAILABLE"); api.status(host) }
         "host.business" -> {
             if (params.getString("path").substringBefore('?').endsWith("/resources"))
                 require(params.optString("method", "GET") == "GET")
             val host = secrets.host() ?: throw ApiFailure(401, "LOGIN_REQUIRED")
+            if (host.authSource == "phone") throw ApiFailure(503, "HOST_UNAVAILABLE")
             val result = api.business(host, params.getString("path"), params.optString("method", "GET"),
                 params.optJSONObject("body"))
             require(result.toString().length <= if (params.getString("path").startsWith("/personal/v1/offline/")) 4 * 1024 * 1024 else 256 * 1024)
@@ -2197,6 +2232,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     }
 
     private fun queueSync(host: HostIdentity, epoch: Long, conversationId: String?) {
+        if (host.authSource == "phone") return
         try { syncWorker.execute {
             try { val result = SyncManager(store, api, attachments).syncOnce(host,
                 { !closed.get() && !accountTransition.get() && accountEpoch.get() == epoch &&
@@ -2595,6 +2631,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         closed.set(true)
         stopped = true
         activeModel?.cancel()
+        phoneRequest.getAndSet(null)?.disconnect()
         if (::bundles.isInitialized) bundles.close()
         events = null
         if (::web.isInitialized) {
