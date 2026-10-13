@@ -4,6 +4,7 @@ import { describeExit, redactEvidenceText } from './process-evidence.mjs';
 // Preparation and teardown are awaited by hooks. Only run() starts the probe
 // budget; a slow synthetic login cannot consume the functional observation.
 export function phasedTestProcess(command, args, {env, roots = []} = {}) {
+  const startedAt=Date.now();
   const child = spawn(command, args, {env, windowsHide:true, stdio:['ignore','pipe','pipe','ipc']});
   let stdout = '', stderr = '', lastPhase = 'prepare';
   const messages = new Map(), waits = new Map(), stages = [];
@@ -11,7 +12,7 @@ export function phasedTestProcess(command, args, {env, roots = []} = {}) {
   const evidence = () => ({lastPhase, stages, ...describeExit(child.exitCode,child.signalCode),
     stdout:redactEvidenceText(stdout, roots),stderr:redactEvidenceText(stderr, roots)});
   child.on('message', message=>{
-    lastPhase=message.phase; stages.push({phase:message.phase,at:Date.now()});
+    lastPhase=message.phase; stages.push({phase:message.phase,ms:Date.now()-startedAt});
     messages.set(message.phase,message); waits.get(message.phase)?.resolve(message);
   });
   let closed = false;
