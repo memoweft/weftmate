@@ -2,6 +2,14 @@ import path from 'node:path';
 import { homedir } from 'node:os';
 
 export function folderWarning(rootPath, home = homedir(), system = process.env.SystemRoot || 'C:\\Windows') {
+  if (process.platform === 'darwin' && rootPath.startsWith('/')) {
+    const target = path.posix.resolve(rootPath);
+    if (target === '/') return '这是整盘根目录，会开放大量文件。建议选择一个专用文件夹，并保持只读。';
+    if (target === path.posix.resolve(home)) return '这是个人主文件夹，可能包含私人资料。建议选择里面的专用文件夹，并保持只读。';
+    if (['/System', '/Library', '/Applications', '/usr', '/bin', '/sbin', '/private/etc'].some(value => target === value || target.startsWith(value + '/')))
+      return '这是系统或程序文件夹，修改可能影响电脑运行。建议保持只读。';
+    return '';
+  }
   const normalize = value => path.win32.resolve(value).replace(/[\\/]+$/, '').toLowerCase();
   const target = normalize(rootPath);
   if (target === normalize(path.win32.parse(rootPath).root)) return '这是整盘根目录，会开放大量文件。建议选择一个专用文件夹，并保持只读。';

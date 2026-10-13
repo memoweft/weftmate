@@ -1,0 +1,14 @@
+{
+  "realMacSourceHost": true,
+  "realCloudImplementation": true,
+  "phone": "headless Chromium 390x844",
+  "computerName": "synthetic-mac",
+  "relay": "direct loopback; production relay not exercised",
+  "electronHeadlessLaunches": 0,
+  "mimoRequests": 0,
+  "checks": [],
+  "completed": false,
+  "hostId": "host-b9056ca7-2e2d-469d-8f4f-0fe870385e1f",
+  "phase": "cloud",
+  "failure": "Expected values to be strictly equal:\n\n403 !== 200\n"
+}
