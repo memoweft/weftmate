@@ -39,9 +39,8 @@ internal fun libraryTypeLabel(row:JSONObject):String {
         item {
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text("成果库",Modifier.weight(1f),fontSize=DesignTokens.font24.sp,fontWeight=FontWeight.SemiBold);NativeFileIconButton(R.drawable.wm_sync,"刷新成果库",enabled=!model.loading){model.refresh()}}
             Text("对话里做好的文件，都在这里。",Modifier.padding(top=gap,bottom=DesignTokens.space24.dp),fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
-            LibrarySelect("文件类型："+(libraryTypes.find{it.first==model.type}?.second ?: "全部"),Modifier.fillMaxWidth().padding(bottom=DesignTokens.space16.dp),"按文件类型筛选") { dismiss ->
-                libraryTypes.forEach{(id,label)->DropdownMenuItem(modifier=Modifier.height(DesignTokens.space44.dp),text={NativeFileLabel(label)},trailingIcon={if(model.type==id)Icon(painterResource(R.drawable.wm_check),"当前")},onClick={model.type=id;dismiss()})}
-            }
+            NativeFilterRow("按文件类型筛选",libraryTypes,model.type,enabled=!model.loading){model.type=it}
+            Spacer(Modifier.height(DesignTokens.space16.dp))
             BasicTextField(model.search,{model.search=it.take(200)},Modifier.fillMaxWidth().heightIn(min=DesignTokens.space44.dp).border((DesignTokens.space2/2).dp,MaterialTheme.colorScheme.outline,RoundedCornerShape(DesignTokens.radius8.dp)).padding(horizontal=DesignTokens.space12.dp,vertical=gap).semantics{contentDescription="搜索文件名"},singleLine=true,textStyle=LocalTextStyle.current.copy(color=MaterialTheme.colorScheme.onSurface,fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),decorationBox={inner->Box(Modifier.fillMaxWidth()){if(model.search.isEmpty())Text("搜索文件名",fontSize=((DesignTokens.font14+DesignTokens.font16)/2).sp,color=MaterialTheme.colorScheme.onSurfaceVariant);inner()}})
             Row(Modifier.fillMaxWidth().padding(top=gap),horizontalArrangement=Arrangement.spacedBy(gap)) {
                 LibrarySelect(model.projects.firstOrNull{it.optString("id")==model.project}?.optString("name") ?: "全部项目",Modifier.weight(1f),"按项目筛选") { dismiss ->

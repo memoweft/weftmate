@@ -1,0 +1,38 @@
+INSTRUMENTATION_STATUS: class=com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest:
+INSTRUMENTATION_STATUS: test=nativeGoalsFlow
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.RuntimeException: Could not launch intent Intent { flg=0x14000000 cmp=com.memoweft.weftmate.mobile.and6qa/com.memoweft.weftmate.mobile.NativeActivity (has extras) } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1791911645605 and now the last time the queue went idle was: 1791911690266. If these numbers are the same your activity might be hogging the event queue.
+	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+	at com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest.nativeGoalsFlow(NativeGoalsInstrumentedTest.kt:49)
+
+INSTRUMENTATION_STATUS: stream=
+Error in nativeGoalsFlow(com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest):
+java.lang.RuntimeException: Could not launch intent Intent { flg=0x14000000 cmp=com.memoweft.weftmate.mobile.and6qa/com.memoweft.weftmate.mobile.NativeActivity (has extras) } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1791911645605 and now the last time the queue went idle was: 1791911690266. If these numbers are the same your activity might be hogging the event queue.
+	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+	at com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest.nativeGoalsFlow(NativeGoalsInstrumentedTest.kt:49)
+
+INSTRUMENTATION_STATUS: test=nativeGoalsFlow
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 45.179
+There was 1 failure:
+1) nativeGoalsFlow(com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest)
+java.lang.RuntimeException: Could not launch intent Intent { flg=0x14000000 cmp=com.memoweft.weftmate.mobile.and6qa/com.memoweft.weftmate.mobile.NativeActivity (has extras) } within 45000 milliseconds. Perhaps the main thread has not gone idle within a reasonable amount of time? There could be an animation or something constantly repainting the screen. Or the activity is doing network calls on creation? See the threaddump logs. For your reference the last time the event queue was idle before your activity launch request was 1791911645605 and now the last time the queue went idle was: 1791911690266. If these numbers are the same your activity might be hogging the event queue.
+	at androidx.test.runner.MonitoringInstrumentation.startActivitySync(MonitoringInstrumentation.java:537)
+	at com.memoweft.weftmate.mobile.NativeGoalsInstrumentedTest.nativeGoalsFlow(NativeGoalsInstrumentedTest.kt:49)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1
