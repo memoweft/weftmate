@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { createHostDiagnostics } from '../../src/host-diagnostics.mjs';
 import { createSystemStatusManager } from '../../src/system-status-runtime.mjs';
 
-export async function startAnd3Fixture() {
+export async function startAnd3Fixture({ usageSamples = false, composer = false, accountModelManager = null } = {}) {
   const cleanups = [];
   const cloud = await fixture({ after: fn => cleanups.push(fn) }, { realProcess:false, env: { CLOUD_OIDC_CLIENTS: JSON.stringify([
     { client_id: 'test-native', redirect_uris: ['com.example.weftmate:/callback'] },
@@ -29,7 +29,7 @@ export async function startAnd3Fixture() {
     metrics:()=>({startupMs:800,firstTokenMs:[900],rssBytes:100*1024**2}), versions:()=>({appVersion:'synthetic'}) });
   try {
     await registration(cloud); desktop = await appDevice(cloud, 'synthetic-desktop');
-    candidate = await startTimelineCandidate({ logicalMobile: true, daily: true, interactive: true, goals: true, clock:()=>Date.now()+hostClockOffset, baseTime:Date.now(), historyCount: 0, riskApproval: true, secondOpinion: true,
+    candidate = await startTimelineCandidate({ usageSamples, composer, accountModelManager, logicalMobile: true, daily: true, interactive: true, goals: true, clock:()=>Date.now()+hostClockOffset, baseTime:Date.now(), historyCount: 0, riskApproval: true, secondOpinion: true,
       systemManager,
       verifyModelProfile:async()=>({configured:true,reachable:true,modelListed:true,inferenceVerified:false}),
       digestModel: async input => { assert.equal(input.purpose, 'second-opinion'); return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ alignment:'对得上', externalInfluence:'没有', reason:'这一步用于保存本人要的进度报告。' }) } }] }), { headers: { 'content-type':'application/json' } }); },
