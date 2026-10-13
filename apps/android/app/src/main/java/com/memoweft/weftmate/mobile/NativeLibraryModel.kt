@@ -52,8 +52,7 @@ internal class NativeLibraryModel(private val chat:NativeChatModel, private val 
                 if(search.isBlank() && type.isBlank() && project.isBlank() && days==0)prefs.edit().putString(owner,JSONArray(rows).toString()).apply()
             }catch(e:CancellationException){throw e}catch(e:Exception){
                 if(g==generation && owner==chat.owner) {
-                    if(e is ApiFailure && e.safeCode in setOf("HOST_REQUIRED","HOST_NOT_CONNECTED","NO_HOST","COMPUTER_REQUIRED")) { noComputer=true;rows=emptyList();next="" }
-                    else error=if(e is ApiFailure && e.status==409)"成果已更新，请重试。" else nativeFileFailure(e)
+                    error=if(e is ApiFailure && e.status==409)"成果已更新，请重试。" else nativeFileFailure(e)
                 }
             }finally{if(g==generation)loading=false}
         }

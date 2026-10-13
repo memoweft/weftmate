@@ -40,7 +40,7 @@ internal object NativeFileControlTokens {
         onDispose{if(Build.VERSION.SDK_INT>=31)windowManager.removeCrossWindowBlurEnabledListener(listener)}
     }
     val background=if(blurEnabled)float else float.compositeOver(Color(if(dark)DesignTokens.nativeDarkCanvas else DesignTokens.nativeCanvas))
-    DropdownMenu(expanded,onDismiss,shape=RoundedCornerShape(DesignTokens.radius12.dp),containerColor=background) {
+    DropdownMenu(expanded,onDismiss,shape=RoundedCornerShape(DesignTokens.radius12.dp),containerColor=background,tonalElevation=0.dp) {
         val view=LocalView.current
         DisposableEffect(view) {
             // Compose's popup owns this root. Do not change the activity or global emulator window.
