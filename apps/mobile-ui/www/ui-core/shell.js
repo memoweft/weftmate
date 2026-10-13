@@ -44,10 +44,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         if (configurationRead) { await configurationRead; if (changed) return refreshConfiguration(changed); return; }
         configurationRead = (async () => {
             const reads = [];
-            if (!changed || changed.models) reads.push(core.refreshModels());
-            else if (changed.modelSettings) reads.push(core.accessApi('/settings/models').then(value => {
-                if (identity === core.state.identityGeneration) { core.state.modelSettings = value; effects.paintModels(); }
-            }));
+            if (!changed || changed.models || changed.modelSettings) reads.push(core.refreshModels());
             if (!changed || changed.personalization) reads.push(core.loadPersonalization());
             await Promise.all(reads);
             if (identity === core.state.identityGeneration) configurationAt = Date.now();
@@ -303,12 +300,18 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
     }
     async function refreshModels() {
         const identity = core.state.identityGeneration;
-        const payload = await core.accessApi('/models');
+        const directory = await core.refreshModelServices?.();
+        // A failed directory read shares the configuration retry interval. Keep
+        // the previous usable models rather than starting the legacy reads.
+        if (core.refreshModelServices && directory === undefined) return;
+        if (identity !== core.state.identityGeneration) return;
+        // Older service responses lack the additive projections. Retain their
+        // legacy reads; the current host supplies both in one directory request.
+        const payload = Array.isArray(directory?.models) ? directory : await core.accessApi('/models');
         if (identity !== core.state.identityGeneration) return;
         core.state.modelsKnown=Array.isArray(payload.models);
         core.state.allModels = Array.isArray(payload.models) ? payload.models : [];
-        if(core.state.modelServicesRefreshAt===undefined||Date.now()-core.state.modelServicesRefreshAt>=60*60*1000){core.state.modelServicesRefreshAt=Date.now();void core.refreshModelServices?.().catch(()=>{});}
-        const modelSettings = await core.accessApi('/settings/models').catch(() => ({}));
+        const modelSettings = directory?.modelSettings ?? await core.accessApi('/settings/models').catch(() => ({}));
         if (identity !== core.state.identityGeneration) return;
         core.state.modelSettings = modelSettings;
         core.state.models = Array.isArray(payload.models) ? payload.models.filter((item) => item?.configured === true &&

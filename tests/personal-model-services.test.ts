@@ -224,7 +224,7 @@ test('service routes discover multiple models, cache directory, hide models, swi
   const root = await mkdtemp(join(tmpdir(), 'personal-model-services-'));
   const secret = randomBytes(24).toString('hex'), staged = new Map<string, string>(), credentials = new Map<string, string>();
   const profiles = new Map<string, any>(), sessions = new Map<string, any>();
-  const sent: string[] = [], sentThinking: boolean[] = []; let queries = 0, discoveredExtra = false, discoveredBlank = false, installedWithPendingSession: string | null = null, installedWithPendingProfile: string | null = null;
+  const sent: string[] = [], sentThinking: boolean[] = []; let queries = 0, nativeCatalogReads = 0, discoveredExtra = false, discoveredBlank = false, installedWithPendingSession: string | null = null, installedWithPendingProfile: string | null = null;
   const directory = createServer((request, response) => {
     queries++; assert.equal(request.url, '/v1/models'); assert.equal(request.headers.authorization === `Bearer ${secret}`, true);
     response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify({ data: [{ id: 'mimo-v2.6-flash' }, { id: 'mimo-v2.6-pro', display_name: 'MiMo Pro', supports_reasoning: true }, { id: 'mimo-v2.5-asr' }, ...(discoveredExtra ? [{ id: 'newly-discovered-chat' }] : []), ...(discoveredBlank ? [{ id: 'new-conversation-chat' }] : [])] }));
@@ -246,7 +246,7 @@ test('service routes discover multiple models, cache directory, hide models, swi
     disable: async ({ profileIds, stageRefs }: any) => { for (const id of profileIds) credentials.delete(id); for (const ref of stageRefs) staged.delete(ref); return { applied: true }; },
     readSecret: async ({ profileId }: any) => credentials.get(profileId), readStagedSecret: async ({ stageRef }: any) => staged.get(stageRef) };
   const backend = { getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready' }),
-    listModels: async () => [...profiles.values()].map(row => ({ id: row.id, name: row.name, model: row.model, configured: credentials.has(row.id), deepThinking: reasoningCapability(row) })),
+    listModels: async () => { nativeCatalogReads++; return [...profiles.values()].map(row => ({ id: row.id, name: row.name, model: row.model, configured: credentials.has(row.id), deepThinking: reasoningCapability(row) })); },
     preflight: async () => ({ ok: true }), createSession: async ({ sessionId, modelProfileId }: any) => { sessions.set(sessionId, { profileId: modelProfileId, running: false }); return { sessionId }; },
     selectSessionModel: async ({ sessionId, modelProfileId }: any) => { const session = sessions.get(sessionId); if (session.running) return { pending: true }; session.profileId = modelProfileId; return { modelProfileId }; },
     sendMessage: async ({ sessionId, deepThinking }: any) => { sent.push(profiles.get(sessions.get(sessionId).profileId).model); sentThinking.push(deepThinking === true); return { accepted: true, receiptId: 'rpc-synthetic' }; },
@@ -258,22 +258,37 @@ test('service routes discover multiple models, cache directory, hide models, swi
     let { origin, hostId } = await service.start(); const grant = await service.issueSetupGrant();
     const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: grant.grant, username: 'Synthetic', password: 'synthetic service account password', deviceName: 'synthetic-host' }) });
     const account = await setup.json(), auth = { origin, cookie: setup.headers.get('set-cookie')!.split(';')[0], 'x-weftmate-csrf': account.csrfToken };
+    const assertBundledModels = async (reader = auth) => {
+      const before = nativeCatalogReads, bundled = await api(origin, reader, 'GET', '/model-services');
+      assert.equal(bundled.status, 200); assert.equal(nativeCatalogReads - before, 1, 'one combined read loads the native catalog only once');
+      const [models, settings] = await Promise.all([api(origin, reader, 'GET', '/models'), api(origin, reader, 'GET', '/settings/models')]);
+      assert.equal(models.status, 200); assert.equal(settings.status, 200);
+      assert.deepEqual(bundled.body.models, models.body.models); assert.deepEqual(bundled.body.modelSettings, settings.body);
+      assert.equal(JSON.stringify(bundled.body).includes(secret), false, 'the combined response contains no credential');
+      return bundled.body;
+    };
     const check = await api(origin, auth, 'POST', '/model-services/check', { baseUrl, apiKey: secret }); assert.equal(check.status, 200); assert.equal(check.body.models.length, 2);
     const created = await api(origin, auth, 'POST', '/model-services', { requestId: 'service-create', name: 'MiMo', baseUrl, apiKey: secret });
     assert.equal(created.status, 201, JSON.stringify(created.body)); const modelService = created.body.service;
     assert.equal(modelService.models.length, 2); assert.equal(modelService.selectedModelId, 'mimo-v2.6-flash');
     assert.equal(JSON.stringify(created.body).includes(secret), false);
     const route = `/model-services/${modelService.serviceId}`;
-    assert.equal((await api(origin, auth, 'GET', '/model-services')).body.services.length, 1);
+    const initialBundle = await assertBundledModels(); assert.equal(initialBundle.services.length, 1); assert.equal(initialBundle.canManage, true);
+    assert.deepEqual(initialBundle.modelSettings, { backgroundModelProfileId: null, backgroundModelFallback: null,
+      defaultModelProfileId: modelService.models[0].profileId, currentChatModelProfileId: modelService.models[0].profileId });
     assert.equal(queries, 2, 'fresh cached catalog does not issue another request');
     assert.equal((await api(origin, auth, 'GET', '/models')).body.models.length, 2);
     const old = await api(origin, auth, 'GET', '/account/models'); assert.equal(old.body.models.length, 2); assert.equal(old.body.models.every((row: any) => typeof row.accountModelId === 'string' && typeof row.profileId === 'string'), true);
     const flash = modelService.models[0], pro = modelService.models[1];
+    assert.equal((await api(origin, auth, 'PATCH', '/settings/models', { backgroundModelProfileId: flash.profileId })).status, 200);
     const createSession = await api(origin, auth, 'POST', '/commands', { requestId: 'new-session', kind: 'session.create', targetDeviceId: hostId, modelProfileId: flash.profileId }); assert.equal(createSession.status, 202);
     const sessionId = createSession.body.command.sessionId;
     await waitFor(() => api(origin, auth, 'GET', `/commands/${createSession.body.command.commandId}`), value => value.body.command.state === 'accepted_by_dsh');
     sessions.get(sessionId).running = true;
     const selected = await api(origin, auth, 'POST', route + '/select', { modelId: pro.modelId, sessionId }); assert.equal(selected.status, 200); assert.equal(selected.body.profileId, pro.profileId);
+    const selectedBundle = await assertBundledModels(); assert.equal(selectedBundle.modelSettings.defaultModelProfileId, pro.profileId);
+    assert.equal(selectedBundle.modelSettings.backgroundModelProfileId, flash.profileId);
+    assert.equal(selectedBundle.services[0].selectedModelId, pro.modelId, 'service selection and account default are projected together');
     assert.equal(selected.body.models.find((row: any) => row.id === pro.profileId).deepThinking.supported, true, 'declared capability reaches the public model list');
     assert.equal((await api(origin, auth, 'GET', '/account/models')).body.models.find((row: any) => row.profileId === pro.profileId).deepThinking.supported, true);
     const enabledThinking = await api(origin, auth, 'PATCH', `/sessions/${sessionId}/thinking`, { enabled: true });
@@ -287,6 +302,10 @@ test('service routes discover multiple models, cache directory, hide models, swi
     await waitFor(() => api(origin, auth, 'GET', `/commands/${message.body.command.commandId}`), value => value.body.command.state === 'accepted_by_dsh');
     assert.deepEqual(sent, ['mimo-v2.6-pro']);
     assert.equal(sentThinking[0], true, 'the next message receives the declared-model thinking preference');
+    await service.reportBackgroundModel(account.account.ownerId, flash.profileId, { unavailable: true });
+    const fallbackBundle = await assertBundledModels(); assert.equal(fallbackBundle.modelSettings.backgroundModelProfileId, null);
+    assert.equal(fallbackBundle.modelSettings.backgroundModelFallback?.profileId, flash.profileId);
+    assert.equal(fallbackBundle.modelSettings.currentChatModelProfileId, pro.profileId);
     sessions.get(sessionId).running = true; discoveredExtra = true;
     const discovery = await api(origin, auth, 'POST', route + '/refresh', {}); assert.equal(discovery.status, 200);
     const extra = discovery.body.service.models.find((row: any) => row.modelId === 'newly-discovered-chat'); assert.equal(extra.profileId, undefined);
@@ -332,12 +351,19 @@ test('service routes discover multiple models, cache directory, hide models, swi
     assert.equal((await api(origin, auth, 'POST', route + '/select', { modelId: flash.modelId })).status, 422);
     assert.equal((await api(origin, auth, 'POST', route + '/refresh', {})).status, 200);
     assert.equal((await api(origin, auth, 'GET', route)).body.service.models[0].enabled, false, 'refresh keeps visibility choices');
+    const other = await fetch(origin + '/personal/v1/auth/register', { method: 'POST', headers: { origin, 'content-type': 'application/json' },
+      body: JSON.stringify({ username: 'OtherSynthetic', password: 'synthetic other service account password', deviceName: 'synthetic-other' }) });
+    assert.equal(other.status, 201); const otherBody = await other.json();
+    const otherBundle = await assertBundledModels({ origin, cookie: other.headers.get('set-cookie')!.split(';')[0], 'x-weftmate-csrf': otherBody.csrfToken });
+    assert.deepEqual(otherBundle.services, []); assert.deepEqual(otherBundle.models, []);
+    assert.deepEqual(otherBundle.modelSettings, { backgroundModelProfileId: null, backgroundModelFallback: null, defaultModelProfileId: null, currentChatModelProfileId: null });
     const disk = await readFile(join(root, 'store.json'), 'utf8'); assert.equal(disk.includes(secret), false);
     const stored = JSON.parse(disk), ownerId = Object.keys(stored.accounts)[0]; assert.equal(stored.accounts[ownerId].defaultModelProfileId, pro.profileId);
     assert.equal(stored.accounts[ownerId].sessions[sessionId].modelSelection.originalProfileId, flash.profileId);
     assert.equal(stored.accounts[ownerId].commands[createSession.body.command.commandId].payload.modelProfileId, flash.profileId, 'historical creation identity remains intact');
     await service.close(); service = await createPersonalAccessService({ root, port: 0, backend, accountModelManager: manager }); ({ origin } = await service.start());
     const after = await api(origin, { ...auth, origin }, 'GET', route); assert.equal(after.status, 200); assert.equal(after.body.service.selectedModelId, pro.modelId); assert.equal(after.body.service.models[0].enabled, false);
+    const restartedBundle = await assertBundledModels({ ...auth, origin }); assert.equal(restartedBundle.modelSettings.defaultModelProfileId, pro.profileId);
     assert.equal((await api(origin, { ...auth, origin }, 'GET', '/account/models')).body.models.length, 4);
     const readded = await api(origin, { ...auth, origin }, 'POST', '/model-services', { requestId: 'same-service-again', name: 'MiMo', baseUrl: baseUrl + '/chat/completions', apiKey: secret });
     assert.equal(readded.status, 201); assert.equal(readded.body.service.serviceId, modelService.serviceId);

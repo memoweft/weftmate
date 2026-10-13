@@ -44,7 +44,9 @@ export function createCommandOperations(context) {
       if(pending.offlineSource && !offlineCommandSource(context,ownerId,pending)){
         await context.serial(()=>context.mutate(ownerId,next=>{if(next.commands[commandId]?.state==='pending'){next.commands[commandId].state='rejected';next.commands[commandId].errorCode='DEVICE_REVOKED';}}));return;
       }
-      if (pending.kind === 'session.message' && !await context.modelServices.applyPendingSelection(ownerId, pending.sessionId)) {
+      const selectedSession = pending.kind === 'session.message' ? context.accountState(ownerId).sessions[pending.sessionId] : null;
+      if (selectedSession?.pendingModelProfileId && selectedSession.pendingModelProfileId !== selectedSession.modelProfileId &&
+          !await context.modelServices.applyPendingSelection(ownerId, pending.sessionId)) {
         const timer = setTimeout(() => schedule(ownerId, commandId), 250); timer.unref?.(); return;
       }
       const pendingSession = pending.kind === 'session.message'

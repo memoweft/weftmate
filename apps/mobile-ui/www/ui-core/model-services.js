@@ -1,6 +1,6 @@
 /* Account scoped service actions. Keys are submitted directly and never cached here. */
 globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => {
-    let reading, writing = false;
+    let reading, writing = false, retryIdentity, retryAt = 0;
     const scope = () => `${core.state.ownerId}/${core.state.identityGeneration}`;
     const recentKey = () => `weftmate:model-recent:${core.state.ownerId}`;
     function modelServicesView() {
@@ -14,16 +14,25 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
     }
     async function refreshModelServices(refresh = false) {
         const identity = scope(); if (reading?.identity === identity) return reading.promise;
+        if (!refresh && retryIdentity === identity && Date.now() < retryAt) return;
         const work = (async () => {
             if (refresh && core.state.modelServices) await Promise.all(core.state.modelServices.map(service => core.accessApi(`/model-services/${encodeURIComponent(service.serviceId)}/refresh`, {method:'POST',protectedWrite:true,body:{}}).catch(() => {})));
             const payload = await core.accessApi('/model-services');
             if (identity !== scope()) return;
             core.state.modelServices = Array.isArray(payload.services) ? payload.services : [];
             core.state.modelServicesCanManage = payload.canManage === true;
+            retryAt = 0;
             effects.renderAccountModels?.(); effects.updateModelPicker?.();
             return payload;
         })(); reading = {identity,promise:work};
-        try { return await work; } finally { if (reading?.promise === work) reading = null; }
+        try { return await work; }
+        catch (error) {
+            if (identity === scope()) {
+                retryIdentity = identity;
+                retryAt = Date.now() + (globalThis.WeftUiCore.polling?.configuration || 30000);
+            }
+            throw error;
+        } finally { if (reading?.promise === work) reading = null; }
     }
     async function selectServiceModel({serviceId,modelId}) {
         if (writing) return false; writing = true; const identity = scope();
@@ -41,6 +50,7 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
                 body:{modelId,requestId:environment.crypto.randomUUID(),...(sessionId ? {sessionId} : {})}, timeoutMs:60000});
             if (identity !== scope()) return false;
             if (!result.profileId) throw {code:'MODEL_UNAVAILABLE'};
+            retryAt = 0;
             if (result.models) core.state.models = result.models.filter(m => m.configured);
             await core.refreshModels(); if (identity !== scope()) return false;
             core.state.modelProfileId = result.profileId; core.state.modelSettings = {...core.state.modelSettings,defaultModelProfileId:result.profileId};
@@ -52,7 +62,7 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
     async function writeModelService(serviceId, body, method = serviceId ? 'PATCH' : 'POST') {
         const identity = scope();
         const result = await core.accessApi('/model-services' + (serviceId ? '/' + encodeURIComponent(serviceId) : ''), {method,protectedWrite:true,body:{requestId:environment.crypto.randomUUID(),...body},timeoutMs:60000});
-        if (identity === scope()) { await refreshModelServices(); await core.refreshModels(); }
+        if (identity === scope()) { retryAt = 0; await core.refreshModels(); }
         return result;
     }
     const checkModelService = ({baseUrl,apiKey,interfaceType,serviceId}) => core.accessApi('/model-services/check', {method:'POST',protectedWrite:true,body:{baseUrl,interfaceType,...(apiKey?{apiKey}:{}),...(serviceId?{serviceId}:{})},timeoutMs:20000});

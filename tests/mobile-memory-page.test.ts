@@ -50,7 +50,7 @@ class FakeElement {
     this.listeners.set(name, [...(this.listeners.get(name) ?? []), listener])
   }
   fire(name: string, extra: Record<string, unknown> = {}) {
-    const event = { currentTarget: this, target: this, preventDefault() {}, ...extra }
+    const event = { currentTarget: this, target: this, preventDefault() {}, stopPropagation() {}, ...extra }
     for (const listener of this.listeners.get(name) ?? []) listener(event)
   }
   append(...children: FakeElement[]) { for (const child of children) { child.parentNode = this; this.children.push(child) } }
@@ -70,6 +70,9 @@ class FakeElement {
   setAttribute(name: string, value: string) { this.attributes.set(name, value) }
   removeAttribute(name: string) { this.attributes.delete(name) }
   getAttribute(name: string) { return this.attributes.get(name) ?? null }
+  get parentElement() { return this.parentNode }
+  get isConnected(): boolean { return this.id==='body'||htmlIds.has(this.id)||this.parentNode?.isConnected===true }
+  replaceWith(...nodes: FakeElement[]) {const parent=this.parentNode;if(!parent)return;const index=parent.children.indexOf(this);parent.children.splice(index,1,...nodes);for(const node of nodes)node.parentNode=parent;this.parentNode=null;}
   focus() {}
   blur() {}
   scrollTo() {}
@@ -152,6 +155,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   function business(path: string, owner: string, method = 'GET', body?: any) {
     businessPaths.push({ owner, path, method, body })
     if (method !== 'GET') return options.write?.(owner, path, method, body) ?? Promise.reject(new Error('METHOD_NOT_ALLOWED'))
+    if (path === '/personal/v1/model-services') return { services: [], canManage: true }
     if (path.startsWith('/personal/v1/memory/commands/by-request/')) {
       const requestId = decodeURIComponent(path.split('/').at(-1)!)
       return options.receipt?.(owner, requestId) ?? Promise.reject(new Error('NOT_FOUND'))
@@ -268,6 +272,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
     querySelector: (selector: string) => selector === '[data-action="new-chat"]' ? newChat : selector === '[data-action="temporary-chat"]' ? temporaryChat : selector === '.brand strong' ? brandTitle : null,
     querySelectorAll: (selector: string) => selector === '[data-page]' ? nav : [],
     addEventListener(name: string, listener: (event?: any) => unknown) { if (name === 'DOMContentLoaded') readyListener=listener },
+    removeEventListener() {},
   }
   const window: any = { weftNative: bridge, innerHeight: 844, matchMedia: () => ({ matches: false, addEventListener() {} }),
     addEventListener() {}, WeftFormat: null }
@@ -318,7 +323,13 @@ async function openModels(app: ReturnType<typeof harness>) {
   await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app bootstrap did not finish')
   app.nav.find((button) => button.dataset.page === 'settings')!.fire('click')
   findButton(app.get('page-content'), '模型')!.fire('click')
-  await waitUntil(() => app.calls.some((call) => call.method === 'models.account.list'), 'account models were not requested')
+  await waitUntil(() => !!findAll(app.get('page-content'),node=>node.tagName==='BUTTON'&&node.getAttribute('aria-label')==='模型服务更多操作')[0], 'model service menu was not rendered')
+  const before=app.calls.filter(call=>call.method==='models.account.list').length
+  findAll(app.get('page-content'),node=>node.tagName==='BUTTON'&&node.getAttribute('aria-label')==='模型服务更多操作')[0].fire('click')
+  const accountModels=findAll(app.get('body'),node=>node.tagName==='BUTTON'&&node.getAttribute('role')==='menuitem'&&node.textContent==='账户云模型')[0]
+  assert.ok(accountModels,'account models must be reachable from the model service menu')
+  accountModels.fire('click')
+  await waitUntil(() => app.calls.filter((call) => call.method === 'models.account.list').length>before, 'account models were not requested from the new entry')
 }
 async function logoutAndLoginB(app: ReturnType<typeof harness>) {
   switchToConnect(app)
@@ -1078,8 +1089,13 @@ test('mobile handoff selects only a unique exact original model and preserves a 
 test('phone model publish sends only a saved model identity through JS and keeps the request ID', async () => {
   const model = { endpoint: 'https://api.xiaomimimo.com/v1/chat/completions', modelId: 'mimo-v2.6-flash',
     displayName: 'MiMo', selected: true }
-  const app = harness({ phoneModels: () => ({ models: [model] }), accountModels: () => ({ models: [] }),
-    accountPublish: (_, params) => ({ operation: { requestId: params.requestId, kind: 'create', status: 'succeeded' } }) })
+  let savedIdentity: any
+  let app!: ReturnType<typeof harness>
+  app = harness({ phoneModels: () => ({ models: [model] }), accountModels: () => ({ models: [] }),
+    accountPublish: (_, params) => {
+      savedIdentity=JSON.parse([...app.storage.entries()].find(([key])=>key.startsWith('weftmate-account-model:publish:'))![1])
+      return { operation: { requestId: params.requestId, kind: 'create', status: 'succeeded' } }
+    } })
   await openModels(app)
   await waitUntil(() => !!findButton(app.get('page-content'), '在电脑使用这个模型'), 'publish action')
   findButton(app.get('page-content'), '在电脑使用这个模型')!.fire('click')
@@ -1087,6 +1103,13 @@ test('phone model publish sends only a saved model identity through JS and keeps
   const call = app.calls.find((entry) => entry.method === 'models.account.publishSaved')!
   assert.deepEqual(Object.keys(call.params).sort(), ['endpoint', 'modelId', 'requestId'])
   assert.equal(call.params.endpoint, model.endpoint)
+  assert.equal(call.params.modelId, model.modelId)
+  assert.match(call.params.requestId,/^[0-9a-f-]{36}$/)
+  assert.deepEqual(Object.keys(savedIdentity).sort(),['endpoint','modelId','owner','requestId'])
+  assert.equal(savedIdentity.owner,'scope-A')
+  assert.equal(savedIdentity.endpoint,model.endpoint)
+  assert.equal(savedIdentity.modelId,model.modelId)
+  assert.equal(savedIdentity.requestId,call.params.requestId)
   assert.equal(JSON.stringify([...app.storage.values()]).includes('apiKey'), false)
   assert.equal(JSON.stringify([...app.storage.values()]).includes('secret'), false)
 })
@@ -1101,11 +1124,19 @@ test('account model import keeps phone selection and asks before replacing an en
   await waitUntil(() => !!findButton(app.get('page-content'), '保存到手机'), 'import action')
   findButton(app.get('page-content'), '保存到手机')!.fire('click')
   await waitUntil(() => !!findButton(app.get('page-content'), '替换同地址密钥'), 'credential conflict')
+  const first=app.calls.filter(call=>call.method==='models.account.transfer')[0]
+  assert.deepEqual(Object.keys(first.params).sort(),['accountModelId','expectedRevision','replaceExistingKey','requestId'])
+  assert.equal(first.params.accountModelId,account.accountModelId)
+  assert.equal(first.params.expectedRevision,account.revision)
+  assert.equal(first.params.replaceExistingKey,false)
+  assert.match(first.params.requestId,/^[0-9a-f-]{36}$/)
+  assert.equal(app.calls.filter(call=>call.method==='models.account.transfer').length,1,'conflict alone cannot replace the existing credential')
   assert.equal(app.calls.filter((call) => call.method === 'models.select').length, 0)
   findButton(app.get('page-content'), '替换同地址密钥')!.fire('click')
   await waitUntil(() => app.calls.filter((call) => call.method === 'models.account.transfer').length === 2,
     'explicit replacement')
   assert.equal(app.calls.filter((call) => call.method === 'models.account.transfer')[1].params.replaceExistingKey, true)
+  assert.equal(JSON.stringify([...app.storage.values()]).includes('apiKey'),false)
   assert.equal(app.calls.filter((call) => call.method === 'models.select').length, 0)
 })
 

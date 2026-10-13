@@ -10,6 +10,7 @@ import { handleOnboarding } from './onboarding.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { canonicalProviderModelId } from '../model-connection-check.mjs';
 import { currentChatProfile } from '../background-model-selection.mjs';
+import { publicModelService } from './model-services.mjs';
 import { personalAccessUiAssetPaths } from '../personal-access-ui/index.mjs';
 import {
   attachmentDisposition,
@@ -884,8 +885,24 @@ export function createHttpHandler(context) {
         const management = request.method !== 'GET';
         const current = context.authenticate(request, management ? 'account:manage' : 'sessions:read');
         if (management && (current.via !== 'cookie' || !['password', 'cloud', 'desktop'].includes(current.device.authKind))) throw failure('FORBIDDEN', 403);
-        if (request.method === 'GET' && pathname === '/personal/v1/model-services') return context.json(response, 200, {
-          services: await context.modelServices.list(ownerId), canManage: current.via === 'cookie' && current.device.scopes.includes('account:manage') });
+        if (request.method === 'GET' && pathname === '/personal/v1/model-services') {
+          await context.modelServices.list(ownerId);
+          const catalog = await context.callBackend(() => context.backend.listModels({ ownerId }));
+          const latest = context.authenticate(request, 'sessions:read');
+          if (latest.ownerId !== ownerId) throw failure('UNAUTHORIZED', 401);
+          // Directory refresh/selection can commit while the native catalog is
+          // loading. Project all account-owned fields from its latest snapshot.
+          const account = context.accountState(ownerId), root = context.rootState;
+          return context.json(response, 200, {
+            services: Object.values(account.modelServices ?? {}).filter(row => row.status === 'active').map(publicModelService),
+            canManage: latest.via === 'cookie' && latest.device.scopes.includes('account:manage'),
+            models: context.visibleModels(ownerId, catalog, account, root),
+            modelSettings: { backgroundModelProfileId: account.backgroundModelProfileId ?? null,
+              backgroundModelFallback: account.backgroundModelFallback ?? null,
+              defaultModelProfileId: account.defaultModelProfileId ?? null,
+              currentChatModelProfileId: currentChatProfile(account, id => context.modelSelectable(ownerId, id, account, root)) },
+          });
+        }
         if (!context.accountModelManager) throw failure('ACCOUNT_MODEL_UNAVAILABLE', 503);
         if (request.method === 'GET' && serviceMatch && !serviceMatch[2]) {
           const service = (await context.modelServices.list(ownerId)).find(row => row.serviceId === serviceMatch[1]);

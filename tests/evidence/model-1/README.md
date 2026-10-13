@@ -49,3 +49,13 @@
 - `tests/model-service-catalog.test.ts`、`personal-model-services.test.ts`、`anthropic-model-service.test.ts`、`model-services-ui.test.ts`、`phone-model-services.test.ts`：目录、能力依据、迁移、缓存、失败回退、旧接口、运行中与冷会话换模、原生 Claude（模型服务）的协议适配及界面身份隔离。新测试可以在没有固定运行时的环境中运行。
 
 本地只运行相关测试、类型检查与公开卫生检查；全量由本包的云端检查承担。其它检查计数和清理结果见工作包结果与 PR。
+
+## 合并前修复证据
+
+手机模型服务页顶栏的「更多」菜单保留「账户云模型」，进入既有上传／取回页面；密钥冲突继续原确认，返回也走顶栏菜单。`phone-standalone/account-entry-validation.json` 和四张 `host-{390,360}-{light,dark}-account-menu-open.png` 记录真实网页点击往返，目录不含密钥，页面脚本错误为0；只表示浏览器视口。原三项保护测试从新入口执行：只传已保存身份和同一请求号、替换密钥前询问、A账户迟到结果不能盖B；整个 `tests/mobile-memory-page.test.ts` 32／32通过。
+
+`GET /model-services` 加法返回 `models` 与 `modelSettings`，共享核心一次读取目录及默认／后台选择，免去空闲时的旧模型与设置重复请求。失败按现有30秒配置刷新间隔退避，缓存仍可用，显式重试可立即进行。`tests/model-services-ui.test.ts` 与 `tests/ui-core.test.ts` 合计72／72通过，合并接口真实HTTP一致性与账户隔离11／11通过。
+
+`apps/mobile-ui/tests/chat-interactions.test.mjs` 120／120通过。该次30秒模拟窗口：普通空闲45、隐藏0；完整空主对话健康42，BACKEND_UNAVAILABLE／HTTP_502／HTTP_504／CURSOR_RESET_REQUIRED各58。这四个错误分支和健康分支继续使用原60次上限；窗口内模型服务1次，旧模型及默认设置0次。调度延迟、恢复、隐藏窗口保护均保留。
+
+安卓路由清单使用符合既有精确白名单的合成服务标识，不放宽白名单。发布资源键根据逻辑URL生成，`ui-core/model-service-catalog.mjs` 的物理源保持 `src/model-service-catalog.mjs`；签名与路径安全检查保持，避免把物理映射中的 `../` 写进发布清单。离线消息只在存在待切换型号时准备换模，普通不可用模型仍沿原检查返回 `MODEL_UNAVAILABLE`。

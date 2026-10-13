@@ -474,7 +474,28 @@ function transferAccountModel(...args){return uiCore.mobileSettings.transferAcco
 
 function testAccountModel(...args){return uiCore.mobileSettings.testAccountModel(...args)}
 
+function modelSettingsMenu(header,label,entries){
+  const title=header.querySelector('.page-title');if(!title)return;
+  const tools=el('div','library-heading');tools.style.marginBottom='var(--wm-space-20)';title.replaceWith(tools);
+  const more=el('button','icon-button');more.type='button';more.setAttribute('aria-label',label);more.setAttribute('aria-haspopup','menu');more.append(WeftIcons.create('more',22));
+  let popup;
+  more.addEventListener('click',()=>{popup?.close(false);WeftPopover.closeMenu();popup=WeftPopover.openMenu(more,entries,{onClose:()=>{popup=null;}});
+    popup.menu.classList.add('wm-model-menu','wm-model-service-editor','wm-model-service-select-menu');
+    for(const [property,token] of [['--floating-surface','--ms-surface'],['--line','--ms-line'],['--shadow-float','--ms-shadow'],['--accent-soft','--ms-soft'],['--surface-soft','--ms-soft']])popup.menu.style.setProperty(property,`var(${token})`);
+    WeftPopover.position(popup.menu,more,{side:'bottom',align:'end'});
+  });tools.append(title,more);
+}
+
+function accountCloudModelsPage(target){
+  clear(target);legacyModelsPage(target);
+  const title=target.querySelector('.page-title');if(!title)return;
+  modelSettingsMenu(title.parentNode,'账户云模型更多操作',[{icon:'model',name:'返回模型服务',action:()=>{
+    state.accountModelCredentialConflict=null;page('models');
+  }}]);
+}
+
 function modelsPage(target){
+  if(state.accountModelCredentialConflict?.owner===state.owner)return accountCloudModelsPage(target);
   if(globalThis.WeftPhone?.active)return phoneModelsPage(target);
   if(!state.loggedIn)return legacyModelsPage(target);
   const owner=state.owner,epoch=state.authEpoch;target.append(heading('模型服务'),notice('正在读取模型服务…'));
@@ -752,7 +773,8 @@ function phoneModelsPage(target,{host=false}={}){
     if(action==='configure'&&result.service?.selectedModelId)await uiCore.selectServiceModel({serviceId:result.service.serviceId,modelId:result.service.selectedModelId});
     const view=publicView();if(view.model)state.model=view.model;updateComposer();return {...view,service:result.service};
   };
-  target.append(heading('模型服务',host?'密钥安全保存在电脑上，手机上不保存副本。填一次密钥，就能选择这个服务的所有聊天模型。':window.weftNative?'密钥保存在这台手机的安全存储中。填一次密钥，就能选择这个服务的所有聊天模型。':'密钥只在这次打开期间有效，关闭或刷新页面后需要重新填写；对话加密保存在此浏览器。模型服务需要允许浏览器直连。'));
+  const header=heading('模型服务',host?'密钥安全保存在电脑上，手机上不保存副本。填一次密钥，就能选择这个服务的所有聊天模型。':window.weftNative?'密钥保存在这台手机的安全存储中。填一次密钥，就能选择这个服务的所有聊天模型。':'密钥只在这次打开期间有效，关闭或刷新页面后需要重新填写；对话加密保存在此浏览器。模型服务需要允许浏览器直连。');
+  if(host)modelSettingsMenu(header,'模型服务更多操作',[{icon:'model',name:'账户云模型',action:()=>{if(current())accountCloudModelsPage(target);}}]);target.append(header);
   const list=el('section','wm-model-service-list');list.append(el('h2','wm-model-group',host?'电脑的模型服务':'这台手机的模型服务'));
   const body=el('div','wm-model-service-cards');list.append(body);target.append(list);
   body.append(notice('正在读取模型服务…'));

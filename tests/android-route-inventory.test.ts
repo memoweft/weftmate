@@ -20,6 +20,22 @@ test('Android inventory resolves opaque IDs, dates, numeric detail anchors and h
   assert.equal(exampleRoute('/personal/v1/sessions/${encodeURIComponent(sessionId)}/events/{seq}/detail'), '/personal/v1/sessions/sample-one/events/1/detail');
   assert.equal(exampleRoute('/personal/v1/daily-summaries/:day/health'), '/personal/v1/daily-summaries/2026-10-12/health');
   assert.equal(exampleRoute('/personal/v1/health/metrics/:id'), '/personal/v1/health/metrics/sleep');
+  const service = '/personal/v1/model-services/model-service-00000000-0000-4000-8000-000000000001';
+  assert.equal(exampleRoute('/personal/v1/model-services/${encodeURIComponent(serviceId)}'), service);
+  assert.equal(exampleRoute('/personal/v1/model-services/:id/refresh'), service + '/refresh');
+  assert.equal(exampleRoute('/personal/v1/model-services/{id}/select'), service + '/select');
+});
+
+test('model service inventory uses the native service identity shape and preserves callable methods', async () => {
+  const rows = (await inventory()).filter(row => row.path.startsWith('/personal/v1/model-services'));
+  const service = '/personal/v1/model-services/model-service-00000000-0000-4000-8000-000000000001';
+  assert.deepEqual(rows.map(row => row.method + ' ' + row.path).sort(), [
+    'GET /personal/v1/model-services', 'POST /personal/v1/model-services',
+    'POST /personal/v1/model-services/check',
+    'GET ' + service, 'PATCH ' + service, 'DELETE ' + service,
+    'POST ' + service + '/refresh', 'POST ' + service + '/select',
+  ].sort());
+  assert.ok(rows.every(row => row.transport === 'business'));
 });
 
 test('offline phone task inventory covers all four exact cloud POST calls and keeps computer receipt routes separate', async () => {

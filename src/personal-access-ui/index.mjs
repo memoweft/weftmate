@@ -111,10 +111,11 @@ const files = new Map([
 ])
 
 export const personalAccessUiAssetPaths = new Set([...files.keys(), '/personal/v1/ui/offline-worker.js'])
-export const personalAccessUiResources = new Map([...files.values()].map(([name]) => {
-  const resource = name.startsWith('../ui-core/') ? name.slice(3) : `personal-access-ui/${name}`;
-  return [resource, join(import.meta.dirname, name)];
-}))
+// Published keys follow browser URLs; source files may live outside ui-core.
+const resourceName = (pathname, sourceName) => sourceName.startsWith('../ui-core/')
+  ? pathname.slice('/personal/v1/ui/'.length) : `personal-access-ui/${sourceName}`;
+export const personalAccessUiResources = new Map([...files].map(([pathname, [name]]) =>
+  [resourceName(pathname, name), join(import.meta.dirname, name)]))
 let verifiedResource = null
 export function setPersonalAccessUiResourceReader(reader) { verifiedResource = reader }
 
@@ -143,7 +144,7 @@ self.addEventListener('fetch',event=>{const u=new URL(event.request.url);if(even
   const asset = files.get(url.pathname)
   if (!asset) return false
   try {
-    const resource = asset[0].startsWith('../ui-core/') ? asset[0].slice(3) : `personal-access-ui/${asset[0]}`
+    const resource = resourceName(url.pathname, asset[0])
     const body = await verifiedResource?.(resource) ?? await readFile(join(import.meta.dirname, asset[0]))
     const headers = { ...securityHeaders };
     if (url.pathname.endsWith('/computer-channel.html')) {
