@@ -19,6 +19,11 @@ import WeftMateCore
     private var replica: OfflineReplica?
     private var identity: OfflineIdentity?
     @Published private(set) var polling = false
+    var generation: Int? { replica?.state.snapshot?.generation }
+    func enqueuePhoneTurns(_ turns: [OfflineTurn], generation: Int) throws {
+        guard let replica, ready, !hostOffline, !polling, !busy else { throw OfflineFailure.notReady }
+        try replica.enqueuePhoneTurns(turns,generation:generation); publish(replica)
+    }
     var messages: [OfflineMessage] {
         turns.filter { $0.conversationId == conversationID }.flatMap(\.messages)
     }

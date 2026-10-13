@@ -1,0 +1,9 @@
+{
+  "realCloud": true,
+  "fileMail": true,
+  "realHost": true,
+  "syntheticRelayRoute": true,
+  "noComputer": true,
+  "modelRequests": 0,
+  "streamRequests": 0
+}

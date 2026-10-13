@@ -22,9 +22,9 @@ struct PhoneAttachmentBlock: View {
             .clipShape(RoundedRectangle(cornerRadius:AppleTokens.Radius.r16))
             .overlay(alignment:.topTrailing) {
                 if let remove { Button(action:remove) {
-                    WeftIcon("deny",size:AppleTokens.Space.p16).foregroundStyle(Weave.ink)
+                    WeftIcon("deny",size:AppleTokens.Space.p16).foregroundStyle(Color.white)
                         .frame(width:AppleTokens.Space.p28,height:AppleTokens.Space.p28)
-                        .background(Weave.surface.opacity(AppleTokens.Opacity.disabled),in:Circle())
+                        .background(Color.black.opacity(0.24),in:Circle())
                         .frame(width:AppleTokens.Space.p44,height:AppleTokens.Space.p44).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityElement(children:.ignore).accessibilityLabel("移除 "+name).accessibilityIdentifier("attachment.remove."+name) }
             }

@@ -1,7 +1,9 @@
 import Foundation
 
 enum SharedValidation {
-    static let maximumSequence = 9_007_199_254_740_991
+    // Real watchOS arm64_32 uses a 32-bit Int. Never form an overflowing literal;
+    // 64-bit clients retain the JS safe-integer bound, narrower clients reject unrepresentable cursors.
+    static let maximumSequence = Int(min(Int64(Int.max), 9_007_199_254_740_991))
     static func id(_ value: String) -> Bool { matches(value, "^[A-Za-z0-9_-]{1,128}$") }
     static func request(_ value: String) -> Bool {
         value != "." && value != ".." && matches(value, "^[A-Za-z0-9_.:-]{1,128}$")

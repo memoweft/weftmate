@@ -113,6 +113,7 @@ struct SettingsView: View {
                             }
                         }
                     }
+                    NavigationLink(value: AppleSettingsRoute(categoryID:"phone-chats")) { WeftLabel("手机上的对话",icon:"chat").frame(maxWidth:.infinity,minHeight:44,alignment:.leading).phoneCard() }.buttonStyle(.plain).accessibilityIdentifier("settings.phoneChats")
                     if categories.isEmpty { Text("没有匹配的设置").foregroundStyle(Weave.muted) }
                     Button { confirmingLogout = true } label: {
                         HStack(spacing: AppleTokens.Space.p12) {
@@ -236,10 +237,34 @@ private struct SettingsCategoryView: View {
         openDiagnostics()
     }
     @ViewBuilder private var content: some View {
+        #if os(iOS)
+        if route.categoryID == "phone-models" || (route.categoryID == "models" && app.session == nil) {
+            PhoneModelsView(model:app.phoneChat).task(id:app.phoneAccountIdentity) { app.phoneChat.activate(app:app) }
+        } else if route.categoryID == "models" {
+            VStack(spacing:AppleTokens.Space.p12) {
+                NavigationLink("手机上的模型",value:AppleSettingsRoute(categoryID:"phone-models")).buttonStyle(OutlineActionStyle()).padding(.horizontal,AppleTokens.Space.p16)
+                standardContent
+            }
+        } else if app.session == nil && ["usage","approvals","schedules","backups","system","archived"].contains(route.categoryID) {
+            PhoneComputerEmptyPage(app:app,title:title,explanation:"这里显示电脑保存的内容和设置。")
+        } else if route.categoryID == "phone-chats" {
+            PhoneStandaloneChat(app:app,model:app.phoneChat)
+        } else if app.session == nil && route.categoryID == "memory" {
+            Text("手机上的对话保存在本机；连上电脑后才能形成和查看记忆。").padding(AppleTokens.Space.p20)
+        } else { standardContent }
+        #else
+        standardContent
+        #endif
+    }
+    @ViewBuilder private var standardContent: some View {
         switch route.categoryID {
         case "account":
+            #if os(iOS)
+            if app.session == nil || app.cloudLogin.authenticated { PhoneAccountSettingsContent(cloud:app.cloudLogin) } else { LocalAccountSettingsView(app:app) }
+            #else
             if app.cloudLogin.authenticated { AccountSettingsView(cloud: app.cloudLogin) }
             else { LocalAccountSettingsView(app: app) }
+            #endif
         case "devices":
             if app.cloudLogin.authenticated { CloudDevicesView(app: app, cloud: app.cloudLogin) }
             else { DevicesView(model: app) }

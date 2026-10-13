@@ -21,6 +21,10 @@ struct PhoneActionStyle: ButtonStyle {
             .contentShape(Capsule())
     }
 }
+struct PhoneOperationModeIcon: View {
+    @ScaledMetric private var size: CGFloat=20
+    var body: some View { Image(systemName:"slider.horizontal.3").font(.system(size:size,weight:.regular)).frame(width:size,height:size).accessibilityHidden(true) }
+}
 struct PhoneIconStyle: ButtonStyle {
     var primary = false
     var quiet = false
@@ -110,7 +114,7 @@ private struct PhoneTabStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.foregroundStyle(selected ? Weave.ink : Weave.muted)
-            .background(selected ? Weave.surface : Weave.soft, in: Capsule())
+            .background(selected ? Weave.surface : .clear, in: Capsule())
             .opacity(!enabled ? AppleTokens.Opacity.disabled : configuration.isPressed ? AppleTokens.Opacity.pressed : 1)
     }
 }
@@ -118,7 +122,7 @@ private struct PhoneTabStyle: ButtonStyle {
 #if os(iOS)
 extension AppleAppModel {
     var phoneConnectionStatus: String {
-        if serverLoginExpired { return "请重新登录" }
+        if serverLoginExpired { return cloudLogin.authenticated ? "电脑暂时连不上" : "请重新登录" }
         if offline.hostOffline { return "电脑离线" }
         return session?.verification == .verified ? "已连接" : "正在连接"
     }
