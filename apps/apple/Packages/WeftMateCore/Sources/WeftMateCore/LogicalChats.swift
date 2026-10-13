@@ -16,6 +16,7 @@ public struct LogicalChat: Codable, Identifiable, Equatable, Sendable {
     public let activeSessionId: String?
     public let conversationId: String?
     public let modelProfileId: String?
+    public var selectedModelProfileId: String? = nil
     public let timeZone: String
     public let revision: Int
     public let contentRevision: Int
