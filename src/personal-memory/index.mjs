@@ -10,7 +10,7 @@ import { createPersonalHealthStore, OBSERVED_PENDING } from '../personal-health/
 import { semanticRecallStatus } from '../system-diagnostics.mjs';
 import { normalizeApiBaseUrl } from '../stage2-config.ts';
 import { modelTierFor } from '../model-tier.ts';
-import { recallQuestions } from './recall-questions.mjs';
+import { recallQuestions,recallEntries } from './recall-questions.mjs';
 
 const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
@@ -652,12 +652,14 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           // A stalled new job must not hide older usable memories. At the
           // deadline, recall the current World and let the foreground answer.
         }
-        const queries = [query, ...recallQuestions(query, recallMaxItems),
+        // Core canonicalizes first-person formation to “用户”; keep identity
+        // lookup in that same vocabulary without reading unrestricted World.
+        const queries = ['用户叫什么？',query, ...recallQuestions(query, recallMaxItems),
           // Standing conversational preferences apply even when today's topic
           // shares no words with the earlier preference (e.g. a new concept).
           // Explicit communication cues use Core's existing query fallback;
           // exact source facts need not contain a synthesized "用户希望" phrase.
-          '“语言”“例子”“术语”的表达偏好？', '我叫什么？'];
+          '“语言”“例子”“术语”的表达偏好？'];
         // Topic, style and identity must share a read transaction: formation can
         // commit between separate RPCs, otherwise a quote and its formal successor
         // can both be injected. Older Core versions have no recent quote bridge.
@@ -701,20 +703,20 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         for (const snapshot of snapshots) {
           const rendered = snapshot?.preview?.rendered_recall ?? '';
           const pairs = snapshot?.preview?.selected_item_ids ?? [];
-          const claims = rendered.split(/\n(?=记忆(?:（过往）)?：)/);
           if (!pairs.length && rendered.trim() &&
               fragments.join('\n\n').length + rendered.length + 2 <= formalBudget && !fragments.includes(rendered.trim())) fragments.push(rendered.trim());
-          for (const [index, pair] of pairs.entries()) {
-            const [kind, id] = Array.isArray(pair) ? pair : [];
-            let claim = claims[index]?.trim();
-            if (claim && (snapshot?.preview?.pending_corrections ?? []).length) claim = '记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。' + claim.replace(/^记忆(?:（过往）)?：/, '');
-            const summary = claim?.replace(/^记忆(?:（过往）)?：/, '').trim().slice(0, 240);
-            if (!['cognition', 'entity', 'relationship', 'event'].includes(kind) ||
-                typeof id !== 'string' || !summary || seen.has(`${kind}:${id}`) ||
-                memories.length + recentEvidence.length >= recallMaxItems || fragments.join('\n\n').length + claim.length + 2 > formalBudget) continue;
-            seen.add(`${kind}:${id}`);
-            memories.push({ id, kind, summary }); fragments.push(claim);
-          }
+        }
+        for (const entry of recallEntries(snapshots)) {
+          const {snapshot,pair}=entry;
+          const [kind, id] = Array.isArray(pair) ? pair : [];
+          let claim = entry.claim;
+          if (claim && (snapshot?.preview?.pending_corrections ?? []).length) claim = '记忆：已被用户纠正，待更新；以下旧内容不能作为当前事实。' + claim.replace(/^记忆(?:（过往）)?：/, '');
+          const summary = claim?.replace(/^记忆(?:（过往）)?：/, '').trim().slice(0, 240);
+          if (!['cognition', 'entity', 'relationship', 'event'].includes(kind) ||
+              typeof id !== 'string' || !summary || seen.has(`${kind}:${id}`) ||
+              memories.length + recentEvidence.length >= recallMaxItems || fragments.join('\n\n').length + claim.length + 2 > formalBudget) continue;
+          seen.add(`${kind}:${id}`);
+          memories.push({ id, kind, summary }); fragments.push(claim);
         }
         if (!pendingCorrections.size && typeof interaction?.rendered_context === 'string' && interaction.rendered_context.trim()) {
           const remaining = formalBudget - fragments.join('\n\n').length - 2;

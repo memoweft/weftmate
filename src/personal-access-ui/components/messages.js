@@ -170,6 +170,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                     WeftContent.update(body,full.data.text);const actual=body.closest('.message');if(actual){appendMessageFiles(actual,full.data.text);actual.querySelector('.truncated')?.remove();}
                 }).catch(()=>{});
             }
+            if(event.data?.phoneSource&&(event.eventId||event.data.phoneEventId))row.weftOpenSideChat=()=>ui.openPhoneHistorySideChat({...event,eventId:event.eventId||event.data.phoneEventId});
             if (!event.data?.live) ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
             if (incremental && events.length <= 20 && event.type === 'assistant.message') {
                 globalThis.WeftReplyMotion?.reveal(row.querySelector('.message-text'),'arrival');

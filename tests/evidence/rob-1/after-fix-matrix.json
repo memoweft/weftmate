@@ -33,11 +33,12 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:52:52.953Z",
+                "modifiedAt": "2026-10-13T11:55:41.417Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -81,7 +82,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:53:04.091Z",
+                "modifiedAt": "2026-10-13T11:55:52.582Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -90,10 +91,10 @@
               "weftmate-model.enc": {
                 "exists": false
               },
-              "weftmate-model.enc.52232.84ff94ff-8964-41ba-92c1-c78a3dff7c90.tmp": {
+              "weftmate-model.enc.21632.e2bbd6ea-a359-41c6-83bb-a6717917693b.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:53:04.327Z"
+                "modifiedAt": "2026-10-13T11:55:52.824Z"
               }
             }
           }
@@ -106,11 +107,12 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:53:04.091Z",
+                "modifiedAt": "2026-10-13T11:55:52.582Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -119,10 +121,10 @@
               "weftmate-model.enc": {
                 "exists": false
               },
-              "weftmate-model.enc.52232.84ff94ff-8964-41ba-92c1-c78a3dff7c90.tmp": {
+              "weftmate-model.enc.21632.e2bbd6ea-a359-41c6-83bb-a6717917693b.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:53:04.327Z"
+                "modifiedAt": "2026-10-13T11:55:52.824Z"
               }
             }
           }
@@ -159,7 +161,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:53:16.552Z",
+                "modifiedAt": "2026-10-13T11:56:04.842Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -168,10 +170,10 @@
               "weftmate-model.enc": {
                 "exists": false
               },
-              "weftmate-model.enc.6832.1f3cfea0-b7da-453c-8885-96a3fa274a7a.tmp": {
+              "weftmate-model.enc.28432.fa15ad8e-9605-46af-9090-7d69edec9e3f.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:53:16.772Z"
+                "modifiedAt": "2026-10-13T11:56:05.059Z"
               }
             }
           },
@@ -181,7 +183,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:53:16.552Z",
+                "modifiedAt": "2026-10-13T11:56:04.842Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -190,7 +192,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:53:16.772Z"
+                "modifiedAt": "2026-10-13T11:56:05.059Z"
               }
             }
           }
@@ -203,11 +205,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:53:16.552Z",
+                "modifiedAt": "2026-10-13T11:56:04.842Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -216,7 +219,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:53:16.772Z"
+                "modifiedAt": "2026-10-13T11:56:05.059Z"
               }
             }
           }
@@ -232,11 +235,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:53:16.552Z",
+                "modifiedAt": "2026-10-13T11:56:04.842Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -245,7 +249,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:53:16.772Z"
+                "modifiedAt": "2026-10-13T11:56:05.059Z"
               }
             }
           }
@@ -258,11 +262,15 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": {
+              "name": "Error",
+              "code": null
+            },
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:53:29.932Z",
+                "modifiedAt": "2026-10-13T11:56:18.128Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -271,7 +279,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:53:16.772Z"
+                "modifiedAt": "2026-10-13T11:56:05.059Z"
               }
             }
           }
@@ -310,11 +318,12 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:53:44.424Z",
+                "modifiedAt": "2026-10-13T11:56:32.749Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -358,7 +367,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:53:55.568Z",
+                "modifiedAt": "2026-10-13T11:56:43.884Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -367,10 +376,10 @@
               "weftmate-model.enc": {
                 "exists": false
               },
-              "weftmate-model.enc.49424.8b783508-1f0c-427b-8d7e-f4e682874a08.tmp": {
+              "weftmate-model.enc.22588.79882d36-6a11-4dbd-9f18-d95d86d70a14.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:53:55.823Z"
+                "modifiedAt": "2026-10-13T11:56:44.099Z"
               }
             }
           }
@@ -383,11 +392,12 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:53:55.568Z",
+                "modifiedAt": "2026-10-13T11:56:43.884Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -396,10 +406,10 @@
               "weftmate-model.enc": {
                 "exists": false
               },
-              "weftmate-model.enc.49424.8b783508-1f0c-427b-8d7e-f4e682874a08.tmp": {
+              "weftmate-model.enc.22588.79882d36-6a11-4dbd-9f18-d95d86d70a14.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:53:55.823Z"
+                "modifiedAt": "2026-10-13T11:56:44.099Z"
               }
             }
           }
@@ -436,7 +446,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:07.966Z",
+                "modifiedAt": "2026-10-13T11:56:56.264Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -445,10 +455,10 @@
               "weftmate-model.enc": {
                 "exists": false
               },
-              "weftmate-model.enc.55560.10351029-cc85-4b0d-bace-855dd7d05899.tmp": {
+              "weftmate-model.enc.50188.be1f5488-a1a7-441d-ac28-d1f962347b7c.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:08.191Z"
+                "modifiedAt": "2026-10-13T11:56:56.480Z"
               }
             }
           },
@@ -458,7 +468,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:07.966Z",
+                "modifiedAt": "2026-10-13T11:56:56.264Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -467,7 +477,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:08.191Z"
+                "modifiedAt": "2026-10-13T11:56:56.480Z"
               }
             }
           }
@@ -480,11 +490,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:07.966Z",
+                "modifiedAt": "2026-10-13T11:56:56.264Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -493,7 +504,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:08.191Z"
+                "modifiedAt": "2026-10-13T11:56:56.480Z"
               }
             }
           }
@@ -509,11 +520,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:07.966Z",
+                "modifiedAt": "2026-10-13T11:56:56.264Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -522,7 +534,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:08.191Z"
+                "modifiedAt": "2026-10-13T11:56:56.480Z"
               }
             }
           }
@@ -535,11 +547,15 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": {
+              "name": "Error",
+              "code": null
+            },
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:21.137Z",
+                "modifiedAt": "2026-10-13T11:57:09.452Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -548,7 +564,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:08.191Z"
+                "modifiedAt": "2026-10-13T11:56:56.480Z"
               }
             }
           }
@@ -587,11 +603,12 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:35.800Z",
+                "modifiedAt": "2026-10-13T11:57:24.091Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -635,7 +652,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:46.967Z",
+                "modifiedAt": "2026-10-13T11:57:35.215Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -644,10 +661,10 @@
               "weftmate-model.enc": {
                 "exists": false
               },
-              "weftmate-model.enc.16068.835b62ba-8a71-479d-b0f1-ea58c3ed723f.tmp": {
+              "weftmate-model.enc.23240.be59f3a2-f12e-4005-9dfd-90b6828f9558.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:47.241Z"
+                "modifiedAt": "2026-10-13T11:57:35.402Z"
               }
             }
           }
@@ -660,11 +677,12 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:46.967Z",
+                "modifiedAt": "2026-10-13T11:57:35.215Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -673,10 +691,10 @@
               "weftmate-model.enc": {
                 "exists": false
               },
-              "weftmate-model.enc.16068.835b62ba-8a71-479d-b0f1-ea58c3ed723f.tmp": {
+              "weftmate-model.enc.23240.be59f3a2-f12e-4005-9dfd-90b6828f9558.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:47.241Z"
+                "modifiedAt": "2026-10-13T11:57:35.402Z"
               }
             }
           }
@@ -713,7 +731,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:59.418Z",
+                "modifiedAt": "2026-10-13T11:57:47.370Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -722,10 +740,10 @@
               "weftmate-model.enc": {
                 "exists": false
               },
-              "weftmate-model.enc.38644.6e1eaa13-ccd5-4fcd-abbc-26eef697b28c.tmp": {
+              "weftmate-model.enc.24548.696502ee-32a4-4c30-bded-e2014da0c728.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:59.690Z"
+                "modifiedAt": "2026-10-13T11:57:47.569Z"
               }
             }
           },
@@ -735,7 +753,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:59.418Z",
+                "modifiedAt": "2026-10-13T11:57:47.370Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -744,7 +762,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:59.690Z"
+                "modifiedAt": "2026-10-13T11:57:47.569Z"
               }
             }
           }
@@ -757,11 +775,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:59.418Z",
+                "modifiedAt": "2026-10-13T11:57:47.370Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -770,7 +789,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:59.690Z"
+                "modifiedAt": "2026-10-13T11:57:47.569Z"
               }
             }
           }
@@ -786,11 +805,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:54:59.418Z",
+                "modifiedAt": "2026-10-13T11:57:47.370Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -799,7 +819,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:59.690Z"
+                "modifiedAt": "2026-10-13T11:57:47.569Z"
               }
             }
           }
@@ -812,11 +832,15 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": {
+              "name": "Error",
+              "code": null
+            },
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:12.980Z",
+                "modifiedAt": "2026-10-13T11:58:00.456Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -825,7 +849,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:54:59.690Z"
+                "modifiedAt": "2026-10-13T11:57:47.569Z"
               }
             }
           }
@@ -847,7 +871,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:26.571Z",
+                "modifiedAt": "2026-10-13T11:58:13.977Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -856,7 +880,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:55:26.843Z"
+                "modifiedAt": "2026-10-13T11:58:14.209Z"
               }
             }
           }
@@ -869,11 +893,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:26.571Z",
+                "modifiedAt": "2026-10-13T11:58:13.977Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -882,7 +907,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:55:26.843Z"
+                "modifiedAt": "2026-10-13T11:58:14.209Z"
               }
             }
           }
@@ -905,7 +930,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:40.127Z",
+                "modifiedAt": "2026-10-13T11:58:27.182Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -914,7 +939,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:55:40.398Z"
+                "modifiedAt": "2026-10-13T11:58:27.486Z"
               }
             }
           },
@@ -924,7 +949,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:40.127Z",
+                "modifiedAt": "2026-10-13T11:58:27.182Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -933,12 +958,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:55:40.398Z"
+                "modifiedAt": "2026-10-13T11:58:27.486Z"
               },
-              "weftmate-model.enc.43032.37a4951f-cc89-4f2c-b3da-9edb310d6a55.tmp": {
+              "weftmate-model.enc.20240.4256dc5a-4414-4d7f-a796-b599e4acb040.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:55:41.802Z"
+                "modifiedAt": "2026-10-13T11:58:28.628Z"
               }
             }
           }
@@ -951,11 +976,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:40.127Z",
+                "modifiedAt": "2026-10-13T11:58:27.182Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -964,12 +990,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:55:40.398Z"
+                "modifiedAt": "2026-10-13T11:58:27.486Z"
               },
-              "weftmate-model.enc.43032.37a4951f-cc89-4f2c-b3da-9edb310d6a55.tmp": {
+              "weftmate-model.enc.20240.4256dc5a-4414-4d7f-a796-b599e4acb040.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:55:41.802Z"
+                "modifiedAt": "2026-10-13T11:58:28.628Z"
               }
             }
           }
@@ -992,7 +1018,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:54.236Z",
+                "modifiedAt": "2026-10-13T11:58:40.615Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1001,7 +1027,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:55:54.514Z"
+                "modifiedAt": "2026-10-13T11:58:40.916Z"
               }
             }
           },
@@ -1011,7 +1037,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:54.236Z",
+                "modifiedAt": "2026-10-13T11:58:40.615Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1020,12 +1046,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:55:54.514Z"
+                "modifiedAt": "2026-10-13T11:58:40.916Z"
               },
-              "weftmate-model.enc.50884.fc893067-00c1-4575-9380-7756c9dc5ed1.tmp": {
+              "weftmate-model.enc.45244.476b3bca-02e1-491e-b811-d654a83bfb2f.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:55:55.882Z"
+                "modifiedAt": "2026-10-13T11:58:42.068Z"
               }
             }
           },
@@ -1035,7 +1061,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:54.236Z",
+                "modifiedAt": "2026-10-13T11:58:40.615Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1044,7 +1070,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:55:55.882Z"
+                "modifiedAt": "2026-10-13T11:58:42.068Z"
               }
             }
           }
@@ -1057,11 +1083,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:54.236Z",
+                "modifiedAt": "2026-10-13T11:58:40.615Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1070,7 +1097,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:55:55.882Z"
+                "modifiedAt": "2026-10-13T11:58:42.068Z"
               }
             }
           }
@@ -1086,11 +1113,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:55:54.236Z",
+                "modifiedAt": "2026-10-13T11:58:40.615Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1099,7 +1127,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:55:55.882Z"
+                "modifiedAt": "2026-10-13T11:58:42.068Z"
               }
             }
           }
@@ -1112,11 +1140,15 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": {
+              "name": "Error",
+              "code": null
+            },
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:09.177Z",
+                "modifiedAt": "2026-10-13T11:58:54.971Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1125,7 +1157,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:55:55.882Z"
+                "modifiedAt": "2026-10-13T11:58:42.068Z"
               }
             }
           }
@@ -1147,7 +1179,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:23.017Z",
+                "modifiedAt": "2026-10-13T11:59:08.341Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1156,7 +1188,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:56:23.335Z"
+                "modifiedAt": "2026-10-13T11:59:08.633Z"
               }
             }
           }
@@ -1169,11 +1201,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:23.017Z",
+                "modifiedAt": "2026-10-13T11:59:08.341Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1182,7 +1215,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:56:23.335Z"
+                "modifiedAt": "2026-10-13T11:59:08.633Z"
               }
             }
           }
@@ -1205,7 +1238,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:36.642Z",
+                "modifiedAt": "2026-10-13T11:59:21.596Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1214,7 +1247,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:56:36.873Z"
+                "modifiedAt": "2026-10-13T11:59:21.798Z"
               }
             }
           },
@@ -1224,7 +1257,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:36.642Z",
+                "modifiedAt": "2026-10-13T11:59:21.596Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1233,12 +1266,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:56:36.873Z"
+                "modifiedAt": "2026-10-13T11:59:21.798Z"
               },
-              "weftmate-model.enc.31380.d2be8eb4-affa-4ce0-8afc-1372c69c0d41.tmp": {
+              "weftmate-model.enc.23244.825f46ac-69f8-4d98-8490-71c55a46c2f0.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:56:38.194Z"
+                "modifiedAt": "2026-10-13T11:59:22.982Z"
               }
             }
           }
@@ -1251,11 +1284,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:36.642Z",
+                "modifiedAt": "2026-10-13T11:59:21.596Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1264,12 +1298,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:56:36.873Z"
+                "modifiedAt": "2026-10-13T11:59:21.798Z"
               },
-              "weftmate-model.enc.31380.d2be8eb4-affa-4ce0-8afc-1372c69c0d41.tmp": {
+              "weftmate-model.enc.23244.825f46ac-69f8-4d98-8490-71c55a46c2f0.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:56:38.194Z"
+                "modifiedAt": "2026-10-13T11:59:22.982Z"
               }
             }
           }
@@ -1292,7 +1326,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:50.413Z",
+                "modifiedAt": "2026-10-13T11:59:34.972Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1301,7 +1335,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:56:50.664Z"
+                "modifiedAt": "2026-10-13T11:59:35.256Z"
               }
             }
           },
@@ -1311,7 +1345,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:50.413Z",
+                "modifiedAt": "2026-10-13T11:59:34.972Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1320,12 +1354,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:56:50.664Z"
+                "modifiedAt": "2026-10-13T11:59:35.256Z"
               },
-              "weftmate-model.enc.19092.73bd498e-f45c-43f6-bdcb-f67a6a3940ed.tmp": {
+              "weftmate-model.enc.26984.51b8c10f-7155-4eb2-9409-0a99ebdb19d5.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:56:52.178Z"
+                "modifiedAt": "2026-10-13T11:59:36.453Z"
               }
             }
           },
@@ -1335,7 +1369,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:50.413Z",
+                "modifiedAt": "2026-10-13T11:59:34.972Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1344,7 +1378,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:56:52.178Z"
+                "modifiedAt": "2026-10-13T11:59:36.453Z"
               }
             }
           }
@@ -1357,11 +1391,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:50.413Z",
+                "modifiedAt": "2026-10-13T11:59:34.972Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1370,7 +1405,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:56:52.178Z"
+                "modifiedAt": "2026-10-13T11:59:36.453Z"
               }
             }
           }
@@ -1386,11 +1421,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:56:50.413Z",
+                "modifiedAt": "2026-10-13T11:59:34.972Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1399,7 +1435,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:56:52.178Z"
+                "modifiedAt": "2026-10-13T11:59:36.453Z"
               }
             }
           }
@@ -1412,11 +1448,15 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": {
+              "name": "Error",
+              "code": null
+            },
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:05.674Z",
+                "modifiedAt": "2026-10-13T11:59:49.447Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1425,7 +1465,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:56:52.178Z"
+                "modifiedAt": "2026-10-13T11:59:36.453Z"
               }
             }
           }
@@ -1447,7 +1487,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:19.597Z",
+                "modifiedAt": "2026-10-13T12:00:03.026Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1456,7 +1496,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:57:19.876Z"
+                "modifiedAt": "2026-10-13T12:00:03.320Z"
               }
             }
           }
@@ -1469,11 +1509,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:19.597Z",
+                "modifiedAt": "2026-10-13T12:00:03.026Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1482,7 +1523,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:57:19.876Z"
+                "modifiedAt": "2026-10-13T12:00:03.320Z"
               }
             }
           }
@@ -1505,7 +1546,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:33.427Z",
+                "modifiedAt": "2026-10-13T12:00:16.261Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1514,7 +1555,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:57:33.716Z"
+                "modifiedAt": "2026-10-13T12:00:16.576Z"
               }
             }
           },
@@ -1524,7 +1565,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:33.427Z",
+                "modifiedAt": "2026-10-13T12:00:16.261Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1533,12 +1574,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:57:33.716Z"
+                "modifiedAt": "2026-10-13T12:00:16.576Z"
               },
-              "weftmate-model.enc.12856.b7c7e8c2-d46f-4a08-856b-7dde2ac834c6.tmp": {
+              "weftmate-model.enc.59500.d5cdbf88-f4a8-437f-b17e-22c81ba820cc.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:57:35.155Z"
+                "modifiedAt": "2026-10-13T12:00:17.774Z"
               }
             }
           }
@@ -1551,11 +1592,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:33.427Z",
+                "modifiedAt": "2026-10-13T12:00:16.261Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1564,12 +1606,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:57:33.716Z"
+                "modifiedAt": "2026-10-13T12:00:16.576Z"
               },
-              "weftmate-model.enc.12856.b7c7e8c2-d46f-4a08-856b-7dde2ac834c6.tmp": {
+              "weftmate-model.enc.59500.d5cdbf88-f4a8-437f-b17e-22c81ba820cc.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:57:35.155Z"
+                "modifiedAt": "2026-10-13T12:00:17.774Z"
               }
             }
           }
@@ -1592,7 +1634,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:47.629Z",
+                "modifiedAt": "2026-10-13T12:00:29.999Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1601,7 +1643,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:57:47.913Z"
+                "modifiedAt": "2026-10-13T12:00:30.209Z"
               }
             }
           },
@@ -1611,7 +1653,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:47.629Z",
+                "modifiedAt": "2026-10-13T12:00:29.999Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1620,12 +1662,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:57:47.913Z"
+                "modifiedAt": "2026-10-13T12:00:30.209Z"
               },
-              "weftmate-model.enc.43136.2bc1ca3b-d5a6-447a-8e79-4db70dcd3c97.tmp": {
+              "weftmate-model.enc.53184.a3ece1b6-c09a-46c7-9cb4-ab091952fcc8.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:57:49.345Z"
+                "modifiedAt": "2026-10-13T12:00:31.336Z"
               }
             }
           },
@@ -1635,7 +1677,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:47.629Z",
+                "modifiedAt": "2026-10-13T12:00:29.999Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1644,7 +1686,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:57:49.345Z"
+                "modifiedAt": "2026-10-13T12:00:31.336Z"
               }
             }
           }
@@ -1657,11 +1699,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:47.629Z",
+                "modifiedAt": "2026-10-13T12:00:29.999Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1670,7 +1713,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:57:49.345Z"
+                "modifiedAt": "2026-10-13T12:00:31.336Z"
               }
             }
           }
@@ -1686,11 +1729,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:57:47.629Z",
+                "modifiedAt": "2026-10-13T12:00:29.999Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1699,7 +1743,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:57:49.345Z"
+                "modifiedAt": "2026-10-13T12:00:31.336Z"
               }
             }
           }
@@ -1712,11 +1756,15 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": {
+              "name": "Error",
+              "code": null
+            },
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:03.157Z",
+                "modifiedAt": "2026-10-13T12:00:44.209Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1725,7 +1773,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:57:49.345Z"
+                "modifiedAt": "2026-10-13T12:00:31.336Z"
               }
             }
           }
@@ -1747,7 +1795,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:07.461Z",
+                "modifiedAt": "2026-10-13T12:00:47.767Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1756,7 +1804,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:07.453Z"
+                "modifiedAt": "2026-10-13T12:00:47.761Z"
               }
             }
           }
@@ -1769,11 +1817,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:07.461Z",
+                "modifiedAt": "2026-10-13T12:00:47.767Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1782,7 +1831,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:07.453Z"
+                "modifiedAt": "2026-10-13T12:00:47.761Z"
               }
             }
           }
@@ -1805,7 +1854,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:10.884Z",
+                "modifiedAt": "2026-10-13T12:00:50.683Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1814,7 +1863,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:10.879Z"
+                "modifiedAt": "2026-10-13T12:00:50.679Z"
               }
             }
           },
@@ -1824,7 +1873,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:10.884Z",
+                "modifiedAt": "2026-10-13T12:00:50.683Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1833,12 +1882,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:10.879Z"
+                "modifiedAt": "2026-10-13T12:00:50.679Z"
               },
-              "weftmate-model.enc.39132.53823a76-1483-4574-99b3-70971d52b8e5.tmp": {
+              "weftmate-model.enc.55144.260d4d73-7033-4b4a-9389-6dbdbf60f508.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:12.269Z"
+                "modifiedAt": "2026-10-13T12:00:51.766Z"
               }
             }
           }
@@ -1851,11 +1900,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:10.884Z",
+                "modifiedAt": "2026-10-13T12:00:50.683Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1864,12 +1914,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:10.879Z"
+                "modifiedAt": "2026-10-13T12:00:50.679Z"
               },
-              "weftmate-model.enc.39132.53823a76-1483-4574-99b3-70971d52b8e5.tmp": {
+              "weftmate-model.enc.55144.260d4d73-7033-4b4a-9389-6dbdbf60f508.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:12.269Z"
+                "modifiedAt": "2026-10-13T12:00:51.766Z"
               }
             }
           }
@@ -1892,7 +1942,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:14.723Z",
+                "modifiedAt": "2026-10-13T12:00:53.731Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1901,7 +1951,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:14.716Z"
+                "modifiedAt": "2026-10-13T12:00:53.728Z"
               }
             }
           },
@@ -1911,7 +1961,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:14.723Z",
+                "modifiedAt": "2026-10-13T12:00:53.731Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1920,12 +1970,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:14.716Z"
+                "modifiedAt": "2026-10-13T12:00:53.728Z"
               },
-              "weftmate-model.enc.33032.ca0217ce-c7ed-4fe1-9f62-945ac958c704.tmp": {
+              "weftmate-model.enc.53180.0c0c2184-9666-4188-8151-86047d82d110.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:16.195Z"
+                "modifiedAt": "2026-10-13T12:00:54.810Z"
               }
             }
           },
@@ -1935,7 +1985,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:14.723Z",
+                "modifiedAt": "2026-10-13T12:00:53.731Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1944,7 +1994,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:16.195Z"
+                "modifiedAt": "2026-10-13T12:00:54.810Z"
               }
             }
           }
@@ -1957,11 +2007,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:14.723Z",
+                "modifiedAt": "2026-10-13T12:00:53.731Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1970,7 +2021,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:16.195Z"
+                "modifiedAt": "2026-10-13T12:00:54.810Z"
               }
             }
           }
@@ -1986,11 +2037,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:14.723Z",
+                "modifiedAt": "2026-10-13T12:00:53.731Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -1999,7 +2051,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:16.195Z"
+                "modifiedAt": "2026-10-13T12:00:54.810Z"
               }
             }
           }
@@ -2012,11 +2064,15 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": {
+              "name": "Error",
+              "code": null
+            },
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:29.767Z",
+                "modifiedAt": "2026-10-13T12:01:07.687Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2025,7 +2081,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:16.195Z"
+                "modifiedAt": "2026-10-13T12:00:54.810Z"
               }
             }
           }
@@ -2047,7 +2103,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:33.842Z",
+                "modifiedAt": "2026-10-13T12:01:11.228Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2056,7 +2112,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:33.836Z"
+                "modifiedAt": "2026-10-13T12:01:11.223Z"
               }
             }
           }
@@ -2069,11 +2125,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:33.842Z",
+                "modifiedAt": "2026-10-13T12:01:11.228Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2082,7 +2139,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:33.836Z"
+                "modifiedAt": "2026-10-13T12:01:11.223Z"
               }
             }
           }
@@ -2105,7 +2162,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:37.448Z",
+                "modifiedAt": "2026-10-13T12:01:14.360Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2114,7 +2171,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:37.442Z"
+                "modifiedAt": "2026-10-13T12:01:14.346Z"
               }
             }
           },
@@ -2124,7 +2181,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:37.448Z",
+                "modifiedAt": "2026-10-13T12:01:14.360Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2133,12 +2190,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:37.442Z"
+                "modifiedAt": "2026-10-13T12:01:14.346Z"
               },
-              "weftmate-model.enc.60484.5fdaec32-58d6-4e62-a445-c64d13837c8c.tmp": {
+              "weftmate-model.enc.4128.a8d7ae6e-7751-46d8-8de6-8eff13f211ab.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:38.640Z"
+                "modifiedAt": "2026-10-13T12:01:15.628Z"
               }
             }
           }
@@ -2151,11 +2208,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:37.448Z",
+                "modifiedAt": "2026-10-13T12:01:14.360Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2164,12 +2222,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:37.442Z"
+                "modifiedAt": "2026-10-13T12:01:14.346Z"
               },
-              "weftmate-model.enc.60484.5fdaec32-58d6-4e62-a445-c64d13837c8c.tmp": {
+              "weftmate-model.enc.4128.a8d7ae6e-7751-46d8-8de6-8eff13f211ab.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:38.640Z"
+                "modifiedAt": "2026-10-13T12:01:15.628Z"
               }
             }
           }
@@ -2192,7 +2250,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:41.012Z",
+                "modifiedAt": "2026-10-13T12:01:17.696Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2201,7 +2259,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:41.007Z"
+                "modifiedAt": "2026-10-13T12:01:17.693Z"
               }
             }
           },
@@ -2211,7 +2269,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:41.012Z",
+                "modifiedAt": "2026-10-13T12:01:17.696Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2220,12 +2278,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:41.007Z"
+                "modifiedAt": "2026-10-13T12:01:17.693Z"
               },
-              "weftmate-model.enc.42684.2074e8eb-6373-4fa7-899f-cad28bc9fb31.tmp": {
+              "weftmate-model.enc.54936.c7a1ff44-59f7-475b-9d59-71ce74aedd1e.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:42.255Z"
+                "modifiedAt": "2026-10-13T12:01:18.783Z"
               }
             }
           },
@@ -2235,7 +2293,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:41.012Z",
+                "modifiedAt": "2026-10-13T12:01:17.696Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2244,7 +2302,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:42.255Z"
+                "modifiedAt": "2026-10-13T12:01:18.783Z"
               }
             }
           }
@@ -2257,11 +2315,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:41.012Z",
+                "modifiedAt": "2026-10-13T12:01:17.696Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2270,7 +2329,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:42.255Z"
+                "modifiedAt": "2026-10-13T12:01:18.783Z"
               }
             }
           }
@@ -2286,11 +2345,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:41.012Z",
+                "modifiedAt": "2026-10-13T12:01:17.696Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2299,7 +2359,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:42.255Z"
+                "modifiedAt": "2026-10-13T12:01:18.783Z"
               }
             }
           }
@@ -2312,11 +2372,15 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": {
+              "name": "Error",
+              "code": null
+            },
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:55.550Z",
+                "modifiedAt": "2026-10-13T12:01:31.609Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2325,7 +2389,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:58:42.255Z"
+                "modifiedAt": "2026-10-13T12:01:18.783Z"
               }
             }
           }
@@ -2347,7 +2411,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:59.323Z",
+                "modifiedAt": "2026-10-13T12:01:35.218Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2356,7 +2420,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:59.318Z"
+                "modifiedAt": "2026-10-13T12:01:35.207Z"
               }
             }
           }
@@ -2369,11 +2433,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:58:59.323Z",
+                "modifiedAt": "2026-10-13T12:01:35.218Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2382,7 +2447,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:58:59.318Z"
+                "modifiedAt": "2026-10-13T12:01:35.207Z"
               }
             }
           }
@@ -2405,7 +2470,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:59:02.532Z",
+                "modifiedAt": "2026-10-13T12:01:38.185Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2414,7 +2479,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:59:02.527Z"
+                "modifiedAt": "2026-10-13T12:01:38.173Z"
               }
             }
           },
@@ -2424,7 +2489,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:59:02.532Z",
+                "modifiedAt": "2026-10-13T12:01:38.185Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2433,12 +2498,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:59:02.527Z"
+                "modifiedAt": "2026-10-13T12:01:38.173Z"
               },
-              "weftmate-model.enc.42088.2fa20602-8674-4ded-95d1-1b8ef71ddf7f.tmp": {
+              "weftmate-model.enc.1748.7fba41a8-7061-4f96-a025-dd6ef13b4cce.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:59:03.840Z"
+                "modifiedAt": "2026-10-13T12:01:39.267Z"
               }
             }
           }
@@ -2451,11 +2516,12 @@
             "stage": "read",
             "readable": true,
             "revision": "old",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:59:02.532Z",
+                "modifiedAt": "2026-10-13T12:01:38.185Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2464,12 +2530,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:59:02.527Z"
+                "modifiedAt": "2026-10-13T12:01:38.173Z"
               },
-              "weftmate-model.enc.42088.2fa20602-8674-4ded-95d1-1b8ef71ddf7f.tmp": {
+              "weftmate-model.enc.1748.7fba41a8-7061-4f96-a025-dd6ef13b4cce.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:59:03.840Z"
+                "modifiedAt": "2026-10-13T12:01:39.267Z"
               }
             }
           }
@@ -2492,7 +2558,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:59:06.237Z",
+                "modifiedAt": "2026-10-13T12:01:41.299Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2501,7 +2567,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:59:06.230Z"
+                "modifiedAt": "2026-10-13T12:01:41.294Z"
               }
             }
           },
@@ -2511,7 +2577,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:59:06.237Z",
+                "modifiedAt": "2026-10-13T12:01:41.299Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2520,12 +2586,12 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 109,
-                "modifiedAt": "2026-10-11T08:59:06.230Z"
+                "modifiedAt": "2026-10-13T12:01:41.294Z"
               },
-              "weftmate-model.enc.54532.233c4b6d-7e59-453c-8fb4-ac6bfb1db137.tmp": {
+              "weftmate-model.enc.50520.c2e14a9c-7445-4508-b959-23b8c0a40375.tmp": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:59:07.566Z"
+                "modifiedAt": "2026-10-13T12:01:42.410Z"
               }
             }
           },
@@ -2535,7 +2601,7 @@
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:59:06.237Z",
+                "modifiedAt": "2026-10-13T12:01:41.299Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2544,7 +2610,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:59:07.566Z"
+                "modifiedAt": "2026-10-13T12:01:42.410Z"
               }
             }
           }
@@ -2557,11 +2623,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:59:06.237Z",
+                "modifiedAt": "2026-10-13T12:01:41.299Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2570,7 +2637,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:59:07.566Z"
+                "modifiedAt": "2026-10-13T12:01:42.410Z"
               }
             }
           }
@@ -2586,11 +2653,12 @@
             "stage": "read",
             "readable": true,
             "revision": "new",
+            "readError": null,
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:59:06.237Z",
+                "modifiedAt": "2026-10-13T12:01:41.299Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2599,7 +2667,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:59:07.566Z"
+                "modifiedAt": "2026-10-13T12:01:42.410Z"
               }
             }
           }
@@ -2612,11 +2680,15 @@
             "stage": "read",
             "readable": false,
             "revision": null,
+            "readError": {
+              "name": "Error",
+              "code": null
+            },
             "files": {
               "Local State": {
                 "exists": true,
                 "bytes": 490,
-                "modifiedAt": "2026-10-11T08:59:20.865Z",
+                "modifiedAt": "2026-10-13T12:01:55.236Z",
                 "masterKeyPresent": true
               },
               "weftmate-storage-key.json": {
@@ -2625,7 +2697,7 @@
               "weftmate-model.enc": {
                 "exists": true,
                 "bytes": 105,
-                "modifiedAt": "2026-10-11T08:59:07.566Z"
+                "modifiedAt": "2026-10-13T12:01:42.410Z"
               }
             }
           }

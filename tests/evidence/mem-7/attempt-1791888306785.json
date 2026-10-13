@@ -1,0 +1,241 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realMemoryCore": true,
+  "syntheticCloud": true,
+  "syntheticAccount": true,
+  "requests": [
+    {
+      "phase": "phone-register",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "light-extraction",
+      "status": 200
+    },
+    {
+      "phase": "phone-chat",
+      "transport": "phone",
+      "purpose": "chat-or-test",
+      "status": 200
+    }
+  ],
+  "checks": [],
+  "screenshots": [
+    {
+      "file": "phone-360-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-empty.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-items.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-menu.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-edit.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-light-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-light-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-360-dark-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    },
+    {
+      "file": "phone-390-dark-memory-off.png",
+      "surface": "web viewport",
+      "systemBars": false
+    }
+  ],
+  "errors": [],
+  "lightItems": [
+    "我叫林舟。",
+    "我的鹦鹉叫青瓷。",
+    "正在做一个叫纸舟的练习项目。",
+    "茶饮偏好：现在喜欢乌龙茶，不再喜欢茉莉花茶。"
+  ],
+  "failure": "The input did not match the regular expression /青瓷/. Input:\n\n'我目前没有关于你的任何记忆信息。这是我们第一次对话，我没有存储你之前提到过的个人偏好信息。\\n' +\n  '\\n' +\n  '你可以告诉我你的鹦鹉叫什么、喜欢什么茶，我会很乐意记住（在本次对话中）！\\n' +\n  '\\n' +\n  '复制回复'\n",
+  "phase": "phone-chat",
+  "processExit": {
+    "decimal": null,
+    "unsignedDecimal": null,
+    "hexadecimal": null,
+    "signal": null,
+    "meaning": "未取得退出码"
+  },
+  "commitMemory": {
+    "available": true,
+    "availableBytes": 16418131968,
+    "limitBytes": 97770655744,
+    "committedBytes": 81352523776
+  },
+  "phoneMemory": {
+    "memory": {
+      "version": 1,
+      "enabled": true,
+      "items": [
+        {
+          "id": "8b00a7c2-9eec-4584-807f-edfcad694e49",
+          "text": "我叫林舟。",
+          "sourceIDs": [
+            "aa0a6c32-cb87-4533-9750-7560e6a67064"
+          ],
+          "pinned": false,
+          "updatedAt": 1791888138815,
+          "lastUsedAt": 1791888139857,
+          "conversationId": "712d2f6e-5772-45d8-8e77-640c8627cca1"
+        },
+        {
+          "id": "2cfcb318-a245-4e5a-923e-f978930cc9c2",
+          "text": "我的鹦鹉叫青瓷。",
+          "sourceIDs": [
+            "aa0a6c32-cb87-4533-9750-7560e6a67064"
+          ],
+          "pinned": false,
+          "updatedAt": 1791888138815,
+          "lastUsedAt": 1791888139857,
+          "conversationId": "712d2f6e-5772-45d8-8e77-640c8627cca1"
+        },
+        {
+          "id": "3f651d99-83c3-4f02-b261-c64fc3d1cad9",
+          "text": "正在做一个叫纸舟的练习项目。",
+          "sourceIDs": [
+            "aa0a6c32-cb87-4533-9750-7560e6a67064"
+          ],
+          "pinned": false,
+          "updatedAt": 1791888138815,
+          "lastUsedAt": 1791888139857,
+          "conversationId": "712d2f6e-5772-45d8-8e77-640c8627cca1"
+        },
+        {
+          "id": "747550f8-6926-45bb-9dae-a175ce7ea0b0",
+          "text": "茶饮偏好：现在喜欢乌龙茶，不再喜欢茉莉花茶。",
+          "sourceIDs": [
+            "ea02c89b-816a-41a5-8c50-39b34e8bf6c4"
+          ],
+          "pinned": false,
+          "updatedAt": 1791888138815,
+          "lastUsedAt": 1791888139857,
+          "conversationId": "712d2f6e-5772-45d8-8e77-640c8627cca1"
+        }
+      ],
+      "processed": [
+        "aa0a6c32-cb87-4533-9750-7560e6a67064",
+        "ea02c89b-816a-41a5-8c50-39b34e8bf6c4"
+      ],
+      "suppressedSources": [],
+      "suppressedText": [],
+      "handover": false,
+      "transferred": false,
+      "resumeAfter": null
+    },
+    "extractions": [
+      {
+        "input": "{\"原话\":[{\"id\":\"aa0a6c32-cb87-4533-9750-7560e6a67064\",\"text\":\"我叫林舟。我的鹦鹉叫青瓷，我喜欢茉莉花茶。我正在做一个叫纸舟的练习项目。请只回复一句知道了。\"},{\"id\":\"ea02c89b-816a-41a5-8c50-39b34e8bf6c4\",\"text\":\"我改口了，现在我更喜欢乌龙茶，不再喜欢茉莉花茶。请只回复一句知道了。\"}],\"已有记忆\":[]}",
+        "output": "{\"upsert\":[{\"id\":null,\"text\":\"我叫林舟。\",\"sourceIDs\":[\"aa0a6c32-cb87-4533-9750-7560e6a67064\"],\"evidence\":\"我叫林舟。\"},{\"id\":null,\"text\":\"我的鹦鹉叫青瓷。\",\"sourceIDs\":[\"aa0a6c32-cb87-4533-9750-7560e6a67064\"],\"evidence\":\"我的鹦鹉叫青瓷\"},{\"id\":null,\"text\":\"正在做一个叫纸舟的练习项目。\",\"sourceIDs\":[\"aa0a6c32-cb87-4533-9750-7560e6a67064\"],\"evidence\":\"我正在做一个叫纸舟的练习项目\"},{\"id\":null,\"text\":\"茶饮偏好：现在喜欢乌龙茶，不再喜欢茉莉花茶。\",\"sourceIDs\":[\"ea02c89b-816a-41a5-8c50-39b34e8bf6c4\"],\"evidence\":\"现在我更喜欢乌龙茶，不再喜欢茉莉花茶\"}],\"invalidate\":[]}"
+      }
+    ],
+    "identity": null,
+    "connection": "phone",
+    "cloudOnly": true
+  },
+  "hostOutput": "",
+  "cleanedProcesses": {
+    "available": true,
+    "failed": 0,
+    "cleaned": 0
+  },
+  "requestCount": 5
+}
