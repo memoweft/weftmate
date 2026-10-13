@@ -15,13 +15,14 @@ test('typing after computer selection turns the phone action into submit before 
   const nodes=new Map<string,Node>();for(const id of ['message-form','message-text','send-message','voice-input','chat-scroll','transcript','jump-latest'])nodes.set(id,new Node());
   const form=nodes.get('message-form')!,field=nodes.get('message-text')!,send=nodes.get('send-message')!,area=new Node();form.parentElement=area;form.append(field,send);
   let submits=0,voices=0;form.addEventListener('submit',()=>submits++);
-  const document:any={body:new Node(),activeElement:field};
+  const document:any={body:new Node(),activeElement:field,addEventListener(){},removeEventListener(){}};
   const ui:any={byId:(id:string)=>nodes.get(id),element:()=>new Node(),updateAvailability:()=>{send.disabled=!field.value;},clearMessageDraft:()=>{field.value='';},startVoiceInput:()=>voices++};
   // The incumbent composer stores this listener before phone presentation mounts.
   field.addEventListener('input',ui.updateAvailability);
   const frames:Function[]=[];
   const context:any=vm.createContext({Event,document,innerHeight:844,requestAnimationFrame:(fn:Function)=>frames.push(fn),MutationObserver:class{observe(){}},
     matchMedia:()=>({matches:true}),SpeechRecognition:class{},WeftIcons:{create:()=>new Node()},WeftPopover:{autosize(){}},globalThis:null});context.globalThis=context;
+  vm.runInContext(await readFile('src/ui-core/composer-press.js','utf8'),context);
   vm.runInContext(await readFile('src/personal-access-ui/phone-unify.js','utf8'),context);
   context.WeftPhoneUnify.mount({state:{},activity:{},currentAttachmentDrafts:()=>[],composerState:(text:string)=>({running:false,sendDisabled:!text.trim(),voiceDisabled:false})},ui);
   assert.equal(send.type,'button');assert.equal(send.dataset.action,'voice');
