@@ -25140,5 +25140,47 @@
         }
       ]
     }
+  ],
+  "additionalObservations": [
+    {
+      "runId": 38338730234,
+      "attempt": 1,
+      "branch": "wp/mob-3-phone-unify",
+      "url": "https://github.com/memoweft/weftmate/actions/runs/38338730234",
+      "cases": [
+        {
+          "job": "test (windows-latest, shard 2/3)",
+          "file": "tests/dsh-web-runtime-lifecycle.test.ts",
+          "name": "start-close race：启动中 child 被关闭，start 明确 reject，且 close 可并发复用",
+          "type": "timeout",
+          "diagnostic": "    not ok 4 - start-close race：启动中 child 被关闭，start 明确 reject，且 close 可并发复用\n      ---\n      duration_ms: 2646.3319\n      type: 'test'\n      location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\dsh-web-runtime-lifecycle.test.ts:210:3'\n      failureType: 'testCodeFailure'\n      error: 'timed out waiting for C:\\\\weftmate-temp\\\\weftmate-ci-file-DkPd6O\\\\weftmate-dsh-runtime-lifecycle-2HbQEP\\\\starting-root.pid'\n      code: 'ERR_TEST_FAILURE'\n      stack: |-\n        waitForFile (file:///D:/a/weftmate/weftmate/tests/dsh-web-runtime-lifecycle.test.ts:87:9)\n        async TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/dsh-web-runtime-lifecycle.test.ts:220:28)\n        async Test.run (node:internal/test_runner/test:1409:7)\n        async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)\n      ...",
+          "classification": "夹具竞态",
+          "basis": "waitForFile 固定100次轮询，慢机未发布PID就关闭测试；改为实际非空文件就绪与启动失败信号，after关闭全部自有运行时，防止EBUSY。"
+        },
+        {
+          "job": "test (windows-latest, shard 2/3)",
+          "file": "tests/dsh-web-runtime-lifecycle.test.ts",
+          "name": "D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\dsh-web-runtime-lifecycle.test.ts",
+          "type": "assertion",
+          "diagnostic": "not ok 2 - D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\dsh-web-runtime-lifecycle.test.ts\n  ---\n  duration_ms: 5.8316\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\dsh-web-runtime-lifecycle.test.ts:17:1'\n  failureType: 'hookFailed'\n  error: \"EBUSY: resource busy or locked, rmdir 'C:\\\\weftmate-temp\\\\weftmate-ci-file-DkPd6O\\\\weftmate-dsh-runtime-lifecycle-2HbQEP\\\\workspace-1288a722346e2'\"\n  code: 'EBUSY'\n  ...",
+          "classification": "夹具竞态",
+          "basis": "waitForFile 固定100次轮询，慢机未发布PID就关闭测试；改为实际非空文件就绪与启动失败信号，after关闭全部自有运行时，防止EBUSY。"
+        },
+        {
+          "job": "test (windows-latest, shard 2/3)",
+          "file": "tests/personal-cloud.test.ts",
+          "name": "AUTH-1 cloud login on a fresh native desktop keeps its durable local owner; another cloud identity cannot replace it",
+          "type": "assertion",
+          "diagnostic": "not ok 13 - AUTH-1 cloud login on a fresh native desktop keeps its durable local owner; another cloud identity cannot replace it\n  ---\n  duration_ms: 8841.4841\n  type: 'test'\n  location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-cloud.test.ts:497:1'\n  failureType: 'testCodeFailure'\n  error: 'session was not accepted'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  operator: 'fail'\n  stack: |-\n    createdCloudSession (file:///D:/a/weftmate/weftmate/tests/personal-cloud.test.ts:494:10)\n    async TestContext.<anonymous> (file:///D:/a/weftmate/weftmate/tests/personal-cloud.test.ts:508:21)\n    async Test.run (node:internal/test_runner/test:1409:7)\n    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n  ...",
+          "classification": "夹具竞态",
+          "basis": "createdCloudSession 固定100次轮询；改为 waitForCommand，终态拒绝仍失败。"
+        }
+      ],
+      "jobConclusion": "cancelled",
+      "jobDeadlineMinutes": 25,
+      "lastFile": "tests/personal-desktop-ui.test.ts",
+      "lastFileStartedAt": "2026-10-13T03:13:05Z",
+      "cancelledAt": "2026-10-13T03:15:57Z"
+    }
   ]
 }
