@@ -103,7 +103,38 @@ internal fun activityCommandProjection(row: JSONObject): JSONObject {
 }
 
 /** The updateable UI is presentation; account secrets, local history, model calls and tools stay native. */
-class HybridActivity : Activity() {
+open class HybridActivity : androidx.activity.ComponentActivity() {
+    override fun attachBaseContext(base: android.content.Context) {
+        if (BuildConfig.DEBUG && base.packageName == "com.memoweft.weftmate.mobile.and4qa") {
+            val width = base.getSharedPreferences("native-qa", MODE_PRIVATE).getInt("width", 360)
+            val configuration = android.content.res.Configuration(base.resources.configuration)
+            configuration.densityDpi = (base.resources.displayMetrics.widthPixels * 160f / width).toInt()
+            configuration.screenWidthDp = width
+            configuration.screenHeightDp = (base.resources.displayMetrics.heightPixels * 160f / configuration.densityDpi).toInt()
+            super.attachBaseContext(base.createConfigurationContext(configuration))
+        } else super.attachBaseContext(base)
+    }
+    /** Native presentation shares the existing owner/epoch guarded business executor. */
+    internal var nativeObserver: ((String, JSONObject) -> Unit)? = null
+    private var nativeHasDraft = false
+    internal val embeddedWeb: WebView get() = web
+    protected open fun embeddedPageFinished() {}
+    internal val presentationContainer: FrameLayout get() = container
+    internal fun nativeRequest(method: String, params: JSONObject, complete: (Result<JSONObject>) -> Unit) {
+        val epoch = accountEpoch.get()
+        val host = secrets.host()
+        worker.execute {
+            val result = runCatching {
+                ensureOpen()
+                if (accountTransition.get()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
+                if (epoch != accountEpoch.get() || host != secrets.host()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
+                val response = handle(method, params, epoch, host)
+                if (epoch != accountEpoch.get()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
+                response
+            }
+            runOnUiThread { if (!closed.get()) complete(result) }
+        }
+    }
     private companion object { const val SPEECH_REQUEST = 2041; const val AVATAR_REQUEST = 2042; const val NOTIFY_REQUEST = 2043; const val ATTACHMENT_REQUEST = 2044; const val ARTIFACT_SAVE_REQUEST = 2045; const val ORIGINAL_SAVE_REQUEST = 2046; const val CAMERA_REQUEST = 2047; const val ATTACHMENT_CAMERA_PERMISSION = 2048 }
     private var pendingCameraPermission: android.webkit.PermissionRequest? = null
     private val origin = "https://appassets.androidplatform.net"
@@ -260,6 +291,8 @@ class HybridActivity : Activity() {
                 forceDark = android.webkit.WebSettings.FORCE_DARK_OFF
             }
         }
+        // Per-package screenshot density must also scale WebView's CSS pixels; no emulator setting changes.
+        if (packageName.endsWith(".and4qa")) web.setInitialScale((resources.displayMetrics.density * 100).toInt())
         web.webChromeClient = object : android.webkit.WebChromeClient() {
             override fun onConsoleMessage(message: android.webkit.ConsoleMessage): Boolean = true
             override fun onPermissionRequest(request: android.webkit.PermissionRequest) {
@@ -324,6 +357,8 @@ class HybridActivity : Activity() {
                 if (url != entry) return
                 syncMotionPreference()
                 syncSafeInsets()
+                view.evaluateJavascript(assets.open("native-frame.js").bufferedReader().use { it.readText() }, null)
+                embeddedPageFinished()
                 val expected = pageGeneration
                 web.postDelayed({
                     if (!closed.get() && !currentPageReady && expected == pageGeneration) {
@@ -428,7 +463,10 @@ class HybridActivity : Activity() {
                     val result = handle(method, request.optJSONObject("params") ?: JSONObject(), requestEpoch, requestHost)
                     if (!authMutation && requestEpoch != accountEpoch.get())
                         respond(reply, id, false, JSONObject().put("code", "ACCOUNT_SWITCHED"))
-                    else respond(reply, id, true, result)
+                    else {
+                        respond(reply, id, true, result)
+                        runOnUiThread { nativeObserver?.invoke("result.$method", result) }
+                    }
                     if (method == "app.ready") scheduleStagedApply()
                 } catch (error: Exception) {
                     if (method == "shared.approvals.decide") RunDiagnostics.failed("approval.failure", "bridge", error)
@@ -645,13 +683,13 @@ class HybridActivity : Activity() {
     private fun emit(type: String, data: JSONObject) {
         if (closed.get()) return
         val body = JSONObject().put("event", type).put("data", data).toString()
-        runOnUiThread { if (!closed.get()) try { events?.postMessage(body) } catch (_: Exception) { } }
+        runOnUiThread { if (!closed.get()) { nativeObserver?.invoke(type, data); try { events?.postMessage(body) } catch (_: Exception) { } } }
     }
     private fun emitForAccount(epoch: Long, type: String, data: JSONObject) {
         if (closed.get()) return
         val body = JSONObject().put("event", type).put("data", data).toString()
         AccountEventGate.post(epoch, accountEpoch::get, { action -> runOnUiThread { action() } }) {
-            if (!closed.get()) try { events?.postMessage(body) } catch (_: Exception) { }
+            if (!closed.get()) { nativeObserver?.invoke(type, data); try { events?.postMessage(body) } catch (_: Exception) { } }
         }
     }
 
@@ -888,6 +926,41 @@ class HybridActivity : Activity() {
     }
 
     private fun handle(method: String, params: JSONObject, requestEpoch: Long, requestHost: HostIdentity?): JSONObject = when (method) {
+        "native.conversation" -> { activeConversation = params.optString("id").takeIf { it.isNotEmpty() }; JSONObject() }
+        "native.preference" -> JSONObject().put("enabled", getSharedPreferences("native-ui", MODE_PRIVATE).getBoolean("enabled", BuildConfig.NATIVE_UI))
+        "native.draft" -> {
+            requireHost()
+            nativeHasDraft = params.getBoolean("hasDraft")
+            uiHasDraft = nativeHasDraft
+            JSONObject()
+        }
+        "native.image" -> {
+            val uri = Uri.parse(params.getString("url"))
+            if (uri.scheme == "weftmate-image" && uri.host == "sent" && uri.pathSegments.size == 2) {
+                val identity = requireHost()
+                val image = attachments.localImage(owner(identity)!!, uri.pathSegments[0], uri.pathSegments[1], true, true)
+                    ?: throw ApiFailure(404, "ATTACHMENT_UNAVAILABLE")
+                JSONObject().put("data",android.util.Base64.encodeToString(image.second,android.util.Base64.NO_WRAP))
+            } else {
+            val request = object : WebResourceRequest {
+                override fun getUrl() = uri
+                override fun isForMainFrame() = false
+                override fun isRedirect() = false
+                override fun hasGesture() = false
+                override fun getMethod() = "GET"
+                override fun getRequestHeaders() = emptyMap<String, String>()
+            }
+            val response = if (uri.path?.startsWith("/media/session/") == true) mediaSharedImage(request) else mediaImage(request)
+            if (response.statusCode != 200) throw ApiFailure(404, "ATTACHMENT_UNAVAILABLE")
+            JSONObject().put("data", android.util.Base64.encodeToString(response.data.use { it.readBytes() }, android.util.Base64.NO_WRAP))
+            }
+        }
+        "native.presentation" -> {
+            val enabled = params.getBoolean("enabled")
+            check(getSharedPreferences("native-ui", MODE_PRIVATE).edit().putBoolean("enabled", enabled).commit())
+            runOnUiThread { startActivity(Intent(this, if (enabled) NativeActivity::class.java else HybridActivity::class.java)); finish() }
+            JSONObject().put("enabled", enabled)
+        }
         "diagnostics.status" -> RunDiagnostics.status()
         "diagnostics.record" -> {
             val webError = JSONObject()
@@ -965,7 +1038,7 @@ class HybridActivity : Activity() {
                 ensureOpen()
                 check(updatePrefs.edit().putBoolean("draft:$scope", draft).commit())
             }
-            uiHasDraft = draft
+            uiHasDraft = draft || nativeHasDraft
             draftKnowledgeReady = true
             currentPageReady = true
             runOnUiThread {
@@ -986,7 +1059,7 @@ class HybridActivity : Activity() {
             val draft = params.getBoolean("hasDraft")
             ensureOpen()
             check(updatePrefs.edit().putBoolean("draft:$scope", draft).commit())
-            uiHasDraft = draft
+            uiHasDraft = draft || nativeHasDraft
             if (!draft) scheduleStagedApply()
             JSONObject().put("saved", true)
         }
@@ -1658,7 +1731,7 @@ class HybridActivity : Activity() {
         "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
             .put("nativeEmailCodeLogin", true)
             .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
-            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.mob4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
+            .put("hostOrigin", if (BuildConfig.DEBUG && packageName in setOf("com.memoweft.weftmate.mobile.and4qa", "com.memoweft.weftmate.mobile.mob4qa", "com.memoweft.weftmate.mobile.and3qa", "com.memoweft.weftmate.mobile.lg1bqa", "com.memoweft.weftmate.mobile.fx9qa", "com.memoweft.weftmate.mobile.st4qa"))
                 intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
                 else secrets.host()?.takeIf { it.authSource == "local" }?.origin ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
         "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))
@@ -1943,7 +2016,7 @@ class HybridActivity : Activity() {
         val message = JSONObject().put("event", "attachment.result").put("data", body).toString()
         AccountEventGate.post(attempt.epoch, accountEpoch::get, { action -> runOnUiThread { action() } }) {
             if (!closed.get() && pageGeneration == attempt.page && activeConversation == attempt.activeAtStart)
-                try { events?.postMessage(message) } catch (_: Exception) { }
+                { nativeObserver?.invoke("attachment.result", body); try { events?.postMessage(message) } catch (_: Exception) { } }
         }
     }
 
@@ -2292,7 +2365,7 @@ class HybridActivity : Activity() {
     }
 
     @Deprecated("Runtime permission callback")
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (closed.get()) return
         if (requestCode == ATTACHMENT_CAMERA_PERMISSION) {

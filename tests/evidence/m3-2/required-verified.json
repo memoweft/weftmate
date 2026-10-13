@@ -1,0 +1,37 @@
+{
+  "mode": "required",
+  "shards": [
+    {
+      "mode": "required",
+      "files": 107,
+      "exitCode": 0,
+      "passed": 648,
+      "failed": 0,
+      "skipped": 11,
+      "failures": []
+    },
+    {
+      "mode": "required",
+      "files": 116,
+      "exitCode": 0,
+      "passed": 616,
+      "failed": 0,
+      "skipped": 1,
+      "failures": []
+    },
+    {
+      "mode": "required",
+      "files": 121,
+      "exitCode": 0,
+      "passed": 697,
+      "failed": 0,
+      "skipped": 2,
+      "failures": []
+    }
+  ],
+  "files": 344,
+  "passed": 1961,
+  "failed": 0,
+  "skipped": 14,
+  "exitCode": 0
+}

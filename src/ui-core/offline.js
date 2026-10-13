@@ -303,7 +303,9 @@
       conversation.turns.pop(); value.turns = value.turns.filter(t => t.id !== last.id);
       await persist(); return send(text, id);
     }
-    return { view, sync, send, regenerate, check, clear, submitTask, retryTask, cancelTask, refreshTasks, clearTasks, stop: () => abort?.abort(), close: () => { abort?.abort(); vault.close(); } };
+    return { view, sync, send, regenerate, check, clear, submitTask, retryTask, cancelTask, refreshTasks, clearTasks,
+      saveComposer: async (conversationId, draft) => { value.nativeDrafts ??= {}; value.nativeDrafts[conversationId || 'new'] = draft; value.nativeComposer = { conversationId, draft }; await persist(); },
+      stop: () => abort?.abort(), close: () => { abort?.abort(); vault.close(); } };
   }
   globalThis.WeftOffline = { create, browserVault, nativeVault, recall, requestBody, readCompletion, encode, decode };
 })();

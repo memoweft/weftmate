@@ -34,6 +34,9 @@ async function assertNoReparsePoints(root) {
   const pending = [root]
   while (pending.length > 0) {
     const current = pending.pop()
+    // POSIX pnpm shims are symlinks, but installation metadata is excluded
+    // from the stage on every platform. Validate the runtime entries we copy.
+    if (!stageRuntimeEntry(relative(root, current).split(sep).join('/'))) continue
     const stat = await lstat(current)
     if (stat.isSymbolicLink()) throw new Error(`reparse point is not allowed in the staged vendor source: ${relative(root, current) || '.'}`)
     if (!stat.isDirectory()) continue

@@ -20,7 +20,9 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/diagnostic_share_paths" />
         </provider>
         <activity android:name=".MainActivity" android:exported="false" />
-        <activity android:name=".HybridActivity" android:exported="true" android:launchMode="singleTop"
+        <activity android:name=".HybridActivity" android:exported="false" android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode|density|fontScale" />
+        <activity android:name=".NativeActivity" android:exported="true" android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode|density|fontScale">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -36,7 +38,7 @@
         <service android:name=".SyncJobService" android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name="androidx.work.impl.foreground.SystemForegroundService" tools:node="remove" />
-        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.composer-camera"
+        <provider android:name=".ComposerFileProvider" android:authorities="${applicationId}.composer-camera"
             android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/composer_camera_paths" />
         </provider>

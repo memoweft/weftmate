@@ -12,6 +12,9 @@ class BusinessRouteUnitTest {
         for (route in listOf("/personal/v1/model-services", "/personal/v1/model-services/check", service, "$service/refresh", "$service/select")) assertTrue(route, validBusinessPath(route))
         for (route in listOf("/personal/v1/model-services?ownerId=other", "/personal/v1/model-services/check/raw", "/personal/v1/model-services/model-one/select", "$service/secret", "$service/select?modelId=other", "/personal/v1/model-services%2Fcheck", "/personal/v1/model-services/../select")) assertFalse(route, validBusinessPath(route))
     }
+    @Test fun computerCloudRoutesAreNotComputerBusinessRoutes() {
+        for (path in listOf("/personal/v1/cloud/hosts/rename", "/personal/v1/cloud/hosts/remove", "/personal/v1/auth/cloud-channel")) assertFalse(path, validBusinessPath(path))
+    }
     @Test fun replyChangeWaitOutlivesTheServerBudgetWithoutChangingOtherReads() {
         assertEquals(30_000, businessReadTimeout("/personal/v1/chats/main/changes?afterSeq=1&waitMs=25000", "GET"))
         assertEquals(30_000, businessReadTimeout("/personal/v1/chats/chat-one/events?waitMs=25000", "GET"))
