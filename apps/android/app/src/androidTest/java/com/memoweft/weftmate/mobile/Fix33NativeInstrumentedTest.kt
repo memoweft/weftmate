@@ -20,7 +20,7 @@ class Fix33NativeInstrumentedTest {
     private fun waitFor(label:String,condition:()->Boolean){val end=System.currentTimeMillis()+20000;while(System.currentTimeMillis()<end){var ready=false;onMain{ready=condition()};if(ready)return;Thread.sleep(50)};error("Timed out: $label")}
     private fun shot(name:String){compose.waitForIdle();val image=instrumentation.uiAutomation.takeScreenshot();File(activity.filesDir,"fix33-${args.getString("version") }-$name.png").outputStream().use{image.compress(Bitmap.CompressFormat.PNG,100,it)}}
     @Test fun connectedNewChatAndFourMessagesUseTheComputer() {
-        check(instrumentation.targetContext.packageName=="com.memoweft.weftmate.mobile.and4qa")
+        org.junit.Assume.assumeTrue(instrumentation.targetContext.packageName=="com.memoweft.weftmate.mobile.and4qa" && args.getString("origin")!=null)
         activity=instrumentation.startActivitySync(Intent(instrumentation.targetContext,NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("lg1bHostOrigin",args.getString("origin"))) as NativeActivity
         var booted=false
         waitFor("embedded login ready"){activity.embeddedWeb.evaluateJavascript("Boolean(typeof state!=='undefined' && state.booted)"){booted=it=="true"};booted};shot("login")

@@ -18,6 +18,21 @@ import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(AndroidJUnit4::class)
 class SharedChatOutboxTest {
+    @Test fun aNewLegacyCommandPostsOnceAndADurableRetryQueriesWithoutSendingAgain() {
+        val context=InstrumentationRegistry.getInstrumentation().targetContext
+        val name="fix33-${UUID.randomUUID()}.db";val fixture=HostFixture()
+        val host=HostIdentity("https://example.test","synthetic","owner-synthetic","host-synthetic","device-synthetic","cookie=owner-synthetic","csrf")
+        val store=LocalStore(context,name)
+        try {
+            val shared=SharedChat(store,PersonalApi(fixture))
+            for(index in 1..4)assertEquals("accepted",shared.submit(host,"session-one","你好","session.message","fix33-$index") { true }.getString("state"))
+            assertEquals(4,fixture.posts);assertEquals(4,fixture.calls.size)
+            assertTrue(fixture.calls.all{it.startsWith("POST")&&it.endsWith("/commands")})
+            fixture.calls.clear()
+            assertEquals("accepted",shared.submit(host,"session-one","你好","session.message","fix33-4") { true }.getString("state"))
+            assertEquals(4,fixture.posts);assertEquals(1,fixture.calls.size);assertTrue(fixture.calls.single().contains("/commands/by-request/fix33-4"))
+        } finally {store.close();context.deleteDatabase(name)}
+    }
     private class HostFixture(private val sessionId: String = "session-one") : JsonTransport {
         val commands = mutableMapOf<String, JSONObject>()
         val calls = mutableListOf<String>()
@@ -77,12 +92,12 @@ class SharedChatOutboxTest {
         val store = LocalStore(context, name)
         try {
             val shared = SharedChat(store, PersonalApi(fixture))
-            assertEquals("uncertain", shared.submit(host, "session-one", "synthetic", "session.message", "fx9-one") { true }.getString("state"))
+            assertEquals("pending", shared.submit(host, "session-one", "synthetic", "session.message", "fx9-one") { true }.getString("state"))
             fixture.commands["owner-a|fx9-one"]!!.put("state", "accepted_by_dsh").put("receiptId", "receipt-one")
             var checks = 0
             try { shared.commandByRequest(host, "fx9-one") { ++checks == 1 }; fail("Late account reply") }
             catch (error: ApiFailure) { assertEquals("ACCOUNT_SWITCHED", error.safeCode) }
-            assertEquals("uncertain", shared.outbox(host).getJSONArray("commands").getJSONObject(0).getString("state"))
+            assertEquals("pending", shared.outbox(host).getJSONArray("commands").getJSONObject(0).getString("state"))
             assertEquals("accepted_by_dsh", shared.commandByRequest(host, "fx9-one") { true }.getString("state"))
             assertEquals("accepted", shared.outbox(host).getJSONArray("commands").getJSONObject(0).getString("state"))
             assertEquals(1, fixture.posts)
@@ -119,10 +134,11 @@ class SharedChatOutboxTest {
             try { shared.submit(a, "session-one", "blocked", "session.message", "request-two") { true }; fail("Read-only") }
             catch (error: ApiFailure) { assertEquals("SESSION_READ_ONLY", error.safeCode) }
             assertNull(store.sharedCommand(Endpoints.ownerKey(a.origin, a.ownerId), a.hostId, "session-one", "request-two"))
-            fixture.revokedOwner = "owner-a"
-            try { shared.submit(a, "session-one", "revoked", "session.message", "request-three") { true }; fail("Revoked") }
-            catch (error: ApiFailure) { assertEquals(401, error.status) }
-            assertNull(store.sharedCommand(Endpoints.ownerKey(a.origin, a.ownerId), a.hostId, "session-one", "request-three"))
+            fixture.writable = true; shared.sessions(a); fixture.revokedOwner = "owner-a"
+            val revoked = shared.submit(a, "session-one", "revoked", "session.message", "request-three") { true }
+            assertEquals("rejected",revoked.getString("state"));assertEquals("UNAUTHORIZED",revoked.getString("errorCode"))
+            assertEquals("rejected",store.sharedCommand(Endpoints.ownerKey(a.origin,a.ownerId),a.hostId,"session-one","request-three")!!.state)
+            assertEquals(2,fixture.posts)
         } finally { store.close(); context.deleteDatabase(name) }
     }
 

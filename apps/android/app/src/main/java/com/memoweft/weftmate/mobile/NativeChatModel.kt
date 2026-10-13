@@ -33,6 +33,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     var mode by mutableStateOf("auto")
     var chatId by mutableStateOf("")
     private var chatKind = ""
+    private var messageIntent = "queue"
     var sessionId by mutableStateOf("")
     var phone by mutableStateOf(false)
     var standalone by mutableStateOf(false)
@@ -115,6 +116,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (modelId.isBlank()) modelId = models.firstOrNull { it.optBoolean("configured") }?.optString("profileId") ?: ""
         modelLabel = selected?.optString("displayName")?.takeIf { it.isNotBlank() } ?: models.firstOrNull { it.optString("profileId") == modelId }?.optString("displayName") ?: "选择模型"
         replyWait = runCatching { business("/status").optJSONObject("personalCapabilities")?.optInt("replyWait") == 1 }.getOrDefault(false)
+        refreshMessageIntent()
         refreshChats()
         if (chatId.isBlank()) {
             val main = runCatching { business("/chats/main").getJSONObject("chat") }.getOrNull()
@@ -263,6 +265,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (!phone && !sendAvailable) { attachments = emptyList(); return }
         attachments = call("attachments.list", JSONObject().put("conversationId", chatId)).optJSONArray("attachments")?.objects().orEmpty()
     }
+    private suspend fun refreshMessageIntent() { messageIntent = runCatching { business("/settings/personalization").optJSONObject("settings")?.optString("messageMode", "queue") ?: "queue" }.getOrDefault("queue") }
     suspend fun refresh(older: Boolean = false, wait: Boolean = false) {
         if (refreshing && refreshGeneration == generation) return
         refreshing = true
@@ -344,13 +347,12 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             }
             val p = JSONObject().put("text", text).put("attachmentIds", JSONArray(files)).put("requestId", "native-${UUID.randomUUID()}")
             val result = if (phone) call("chat.send", p.put("conversationId", chatId)) else {
-                val intent = runCatching { business("/settings/personalization").optJSONObject("settings")?.optString("messageMode", "queue") ?: "queue" }.getOrDefault("queue")
                 val target = hostChatSendTarget(chatKind, chatId, sessionId)
                 for (key in target.keys()) p.put(key, target.get(key))
-                call("shared.send", p.put("modelProfileId", modelId).put("intent", intent))
+                call("shared.send", p.put("modelProfileId", modelId).put("intent", messageIntent))
             }
             if (g != generation) return@launch
-            if (result.optString("state") == "rejected") { error = "消息没能发送，草稿已保留。"; return@launch }
+            if (result.optString("state") == "rejected") { error = if(result.optString("errorCode") in setOf("UNAUTHORIZED","DEVICE_NOT_TRUSTED")) "电脑连接已失效，请重新连接后发送。草稿已保留。" else "消息没能发送，草稿已保留。"; return@launch }
             if (!phone && result.optString("state") != "accepted") uncertain = uncertain.filter { it.optString("requestId") != result.optString("requestId") } + result
             draft = ""; saveDraft(); sending = false; focused = false; activity.hideKeyboard(); running = result.optString("state") != "uncertain"
             launch { call("native.draft",JSONObject().put("hasDraft",false)); if (g == generation) { refreshAttachments(); refresh() } }
@@ -378,7 +380,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         }
         tab="chat"
     }
-    fun returnToChat() { tab="chat"; launch { readingPreferences(activity.phonePresentation("view"));if(standalone)refreshPhoneModels(); refresh() } }
+    fun returnToChat() { tab="chat"; launch { readingPreferences(activity.phonePresentation("view"));if(standalone)refreshPhoneModels() else refreshMessageIntent(); refresh() } }
     fun openModels() { modelSettingsFinished=false; tab="models" }
     fun selectModel(row: JSONObject) = launch {
         val id = row.optString("profileId",row.optString("modelId"))

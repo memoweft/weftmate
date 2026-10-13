@@ -8,7 +8,7 @@ internal fun hostChatSendTarget(kind: String, chatId: String, sessionId: String)
     else JSONObject().put("sessionId", sessionId.takeIf { it.isNotBlank() } ?: throw ApiFailure(409, "SESSION_UNAVAILABLE"))
 
 internal fun sharedSendRejected(error: Exception): Boolean = error is ApiFailure &&
-    (error.status == 400 || error.status == 403 || error.status == 404 || error.status == 422 ||
+    (error.status == 400 || error.status == 401 || error.status == 403 || error.status == 404 || error.status == 422 ||
         error.safeCode in setOf("SESSION_READ_ONLY", "SESSION_UNAVAILABLE", "MODEL_UNAVAILABLE", "REQUEST_CONFLICT", "INVALID_REQUEST", "CHAT_UNAVAILABLE"))
 
 internal fun hostDeliveryMessage(row: JSONObject): String = when (row.optString("state")) {

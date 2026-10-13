@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit
 class Fix33LiveProbeTest {
     @Test fun inspectCurrentConnectionWithoutChangingLogin() {
         val i=InstrumentationRegistry.getInstrumentation()
+        org.junit.Assume.assumeTrue(InstrumentationRegistry.getArguments().getString("fix33LiveAccount")=="authorized")
         check(i.targetContext.packageName=="com.memoweft.weftmate.mobile.debug")
         i.runOnMainSync{android.webkit.WebView.setWebContentsDebuggingEnabled(true)}
         val a=i.startActivitySync(Intent(i.targetContext,NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as NativeActivity
