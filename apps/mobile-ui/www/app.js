@@ -65,7 +65,7 @@ const mobileEffects = {
   readMessageDraft: () => $('draft').value,
   clearMessageDraft: () => { $('draft').value = ''; },
   readChatStatus: () => $('chat-status').textContent,
-  isVisible: () => document.visibilityState !== 'hidden',
+  isVisible: () => globalThis.weftNativeChatActive !== true && document.visibilityState !== 'hidden',
   status: (...args) => status(...args), toast: (...args) => toast(...args),
   safeError: (...args) => safeError(...args),
   page: name => page(name), selectSharedSession: id => selectSharedSession(id),
@@ -99,7 +99,7 @@ const mobileEffects = {
 const uiCore = WeftUiCore.create({ fetch: mobileWebBridge?.fetch || androidBridge.fetch, storage: localStorage,
   crypto: globalThis.crypto, effects: mobileEffects, mobileState: state, attachmentDrafts, logicalChats:true,
   networkAvailable:()=>globalThis.navigator?.onLine,nativeMobile:!!window.weftNative,
-  canWaitForReply:()=>!window.weftNative||androidBridge.canWaitForReply() });
+  canWaitForReply:()=>globalThis.weftNativeChatActive!==true&&(!window.weftNative||androidBridge.canWaitForReply()) });
 uiCore.android = androidBridge;
 uiCore.cloudSendFeedback = payload => {
   const account = globalThis.WeftMobileCloud?.core;

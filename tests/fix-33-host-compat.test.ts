@@ -31,6 +31,16 @@ test('new phone model sync uses the declared computer protocol and never sends p
  }
 });
 
+test('a legacy computer receives the first phone turn with its original fields, without a rejected handover probe',async()=>{
+ const context:any=vm.createContext({TextEncoder});vm.runInContext(await readFile('src/ui-core/offline.js','utf8'),context);
+ const turn={id:'synthetic-turn',conversationId:'synthetic-conversation',timestamp:1,messages:[{role:'user',text:'你好'},{role:'assistant',text:'合成回复'}]};
+ const requests:any[]=[];
+ const engine=await context.WeftOffline.create({identity:{hostId:'synthetic'},phoneModel:()=>({modelId:'synthetic'}),hostCapabilities:()=>({}),
+  vault:{load:async()=>({snapshot:null,turns:[turn],conversations:[],tasks:[]}),key:async()=>({}),save:async()=>{},close:()=>{},open:async()=>({items:[],remove:[],hashes:{},generation:1,model:null,control:{accountId:'synthetic'}})},
+  host:async(path:string,body:any)=>{requests.push({path,body});assert.equal(body.phoneFirst,undefined);assert.equal(body.handover,undefined);assert.equal(body.turnFragments,undefined);return path==='/offline/turns'?{generation:1,receipts:[{id:turn.id,state:'synced'}]}:{};},});
+ await engine.sync();assert.deepEqual(requests.map(r=>r.path),['/offline/sync','/offline/turns']);assert.deepEqual(Object.keys(requests[1].body).sort(),['generation','turns']);engine.close();
+});
+
 test('phone sync commit wakes the existing chat wait; duplicate upload does not wake idle clients',async t=>{
  const root=await mkdtemp(join(tmpdir(),'weftmate-fix33-sync-'));
  const host=await createPersonalAccessService({root,port:0,backend:{getStatus:async()=>({}),listModels:async()=>[],preflight:async()=>({}),createSession:async()=>({}),sendMessage:async()=>({}),cancelSession:async()=>({}),describeSession:async()=>null,readEvents:async()=>({events:[],nextSeq:-1,hasMore:false}),waitForEvents:async()=>({})}});

@@ -216,10 +216,12 @@
       }
       if(phoneModel&&delta.memoryAuthority?.ready===false)return false;
       if (value.turns.length) {
-        if(phoneModel&&!value.handover){const bytes=utf8(JSON.stringify(value.turns)).byteLength;value.handover={id:crypto.randomUUID(),totalTurns:value.turns.length,conversationCount:new Set(value.turns.map(t=>t.conversationId)).size,bytes,awaitingConfirmation:value.turns.length>=100||bytes>=256*1024};await persist();}
-        if(value.handover?.awaitingConfirmation)return false;
+        const importsSupported=!!delta.memoryAuthority || Array.isArray(delta.phoneImports);
+        if(phoneModel&&importsSupported&&!value.handover){const bytes=utf8(JSON.stringify(value.turns)).byteLength;value.handover={id:crypto.randomUUID(),totalTurns:value.turns.length,conversationCount:new Set(value.turns.map(t=>t.conversationId)).size,bytes,awaitingConfirmation:value.turns.length>=100||bytes>=256*1024};await persist();}
+        if(importsSupported&&value.handover?.awaitingConfirmation)return false;
         const batch=[],first=value.turns[0],raw=utf8(JSON.stringify(first));let turnFragments;
         if(first.messages.some(m=>m.text.length>16384)||raw.byteLength>200*1024){
+          if(!importsSupported)fail('COMPUTER_UPDATE_REQUIRED');
           const chunkSize=96000,count=Math.ceil(raw.byteLength/chunkSize),index=value.fragmentProgress?.[first.id]||0;
           const sha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',raw)),b=>b.toString(16).padStart(2,'0')).join('');
           const bytes=raw.slice(index*chunkSize,(index+1)*chunkSize);let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
@@ -227,7 +229,7 @@
         }else for (const turn of value.turns.slice(0,50)) { if(turn.messages.some(m=>m.text.length>16384)||utf8(JSON.stringify([...batch,turn])).byteLength>240*1024)break;batch.push(turn); }
         const last=turnFragments?turnFragments[0].index===turnFragments[0].count-1&&value.turns.length===1:batch.length===value.turns.length;
         const body={generation:delta.generation,turns:batch,...(turnFragments?{turnFragments}:{}),
-          ...(value.handover?{handover:{id:value.handover.id,totalTurns:value.handover.totalTurns,conversationCount:value.handover.conversationCount,bytes:value.handover.bytes,complete:last}}:{})};
+          ...(importsSupported&&value.handover?{handover:{id:value.handover.id,totalTurns:value.handover.totalTurns,conversationCount:value.handover.conversationCount,bytes:value.handover.bytes,complete:last}}:{})};
         let result;
         try{result=await host('/offline/turns',body);}
         catch(error){if((error.code||error.message)!=='INVALID_REQUEST'||turnFragments||!value.handover)throw error;

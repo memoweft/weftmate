@@ -1,7 +1,7 @@
 // Actual 3062ea4a host modules, current cloud, and current phone code. Synthetic data only.
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {mkdtemp, mkdir, writeFile, symlink, unlink, rm} from 'node:fs/promises';
+import {mkdtemp, mkdir, writeFile, symlink, unlink, rm, readdir, lstat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -106,11 +106,13 @@ try{
     scenario.latency=[];
     const visible=async(page,text)=>page.waitForFunction(text=>document.getElementById('transcript')?.textContent.includes(text),text,{timeout:20000});
     for(const [source,target,label] of [[phonePage,desktopPage,'phone-to-desktop'],[desktopPage,phonePage,'desktop-to-phone']]) {
+    for(let index=1;index<=4;index++) {
      const replies=await target.evaluate(()=>Array.from(globalThis.__fix33Core.state.historyEvents.values()).filter(e=>e.type==='assistant.message').length);
      const text='合成来回消息-'+randomUUID(),begin=performance.now();await source.locator('#message-text').fill(text);await source.locator('#send-message').click();
      await source.screenshot({path:join(out,`${version}-${label}-sending.png`)});
      await visible(target,text);const userMs=Math.round(performance.now()-begin);await target.waitForFunction(count=>Array.from(globalThis.__fix33Core.state.historyEvents.values()).filter(e=>e.type==='assistant.message').length>count,replies,{timeout:20000});
-     scenario.latency.push({label,userMs,replyMs:Math.round(performance.now()-begin)});await target.screenshot({path:join(out,`${version}-${label}.png`)});
+     scenario.latency.push({label,index,userMs,replyMs:Math.round(performance.now()-begin)});await target.screenshot({path:join(out,`${version}-${label}.png`)});
+    }
     }
     const conversationId='conversation-'+randomUUID(),at=new Date().toISOString(),body={events:[{eventId:'event-'+randomUUID(),conversationId,clientSeq:1,kind:'conversation.created',occurredAt:at,payload:{title:'合成手机独立对话'}},{eventId:'event-'+randomUUID(),conversationId,clientSeq:2,kind:'message.created',occurredAt:at,payload:{messageId:'message-'+randomUUID(),role:'user',text:'合成手机独立消息'}},{eventId:'event-'+randomUUID(),conversationId,clientSeq:3,kind:'message.created',occurredAt:at,payload:{messageId:'message-'+randomUUID(),role:'assistant',text:'合成手机独立回复'}}]};
     const begin=performance.now();const uploaded=await api('/sync/events',body,auth);assert.equal(uploaded.status,200);
@@ -129,7 +131,9 @@ try{
  }
 }finally{
  for(const close of cleanup.reverse())await close();
- assert.ok(resolve(root).startsWith(resolve(tmpdir())+'\\')||resolve(root).startsWith(resolve(tmpdir())+'/'));await rm(root,{recursive:true,force:true});
+ assert.ok(resolve(root).startsWith(resolve(tmpdir())+'\\')||resolve(root).startsWith(resolve(tmpdir())+'/'));
+ async function detachLinks(directory){for(const entry of await readdir(directory)){const path=join(directory,entry),stat=await lstat(path);if(stat.isSymbolicLink())await unlink(path);else if(stat.isDirectory())await detachLinks(path);}}
+ await detachLinks(root);await rm(root,{recursive:true,force:true});
  await writeFile(join(out,process.env.FIX33_UI==='1'?'versions-ui.json':baseline?'versions-before.json':'versions-after.json'),JSON.stringify(report,null,2)+'\n');
  console.log(JSON.stringify({scenarios:report.scenarios.map(s=>({version:s.version,messages:s.messages.map(m=>({kind:m.kind,index:m.index,state:m.state,error:m.error,toModelStartMs:m.toModelStartMs})),latency:s.latency})),requests:trace.length}));
 }

@@ -58,6 +58,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
             throw ApiFailure(502, "COMMAND_RECEIPT_INVALID")
         val state = when (command.optString("state")) {
             "accepted_by_dsh", "observed" -> "accepted"
+            "pending", "preflight", "dispatching" -> "pending"
             "rejected" -> "rejected"
             else -> "uncertain"
         }
