@@ -1,0 +1,14 @@
+✔ A13 keeps every required native scene in both Mac/iPhone themes plus Watch approval (1.103592ms)
+✔ search highlights meet 4.5:1 text contrast in every desktop and mobile theme (3.477738ms)
+✔ design token outputs match the sole source without writing files (143.186908ms)
+✔ every authored desktop/mobile token reference exists in its generated CSS (9.500223ms)
+✔ Apple views consume generated typed tokens compiled by all three native targets (24.826337ms)
+✔ named shared spacing tokens generate valid Swift declarations (1.233016ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 790.83856

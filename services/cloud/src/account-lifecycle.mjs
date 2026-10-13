@@ -1,5 +1,6 @@
 import { calculateJwkThumbprint } from 'jose';
 import { CloudError, transaction, verifyPassword } from './security.mjs';
+import { backupDeletionVerification } from './cloud-backups.mjs';
 
 const fields = (body, names) => {
   if (Object.keys(body).sort().join(',') !== names.sort().join(',')) throw new CloudError(400, 'INVALID_REQUEST');
@@ -75,7 +76,7 @@ export function accountLifecycle({ database: db, accounts, relay }) {
       for (const h of hosts) relay.revoke(h.host_id);
       db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
       await accounts.mailer.deleteAccount?.(account.id, emails);
-      return { deleted: true, localDataPreserved: true };
+      return { deleted: true, localDataPreserved: true, cloudBackupVerification: backupDeletionVerification(db, account.id) };
     },
     async logoutOthers(body, account, token) {
       fields(body, []);

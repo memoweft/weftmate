@@ -79,7 +79,8 @@ export async function createOfflineService(context) {
       for (const device of Object.values(current.devices)) device.hashes = {};
       await save();
       await context.memoryManager?.discardOfflinePending?.(ownerId);
-      if (Object.keys(current.devices).length) await publish(ownerId);
+      if (Object.keys(current.devices).length ||
+          context.cloudIdentity?.cloudBackupSupported?.() === true && context.cloudIdentity.backupAccount?.(ownerId)) await publish(ownerId);
       return { generation: current.generation };
     }); },
     async handle(request, response, url, ownerId) {

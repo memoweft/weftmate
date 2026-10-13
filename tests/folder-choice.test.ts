@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {mkdtemp,mkdir,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,rm,realpath} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
@@ -29,17 +29,21 @@ test('UX-9 high risk warnings cover disk, personal home and system locations',()
 test('UX-9 dropped directory uses folder selection; ordinary and zero-byte files stay attachments',async()=>{const f=fixture(),folder={name:'workspace'},file={name:'notes.txt'},empty={name:'empty.txt',size:0};const result=await f.core.partitionFolderDrop([folder,file,empty],async(value:any)=>value===folder?'C:\\Synthetic\\workspace':null);assert.equal(result.folders[0].file,folder);assert.equal(result.folders[0].path,'C:\\Synthetic\\workspace');assert.equal(result.files.length,2);assert.equal(result.files[0],file);assert.equal(result.files[1],empty);});
 
 test('UX-9 new-folder API uses existing permission revisions and never returns a full browser path', async t=>{
- const root=await mkdtemp(join(tmpdir(),'weftmate-ux9-contract-')),folder=join(root,'Synthetic');await mkdir(folder);
+ const root=await realpath(await mkdtemp(join(tmpdir(),'weftmate-ux9-contract-'))),folder=join(root,'Synthetic');await mkdir(folder);
  const backend:any=Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(name=>[name,async()=>name==='listModels'?[]:{}]));
- const service=await createPersonalAccessService({root:join(root,'host'),port:0,backend});const {origin}=await service.start();
+ // This test owns the HTTP permission/privacy contract. The real Windows reader
+ // and its compiler/startup behavior are covered by personal-project-reader.test.ts.
+ let inspections=0;
+ const projectRootInspector=async rootPath=>{inspections++;if(process.platform!=='win32')throw Object.assign(new Error('Windows required'),{code:'PROJECT_WINDOWS_REQUIRED'});assert.equal(rootPath,folder);return {rootPath,rootFinalPath:'\\\\?\\'+rootPath,rootIdentity:'1234ABCD:1234567890ABCDEF'};};
+ const service=await createPersonalAccessService({root:join(root,'host'),port:0,backend,projectRootInspector});const {origin}=await service.start();
  t.after(async()=>{await service.close();await rm(root,{recursive:true,force:true});});
  const grant=await service.issueSetupGrant(),response=await fetch(origin+'/personal/v1/auth/setup',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({grant:grant.grant,username:'FolderContract',password:'Synthetic-'+randomUUID(),deviceName:'合成电脑'})});assert.equal(response.status,201);
  const auth:any=await response.json(),cookie=response.headers.get('set-cookie')!.split(';')[0];
  const headers:any={cookie,origin,'content-type':'application/json','x-weftmate-csrf':auth.csrfToken,'sec-fetch-site':'same-origin'};
- const body={requestId:randomUUID(),name:'Synthetic',rootPath:process.platform==='win32'?folder:'C:\\Synthetic\\NativeOnly'};
- const rejected=await fetch(origin+'/personal/v1/projects',{method:'POST',headers,body:JSON.stringify(body)});assert.equal(rejected.status,403);assert.equal((await rejected.json()).error.code,'PROJECT_NATIVE_SELECTION_REQUIRED');
+ const body={requestId:randomUUID(),name:'Synthetic',rootPath:['win32','darwin'].includes(process.platform)?folder:'C:\\Synthetic\\NativeOnly'};
+ const rejected=await fetch(origin+'/personal/v1/projects',{method:'POST',headers,body:JSON.stringify(body)});assert.equal(rejected.status,403);assert.equal((await rejected.json()).error.code,'PROJECT_NATIVE_SELECTION_REQUIRED');assert.equal(inspections,0);
  const trusted={...headers,'x-weftmate-desktop':service.libraryDesktopToken};
- const created=await fetch(origin+'/personal/v1/projects',{method:'POST',headers:trusted,body:JSON.stringify(body)});if(process.platform!=='win32'){assert.equal(created.status,503);assert.equal((await created.json()).error.code,'PROJECT_WINDOWS_REQUIRED');return;}assert.equal(created.status,201);const project=(await created.json()).project;assert.equal(project.permission,'read-only');assert.equal(project.rootPath,undefined);assert.ok(project.pathHint.endsWith('Synthetic'));
+ const created=await fetch(origin+'/personal/v1/projects',{method:'POST',headers:trusted,body:JSON.stringify(body)});assert.equal(inspections,1);if(!['win32','darwin'].includes(process.platform)){assert.equal(created.status,503);assert.equal((await created.json()).error.code,'PROJECT_WINDOWS_REQUIRED');return;}assert.equal(created.status,201);const project=(await created.json()).project;assert.equal(project.permission,'read-only');assert.equal(project.rootPath,undefined);assert.ok(project.pathHint.endsWith('Synthetic'));assert.ok(!JSON.stringify(project).includes(folder));
  const patched=await fetch(origin+'/personal/v1/projects/'+project.projectId,{method:'PATCH',headers,body:JSON.stringify({expectedRevision:project.revision,permission:'write'})});assert.equal(patched.status,200);const next=(await patched.json()).project;assert.equal(next.permission,'write');assert.equal(next.revision,project.revision+1);
  const list=await(await fetch(origin+'/personal/v1/projects',{headers})).json();assert.equal(list.projects[0].rootPath,undefined);
  const local=await(await fetch(origin+'/personal/v1/projects',{headers:trusted})).json();assert.equal(local.projects[0].rootPath.toLowerCase(),folder.toLowerCase());

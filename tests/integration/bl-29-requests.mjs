@@ -9,9 +9,12 @@ import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { startTimelineCandidate } from './bl29-rework/fixture.mjs';
 import { initializeDesktopSession } from './bl29-rework/auth.mjs';
+import {waitForCommand} from '../helpers/wait-for-command.mjs';
+import {waitForPublishedText} from '../helpers/wait-for-published-text.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const stage = process.argv.includes('--before') ? 'before' : 'after';
 const latencyOnly=process.argv.includes('--latency');
+const phased=process.argv.includes('--phased');
 const logical=process.argv.includes('--logical'),reportName=latencyOnly?'responsiveness':stage+(logical?'-main':'');
 const baseline='ec3ab4996609a6d81181bc178f024d5e5158c577';
 const out = resolve(process.env.WEFTMATE_BL29_EVIDENCE_DIR || 'tests/evidence/bl-29'); mkdirSync(out,{recursive:true});
@@ -81,10 +84,14 @@ try {
     writeFileSync(join(out,reportName+'.json'),JSON.stringify(report,null,2)+'\n');
   }
   if(latencyOnly){
+    if(phased){
+      const start=new Promise(resolve=>process.once('message',resolve));
+      process.send({phase:'ready'});await start;checkpoint('measurement started after preparation');
+    }
     await pause(1500);
     const host=(await f.request('/status')).hostId,chat=(await f.request('/chats/main')).chat;
     const send=async(text,requestId)=>{const value=await f.request('/commands',{requestId,kind:'chat.message',chatId:chat.chatId,modelProfileId:'local',targetDeviceId:host,text});
-      for(let n=0;n<100;n++){const cmd=(await f.request('/commands/'+value.command.commandId)).command;if(cmd.state==='accepted_by_dsh'){f.sessionId=cmd.sessionId;return cmd;}await pause(20);}};
+      const cmd=await waitForCommand(async()=>(await f.request('/commands/'+value.command.commandId)).command);f.sessionId=cmd.sessionId;return cmd;};
     const at=Date.now();await send('另一台设备的新消息','bl29-other-message');
     for(const [surface,p] of pages){await p.getByText('另一台设备的新消息',{exact:true}).first().waitFor({state:'visible',timeout:6000});report.checks.push({name:'other-device-message',surface,ms:Date.now()-at});}
     await pause(300);
@@ -122,7 +129,10 @@ try {
     start=Date.now();await f.request(`/sessions/${newId}/metadata`,{title:'跨设备改名'},'PATCH');
     for(const [surface,p]of pages){await p.waitForFunction(({surface,id})=>(surface==='mobile'?uiCore:__streamCore).state.sessions.some(row=>row.sessionId===id&&row.title==='跨设备改名'),{surface,id:newId},{timeout:6000});report.checks.push({name:'rename-session',surface,ms:Date.now()-start});}
     for(const [surface,p]of pages){await p.evaluate(()=>{Object.defineProperty(document,'visibilityState',{configurable:true,get:()=> 'hidden'});document.dispatchEvent(new Event('visibilitychange'));});
-      const text='后台恢复'+surface;await send(text,'bl29-background-'+surface);await pause(200);f.progress.text('恢复到最新'+surface);f.progress.finish();start=Date.now();
+      const text='后台恢复'+surface;await send(text,'bl29-background-'+surface);f.progress.text('恢复到最新'+surface);f.progress.finish();
+      const publishedAt=Date.now();
+      await waitForPublishedText(()=>f.request(`/chats/${chat.chatId}/events?limit=100`),'恢复到最新'+surface);
+      checkpoint(`${surface} foreground reply projection ready (${Date.now()-publishedAt}ms)`);start=Date.now();
       await p.evaluate(()=>{delete document.visibilityState;document.dispatchEvent(new Event('visibilitychange'));});
       await p.getByText('恢复到最新'+surface,{exact:true}).first().waitFor({state:'visible',timeout:1000});report.checks.push({name:'foreground-recovery',surface,ms:Date.now()-start});
       await p.evaluate(({surface})=>{const c=surface==='mobile'?uiCore:__streamCore;c.connectionNetwork(false);},{surface});
@@ -161,6 +171,7 @@ try {
     if(row.surface==='electron')assert.ok(row.windows.find(w=>w.name==='electron-minimized').total<=3,'native minimized 30s budget');
   }
   checkpoint('all observations and assertions completed');
+  if(phased)process.send({phase:'measured',report});
 } catch(error){report.failure=error.message;report.desktopDebug=await (await app?.firstWindow())?.evaluate(()=>({text:document.body.innerText,core:!!globalThis.__streamCore,state:globalThis.__streamCore?{view:__streamCore.state.currentView,main:__streamCore.state.mainChat,refreshing:__streamCore.state.refreshing}:null})).catch(()=>null);
   report.mobileDebug=await mobile?.evaluate(()=>({text:document.body.innerText,sharedSessionId:state.sharedSessionId,selectedChatId:uiCore.state.selectedChatId,main:uiCore.state.mainChat,context:uiCore.conversationTaskContext(),facts:uiCore.state.historyReadResult})).catch(()=>null);
   report.currentApprovals=await f.request(`/sessions/${f.sessionId}/approvals?limit=100`).catch(()=>null);throw error;}
@@ -189,5 +200,6 @@ finally{
     finally{if(exitListener)child.removeListener('exit',exitListener);}
   }
   checkpoint('host / synthetic cloud close started');await f.close();checkpoint('host / synthetic cloud close completed');
+  if(phased)process.disconnect();
   rmSync(profile,{recursive:true,force:true});rmSync(f.root,{recursive:true,force:true});checkpoint('owned directories removed / teardown completed');
 }

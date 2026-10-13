@@ -1,0 +1,149 @@
+[
+  {
+    "original": "apple6-light-registered-no-computer.png",
+    "file": "failed/apple6-light-registered-no-computer.png",
+    "accepted": false,
+    "reason": "XCTest 截图超时后的 1x1 占位帧",
+    "sha256": "01c1db774919661035ca79df7eb79830f1709147423208825cf72c227a8818bf"
+  },
+  {
+    "original": "apple6-light-pdf-fullscreen.png",
+    "file": "failed/apple6-light-pdf-fullscreen.png",
+    "accepted": false,
+    "reason": "全黑且无状态栏",
+    "sha256": "db8bb238a01c81c401bd0aaf9dc323c988672ca8dcafe7a7fb5d233aa1f8399f"
+  },
+  {
+    "original": "apple6-light-pdf-menu.png",
+    "file": "failed/apple6-light-pdf-menu.png",
+    "accepted": false,
+    "reason": "全黑且无状态栏",
+    "sha256": "e9f3e9c5900922a709c24b136dccb22e35454a65464b6b7fe7c17903ebb8577b"
+  },
+  {
+    "original": "apple6-light-connected-attachments-collapsed.png",
+    "file": "failed/apple6-light-connected-attachments-collapsed.png",
+    "accepted": false,
+    "reason": "系统键盘首次输入提示遮挡，不能证明收起状态",
+    "sha256": "45eb4d73f738bc613690174c96f4ae2433937349f7f3a8fda09c21bc1d07f247"
+  },
+  {
+    "original": "simctl-boot-2/light-registered-no-computer.png",
+    "file": "failed/simctl-boot-2/light-registered-no-computer.png",
+    "accepted": false,
+    "reason": "画面实际为合成云限流的登录页，标题与状态不符",
+    "sha256": "9e0bf4f6f3b65660d410209e0f0011a39c61041c42dc3b516506e9c4ba2235f5"
+  },
+  {
+    "original": "simctl-boot-4/light-registered-no-computer.png",
+    "file": "failed/simctl-boot-4/light-registered-no-computer.png",
+    "accepted": false,
+    "reason": "只有状态栏，正文空白",
+    "sha256": "d584fc45a7216219843d55513e18307521ceb340b7e23d7b8d5a5b00aeb05b91"
+  },
+  {
+    "original": "simctl-boot-5/light-pdf-fullscreen.png",
+    "file": "failed/simctl-boot-5/light-pdf-fullscreen.png",
+    "accepted": false,
+    "reason": "仍是旧场景菜单，另有白色破块，与文件页 AX 不一致",
+    "sha256": "262f6cf10c1816ec0ec76388f2fceafa6bee94cb9347c9a66acae87a8c728224"
+  },
+  {
+    "original": "simctl-boot-5/light-pdf-menu.png",
+    "file": "failed/simctl-boot-5/light-pdf-menu.png",
+    "accepted": false,
+    "reason": "PDF 文字有显示但有残留键盘及白色破块",
+    "sha256": "8c4b4d19c5a2aa8451b9b11b2b5240bc435fbb0205a8e9cfcbcfba88453e86fd"
+  },
+  {
+    "original": "simctl-boot-5/light-connected-attachments-collapsed.png",
+    "file": "failed/simctl-boot-5/light-connected-attachments-collapsed.png",
+    "accepted": false,
+    "reason": "系统键盘提示遮挡，不能证明收起状态",
+    "sha256": "1fd45b6f6076531254862db77c12b3500ce694c3b232ffe903c83a8df787e13a"
+  },
+  {
+    "original": "apple6-light-model-before-test.png",
+    "file": "attempts/apple6-light-model-before-test.png",
+    "accepted": false,
+    "reason": "含已移除的 activate 调试文案，属于账号切换修复前尝试；不是最终完成状态截图",
+    "sha256": "943ec9a39bbf8ac9c0dc115935bd49145e72ff27f5058038a465a33279b31ea1"
+  },
+  {
+    "original": "apple6-light-model-test-result.png",
+    "file": "attempts/apple6-light-model-test-result.png",
+    "accepted": false,
+    "reason": "含已移除的 activate 调试文案，属于账号切换修复前尝试；不是最终完成状态截图",
+    "sha256": "943ec9a39bbf8ac9c0dc115935bd49145e72ff27f5058038a465a33279b31ea1"
+  },
+  {
+    "original": "simctl-boot-3/light-registered-no-computer.png",
+    "file": "attempts/simctl-boot-3/light-registered-no-computer.png",
+    "accepted": false,
+    "reason": "含已移除的 activate 调试文案，属于账号切换修复前尝试；不是最终完成状态截图",
+    "sha256": "262c0b42a758cd0162b3dfc8e44282d13f319fe0043c6b2ba791c6126c33b3b3"
+  },
+  {
+    "original": "simctl-boot-3/light-model-before-test.png",
+    "file": "attempts/simctl-boot-3/light-model-before-test.png",
+    "accepted": false,
+    "reason": "含已移除的 activate 调试文案，属于账号切换修复前尝试；不是最终完成状态截图",
+    "sha256": "a9fe842e3c50781f0db740cd6002c1b4d860cb37fe1d5b21200114ae42223082"
+  },
+  {
+    "original": "simctl-boot-3/light-model-test-result.png",
+    "file": "attempts/simctl-boot-3/light-model-test-result.png",
+    "accepted": false,
+    "reason": "含已移除的 activate 调试文案，属于账号切换修复前尝试；不是最终完成状态截图",
+    "sha256": "bde519001d0af48dda7dbf2f72b4dceae6085db7bb95203537729e910ae61081"
+  },
+  {
+    "original": "simctl-boot-4/light-model-before-test.png",
+    "file": "attempts/simctl-boot-4/light-model-before-test.png",
+    "accepted": false,
+    "reason": "含已移除的 activate 调试文案，属于账号切换修复前尝试；不是最终完成状态截图",
+    "sha256": "73ae2e94c585df7c79643f8ad72a0ba5e47cb5aa43aa1fd3f39d0b297add13b5"
+  },
+  {
+    "original": "simctl-boot-4/light-model-test-result.png",
+    "file": "attempts/simctl-boot-4/light-model-test-result.png",
+    "accepted": false,
+    "reason": "含已移除的 activate 调试文案，属于账号切换修复前尝试；不是最终完成状态截图",
+    "sha256": "73ae2e94c585df7c79643f8ad72a0ba5e47cb5aa43aa1fd3f39d0b297add13b5"
+  },
+  {
+    "original": "apple6-light-connected-composer-collapsed.png",
+    "file": "partial/apple6-light-connected-composer-collapsed.png",
+    "accepted": false,
+    "reason": "输入行可辨认，但上方标题/空状态未绘出，不能算整屏验收；仅作取图异常和输入行局部证据",
+    "sha256": "397c001e8a277d8f85326a3dd365c3d902441d89409deee584ae87ef398d69d9"
+  },
+  {
+    "original": "apple6-light-connected-composer-expanded.png",
+    "file": "partial/apple6-light-connected-composer-expanded.png",
+    "accepted": false,
+    "reason": "输入行可辨认，但上方标题/空状态未绘出，不能算整屏验收；仅作取图异常和输入行局部证据",
+    "sha256": "bad045fc8c7b31c22357fd62d7043cf5ce599b3259ca45354fa18540c13690dc"
+  },
+  {
+    "original": "simctl-boot-5/light-connected-composer-collapsed.png",
+    "file": "partial/simctl-boot-5/light-connected-composer-collapsed.png",
+    "accepted": false,
+    "reason": "输入行可辨认，但上方标题/空状态未绘出，不能算整屏验收；仅作取图异常和输入行局部证据",
+    "sha256": "3c21e33cc947a7f90a99b8596345f565ce271f7271b63ccfc7dc7e7f65f7d4a1"
+  },
+  {
+    "original": "simctl-boot-5/light-connected-composer-expanded.png",
+    "file": "partial/simctl-boot-5/light-connected-composer-expanded.png",
+    "accepted": false,
+    "reason": "输入行可辨认，但上方标题/空状态未绘出，不能算整屏验收；仅作取图异常和输入行局部证据",
+    "sha256": "fd5ae68dc8da75418258f95e97a653ce79b0912216e6624fcd56dc0aa6eda503"
+  },
+  {
+    "original": "simctl-boot-2/light-connected-composer-collapsed.png",
+    "file": "partial/simctl-boot-2/light-connected-composer-collapsed.png",
+    "accepted": false,
+    "reason": "标题/空状态未绘出，只保留输入行局部证据",
+    "sha256": "d52fe179f6be024f13856fa6bc43c5c1b41b9047ac98c1acbde520a5a62434a1"
+  }
+]

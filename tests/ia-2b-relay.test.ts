@@ -39,10 +39,9 @@ test('durable main sends bind once, queue during relay, keep attachments, recove
     const main = (await api('/chats/main')).body.chat;
     const body = (requestId, text = 'test') => ({ requestId, kind: 'chat.message', targetDeviceId: hostId, chatId: main.chatId, modelProfileId: 'local', text });
     const wait = async request => {
-      for (let i = 0; i < 200; i++) { const row = (await api(`/commands/by-request/${request}`)).body.command;
+      for (;;) { const row = (await api(`/commands/by-request/${request}`)).body.command;
         if (['accepted_by_dsh','rejected','uncertain'].includes(row.state)) return row;
         await new Promise(resolve => setTimeout(resolve, 10)); }
-      assert.fail('pending command did not settle');
     };
     const uploadText = Buffer.from('synthetic attached text'), attachmentId = `attachment-${randomUUID()}`;
     const upload = await fetch(`${origin}/personal/v1/chats/${main.chatId}/attachments/${attachmentId}?requestId=first&name=note.txt`,

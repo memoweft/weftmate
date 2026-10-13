@@ -13,3 +13,19 @@
 只读取 GitHub 的取证命令：`node .github/scripts/ci-failure-survey.mjs` 获取最近 80 次主流程；`survey({workflow:'windows-package.yml', ...})` 另取打包流程。原日志留在 `.local/ci-1/`，公开表格和诊断摘要在 `tests/evidence/ci-1/`。`node .github/scripts/ci-run-evidence.mjs <运行ID> <标签>` 下载各片报告、记录用时与重跑恢复；`round-1` 至 `round-6` 自动生成完整结果表。
 
 旧检查名 `test (windows-latest)` / `test (ubuntu-latest)` 分别替换为 `test (windows-latest, shard 1/3)` 至 `3/3`、`test (ubuntu-latest, shard 1/3)` 至 `3/3`，新增阻断汇总 `Required unit tests (summary)`。原 `test (macos-latest)` 按原触发条件显示为 `test (macos-latest, shard 1/1)`。其他产品平台、云端服务与手机系统栏取证流程保留。
+
+## 合并与红灯处理
+
+合并前，必须把最新 main 合入工作分支，等待该合并结果的全部云端检查通过；单个工作包此前通过不能替代合并结果通过。合主线后的检查也全部核对，由编排者收取结果。计时清单内一次恢复仍须在结果中明示，不能称为首次全绿。
+
+遇到红灯，先保存运行 ID（标识）、提交、平台、文件、用例、历史尝试与失败日志；重跑成功不删除原失败。`node .github/scripts/ci-post-merge-survey.mjs <起点 UTC（协调世界时）>` 按固定起点采集 CI、Review gallery（审稿画廊）、Windows packaged application（打包程序）、S1c、S2、S2b 与 Pinned DSH vendor tests（固定运行时测试）。公开证据清理机器身份；原始日志留本包 `.local`。
+
+按证据区分夹具竞态、测试写法不确定、产品问题与纯墙上时钟预算。等待必须依据命令终态、真实长轮询注册或观察者关闭；不靠固定 sleep（休眠）猜测就绪。密文篡改解码后翻转字节。精确读计数和完整存储快照测试先关闭独立后台观察者。继承临时目录的子进程不更新创建者租约。
+
+预算不包含与被测行为无关的合成身份准备或清理。BL-29 审批探针由 hooks（测试钩子）等待准备与退出；原 25 秒测量期限、30 秒测试期限及四项 2 秒断言保留。手机界面发布的准备也移入钩子，20 秒测量期限不变，SSE（服务器发送事件）读取期限的定时器在读完后释放。非零文件退出一律记录十进制／十六进制退出码、信号、阶段、输出尾段与提交内存概况，报告和失败日志都保留。
+
+`Required unit tests (summary)` 仍须等全部分片报告，缺失、重复或失败继续阻断；它仅移除没有依赖用途的 `npm ci`。无法在其它分片未结束时宣布整体通过。当前 CI 的 Observed bridge（记忆观察桥）任务比 Windows 三片快，vendor／打包／画廊已是独立工作流，继续拆这些任务不能缩短 `gh run rerun --failed` 对同一次运行结束的等待。保持全部检查标准；需要定位时查看已完成的失败 job（任务）日志，完整失败重跑等运行结束后执行。
+
+计时敏感清单沿用 CI-1 六项，本包不扩大重跑范围，不为功能失败登记计时例外。再次失败应继续查阶段耗时和真实条件，不能增加第二次自动重跑。固定复现、逐项定性和连续六轮同代码证据见 [CI-3](../tests/evidence/ci-3/README.md)。
+
+同步探针后续采用相同 hooks（测试钩子）边界：合成身份、桌面／手机准备与退出在测量之外，原55秒／60秒及6秒／1秒／7秒断言不变。硬期限收集控制器时使用SIGKILL（强制终止信号），避免SIGTERM（终止信号）处理器让同步控制器一直不返回；失败保留每一步耗时，合成桌面验证正常退出0。该修复只在共享测试夹具，Apple（苹果端）工作流与原生检查不变。首次验收在macOS Node组600秒到期的失败与下一额外观察轮macOS组通过都保留在 before-sync-fix-cloud（同步修复前证据），不计入最终冻结代码六轮。

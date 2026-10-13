@@ -1,0 +1,182 @@
+{
+  "native": true,
+  "nativeEntry": true,
+  "testDiscovery": "synthetic computer presence and loopback address; authentication and content use product APIs",
+  "syntheticCloud": true,
+  "syntheticAccount": true,
+  "mimoRequests": 0,
+  "checks": [
+    "native-register-no-computer-enters-chat",
+    "native-empty-model-cta-actual-settings-return",
+    "native-model-key-is-encrypted",
+    "native-main-send-blocker-stale-activation-keeps-draft",
+    "native-synthetic-stream-and-final-reply",
+    "native-stop-preserves-partial",
+    "native-regenerate-and-copy",
+    "native-failure-before-first-token-can-regenerate",
+    "native-kill-reopen-identity-encrypted-chat-draft"
+  ],
+  "screenshots": [
+    {
+      "file": "native-390-light-registered-empty.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": false,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          2.599329501915709,
+          2.621743295019157,
+          2.692528735632184
+        ],
+        "header": [
+          4.8875,
+          4.927777777777778,
+          5.065277777777778
+        ],
+        "delta": 2.32260322920769,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false
+    },
+    {
+      "file": "native-390-light-model-settings.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": false,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          2.599329501915709,
+          2.621743295019157,
+          2.692528735632184
+        ],
+        "header": [
+          4.8875,
+          4.927777777777778,
+          5.065277777777778
+        ],
+        "delta": 2.32260322920769,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false
+    },
+    {
+      "file": "native-390-light-synthetic-stream.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": false,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          2.599329501915709,
+          2.621743295019157,
+          2.692528735632184
+        ],
+        "header": [
+          4.8875,
+          4.927777777777778,
+          5.065277777777778
+        ],
+        "delta": 2.32260322920769,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false
+    },
+    {
+      "file": "native-390-light-local-model-menu.png",
+      "viewportWidth": 390,
+      "systemTheme": "unchanged",
+      "pageTheme": "light",
+      "android": "15",
+      "statusHeight": 31,
+      "statusHeightFromResource": false,
+      "statusVisible": true,
+      "navigationHeight": 0,
+      "windowFocused": false,
+      "keyboardVisible": false,
+      "darkStatusIcons": true,
+      "darkNavigationIcons": true,
+      "topColor": {
+        "width": 720,
+        "height": 1280,
+        "statusHeight": 31,
+        "xStart": 0.25,
+        "xEnd": 0.75,
+        "bar": [
+          2.599329501915709,
+          2.621743295019157,
+          2.692528735632184
+        ],
+        "header": [
+          4.8875,
+          4.927777777777778,
+          5.065277777777778
+        ],
+        "delta": 2.32260322920769,
+        "threshold": 18,
+        "passed": true
+      },
+      "bottomVisible": false
+    }
+  ],
+  "errors": [],
+  "fixtureModel": true,
+  "modelEntry": {
+    "tab": "models",
+    "standalone": true
+  },
+  "syntheticModelRequests": 6,
+  "cleanup": [
+    {
+      "package": "com.memoweft.weftmate.mobile.and4qa.test",
+      "result": "Success"
+    },
+    {
+      "package": "com.memoweft.weftmate.mobile.and4qa",
+      "result": "Success"
+    }
+  ]
+}
