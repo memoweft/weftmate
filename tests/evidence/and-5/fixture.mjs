@@ -47,7 +47,15 @@ export async function startFeedFixture(){
       const selected=available.filter(filter),offset=Number(u.searchParams.get('cursor')||0),limit=u.searchParams.get('limit')==='50'?4:200,next=offset+limit<selected.length?String(offset+limit):null;
       return json(res,{items:selected.slice(offset,offset+limit),nextCursor:next,hasMore:!!next,syncCursor:String(revision),snapshotCursor:'synthetic-snapshot',timeZone:'Asia/Shanghai',...(mode==='empty'?{unreadCount:0,actionableCount:0}:counts())});
     }
-    if(history&&p.startsWith('/personal/v1/chats/')&&(p.endsWith('/events')||p.endsWith('/changes'))){const me=await authenticated(req);if(!me)return json(res,{error:{code:'UNAUTHORIZED'}},401);const delta=p.endsWith('/changes'),end=Number(u.searchParams.get('before')||history.length+1)-1,start=Math.max(0,end-100);return json(res,{[delta?'upserts':'items']:delta?[]:history.slice(start,end),contentRevision:2,chatRevision:1,timeZone:'Asia/Shanghai',...(!delta?{olderCursor:start>0?String(start+1):null,hasOlder:start>0,hasNewer:false}:{}),syncCursor:'220',nextCursor:'220',liveEvents:[],liveRevision:0});}
+    if(history&&p.startsWith('/personal/v1/chats/')&&(p.endsWith('/events')||p.endsWith('/changes'))){
+      const me=await authenticated(req);if(!me)return json(res,{error:{code:'UNAUTHORIZED'}},401);
+      const delta=p.endsWith('/changes'),limit=Number(u.searchParams.get('limit')||50);
+      let end=Number(u.searchParams.get('before')||history.length+1)-1,start=Math.max(0,end-limit),deletedAnchor=false;
+      if(u.searchParams.has('around')){const anchor=history.findIndex(row=>row.eventId===u.searchParams.get('around'));deletedAnchor=anchor<0;if(!deletedAnchor){start=Math.max(0,anchor-Math.floor(limit/2));end=Math.min(history.length,start+limit);}}
+      if(u.searchParams.has('after')){start=Number(u.searchParams.get('after'));end=Math.min(history.length,start+limit);}
+      const selected=history.slice(start,end);
+      return json(res,{[delta?'upserts':'items']:delta?[]:selected,contentRevision:2,chatRevision:1,timeZone:'Asia/Shanghai',...(!delta?{olderCursor:selected.length?String(start+1):null,newerCursor:selected.length?String(end):null,hasOlder:start>0,hasNewer:end<history.length,deletedAnchor}:{}),syncCursor:'220',nextCursor:'220',liveEvents:[],liveRevision:0});
+    }
     if(p.match(/\/sessions\/[^/]+\/approvals$/))return json(res,{approvals:[{approvalId:'feed-approval',sessionId:chat.activeSessionId,summary:'整理合成记录',reason:'把两份合成记录合并，保留原文件。',status:'pending',createdAt:new Date().toISOString()}],hasMore:false,nextBefore:null});
     if(p.match(/\/sessions\/[^/]+\/questions$/))return json(res,{questions:[{questionRpcId:'feed-question',sessionId:chat.activeSessionId,status:'pending',createdAt:new Date().toISOString(),questions:[{id:'destination',question:'把记录放在哪里？',options:[{label:'本周计划'},{label:'稍后再定'}]}]}],hasMore:false,nextBefore:null});
     const headers={};for(const[k,v]of Object.entries(req.headers))if(typeof v==='string'&&!['host','connection','content-length'].includes(k))headers[k]=v;

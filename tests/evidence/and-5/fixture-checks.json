@@ -1,5 +1,5 @@
 {
-  "passed": 6,
+  "passed": 8,
   "failed": 0,
   "checks": [
     "notification-command-identifies-specific-activity-and-chat",
@@ -7,6 +7,8 @@
     "settled-delta-does-not-reset-pagination",
     "notification-read-receipt-is-observable",
     "history-pages-preserve-all-220-contiguous-events",
-    "old-event-2-target-is-precise"
+    "old-event-2-target-is-precise",
+    "around-anchor-window-does-not-claim-continuity-to-latest",
+    "deleted-around-anchor-falls-back-to-latest"
   ]
 }
