@@ -4,30 +4,89 @@
   "transport": "isolated direct Windows host; Linux 443 relay is verified by CI",
   "switches": [],
   "approvals": [],
+  "commands": [],
+  "baseline": true,
+  "baselineHelperLoads": 2,
+  "baselineScriptLoads": 2,
+  "restoredLegacyPress": true,
   "trace": [
+    {
+      "type": "click-bubble",
+      "target": "svg",
+      "connected": true,
+      "disabled": false,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "click-bubble",
+      "target": "BUTTON",
+      "connected": false,
+      "disabled": true,
+      "buttonType": "button",
+      "defaultPrevented": false,
+      "invalid": []
+    },
     {
       "type": "pointerdown",
       "target": "path",
       "id": "",
-      "time": 2782
+      "time": 2962.7999999523163,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
     },
     {
       "type": "mousedown",
       "target": "path",
       "id": "",
-      "time": 2782
+      "time": 2962.899999976158,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
+    },
+    {
+      "type": "mutation",
+      "time": 2969
+    },
+    {
+      "type": "mutation",
+      "time": 2977.2999999523163
+    },
+    {
+      "type": "mutation",
+      "time": 2978.899999976158
+    },
+    {
+      "type": "mutation",
+      "time": 2980.399999976158
     },
     {
       "type": "pointerup",
       "target": "path",
       "id": "",
-      "time": 2891.800000011921
+      "time": 3071,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
     },
     {
       "type": "mouseup",
       "target": "path",
       "id": "",
-      "time": 2891.899999976158
+      "time": 3071,
+      "action": "send",
+      "disabled": false,
+      "buttonType": "submit",
+      "defaultPrevented": false,
+      "invalid": []
     }
   ],
   "state": {
@@ -50,8 +109,9 @@
       "cancelHidden": true,
       "cancelDisabled": true
     },
-    "selected": "session-4538c8ca-bc63-481d-8e89-6f731a63fa1f"
+    "selected": "session-f0b7fc0d-2c59-4672-8c0f-fcc468ed8fc1"
   },
   "passed": false,
-  "error": "first send complete"
+  "error": "first send complete",
+  "messageRequests": 0
 }
