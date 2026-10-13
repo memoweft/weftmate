@@ -50,7 +50,7 @@ test('BL-28a server routes each request kind through its own switch for all four
 test('BL-28a server only cancels the request kind whose switch was disabled',async()=>{
   for(const kind of ['replies','completion']) {
     const f=fixture();f.account.personalization={nextSuggestionsEnabled:true,inlineCompletionEnabled:true};f.hold();
-    const work=f.run({kind,requestId:'r',...(kind==='completion'?{draft:'请把'}:{})});await delay();
+    const work=f.run({kind,requestId:'r',...(kind==='completion'?{draft:'请把'}:{})});await f.started;
     const own=kind==='completion'?'inlineCompletionEnabled':'nextSuggestionsEnabled';
     const other=kind==='completion'?'nextSuggestionsEnabled':'inlineCompletionEnabled';
     f.account.personalization[other]=false;f.service.reconcile('o');assert.equal(f.aborted,false);
