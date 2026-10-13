@@ -73,21 +73,21 @@ struct ModelServicesSettingsView: View {
     @State private var removing: ModelService?
     var body: some View {
         ScrollView {
-            VStack(alignment:.leading,spacing:20) {
+            VStack(alignment:.leading,spacing:AppleTokens.Space.p20) {
                 Text("一个地址和密钥，就能选用这个服务的全部聊天模型。").foregroundStyle(Weave.muted)
                 ForEach(store.services) { service in
-                    VStack(alignment:.leading,spacing:12) {
+                    VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
                         Text(service.name).font(AppleTokens.Fonts.headline)
                         Text(service.baseUrl).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         Text("\(service.models.count) 个模型 · \(service.models.filter(\.enabled).count) 个显示在菜单里")
                         Text(service.catalog.message).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         if let checked=service.catalog.checkedAt { Text(HealthInputMath.parseISO(checked)?.formatted(date:.abbreviated,time:.shortened) ?? "").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                         Button("管理模型服务") { editing=service;editor=true }.buttonStyle(ServiceActionStyle()).disabled(!store.canManage).accessibilityIdentifier("modelServices.edit."+service.id)
-                    }.padding(16).background(ServiceControlPalette(dark:scheme == .dark).surface,in:RoundedRectangle(cornerRadius:16))
+                    }.padding(AppleTokens.Space.p16).background(ServiceControlPalette(dark:scheme == .dark).surface,in:RoundedRectangle(cornerRadius:AppleTokens.Radius.r16))
                 }
                 Button("添加模型服务…") { editing=nil;editor=true }.buttonStyle(ServiceActionStyle(primary:true)).disabled(!store.canManage).accessibilityIdentifier("modelServices.new")
                 if let notice=store.notice { Text(notice).foregroundStyle(Weave.muted) }
-            }.padding(20)
+            }.padding(AppleTokens.Space.p20)
         }.background(ServiceControlPalette(dark:scheme == .dark).canvas).navigationTitle("模型服务").task { await store.load() }
             .sheet(isPresented:$editor) { NavigationStack { ModelServiceEditor(store:store,existing:editing,onClose:{editor=false}) } }
     }
@@ -121,7 +121,7 @@ struct ModelServiceEditor: View {
     }
     var body: some View {
         ScrollView {
-            VStack(alignment:.leading,spacing:16) {
+            VStack(alignment:.leading,spacing:AppleTokens.Space.p16) {
                 Button("选择预设或自定义") { presets.toggle() }.buttonStyle(ServiceActionStyle()).accessibilityIdentifier("modelServices.preset")
                 if presets {
                     #if os(iOS)
@@ -140,7 +140,7 @@ struct ModelServiceEditor: View {
                     Text("选择默认模型").font(AppleTokens.Fonts.headline)
                     TextField("搜索型号",text:$query).weaveField()
                     ForEach(items.filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) || $0.modelId.localizedCaseInsensitiveContains(query) }) { item in
-                        VStack(spacing:0) {
+                        VStack(spacing:AppleTokens.Space.p0) {
                             ServiceMenuRow(title:item.name,selected:selected == item.modelId) { selected=item.modelId }.accessibilityIdentifier("modelServices.default."+item.modelId)
                             if existing != nil { ServiceSwitch(title:"在菜单里显示",enabled:Binding(get:{enabled.contains(item.modelId)},set:{value in if value { enabled.insert(item.modelId) } else { enabled.remove(item.modelId) }})) }
                         }
@@ -152,7 +152,7 @@ struct ModelServiceEditor: View {
                 Button(existing == nil ? "完成并使用" : "保存") { Task { if await store.save(existing:existing,name:name,base:base,key:key,type:type,result:result,manual:manual,selected:selected,enabled:enabled) { key="";onClose() } } }.buttonStyle(ServiceActionStyle(primary:true)).disabled(!valid || store.busy).accessibilityIdentifier("modelServices.save")
                 if let notice=store.notice { Text(notice).foregroundStyle(Weave.muted) }
                 if existing != nil { Button("删除模型服务") { removing=true }.buttonStyle(ServiceActionStyle()).foregroundStyle(Weave.danger).accessibilityIdentifier("modelServices.delete") }
-            }.padding(20)
+            }.padding(AppleTokens.Space.p20)
         }.background(Weave.canvas).navigationTitle(existing == nil ? "添加模型服务" : "管理模型服务")
             .toolbar { ToolbarItem(placement:.cancellationAction) { Button("关闭") { key="";onClose() }.foregroundStyle(Weave.secondary) } }
             .onAppear { if let existing { name=existing.name;base=existing.baseUrl;type=existing.interfaceType;selected=existing.selectedModelId;enabled=Set(existing.models.filter(\.enabled).map(\.modelId)) } }

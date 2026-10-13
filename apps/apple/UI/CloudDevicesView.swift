@@ -54,7 +54,7 @@ struct CloudDevicesView: View {
                 }
             }
             .sheet(item:$computerRename) { host in
-                NavigationStack { VStack(spacing:16) { TextField("电脑名称",text:$newName).weaveField();Button("保存") { Task { await cloud.renameComputer(host,name:newName);computerRename=nil } }.buttonStyle(ServiceActionStyle(primary:true)) }.padding(20).navigationTitle("电脑名称") }
+                NavigationStack { VStack(spacing:AppleTokens.Space.p16) { TextField("电脑名称",text:$newName).weaveField();Button("保存") { Task { await cloud.renameComputer(host,name:newName);computerRename=nil } }.buttonStyle(ServiceActionStyle(primary:true)) }.padding(AppleTokens.Space.p20).navigationTitle("电脑名称") }
             }
             .confirmationDialog("移除这台电脑？不会删除这台电脑上的对话、文件和其他内容；未开始的事项会取消，已经开始的操作在那台电脑上收尾。",isPresented:Binding(get:{computerRemove != nil},set:{if !$0 {computerRemove=nil}}),titleVisibility:.visible) { Button("移除电脑",role:.destructive) { if let host=computerRemove { Task { await cloud.removeComputer(host) } };computerRemove=nil };Button("取消",role:.cancel) {} }
             .alert("设备名称", isPresented: Binding(get: { renameTarget != nil }, set: { if !$0 { renameTarget = nil } })) {

@@ -4,14 +4,23 @@ import Foundation
 import SwiftUI
 import AppKit
 
+private struct PaletteCheckFailure: Error, CustomStringConvertible { let description: String }
+private func requirePalette(_ value: Bool,_ reason: String) throws {
+    guard value else { throw PaletteCheckFailure(description:reason) }
+}
+
 @main struct DesignTokenChecks {
-    @MainActor static func main() throws {
+    @MainActor static func main() {
+        do { try run() } catch { print("FAIL DesignTokenChecks: \(error)");exit(1) }
+    }
+    @MainActor static func run() throws {
         let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("design/tokens/tokens.json")
-        let tokens = try JSONSerialization.jsonObject(with: Data(contentsOf: source)) as! [String: Any]
-        let apple = tokens["apple"] as! [String: Any]
-        let recipes = apple["colors"] as! [String: [String: String]]
+        guard let tokens = try JSONSerialization.jsonObject(with: Data(contentsOf: source)) as? [String: Any],
+              let apple=tokens["apple"] as? [String:Any],let recipes=apple["colors"] as? [String:[String:String]] else {
+            throw PaletteCheckFailure(description:"Invalid native palette source")
+        }
         let colors: [String: Color] = ["accent": Weave.accent, "accentSoft": Weave.accentSoft,
             "ink": Weave.ink, "secondary": Weave.secondary, "muted": Weave.muted,
             "canvas": Weave.canvas, "surface": Weave.surface, "soft": Weave.soft,
@@ -60,20 +69,35 @@ import AppKit
             "healthTrack": AppleTokens.Colors.healthTrack,
             "healthInk": AppleTokens.Colors.healthInk,
             "healthMuted": AppleTokens.Colors.healthMuted,
-            "healthCanvas": AppleTokens.Colors.healthCanvas]
-        precondition(Set(recipes.keys) == Set(colors.keys), "Native palette differs from the source roles")
+            "healthCanvas": AppleTokens.Colors.healthCanvas,
+            "controlSurface": AppleTokens.Colors.controlSurface,
+            "controlCanvas": AppleTokens.Colors.controlCanvas,
+            "controlInk": AppleTokens.Colors.controlInk,
+            "controlSecondary": AppleTokens.Colors.controlSecondary,
+            "controlMuted": AppleTokens.Colors.controlMuted,
+            "controlAccent": AppleTokens.Colors.controlAccent,
+            "controlOnAccent": AppleTokens.Colors.controlOnAccent,
+            "controlLine": AppleTokens.Colors.controlLine,
+            "controlSoft": AppleTokens.Colors.controlSoft,
+            "controlShadow": AppleTokens.Colors.controlShadow]
+        try requirePalette(Set(recipes.keys) == Set(colors.keys), "Native palette differs from the source roles")
         var count = 0
         for (mode, appearanceName) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
-            let appearance = NSAppearance(named: appearanceName)!
+            guard let appearance=NSAppearance(named:appearanceName) else { throw PaletteCheckFailure(description:"Appearance unavailable: \(mode)") }
             for role in colors.keys.sorted() {
-                let value = UInt32(recipes[role]![mode]!.dropFirst(), radix: 16)!
-                let expected = [CGFloat((value >> 16) & 255) / 255, CGFloat((value >> 8) & 255) / 255, CGFloat(value & 255) / 255]
-                appearance.performAsCurrentDrawingAppearance {
-                    let resolved = NSColor(colors[role]!).usingColorSpace(.sRGB)!
-                    let actual = [resolved.redComponent, resolved.greenComponent, resolved.blueComponent]
-                    precondition(zip(actual, expected).allSatisfy { abs($0 - $1) < 0.000001 }, "Incorrect \(mode) \(role)")
-                    precondition(resolved.alphaComponent == 1, "Unexpected palette transparency")
+                guard let recipe=recipes[role]?[mode],let value=UInt32(recipe.dropFirst(),radix:16),let color=colors[role] else {
+                    throw PaletteCheckFailure(description:"Missing or invalid \(mode) \(role)")
                 }
+                let expected = [CGFloat((value >> 16) & 255) / 255, CGFloat((value >> 8) & 255) / 255, CGFloat(value & 255) / 255]
+                var actual: [CGFloat]?,alpha: CGFloat?
+                appearance.performAsCurrentDrawingAppearance {
+                    if let resolved=NSColor(color).usingColorSpace(.sRGB) {
+                        actual=[resolved.redComponent,resolved.greenComponent,resolved.blueComponent];alpha=resolved.alphaComponent
+                    }
+                }
+                guard let actual,let alpha else { throw PaletteCheckFailure(description:"Color resolution failed: \(mode) \(role)") }
+                try requirePalette(zip(actual,expected).allSatisfy { abs($0-$1)<0.000001 },"Incorrect \(mode) \(role)")
+                try requirePalette(alpha == 1,"Unexpected palette transparency")
                 count += 1
             }
         }
