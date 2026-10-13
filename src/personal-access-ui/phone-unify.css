@@ -9,6 +9,9 @@
 .phone-unified #attachment-add { grid-column:1; grid-row:1; }
 .phone-unified #send-message { grid-column:3; grid-row:1; width:var(--wm-space-44); height:var(--wm-space-44); min-width:var(--wm-space-44); }
 .phone-unified #message-form:not(.phone-composer-expanded) :is(#model-picker,#approval-picker,#context-usage,#voice-input,#thinking-badge,.composer-spacer) { display:none; }
+.phone-unified #message-form:not(.phone-composer-expanded) {grid-template-columns:var(--wm-space-44) minmax(0,1fr) var(--wm-space-44) var(--wm-space-44)}
+.phone-unified #message-form:not(.phone-composer-expanded) #model-picker {display:block;grid-column:3;grid-row:1;width:var(--wm-space-44);max-width:var(--wm-space-44)}
+.phone-unified #message-form:not(.phone-composer-expanded) #send-message {grid-column:4}
 .phone-unified #message-form.phone-composer-expanded { display:flex; flex-direction:column; align-items:stretch; padding:var(--wm-space-8); border-radius:var(--wm-radius-26); }
 .phone-unified #message-form.phone-composer-expanded #message-text { order:1; width:100%; min-height:var(--wm-space-56); max-height:min(var(--phone-textarea-max),35dvh); padding:var(--wm-space-8); animation:phone-composer-expand var(--wm-duration-160ms) var(--wm-easing-desktop); }
 .phone-unified #message-form.phone-composer-expanded .composer-actions { order:2; display:flex; align-items:center; flex-wrap:wrap; gap:var(--wm-space-2); min-height:var(--wm-space-44); }

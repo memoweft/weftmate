@@ -152,7 +152,7 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
 }
 
 let memoryPullMounted=false;
-function memoryPage(target){memoryTarget=target;if(!memoryPullMounted){memoryPullMounted=true;WeftPopover.pullRefresh($('generic-page'),()=>startMemorySnapshot(memoryTarget,state.memory.kind,state.memory.query),()=>state.page==='memory'&&!state.memory.loading);}const scope=state.owner||'';if(!state.memory||state.memory.scope!==scope)state.memory=emptyMemoryState(scope);
+function memoryPage(target){if(globalThis.WeftPhone?.memoryPending)return WeftPhoneMemoryView(target);memoryTarget=target;if(!memoryPullMounted){memoryPullMounted=true;WeftPopover.pullRefresh($('generic-page'),()=>startMemorySnapshot(memoryTarget,state.memory.kind,state.memory.query),()=>state.page==='memory'&&!state.memory.loading);}const scope=state.owner||'';if(!state.memory||state.memory.scope!==scope)state.memory=emptyMemoryState(scope);
   const memory=state.memory;memory.target='memory';memory.view='list';memory.flow++;
   memory.pendingMarker=savedMemoryMarker();
   if(!state.loggedIn||!scope||state.transitionPending){renderMemoryList(target);return}

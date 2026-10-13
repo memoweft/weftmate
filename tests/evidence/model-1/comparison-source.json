@@ -1,0 +1,5 @@
+{
+  "source": "supplied controls-spec/components/ModelPicker/preview.html + tokens.json + bundle.css",
+  "actual": "real Electron page screenshots",
+  "artifactPreview": "online artifact was unavailable; local source preview used"
+}

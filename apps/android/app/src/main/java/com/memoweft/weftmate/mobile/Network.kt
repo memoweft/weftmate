@@ -33,6 +33,7 @@ internal fun validBusinessPath(path: String): Boolean {
     if (path.length > if (route.startsWith("/personal/v1/chats") || route == "/personal/v1/sessions" || route.startsWith("/personal/v1/library") || route.startsWith("/personal/v1/activity") || route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/suggestions"))) 4096 else 512) return false
     if (path == "/personal/v1/sessions/temporary") return true
     val query = path.substringAfter('?', "")
+    if (query.isEmpty() && route.matches(Regex("/personal/v1/model-services(/(check|model-service-[0-9a-f-]{36}(/(refresh|select))?))?"))) return true
     if (route == "/personal/v1/execution-records" && query.matches(Regex("[A-Za-z0-9._~=&%+-]*"))) return true
     if (query.isEmpty() && (route.matches(Regex("/personal/v1/account/models(/(check|by-request/[A-Za-z0-9_.:-]{1,128}|[A-Za-z0-9_-]{1,128}(/(test|stop-using|transfer))?))?")) ||
         route.matches(Regex("/personal/v1/projects(/[A-Za-z0-9_-]{1,128}(/(sessions|revoke))?)?")) ||
@@ -52,6 +53,7 @@ internal fun validBusinessPath(path: String): Boolean {
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/chats(/main|/[A-Za-z0-9_-]{1,128}(/(events|changes|dates|locate|search|resources|metadata|archive|unarchive|results|forget-preview))?)?"))) return true
     if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/library(/[A-Za-z0-9_-]{1,128}(/preview)?)?"))) return true
     if (query.isEmpty() && route == "/personal/v1/commands") return true
+    // MEM-7 keeps reception, stable receipts and phone erasure on these exact paths.
     if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true
     if (query.isEmpty() && (route == "/personal/v1/status" || route == "/personal/v1/commands" ||
         route.matches(Regex("/personal/v1/commands/[A-Za-z0-9_-]{1,128}")) ||

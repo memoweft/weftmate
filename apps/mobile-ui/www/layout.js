@@ -71,7 +71,7 @@ const mobileMarkup = String.raw`
               <span id="thinking-badge" class="thinking-badge" aria-label="已开启深入思考" hidden>深入思考</span><div class="composer-spacer"></div>
               <button type="button" id="context-usage" class="icon-button context-usage" aria-label="背景信息窗口" aria-describedby="context-tooltip"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="context-track" cx="12" cy="12" r="8"/><circle class="context-fill" cx="12" cy="12" r="8" pathLength="100"/></svg></button>
               <div id="context-tooltip" class="context-tooltip" role="tooltip" hidden><span id="context-tooltip-label"></span><strong id="context-tooltip-detail"></strong></div>
-              <button id="model-button" class="model-button" aria-label="选择模型" aria-expanded="false" aria-controls="model-popover"><span id="model-label">选择模型</span><span class="icon icon-down"></span></button>
+              <button id="model-button" class="icon-button model-button wm-model-trigger" aria-label="模型：尚未选择" aria-expanded="false" aria-haspopup="menu" aria-controls="model-popover"><span class="icon icon-model" aria-hidden="true"></span><span id="model-label" class="sr-only">尚未选择</span></button>
               <button id="voice-button" class="icon-button" aria-label="语音输入"><span class="icon icon-mic"></span></button>
               <button id="send-button" class="send-button" aria-label="发送"><span class="icon icon-arrow"></span></button>
             </div>
