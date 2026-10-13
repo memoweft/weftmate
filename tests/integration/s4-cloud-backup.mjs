@@ -51,7 +51,7 @@ async function acquireHeavy() {
       try {await writeFile(file,tag,{flag:'wx'});heavyLock={file,tag,acquiredAt:Date.now()};break;}
       catch(error){if(error.code!=='EEXIST')throw error;const info=await stat(file).catch(()=>null);if(info&&Date.now()-info.mtimeMs>45*60000)await rm(file,{force:true});}
     }
-    if(!heavyLock){console.log('S4: waiting for a heavy-work slot');await pause(30000);}
+    if(!heavyLock){console.log('S4: waiting for a heavy-work slot');await pause(120000);}
   }
   report.heavySlot=heavyLock.file.match(/heavy-\d+/)[0];console.log('S4: heavy-work slot acquired');
 }
