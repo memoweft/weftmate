@@ -1,0 +1,79 @@
+{
+  "synthetic": true,
+  "instrumentation": [
+    {
+      "width": 390,
+      "theme": "light",
+      "passed": true
+    }
+  ],
+  "screenshots": [],
+  "occupancy": {
+    "startedAt": "2026-10-13T20:44:08.022Z",
+    "heavySlot": "heavy-1.lock",
+    "releasedAt": "2026-10-13T20:44:19.391Z"
+  },
+  "installedOtherPackages": 2,
+  "systemVersion": "15",
+  "systemTheme": "Night mode: yes",
+  "apkHashes": {
+    "app": "f4802667a348ffa77dbc95e1c2d4b98042f87641ed3c3cc8069693a4d02795d0",
+    "test": "07fa03861444dd1a5da3b87d558f786805199a75cabb079e9619551ceba1fb78"
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "PATCH",
+      "path": "/personal/v1/model-services/model-service-11111111-1111-4111-8111-111111111111",
+      "expectedRevision": 1
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "PATCH",
+      "path": "/personal/v1/model-services/model-service-11111111-1111-4111-8111-111111111111",
+      "expectedRevision": 2
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "PATCH",
+      "path": "/personal/v1/model-services/model-service-11111111-1111-4111-8111-111111111111",
+      "modelId": "manual-native",
+      "expectedRevision": 3
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "PATCH",
+      "path": "/personal/v1/model-services/model-service-11111111-1111-4111-8111-111111111111",
+      "expectedRevision": 4
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    }
+  ],
+  "privateAdbClosed": true
+}
