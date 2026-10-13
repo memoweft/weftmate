@@ -227,8 +227,18 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
                     if (sideWaitScope !== token || !sideWaitCursor) {
                         const page = await core.readChatEvents(chatId, {limit:1}, {signal:controller.signal});
                         if (token !== scope() || controller.signal.aborted) return core.historyReadResult('cancelled');
-                        sideWaitScope = token; sideWaitCursor = page.syncCursor; sideWaitRevision = page.liveRevision ?? 0;
                         core.acceptAccountChanges?.(page.accountChanges);
+                        // The baseline cursor already includes changes since the
+                        // initial session read. Catch up native history before
+                        // waiting for changes *after* that cursor, or an existing
+                        // message/approval can stay hidden for the whole wait.
+                        if (core.state.historyInFlight?.generation === core.state.historyGeneration) await core.state.historyInFlight.promise;
+                        if (token !== scope() || controller.signal.aborted) return core.historyReadResult('cancelled');
+                        const history = await legacy.refreshHistory(false, true);
+                        if (token !== scope() || controller.signal.aborted) return core.historyReadResult('cancelled');
+                        if (['failed','reset','cancelled'].includes(history?.kind)) return history;
+                        sideWaitScope = token; sideWaitCursor = page.syncCursor; sideWaitRevision = page.liveRevision ?? 0;
+                        return core.historyReadResult(history.kind, {immediateRenew:true});
                     }
                     const page = await core.readChatChanges(chatId, sideWaitCursor, 200,
                         {ms:core.replyWaitMilliseconds(), liveRevision:sideWaitRevision, signal:controller.signal});

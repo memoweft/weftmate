@@ -1,0 +1,21 @@
+{
+  "selectedSessionMatchesApproval": true,
+  "historyEvents": 0,
+  "uiAfterSeq": 3,
+  "apiNextSeq": 39,
+  "apiEventTypes": [
+    "turn.started",
+    "task.started",
+    "user.message",
+    "step.started",
+    "step.completed",
+    "step.started",
+    "approval.requested"
+  ],
+  "pendingTool": "read",
+  "approvalValid": true,
+  "approvalSource": null,
+  "taskEntries": 0,
+  "approvalBarHidden": true,
+  "baselineEstablishedAfterApproval": true
+}

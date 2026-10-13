@@ -1,0 +1,19 @@
+.connectors-view { display: grid; gap: var(--wm-space-16); }
+.connectors-view h2 { font-size: var(--wm-font-size-15); margin: 0; }
+.connector-list-row { display: flex; align-items: center; gap: var(--wm-space-12); }
+.connector-list-row .connector-open { flex: 1; min-width: 0; text-align: left; }
+.connector-row-copy { display: grid; gap: var(--wm-space-4); min-width: 0; }
+.connector-row-copy strong, .connector-row-copy small { overflow-wrap: anywhere; }
+.connector-empty { display: grid; justify-items: center; padding: var(--wm-space-24); color: var(--muted); }
+.connector-field { display: grid; gap: var(--wm-space-8); margin-bottom: var(--wm-space-12); }
+.connector-field input, .connector-field textarea { width: 100%; box-sizing: border-box; }
+.connector-field textarea { resize: none; min-height: 5em; padding: var(--wm-space-12); color: var(--ink); background: var(--surface); border: var(--wm-space-1) solid var(--line); border-radius: var(--wm-radius-8); font: inherit; }
+.connector-field textarea:focus-visible { outline: var(--wm-space-2) solid var(--accent); outline-offset: var(--wm-space-2); }
+.connector-credential { display: grid; grid-template-columns: 1fr 1fr; gap: var(--wm-space-8); padding-block: var(--wm-space-12); }
+.connector-credential button { justify-self: start; }
+.connector-problem { color: var(--danger); overflow-wrap: anywhere; }
+.connector-test-result p { overflow-wrap: anywhere; }
+.connector-test-result { display: grid; gap: var(--wm-space-8); }
+.connector-test-result > p { display: block; margin: 0; }
+.connector-editor .model-editor-body { overflow: auto; }
+@media(max-width: 600px) { .connector-credential { grid-template-columns: 1fr; } .connector-editor { max-height: calc(100dvh - var(--safe-top, env(safe-area-inset-top, 0px)) - var(--safe-bottom, env(safe-area-inset-bottom, 0px)) - var(--wm-space-24)); } }
