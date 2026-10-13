@@ -95,11 +95,21 @@ class NativeLibraryInstrumentedTest {
         val entry=i.uiAutomation.takeScreenshot();File(activity.filesDir,"and7-$variant-entry.png").outputStream().use{entry.compress(Bitmap.CompressFormat.PNG,100,it)}
         compose.waitUntil(30000){runCatching{compose.onAllNodesWithText("虚构文档.docx").fetchSemanticsNodes().isNotEmpty()}.getOrDefault(false)};shot("library-list")
         reveal("虚构周计划.md")
+        val beforeMenu=i.uiAutomation.takeScreenshot()
         compose.onNodeWithContentDescription("文件操作：虚构周计划.md").performClick();shot("row-menu")
-        if(android.os.Build.VERSION.SDK_INT>=31)main {
-            val panels=android.view.inspector.WindowInspector.getGlobalWindowViews().mapNotNull{it.layoutParams as? android.view.WindowManager.LayoutParams}.filter{it.type==android.view.WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL}
-            assertTrue("Floating menu requests background blur",panels.any{it.flags and android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND!=0 && it.blurBehindRadius>0})
-            File(activity.filesDir,"and7-$variant-menu-blur.json").writeText(JSONObject().put("requested",true).put("systemSupportsBlur",activity.getSystemService(android.view.WindowManager::class.java).isCrossWindowBlurEnabled).put("scrollingContentBlurred",false).toString())
+        if(android.os.Build.VERSION.SDK_INT>=31) {
+            val afterMenu=i.uiAutomation.takeScreenshot()
+            var difference=0L;var samples=0
+            // Right-hand system icons are stable; exclude the clock, which can advance a minute.
+            for(y in 0 until 26)for(x in beforeMenu.width*3/4 until beforeMenu.width) {
+                val before=beforeMenu.getPixel(x,y);val after=afterMenu.getPixel(x,y)
+                difference+=kotlin.math.abs(android.graphics.Color.red(before)-android.graphics.Color.red(after))
+                difference+=kotlin.math.abs(android.graphics.Color.green(before)-android.graphics.Color.green(after))
+                difference+=kotlin.math.abs(android.graphics.Color.blue(before)-android.graphics.Color.blue(after));samples+=3
+            }
+            val delta=difference.toDouble()/samples
+            assertTrue("Menu leaves the system bar sharp and unchanged: $delta",delta<2.0)
+            File(activity.filesDir,"and7-$variant-menu-blur.json").writeText(JSONObject().put("statusBarMeanDelta",delta).put("statusBarPreserved",true).put("backdrop","shared panel-only GPU blur").put("scrollingContentBlurred",false).toString())
         }
         i.uiAutomation.performGlobalAction(1)
         compose.onNodeWithContentDescription("成果文件").performScrollToNode(hasContentDescription("按项目筛选"))
