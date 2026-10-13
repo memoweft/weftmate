@@ -9,22 +9,48 @@ public final class OfflineVault {
     let store: any CredentialStore
     let file: URL
     let keyPrefix: String
-    public init(identity: OfflineIdentity, directory: URL, store: any CredentialStore = KeychainCredentialStore()) throws {
-        self.identity = identity; self.store = store
+    let activeSlot: String
+    let multipleHosts: Bool
+    public init(identity: OfflineIdentity, directory: URL, store: any CredentialStore = KeychainCredentialStore(), multipleHosts: Bool = false) throws {
+        self.identity = identity; self.store = store;self.multipleHosts=multipleHosts;activeSlot=multipleHosts ? "offline.active."+identity.hostId : "offline.active"
         let digest = SHA256.hash(data: Data(identity.scope.utf8)).map { String(format: "%02x", $0) }.joined()
         keyPrefix = "offline.v1." + digest
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         var excluded = directory; var values = URLResourceValues(); values.isExcludedFromBackup = true
         try excluded.setResourceValues(values)
         file = directory.appendingPathComponent(digest + ".sealed")
-        if let prior = try store.load(key: "offline.active"), prior != Data(keyPrefix.utf8) {
+        if let prior = try store.load(key: activeSlot), prior != Data(keyPrefix.utf8) {
             try Self.clearActive(directory: directory, store: store)
         }
         try rememberScope()
     }
-    private func rememberScope() throws { try store.save(Data(keyPrefix.utf8), key: "offline.active") }
+    private func rememberScope() throws {
+        try store.save(Data(keyPrefix.utf8),key:activeSlot)
+        if multipleHosts {
+            var registry=(try store.load(key:"offline.computers")).flatMap { try? JSONDecoder().decode([String:String].self,from:$0) } ?? [:]
+            registry[identity.hostId]=keyPrefix;try store.save(JSONEncoder().encode(registry),key:"offline.computers")
+        }
+    }
+    public static func clearComputer(hostID: String,directory: URL,store: any CredentialStore) throws {
+        guard let bytes=try store.load(key:"offline.computers") else { return }
+        var registry=try JSONDecoder().decode([String:String].self,from:bytes)
+        if let prefix=registry[hostID] { try clearPrefix(prefix,directory:directory,store:store);registry[hostID]=nil }
+        try store.delete(key:"offline.active."+hostID);try store.save(JSONEncoder().encode(registry),key:"offline.computers")
+    }
+    private static func clearPrefix(_ prefix: String,directory: URL,store: any CredentialStore) throws {
+        let digest=String(prefix.dropFirst("offline.v1.".count))
+        guard prefix.hasPrefix("offline.v1."),digest.count == 64,digest.allSatisfy({$0.isHexDigit}) else { throw APIFailure.credentialStorage }
+        try store.delete(key:prefix+".aes");try store.delete(key:prefix+".rsa")
+        let file=directory.appendingPathComponent(digest+".sealed")
+        if FileManager.default.fileExists(atPath:file.path) { try FileManager.default.removeItem(at:file) }
+    }
     /// Also works before a replica has been loaded, e.g. logout immediately after app restore.
     public static func clearActive(directory: URL, store: any CredentialStore) throws {
+        if let computers=try store.load(key:"offline.computers") {
+            let registry=try JSONDecoder().decode([String:String].self,from:computers)
+            for host in registry.keys { try clearComputer(hostID:host,directory:directory,store:store) }
+            try store.delete(key:"offline.computers")
+        }
         guard let bytes = try store.load(key: "offline.active"), let prefix = String(data: bytes, encoding: .utf8) else { return }
         let digest = String(prefix.dropFirst("offline.v1.".count))
         guard prefix.hasPrefix("offline.v1."), digest.count == 64, digest.allSatisfy({ $0.isHexDigit }) else { throw APIFailure.credentialStorage }
@@ -113,7 +139,7 @@ public final class OfflineVault {
         for suffix in [".aes", ".rsa"] { do { try store.delete(key: keyPrefix + suffix) } catch { failure = error } }
         do { if FileManager.default.fileExists(atPath: file.path) { try FileManager.default.removeItem(at: file) } } catch { failure = error }
         if let failure { throw failure }
-        if try store.load(key: "offline.active") == Data(keyPrefix.utf8) { try store.delete(key: "offline.active") }
+        if try store.load(key: activeSlot) == Data(keyPrefix.utf8) { try store.delete(key: activeSlot) }
     }
     static func decode(_ value: String) throws -> Data {
         let normalized = value.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")

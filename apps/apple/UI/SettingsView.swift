@@ -243,8 +243,9 @@ private struct SettingsCategoryView: View {
         } else if route.categoryID == "models" {
             VStack(spacing:AppleTokens.Space.p12) {
                 NavigationLink("手机上的模型",value:AppleSettingsRoute(categoryID:"phone-models")).buttonStyle(OutlineActionStyle()).padding(.horizontal,AppleTokens.Space.p16)
-                standardContent
-            }
+                if app.modelServicesSupported == true { ModelServicesSettingsView(store:ModelServiceSettingsModel(app:app)) }
+                else { standardContent }
+            }.task { _ = try? await app.readModelCatalogue() }
         } else if app.session == nil && ["usage","approvals","schedules","backups","system","archived"].contains(route.categoryID) {
             PhoneComputerEmptyPage(app:app,title:title,explanation:"这里显示电脑保存的内容和设置。")
         } else if route.categoryID == "phone-chats" {

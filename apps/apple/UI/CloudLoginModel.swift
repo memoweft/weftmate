@@ -10,6 +10,26 @@ final class CloudLoginModel: ObservableObject {
     @Published private(set) var subject: String?
     @Published private(set) var email = ""
     @Published private(set) var devices: [CloudDirectoryDevice] = []
+    @Published private(set) var multiHost=false
+    @Published private(set) var computerConversations: [ComputerConversation]=[]
+    @Published var requestedComputerID: String?
+    private var computerClients: [String:PersonalClient]=[:]
+    private var computerLists: [String:[ConversationSummary]]=[:]
+    private var computersReadAt=Date.distantPast
+    var multipleComputers: Bool { multiHost && hosts.count > 1 }
+    func computerName(_ id: String?) -> String? { guard multipleComputers,let id else { return nil };return hosts.first { ($0.hostId ?? $0.id) == id }?.computerName }
+    var selectedComputerName: String { hosts.first { ($0.hostId ?? $0.id) == (requestedComputerID ?? hostID) }?.computerName ?? "电脑" }
+    var selectedComputerNotice: String? {
+        guard multipleComputers,let id=requestedComputerID else { return nil }
+        let host=hosts.first { ($0.hostId ?? $0.id) == id }
+        if host?.online != true { return selectedComputerName+"不在线；已有事项仍在原来的电脑上。" }
+        if app?.session?.hostId != id { return "尚未连接到"+selectedComputerName+"，请先连接这台电脑。" }
+        return nil
+    }
+    var selectedComputerUnavailable: Bool {
+        guard multipleComputers,let id=requestedComputerID else { return false }
+        return hosts.first { ($0.hostId ?? $0.id) == id }?.online != true || app?.session?.hostId != id
+    }
     @Published private(set) var hosts: [CloudDirectoryDevice] = []
     @Published private(set) var authenticated = false
     @Published private(set) var notice: String?
@@ -74,7 +94,7 @@ final class CloudLoginModel: ObservableObject {
             #endif
             authenticated = true; cloudSignedIn = true
             await refreshDirectory()
-            if let hostID, app?.session == nil { await connectHost(id: hostID) }
+            if let selected=multipleComputers ? requestedComputerID : hostID, app?.session == nil { await connectHost(id:selected) }
         } catch { await sessionFailure(error) }
     }
     func changePage(_ page: AppAccountForm.Page) { form.reset(to: page); error = nil; notice = nil }
@@ -188,7 +208,17 @@ final class CloudLoginModel: ObservableObject {
             }
             seenDeviceIDs.formUnion(directory.devices.map(\.id)); directoryLoaded = true
             try store.save(JSONEncoder().encode(seenDeviceIDs), key: "seen-devices:" + (subject ?? ""))
-            devices = directory.devices; hosts = directory.hosts
+            devices = directory.devices; hosts = directory.hosts;multiHost=directory.capabilities?["multiHost"] == 1
+            if multiHost {
+                let currentIDs=Set(hosts.map {$0.hostId ?? $0.id})
+                for id in computerClients.keys where !currentIDs.contains(id) { computerClients[id]=nil;computerLists[id]=nil }
+                for removed in directory.removedHosts ?? [] { app?.removeComputerReplica(removed.hostId);computerLists[removed.hostId]=nil;computerClients[removed.hostId]=nil }
+                if requestedComputerID == nil {
+                    let last=(try store.load(key:"computer-preference:"+(subject ?? ""))).flatMap { String(data:$0,encoding:.utf8) }
+                    requestedComputerID=ComputerSelection.target(hosts:hosts,lastUsed:last)
+                }
+                await refreshComputerConversations()
+            } else { requestedComputerID=nil;computerConversations=[];computerClients=[:];computerLists=[:] }
             #if os(iOS)
             if let app { app.phoneChat.activate(app:app);app.phoneChat.computerDirectoryChanged(hostIDs:Set(directory.hosts.map { $0.hostId ?? $0.id })) }
             #endif
@@ -210,14 +240,18 @@ final class CloudLoginModel: ObservableObject {
     }
     func connectHost(id: String) async {
         guard !busy else { return }
+        let ticket=operation
+        if multipleComputers { requestedComputerID=id;app?.objectWillChange.send() }
         busy = true; error = nil; defer { busy = false }
         do {
             let account = try accountClient()
             let connection = try await account.connect(hostID: id)
+            guard ticket == operation else { return }
             guard connection.hostId == id else { throw APIFailure.identityMismatch }
             selectedHost = connection
             hostID = id
-            try await exchange(id: operation)
+            try await exchange(id: ticket)
+            if ticket == operation,subject != nil { try store.save(Data(id.utf8),key:"computer-preference:"+(subject ?? "")) }
         } catch {
             waiting = true
             if case CloudLoginFailure.hostOffline = error { self.error = connectionMessage(error) }
@@ -226,7 +260,7 @@ final class CloudLoginModel: ObservableObject {
         }
     }
     private func connectionMessage(_ error: Error) -> String {
-        if case CloudLoginFailure.hostOffline = error { return "电脑没开或没联网。打开电脑上的 WeftMate 后再试一次。" }
+        if case CloudLoginFailure.hostOffline = error { return (multipleComputers ? selectedComputerName+"不在线。" : "电脑没开或没联网。")+"打开这台电脑上的 WeftMate 后再试一次。" }
         if case APIFailure.transport(_) = error { return "电脑没开或没联网。请检查后再试一次。" }
         return accountMessage(error)
     }
@@ -234,6 +268,65 @@ final class CloudLoginModel: ObservableObject {
         await refreshDirectory()
         if waiting && authenticated && !busy { await retryConnection() }
     }
+    func refreshComputerConversations(force: Bool = false) async {
+        guard authenticated,multipleComputers,!Task.isCancelled,(force || Date().timeIntervalSince(computersReadAt)>=30),let app else { return }
+        let ticket=operation,accountIdentity=subject;computersReadAt=Date()
+        do {
+            let account=try accountClient();guard let key,let subject else { return }
+            for host in hosts where host.online {
+                let id=host.hostId ?? host.id
+                if app.session?.hostId == id { computerLists[id]=app.conversations;continue }
+                do {
+                    let content: PersonalClient
+                    if let prior=computerClients[id] { content=prior }
+                    else {
+                        let connection=try await account.connect(hostID:id)
+                        guard connection.hostId == id,connection.status == "online",let base=connection.baseUrl else { continue }
+                        content=PersonalClient(credentialStore:KeychainCredentialStore(service:namespace+".computer."+subject+"."+id),transport:URLSessionTransport(hostPins:pins))
+                        let token=try await account.accessToken(hostID:id)
+                        let exchange=try await content.exchangeCloudSession(server:ServerConfiguration(input:base,allowLoopbackHTTP:allowLoopback),hostID:id,accessToken:token,deviceName:cloudDeviceName(deviceName),key:key,trustSubject:subject,hostPins:pins)
+                        guard case .authenticated = exchange else { continue }
+                        guard ticket == operation,accountIdentity == self.subject else { return };computerClients[id]=content
+                    }
+                    let rows=try await content.conversations(includeArchived:false)
+                    guard ticket == operation,accountIdentity == self.subject else { return }
+                    guard rows.allSatisfy({$0.hostId == nil || $0.hostId == id}) else { throw APIFailure.identityMismatch }
+                    computerLists[id]=rows
+                } catch { computerClients[id]=nil }
+            }
+            guard ticket == operation,accountIdentity == self.subject else { return }
+            computerConversations=hosts.flatMap { host in (computerLists[host.hostId ?? host.id] ?? []).map { ComputerConversation(hostId:host.hostId ?? host.id,name:host.computerName,online:host.online,conversation:$0) } }.sorted { ($0.conversation.updatedAt ?? "") > ($1.conversation.updatedAt ?? "") }
+        } catch { if ticket == operation { self.error="电脑对话列表暂时读不了，最近的记录仍然保留。" } }
+    }
+    func openComputerConversation(_ row: ComputerConversation) async {
+        guard row.online else { requestedComputerID=row.hostId;error=row.name+"不在线，打开这台电脑后再试。";return }
+        if app?.session?.hostId != row.hostId { await connectHost(id:row.hostId) }
+        guard app?.session?.hostId == row.hostId else { return }
+        app?.openedSessionID=row.conversation.id
+    }
+    func renameComputer(_ host: CloudDirectoryDevice,name: String) async {
+        guard multiHost else { return }
+        do { try await accountClient().renameComputer(hostID:host.hostId ?? host.id,name:name);await refreshDirectory() }
+        catch { self.error="电脑名称没能保存，请重试。" }
+    }
+    func removeComputer(_ host: CloudDirectoryDevice) async {
+        guard multiHost else { return };let id=host.hostId ?? host.id
+        do {
+            try await accountClient().removeComputer(hostID:id);app?.removeComputerReplica(id);computerClients[id]=nil;computerLists[id]=nil
+            if app?.session?.hostId == id { await app?.retainLocalContentAfterExpiry() }
+            if requestedComputerID == id { requestedComputerID=nil };await refreshDirectory()
+        } catch { self.error="电脑没能移除，请重试。" }
+    }
+    #if DEBUG
+    func seedComputerScreenshot() throws {
+        let args=ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"),args.contains("--apple9-fixture") else { return }
+        let data=Data("{\"devices\":[],\"hosts\":[{\"id\":\"synthetic-desk\",\"hostId\":\"synthetic-desk\",\"name\":\"工作电脑\",\"type\":\"computer\",\"online\":true,\"isCurrent\":false},{\"id\":\"synthetic-laptop\",\"hostId\":\"synthetic-laptop\",\"name\":\"随身电脑\",\"type\":\"computer\",\"online\":false,\"isCurrent\":false}],\"capabilities\":{\"multiHost\":1}}".utf8)
+        let directory=try JSONDecoder().decode(CloudDirectory.self,from:data)
+        hosts=directory.hosts;multiHost=true;requestedComputerID="synthetic-desk"
+        computerConversations=[ComputerConversation(hostId:"synthetic-desk",name:"工作电脑",online:true,conversation:.init(id:"synthetic-chat-a",title:"整理周报",conversationId:nil,sessionId:"synthetic-session-a",running:false,sendAvailable:true,originalModelLabel:nil)),ComputerConversation(hostId:"synthetic-laptop",name:"随身电脑",online:false,conversation:.init(id:"synthetic-chat-b",title:"旅行清单",conversationId:nil,sessionId:"synthetic-session-b",running:false,sendAvailable:false,originalModelLabel:nil))]
+    }
+    #endif
     func dismissNewDeviceNotice() { newDeviceNotice = nil }
     func changePassword(current: String, password: String, repeatPassword: String) async {
         guard !busy else { return }
@@ -303,7 +396,8 @@ final class CloudLoginModel: ObservableObject {
     }
     func retryConnection() async {
         guard !busy, authenticated else { return }
-        if let host = hosts.first(where: { $0.hostId == hostID }) ?? hosts.first {
+        let preferred=multipleComputers ? ComputerSelection.target(hosts:hosts,lastUsed:requestedComputerID ?? hostID,source:requestedComputerID) : hostID
+        if let host = hosts.first(where: { $0.hostId == preferred }) ?? (multipleComputers && preferred != nil ? nil : hosts.first) {
             await connectHost(id: host.hostId ?? host.id)
         } else {
             #if os(iOS)
@@ -351,7 +445,7 @@ final class CloudLoginModel: ObservableObject {
             let config = CloudConfiguration(server: try ServerConfiguration(input: cloud, allowLoopbackHTTP: allowLoopback))
             try store.delete(key: CloudAccountClient.credentialKey(configuration: config))
         }
-        subject = nil; waiting = false
+        subject = nil; waiting = false;multiHost=false;computerConversations=[];computerClients=[:];computerLists=[:];requestedComputerID=nil
         client = nil; key = nil; cloudSignedIn = false; authenticated = false; devices = []; hosts = []; email = ""; emailChangeChallenge = nil; selectedHost = nil; form.reset(to: .login)
         hostID = nil; newDeviceNotice = nil; directoryLoaded = false; seenDeviceIDs = []
         try store.delete(key: "trusted-host")

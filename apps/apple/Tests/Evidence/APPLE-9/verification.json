@@ -1,0 +1,73 @@
+{
+  "swiftPackage": {
+    "tests": 36,
+    "suites": 6,
+    "failures": 0,
+    "afterSystemRestart": true
+  },
+  "stateChecks": {
+    "PhoneModelServicesModelChecks": 15,
+    "PhoneStandaloneModelChecks": 23,
+    "PhoneAttachmentModelChecks": 36,
+    "PhoneMemoryModelChecks": 43,
+    "AppleContractStateChecks": "passed after restart",
+    "AppleSettingsSummaryChecks": "passed after restart",
+    "A16ChatStateChecks": "passed before restart",
+    "DesignTokenChecks": 114
+  },
+  "nativeBuilds": {
+    "iPhone": "generic iOS, unsigned, passed after restart",
+    "Watch": "generic watchOS, unsigned, passed after restart",
+    "Mac": "native macOS, unsigned, passed after restart"
+  },
+  "gates": {
+    "generatedTokens": "passed",
+    "callbackIsolation": {
+      "sites": 72,
+      "failures": 0
+    },
+    "authoredCopy": {
+      "strings": 2778,
+      "passed": true
+    },
+    "copyRegression": {
+      "relevantTests": 3,
+      "failures": 0,
+      "unrelatedBaselineFailure": "health disclaimer placement assertion fails on unchanged origin/main health source"
+    }
+  },
+  "simulator": {
+    "starts": 2,
+    "systemRestarts": 1,
+    "firstRun": {
+      "tests": 1,
+      "passed": 1,
+      "screenshots": 14
+    },
+    "secondRun": {
+      "tests": 1,
+      "failed": 1,
+      "reason": "screenshot request timeout; machine restart; incomplete xcresult cannot export"
+    },
+    "finalScreenshotMatrixRecovered": 0,
+    "finalMissing": 14,
+    "newWeftMateReports": 0,
+    "newGraphicsReportCounts": {
+      "user": {
+        "GPU": 0,
+        "WindowServer": 0
+      },
+      "system": {
+        "GPU": 0,
+        "WindowServer": 4
+      }
+    },
+    "noMoreSimulatorStarts": true
+  },
+  "realModelRequests": 0,
+  "MIMO_API_KEY": "not present; no credential search",
+  "realAccountsComputersOrProductionCloud": false,
+  "trialAccess": false,
+  "fullRepositoryLocalTests": false,
+  "CI": "not awaited; Claude collects final head"
+}
