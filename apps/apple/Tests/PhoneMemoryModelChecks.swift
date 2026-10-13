@@ -14,6 +14,7 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
 @MainActor final class PhoneCheckOffline {
     var memoryItems: [OfflineMemory]=[]
     func authorizeMemory(control: (String) async throws -> OfflineAuthorization) async throws {}
+    func erase() { enqueued=[];synced=[];memoryItems=[];ready=false }
     var generation: Int?=1
     var ready=true
     var hostOffline=false
@@ -148,7 +149,7 @@ struct PhoneCheckSession { enum Verification { case verified };var verification:
         model.handoffNow();try await wait({app.offline.enqueued.count == 100})
         try require(model.memory.items.count == 1,"now-enqueues-complete-large-history")
         model.clearLocalData();try require(model.state.threads.isEmpty && model.memory.items.isEmpty && model.models.isEmpty,"clear-local-data-includes-memory")
-        app.cloudLogin.subject="long-account"
+        app.offline.ready=true;app.cloudLogin.subject="long-account"
         var longState=PhoneChatState(),longThread=PhoneChatThread();longThread.messages=[.init(role:"user",text:String(repeating:"长",count:16385))]
         longState.threads=[longThread];longState.memory = .init();longState.memory?.items=[.init(text:"长对话仍有记忆")]
         let longStore=try PhoneChatStore(account:app.phoneAccountIdentity,directory:root.appendingPathComponent("PhoneChats"),credentials:keys);try longStore.save(longState)

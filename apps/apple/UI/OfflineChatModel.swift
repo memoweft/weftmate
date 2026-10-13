@@ -50,13 +50,13 @@ import WeftMateCore
         if !ready { draft = ""; recentID = nil }
     }
     func poll(session: AccountSession, client: PersonalClient, directory: URL, store: any CredentialStore,
-              allowLoopback: Bool, control: (String) async throws -> OfflineAuthorization) async {
+              allowLoopback: Bool, phoneFirst: Bool = false, control: (String) async throws -> OfflineAuthorization) async {
         guard !polling, !busy else { return }; polling = true; defer { polling = false }
         do {
             let next = OfflineIdentity(ownerId: session.account.ownerId, hostId: session.hostId, deviceId: session.device.id)
             if identity?.ownerId != next.ownerId || identity?.hostId != next.hostId || replica == nil {
                 if replica != nil { erase() }
-                replica = try OfflineReplica(vault: OfflineVault(identity: next, directory: directory, store: store), allowLoopback: allowLoopback)
+                replica = try OfflineReplica(vault: OfflineVault(identity: next, directory: directory, store: store), allowLoopback: allowLoopback,phoneFirst:phoneFirst)
                 identity = next
             }
             guard let engine = replica else { return }
@@ -99,13 +99,13 @@ import WeftMateCore
             }
         } catch { notice = (error as? LocalizedError)?.errorDescription ?? "离线副本无法读取。" }
     }
-    func send(control: (String) async throws -> OfflineAuthorization) async {
+    func send(control: (String) async throws -> OfflineAuthorization, fallbackModel: PhoneModelConfiguration? = nil) async {
         guard let engine = replica, hostOffline, ready, !busy, !polling else { return }
         busy = true; notice = nil; let text = draft; draft = ""
         let previousCount = engine.state.turns.count
         defer { busy = false }
         do {
-            try await engine.send(text, conversationID: conversationID, recentID: recentID, control: control)
+            try await engine.send(text, conversationID: conversationID, recentID: recentID, fallbackModel:fallbackModel, control: control)
             guard replica === engine else { return }
             notice = "电脑上线后自动同步"
         } catch {
