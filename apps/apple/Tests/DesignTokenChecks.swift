@@ -101,6 +101,15 @@ private func requirePalette(_ value: Bool,_ reason: String) throws {
                 count += 1
             }
         }
+        // Exercise real SwiftUI font and padding resolution rather than parsing Swift sources.
+        let token=NSHostingView(rootView:Text("提醒 喝水 09:00").font(AppleTokens.Fonts.caption2))
+        let native=NSHostingView(rootView:Text("提醒 喝水 09:00").font(.caption2))
+        let padded=NSHostingView(rootView:Text("提醒 喝水 09:00").font(AppleTokens.Fonts.caption2).padding(AppleTokens.Space.p16))
+        let actual=token.fittingSize,expected=native.fittingSize,withPadding=padded.fittingSize
+        try requirePalette(actual.width > 0 && actual.height > 0,"Generated reminder font has empty layout")
+        try requirePalette(abs(actual.width-expected.width)<0.01 && abs(actual.height-expected.height)<0.01,"Generated reminder font differs from system caption2")
+        try requirePalette(abs(withPadding.width-actual.width-32)<0.01 && abs(withPadding.height-actual.height-32)<0.01,"Generated reminder padding is not applied by SwiftUI")
+        print("3 real SwiftUI reminder font/padding layout checks passed")
         print("\(count) native light/dark palette checks passed; external HTTP/model requests: 0; GUI: not run")
     }
 }
