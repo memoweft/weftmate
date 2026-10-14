@@ -3,14 +3,18 @@ import SwiftUI
 @main
 struct WeftMatePhoneApp: App {
     @UIApplicationDelegateAdaptor(RunLogPhoneDelegate.self) private var logDelegate
-    @StateObject private var model = AppleAppModel()
+    @StateObject private var model: AppleAppModel
     @StateObject private var health = DailyHealthModel()
     @Environment(\.scenePhase) private var logScenePhase
-    @MainActor init() { DailyHealthBackground.register() }
+    @MainActor init() {
+        let app=AppleAppModel();_model=StateObject(wrappedValue:app)
+        DailyHealthBackground.register();PhoneReminderBackground.register();PhoneReminderNotifications.shared.attach(app)
+    }
     var body: some Scene {
         WindowGroup {
             #if DEBUG && targetEnvironment(simulator)
-            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple9-fixture") { PhoneServiceScreenshotFixture(app:model) }
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple11-fixture") { PhoneReminderTestFixture(app:model) }
+            else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple9-fixture") { PhoneServiceScreenshotFixture(app:model) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple8-fixture") { PhoneAttachmentScreenshotFixture(app:model) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple7-fixture") { PhoneMemoryScreenshotFixture(app:model) }
             else if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--apple5-addendum") { Apple5AddendumFixture(health:health) }
@@ -30,6 +34,7 @@ struct WeftMatePhoneApp: App {
     }
     private var healthContent: some View {
         WeftMateRootView(model: model)
+            .modifier(PhoneReminderLifecycle(app:model,phone:model.phoneChat))
             .environmentObject(health)
             .modifier(PhoneCloudHealthActivation(app:model,cloud:model.cloudLogin,health:health))
             // Restored accounts also prepare observers when iOS starts the app in the background.

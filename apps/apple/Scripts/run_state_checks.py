@@ -14,6 +14,7 @@ CHECKS = {
     "PhoneModelServicesModelChecks": [],
     "PhoneAttachmentModelChecks": [],
     "PhoneStandaloneModelChecks": [],
+    "PhoneReminderModelChecks": [],
     "PhoneMemoryModelChecks": [],
     "A16ChatStateChecks": APP_MODEL,
     "AppleUX23StateChecks": APP_MODEL,
@@ -69,9 +70,9 @@ def main():
             sources.append(ROOT / "UI/ConversationResourcesModel.swift")
         if name == "DesignTokenChecks":
             sources.append(ROOT.parent.parent / "design/tokens/generated/apple/DesignTokens.swift")
-        if name in ("PhoneModelServicesModelChecks", "PhoneStandaloneModelChecks", "PhoneMemoryModelChecks", "PhoneAttachmentModelChecks"):
+        if name in ("PhoneModelServicesModelChecks", "PhoneStandaloneModelChecks", "PhoneReminderModelChecks", "PhoneMemoryModelChecks", "PhoneAttachmentModelChecks"):
             sources.append(ROOT / "iOS/PhoneStandaloneModel.swift")
-        if name in ("PhoneModelServicesModelChecks", "PhoneStandaloneModelChecks", "PhoneAttachmentModelChecks"):
+        if name in ("PhoneModelServicesModelChecks", "PhoneStandaloneModelChecks", "PhoneReminderModelChecks", "PhoneAttachmentModelChecks"):
             sources.append(ROOT / "Tests/PhoneStandaloneCheckSupport.swift")
         if name == "PhoneAttachmentModelChecks":
             sources.append(ROOT / "iOS/PhoneAttachmentInput.swift")
