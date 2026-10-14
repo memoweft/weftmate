@@ -48,7 +48,7 @@ try {
     });
   }
   for (phase of capture && !fixture ? ['before', 'after'] : ['after']) {
-    await page.reload(); await localUiSession(page, candidate.credentials);
+    await page.reload(); await localUiSession(page, candidate.credentials, undefined, {preserveCapabilities:['modelServices']});
     await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).waitFor();
     for (const [width, height] of [[1200,800], [720,600]]) {
       await app.evaluate(({ BrowserWindow }, size) => { const window = BrowserWindow.getAllWindows()[0]; window.setMinimumSize(0,0); window.setContentSize(...size); }, [width,height]);
@@ -121,7 +121,7 @@ try {
   await phone.addInitScript(()=>{window.weftNative={postMessage(raw){const message=JSON.parse(raw);const model={modelId:'fixture',name:'MiMo 定时验收',profileId:'local',enabled:true};const service={serviceId:'model-service-00000000-0000-4000-8000-000000000001',name:'合成模型服务',models:[model],catalog:{status:'available'}};const result=message.method==='host.business'&&message.params?.path==='/personal/v1/settings/personalization'?{settings:{...WeftPersonalization.defaults,...message.params.body},updatedAt:'2026-10-10T00:00:00.000Z',synced:true}:message.method==='host.business'&&message.params?.path==='/personal/v1/model-services'?{services:[service],canManage:true}:message.method==='host.business'&&message.params?.path.endsWith('/refresh')?{service}:message.method==='app.bootstrap'?{loggedIn:false}:message.method==='models.list'?{models:[{source:'phone',modelId:'fixture',displayName:'MiMo 定时验收',selected:true}]}:message.method==='models.host'?{models:[]}:{};queueMicrotask(()=>window.weftNative.onmessage({data:JSON.stringify({id:message.id,ok:true,result})}));}};});
   for(phase of capture?['before','after']:['after']) {
     await phone.goto(`http://127.0.0.1:${server.address().port}/`);await phone.waitForFunction(()=>typeof state!=='undefined'&&state.booted);
-    await phone.evaluate(after=>{state.logicalChats=false;state.model={source:after?'host':'phone',modelId:'fixture',displayName:'MiMo 定时验收',...(after?{profileId:'local'}:{})};state.loggedIn=true;state.owner='synthetic-fix5';state.deviceId='synthetic-phone';state.transitionPending=false;state.chatSource=after?'host':'phone';state.restorePending=false;if(after){state.sharedSessionId='synthetic-session';state.sharedSessions=[{sessionId:'synthetic-session',modelProfileId:'local',modelDisplayName:'MiMo 定时验收',sendAvailable:true}];}page('chat');updateComposer();},phase==='after');
+    await phone.evaluate(after=>{state.logicalChats=false;state.model={source:after?'host':'phone',modelId:'fixture',displayName:'MiMo 定时验收',...(after?{profileId:'local'}:{})};state.loggedIn=true;state.owner='synthetic-fix5';state.deviceId='synthetic-phone';state.transitionPending=false;state.chatSource=after?'host':'phone';state.restorePending=false;if(after){uiCore.state.personalCapabilities={modelServices:1};state.sharedSessionId='synthetic-session';state.sharedSessions=[{sessionId:'synthetic-session',modelProfileId:'local',modelDisplayName:'MiMo 定时验收',sendAvailable:true}];}page('chat');updateComposer();},phase==='after');
     await phone.locator('#draft').focus();
     const phoneModelTrigger=phase==='after'?phone.getByRole('button',{name:/^模型：/}):phone.getByRole('button',{name:'选择模型',exact:true});
     const phoneModelMenu=phase==='after'?phone.getByRole('menu',{name:'选择模型',exact:true}):phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..');

@@ -57,6 +57,7 @@ class NativeActivity : HybridActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        coveredHostHistory = true
         embeddedWebIdentity = embeddedWeb
         // Ignore the retired user preference; rollback is a build-time choice.
         getSharedPreferences("native-ui", MODE_PRIVATE).edit().remove("enabled").apply()
@@ -80,20 +81,24 @@ class NativeActivity : HybridActivity() {
     }
     internal fun webPage(name: String, embedded: Boolean = true): WebView {
         webRoute=name;webEmbedded=embedded
+        coveredHostHistory = name != "chat" && name != "home"
         val web = embeddedWeb
         (web.parent as? ViewGroup)?.removeView(web)
         web.visibility = android.view.View.VISIBLE
+        web.evaluateJavascript("window.weftNativeChatActive=false;if(typeof uiCore!=='undefined')uiCore.connectionVisibility(document.visibilityState==='hidden')", null)
         applyWebFrame()
         return web
     }
-    override fun embeddedPageFinished() { embeddedWebIdentity=embeddedWeb;applyWebFrame();embeddedFeedLoaded?.invoke() }
+    override fun embeddedPageFinished() { embeddedWebIdentity=embeddedWeb;applyWebFrame();if(::model.isInitialized && model.loggedIn && model.tab=="chat")parkWeb();embeddedFeedLoaded?.invoke() }
     internal fun parkWeb() {
         if (!::model.isInitialized || model.tab !in listOf("chat", "activity", "goals", "health", "settings", "models")) return
+        coveredHostHistory = true
         val web = embeddedWeb
         (web.parent as? ViewGroup)?.removeView(web)
         // Keep the shared phone engine attached, but stop painting the covered web UI.
         // evaluateJavascript/native events still drive the existing account/vault engine.
         web.visibility = android.view.View.INVISIBLE
+        web.evaluateJavascript("window.weftNativeChatActive=true;if(typeof stopSharedPoll==='function')stopSharedPoll();if(typeof uiCore!=='undefined')uiCore.connectionVisibility(true)", null)
         presentationContainer.addView(web, 0, ViewGroup.LayoutParams(-1, -1))
     }
     private fun applyWebFrame() {

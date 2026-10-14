@@ -58,6 +58,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
             throw ApiFailure(502, "COMMAND_RECEIPT_INVALID")
         val state = when (command.optString("state")) {
             "accepted_by_dsh", "observed" -> "accepted"
+            "pending", "preflight", "dispatching" -> "pending"
             "rejected" -> "rejected"
             else -> "uncertain"
         }
@@ -75,14 +76,12 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         return result
     }
 
-    /** Query the server first, including when the previous POST may have committed but lost its reply. */
-    @Synchronized fun reconcile(host: HostIdentity, row: SharedCommandRow, current: () -> Boolean): JSONObject {
+    /** Existing requests query first; a newly persisted request can post directly. */
+    @Synchronized fun reconcile(host: HostIdentity, row: SharedCommandRow, current: () -> Boolean, queryFirst: Boolean = true): JSONObject {
         if (row.owner != Endpoints.ownerKey(host.origin, host.ownerId) || row.hostId != host.hostId)
             throw ApiFailure(409, "ACCOUNT_SWITCHED")
         if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
-        api.me(host)
-        if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
-        val prior = try { api.commandByRequest(host, row.requestId) }
+        val prior = if (!queryFirst) null else try { api.commandByRequest(host, row.requestId) }
         catch (error: ApiFailure) {
             if (error.status != 404 || error.safeCode != "NOT_FOUND") {
                 store.updateSharedCommand(row, "uncertain")
@@ -151,8 +150,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
             checked(row, command)
         }
         catch (error: Exception) {
-            val rejected = error is ApiFailure && error.safeCode in setOf("SESSION_READ_ONLY",
-                "SESSION_UNAVAILABLE", "MODEL_UNAVAILABLE", "REQUEST_CONFLICT", "INVALID_REQUEST")
+            val rejected = sharedSendRejected(error)
             store.updateSharedCommand(row, if (rejected) "rejected" else "uncertain")
             throw error
         }
@@ -174,18 +172,12 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         val id = requestId ?: "mobile-${UUID.randomUUID()}"
         if (!requestIdPattern.matches(id)) throw ApiFailure(400, "INVALID_REQUEST")
         val owner = Endpoints.ownerKey(host.origin, host.ownerId)
-        try { api.me(host) }
-        catch (error: ApiFailure) { if (error.status in 400..499) throw error }
-        catch (_: Exception) { /* A previously verified session may be queued offline. */ }
         if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
-        var selected = if (logical) api.business(host, "/personal/v1/chats/$sessionId", "GET", null).getJSONObject("chat") else store.sharedSession(owner, host.hostId, sessionId)
-        if (selected == null) {
-            val listing = sessions(host)
-            if (!listing.getBoolean("hostAvailable")) throw ApiFailure(503, "HOST_UNAVAILABLE")
-            selected = store.sharedSession(owner, host.hostId, sessionId)
-                ?: throw ApiFailure(404, "SESSION_UNAVAILABLE")
-        }
-        if (!selected.optBoolean("sendAvailable")) throw ApiFailure(409, "SESSION_READ_ONLY")
+        // The authenticated command endpoint checks the current account and target.
+        // A cached read-only session can fail locally; a new session need not wait
+        // for the sidebar list before its first send.
+        val selected = if (logical) null else store.sharedSession(owner, host.hostId, sessionId)
+        if (selected != null && !selected.optBoolean("sendAvailable")) throw ApiFailure(409, "SESSION_READ_ONLY")
         if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
         val payload = JSONObject().put("requestId", id).put("kind", kind)
             .put("targetDeviceId", host.hostId).put(if (logical) "chatId" else "sessionId", sessionId)
@@ -216,9 +208,10 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
             }
             if (modelRows.length() > 0) payload.put("attachments", modelRows)
         }
+        val priorRow = store.sharedCommand(owner, host.hostId, sessionId, id)
         val row = store.queueSharedCommand(owner, host.hostId, sessionId, id, payload)
         return try {
-            var result = reconcile(host, row, current)
+            var result = reconcile(host, row, current, queryFirst = priorRow != null)
             if (attachmentIds.isNotEmpty() && result.optString("state") == "uncertain") {
                 repeat(4) {
                     if (!current() || result.optString("state") != "uncertain") return@repeat

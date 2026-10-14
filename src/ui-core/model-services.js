@@ -13,6 +13,7 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
             modelName: services.find(s => s.serviceId === selected?.serviceId)?.models.find(m => m.modelId === selected?.modelId)?.name || core.state.models.find(m => m.id === core.state.modelProfileId)?.name };
     }
     async function refreshModelServices(refresh = false) {
+        if (core.state.personalCapabilities?.modelServices !== 1) { delete core.state.modelServices; core.state.modelServicesCanManage = false; return null; }
         const identity = scope(); if (reading?.identity === identity) return reading.promise;
         if (!refresh && retryIdentity === identity && Date.now() < retryAt) return;
         const work = (async () => {
@@ -35,6 +36,7 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
         } finally { if (reading?.promise === work) reading = null; }
     }
     async function selectServiceModel({serviceId,modelId}) {
+        if (core.state.personalCapabilities?.modelServices !== 1) throw {code:'COMPUTER_UPDATE_REQUIRED'};
         if (writing) return false; writing = true; const identity = scope();
         try {
             let sessionId=core.state.selectedSessionId;
@@ -60,11 +62,12 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
         } finally { writing = false; }
     }
     async function writeModelService(serviceId, body, method = serviceId ? 'PATCH' : 'POST') {
+        if (core.state.personalCapabilities?.modelServices !== 1) throw {code:'COMPUTER_UPDATE_REQUIRED'};
         const identity = scope();
         const result = await core.accessApi('/model-services' + (serviceId ? '/' + encodeURIComponent(serviceId) : ''), {method,protectedWrite:true,body:{requestId:environment.crypto.randomUUID(),...body},timeoutMs:60000});
         if (identity === scope()) { retryAt = 0; await core.refreshModels(); }
         return result;
     }
-    const checkModelService = ({baseUrl,apiKey,interfaceType,serviceId}) => core.accessApi('/model-services/check', {method:'POST',protectedWrite:true,body:{baseUrl,interfaceType,...(apiKey?{apiKey}:{}),...(serviceId?{serviceId}:{})},timeoutMs:20000});
+    const checkModelService = ({baseUrl,apiKey,interfaceType,serviceId}) => { if (core.state.personalCapabilities?.modelServices !== 1) throw {code:'COMPUTER_UPDATE_REQUIRED'}; return core.accessApi('/model-services/check', {method:'POST',protectedWrite:true,body:{baseUrl,interfaceType,...(apiKey?{apiKey}:{}),...(serviceId?{serviceId}:{})},timeoutMs:20000}); };
     return { modelServicesView, refreshModelServices, selectServiceModel, writeModelService, checkModelService };
 };

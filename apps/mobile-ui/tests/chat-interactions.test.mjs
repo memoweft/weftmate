@@ -148,7 +148,7 @@ test('BL-29 synthetic 30-second request budgets include every bridge method in f
 });
 
 test('BL-29b full empty logical main with replyWait counts every bridge call and backs off immediate errors',async t=>{
-  const capabilities = Object.fromEntries(['replyStreaming','replyWait','chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources'].map(key=>[key,1]));
+  const capabilities = Object.fromEntries(['replyStreaming','replyWait','chats','chatTimeline','chatSearch','chatSend','sideChats','chatResources','modelServices'].map(key=>[key,1]));
   const chat = {chatId:'chat-main',kind:'main',activeSessionId:null,revision:1,contentRevision:1,sendAvailable:true};
   const page = {items:[],upserts:[],removals:[],liveEvents:[],liveRevision:0,syncCursor:'sync',nextCursor:'sync',contentRevision:1,chatRevision:1,hasMore:false};
   for (const fault of [null,'BACKEND_UNAVAILABLE','HTTP_502','HTTP_504','CURSOR_RESET_REQUIRED','NOT_FOUND','CHAT_ARCHIVED','UNAUTHORIZED','NETWORK']) {
@@ -1498,7 +1498,8 @@ test('task15-approval-client native methods use dedicated authenticated routes a
   assert.match(bridge,/val host = requireHost\(\)/);assert.match(bridge,/val epoch = requestEpoch/);
   assert.match(bridge,/owner\(secrets.host\(\)\) != scope/);assert.match(bridge,/secrets.host\(\) != host/);
   assert.match(bridge,/host != requestHost/);assert.match(native,/val requestEpoch = accountEpoch.get\(\)\s+val requestHost = secrets.host\(\)/);
-  assert.match(native,/handle\(method, request.optJSONObject\("params"\) \?: JSONObject\(\), requestEpoch, requestHost\)/);
+  assert.match(native,/val params = request.optJSONObject\("params"\) \?: JSONObject\(\)/);
+  assert.match(native,/handle\(method, params, requestEpoch, requestHost\)/);
   assert.equal([...bridge.matchAll(/\n\s+ensureCurrent\(\)/g)].length,2);
   assert.match(bridge,/api\.approvals\(host/);assert.match(bridge,/api\.decideApproval\(host/);assert.doesNotMatch(bridge,/api\.business/);
   assert.match(network,/fun approvals\([\s\S]*?approvalListPath\(sessionId, before, limit\)\}[\s\S]*?"GET"[\s\S]*?"Cookie" to host.cookie/);

@@ -59,6 +59,7 @@ class Element {
   disabled = false
   checked = false
   value = ''
+  get selectedOptions() { return this.children.filter(child => child.tagName.toLowerCase() === 'option' && child.value === this.value) }
   textContent = ''
   type = ''
   className = ''
@@ -316,6 +317,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     ] }))
     if (url.endsWith('/status') && config.statusOffline) return Promise.reject(new Error('synthetic status disconnect'))
     if (url.endsWith('/status')) return Promise.resolve(reply({ ownerId: config.profileAccounts ? profileAccounts[profileOwner].ownerId : 'owner-test', hostId: 'host-test',
+      personalCapabilities:{modelServices:1},
       ...(config.syncAvailable ? { sync: { available: true } } : {}),
       ...(config.downloadAvailable ? { downloads: { android: true } } : {}),
       backend: { capabilities: { chat: { available: true }, desktopOpenApp: { available: true, appIds: ['notepad'] }, naturalLanguageDesktop: { available: false } } } }))
@@ -494,9 +496,10 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   const URLShim = class extends URL {}
   URLShim.createObjectURL = (_file: object) => { const value = `blob:synthetic-${objectUrls.created.length + 1}`; objectUrls.created.push(value); return value }
   URLShim.revokeObjectURL = (value: string) => { objectUrls.revoked.push(value) }
-  const context = { document, window, location, fetch, URL: URLShim, localStorage: { getItem: (key: string) => storage.get(key) ?? null,
+  const context = { document, window, innerWidth: window.innerWidth, location, fetch, URL: URLShim, localStorage: { getItem: (key: string) => storage.get(key) ?? null,
     setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
   TextEncoder, TextDecoder, Blob, File, AbortController, DOMException, queueMicrotask, Event,
+  MutationObserver: class { constructor(_callback: () => void) {} observe() {} disconnect() {} },
   Option: class extends Element { constructor(text: string, value: string) { super('', 'option'); this.textContent = text; this.value = value } },
   __weftmateTestHashBlobSha256: hashBlobSha256, crypto: { randomUUID: () => config.uuidForSync
     ? `00000000-0000-4000-8000-${(++sequence).toString(16).padStart(12, '0')}` : `request-${++sequence}` }, AbortSignal: config.abortSignal ?? AbortSignal, Intl, Date, btoa,

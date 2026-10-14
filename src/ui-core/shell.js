@@ -77,6 +77,8 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         const changed = Object.fromEntries(['models','modelSettings','personalization'].map(key => [key, snapshot[key] !== undefined && previous[key] !== snapshot[key]]));
         if (Object.values(changed).some(Boolean)) void refreshConfiguration(changed).catch(() => {});
         if (previous.sessions !== snapshot.sessions) void (environment.mobileState ? core.listMobileSessions() : refreshAssistantOverview()).catch(() => {});
+        if (foreground() && snapshot.phoneSync !== undefined && previous.phoneSync !== snapshot.phoneSync && core.state.syncAvailable)
+            void core.refreshPhoneRecords().catch(() => {});
     }
     const polling = globalThis.WeftUiCore.polling;
     const canWaitForReply=()=>core.state.personalCapabilities?.replyWait===1&&environment.canWaitForReply?.()!==false;
@@ -121,6 +123,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             case 'ACCOUNT_ALREADY_EXISTS': return '这个账户名已经有人使用，请换一个名称或直接登录。';
             case 'FORBIDDEN': return '当前登录没有执行这项操作的权限。';
             case 'UNAUTHORIZED': return '登录已失效，请重新登录。';
+            case 'COMPUTER_UPDATE_REQUIRED': return '这台电脑的 WeftMate 需要更新，之后就能使用这项功能。';
             case 'BROWSER_DNS_TIMEOUT': return '网页域名解析超时，本次没有取得可引用的页面正文。';
             case 'BROWSER_DOWNGRADE_BLOCKED': return '网页从 HTTPS 跳到不安全的 HTTP，已阻止继续读取。';
             case 'BROWSER_PAGE_CHANGED': return '网页读取时发生跳转或变化，本次正文不能作为来源，请重试。';
