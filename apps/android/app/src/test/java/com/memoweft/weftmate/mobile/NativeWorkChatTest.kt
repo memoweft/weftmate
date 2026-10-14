@@ -122,5 +122,13 @@ class NativeWorkChatTest {
         assertEquals("chat",nativeConversationMode(JSONObject().put("phoneHistory",true).put("mode","work").put("projectId","old-project")))
         assertEquals("work",nativeConversationMode(JSONObject().put("chatId","old").put("projectId","project-old")))
         assertEquals("work",nativeConversationMode(JSONObject().put("chatId","revoked").put("mode","work").put("workDirectory",JSONObject.NULL)))
+        assertEquals("chat",nativeConversationMode(JSONObject().put("chatId","explicit").put("mode","chat").put("projectId","historical-project")))
+    }
+    @Test fun offlineWorkUsesTheOriginalReceiptMessageAndDoesNotQueueTheReplacementDraft() {
+        val users=listOf(JSONObject().put("type","user.message").put("data",JSONObject().put("receiptId","original").put("text","原来的任务")),
+            JSONObject().put("type","user.message").put("data",JSONObject().put("receiptId","later").put("text","之后的补充")))
+        assertEquals("原来的任务",nativeWorkSwitchText(JSONObject().put("sourceReceiptId","original"),users,"另一个未发送的草稿"))
+        assertEquals("之后的补充",nativeWorkSwitchText(JSONObject(),users,"另一个草稿"))
+        assertEquals("保留的草稿",nativeWorkSwitchText(JSONObject(),emptyList(),"保留的草稿"))
     }
 }

@@ -7,8 +7,16 @@ internal fun hostWorkAndChatDeclared(status: JSONObject?): Boolean =
 
 internal fun nativeConversationMode(chat: JSONObject): String = when {
     chat.optBoolean("phoneHistory") || chat.optBoolean("nativePhone") || hostChatUsesPhoneStorage(chat) -> "chat"
-    chat.stringOrEmpty("mode") == "work" || chat.stringOrEmpty("projectId").isNotEmpty() || chat.stringOrEmpty("workspaceKind") == "browser" -> "work"
+    chat.stringOrEmpty("mode") in listOf("chat", "work") -> chat.getString("mode")
+    chat.stringOrEmpty("projectId").isNotEmpty() || chat.stringOrEmpty("workspaceKind") == "browser" -> "work"
     else -> "chat"
+}
+
+internal fun nativeWorkSwitchText(row: JSONObject, rows: List<JSONObject>, draft: String): String {
+    val users = rows.filter { it.optString("type") == "user.message" }
+    val receipt = row.stringOrEmpty("sourceReceiptId")
+    val source = users.lastOrNull { receipt.isNotEmpty() && it.optJSONObject("data")?.stringOrEmpty("receiptId") == receipt } ?: users.lastOrNull()
+    return source?.optJSONObject("data")?.stringOrEmpty("text")?.ifEmpty { null } ?: draft
 }
 
 internal fun nativeModeChats(chats: List<JSONObject>, mode: String, supported: Boolean): List<JSONObject> =
