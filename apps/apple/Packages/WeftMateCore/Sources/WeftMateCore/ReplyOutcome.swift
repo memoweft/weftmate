@@ -5,16 +5,18 @@ public struct ReplyOutcome: Equatable, Sendable {
     public let state: State
     public let retries: Int
     public var rejectedSummaries: [String] = []
+    public var endReasonKind: String? = nil
     public var prominent: Bool { state == .failed }
     public var text: String {
-        if !rejectedSummaries.isEmpty { return rejectedSummaries.map { "你拒绝了" + $0 + "，没有做" }.joined(separator: "；") }
-        return statusText
+        guard !rejectedSummaries.isEmpty else { return statusText }
+        let refusal = rejectedSummaries.map { "你拒绝了" + $0 + "，没有做" }.joined(separator: "；")
+        return state == .completed && retries == 0 ? refusal : refusal + "。" + statusText
     }
     private var statusText: String {
         switch state {
         case .completed: retries > 0 ? "已完成 · 中途有 \(retries) 步重试" : "已完成"
         case .interrupted: "已中断"
-        case .failed: "这轮未能完成，可以让我重试或补充说明。"
+        case .failed: endReasonKind == "max-tokens" ? "回复未完成：内容超出了本次可回复的长度，可以让我接着做。" : "这轮未能完成，可以让我重试或补充说明。"
         case .running: retries > 0 ? "中途遇到问题，正在继续" : "正在处理…"
         case .ended: "已结束"
         }
@@ -58,7 +60,7 @@ public struct ReplyOutcome: Equatable, Sendable {
             let summary = ToolProgressSummary.approval(tool: tool, raw: data["arguments"]?.string ?? bytes.flatMap { String(data: $0, encoding: .utf8) } ?? "")
             if !summaries.contains(summary) { summaries.append(summary) }
         }
-        return .init(state: state, retries: failures.count, rejectedSummaries: summaries)
+        return .init(state: state, retries: failures.count, rejectedSummaries: summaries, endReasonKind: end?.data["endReasonKind"]?.string)
     }
 }
 public struct ReplyArtifactBundle: Equatable, Sendable, Identifiable {

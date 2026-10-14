@@ -219,7 +219,7 @@
         const rejected = steps.filter(rejectedStep);
         if (rejected.length) {
             const remaining = steps.filter(step => !rejectedStep(step));
-            const other = remaining.length ? progressText(remaining, outcome) : {text:'',running:false};
+            const other = progressText(remaining, outcome);
             const refusal = rejected.map(step => `你拒绝了${(step.approvalSummary || approvalSummary(step.toolName,step.arguments))}，没有做`).join('；');
             return {...other,text:[refusal,other.text === '已完成' || other.text === '工具已就绪' ? '' : other.text].filter(Boolean).join(' · ')};
         }
