@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -5,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { migrationHost } from '../helpers/migration-host.mjs';
 import { createProcessEvidence, cleanupOwnedProcesses } from '../helpers/process-evidence.mjs';
 const executable=resolve(process.argv[2]),repo=resolve(import.meta.dirname,'../..'),root=resolve(mkdtempSync('C:/weftmate-rob1-installed-')),startedAt=Date.now();
-const output=join(repo,'tests/evidence/rob-1');mkdirSync(output,{recursive:true});
+const output=evidencePath('rob-1');mkdirSync(output,{recursive:true});
 let h,ev,cleaned=0;
 try {
   h=await migrationHost({executable,tempRoot:root,processEvidence:spec=>ev=createProcessEvidence({outputDir:join(repo,'.local/rob-1-installed-first-run'),profileDirectory:spec.profile,commandRoots:[root],executables:[executable,process.execPath],startedAt})});

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -19,7 +20,7 @@ import { personalAccessUiResources } from '../../src/personal-access-ui/index.mj
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 
 const repository = resolve(import.meta.dirname, '../..'), run = promisify(execFile);
-const evidence = join(repository, 'tests/evidence/r0-1'); await mkdir(evidence, { recursive: true });
+const evidence = evidencePath('r0-1'); await mkdir(evidence, { recursive: true });
 const root = await mkdtemp(join(tmpdir(), 'weftmate-r01-'));
 const installation = join(root, 'Programs/WeftMate'), executable = join(installation, 'WeftMate.exe');
 const profile = join(root, 'profile'), control = join(process.env.APPDATA, 'WeftMate r01qa');

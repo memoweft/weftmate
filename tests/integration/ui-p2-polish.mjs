@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -12,7 +13,7 @@ import { join, resolve } from 'node:path';
 import { _electron, chromium } from 'playwright';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const root = resolve(import.meta.dirname, '../..'), evidence = join(root, 'tests/evidence/ui-p2');
+const root = resolve(import.meta.dirname, '../..'), evidence = evidencePath('ui-p2');
 const baseline = 'd2f188deb7b15087a9d7202c66222fe59588b96e';
 mkdirSync(evidence, { recursive: true });
 const mobileImageUrl = 'data:image/png;base64,' + readFileSync(join(root, 'build/tray-icon.png')).toString('base64');

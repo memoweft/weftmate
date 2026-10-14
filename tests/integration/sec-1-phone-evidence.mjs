@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Presentation fixture on stock Android; real cloud authority and real approval API. */
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ import {servePersonalAccessUi} from '../../src/personal-access-ui/index.mjs';
 import {digestAuthFixture} from '../helpers/memory-digest-auth-fixture.mjs';
 import {managedMkdtempSync} from '../helpers/managed-temp.mjs';
 import {sec1SystemBars} from './sec-1-system-bars.mjs';
-const out=resolve('tests/evidence/sec-1');await mkdir(out,{recursive:true});
+const out=evidencePath('sec-1');await mkdir(out,{recursive:true});
 const root=managedMkdtempSync('weftmate-sec1-phone-'),sessions=new Map(),hash=text=>createHash('sha256').update(text).digest('hex');
 let service,bars,cloud,mode='agree',auth,cookie,origin;
 const backend={getStatus:async()=>({runtime:'ready',capabilities:{chat:{available:true}}}),

@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Installer1,[Parameter(Mandatory=$true)][string]$Installer2,[string]$Evidence='tests/evidence/inst-2',[switch]$StartAtCustom,[switch]$MonitorOnly,[switch]$InteractiveOnly)
+param([Parameter(Mandatory=$true)][string]$Installer1,[Parameter(Mandatory=$true)][string]$Installer2,[string]$Evidence=(Join-Path $(if ($env:WEFTMATE_EVIDENCE_DIR) { $env:WEFTMATE_EVIDENCE_DIR } else { '.local/evidence' }) 'inst-2'),[switch]$StartAtCustom,[switch]$MonitorOnly,[switch]$InteractiveOnly)
 $ErrorActionPreference='Stop'
 $started=Get-Date
 $identity='WeftMate inst2qa'

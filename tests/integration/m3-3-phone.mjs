@@ -1,3 +1,5 @@
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** One real Mac source host, real synthetic cloud, headless phone webpage. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -13,6 +15,8 @@ import { fixture, P } from '../../services/cloud/test/identity-helpers.mjs';
 import { appDevice, proof, control } from '../../services/cloud/test/app-helpers.mjs';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
+prepareEvidenceDirectory(evidencePath('m3-3'), { recursive: true });
+
 
 assert.equal(process.platform, 'darwin');
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-mac';
@@ -125,22 +129,22 @@ try {
   phase = 'phone-directory';
   await page.evaluate(() => WeftSettingsNavigation.open('devices'));
   await page.getByText('synthetic-mac', { exact: true }).filter({ visible: true }).first().waitFor();
-  await page.screenshot({ path: 'tests/evidence/m3-3/phone-web-devices.png' });
+  await page.screenshot({ path: evidencePath('m3-3/phone-web-devices.png') });
   report.checks.push('phone settings visibly lists synthetic-mac');
   await page.getByRole('button', { name: '关闭设置', exact: true }).click();
   phase = 'phone-chat';
   if (!modelId) {
     report.connected = true;
-    await page.screenshot({ path: 'tests/evidence/m3-3/phone-web-model-unavailable.png' });
+    await page.screenshot({ path: evidencePath('m3-3/phone-web-model-unavailable.png') });
     throw Error('MAC_ACCOUNT_MODEL_CATALOG_EMPTY: the native fixture route is not published in this bound account catalog; no chat command was sent.');
   }
   await page.locator('#message-text').fill('M3-3_PHONE 在这台 Mac 上聊一句。'); await page.locator('#message-text').press('Enter');
   await page.getByText('M3-3 手机已在 Mac 上开聊。', { exact: true }).first().waitFor({ timeout: 60000 });
-  await page.screenshot({ path: 'tests/evidence/m3-3/phone-web-chat.png' });
+  await page.screenshot({ path: evidencePath('m3-3/phone-web-chat.png') });
   report.checks.push('phone creates a conversation and receives the real Mac DSH synthetic-model reply'); report.completed = true;
 } catch (error) {
   report.phase = phase; report.failure = String(error.message).replaceAll(password, '[private]').replaceAll(modelKey, '[private]').replaceAll(root, '<synthetic-temp>').replace(/\/Users\/[^/\s]+/g, '/Users/<user>');
-  if (page) await page.screenshot({ path: 'tests/evidence/m3-3/phone-web-failure.png' }).catch(() => {});
+  if (page) await page.screenshot({ path: evidencePath('m3-3/phone-web-failure.png') }).catch(() => {});
   process.exitCode = 1;
 } finally {
   await browser?.close(); await prep?.close();
@@ -152,6 +156,6 @@ try {
   model.closeAllConnections(); await new Promise(r => model.close(r));
   for (const close of cleanups.reverse()) await close();
   await rm(root, { recursive: true, force: true });
-  await writeFile('tests/evidence/m3-3/phone.json', JSON.stringify(report, null, 2) + '\n');
+  await writeFile(evidencePath('m3-3/phone.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ completed: report.completed, phase: report.phase, launches: report.electronHeadlessLaunches }));
 }

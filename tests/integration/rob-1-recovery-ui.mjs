@@ -1,10 +1,11 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { migrationHost, until } from '../helpers/migration-host.mjs';
 import { createProcessEvidence } from '../helpers/process-evidence.mjs';
-const repo=resolve(import.meta.dirname,'../..'), output=join(repo,'tests/evidence/rob-1');mkdirSync(output,{recursive:true});
+const repo=resolve(import.meta.dirname,'../..'), output=evidencePath('rob-1');mkdirSync(output,{recursive:true});
 const root=mkdtempSync('C:/weftmate-rob1-ui-'), startedAt=Date.now(), electron=createRequire(import.meta.url)('electron');
 let h;const evs=[];
 try {

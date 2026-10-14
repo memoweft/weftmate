@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -25,7 +26,7 @@ const wireFile=join(root,'wire.jsonl');
 const hook=join(root,'wire-hook.mjs');writeFileSync(hook,`process.env.UX3_WIRE_FILE=${JSON.stringify(wireFile)};await import(${JSON.stringify(new URL('./ux-3-wire-hook.mjs',import.meta.url).href)});`);
 const env={...process.env,UX3_WIRE_FILE:wireFile,UX3_HOOK_MODULE:new URL("file:///"+hook.replaceAll("\\","/")).href};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
 env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
-let app;const evidence=resolve('tests/evidence/ux-9');mkdirSync(evidence,{recursive:true});
+let app;const evidence=evidencePath('ux-9');mkdirSync(evidence,{recursive:true});
 
 let page,api;const folder=join(root,'SyntheticWork');mkdirSync(folder);writeFileSync(join(folder,'input.txt'),'This is a synthetic UX-9 project.');
 try{

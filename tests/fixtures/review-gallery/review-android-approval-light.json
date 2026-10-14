@@ -1,0 +1,10 @@
+{
+  "platform": "android",
+  "scene": "approval",
+  "theme": "light",
+  "commit": "3f86201a31a0351224cb6d99f027bb51c448d4b7",
+  "generatedAt": "2026-10-08T17:48:06+08:00",
+  "synthetic": true,
+  "source": "tests/evidence/fe-1b/after-mumu-approval.png",
+  "timeBasis": "证据提交时间（历史图未记录拍摄时间）"
+}

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** BL-28a: production Electron and mobile web content, synthetic host and suggestion responses only. */
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { exposeUx7Desktop, mockUx7Requests, closeUx7Routes, assertUx7RouteErrors } from './ux-7-scenes.mjs';
 
-const root = resolve(import.meta.dirname, '../..'), out = join(root, 'tests/evidence/bl-28a');
+const root = resolve(import.meta.dirname, '../..'), out = evidencePath('bl-28a');
 await mkdir(out, { recursive: true });
 const checks = [], shots = [], errors = [], pages = new Set();
 const env = { ...process.env };

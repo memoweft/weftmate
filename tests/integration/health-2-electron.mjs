@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
@@ -12,7 +13,7 @@ import {PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT} from '../../src/host-
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 import {generateHealthSequence} from '../helpers/health-sequence.mjs';
 import {METRIC_IDS} from '../../src/personal-health/analysis.mjs';
-const repository=resolve(import.meta.dirname,'../..'),out=join(repository,'tests/evidence/health-2'),root=await mkdtemp(join(tmpdir(),'weftmate-health2-electron-')),profile=join(root,'profile'),startedAt=new Date().toISOString();
+const repository=resolve(import.meta.dirname,'../..'),out=evidencePath('health-2'),root=await mkdtemp(join(tmpdir(),'weftmate-health2-electron-')),profile=join(root,'profile'),startedAt=new Date().toISOString();
 await mkdir(out,{recursive:true});await mkdir(profile);await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const key=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"],{encoding:'utf8',windowsHide:true}).trim();assert.ok(key,'Machine MIMO_API_KEY is required');
 const credentials={username:'health-synthetic',password:'synthetic-'+randomUUID(),deviceName:'Synthetic health test'};

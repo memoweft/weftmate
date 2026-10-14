@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** UX-2: own Android QA package, real full-screen PNGs, synthetic data only.
  * Run under the UX-2 heavy slot: UX2_HEAVY_LOCK=<owned lock> node this-file.
  * Existing MuMu is read via MuMuManager; this script never starts/stops it.
@@ -11,7 +12,7 @@ import { managedMkdtempSync, managedTempRoot, disposeManagedTemp } from '../help
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { systemBarDifference } from '../../scripts/nightly/system-bars.mjs';
 
-const root = resolve(import.meta.dirname, '../..'), out = join(root, 'tests/evidence/ux-2');
+const root = resolve(import.meta.dirname, '../..'), out = evidencePath('ux-2');
 const adb = 'D:/Software/MuMuPlayer/nx_main/adb.exe', manager = 'D:/Software/MuMuPlayer/nx_main/MuMuManager.exe';
 const pkg = 'com.memoweft.weftmate.mobile.ux2qa';
 const run = (file, args, options = {}) => execFileSync(file, args, { windowsHide: true, timeout: 30000, maxBuffer: 16 * 1024 * 1024, ...options });

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
@@ -9,7 +10,7 @@ import { startAnd3Fixture } from './and-3-fixture.mjs';
 import { systemBarDifference } from '../../scripts/nightly/system-bars.mjs';
 import { pixels } from '../../scripts/nightly/report.mjs';
 
-const repo = resolve(import.meta.dirname, '../..'), out = join(repo, 'tests/evidence/and-3');
+const repo = resolve(import.meta.dirname, '../..'), out = evidencePath('and-3');
 const local = process.platform === 'win32';
 const adb = process.env.AND3_ADB || 'D:/Software/MuMuPlayer/nx_main/adb.exe';
 const pkg = 'com.memoweft.weftmate.mobile.and3qa';

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -25,7 +26,7 @@ const model = arg('--model', 'mimo'), settledMode = process.argv.includes('--set
 assert.ok(['mimo', 'lan'].includes(model));
 const core = resolve(arg('--core-source', 'D:/AIProjects/MemoWeft/Worktrees/mf-2-elliptical-correction/py/src'));
 const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
-const destination = resolve(arg('--out', `tests/evidence/mf-2/after-${model}-${settledMode ? 'settled' : 'default'}`));
+const destination = resolve(arg('--out', evidencePath(`mf-2/after-${model}-${settledMode ? 'settled' : 'default'}`)));
 mkdirSync(destination, { recursive: true });
 const source = readFileSync(new URL('../fixtures/mf2-elliptical-corrections.json', import.meta.url), 'utf8');
 const fixture = JSON.parse(source), cases = fixture.cases.filter(c => !arg('--only') || arg('--only').split(',').includes(c.id));

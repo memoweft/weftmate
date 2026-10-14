@@ -1,6 +1,7 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-const out=resolve('tests/evidence/stream-1');mkdirSync(out,{recursive:true});
+const out=evidencePath('stream-1');mkdirSync(out,{recursive:true});
 const key=process.env.STREAM1_MIMO_KEY;if(!key)throw Error('Missing in-memory MiMo key');
 const messages=[{role:'user',content:'家里的照片、账单和证件如何分类，给我几个简洁建议。'},{role:'assistant',content:'照片按年月整理，账单按用途和年份保存，证件集中加密备份。'}];
 const report=[];

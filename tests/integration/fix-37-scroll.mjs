@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Production Electron and remote phone view, synthetic model/commands only.
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -11,7 +12,7 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const phase = process.argv.includes('--before') ? 'before' : 'after';
 const baselineScroll=phase==='before'?execFileSync('git',['show','c3b341aa5:src/personal-access-ui/conversation-scroll.js'],{encoding:'utf8'}):null;
-const evidence = resolve('tests/evidence/fix-37'); mkdirSync(evidence, {recursive:true});
+const evidence = evidencePath('fix-37'); mkdirSync(evidence, {recursive:true});
 const f = await startFixture(), profile = managedMkdtempSync(join(managedTempRoot(),'weftmate-fix37-'));
 let app, browser; const report = {phase, synthetic:true, surfaces:[], errors:[]};
 try {

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic accounts, production Electron shell and a real authenticated cloud.
 // Only cloud-login preparation/transport is injected; no GitHub network traffic.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -14,7 +15,7 @@ import { fixture as cloudFixture } from '../../services/cloud/test/identity-help
 import { registration, appDevice, control } from '../../services/cloud/test/app-helpers.mjs';
 import { createProcessEvidence } from '../helpers/process-evidence.mjs';
 
-const evidence=resolve('tests/evidence/r0-4');await mkdir(evidence,{recursive:true});
+const evidence=evidencePath('r0-4');await mkdir(evidence,{recursive:true});
 const teardown=[],received=[],checks=[],errors=[];
 let mode='ready';
 const github=createServer(async(req,res)=>{

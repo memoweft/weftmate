@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -41,7 +42,7 @@ try{
     await page.keyboard.press('Escape');await page.getByRole('dialog',{name:'搜索',exact:true}).waitFor({state:'hidden'});
   }
   Object.assign(report,{uiSamples:10,uiEmpty,uiQuery,uiEmptyP95Ms:p95(uiEmpty),uiQueryP95Ms:p95(uiQuery),realElectron:true});
-  const out=resolve('tests/evidence/ux-6');await mkdir(out,{recursive:true});await writeFile(join(out,'performance.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({...report,empty:undefined,query:undefined,uiEmpty:undefined,uiQuery:undefined},null,2));
+  const out=evidencePath('ux-6');await mkdir(out,{recursive:true});await writeFile(join(out,'performance.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({...report,empty:undefined,query:undefined,uiEmpty:undefined,uiQuery:undefined},null,2));
   assert.equal(report.bodyHits,500);assert.ok(report.coldEmptyMs<150);assert.ok(report.queryIncludingDebounceP95Ms<300);
   assert.ok(report.uiEmptyP95Ms<150);assert.ok(report.uiQueryP95Ms<300);
 }finally{await app?.evaluate(({app})=>app.exit(0)).catch(()=>{});await app?.close().catch(()=>{});await service?.close();await rm(root,{recursive:true,force:true});if(profile)await rm(profile,{recursive:true,force:true});}
