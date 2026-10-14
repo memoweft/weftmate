@@ -34,7 +34,7 @@ try {
     process.stdout.write('Waiting for the shared acceptance slot; no lock held.\n');
     for (let i = 0; i < (availableSlot ? 1 : 4); i++) await new Promise(resolve => setTimeout(resolve, 30000));
   }
-  
+
   h = await migrationHost();
   const files = join(h.root, 'FIX46-files');mkdirSync(files);
   h.respond = async body => {
