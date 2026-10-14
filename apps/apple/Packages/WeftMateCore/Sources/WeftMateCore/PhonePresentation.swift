@@ -8,7 +8,7 @@ public enum PhoneTab: String, CaseIterable, Identifiable, Sendable {
         switch self { case .chat: "聊天"; case .activity: "动态"; case .health: "健康"; case .goals: "目标"; case .resources: "成果库" }
     }
     public var icon: String {
-        switch self { case .chat: "chat"; case .activity: "bell"; case .health: "health"; case .goals: "plan"; case .resources: "outputs" }
+        switch self { case .chat: "chat"; case .activity: "bell"; case .health: "health"; case .goals: "goal"; case .resources: "outputs" }
     }
 }
 public enum PhonePresentation {
