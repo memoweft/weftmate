@@ -300,6 +300,10 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 ST-2：操作类型为 `read/write/delete/command/network/external/spend/install/system`。删除、对外发送、花钱拒绝 `allow`；未自定义时完整保留 D12 现有审批模式和新建文件 / 覆盖文件的区别。项目 `permissionRules` 按类别覆盖账户设置，未设置的类别继承；`PATCH /projects/{id}` 与公开项目对象增加该可选字段，保存仍遵循原 `expectedRevision` 和运行中项目限制。
 
+FIX-40：`ask`（每次询问）优先于账户／项目的长期 `allow`（允许）规则与对话内分类授权；每次工具操作仍须原生一次审批，`deny`（禁止）规则继续生效。存储中的规则不被删除，切回其他模式后按原规则处理。该模式新建的审批 `canAlwaysAllow:false`，批准只作用于本次操作；拒绝通过原生工具错误返回模型。
+
+`GET /chats/main`、`GET /chats/{id}` 的 `chat` 增加 `approvalMode`（审批方式），值域与会话接口相同。`PATCH /chats/{id}` 接收且只接收 `{"approvalMode":"ask"}`，返回 `200 {chat}`，需要原 `commands:write` 权限；无原生会话的主对话也能先保存选择，不改变账户默认值。逻辑对话模式跨原生段继承；既有 `PATCH /sessions/{id}/approval-mode` 同时更新所属逻辑对话。无会话且尚无逻辑身份的新旁聊由客户端暂存选择，创建回执返回后必须先保存、核对模式，再发第一条消息；保存失败不发送，草稿保留。
+
 审批公开行增加可选 `operationCategories:string[]`、`canAlwaysAllow:boolean`；POST 审批的 `scope` 可为 `global-category`（只允许 `outcome:allowed-once` 且 `canAlwaysAllow:true`），在提交原审批决定的同一次账户写入中设置对应全局类别为 `allow`。原 `once/conversation-category` 兼容，已决定的请求仍用原 ID 与原体重放。
 
 SEC-1：审批行可含 `secondOpinion:{alignment:"对得上"|"对不上"|"拿不准",externalInfluence:"有"|"没有",reason:string}`，理由为不超过200字的单行文字。缺失表示本次未取得复核意见，不显示故障提示。只复核现有高风险类别及文件夹之外写入的命令；普通审批不调用。后台模型独立请求最多等待4秒，未配置时用会话模型的独立请求；请求计入 `second-opinion` 用量类别。输入仅本人根请求原话、精确工具参数和已经读到的来源位置，不含外部正文和对话历史；意见不能成为审批回执，仍须原批准/拒绝流程。`alignment:对不上` 或 `externalInfluence:有` 时用提醒样式并首次聚焦拒绝；一致时仅显示「另一个模型看过：和你的要求一致」。旧客户端忽略可选字段仍正常审批；Apple 原生需接入显示与设置开关，Android 可由既有界面包更新，无新增路由。

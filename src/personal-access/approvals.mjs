@@ -5,6 +5,7 @@ import { readSourceEvents } from './source-history.mjs';
 import { exactKeys, failure, validId, withDeadline } from './common.mjs';
 import { sourceMessageHash } from './command-policy.mjs';
 import { approvalCategories } from '../plugins/personal-approval-policy.mjs';
+import { chatForSession } from './chat-identity.mjs';
 import { createSecondOpinion } from './second-opinion.mjs';
 import { redactProjectPath } from '../personal-projects/projects.mjs';
 import {
@@ -306,7 +307,8 @@ export function createApprovalOperations(context) {
           reason: input.reason, riskCategories: approvalCategories(input.reason), status: 'pending', createdAt: new Date(context.timestamp()).toISOString() };
         if (isWorkSwitch(input)) row.intent = 'work-switch';
         row.operationCategories = [...new Set(row.riskCategories.map(riskPermissionType))];
-        row.canAlwaysAllow = !input.toolName.startsWith('mcp__c_') && row.operationCategories.length > 0 && row.operationCategories.every(type => PERMISSION_TYPES.some(item => item.id === type && !item.restricted));
+        const mode = chatForSession(next, sessionId)?.approvalMode ?? next.sessions[sessionId].approvalMode ?? next.defaultApprovalMode ?? 'auto';
+        row.canAlwaysAllow = mode !== 'ask' && !input.toolName.startsWith('mcp__c_') && row.operationCategories.length > 0 && row.operationCategories.every(type => PERMISSION_TYPES.some(item => item.id === type && !item.restricted));
         if (review) row.secondOpinion = review;
         checked.source.toolApprovals = [...rows, row];
         return publicToolApproval(row);
