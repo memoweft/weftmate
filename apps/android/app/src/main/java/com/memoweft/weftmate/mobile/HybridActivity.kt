@@ -1260,22 +1260,20 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                     owner(secrets.host()) != scope || secrets.host() != host || host != requestHost)
                     throw ApiFailure(403, "ACCOUNT_SWITCHED")
             }
-            ensureCurrent()
-            val result = when (method) {
+            checkedNativeDecisionRequest(::ensureCurrent) { when (method) {
                 "shared.approvals.list" -> api.approvals(host, params.getString("sessionId"),
                     if (params.has("before")) params.getString("before") else null,
                     params.optInt("limit", 50))
                 "shared.approvals.decide" -> api.decideApproval(host, params.getString("sessionId"), params.getString("approvalId"),
                     params.getString("requestId"), params.getString("outcome"),
-                    if (params.has("scope")) params.getString("scope") else null)
+                    if (params.has("scope")) params.getString("scope") else null,
+                    if (params.has("workProjectId")) params.getString("workProjectId") else null)
                 "shared.questions.list" -> api.questions(host, params.getString("sessionId"),
                     if (params.has("before")) params.getString("before") else null,
                     params.optInt("limit", 50))
                 else -> api.answerQuestion(host, params.getString("sessionId"), params.getString("questionRpcId"),
                     params.getString("requestId"), params.getJSONObject("answer"))
-            }
-            ensureCurrent()
-            result
+            } }
         }
         "shared.sources.detail" -> {
             val host = requireHost()
