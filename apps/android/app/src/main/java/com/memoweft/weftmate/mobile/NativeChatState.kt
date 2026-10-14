@@ -20,6 +20,25 @@ internal class NativeTimeline {
     private fun key(e: JSONObject): String = e.optString("eventId").ifBlank { "${session(e)}:${e.optLong("seq")}" }
     private fun session(e: JSONObject) = e.optJSONObject("sourceRef")?.optString("sessionId") ?: e.optString("sessionId")
     fun reset() { durable.clear(); live = emptyList(); watermark = -1; revision = null }
+    suspend fun readPage(page: JSONObject, older: Boolean = false, current: () -> Boolean = { true },
+        detail: suspend (String, Long) -> JSONObject) {
+        // Complete before publishing or advancing the cursor. A failed detail read
+        // remains retryable, and a late result cannot enter a different conversation.
+        val completed = JSONObject(page.toString())
+        for (field in listOf("items", "upserts", "events")) {
+            for (event in completed.optJSONArray(field)?.objects().orEmpty()) {
+                val data = event.optJSONObject("data") ?: continue
+                if (!data.optBoolean("truncated") || event.optString("type") !in listOf("user.message", "assistant.message")) continue
+                if (!current()) return
+                val source = event.optJSONObject("sourceRef") ?: event
+                val full = detail(source.getString("sessionId"), source.getLong("seq"))
+                if (!current()) return
+                check(full.optString("type") == event.optString("type") && full.opt("text") is String && !full.optBoolean("truncated")) { "MESSAGE_DETAIL_UNAVAILABLE" }
+                data.put("text", full.getString("text")).put("truncated", false)
+            }
+        }
+        if (current()) merge(completed, older)
+    }
     fun merge(page: JSONObject, older: Boolean = false) {
         if (page.has("contentRevision")) {
             val next = page.getLong("contentRevision")
