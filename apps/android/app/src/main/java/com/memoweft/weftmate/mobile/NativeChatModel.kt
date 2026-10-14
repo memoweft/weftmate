@@ -1,13 +1,10 @@
 package com.memoweft.weftmate.mobile
 
-import android.content.Context
 import androidx.compose.runtime.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 internal suspend fun readNativeApprovalMode(fallback: String, read: suspend () -> String): String {
     val modes = listOf("auto", "ask", "accept-edits", "plan", "allow-all")
@@ -28,7 +25,8 @@ internal suspend fun saveNativeApprovalMode(selected: String, local: Boolean, sa
 
 /** Presentation only: account, model, local conversations, attachments and commands stay in the existing native layer. */
 @Stable
-internal class NativeChatModel(private val activity: NativeActivity, val scope: CoroutineScope) {
+internal class NativeChatModel(private val environment: NativeChatEnvironment, val scope: CoroutineScope) {
+    constructor(activity: NativeActivity, scope: CoroutineScope) : this(ActivityNativeChatEnvironment(activity), scope)
     var loggedIn by mutableStateOf(false)
     var owner by mutableStateOf("")
     var tab by mutableStateOf("chat")
@@ -132,12 +130,10 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     private var composerSave: Job? = null
     private var bootstrapping = false
     private var modelSettingsFinished = false
-    private val prefs = activity.getSharedPreferences("native-chat", Context.MODE_PRIVATE)
+    private val prefs = environment.preferences
+    private val uncreatedDraftKey get() = "draft-new:$owner:$conversationMode"
     val composer get() = NativeComposerState(draft, focused, attachments.size, running, !standalone)
-    suspend fun call(method: String, params: JSONObject = JSONObject()): JSONObject = suspendCancellableCoroutine { c ->
-        val cancel = activity.nativeRequest(method, params) { r -> if (c.isActive) r.fold({ c.resume(it) }, { c.resumeWithException(it) }) }
-        c.invokeOnCancellation { cancel() }
-    }
+    suspend fun call(method: String, params: JSONObject = JSONObject()): JSONObject = environment.request(method, params)
     suspend fun business(path: String, method: String = "GET", body: JSONObject? = null): JSONObject {
         val request: suspend () -> JSONObject = { call("host.business", JSONObject().put("path", "/personal/v1$path").put("method", method).apply { body?.let { put("body", it) } }) }
         return if (path == "/model-services" || path.startsWith("/model-services/")) hostModelServicesRequest(hostModelServices, request) else request()
@@ -152,19 +148,19 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         hostModelServices = false
         val b = call("app.bootstrap")
         val nextOwner = b.optString("owner")
-        if (owner != nextOwner) { workAndChat=false; loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
+        if (owner != nextOwner) { workAndChat=false; newWork=false; conversationMode="chat"; loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
         owner = nextOwner; loggedIn = b.optBoolean("loggedIn"); standalone = b.optString("authSource") == "phone"
         sidebarMode = prefs.getString("conversation-mode:$owner", "chat").let { if (it == "work") "work" else "chat" }
         val appearance = call("settings.appearance")
         dark = resolvedAppearanceDark(appearance.optString("value"), appearance.optBoolean("systemDark"))
         if (!loggedIn) { workAndChat=false; composerSave?.cancel(); phoneOwner = ""; chats = emptyList(); models = emptyList(); running = false; phoneArchive = false; loading = false; return }
-        var phoneView = activity.phonePresentation("view")
+        var phoneView = environment.phone("view")
         readingPreferences(phoneView)
         if(phoneView.optBoolean("active")) standalone=true
         if (standalone) {
             var view = phoneView
             val deadline = android.os.SystemClock.elapsedRealtime() + 20000
-            while ((!view.optBoolean("ready") || view.optBoolean("authBusy")) && android.os.SystemClock.elapsedRealtime() < deadline) { delay(100); view = activity.phonePresentation("view") }
+            while ((!view.optBoolean("ready") || view.optBoolean("authBusy")) && android.os.SystemClock.elapsedRealtime() < deadline) { delay(100); view = environment.phone("view") }
             if (!view.optBoolean("ready") || view.optBoolean("authBusy")) { loading = false; return }
             phoneOwner = view.optString("owner")
             refreshPhoneModels()
@@ -178,24 +174,21 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             } else refreshPhone(view)
             loading = false; return
         }
-        models = runCatching { call("models.host").optJSONArray("models")?.objects() ?: emptyList() }.getOrDefault(emptyList()) +
-            runCatching { call("models.list").optJSONArray("models")?.objects() ?: emptyList() }.getOrDefault(emptyList())
-        val selected = b.optJSONObject("model")
-        modelId = selected?.optString("profileId") ?: ""
-        if (modelId.isBlank()) modelId = models.firstOrNull { it.optBoolean("configured") }?.optString("profileId") ?: ""
-        modelLabel = selected?.optString("displayName")?.takeIf { it.isNotBlank() } ?: models.firstOrNull { it.optString("profileId") == modelId }?.optString("displayName") ?: "选择模型"
+        refreshHostModels(b.optJSONObject("model"))
         val hostStatus = runCatching { business("/status") }.getOrNull()
         replyWait = hostStatus?.optJSONObject("personalCapabilities")?.optInt("replyWait") == 1
         hostModelServices = hostModelServicesDeclared(hostStatus)
         workAndChat = hostWorkAndChatDeclared(hostStatus)
         hostId = hostStatus?.stringOrEmpty("hostId").orEmpty()
         hostName = hostStatus?.stringOrEmpty("hostName")?.ifEmpty { null } ?: "这台电脑"
+        if (hostStatus != null) connected = true
         if (workAndChat) refreshWorkChoices()
         refreshMessageIntent()
         refreshChats()
         if (chatId.isBlank()) {
             if (switchingComputer) return
             if (workAndChat && newWork) return
+            if (workAndChat && prefs.getBoolean("new-work:$owner", false)) { newChat("work").join(); return }
             if (workAndChat) { val remembered = sidebarMode; newChat("chat").join(); chooseSidebarMode(remembered); return }
             val main = runCatching { business("/chats/main").getJSONObject("chat") }.getOrNull()
             if (main != null) select(main) else {
@@ -206,6 +199,13 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         }
         loading = false
         } finally { bootstrapping = false; loading = false }
+    }
+    private suspend fun refreshHostModels(selected: JSONObject?) {
+        models = runCatching { call("models.host").optJSONArray("models")?.objects() ?: emptyList() }.getOrDefault(emptyList()) +
+            runCatching { call("models.list").optJSONArray("models")?.objects() ?: emptyList() }.getOrDefault(emptyList())
+        modelId = selected?.stringOrEmpty("profileId").orEmpty()
+        if (modelId.isBlank()) modelId = models.firstOrNull { it.optBoolean("configured") }?.stringOrEmpty("profileId").orEmpty()
+        modelLabel = selected?.stringOrEmpty("displayName")?.takeIf { it.isNotBlank() } ?: models.firstOrNull { it.optString("profileId") == modelId }?.optString("displayName") ?: "选择模型"
     }
     private suspend fun refreshPhoneModels() {
         val result = call("phone.models.list")
@@ -252,13 +252,13 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             if (main != null && chats.none { it.stringOrEmpty("chatId") == main.stringOrEmpty("chatId") }) chats = listOf(main) + chats
         }
         if (workAndChat && computers.size > 1) {
-            val all = runCatching { activity.goals.presentation("const all=await uiCore.accessApi('/chats?limit=200');for(const computer of uiCore.state.computers||[]){try{const value=await uiCore.computerApi(computer.hostId,'/chats/main');if(value.chat && !all.items.some(row=>row.chatId===value.chat.chatId))all.items.unshift({...value.chat,hostId:computer.hostId});}catch{}}return all;") }.getOrNull()
+            val all = runCatching { environment.presentation("const all=await uiCore.accessApi('/chats?limit=200');for(const computer of uiCore.state.computers||[]){try{const value=await uiCore.computerApi(computer.hostId,'/chats/main');if(value.chat && !all.items.some(row=>row.chatId===value.chat.chatId))all.items.unshift({...value.chat,hostId:computer.hostId});}catch{}}return all;") }.getOrNull()
             all?.optJSONArray("items")?.let {
                 val items = it.objects()
                 chats = items + chats.filter { row -> hostChatUsesPhoneStorage(row) || row.stringOrEmpty("kind") == "main" && items.none { item -> item.stringOrEmpty("chatId") == row.stringOrEmpty("chatId") } }
             }
         }
-        val view = activity.phonePresentation("view")
+        val view = environment.phone("view")
         if (view.optBoolean("ready")) {
             phoneOwner = view.optString("owner")
             chats = chats + view.optJSONArray("conversations")?.objects().orEmpty().map { c -> JSONObject().put("id",c.optString("id")).put("source","phone").put("nativePhone",true)
@@ -271,7 +271,9 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             if (chat.optBoolean("computerOffline")) { error = "这段工作所在的电脑不在线，连接后可继续。"; return }
             connectComputer(sourceHost)
         }
-        val startingDraft = if(chatId.isBlank())draft else ""
+        val transferringWork = newWork && requestedApprovalMode != null
+        val startingDraft = if (chatId.isBlank() && (!newWork || transferringWork)) draft else ""
+        val startingDraftKey = if (workAndChat && chatId.isBlank() && (!newWork || transferringWork)) uncreatedDraftKey else null
         saveDraft(); generation++; sending=false; workChoicesBusy=false; poll?.cancel(); timeline.reset(); cursor = ""; liveRevision = 0; seq = -1
         val g = generation
         approvalModeReady = false
@@ -292,6 +294,10 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         modelId = chat.stringOrEmpty("selectedModelProfileId").ifEmpty { chat.stringOrEmpty("modelProfileId") }.ifEmpty { modelId }
         modelLabel = models.firstOrNull { it.optString("profileId",it.optString("modelId")) == modelId }?.optString("displayName") ?: modelLabel
         draft = prefs.getString("draft:$owner:$chatId", startingDraft) ?: startingDraft
+        if (workAndChat && !phone) prefs.edit().apply {
+            remove("new-work:$owner")
+            if (startingDraftKey != null) { putString("draft:$owner:$chatId", draft); remove(startingDraftKey) }
+        }.apply()
         rows = emptyList(); approvals = emptyList(); questions = emptyList(); uncertain = emptyList(); phoneLive = ""; focused = false
         canRegenerate = false
         var approvalSelectionRevision = approvalModeRevision
@@ -300,7 +306,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (g != generation) return
         if (phoneArchive) {
             attachments = emptyList(); draft = ""; hasOlder = false; olderCursor = ""
-            val view = activity.phonePresentation("view")
+            val view = environment.phone("view")
             if (g != generation) return
             val saved = view.optJSONObject("composer")
             if (standalone) draft = view.optJSONObject("drafts")?.optString(if(chatId=="phone-new")"new" else chatId)
@@ -308,7 +314,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             refreshPhone(view)
             call("native.draft",JSONObject().put("hasDraft",draft.isNotEmpty()))
             if (g != generation) return
-            poll = scope.launch { while (isActive && g == generation) { delay(if (running) 100 else 500); if (activity.nativeForeground) refresh() } }
+            poll = scope.launch { while (isActive && g == generation) { delay(if (running) 100 else 500); if (environment.foreground) refresh() } }
             return
         }
         refreshAttachments()
@@ -334,19 +340,26 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (g != generation) return
         refresh()
         if (g != generation) return
+        startPolling(g)
+        } finally { if (g == generation && approvalSelectionRevision == approvalModeRevision) approvalModeBusy = false }
+    }
+    private fun startPolling(g: Int) {
+        poll?.cancel()
         poll = scope.launch { while (isActive && g == generation) {
             if (refreshing && refreshGeneration == g) { delay(50); continue }
-            if (tab == "chat" && activity.nativeForeground && replyWait && !phone && cursor.isNotBlank()) refresh(wait = true)
-            else { delay(if (running) 250 else 2500); if (tab == "chat" && activity.nativeForeground) refresh() }
+            if (tab == "chat" && environment.foreground && replyWait && !phone && cursor.isNotBlank()) refresh(wait = true)
+            else { delay(if (running) 250 else 2500); if (tab == "chat" && environment.foreground) refresh() }
             if (!connected) delay(1500)
         } }
-        } finally { if (g == generation && approvalSelectionRevision == approvalModeRevision) approvalModeBusy = false }
     }
     fun saveDraft() {
         if (phoneArchive) {
             composerSave?.cancel()
-            if (standalone && phoneOwner.isNotBlank()) { val p = phoneParams().put("draft", draft); composerSave = scope.launch { delay(150); runCatching { activity.phonePresentation("composer", p) } } }
-        } else if (owner.isNotBlank() && chatId.isNotBlank()) prefs.edit().putString("draft:$owner:$chatId", draft).apply()
+            if (standalone && phoneOwner.isNotBlank()) { val p = phoneParams().put("draft", draft); composerSave = scope.launch { delay(150); runCatching { environment.phone("composer", p) } } }
+        } else if (owner.isNotBlank()) {
+            if (chatId.isNotBlank()) prefs.edit().putString("draft:$owner:$chatId", draft).apply()
+            else if (workAndChat) prefs.edit().putString(uncreatedDraftKey, draft).putBoolean("new-work:$owner", newWork).apply()
+        }
     }
     suspend fun locateFile(source: JSONObject) {
         val started=generation;val sourceOwner=owner
@@ -393,14 +406,24 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         }
     }
     suspend fun refresh(older: Boolean = false, wait: Boolean = false) {
-        if (newWork) return
+        if (newWork && workBusy) return
         if (refreshing && refreshGeneration == generation) return
         refreshing = true
         val g = generation
         refreshGeneration = g
         try {
-            if (phoneArchive) {
-                val view = activity.phonePresentation("view"); if (g != generation) return
+            if (workAndChat && !phone && chatId.isBlank()) {
+                // An unbound draft has no history endpoint, but still needs model
+                // updates and connection recovery while it waits for a folder.
+                business("/status"); if (g != generation) return
+                val b = call("app.bootstrap"); if (g != generation || b.stringOrEmpty("owner") != owner) return
+                refreshHostModels(b.optJSONObject("model")); if (g != generation) return
+                sendAvailable = !newWork && modelId.isNotBlank()
+                approvalModeReady = true
+                if (newWork) refreshWorkChoices(false)
+                if (g != generation) return
+            } else if (phoneArchive) {
+                val view = environment.phone("view"); if (g != generation) return
                 refreshPhone(view)
                 if (standalone && tab == "chat" && !running) refreshPhoneModels()
                 return
@@ -462,12 +485,16 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             if (g != generation) return
             connected = false
             if (e is ApiFailure && e.status == 409) { cursor = ""; timeline.reset(); rows = emptyList() }
-            if (e is ApiFailure && e.status in listOf(401, 403)) { loggedIn = false; rows = emptyList(); approvals = emptyList(); questions = emptyList(); timeline.reset(); poll?.cancel(); activity.showLogin() }
+            if (e is ApiFailure && e.status in listOf(401, 403)) { loggedIn = false; rows = emptyList(); approvals = emptyList(); questions = emptyList(); timeline.reset(); poll?.cancel(); environment.showLogin() }
             else error = "连接暂时中断，正在重连。"
         } finally { if (refreshGeneration == g) { refreshing = false; refreshPhase = "idle" } }
     }
     fun send() = launch {
         if (sending || approvalModeBusy || !canSend || workBusy || uncertain.any { it.optString("state") == "uncertain" } || draft.isBlank() && attachments.isEmpty()) return@launch
+        if (workAndChat && !phone && chatId.isBlank()) {
+            newChat("chat", pendingApprovalMode ?: mode).join()
+            if (chatId.isBlank() || !canSend || approvalModeBusy) return@launch
+        }
         if (!phone && pendingApprovalMode != null) {
             val selected = pendingApprovalMode!!; val retryGeneration = generation; val revision = approvalModeRevision
             approvalModeBusy = true
@@ -492,7 +519,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         var submitted=false
         try {
             if (phoneArchive) {
-                val accepted=activity.phonePresentation("send", phoneParams().put("text",text))
+                val accepted=environment.phone("send", phoneParams().put("text",text))
                 if(g!=generation)return@launch
                 check(accepted.optBoolean("ready") && accepted.optString("owner")==phoneOwner) { "ACCOUNT_SWITCHED" }
                 if(!accepted.optBoolean("sent",true)) { refreshPhone(accepted);return@launch }
@@ -515,8 +542,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             sending=false
         } }
     }
-    fun stop() = launch { if (phoneArchive) activity.phonePresentation("stop", phoneParams()) else if (phone) call("chat.stop") else if (sessionId.isNotBlank()) call("shared.stop", JSONObject().put("sessionId", sessionId).put("requestId", "stop-${UUID.randomUUID()}")); refresh() }
-    fun regenerate() = launch { if (canRegenerate) { scrollVersion++;activity.phonePresentation("regenerate", phoneParams()); refresh() } }
+    fun stop() = launch { if (phoneArchive) environment.phone("stop", phoneParams()) else if (phone) call("chat.stop") else if (sessionId.isNotBlank()) call("shared.stop", JSONObject().put("sessionId", sessionId).put("requestId", "stop-${UUID.randomUUID()}")); refresh() }
+    fun regenerate() = launch { if (canRegenerate) { scrollVersion++;environment.phone("regenerate", phoneParams()); refresh() } }
     fun copyReply(text:String) = launch { call("clipboard.copy",JSONObject().put("text",text));copyVersion++ }
     fun checkDelivery() = launch { call("shared.outbox.reconcile"); refresh() }
     private suspend fun writeApprovalMode(selected: String, session: String, chat: String): String {
@@ -545,21 +572,31 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             } finally { if (g == generation && revision == approvalModeRevision) approvalModeBusy = false }
         }
     }
-    fun newChat(productMode: String = sidebarMode) = launchJob {
+    fun newChat(productMode: String = sidebarMode, approvalChoice: String? = null) = launchJob {
         if(creatingChat)return@launchJob
         val usePhone=standalone || !connected
         saveDraft(); generation++; val creatingGeneration=generation
         poll?.cancel(); timeline.reset(); cursor=""; liveRevision=0
+        val startingDraft = if (chatId.isBlank() && conversationMode == productMode) draft else ""
         if(chatId.isNotBlank())draft=""
         chatId="";sessionId="";title="新对话";rows=emptyList();approvals=emptyList();questions=emptyList();uncertain=emptyList();attachments=emptyList()
-        pendingApprovalMode=null;approvalModeRevision++;approvalModeBusy=false;mode="auto"
+        pendingApprovalMode=approvalChoice;approvalModeRevision++;approvalModeBusy=false;mode=approvalChoice ?: "auto"
         running=false;sending=false;sendAvailable=false;loading=false;error="";tab="chat";creatingChat=true
         newWork = workAndChat && productMode == "work"
         conversationMode = if (newWork) "work" else "chat"
         if (workAndChat) chooseSidebarMode(conversationMode)
         workProject = null; workCreateRequest = ""; workCreateProject = ""
         try {
-            if (newWork) { title="新工作"; refreshWorkChoices(); return@launchJob }
+            if (newWork || workAndChat && !usePhone && modelId.isBlank()) {
+                phone = false; phoneArchive = false; phoneHistory = false
+                draft = prefs.getString(uncreatedDraftKey, startingDraft) ?: startingDraft
+                saveDraft(); approvalModeReady = true
+                if (newWork) { title="新工作"; refreshWorkChoices() }
+                if (creatingGeneration == generation) startPolling(creatingGeneration)
+                return@launchJob
+            }
+            draft = startingDraft
+            if (workAndChat) prefs.edit().remove("new-work:$owner").apply()
             val conversation=if(usePhone) {
                 if(standalone) JSONObject().put("id","phone-new").put("nativePhone",true).put("title","小纬") else call("conversations.create")
             } else {
@@ -582,12 +619,16 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         catch(e:Exception){if(creatingGeneration==generation)error="电脑还没能创建对话，请重新点新对话。草稿已保留。"}
         finally{creatingChat=false}
     }
-    fun returnToChat() { tab="chat"; launch { readingPreferences(activity.phonePresentation("view"));if(standalone)refreshPhoneModels() else refreshMessageIntent(); refresh() } }
+    fun returnToChat() { tab="chat"; launch { readingPreferences(environment.phone("view"));if(standalone)refreshPhoneModels() else refreshMessageIntent(); refresh() } }
     fun openModels() { modelSettingsFinished=false; tab="models" }
     fun selectModel(row: JSONObject) = launch {
         val id = row.optString("profileId",row.optString("modelId"))
-        if(standalone) { activity.phonePresentation("model", phoneParams().put("endpoint",row.getString("endpoint")).put("modelId",row.getString("modelId"))); refreshPhoneModels() }
-        else { if(row.optString("source")=="phone")call("models.select",JSONObject().put("endpoint",row.getString("endpoint")).put("modelId",row.getString("modelId"))) else call("models.selectHost",JSONObject().put("profileId",id)); modelId=id;modelLabel=row.optString("displayName",id) }
+        if(standalone) { environment.phone("model", phoneParams().put("endpoint",row.getString("endpoint")).put("modelId",row.getString("modelId"))); refreshPhoneModels() }
+        else {
+            if(row.optString("source")=="phone")call("models.select",JSONObject().put("endpoint",row.getString("endpoint")).put("modelId",row.getString("modelId"))) else call("models.selectHost",JSONObject().put("profileId",id))
+            modelId=id;modelLabel=row.optString("displayName",id)
+            if (workAndChat && !phone && chatId.isBlank()) { sendAvailable = !newWork && modelId.isNotBlank() && connected; approvalModeReady = true }
+        }
     }
     fun pick(kind: String) = launch { call("attachments.pick", JSONObject().put("conversationId", chatId).put("kind", kind)) }
     fun remove(row: JSONObject) = launch { call("attachments.remove", JSONObject().put("conversationId", chatId).put("attachmentId", row.getString("attachmentId"))); refreshAttachments() }
@@ -619,9 +660,9 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         val g = generation
         try {
             if (includeComputers) {
-                val directory = runCatching { nativePageRead { NativeSettingsBridge(activity).call("directory") } }.getOrNull()
+                val directory = runCatching { environment.directory() }.getOrNull()
                 if (g != generation) return
-                offlineWorkReady = runCatching { activity.goals.presentation("return {ready:globalThis.WeftMobileCloud?.core?.offlineWorkReady?.()===true};").optBoolean("ready") }.getOrDefault(false)
+                offlineWorkReady = runCatching { environment.presentation("return {ready:globalThis.WeftMobileCloud?.core?.offlineWorkReady?.()===true};").optBoolean("ready") }.getOrDefault(false)
                 computers = directory?.optJSONArray("hosts")?.objects()?.takeIf { it.isNotEmpty() }
                     ?: listOf(JSONObject().put("hostId", hostId).put("name", hostName).put("online", connected))
                 hostName = computers.find { it.stringOrEmpty("hostId") == hostId }?.let { it.stringOrEmpty("displayName").ifEmpty { it.stringOrEmpty("name") } }?.ifEmpty { null } ?: hostName
@@ -639,7 +680,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (computers.none { it.stringOrEmpty("hostId") == id && it.optBoolean("online") }) throw ApiFailure(503,"COMPUTER_OFFLINE")
         switchingComputer = true
         try {
-            activity.goals.presentation("const core=globalThis.WeftMobileCloud.core,account=core.state.cloudAuth.sub;const connection=await core.cloudConnect(${JSONObject.quote(id)});if(connection.status!=='online')throw {code:'COMPUTER_OFFLINE'};if(connection.pairingRequired)throw {code:'COMPUTER_UPDATE_REQUIRED'};await core.cloudConnectTrusted(connection);if(core.state.cloudAuth.sub!==account)throw {code:'ACCOUNT_SWITCHED'};await core.enterAssistant();return {};")
+            environment.presentation("const core=globalThis.WeftMobileCloud.core,account=core.state.cloudAuth.sub;const connection=await core.cloudConnect(${JSONObject.quote(id)});if(connection.status!=='online')throw {code:'COMPUTER_OFFLINE'};if(connection.pairingRequired)throw {code:'COMPUTER_UPDATE_REQUIRED'};await core.cloudConnectTrusted(connection);if(core.state.cloudAuth.sub!==account)throw {code:'ACCOUNT_SWITCHED'};await core.enterAssistant();return {};")
             chatId = ""; sessionId = ""; poll?.cancel()
             bootstrap()
             check(hostId == id) { "TARGET_UNAVAILABLE" }
@@ -659,11 +700,11 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     }
     fun chooseWorkProject(project: JSONObject) = launch {
         if (workBusy || running || !connected) return@launch
+        if (newWork && modelId.isBlank()) { error="先选择一个模型，再选文件夹开始工作。"; return@launch }
         workChoicesBusy = true
         val g = generation
         try {
             if (newWork) {
-                val selectedApprovalMode = pendingApprovalMode ?: mode
                 if (workCreateRequest.isEmpty() || workCreateProject != project.getString("projectId")) {
                     workCreateRequest = "native-work-${UUID.randomUUID()}"; workCreateProject = project.getString("projectId")
                 }
@@ -678,8 +719,9 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                 if (g != generation) return@launch
                 val resolved = business("/sessions/${command.getString("sessionId")}/chat")
                 val chat = business("/chats/${resolved.getString("chatId")}").getJSONObject("chat")
+                if (g != generation) return@launch
                 workChoicesBusy = false
-                select(chat, selectedApprovalMode); refreshChats()
+                select(chat, pendingApprovalMode ?: mode); refreshChats()
             } else {
                 business("/sessions/$sessionId/metadata","PATCH",JSONObject().put("projectId",project.getString("projectId")))
                 if (g != generation) return@launch
@@ -691,7 +733,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     }
     fun openOfflineWork(row: JSONObject) = launch {
         val text = nativeWorkSwitchText(row, rows, draft)
-        activity.goals.presentation("const core=globalThis.WeftMobileCloud?.core;if(!core?.offlineWorkReady?.())throw {code:'COMPUTER_OFFLINE'};core.openOfflineWorkMode(${JSONObject.quote(text)});return {};")
+        environment.presentation("const core=globalThis.WeftMobileCloud?.core;if(!core?.offlineWorkReady?.())throw {code:'COMPUTER_OFFLINE'};core.openOfflineWorkMode(${JSONObject.quote(text)});return {};")
         tab="web-chat"
     }
     fun answer(row: JSONObject, answers: JSONArray) = launch {
