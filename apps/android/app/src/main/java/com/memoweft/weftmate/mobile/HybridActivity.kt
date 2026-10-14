@@ -1267,7 +1267,8 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                     params.optInt("limit", 50))
                 "shared.approvals.decide" -> api.decideApproval(host, params.getString("sessionId"), params.getString("approvalId"),
                     params.getString("requestId"), params.getString("outcome"),
-                    if (params.has("scope")) params.getString("scope") else null)
+                    if (params.has("scope")) params.getString("scope") else null,
+                    if (params.has("workProjectId")) params.getString("workProjectId") else null)
                 "shared.questions.list" -> api.questions(host, params.getString("sessionId"),
                     if (params.has("before")) params.getString("before") else null,
                     params.optInt("limit", 50))

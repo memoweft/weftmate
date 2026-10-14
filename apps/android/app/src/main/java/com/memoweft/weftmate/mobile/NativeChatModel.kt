@@ -46,6 +46,42 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     var chats by mutableStateOf(emptyList<JSONObject>())
     var models by mutableStateOf(emptyList<JSONObject>())
     var hostModelServices by mutableStateOf(false)
+    var workAndChat by mutableStateOf(false)
+    var conversationMode by mutableStateOf("chat")
+        private set
+    var sidebarMode by mutableStateOf("chat")
+        private set
+    var hostId by mutableStateOf("")
+        private set
+    var hostName by mutableStateOf("这台电脑")
+        private set
+    var computers by mutableStateOf(emptyList<JSONObject>())
+        private set
+    var projects by mutableStateOf(emptyList<JSONObject>())
+        private set
+    var workProject by mutableStateOf<JSONObject?>(null)
+        private set
+    var newWork by mutableStateOf(false)
+        private set
+    var workChoicesBusy by mutableStateOf(false)
+        private set
+    var workChoicesError by mutableStateOf("")
+        private set
+    private var switchingComputer = false
+    private var workCreateRequest = ""
+    private var workCreateProject = ""
+    var offlineWorkReady by mutableStateOf(false)
+        private set
+    val visibleChats get() = nativeModeChats(chats, sidebarMode, workAndChat)
+    val canSend get() = sendAvailable && (!workAndChat || conversationMode != "work" || workProject != null && connected)
+    val subtitle get() = when {
+        phoneHistory -> "来自手机 · 只读"
+        standalone || phone -> "手机自己答的"
+        workAndChat && conversationMode == "work" -> "$hostName · ${workProject?.stringOrEmpty("name")?.ifEmpty { null } ?: "选择项目或文件夹"}"
+        workAndChat -> "由 $hostName 回答"
+        connected -> "已连接"
+        else -> "正在重连"
+    }
     var modelLabel by mutableStateOf("选择模型")
     var modelId by mutableStateOf("")
     var mode by mutableStateOf("auto")
@@ -110,11 +146,12 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (bootstrapping) return
         bootstrapping = true
         try {
-        hostModelServices = false
+        hostModelServices = false; workAndChat = false
         val b = call("app.bootstrap")
         val nextOwner = b.optString("owner")
         if (owner != nextOwner) { loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
         owner = nextOwner; loggedIn = b.optBoolean("loggedIn"); standalone = b.optString("authSource") == "phone"
+        sidebarMode = prefs.getString("conversation-mode:$owner", "chat").let { if (it == "work") "work" else "chat" }
         val appearance = call("settings.appearance")
         dark = resolvedAppearanceDark(appearance.optString("value"), appearance.optBoolean("systemDark"))
         if (!loggedIn) { composerSave?.cancel(); phoneOwner = ""; chats = emptyList(); models = emptyList(); running = false; phoneArchive = false; loading = false; return }
@@ -147,9 +184,16 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         val hostStatus = runCatching { business("/status") }.getOrNull()
         replyWait = hostStatus?.optJSONObject("personalCapabilities")?.optInt("replyWait") == 1
         hostModelServices = hostModelServicesDeclared(hostStatus)
+        workAndChat = hostWorkAndChatDeclared(hostStatus)
+        hostId = hostStatus?.stringOrEmpty("hostId").orEmpty()
+        hostName = hostStatus?.stringOrEmpty("hostName")?.ifEmpty { null } ?: "这台电脑"
+        if (workAndChat) refreshWorkChoices()
         refreshMessageIntent()
         refreshChats()
         if (chatId.isBlank()) {
+            if (switchingComputer) return
+            if (workAndChat && newWork) return
+            if (workAndChat) { val remembered = sidebarMode; newChat("chat").join(); chooseSidebarMode(remembered); return }
             val main = runCatching { business("/chats/main").getJSONObject("chat") }.getOrNull()
             if (main != null) select(main) else {
                 connected = false; sendAvailable = false; loading = false
@@ -200,6 +244,17 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     suspend fun refreshChats() {
         chats = if (standalone) emptyList() else runCatching { business("/chats").optJSONArray("items")?.objects().orEmpty() }.getOrDefault(emptyList()) +
             runCatching { call("conversations.list").optJSONArray("conversations")?.objects().orEmpty() }.getOrDefault(emptyList())
+        if (workAndChat) {
+            val main = runCatching { business("/chats/main").getJSONObject("chat") }.getOrNull()
+            if (main != null && chats.none { it.stringOrEmpty("chatId") == main.stringOrEmpty("chatId") }) chats = listOf(main) + chats
+        }
+        if (workAndChat && computers.size > 1) {
+            val all = runCatching { activity.goals.presentation("const all=await uiCore.accessApi('/chats?limit=200');for(const computer of uiCore.state.computers||[]){try{const value=await uiCore.computerApi(computer.hostId,'/chats/main');if(value.chat && !all.items.some(row=>row.chatId===value.chat.chatId))all.items.unshift({...value.chat,hostId:computer.hostId});}catch{}}return all;") }.getOrNull()
+            all?.optJSONArray("items")?.let {
+                val items = it.objects()
+                chats = items + chats.filter { row -> hostChatUsesPhoneStorage(row) || row.stringOrEmpty("kind") == "main" && items.none { item -> item.stringOrEmpty("chatId") == row.stringOrEmpty("chatId") } }
+            }
+        }
         val view = activity.phonePresentation("view")
         if (view.optBoolean("ready")) {
             phoneOwner = view.optString("owner")
@@ -208,8 +263,13 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         }
     }
     suspend fun select(chat: JSONObject, requestedApprovalMode: String? = null) {
+        val sourceHost = chat.stringOrEmpty("workHostId").ifEmpty { chat.stringOrEmpty("hostId") }
+        if (!hostChatUsesPhoneStorage(chat) && sourceHost.isNotEmpty() && sourceHost != hostId && computers.any { it.stringOrEmpty("hostId") == sourceHost }) {
+            if (chat.optBoolean("computerOffline")) { error = "这段工作所在的电脑不在线，连接后可继续。"; return }
+            connectComputer(sourceHost)
+        }
         val startingDraft = if(chatId.isBlank())draft else ""
-        saveDraft(); generation++; sending=false; poll?.cancel(); timeline.reset(); cursor = ""; liveRevision = 0; seq = -1
+        saveDraft(); generation++; sending=false; workChoicesBusy=false; poll?.cancel(); timeline.reset(); cursor = ""; liveRevision = 0; seq = -1
         val g = generation
         approvalModeReady = false
         approvalModeRevision++
@@ -220,6 +280,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         approvalModeBusy = !phoneArchive && !phone
         chatId = if (phone) chat.getString("id") else chat.optString("chatId")
         chatKind = chat.optString("kind")
+        newWork = false
+        applyWorkMetadata(chat, true)
         sessionId = chat.optString("activeSessionId").takeUnless { it == "null" } ?: ""
         sendAvailable = phone || chat.optBoolean("sendAvailable")
         title = hostChatTitle(chat)
@@ -328,6 +390,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         }
     }
     suspend fun refresh(older: Boolean = false, wait: Boolean = false) {
+        if (newWork) return
         if (refreshing && refreshGeneration == generation) return
         refreshing = true
         val g = generation
@@ -362,7 +425,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                     mode = saved; approvalModeReady = true
                 }
                 title = hostChatTitle(current)
-                chats = chats.map { if (it.optString("chatId") == chatId) JSONObject(it.toString()).put("title", current.opt("title")) else it }
+                chats = chats.map { if (it.optString("chatId") == chatId) nativeChatMetadata(it, current) else it }
+                applyWorkMetadata(current)
                 sessionId = current.optString("activeSessionId").takeUnless { it == "null" } ?: ""
                 sendAvailable = current.optBoolean("sendAvailable")
                 running = current.optBoolean("running") || rows.any { it.optString("type") == "assistant.delta" && it.optJSONObject("data")?.optBoolean("streaming") == true }
@@ -400,7 +464,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         } finally { if (refreshGeneration == g) { refreshing = false; refreshPhase = "idle" } }
     }
     fun send() = launch {
-        if (sending || approvalModeBusy || !sendAvailable || uncertain.any { it.optString("state") == "uncertain" } || draft.isBlank() && attachments.isEmpty()) return@launch
+        if (sending || approvalModeBusy || !canSend || workChoicesBusy || uncertain.any { it.optString("state") == "uncertain" } || draft.isBlank() && attachments.isEmpty()) return@launch
         if (!phone && pendingApprovalMode != null) {
             val selected = pendingApprovalMode!!; val retryGeneration = generation; val revision = approvalModeRevision
             approvalModeBusy = true
@@ -478,8 +542,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             } finally { if (g == generation && revision == approvalModeRevision) approvalModeBusy = false }
         }
     }
-    fun newChat() = launch {
-        if(creatingChat)return@launch
+    fun newChat(productMode: String = sidebarMode) = launchJob {
+        if(creatingChat)return@launchJob
         val usePhone=standalone || !connected
         saveDraft(); generation++; val creatingGeneration=generation
         poll?.cancel(); timeline.reset(); cursor=""; liveRevision=0
@@ -487,7 +551,12 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         chatId="";sessionId="";title="新对话";rows=emptyList();approvals=emptyList();questions=emptyList();uncertain=emptyList();attachments=emptyList()
         pendingApprovalMode=null;approvalModeRevision++;approvalModeBusy=false;mode="auto"
         running=false;sending=false;sendAvailable=false;loading=false;error="";tab="chat";creatingChat=true
+        newWork = workAndChat && productMode == "work"
+        conversationMode = if (newWork) "work" else "chat"
+        if (workAndChat) chooseSidebarMode(conversationMode)
+        workProject = null; workCreateRequest = ""; workCreateProject = ""
         try {
+            if (newWork) { title="新工作"; refreshWorkChoices(); return@launchJob }
             val conversation=if(usePhone) {
                 if(standalone) JSONObject().put("id","phone-new").put("nativePhone",true).put("title","小纬") else call("conversations.create")
             } else {
@@ -503,7 +572,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                 val resolved = business("/sessions/${command.getString("sessionId")}/chat")
                 business("/chats/${resolved.getString("chatId")}").getJSONObject("chat")
             }
-            if(creatingGeneration!=generation)return@launch
+            if(creatingGeneration!=generation)return@launchJob
             creatingChat=false
             select(conversation, pendingApprovalMode)
         } catch(e:CancellationException){throw e}
@@ -519,14 +588,103 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     }
     fun pick(kind: String) = launch { call("attachments.pick", JSONObject().put("conversationId", chatId).put("kind", kind)) }
     fun remove(row: JSONObject) = launch { call("attachments.remove", JSONObject().put("conversationId", chatId).put("attachmentId", row.getString("attachmentId"))); refreshAttachments() }
-    fun decide(row: JSONObject, outcome: String, decisionScope: String = "once") = launchJob {
+    fun decide(row: JSONObject, outcome: String, decisionScope: String = "once", workProjectId: String? = null) = launchJob {
         val id = row.getString("approvalId"); val key = "decision:$owner:$sessionId:$id"
-        val p = prefs.getString(key, null)?.let(::JSONObject) ?: JSONObject().put("sessionId", sessionId).put("approvalId", id).put("requestId", "approve-${UUID.randomUUID()}").put("outcome", outcome).apply { if (outcome != "rejected") put("scope", decisionScope) }
+        val p = prefs.getString(key, null)?.let(::JSONObject) ?: nativeApprovalBody("approve-${UUID.randomUUID()}", outcome,
+            if (outcome != "rejected") decisionScope else null,
+            if (workAndChat && row.stringOrEmpty("intent") == "work-switch" && outcome == "allowed-once") workProjectId else null)
+            .put("sessionId", sessionId).put("approvalId", id)
         check(prefs.edit().putString(key, p.toString()).commit())
         approvals = approvals.map { if(it.optString("approvalId")==id)JSONObject(it.toString()).put("nativeDecision",p) else it }
         val receipt = call("shared.approvals.decide", p).optJSONObject("approval")
         if (receipt != null) approvals = approvals.map { if (it.optString("approvalId") == id && it.optString("status") == "pending") receipt else it }
         refresh()
+    }
+    fun chooseSidebarMode(value: String) {
+        sidebarMode = if (value == "work") "work" else "chat"
+        prefs.edit().putString("conversation-mode:$owner", sidebarMode).apply()
+    }
+    private fun applyWorkMetadata(chat: JSONObject, selecting: Boolean = false) {
+        val previous = conversationMode
+        conversationMode = nativeConversationMode(chat)
+        if (workAndChat && (selecting || previous != conversationMode)) chooseSidebarMode(conversationMode)
+        val directory = chat.optJSONObject("workDirectory")
+        workProject = directory ?: projects.find { it.stringOrEmpty("projectId") == chat.stringOrEmpty("projectId") && !it.optBoolean("revoked") }
+    }
+    suspend fun refreshWorkChoices() {
+        workChoicesBusy = true; workChoicesError = ""
+        val g = generation
+        try {
+            val directory = runCatching { nativePageRead { NativeSettingsBridge(activity).call("directory") } }.getOrNull()
+            if (g != generation) return
+            offlineWorkReady = runCatching { activity.goals.presentation("return {ready:uiCore.offlineWorkReady?.()===true};").optBoolean("ready") }.getOrDefault(false)
+            computers = directory?.optJSONArray("hosts")?.objects()?.takeIf { it.isNotEmpty() }
+                ?: listOf(JSONObject().put("hostId", hostId).put("name", hostName).put("online", connected))
+            hostName = computers.find { it.stringOrEmpty("hostId") == hostId }?.let { it.stringOrEmpty("displayName").ifEmpty { it.stringOrEmpty("name") } }?.ifEmpty { null } ?: hostName
+            val result = business("/projects")
+            if (g != generation) return
+            projects = result.optJSONArray("projects")?.objects().orEmpty().filter { !it.optBoolean("revoked") }
+            if (workProject != null) workProject = projects.find { it.stringOrEmpty("projectId") == workProject?.stringOrEmpty("projectId") }
+        } catch (e: CancellationException) { throw e
+        } catch (_: Exception) { if (g == generation) { projects = emptyList(); workChoicesError = "项目暂时无法读取，请重试。" } }
+        finally { if (g == generation) workChoicesBusy = false }
+    }
+    private suspend fun connectComputer(id: String) {
+        if (id == hostId) return
+        if (computers.none { it.stringOrEmpty("hostId") == id && it.optBoolean("online") }) throw ApiFailure(503,"COMPUTER_OFFLINE")
+        switchingComputer = true
+        try {
+            NativeSettingsBridge(activity).call("connect", JSONObject().put("hostId", id))
+            chatId = ""; sessionId = ""; poll?.cancel()
+            bootstrap()
+            check(hostId == id) { "TARGET_UNAVAILABLE" }
+        } finally { switchingComputer = false }
+    }
+    fun chooseWorkComputer(id: String) = launch {
+        if (!newWork || workChoicesBusy) return@launch
+        val text = draft
+        workChoicesBusy = true
+        try {
+            connectComputer(id)
+            if (!workAndChat) { error="这台电脑需要更新 WeftMate 后才能使用对话和工作。"; return@launch }
+            newChat("work").join(); edit(text)
+        } finally { workChoicesBusy = false }
+    }
+    fun chooseWorkProject(project: JSONObject) = launch {
+        if (workChoicesBusy || running || !connected) return@launch
+        workChoicesBusy = true
+        val g = generation
+        try {
+            if (newWork) {
+                val text = draft; val selectedApprovalMode = pendingApprovalMode ?: mode
+                if (workCreateRequest.isEmpty() || workCreateProject != project.getString("projectId")) {
+                    workCreateRequest = "native-work-${UUID.randomUUID()}"; workCreateProject = project.getString("projectId")
+                }
+                var command = nativeCreateWork(hostId, project.getString("projectId"), workCreateRequest, modelId) { target, path, body ->
+                    check(target == hostId) { "TARGET_UNAVAILABLE" }; business(path,"POST",body)
+                }.getJSONObject("command")
+                val deadline = android.os.SystemClock.elapsedRealtime() + 15000
+                while (command.optString("state") in setOf("pending","preflight","dispatching") && android.os.SystemClock.elapsedRealtime() < deadline) {
+                    delay(100); command = call("shared.commands.byRequest",JSONObject().put("requestId",workCreateRequest)).getJSONObject("command")
+                }
+                check(command.optString("state") in setOf("accepted_by_dsh","observed")) { "CREATE_PENDING" }
+                if (g != generation) return@launch
+                val resolved = business("/sessions/${command.getString("sessionId")}/chat")
+                val chat = business("/chats/${resolved.getString("chatId")}").getJSONObject("chat")
+                workChoicesBusy = false
+                select(chat, selectedApprovalMode); edit(text); refreshChats()
+            } else {
+                business("/sessions/$sessionId/metadata","PATCH",JSONObject().put("projectId",project.getString("projectId")))
+                if (g != generation) return@launch
+                workProject = project; refresh()
+            }
+        } catch (e: CancellationException) { throw e
+        } catch (_: Exception) { error="文件夹未选好，请重试。草稿已保留。" }
+        finally { workChoicesBusy = false }
+    }
+    fun openOfflineWork() = launch {
+        activity.goals.presentation("if(!uiCore.offlineWorkReady?.())throw {code:'COMPUTER_OFFLINE'};uiCore.openOfflineWorkMode(${JSONObject.quote(draft)});return {};")
+        tab="web-chat"
     }
     fun answer(row: JSONObject, answers: JSONArray) = launch {
         val id = row.getString("questionRpcId"); val key = "question:$owner:$sessionId:$id"
@@ -535,7 +693,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     }
     fun event(type: String, data: JSONObject) {
         when {
-            type == "result.app.ready" || type == "result.auth.login" || type == "result.cloud.adopt" || type == "result.phone.adopt" || type == "result.auth.logout" -> launch { bootstrap() }
+            type == "result.app.ready" || type == "result.auth.login" || type == "result.cloud.adopt" || type == "result.phone.adopt" || type == "result.auth.logout" -> if (!switchingComputer) launch { bootstrap() }
             type.startsWith("result.phone.models.") && standalone -> {
                 if(tab=="models" && type in listOf("result.phone.models.test","result.phone.models.select")) modelSettingsFinished=true
                 launch { refreshPhoneModels() }
