@@ -2,7 +2,8 @@ process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { open, unlink } from 'node:fs/promises';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
+import { promisify } from 'node:util';
 import { join, resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { migrationHost, until } from '../helpers/migration-host.mjs';
@@ -17,12 +18,19 @@ const android = process.argv.includes('--android'), pkg = 'com.memoweft.weftmate
 let heavy, mumu, h, browser, serial, reversed, installed;
 const report = { realElectron: true, realDsh: true, model: 'scripted HTTP provider', scenarios: [], relay: 'not exercised; local Linux relay prerequisite unavailable, see relay-environment.log' };
 const outputs = new Map(), counts = new Map();
+const execute = promisify(execFile);
 async function lock(file, label) { const handle = await open(file, 'wx'); await handle.writeFile(`FIX-40 ${new Date().toISOString()} ${label}`); await handle.close(); return file; }
 const adb = (...args) => execFileSync(adbExecutable, ['-s', serial, ...args], { encoding: 'utf8', windowsHide: true, timeout: args.includes('instrument') ? 240000 : 30000, maxBuffer: 8 * 1024 * 1024 });
 try {
-  for (let i = 1; i <= 3 && !heavy; i++) try { heavy = await lock(join(locks, `heavy-${i}.lock`), 'Electron approval acceptance'); } catch (error) { if (error.code !== 'EEXIST') throw error; }
-  assert.ok(heavy, 'heavy slot required');
-  if (android) mumu = await lock(join(locks, 'mumu.lock'), 'native approve/reject acceptance');
+  while (true) {
+    for (let i = 1; i <= 3 && !heavy; i++) try { heavy = await lock(join(locks, `heavy-${i}.lock`), 'Electron approval acceptance'); } catch (error) { if (error.code !== 'EEXIST') throw error; }
+    const availableSlot = !!heavy;
+    if (heavy && android) try { mumu = await lock(join(locks, 'mumu.lock'), 'native approve/reject acceptance'); }
+    catch (error) { await unlink(heavy); heavy = null; if (error.code !== 'EEXIST') throw error; }
+    if (heavy) break;
+    process.stdout.write('Waiting for the shared acceptance slot; no lock held.\n');
+    for (let i = 0; i < (availableSlot ? 1 : 4); i++) await new Promise(resolve => setTimeout(resolve, 30000));
+  }
   h = await migrationHost();
   h.respond = async body => {
     if (!body.tools?.length) return { role: 'assistant', content: '合成对话' };
@@ -44,12 +52,17 @@ try {
     const port = new URL(h.origin).port; adb('reverse', `tcp:${port}`, `tcp:${port}`); reversed = port;
     for (const kind of ['debug/app-debug.apk', 'androidTest/debug/app-debug-androidTest.apk']) { adb('install', '-r', join(repo, 'apps/android/app/build/outputs/apk', kind)); installed = true; }
     const credentials = h.credentials;
-    const log = adb('shell', 'am', 'instrument', '-w', '-r', '-e', 'class', 'com.memoweft.weftmate.mobile.Fix40ApprovalInstrumentedTest',
-      '-e', 'origin', h.origin, '-e', 'username', credentials.username, '-e', 'password', credentials.password, `${pkg}.test/androidx.test.runner.AndroidJUnitRunner`);
+    // The scripted model is served by this Node process. Keep its event loop
+    // available while the real Android instrumentation waits for model tools.
+    const instrumented = await execute(adbExecutable, ['-s', serial, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'class', 'com.memoweft.weftmate.mobile.Fix40ApprovalInstrumentedTest',
+      '-e', 'origin', h.origin, '-e', 'username', credentials.username, '-e', 'password', credentials.password, `${pkg}.test/androidx.test.runner.AndroidJUnitRunner`], { windowsHide: true, timeout: 240000, maxBuffer: 8 * 1024 * 1024 });
+    const log = instrumented.stdout + instrumented.stderr;
     writeFileSync(join(out, 'android-instrumentation.log'), log.replaceAll(credentials.password, '<synthetic-password>'));
     const external = `/sdcard/Android/data/${pkg}/files`;
-    for (const file of adb('shell', 'ls', external).split(/\s+/).filter(file => /^fix40-.*\.png$/.test(file)))
+    for (const file of adb('shell', 'ls', external).split(/\s+/).filter(file => /^fix40-.*\.(png|json)$/.test(file)))
       writeFileSync(join(out, file), execFileSync(adbExecutable, ['-s', serial, 'exec-out', 'cat', `${external}/${file}`], { windowsHide: true, maxBuffer: 10 * 1024 * 1024 }));
+    report.modelRequests = h.requests.filter(body => body.tools?.length).length;
+    report.mainChat = (await h.api('/chats/main')).body.chat;
     assert.match(log, /OK \(1 test\)/);
     for (const tag of ['ANDROID_ALLOW', 'ANDROID_REJECT']) {
       const file = outputs.get(tag); assert.ok(file); assert.equal(existsSync(file), tag.endsWith('ALLOW'));

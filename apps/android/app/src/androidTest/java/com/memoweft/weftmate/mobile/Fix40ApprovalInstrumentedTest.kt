@@ -45,22 +45,34 @@ class Fix40ApprovalInstrumentedTest {
             compose.onNodeWithContentDescription("审批方式：自动").performClick()
             compose.onNodeWithText("每次询问", useUnmergedTree = true).performClick()
             waitFor("saved ask") { activity.model.mode == "ask" && !activity.model.approvalModeBusy }
+            compose.waitUntil(10000) { compose.onAllNodesWithText("每次询问", useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
+            compose.waitForIdle()
             shot("selected-before-first-message")
             compose.onNodeWithContentDescription("发送消息").performClick()
             waitFor("allow card") { activity.model.approvals.any { it.optString("status") == "pending" } }
             assertEquals("ask", activity.model.mode)
             assertFalse(activity.model.approvals.first { it.optString("status") == "pending" }.optBoolean("canAlwaysAllow"))
-            shot("allow-pending")
-            compose.onNodeWithText("批准", useUnmergedTree = true).performScrollTo().performClick()
+            val approve = compose.onNodeWithText("批准", useUnmergedTree = true)
+            approve.performScrollTo().assertIsDisplayed(); compose.waitForIdle(); shot("allow-pending")
+            approve.performClick()
             waitFor("approved result") { !activity.model.running && activity.model.rows.toString().contains("FIX40_FINISHED_ANDROID_ALLOW") }
             shot("approved")
             editor.performTextInput("FIX40_ANDROID_REJECT")
             compose.onNodeWithContentDescription("发送消息").performClick()
             waitFor("reject card") { activity.model.approvals.any { it.optString("status") == "pending" } }
-            shot("reject-pending")
-            compose.onNodeWithText("拒绝", useUnmergedTree = true).performScrollTo().performClick()
+            val reject = compose.onNodeWithText("拒绝", useUnmergedTree = true)
+            reject.performScrollTo().assertIsDisplayed(); compose.waitForIdle(); shot("reject-pending")
+            reject.performClick()
             waitFor("rejected result") { !activity.model.running && activity.model.rows.toString().contains("FIX40_FINISHED_ANDROID_REJECT") }
             shot("rejected")
+        } catch (error: Throwable) {
+            var state = JSONObject()
+            main { val m = activity.model; state = JSONObject().put("mode", m.mode).put("busy", m.approvalModeBusy)
+                .put("draft", m.draft).put("sessionId", m.sessionId).put("chatId", m.chatId).put("running", m.running)
+                .put("sendAvailable", m.sendAvailable).put("error", m.error).put("approvals", m.approvals.toString()).put("rows", m.rows.toString()) }
+            File(i.targetContext.getExternalFilesDir(null), "fix40-failure.json").writeText(state.toString())
+            shot("failure")
+            throw error
         } finally { main { activity.finish() } }
     }
 }
