@@ -1,3 +1,5 @@
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
@@ -6,6 +8,8 @@ import {join,resolve} from 'node:path';
 import {runInNewContext} from 'node:vm';
 import {createPersonalAccessService} from '../../src/personal-access/index.mjs';
 import {generateHealthSequence} from '../helpers/health-sequence.mjs';
+prepareEvidenceDirectory(evidencePath('health-6'), { recursive: true });
+
 const day='2026-10-12',root=await mkdtemp(join(tmpdir(),'weftmate-health6-real-'));let modelRequests=0,service;
 const backend={getStatus:async()=>({runtime:'ready',capabilities:{chat:{available:false}}}),listModels:async()=>[],preflight:async()=>({ok:true}),createSession:async({sessionId})=>({sessionId}),sendMessage:async()=>({accepted:true}),cancelSession:async()=>({accepted:true}),readEvents:async()=>({events:[],nextSeq:-1,hasMore:false}),describeSession:async()=>null,modelCompletion:async()=>{modelRequests++;throw Error('REAL_MODEL_FORBIDDEN');}};
 try{
@@ -17,5 +21,5 @@ try{
  const context={WeftUiCore:{factories:{}},Intl,URLSearchParams};runInNewContext(await readFile(resolve('src/ui-core/health.js'),'utf8'),context);
  const core={state:{ownerId:auth.account.ownerId,identityGeneration:0},accessApi:api,failureMessage:error=>error.message};Object.assign(core,context.WeftUiCore.factories.health(core,{},{}));await core.readHealth();assert.equal(core.health.error,'');assert.equal(core.health.overview.connected,true);assert.equal(core.health.overview.insight.mode,'statistics');
  const value=context.WeftHealth.vital(core.health.overview,'hrvSdnnMs').value;assert.equal(value,sequence.items.at(-1).health.hrvSdnnMs);assert.ok(core.health.overview.recovery.score!==null);assert.equal(core.health.trend.points.length,30);assert.equal(core.health.sleepStages.deepMinutes,sequence.items.at(-1).health.sleep.deepMinutes);await core.openHealthMetric('sleep','detail');await core.readHealth('2026-10-10');assert.ok(core.health.trend.points.every(p=>p.day<='2026-10-10'));assert.ok(!requests.some(r=>r.path.includes('to=')));assert.ok(!requests.some(r=>r.path.includes('/analysis')));assert.equal(core.health.analyses.size,0);assert.equal(modelRequests,0);
- const report={realPersonalApi:true,realHealth2Implementation:true,source:'tests/helpers/health-sequence.mjs',syntheticOnly:true,seed:sequence.seed,days:90,realModelRequests:0,checks:['default top interpretation setting remains on','legacy settings omit item analysis','90 seeded records accepted by actual batch route','production overview/metric/sleep-stage reads consumed by shared model','array vital values reach detail presentation helper','legacy history omits unsupported to and retains filtered dates','legacy host issues no analysis requests'],requests:requests.length};await writeFile(resolve('tests/evidence/health-6/real-v2-verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
+ const report={realPersonalApi:true,realHealth2Implementation:true,source:'tests/helpers/health-sequence.mjs',syntheticOnly:true,seed:sequence.seed,days:90,realModelRequests:0,checks:['default top interpretation setting remains on','legacy settings omit item analysis','90 seeded records accepted by actual batch route','production overview/metric/sleep-stage reads consumed by shared model','array vital values reach detail presentation helper','legacy history omits unsupported to and retains filtered dates','legacy host issues no analysis requests'],requests:requests.length};await writeFile(evidencePath('health-6/real-v2-verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
 }finally{await service?.close();await rm(root,{recursive:true,force:true});}

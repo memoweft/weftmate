@@ -1,3 +1,4 @@
+import { evidencePath } from '../tests/helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, stat, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -54,8 +55,8 @@ if (child) {
     }
     const report = { checkedAt: new Date().toISOString(), fixedDsh: true, synthetic: true, pageSize: 50, results,
       limitation: 'Pinned DSH inspect reads the full stored log before projection. Cold native read bytes grow linearly; logical indexing alone does not meet the non-linear cold-read budget. IA-2b must close this with a native range-read seam; no private log decoder is introduced here.' };
-    await mkdir('tests/evidence/ia-2a', { recursive: true });
-    await writeFile('tests/evidence/ia-2a/history-native-performance.json', JSON.stringify(report, null, 2)+'\n');
+    await mkdir(evidencePath('ia-2a'), { recursive: true });
+    await writeFile(evidencePath('ia-2a/history-native-performance.json'), JSON.stringify(report, null, 2)+'\n');
     console.log(JSON.stringify(report, null, 2));
   } finally { await rm(root, { recursive: true, force: true }); }
 }

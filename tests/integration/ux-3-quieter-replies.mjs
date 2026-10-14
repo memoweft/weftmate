@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
 import {randomUUID} from 'node:crypto';
@@ -8,7 +9,7 @@ import {managedMkdtemp,disposeManagedTemp} from '../helpers/managed-temp.mjs';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
-const out=resolve('tests/evidence/ux-3/quieter-replies');await mkdir(out,{recursive:true});
+const out=evidencePath('ux-3/quieter-replies');await mkdir(out,{recursive:true});
 const report={synthetic:true,modelRequests:0,hiddenProductionDesktop:true,shots:[],checks:[],errors:[]};
 const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 let fixture,app,browser,profile;

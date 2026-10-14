@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 // Inspect a FACT-1 isolated host while its independent model tasks continue.
@@ -8,11 +9,11 @@ import { resolve, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { verifyFactUi } from './fact-1-ui.mjs';
-const directory=resolve(process.argv[2]||'tests/evidence/fact-1/acceptance/mimo-node');
+const directory=resolve(process.argv[2]||evidencePath('fact-1/acceptance/mimo-node'));
 const batch=JSON.parse(readFileSync(join(directory,'results.json'),'utf8'));
 const c=JSON.parse(readFileSync(join(batch.root,'eval/credentials.json'),'utf8'));
 const profile=join('C:/Temp','weftmate-fact1-ui-'+randomUUID());mkdirSync(profile,{recursive:true});
-const evidence=resolve('tests/evidence/fact-1/ui');mkdirSync(evidence,{recursive:true});
+const evidence=evidencePath('fact-1/ui');mkdirSync(evidence,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
 env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 let app,page;

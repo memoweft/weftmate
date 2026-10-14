@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -14,7 +15,7 @@ import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 
-const repository = resolve(import.meta.dirname, '../..'), evidence = join(repository, 'tests/evidence/m3-a');
+const repository = resolve(import.meta.dirname, '../..'), evidence = evidencePath('m3-a');
 const android = process.argv.includes('--android'), packageName = 'com.memoweft.weftmate.mobile.m3a';
 const adb = 'D:/Software/MuMuPlayer/nx_main/adb.exe', serial = '127.0.0.1:7555';
 const adbRun = (...args) => execFileSync(adb, ['-s', serial, ...args], { encoding: 'utf8', windowsHide: true, maxBuffer: 8 * 1024 * 1024 });

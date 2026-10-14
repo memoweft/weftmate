@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -9,7 +10,7 @@ import { mkdir, writeFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const out=resolve('tests/evidence/st-6');await mkdir(out,{recursive:true});
+const out=evidencePath('st-6');await mkdir(out,{recursive:true});
 const start=Date.now();let now=start;
 const f=await startTimelineCandidate({interactive:true,inlineProgress:true,composer:true,historyCount:0,clock:()=>now,baseTime:start-10000});
 const profile=await mkdtemp(join(tmpdir(),'weftmate-st6-electron-'));

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /* Production Electron shell and remote webpage, isolated synthetic account only. */
 import assert from 'node:assert/strict';
 import { chromium, _electron } from 'playwright';
@@ -8,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { health6Synthetic } from '../helpers/health-6-synthetic.mjs';
-const out=resolve('tests/evidence/fix-34');await mkdir(out,{recursive:true});
+const out=evidencePath('fix-34');await mkdir(out,{recursive:true});
 const f=await startTimelineCandidate({daily:true,sidebar:true,interactive:true,composer:true});
 const profile=await mkdtemp(join(tmpdir(),'weftmate-fix34-electron-'));
 const report={synthetic:true,modelRequests:0,realDesktopShell:true,browserSystemBars:false,phoneViewport:'390×844 remote webpage; browser chrome not captured',screenshots:[],errors:[]};

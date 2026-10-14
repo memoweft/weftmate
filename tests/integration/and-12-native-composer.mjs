@@ -1,12 +1,13 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import { execFileSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { mkdir, open, writeFile, rm } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { readMuMuInfo, adbExecutable } from '../../scripts/nightly/mumu.mjs';
-const { startComposerFixture }=await import('../evidence/and-12/fixture.mjs');
+const { startComposerFixture }=await import('../fixtures/and-12/fixture.mjs');
 const execute=promisify(execFile),repo=resolve(import.meta.dirname,'../..');
-const out=join(repo,'tests/evidence/and-12');
+const out=evidencePath('and-12');
 const locks='D:/AIProjects/WeftMate/Runtime/Orchestrator';
 const pkg='com.memoweft.weftmate.mobile.and12qa';
 const testIme=process.argv.includes('--test-ime');

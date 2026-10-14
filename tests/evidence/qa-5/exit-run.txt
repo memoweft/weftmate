@@ -1,4 +1,0 @@
-idle tray 1 true
-idle tray 2 true
-idle tray 3 true
-idle task-manager-force 1 false

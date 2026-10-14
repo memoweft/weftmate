@@ -1,0 +1,10 @@
+{
+  "platform": "windows",
+  "scene": "memory",
+  "theme": "dark",
+  "commit": "9bb16f5e0c8b22bc019ba7375dfc83d32a9c6986",
+  "generatedAt": "2026-10-10T12:51:10+08:00",
+  "synthetic": true,
+  "source": "tests/evidence/ux-p3/after-electron-1200-dark-settings-memory.png",
+  "timeBasis": "证据提交时间（历史图未记录拍摄时间）"
+}

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 // Read the completed synthetic run after a host restart; no new inference is requested.
@@ -8,10 +9,10 @@ import { join, resolve } from 'node:path';
 import assert from 'node:assert/strict';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { verifyFactUi } from './fact-1-ui.mjs';
-const batch=JSON.parse(readFileSync(resolve(process.argv[2]||'tests/evidence/fact-1/serial-performance/mimo/results.json'),'utf8'));
+const batch=JSON.parse(readFileSync(resolve(process.argv[2]||evidencePath('fact-1/serial-performance/mimo/results.json')),'utf8'));
 assert.match(batch.root,/^C:[\\/]Temp[\\/]weftmate-fact1-/i);
 const c=JSON.parse(readFileSync(join(batch.root,'eval/credentials.json'),'utf8'));
-const evidence=resolve('tests/evidence/fact-1/post-merge-ui');mkdirSync(evidence,{recursive:true});
+const evidence=evidencePath('fact-1/post-merge-ui');mkdirSync(evidence,{recursive:true});
 const env={...process.env};for(const name of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(name)||['ELECTRON_RUN_AS_NODE','MIMO_API_KEY','MODEL_SWITCH_UNIFIED_KEY'].includes(name))delete env[name];
 env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 env.FACT1_PHASE='after';env.WEFTMATE_BASELINE_TRACE=join(evidence,'requests.jsonl');

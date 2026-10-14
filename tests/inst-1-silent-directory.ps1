@@ -1,7 +1,9 @@
-param([Parameter(Mandatory=$true)][string]$Installer,[string]$Out='tests/evidence/inst-1/silent-directory-results.json')
+param([Parameter(Mandatory=$true)][string]$Installer,[string]$Out=(Join-Path $(if ($env:WEFTMATE_EVIDENCE_DIR) { $env:WEFTMATE_EVIDENCE_DIR } else { '.local/evidence' }) 'inst-1/silent-directory-results.json'))
 $ErrorActionPreference='Stop'
 $started=Get-Date
 $workspace=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$Out=[IO.Path]::GetFullPath($(if ([IO.Path]::IsPathRooted($Out)) { $Out } else { Join-Path $workspace $Out }))
+[IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($Out))|Out-Null
 $Installer=(Resolve-Path -LiteralPath $Installer).Path
 Add-Type -Path (Join-Path $PSScriptRoot 'helpers/installer-window.cs') -ReferencedAssemblies System.Drawing
 $root=Join-Path ([IO.Path]::GetPathRoot($env:SystemRoot)) ('wi1-'+[Guid]::NewGuid().ToString('N').Substring(0,16))
@@ -44,11 +46,14 @@ try {
   if((Test-Path -LiteralPath $installation)-or(Test-Path -LiteralPath $shortcut)-or(Get-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*|Where-Object {$_.DisplayName-eq'WeftMate inst1qa'})){throw 'Silent uninstall left installation registration or files'}
   if(!(Test-Path -LiteralPath (Join-Path $profile 'keep-me.txt'))){throw 'Silent uninstall deleted data'}
   $passed=$true
-  [IO.File]::WriteAllText((Join-Path $workspace $Out),(@{testIdentity='inst1qa';synthetic=$true;privateDesktop=$true;globalInputUsed=$false;standardDirectoryParameter=$true;directoryContainsUnicodeAndSpace=$true;registeredTarget=$true;startMenuTarget=$true;silentInstallExit=0;silentUninstallExit=0;uninstalled=$true;dataPreserved=$true}|ConvertTo-Json))
+  $report=@{testIdentity='inst1qa';synthetic=$true;privateDesktop=$true;globalInputUsed=$false;standardDirectoryParameter=$true;directoryContainsUnicodeAndSpace=$true;registeredTarget=$true;startMenuTarget=$true;silentInstallExit=0;silentUninstallExit=0;uninstalled=$true;dataPreserved=$true}
+  [IO.File]::WriteAllText($Out,($report|ConvertTo-Json))
 } finally {
   foreach($process in (Get-CimInstance Win32_Process|Where-Object {$_.CreationDate-ge$started-and$_.ExecutablePath-and$_.CommandLine-and($_.ExecutablePath-eq$Installer-or$_.ExecutablePath.StartsWith($root+'\',[StringComparison]::OrdinalIgnoreCase))-and($_.CommandLine.Contains($Installer)-or$_.CommandLine.Contains($root))})){ $handle=Get-Process -Id $process.ProcessId -ErrorAction SilentlyContinue;if($handle){try{if(!$handle.HasExited){Stop-Process -InputObject $handle -Force;$cleaned++};if(!$handle.WaitForExit(30000)){throw 'Synthetic silent process did not exit'}}finally{$handle.Dispose()}} }
   $desktop.Dispose()
   Write-Output "已清理进程：$cleaned"
-  if($passed){$report=Get-Content -LiteralPath (Join-Path $workspace $Out) -Raw|ConvertFrom-Json;$report|Add-Member -NotePropertyName cleanedProcesses -NotePropertyValue $cleaned;[IO.File]::WriteAllText((Join-Path $workspace $Out),($report|ConvertTo-Json))}
-  if($passed){& node (Join-Path $PSScriptRoot 'inst-1-cleanup.mjs') $root;if($LASTEXITCODE){throw 'Silent directory fixture cleanup failed'}}
+  if($passed){
+    try{$report.cleanedProcesses=$cleaned;[IO.File]::WriteAllText($Out,($report|ConvertTo-Json))}
+    finally{& node (Join-Path $PSScriptRoot 'inst-1-cleanup.mjs') $root;if($LASTEXITCODE){throw 'Silent directory fixture cleanup failed'}}
+  }
 }

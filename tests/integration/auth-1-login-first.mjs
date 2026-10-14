@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // All accounts, mail, hosts and content are synthetic; no model is contacted.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
@@ -17,7 +18,7 @@ import { fixture } from '../helpers/auth-1-https-cloud.mjs';
 import { registration, appDevice } from '../../services/cloud/test/app-helpers.mjs';
 
 const repo = resolve(import.meta.dirname, '../..'), baseline = join(repo, '.local/auth-1-baseline');
-const out = join(repo, 'tests/evidence/auth-1'); await mkdir(out, { recursive: true });
+const out = evidencePath('auth-1'); await mkdir(out, { recursive: true });
 const root = await mkdtemp(join(tmpdir(), 'wm-auth1-migration-'));
 const cleanups = [], report = { modelRequests: 0, realElectron: true, productionNativeShell: true,
   syntheticCloud: true, syntheticMail: true, oldCommit: 'fa6d96a8', checks: [], pageErrors: [] };

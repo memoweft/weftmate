@@ -1,3 +1,4 @@
+import { evidencePath } from '../../../tests/helpers/evidence-path.mjs';
 import './fix-32-pointer.test.mjs';
 import './composer-viewport.test.mjs';
 import test from 'node:test';
@@ -9,7 +10,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 
 const root=fileURLToPath(new URL('../www/',import.meta.url));
-const evidence=fileURLToPath(new URL(process.env.WEFTMATE_UI2_EVIDENCE==='1'?'../../../tests/evidence/ui-2/':'../../../.local/ui-2/',import.meta.url));
+const evidence=evidencePath('ui-2/');
 
 test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts and history',async()=>{
   const server=createServer(async(req,res)=>{try{

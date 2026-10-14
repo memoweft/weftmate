@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
@@ -8,7 +9,7 @@ import {join,resolve} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 import {healthPageSynthetic} from '../helpers/health-page-synthetic.mjs';
-const out=resolve('tests/evidence/health-3');await mkdir(out,{recursive:true});
+const out=evidencePath('health-3');await mkdir(out,{recursive:true});
 const report={realElectron:true,syntheticOnly:true,realModelRequests:0,contractFixture:true,screenshots:[],checks:[],errors:[]};
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 for(const theme of ['light','dark']){

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -18,7 +19,7 @@ export const run = promisify(execFile);
 export const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
 export const core = 'D:/AIProjects/MemoWeft/Core/py/src';
 export const repository = resolve(import.meta.dirname, '../..');
-export const evidence = join(repository, 'tests/evidence/ia-2b');
+export const evidence = evidencePath('ia-2b');
 export const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 export async function until(check, timeout = 180000) {
   const deadline = Date.now() + timeout;

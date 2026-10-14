@@ -1,3 +1,4 @@
+const { evidencePath } = require('../helpers/evidence-path.cjs');
 const { managedMkdtempSync:mkdtempSync, managedTempRoot:tmpdir } = require('../helpers/managed-temp.cjs');
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -17,7 +18,7 @@ app.whenReady().then(async () => {
   try {
     const { startTimelineCandidate } = await import(pathToFileURL(join(__dirname,'timeline-ui-candidate.mjs')).href)
     candidate = await startTimelineCandidate()
-    const output = resolve(__dirname, '../evidence/m0-3'); mkdirSync(output,{recursive:true})
+    const output = evidencePath('m0-3'); mkdirSync(output,{recursive:true})
     const create = (width,height) => new BrowserWindow({width,height,show:false,useContentSize:true,webPreferences:{contextIsolation:true,nodeIntegration:false,backgroundThrottling:false,offscreen:true}})
     desktop=create(1280,960);mobile=create(390,844)
 

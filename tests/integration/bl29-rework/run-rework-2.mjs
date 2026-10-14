@@ -1,10 +1,11 @@
+import { evidencePath } from '../../helpers/evidence-path.mjs';
 /** Review gates and retained BL-29b proofs, strictly one application at a time. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { scrub } from './exit-supervisor.mjs';
-const base=resolve(process.env.BL29_EVIDENCE_DIR || 'tests/evidence/bl-29/rework-2');
+const base=resolve(process.env.BL29_EVIDENCE_DIR || evidencePath('bl-29/rework-2'));
 mkdirSync(base,{recursive:true});
 const jobs=[
   ...['model-scope','catalog-generation','catalog-close','account-probe','frozen-state','policy-probe','three-readers','cancel-stress',

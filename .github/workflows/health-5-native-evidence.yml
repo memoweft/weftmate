@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/evidence
       TZ: Asia/Shanghai
       WEFTMATE_TEST_HOST_NAME: synthetic-host
     steps:
@@ -68,6 +69,6 @@ jobs:
         with:
           name: health-5-native-evidence
           path: |
-            tests/evidence/health-5/android-*.png
-            tests/evidence/health-5/native-verification.json
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/health-5/android-*.png
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/health-5/native-verification.json
           retention-days: 7

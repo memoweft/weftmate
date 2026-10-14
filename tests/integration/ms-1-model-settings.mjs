@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -15,7 +16,7 @@ import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/ho
 
 const repository = resolve(import.meta.dirname, '../..');
 const root = mkdtempSync(join(tmpdir(), 'weftmate-ms1-')), profile = join(root, 'profile'); mkdirSync(profile);
-const evidence = join(repository, 'tests/evidence/ms-1'); mkdirSync(evidence, { recursive: true });
+const evidence = evidencePath('ms-1'); mkdirSync(evidence, { recursive: true });
 const password = 'synthetic-ms1-' + randomUUID(), key = 'synthetic-ms1-key';
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 let inference = 0;

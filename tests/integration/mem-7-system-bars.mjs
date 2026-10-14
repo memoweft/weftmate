@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Visual acceptance only: production phone webpage in an isolated test browser.
  * State is synthetic; real extraction/Core acceptance is in phone-handover.mjs. */
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ import {createRequire} from 'node:module';
 import {readMuMuInfo,adbExecutable} from '../../scripts/nightly/mumu.mjs';
 import {redactEvidenceText} from '../helpers/process-evidence.mjs';
 const {PNG}=createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
-const repo=resolve(import.meta.dirname,'../..'),local=join(repo,'.local/mem-7/phone-container'),out=join(repo,'tests/evidence/mem-7');
+const repo=resolve(import.meta.dirname,'../..'),local=join(repo,'.local/mem-7/phone-container'),out=evidencePath('mem-7');
 const pkg='com.memoweft.weftmate.mobile.mem7qa',activity='com.memoweft.weftmate.mobile.St2PhoneBrowserActivity';
 await mkdir(local,{recursive:true});
 const generator=(await readFile(join(repo,'tests/integration/st-2-phone-container.mjs'),'utf8')).replace("resolve('.local/st2-phone-container')",`resolve(${JSON.stringify(local)})`);

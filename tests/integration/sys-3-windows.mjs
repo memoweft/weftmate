@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Real installed Windows app; synthetic identities and provider. No desktop input automation. */
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
@@ -13,7 +14,7 @@ import { sendToRegistryKeys } from '../../src/windows-system-integration.mjs';
 
 const option = (name, fallback) => { const i = process.argv.indexOf(name); return i < 0 ? fallback : process.argv[i + 1]; };
 const installer = resolve(option('--installer', '.local/sys3-release/0.1.1-preview.21/build/WeftMate-Setup-0.1.1-preview.21.exe'));
-const out = resolve(option('--out', 'tests/evidence/sys-3'));
+const out = resolve(option('--out', evidencePath('sys-3')));
 const identity = 'sys3qa', appId = 'com.memoweft.weftmate.sys3qa';
 const temp = managedMkdtempSync('weftmate-sys3-'), installation = join(temp, 'custom install 合成目录');
 const startedAt = Date.now();
