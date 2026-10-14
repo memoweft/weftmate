@@ -202,7 +202,7 @@ test('Relay phone first input and file task', {
     await phone.screenshot({ path: join(evidence, 'first-input.png') });
     // MODE-1 requires a chosen folder. Linux uses the existing POSIX inspector
     // fixture; command execution, project bounds and approvals are real.
-    const registeredProject = await phoneApi('/projects', { requestId: randomUUID(), name: '合成中继项目', rootPath: runtime.project, permission: 'write' });
+    const registeredProject = await direct('/projects', { requestId: randomUUID(), name: '合成中继项目', rootPath: runtime.project, permission: 'write' }, local);
     assert.equal(registeredProject.status, 201, JSON.stringify(registeredProject.data));
     const accepted = await phoneApi(`/projects/${registeredProject.data.project.projectId}/sessions`, { requestId: randomUUID(), modelProfileId: 'synthetic' });
     assert.equal(accepted.status, 202, JSON.stringify(accepted.data)); const created = await settle(accepted.data.command);
