@@ -99,6 +99,7 @@ import WeftMateCore
     }
     /// Called only after a successful authenticated account directory read, never on a network failure.
     func computerDirectoryChanged(hostIDs: Set<String>) {
+        state.computerReminders=state.computerReminders?.filter { hostIDs.contains($0.key) };try? persist()
         guard let host=memory.computerHost,!hostIDs.contains(host) else { return }
         cancelExtraction();state.memory?.computerRemoved();handoffApproved=false;handoffCount=0;handoffBytes=0
         try? persist()
@@ -342,8 +343,54 @@ import WeftMateCore
         do { try persist() } catch { notice="对话没能保存，请重试。" }
     }
     func stop() { cancelExtraction();let wasBusy=busy; epoch=UUID(); task?.cancel(); task=nil; busy=false; testing=false; if wasBusy { notice="已停止，已收到的内容保留。" } }
+    var reminders: [LocalReminder] { state.reminders ?? [] }
+    var allReminders: [LocalReminder] {
+        let computers=state.computerReminders ?? [:]
+        return reminders + computers.keys.sorted().flatMap { computers[$0] ?? [] }
+    }
+    func saveReminder(id: String? = nil, text: String, date: Date) throws {
+        var next=state
+        let row=LocalReminder(id:id ?? UUID().uuidString,text:text,fireAt:date,sessionID:state.selected)
+        if let index=next.reminders?.firstIndex(where: { $0.id == row.id }) {
+            var updated=row; updated.sessionID=next.reminders?[index].sessionID; next.reminders?[index]=updated
+        } else { if next.reminders == nil { next.reminders=[] };next.reminders?.append(row) }
+        try save(next)
+    }
+    func finishReminder(_ id: String, delete: Bool) throws {
+        var next=state
+        if delete { next.reminders?.removeAll { $0.id == id } }
+        else if let index=next.reminders?.firstIndex(where: { $0.id == id }) { next.reminders?[index].completed=true }
+        try save(next)
+    }
+    func receiveReminders(_ rows: [ManagedSchedule], hostID: String) throws {
+        var next=state;if next.computerReminders == nil { next.computerReminders=[:] }
+        let reminders=LocalReminder.schedules(rows,hostID:hostID)
+        guard next.computerReminders?[hostID] != reminders else { return }
+        next.computerReminders?[hostID]=reminders;try save(next)
+    }
+    func withdrawComputerReminder(_ row: ManagedSchedule, hostID: String) throws {
+        var next=state;next.computerReminders?[hostID]?.removeAll { $0.id == row.identity };try save(next)
+    }
+    @discardableResult func sendReminderCommand(_ text: String) -> Bool {
+        guard let command=PhoneReminderCommand.parse(text) else { return false }
+        cancelExtraction()
+        let original=state
+        if state.selected == nil { newThread() }
+        guard let index=state.threads.firstIndex(where: { $0.id == state.selected }) else { return false }
+        do {
+            var next=state
+            if next.reminders == nil { next.reminders=[] }
+            next.reminders?.append(.init(text:command.text,fireAt:command.date,sessionID:next.selected))
+            next.threads[index].messages.append(.init(role:"user",text:text))
+            next.threads[index].messages.append(.init(role:"assistant",text:"已记下："+command.text+"，"+command.date.formatted(date:.abbreviated,time:.shortened)+"提醒你。通知是否弹出，可在目标页查看。"))
+            next.pending = .init();try save(next);draft="";notice=nil
+        } catch { state=original;try? persist();notice="提醒没能保存，请检查手机存储后重试。" }
+        return true
+    }
     func send(regenerate: Bool = false) {
-        guard !busy, let model=currentModel else { return }
+        guard !busy else { return }
+        if !regenerate, draft.utf16.count <= 16384, attachments.isEmpty, sendReminderCommand(draft.trimmingCharacters(in:.whitespacesAndNewlines)) { return }
+        guard let model=currentModel else { return }
         cancelExtraction()
         let originalState=state
         let text=draft.trimmingCharacters(in:.whitespacesAndNewlines)
