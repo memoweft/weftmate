@@ -11,7 +11,7 @@ import { startAnd3Fixture } from './and-3-fixture.mjs';
 import { systemBarDifference } from '../../scripts/nightly/system-bars.mjs';
 const nativeEntry=process.argv.includes('--native-entry'), native = nativeEntry || process.argv.includes('--native'), repo = resolve(import.meta.dirname, '../..');
 const postMainSmoke=process.argv.includes('--post-main-smoke');
-const out = join(repo, nativeEntry?evidencePath('and-4/standalone')+(postMainSmoke?'/post-main':''):evidencePath('mob-4')); mkdirSync(out, { recursive: true });
+const out = nativeEntry ? evidencePath('and-4/standalone', postMainSmoke ? 'post-main' : '') : evidencePath('mob-4'); mkdirSync(out, { recursive: true });
 const report = { native, nativeEntry, testDiscovery:'synthetic computer presence and loopback address; authentication and content use product APIs', syntheticCloud: true, syntheticAccount: true, mimoRequests: 0, checks: [], screenshots: [], errors: [] };
 const pkg = 'com.memoweft.weftmate.mobile.'+(nativeEntry?'and4qa':'mob4qa'), adb = process.env.AND4_ADB_EXE || 'D:/Software/MuMuPlayer/nx_main/adb.exe';
 const adbServer=process.env.AND4_ADB_SERVER_PORT?['-P',process.env.AND4_ADB_SERVER_PORT]:[];

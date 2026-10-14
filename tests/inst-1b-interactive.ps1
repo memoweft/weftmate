@@ -4,7 +4,7 @@ $started=Get-Date
 $workspace=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $Installer=(Resolve-Path -LiteralPath $Installer).Path
 $UpgradeInstaller=(Resolve-Path -LiteralPath $UpgradeInstaller).Path
-$Out=[IO.Path]::GetFullPath((Join-Path $workspace $Out))
+$Out=[IO.Path]::GetFullPath($(if ([IO.Path]::IsPathRooted($Out)) { $Out } else { Join-Path $workspace $Out }))
 [IO.Directory]::CreateDirectory($Out)|Out-Null
 Add-Type -Path (Join-Path $PSScriptRoot 'helpers/installer-window.cs') -ReferencedAssemblies System.Drawing
 # NSIS stages the old tree under TEMP/…/old-install. Keep this synthetic base
