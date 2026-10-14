@@ -21,10 +21,16 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       CLOUD_DEVICE_VERIFICATION_REQUIRED: '请重新登录并确认邮箱。', CLOUD_TOKEN_INVALID: '需要重新登录，电脑上的内容仍可继续使用。', UNAUTHORIZED: '登录已失效，请重新登录。', DEVICE_NOT_TRUSTED: '这台设备已下线，请联系账户所有者。',
       CLOUD_BINDING_CONFLICT: '这个云账号已绑定其他本地账户，请使用原账号或先解绑。',
       NETWORK: '网络不通，请检查连接后重试。', STORAGE_UNAVAILABLE: '无法安全记住本设备，请检查设备存储后重试。',
+      CLOUD_RESPONSE_INVALID: '电脑连接暂时没有返回有效结果，请稍后重试。',
+      CLOUD_REQUEST_INVALID: '连接电脑时未能完成请求，请稍后重试。',
+      CLOUD_TLS_UNAVAILABLE: '暂时无法确认电脑的安全连接，请稍后重试。',
+      CLOUD_TIMEOUT: '电脑连接超时，账号仍已登录，请稍后重试。',
+      CLOUD_TRANSPORT_UNAVAILABLE: '电脑暂时连不上，账号仍已登录，请稍后重试。',
       PAIRING_INVALID: '配对码已失效或不属于这台电脑，请获取新码。', PAIRING_REQUIRED: '请在目标电脑显示二维码，并输入配对码后连接。',
       HOST_TRUST_INVALID: '无法确认电脑身份，请检查连接后重试。',
       INVALID_DEVICE: '设备名称须为 1–128 个字符。',
       UPDATE_REQUIRED: '请更新电脑上的 WeftMate 后重新登录。',
+      COMPUTER_UPDATE_REQUIRED: '这台电脑的 WeftMate 需要更新，连接后仍可继续聊天。',
       NATIVE_LOGIN_UPGRADE_REQUIRED: '请更新手机程序后使用这个登录入口。现在可以使用密码登录并确认邮箱。',
       CLOUD_LOGIN_REQUIRED: '请更新客户端并使用邮箱登录，远程访问需要云账号。',
       PASSWORD_MISMATCH: '两次输入的密码不一致。', EMERGENCY_PASSWORD_INVALID: '离线密码须为 15–128 个字符。',
@@ -287,6 +293,11 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   async function cloudConnect(hostId) { return client.authorized('/hosts/connect', { method: 'POST', body: { hostId } }); }
   core.cloudCurrentComputer = () => client?.config?.hostId;
   core.cloudComputerChannel = (connection,request) => client.channel(connection,request);
+  core.cloudComputerCapabilities = async connection => {
+    const config = await client.request(connection.baseUrl + '/personal/v1/cloud/config');
+    if (config.hostId !== connection.hostId || config.issuer !== client.config.issuer) throw {code:'HOST_TRUST_INVALID'};
+    return config.capabilities || {};
+  };
   core.cloudRenameComputer = async (hostId,name) => {
     if(!core.state.computers?.length)throw {code:'FORBIDDEN'};
     await client.authorized('/hosts/rename',{method:'POST',body:{hostId,name:name.trim()}});return cloudDirectory();

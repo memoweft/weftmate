@@ -120,6 +120,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     internal var nativeObserver: ((String, JSONObject) -> Unit)? = null
     private var nativeHasDraft = false
     internal val embeddedWeb: WebView get() = web
+    @Volatile protected var coveredHostHistory = false
     protected open fun embeddedPageFinished() {}
     internal val presentationContainer: FrameLayout get() = container
     internal fun nativeFileCurrent(file: NativeFile): Boolean = !closed.get() && !accountTransition.get() &&
@@ -138,19 +139,26 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             runOnUiThread { if (!closed.get()) complete(result) }
         }
     }
-    internal fun nativeRequest(method: String, params: JSONObject, complete: (Result<JSONObject>) -> Unit) {
+    internal fun nativeRequest(method: String, params: JSONObject, complete: (Result<JSONObject>) -> Unit): () -> Unit {
         val epoch = accountEpoch.get()
         val host = secrets.host()
-        worker.execute {
+        val reading = method == "host.business" && params.optString("method", "GET") == "GET"
+        val active = if (reading) AtomicReference<HttpURLConnection?>() else null
+        val task = worker.submit {
             val result = runCatching {
                 ensureOpen()
                 if (accountTransition.get()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
                 if (epoch != accountEpoch.get() || host != secrets.host()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
-                val response = handle(method, params, epoch, host)
+                val response = handle(method, params, epoch, host, active)
                 if (epoch != accountEpoch.get()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
                 response
             }
             runOnUiThread { if (!closed.get()) complete(result) }
+        }
+        return {
+            task.cancel(reading)
+            val connection = active?.getAndSet(null)
+            if (connection != null && !readCancellationWorker.isShutdown) readCancellationWorker.execute { connection.disconnect() }
         }
     }
     private companion object { const val SPEECH_REQUEST = 2041; const val AVATAR_REQUEST = 2042; const val NOTIFY_REQUEST = 2043; const val ATTACHMENT_REQUEST = 2044; const val ARTIFACT_SAVE_REQUEST = 2045; const val ORIGINAL_SAVE_REQUEST = 2046; const val CAMERA_REQUEST = 2047; const val ATTACHMENT_CAMERA_PERMISSION = 2048 }
@@ -158,6 +166,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     private val origin = "https://appassets.androidplatform.net"
     private val entry = "$origin/ui/index.html"
     private val worker = Executors.newFixedThreadPool(2)
+    private val readCancellationWorker = Executors.newSingleThreadExecutor()
     private val modelWorker = Executors.newSingleThreadExecutor()
     private val phoneRequest = AtomicReference<java.net.HttpURLConnection?>()
     private val attachmentWorker = Executors.newSingleThreadExecutor()
@@ -496,7 +505,11 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                 }
                 try {
                     if(method.startsWith("phone.") && !authMutation && requestEpoch != accountEpoch.get()) throw ApiFailure(403,"ACCOUNT_SWITCHED")
-                    val result = handle(method, request.optJSONObject("params") ?: JSONObject(), requestEpoch, requestHost)
+                    val params = request.optJSONObject("params") ?: JSONObject()
+                    if (coveredHostHistory && method == "host.business" && params.optString("method", "GET") == "GET" &&
+                        params.optString("path").substringBefore('?').matches(Regex("/personal/v1/chats/[A-Za-z0-9_-]{1,128}/(events|changes)")))
+                        throw ApiFailure(503, "NATIVE_CHAT_VISIBLE")
+                    val result = handle(method, params, requestEpoch, requestHost)
                     if (!authMutation && requestEpoch != accountEpoch.get())
                         respond(reply, id, false, JSONObject().put("code", "ACCOUNT_SWITCHED"))
                     else {
@@ -962,7 +975,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
         } finally { original.recycle() }
     }
 
-    private fun handle(method: String, params: JSONObject, requestEpoch: Long, requestHost: HostIdentity?): JSONObject = when (method) {
+    private fun handle(method: String, params: JSONObject, requestEpoch: Long, requestHost: HostIdentity?, readActive: AtomicReference<HttpURLConnection?>? = null): JSONObject = when (method) {
         "native.conversation" -> { activeConversation = params.optString("id").takeIf { it.isNotEmpty() }; JSONObject() }
         "native.preference" -> JSONObject().put("enabled", BuildConfig.NATIVE_UI)
         "native.draft" -> {
@@ -1919,7 +1932,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             val host = secrets.host() ?: throw ApiFailure(401, "LOGIN_REQUIRED")
             if (host.authSource == "phone") throw ApiFailure(503, "HOST_UNAVAILABLE")
             val result = api.business(host, params.getString("path"), params.optString("method", "GET"),
-                params.optJSONObject("body"))
+                params.optJSONObject("body"), readActive)
             require(result.toString().length <= if (params.getString("path").startsWith("/personal/v1/offline/")) 4 * 1024 * 1024 else 256 * 1024)
             publicBusiness(result) as JSONObject
         }
@@ -2691,6 +2704,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             web.webViewClient = WebViewClient()
         }
         worker.shutdownNow()
+        readCancellationWorker.shutdownNow()
         attachmentWorker.shutdownNow()
         syncWorker.shutdownNow()
         localTurnRenewWorker.shutdownNow()

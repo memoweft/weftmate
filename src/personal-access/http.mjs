@@ -600,8 +600,11 @@ export function createHttpHandler(context) {
             if (latest.ownerId !== ownerId || latest.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
           };
           authorize();
-          return context.syncStores.get(ownerId).append({ events: body.events, sourceDeviceId: deviceId, authorize,
+          const store = context.syncStores.get(ownerId), before = store.watermark;
+          const result = await store.append({ events: body.events, sourceDeviceId: deviceId, authorize,
             validateAttachment: (reference) => context.attachmentStores.get(ownerId).referenced(reference) });
+          if (store.watermark > before) context.notifyPhoneSync(ownerId);
+          return result;
         });
         return context.json(response, 200, accepted);
       }
@@ -870,7 +873,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, {
           ...context.service.status(ownerId), hostName:hostName(),
           presence: presence(backendStatus),
-          personalCapabilities: { replyWait: typeof context.backend.waitForEvents === 'function' ? 1 : 0, replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1 },
+          personalCapabilities: { replyWait: typeof context.backend.waitForEvents === 'function' ? 1 : 0, replyStreaming: 1, sessionStatus: 1, nextSuggestions: typeof context.backend.modelCompletion === 'function' ? 1 : 0, library: 1, libraryPreview: 1, libraryDesktopActions: context.library.desktopAvailable ? 1 : 0, taskOverview: 1, scheduleEditing: typeof context.backend.schedules === 'function' ? 1 : 0, goals: typeof context.backend.goals === 'function' ? 1 : 0, activity: 1, activityChanges: 1, activityRead: 1, activityNotification: 1, notificationSettings: 1, pushRegistration: 1, temporaryChats: 1, chats: 1, chatTimeline: 1, chatSearch: 1, sideChats: 1, creationReceipt: 1, chatSend: 1, chatLifecycle: 1, chatResources: 1, modelServices: 1 },
           executionAccount: context.hostOwner(ownerId),
           executionAccountName: context.hostOwner(ownerId) ? null : context.executionAccountName(),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },

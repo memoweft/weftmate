@@ -256,6 +256,7 @@ export async function createPersonalSyncStore({ root, ownerId }) {
         return { accepted, lastSeq: state.lastSeq };
       });
     },
+    get watermark() { return state.lastSeq; },
     page({ afterSeq = 0, limit = 100 } = {}) {
       if (!Number.isSafeInteger(afterSeq) || afterSeq < 0 || afterSeq > state.lastSeq ||
           !Number.isSafeInteger(limit) || limit < 1 || limit > 200) invalid();

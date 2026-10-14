@@ -85,7 +85,10 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
         return JSONObject().put("credentialPresent", entries.keys().asSequence().any { it.startsWith("app-tokens:") })
             .put("refreshCount", refreshes().length())
     }
-    @Synchronized fun request(params: JSONObject): JSONObject {
+    @Synchronized fun request(params: JSONObject): JSONObject = try { checkedRequest(params) }
+        catch(error: Exception) { throw cloudAppFailure(error) }
+
+    private fun checkedRequest(params: JSONObject): JSONObject {
         val login = login(); val host = login.getString("host"); val issuer = login.getString("issuer")
         val target = params.getString("url"); val method = params.optString("method", "GET")
         require(cloudAppRouteAllowed(target, method, host, issuer))

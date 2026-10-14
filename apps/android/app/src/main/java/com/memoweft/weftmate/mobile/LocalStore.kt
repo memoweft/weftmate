@@ -25,7 +25,8 @@ data class SharedCommandRow(val owner: String, val hostId: String, val sessionId
     fun bridge(): JSONObject = JSONObject().put("source", "host").put("sessionId", sessionId)
         .put("requestId", requestId).put("kind", payload.getString("kind")).put("state", state)
         .put("command", command ?: JSONObject.NULL)
-        .apply { if (payload.optString("kind") == "chat.message") put("chatId", sessionId).put("text", payload.optString("text")) }
+        .apply { if (payload.optString("kind") == "chat.message") put("chatId", sessionId)
+            if (payload.optString("kind") in setOf("chat.message","session.message")) put("text", payload.optString("text")) }
 }
 
 /** One private on-device database. Local changes and their outbox entries share a transaction. */

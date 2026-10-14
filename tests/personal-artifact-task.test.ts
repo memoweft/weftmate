@@ -4,6 +4,7 @@ import { linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, wr
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
+import { waitForCommand } from './helpers/wait-for-command.mjs'
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 import { artifactContentType, canonicalArtifact, createPersonalArtifactStore } from '../src/personal-artifacts/index.mjs'
 
@@ -42,12 +43,8 @@ async function api(origin: string, method: string, route: string, body?: object,
 }
 
 async function waitCommand(origin: string, headers: Record<string, string>, commandId: string) {
-  for (let attempt = 0; attempt < 100; attempt++) {
-    const value = await api(origin, 'GET', `/personal/v1/commands/${commandId}`, undefined, headers)
-    if (value.body.command.state !== 'pending' && value.body.command.state !== 'dispatching') return value.body.command
-    await new Promise((resolve) => setTimeout(resolve, 20))
-  }
-  throw new Error('command did not settle')
+  return waitForCommand(async () => (await api(origin, 'GET', `/personal/v1/commands/${commandId}`, undefined, headers)).body.command,
+    { accepted: row => !['pending', 'dispatching'].includes(row.state), label: 'artifact fixture command' })
 }
 
 async function artifactSourceFixture() {
