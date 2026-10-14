@@ -35,7 +35,7 @@ class Mode2aInstrumentedTest {
         compose.onNodeWithContentDescription("打开侧栏").performClick()
         compose.onNodeWithContentDescription(if(mode=="work")"工作" else "对话").performClick()
         click(if(mode=="work")"新建工作" else "新建对话")
-        waitFor("new $mode"){!a.model.workChoicesBusy && if(mode=="work")a.model.newWork else a.model.chatId.isNotEmpty() && a.model.canSend && !a.model.submitting}
+        waitFor("new $mode"){!a.model.workBusy && if(mode=="work")a.model.newWork else a.model.chatId.isNotEmpty() && a.model.canSend && !a.model.submitting}
     }
     private fun send(text:String){compose.onNodeWithContentDescription("消息输入").performTextInput(text);compose.onNodeWithContentDescription("发送消息").performClick()}
     private fun completed(tag:String){waitFor("completed $tag",90000){!a.model.running && a.model.rows.any{it.optString("type")=="assistant.message" && it.optJSONObject("data")?.stringOrEmpty("text")?.contains("MODE2A_DONE_$tag")==true}}}
@@ -62,10 +62,10 @@ class Mode2aInstrumentedTest {
                 compose.onNodeWithContentDescription("打开侧栏").performClick()
                 compose.onNodeWithContentDescription("对话").performClick();shot("$theme-sidebar-chat")
                 compose.onNodeWithContentDescription("工作").performClick();shot("$theme-sidebar-work")
-                click("新建工作");waitFor("fresh work"){a.model.newWork && !a.model.workChoicesBusy}
+                click("新建工作");waitFor("fresh work"){a.model.newWork && !a.model.workBusy}
                 assertFalse(a.model.canSend)
                 compose.onNodeWithContentDescription("项目或文件夹：选择项目或文件夹").performClick()
-                waitFor("project choices"){!a.model.workChoicesBusy && a.model.projects.isNotEmpty()}
+                waitFor("project choices"){!a.model.workBusy && a.model.projects.isNotEmpty()}
                 shot("$theme-folder-menu")
                 click("MODE-2A 测试文件夹")
                 waitFor("project bound"){!a.model.newWork && a.model.conversationMode=="work" && a.model.workProject!=null && !a.model.submitting}
@@ -81,7 +81,7 @@ class Mode2aInstrumentedTest {
                 val session=a.model.sessionId
                 val source=a.model.rows.first{it.optString("type")=="user.message"}.toString()
                 compose.onNodeWithText("切换到工作",useUnmergedTree=true).performScrollTo();compose.waitForIdle()
-                waitFor("switch choices ready"){!a.model.workChoicesBusy && a.model.projects.isNotEmpty()};shot("$theme-switch-pending")
+                waitFor("switch choices ready"){!a.model.workBusy && a.model.projects.isNotEmpty()};shot("$theme-switch-pending")
                 click("切换到工作")
                 completed("SWITCH_${theme.uppercase()}")
                 assertEquals(chat,a.model.chatId);assertEquals(session,a.model.sessionId);assertEquals("work",a.model.conversationMode)
@@ -117,7 +117,7 @@ class Mode2aInstrumentedTest {
             send("MODE2A_MAIN_DARK 请在这段历史中继续建文件。")
             waitFor("main switch"){a.model.approvals.any{it.stringOrEmpty("intent")=="work-switch" && it.optString("status")=="pending"}}
             compose.onNodeWithText("切换到工作",useUnmergedTree=true).performScrollTo();compose.waitForIdle()
-            waitFor("main choices ready"){!a.model.workChoicesBusy && a.model.projects.isNotEmpty()};click("切换到工作")
+            waitFor("main choices ready"){!a.model.workBusy && a.model.projects.isNotEmpty()};click("切换到工作")
             completed("MAIN_DARK")
             assertEquals(originalMain,a.model.chatId);assertEquals(mainSession,a.model.sessionId)
             assertEquals("main",a.model.chatKind);assertTrue(a.model.rows.any{it.toString()==mainSource})
@@ -130,14 +130,14 @@ class Mode2aInstrumentedTest {
                 waitFor("draft approval choice"){a.model.mode=="ask" && !a.model.approvalModeBusy}
                 compose.onNodeWithContentDescription("电脑：${a.model.hostName}").performClick();shot("two-computers-menu")
                 click("MODE-2A 第二台电脑")
-                waitFor("second computer draft",90000){a.model.hostId==args.getString("secondHostId") && a.model.newWork && !a.model.workChoicesBusy}
+                waitFor("second computer draft",90000){a.model.hostId==args.getString("secondHostId") && a.model.newWork && !a.model.workBusy}
                 assertEquals("ask",a.model.mode)
                 assertTrue(a.model.draft.startsWith("MODE2A_SECOND_DARK"))
                 compose.waitForIdle()
                 val picker=compose.onNodeWithContentDescription("项目或文件夹：选择项目或文件夹")
                 compose.waitUntil(20000){picker.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Disabled)==null}
                 picker.assertIsEnabled().performClick()
-                waitFor("second projects"){!a.model.workChoicesBusy && a.model.projects.isNotEmpty()}
+                waitFor("second projects"){!a.model.workBusy && a.model.projects.isNotEmpty()}
                 compose.waitForIdle()
                 click("MODE-2A 第二台文件夹")
                 waitFor("second work bound"){!a.model.newWork && a.model.canSend && !a.model.submitting}
@@ -158,14 +158,14 @@ class Mode2aInstrumentedTest {
                 val before=a.model.rows.first{it.optString("type")=="user.message"}.toString()
                 val tool=a.model.approvals.first{it.stringOrEmpty("intent")=="work-switch" && it.optString("status")=="pending"}.stringOrEmpty("toolName")
                 compose.onNodeWithText("切换到工作",useUnmergedTree=true).performScrollTo();compose.waitForIdle()
-                waitFor("MiMo switch project"){!a.model.workChoicesBusy && a.model.projects.isNotEmpty()}
+                waitFor("MiMo switch project"){!a.model.workBusy && a.model.projects.isNotEmpty()}
                 shot("mimo-real-tool-pending");click("切换到工作")
                 waitFor("MiMo work completed",120000){a.model.conversationMode=="work" && !a.model.running && a.model.rows.any{it.optString("type")=="assistant.message"}}
                 assertEquals(original,a.model.chatId);assertTrue(a.model.rows.any{it.toString()==before})
                 shot("mimo-real-file-completed");report.put("realMiMo",true).put("mimoTool",tool)
             }
             report.put("newWork",true).put("sameChatAndSession",true).put("singleUserMessage",true).put("publicLookupNoSwitch",true).put("rejection",true)
-        } catch(e:Throwable){shot("failure");main{report.put("failure",e.javaClass.simpleName).put("choicesBusy",a.model.workChoicesBusy).put("projectCount",a.model.projects.size).put("projectNames",org.json.JSONArray(a.model.projects.map{it.stringOrEmpty("name")})).put("computerCount",a.model.computers.size).put("newWork",a.model.newWork).put("running",a.model.running).put("connected",a.model.connected).put("error",a.model.error).put("choiceError",a.model.workChoicesError)};throw e}
+        } catch(e:Throwable){shot("failure");main{report.put("failure",e.javaClass.simpleName).put("choicesBusy",a.model.workBusy).put("projectCount",a.model.projects.size).put("projectNames",org.json.JSONArray(a.model.projects.map{it.stringOrEmpty("name")})).put("computerCount",a.model.computers.size).put("newWork",a.model.newWork).put("running",a.model.running).put("connected",a.model.connected).put("error",a.model.error).put("choiceError",a.model.workChoicesError)};throw e}
         finally {File(i.targetContext.getExternalFilesDir(null),"mode2a-report.json").writeText(report.toString());main{a.finish()}}
     }
 }

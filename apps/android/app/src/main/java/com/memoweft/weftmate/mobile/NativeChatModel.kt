@@ -65,6 +65,9 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         private set
     var workChoicesBusy by mutableStateOf(false)
         private set
+    var workComputerBusy by mutableStateOf(false)
+        private set
+    val workBusy get() = workChoicesBusy || workComputerBusy
     var workChoicesError by mutableStateOf("")
         private set
     private var switchingComputer = false
@@ -464,7 +467,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         } finally { if (refreshGeneration == g) { refreshing = false; refreshPhase = "idle" } }
     }
     fun send() = launch {
-        if (sending || approvalModeBusy || !canSend || workChoicesBusy || uncertain.any { it.optString("state") == "uncertain" } || draft.isBlank() && attachments.isEmpty()) return@launch
+        if (sending || approvalModeBusy || !canSend || workBusy || uncertain.any { it.optString("state") == "uncertain" } || draft.isBlank() && attachments.isEmpty()) return@launch
         if (!phone && pendingApprovalMode != null) {
             val selected = pendingApprovalMode!!; val retryGeneration = generation; val revision = approvalModeRevision
             approvalModeBusy = true
@@ -643,23 +646,24 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         } finally { switchingComputer = false }
     }
     fun chooseWorkComputer(id: String) = launch {
-        if (!newWork || workChoicesBusy) return@launch
+        if (!newWork || workBusy) return@launch
         val text = draft
         val selectedApprovalMode = pendingApprovalMode ?: mode
-        workChoicesBusy = true
+        workComputerBusy = true
         try {
             connectComputer(id)
             if (!workAndChat) { error="这台电脑需要更新 WeftMate 后才能使用对话和工作。"; return@launch }
-            newChat("work").join(); setApprovalMode(selectedApprovalMode); edit(text)
-        } finally { workChoicesBusy = false }
+            val currentApprovalMode = pendingApprovalMode ?: selectedApprovalMode
+            newChat("work").join(); setApprovalMode(currentApprovalMode); edit(text)
+        } finally { workComputerBusy = false }
     }
     fun chooseWorkProject(project: JSONObject) = launch {
-        if (workChoicesBusy || running || !connected) return@launch
+        if (workBusy || running || !connected) return@launch
         workChoicesBusy = true
         val g = generation
         try {
             if (newWork) {
-                val text = draft; val selectedApprovalMode = pendingApprovalMode ?: mode
+                val selectedApprovalMode = pendingApprovalMode ?: mode
                 if (workCreateRequest.isEmpty() || workCreateProject != project.getString("projectId")) {
                     workCreateRequest = "native-work-${UUID.randomUUID()}"; workCreateProject = project.getString("projectId")
                 }
@@ -675,7 +679,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                 val resolved = business("/sessions/${command.getString("sessionId")}/chat")
                 val chat = business("/chats/${resolved.getString("chatId")}").getJSONObject("chat")
                 workChoicesBusy = false
-                select(chat, selectedApprovalMode); edit(text); refreshChats()
+                select(chat, selectedApprovalMode); refreshChats()
             } else {
                 business("/sessions/$sessionId/metadata","PATCH",JSONObject().put("projectId",project.getString("projectId")))
                 if (g != generation) return@launch
