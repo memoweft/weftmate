@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -8,7 +9,7 @@ import { join,resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const out=resolve('tests/evidence/stream-1/assets');mkdirSync(out,{recursive:true});
+const out=evidencePath('stream-1/assets');mkdirSync(out,{recursive:true});
 const profile=mkdtempSync(join(tmpdir(),'weftmate-stream1-perf-'));let app,browser;
 const fixture=await startTimelineCandidate({interactive:true,daily:true,inlineProgress:true,sidebar:true,historyCount:0});
 await fixture.request(`/sessions/${fixture.sessionId}/metadata`,{title:'项目进度报告'},'PATCH');

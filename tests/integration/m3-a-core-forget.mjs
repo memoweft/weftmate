@@ -1,3 +1,5 @@
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Verify FG-1/FG-2 on an isolated copy of an M3-A acceptance World, with no paid model. */
 import assert from 'node:assert/strict';
@@ -8,6 +10,8 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createPersonalMemoryManager } from '../../src/personal-memory/index.mjs';
 import { offlineBoundary } from '../../src/personal-offline/snapshot.mjs';
+prepareEvidenceDirectory(evidencePath('m3-a'), { recursive: true });
+
 const source = process.env.WEFTMATE_M3A_SOURCE_PROFILE;
 assert.ok(source?.includes('weftmate-m3a-e2e-') && !source.includes('Runtime'), 'Only an isolated M3-A fixture is allowed');
 const state = JSON.parse(await readFile(join(source, 'personal-access/store.json'), 'utf8'));
@@ -41,5 +45,5 @@ try {
     const bytes = await readFile(join(home, file)); assert.ok(!bytes.includes(Buffer.from(marker)), 'no derived reply bytes in ' + file);
   }
   const report = { status: 'passed', paidRequests: 0, core: 'real', checks: ['offline assistant dependencies persisted', 'forget cascaded into imported context', 'Core storage byte scan found no derived marker'] };
-  await writeFile('tests/evidence/m3-a/core-forget.json', JSON.stringify(report, null, 2) + '\n'); console.log(JSON.stringify(report));
+  await writeFile(evidencePath('m3-a/core-forget.json'), JSON.stringify(report, null, 2) + '\n'); console.log(JSON.stringify(report));
 } finally { await manager.close(); await new Promise(done => model.close(done)); await rm(root, { recursive: true, force: true }); }

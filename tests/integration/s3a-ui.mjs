@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -11,7 +12,7 @@ import { join,resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { phone,shell,shot,pause,wait,pkg } from './s3a-android.mjs';
-const out=resolve('tests/evidence/s3a');await mkdir(out,{recursive:true});
+const out=evidencePath('s3a');await mkdir(out,{recursive:true});
 const f=await startTimelineCandidate({interactive:true,inlineProgress:true,s3a:true,historyCount:0,baseTime:Date.now()-10000});
 const profile=await mkdtemp(join(tmpdir(),'weftmate-s3a-ui-'));let p,app;
 const report={nativeAndroid:true,realElectron:true,syntheticAccounts:true,sizes:[],errors:[]};

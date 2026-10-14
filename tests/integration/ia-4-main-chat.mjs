@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Production phone UI, synthetic account, random ports and logical native bridge. */
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
@@ -5,7 +6,7 @@ import {randomUUID} from 'node:crypto';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
-const evidence=resolve(import.meta.dirname,'../evidence/ia-4');await mkdir(evidence,{recursive:true});
+const evidence=evidencePath('ia-4');await mkdir(evidence,{recursive:true});
 const web=process.argv.includes('--web');
 const f=await startTimelineCandidate({daily:true,sidebar:true,logicalMobile:true,interactive:true,inlineProgress:true,historyCount:0,baseTime:Date.now()-15000});
 const host=(await f.request('/status')).hostId,main=(await f.request('/chats/main')).chat;

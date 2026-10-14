@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {execFile,execFileSync,spawn} from 'node:child_process';
@@ -10,7 +11,7 @@ import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {generateHealthV3Sequence} from '../helpers/health-sequence.mjs';
 import {disposeHealthFixture} from '../helpers/health-5-temp.mjs';
 import {assertSystemBars} from '../../scripts/nightly/system-bars.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/health-5'),lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg='com.memoweft.weftmate.mobile.health5qa',adb=process.env.WEFTMATE_HEALTH5_ADB??'D:/Software/MuMuPlayer/nx_main/adb.exe',execute=promisify(execFile);
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('health-5'),lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg='com.memoweft.weftmate.mobile.health5qa',adb=process.env.WEFTMATE_HEALTH5_ADB??'D:/Software/MuMuPlayer/nx_main/adb.exe',execute=promisify(execFile);
 let serial,fixture,browser,forward,probe,installed=false,held=false,reversed=false,probeLog='';const report={source:process.env.WEFTMATE_HEALTH5_ANDROID_SERIAL?'cloudAndroid':'MuMu',synthetic:true,realNativeBusinessBridge:true,modelRequests:0,checks:[],screenshots:[],settingsChanged:false};
 await mkdir(out,{recursive:true});
 const pause=ms=>new Promise(r=>setTimeout(r,ms));

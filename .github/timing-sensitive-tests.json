@@ -1,10 +1,10 @@
 {
-  "evidence": "tests/evidence/ci-1/flaky-table.json",
+  "evidence": "tests/fixtures/ci-1/flaky-table.json",
   "tests": [
     {
       "file": "tests/packaged-project-reader.test.ts",
       "name": "bundled project reader runs from a real ASAR without extracting an executable script",
-      "evidence": "tests/evidence/ci-1/followup-table.json",
+      "evidence": "tests/fixtures/ci-1/followup-table.json",
       "reason": "Observed PROJECT_READER_TIMEOUT inside the real Electron ASAR read, with a 30000ms outer test and a bounded native reader. Follow-up run 38236573397; budgets and exact returned-text assertion unchanged.",
       "failureCount": 1
     },

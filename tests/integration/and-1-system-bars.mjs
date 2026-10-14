@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'node:url';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { execFileSync, spawn } from 'node:child_process';
 import { writeFile, mkdir, rm, readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
@@ -5,7 +7,7 @@ import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { systemBarDifference, assertSystemBars } from '../../scripts/nightly/system-bars.mjs';
 
 const adb = 'D:/Software/MuMuPlayer/nx_main/adb.exe', serial = '127.0.0.1:7555', pkg = 'com.memoweft.weftmate.mobile.and1';
-const out = new URL('../evidence/and-1/', import.meta.url);
+const out = pathToFileURL(evidencePath('and-1/') + '/');
 const command = (...args) => execFileSync(adb, ['-s', serial, ...args], { windowsHide: true, timeout: 15000 });
 const delay = ms => new Promise(done => setTimeout(done, ms));
 const records = [], forwards = [], reverse = [];
@@ -135,7 +137,7 @@ try {
   command('shell','input','keyevent','3');command('shell','cmd','uimode','night','no');command('shell','am','start','-n',pkg+'/com.memoweft.weftmate.mobile.HybridActivity');await delay(500);await shot('background-system-change','light');
   command('shell','settings','put','system','accelerometer_rotation','0');command('shell','settings','put','system','user_rotation','1');await delay(500);await shot('landscape','light');command('shell','settings','put','system','user_rotation','0');
   // Before capture is deliberately retained and must be rejected by the automated metric.
-  const before = await import('node:fs/promises').then(fs=>fs.readFile(new URL('before-dark-page-light-native.png',out)));
+  const before = await import('node:fs/promises').then(fs=>fs.readFile(new URL('../fixtures/and-1/before-dark-page-light-native.png',import.meta.url)));
   records.push({scene:'before',difference:systemBarDifference(before,{statusHeight:31})});
 } finally {
   await writeFile(new URL('measurements.json',out),JSON.stringify(records,null,2)+'\n');

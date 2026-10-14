@@ -22,7 +22,7 @@ test('foreground timing waits for the exact published reply instead of a synthet
 });
 
 test('fixed authenticated ciphertext survives the old A/B replacement but byte tampering always rejects', () => {
-  const {envelope,recipient,identity,payload}=JSON.parse(readFileSync('tests/evidence/ci-3/fixed-ciphertext.json','utf8'));
+  const {envelope,recipient,identity,payload}=JSON.parse(readFileSync('tests/fixtures/ci-3/fixed-ciphertext.json','utf8'));
   const old='A'+envelope.ciphertext.slice(1,-1)+'B';
   assert.deepEqual(Buffer.from(old,'base64url'),Buffer.from(envelope.ciphertext,'base64url'));
   assert.deepEqual(openTask({...envelope,ciphertext:old},recipient,identity),payload);

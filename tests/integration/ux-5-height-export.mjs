@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -10,7 +11,7 @@ import {join,resolve} from 'node:path';
 import {startMainChatCandidate} from './main-chat-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 import {renderingSample} from '../helpers/rendering-sample.mjs';
-const out=resolve('tests/evidence/ux-5'),fixture=await startMainChatCandidate(1000),profile=await mkdtemp(join(tmpdir(),'weftmate-ux5-height-'));
+const out=evidencePath('ux-5'),fixture=await startMainChatCandidate(1000),profile=await mkdtemp(join(tmpdir(),'weftmate-ux5-height-'));
 fixture.progress.text(renderingSample);fixture.progress.finish();
 const env={...process.env,REVIEW_PROFILE:profile,REVIEW_ORIGIN:fixture.origin,REVIEW_THEME:'light'};delete env.ELECTRON_RUN_AS_NODE;
 env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';

@@ -5,22 +5,7 @@ import { catalog, repository, assertPublicText } from './common.mjs';
 // Explicit compatibility aliases for known synthetic device captures. Browser captures
 // and UI-3's machine-path-bearing shell evidence are deliberately not device evidence.
 const aliases = [];
-for (const theme of ['light', 'dark']) {
-  for(const [scene,suffix] of [['sessions','sidebar-idle'],['session-menu','chat-menu'],['memory','settings-memory'],['general','settings-general']]) aliases.push({platform:'windows',scene,theme,path:`tests/evidence/ux-p3/after-electron-1200-${theme}-${suffix}.png`});
-  aliases.push({platform:'mobile-web',scene:'sessions',theme,path:`tests/evidence/ux-p3/after-phone-web-390-${theme}-drawer.png`});
-  for (const [scene,suffix] of [['memory','memory-rejected-expanded-final'],['conversation','D49-user-hover'],['session-menu','session-menu'],['appearance','settings-appearance'],['general','settings-assistant'],['usage','settings-usage'],['onboarding','onboarding-0']]) aliases.push({platform:'windows',scene,theme,path:`tests/evidence/ux-p2/after-electron-1200-${theme}-${suffix}.png`});
-  aliases.push({platform:'mobile-web',scene:'main-chat',theme,path:`tests/evidence/ux-p2/after-phone-web-390-${theme}-main-search.png`});
-  aliases.push({platform:'mobile-web',scene:'goals',theme,path:`tests/evidence/ux-p2/after-phone-web-390-${theme}-goals-empty.png`});
-  aliases.push({platform:'windows',scene:'goals',theme,path:`tests/evidence/ux-p2/after-electron-1200-${theme}-goals-empty.png`});
-  aliases.push({platform:'android',scene:'main-chat',theme,path:`tests/evidence/ux-p2/after-14-android-native-${theme}.png`});
 
-  aliases.push({platform:'windows',scene:'memory',theme,path:`tests/evidence/ux-p1/after-06-desktop-${theme}.png`});
-  aliases.push({platform:'windows',scene:'onboarding',theme,path:`tests/evidence/ux-p1/after-11-desktop-${theme}.png`});
-  aliases.push({platform:'mobile-web',scene:'main-chat',theme,path:`tests/evidence/ux-p1/after-14-web-390-${theme}.png`});
-  aliases.push({platform:'android',scene:'main-chat',theme,path:`tests/evidence/ux-p1/after-14-android-native-${theme}.png`});
-  aliases.push({ platform: 'windows', scene: 'onboarding', theme, path: `tests/evidence/onb-1/desktop-welcome-${theme}.png` });
-  aliases.push({ platform: 'mobile-web', scene: 'onboarding', theme, path: `tests/evidence/onb-1/mobile-web-pair-waiting-${theme}.png` });
-}
 const add = (platform, directory, prefix, mapping, themes) => {
   for (const theme of themes) for (const [scene, suffix] of Object.entries(mapping)) {
     aliases.push({ platform, scene, theme, path: `${directory}/${prefix.replace('{theme}', theme)}${suffix}.png` });
@@ -28,9 +13,6 @@ const add = (platform, directory, prefix, mapping, themes) => {
 };
 add('iphone', 'apps/apple/Tests/Evidence/DS-1b', 'after-{theme}-', { sessions: 'list', conversation: 'running', approval: 'approval', 'outputs-sources': 'outputs-sources' }, ['light', 'dark']);
 add('iphone', 'apps/apple/Tests/Evidence/IC-2', 'ios-{theme}-', { sessions: 'sidebar', conversation: 'completed-composer', approval: 'approval-composer', 'outputs-sources': 'outputs-sources' }, ['light', 'dark']);
-add('android', 'tests/evidence/fe-1b', 'after-mumu-', { login: 'login', sessions: 'list', conversation: 'steps', approval: 'approval', 'outputs-sources': 'outputs-sources', memory: 'memory' }, ['light']);
-aliases.push({ platform: 'android', scene: 'sessions', theme: 'dark', path: 'tests/evidence/fe-1b/after-mumu-dark-list.png' },
-  { platform: 'android', scene: 'appearance', theme: 'dark', path: 'tests/evidence/fe-1b/after-mumu-appearance.png' });
 const git = args => execFileSync('git', args, { cwd: repository, encoding: 'utf8' }).trim();
 async function walk(root) {
   const result = [];
@@ -50,7 +32,7 @@ export async function collectEvidence(captureDirectory, { includeRepositoryEvide
     if (name !== `review-${row.platform}-${row.scene}-${row.theme}.json` || !catalog.scenes.some(scene => scene.id === row.scene) || !catalog.themes.includes(row.theme) || row.synthetic !== true || !/^[a-f0-9]{40}$/.test(row.commit) || !Number.isFinite(Date.parse(row.generatedAt)) || typeof row.reason !== 'string' || !row.reason.trim()) throw Error('Invalid capture failure provenance');
     assertPublicText(JSON.stringify(row)); failures.push(row);
   }
-  const roots = [captureDirectory, ...(includeRepositoryEvidence ? [join(repository, 'tests/evidence'), join(repository, 'apps/apple/Tests/Evidence')] : [])];
+  const roots = [captureDirectory, ...(includeRepositoryEvidence ? [join(repository, 'tests/fixtures/review-gallery'), join(repository, 'apps/apple/Tests/Evidence')] : [])];
   const pattern = /^review-(windows|mobile-web|android|iphone|mac|watch)-(.+)-(light|dark)(?:-\d{8}T\d{6}Z)?\.png$/;
   for (const root of roots) for (const path of await walk(root)) {
     const match = path.split(/[\\/]/).at(-1).match(pattern);
@@ -59,7 +41,7 @@ export async function collectEvidence(captureDirectory, { includeRepositoryEvide
     assertPublicText(JSON.stringify(metadata));
     if (metadata.synthetic !== true || !/^[a-f0-9]{40}$/.test(metadata.commit) || !Number.isFinite(Date.parse(metadata.generatedAt))) throw Error('Device evidence needs synthetic provenance, full commit and ISO timestamp');
     if (metadata.platform !== match[1] || metadata.scene !== match[2] || metadata.theme !== match[3]) throw Error('Evidence metadata disagrees with filename');
-    candidates.push({ ...metadata, path, source: roots.indexOf(root) === 0 ? metadata.source : relative(repository, path).replaceAll('\\', '/') });
+    candidates.push({ ...metadata, path, source: root === join(repository, 'tests/fixtures/review-gallery') || roots.indexOf(root) === 0 ? metadata.source : relative(repository, path).replaceAll('\\', '/') });
   }
   for (const row of includeRepositoryEvidence ? aliases : []) {
     const path = join(repository, row.path);

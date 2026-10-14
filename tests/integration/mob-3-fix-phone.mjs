@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Windows counterpart of the Linux relay scenario: same production runtime,
 // synthetic model and phone UI, using an isolated direct host transport.
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ import {servePersonalAccessUi} from '../../src/personal-access-ui/index.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 import {approvePhoneOperation} from '../helpers/phone-approval.mjs';
 import {managedMkdtemp,managedTempRoot,disposeManagedTemp} from '../helpers/managed-temp.mjs';
-const out=resolve('tests/evidence/mob-3-fix'),root=await managedMkdtemp(join(managedTempRoot(),'weftmate-mob3-fix-'));
+const out=evidencePath('mob-3-fix'),root=await managedMkdtemp(join(managedTempRoot(),'weftmate-mob3-fix-'));
 await mkdir(out,{recursive:true});const logs=[],report={synthetic:true,realModelRequests:0,transport:'isolated direct Windows host; Linux 443 relay is verified by CI',switches:[],approvals:[]};
 let runtime,host,browser,page;
 const wait=async(fn,label)=>{const end=Date.now()+90000;while(Date.now()<end){if(await fn())return;await new Promise(done=>setTimeout(done,200));}throw Error(label);};

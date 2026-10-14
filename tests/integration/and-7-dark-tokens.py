@@ -1,9 +1,10 @@
+import os
 """Compare the shipped Android palette to the supplied neutral-gray controls specification."""
 from pathlib import Path
 import json, re
 
 repo=Path(__file__).resolve().parents[2]
-root=repo/'tests/evidence/and-7'
+root=(repo / os.environ.get('WEFTMATE_EVIDENCE_DIR', '.local/evidence')) / 'and-7'
 source=(repo/'apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTokens.kt').read_text(encoding='utf8')
 actual={name:int(value,16) for name,value in re.findall(r'const val (\w+) = 0x([0-9a-f]+)\.toInt\(\)',source)}
 reference=json.loads((root/'dark-control-reference.json').read_text(encoding='utf8'))

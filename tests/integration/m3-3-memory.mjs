@@ -1,3 +1,5 @@
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Read-only external Core checkout, synthetic HTTP interpretation, isolated data. */
 import assert from 'node:assert/strict';
 import { createPersonalMemoryManager } from '../../src/personal-memory/index.mjs';
@@ -7,6 +9,8 @@ import { createServer } from 'node:http';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+prepareEvidenceDirectory(evidencePath('m3-3'), { recursive: true });
+
 
 const source = resolve(process.env.M3_3_MEMORY_SOURCE || '../memoweft/py/src');
 const python = resolve(process.env.M3_3_MEMORY_PYTHON || '../memoweft/py/.venv/bin/python');
@@ -79,6 +83,6 @@ try {
   report.formationRequests = formationRequests; report.chatRequests = chatRequests;
   await manager?.close(); server.closeAllConnections(); await new Promise(r => server.close(r));
   await rm(root, { recursive: true, force: true });
-  await writeFile('tests/evidence/m3-3/memory.json', JSON.stringify(report, null, 2) + '\n');
+  await writeFile(evidencePath('m3-3/memory.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ completed: report.completed, formationRequests, chatRequests }));
 }

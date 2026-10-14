@@ -1,3 +1,4 @@
+import { evidencePath } from '../../../tests/helpers/evidence-path.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -6,7 +7,7 @@ import { resolve, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 const root = fileURLToPath(new URL('../www/', import.meta.url));
-const evidence = fileURLToPath(new URL(process.env.WEFTMATE_UXP3_EVIDENCE === '1' ? '../../../tests/evidence/ux-p3/' : '../../../.local/ux-p3/', import.meta.url));
+const evidence = evidencePath('ux-p3');
 test('D50 touch drawer aligns project and chat rows, single status, long press and settings page titles', async () => {
   const server = createServer(async (req, res) => { try {
     const pathname = new URL(req.url, 'http://localhost').pathname;

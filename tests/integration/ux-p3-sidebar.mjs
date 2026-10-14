@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -12,7 +13,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
-const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/ux-p3');await mkdir(out,{recursive:true});
+const root=resolve(import.meta.dirname,'../..'),out=evidencePath('ux-p3');await mkdir(out,{recursive:true});
 const before=process.argv.includes('--before'),prefix=before?'before':'after';
 const env={...process.env};for(const k of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(k)||k==='ELECTRON_RUN_AS_NODE')delete env[k];
 env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -15,7 +16,7 @@ const repository = resolve(import.meta.dirname, '../..');
 const root = mkdtempSync(join(process.env.SystemRoot || 'C:/Windows', 'Temp', 'weftmate-ui-3-'));
 const profile = join(root, 'profile'); mkdirSync(profile);
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
-const evidence = join(repository, 'tests/evidence/ui-3'); mkdirSync(evidence, { recursive: true });
+const evidence = evidencePath('ui-3'); mkdirSync(evidence, { recursive: true });
 const password = `synthetic-${randomUUID()}-password`;
 const preparation = await createPersonalAccessService({ root: join(profile, 'personal-access'), port: 0,
   backend: Object.fromEntries(['getStatus', 'listModels', 'preflight', 'createSession', 'sendMessage', 'cancelSession', 'readEvents', 'describeSession'].map(name => [name, async () => name === 'listModels' ? [] : {}])) });

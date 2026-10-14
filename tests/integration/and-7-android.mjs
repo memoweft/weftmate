@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {createServer} from 'node:net';
@@ -10,7 +11,7 @@ const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',manager='D:/Software/MuMuPlay
 const pkg='com.memoweft.weftmate.mobile.and7qa';
 const variants=process.argv.includes('--pair')?[[390,'light']]:process.argv.includes('--single')?[[360,'light']]:[[360,'light'],[360,'dark'],[390,'light'],[390,'dark']];
 let heavy,mumu,fixture,serial,adbPort,connected=false,installed=false;
-const evidence=join(root,'tests/evidence/and-7');await mkdir(evidence,{recursive:true});await mkdir('.local/and-7',{recursive:true});
+const evidence=evidencePath('and-7');await mkdir(evidence,{recursive:true});await mkdir('.local/and-7',{recursive:true});
 async function claim(path,label){try{const f=await open(path,'wx');await f.writeFile(`AND-7 ${new Date().toISOString()} ${label}`);await f.close();return path;}catch(e){if(e.code==='EEXIST')return null;throw e;}}
 async function reserve(){while(true){const slots=await Promise.all([1,2,3].map(n=>readFile(join(orchestrator,`heavy-${n}.lock`),'utf8').catch(()=>'')));if(!slots.some(text=>text.startsWith('AND-7')))for(let n=1;n<=3;n++){heavy=await claim(join(orchestrator,`heavy-${n}.lock`),'MuMu');if(heavy)break;}if(heavy){mumu=await claim(join(orchestrator,'mumu.lock'),'native library screenshots');if(mumu)return;await unlink(heavy);heavy=null;}console.log('Waiting for MuMu and a heavy slot');await sleep(120000);}}
 async function call(args,timeout=30000){return exec(adb,['-P',String(adbPort),...args],{windowsHide:true,timeout,maxBuffer:16*1024*1024});}
