@@ -90,6 +90,8 @@
 
 用户名 NFKC/trim 后 3–64 个 Unicode 字符，仅字母/数字/`_.-`；密码 15–128 个 Unicode 字符；设备名 trim 后非空、≤128 个 UTF-16 单元。昵称 NFKC/trim 后 ≤64 个 Unicode 字符。`avatar` 为 `null` 或 `{"mimeType":"image/png","dataBase64":"…"}`，支持 PNG/JPEG/WebP，解码 ≤128 KiB。
 
+FIX-33：`GET /status` 的 `personalCapabilities.modelServices:1` 由该电脑声明；缺省直接读取旧 `/models` 与 `/settings/models`，不探测 `/model-services`。新内容通道、手机优先副本同样只使用目标电脑 `/cloud/config` 的可选声明，云端能力不能替它声明。`accountChanges.phoneSync` 是账户隔离的不透明手机同步水位；新提交沿既有等待唤醒，重复提交不额外唤醒。原生聊天显示时暂停被覆盖网页的读取，手机独立聊天引擎继续运行；原生历史取消同时取消排队并在后台断开连接。
+
 ### 3.2 设备与宿主状态（4）
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
@@ -191,7 +193,7 @@ STREAM-1：`GET /status.personalCapabilities.replyStreaming` 精确为 `1` 表�
 
 BL-29：`personalCapabilities.replyWait:1` 表示现有 `GET /chats/{id}/changes` 可选 `waitMs`（整数 1–30000）及 `liveRevision`（客户端已接纳的非负快照水位）。先按原游标读取，有历史增量、移除或不同快照立即返回；无变化时等待账户提交或 DSH（助手运行时）原生会话事件，最长等待指定时间后返回现有响应形状。等待绑定该查询实际看到的各段原生水位，注册后重新检查索引变化，其他客户端推进索引不会吞掉唤醒。取消监听在首次查询之前注册；等待结束再次读取并重新核验登录与设备权限；取消请求解除等待，不确认任何写请求。`liveRevision` 只在累计正文集合变化时递增，空闲重读不制造新水位。安卓现有 `/chats` 业务白名单已接受这些查询参数，无新路由、权限或壳方法。
 
-BL-29c 在既有 `events|changes` 响应保留可选 `accountChanges:{revision,models,modelSettings,personalization,sessions}`：`revision` 是本宿主进程内、按账户隔离的提交水位，其他账户的私有提交不会唤醒或使本账户缓存失效。其余字段是使用进程随机密钥并加入账户／字段域的 HMAC（带密钥的消息认证码）失效标记；客户端仅比较相等性，不解析、不重算、不跨账户比较。`models` 对同一提交快照复用公开 `/models` 的完整可见投影，包含名称、可用状态、账户模型修订及全部公开目录字段。目录读取失败时正文仍可返回 200，此次通知省略 `models`；客户端保留此前该字段，其他通知照常处理，并按后续有效通知及既有 30 秒兜底刷新。目录快照和纯账户标记均绑定读取开始时的账户修订；目录完成后同步核对聊天存在、正文内容代次与当前设备鉴权，失效代次返回 409 `CURSOR_RESET_REQUIRED`。目录等待服从同一请求取消域及宿主关闭信号。
+BL-29c 在既有 `events|changes` 响应保留可选 `accountChanges:{revision,models,modelSettings,personalization,sessions,phoneSync}`：`revision` 是本宿主进程内、按账户隔离的提交水位，其他账户的私有提交不会唤醒或使本账户缓存失效。其余字段是使用进程随机密钥并加入账户／字段域的 HMAC（带密钥的消息认证码）失效标记；客户端仅比较相等性，不解析、不重算、不跨账户比较。`models` 对同一提交快照复用公开 `/models` 的完整可见投影，包含名称、可用状态、账户模型修订及全部公开目录字段。目录读取失败时正文仍可返回 200，此次通知省略 `models`；客户端保留此前该字段，其他通知照常处理，并按后续有效通知及既有 30 秒兜底刷新。目录快照和纯账户标记均绑定读取开始时的账户修订；目录完成后同步核对聊天存在、正文内容代次与当前设备鉴权，失效代次返回 409 `CURSOR_RESET_REQUIRED`。目录等待服从同一请求取消域及宿主关闭信号。
 
 `changes` 可携带最后接纳的非负整数 `accountRevision`；水位不同立即返回，避免本账户提交发生在两次订阅之间时漏掉配置或列表变化。宿主重启后接纳新水位及新标记，标记变化只重读对应模型目录／模型设置／个性化；列表标记变化立即补读列表。本账户提交水位推进时还重新核对当前对话的权威审批／提问及其源任务；原生请求事件先到、持久登记稍后完成时，不能沿用此前空读取结果。手机使用完整的决策读取链，不绕过源任务与身份核验。等待读的可选 `waitOutcome` 为 `snapshot`（初查已有结果）、`changed`（被唤醒）或 `timeout`（正常等满）；只有后两者可立即续订。401／撤权停止当前身份读取，404 清除所选来源，持续 409 最多重建一次尾页；失败复用共享连接策略，首轮及后续均直接在 1500–1750 毫秒区间抖动，独立状态探测区分连接故障与业务 503。正文端点恢复后至多 1750 毫秒加成功请求耗时（桌面另加最多 250 毫秒检查间隔）；全宿主不可用时仍由既有最长 30 秒连接探测发现，不能宣称无条件 2 秒恢复。关闭先撤销等待，再关闭监听，等待方收到 503 `SERVICE_CLOSING`，按宿主关闭走连接恢复。
 
@@ -1034,7 +1036,7 @@ AND-3：Android（安卓）原生 `cloud.app.configure` 与 `cloud.app.identity`
 
 | 提供者 / 方法与路径 | 请求 / 响应 |
 |---|---|
-| 宿主 GET `/personal/v1/cloud/config` | 无认证；200 `{issuer,hostId,clientId}`。只公开固定发行者与公开客户端 ID，不含绑定账号、公钥、凭据；未启用云为原 404 |
+| 宿主 GET `/personal/v1/cloud/config` | 无认证；200 `{issuer,hostId,clientId,capabilities?}`。电脑可声明 `capabilities.cloudChannel:1`（内容令牌通道）、`offlinePhoneFirst:1`（手机自配模型的离线补交）。缺失时按旧电脑处理，云端 `multiHost` 不能替代电脑声明；只公开固定发行者、公开客户端 ID 与能力，不含绑定账号、公钥、凭据；未启用云为原 404 |
 | 宿主 GET `/personal/v1/cloud/binding` | 本账号 Cookie；200 `{status:"unbound"\|"pending"\|"active",canManage,hostId}`。只返回当前账号；canManage 仅电脑直接地址的本地密码 Cookie 为 true，实际写权限仍按 7.4 检查 |
 
 浏览器从宿主同 origin 的 `/personal/v1/ui/` 登录。`WEFTMATE_CLOUD_WEB_CLIENT_ID` 默认 `weftmate-web`；云 `CLOUD_OIDC_CLIENTS` 增加可选 `application_type:"web"\|"native"`（旧配置默认 native），**预登记精确回调 URI**。浏览器回调固定 `<宿主 origin>/personal/v1/ui/`，包括实际直接地址与中继地址；禁止通配符。Android 客户端 ID 为 `weftmate-android`，回调为 `com.memoweft.weftmate:/oauth`。部署配置需同时登记两个公开客户端；开发的回环 HTTP 仅在已有隔离测试开关下使用。

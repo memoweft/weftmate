@@ -271,7 +271,7 @@ export async function createHostCloudIdentity(context, options) {
       const route = pathname.replace('/personal/v1', '');
       if (route === '/cloud/config' && request.method === 'GET') {
         context.json(response, 200, { issuer: config.issuer, hostId,
-          clientId: options.clientId || 'weftmate-web' }); return true;
+          clientId: options.clientId || 'weftmate-web', capabilities: { cloudChannel: 1, offlinePhoneFirst: 1 } }); return true;
       }
       if (route === '/cloud/binding' && request.method === 'GET') {
         const current = local(request);

@@ -110,9 +110,9 @@ function stopSharedPoll(){clearTimeout(state.sharedPollTimer);state.sharedPollTi
 
 function scheduleSharedPoll(result) {
   stopSharedPoll();
-  if (state.chatSource !== 'host' || state.page !== 'chat' || document.visibilityState === 'hidden' || !uiCore.state.online) return;
+  if (globalThis.weftNativeChatActive === true || state.chatSource !== 'host' || state.page !== 'chat' || document.visibilityState === 'hidden' || !uiCore.state.online) return;
   state.sharedPollTimer = setTimeout(async () => {
-    if (state.chatSource !== 'host' || state.page !== 'chat') return;
+    if (globalThis.weftNativeChatActive === true || state.chatSource !== 'host' || state.page !== 'chat') return;
     const outcome = await loadSharedHistory(true);
     if (state.chatSource === 'host') scheduleSharedPoll(outcome);
   }, uiCore.historyPollDelay(result));
@@ -238,7 +238,7 @@ function renderOptimisticMessages(){if(state.chatSource!=='host'||state.page!=='
   }
 }
 
-function loadSharedHistory(wait=false){return uiCore.loadMobileHistory(wait)}
+function loadSharedHistory(wait=false){if(globalThis.weftNativeChatActive===true)return Promise.resolve();return uiCore.loadMobileHistory(wait)}
 
 function loadSharedOutbox(...args){return uiCore.mobile.loadSharedOutbox(...args)}
 

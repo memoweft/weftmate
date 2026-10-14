@@ -18,6 +18,21 @@ import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(AndroidJUnit4::class)
 class SharedChatOutboxTest {
+    @Test fun aNewLegacyCommandPostsOnceAndADurableRetryQueriesWithoutSendingAgain() {
+        val context=InstrumentationRegistry.getInstrumentation().targetContext
+        val name="fix33-${UUID.randomUUID()}.db";val fixture=HostFixture()
+        val host=HostIdentity("https://example.test","synthetic","owner-synthetic","host-synthetic","device-synthetic","cookie=owner-synthetic","csrf")
+        val store=LocalStore(context,name)
+        try {
+            val shared=SharedChat(store,PersonalApi(fixture))
+            for(index in 1..4)assertEquals("accepted",shared.submit(host,"session-one","你好","session.message","fix33-$index") { true }.getString("state"))
+            assertEquals(4,fixture.posts);assertEquals(4,fixture.calls.size)
+            assertTrue(fixture.calls.all{it.startsWith("POST")&&it.endsWith("/commands")})
+            fixture.calls.clear()
+            assertEquals("accepted",shared.submit(host,"session-one","你好","session.message","fix33-4") { true }.getString("state"))
+            assertEquals(4,fixture.posts);assertEquals(1,fixture.calls.size);assertTrue(fixture.calls.single().contains("/commands/by-request/fix33-4"))
+        } finally {store.close();context.deleteDatabase(name)}
+    }
     private class HostFixture(private val sessionId: String = "session-one") : JsonTransport {
         val commands = mutableMapOf<String, JSONObject>()
         val calls = mutableListOf<String>()
@@ -77,12 +92,12 @@ class SharedChatOutboxTest {
         val store = LocalStore(context, name)
         try {
             val shared = SharedChat(store, PersonalApi(fixture))
-            assertEquals("uncertain", shared.submit(host, "session-one", "synthetic", "session.message", "fx9-one") { true }.getString("state"))
+            assertEquals("pending", shared.submit(host, "session-one", "synthetic", "session.message", "fx9-one") { true }.getString("state"))
             fixture.commands["owner-a|fx9-one"]!!.put("state", "accepted_by_dsh").put("receiptId", "receipt-one")
             var checks = 0
             try { shared.commandByRequest(host, "fx9-one") { ++checks == 1 }; fail("Late account reply") }
             catch (error: ApiFailure) { assertEquals("ACCOUNT_SWITCHED", error.safeCode) }
-            assertEquals("uncertain", shared.outbox(host).getJSONArray("commands").getJSONObject(0).getString("state"))
+            assertEquals("pending", shared.outbox(host).getJSONArray("commands").getJSONObject(0).getString("state"))
             assertEquals("accepted_by_dsh", shared.commandByRequest(host, "fx9-one") { true }.getString("state"))
             assertEquals("accepted", shared.outbox(host).getJSONArray("commands").getJSONObject(0).getString("state"))
             assertEquals(1, fixture.posts)
@@ -119,10 +134,11 @@ class SharedChatOutboxTest {
             try { shared.submit(a, "session-one", "blocked", "session.message", "request-two") { true }; fail("Read-only") }
             catch (error: ApiFailure) { assertEquals("SESSION_READ_ONLY", error.safeCode) }
             assertNull(store.sharedCommand(Endpoints.ownerKey(a.origin, a.ownerId), a.hostId, "session-one", "request-two"))
-            fixture.revokedOwner = "owner-a"
-            try { shared.submit(a, "session-one", "revoked", "session.message", "request-three") { true }; fail("Revoked") }
-            catch (error: ApiFailure) { assertEquals(401, error.status) }
-            assertNull(store.sharedCommand(Endpoints.ownerKey(a.origin, a.ownerId), a.hostId, "session-one", "request-three"))
+            fixture.writable = true; shared.sessions(a); fixture.revokedOwner = "owner-a"
+            val revoked = shared.submit(a, "session-one", "revoked", "session.message", "request-three") { true }
+            assertEquals("rejected",revoked.getString("state"));assertEquals("UNAUTHORIZED",revoked.getString("errorCode"))
+            assertEquals("rejected",store.sharedCommand(Endpoints.ownerKey(a.origin,a.ownerId),a.hostId,"session-one","request-three")!!.state)
+            assertEquals(2,fixture.posts)
         } finally { store.close(); context.deleteDatabase(name) }
     }
 
@@ -216,7 +232,7 @@ class SharedChatOutboxTest {
             attachments.claimDraft(owner, listOf(imported.id), sessionId)
             val fixture = HostFixture(sessionId).apply { commandState = "pending" }
             val server = Thread {
-                try { socket.accept().use { connection ->
+                try { repeat(2) { socket.accept().use { connection ->
                     val input = connection.getInputStream().buffered()
                     fun line(): String {
                         val bytes = java.io.ByteArrayOutputStream()
@@ -228,7 +244,8 @@ class SharedChatOutboxTest {
                         return bytes.toString("UTF-8")
                     }
                     val requestLine = line()
-                    if (!requestLine.startsWith("PUT /personal/v1/sessions/$sessionId/attachments/${imported.id}?"))
+                    val original = requestLine.startsWith("PUT /personal/v1/sync/attachments/${imported.id}?")
+                    if (!original && !requestLine.startsWith("PUT /personal/v1/sessions/$sessionId/attachments/${imported.id}?"))
                         throw AssertionError("Unexpected upload path")
                     var length = 0
                     var mime = ""
@@ -242,27 +259,28 @@ class SharedChatOutboxTest {
                             declaredHash = header.substringAfter(':').trim()
                     }
                     if (length !in 1..512 * 1024) throw AssertionError("Derived upload length")
-                    if (mime != "image/jpeg") throw AssertionError("Derived upload MIME")
+                    if (mime != if(original) "image/png" else "image/jpeg") throw AssertionError("Upload MIME")
                     val uploaded = input.readNBytes(length)
-                    if (uploaded.size != length || uploaded.size < 4 ||
+                    if (original && !uploaded.contentEquals(imported.file.readBytes())) throw AssertionError("Original PNG body")
+                    if (uploaded.size != length || !original && (uploaded.size < 4 ||
                         uploaded[0] != 0xff.toByte() || uploaded[1] != 0xd8.toByte() ||
                         uploaded[2] != 0xff.toByte() || uploaded[uploaded.size - 2] != 0xff.toByte() ||
-                        uploaded.last() != 0xd9.toByte()) throw AssertionError("Derived JPEG body")
+                        uploaded.last() != 0xd9.toByte())) throw AssertionError("Derived JPEG body")
                     val actualHash = MessageDigest.getInstance("SHA-256").digest(uploaded)
                         .joinToString("") { "%02x".format(it) }
                     if (declaredHash != actualHash) throw AssertionError("Derived upload hash")
-                    uploadBytes.set(uploaded)
+                    if (!original) uploadBytes.set(uploaded)
                     val meta = JSONObject().put("attachmentId", imported.id)
                         .put("name", imported.name).put("contentType", mime)
                         .put("size", uploaded.size).put("sha256", actualHash)
-                    uploadMeta.set(meta)
+                    if (!original) uploadMeta.set(meta)
                     val body = JSONObject().put("attachment", meta)
                         .put("duplicate", false).toString().toByteArray()
                     val head = "HTTP/1.1 201 Created\r\nContent-Type: application/json\r\n" +
                         "Content-Length: ${body.size}\r\nConnection: close\r\n\r\n"
                     connection.getOutputStream().write(head.toByteArray() + body)
                     connection.getOutputStream().flush()
-                } } catch (error: Throwable) { failure.set(error) }
+                } } } catch (error: Throwable) { failure.set(error) }
             }
             server.start()
             val shared = SharedChat(local, PersonalApi(fixture), attachments)
@@ -281,7 +299,7 @@ class SharedChatOutboxTest {
             val sentRef = fixture.postedPayloads.single().getJSONArray("attachments").getJSONObject(0)
             for (key in listOf("attachmentId", "name", "contentType", "size", "sha256"))
                 assertEquals("Command reference $key", transmittedMeta.get(key), sentRef.get(key))
-            assertEquals("uncertain", submitted.getString("state"))
+            assertEquals("pending", submitted.getString("state"))
             assertTrue(imported.file.exists())
             assertEquals(imported.id, attachments.list(owner, sessionId).single().id)
             fixture.commands["owner-image|shared-image-request"]!!.put("state", "accepted_by_dsh")
