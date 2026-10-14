@@ -54,7 +54,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     private var pendingApprovalMode: String? = null
     private var approvalModeRevision = 0
     var chatId by mutableStateOf("")
-    private var chatKind = ""
+    var chatKind = ""
+        private set
     private var messageIntent = "queue"
     var sessionId by mutableStateOf("")
     var phone by mutableStateOf(false)
@@ -221,7 +222,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         chatKind = chat.optString("kind")
         sessionId = chat.optString("activeSessionId").takeUnless { it == "null" } ?: ""
         sendAvailable = phone || chat.optBoolean("sendAvailable")
-        title = if (chat.optString("kind") == "main") "WeftMate" else chat.optString("title", "新对话")
+        title = hostChatTitle(chat)
         timeZone = chat.optString("timeZone", java.time.ZoneId.systemDefault().id)
         modelId = chat.stringOrEmpty("selectedModelProfileId").ifEmpty { chat.stringOrEmpty("modelProfileId") }.ifEmpty { modelId }
         modelLabel = models.firstOrNull { it.optString("profileId",it.optString("modelId")) == modelId }?.optString("displayName") ?: modelLabel
@@ -294,7 +295,9 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if(anchor.isNotBlank()) {
             val page=business("/chats/$chatId/events?around=${java.net.URLEncoder.encode(anchor,"UTF-8")}&limit=100")
             if(selectedGeneration!=generation || sourceOwner!=owner)return
-            timeline.reset();timeline.merge(page);rows=timeline.rows();olderCursor=page.optString("olderCursor").takeUnless{it=="null"}.orEmpty();hasOlder=page.optBoolean("hasOlder")
+            timeline.reset();readHistoryPage(page, selectedGeneration)
+            if(selectedGeneration!=generation || sourceOwner!=owner)return
+            rows=timeline.rows();olderCursor=page.optString("olderCursor").takeUnless{it=="null"}.orEmpty();hasOlder=page.optBoolean("hasOlder")
             fileAnchor=anchor
         }
         tab="chat"
@@ -319,6 +322,11 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         attachments = call("attachments.list", JSONObject().put("conversationId", chatId)).optJSONArray("attachments")?.objects().orEmpty()
     }
     private suspend fun refreshMessageIntent() { messageIntent = runCatching { business("/settings/personalization").optJSONObject("settings")?.optString("messageMode", "queue") ?: "queue" }.getOrDefault("queue") }
+    private suspend fun readHistoryPage(page: JSONObject, selectedGeneration: Int, older: Boolean = false) {
+        timeline.readPage(page, older, { selectedGeneration == generation }) { sourceSession, sourceSeq ->
+            nativeMessageDetail(sourceSession, sourceSeq, ::call)
+        }
+    }
     suspend fun refresh(older: Boolean = false, wait: Boolean = false) {
         if (refreshing && refreshGeneration == generation) return
         refreshing = true
@@ -342,7 +350,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                 refreshPhase = "history"
                 val p = business(path); if (g != generation) return
                 val previousRows = rows.toString()
-                timeline.merge(p, older); rows = timeline.rows(); uncertain = uncertain.filter { nativePendingMessageVisible(it, rows) }
+                readHistoryPage(p, g, older); if (g != generation) return
+                rows = timeline.rows(); uncertain = uncertain.filter { nativePendingMessageVisible(it, rows) }
                 if (p.has("olderCursor")) { olderCursor = p.optString("olderCursor").takeUnless { it == "null" } ?: ""; hasOlder = p.optBoolean("hasOlder") }
                 if (!older) { cursor = p.optString("nextCursor", p.optString("syncCursor", cursor)); liveRevision = p.optLong("liveRevision", liveRevision) }
                 refreshPhase = "chat-status"
@@ -352,6 +361,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                     check(saved in listOf("auto", "ask", "accept-edits", "plan", "allow-all")) { "APPROVAL_RECEIPT_INVALID" }
                     mode = saved; approvalModeReady = true
                 }
+                title = hostChatTitle(current)
+                chats = chats.map { if (it.optString("chatId") == chatId) JSONObject(it.toString()).put("title", current.opt("title")) else it }
                 sessionId = current.optString("activeSessionId").takeUnless { it == "null" } ?: ""
                 sendAvailable = current.optBoolean("sendAvailable")
                 running = current.optBoolean("running") || rows.any { it.optString("type") == "assistant.delta" && it.optJSONObject("data")?.optBoolean("streaming") == true }
