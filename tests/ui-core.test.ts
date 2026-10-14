@@ -790,6 +790,35 @@ test('UI-P4 a new draft reads the account approval mode and applies its chosen m
   await f.core.sendDraft('先出计划');assert.deepEqual(operations,['session.create','approval-mode:plan','session.message']);
 });
 
+test('FIX-40 a main chat without a session saves ask to that chat and validates the receipt',async()=>{
+  const f=fixture();f.core.state.selectedSessionId=null;f.core.state.selectedChatId='chat-main';
+  f.core.accessApi=async(path,options)=>{
+    assert.equal(path,'/chats/chat-main');assert.equal(options.method,'PATCH');
+    assert.equal(options.body.approvalMode,'ask');return {chat:{approvalMode:'ask'}};
+  };
+  await f.core.saveApprovalMode('ask');assert.equal(f.core.currentApprovalMode,'ask');
+  f.core.accessApi=async()=>({chat:{approvalMode:'auto'}});
+  await f.core.saveApprovalMode('plan');assert.equal(f.core.currentApprovalMode,'ask');
+  assert.ok(f.paints.some(row=>row.name==='historyNotice'&&row.args[0].includes('未保存')));
+});
+
+test('FIX-40 a mismatched first-message approval receipt prevents session.message',async()=>{
+  const f=fixture();f.core.refreshNewConversationApprovalMode=async()=>{};f.core.startNewConversation();
+  f.core.state.newConversationApprovalMode='ask';const operations:string[]=[];
+  f.core.submitCommand=async(kind,fields,_session,id)=>{operations.push(kind);return {requestId:id,kind,sessionId:'new-session',state:'accepted_by_dsh'};};
+  f.core.refreshSessions=async()=>{};f.core.selectSession=async id=>{f.core.state.selectedSessionId=id;f.core.state.newConversation=false;};
+  f.core.accessApi=async()=>({mode:'auto'});
+  await f.core.sendDraft('必须先问');assert.deepEqual(operations,['session.create']);
+  assert.equal(f.core.optimisticMessages()[0].status,'failed');
+});
+
+test('FIX-40 a message waits for the selected approval mode write to finish',async()=>{
+  const f=fixture(),writing=deferred();f.core.accessApi=()=>writing.promise;
+  const saved=f.core.saveApprovalMode('ask');await new Promise(done=>setImmediate(done));
+  assert.match(f.core.sendBlocker('在保存后发送'),/审批方式/);
+  writing.resolve({mode:'ask'});await saved;assert.equal(f.core.state.approvalModeSaving,null);
+});
+
 test('UI-P4 starting another new conversation does not display an earlier uncreated failed message',async()=>{
   const f=fixture();f.core.refreshNewConversationApprovalMode=async()=>{};
   f.core.startNewConversation();f.core.beginOptimistic({sessionId:null,draftId:f.core.state.newConversationId,requestId:'failed-first',text:'旧草稿',status:'failed'});

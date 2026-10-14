@@ -32,7 +32,7 @@ export function createMainChat(context) {
         await context.callBackend(()=>context.backend.createSession({ownerId,sessionId,modelProfileId:profile,workspaceChatId:row.chatId,title:'WeftMate'}));
         await context.mutate(ownerId,next=>{
           authorize();const identity=next.chatIdentity,main=identity.chats[identity.mainChatId];
-          next.sessions[sessionId]={ownerId,origin:'personal-remote',attachedAt:at,modelProfileId:profile,approvalMode:next.defaultApprovalMode??'auto',workspaceChatId:main.chatId};
+          next.sessions[sessionId]={ownerId,origin:'personal-remote',attachedAt:at,modelProfileId:profile,approvalMode:main.approvalMode??next.defaultApprovalMode??'auto',workspaceChatId:main.chatId};
           identity.segments[segmentId]={segmentId,chatId:main.chatId,sessionId,hostId:next.hostId,ordinal:0,state:'active',startedAt:at};
           identity.sessionSegments[sessionId]=segmentId;main.activeSegmentId=segmentId;main.revision++;
         });return sessionId;
@@ -133,7 +133,7 @@ export function createMainChat(context) {
               const previous = next.chatIdentity.segments[row.activeSegmentId];
               const now = new Date(context.timestamp()).toISOString();
               next.sessions[relay.sessionId] = { ownerId, origin: 'personal-remote', attachedAt: now, modelProfileId: relay.modelProfileId,
-                approvalMode: previous ? next.sessions[previous.sessionId].approvalMode : next.defaultApprovalMode ?? 'auto', workspaceChatId: request.chatId,
+                approvalMode: row.approvalMode ?? (previous ? next.sessions[previous.sessionId].approvalMode : next.defaultApprovalMode ?? 'auto'), workspaceChatId: request.chatId,
                 deepThinking: previous ? next.sessions[previous.sessionId].deepThinking === true : defaultThinking,
                 ...(previous && next.sessions[previous.sessionId].allowedApprovalCategories ? { allowedApprovalCategories: structuredClone(next.sessions[previous.sessionId].allowedApprovalCategories) } : {}) };
               next.chatIdentity.segments[relay.segmentId] = { segmentId: relay.segmentId, chatId: request.chatId, sessionId: relay.sessionId,

@@ -137,7 +137,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             if (core.state.newConversation && core.state.selectedSessionId === null && core.state.newConversationId === row.draftId) await core.selectSession(row.sessionId);
         }
         if(row.approvalMode){
-            await core.accessApi(`/sessions/${encodeURIComponent(row.sessionId)}/approval-mode`,{method:'PATCH',protectedWrite:true,body:{mode:row.approvalMode}});
+            const modeReceipt = await core.accessApi(`/sessions/${encodeURIComponent(row.sessionId)}/approval-mode`,{method:'PATCH',protectedWrite:true,body:{mode:row.approvalMode}});
+            if(modeReceipt.mode!==row.approvalMode)throw {code:'APPROVAL_RECEIPT_INVALID'};
             if(!current())return;
             if(core.state.selectedSessionId===row.sessionId)void core.refreshApprovalMode(row.sessionId);
         }
@@ -264,6 +265,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         finally { if (intent && core.conversationTaskCurrent(context)) core.state.messageMode = previous; }
     }
     function sendBlocker(text, main = false) {
+        if (core.state.approvalModeSaving) return '正在保存审批方式，请稍候再发送。';
         if (core.state.sessionSelecting) return '正在打开对话，请稍候再发送。';
         if (core.state.sideCreating) return '正在创建对话，请稍候再发送。';
         if (core.folderMutationPending?.()) return '正在准备文件夹，请稍候再发送。';

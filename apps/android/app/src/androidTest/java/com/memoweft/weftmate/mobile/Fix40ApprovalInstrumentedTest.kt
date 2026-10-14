@@ -1,0 +1,66 @@
+package com.memoweft.weftmate.mobile
+
+import android.content.Intent
+import android.graphics.Bitmap
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.test.platform.app.InstrumentationRegistry
+import org.json.JSONObject
+import org.junit.Assert.*
+import org.junit.Rule
+import org.junit.Test
+import java.io.File
+
+/** Isolated app + real host/DSH: choose the mode and answer the visible native cards. */
+class Fix40ApprovalInstrumentedTest {
+    @get:Rule val compose = createEmptyComposeRule()
+    private val i = InstrumentationRegistry.getInstrumentation()
+    private val args = InstrumentationRegistry.getArguments()
+    private lateinit var activity: NativeActivity
+    private fun main(action: () -> Unit) = i.runOnMainSync(action)
+    private fun waitFor(label: String, condition: () -> Boolean) {
+        val end = System.currentTimeMillis() + 45000
+        while (System.currentTimeMillis() < end) { var ok = false; main { ok = condition() }; if (ok) return; Thread.sleep(100) }
+        error("Timed out: $label")
+    }
+    private fun shot(name: String) {
+        val image = i.uiAutomation.takeScreenshot()
+        try {
+            File(i.targetContext.getExternalFilesDir(null), "fix40-$name.png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        } finally { image.recycle() }
+    }
+    @Test fun askBeforeFirstMessageThenApproveAndReject() {
+        activity = i.startActivitySync(Intent(i.targetContext, NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .putExtra("lg1bHostOrigin", args.getString("origin"))) as NativeActivity
+        try {
+            var booted = false
+            waitFor("login boot") { activity.embeddedWeb.evaluateJavascript("Boolean(typeof state!=='undefined' && state.booted)") { booted = it == "true" }; booted }
+            val credentials = JSONObject().put("origin", args.getString("origin")).put("username", args.getString("username"))
+                .put("password", args.getString("password")).put("deviceName", "FIX-40 synthetic phone")
+            main { activity.embeddedWeb.evaluateJavascript("call('auth.login',$credentials).then(()=>location.reload())", null) }
+            waitFor("native main chat") { activity.model.loggedIn && !activity.model.loading && activity.model.chatId.isNotBlank() && !activity.model.approvalModeBusy }
+            assertEquals("first choice precedes native session creation", "", activity.model.sessionId)
+            val editor = compose.onNodeWithContentDescription("消息输入")
+            editor.performTextInput("FIX40_ANDROID_ALLOW")
+            compose.onNodeWithContentDescription("审批方式：自动").performClick()
+            compose.onNodeWithText("每次询问", useUnmergedTree = true).performClick()
+            waitFor("saved ask") { activity.model.mode == "ask" && !activity.model.approvalModeBusy }
+            shot("selected-before-first-message")
+            compose.onNodeWithContentDescription("发送消息").performClick()
+            waitFor("allow card") { activity.model.approvals.any { it.optString("status") == "pending" } }
+            assertEquals("ask", activity.model.mode)
+            assertFalse(activity.model.approvals.first { it.optString("status") == "pending" }.optBoolean("canAlwaysAllow"))
+            shot("allow-pending")
+            compose.onNodeWithText("批准", useUnmergedTree = true).performScrollTo().performClick()
+            waitFor("approved result") { !activity.model.running && activity.model.rows.toString().contains("FIX40_FINISHED_ANDROID_ALLOW") }
+            shot("approved")
+            editor.performTextInput("FIX40_ANDROID_REJECT")
+            compose.onNodeWithContentDescription("发送消息").performClick()
+            waitFor("reject card") { activity.model.approvals.any { it.optString("status") == "pending" } }
+            shot("reject-pending")
+            compose.onNodeWithText("拒绝", useUnmergedTree = true).performScrollTo().performClick()
+            waitFor("rejected result") { !activity.model.running && activity.model.rows.toString().contains("FIX40_FINISHED_ANDROID_REJECT") }
+            shot("rejected")
+        } finally { main { activity.finish() } }
+    }
+}
