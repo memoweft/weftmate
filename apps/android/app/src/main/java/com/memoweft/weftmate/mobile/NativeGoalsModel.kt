@@ -53,12 +53,12 @@ internal class NativeGoalsModel(private val chat: NativeChatModel, private val a
     internal suspend fun presentation(expression:String):JSONObject {
         val token=UUID.randomUUID().toString(); val key=JSONObject.quote(token)
         activity.embeddedWeb.evaluateJavascript("""(()=>{window.weftGoalResults??={};window.weftGoalResults[$key]=null;Promise.resolve().then(async()=>{$expression}).then(value=>{if(Object.hasOwn(window.weftGoalResults,$key))window.weftGoalResults[$key]={value}}).catch(e=>{if(Object.hasOwn(window.weftGoalResults,$key))window.weftGoalResults[$key]={error:{status:e.status||0,code:e.code||'NETWORK_FAILED'}}})})()""",null)
-        try { return withTimeout(20000) {
+        try { return nativePageRead {
             while(true) {
                 val result=suspendCancellableCoroutine<JSONObject?> { c -> activity.embeddedWeb.evaluateJavascript("JSON.stringify(window.weftGoalResults?.[$key]||null)") { raw ->
                     if(c.isActive)c.resumeWith(Result.success(runCatching { if(raw=="null")null else JSONObject(org.json.JSONTokener(raw).nextValue().toString()) }.getOrNull()))
                 } }
-                if(result!=null){result.optJSONObject("error")?.let{throw ApiFailure(it.optInt("status"),it.optString("code"))};return@withTimeout result.getJSONObject("value")}
+                if(result!=null){result.optJSONObject("error")?.let{throw ApiFailure(it.optInt("status"),it.optString("code"))};return@nativePageRead result.getJSONObject("value")}
                 delay(50)
             }
             @Suppress("UNREACHABLE_CODE") JSONObject()
@@ -73,18 +73,18 @@ internal class NativeGoalsModel(private val chat: NativeChatModel, private val a
         if(!chat.loggedIn)return
         noComputer=feedHasNoComputer(chat.call("app.bootstrap"))
         if(!noComputer)refresh()
-        poll=chat.scope.launch { while(isActive){delay(5000);if(activity.nativeForeground&&chat.tab=="goals"&&!noComputer)refresh()} }
+        poll=chat.scope.launch { while(isActive){delay(5000);if(activity.nativeForeground&&chat.tab=="goals"&&!noComputer&&errors.isEmpty())refresh()} }
     }
     fun refresh() {
         if(noComputer||!chat.loggedIn||read?.isActive==true||busy)return
         val g=epoch
         read=chat.scope.launch {
-            loading=true
-            try {
-                val directory=runCatching{presentation("if(typeof uiCore==='undefined')return {};return {computers:uiCore.state.computers||[],selected:uiCore.currentExecutionComputer?.()||''};")}.getOrDefault(JSONObject())
-                if(g!=epoch)return@launch
+            loading=sections.isEmpty() && errors.isEmpty()
+            try { nativePageRead readPage@{
+                val directory=runCatching{nativePageRead(2000){presentation("if(typeof uiCore==='undefined')return {};return {computers:uiCore.state.computers||[],selected:uiCore.currentExecutionComputer?.()||''};")}}.getOrDefault(JSONObject())
+                if(g!=epoch)return@readPage
                 computers=directory.optJSONArray("computers")?.objects() ?: computers
-                val status=runCatching{chat.call("host.status")}.getOrDefault(JSONObject());if(g!=epoch)return@launch
+                val status=runCatching{chat.business("/status")}.getOrDefault(JSONObject());if(g!=epoch)return@readPage
                 primaryHost=status.stringOrEmpty("hostId").ifEmpty{SecureSettings(activity).host()?.hostId.orEmpty()};timeZone=status.stringOrEmpty("timeZone").ifEmpty{timeZone}
                 selectedHost=directory.stringOrEmpty("selected").ifEmpty{primaryHost}
                 val hosts=if(computers.size>1)computers else listOf(JSONObject().put("hostId",primaryHost).put("online",status.length()>0).put("name",status.optString("hostName","这台电脑")))
@@ -101,7 +101,7 @@ internal class NativeGoalsModel(private val chat: NativeChatModel, private val a
                         try {
                             if(unavailable)throw ApiFailure(0,"COMPUTER_OFFLINE")
                             if(cap!=null&&caps?.optInt(cap)!=1){nextErrors[section]="更新电脑上的 WeftMate 后可使用这项功能。";continue}
-                            val result=api(id,path);if(g!=epoch)return@launch
+                            val result=api(id,path);if(g!=epoch)return@readPage
                             val rows=(result.optJSONArray(if(section=="sessions")"sessions" else "items")?.objects().orEmpty()).map{JSONObject(it.toString()).put("hostId",id)}
                             snapshots[key]=rows
                             if(section=="tasks"){zones[id]=result.stringOrEmpty("timeZone").ifEmpty{timeZone};if(id==selectedHost)timeZone=zones[id].orEmpty();snapshots["$id|recent"]=result.optJSONArray("recent")?.objects().orEmpty().map{JSONObject(it.toString()).put("hostId",id)}}
@@ -111,11 +111,11 @@ internal class NativeGoalsModel(private val chat: NativeChatModel, private val a
                     }
                     next.getOrPut("recent"){mutableListOf()}.addAll(snapshots["$id|recent"].orEmpty())
                 }
-                if(g!=epoch)return@launch
+                if(g!=epoch)return@readPage
                 sections=next.mapValues{goalMerge(it.value,invalidatedHosts)};sessions=nextSessions.filter{it.stringOrEmpty("hostId") !in invalidatedHosts};offline=failed;unavailableHosts=failedHosts+invalidatedHosts;errors=nextErrors
                 if(selectedHost in failedHosts)selectedHost=hosts.firstOrNull{it.stringOrEmpty("hostId") !in failedHosts&&it.optBoolean("online",true)}?.stringOrEmpty("hostId") ?: selectedHost
                 if(sessions.none{goalSession(it)==chat.sessionId}&&chat.sessionId.isNotBlank())sessions=sessions+JSONObject().put("sessionId",chat.sessionId).put("hostId",primaryHost).put("title","WeftMate 主对话").put("taskAvailable",true)
-            }catch(e:CancellationException){throw e}catch(e:Exception){if(g==epoch){offline=listOf(computers.firstOrNull{it.stringOrEmpty("hostId")==primaryHost}?.stringOrEmpty("name").orEmpty().ifEmpty{"这台电脑"});if(sections.isEmpty())errors=mapOf("all" to failure(e))}}
+            }}catch(e:CancellationException){throw e}catch(e:Exception){if(g==epoch){offline=listOf(computers.firstOrNull{it.stringOrEmpty("hostId")==primaryHost}?.stringOrEmpty("name").orEmpty().ifEmpty{"这台电脑"});if(sections.isEmpty())errors=mapOf("all" to failure(e))}}
             finally{if(g==epoch)loading=false}
         }
     }
