@@ -56,6 +56,7 @@ export function createChatOperations(context) {
     const chat = requireChat(ownerId, chatId), account = context.accountState(ownerId), identity = account.chatIdentity;
     const segment = identity.segments[chat.activeSegmentId], session = account.sessions[segment?.sessionId];
     const base = { chatId, kind: chat.kind, revision: chat.revision, contentRevision: chat.contentRevision,
+      approvalMode: chat.approvalMode ?? session?.approvalMode ?? account.defaultApprovalMode ?? 'auto',
       ...modeProjection(session, account), ...(chat.wasMain || chat.kind === 'main' ? { logicalHistory: true } : {}),
       ...(chat.kind === 'main' ? { displayTitle: session?.title || '小纬' } : {}),
       ...(session?.phoneHistory ? {phoneHistory:true,readOnly:true,source:'phone'} : {}),

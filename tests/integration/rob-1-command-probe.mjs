@@ -16,10 +16,18 @@ try{
  writeFileSync(join(root,'parent.ps1'),`$p=Start-Process -FilePath '${powershell.replaceAll("'","''")}' -ArgumentList '-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',('"'+$PSScriptRoot+'\\child.ps1"') -WindowStyle Hidden -PassThru; [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'child.pid'),[string]$p.Id); Start-Sleep -Seconds 120`);
  for(let repeat=0;repeat<3;repeat++){
   rmSync(join(root,'child.pid'),{force:true});
-  let parentPid,code;const at=Date.now();
-  try{await boundedCommand(powershell,['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',join(root,'parent.ps1')],{timeoutMs:2000,windowsHide:true,exec:(...args)=>{const p=execute(...args);parentPid=p.child.pid;return p;}});}catch(e){code=e.code;}
+  const args=['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',join(root,'parent.ps1')];
+  const startupAt=Date.now(),task=execute(powershell,args,{windowsHide:true}),parentPid=task.child.pid;
+  // Measure tree cancellation after the fixture really has a descendant.
+  // Cold PowerShell startup on a hosted runner must not consume the 2s probe.
+  void task.catch(()=>{});
+  while(!existsSync(join(root,'child.pid'))&&Date.now()-startupAt<15000)await new Promise(r=>setTimeout(r,20));
+  assert.equal(existsSync(join(root,'child.pid')),true,'the process-tree fixture must be ready before measuring cancellation');
+  let code;const at=Date.now();
+  try{await boundedCommand(powershell,args,{timeoutMs:2000,windowsHide:true,exec:()=>task});}catch(e){code=e.code;}
   const childPid=existsSync(join(root,'child.pid'))?Number(readFileSync(join(root,'child.pid'),'utf8')):null;
-  report.push({repeat,code,elapsedMs:Date.now()-at,parentAlive:alive(parentPid),childCreated:!!childPid,childAlive:childPid?alive(childPid):null});
+  report.push({repeat,code,startupMs:at-startupAt,elapsedMs:Date.now()-at,parentAlive:alive(parentPid),childCreated:!!childPid,childAlive:childPid?alive(childPid):null});
+  assert.equal(code,'EXTERNAL_COMMAND_TIMEOUT');
   assert.equal(report.at(-1).childCreated,true); assert.equal(report.at(-1).parentAlive,false); assert.equal(report.at(-1).childAlive,false);
   const c=cleanupOwnedProcesses({startedAt,executables:[powershell],commandRoots:[root]});cleaned+=c.cleaned;report.push({cleanup:c});
  }

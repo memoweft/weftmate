@@ -37,40 +37,56 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
 
     async function refreshApprovalMode(sessionId) {
         const generation = core.state.identityGeneration;
+        const selectedChat = () => core.state.selectedChatId ?? core.state.chats?.find(row => row.activeSessionId === sessionId)?.chatId ?? null;
+        const chatId = selectedChat(), operation = {};
+        core.state.approvalModeOperation = operation;
         core.state.approvalModeLoading = true;
         effects.setApprovalModeBusy(true);
         effects.closeApprovalMenu();
         try {
-            const value = await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/approval-mode`);
-            if (core.state.identityGeneration !== generation || core.state.selectedSessionId !== sessionId || core.state.activeChatSource !== 'desktop')
+            const value = sessionId ? await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/approval-mode`)
+                : { mode: (await core.accessApi(`/chats/${encodeURIComponent(chatId)}`)).chat.approvalMode };
+            if (core.state.approvalModeOperation !== operation || core.state.identityGeneration !== generation || core.state.selectedSessionId !== sessionId || selectedChat() !== chatId || core.state.activeChatSource !== 'desktop')
                 return;
+            if (!core.approvalModes.some(row => row[0] === value.mode)) throw {code:'APPROVAL_RECEIPT_INVALID'};
             core.currentApprovalMode = value.mode;
             effects.renderApprovalMode();
-            core.state.approvalModeLoading = false;
-            effects.setApprovalModeBusy(false);
         }
         catch {
-            if (core.state.selectedSessionId === sessionId)
+            if (core.state.approvalModeOperation === operation && core.state.identityGeneration === generation && core.state.selectedSessionId === sessionId)
                 effects.approvalModeReadFailed();
+        } finally {
+            if (core.state.approvalModeOperation === operation) {
+                core.state.approvalModeOperation = null;
+                core.state.approvalModeLoading = false;
+                effects.setApprovalModeBusy(false);
+            }
         }
     }
     async function saveApprovalMode(mode) {
         const sessionId = core.state.selectedSessionId;
+        const chatId = core.state.selectedChatId;
         const generation = core.state.identityGeneration;
         if (!await effects.acceptApprovalRisk(mode)) return;
-        if (core.state.identityGeneration !== generation || core.state.selectedSessionId !== sessionId) return;
+        if (core.state.identityGeneration !== generation || core.state.selectedSessionId !== sessionId || core.state.selectedChatId !== chatId) return;
         if(!sessionId&&core.state.newConversation){
             core.state.newConversationApprovalMode=mode;core.currentApprovalMode=mode;
             effects.renderApprovalMode();effects.closeApprovalMenu();effects.focusApprovalMode();return;
         }
-        if (!sessionId || core.state.approvalModeLoading || core.state.activeChatSource !== 'desktop')
+        if ((!sessionId && !chatId) || core.state.approvalModeLoading || core.state.activeChatSource !== 'desktop')
             return;
+        const saving = {};
+        core.state.approvalModeSaving = saving;
+        core.state.approvalModeOperation = saving;
         core.state.approvalModeLoading = true;
         effects.setApprovalModeBusy(true);
+        effects.updateAvailability();
         try {
-            const value = await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/approval-mode`, { method: 'PATCH', protectedWrite: true, body: { mode } });
-            if (core.state.identityGeneration !== generation || core.state.selectedSessionId !== sessionId || core.state.activeChatSource !== 'desktop')
+            const value = sessionId ? await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/approval-mode`, { method: 'PATCH', protectedWrite: true, body: { mode } })
+                : {mode:(await core.accessApi(`/chats/${encodeURIComponent(chatId)}`, {method:'PATCH',protectedWrite:true,body:{approvalMode:mode}})).chat.approvalMode};
+            if (core.state.identityGeneration !== generation || core.state.selectedSessionId !== sessionId || core.state.selectedChatId !== chatId || core.state.activeChatSource !== 'desktop')
                 return;
+            if (value.mode !== mode) throw {code:'APPROVAL_RECEIPT_INVALID'};
             core.currentApprovalMode = value.mode;
             effects.renderApprovalMode();
             effects.closeApprovalMenu();
@@ -80,9 +96,13 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             effects.historyNotice('审批模式未保存，请重试。');
         }
         finally {
-            if (core.state.selectedSessionId === sessionId) {
+            if (core.state.approvalModeSaving === saving) core.state.approvalModeSaving = null;
+            effects.updateAvailability();
+            if (core.state.approvalModeOperation === saving) {
+                core.state.approvalModeOperation = null;
                 core.state.approvalModeLoading = false;
                 effects.setApprovalModeBusy(false);
+                effects.updateAvailability();
             }
         }
     }

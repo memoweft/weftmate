@@ -772,7 +772,11 @@ export function createHttpHandler(context) {
           if (!Object.keys(body).length || body.mode !== undefined && !APPROVAL_MODES.includes(body.mode) || body.rules !== undefined && !validPermissionRules(body.rules, { patch: true })) throw failure('INVALID_REQUEST');
           await context.serial(() => context.mutate(ownerId, next => {
             context.authenticate(request, 'commands:write');
-            if (sessionId) next.sessions[sessionId].approvalMode = body.mode;
+            if (sessionId) {
+              next.sessions[sessionId].approvalMode = body.mode;
+              const chat = chatForSession(next, sessionId);
+              if (chat) { chat.approvalMode = body.mode; chat.revision++; }
+            }
             else {
               if (body.secondOpinionEnabled !== undefined) next.secondOpinionEnabled = body.secondOpinionEnabled;
               if (body.rules !== undefined) next.permissionRules = mergePermissionRules(next.permissionRules, body.rules);
@@ -783,7 +787,7 @@ export function createHttpHandler(context) {
           }));
         }
         const saved = context.accountState(ownerId);
-        return context.json(response, 200, { mode: sessionId ? saved.sessions[sessionId].approvalMode ?? saved.defaultApprovalMode ?? 'auto'
+        return context.json(response, 200, { mode: sessionId ? chatForSession(saved, sessionId)?.approvalMode ?? saved.sessions[sessionId].approvalMode ?? saved.defaultApprovalMode ?? 'auto'
           : saved.defaultApprovalMode ?? 'auto', ...(!sessionId ? { rules: saved.permissionRules ?? {}, types: PERMISSION_TYPES, secondOpinionEnabled: saved.secondOpinionEnabled !== false, ...await connectorSettings(context, request, approvalAuth) } : {}), ...(sessionId ? { allowedCategories: saved.sessions[sessionId].allowedApprovalCategories ?? [] } : {}) });
       }
       if (['/personal/v1/usage', '/personal/v1/settings/usage'].includes(pathname) && ['GET', 'PATCH'].includes(request.method)) {
@@ -1404,6 +1408,22 @@ export function createHttpHandler(context) {
         return context.json(response, 201, await context.sideChats.share(ownerId, sideResultMatch[1], await context.readJson(request, 2048), authorize));
       }
       const chatMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)$/.exec(pathname);
+      if (request.method === 'PATCH' && chatMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, 'commands:write');
+        const body = await context.readJson(request); exactKeys(body, ['approvalMode'], ['approvalMode']);
+        if (!APPROVAL_MODES.includes(body.approvalMode)) throw failure('INVALID_REQUEST');
+        await context.serial(() => context.mutate(ownerId, next => {
+          context.authenticate(request, 'commands:write');
+          const chat = context.chats.requireChat(ownerId, chatMatch[1]);
+          const segment = next.chatIdentity.segments[chat.activeSegmentId];
+          if (segment && next.sessions[segment.sessionId]?.origin !== 'personal-remote') throw failure('SESSION_UNAVAILABLE', 404);
+          next.chatIdentity.chats[chat.chatId].approvalMode = body.approvalMode;
+          next.chatIdentity.chats[chat.chatId].revision++;
+          if (segment) next.sessions[segment.sessionId].approvalMode = body.approvalMode;
+        }));
+        return context.json(response, 200, { chat: await context.chats.view(ownerId, chatMatch[1]) });
+      }
       if (request.method === 'GET' && chatMatch) {
         if (url.search) throw failure('INVALID_REQUEST');
         return context.json(response, 200, { chat: await context.chats.view(ownerId, chatMatch[1]) });

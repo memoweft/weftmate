@@ -214,6 +214,27 @@ test('always allow categories is scoped to this conversation, survives reload, a
   } finally { await f.close() }
 })
 
+test('FIX-40 choosing ask ignores past conversation grants and global allows without deleting them', async () => {
+  const f = await fixture()
+  try {
+    await f.register({ reason: '[weftmate:execute] 运行合成命令' })
+    assert.equal((await f.request(`${f.approvalsPath}/${f.input.approvalId}`, { requestId: 'past-command-grant', outcome: 'allowed-once', scope: 'conversation-category' })).status, 200)
+    await f.resolve('allowed-once')
+    assert.equal((await f.request('settings/approvals', { rules: { command: 'allow', write: 'allow', network: 'deny' } }, {}, 'PATCH')).status, 200)
+    const path = `sessions/${f.input.sessionId}/approval-mode`
+    assert.equal((await f.request(path, { mode: 'ask' }, {}, 'PATCH')).status, 200)
+    let policy = f.service.getApprovalPolicy({ sessionId: f.input.sessionId })
+    assert.deepEqual(policy.allowedCategories, [])
+    assert.deepEqual(policy.permissionRules, { command: 'ask', write: 'ask', network: 'deny' })
+    await f.restart()
+    assert.deepEqual(f.service.getApprovalPolicy({ sessionId: f.input.sessionId }).allowedCategories, [])
+    await f.request(path, { mode: 'auto' }, {}, 'PATCH')
+    policy = f.service.getApprovalPolicy({ sessionId: f.input.sessionId })
+    assert.deepEqual(policy.allowedCategories, ['execute'])
+    assert.deepEqual(policy.permissionRules, { command: 'allow', write: 'allow', network: 'deny' })
+  } finally { await f.close() }
+})
+
 test('pending approval expires after ten minutes and the native model receives unavailable rather than a grant', async () => {
   let now = Date.now()
   const f = await fixture({ clockFn: () => now })
