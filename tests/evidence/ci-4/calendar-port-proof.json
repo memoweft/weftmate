@@ -1,9 +1,0 @@
-{
-  "source": "fc75a5ba^:src/personal-connectors/calendar.mjs",
-  "cause": {
-    "code": "ECONNREFUSED",
-    "message": "connect ECONNREFUSED 127.0.0.1:40437"
-  },
-  "before": "CALENDAR_ADDRESS_INVALID",
-  "after": "CALENDAR_NETWORK"
-}

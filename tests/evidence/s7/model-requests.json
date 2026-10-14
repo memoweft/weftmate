@@ -1,7 +1,0 @@
-{
-  "finalInference": 9,
-  "finalCatalog": 17,
-  "recordedAttempts": 19,
-  "recordedInferenceLowerBound": 100,
-  "note": "Earlier two warm-up attempts lack complete request ledgers; historical total is a lower bound. Final run counts every forwarded MiMo request."
-}

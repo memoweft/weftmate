@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../tests/helpers/evidence-path.mjs';
 /** Local x64 .app only. No DMG, updater, publishing, or developer credentials. */
 import { build, Platform, Arch } from 'electron-builder';
 import packageInfo from '../package.json' with { type: 'json' };
@@ -9,6 +11,8 @@ import { join, resolve } from 'node:path';
 import { homedir, tmpdir } from 'node:os';
 import { stageDshRuntime } from './stage-dsh-runtime.mjs';
 import { verifyWindowsPackage } from './verify-windows-package.mjs';
+prepareEvidenceDirectory(evidencePath('m3-3b'), { recursive: true });
+
 const repository = resolve(import.meta.dirname, '..');
 const option = (name, fallback) => { const i = process.argv.indexOf(name); return i < 0 ? fallback : process.argv[i + 1]; };
 if (process.platform !== 'darwin' || process.arch !== 'x64') throw Error('This trial builds only on macOS x64');
@@ -39,7 +43,7 @@ try {
   execFileSync('/usr/bin/codesign', ['--verify', '--deep', '--strict', candidate], { stdio: 'inherit' });
   const audit = await verifyWindowsPackage({ unpacked: candidate, resourcesDirectory: join(candidate, 'Contents/Resources'), installer: join(candidate, 'Contents/MacOS/WeftMate') });
   const sizeKiB = Number(execFileSync('/usr/bin/du', ['-sk', candidate], { encoding: 'utf8' }).split(/\s/)[0]);
-  await writeFile(join(repository, 'tests/evidence/m3-3b/package.json'), JSON.stringify({
+  await writeFile(evidencePath('m3-3b/package.json'), JSON.stringify({
     platform: 'darwin-x64', sizeKiB, signing: 'ad-hoc; no Developer ID; not notarized',
     audit: { ...audit, installer: { ...audit.installer, file: 'Contents/MacOS/WeftMate' } },
     includes: ['Electron + Node', 'WeftMate desktop/host', 'pinned patched DSH closure'],

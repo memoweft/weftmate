@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic local cloud + actual production Electron/DSH, with a durable Windows vault.
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -23,7 +24,7 @@ import { createMailer } from '../../services/cloud/src/mail.mjs';
 import { createLogger } from '../../services/cloud/src/log.mjs';
 import { digest } from '../../services/cloud/src/security.mjs';
 import { registration, appDevice, proof, refresh } from '../../services/cloud/test/app-helpers.mjs';
-const repo = resolve(import.meta.dirname, '../..'), evidence = join(repo, 'tests/evidence/s4'), startedAt = Date.now();
+const repo = resolve(import.meta.dirname, '../..'), evidence = evidencePath('s4'), startedAt = Date.now();
 const root = process.env.WEFTMATE_S4_RESUME_ROOT ? resolve(process.env.WEFTMATE_S4_RESUME_ROOT) : await mkdtemp(join(managedTempRoot(), 'wm-s4-')), originalProfile = join(root, 'original'), newProfile = join(root, 'new-computer');
 const electron = createRequire(import.meta.url)('electron'), orchestrator = 'D:/AIProjects/WeftMate/Runtime/Orchestrator';
 const key = execFileSync('powershell.exe', ['-NoProfile','-NonInteractive','-Command', "[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"], {encoding:'utf8',windowsHide:true}).trim();

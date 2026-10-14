@@ -1,10 +1,11 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve,join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { phone,shell,shot,notifications,wait,pause,pkg } from './s3a-android.mjs';
-const out=resolve('tests/evidence/s3a');mkdirSync(out,{recursive:true});
+const out=evidencePath('s3a');mkdirSync(out,{recursive:true});
 const report={nativeAndroid:true,syntheticAccounts:true,checks:[],errors:[]};
 let p,f;
 const notice=id=>notifications().find(row=>row.tag.endsWith(':'+id));

@@ -20,6 +20,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     env:
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/evidence
       WEFTMATE_TEST_HOST_NAME: synthetic-host
       CI_TEST_OS: ${{ matrix.os }}
       PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.local/ci-browser-cache
@@ -88,7 +89,7 @@ jobs:
       - name: Public repository hygiene
         if: matrix.shard == 1
         run: |
-          node --test tests/public-hygiene.test.mjs
+          node --test tests/public-hygiene.test.mjs tests/evidence-path.test.mjs
           node .github/scripts/public-hygiene.mjs
 
       - name: Audit development dependencies
@@ -159,6 +160,15 @@ jobs:
           name: unit-${{ matrix.os }}-${{ matrix.shard }}
           path: unit-report.json
           if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload generated unit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-${{ matrix.os }}-${{ matrix.shard }}
+          path: ${{ env.WEFTMATE_EVIDENCE_DIR }}
+          if-no-files-found: ignore
           retention-days: 7
 
       # CI-2 retired 10 baseline exceptions. Only the two product failures

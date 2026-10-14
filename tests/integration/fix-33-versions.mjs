@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Actual 3062ea4a host modules, current cloud, and current phone code. Synthetic data only.
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -17,7 +18,7 @@ import {phoneRuntime} from '../../services/cloud/test/relay-phone-runtime.mjs';
 const root=await mkdtemp(join(tmpdir(),'weftmate-fix33-')), cleanup=[], trace=[];
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 const report={synthetic:true, model:'synthetic backend with durable user/assistant events', baseline:'3062ea4a', scenarios:[],trace};
-const out=resolve('tests/evidence/fix-33');await mkdir(out,{recursive:true});
+const out=evidencePath('fix-33');await mkdir(out,{recursive:true});
 const baseline=process.env.FIX33_BASELINE==='1';report.baseline=baseline;
 const timingBaseline=process.env.FIX33_TIMING_BASELINE==='1';report.timingBaseline=timingBaseline;
 if(process.env.FIX33_UI==='1')report.model='real pinned DSH runtime with synthetic HTTP streaming model';

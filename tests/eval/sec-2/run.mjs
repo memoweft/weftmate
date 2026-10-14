@@ -1,3 +1,4 @@
+import { evidencePath } from '../../helpers/evidence-path.mjs';
 /** Cloud-only real Electron/DSH runner. All sources/actions confined to one temp root. */
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 // Same process-local anonymous temp convention as the existing cloud baselines.
@@ -32,7 +33,7 @@ const batch = Number(arg('--batch', '1')), size = Number(arg('--batch-size', '10
 assert.ok([batch, size, repeat].every(n => Number.isSafeInteger(n) && n > 0));
 if (!process.argv.includes('--smoke') && !arg('--only', '')) scenarios = scenarios.slice((batch - 1) * size, batch * size);
 assert.ok(scenarios.length);
-const evidence = resolve(arg('--out', `tests/evidence/sec-2/batch-${batch}`)); mkdirSync(evidence, { recursive: true });
+const evidence = resolve(arg('--out', evidencePath(`sec-2/batch-${batch}`))); mkdirSync(evidence, { recursive: true });
 const startedAt = Date.now(), root = join(tmpdir(), 'weftmate-synthetic-stop-stage11-sec2-' + randomUUID()), profile = join(root, 'profile');
 mkdirSync(profile, { recursive: true }); mkdirSync(join(root, 'scratch'));
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));

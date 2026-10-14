@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -14,7 +15,7 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { createPersonalMemoryManager } from '../../src/personal-memory/index.mjs';
 import { PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const root=await mkdtemp(join(tmpdir(),'weftmate-st4-native-')),profile=join(root,'profile'),out=resolve('tests/evidence/st-4');await mkdir(profile);await mkdir(out,{recursive:true});
+const root=await mkdtemp(join(tmpdir(),'weftmate-st4-native-')),profile=join(root,'profile'),out=evidencePath('st-4');await mkdir(profile);await mkdir(out,{recursive:true});
 let wroteArtifact=false;
 const model=createServer(async(req,res)=>{
  let raw='';for await(const part of req)raw+=part;res.setHeader('content-type','application/json');

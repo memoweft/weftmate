@@ -27,8 +27,8 @@
         "npmMajor": 11,
         "releaseDate": "2025-05-06"
       },
-      "regressionDocument": "tests/evidence/qa-4/web-document/node24说明.md",
-      "numericRegressionDocument": "tests/evidence/pf-2/final/mimo/documents/run-2.md"
+      "regressionDocument": "tests/fixtures/qa-4/web-document/node24说明.md",
+      "numericRegressionDocument": "tests/fixtures/pf-2/final/mimo/documents/run-2.md"
     },
     {
       "id": "node-dep0190",

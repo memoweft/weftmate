@@ -1,0 +1,10 @@
+{
+  "platform": "mobile-web",
+  "scene": "onboarding",
+  "theme": "dark",
+  "commit": "da133f2b45b4a30afba0895601e60f70d39ae184",
+  "generatedAt": "2026-10-10T07:48:34+08:00",
+  "synthetic": true,
+  "source": "tests/evidence/onb-1/mobile-web-pair-waiting-dark.png",
+  "timeBasis": "证据提交时间（历史图未记录拍摄时间）"
+}

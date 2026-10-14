@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -13,7 +14,7 @@ import { promisify } from 'node:util';
 
 const repository = resolve(import.meta.dirname, '../..'), baseline = process.argv.includes('--baseline');
 const label = baseline ? 'before' : 'after', root = await mkdtemp(join(tmpdir(), 'weftmate-fx12-'));
-const output = join(repository, 'tests/evidence/fx-12');
+const output = evidencePath('fx-12');
 await mkdir(output, { recursive: true });
 const env = { ...process.env, FX12_PROFILE: root };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key === 'ELECTRON_RUN_AS_NODE' || /API_KEY|MODEL_SWITCH_UNIFIED_KEY/.test(key)) delete env[key];

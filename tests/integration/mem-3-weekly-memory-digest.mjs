@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
@@ -8,7 +9,7 @@ import {join,resolve} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {digestAuthFixture} from '../helpers/memory-digest-auth-fixture.mjs';
 import {digestMemoryFixture} from '../helpers/memory-digest-fixture.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/mem-3');await mkdir(out,{recursive:true});
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('mem-3');await mkdir(out,{recursive:true});
 const memory=digestMemoryFixture();memory.setReady(false);let now;
 const authentication=await digestAuthFixture();
 const fixture=await startTimelineCandidate({logicalMobile:true,inlineProgress:true,historyCount:0,memoryManager:memory.manager,clock:()=>now??Date.now(),cloudIdentity:authentication.cloudIdentity,authenticate:authentication.authenticate}).catch(async error=>{await authentication.close();throw error;});

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Repeatable rubric judge. Judgements are evidence, not edits to generated documents.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -5,7 +6,7 @@ import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { factSourceEvidence, nativeFactAudit } from './fact-1-scoring.mjs';
 const arg=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
-const input=resolve(arg('--input','tests/evidence/fact-1/after/mimo/results.json'));
+const input=resolve(arg('--input',evidencePath('fact-1/after/mimo/results.json')));
 const out=resolve(arg('--out',join(input,'../scores.json')));
 const fixture=JSON.parse(readFileSync('tests/fixtures/fact-1/topics.json','utf8'));
 const key=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"],{encoding:'utf8',windowsHide:true}).trim();

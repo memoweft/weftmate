@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** macOS source desktop acceptance. Synthetic model; no real login keychain. */
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
@@ -14,7 +15,7 @@ import { resolve, join } from 'node:path';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 
 assert.equal(process.platform, 'darwin');
-const repository = resolve(import.meta.dirname, '../..'), out = join(repository, 'tests/evidence/m3-3b');
+const repository = resolve(import.meta.dirname, '../..'), out = evidencePath('m3-3b');
 await mkdir(out, { recursive: true });
 const root = await realpath(await mkdtemp(join(tmpdir(), 'weftmate-m3-3-'))), profile = join(root, 'profile'), project = join(root, 'synthetic-project');
 await mkdir(profile); await mkdir(project);

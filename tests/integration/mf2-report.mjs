@@ -1,7 +1,8 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Consolidate evidence without rewriting any measured response or verdict. */
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-const root = resolve('tests/evidence/mf-2');
+const root = evidencePath('mf-2');
 const json = p => JSON.parse(readFileSync(p, 'utf8'));
 const lines = p => existsSync(p) ? readFileSync(p, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse) : [];
 const walk = p => readdirSync(p, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(join(p, e.name)) : [join(p, e.name)]);

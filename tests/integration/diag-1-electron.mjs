@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Synthetic desktop diagnosis acceptance. One Electron at a time; no model calls. */
 import assert from 'node:assert/strict';
@@ -15,7 +16,7 @@ import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/ho
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { createProcessEvidence, cleanupOwnedProcesses } from '../helpers/process-evidence.mjs';
 
-const repository=resolve(import.meta.dirname,'../..'), output=join(repository,'tests/evidence/diag-1');
+const repository=resolve(import.meta.dirname,'../..'), output=evidencePath('diag-1');
 mkdirSync(output,{recursive:true});
 const root=mkdtempSync(join(process.platform==='win32' ? parse(tmpdir()).root : tmpdir(),'weftmate-diag1-'));
 const electron=createRequire(import.meta.url)('electron'), startedAt=Date.now();

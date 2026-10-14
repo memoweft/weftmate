@@ -1,9 +1,10 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Approved real MiMo request, actual provider usage, fixed DSH and isolated Electron. */
 import assert from 'node:assert/strict';
 import { mkdir,writeFile,rm } from 'node:fs/promises';
 import { join,resolve } from 'node:path';
 import { harness,until } from './ia-2b-harness.mjs';
-const out=resolve(import.meta.dirname,'../evidence/tb-2');await mkdir(out,{recursive:true});
+const out=evidencePath('tb-2');await mkdir(out,{recursive:true});
 const h=await harness('tb2-mimo',{memory:false,mainChat:true});const report={realElectron:true,fixedDsh:true,model:'mimo-v2.6-flash',checks:[]};
 try{
   const page=h.page;page.setDefaultTimeout(30000);await page.getByRole('button',{name:'WeftMate 主对话',exact:true}).click();

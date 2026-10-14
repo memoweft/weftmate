@@ -1,9 +1,10 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { spawn,execFileSync } from 'node:child_process';
 import { mkdir,writeFile,readFile,rm,utimes } from 'node:fs/promises';
 import { join,resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
-const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',serial='127.0.0.1:7555',pkg='com.memoweft.weftmate.mobile.st4qa',out=resolve('tests/evidence/st-4');await mkdir(out,{recursive:true});
+const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',serial='127.0.0.1:7555',pkg='com.memoweft.weftmate.mobile.st4qa',out=evidencePath('st-4');await mkdir(out,{recursive:true});
 function adbCall(...args){try{return execFileSync(adb,['-s',serial,...args],{windowsHide:true,maxBuffer:16*1024*1024});}catch(error){if(args[0]==='shell'&&args[1]==='pidof'&&error.status===1)return Buffer.alloc(0);throw error;}}
 assert.equal(adbCall('shell','pidof','com.memoweft.weftmate.mobile.and1').toString().trim(),'','Another package is using MuMu');
 const f=await startTimelineCandidate({interactive:true,composer:true,historyCount:0});let socket,probe,forward;const port=new URL(f.origin).port;

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Real Electron + DSH + MemoWeft, synthetic files/accounts, process-only MiMo credential. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -13,7 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { prepareSyntheticMainRoute } from '../helpers/mem-1-synthetic-route.mjs';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { redactEvidenceText, cleanupOwnedProcesses, systemCommitMemory, describeExit } from '../helpers/process-evidence.mjs';
-const repository=resolve(import.meta.dirname,'../..'),out=join(repository,'tests/evidence/mem-1');await mkdir(out,{recursive:true});
+const repository=resolve(import.meta.dirname,'../..'),out=evidencePath('mem-1');await mkdir(out,{recursive:true});
 const startedAt=new Date().toISOString();
 const resume=process.argv.includes('--resume')?JSON.parse(await readFile(join(repository,'.local','mem-1-resume.json'),'utf8')):null;
 const secret=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"[Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine')"],{encoding:'utf8',windowsHide:true,stdio:['ignore','pipe','ignore']}).trim();

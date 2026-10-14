@@ -1,3 +1,4 @@
+import { evidencePath } from '../../tests/helpers/evidence-path.mjs';
 import { execFileSync } from 'node:child_process';
 import { readFile, mkdir, writeFile, rm } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
@@ -5,7 +6,7 @@ export const repository = resolve(import.meta.dirname, '../..');
 export const catalog = JSON.parse(await readFile(join(import.meta.dirname, 'scenes.json'), 'utf8'));
 export const commit = () => execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding: 'utf8' }).trim();
 export function option(name, fallback) { const i = process.argv.indexOf(name); return i < 0 ? fallback : process.argv[i + 1]; }
-export const outDirectory = () => resolve(option('--out', '.local/review-gallery'));
+export const outDirectory = () => resolve(option('--out', evidencePath('review-gallery')));
 export const delay = ms => new Promise(done => setTimeout(done, ms));
 export const capturePlatforms = catalog.platforms.filter(row => row.capture !== 'evidence');
 export function captureSummary(records) {
