@@ -2,6 +2,14 @@ package com.memoweft.weftmate.mobile
 
 import org.json.JSONObject
 
+internal fun hostModelServicesDeclared(status: JSONObject?): Boolean =
+    status?.optJSONObject("personalCapabilities")?.opt("modelServices") == 1
+
+internal suspend fun hostModelServicesRequest(declared: Boolean, request: suspend () -> JSONObject): JSONObject {
+    if (!declared) throw ApiFailure(426, "COMPUTER_UPDATE_REQUIRED")
+    return request()
+}
+
 /** Logical chat.message is only the main chat; side chats keep their native session. */
 internal fun hostChatSendTarget(kind: String, chatId: String, sessionId: String): JSONObject =
     if (kind == "main") JSONObject().put("chatId", chatId)

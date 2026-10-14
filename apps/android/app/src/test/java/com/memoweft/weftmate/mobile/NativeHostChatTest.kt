@@ -3,8 +3,24 @@ package com.memoweft.weftmate.mobile
 import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
+import kotlinx.coroutines.runBlocking
 
 class NativeHostChatTest {
+    @Test fun modelServicesRequireTheSelectedComputersOwnDeclarationBeforeAnyRequest() = runBlocking {
+        val oldStatuses = listOf(JSONObject(), JSONObject().put("capabilities", JSONObject().put("multiHost", 1)),
+            JSONObject().put("personalCapabilities", JSONObject().put("modelServices", "1")))
+        var requests = 0
+        for (status in oldStatuses) {
+            try {
+                hostModelServicesRequest(hostModelServicesDeclared(status)) { requests++; JSONObject() }
+                fail("An undeclared computer must use legacy models without a probe")
+            } catch (error: ApiFailure) { assertEquals(426, error.status); assertEquals("COMPUTER_UPDATE_REQUIRED", error.safeCode) }
+        }
+        assertEquals(0, requests)
+        val declared = JSONObject().put("personalCapabilities", JSONObject().put("modelServices", 1))
+        val result = hostModelServicesRequest(hostModelServicesDeclared(declared)) { requests++; JSONObject().put("services", "synthetic") }
+        assertEquals(1, requests); assertEquals("synthetic", result.getString("services"))
+    }
     @Test fun aStablePinReusesTlsButChangingThePinCannotReuseItsTrustManager() {
         val origin="https://synthetic.example.test";val url=java.net.URL(origin)
         try {
