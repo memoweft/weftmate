@@ -98,6 +98,8 @@ public struct PhoneChatState: Codable, Sendable {
     public var selected: String?
     public var migrations: [String:PhoneChatMigration]?
     public var pending: PhoneChatDraft?
+    public var reminders: [LocalReminder]?
+    public var computerReminders: [String:[LocalReminder]]?
     public var memory: PhoneMemoryState?
     public init() {}
 }
@@ -202,6 +204,8 @@ extension PhoneChatState {
         guard let existing=migrations?[host],existing.generation != generation else { return }
         memory?.items.removeAll { existing.conversationIDs.contains($0.threadID ?? "") }
         threads.removeAll { existing.conversationIDs.contains($0.id) }
+        reminders?.removeAll { existing.conversationIDs.contains($0.sessionID ?? "") }
+        computerReminders?[host]=nil
         if !threads.contains(where: { $0.id == selected }) { selected=nil }
         migrations?[host]=PhoneChatMigration(generation:generation,turns:[],accepted:[],conversationIDs:[])
     }

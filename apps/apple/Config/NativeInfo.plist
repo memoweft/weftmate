@@ -2,6 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>WeftMate cloud login</string><key>CFBundleURLSchemes</key><array><string>com.weftmate.apple</string></array></dict></array>
-<key>BGTaskSchedulerPermittedIdentifiers</key><array><string>com.weftmate.apple.daily-health</string></array>
+<key>BGTaskSchedulerPermittedIdentifiers</key><array><string>com.weftmate.apple.daily-health</string><string>com.weftmate.apple.local-reminders</string></array>
 <key>UIBackgroundModes</key><array><string>fetch</string></array>
 </dict></plist>

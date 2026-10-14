@@ -32,7 +32,13 @@ import WeftMateCore
                 if self.current { self.hostUpdates = reply }
             case "schedules":
                 let reply = try await app.assistantClient.settingsSchedules()
-                if self.current { self.schedules = reply.items }
+                if self.current {
+                    self.schedules = reply.items
+                    #if os(iOS)
+                    app.phoneChat.activate(app:app)
+                    if let host=app.session?.hostId { try app.phoneChat.receiveReminders(reply.items,hostID:host) }
+                    #endif
+                }
             case "backups":
                 let reply = try await app.assistantClient.settingsBackups()
                 if self.current { self.backups = reply; self.backupPreferences = reply.settings }
@@ -69,7 +75,12 @@ import WeftMateCore
         }
     }
     func schedule(_ item: ManagedSchedule, action: ScheduleAction) async {
-        let succeeded = await perform { try await self.app?.assistantClient.manageSchedule(sessionID: item.sessionId, id: item.id, action: action) }
+        let succeeded = await perform {
+            try await self.app?.assistantClient.manageSchedule(sessionID: item.sessionId, id: item.id, action: action)
+            #if os(iOS)
+            if self.current,action != .resume,let app=self.app,let host=app.session?.hostId { try app.phoneChat.withdrawComputerReminder(item,hostID:host) }
+            #endif
+        }
         if succeeded, current { await refresh("schedules") }
     }
     func saveBackups() async {
