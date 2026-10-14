@@ -611,16 +611,18 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         val directory = chat.optJSONObject("workDirectory")
         workProject = directory ?: projects.find { it.stringOrEmpty("projectId") == chat.stringOrEmpty("projectId") && !it.optBoolean("revoked") }
     }
-    suspend fun refreshWorkChoices() {
+    suspend fun refreshWorkChoices(includeComputers: Boolean = true) {
         workChoicesBusy = true; workChoicesError = ""
         val g = generation
         try {
-            val directory = runCatching { nativePageRead { NativeSettingsBridge(activity).call("directory") } }.getOrNull()
-            if (g != generation) return
-            offlineWorkReady = runCatching { activity.goals.presentation("return {ready:uiCore.offlineWorkReady?.()===true};").optBoolean("ready") }.getOrDefault(false)
-            computers = directory?.optJSONArray("hosts")?.objects()?.takeIf { it.isNotEmpty() }
-                ?: listOf(JSONObject().put("hostId", hostId).put("name", hostName).put("online", connected))
-            hostName = computers.find { it.stringOrEmpty("hostId") == hostId }?.let { it.stringOrEmpty("displayName").ifEmpty { it.stringOrEmpty("name") } }?.ifEmpty { null } ?: hostName
+            if (includeComputers) {
+                val directory = runCatching { nativePageRead { NativeSettingsBridge(activity).call("directory") } }.getOrNull()
+                if (g != generation) return
+                offlineWorkReady = runCatching { activity.goals.presentation("return {ready:globalThis.WeftMobileCloud?.core?.offlineWorkReady?.()===true};").optBoolean("ready") }.getOrDefault(false)
+                computers = directory?.optJSONArray("hosts")?.objects()?.takeIf { it.isNotEmpty() }
+                    ?: listOf(JSONObject().put("hostId", hostId).put("name", hostName).put("online", connected))
+                hostName = computers.find { it.stringOrEmpty("hostId") == hostId }?.let { it.stringOrEmpty("displayName").ifEmpty { it.stringOrEmpty("name") } }?.ifEmpty { null } ?: hostName
+            }
             val result = business("/projects")
             if (g != generation) return
             projects = result.optJSONArray("projects")?.objects().orEmpty().filter { !it.optBoolean("revoked") }
@@ -634,7 +636,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (computers.none { it.stringOrEmpty("hostId") == id && it.optBoolean("online") }) throw ApiFailure(503,"COMPUTER_OFFLINE")
         switchingComputer = true
         try {
-            NativeSettingsBridge(activity).call("connect", JSONObject().put("hostId", id))
+            activity.goals.presentation("const core=globalThis.WeftMobileCloud.core,account=core.state.cloudAuth.sub;const connection=await core.cloudConnect(${JSONObject.quote(id)});if(connection.status!=='online')throw {code:'COMPUTER_OFFLINE'};if(connection.pairingRequired)throw {code:'COMPUTER_UPDATE_REQUIRED'};await core.cloudConnectTrusted(connection);if(core.state.cloudAuth.sub!==account)throw {code:'ACCOUNT_SWITCHED'};await core.enterAssistant();return {};")
             chatId = ""; sessionId = ""; poll?.cancel()
             bootstrap()
             check(hostId == id) { "TARGET_UNAVAILABLE" }
@@ -683,7 +685,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         finally { workChoicesBusy = false }
     }
     fun openOfflineWork() = launch {
-        activity.goals.presentation("if(!uiCore.offlineWorkReady?.())throw {code:'COMPUTER_OFFLINE'};uiCore.openOfflineWorkMode(${JSONObject.quote(draft)});return {};")
+        activity.goals.presentation("const core=globalThis.WeftMobileCloud?.core;if(!core?.offlineWorkReady?.())throw {code:'COMPUTER_OFFLINE'};core.openOfflineWorkMode(${JSONObject.quote(draft)});return {};")
         tab="web-chat"
     }
     fun answer(row: JSONObject, answers: JSONArray) = launch {
