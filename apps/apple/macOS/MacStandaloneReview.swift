@@ -11,9 +11,9 @@ import WeftMateCore
     }
     private static let credentials = ReviewCredentials()
     static func makeModel() -> PhoneStandaloneModel {
-        enabled ? PhoneStandaloneModel(testCredentials: credentials, testLoopback: false) : PhoneStandaloneModel()
+        enabled ? PhoneStandaloneModel(testCredentials: credentials, testLoopback: ProcessInfo.processInfo.arguments.contains("--apple12-fix1-connection")) : PhoneStandaloneModel()
     }
-    private static func set(_ id: String, _ value: String) async throws {
+    static func set(_ id: String, _ value: String) async throws {
         let node = try await A10MacReview.wait(id)
         guard let cell = node as? NSCell, let field = cell.controlView as? NSTextField, let window = field.window else {
             throw NSError(domain: "Apple12ControlValue", code: 1)
@@ -30,10 +30,47 @@ import WeftMateCore
         for _ in 0..<1500 { if condition() { return }; try await Task.sleep(for: .milliseconds(100)) }
         throw NSError(domain: "Apple12ReviewTimeout", code: 1)
     }
+    private static func connectionRegression(app: AppleAppModel, chat: PhoneStandaloneModel) async throws {
+        NSApplication.shared.setActivationPolicy(.regular)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        for window in NSApplication.shared.windows { window.makeKeyAndOrderFront(nil) }
+        NSApplication.shared.accessibilitySetValue(true, forAttribute: NSAccessibility.Attribute(rawValue: "AXEnhancedUserInterface"))
+        guard let base = ProcessInfo.processInfo.environment["APPLE12_MODEL_FIXTURE"] else { throw NSError(domain: "FixtureMissing", code: 1) }
+        chat.activate(app: app); chat.setMemoryEnabled(false)
+        try chat.saveModel(.init(name: "Synthetic", baseURL: base, model: "synthetic-stream", apiKey: "synthetic-state-key"))
+        _ = try await A10MacReview.wait("macChat.draft")
+        chat.draft = "慢回复"; chat.send()
+        try await wait { !(chat.messages.last?.text.isEmpty ?? true) }
+        guard chat.busy else { throw NSError(domain: "StreamNotInProgress", code: 1) }
+        let thread = chat.state.selected
+        try app.seedMacStandaloneConnectionReview()
+        try await Task.sleep(for: .milliseconds(500))
+        guard chat.busy else {
+            print("APPLE12_FIX1_RED: connecting computer stopped the local stream")
+            throw NSError(domain: "LocalStreamStoppedOnConnect", code: 1)
+        }
+        print("APPLE12_FIX1_STEP: stream retained after connection")
+        try await A10MacReview.press("macChat.openLocal")
+        _ = try await A10MacReview.wait("macChat.openComputer")
+        print("APPLE12_FIX1_STEP: returned to visible local workspace")
+        _ = try await A10MacReview.wait("macChat.draft")
+        try await wait { !chat.busy }
+        guard chat.state.selected == thread, app.session != nil, chat.notice == nil, !chat.messages.last!.text.isEmpty else { throw NSError(domain: "LocalHistoryLost", code: 1) }
+        chat.draft = "接着聊"; chat.send(); try await wait { !chat.busy }
+        guard chat.messages.count == 4, chat.notice == nil else { throw NSError(domain: "LocalContinuationFailed", code: 1) }
+        try await A10MacReview.capture("fix1-connected-local-chat", identifier: "macChat.draft")
+        print("APPLE12_FIX1_GREEN: computer connected mid-stream, local entry reopened same thread, reply finished and next turn succeeded")
+    }
+
     static func run(app: AppleAppModel, chat: PhoneStandaloneModel) async {
         var stage = "restore"
         do {
             try await wait { !app.restoring }
+            if ProcessInfo.processInfo.arguments.contains("--apple12-fix1-connection") {
+                try await connectionRegression(app: app, chat: chat)
+                await RunLogRuntime.shared.ready(); await RunLogRuntime.shared.store.exit(reason: "user_quit", code: 0)
+                Darwin.exit(0)
+            }
             guard app.session == nil, !app.cloudLogin.authenticated,
                   let key = ProcessInfo.processInfo.environment["MIMO_API_KEY"]?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty else {
                 throw NSError(domain: "Apple12IsolatedLocalOnly", code: 1)
@@ -93,6 +130,7 @@ import WeftMateCore
         } catch {
             // Never stringify errors that could contain a request, header or provider body.
             print("APPLE12_GUI_FAILED: " + stage)
+            if ProcessInfo.processInfo.arguments.contains("--apple12-fix1-connection") { print("APPLE12_FIX1_ERROR: " + String(describing: error)) }
             A16MacReview.captureVisible("mac-failure")
             Darwin.exit(1)
         }

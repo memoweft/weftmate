@@ -2442,3 +2442,17 @@ private final class CaptureCredentials: CredentialStore, @unchecked Sendable {
     func delete(key: String) { lock.withLock { values[key] = nil } }
 }
 #endif
+
+#if DEBUG && os(macOS)
+extension AppleAppModel {
+    /// A synthetic connection transition for the native regression driver; no account login or network.
+    func seedMacStandaloneConnectionReview() throws {
+        let args = ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"), args.contains("--apple12-fix1-connection") else { return }
+        let value: [String: Any] = ["server": ["origin": "https://connection.example.invalid"],
+            "account": ["ownerId": "synthetic-owner", "username": "synthetic", "displayName": "合成连接"],
+            "device": ["id": "synthetic-device", "name": "合成 Mac"], "hostId": "synthetic-computer", "verification": "verified"]
+        session = try JSONDecoder().decode(AccountSession.self, from: JSONSerialization.data(withJSONObject: value))
+    }
+}
+#endif

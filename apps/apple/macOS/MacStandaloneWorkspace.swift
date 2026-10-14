@@ -6,7 +6,7 @@ import WeftMateCore
 struct MacStandaloneWorkspace: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var cloud: CloudLoginModel
-    @StateObject private var chat: PhoneStandaloneModel
+    @ObservedObject private var chat: PhoneStandaloneModel
     @State private var notes = false
     @State private var models = false
     @State private var importing = false
@@ -16,13 +16,8 @@ struct MacStandaloneWorkspace: View {
     private var colors: ServiceControlPalette { .init(dark: scheme == .dark) }
     @Environment(\.openWindow) private var openWindow
 
-    init(app: AppleAppModel, cloud: CloudLoginModel) {
-        self.app = app; self.cloud = cloud
-        #if DEBUG
-        _chat = StateObject(wrappedValue: MacStandaloneReview.makeModel())
-        #else
-        _chat = StateObject(wrappedValue: PhoneStandaloneModel())
-        #endif
+    init(app: AppleAppModel, cloud: CloudLoginModel, chat: PhoneStandaloneModel) {
+        self.app = app; self.cloud = cloud; self.chat = chat
     }
     var body: some View {
         HSplitView {
@@ -85,12 +80,12 @@ struct MacStandaloneWorkspace: View {
                 }.frame(minWidth: 480, idealWidth: 560, minHeight: 560, idealHeight: 650)
             }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.item], allowsMultipleSelection: true, onCompletion: importCompletion)
-            .task(id: app.phoneAccountIdentity) { chat.activate(app: app) }
-            .onDisappear { chat.deactivate() }
             #if DEBUG
             .task {
-                guard MacStandaloneReview.enabled else { return }
-                await MacStandaloneReview.run(app: app, chat: chat)
+                guard MacStandaloneReview.enabled, !ProcessInfo.processInfo.arguments.contains("--apple12-fix1-notification") else { return }
+                if ProcessInfo.processInfo.arguments.contains("--apple12-fix1-connection") {
+                    Task { await MacStandaloneReview.run(app: app, chat: chat) }
+                } else { await MacStandaloneReview.run(app: app, chat: chat) }
             }
             #endif
     }

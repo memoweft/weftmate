@@ -393,7 +393,12 @@ import WeftMateCore
             if next.reminders == nil { next.reminders=[] }
             next.reminders?.append(.init(text:command.text,fireAt:command.date,sessionID:next.selected))
             next.threads[index].messages.append(.init(role:"user",text:text))
-            next.threads[index].messages.append(.init(role:"assistant",text:"已记下："+command.text+"，"+command.date.formatted(date:.abbreviated,time:.shortened)+"提醒你。通知是否弹出，可在目标页查看。"))
+            #if os(macOS)
+            let confirmation = "已保存提醒：" + command.text + "，" + command.date.formatted(date: .abbreviated, time: .shortened) + "。允许 WeftMate 发送通知后，就能在到点时提醒你。"
+            #else
+            let confirmation = "已记下："+command.text+"，"+command.date.formatted(date:.abbreviated,time:.shortened)+"提醒你。通知是否弹出，可在目标页查看。"
+            #endif
+            next.threads[index].messages.append(.init(role:"assistant",text:confirmation))
             next.pending = .init();try save(next);draft="";notice=nil
         } catch { state=original;try? persist();notice="提醒没能保存，请检查本机存储后重试。" }
         return true

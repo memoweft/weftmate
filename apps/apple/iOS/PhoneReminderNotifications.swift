@@ -3,32 +3,6 @@ import UserNotifications
 import BackgroundTasks
 import WeftMateCore
 
-@MainActor private final class PhoneNotificationCenter: ReminderNotificationCenter {
-    let center=UNUserNotificationCenter.current()
-    func pending() async -> [ReminderNotification] {
-        await center.pendingNotificationRequests().compactMap { request in
-            guard request.identifier.hasPrefix(ReminderNotification.prefix),let data=request.content.userInfo["reminder"] as? Data else { return nil }
-            return try? JSONDecoder().decode(ReminderNotification.self,from:data)
-        }
-    }
-    func otherPendingCount() async -> Int { await center.pendingNotificationRequests().filter { !$0.identifier.hasPrefix(ReminderNotification.prefix) }.count }
-    func remove(_ identifiers: [String]) { center.removePendingNotificationRequests(withIdentifiers:identifiers) }
-    func deliveredNotifications() async -> [ReminderNotification] {
-        await center.deliveredNotifications().compactMap { item in
-            guard item.request.identifier.hasPrefix(ReminderNotification.prefix),let data=item.request.content.userInfo["reminder"] as? Data else { return nil }
-            return try? JSONDecoder().decode(ReminderNotification.self,from:data)
-        }
-    }
-    func removeDelivered(_ identifiers: [String]) { center.removeDeliveredNotifications(withIdentifiers:identifiers) }
-    func add(_ notification: ReminderNotification) async throws {
-        let content=UNMutableNotificationContent();content.title="提醒";content.body=notification.text;content.sound = .default
-        content.userInfo=["reminder":try JSONEncoder().encode(notification)]
-        var calendar=Calendar(identifier:.gregorian);calendar.timeZone=TimeZone(secondsFromGMT:0)!
-        var components=calendar.dateComponents([.year,.month,.day,.hour,.minute,.second],from:notification.fireAt)
-        components.calendar=calendar;components.timeZone=calendar.timeZone
-        try await center.add(UNNotificationRequest(identifier:notification.identifier,content:content,trigger:UNCalendarNotificationTrigger(dateMatching:components,repeats:false)))
-    }
-}
 /// Installed before launch completes; forwarding to Watch is owned by the OS.
 private final class ReminderNotificationDelegate: NSObject, UNUserNotificationCenterDelegate, Sendable {
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
@@ -50,7 +24,7 @@ private final class ReminderNotificationDelegate: NSObject, UNUserNotificationCe
     @Published private(set) var deliveryNotice: String?
     @Published var openedReminder: ReminderRoute?
     private(set) var opensConversation=false
-    private let adapter=PhoneNotificationCenter()
+    private let adapter=NativeReminderNotificationCenter()
     private let delegate=ReminderNotificationDelegate()
     private lazy var scheduler=LocalReminderScheduler(center:adapter)
     private weak var app: AppleAppModel?
