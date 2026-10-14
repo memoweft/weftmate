@@ -153,6 +153,8 @@ export function validToolApprovals(command, store) {
       !Array.isArray(rows) || rows.length > MAX_COMMAND_TOOL_APPROVALS ||
       new Set(rows.map(row => row?.approvalId)).size !== rows.length) return false;
   return rows.every(row => {
+    if (row?.intent !== undefined && row.intent !== 'work-switch' || row?.workProjectId !== undefined &&
+        (row.intent !== 'work-switch' || !validId(row.workProjectId) || row.decisionOutcome !== 'allowed-once')) return false;
     if (row?.decisionScope !== undefined && (!['once', 'conversation-category', 'global-category'].includes(row.decisionScope) ||
         ['conversation-category', 'global-category'].includes(row.decisionScope) && row.decisionOutcome !== 'allowed-once') ||
         row?.riskCategories !== undefined && (!Array.isArray(row.riskCategories) || row.riskCategories.some(x => ![...RISK_CATEGORIES, 'read', 'network'].includes(x)))) return false;

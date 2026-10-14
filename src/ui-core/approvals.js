@@ -37,24 +37,30 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
 
     async function refreshApprovalMode(sessionId) {
         const generation = core.state.identityGeneration;
-        const chatId = core.state.selectedChatId;
+        const selectedChat = () => core.state.selectedChatId ?? core.state.chats?.find(row => row.activeSessionId === sessionId)?.chatId ?? null;
+        const chatId = selectedChat(), operation = {};
+        core.state.approvalModeOperation = operation;
         core.state.approvalModeLoading = true;
         effects.setApprovalModeBusy(true);
         effects.closeApprovalMenu();
         try {
             const value = sessionId ? await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/approval-mode`)
                 : { mode: (await core.accessApi(`/chats/${encodeURIComponent(chatId)}`)).chat.approvalMode };
-            if (core.state.identityGeneration !== generation || core.state.selectedSessionId !== sessionId || core.state.selectedChatId !== chatId || core.state.activeChatSource !== 'desktop')
+            if (core.state.approvalModeOperation !== operation || core.state.identityGeneration !== generation || core.state.selectedSessionId !== sessionId || selectedChat() !== chatId || core.state.activeChatSource !== 'desktop')
                 return;
             if (!core.approvalModes.some(row => row[0] === value.mode)) throw {code:'APPROVAL_RECEIPT_INVALID'};
             core.currentApprovalMode = value.mode;
             effects.renderApprovalMode();
-            core.state.approvalModeLoading = false;
-            effects.setApprovalModeBusy(false);
         }
         catch {
-            if (core.state.selectedSessionId === sessionId)
+            if (core.state.approvalModeOperation === operation && core.state.identityGeneration === generation && core.state.selectedSessionId === sessionId)
                 effects.approvalModeReadFailed();
+        } finally {
+            if (core.state.approvalModeOperation === operation) {
+                core.state.approvalModeOperation = null;
+                core.state.approvalModeLoading = false;
+                effects.setApprovalModeBusy(false);
+            }
         }
     }
     async function saveApprovalMode(mode) {
@@ -71,6 +77,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             return;
         const saving = {};
         core.state.approvalModeSaving = saving;
+        core.state.approvalModeOperation = saving;
         core.state.approvalModeLoading = true;
         effects.setApprovalModeBusy(true);
         effects.updateAvailability();
@@ -91,7 +98,8 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         finally {
             if (core.state.approvalModeSaving === saving) core.state.approvalModeSaving = null;
             effects.updateAvailability();
-            if (core.state.selectedSessionId === sessionId && core.state.selectedChatId === chatId) {
+            if (core.state.approvalModeOperation === saving) {
+                core.state.approvalModeOperation = null;
                 core.state.approvalModeLoading = false;
                 effects.setApprovalModeBusy(false);
                 effects.updateAvailability();
@@ -319,6 +327,8 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         }
     }
     function approvalStatusText(row) {
+        if (row.intent === 'work-switch') return (row.decisionOutcome || row.outcome) === 'allowed-once' ? '已切换到工作'
+            : (row.decisionOutcome || row.outcome) === 'rejected' ? '先继续对话' : row.status === 'pending' ? '要切换到工作吗？' : '这次工作选择已失效';
         if (row.status === 'pending')
             return '等待你决定是否允许这次操作。';
         if (row.status === 'answered')
@@ -328,7 +338,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
                 ? `已取消 · ${core.executionName(row)}` : `已失效 · ${core.executionName(row)}`;
         return `${{ 'allowed-once': '已允许', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' }[row.outcome] || '已处理'} · ${core.executionName(row)}`;
     }
-    async function submitApproval(context, original, outcome, scope = 'once') {
+    async function submitApproval(context, original, outcome, scope = 'once', fields = {}) {
         const id = original.approvalId;
         if (!core.approvalContextCurrent(context) || core.conversationApprovals.operations.has(id))
             return;
@@ -338,7 +348,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         let marker = core.approvalMarker(context, original);
         if (marker && (marker.outcome !== outcome || (marker.scope ?? 'once') !== scope))
             return;
-        const operation = marker || { ...core.approvalIdentity(original), requestId: environment.crypto.randomUUID(), outcome, scope };
+        const operation = marker || { ...core.approvalIdentity(original), requestId: environment.crypto.randomUUID(), outcome, scope, ...fields };
         try {
             core.saveApprovalMarker(context, operation);
         }
@@ -358,6 +368,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
                     return;
             }
             const receipt = await core.accessApi(`/sessions/${encodeURIComponent(original.sessionId)}/approvals/${encodeURIComponent(id)}`, { method: 'POST', protectedWrite: true, body: { requestId: operation.requestId, outcome: operation.outcome,
+                    ...(operation.workProjectId ? { workProjectId: operation.workProjectId } : {}),
                     ...(['conversation-category','global-category'].includes(operation.scope) ? { scope: operation.scope } : {}) } });
             if (!core.approvalContextCurrent(context) || core.conversationApprovals.operations.get(id) !== operation)
                 return;

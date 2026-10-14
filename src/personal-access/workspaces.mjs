@@ -1,4 +1,5 @@
 import { scheduledCommandSource } from './schedules-authorization.mjs';
+import { executionProject } from './work-and-chat.mjs';
 import { digest, failure, id, publicProject, publicSource, validId, withDeadline } from './common.mjs';
 import { browserCaptureSegments, browserCaptureVersion, MAX_SEGMENT_BYTES } from '../personal-browser/index.mjs';
 import {
@@ -61,10 +62,10 @@ export function createWorkspaceOperations(context) {
     const root = account.commands[rootTaskId];
     const session = account.sessions[sessionId];
     if (root?.taskControl?.state === 'stop_requested') throw failure('TASK_NOT_READY', 409);
-    if (root?.payload.projectId !== session?.projectId ||
-        root?.payload.projectRevision !== session?.projectRevision ||
-        source.payload.projectId !== session?.projectId ||
-        source.payload.projectRevision !== session?.projectRevision) throw failure('PROJECT_REVOKED', 409);
+    if (executionProject(root).projectId !== session?.projectId ||
+        executionProject(root).projectRevision !== session?.projectRevision ||
+        executionProject(source).projectId !== session?.projectId ||
+        executionProject(source).projectRevision !== session?.projectRevision) throw failure('PROJECT_REVOKED', 409);
     return { source, rootTaskId };
   }
 

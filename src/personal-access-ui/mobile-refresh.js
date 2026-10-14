@@ -9,10 +9,11 @@ globalThis.WeftUiComponents.factories.mobileRefresh=(core,ui)=>({mountMobileRefr
     if(versionRow){const label=versionRow.querySelector('label'),help=versionRow.querySelector('p');if(label)label.textContent='电脑上的版本';if(help)help.textContent='当前连接电脑上的 WeftMate。';}
     const status=ui.element('small','remote-connection-copy');ui.byId('assistant-title').after(status);
     const paintConnection=ui.paintConnection;
-    ui.paintConnection=(...args)=>{const result=paintConnection(...args);const view=core.connectionView();status.textContent=view.kind==='online'?'已连接':view.label;return result;};
+    ui.paintConnection=(...args)=>{const result=paintConnection(...args);const view=core.connectionView();status.dataset.connectionKind=view.kind;status.textContent=view.kind==='online'?'已连接':view.label;return result;};
     status.textContent=core.connectionView().kind==='online'?'已连接':core.connectionView().label;
+    status.dataset.connectionKind=core.connectionView().kind;
     const tabs=ui.element('nav','remote-mobile-tabs');tabs.setAttribute('aria-label','手机主导航');tabs.setAttribute('role','tablist');
-    const actions={health:()=>ui.openHealth(),chat:()=>core.selectMainChat(),activity:()=>ui.openActivity(),goals:()=>ui.openGoals(),library:()=>ui.openLibrary()};
+    const actions={health:()=>ui.openHealth(),chat:()=>core.supportsWorkModes?.()?ui.showConversation():core.selectMainChat(),activity:()=>ui.openActivity(),goals:()=>ui.openGoals(),library:()=>ui.openLibrary()};
     for(const [id,name,icon] of [['chat','聊天','chat'],['activity','动态','bell'],...(WeftHealth.showHealthBottomTab?[['health','健康','health']]:[]),['goals','目标','goal'],['library','成果库','folder']]){
         const button=ui.element('button','remote-mobile-tab');button.type='button';button.id=`remote-tab-${id}`;button.dataset.tab=id;button.setAttribute('role','tab');button.setAttribute('aria-label',name);
         const panel=id==='chat'?ui.byId('conversation-pane'):document.querySelector(`.${id}-surface`);if(panel){panel.id ||= `remote-panel-${id}`;button.setAttribute('aria-controls',panel.id);}

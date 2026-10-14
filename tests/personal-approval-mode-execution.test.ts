@@ -63,6 +63,9 @@ async function fixture(t: any, { inheritedAllow = false, beforeFirstMessage = fa
     return waitForCommand(async () => (await api('/commands/' + result.body.command.commandId)).body.command)
   }
   if (inheritedAllow) assert.equal((await api('/settings/approvals', { rules: { write: 'allow', command: 'allow' } }, 'PATCH')).status, 200)
+  const registered = await api('/projects', { requestId: 'mode-project', name: 'Synthetic approval files', rootPath: root, permission: 'write' })
+  assert.equal(registered.status, 201, JSON.stringify(registered.body))
+  const projectId = registered.body.project.projectId
   let sessionId: string, source: any
   if (beforeFirstMessage) {
     const chat = (await api('/chats/main')).body.chat
@@ -74,7 +77,9 @@ async function fixture(t: any, { inheritedAllow = false, beforeFirstMessage = fa
     source = await command({ kind: 'chat.message', requestId: 'mode-source', chatId: chat.chatId, modelProfileId: 'local', text })
     sessionId = source.sessionId
   } else {
-    const created = await command({ kind: 'session.create', requestId: 'mode-create', modelProfileId: 'local' })
+    const creation = await api(`/projects/${projectId}/sessions`, { requestId: 'mode-create', modelProfileId: 'local' })
+    assert.equal(creation.status, 202, JSON.stringify(creation.body))
+    const created = await waitForCommand(async () => (await api('/commands/' + creation.body.command.commandId)).body.command)
     sessionId = created.sessionId
     assert.equal((await api(`/sessions/${sessionId}/approval-mode`, { mode: 'ask' }, 'PATCH')).status, 200)
     source = await command({ kind: 'session.message', requestId: 'mode-source', sessionId, text })
@@ -138,6 +143,12 @@ async function fixture(t: any, { inheritedAllow = false, beforeFirstMessage = fa
       const response = await api(`/sessions/${session.id}/approvals`)
       const row = response.body.approvals?.find((row: any) => row.status === 'pending')
       if (!row && settled) throw Error(JSON.stringify({ result: settled, fileExists: existsSync(join(root, 'first-message.txt')), response, events: session.events.slice(-4) }))
+      if (row?.intent === 'work-switch') {
+        assert.equal(existsSync(join(root, 'first-message.txt')), false, 'choosing a work directory cannot perform the pending write')
+        assert.equal((await api(`/sessions/${session.id}/approvals/${row.approvalId}`, { requestId: 'mode-work-choice', outcome: 'allowed-once', workProjectId: projectId })).status, 200)
+        assert.equal(service.getApprovalPolicy({ sessionId }).mode, 'ask', 'work conversion preserves the first-message approval choice')
+        return null
+      }
       return row
     }),
     close: async () => { controller.abort(); await pending; await ctx.fiber.dispose(); await service.close(); rmSync(root, { recursive: true, force: true }) } }

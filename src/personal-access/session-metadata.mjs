@@ -1,4 +1,5 @@
 import { hasPrivateContent, memorySettings, validateMemorySettings } from './temporary-chats.mjs';
+import { conversationMode, modeProjection } from './work-and-chat.mjs';
 import { randomUUID } from 'node:crypto';
 import { protectMainSession } from './chat-identity.mjs';
 import { failure, plainObject, validId } from './common.mjs';
@@ -103,7 +104,9 @@ export function createSessionMetadata(context) {
     },
     messageBranches: createMessageBranches(context),
     async metadata(ownerId, sessionId, patch) {
-      protectMainSession(context.accountState(ownerId), sessionId);
+      const modeWorkFolder = context.accountState(ownerId).sessions[sessionId]?.mode === 'work' &&
+        plainObject(patch) && Object.keys(patch).length === 1 && Object.hasOwn(patch, 'projectId');
+      if (!modeWorkFolder) protectMainSession(context.accountState(ownerId), sessionId);
       if (!plainObject(patch) || !Object.keys(patch).length || Object.keys(patch).some(key => !['pinned', 'unread', 'title', 'groupId', 'projectId', 'memoryMode', 'recallEnabled', 'autoDeleteDays'].includes(key)) ||
           ['pinned', 'unread'].some(key => patch[key] !== undefined && typeof patch[key] !== 'boolean') ||
           patch.groupId !== undefined && patch.groupId !== null && !validId(patch.groupId) ||
@@ -129,10 +132,12 @@ export function createSessionMetadata(context) {
           const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
           if (described?.running || Object.values(context.accountState(ownerId).commands).some(command =>
               command.sessionId === sessionId && ['pending', 'dispatching', 'uncertain'].includes(command.state))) throw failure('SESSION_BUSY', 409);
-          patch = { ...patch, projectId: project?.projectId ?? null, projectRevision: project?.revision ?? null,
+          patch = { ...patch, mode: project || conversationMode(session) === 'work' ? 'work' : 'chat',
+            ...(project ? { workHostId: context.accountState(ownerId).hostId } : {}),
+            projectId: project?.projectId ?? null, projectRevision: project?.revision ?? null,
             ...(project ? { groupId: null } : {}),
             projectNotice: project ? `已移至项目「${project.name}」。从下一回合使用项目文件夹；之前的文件与经验留在原目录。`
-              : '已移出项目。从下一回合使用本对话的独立工作目录；项目文件仍保留。' };
+              : '已移出项目，文件仍保留。先选择一个项目或文件夹，再继续工作。' };
         }
         if (patch.groupId && !Object.hasOwn(context.accountState(ownerId).sessionGroups ?? {}, patch.groupId)) throw failure('NOT_FOUND', 404);
         validateMemorySettings(patch);
@@ -200,7 +205,7 @@ export function createSessionMetadata(context) {
       const row = index.get(key(ownerId, sessionId));
       const latestMessageSeq = Math.max(row?.latestMessageSeq ?? -1, row?.outcomeSeq ?? -1);
       const activityTimes = [metadata.attachedAt, row?.updatedAt].map(value => Date.parse(value)).filter(Number.isFinite);
-      return { ...memorySettings(metadata), pinned: metadata.pinned === true, unread: metadata.unread === true || latestMessageSeq > (metadata.readMessageSeq ?? -1),
+      return { ...modeProjection(metadata, context.accountState(ownerId)), ...memorySettings(metadata), pinned: metadata.pinned === true, unread: metadata.unread === true || latestMessageSeq > (metadata.readMessageSeq ?? -1),
         attention: attentionIndex(context.accountState(ownerId)).get(sessionId) ?? null, lastOutcome: row?.lastOutcome ?? null,
         ...(activityTimes.length ? { updatedAt: new Date(Math.max(...activityTimes)).toISOString() } : {}),
         groupId: metadata.groupId ?? null, ...(metadata.title ? { title: metadata.title } : {}),

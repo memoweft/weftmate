@@ -1,4 +1,5 @@
 import { redactProjectPath } from '../personal-projects/projects.mjs';
+import { isWorkSwitch, executionProject } from './work-and-chat.mjs';
 import { readSourceEvents } from './source-history.mjs';
 import {
   digest,
@@ -233,7 +234,7 @@ export function createTaskOperations(context) {
     const sources = [...Object.values(account.projectSources ?? {}), ...Object.values(account.browserSources ?? {})]
       .filter((item) => item.taskId === taskId)
       .map((item) => ({ ...publicSource(item), cited: citedIds.has(item.snapshotId) }));
-    const projectRecord = source.payload.projectId ? account.projects?.[source.payload.projectId] : null;
+    const projectRecord = account.projects?.[executionProject(source).projectId];
     const steps = Object.values(account.commands).filter((item) =>
       item.kind === 'desktop.open_app' && item.toolSource &&
       (item.taskId === taskId || messageIds.has(item.toolSource.sourceCommandId))).map(publicCommand);
@@ -500,7 +501,7 @@ export function createTaskOperations(context) {
         if (prior) throw failure('REQUEST_CONFLICT', 409); // Unknown or completed calls are never executed twice.
         for (const row of source.toolApprovals ?? []) if (row.turn === turn &&
             (row.callId === callId || row.rootCallId === rootCallId)) {
-          if (row.callId === callId && (row.toolName !== toolName || row.argumentsHash !== argumentsHash ||
+          if (row.callId === callId && (row.toolName !== toolName || !isWorkSwitch(row) && row.argumentsHash !== argumentsHash ||
               row.rootCallId !== rootCallId || input.runtimeId !== undefined && row.runtimeId !== input.runtimeId)) {
             throw failure('REQUEST_CONFLICT', 409);
           }
@@ -513,7 +514,7 @@ export function createTaskOperations(context) {
         source.dshTurn = turn;
         source.toolExecutions = [...rows, { executionId, sourceCommandId: source.commandId, sourceReceiptId: receiptId,
           rootCallId, callId, toolName, turn, state: 'running', argumentsHash,
-          ...(input.permission ? { permission: { ...input.permission, summary: redactProjectPath(input.permission.summary, next.projects?.[source.payload.projectId]?.rootPath) } } : {}),
+          ...(input.permission ? { permission: { ...input.permission, summary: redactProjectPath(input.permission.summary, next.projects?.[executionProject(source).projectId]?.rootPath) } } : {}),
           ...(input.runtimeId !== undefined ? { runtimeId: input.runtimeId } : {}), startedAt: now, updatedAt: now }];
         return { executionId, taskId: root.commandId, state: 'running' };
       }, () => context.requireToolRuntime(input.runtimeId)));

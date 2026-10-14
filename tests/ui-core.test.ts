@@ -29,6 +29,28 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 const deferred = () => { let resolve!: (value: any) => void; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 
+test('MODE-1 a late computer status cannot replace the account or computer selected while it was in flight', async () => {
+  const pending = deferred(), f = fixture(() => pending.promise);
+  const before = f.core.state.identityGeneration, reading = f.core.refreshStatus();
+  Object.assign(f.core.state,{identityGeneration:before+1,ownerId:'owner-next',hostId:'host-next'});
+  pending.resolve(response({ownerId:'owner-test',hostId:'host-test',presence:{authorization:'active'}}));
+  assert.equal(await reading,false);assert.equal(f.core.state.ownerId,'owner-next');assert.equal(f.core.state.hostId,'host-next');
+});
+
+test('MODE-1 explicitly choosing a folder in a fresh draft selects work and keeps that folder before the first send', async () => {
+  const f=fixture();Object.assign(f.core.state,{personalCapabilities:{workAndChat:1},newConversation:true,selectedSessionId:null,newConversationMode:'chat'});
+  const project={projectId:'project-synthetic',name:'Synthetic folder'};await f.core.chooseFolderProject(project);
+  assert.equal(f.core.state.newConversationProjectId,project.projectId);assert.equal(f.core.currentConversationMode(),'work');assert.equal(f.core.sidebarConversationMode(),'work');
+  assert.equal(f.requests.length,0,'the explicit choice changes only the unsent draft');
+});
+
+test('MODE-1 history authorization resumes only after the current owner status verifies active authority', async () => {
+  let active = false; const f=fixture(()=>response({ownerId:'owner-test',hostId:'host-test',presence:{authorization:active?'active':'pending'}}));
+  f.core.historyReadResult('failed',{terminal:true,error:{code:'UNAUTHORIZED'}});assert.equal(f.core.historyReadAllowed(),false);
+  await f.core.refreshStatus();assert.equal(f.core.historyReadAllowed(),false);
+  active=true;await f.core.refreshStatus();assert.equal(f.core.historyReadAllowed(),true);
+});
+
 test('MODEL-1 combined service read supplies models and default/background settings without legacy requests',async()=>{
   const f=fixture(path=>{
     assert.equal(path,'/personal/v1/model-services');
@@ -788,6 +810,34 @@ test('UI-P4 a new draft reads the account approval mode and applies its chosen m
   f.core.selectSession=async id=>{f.core.state.selectedSessionId=id;f.core.state.newConversation=false;};
   f.core.accessApi=async(_path,options)=>{operations.push('approval-mode:'+options.body.mode);return {mode:options.body.mode};};
   await f.core.sendDraft('先出计划');assert.deepEqual(operations,['session.create','approval-mode:plan','session.message']);
+});
+
+test('FIX-40 side selection accepts its approval read after binding the logical chat identity',async()=>{
+  const pending=deferred(), f=fixture();
+  Object.assign(f.core.state,{selectedChatId:'previous-chat',activeChatSource:'desktop',chats:[{chatId:'side-chat',activeSessionId:'side-session'}]});
+  f.core.state.sessions.push({sessionId:'side-session',running:false,sendAvailable:true});
+  f.core.refreshHistory=async()=>{};f.core.refreshConversationTasks=async()=>{};
+  f.core.accessApi=async(path:string)=>{assert.match(path,/\/sessions\/side-session\/approval-mode$/);return pending.promise;};
+  let reading!:Promise<void>;const refresh=f.core.refreshApprovalMode;
+  f.core.refreshApprovalMode=(id:string)=>{reading=refresh(id);return reading;};
+  await f.core.selectSession('side-session');
+  assert.equal(f.core.state.selectedChatId,'side-chat');assert.equal(f.core.state.approvalModeLoading,true);
+  pending.resolve({mode:'ask'});await reading;
+  assert.equal(f.core.currentApprovalMode,'ask');assert.equal(f.core.state.approvalModeLoading,false);
+  assert.deepEqual(f.paints.filter(row=>row.name==='setApprovalModeBusy').at(-1)?.args,[false]);
+});
+
+test('FIX-40 an old approval read cannot unlock or replace a newer conversation read',async()=>{
+  const old=deferred(), next=deferred(), f=fixture();
+  Object.assign(f.core.state,{selectedChatId:'old-chat',activeChatSource:'desktop'});
+  f.core.accessApi=async(path:string)=>path.includes('/session-test/')?old.promise:next.promise;
+  const first=f.core.refreshApprovalMode('session-test');
+  Object.assign(f.core.state,{selectedSessionId:'next-session',selectedChatId:'next-chat'});
+  const second=f.core.refreshApprovalMode('next-session');
+  old.resolve({mode:'allow-all'});await first;
+  assert.equal(f.core.state.approvalModeLoading,true);assert.equal(f.core.currentApprovalMode,'auto');
+  next.resolve({mode:'ask'});await second;
+  assert.equal(f.core.state.approvalModeLoading,false);assert.equal(f.core.currentApprovalMode,'ask');
 });
 
 test('FIX-40 a main chat without a session saves ask to that chat and validates the receipt',async()=>{

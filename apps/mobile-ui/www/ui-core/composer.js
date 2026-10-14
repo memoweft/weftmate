@@ -90,7 +90,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         }
         core.state.newConversation = true;
         core.state.newConversationTemporary = temporary;
-        core.state.newConversationProjectId = core.defaultFolderProject?.()?.projectId || null;
+        core.state.newConversationProjectId = null;
         core.state.newConversationId = environment.crypto.randomUUID();
         core.state.newConversationApprovalMode = null;
         core.state.newConversationThinking = core.state.personalization?.defaultDeepThinking === true;

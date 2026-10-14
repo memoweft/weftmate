@@ -39,7 +39,28 @@ class Fix40ApprovalInstrumentedTest {
             val credentials = JSONObject().put("origin", args.getString("origin")).put("username", args.getString("username"))
                 .put("password", args.getString("password")).put("deviceName", "FIX-40 synthetic phone")
             main { activity.embeddedWeb.evaluateJavascript("call('auth.login',$credentials).then(()=>location.reload())", null) }
-            waitFor("native main chat") { activity.model.loggedIn && !activity.model.loading && activity.model.chatId.isNotBlank() && !activity.model.approvalModeBusy }
+            val workChatId = args.getString("chatId")
+            waitFor("native login") { activity.model.loggedIn && !activity.model.loading && !activity.model.approvalModeBusy }
+            if (workChatId.isNullOrBlank()) waitFor("native main chat") { activity.model.chatId.isNotBlank() }
+            val recovery = args.getString("recovery") == "true"
+            if (recovery) {
+                var selectedLocal = false
+                main { activity.model.launch {
+                    val local = activity.model.call("conversations.create")
+                    activity.model.select(local); activity.model.setApprovalMode("ask"); selectedLocal = true
+                } }
+                waitFor("local approval choice") { selectedLocal && activity.model.phone && activity.model.mode == "ask" && !activity.model.approvalModeBusy }
+                assertTrue(activity.model.sessionId.isBlank())
+            }
+            if (!workChatId.isNullOrBlank()) {
+                var selected = false
+                main { activity.model.launch {
+                    val value = activity.model.business("/chats/$workChatId")
+                    activity.model.select(value.getJSONObject("chat")); selected = true
+                } }
+                waitFor("prepared work conversation") { selected && !activity.model.loading && !activity.model.approvalModeBusy }
+                assertTrue(activity.model.sessionId.isNotBlank())
+            }
             var themeSaved = false
             main { activity.model.launch {
                 activity.model.call("settings.appearance", JSONObject().put("value", theme))
@@ -47,12 +68,13 @@ class Fix40ApprovalInstrumentedTest {
             } }
             waitFor("saved test appearance") { themeSaved }
             compose.waitForIdle()
-            assertEquals("first choice precedes native session creation", "", activity.model.sessionId)
+            if (workChatId.isNullOrBlank()) assertEquals("first choice precedes native session creation", "", activity.model.sessionId)
+            assertFalse("first choice precedes any test message", activity.model.rows.toString().contains("FIX40_ANDROID"))
             val editor = compose.onNodeWithContentDescription("消息输入")
             editor.performTextInput("FIX40_ANDROID_ALLOW")
             compose.onNodeWithContentDescription("审批方式：自动").performClick()
             compose.onNodeWithText("每次询问", useUnmergedTree = true).performClick()
-            waitFor("saved ask") { activity.model.mode == "ask" && !activity.model.approvalModeBusy }
+            waitFor("saved ask or retryable save") { !activity.model.approvalModeBusy && (activity.model.mode == "ask" || recovery && activity.model.error.contains("审批方式未保存")) }
             compose.waitUntil(10000) { compose.onAllNodesWithText("每次询问", useUnmergedTree = true).fetchSemanticsNodes().isEmpty() }
             compose.waitForIdle()
             shot("selected-before-first-message")
@@ -64,6 +86,7 @@ class Fix40ApprovalInstrumentedTest {
             approve.performScrollTo().assertIsDisplayed(); compose.waitForIdle(); shot("allow-pending")
             approve.performClick()
             waitFor("approved result") { !activity.model.running && activity.model.rows.toString().contains("FIX40_FINISHED_ANDROID_ALLOW") }
+            compose.waitForIdle()
             shot("approved")
             editor.performTextInput("FIX40_ANDROID_REJECT")
             compose.onNodeWithContentDescription("发送消息").performClick()
@@ -72,10 +95,12 @@ class Fix40ApprovalInstrumentedTest {
             reject.performScrollTo().assertIsDisplayed(); compose.waitForIdle(); shot("reject-pending")
             reject.performClick()
             waitFor("rejected result") { !activity.model.running && activity.model.rows.toString().contains("FIX40_FINISHED_ANDROID_REJECT") }
+            compose.waitForIdle()
             shot("rejected")
         } catch (error: Throwable) {
             var state = JSONObject()
             main { val m = activity.model; state = JSONObject().put("mode", m.mode).put("busy", m.approvalModeBusy)
+                .put("loggedIn",m.loggedIn).put("loading",m.loading).put("refreshPhase",m.refreshPhase).put("connected",m.connected)
                 .put("draft", m.draft).put("sessionId", m.sessionId).put("chatId", m.chatId).put("running", m.running)
                 .put("sendAvailable", m.sendAvailable).put("error", m.error).put("approvals", m.approvals.toString()).put("rows", m.rows.toString()) }
             File(i.targetContext.getExternalFilesDir(null), "fix40-failure.json").writeText(state.toString())
