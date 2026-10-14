@@ -8,6 +8,7 @@ struct WeftMateMacApp: App {
     @StateObject private var updates = MacUpdateModel()
     @Environment(\.openWindow) private var openWindow
     init() {
+        _ = MacReminderNotifications.shared
         #if DEBUG
         let args = ProcessInfo.processInfo.arguments
         if args.contains("--ui-testing"), (args.contains("--lg2-capture") || args.contains("--apple12-review")) {

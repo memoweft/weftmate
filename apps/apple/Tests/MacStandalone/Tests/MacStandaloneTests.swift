@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import UserNotifications
 import WeftMateCore
 @testable import MacStandaloneProduct
 
@@ -60,6 +61,52 @@ import WeftMateCore
         #expect(model.messages.isEmpty && model.models.isEmpty)
         #expect(app.offline.enqueued.isEmpty)
     }
+    @Test func macReminderAcknowledgementHasAnExistingDestination() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let app = AppleAppModel(directory: directory)
+        app.cloudLogin.subject = nil; app.cloudLogin.authenticated = false
+        let model = PhoneStandaloneModel(testCredentials: PhoneCheckCredentials(), testLoopback: false)
+        defer { model.deactivate() }; model.activate(app: app)
+        model.draft = "1分钟后提醒我喝水"; model.send()
+        #expect(model.reminders.count == 1)
+        #expect(model.reminders.first?.text == "喝水")
+        #expect(model.messages.last?.role == "assistant")
+        #expect(model.messages.last?.text.contains("目标页") == false)
+        #expect(model.messages.last?.text.contains("通知") == true)
+        let center = MacRecordingNotificationCenter()
+        let notifications = MacReminderNotifications(center: center, authorization: { .authorized }, request: { true })
+        notifications.attach(model); await notifications.reconcile()
+        let pending = try #require(center.values.first)
+        #expect(center.values.count == 1)
+        #expect(pending.text == "喝水")
+        #expect(pending.route.sessionID == model.state.selected)
+        #expect(abs(pending.fireAt.timeIntervalSinceNow - 60) < 5)
+        await notifications.reconcile()
+        #expect(center.values.count == 1 && center.additions == 1)
+        app.cloudLogin.subject = "other-account"; model.activate(app: app)
+        await notifications.reconcile()
+        #expect(center.values.isEmpty)
+
+    }
+    @Test func macNotificationAuthorizationFailureStaysVisibleAndRecovers() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let app = AppleAppModel(directory: directory)
+        let model = PhoneStandaloneModel(testCredentials: PhoneCheckCredentials(), testLoopback: false)
+        defer { model.deactivate() }; model.activate(app: app)
+        model.draft = "1分钟后提醒我喝水"; model.send()
+        let center = MacRecordingNotificationCenter()
+        var status = UNAuthorizationStatus.notDetermined
+        let notifications = MacReminderNotifications(center: center, authorization: { status }, request: { throw NSError(domain: "UNErrorDomain", code: 1) })
+        notifications.attach(model); await notifications.requestPermission(); await notifications.reconcile()
+        #expect(notifications.deliveryNotice?.contains("权限") == true)
+        #expect(!notifications.needsPermission)
+        #expect(center.values.isEmpty)
+        status = .authorized; await notifications.reconcile()
+        #expect(notifications.deliveryNotice == nil)
+        #expect(center.values.count == 1)
+    }
     @Test(.enabled(if: ProcessInfo.processInfo.environment["APPLE12_LIVE_MIMO"] == "1"))
     func threeRealMimoRepliesThroughMacProductController() async throws {
         let key = try #require(ProcessInfo.processInfo.environment["MIMO_API_KEY"]?.trimmingCharacters(in: .whitespacesAndNewlines))
@@ -87,4 +134,15 @@ import WeftMateCore
         #expect(app.session == nil && !app.cloudLogin.authenticated && app.offline.enqueued.isEmpty)
         print("APPLE12_LIVE: 3/3 nonempty streamed replies; sealed history reopened; account login 0; in-memory credential substitute")
     }
+}
+
+@MainActor private final class MacRecordingNotificationCenter: ReminderNotificationCenter {
+    var values: [ReminderNotification] = []
+    var additions = 0
+    func pending() async -> [ReminderNotification] { values }
+    func otherPendingCount() async -> Int { 0 }
+    func remove(_ identifiers: [String]) { values.removeAll { identifiers.contains($0.identifier) } }
+    func deliveredNotifications() async -> [ReminderNotification] { [] }
+    func removeDelivered(_ identifiers: [String]) {}
+    func add(_ notification: ReminderNotification) async throws { additions += 1; values.append(notification) }
 }
