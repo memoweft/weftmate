@@ -79,8 +79,8 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
             const result=await core.writeModelService(serviceEditing?.serviceId,{...fields,...(serviceEditing?{expectedRevision:serviceEditing.revision}:{}),...(models.length?{models}:{}),...(manual?{modelId:manual}:{})});
             if(!core.accountCurrent(token))return;
             if (!serviceEditing && result.service?.models?.length) {
-                const recommended=result.service.models.find(m=>m.recommended&&m.enabled!==false)||result.service.models.find(m=>m.enabled!==false);
-                if(recommended)await core.selectServiceModel({serviceId:result.service.serviceId,modelId:recommended.modelId});
+                const selected=core.preferredServiceModel(result.service);
+                if(selected)await core.selectServiceModel({serviceId:result.service.serviceId,modelId:selected.modelId});
             }
             if(core.accountCurrent(token)){ui.byId('account-model-key').value='';ui.byId('account-model-dialog').close();ui.toast('模型服务已保存');}
         } catch {if(core.accountCurrent(token))accountModelFormNotice('模型服务没保存成功，原来的设置仍可使用。请检查地址和密钥后重试。');}

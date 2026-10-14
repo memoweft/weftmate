@@ -190,6 +190,7 @@ test('phone Claude completion supports light memory without a progress callback 
       assert.equal(url, 'https://model.example/v1/messages');
       assert.ok(options.headers['x-api-key'] === credential, 'credential remains only in the completion transport');
       requested = JSON.parse(options.body);
+      if (requested.tools?.length) return { ok: true, json: async () => ({ stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'synthetic-work', name: 'computer_work', input: { description: '合成文件工作' } }] }) };
       return { ok: true, json: async () => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: '{"upsert":[],"invalidate":[]}' }] }) };
     }, URL, DOMException, AbortController, clearTimeout };
   runInNewContext(readFileSync(new URL('../apps/mobile-ui/www/components/phone-standalone.js', import.meta.url), 'utf8'), context);
@@ -200,5 +201,11 @@ test('phone Claude completion supports light memory without a progress callback 
     { model: attached.phoneModel() }, new AbortController().signal);
   assert.equal(requested.model, 'claude-synthetic'); assert.equal(requested.max_tokens, 1200);
   assert.equal(requested.stream, false); assert.equal(reply.choices[0].message.content, '{"upsert":[],"invalidate":[]}');
+  const work = await attached.vault.complete({ model: 'claude-synthetic', messages: [{ role: 'user', content: '合成请求' }],
+    tools: [{ type: 'function', function: { name: 'computer_work', description: 'Ask to enter work', parameters: { type: 'object', properties: { description: { type: 'string' } } } } }] },
+    { model: attached.phoneModel() }, new AbortController().signal);
+  assert.equal(requested.tools[0].name, 'computer_work'); assert.equal(requested.tools[0].input_schema.type, 'object');
+  assert.equal(work.choices[0].message.tool_calls[0].function.name, 'computer_work');
+  assert.deepEqual(JSON.parse(work.choices[0].message.tool_calls[0].function.arguments), { description: '合成文件工作' });
   manager.clear();
 });

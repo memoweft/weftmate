@@ -21,7 +21,7 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
   core.canChooseExecutionComputer=()=>enabled&&core.hasMultipleComputers();
   core.canUseComputerChannel=()=>enabled;
   core.updateComputerDirectory = result => {
-    enabled = result.capabilities?.multiHost === 1 && !environment.desktop && typeof effects.openComputerChannel === 'function';
+    enabled = result.capabilities?.multiHost === 1 && (!environment.desktop || core.state.personalCapabilities?.workAndChat === 1) && typeof effects.openComputerChannel === 'function';
     core.state.computers = result.capabilities?.multiHost===1 ? result.hosts || [] : [];
     if(!enabled)current=core.cloudCurrentComputer?.() || core.state.hostId;
     else current ??= core.cloudCurrentComputer?.() || core.state.hostId;
@@ -123,6 +123,7 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
     core.state.selectedSessionId=null;core.state.selectedChatId=null;core.state.mainChat=null;
     try{environment.storage.setItem(lastKey(),id);}catch{}
     await core.refreshStatus();await core.refreshModels();await core.refreshSessions();
+    effects.startAssistantRefresh?.();
     effects.paintComputers?.();
   };
   core.selectSession = async (id,...args) => {

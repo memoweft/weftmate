@@ -7,9 +7,10 @@ import { randomUUID } from 'node:crypto';
 import { chromium } from 'playwright';
 import { relayFixture, waitFor } from './relay-fixture.mjs';
 import { registration, appDevice, control, refresh, proof } from './app-helpers.mjs';
-import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
+import '../../../tests/helpers/posix-project-fixture.mjs';
 import { servePersonalAccessUi } from '../../../src/personal-access-ui/index.mjs';
-import { phoneRuntime, scenarioUserText } from './relay-phone-runtime.mjs';
+const { createPersonalAccessService } = await import('../../../src/personal-access/index.mjs');
+const { phoneRuntime, scenarioUserText } = await import('./relay-phone-runtime.mjs');
 import { approvePhoneOperation } from '../../../tests/helpers/phone-approval.mjs';
 
 const pause = ms => new Promise(r => setTimeout(r, ms));
@@ -160,6 +161,8 @@ test('Relay phone first input and file task', {
     const select = async session => {
       const toggle = phone.getByRole('button', { name: '切换会话侧栏', exact: true });
       if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+      const mode = await phone.evaluate(id => { const row = globalThis.__ciR1Core.state.sessions.find(item => item.sessionId === id); return row?.mode || (row?.projectId ? 'work' : 'chat'); }, session.sessionId);
+      await phone.getByRole('tab', {name:mode === 'work' ? '工作' : '对话',exact:true}).click();
       const row = phone.locator(`[data-session-id="${session.sessionId}"]`);
       const visibleTitle = await phone.evaluate(id => globalThis.__ciR1Core.state.sessions.find(s => s.sessionId === id)?.title, session.sessionId) ?? session.title;
       const button = row.getByRole('button', { name: visibleTitle, exact: true });
@@ -199,10 +202,11 @@ test('Relay phone first input and file task', {
       delayed = null;
     }
     await phone.screenshot({ path: join(evidence, 'first-input.png') });
-    // The cloud runner's synthetic project is a real temporary Linux directory.
-    // Windows folder registration is deliberately outside this transport test:
-    // its existing contract requires Windows volume/file identities.
-    const accepted = await phoneApi('/commands', { requestId: randomUUID(), kind: 'session.create', targetDeviceId: started.hostId, modelProfileId: 'synthetic' });
+    // MODE-1 requires a chosen folder. Linux uses the existing POSIX inspector
+    // fixture; command execution, project bounds and approvals are real.
+    const registeredProject = await direct('/projects', { requestId: randomUUID(), name: '合成中继项目', rootPath: runtime.project, permission: 'write' }, local);
+    assert.equal(registeredProject.status, 201, JSON.stringify(registeredProject.data));
+    const accepted = await phoneApi(`/projects/${registeredProject.data.project.projectId}/sessions`, { requestId: randomUUID(), modelProfileId: 'synthetic' });
     assert.equal(accepted.status, 202, JSON.stringify(accepted.data)); const created = await settle(accepted.data.command);
     const fileSession = { sessionId: created.sessionId, title: '合成中继文件任务' };
     await phoneApi(`/sessions/${created.sessionId}/metadata`, { title: fileSession.title }, 'PATCH');

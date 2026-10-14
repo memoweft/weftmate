@@ -4,6 +4,7 @@ import { readSourceEvents } from './source-history.mjs';
 import { chatForSession } from './chat-identity.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { randomUUID } from 'node:crypto';
+import { completionActivitySummary, activitySummaryEvent } from './activity-copy.mjs';
 
 const short = value => Array.from(String(value ?? '').replace(/\s+/g, ' ').trim()).slice(0, 160).join('');
 const nativeId = (hostId, sessionId, seq) => `event-${digest(`${hostId}/${sessionId}/${seq}`)}`;
@@ -79,7 +80,7 @@ export function createSideChats(context) {
         next.chatResults[resultId] = { resultId, sourceChatId: input.sourceChatId, sourceEventId: input.sourceEventId,
           sourceRef: { kind: 'result', resultId, sourceChatId: input.sourceChatId, sourceEventId: input.sourceEventId,
             native: input.nativeSource }, ...(input.taskId ? { taskId: input.taskId } : {}),
-          state: input.state, summary: input.summary, resultRevision: revision, requiresResponse: input.requiresResponse === true,
+          state: input.state, summary: input.summary, ...(input.summaryFormat?{summaryFormat:input.summaryFormat}:{}), resultRevision: revision, requiresResponse: input.requiresResponse === true,
           artifactRefs: input.artifactRefs ?? [], contentHash,
           mainEventId: previous?.mainEventId ?? `event-${resultId}`, activityId: previous?.activityId ?? `activity-${resultId}`,
           notificationRevision: revision, orderKey: previous?.orderKey ?? `${orderAnchor}~${String(counter).padStart(16,'0')}`,
@@ -124,9 +125,11 @@ export function createSideChats(context) {
     if (events.some(event => account.sessions[command.sessionId]?.forgottenSeqs?.includes(event.seq))) throw failure('SOURCE_UNAVAILABLE', 404);
     const state = task.control?.state === 'stop_requested' && task.control?.stopStatus === 'stopped'
       ? 'stopped' : states[evidence.status];
+    const summaryEvent=state==='completed'?await activitySummaryEvent(context,ownerId,command.sessionId,selected):selected;
     return { sourceChatId: chatId, sourceEventId: nativeId(segment.hostId, command.sessionId, selected.seq),
       contentRevision: chat.contentRevision, taskId, state,
-      summary: short(selected.type === 'assistant.message' && selected.data?.text ? selected.data.text : ''),
+      summary: (state==='completed'?completionActivitySummary:short)(summaryEvent.type === 'assistant.message' && summaryEvent.data?.text ? summaryEvent.data.text : ''),
+      ...(state==='completed'?{summaryFormat:'plain'}:{}),
       requiresResponse: false, nativeSource: { kind: 'native', hostId: segment.hostId, sessionId: command.sessionId, seq: selected.seq },
       artifactRefs: (task.artifacts ?? []).map(row => ({ taskId, artifactId: row.artifactId })), observedCommandId: accepted.commandId };
   }
