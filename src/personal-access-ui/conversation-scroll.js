@@ -18,10 +18,18 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
             followingTop = Math.max(0, box.scrollHeight - box.clientHeight);
             if (!smooth || reduced() || (globalThis.WeftReplyMotion?.paused ?? document.hidden)) { stop(); if (Math.abs(box.scrollTop-followingTop)>1) box.scrollTop = followingTop; }
             else if (Math.abs(box.scrollTop-followingTop)>1) {
-                if (!moving) { const css=getComputedStyle(document.documentElement); const curve=css.getPropertyValue('--wm-easing-desktop').match(/[\d.]+/g)?.map(Number); moving={from:box.scrollTop, started:performance.now(), duration:globalThis.WeftReplyMotion?.milliseconds('replyScroll') || 160, curve}; }
+                if (!moving) { const css=getComputedStyle(document.documentElement); const curve=css.getPropertyValue('--wm-easing-desktop').match(/[\d.]+/g)?.map(Number); moving={from:box.scrollTop, to:followingTop, started:performance.now(), duration:globalThis.WeftReplyMotion?.milliseconds('replyScroll') || 160, curve}; }
                 if (frame === null) {
                     const tick = time => {
                         frame = null; if (!pinned || !moving) return;
+                        // Read layout now: resize delivery can follow this frame.
+                        // Retarget from the actual viewport, never the old origin.
+                        followingTop = Math.max(0, box.scrollHeight - box.clientHeight);
+                        if (Math.abs(box.scrollTop-followingTop)<=1) { stop(); followingTop=null; return; }
+                        if (moving.to !== followingTop) {
+                            moving.from=box.scrollTop;moving.to=followingTop;
+                            moving.duration=Math.max(1,moving.duration-(time-moving.started));moving.started=time;
+                        }
                         const fraction = Math.min(1, (time-moving.started)/moving.duration);
                         const bezier=(t,a,b)=>3*(1-t)*(1-t)*t*a+3*(1-t)*t*t*b+t*t*t;
                         let eased=fraction; if(moving.curve?.length===4){let low=0,high=1;for(let index=0;index<12;index++){const mid=(low+high)/2;if(bezier(mid,moving.curve[0],moving.curve[2])<fraction)low=mid;else high=mid;}eased=bezier((low+high)/2,moving.curve[1],moving.curve[3]);}
@@ -30,7 +38,7 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
                     };
                     frame=requestAnimationFrame(tick);
                 }
-            }
+            } else { stop(); followingTop = null; }
             newContent = false;
         }
         paint();
@@ -44,7 +52,7 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
         const top = box.scrollTop;
         if(scrollbarDrag&&top<lastTop-1&&gap()>48){stop();pinned=false;followingTop=null;}
         if (followingTop !== null && Math.abs(top - followingTop) <= 1) { if (!moving) followingTop = null; }
-        else if (gap() <= 48) { pinned = true; newContent = false; }
+        else if (gap() <= (pinned ? 48 : 1)) { pinned = true; newContent = false; }
         // Layout clamping (keyboard, composer/approval resize, virtual rows) can
         // reduce scrollTop without user intent. Only input handlers unpin.
         lastTop=top;paint();
@@ -55,11 +63,11 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     globalThis.addEventListener?.('pointercancel',endScrollbarDrag);
     box.addEventListener('scroll', scrolled, {passive:true});
     box.addEventListener('wheel', event => {
-        if (event.deltaY < 0 && gap() - event.deltaY > 48) { stop(); pinned = false; followingTop = null; paint(); }
+        if (event.deltaY < 0) { stop(); pinned = false; followingTop = null; paint(); }
     }, {passive:true});
     let touchY = null;
     box.addEventListener('touchstart', event => {touchY=event.touches[0]?.clientY;}, {passive:true});
-    box.addEventListener('touchmove', event => {const y=event.touches[0]?.clientY;if(touchY!==null && y>touchY && gap()+y-touchY>48){stop();pinned=false;followingTop=null;paint();}touchY=y;}, {passive:true});
+    box.addEventListener('touchmove', event => {const y=event.touches[0]?.clientY;if(touchY!==null && y>touchY){stop();pinned=false;followingTop=null;paint();}touchY=y;}, {passive:true});
     box.addEventListener('keydown', event => {if(['ArrowUp','PageUp','Home'].includes(event.key) && !event.target.closest?.('input,textarea,[contenteditable=true]')){stop();pinned=false;followingTop=null;paint();}});
     globalThis.addEventListener?.('weft-reply-motion-change', () => {if((globalThis.WeftReplyMotion?.paused ?? document.hidden) || reduced()) {stop();if(pinned)follow();}});
     const latest = () => { pinned = true; newContent = false; follow(); };
