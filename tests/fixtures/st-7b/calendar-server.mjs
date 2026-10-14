@@ -1,12 +1,12 @@
 import { createServer } from 'node:https';
-import { createPublicKey, generateKeyPairSync, sign } from 'node:crypto';
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { createPublicKey, generateKeyPairSync, sign, randomUUID } from 'node:crypto';
+import { writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { managedMkdtemp, disposeManagedTemp } from '../../helpers/managed-temp.mjs';
 
 // Generated disposable test certificate and key. Product code has no certificate bypass.
 export async function calendarTlsFixture() {
-  const directory = await mkdtemp(join(tmpdir(), 'st-7b-calendar-'));
+  const directory = await managedMkdtemp('st-7b-calendar-');
   const { privateKey } = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
   const der = (tag, ...parts) => {
     const content = Buffer.concat(parts.map(part => Buffer.isBuffer(part) ? part : Buffer.from(part)));
@@ -15,7 +15,7 @@ export async function calendarTlsFixture() {
   };
   const seq = (...parts) => der(0x30, ...parts), oid = hex => der(6, Buffer.from(hex, 'hex'));
   const algorithm = seq(oid('2a8648ce3d040302'));
-  const name = seq(der(0x31, seq(oid('550403'), der(0x0c, 'localhost'))));
+  const name = seq(der(0x31, seq(oid('550403'), der(0x0c, 'synthetic-tls-' + randomUUID()))));
   const basic = seq(oid('551d13'), der(1, Buffer.from([255])), der(4, seq(der(1, Buffer.from([255])))));
   const san = seq(oid('551d11'), der(4, seq(der(0x82, 'localhost'), der(0x87, Buffer.from([127, 0, 0, 1])))));
   const tbs = seq(der(0xa0, der(2, Buffer.from([2]))), der(2, Buffer.from([1])), algorithm, name,
@@ -26,7 +26,7 @@ export async function calendarTlsFixture() {
   const key = privateKey.export({ type: 'pkcs8', format: 'pem' });
   const certificatePath = join(directory, 'calendar-cert.pem'), keyPath = join(directory, 'calendar-key.pem');
   await writeFile(certificatePath, cert); await writeFile(keyPath, key);
-  return { directory, certificatePath, certPath: certificatePath, keyPath, cert, key, async close() { await rm(directory, { recursive: true, force: true }); } };
+  return { directory, certificatePath, certPath: certificatePath, keyPath, cert, key, async close() { disposeManagedTemp(directory); } };
 }
 export function calendarIcs(events) {
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Synthetic ST-7b//ZH', ...events, 'END:VCALENDAR', ''].join('\r\n');

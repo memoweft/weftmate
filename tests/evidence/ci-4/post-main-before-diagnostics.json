@@ -1,0 +1,92 @@
+{
+  "branchHead": "fe0ee01a3351fb349253a5eab4ce10ed06cd8770",
+  "originMain": "e6a6c7c8f2c83eb1deb3f3a079b0d1299afc0a5d",
+  "checks": [
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383962/job/115667791132",
+      "name": "Required unit tests (summary)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383962/job/115661582473",
+      "name": "test (windows-latest, shard 2/3)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383962/job/115661582620",
+      "name": "test (ubuntu-latest, shard 3/3)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383962/job/115661582148",
+      "name": "Observed bridge (real MemoWeft Core)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383937/job/115661581811",
+      "name": "Relay phone first input and file task",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383979/job/115661582340",
+      "name": "Host certificates (Pebble DNS-01)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383962/job/115661582449",
+      "name": "test (ubuntu-latest, shard 1/3)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383962/job/115661582538",
+      "name": "test (ubuntu-latest, shard 2/3)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383963/job/115661581913",
+      "name": "Synthetic multi-device review gallery",
+      "state": "FAILURE"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383962/job/115661582494",
+      "name": "test (windows-latest, shard 1/3)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383949/job/115661582174",
+      "name": "Pinned DSH vendor unit tests",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383962/job/115661582543",
+      "name": "test (windows-latest, shard 3/3)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383997/job/115661582680",
+      "name": "Android debug and JVM tests",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383997/job/115661582468",
+      "name": "Web cloud login interactions",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383937/job/115661582096",
+      "name": "Relay full chain (443)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/38505383923/job/115661582186",
+      "name": "Windows package and startup smoke",
+      "state": "SUCCESS"
+    }
+  ],
+  "summary": {
+    "passed": 15,
+    "failed": 1
+  },
+  "workflowReruns": 0,
+  "next": "Only safe fixed-step and listener-class diagnostics; preserve the failed rendering run."
+}

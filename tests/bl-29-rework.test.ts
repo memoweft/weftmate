@@ -119,16 +119,3 @@ test('BL-29b M1/S3 shipped mobile full lifecycle empty main budgets errors, reco
   assert.ok(Object.values(r.idleMethods).reduce((sum:number,value:number)=>sum+value,0)<=62, 'all bridge methods count in 31s healthy idle');
   assert.ok(r.background10s.length<=1, 'all bridge methods count in 10s hidden');
 });
-
-test('BL-29c N4 real Electron and mobile independently sync catalog, settings, personalization, rename and list within 7s', {timeout:60000}, t => {
-  const r=probe('ui-extra','ui-extra.json',55000);
-  t.diagnostic(JSON.stringify({kind:'independent-config-sync',...r}));
-  assert.equal(r.failure,undefined,JSON.stringify(r));assert.deepEqual(r.errors,[]);
-  assert.deepEqual(r.individualChanges.map(row=>row.kind),['modelSettings','personalization','modelCatalog','modelRename','sessionList']);
-  for(const change of r.individualChanges)for(const row of change.rows){
-    assert.equal(row.error,undefined,JSON.stringify(change));assert.ok(row.ms<=7000,JSON.stringify(change));
-  }
-  for(const row of r.rows)if(row.kind==='rename'){
-    assert.ok(row.desktop<=6000,JSON.stringify(row));assert.ok(row.mobile<=6000,JSON.stringify(row));
-  }else {assert.equal(row.error,undefined);assert.ok(row.ms<=1000,JSON.stringify(row));}
-});

@@ -48,8 +48,14 @@ function secureUrl(value) {
   if (url.protocol !== 'https:' || url.username || url.password || url.hash) throw error('CALENDAR_ADDRESS_INVALID', '日历地址必须是 https 加密地址，账号和授权码请填在各自的输入框。');
   return url.href;
 }
-function safeError(cause) {
+export function calendarError(cause) {
   if (cause?.code?.startsWith('CALENDAR_')) return cause;
+  // A refused connection can contain a port such as 40437. It is not an HTTP
+  // 404 response; preserve transport errors before inspecting free-form text.
+  const codes = [cause?.code, cause?.cause?.code];
+  if (codes.some(code => ['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'EHOSTUNREACH',
+    'ENETUNREACH', 'ETIMEDOUT', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET'].includes(code)))
+    return error('CALENDAR_NETWORK', '暂时连不上日历，请检查网络和服务器地址后重试。');
   const text = `${cause?.code ?? ''} ${cause?.message ?? ''} ${cause?.cause?.code ?? ''} ${cause?.cause?.message ?? ''}`;
   if (/\b(?:401|403)\b|auth|unauthorized|forbidden/i.test(text)) return error('CALENDAR_AUTH_FAILED', '账号或授权码未被接受，请检查账号，并重新生成应用专用密码。');
   if (/cert|tls|ssl|issuer|self.signed/i.test(text)) return error('CALENDAR_TLS', '日历服务器的安全证书未通过验证，请联系服务商或检查服务器证书。');
@@ -227,7 +233,7 @@ export function createCalendar(config) {
         chunks.push(chunk.value);
       }
       return new Response(response.status === 204 ? null : Buffer.concat(chunks), { status: response.status, statusText: response.statusText, headers: response.headers });
-    } catch (cause) { throw safeError(cause); }
+    } catch (cause) { throw calendarError(cause); }
     finally { clearTimeout(timer); controllers.delete(controller); }
   }
   async function discover() {
@@ -240,7 +246,7 @@ export function createCalendar(config) {
         const found = (await client.fetchCalendars()).map(calendar => ({ ...calendar, url: secureUrl(calendar.url), id: id(calendar.url) }));
         if (!found.length) throw error('CALENDAR_ADDRESS_INVALID', '这个账号里没有可读取的日历，请检查日历地址和账号。');
         return calendars = found;
-      } catch (cause) { client = null; throw safeError(cause); }
+      } catch (cause) { client = null; throw calendarError(cause); }
     })();
     try { return await discovery; } finally { discovery = null; }
   }
@@ -326,7 +332,7 @@ export function createCalendar(config) {
     tools: kind === 'ics' ? calendarTools.slice(0, 2) : calendarTools,
     async test() {
       try { const list = await discover(); if (kind === 'ics') calendarComponent(await (await transport(url)).text()); return { ok: true, calendars: publicCalendars(list), timeZone: accountZone, readOnly: kind === 'ics' }; }
-      catch (cause) { throw safeError(cause); }
+      catch (cause) { throw calendarError(cause); }
     },
     async call(name, args = {}) {
       try {
@@ -341,7 +347,7 @@ export function createCalendar(config) {
         const limit = args.limit == null ? 50 : Math.min(MAX_EVENTS, Math.max(1, Math.trunc(Number(args.limit)) || 50));
         const hasMore = incomplete || rows.length > limit;
         return { events: rows.slice(0, limit), calendars: selected, timeZone: accountZone, hasMore, ...(hasMore ? { notice: '还有更多日程，可以缩小时间范围。' } : {}) };
-      } catch (cause) { throw safeError(cause); }
+      } catch (cause) { throw calendarError(cause); }
     },
     close() { closed = true; for (const controller of controllers) controller.abort(); resources.clear(); calendars = null; client = null; password = ''; username = ''; },
   };

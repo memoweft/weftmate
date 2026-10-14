@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-10-14T03:41:15.057Z",
+  "forcedCleanupTotal": 3,
+  "forcedCleanupBreakdown": {
+    "initialOwnedTestProcesses": 2,
+    "obsoleteAcceptanceController": 1
+  },
+  "remainingOwnedProcesses": 0,
+  "ownedHeavySlotsRemaining": 0,
+  "criteria": [
+    "created after task start",
+    "executable path verified",
+    "command path belongs to w9 or its owned temporary root"
+  ],
+  "normalExits": "Electron probes, Python shutdown worker, diagnostics and final cloud controller all completed; current CIM worktree census empty; post-main mobile sequence and gallery privacy regression also exited normally and released owned heavy locks.",
+  "installation": "No test identity program installed; no registration created",
+  "disk": {
+    "own": {
+      "bytes": 126563923,
+      "megabytes": 120.7,
+      "linksExcluded": 0,
+      "filesOver1GB": []
+    },
+    "entireLocal": {
+      "bytes": 247282003,
+      "megabytes": 235.8,
+      "linksExcluded": 0,
+      "filesOver1GB": []
+    },
+    "note": "Only CI-4 owns .local/ci-4; older sibling assets and linked caches are not deleted."
+  }
+}

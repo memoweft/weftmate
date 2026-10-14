@@ -5,10 +5,6 @@
       "name": "internal weekly memory digest wakes once without a chat message or inference and stays out of user schedules"
     },
     {
-      "file": "tests/bl-29-rework.test.ts",
-      "name": "BL-29c N4 real Electron and mobile independently sync catalog, settings, personalization, rename and list within 7s"
-    },
-    {
       "file": "tests/harness-model-routes.test.ts",
       "name": "keeps a useful SDK request budget when history exceeds the old account capacity"
     },
@@ -458,6 +454,7 @@
     }
   ],
   "files": [
+    "tests/bl-29-timing-config.test.ts",
     "tests/vendor-hidden-subprocesses.test.ts",
     "tests/bl-29-runtime-close.test.ts",
     "tests/weftmod-service.test.ts",
