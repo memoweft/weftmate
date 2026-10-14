@@ -44,8 +44,8 @@ import org.json.JSONObject
     Column(Modifier.fillMaxWidth().padding(horizontal=DesignTokens.space12.dp).semantics { contentDescription="工作电脑与文件夹" }) {
         Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
             if (m.computers.count { it.optBoolean("online") } != 1 || !m.newWork) Box(Modifier.weight(1f)) {
-                FeedControlButton(m.hostName,icon=R.drawable.wm_pc,trailingIcon=R.drawable.wm_down,choice=true,
-                    enabled=m.newWork && !m.workChoicesBusy,contentDescription="电脑：${m.hostName}"){computerMenu=true}
+                FeedControlButton(if(m.workComputerBusy)"正在连接…" else m.hostName,icon=R.drawable.wm_pc,trailingIcon=R.drawable.wm_down,choice=true,loading=m.workComputerBusy,
+                    enabled=m.newWork && !m.workBusy,contentDescription="电脑：${m.hostName}"){computerMenu=true}
                 NativeFileMenu(computerMenu,{computerMenu=false}) { m.computers.forEach { computer ->
                     val label=computer.stringOrEmpty("displayName").ifEmpty{computer.stringOrEmpty("name")}
                     FeedControlMenuItem(if(computer.optBoolean("online"))label else "$label · 不在线",enabled=computer.optBoolean("online"),checked=computer.stringOrEmpty("hostId")==m.hostId) {
@@ -56,18 +56,18 @@ import org.json.JSONObject
             Box(Modifier.weight(1f)) {
                 val label=m.workProject?.stringOrEmpty("name")?.ifEmpty{null} ?: "选择项目或文件夹"
                 FeedControlButton(label,icon=R.drawable.wm_folder,trailingIcon=R.drawable.wm_down,choice=true,
-                    contentDescription="项目或文件夹：$label",enabled=m.connected && !m.running && !m.workChoicesBusy){projectMenu=true;m.launch{m.refreshWorkChoices(false)}}
+                    contentDescription="项目或文件夹：$label",enabled=m.connected && !m.running && !m.workBusy){projectMenu=true;m.launch{m.refreshWorkChoices(false)}}
                 NativeFileMenu(projectMenu,{projectMenu=false}) {
                     m.projects.forEach { project ->
-                        FeedControlMenuItem(project.stringOrEmpty("name"),enabled=!m.workChoicesBusy,checked=project.stringOrEmpty("projectId")==m.workProject?.stringOrEmpty("projectId")){projectMenu=false;m.chooseWorkProject(project)}
+                        FeedControlMenuItem(project.stringOrEmpty("name"),enabled=!m.workBusy,checked=project.stringOrEmpty("projectId")==m.workProject?.stringOrEmpty("projectId")){projectMenu=false;m.chooseWorkProject(project)}
                     }
-                    if(m.projects.isEmpty())NativeFileMenuAction(if(m.workChoicesBusy)"正在读取项目…" else "还没有项目或文件夹",R.drawable.wm_folder,false){}
+                    if(m.projects.isEmpty())NativeFileMenuAction(if(m.workBusy)"正在读取项目…" else "还没有项目或文件夹",R.drawable.wm_folder,false){}
                     NativeFileMenuAction("新文件夹请在电脑上添加",R.drawable.wm_pc,false){}
-                    NativeFileMenuAction("重新读取项目",R.drawable.wm_sync,!m.workChoicesBusy){m.launch{m.refreshWorkChoices(false)}}
+                    NativeFileMenuAction("重新读取项目",R.drawable.wm_sync,!m.workBusy){m.launch{m.refreshWorkChoices(false)}}
                 }
             }
         }
-        val hint=if(!m.connected)"这段工作所在的电脑不在线，连接后可继续。" else m.workChoicesError.ifEmpty { if(m.workProject==null)"选好项目或文件夹，就能开始工作。" else "" }
+        val hint=if(m.workComputerBusy)"正在连接选好的电脑…" else if(!m.connected)"这段工作所在的电脑不在线，连接后可继续。" else m.workChoicesError.ifEmpty { if(m.workProject==null)"选好项目或文件夹，就能开始工作。" else "" }
         if(hint.isNotEmpty())Text(hint,Modifier.padding(horizontal=DesignTokens.space16.dp,vertical=DesignTokens.space4.dp),fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -95,17 +95,17 @@ import org.json.JSONObject
                 val checked=selected==project.stringOrEmpty("projectId")
                 Row(Modifier.fillMaxWidth().heightIn(min=DesignTokens.space44.dp).clip(RoundedCornerShape(DesignTokens.radius12.dp))
                     .background(if(checked)MaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
-                    .selectable(checked,enabled=m.connected && !m.workChoicesBusy,role=Role.RadioButton,onClick={selected=project.getString("projectId")}).padding(horizontal=DesignTokens.space8.dp),verticalAlignment=Alignment.CenterVertically) {
+                    .selectable(checked,enabled=m.connected && !m.workBusy,role=Role.RadioButton,onClick={selected=project.getString("projectId")}).padding(horizontal=DesignTokens.space8.dp),verticalAlignment=Alignment.CenterVertically) {
                     RadioButton(checked,null,colors=RadioButtonDefaults.colors(selectedColor=MaterialTheme.colorScheme.primary,unselectedColor=MaterialTheme.colorScheme.onSurfaceVariant))
                     Column(Modifier.weight(1f)) { Text(project.stringOrEmpty("name"),maxLines=1,overflow=TextOverflow.Ellipsis,fontSize=DesignTokens.font14.sp)
                         project.stringOrEmpty("pathHint").takeIf{it.isNotEmpty()}?.let{Text(it,fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)} }
                 }
             }
-            if(m.projects.isEmpty())Text(if(m.workChoicesBusy)"正在读取项目…" else m.workChoicesError.ifEmpty{"先在这台电脑上添加项目或文件夹。"},fontSize=DesignTokens.font13.sp)
+            if(m.projects.isEmpty())Text(if(m.workBusy)"正在读取项目…" else m.workChoicesError.ifEmpty{"先在这台电脑上添加项目或文件夹。"},fontSize=DesignTokens.font13.sp)
             if(m.workChoicesError.isNotEmpty())FeedControlButton("重新读取项目",icon=R.drawable.wm_sync){m.launch{m.refreshWorkChoices(false)}}
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp,Alignment.End)) {
                 FeedControlButton("先不用",secondary=true){m.decide(row,"rejected")}
-                FeedControlButton("切换到工作",primary=true,enabled=m.connected && !m.workChoicesBusy && selected.isNotEmpty()){m.decide(row,"allowed-once","once",selected)}
+                FeedControlButton("切换到工作",primary=true,enabled=m.connected && !m.workBusy && selected.isNotEmpty()){m.decide(row,"allowed-once","once",selected)}
             }
             if(!m.connected && m.offlineWorkReady)FeedControlButton("交给电脑，上线后做"){m.openOfflineWork(row)}
         }
