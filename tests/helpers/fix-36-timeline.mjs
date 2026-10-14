@@ -7,7 +7,7 @@ export function timelineCore() {
 }
 export function progressEvents(mode='completed',session='synthetic-session',turn=1) {
   const events=[],at='2026-10-14T05:20:00.000Z',taskId=`turn-${turn}`;
-  const add=(type,data)=>events.push({eventId:`${session}:${events.length+1}`,seq:events.length+1,type,at,sessionId:session,sourceRef:{sessionId:session,seq:events.length+1},data});
+  const add=(type,data)=>events.push({eventId:`${session}:${events.length+1}`,seq:events.length+1,orderKey:String(events.length+1).padStart(20,'0'),type,at,sessionId:session,sourceRef:{sessionId:session,seq:events.length+1},data});
   add('user.message',{text:'现在几点？顺便查一下今天的日历和健康记录。'});
   add('turn.started',{turn});
   const names=['load_tools','load_tools','mcp__health__health_query','mcp__calendar__calendar_list_events','mcp__clock__read_local_time','unknown_extension','load_tools','load_tools','weftmod_script','unknown_extension','weftmod_script','mcp__mail__mail_read'];

@@ -3,6 +3,7 @@
     {
       "eventId": "synthetic-session:1",
       "seq": 0,
+      "orderKey": "00000000000000000001",
       "type": "user.message",
       "at": "2026-10-14T05:20:00.000Z",
       "sessionId": "synthetic-session",
@@ -19,6 +20,7 @@
     {
       "eventId": "synthetic-session:27",
       "seq": 26,
+      "orderKey": "00000000000000000027",
       "type": "assistant.message",
       "at": "2026-10-14T05:20:00.000Z",
       "sessionId": "synthetic-session",
@@ -237,6 +239,7 @@
     {
       "eventId": "synthetic-session:1",
       "seq": 0,
+      "orderKey": "00000000000000000001",
       "type": "user.message",
       "at": "2026-10-14T05:20:00.000Z",
       "sessionId": "synthetic-session",
@@ -453,6 +456,7 @@
     {
       "eventId": "synthetic-session:1",
       "seq": 0,
+      "orderKey": "00000000000000000001",
       "type": "user.message",
       "at": "2026-10-14T05:20:00.000Z",
       "sessionId": "synthetic-session",
@@ -469,6 +473,7 @@
     {
       "eventId": "synthetic-session:27",
       "seq": 26,
+      "orderKey": "00000000000000000027",
       "type": "assistant.message",
       "at": "2026-10-14T05:20:00.000Z",
       "sessionId": "synthetic-session",
@@ -687,6 +692,7 @@
     {
       "eventId": "synthetic-session:1",
       "seq": 0,
+      "orderKey": "00000000000000000001",
       "type": "user.message",
       "at": "2026-10-14T05:20:00.000Z",
       "sessionId": "synthetic-session",
@@ -902,6 +908,7 @@
     {
       "eventId": "synthetic-session:26",
       "seq": 25,
+      "orderKey": "00000000000000000026",
       "type": "approval.requested",
       "at": "2026-10-14T05:20:00.000Z",
       "sessionId": "synthetic-session",

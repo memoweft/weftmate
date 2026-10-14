@@ -331,7 +331,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             .heightIn(min=DesignTokens.space44.dp).padding(vertical=gap)
             .semantics { contentDescription=if(expanded) "收起回复进展" else "展开回复进展";stateDescription=if(expanded)"已展开" else "已收起" },verticalAlignment=Alignment.CenterVertically) {
             if(data.optBoolean("running")) CircularProgressIndicator(Modifier.size(DesignTokens.space16.dp),color=color,strokeWidth=1.dp)
-            Text(data.optString("summary"),Modifier.weight(1f).padding(end=gap),fontSize=DesignTokens.font13.sp,color=color)
+            Text(data.optString("summary"),Modifier.weight(1f).padding(end=gap),maxLines=1,overflow=TextOverflow.Ellipsis,fontSize=DesignTokens.font13.sp,color=color)
             Icon(painterResource(if(expanded)R.drawable.wm_down else R.drawable.wm_right),null,Modifier.size(DesignTokens.space16.dp),tint=color)
         }
         val steps=state.visibleSteps(row)

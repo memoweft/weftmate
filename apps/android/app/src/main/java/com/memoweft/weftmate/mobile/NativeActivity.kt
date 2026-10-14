@@ -31,8 +31,20 @@ class NativeActivity : HybridActivity() {
     internal var overlayBack: (() -> Unit)? = null
     private var webRoute="login"
     private var webEmbedded=false
-    internal suspend fun timelinePresentation(events: List<JSONObject>, approvals: List<JSONObject>, questions: List<JSONObject>): List<JSONObject> =
-        suspendCancellableCoroutine { continuation ->
+    private var timelineMapperInstalled=false
+    internal suspend fun timelinePresentation(events: List<JSONObject>, approvals: List<JSONObject>, questions: List<JSONObject>): List<JSONObject> {
+        // A shell upgrade may reopen the previous downloaded UI bundle. Load
+        // the same shipped shared mapper when that bundle predates this view.
+        if(!timelineMapperInstalled) suspendCancellableCoroutine<Unit> { continuation ->
+            val shared=assets.open("ui-core/timeline-model.js").bufferedReader().use { it.readText() }
+            embeddedWeb.evaluateJavascript("if(typeof WeftUiCore.nativeTimelineRows!=='function'){$shared}Boolean(WeftUiCore.nativeTimelineRows)") { value ->
+                if(continuation.isActive) {
+                    timelineMapperInstalled=value=="true"
+                    continuation.resumeWith(if(timelineMapperInstalled)Result.success(Unit) else Result.failure(IllegalStateException("TIMELINE_PRESENTATION_UNAVAILABLE")))
+                }
+            }
+        }
+        return suspendCancellableCoroutine { continuation ->
             val script = "JSON.stringify(WeftUiCore.nativeTimelineRows(${org.json.JSONArray(events)},${org.json.JSONArray(approvals)},${org.json.JSONArray(questions)}))"
             embeddedWeb.evaluateJavascript(script) { value ->
                 if (continuation.isActive) continuation.resumeWith(runCatching {
@@ -40,6 +52,7 @@ class NativeActivity : HybridActivity() {
                 })
             }
         }
+    }
     internal suspend fun phonePresentation(action: String, params: JSONObject = JSONObject()): JSONObject {
         val token = java.util.UUID.randomUUID().toString()
         val key = JSONObject.quote(token)
@@ -98,7 +111,7 @@ class NativeActivity : HybridActivity() {
         applyWebFrame()
         return web
     }
-    override fun embeddedPageFinished() { embeddedWebIdentity=embeddedWeb;applyWebFrame();if(::model.isInitialized && model.loggedIn && model.tab=="chat")parkWeb();embeddedFeedLoaded?.invoke() }
+    override fun embeddedPageFinished() { timelineMapperInstalled=false;embeddedWebIdentity=embeddedWeb;applyWebFrame();if(::model.isInitialized && model.loggedIn && model.tab=="chat")parkWeb();embeddedFeedLoaded?.invoke() }
     internal fun parkWeb() {
         if (!::model.isInitialized || model.tab !in listOf("chat", "activity", "goals", "health", "settings", "models", "library")) return
         coveredHostHistory = true

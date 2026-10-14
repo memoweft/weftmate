@@ -158,7 +158,7 @@
     function turnOutcome(events, taskId, stopView) {
         const matches = event => event.data?.taskId === taskId ||
             event.type === 'turn.ended' && (taskId === `turn-${event.data?.turn}` || taskId?.endsWith(`:turn-${event.data?.turn}`)) &&
-            (!event.sessionId || !taskId.includes(':') || taskId.startsWith(`${event.sessionId}:`));
+            (!(event.sessionId || event.sourceRef?.sessionId) || !taskId.includes(':') || taskId.startsWith(`${event.sessionId || event.sourceRef?.sessionId}:`));
         const end = events.filter(event => ['task.ended','turn.ended'].includes(event.type) && matches(event)).at(-1);
         if (stopView?.terminal && stopView.text === '已停止' && end?.data?.reason !== 'completed') return {terminal:true,reason:'aborted'};
         if (stopView?.terminal && !end) return {terminal:true,reason:stopView.text==='已结束'?'completed':'aborted'};
@@ -241,7 +241,7 @@
     // Kotlin never maintains a second tool-name mapping.
     function nativeTimelineRows(events, approvals = [], questions = []) {
         const normalized = events.map((event, index) => ({...event, seq:index, sourceSeq:event.seq,
-            data:{...event.data, ...(event.type.startsWith('tool.') ? {
+            data:{...event.data, ...(event.data?.completedStep ? {completedStep:{...event.data.completedStep}} : {}), ...(event.type.startsWith('tool.') ? {
                 stepId:event.data?.stepId || event.data?.callId || `tool-${index}`,
                 taskId:event.data?.taskId || `turn-${event.data?.turn || 0}`,
                 state:event.data?.state || (event.type.endsWith('started')?'running':event.type.endsWith('failed')?'failed':'completed')
@@ -307,7 +307,7 @@
                     if (event.type === 'step.completed')
                         step.endAt = event.at;
                 }
-                if (toolActivity(step.toolName) || /^执行工具(?:\s|$)/.test(step.summary || '')) step.summary = toolSummary(step.toolName, step.arguments);
+                if (toolActivity(step.toolName) || /^执行工具(?:\s|$)/.test(step.summary || '') || step.summary === '调用扩展服务') step.summary = toolSummary(step.toolName, step.arguments);
             }
             else if (!['turn.started', 'turn.ended', 'task.started', 'task.ended', 'approval.requested', 'approval.resolved'].includes(event.type))
                 group = null;
@@ -315,7 +315,9 @@
         for (const step of steps.values()) {
             const request = ordered.find(event => event.type === 'approval.requested' && event.data?.callId &&
                 (!event.data.taskId || event.data.taskId === step.taskId) && (event.data.callId === step.stepId || event.data.callId === step.callId));
-            const row = approvals.find(row => row.callId && (row.callId === step.stepId || row.callId === step.callId) && (!row.turn || step.taskId === `turn-${row.turn}` || row.taskId === step.taskId));
+            const row = approvals.find(row => row.callId && (row.callId === step.stepId || row.callId === step.callId) &&
+                (!row.sessionId || !step.sessionId || row.sessionId === step.sessionId) &&
+                (!row.turn || step.taskId === `turn-${row.turn}` || step.taskId === `${row.sessionId}:turn-${row.turn}` || row.taskId === step.taskId));
             const resolved = request && ordered.find(event => event.type === 'approval.resolved' && event.data?.approvalId === request.data.approvalId);
             const record = row || resolved?.data || request && { status: 'pending' };
             step.approvalText = approvalProgress(record);

@@ -607,14 +607,14 @@ test('UI-3 approvals and sources share summaries for shell/files/web/subtask and
     ['edit', { path: 'out/report.md' }, '修改 1 个文件：report.md'],
     ['web_fetch', { url: 'https://example.com/a' }, '访问网页 example.com'],
     ['subagent', { prompt: '核对结果' }, '交给子任务：核对结果'],
-    ['custom_tool', { a: 1, b: 'two', c: true, d: 'omitted' }, '调用扩展服务'],
+    ['custom_tool', { a: 1, b: 'two', c: true, d: 'omitted' }, '使用扩展工具'],
   ] as any[]) {
     const text = JSON.stringify({ arguments: JSON.stringify(args) })
     assert.equal(f.core.toolSummary(tool, args), summary)
     assert.equal(f.core.sourcePresentation(tool, text).summary, summary)
     assert.equal(f.core.approvalPresentation({ toolName: tool, reason: JSON.stringify(args) }).summary, summary)
   }
-  assert.equal(f.core.toolSummary('unknown', 'invalid json'), '调用扩展服务')
+  assert.equal(f.core.toolSummary('unknown', 'invalid json'), '使用扩展工具')
   assert.equal(f.core.approvalPresentation({ toolName: 'write', reason: '[weftmate:overwrite] 覆盖报告，可从 Git 恢复。' }).summary, '覆盖报告，可从 Git 恢复。')
 })
 
