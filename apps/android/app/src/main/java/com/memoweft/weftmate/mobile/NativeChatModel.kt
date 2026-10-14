@@ -146,15 +146,15 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (bootstrapping) return
         bootstrapping = true
         try {
-        hostModelServices = false; workAndChat = false
+        hostModelServices = false
         val b = call("app.bootstrap")
         val nextOwner = b.optString("owner")
-        if (owner != nextOwner) { loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
+        if (owner != nextOwner) { workAndChat=false; loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
         owner = nextOwner; loggedIn = b.optBoolean("loggedIn"); standalone = b.optString("authSource") == "phone"
         sidebarMode = prefs.getString("conversation-mode:$owner", "chat").let { if (it == "work") "work" else "chat" }
         val appearance = call("settings.appearance")
         dark = resolvedAppearanceDark(appearance.optString("value"), appearance.optBoolean("systemDark"))
-        if (!loggedIn) { composerSave?.cancel(); phoneOwner = ""; chats = emptyList(); models = emptyList(); running = false; phoneArchive = false; loading = false; return }
+        if (!loggedIn) { workAndChat=false; composerSave?.cancel(); phoneOwner = ""; chats = emptyList(); models = emptyList(); running = false; phoneArchive = false; loading = false; return }
         var phoneView = activity.phonePresentation("view")
         readingPreferences(phoneView)
         if(phoneView.optBoolean("active")) standalone=true
