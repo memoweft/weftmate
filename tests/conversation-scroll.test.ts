@@ -3,16 +3,42 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('../src/personal-access-ui/conversation-scroll.js',import.meta.url),'utf8');
-function fixture(){
+function fixture(smooth=false){
  const frames:Function[]=[],observers:Function[]=[],viewport=new Map(),events=new Map();
  const node=()=>({scrollTop:0,scrollHeight:1500,clientHeight:500,clientWidth:300,offsetWidth:308,getBoundingClientRect:()=>({right:308}),hidden:true,textContent:'',listeners:new Map(),setAttribute(){},addEventListener(name:string,fn:Function){this.listeners.set(name,fn);}});
  const box=node(),content=node(),button=node();box.scrollTop=1000;
- const context:any={document:{hidden:false},matchMedia:()=>({matches:true}),requestAnimationFrame:(fn:Function)=>frames.push(fn),cancelAnimationFrame(){},addEventListener:(name:string,fn:Function)=>events.set(name,fn),visualViewport:{addEventListener:(name:string,fn:Function)=>viewport.set(name,fn)},ResizeObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}},MutationObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}}};
+ let actualTop=box.scrollTop;Object.defineProperty(box,'scrollTop',{get:()=>actualTop,set:(value:number)=>{actualTop=Math.max(0,Math.min(value,box.scrollHeight-box.clientHeight))}});
+ let time=0;
+ const context:any={document:{hidden:false,documentElement:{}},performance:{now:()=>time},getComputedStyle:()=>({getPropertyValue:()=>''}),matchMedia:()=>({matches:!smooth}),requestAnimationFrame:(fn:Function)=>{frames.push(fn);return fn},cancelAnimationFrame:(fn:Function)=>{const i=frames.indexOf(fn);if(i>=0)frames.splice(i,1)},addEventListener:(name:string,fn:Function)=>events.set(name,fn),visualViewport:{addEventListener:(name:string,fn:Function)=>viewport.set(name,fn)},ResizeObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}},MutationObserver:class{constructor(fn:Function){observers.push(fn)}observe(){}}};
  vm.runInNewContext(source,context);const scroll=context.WeftConversationScroll(box,content,button);
  const flush=()=>{while(frames.length)frames.shift()!(0);};
  const fire=(name:string,event:any={})=>box.listeners.get(name)?.(event);
- return {box,content,button,scroll,flush,fire,observers,viewport,events};
+ const tick=()=>{time+=16;const batch=frames.splice(0);batch.forEach(fn=>fn(time));return box.scrollTop;};
+ return {box,content,button,scroll,flush,fire,observers,viewport,events,tick};
 }
+test('smooth follow never replays its old origin after a layout clamp reaches the new bottom',()=>{
+ const f=fixture(true);f.scroll.latest();f.box.scrollHeight+=160;f.scroll.changed();for(let i=0;i<8;i++)f.tick();
+ // Composer shrinks/keyboard closes during the animation; Chromium clamps.
+ f.box.clientHeight+=80;f.box.scrollTop=f.box.scrollHeight-f.box.clientHeight;f.fire('scroll');f.scroll.changed();
+ const positions=Array.from({length:30},()=>{f.scroll.changed();return f.tick()});
+ assert.ok(positions.every(top=>Math.abs(top-1080)<=1),JSON.stringify(positions));
+});
+test('continuous growth advances each frame rather than restarting follow at zero progress',()=>{
+ const f=fixture(true);f.scroll.latest();const positions=[];
+ for(let i=0;i<20;i++){f.box.scrollHeight+=20;f.scroll.changed();positions.push(f.tick());}
+ assert.ok(positions.at(-1)!>positions[0]+200,JSON.stringify(positions));
+ for(let i=0;i<30;i++)f.tick();assert.equal(f.box.scrollTop,f.box.scrollHeight-f.box.clientHeight);
+});
+test('an upward gesture near bottom cancels animation immediately, even within the bottom tolerance',()=>{
+ for(const input of ['wheel','touch','scrollbar']){
+ const f=fixture(true);f.scroll.latest();f.box.scrollHeight+=20;f.scroll.changed();f.tick();
+ if(input==='wheel')f.fire('wheel',{deltaY:-10});
+ if(input==='touch'){f.fire('touchstart',{touches:[{clientY:100}]});f.fire('touchmove',{touches:[{clientY:110}]});}
+ if(input==='scrollbar')f.fire('pointerdown',{pointerType:'mouse',clientX:305});
+ f.box.scrollTop-=10;const top=f.box.scrollTop;f.fire('scroll');f.scroll.changed();
+ assert.equal(f.scroll.pinned,false);assert.ok(Array.from({length:20},()=>f.tick()).every(value=>value===top));
+ }
+});
 test('conversation follows streaming growth, keyboard closure and approval layout clamping',()=>{
  const f=fixture();f.scroll.latest();
  // Keyboard closes: viewport grows, the browser clamps top before resize.
