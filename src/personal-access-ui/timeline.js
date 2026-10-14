@@ -11,9 +11,11 @@
     const put = (key, seq, build) => {
       seen.add(key); let row = existing.get(key)
       if (!row) { row = node(options.tag || 'li', 'timeline-entry'); row.dataset.timeline = key; existing.set(key, row) }
+      const previousSeq = row.dataset.seq
       row.dataset.seq = String(seq); build(row)
       const before = [...list.children].find(n => n !== row && Number(n.dataset.seq) > seq)
-      if (before) list.insertBefore(row, before); else list.append(row)
+      if (before) { if (row.nextElementSibling !== before) list.insertBefore(row, before) }
+      else if (!row.parentNode || previousSeq !== String(seq)) list.append(row)
       return row
     }
     const started = ordered.filter(event => event.type === 'turn.started').at(-1)

@@ -1,8 +1,19 @@
 import { Config, apply as applyTitle } from '@deepseek-ai/dsh-session-title-first-prompt-llm';
 import { runWithModelSlot } from '../model-scheduler-client.mjs';
+import { normalizeSessionTitle } from '@deepseek-ai/dsh-session-title';
 export { Config };
 export const name = 'session-title-first-prompt-llm';
 export const inject = ['sessionTitle', 'llm', 'sessions'];
+export function titleForConversation(result, messages, targetCharacters) {
+  const first = String(messages[0]?.text || '');
+  // The observed failure is an English title for Chinese input. Preserve the
+  // user's own topic when a model ignores the language instruction; no retry.
+  if (/\p{Script=Han}/u.test(first) && !/[\u3040-\u30ff\uac00-\ud7af]/u.test(first) && !/\p{Script=Han}/u.test(result.title)) {
+    const text = first.slice(first.search(/\p{Script=Han}/u)).replace(/\s+/g, ' ').trim();
+    return { ...result, title: normalizeSessionTitle(Array.from(text).slice(0,targetCharacters).join(''),Number.MAX_SAFE_INTEGER) };
+  }
+  return result;
+}
 export function titleLanguageInstruction(messages) {
   const framed = messages.flatMap(message => message.content || []).filter(block => block.type === 'text').map(block => block.text).join('\n');
   let source = framed;
@@ -22,8 +33,9 @@ export function apply(ctx, config) {
           if (!response.ok) throw new Error('BACKGROUND_MODEL_UNAVAILABLE');
           request = { ...request, route: await response.json() };
         }
-        return runWithModelSlot('background', request.signal, () => provider.generate(request),
+        const result = await runWithModelSlot('background', request.signal, () => provider.generate(request),
           scheduler, { profileId: request.route?.provider ?? '' });
+        return titleForConversation(result,request.messages,config.targetCjkCharacters);
       },
     });
     const value = Reflect.get(target, method);
