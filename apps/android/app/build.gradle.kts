@@ -20,8 +20,8 @@ android {
             .orElse("com.memoweft.weftmate.mobile.debug").get()
         minSdk = 26
         targetSdk = 35
-        versionCode = 48
-        versionName = "0.8.35"
+        versionCode = 49
+        versionName = "0.8.36"
         buildConfigField("String", "UPDATE_CHANNEL", "\"$updateChannel\"")
         buildConfigField("boolean", "NATIVE_UI", providers.gradleProperty("weftmateNativeUi").orElse("true").get())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
