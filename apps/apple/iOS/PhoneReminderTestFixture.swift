@@ -18,7 +18,7 @@ struct PhoneReminderTestFixture: View {
 
             } else { ProgressView("准备提醒检查…") }
         }.preferredColorScheme(dark ? .dark : .light)
-            .overlay(alignment:.top) { Text("setup="+setupPhase+" "+systemStatus).font(.caption2).accessibilityIdentifier("reminders.systemEvidence") }
+            .overlay(alignment:.top) { Text("setup="+setupPhase+" "+systemStatus).font(AppleTokens.Fonts.caption2).accessibilityIdentifier("reminders.systemEvidence") }
             .task {
                 await app.start();setupPhase="restored";app.phoneChat.activate(app:app)
                 do {
