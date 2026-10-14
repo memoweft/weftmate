@@ -10,13 +10,14 @@ private actor NativeAccountTransport: HTTPTransport {
     let privateKey: SecKey
     let jwk: RSAPublicKey
     let fault: String?
+    let taskSupport: Int?
     let subject: String
     var requests: [URLRequest] = []
     var nonce = ""
     var state = ""
     var rotation = 0
-    init(configuration: CloudConfiguration, thumbprint: String, fault: String? = nil, subject: String = "synthetic-sub") throws {
-        self.configuration = configuration; self.thumbprint = thumbprint; self.fault = fault; self.subject = subject
+    init(configuration: CloudConfiguration, thumbprint: String, fault: String? = nil, subject: String = "synthetic-sub", taskSupport: Int? = nil) throws {
+        self.configuration = configuration; self.thumbprint = thumbprint; self.fault = fault; self.subject = subject;self.taskSupport=taskSupport
         privateKey = SecKeyCreateRandomKey([kSecAttrKeyType: kSecAttrKeyTypeRSA, kSecAttrKeySizeInBits: 2048] as CFDictionary, nil)!
         jwk = try RSAPublicKey(publicKey: SecKeyCopyPublicKey(privateKey)!, additionalParameters: ["kid": "native", "alg": "RS256", "use": "sig"])
     }
@@ -86,8 +87,18 @@ private actor NativeAccountTransport: HTTPTransport {
             return try reply(["devices": [], "hosts": []])
         }
         if path.hasSuffix("/hosts/offline/status") {
-            return try reply(["hostId": "host-one", "accountId": subject, "generation": 3, "authorized": true])
+            var value: [String:Any] = ["hostId": "host-one", "accountId": subject, "generation": 3, "authorized": true]
+            if let taskSupport { value["capabilities"]=["offlineTasks":taskSupport] }
+            return try reply(value)
         }
+        if path.contains("/hosts/offline/tasks/") {
+            #expect(taskSupport == 1)
+            let body=try JSONSerialization.jsonObject(with:request.httpBody!) as! [String:Any]
+            if path.hasSuffix("clear") { return try reply(["deleted":true]) }
+            if path.hasSuffix("list") { return try reply(["items":[["id":"task-offline","hostId":"host-one","state":"waiting"]]]) }
+            return try reply(["id":body["id"]!,"hostId":body["hostId"]!,"state":path.hasSuffix("cancel") ? "canceled" : "waiting"])
+        }
+        if path.hasSuffix("/auth/logout") { return try reply(["loggedOut":true]) }
         if path.hasSuffix("request") { return try reply(["error": ["code": "RATE_LIMITED"]], headers: ["retry-after": "37"], status: 429) }
         throw APIFailure.invalidResponse
     }
@@ -131,6 +142,41 @@ private actor NativeAccountTransport: HTTPTransport {
         let payload = try JSONSerialization.jsonObject(with: OfflineVault.decode(String(proof[1]))) as! [String: Any]
         #expect(payload["htu"] as? String == config.audience + "/hosts/offline/status")
         #expect(payload["htm"] as? String == "POST"); #expect(payload["ath"] as? String != nil)
+    }
+    @Test func mode2iOfflineCloudOnlyUsesDeclaredTaskRoutesAndDPoP() async throws {
+        for capability in [nil,1] as [Int?] {
+            let config=CloudConfiguration(server:try ServerConfiguration(input:"https://cloud.example.com"))
+            let key=try CloudDeviceKey(softwareStore:MemoryStore())
+            let fixture=try NativeAccountTransport(configuration:config,thumbprint:key.thumbprint,taskSupport:capability)
+            let client=CloudAccountClient(configuration:config,key:key,store:MemoryStore(),transport:fixture)
+            try await client.beginAppLogin()
+            let reply=try await client.appLogin(email:"synthetic@example.com",password:UUID().uuidString,name:"Synthetic",type:"ios")
+            try await client.finishAppLogin(resumeURL:reply.resumeUrl!)
+            let authorization=try await client.offlineStatus(hostID:"host-one")
+            let task=try JSONDecoder().decode(OfflineWorkTask.self,from:Data("{\"id\":\"task-offline\",\"hostId\":\"host-one\",\"generation\":3,\"state\":\"sending\",\"envelope\":{\"version\":1,\"algorithm\":\"RSA-OAEP-256+A256GCM\",\"aad\":\"synthetic\",\"wrappedKey\":\"synthetic\",\"iv\":\"synthetic\",\"ciphertext\":\"synthetic\"}}".utf8))
+            if capability == 1 {
+                let first=try await client.submitOfflineWork(task,authorization:authorization)
+                let repeated=try await client.submitOfflineWork(task,authorization:authorization)
+                #expect(first.id == repeated.id && first.state == "waiting")
+                #expect(try await client.listOfflineWork(hostID:"host-one",authorization:authorization).count == 1)
+                #expect(try await client.cancelOfflineWork(task,authorization:authorization).state == "canceled")
+            } else {
+                await #expect(throws:OfflineFailure.authorization) { try await client.submitOfflineWork(task,authorization:authorization) }
+            }
+            try await client.logout()
+            let requests=await fixture.recorded().filter { $0.url!.path.contains("/hosts/offline/tasks/") }
+            #expect(requests.count == (capability == 1 ? 5 : 0))
+            if capability == 1 {
+                #expect(requests.last?.url!.path.hasSuffix("/clear") == true)
+                #expect(requests[0].httpBody == requests[1].httpBody)
+            }
+            for request in requests {
+                #expect(request.value(forHTTPHeaderField:"Authorization")?.hasPrefix("DPoP ") == true)
+                #expect(request.value(forHTTPHeaderField:"DPoP") != nil && request.value(forHTTPHeaderField:"Cookie") == nil)
+                let body=try JSONDecoder().decode(JSONValue.self,from:request.httpBody!)
+                #expect(body["text"] == nil && body["sessionId"] == nil && body["projectId"] == nil)
+            }
+        }
     }
     @Test func formTransitionsClearSecretsPreserveEmailAndCountdown() {
         var form = AppAccountForm(); form.email = "synthetic@example.com"

@@ -9,6 +9,7 @@ private struct Credential: Codable, Sendable {
 }
 private struct DevicesReply: Decodable { let devices: [DeviceRecord] }
 private struct RemoteSession: Decodable {
+    let mode: ConversationMode?; let displayTitle: String?; let workHostId: String?; let workDirectory: WorkDirectory?; let logicalHistory: Bool?
     let temporary: Bool?; let memoryMode: String?; let recallEnabled: Bool?; let autoDeleteDays: Int?; let expiresAt: String?; let hasTemporaryContent: Bool?
     var temporaryState: TemporaryChatState { .init(temporary: temporary ?? false, memoryMode: memoryMode ?? "on", recallEnabled: recallEnabled ?? true, autoDeleteDays: autoDeleteDays, expiresAt: expiresAt, hasTemporaryContent: hasTemporaryContent ?? false) }
     let hostId: String?; let updatedAt: String?
@@ -587,7 +588,7 @@ public actor PersonalClient {
             // FX-14/A15 activity and execution-host metadata remain native facts. The logical Chat schema does not supply them.
             let native: SessionsReply = try await authorized(auth, generation, path: includeArchived ? "/sessions?archived=all" : "/sessions")
             let bySession = Dictionary(uniqueKeysWithValues: native.sessions.map { ($0.sessionId, $0) })
-            var rows = [main.summary], cursor: String? = nil
+            var rows = [main.summary(hostID: auth.session.hostId, updatedAt: nil)], cursor: String? = nil
             repeat {
                 var query = ["kind": "side", "archived": includeArchived ? "all" : "false", "limit": "200"]; query["cursor"] = cursor
                 let page: ChatList = try await parityRequest(path: attachmentPath("/chats", query: query))
@@ -612,13 +613,13 @@ public actor PersonalClient {
             guard bound.count <= 1 else { throw APIFailure.invalidResponse }
             let session = bound.first
             rows.append(.init(id: id, title: session?.title ?? title, conversationId: id, sessionId: session?.sessionId,
-                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false, pinned: session?.pinned ?? false, unread: session?.unread ?? false, groupId: session?.groupId, contextUsage: session?.contextUsage, processing: session?.processing, projectId: session?.projectId, projectName: session?.projectName, projectNotice: session?.projectNotice, taskAvailable: session?.taskAvailable, hostId: session?.hostId, updatedAt: session?.updatedAt, temporaryState: session?.temporaryState ?? .init()))
+                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false, pinned: session?.pinned ?? false, unread: session?.unread ?? false, groupId: session?.groupId, contextUsage: session?.contextUsage, processing: session?.processing, projectId: session?.projectId, projectName: session?.projectName, projectNotice: session?.projectNotice, taskAvailable: session?.taskAvailable, hostId: session?.hostId, updatedAt: session?.updatedAt, temporaryState: session?.temporaryState ?? .init(), mode: session?.mode, workHostId: session?.workHostId, workDirectory: session?.workDirectory, logicalHistory: session?.logicalHistory))
         }
         for session in host.sessions where session.conversationId == nil || grouped[session.conversationId!] == nil {
             rows.append(.init(id: session.conversationId ?? session.sessionId,
-                title: session.title.isEmpty ? "电脑会话" : session.title, conversationId: session.conversationId,
+                title: session.displayTitle ?? (session.title.isEmpty ? "电脑会话" : session.title), conversationId: session.conversationId,
                 sessionId: session.sessionId, running: session.running, sendAvailable: false,
-                originalModelLabel: session.modelProfileId, archived: session.archived ?? false, pinned: session.pinned ?? false, unread: session.unread ?? false, groupId: session.groupId, contextUsage: session.contextUsage, processing: session.processing, projectId: session.projectId, projectName: session.projectName, projectNotice: session.projectNotice, taskAvailable: session.taskAvailable, hostId: session.hostId, updatedAt: session.updatedAt, temporaryState: session.temporaryState))
+                originalModelLabel: session.modelProfileId, archived: session.archived ?? false, pinned: session.pinned ?? false, unread: session.unread ?? false, groupId: session.groupId, contextUsage: session.contextUsage, processing: session.processing, projectId: session.projectId, projectName: session.projectName, projectNotice: session.projectNotice, taskAvailable: session.taskAvailable, hostId: session.hostId, updatedAt: session.updatedAt, temporaryState: session.temporaryState, mode: session.mode, workHostId: session.workHostId, workDirectory: session.workDirectory, logicalHistory: session.logicalHistory))
         }
         try check(generation)
         syncEvents = events

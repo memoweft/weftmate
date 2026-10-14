@@ -6,7 +6,12 @@ import WeftMateCore
 enum AppleContractUIFixture {
     static let sessionID = "session-11111111-1111-4111-8111-111111111111"
     static let attachmentID = "attachment-33333333-3333-4333-8333-333333333333"
-    static func makeClient() -> PersonalClient { PersonalClient(credentialStore: Credentials(), transport: Transport()) }
+    static func makeClient() -> PersonalClient {
+        #if os(iOS)
+        if ProcessInfo.processInfo.arguments.contains("--mode2i-fixture") { return PersonalClient(credentialStore: Mode2IKeys(), transport: Mode2ITransport()) }
+        #endif
+        return PersonalClient(credentialStore: Credentials(), transport: Transport())
+    }
     static func selectedFile() throws -> URL {
         let file = FileManager.default.temporaryDirectory.appendingPathComponent("A2-测试文件.txt")
         try Data("A2 controlled attachment file 中文\n".utf8).write(to: file)
