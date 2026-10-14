@@ -280,7 +280,7 @@
         goals: '你想长期推进的目标会出现在这里。连上电脑后可添加目标和定时任务。',
         library: '对话中生成的文件和成果会出现在这里。连上电脑后可查看电脑上的成果。',
         memory: '连上电脑后，WeftMate 才会从对话中整理记忆。手机上的对话会保留。' };
-      const icon=el('span','empty-state-icon');icon.append(WeftIcons.create({health:'health',activity:'bell',goals:'approval',library:'folder',memory:'memory'}[name]||'device',32));
+      const icon=el('span','empty-state-icon');icon.append(WeftIcons.create({health:'health',activity:'bell',goals:'goal',library:'folder',memory:'memory'}[name]||'device',32));
       target.replaceChildren(heading(mobilePageNames[name] || mobileSettingsRegistry.get(name)?.name || (name==='memory'?'记忆':'设置')), icon,notice(copy[name] || '连上电脑后可用。'), action('怎么连上电脑', () => page('devices'), false));
     },
   };

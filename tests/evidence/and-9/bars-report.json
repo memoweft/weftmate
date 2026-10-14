@@ -1,0 +1,206 @@
+{
+  "synthetic": true,
+  "instrumentation": [
+    {
+      "width": 360,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "theme": "dark",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "and9-360-light-delete-service-confirm.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-light-remove-computer-confirm.png",
+      "pageTheme": "light",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-delete-service-confirm.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-360-dark-remove-computer-confirm.png",
+      "pageTheme": "dark",
+      "widthDp": 360,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-delete-service-confirm.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-light-remove-computer-confirm.png",
+      "pageTheme": "light",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-delete-service-confirm.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    },
+    {
+      "file": "and9-390-dark-remove-computer-confirm.png",
+      "pageTheme": "dark",
+      "widthDp": 390,
+      "systemVersion": "15",
+      "systemTheme": "Night mode: yes"
+    }
+  ],
+  "occupancy": {
+    "startedAt": "2026-10-13T21:03:21.836Z",
+    "heavySlot": "heavy-1.lock",
+    "releasedAt": "2026-10-13T21:03:48.738Z"
+  },
+  "installedOtherPackages": 2,
+  "systemVersion": "15",
+  "systemTheme": "Night mode: yes",
+  "apkHashes": {
+    "app": "abd894e1c75448a0207a1bf53c21d79d414601ecee1bc01d3c98737da3e8d566",
+    "test": "3a61fa6b4b47da7abe3616bbb254450fae4cb7ab17bff518e9375a14e60cb1dc"
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "DELETE",
+      "path": "/personal/v1/model-services/model-service-11111111-1111-4111-8111-111111111111",
+      "expectedRevision": 1
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "DELETE",
+      "path": "/personal/v1/model-services/model-service-11111111-1111-4111-8111-111111111111",
+      "expectedRevision": 1
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "DELETE",
+      "path": "/personal/v1/model-services/model-service-11111111-1111-4111-8111-111111111111",
+      "expectedRevision": 1
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/models"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    },
+    {
+      "method": "DELETE",
+      "path": "/personal/v1/model-services/model-service-11111111-1111-4111-8111-111111111111",
+      "expectedRevision": 1
+    },
+    {
+      "method": "GET",
+      "path": "/personal/v1/model-services"
+    }
+  ],
+  "privateAdbClosed": true
+}

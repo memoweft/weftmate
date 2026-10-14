@@ -3,7 +3,7 @@
   const drawer=$('drawer'),primary=el('div','drawer-primary'),main=drawer.querySelector('.rail-main-chat');
   drawer.querySelector('.drawer-brand').after(primary);
   if(main)primary.append(main);
-  for(const [id,name,icon] of [['activity','动态','bell'],['health','健康','health'],['goals','目标','approval'],['library','成果库','folder']]){
+  for(const [id,name,icon] of [['activity','动态','bell'],['health','健康','health'],['goals','目标','goal'],['library','成果库','folder']]){
     const button=el('button','',name);button.type='button';button.dataset.mobilePage=id;button.prepend(WeftIcons.create(icon,20));
     button.onclick=()=>{closeDrawer();void selectMobileTab(id);};primary.append(button);
   }

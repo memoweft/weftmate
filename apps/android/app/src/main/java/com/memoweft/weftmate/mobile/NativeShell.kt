@@ -68,7 +68,7 @@ private val touch = DesignTokens.space44.dp
 private val pill = RoundedCornerShape(DesignTokens.radius26.dp)
 private val card = RoundedCornerShape(DesignTokens.radius16.dp)
 private val bubble = RoundedCornerShape(DesignTokens.radius26.dp)
-private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity" to ("动态" to R.drawable.wm_bell), "health" to ("健康" to R.drawable.wm_heart), "goals" to ("目标" to R.drawable.wm_check_circle), "library" to ("成果库" to R.drawable.wm_folder))
+private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity" to ("动态" to R.drawable.wm_bell), "health" to ("健康" to R.drawable.wm_heart), "goals" to ("目标" to R.drawable.wm_goal), "library" to ("成果库" to R.drawable.wm_folder))
 
 @Composable private fun NativeTheme(dark: Boolean, content: @Composable () -> Unit) {
     val accent=Color(if(dark)DesignTokens.nativeDarkAccent else DesignTokens.nativeAccent)
@@ -101,6 +101,8 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
 @Composable internal fun NativeShell(m: NativeChatModel, activity: NativeActivity) {
     // Observe the route here; a forwarded theme lambda must also change when navigation changes.
     val selectedTab=m.tab
+    val settings=activity.settings
+    LaunchedEffect(m.owner,m.loggedIn) { settings.reset() }
     val signedIn=m.loggedIn
     val account=m.owner
     var overflow by remember { mutableStateOf(false) }
@@ -123,10 +125,10 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
         val focus=LocalFocusManager.current
         var drawer by remember { mutableStateOf(false) }
         androidx.activity.compose.BackHandler(showOverflow) { overflow=false }
-        SideEffect { activity.overlayBack=if(drawer) ({drawer=false}) else null }
+        SideEffect { activity.overlayBack=if(drawer) ({drawer=false}) else settings.confirmation?.dismiss }
         DisposableEffect(activity) { onDispose { activity.overlayBack=null } }
         val paneAlpha=remember { Animatable(1f) }
-        LaunchedEffect(selectedTab) { paneAlpha.snapTo(.8f);paneAlpha.animateTo(1f,tween(DesignTokens.durationFast.toInt())) }
+        LaunchedEffect(selectedTab) { paneAlpha.snapTo(.8f);paneAlpha.animateTo(1f,tween(if(settings.home.optBoolean("reducedMotion"))DesignTokens.durationReduced.toInt() else DesignTokens.durationFast.toInt())) }
         LaunchedEffect(m.dark) { activity.reportRenderedSystemBars(m.dark) }
         val imeInsets=WindowInsets.ime
         val imeTarget=WindowInsets.imeAnimationTarget
@@ -135,20 +137,22 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 frost.keyboardAnimating=current!=target
             }
         }
+        LaunchedEffect(selectedTab) {if(selectedTab=="models" && settings.page!="models")settings.open("models");if(selectedTab!="chat")settings.menuVisible=false}
         LaunchedEffect(selectedTab,openedFile) { if(selectedTab!="chat" || openedFile!=null) { focus.clearFocus();m.focused=false;activity.hideKeyboard() } }
-        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).windowInsetsPadding(WindowInsets.systemBars).then(if(android.os.Build.VERSION.SDK_INT>=30)Modifier.imePadding() else Modifier.windowInsetsPadding(WindowInsets.imeAnimationTarget)).then(if(drawer)Modifier.clearAndSetSemantics{} else Modifier)) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).windowInsetsPadding(WindowInsets.systemBars).then(if(android.os.Build.VERSION.SDK_INT>=30)Modifier.imePadding() else Modifier.windowInsetsPadding(WindowInsets.imeAnimationTarget)).then(if(drawer||settings.confirmation!=null)Modifier.clearAndSetSemantics{} else Modifier)) {
           if(selectedTab=="chat") NativeConversation(m,Modifier.fillMaxSize().frostSource(frost).alpha(paneAlpha.value),bottom={with(density){dockHeight.intValue.toDp()}},onPreview={preview=it})
           Column(Modifier.fillMaxSize()) {
-            if(selectedTab=="activity" || selectedTab=="activity-web") NativeFeedToolbar(activity.feed,
+            if(selectedTab in listOf("settings","models")) NativeSettingsToolbar(settings)
+            else if(selectedTab=="activity" || selectedTab=="activity-web") NativeFeedToolbar(activity.feed,
                 back={if(selectedTab=="activity-web")activity.feed.closeWeb() else activity.feed.closeDetail()},
                 onDrawer={focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch{m.refreshChats()}},
-                onSettings={focus.clearFocus();m.tab="settings"})
+                onSettings={focus.clearFocus();settings.open()})
             else if(selectedTab in listOf("goals","goals-web")) NativeGoalsToolbar(activity.goals,
                 onDrawer={focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch{m.refreshChats()}},
-                onSettings={focus.clearFocus();m.tab="settings"})
+                onSettings={focus.clearFocus();settings.open()})
             else if(selectedTab in listOf("health","health-web")) NativeHealthToolbar(activity.health,
                 onDrawer={focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch{m.refreshChats()}},
-                onSettings={focus.clearFocus();m.tab="settings"})
+                onSettings={focus.clearFocus();settings.open()})
             else Row(Modifier.fillMaxWidth().height(DesignTokens.space80.dp).background(MaterialTheme.colorScheme.background).padding(DesignTokens.space12.dp),verticalAlignment=Alignment.CenterVertically) {
                 NativeIconButton(if(selectedTab in listOf("settings","models")) R.drawable.wm_back else R.drawable.wm_panel,if(selectedTab in listOf("settings","models"))"返回聊天" else "打开侧栏",Modifier.nativeFrost(CircleShape)) { if(selectedTab in listOf("settings","models"))m.returnToChat() else { focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch { m.refreshChats() } } }
                 Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally) {
@@ -159,7 +163,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                     NativeIconButton(R.drawable.wm_more,"更多",Modifier.nativeFrost(CircleShape)){overflow=true}
                     NativeMenu(expanded=showOverflow,keepEditorFocus=true,onDismissRequest={overflow=false}) {
                         if(m.running && selectedTab!="library") NativeMenuItem(text={Text("停止回复")},onClick={overflow=false;m.stop()},leadingIcon={Icon(painterResource(R.drawable.wm_stop),null)})
-                        NativeMenuItem(text={Text("设置")},onClick={overflow=false;focus.clearFocus();m.tab="settings"},leadingIcon={Icon(painterResource(R.drawable.wm_settings),null)})
+                        NativeMenuItem(text={Text("设置")},onClick={overflow=false;focus.clearFocus();settings.open()},leadingIcon={Icon(painterResource(R.drawable.wm_settings),null)})
                         if(selectedTab=="library")NativeMenuItem(text={Text("打开原网页成果库")},onClick={overflow=false;activity.originalLibrary()},leadingIcon={Icon(painterResource(R.drawable.wm_layers),null)})
                         if(selectedTab!="library")NativeMenuItem(text={Text("新对话")},onClick={overflow=false;focus.clearFocus();activity.hideKeyboard();m.focused=false;m.newChat()},leadingIcon={Icon(painterResource(R.drawable.wm_plus),null)})
                         if(selectedTab!="library")NativeMenuItem(text={Text("完整对话功能")},onClick={overflow=false;m.tab="web-chat"},leadingIcon={Icon(painterResource(R.drawable.wm_chat),null)})
@@ -178,6 +182,8 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 NativeGoalsPage(activity.goals,Modifier.weight(1f).alpha(paneAlpha.value))
             } else if(selectedTab=="goals-web") {
                 NativeGoalsWeb(activity.goals,activity,Modifier.weight(1f).fillMaxWidth())
+            } else if(selectedTab in listOf("settings","models")) {
+                NativeSettingsPage(settings,Modifier.weight(1f))
             } else if(selectedTab=="health") {
                 NativeHealthPage(activity.health,Modifier.weight(1f).alpha(paneAlpha.value))
             } else if(selectedTab=="health-web") {
@@ -186,8 +192,8 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 key(selectedTab) { AndroidView(factory={ activity.webPage(if(selectedTab=="web-chat")"chat" else if(selectedTab=="web-home")"home" else selectedTab) },onRelease={activity.parkWeb()},modifier=Modifier.weight(1f).fillMaxWidth().alpha(paneAlpha.value)) }
             }
             Column(Modifier.onSizeChanged{dockHeight.intValue=it.height}) {
-            if(selectedTab=="chat")NativeComposer(m,onPreview={preview=it})
-            if(selectedTab!="settings") {
+            if(selectedTab=="chat")NativeComposer(m,settings,onPreview={preview=it})
+            if(selectedTab !in listOf("settings","models")) {
                 Row(Modifier.fillMaxWidth().keyboardNavigation().padding(start=DesignTokens.space12.dp,end=DesignTokens.space12.dp,top=DesignTokens.space4.dp,bottom=DesignTokens.space12.dp).nativeFrost(pill).padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space4.dp),horizontalArrangement=Arrangement.SpaceEvenly) {
                     tabs.forEach{(id,v)->Box(Modifier.weight(1f),contentAlignment=Alignment.Center){
                         val active=selectedTab==id || id=="activity"&&selectedTab=="activity-web" || id=="goals"&&selectedTab=="goals-web" || id=="health"&&selectedTab=="health-web"
@@ -199,6 +205,9 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
         }
           }
         }
+        LaunchedEffect(settings.confirmation){if(settings.confirmation!=null){focus.clearFocus();activity.hideKeyboard()}}
+        settings.confirmation?.let{NativeSettingsConfirmationOverlay(it)}
+        if(selectedTab=="chat" && settings.menuVisible) NativeModelServiceOverlay(settings,with(density){dockHeight.intValue.toDp()})
         // One activity window lets the panel continue through the system safe area.
         if(drawer) {
             Row(Modifier.fillMaxSize().semantics { paneTitle="对话";isTraversalGroup=true }) {
@@ -209,7 +218,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 items(m.chats){row->NativeSidebarRow(row.optString("title","新对话"),selected=row.optString("id",row.optString("chatId"))==m.chatId){drawer=false;m.launch{m.select(row);m.tab="chat"}}}
                 item { Spacer(Modifier.height(pad)) }
                 item { NativeSidebarRow("完整对话列表",subtitle="搜索、项目与归档",icon=R.drawable.wm_chat){drawer=false;m.tab="web-home"} }
-                item { NativeSidebarRow("设置",icon=R.drawable.wm_settings){drawer=false;m.tab="settings"} }
+                item { NativeSidebarRow("设置",icon=R.drawable.wm_settings){drawer=false;settings.open()} }
             }
             }
             Spacer(Modifier.weight(1f).fillMaxHeight().background(MaterialTheme.colorScheme.scrim).clickable{drawer=false})
@@ -411,21 +420,23 @@ private fun inlineMarkdown(text:String):AnnotatedString=buildAnnotatedString {
 }
 
 @OptIn(ExperimentalLayoutApi::class)
-@Composable private fun NativeComposer(m:NativeChatModel,onPreview:(JSONObject)->Unit) {
-    var plus by remember{mutableStateOf(false)};var modelMenu by remember{mutableStateOf(false)};var modeMenu by remember{mutableStateOf(false)};var allowRisk by remember{mutableStateOf(false)}
-    androidx.activity.compose.BackHandler(plus || modelMenu || modeMenu || allowRisk) { plus=false;modelMenu=false;modeMenu=false;allowRisk=false }
+@Composable private fun NativeComposer(m:NativeChatModel,settings:NativeSettingsModel,onPreview:(JSONObject)->Unit) {
+    var plus by remember{mutableStateOf(false)};var modeMenu by remember{mutableStateOf(false)};var allowRisk by remember{mutableStateOf(false)}
+    androidx.activity.compose.BackHandler(plus || modeMenu || allowRisk) { plus=false;modeMenu=false;allowRisk=false }
     var editorFocused by remember { mutableStateOf(false) }
     // Visibility drives the shape; only explicit navigation/list actions blur.
     // A language/voice panel transition must keep the composing session alive.
     val expanded=m.composer.copy(focused=editorFocused && WindowInsets.isImeVisible).height!=ComposerHeight.Capsule
     val inputFocus=remember { FocusRequester() }
+    SideEffect {settings.restoreComposer={inputFocus.requestFocus()}}
+    DisposableEffect(settings){onDispose{settings.restoreComposer=null}}
     val keyboard=LocalSoftwareKeyboardController.current
     val context=LocalContext.current
     fun voice() {
         inputFocus.requestFocus();keyboard?.show()
         android.widget.Toast.makeText(context,"请使用键盘上的语音输入",android.widget.Toast.LENGTH_SHORT).show()
     }
-    Column(Modifier.fillMaxWidth().semantics{contentDescription="聊天输入区"}.padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).nativeFrost(if(expanded)RoundedCornerShape(DesignTokens.radius24.dp) else pill).animateContentSize(tween(DesignTokens.durationFast.toInt()),alignment=Alignment.BottomStart).padding(if(expanded)gap else DesignTokens.space4.dp)) {
+    Column(Modifier.fillMaxWidth().semantics{contentDescription="聊天输入区"}.padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space8.dp).nativeFrost(if(expanded)RoundedCornerShape(DesignTokens.radius24.dp) else pill).animateContentSize(tween(if(settings.home.optBoolean("reducedMotion"))DesignTokens.durationReduced.toInt() else DesignTokens.durationFast.toInt()),alignment=Alignment.BottomStart).padding(if(expanded)gap else DesignTokens.space4.dp)) {
         if(m.attachments.isNotEmpty())NativeAttachments(m.attachments,true,{onPreview(JSONObject(it.toString()).put("conversationId",m.chatId).put("sessionId",m.sessionId))},m::remove)
         val input:@Composable ()->Unit={BasicTextField(m.draft,onValueChange=m::edit,modifier=Modifier.fillMaxWidth().heightIn(min=if(expanded)DesignTokens.space64.dp else touch,max=DesignTokens.space150.dp).focusRequester(inputFocus).onFocusChanged{editorFocused=it.isFocused;m.focused=it.isFocused}.padding(if(expanded)gap else DesignTokens.space4.dp).semantics{contentDescription="消息输入"},textStyle=TextStyle(color=MaterialTheme.colorScheme.onSurface,fontSize=LocalReadingSize.current.sp,lineHeight=(LocalReadingSize.current * 1.5f).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),maxLines=5,decorationBox={inner->Box{if(m.draft.isEmpty())Text(if(m.running)"可以继续补充…" else "说说你的目标…",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=LocalReadingSize.current.sp);inner()}})}
         NativeComposerLayout(expanded,input,leading={
@@ -433,7 +444,7 @@ private fun inlineMarkdown(text:String):AnnotatedString=buildAnnotatedString {
             Box{NativeIconButton(R.drawable.wm_plus,"添加附件",enabled=!m.standalone && !m.phoneArchive){plus=true};NativeMenu(plus,keepEditorFocus=true,onDismissRequest={plus=false}){listOf("image" to "照片","camera" to "拍照","file" to "文件").forEach{(kind,label)->NativeMenuItem(text={Text(label)},leadingIcon={Icon(painterResource(when(kind){"image"->R.drawable.wm_image;"camera"->R.drawable.wm_camera;else->R.drawable.wm_file}),null,Modifier.size(DesignTokens.iconTouch.dp))},onClick={plus=false;m.pick(kind)})}}}
             if(expanded) {
                 Box{NativeIconButton(R.drawable.wm_approval,"审批方式：${modeName(m.mode)}",enabled=!m.standalone && !m.phoneArchive){modeMenu=true};NativeMenu(modeMenu || allowRisk,keepEditorFocus=true,onDismissRequest={modeMenu=false;allowRisk=false}){if(allowRisk){Text("删除、覆盖、系统修改、安装、发送和付款可能直接执行，且无法撤销。",Modifier.widthIn(max=DesignTokens.space150.dp*2).padding(pad));NativeMenuItem(text={Text("全部允许")},onClick={allowRisk=false;m.launch{if(m.sessionId.isNotBlank())m.business("/sessions/${m.sessionId}/approval-mode","PATCH",JSONObject().put("mode","allow-all"));m.mode="allow-all"}});NativeMenuItem(text={Text("取消")},onClick={allowRisk=false})}else listOf("auto","ask","accept-edits","plan","allow-all").forEach{id->NativeMenuItem(text={Text(modeName(id))},trailingIcon={if(m.mode==id)Icon(painterResource(R.drawable.wm_check),"当前模式",Modifier.size(DesignTokens.iconTouch.dp))},onClick={modeMenu=false;if(id=="allow-all")allowRisk=true else m.launch{if(m.sessionId.isNotBlank())m.business("/sessions/${m.sessionId}/approval-mode","PATCH",JSONObject().put("mode",id));m.mode=id}})}}}
-                Box{NativeIconButton(R.drawable.wm_model,"模型：${m.modelLabel}"){modelMenu=true};NativeMenu(modelMenu,keepEditorFocus=true,onDismissRequest={modelMenu=false}){m.models.forEach{row->val id=row.optString("profileId",row.optString("modelId"));NativeMenuItem(text={Text(row.optString("displayName",id))},trailingIcon={if(if(m.standalone)row.optBoolean("selected") else id==m.modelId)Icon(painterResource(R.drawable.wm_check),"当前模型",Modifier.size(DesignTokens.iconTouch.dp))},onClick={modelMenu=false;m.selectModel(row)})};NativeMenuItem(text={Text("管理模型")},onClick={modelMenu=false;m.openModels()})}}
+                NativeIconButton(R.drawable.wm_model,"模型：${m.modelLabel}"){settings.menuVisible=true;settings.menuOpened()}
             }
         }
         },trailing={

@@ -61,6 +61,8 @@ function vector(svg, { size = 24, viewport = 24, transform = '' } = {}) {
   return `<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="${size}dp" android:height="${size}dp" android:viewportWidth="${viewport}" android:viewportHeight="${viewport}">${transform ? `<group ${transform}>${paths}</group>` : paths}</vector>\n`;
 }
 const res = 'apps/android/app/src/main/res';
+// A selected canonical icon can be introduced without hand-writing a native asset.
+if (only && icons[only]) await put(`${res}/drawable/wm_${only}.xml`, vector(icons[only]));
 for (const file of (await readdir(join(root, res, 'drawable'))).filter(n => n.startsWith('wm_') && n.endsWith('.xml'))) {
   const id = file.slice(3, -4); const svg = icons[aliases[id] || id];
   if (only && (aliases[id] || id) !== only) continue;
