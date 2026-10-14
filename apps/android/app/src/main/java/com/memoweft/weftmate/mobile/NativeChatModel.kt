@@ -28,6 +28,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     var attachments by mutableStateOf(emptyList<JSONObject>())
     var chats by mutableStateOf(emptyList<JSONObject>())
     var models by mutableStateOf(emptyList<JSONObject>())
+    var hostModelServices by mutableStateOf(false)
     var modelLabel by mutableStateOf("选择模型")
     var modelId by mutableStateOf("")
     var mode by mutableStateOf("auto")
@@ -75,7 +76,10 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         val cancel = activity.nativeRequest(method, params) { r -> if (c.isActive) r.fold({ c.resume(it) }, { c.resumeWithException(it) }) }
         c.invokeOnCancellation { cancel() }
     }
-    suspend fun business(path: String, method: String = "GET", body: JSONObject? = null) = call("host.business", JSONObject().put("path", "/personal/v1$path").put("method", method).apply { body?.let { put("body", it) } })
+    suspend fun business(path: String, method: String = "GET", body: JSONObject? = null): JSONObject {
+        val request: suspend () -> JSONObject = { call("host.business", JSONObject().put("path", "/personal/v1$path").put("method", method).apply { body?.let { put("body", it) } }) }
+        return if (path == "/model-services" || path.startsWith("/model-services/")) hostModelServicesRequest(hostModelServices, request) else request()
+    }
     private fun launchJob(action: suspend () -> Unit): Job = scope.launch { try { action() } catch (e: CancellationException) { throw e } catch (_: Exception) { error = "暂时没能完成，请重试。" } }
     fun launch(action: suspend () -> Unit) { launchJob(action) }
     fun start() { launch { bootstrap() } }
@@ -83,6 +87,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (bootstrapping) return
         bootstrapping = true
         try {
+        hostModelServices = false
         val b = call("app.bootstrap")
         val nextOwner = b.optString("owner")
         if (owner != nextOwner) { loading=true; generation++; poll?.cancel(); timeline.reset(); rows = emptyList(); attachments = emptyList(); approvals = emptyList(); questions = emptyList(); draft = ""; uncertain = emptyList(); chatId = ""; sessionId = ""; tab="chat"; modelSettingsFinished=false }
@@ -116,7 +121,9 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         modelId = selected?.optString("profileId") ?: ""
         if (modelId.isBlank()) modelId = models.firstOrNull { it.optBoolean("configured") }?.optString("profileId") ?: ""
         modelLabel = selected?.optString("displayName")?.takeIf { it.isNotBlank() } ?: models.firstOrNull { it.optString("profileId") == modelId }?.optString("displayName") ?: "选择模型"
-        replyWait = runCatching { business("/status").optJSONObject("personalCapabilities")?.optInt("replyWait") == 1 }.getOrDefault(false)
+        val hostStatus = runCatching { business("/status") }.getOrNull()
+        replyWait = hostStatus?.optJSONObject("personalCapabilities")?.optInt("replyWait") == 1
+        hostModelServices = hostModelServicesDeclared(hostStatus)
         refreshMessageIntent()
         refreshChats()
         if (chatId.isBlank()) {
