@@ -82,7 +82,7 @@ globalThis.WeftUiCore.releaseNotes = [
       "睡眠时长显示小时和分，健康回答区分最近测量和平均值；用量与导入费用不再显示冗长小数。"
     ],
     "audience": "mobile",
-    "version": "0.8.34"
+    "version": "0.8.35"
   },
   {
     "date": "2026-10-13",
