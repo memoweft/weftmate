@@ -21,6 +21,7 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
         }
         if (identity !== core.state.identityGeneration) throw {code:'ABORTED'};
         if (core.state.personalCapabilities?.modelServices !== 1) throw {code:'COMPUTER_UPDATE_REQUIRED'};
+        return identity;
     }
     function modelServiceFailureMessage(error) {
         switch (error?.code) {
@@ -67,7 +68,8 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
         } finally { if (reading?.promise === work) reading = null; }
     }
     async function selectServiceModel({serviceId,modelId}) {
-        await requireModelServices();
+        const generation = await requireModelServices();
+        if (generation !== core.state.identityGeneration) throw {code:'ABORTED'};
         if (writing) return false; writing = true; const identity = scope();
         try {
             let sessionId=core.state.selectedSessionId;
@@ -93,12 +95,17 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
         } finally { writing = false; }
     }
     async function writeModelService(serviceId, body, method = serviceId ? 'PATCH' : 'POST') {
-        await requireModelServices();
+        const generation = await requireModelServices();
+        if (generation !== core.state.identityGeneration) throw {code:'ABORTED'};
         const identity = scope();
         const result = await core.accessApi('/model-services' + (serviceId ? '/' + encodeURIComponent(serviceId) : ''), {method,protectedWrite:true,body:{requestId:environment.crypto.randomUUID(),...body},timeoutMs:60000});
         if (identity === scope()) { retryAt = 0; await core.refreshModels(); }
         return result;
     }
-    const checkModelService = async ({baseUrl,apiKey,interfaceType,serviceId}) => { await requireModelServices(); return core.accessApi('/model-services/check', {method:'POST',protectedWrite:true,body:{baseUrl,interfaceType,...(apiKey?{apiKey}:{}),...(serviceId?{serviceId}:{})},timeoutMs:20000}); };
+    async function checkModelService({baseUrl,apiKey,interfaceType,serviceId}) {
+        const generation = await requireModelServices();
+        if (generation !== core.state.identityGeneration) throw {code:'ABORTED'};
+        return core.accessApi('/model-services/check', {method:'POST',protectedWrite:true,body:{baseUrl,interfaceType,...(apiKey?{apiKey}:{}),...(serviceId?{serviceId}:{})},timeoutMs:20000});
+    }
     return { modelServicesView, refreshModelServices, selectServiceModel, writeModelService, checkModelService, modelServiceFailureMessage };
 };

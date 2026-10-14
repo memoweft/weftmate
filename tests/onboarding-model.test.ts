@@ -120,3 +120,14 @@ test('failed capability read can be retried instead of being cached as an old co
   const retry = f.core.checkModelService(draft); f.ready(); await retry;
   assert.equal(attempts, 2); assert.equal(f.calls.includes('/model-services/check'), true);
 });
+
+test('identity change just before a ready model action resumes never submits the previous draft', async () => {
+  for (const action of ['checkModelService', 'writeModelService', 'selectServiceModel']) {
+    const f = fixture(); f.core.state.personalCapabilities = { modelServices: 1 };
+    const draft = { baseUrl: 'https://synthetic.example/v1', apiKey: 'previous-key' };
+    const work = action === 'writeModelService' ? f.core[action](null, draft) : f.core[action](action === 'selectServiceModel' ? { serviceId: 'synthetic-service', modelId: 'synthetic-model' } : draft);
+    f.core.state.identityGeneration++;
+    await assert.rejects(work, error => error.code === 'ABORTED');
+    assert.equal(f.calls.length, 0);
+  }
+});
