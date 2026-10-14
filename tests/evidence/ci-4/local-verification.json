@@ -56,6 +56,26 @@
       "passed": 10,
       "failed": 0,
       "skipped": 0
+    },
+    {
+      "file": "shutdown-related.log",
+      "files": [
+        "tests/personal-memory-shutdown.test.ts",
+        "tests/personal-memory-processing-route.test.ts",
+        "tests/personal-general-execution.test.ts",
+        "tests/folder-choice.test.ts"
+      ],
+      "tests": 32,
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "file": "desktop-error-final.log",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
     }
   ],
   "focusedRepeats": {

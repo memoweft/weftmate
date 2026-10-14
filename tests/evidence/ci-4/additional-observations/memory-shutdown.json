@@ -1,0 +1,16 @@
+{
+  "run": 38492929698,
+  "attempt": 1,
+  "job": 115622121510,
+  "sha": "efa16e86c13523aa616b730b96cb264078a95de5",
+  "phase": "initialize (deduced from request timeout and exception propagation)",
+  "originalRequestTimeoutMs": 15000,
+  "originalShutdownRequestTimeoutMs": 3000,
+  "originalExitWaitMs": 2000,
+  "missing": [
+    "Python ready timestamp",
+    "request send/response timestamps",
+    "event-loop scheduling delay"
+  ],
+  "log": "2026-10-14T01:11:37.5992168Z # Subtest: memory shutdown waits for the worker write acknowledgement and confirms the worker exits\r\n2026-10-14T01:11:37.5993128Z not ok 1 - memory shutdown waits for the worker write acknowledgement and confirms the worker exits\r\n2026-10-14T01:11:37.5998840Z   ---\r\n2026-10-14T01:11:37.5999072Z   duration_ms: 15882.1003\r\n2026-10-14T01:11:37.5999325Z   type: 'test'\r\n2026-10-14T01:11:37.5999654Z   location: 'D:\\\\a\\\\weftmate\\\\weftmate\\\\tests\\\\personal-memory-shutdown.test.ts:8:1'\r\n2026-10-14T01:11:37.6000027Z   failureType: 'testCodeFailure'\r\n2026-10-14T01:11:37.6000278Z   error: 'MEMORY_TIMEOUT'\r\n2026-10-14T01:11:37.6000480Z   code: 'MEMORY_TIMEOUT'\r\n2026-10-14T01:11:37.6000666Z   stack: |-\r\n2026-10-14T01:11:37.6000948Z     failed (file:///D:/a/weftmate/weftmate/src/personal-memory/rpc.mjs:10:40)\r\n2026-10-14T01:11:37.6001402Z     Timeout._onTimeout (file:///D:/a/weftmate/weftmate/src/personal-memory/rpc.mjs:106:16)\r\n2026-10-14T01:11:37.6002652Z     listOnTimeout (node:internal/timers:685:17)\r\n2026-10-14T01:11:37.6002952Z     process.processTimers (node:internal/timers:618:7)\r\n2026-10-14T01:11:37.6003191Z   ...\r\n2026-10-14T01:11:39.6051368Z 1..1\r\n2026-10-14T01:11:39.6051696Z # tests 1\r\n2026-10-14T01:11:39.6051930Z # suites 0\r\n2026-10-14T01:11:39.6052178Z # pass 0\r\n2026-10-14T01:11:39.6052687Z # fail 1\r\n2026-10-14T01:11:39.6053400Z # cancelled 0\r\n2026-10-14T01:11:39.6053798Z # skipped 0\r\n2026-10-14T01:11:39.6054792Z # todo 0\r\n2026-10-14T01:11:39.6055066Z # duration_ms 17987.4509\r\n2026-10-14T01:11:40.4778444Z Failed test process evidence: {\"decimal\":1,\"unsignedDecimal\":1,\"hexadecimal\":\"0x00000001\",\"signal\":null,\"meaning\":\"非零退出码\",\"phase\":\"file-exit\",\"elapsedMs\":18048,\"spawnErrorCode\":null,\"systemCommit\":{\"available\":true,\"availableBytes\":16934453248,\"limitBytes\":20261367808,\"committedBytes\":3326914560},\"stdoutTail\":\"TAP version 13\\n# Subtest: memory shutdown waits for the worker write acknowledgement and confirms the worker exits\\nnot ok 1 - memory shutdown waits for the worker write acknowledgement and confirms the worker exits\\n  ---\\n  duration_ms: 15882.1003\\n  type: 'test'\\n  location: 'D:\\\\\\\\a\\\\\\\\weftmate\\\\\\\\weftmate\\\\\\\\tests\\\\\\\\personal-memory-shutdown.test.ts:8:1'\\n  failureType: 'testCodeFailure'\\n  error: 'MEMORY_TIMEOUT'\\n  code: 'MEMORY_TIMEOUT'\\n  stack: |-\\n    failed (file:///D:/a/weftmate/weftmate/src/personal-memory/rpc.mjs:10:40)\\n    Timeout._onTimeout (file:///D:/a/weftmate/weftmate/src/personal-memory/rpc.mjs:106:16)\\n    listOnTimeout (node:internal/timers:685:17)\\n    process.processTimers (node:internal/timers:618:7)\\n  ...\\n1..1\\n# tests 1\\n# suites 0\\n# pass 0\\n# fail 1\\n# cancelled 0\\n# skipped 0\\n# todo 0\\n# duration_ms 17987.4509\\n\",\"stderrTail\":\"\"}\r"
+}
