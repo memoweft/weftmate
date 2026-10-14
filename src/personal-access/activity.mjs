@@ -36,7 +36,7 @@ export function observeActivityEvents(account,sessionId,events,nextSeq,observeRe
     if(event.type==='turn.ended' && (scan.executed||account.commands[scan.taskId]?.scheduleSourceId||account.commands[scan.taskId]?.offlineSource||['failed','error','blocked','aborted'].includes(data.reason))){
       const result={completed:'completed',failed:'failed',error:'failed',blocked:'failed',aborted:'stopped'}[data.reason];
       if(result){const failureReason=result==='failed'&&!hasPrivateContent(session)?nativeFailureReason(data)||scan.failureReason:undefined;
-        const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:result==='completed'?completionActivitySummary(scan.summary):scan.summary.slice(0,160)}:{}),...(failureReason?{failureReason}:{})};
+        const terminal={at,state:result,turn:scan.turn,seq:event.seq,...(scan.taskId?{taskId:scan.taskId}:{}),...(scan.summary?{summary:result==='completed'?completionActivitySummary(scan.summary):scan.summary.slice(0,160),...(result==='completed'?{summaryFormat:'plain'}:{})}:{}),...(failureReason?{failureReason}:{})};
         scan.terminals??={};scan.terminals[scan.taskId??event.seq]=terminal;
         if(!Object.values(account.chatResults??{}).some(row=>row.taskId===scan.taskId))nativeTaskActivity(account,sessionId,terminal);
       }

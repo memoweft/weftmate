@@ -6,7 +6,7 @@
 
 验证：
 
-- `node --test tests/personal-activity.test.ts tests/personal-goals.test.ts tests/ia-2a-side-chats.test.ts`：21项通过。两条宿主行为修前失败，覆盖目标完成、回执混入正文、160字符前缀、原生4000字符预览、旧动态快照／增量／已读返回；同时核对原目标终态及原对话回执。
+- `node --test tests/personal-activity.test.ts tests/personal-goals.test.ts tests/ia-2a-side-chats.test.ts`：23项通过。四条宿主行为各修前失败，覆盖目标完成、回执混入正文、160字符前缀、原生4000字符预览、旧动态快照／增量／已读返回；同时核对原目标终态及原对话回执。审查回归验证 `12/15`、`2026/10/14`（含行内代码）不被当路径，`__init__.py`／`_notes_.md` 经观察、持久化、旁聊完成、快照／增量／已读返回均不改名。纯文本标记只保存在宿主内部，不返回客户端。
 - `npm run typecheck` 和 `node .github/scripts/public-hygiene.mjs`。
 - `node tests/integration/fix-43-activity.mjs`：真实 Electron（桌面程序框架）窗口与390像素手机网页，各浅／深一图。使用同一个合成目标完成后的实际宿主动态接口；四次文字、文件名、无内部字段、无横向溢出断言通过，页面脚本错误0。
 

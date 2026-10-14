@@ -13,13 +13,19 @@ function fileName(value) {
   try { path = decodeURIComponent(path); } catch { /* Keep literal file names. */ }
   return path.split(/[\\/]/).at(-1);
 }
+function localFilePath(value) {
+  if (/^[a-z][\w+.-]*:/i.test(value) && !/^(?:file:|[A-Za-z]:[\\/])/i.test(value)) return false;
+  return /^(?:file:|[A-Za-z]:[\\/]|\\\\|\.{1,2}[\\/]|~[\\/])/i.test(value) ||
+    /[\\/]/.test(value) && /(?:^|[\\/])[^\\/]*\.[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(value);
+}
 function localFiles(value) {
   // URLs remain useful sources; local Windows, UNC, POSIX and relative paths
   // are represented by their last component. Quoted/code paths may have spaces.
   return value.replace(/(?:file:\/\/|[A-Za-z]:[\\/]|\\\\|\.{1,2}[\\/]|\/|[\p{L}\p{N}_.%~-]+[\\/])[^\s`"'<>，。；：！？、()（）\[\]{}]+/gu, (path, offset, text) => {
     if (offset && /[\w:/]/.test(text[offset - 1])) return path;
     const punctuation = path.match(/[.,;:!?]+$/)?.[0] ?? '';
-    return fileName(punctuation ? path.slice(0, -punctuation.length) : path) + punctuation;
+    const candidate=punctuation ? path.slice(0, -punctuation.length) : path;
+    return localFilePath(candidate) ? fileName(candidate) + punctuation : path;
   });
 }
 function nativeReceipt(value) {
@@ -54,7 +60,7 @@ function inline(tokens) {
     const token = tokens[i];
     if (token.type === 'link_open') {
       const href = token.attrGet('href');
-      if (/^(?:file:|[A-Za-z]:[\\/]|\\\\|\/|\.{1,2}[\\/])/.test(href ?? '')) {
+      if (localFilePath(href ?? '')) {
         const label = [];
         while (++i < tokens.length && tokens[i].type !== 'link_close') label.push(tokens[i]);
         const name = fileName(href), caption = inline(label).trim();
@@ -62,7 +68,7 @@ function inline(tokens) {
       }
     } else if (token.type === 'code_inline') {
       const value = token.content;
-      text += !/^https?:/i.test(value) && /[\\/]/.test(value) ? fileName(value) : value;
+      text += localFilePath(value) ? fileName(value) : value;
     } else if (token.type === 'text' || token.type === 'image') text += localFiles(token.content);
     else if (['softbreak', 'hardbreak'].includes(token.type)) text += ' ';
   }
@@ -90,11 +96,12 @@ export async function activitySummaryEvent(context, ownerId, sessionId, event) {
   try {
     const detail = await context.callBackend(() => context.backend.readEventDetail({ownerId, sessionId, seq:event.seq}));
     if (!visible() || detail.type !== 'assistant.message' || typeof detail.text !== 'string') return event;
-    return {...event, data:{...event.data, text:completionActivitySummary(detail.text, '')}};
+    return {...event, data:{...event.data, text:detail.text}};
   } catch { return event; }
 }
 
 /** Also projects persisted activities from older hosts; native sources stay intact. */
 export function publicActivityCopy(row) {
-  return row?.type === 'task.completed' && !row.temporary ? {...row, summary: completionActivitySummary(row.summary)} : row;
+  const {summaryFormat,...copy}=row;
+  return row.type === 'task.completed' && !row.temporary && summaryFormat!=='plain' ? {...copy, summary: completionActivitySummary(row.summary)} : copy;
 }
