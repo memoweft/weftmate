@@ -634,7 +634,7 @@ test('UI-3 approvals and sources share summaries for shell/files/web/subtask and
     const text = JSON.stringify({ arguments: JSON.stringify(args) })
     assert.equal(f.core.toolSummary(tool, args), summary)
     assert.equal(f.core.sourcePresentation(tool, text).summary, summary)
-    assert.equal(f.core.approvalPresentation({ toolName: tool, reason: JSON.stringify(args) }).summary, summary)
+    assert.equal(f.core.approvalPresentation({ toolName: tool, reason: JSON.stringify(args) }).summary, tool === 'shell' ? '运行一条命令' : summary)
   }
   assert.equal(f.core.toolSummary('unknown', 'invalid json'), '使用扩展工具')
   assert.equal(f.core.approvalPresentation({ toolName: 'write', reason: '[weftmate:overwrite] 覆盖报告，可从 Git 恢复。' }).summary, '覆盖报告，可从 Git 恢复。')
@@ -651,11 +651,11 @@ test('UI-3 outputs group by path, keep creation order and expose older versions'
 })
 
 
-test('UI-3 native approval reasons keep the risk prose and fold embedded raw parameters', () => {
+test('UI-3 native approval reasons keep human risk prose and fold embedded raw parameters', () => {
   const f = fixture(), row = { toolName: 'pwsh', reason: '[weftmate:delete] 删除用户文件。操作：pwsh\n{"command":"Remove-Item a.txt"}' }
   const presentation = f.core.approvalPresentation(row)
-  assert.equal(presentation.summary, '运行命令：Remove-Item a.txt')
-  assert.equal(presentation.reason, '删除用户文件。操作：pwsh')
+  assert.equal(presentation.summary, '运行一条命令')
+  assert.equal(presentation.reason, '删除用户文件。')
   assert.ok(presentation.raw.includes('{"command"'))
 })
 
