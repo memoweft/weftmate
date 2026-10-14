@@ -1,11 +1,28 @@
 /* Shared messages state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
     async function completeHistoryEvents(events, previous = core.state.historyEvents, sessionId = core.state.selectedSessionId) {
-        return Promise.all(events.map(event => {
+        const merged = events.map(event => {
             const prior = previous.get(event.eventId ?? event.seq);
-            const merged = globalThis.WeftUiCore.mergeHistoryMessage(prior, event);
-            return core.completeMessageEvent(event.sourceRef?.sessionId || event.sessionId || sessionId, merged);
-        }));
+            return globalThis.WeftUiCore.mergeHistoryMessage(prior, event);
+        });
+        const results = await Promise.allSettled(merged.map(event =>
+            core.completeMessageEvent(event.sourceRef?.sessionId || event.sessionId || sessionId, event)));
+        return results.map((result, index) => result.status === 'fulfilled' ? result.value :
+            { ...merged[index], data: { ...merged[index].data, fullTextReadFailed: true } });
+    }
+    async function retryHistoryMessage(event, sessionId = core.state.selectedSessionId) {
+        const identity = core.state.identityGeneration, owner = core.state.ownerId, generation = core.state.historyGeneration;
+        const full = await core.completeMessageEvent(event.sourceRef?.sessionId || event.sessionId || sessionId, event);
+        if (identity !== core.state.identityGeneration || owner !== core.state.ownerId || generation !== core.state.historyGeneration) return null;
+        if (core.state.historyEvents.get(event.seq)?.data === event.data) {
+            core.state.historyEvents.set(event.seq, full);
+            if (environment.mobileState) environment.mobileState.sharedEvents = [...core.state.historyEvents.values()].sort((a, b) => a.seq - b.seq);
+        }
+        if (core.state.chatWindow?.events.get(event.eventId)?.data === event.data) {
+            core.state.chatWindow.events.set(event.eventId, full);
+            effects.renderMainChat?.();
+        }
+        return full;
     }
     function normalizedOriginalAttachment(item) {
         if (!item || typeof item.attachmentId !== 'string' || !core.syncIdPattern.test(item.attachmentId)
@@ -268,5 +285,5 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         }
         return { isRunning, message };
     }
-    return { normalizedOriginalAttachment, normalizedOriginalFile, originalFileSize, unpreviewedOriginalImages, completeHistoryEvents, appendHistory, refreshHistory, loadOlderHistory, turnStatusViewModel };
+    return { normalizedOriginalAttachment, normalizedOriginalFile, originalFileSize, unpreviewedOriginalImages, completeHistoryEvents, retryHistoryMessage, appendHistory, refreshHistory, loadOlderHistory, turnStatusViewModel };
 };

@@ -29,6 +29,49 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 const deferred = () => { let resolve!: (value: any) => void; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 
+test('FIX-44 fix-1 oversized message detail leaves only that message partial and advances every history page', async () => {
+  const f=fixture(path=>{
+    if(path.endsWith('/10/detail'))return response({type:'assistant.message',text:'第一条全文'});
+    if(path.endsWith('/11/detail'))return response({error:{code:'RESPONSE_TOO_LARGE'}},413);
+    if(path.includes('afterSeq=12'))return response({events:[{seq:13,type:'assistant.message',data:{text:'后页正常回复'}}],nextSeq:13,hasMore:false});
+    return response({events:[{seq:10,type:'assistant.message',data:{text:'第一条摘要',truncated:true}},
+      {seq:11,type:'assistant.message',data:{text:'超长消息摘要',truncated:true}},
+      {seq:12,type:'assistant.message',data:{text:'同页正常回复'}}],nextSeq:12,hasMore:true});
+  });
+  await f.core.refreshHistory(true,true);
+  assert.deepEqual([...f.core.state.historyEvents.keys()],[10,11,12,13]);
+  assert.equal(f.core.state.historyEvents.get(10).data.text,'第一条全文');
+  assert.equal(f.core.state.historyEvents.get(11).data.text,'超长消息摘要');
+  assert.equal(f.core.state.historyEvents.get(11).data.truncated,true);
+  assert.equal(f.core.state.historyEvents.get(11).data.fullTextReadFailed,true);
+  assert.equal(f.core.state.historyEvents.get(12).data.text,'同页正常回复');
+  assert.equal(f.core.state.historyEvents.get(13).data.text,'后页正常回复');
+  assert.equal(f.core.state.afterSeq,13);
+});
+
+test('FIX-44 fix-1 message detail 404 during logical changes preserves the chat, old messages and next cursor', async () => {
+  let available=false;
+  const f=fixture(path=>path.endsWith('/11/detail')?(available?response({type:'assistant.message',text:'重试后的全文'}):response({error:{code:'SOURCE_UNAVAILABLE'}},404)):response({}));
+  Object.assign(f.core.state,{personalCapabilities:{chatTimeline:1},selectedChatId:'main',mainChat:{chatId:'main',activeSessionId:'session-test'}});
+  const event=(id,seq,data)=>({eventId:id,revision:1,seq,orderKey:String(seq).padStart(3,'0'),at:new Date().toISOString(),type:'assistant.message',sourceRef:{sessionId:'session-test',seq},data});
+  f.core.readChatEvents=async()=>({items:[event('old',1,{text:'已有完整回复'})],syncCursor:'one',contentRevision:1});
+  f.core.readChatDates=async()=>({days:[],contentRevision:1});
+  f.core.readChatChanges=async()=>({upserts:[event('forgotten',11,{text:'刚被忘掉的消息摘要',truncated:true}),event('new',12,{text:'其他正常回复'})],nextCursor:'two',contentRevision:1});
+  f.core.readMainChat=async()=>({chat:f.core.state.mainChat});
+  await f.core.refreshLogicalHistory(true);await f.core.refreshLogicalHistory();
+  assert.equal(f.core.state.selectedChatId,'main');assert.equal(f.core.state.selectedSessionId,'session-test');
+  assert.equal(f.core.state.chatWindow.events.get('old').data.text,'已有完整回复');
+  assert.equal(f.core.state.chatWindow.events.get('forgotten').data.fullTextReadFailed,true);
+  assert.equal(f.core.state.chatWindow.events.get('new').data.text,'其他正常回复');
+  assert.equal(f.core.state.chatWindow.syncCursor,'two');
+  available=true;
+  const presentationEvent={...f.core.state.chatWindow.events.get('forgotten'),presentationKey:'stream:session-test:10'};
+  await f.core.retryHistoryMessage(presentationEvent);
+  assert.equal(f.core.state.chatWindow.events.get('forgotten').data.text,'重试后的全文');
+  assert.equal(f.core.state.chatWindow.events.get('forgotten').data.fullTextReadFailed,undefined);
+  assert.equal(f.core.state.chatWindow.syncCursor,'two');
+});
+
 test('FIX-44 native history keeps a complete streamed reply when its terminal summary is truncated', () => {
   const f = fixture(), text = '完整中文回复'.repeat(1200) + '全文终点';
   f.core.appendHistory([], [{seq: 10, sessionId:'session-test', data:{text, streaming:false}}], 10);
@@ -84,13 +127,16 @@ test('FIX-44 main-chat tail and changes hydrate summaries into state and reuse c
   assert.equal(f.requests.filter(row=>row.path.endsWith('/11/detail')).length,1,'the existing complete body avoids another detail read');
 });
 
-test('FIX-44 a failed full-text read retries without accepting the terminal summary', async () => {
+test('FIX-44 a failed full-text read keeps its marked summary and a manual retry stores the full body', async () => {
   let available=false;const text='恢复连接后的全文'.repeat(1000)+'全文终点';
   const f=fixture(path=>path.endsWith('/detail')?(available?response({type:'assistant.message',text}):response({error:{code:'NETWORK'}},503)):
     response({events:[{seq:11,sessionId:'session-test',type:'assistant.message',data:{text:text.slice(0,4000),truncated:true}}],nextSeq:11,hasMore:false}));
-  await f.core.refreshHistory(true,true);assert.equal(f.core.state.historyEvents.size,0);assert.equal(f.core.state.afterSeq,-1);
-  available=true;f.core.state.online=true;await f.core.refreshHistory(true,true);
+  await f.core.refreshHistory(true,true);assert.equal(f.core.state.historyEvents.size,1);assert.equal(f.core.state.afterSeq,11);
+  assert.equal(f.core.state.historyEvents.get(11).data.fullTextReadFailed,true);
+  available=true;f.core.state.online=true;await f.core.retryHistoryMessage(f.core.state.historyEvents.get(11));
   assert.equal(f.core.state.historyEvents.get(11).data.text,text);
+  assert.equal(f.core.state.historyEvents.get(11).data.truncated,false);
+  assert.equal(f.core.state.historyEvents.get(11).data.fullTextReadFailed,undefined);
 });
 
 test('MODE-1 a late computer status cannot replace the account or computer selected while it was in flight', async () => {

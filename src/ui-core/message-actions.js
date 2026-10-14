@@ -137,7 +137,8 @@
       const detail = await core.readTimelineDetail(sourceId, seq);
       if (!current(captured)) throw new Error('账户已切换');
       if (detail.type !== event.type || typeof detail.text !== 'string' || detail.truncated) throw new Error('全文暂时无法读取，请更新电脑程序或稍后重试');
-      return { ...event, data: { ...event.data, text: detail.text, truncated: false } };
+      const { fullTextReadFailed, ...data } = event.data;
+      return { ...event, data: { ...data, text: detail.text, truncated: false } };
     }
     async function completeMessageEvents(sessionId, events, captured) {
       const result = [];
