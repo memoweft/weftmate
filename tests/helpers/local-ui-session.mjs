@@ -8,12 +8,13 @@ export function nativeFixtureFetchOptions(route, nativeIdentity) {
   return { maxRedirects: 0, headers: { ...route.request().headers(), origin: nativeIdentity.origin,
     'x-weftmate-desktop': nativeIdentity.libraryDesktopToken } };
 }
-export async function localUiSession(page, credentials, deviceName = 'Synthetic UI regression', { mainChat = false, interceptLegacyStatus = !mainChat, nativeIdentity } = {}) {
+export async function localUiSession(page, credentials, deviceName = 'Synthetic UI regression', { mainChat = false, interceptLegacyStatus = !mainChat, nativeIdentity, preserveCapabilities = [] } = {}) {
   if (interceptLegacyStatus) await page.route('**/personal/v1/status', async route => {
     try {
       const response = await route.fetch(nativeFixtureFetchOptions(route, nativeIdentity)), body = await response.json();
       // Existing feature regressions also cover hosts before IA-2 capabilities.
-      await route.fulfill({ response, json: { ...body, personalCapabilities: {} } });
+      const capabilities=Object.fromEntries(preserveCapabilities.filter(name=>body.personalCapabilities?.[name]===1).map(name=>[name,1]));
+      await route.fulfill({ response, json: { ...body, personalCapabilities: capabilities } });
     } catch { await route.abort().catch(() => {}); }
   });
   const result = await page.evaluate(async input => {

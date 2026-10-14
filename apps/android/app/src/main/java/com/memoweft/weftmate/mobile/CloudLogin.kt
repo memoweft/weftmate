@@ -11,6 +11,7 @@ import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import android.net.http.X509TrustManagerExtensions
 import android.util.Base64
 
 internal const val CLOUD_CALLBACK = "com.memoweft.weftmate:/oauth"
@@ -29,12 +30,16 @@ internal fun cloudCallbackMatches(value: String, expectedState: String): Boolean
 /** Pins come only from an entered, locally issued pairing code. The normal CA check runs first. */
 internal object CloudPins {
     private val pins = ConcurrentHashMap<String, String>()
+    private val factories = ConcurrentHashMap<String, javax.net.ssl.SSLSocketFactory>()
     fun install(origin: String, pin: String) {
         require(pin.matches(Regex("[A-Za-z0-9_-]{43}")))
-        pins[origin] = pin
+        val previous = pins.put(origin, pin)
+        if (previous != null && previous != pin) factories.remove(previous)
     }
-    fun clear(origin: String) { pins.remove(origin) }
+    fun clear(origin: String) { pins.remove(origin)?.let { factories.remove(it) } }
     fun has(origin: String): Boolean = pins.containsKey(origin)
+    fun matches(origin: String, certificate: X509Certificate): Boolean = pins[origin] ==
+        Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(certificate.publicKey.encoded), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
     fun open(url: URL): HttpURLConnection {
         val connection = url.openConnection() as HttpURLConnection
         val pin = pins["${url.protocol}://${url.authority}"] ?: return connection
@@ -42,25 +47,37 @@ internal object CloudPins {
             require(BuildConfig.DEBUG && url.host in setOf("localhost", "127.0.0.1"))
             return connection
         }
-        val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        factory.init(null as KeyStore?)
-        val standard = factory.trustManagers.filterIsInstance<X509TrustManager>().single()
-        val trust = object : X509TrustManager {
-            override fun getAcceptedIssuers(): Array<X509Certificate> = standard.acceptedIssuers
-            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) = standard.checkClientTrusted(chain, authType)
-            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
-                standard.checkServerTrusted(chain, authType)
-                val actual = Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(chain[0].publicKey.encoded),
-                    Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
-                if (actual != pin) throw java.security.cert.CertificateException("HOST_PIN_MISMATCH")
-            }
+        // A stable factory retains Android's connection/session reuse. The pin
+        // is the cache key, so changing it never reuses the previous trust rule.
+        (connection as HttpsURLConnection).sslSocketFactory = factories.computeIfAbsent(pin) {
+            val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            factory.init(null as KeyStore?)
+            val standard = factory.trustManagers.filterIsInstance<X509TrustManager>().single()
+            SSLContext.getInstance("TLS").apply { init(null, arrayOf(PinnedTrustManager(standard, pin)), null) }.socketFactory
         }
-        val tls = SSLContext.getInstance("TLS").apply { init(null, arrayOf(trust), null) }
-        (connection as HttpsURLConnection).sslSocketFactory = tls.socketFactory
         return connection
     }
 }
 internal fun URL.openPinnedConnection(): HttpURLConnection = CloudPins.open(this)
+
+/** Android's hostname-aware chain cleaner calls the public three-argument overload by reflection. */
+@androidx.annotation.Keep
+internal class PinnedTrustManager(private val standard: X509TrustManager, private val pin: String) : X509TrustManager {
+    private val extensions = X509TrustManagerExtensions(standard)
+    override fun getAcceptedIssuers(): Array<X509Certificate> = standard.acceptedIssuers
+    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) = standard.checkClientTrusted(chain, authType)
+    private fun checkPin(certificate: X509Certificate) {
+        val actual = Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(certificate.publicKey.encoded), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+        if (actual != pin) throw java.security.cert.CertificateException("HOST_PIN_MISMATCH")
+    }
+    override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
+        standard.checkServerTrusted(chain, authType); checkPin(chain[0])
+    }
+    fun checkServerTrusted(chain: Array<X509Certificate>, authType: String, host: String): List<X509Certificate> {
+        val verified = extensions.checkServerTrusted(chain, authType, host)
+        checkPin(verified[0]); return verified
+    }
+}
 
 /** Small native adapter: system authentication browser, fixed cloud/host endpoints, encrypted refresh storage. */
 internal class CloudLogin(private val secrets: SecureSettings, private val api: PersonalApi) {

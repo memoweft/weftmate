@@ -125,6 +125,8 @@ test('stop freezes exact receipts, ignores same-text unrelated turns, and withdr
     assert.equal(first.taskLabel, 'identical text')
     const otherId = await send('same-b', 'identical text')
     assert.equal((await settled(origin, auth, otherId)).receiptId, 'receipt-2')
+    // Finish background digest initialization before measuring stop-only writes.
+    assert.equal((await request(origin, 'GET', '/personal/v1/daily-summaries', auth)).status, 200)
     const route = `/personal/v1/tasks/${taskId}`
     const stopped = await request(origin, 'POST', `${route}/stop`, auth, { requestId: 'stop-a' })
     assert.equal(stopped.status, 202, JSON.stringify(stopped.body))

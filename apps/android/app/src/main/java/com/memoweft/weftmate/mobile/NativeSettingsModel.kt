@@ -65,7 +65,7 @@ internal class SettingsConfirmation(val title:String,val message:String,val labe
     fun run(success:String="",action:suspend ()->Unit) {
         if(busy)return
         val owner=chat.owner;busy=true;error=""
-        mutation=chat.scope.launch { try { action();if(owner==chat.owner&&success.isNotEmpty())toast(success) } catch(e:CancellationException){throw e} catch(e:Exception){if(owner==chat.owner)error=e.message?.takeUnless{it.matches(Regex("[A-Z_]+"))} ?: "暂时没能完成，请重试。"} finally{if(owner==chat.owner)busy=false} }
+        mutation=chat.scope.launch { try { action();if(owner==chat.owner&&success.isNotEmpty())toast(success) } catch(e:CancellationException){throw e} catch(e:Exception){if(owner==chat.owner)error=if(e is ApiFailure&&e.safeCode=="COMPUTER_UPDATE_REQUIRED")"这台电脑的 WeftMate 需要更新，才能管理模型服务。" else e.message?.takeUnless{it.matches(Regex("[A-Z_]+"))} ?: "暂时没能完成，请重试。"} finally{if(owner==chat.owner)busy=false} }
     }
     fun refresh() { read?.cancel();val owner=chat.owner;loading=true;error="";read=chat.scope.launch {
         try { val value=bridge.call("home",JSONObject().put("includeUsage",page.isEmpty()));if(owner!=chat.owner)return@launch;home=value
@@ -76,7 +76,7 @@ internal class SettingsConfirmation(val title:String,val message:String,val labe
     suspend fun loadServices(force:Boolean=false) {
         val owner=chat.owner
         val result=try { if(chat.standalone)bridge.call("phoneService",JSONObject().put("action",if(force)"refresh" else "list").put("body",JSONObject().put("force",force))) else chat.business("/model-services") }
-        catch(e:ApiFailure) { if(!chat.standalone && e.status in listOf(404,405,501)){legacy=true;return};throw e }
+        catch(e:ApiFailure) { if(!chat.standalone && e.status in listOf(404,405,426,501)){legacy=true;services=emptyList();selected=JSONObject();return};throw e }
         if(owner!=chat.owner)return
         legacy=false;services=result.optJSONArray("services")?.objects().orEmpty();selected=result.optJSONObject("selected") ?: result.optJSONObject("model") ?: JSONObject()
         if(!chat.standalone) {

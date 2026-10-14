@@ -1,0 +1,74 @@
+package com.memoweft.weftmate.mobile
+
+import org.json.JSONObject
+import org.junit.Assert.*
+import org.junit.Test
+import kotlinx.coroutines.runBlocking
+
+class NativeHostChatTest {
+    @Test fun modelServicesRequireTheSelectedComputersOwnDeclarationBeforeAnyRequest() = runBlocking {
+        val oldStatuses = listOf(JSONObject(), JSONObject().put("capabilities", JSONObject().put("multiHost", 1)),
+            JSONObject().put("personalCapabilities", JSONObject().put("modelServices", "1")))
+        var requests = 0
+        for (status in oldStatuses) {
+            try {
+                hostModelServicesRequest(hostModelServicesDeclared(status)) { requests++; JSONObject() }
+                fail("An undeclared computer must use legacy models without a probe")
+            } catch (error: ApiFailure) { assertEquals(426, error.status); assertEquals("COMPUTER_UPDATE_REQUIRED", error.safeCode) }
+        }
+        assertEquals(0, requests)
+        val declared = JSONObject().put("personalCapabilities", JSONObject().put("modelServices", 1))
+        val result = hostModelServicesRequest(hostModelServicesDeclared(declared)) { requests++; JSONObject().put("services", "synthetic") }
+        assertEquals(1, requests); assertEquals("synthetic", result.getString("services"))
+    }
+    @Test fun aStablePinReusesTlsButChangingThePinCannotReuseItsTrustManager() {
+        val origin="https://synthetic.example.test";val url=java.net.URL(origin)
+        try {
+            CloudPins.install(origin,"a".repeat(43))
+            val first=(CloudPins.open(url) as javax.net.ssl.HttpsURLConnection).sslSocketFactory
+            assertSame(first,(CloudPins.open(url) as javax.net.ssl.HttpsURLConnection).sslSocketFactory)
+            CloudPins.install(origin,"b".repeat(43))
+            assertNotSame(first,(CloudPins.open(url) as javax.net.ssl.HttpsURLConnection).sslSocketFactory)
+        } finally {CloudPins.clear(origin)}
+    }
+    @Test fun importedPhoneHistoryKeepsTheComputerTimelineRatherThanLookingUpAnAndroidLocalId() {
+        assertFalse(hostChatUsesPhoneStorage(JSONObject().put("source","phone").put("phoneHistory",true).put("readOnly",true).put("chatId","chat-synthetic")))
+        assertTrue(hostChatUsesPhoneStorage(JSONObject().put("source","phone").put("id","conversation-synthetic")))
+        assertFalse(hostChatUsesPhoneStorage(JSONObject().put("kind","side").put("chatId","chat-synthetic")))
+    }
+    @Test fun pinnedTrustManagerExposesTheAndroidHostnameAwareChainContract() {
+        val method=PinnedTrustManager::class.java.getMethod("checkServerTrusted",Array<java.security.cert.X509Certificate>::class.java,String::class.java,String::class.java)
+        assertTrue(java.util.List::class.java.isAssignableFrom(method.returnType))
+        assertTrue(java.lang.reflect.Modifier.isPublic(method.modifiers))
+    }
+    @Test fun cloudConnectionFailuresKeepSafeActionableReasonsWithoutRawMessages() {
+        val cases=listOf(org.json.JSONException("private response") to "CLOUD_RESPONSE_INVALID",IllegalArgumentException("private request") to "CLOUD_REQUEST_INVALID",javax.net.ssl.SSLException("private host") to "CLOUD_TLS_UNAVAILABLE",java.net.SocketTimeoutException("private address") to "CLOUD_TIMEOUT")
+        for((error,code) in cases)assertEquals(code,cloudAppFailure(error).safeCode)
+        val revoked=ApiFailure(401,"UNAUTHORIZED");assertSame(revoked,cloudAppFailure(revoked))
+    }
+    @Test fun mainKeepsLogicalIdentityBeforeAndAfterFirstSession() {
+        for (session in listOf("", "session-one")) {
+            val target = hostChatSendTarget("main","chat-main",session)
+            assertEquals("chat-main",target.getString("chatId")); assertFalse(target.has("sessionId"))
+        }
+    }
+    @Test fun sideAndLegacyChatsSendToTheirOriginalSession() {
+        for (kind in listOf("side", "")) {
+            val target = hostChatSendTarget(kind,"chat-side","session-old")
+            assertEquals("session-old",target.getString("sessionId")); assertFalse(target.has("chatId"))
+        }
+    }
+    @Test(expected=ApiFailure::class) fun missingSideSessionNeverFallsBackToMainOrPhone() { hostChatSendTarget("side","chat-side","") }
+    @Test fun oldAndCurrentHostRejectionsAreTerminal() {
+        for ((status,code) in listOf(404 to "CHAT_UNAVAILABLE",400 to "INVALID_REQUEST",401 to "UNAUTHORIZED",422 to "MODEL_UNAVAILABLE",409 to "REQUEST_CONFLICT",403 to "FORBIDDEN"))
+            assertTrue(sharedSendRejected(ApiFailure(status,code)))
+        for ((status,code) in listOf(503 to "HOST_UNAVAILABLE",502 to "COMMAND_RECEIPT_INVALID",409 to "SESSION_BUSY"))
+            assertFalse(sharedSendRejected(ApiFailure(status,code)))
+    }
+    @Test fun unknownOutcomeRetainsOriginalMessageAndOffersAnExplicitCheck() {
+        val row=JSONObject().put("state","uncertain").put("text","你好")
+        assertTrue(hostDeliveryMessage(row).contains("点按核对"));assertFalse(hostDeliveryMessage(row).contains("自动续查"));assertEquals("你好",row.getString("text"))
+        assertTrue(hostDeliveryMessage(row.put("state","rejected")).contains("没有发出"))
+        assertTrue(hostDeliveryMessage(row.put("state","pending")).contains("电脑已收到"))
+    }
+}

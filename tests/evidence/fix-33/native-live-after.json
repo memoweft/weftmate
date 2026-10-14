@@ -1,0 +1,31 @@
+{
+  "loggedInAccountReused": true,
+  "bootstrapMs": 8515,
+  "newChatMs": 4722,
+  "newChatRunsOnComputer": true,
+  "firstUserVisibleMs": 1174,
+  "greetings": [
+    {
+      "index": 1,
+      "replyVisibleMs": 3127
+    },
+    {
+      "index": 2,
+      "replyVisibleMs": 7083
+    },
+    {
+      "index": 3,
+      "replyVisibleMs": 8031
+    },
+    {
+      "index": 4,
+      "replyVisibleMs": 10476
+    }
+  ],
+  "model": "MiMo",
+  "computerChatCount": 12,
+  "error": "",
+  "submitting": false,
+  "draftRetained": false,
+  "delivery": []
+}

@@ -55,7 +55,7 @@ html[data-reduced-motion] :is(button,.popover button,.send-button,.nav-primary):
 :root[data-theme="dark"][data-accent="green"] { --accent:#a0c8ad; --accent-hover:#bddbc5; --accent-soft:#2d3e32; }
 :root[data-theme="dark"][data-accent="purple"] { --accent:#cbb3e6; --accent-hover:#decbf2; --accent-soft:#3b314a; }
 
-:root :is(.message-action-primary,.message-action-primary:hover,.model-setup-button,.phone-handoff button,.nav-primary,.native-download-link,.primary:not(.approval-risk-actions .primary),.send-button.ready,#stop-button,#send-button,.composer-send,.composer-send.is-stop,[aria-checked=true]>.menu-toggle-state) { color:var(--wm-color-on-action); }
+:root :is(.message-action-primary,.message-action-primary:hover,.model-setup-button,.phone-handoff > button:not(.secondary),.nav-primary,.native-download-link,.primary:not(.approval-risk-actions .primary),.send-button.ready,#stop-button,#send-button,.composer-send,.composer-send.is-stop,[aria-checked=true]>.menu-toggle-state) { color:var(--wm-color-on-action); }
 :root #pick-thinking[aria-checked=true]::after { color:var(--wm-color-on-action); }
 .appearance-mode-row.settings-row > div:first-child { flex:initial; }
 .appearance-mode-row.settings-row .appearance-modes { flex:initial; }

@@ -44,6 +44,8 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
     const pending=(async()=>{
       const connection=await core.cloudConnect(id);
       if(connection.status!=='online'||!connection.baseUrl)throw {code:'COMPUTER_OFFLINE'};
+      const capabilities=await core.cloudComputerCapabilities?.(connection);
+      if(capabilities?.cloudChannel!==1)throw {code:'COMPUTER_UPDATE_REQUIRED',connection};
       const transport=await effects.openComputerChannel(connection);
       try {
         const session=await core.cloudComputerChannel(connection,transport.request);
@@ -108,7 +110,13 @@ globalThis.WeftUiCore.factories.computers = (core,effects,environment) => {
     if(!enabled || id===current)return;
     if(core.state.submitting || core.state.unresolvedSubmission)throw {code:'SESSION_BUSY'};
     const row=core.state.computers.find(row=>row.hostId===id);if(!row?.online)throw {code:'COMPUTER_OFFLINE'};
-    const entry=id===core.cloudCurrentComputer?.()?null:await channel(id);
+    let entry;
+    try { entry=id===core.cloudCurrentComputer?.()?null:await channel(id); }
+    catch(error) {
+      if(error.code!=='COMPUTER_UPDATE_REQUIRED'||!core.cloudConnectTrusted)throw error;
+      // The original Cookie flow connects legacy computers without opening the new iframe or token channel.
+      await core.cloudConnectTrusted(error.connection); entry=null;
+    }
     const session=entry?.session || await json(core.authBase+'/me');
     core.stopAssistantRefresh?.();current=id;core.acceptSession(session);core.state.hostId=id;
     core.resetLogicalSession?.();
