@@ -31,7 +31,8 @@ jobs:
         with:
           gradle-version: 8.9
       - run: npm ci
-      - run: gradle -p apps/android -PweftmateApplicationId=com.memoweft.weftmate.mobile.health5qa :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon --console=plain
+      # This suite exercises the packaged WebView and native business bridge.
+      - run: gradle -p apps/android -PweftmateApplicationId=com.memoweft.weftmate.mobile.health5qa -PweftmateNativeUi=false :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon --console=plain
       - name: Prepare isolated phone
         run: |
           mkdir -p .local
