@@ -1,3 +1,4 @@
+import './helpers/posix-project-fixture.mjs'
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
@@ -45,6 +46,9 @@ async function fixture(t: any, { inheritedAllow = false, beforeFirstMessage = fa
     cancelSession: async () => ({ accepted: true }),
   }
   const service = await createPersonalAccessService({ root: join(root, 'host'), port: 0, backend })
+  let serviceClosed = false
+  const closeService = async () => { if (!serviceClosed) { serviceClosed = true; await service.close() } }
+  t.after(async () => { await closeService(); rmSync(root, { recursive: true, force: true }) })
   const { origin, hostId } = await service.start(), setup = await service.issueSetupGrant()
   const registration = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST',
     headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: setup.grant,
@@ -151,7 +155,7 @@ async function fixture(t: any, { inheritedAllow = false, beforeFirstMessage = fa
       }
       return row
     }),
-    close: async () => { controller.abort(); await pending; await ctx.fiber.dispose(); await service.close(); rmSync(root, { recursive: true, force: true }) } }
+    close: async () => { controller.abort(); await pending; await ctx.fiber.dispose(); await closeService(); rmSync(root, { recursive: true, force: true }) } }
 }
 
 for (const toolName of ['write', 'shell']) for (const inheritedAllow of [false, true]) test(`FIX-40 phone PATCH ask waits before every ${toolName}, including inherited allow=${inheritedAllow}`, async t => {
