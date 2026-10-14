@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -19,7 +20,7 @@ const run = promisify(execFile), repository = resolve(import.meta.dirname, '../.
 const source = process.argv[2]; if (!source) throw new Error('Pass the explicitly authorized backup directory');
 const releaseRoot = resolve(process.argv[3] || '.local/r0-1/final-releases');
 const root = await mkdtemp(join(tmpdir(), 'weftmate-r01-migration-')), profile = join(root, 'profile');
-const evidence = join(repository, 'tests/evidence/r0-1'); await mkdir(evidence, { recursive: true });
+const evidence = evidencePath('r0-1'); await mkdir(evidence, { recursive: true });
 const control = join(process.env.APPDATA, 'WeftMate r01qa'), configFile = join(control, 'WeftMate/desktop-config.json');
 const installer = join(releaseRoot, '0.1.1-preview.2/build/WeftMate-Setup-0.1.1-preview.2.exe');
 const installation = join(root, 'Programs/WeftMate'), executable = join(installation, 'WeftMate.exe');

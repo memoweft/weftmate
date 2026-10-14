@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Real phone browser -> real Electron/DSH/Core, synthetic cloud/account and
  * random ports. Only model transport and discovery addresses are adapted. */
 import './and-2-fixture.mjs';
@@ -17,7 +18,7 @@ import { fixture } from '../helpers/auth-1-https-cloud.mjs';
 import { appDevice,proof } from '../../services/cloud/test/app-helpers.mjs';
 import { taskRecipient,openTask } from '../../src/personal-offline/crypto.mjs';
 import { redactEvidenceText,cleanupOwnedProcesses,systemCommitMemory,describeExit } from '../helpers/process-evidence.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/mem-7');await mkdir(out,{recursive:true});
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('mem-7');await mkdir(out,{recursive:true});
 const startedAt=new Date().toISOString(),root=await mkdtemp(join(tmpdir(),'weftmate-mem7-')),profile=join(root,'profile');await mkdir(profile);
 await writeFile(join(profile,'.weftmate-personal-host-profile.json'),JSON.stringify({schemaVersion:1,purpose:'isolated-personal-host'}));
 const secret=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"],{windowsHide:true,encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim();assert.ok(secret);

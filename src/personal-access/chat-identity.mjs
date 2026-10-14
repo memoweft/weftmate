@@ -59,6 +59,7 @@ export function validateChatIdentity(account) {
       Object.values(identity.chats).filter(chat => chat.kind === 'main').length !== 1) corrupt();
   for (const [id, chat] of Object.entries(identity.chats)) {
     if (chat.deepThinking !== undefined && typeof chat.deepThinking !== 'boolean') corrupt();
+    if (chat.wasMain !== undefined && typeof chat.wasMain !== 'boolean') corrupt();
     if (!validId(id) || !plainObject(chat) || chat.chatId !== id || !['main', 'side'].includes(chat.kind) ||
         !Number.isSafeInteger(chat.revision) || chat.revision < 1 ||
         !Number.isSafeInteger(chat.contentRevision) || chat.contentRevision < 1 ||

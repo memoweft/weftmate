@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Opt-in Android acceptance. Real login UI/native transport; synthetic cloud/host only. */
 import assert from 'node:assert/strict';
 import {execFileSync,spawn} from 'node:child_process';
@@ -7,7 +8,7 @@ import {chromium} from 'playwright';
 import {startAndroidLoginFixture} from './and-2-fixture.mjs';
 import {systemBarDifference} from '../../scripts/nightly/system-bars.mjs';
 const adb=process.env.AND2_ADB||'D:/Software/MuMuPlayer/nx_main/adb.exe',serial='127.0.0.1:7555',pkg='com.memoweft.weftmate.mobile.lg1bqa';
-const out=resolve('tests/evidence/and-2');await mkdir(out,{recursive:true});
+const out=evidencePath('and-2');await mkdir(out,{recursive:true});
 const adbServer=process.env.AND2_ADB_PORT?['-P',process.env.AND2_ADB_PORT]:[];
 const run=(...args)=>execFileSync(adb,[...adbServer,'-s',serial,...args],{windowsHide:true,timeout:20000,maxBuffer:20*1024*1024,stdio:['ignore','pipe','pipe']});
 const pause=ms=>new Promise(r=>setTimeout(r,ms));

@@ -1,10 +1,11 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { readFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { sealReplica } from '../../src/personal-offline/crypto.mjs';
-const directory = resolve('tests/evidence/m3-a'); await mkdir(directory, { recursive: true });
+const directory = evidencePath('m3-a'); await mkdir(directory, { recursive: true });
 const server = createServer(async (request, response) => {
   if (request.url === '/') { response.setHeader('content-type', 'text/html'); response.end('<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/src/personal-access-ui/tokens.css"><link rel="stylesheet" href="/src/personal-access-ui/offline.css"><script src="/src/personal-access-ui/format-vendor.js"></script><script src="/src/ui-core/offline.js"></script><script src="/src/personal-access-ui/components/offline.js"></script>'); return; }
   response.setHeader('content-type', request.url.endsWith('.css') ? 'text/css' : 'text/javascript');

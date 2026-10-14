@@ -50,7 +50,7 @@ export async function scanUiCopy(root = resolve(import.meta.dirname,'..')) {
   for(const dir of ['src/personal-access-ui','apps/mobile-ui/www']) for(const file of await files(join(root,dir))) {
     for(const copy of authoredCopy(await readFile(file,'utf8'),file)) { try { checkVisibleCopy(copy,file); } catch(error) { found.push(error.message); } }
   }
-  const frames=JSON.parse(await readFile(join(root,'tests/evidence/ux-1/screenshot-text.json'),'utf8'));
+  const frames=JSON.parse(await readFile(join(root,'tests/fixtures/ux-1/screenshot-text.json'),'utf8'));
   if(frames.syntheticOnly!==true || !frames.frames.length)throw new Error('Missing synthetic rendered screenshot text');
   for(const frame of frames.frames) { try { checkVisibleCopy(frame.text,`${frame.surface}/${frame.theme}/${frame.scene}`); } catch(error) { found.push(error.message); } }
   if(found.length)throw new Error(found.join('\n'));

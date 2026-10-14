@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Local cloud + production Electron/DSH + phone web. No installed app or production cloud.
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
@@ -17,7 +18,7 @@ import {sessionWorkspace} from '../../src/personal-access/session-workspace.mjs'
 import {fixture,P,EMAIL,PASSWORD} from '../../services/cloud/test/identity-helpers.mjs';
 import {registration,appDevice,control,refresh,proof} from '../../services/cloud/test/app-helpers.mjs';
 import {s7Phone} from '../helpers/s7-phone.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/s7'),startedAt=Date.now(),root=await managedMkdtemp(join(managedTempRoot(),'wm-s7-')),profile=join(root,'desktop');
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('s7'),startedAt=Date.now(),root=await managedMkdtemp(join(managedTempRoot(),'wm-s7-')),profile=join(root,'desktop');
 await mkdir(profile);await mkdir(out,{recursive:true});await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const key=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"],{encoding:'utf8',windowsHide:true}).trim();assert.ok(key,'MiMo machine environment key is required');
 const cleanups=[],errors=[],report={syntheticCloud:true,realElectron:true,realDSH:true,model:'mimo-v2.6-flash',modelRequests:0,checks:[],screenshots:[],systemBars:'Browser viewport evidence; native system bars require the follow-up shell.'};

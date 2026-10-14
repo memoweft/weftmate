@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic schema-8 and schema-9 clouds, real signed device/host protocols,
 // production phone offline component. No real model or emulator settings.
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ import {fixture} from '../../services/cloud/test/identity-helpers.mjs';
 import {registration,appDevice,control,refresh,hostFixture} from '../../services/cloud/test/app-helpers.mjs';
 import {taskRecipient} from '../../src/personal-offline/crypto.mjs';
 import {managedMkdtemp,managedTempRoot,disposeManagedTemp} from '../helpers/managed-temp.mjs';
-const root=await managedMkdtemp(join(managedTempRoot(),'wm-s7-cloudcompat-')),out=resolve('tests/evidence/s7'),legacy=join(root,'legacy'),source=resolve('src/personal-access-ui');
+const root=await managedMkdtemp(join(managedTempRoot(),'wm-s7-cloudcompat-')),out=evidencePath('s7'),legacy=join(root,'legacy'),source=resolve('src/personal-access-ui');
 await mkdir(legacy,{recursive:true});await mkdir(out,{recursive:true});
 // Pin the schema-8 baseline so this evidence remains reproducible after main upgrades.
 const ref='9a9f53f0593d4333843a296cdbe2533757b4aa57';

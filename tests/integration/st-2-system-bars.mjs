@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -6,7 +7,7 @@ import {mkdir,writeFile,rm,open,readFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {readMuMuInfo} from '../../scripts/nightly/mumu.mjs';
-const cloud=!!process.env.WEFTMATE_ST2_ANDROID_SERIAL,adb=process.env.WEFTMATE_ST2_ADB??'D:/Software/MuMuPlayer/nx_main/adb.exe',pkg=process.env.WEFTMATE_ST2_ANDROID_PACKAGE??'com.memoweft.weftmate.mobile.st4qa',out=resolve('tests/evidence/st-2'),lock=cloud?resolve('.local/st2-phone.lock'):'D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock';
+const cloud=!!process.env.WEFTMATE_ST2_ANDROID_SERIAL,adb=process.env.WEFTMATE_ST2_ADB??'D:/Software/MuMuPlayer/nx_main/adb.exe',pkg=process.env.WEFTMATE_ST2_ANDROID_PACKAGE??'com.memoweft.weftmate.mobile.st4qa',out=evidencePath('st-2'),lock=cloud?resolve('.local/st2-phone.lock'):'D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock';
 await mkdir(out,{recursive:true});const ownsLease=process.env.WEFTMATE_ST2_MUMU_LEASE!=='parent';if(ownsLease){const lease=await open(lock,'wx');await lease.writeFile(`ST-2 ${new Date().toISOString()} remote browser system bars`);await lease.close();}else assert.match(await readFile(lock,'utf8'),/^ST-2 fresh-navigation/);
 let f,proxy,browserOrigin,socket,forward,serial,originalNight,originalSize,originalDensity,resized=false,installed=false;const checks=[];
 function run(...args){return execFileSync(adb,['-s',serial,...args],{windowsHide:true,maxBuffer:16*1024*1024});}

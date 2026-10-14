@@ -5,6 +5,7 @@ import { validateMemorySettings } from './temporary-chats.mjs';
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { validateChatIdentity } from './chat-identity.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
+import { executionProject } from './work-and-chat.mjs';
 import { randomUUID } from 'node:crypto';
 import { open, rm } from 'node:fs/promises';
 import { ensurePrivateFile, forgetPrivateFile, openPrivateFile, renamePrivateFile } from '../private-host-storage.mjs';
@@ -249,6 +250,8 @@ export function validateSingleStore(store) {
     }
   }
   for (const [sessionId, session] of Object.entries(store.sessions)) {
+    if (session?.mode !== undefined && !['chat', 'work'].includes(session.mode) ||
+        session?.workHostId !== undefined && !validId(session.workHostId)) throw failure('STORE_CORRUPT', 500);
     if (!validId(sessionId) || !plainObject(session) || session.ownerId !== store.ownerId ||
         (session.archived !== undefined && typeof session.archived !== 'boolean') ||
         (session.deleting !== undefined && typeof session.deleting !== 'boolean') ||
@@ -447,6 +450,9 @@ export function validateSingleStore(store) {
   }
   const requestIds = new Set();
   for (const [commandId, command] of Object.entries(store.commands)) {
+    if (command?.workContext !== undefined && (!plainObject(command.workContext) ||
+        !validId(command.workContext.projectId) || !validId(command.workContext.hostId) ||
+        !Number.isSafeInteger(command.workContext.projectRevision) || command.workContext.projectRevision < 1 || !validTime(command.workContext.at))) throw failure('STORE_CORRUPT', 500);
     if (!validId(commandId) || !plainObject(command) || command.commandId !== commandId ||
         command.ownerId !== store.ownerId || !REQUEST_ID.test(command.requestId ?? '') ||
         !/^[a-f0-9]{64}$/.test(command.payloadHash ?? '') ||
@@ -467,20 +473,21 @@ export function validateSingleStore(store) {
     requestIds.add(command.requestId);
     try {
       const payload = canonicalCommand(command.payload, store.hostId, true);
+      const binding = executionProject(command);
       const currentBinding = ['pending', 'dispatching', 'uncertain'].includes(command.state);
       if (JSON.stringify(payload) !== JSON.stringify(command.payload) ||
           digest(JSON.stringify(payload)) !== command.payloadHash ||
           command.kind !== payload.kind || command.requestId !== payload.requestId ||
           command.targetDeviceId !== store.hostId ||
-           (payload.projectId !== undefined && (!['session.create', 'session.message'].includes(command.kind) ||
-             !Object.hasOwn(store.projects ?? {}, payload.projectId) ||
+           (binding.projectId !== undefined && (!['session.create', 'session.message'].includes(command.kind) ||
+             !Object.hasOwn(store.projects ?? {}, binding.projectId) ||
              (currentBinding && command.kind === 'session.message' &&
-               (store.sessions[command.sessionId]?.projectId !== payload.projectId ||
-                 store.sessions[command.sessionId]?.projectRevision !== payload.projectRevision)))) ||
+               (store.sessions[command.sessionId]?.projectId !== binding.projectId ||
+                 store.sessions[command.sessionId]?.projectRevision !== binding.projectRevision)))) ||
            (currentBinding && command.kind === 'session.message' &&
-             (payload.projectId ?? null) !== (store.sessions[command.sessionId]?.projectId ?? null)) ||
+             (binding.projectId ?? null) !== (store.sessions[command.sessionId]?.projectId ?? null)) ||
            (currentBinding && command.kind === 'session.message' &&
-             (payload.workspaceKind ?? null) !== (store.sessions[command.sessionId]?.workspaceKind ?? null)) ||
+             (binding.workspaceKind ?? null) !== (store.sessions[command.sessionId]?.workspaceKind ?? null)) ||
            (command.kind === 'session.message' &&
              ((payload.conversationId ?? null) !== (store.sessions[command.sessionId]?.conversationId ?? null) ||
                (payload.sourceSyncEventId !== undefined && payload.conversationId === undefined))) ||
@@ -547,9 +554,9 @@ export function validateSingleStore(store) {
             store.commands[command.rootTaskId]?.kind !== 'session.message' ||
             store.commands[command.rootTaskId]?.rootTaskId !== undefined ||
              store.commands[command.rootTaskId]?.sessionId !== command.sessionId ||
-             (store.commands[command.rootTaskId]?.payload.projectId ?? null) !== (payload.projectId ?? null) ||
-             (store.commands[command.rootTaskId]?.payload.projectRevision ?? null) !== (payload.projectRevision ?? null) ||
-             (store.commands[command.rootTaskId]?.payload.workspaceKind ?? null) !== (payload.workspaceKind ?? null))) ||
+             (executionProject(store.commands[command.rootTaskId]).projectId ?? null) !== (binding.projectId ?? null) ||
+             (executionProject(store.commands[command.rootTaskId]).projectRevision ?? null) !== (binding.projectRevision ?? null) ||
+             (executionProject(store.commands[command.rootTaskId]).workspaceKind ?? null) !== (binding.workspaceKind ?? null))) ||
           (command.taskAction !== undefined && command.rootTaskId === undefined) ||
           (command.taskControl !== undefined && (command.kind !== 'session.message' ||
             command.rootTaskId !== undefined || !plainObject(command.taskControl) ||

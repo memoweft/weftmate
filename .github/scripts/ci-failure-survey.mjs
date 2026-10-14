@@ -1,3 +1,4 @@
+import { evidencePath } from '../../tests/helpers/evidence-path.mjs';
 // Read-only GitHub survey. Cached logs stay local; public evidence contains redacted failure blocks only.
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -39,7 +40,7 @@ export function parseFailures(log, sources = []) {
   return [...new Map(failures.map(row=>[JSON.stringify([row.job,row.name]),row])).values()];
 }
 
-export async function survey({ workflow = 'ci.yml', limit = 80, since, allJobs = false, destination = 'tests/evidence/ci-1', cache = '.local/ci-1/survey' } = {}) {
+export async function survey({ workflow = 'ci.yml', limit = 80, since, allJobs = false, destination = evidencePath('ci-1'), cache = '.local/ci-1/survey' } = {}) {
   mkdirSync(cache, { recursive: true }); mkdirSync(destination, { recursive: true });
   const cached = async (name, args, refresh = false) => {
     const file = resolve(cache, name);

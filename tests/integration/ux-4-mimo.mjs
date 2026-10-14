@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -11,7 +12,7 @@ import { join, resolve } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const evidence=resolve('tests/evidence/ux-4');mkdirSync(evidence,{recursive:true});
+const evidence=evidencePath('ux-4');mkdirSync(evidence,{recursive:true});
 assert.ok(process.env.UX3_MIMO_KEY,'MiMo credential must be supplied in process memory');
 const root=mkdtempSync(join(tmpdir(),'weftmate-ux4-mimo-')),profile=join(root,'profile');mkdirSync(profile);
 writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));

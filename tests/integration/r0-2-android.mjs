@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** R0-2 native screenshots: existing shell, external test probe, synthetic local account only. */
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
@@ -11,7 +12,7 @@ import { createHostDiagnostics } from '../../src/host-diagnostics.mjs';
 import { systemBarDifference } from '../../scripts/nightly/system-bars.mjs';
 
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
-const repository=resolve(import.meta.dirname,'../..'),out=join(repository,'tests/evidence/r0-2');mkdirSync(out,{recursive:true});
+const repository=resolve(import.meta.dirname,'../..'),out=evidencePath('r0-2');mkdirSync(out,{recursive:true});
 const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',manager='D:/Software/MuMuPlayer/nx_main/MuMuManager.exe';
 const pkg='com.memoweft.weftmate.mobile.r02',locks='D:/AIProjects/WeftMate/Runtime/Orchestrator';
 const root=managedMkdtempSync(join(managedTempRoot(),'weftmate-r0-2-android-'));

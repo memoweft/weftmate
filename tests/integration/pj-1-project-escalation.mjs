@@ -1,3 +1,5 @@
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -12,6 +14,8 @@ import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
+prepareEvidenceDirectory(evidencePath('pj-1'), { recursive: true });
+
 
 const repository=resolve(import.meta.dirname,'../..'),root=mkdtempSync(join(tmpdir(),'weftmate-pj1-escalation-')),profile=join(root,'profile'),folder=join(root,'project');
 mkdirSync(profile);mkdirSync(folder);writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
@@ -59,6 +63,6 @@ try{
   assert.equal(existsSync(inside),false);
   assert.equal((await api(`/sessions/${create.sessionId}/approvals/${insideApproval.approvalId}`,{requestId:randomUUID(),outcome:'allowed-once',scope:'once'})).status,200);
   await until(()=>existsSync(inside)&&readFileSync(inside,'utf8')==='Approved project update');await until(async()=>(await api('/tasks/'+update.commandId)).body.replyEvidence?.status==='completed');
-  writeFileSync(join(repository,'tests/evidence/pj-1/escalation-verification.json'),JSON.stringify({syntheticModel:true,realElectronAndDsh:true,allowAllStillRequiresExplicitApproval:true,outsideFileAbsentBeforeApproval:true,oneShotNativeFileUpgradeSucceeded:true,projectFolderHiddenInApproval:true,relativeApprovalTargetPreserved:true},null,2));
+  writeFileSync(evidencePath('pj-1/escalation-verification.json'),JSON.stringify({syntheticModel:true,realElectronAndDsh:true,allowAllStillRequiresExplicitApproval:true,outsideFileAbsentBeforeApproval:true,oneShotNativeFileUpgradeSucceeded:true,projectFolderHiddenInApproval:true,relativeApprovalTargetPreserved:true},null,2));
   console.log('PJ-1 native project escalation requires and consumes explicit approval even in allow-all');
 }finally{await app?.close();await new Promise(done=>model.close(done));}

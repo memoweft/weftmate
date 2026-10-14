@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Audit completed/interrupted EX-2 roots without reopening hosts or calling models.
  * node .../m2-exit-audit.mjs <isolated-root> ... [--out <evidence-directory>]
  * Removes only generated baseline credential/session files; scans actual file bytes.
@@ -12,7 +13,7 @@ import { snapshot, verify } from '../../src/personal-backup/archive.mjs';
 import { exportHasForgottenName } from './m2-exit-checks.mjs';
 const run = promisify(execFile), exportCheck = process.argv.includes('--export-check');
 const args = process.argv.slice(2).filter(arg => arg !== '--export-check'), at = args.indexOf('--out');
-const out = at < 0 ? resolve(import.meta.dirname, '../evidence/m2-exit') : resolve(args[at + 1]);
+const out = at < 0 ? evidencePath('m2-exit') : resolve(args[at + 1]);
 const roots = (at < 0 ? args : args.slice(0, at)).map(root => resolve(root));
 assert.ok(roots.length, 'Pass completed EX-2 isolated roots');
 const privateValues = [];

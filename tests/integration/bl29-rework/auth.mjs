@@ -56,4 +56,7 @@ export async function initializeDesktopSession(page, fixture, { legacy = false, 
     return core?.state.account && core.state.device?.authKind === 'desktop' && core.state.ownerId &&
       core.state.mainChat && core.state.modelsKnown && !core.state.refreshing && !core.state.sessionSelecting;
   });
+  // Synchronization probes measure an existing conversation, not the new empty
+  // draft that MODE-1 now opens. Read it through the preserved logical route.
+  await page.evaluate(() => (globalThis.__revCore || globalThis.__streamCore).selectMainChat());
 }

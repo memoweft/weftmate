@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile, rm } from 'node:fs/promises';
@@ -5,7 +6,7 @@ import { mkdir, writeFile, rm } from 'node:fs/promises';
 import { join,resolve } from 'node:path';
 import { monitorEventLoopDelay } from 'node:perf_hooks';
 import { scanStatistics } from '../../src/personal-data/statistics.mjs';
-const root=await mkdtemp(join(tmpdir(),'weftmate-st4-50k-')),out=resolve('tests/evidence/st-4');await mkdir(out,{recursive:true});
+const root=await mkdtemp(join(tmpdir(),'weftmate-st4-50k-')),out=evidencePath('st-4');await mkdir(out,{recursive:true});
 try {
  const fileCount=50000,bytes=2*1024**3,small=Math.floor(bytes/fileCount),extra=bytes-small*fileCount;
  const block=Buffer.alloc(small,0x53);let created=0;

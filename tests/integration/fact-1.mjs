@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 // Real Electron + DSH evaluation. All files/accounts/ports are isolated.
@@ -19,7 +20,7 @@ const phase=arg('--phase','after'), model=arg('--model','mimo'), repetitions=Num
 assert.ok(['before','after'].includes(phase)&&['mimo','lan'].includes(model));
 const fixture=JSON.parse(readFileSync(join(repo,'tests/fixtures/fact-1/topics.json')));
 const topics=fixture.topics.filter(t=>!arg('--only','')||arg('--only','').split(',').includes(t.id));
-const evidence=resolve(arg('--out',`tests/evidence/fact-1/${phase}/${model}`));mkdirSync(evidence,{recursive:true});
+const evidence=resolve(arg('--out',evidencePath(`fact-1/${phase}/${model}`)));mkdirSync(evidence,{recursive:true});
 process.env.TEMP=process.env.TMP='C:/Temp';
 const root=join('C:/Temp','weftmate-fact1-'+randomUUID()),profile=join(root,'profile');mkdirSync(profile,{recursive:true});
 writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));

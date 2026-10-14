@@ -17,7 +17,7 @@ async function setup(extra:any={}){
   core.accessBase='/personal/v1';core.authBase='/personal/v1/auth';core.requestJson=(url:string,options:any)=>coreOriginal(url.replace('/personal/v1',''),options);
   const coreOriginal=core.accessApi;
   ctx.WeftUiCore.factories.computers(core,effects,{...extra,storage:{getItem:(k:string)=>prefs.get(k),setItem:(k:string,v:string)=>prefs.set(k,v)}});
-  return {ctx,core,calls};
+  return {ctx,core,calls,effects};
 }
 test('execution defaults inherit sources, prefer last online computer, and choose the only online computer',async()=>{
   const {ctx}=await setup(),choose=ctx.WeftUiCore.chooseComputer;
@@ -57,6 +57,12 @@ test('list merges by computer; sending and retries address only the selected com
   assert.equal(calls.length,2);assert.ok(calls.every(c=>c.host==='b'));assert.equal(calls[0].options.body,calls[1].options.body);
   hosts[0].online=false;const offline=await core.accessApi('/sessions?archived=all');
   assert.equal(offline.sessions.find((s:any)=>s.hostId==='a').computerOffline,true);
+});
+
+test('MODE-1 selecting another computer restores receipt observation before an empty work draft sends',async()=>{
+  const {core,effects}=await setup();let restarts=0;(effects as any).startAssistantRefresh=()=>restarts++;
+  core.updateComputerDirectory({hosts:[{hostId:'a',online:true},{hostId:'b',online:true}],capabilities:{multiHost:1}});
+  await core.selectExecutionComputer('b');assert.equal(restarts,1);
 });
 
 test('new cloud cannot enable a token channel on a computer that did not declare it',async()=>{

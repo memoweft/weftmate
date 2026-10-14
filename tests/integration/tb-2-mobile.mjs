@@ -1,9 +1,10 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { mkdir,writeFile,rm } from 'node:fs/promises';
 import { join,resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
-const fixture=await startTimelineCandidate({logicalMobile:true,interactive:true,historyCount:0,goals:true}),out=resolve(import.meta.dirname,'../evidence/tb-2');await mkdir(out,{recursive:true});
+const fixture=await startTimelineCandidate({logicalMobile:true,interactive:true,historyCount:0,goals:true}),out=evidencePath('tb-2');await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true}),report={viewport:{width:390,height:844},checks:[],errors:[]};
 try{
   const page=await browser.newPage({viewport:report.viewport});page.on('pageerror',e=>report.errors.push(e.message));page.setDefaultTimeout(20000);

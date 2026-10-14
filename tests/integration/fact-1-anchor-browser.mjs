@@ -1,3 +1,5 @@
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync } from '../helpers/managed-temp.mjs';
 // Run under Electron; exercises the actual public-page reader without any model.
 import assert from 'node:assert/strict';
@@ -5,6 +7,8 @@ import { app, BrowserWindow, session } from 'electron';
 import { writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createPersonalBrowserReader } from '../../src/personal-browser/index.mjs';
+prepareEvidenceDirectory(evidencePath('fact-1'), { recursive: true });
+
 const root=mkdtempSync('C:/Temp/weftmate-fact1-anchor-');
 app.setPath('userData',root);app.on('window-all-closed',()=>{});
 app.whenReady().then(async () => {
@@ -20,7 +24,7 @@ try {
     results.push({url,capturedFragment:value.capturedFragment,durationMs:Date.now()-start,bytes:value.totalCapturedBytes,
       requiredPhrase:phrase,phrasePresent:true,partialPage:true,firstParagraph:value.capturedText.slice(0,300)});
   }
-  writeFileSync(resolve('tests/evidence/fact-1/anchor-reader.json'),JSON.stringify({realElectron:true,results},null,2));
+  writeFileSync(evidencePath('fact-1/anchor-reader.json'),JSON.stringify({realElectron:true,results},null,2));
 } finally {await reader.close();app.quit();}
 
-}).catch(error => { writeFileSync(resolve('tests/evidence/fact-1/anchor-reader-failure.json'),JSON.stringify({code:error.code||error.name,message:error.message})); app.exit(1); });
+}).catch(error => { writeFileSync(evidencePath('fact-1/anchor-reader-failure.json'),JSON.stringify({code:error.code||error.name,message:error.message})); app.exit(1); });

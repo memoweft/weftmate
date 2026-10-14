@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** DIAG-1: shipped phone www pages, synthetic login, local HTTP and no native UI.
  * Screenshots are viewport-only. Native status/navigation bars are not verified.
  * Run separately from Electron/vendor gates: node tests/integration/diag-1-mobile.mjs
@@ -9,7 +10,7 @@ import { join, resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
-const out = process.env.DIAG1_EVIDENCE_DIR ? resolve(process.env.DIAG1_EVIDENCE_DIR) : resolve(import.meta.dirname, '../evidence/diag-1');
+const out = process.env.DIAG1_EVIDENCE_DIR ? resolve(process.env.DIAG1_EVIDENCE_DIR) : evidencePath('diag-1');
 await mkdir(out, { recursive: true });
 const report = {
   synthetic: true, productionMobile: true, modelRequests: 0, transport: 'local authenticated HTTP',

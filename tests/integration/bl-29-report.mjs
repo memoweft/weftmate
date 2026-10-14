@@ -1,5 +1,6 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import {readFileSync,writeFileSync,existsSync} from 'node:fs';
-const out='tests/evidence/bl-29';
+const out=evidencePath('bl-29');
 const read=name=>JSON.parse(readFileSync(`${out}/${name}.json`,'utf8'));
 const phases=['foreground-idle','streaming','background','electron-minimized','settings','activity','goals','library'];
 function actor(stack,route){

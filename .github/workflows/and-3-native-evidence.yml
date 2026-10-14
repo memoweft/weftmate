@@ -13,6 +13,8 @@ jobs:
   native:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/evidence
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,7 +52,7 @@ jobs:
         with:
           name: and-3-native-system-bars
           path: |
-            tests/evidence/and-3/cloud-*.png
-            tests/evidence/and-3/cloud-verification.json
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/and-3/cloud-*.png
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/and-3/cloud-verification.json
             apps/android/app/build/test-results/testDebugUnitTest/*.xml
           retention-days: 7
