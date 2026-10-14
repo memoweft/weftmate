@@ -10,6 +10,7 @@ async function setup(extra:any={}){
     accessApi:async(path:string,options:any={})=>{calls.push({host:'a',path,options});return path.startsWith('/sessions')?{sessions:[{sessionId:'a-session',title:'A'}]}:{projects:[]};},
     selectSession:async()=>{},startNewConversation:()=>{},clearSession:()=>{},cloudCurrentComputer:()=> 'a',
     cloudConnect:async(id:string)=>({hostId:id,status:'online',baseUrl:'https://'+id+'.example.com'}),
+    cloudComputerCapabilities:async()=>({cloudChannel:1}),
     cloudComputerChannel:async()=>({token:'synthetic-token',account:{ownerId:'b-owner'},device:{id:'phone'},csrfToken:'csrf'}),
     acceptSession:()=>{},refreshStatus:async()=>{},refreshModels:async()=>{},refreshSessions:async()=>{},api:async()=>({})};
   const effects={paintComputers:()=>{},toast:()=>{},openComputerChannel:async(c:any)=>({close:()=>{},request:async(path:string,options:any)=>{calls.push({host:c.hostId,path,options});return {sessions:[{sessionId:'b-session',title:'B'}]};}})};
@@ -56,4 +57,15 @@ test('list merges by computer; sending and retries address only the selected com
   assert.equal(calls.length,2);assert.ok(calls.every(c=>c.host==='b'));assert.equal(calls[0].options.body,calls[1].options.body);
   hosts[0].online=false;const offline=await core.accessApi('/sessions?archived=all');
   assert.equal(offline.sessions.find((s:any)=>s.hostId==='a').computerOffline,true);
+});
+
+test('new cloud cannot enable a token channel on a computer that did not declare it',async()=>{
+  const {core,calls}=await setup();let opened=0,legacy=0;
+  core.cloudComputerCapabilities=async()=>({});
+  core.cloudComputerChannel=async()=>{opened++;throw Error('legacy host has no token channel');};
+  core.cloudConnectTrusted=async()=>{legacy++;core.cloudCurrentComputer=()=> 'b';};
+  core.updateComputerDirectory({hosts:[{hostId:'a',online:true},{hostId:'b',online:true}],capabilities:{multiHost:1}});
+  await core.selectExecutionComputer('b');
+  assert.equal(legacy,1);assert.equal(opened,0);
+  assert.ok(!calls.some(c=>c.path==='/personal/v1/auth/cloud-channel'));
 });

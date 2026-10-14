@@ -115,7 +115,7 @@
       voiceDisabled:!available,attachmentItemDisabled:uiCore.state.submitting};
   };
   renderSharedConversation=function(){if(main()){ensureList();mobileEffects.renderMainChat();updateComposer();return;}return oldRender();};
-  loadSharedHistory=function(wait=false){return main()?uiCore.refreshLogicalHistory(false,wait):oldLoad(wait);};
+  loadSharedHistory=function(wait=false){if(globalThis.weftNativeChatActive===true)return Promise.resolve();return main()?uiCore.refreshLogicalHistory(false,wait):oldLoad(wait);};
   loadOlderHistory=function(){return main()?uiCore.loadOlderLogicalHistory():oldOlder();};
   handleChatScroll=function(){if(main()){ensureConversationScroll().scrolled();syncPendingDecision();}else oldScroll();};
   send=async function(options={}){

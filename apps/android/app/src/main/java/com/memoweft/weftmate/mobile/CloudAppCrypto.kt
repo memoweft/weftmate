@@ -41,6 +41,15 @@ internal fun cloudAppHostTrustRoute(target: String, host: String): Boolean =
     target.startsWith(host + "/personal/v1/cloud/devices/") &&
         target.removePrefix(host).matches(Regex("/personal/v1/cloud/devices/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/trust"))
 
+internal fun cloudAppFailure(error: Exception): ApiFailure = when(error) {
+    is ApiFailure -> error
+    is org.json.JSONException -> ApiFailure(502, "CLOUD_RESPONSE_INVALID")
+    is IllegalArgumentException -> ApiFailure(400, "CLOUD_REQUEST_INVALID")
+    is javax.net.ssl.SSLException -> ApiFailure(503, "CLOUD_TLS_UNAVAILABLE")
+    is java.net.SocketTimeoutException -> ApiFailure(504, "CLOUD_TIMEOUT")
+    else -> ApiFailure(503, "CLOUD_TRANSPORT_UNAVAILABLE")
+}
+
 internal fun cloudAppRouteAllowed(target: String, method: String, host: String, issuer: String): Boolean {
     if (method !in setOf("GET", "POST")) return false
     val cloud = issuer.removeSuffix("/oidc")
