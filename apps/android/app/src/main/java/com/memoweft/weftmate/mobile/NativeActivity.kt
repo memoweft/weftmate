@@ -22,6 +22,7 @@ class NativeActivity : HybridActivity() {
     internal lateinit var model: NativeChatModel
     internal lateinit var feed: NativeFeedModel
     internal lateinit var goals: NativeGoalsModel
+    internal lateinit var settings: NativeSettingsModel
     internal lateinit var health: NativeHealthModel
     internal var embeddedFeedLoaded: (() -> Unit)? = null
     internal var embeddedWebIdentity by mutableStateOf<WebView?>(null)
@@ -66,6 +67,7 @@ class NativeActivity : HybridActivity() {
         model = NativeChatModel(this, nativeScope)
         feed = NativeFeedModel(model, this)
         goals = NativeGoalsModel(model, this)
+        settings = NativeSettingsModel(model, this)
         health = NativeHealthModel(model)
         nativeObserver = { type, data -> model.event(type, data); feed.event(type, data); goals.event(type, data); health.event(type) }
         // Compose owns system/IME insets; the embedded page receives a zero local safe area.
@@ -89,7 +91,7 @@ class NativeActivity : HybridActivity() {
     }
     override fun embeddedPageFinished() { embeddedWebIdentity=embeddedWeb;applyWebFrame();if(::model.isInitialized && model.loggedIn && model.tab=="chat")parkWeb();embeddedFeedLoaded?.invoke() }
     internal fun parkWeb() {
-        if (!::model.isInitialized || model.tab !in listOf("chat", "activity", "goals", "health")) return
+        if (!::model.isInitialized || model.tab !in listOf("chat", "activity", "goals", "health", "settings", "models")) return
         coveredHostHistory = true
         val web = embeddedWeb
         (web.parent as? ViewGroup)?.removeView(web)
@@ -146,7 +148,8 @@ class NativeActivity : HybridActivity() {
     @Suppress("DEPRECATION") override fun onBackPressed() {
         overlayBack?.let { it(); return }
         if (!::model.isInitialized || !model.loggedIn) { super.onBackPressed(); return }
-        if (model.tab == "health-web") health.closeWeb()
+        if (model.tab == "settings" || model.tab == "models") settings.back()
+        else if (model.tab == "health-web") health.closeWeb()
         else if (model.tab == "health" && health.calendarOpen) health.calendarOpen = false
         else if (model.tab == "health" && health.view != "today") health.home()
         else if (model.tab == "goals-web") goals.closeWeb()
@@ -155,5 +158,5 @@ class NativeActivity : HybridActivity() {
         else if (model.tab == "activity" && feed.detail != null) feed.closeDetail()
         else if (model.tab != "chat") model.returnToChat() else moveTaskToBack(true)
     }
-    override fun onDestroy() { overlayBack=null; if (::health.isInitialized) health.close(); if (::goals.isInitialized) goals.close(); if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
+    override fun onDestroy() { overlayBack=null; if (::settings.isInitialized) settings.close(); if (::health.isInitialized) health.close(); if (::goals.isInitialized) goals.close(); if (::feed.isInitialized) feed.close(); if (::model.isInitialized) model.close(); nativeObserver = null; nativeScope.cancel(); super.onDestroy() }
 }

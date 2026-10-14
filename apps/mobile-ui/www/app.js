@@ -293,7 +293,7 @@ async function selectMobileTab(name){
 }
 function mountMobileTabs(){
   const tabs=$('mobile-bottom-tabs');if(!tabs)return;tabs.style.setProperty('--mobile-tab-count',String(Object.keys(mobileTabNames).length)); $('app').append(tabs);$('chat-page').setAttribute('role','tabpanel');$('chat-page').setAttribute('aria-labelledby','mobile-tab-chat');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','手机主导航');
-  const icons={chat:'chat',activity:'bell',health:'health',goals:'approval',library:'folder'};
+  const icons={chat:'chat',activity:'bell',health:'health',goals:'goal',library:'folder'};
   for(const [id,name]of Object.entries(mobileTabNames)){
     const tab=el('button','mobile-tab');tab.type='button';tab.id=`mobile-tab-${id}`;tab.dataset.tab=id;tab.setAttribute('role','tab');
     tab.setAttribute('aria-controls',id==='chat'?'chat-page':`mobile-panel-${id}`);
