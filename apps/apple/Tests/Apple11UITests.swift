@@ -30,6 +30,9 @@ final class Apple11UITests: XCTestCase {
             RunLoop.current.run(until:Date().addingTimeInterval(0.5))
         }
         XCTAssertTrue(springboard.staticTexts["喝水"].exists,"System banner must contain the actual reminder body")
+        // Accessibility becomes available before SpringBoard finishes the banner animation.
+        RunLoop.current.run(until:Date().addingTimeInterval(1))
+        XCTAssertTrue(springboard.staticTexts["喝水"].exists)
         capture("apple11-local-notification-banner")
         springboard.staticTexts["喝水"].firstMatch.tap()
         XCTAssertTrue(app.descendants(matching:.any)["phoneChat.draft"].firstMatch.waitForExistence(timeout:10))
