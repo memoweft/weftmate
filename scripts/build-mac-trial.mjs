@@ -1,5 +1,5 @@
-import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
 #!/usr/bin/env node
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
 import { evidencePath } from '../tests/helpers/evidence-path.mjs';
 /** Local x64 .app only. No DMG, updater, publishing, or developer credentials. */
 import { build, Platform, Arch } from 'electron-builder';
