@@ -10,7 +10,7 @@ struct WeftMateMacApp: App {
     init() {
         #if DEBUG
         let args = ProcessInfo.processInfo.arguments
-        if args.contains("--ui-testing"), args.contains("--lg2-capture") {
+        if args.contains("--ui-testing"), (args.contains("--lg2-capture") || args.contains("--apple12-review")) {
             // Launch Services can restore this single-window app with no visible window.
             // Exercise its own Window menu action; no global events or Accessibility grant.
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {

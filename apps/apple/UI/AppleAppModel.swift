@@ -786,10 +786,17 @@ final class AppleAppModel: ObservableObject {
     #if os(iOS)
     @Published var phonePreviewRequest=UUID()
     lazy var phoneChat = PhoneStandaloneModel()
-    var phoneCredentialNamespace: String { cloudNamespace + ".phone" }
-    var phoneAccountIdentity: String { cloudLogin.subject.map { cloudLogin.cloudAddress + "|" + $0 } ?? "device-local" }
     var phoneReminderAccountIdentity: String? { ReminderAccountIdentity.resolve(subject:cloudLogin.subject,issuer:cloudLogin.cloudAddress,restored:cloudLogin.identityRestored) }
     #endif
+    // Standalone storage uses the same account boundary on iPhone and Mac.
+    var phoneCredentialNamespace: String {
+        #if os(macOS)
+        cloudNamespace + ".mac"
+        #else
+        cloudNamespace + ".phone"
+        #endif
+    }
+    var phoneAccountIdentity: String { cloudLogin.subject.map { cloudLogin.cloudAddress + "|" + $0 } ?? "device-local" }
     lazy var cloudLogin = CloudLoginModel(app: self, namespace: cloudNamespace)
     @Published var timelineRootCommands: [TaskRootCommandMetadata] = []
     @Published var stoppingActiveTask = false
