@@ -4,11 +4,11 @@ import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import './helpers/posix-project-fixture.mjs';
-import {bindConversationWork} from '../src/personal-access/work-and-chat.mjs';
-import {validateStore} from '../src/personal-access/store.mjs';
 
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 const {createPersonalAccessService}=await import('../src/personal-access/index.mjs');
+const {bindConversationWork}=await import('../src/personal-access/work-and-chat.mjs');
+const {validateStore}=await import('../src/personal-access/store.mjs');
 
 test('MODE-1 converted task accepts steer, supplement and stopped-task resume without rewriting its source',async t=>{
   for(const action of ['steer','supplement','resume'])await t.test(action,async()=>{
@@ -36,7 +36,7 @@ test('MODE-1 converted task accepts steer, supplement and stopped-task resume wi
         body:JSON.stringify({grant:grant.grant,username:'SyntheticModeControl',password:'Synthetic mode control password',deviceName:'SyntheticDesktop'})});
       assert.equal(setup.status,201);auth={cookie:setup.headers.get('set-cookie')!.split(';')[0],'x-weftmate-csrf':(await setup.json()).csrfToken};
       const folder=join(root,'SyntheticProject');mkdirSync(folder);
-      const project=await request('/projects',{requestId:'register-project',name:'合成工作',rootPath:folder,permission:'write'});assert.equal(project.status,201);
+      const project=await request('/projects',{requestId:'register-project',name:'合成工作',rootPath:folder,permission:'write'});assert.equal(project.status,201,JSON.stringify(project.body));
       const created=await request('/commands',{requestId:'create-session',kind:'session.create',targetDeviceId:started.hostId,modelProfileId:'local'});
       assert.equal(created.status,202);const sessionId=created.body.command.sessionId;await settled(created.body.command.commandId);
       const source=await request('/commands',{requestId:'original-work',kind:'session.message',targetDeviceId:started.hostId,sessionId,text:'Synthetic original work'});
