@@ -30,8 +30,7 @@ jobs:
           gradle-version: 8.9
       - run: npm ci
       - run: npm ci --prefix services/cloud
-      # This suite exercises the packaged WebView and native business bridge.
-      - run: gradle -PweftmateApplicationId=com.memoweft.weftmate.mobile.and3qa -PweftmateNativeUi=false :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon --console=plain --max-workers=2
+      - run: gradle -PweftmateApplicationId=com.memoweft.weftmate.mobile.and3qa :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon --console=plain --max-workers=2
         working-directory: apps/android
       - name: Enable KVM
         run: |
