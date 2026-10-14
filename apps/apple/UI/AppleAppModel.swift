@@ -788,6 +788,7 @@ final class AppleAppModel: ObservableObject {
     lazy var phoneChat = PhoneStandaloneModel()
     var phoneCredentialNamespace: String { cloudNamespace + ".phone" }
     var phoneAccountIdentity: String { cloudLogin.subject.map { cloudLogin.cloudAddress + "|" + $0 } ?? "device-local" }
+    var phoneReminderAccountIdentity: String? { ReminderAccountIdentity.resolve(subject:cloudLogin.subject,issuer:cloudLogin.cloudAddress,restored:cloudLogin.identityRestored) }
     #endif
     lazy var cloudLogin = CloudLoginModel(app: self, namespace: cloudNamespace)
     @Published var timelineRootCommands: [TaskRootCommandMetadata] = []
@@ -1527,6 +1528,9 @@ final class AppleAppModel: ObservableObject {
             authError = launchConfigurationError
             return
         }
+        #if os(iOS)
+        await cloudLogin.restoreLocalIdentity()
+        #endif
         #if DEBUG
         let fixtureArguments = ProcessInfo.processInfo.arguments
         if fixtureArguments.contains("--ui-testing") && fixtureArguments.contains("--apple-contract-fixture") {

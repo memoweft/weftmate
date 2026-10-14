@@ -61,7 +61,12 @@ import WeftMateCore
                 case "tasks":
                     let page=try await app.assistantClient.phoneTasks(); guard token == app.accountEpoch, generation == version else { return }; tasks=page.items; recent=page.recent
                 case "schedules":
-                    let page=try await app.assistantClient.settingsSchedules(); guard token == app.accountEpoch, generation == version else { return }; schedules=page.items; app.phoneChat.activate(app:app); if let host=app.session?.hostId { try app.phoneChat.receiveReminders(page.items,hostID:host) }
+                    guard let host=app.session?.hostId else { return }
+                    app.phoneChat.activate(app:app)
+                    let identity=app.phoneAccountIdentity,read=app.phoneChat.beginReminderRead(hostID:host)
+                    let page=try await app.assistantClient.settingsSchedules()
+                    guard token == app.accountEpoch, generation == version,host == app.session?.hostId,identity == app.phoneAccountIdentity else { return }
+                    if try app.phoneChat.receiveReminders(page.items,hostID:host,read:read) { schedules=page.items }
                 case "goals":
                     let page=try await app.assistantClient.phoneGoals(); guard token == app.accountEpoch, generation == version else { return }; goals=page.items
                 default:

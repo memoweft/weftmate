@@ -49,7 +49,8 @@ public struct ReminderNotification: Codable, Equatable, Sendable {
     func pending() async -> [ReminderNotification]
     func otherPendingCount() async -> Int
     func remove(_ identifiers: [String])
-    func removeDeliveredExcept(_ identifiers: Set<String>) async
+    func deliveredNotifications() async -> [ReminderNotification]
+    func removeDelivered(_ identifiers: [String])
     func add(_ notification: ReminderNotification) async throws
 }
 /// Reconciles with the OS queue, including after process restart or delivery.
@@ -58,13 +59,16 @@ public struct ReminderNotification: Codable, Equatable, Sendable {
     private let center: any ReminderNotificationCenter
     private let now: () -> Date
     private var desired: [ReminderNotification]=[]
-    private var retained=Set<String>()
+    private var accountKey=""
+    private var cancellations: [ReminderCancellation]=[]
+    private var manuallyCompleted=Set<String>()
     private var revision=0
     private var worker: Task<Void,Error>?
     public init(center: any ReminderNotificationCenter, now: @escaping () -> Date = Date.init) { self.center=center; self.now=now }
-    public func reconcile(account: String, reminders: [LocalReminder], authorized: Bool = true) async throws {
+    public func reconcile(account: String, reminders: [LocalReminder], authorized: Bool = true, cancellations: [ReminderCancellation] = []) async throws {
         let active=reminders.filter { !$0.completed }.map { ReminderNotification(account:account,reminder:$0) }
-        retained=Set(active.map(\.identifier))
+        accountKey=ReminderRoute.accountKey(account);self.cancellations=cancellations
+        manuallyCompleted=Set(reminders.filter(\.completed).map { ReminderNotification(account:account,reminder:$0).identifier })
         desired=authorized ? active.filter { $0.fireAt > now() }.sorted { $0.fireAt == $1.fireAt ? $0.identifier < $1.identifier : $0.fireAt < $1.fireAt } : []
         revision += 1
         if let worker { try await worker.value; return }
@@ -77,12 +81,15 @@ public struct ReminderNotification: Codable, Equatable, Sendable {
     private func drain() async throws {
         while true {
             let version=revision
-            let pending=await center.pending(), other=await center.otherPendingCount()
+            let pending=await center.pending(), other=await center.otherPendingCount(), delivered=await center.deliveredNotifications()
             guard version == revision else { continue }
             let nearest=Array(desired.filter { $0.fireAt > now() }.prefix(max(0,64-other)))
             let ids=Set(nearest.map(\.identifier))
             center.remove(pending.filter { !ids.contains($0.identifier) }.map(\.identifier))
-            await center.removeDeliveredExcept(retained)
+            let withdrawn=delivered.filter { item in
+                item.route.account != accountKey || manuallyCompleted.contains(item.identifier) || cancellations.contains { $0.matches(item) }
+            }
+            center.removeDelivered(withdrawn.map(\.identifier))
             var failure: (any Error)?
             for item in nearest where !pending.contains(item) {
                 guard version == revision else { break }

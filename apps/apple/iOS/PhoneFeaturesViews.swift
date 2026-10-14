@@ -161,10 +161,11 @@ struct PhoneGoalsView: View {
     }
     private func reload() { Task { await model.read("goals",app:app) } }
     private func manage(_ row: ManagedSchedule,_ action: ScheduleAction) {
+        let epoch=app.accountEpoch,identity=app.phoneAccountIdentity,host=app.session?.hostId
         Task {
             await model.write(row.identity,page:"goals",app:app) { id in
                 try await app.assistantClient.phoneManageSchedule(row,action:action,requestID:id)
-                if action != .resume,let host=app.session?.hostId { try app.phoneChat.withdrawComputerReminder(row,hostID:host) }
+                if epoch == app.accountEpoch,identity == app.phoneAccountIdentity,let host,host == app.session?.hostId { try app.phoneChat.withdrawComputerReminder(row,hostID:host,action:action) }
             }
         }
     }
