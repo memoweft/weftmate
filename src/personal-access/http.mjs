@@ -68,6 +68,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { modelRouteFingerprint } from '../model-route-fingerprint.mjs';
 import { openAICompatibleEndpoint } from '../openai-compatible-client.ts';
 import { inspectProjectRoot } from '../personal-projects/index.mjs';
+import { executionProject } from './work-and-chat.mjs';
 import { createProjectOperations, projectSettings } from '../personal-projects/projects.mjs';
 import { canonicalCompletion, projectCompletion } from './model-completion.mjs';
 import {
@@ -2003,11 +2004,11 @@ export function createHttpHandler(context) {
           mode: taskAction === 'supplement' ? 'steer' : 'queue', rootTaskId, taskAction,
         } : body.kind === 'session.side.create' ? await context.sideChats.prepare(ownerId, body) : canonicalCommand(body, state.hostId);
         const projectBinding = rawPayload.kind === 'session.message' ? taskAction
-          ? rootSource.payload : state.sessions[rawPayload.sessionId] : null;
+          ? executionProject(rootSource) : state.sessions[rawPayload.sessionId] : null;
         const conversationBinding = rawPayload.kind === 'session.message' ? taskAction
           ? rootSource.payload.conversationId : state.sessions[rawPayload.sessionId]?.conversationId : null;
         const browserBinding = rawPayload.kind === 'session.message' &&
-          (taskAction ? rootSource.payload.workspaceKind : state.sessions[rawPayload.sessionId]?.workspaceKind) === 'browser';
+          (taskAction ? executionProject(rootSource).workspaceKind : state.sessions[rawPayload.sessionId]?.workspaceKind) === 'browser';
         let payload = canonicalCommand({ ...rawPayload,
           ...(projectBinding?.projectId ? { projectId: projectBinding.projectId,
             projectRevision: projectBinding.projectRevision } : {}),
