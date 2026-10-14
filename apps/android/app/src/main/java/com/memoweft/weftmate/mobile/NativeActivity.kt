@@ -91,7 +91,7 @@ class NativeActivity : HybridActivity() {
     }
     override fun embeddedPageFinished() { embeddedWebIdentity=embeddedWeb;applyWebFrame();if(::model.isInitialized && model.loggedIn && model.tab=="chat")parkWeb();embeddedFeedLoaded?.invoke() }
     internal fun parkWeb() {
-        if (!::model.isInitialized || model.tab !in listOf("chat", "activity", "goals", "health", "settings", "models")) return
+        if (!::model.isInitialized || model.tab !in listOf("chat", "activity", "goals", "health", "settings", "models", "library")) return
         coveredHostHistory = true
         val web = embeddedWeb
         (web.parent as? ViewGroup)?.removeView(web)
@@ -132,10 +132,19 @@ class NativeActivity : HybridActivity() {
         getSharedPreferences("native-ui", MODE_PRIVATE).edit().putBoolean("enabled", false).commit()
         startActivity(Intent(this, HybridActivity::class.java)); finish()
     }
+    private var originalLibraryFileId=""
     internal fun originalLibrary(fileId:String?=null) {
-        startActivity(Intent(this, HybridActivity::class.java).putExtra("openLibraryPage",true)
-            .putExtra("openLibraryFileId",fileId)
-            .putExtra("lg1bHostOrigin",intent.getStringExtra("lg1bHostOrigin")))
+        originalLibraryFileId=fileId.orEmpty()
+        model.tab="library-web"
+    }
+    internal fun originalLibraryPage():WebView {
+        val web=webPage("library")
+        web.evaluateJavascript("""openNativeLibraryFile(${JSONObject.quote(originalLibraryFileId)}).catch(()=>toast('文件暂时没能打开，请在成果库重新点开。',true))""",null)
+        return web
+    }
+    internal fun closeOriginalLibrary() {
+        embeddedWeb.evaluateJavascript("window.weftNativeLibraryEntry=false;closeResourcePage({restoreFocus:false})",null)
+        model.tab="library"
     }
     internal fun originalFile(row:JSONObject) {
         if(row.optString("libraryId").isNotBlank())originalLibrary(row.getString("libraryId"))
@@ -148,6 +157,7 @@ class NativeActivity : HybridActivity() {
     @Suppress("DEPRECATION") override fun onBackPressed() {
         overlayBack?.let { it(); return }
         if (!::model.isInitialized || !model.loggedIn) { super.onBackPressed(); return }
+        if (model.tab == "library-web") { closeOriginalLibrary();return }
         if (model.tab == "settings" || model.tab == "models") settings.back()
         else if (model.tab == "health-web") health.closeWeb()
         else if (model.tab == "health" && health.calendarOpen) health.calendarOpen = false

@@ -12,8 +12,11 @@ export async function buildPhonePdf(){
     try{await unlinkLinks(directory);await rm(directory,{recursive:true,force:true});}catch(error){if(error.code!=='ENOENT')throw error;}
   }
   await mkdir(target,{recursive:true});
-  await copyFile(join(source,'legacy/build/pdf.mjs'),join(target,'pdf.js'));
-  await copyFile(join(source,'legacy/build/pdf.worker.mjs'),join(target,'pdf.worker.js'));
+  // Android's existing Chromium 110 WebView lacks this PDF.js prerequisite.
+  // Install it in both realms, before the pinned main/worker module executes.
+  const compatibility=await readFile(join(root,'scripts/pdf-webview-compat.js'),'utf8')+'\n';
+  for(const [input,output]of [['pdf.mjs','pdf.js'],['pdf.worker.mjs','pdf.worker.js']])
+    await writeFile(join(target,output),compatibility+await readFile(join(source,'legacy/build',input),'utf8'));
   const tables={};
   for(const [folder,key]of [['cmaps','cMapUrl'],['standard_fonts','standardFontDataUrl'],['wasm','wasmUrl']]){
     const data={};for(const name of await readdir(join(source,folder))){const bytes=await readFile(join(source,folder,name));

@@ -1,0 +1,47 @@
+{
+  "synthetic": true,
+  "baseline": {
+    "jvmTests": 5,
+    "jvmFailed": 4,
+    "webRestoreTests": 1,
+    "webFailed": 1,
+    "oldPromiseFailed": 1
+  },
+  "after": {
+    "jvmRelevantTests": 63,
+    "jvmFailed": 0,
+    "webAndBridgeRelevantTests": 135,
+    "webAndBridgeFailed": 0,
+    "incrementalWebAndAssetsTests": 18,
+    "incrementalFailed": 0,
+    "rendererTests": 11,
+    "currentLibraryContractTests": 4,
+    "finalBridgeAndLibraryTests": 19,
+    "finalChatInteractionTests": 121,
+    "nativeLibraryIncrementalTests": 18
+  },
+  "fourBlockers": [
+    "submitted-draft-ownership",
+    "exact-library-file-and-complete-preview",
+    "bounded-page-read-state",
+    "cloud-account-projection"
+  ],
+  "ownerScreenshotsCommitted": false,
+  "nativePdfPixelRegression": {
+    "beforeWebInk": 0,
+    "nativeInk": 92336,
+    "afterWebInk": 277627
+  },
+  "ownerWalkthrough": {
+    "messageIntervalsMs": [
+      1248,
+      1390,
+      1260
+    ],
+    "allFourMessagesAndReplies": true,
+    "newConversationDraftPreserved": true,
+    "goalEntriesLight": 3,
+    "goalEntriesDark": 3,
+    "markdownAndPdfReturn": true
+  }
+}
