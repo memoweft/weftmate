@@ -6,6 +6,13 @@ struct SessionActions: View {
     let conversation: ConversationSummary
     var onSelect: () -> Void = {}
     var onDelete: (() -> Void)?
+    private var phoneWork: Bool {
+        #if os(iOS)
+        app.mainChat.capabilities.supports("workAndChat") && WorkAndChat.mode(conversation) == .work
+        #else
+        false
+        #endif
+    }
     var body: some View {
         if !conversation.isMainChat, conversation.sessionId != nil {
             if app.mainChat.capabilities.supports("temporaryChats") { TemporaryChatMenu(app: app, conversation: conversation) }
@@ -19,7 +26,7 @@ struct SessionActions: View {
                                 .accessibilityIdentifier("sessionProject." + project.id)
                         }
                         Button("移出项目") { onSelect(); Task { await app.updateMetadata(conversation, changeProject: true) } }
-                            .disabled(conversation.projectId == nil).accessibilityIdentifier("sessionProject.none")
+                            .disabled(conversation.projectId == nil || phoneWork).accessibilityIdentifier("sessionProject.none")
                     }.disabled(app.lifecycleBusy || conversation.running).accessibilityIdentifier("sessionAction.project")
                     #if os(macOS)
                     .menuStyle(.borderlessButton).foregroundStyle(Weave.ink).fixedSize()

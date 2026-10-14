@@ -5,7 +5,7 @@ import PhotosUI
 
 struct MainChatView: View {
     @ObservedObject var app: AppleAppModel
-    @ObservedObject var model: MainChatModel
+    @StateObject var model: MainChatModel
     @StateObject private var interactions: TaskInteractionModel
     #if os(macOS)
     @Environment(\.openWindow) private var openWindow
@@ -36,8 +36,8 @@ struct MainChatView: View {
     @State private var scrollHeight: CGFloat = 0
     @State private var revealDecision = false
     @StateObject private var positions = MainChatPositionTracker()
-    init(app: AppleAppModel) {
-        self.app = app; model = app.mainChat
+    init(app: AppleAppModel, chatID: String? = nil) {
+        self.app = app; _model = StateObject(wrappedValue: chatID == nil ? app.mainChat : MainChatModel(app: app, chatID: chatID))
         _interactions = StateObject(wrappedValue: TaskInteractionModel(client: app.assistantClient, account: app.session,
             epoch: app.accountEpoch, stateDirectory: app.assistantStateDirectory,
             currentEpoch: { [weak app] in app?.accountEpoch ?? UUID() }, currentSession: { [weak app] in app?.session }))
@@ -53,7 +53,7 @@ struct MainChatView: View {
     var body: some View {
         VStack(spacing: AppleTokens.Space.p0) {
             #if os(iOS)
-            PhoneChatHeader(title: PhonePresentation.title(main: true, assistant: "小纬", conversation: model.chat?.title ?? ""), status: app.phoneConnectionStatus) {
+            PhoneChatHeader(title: model.capabilities.supports("workAndChat") ? (model.chat?.displayTitle ?? model.chat?.title ?? "对话") : PhonePresentation.title(main:true,assistant:"小纬",conversation:model.chat?.title ?? ""), status: model.capabilities.supports("workAndChat") ? (model.chat.map { WorkAndChat.subtitle($0.summary, computer: app.cloudLogin.selectedComputerName) } ?? app.phoneConnectionStatus) : app.phoneConnectionStatus) {
                 Menu {
                     Button("跳日期", image: ImageResource(name: "wm-clock", bundle: .main)) { draftFocused = false; choosingDate = true }.accessibilityIdentifier("mainChat.date")
                     Button("搜索", image: ImageResource(name: "wm-search", bundle: .main)) { draftFocused = false; searching.toggle() }.disabled(!model.capabilities.supports("chatSearch")).accessibilityIdentifier("mainChat.search")
@@ -108,6 +108,7 @@ struct MainChatView: View {
         .task(id: "\(model.chat?.activeSessionId ?? "")|\(model.modelID)") { await model.refreshThinking() }
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        .environment(\.phoneWorkApp,app)
         #endif
         .popover(isPresented: $choosingDate) {
             VStack {
@@ -165,7 +166,7 @@ struct MainChatView: View {
             while !Task.isCancelled {
                 await model.changes()
                 let readDecisions = Date().timeIntervalSince(lastDecisionRead) >= 1.5
-                if readDecisions, let id = model.chat?.activeSessionId {
+                if readDecisions, model.chat?.taskAvailable != false, app.executionAccount != false, let id = model.chat?.activeSessionId {
                     lastDecisionRead = Date(); await interactions.refreshTimeline(sessionID: id)
                 }
                 #if os(iOS)
@@ -355,6 +356,7 @@ struct MainChatView: View {
                 }
             }
             #if os(iOS)
+            if let chat = model.chat, WorkAndChat.mode(chat.summary) == .work, model.capabilities.supports("workAndChat") { PhoneWorkDirectoryLine(app: app, row: chat.summary) }
             if pendingDecisionID != nil && !decisionVisible || !atBottom && !model.window.events.isEmpty {
                 HStack {
                     if !decisionVisible { PhonePendingDecisionNotice(model:interactions) { draftFocused=false; decisionJump += 1 } }
@@ -500,7 +502,11 @@ struct MainChatView: View {
     @ViewBuilder private var modelSelection: some View {
         if app.modelServicesSupported == true {
             ServiceModelMenuButton(services:app.modelServices,current:model.modelID,label:app.modelServices.flatMap(\.models).first(where: {$0.matches(model.modelID)})?.name ?? "尚未配置",usesImages:model.conversationUsesImages,thinkingSupported:app.modelServices.flatMap(\.models).first(where: {$0.matches(model.modelID)})?.deepThinking?.supported == true,thinkingAvailable:model.chat?.activeSessionId != nil,thinkingUnavailableReason:model.chat?.activeSessionId == nil ? "先发第一条消息，再切换深度思考。" : nil,thinking:Binding(get:{model.thinking?.enabled == true},set:{enabled in Task { await model.refreshThinking(enabled:enabled) }}),select:{service,item in Task { await app.chooseServiceModel(service,item,conversation:model.chat?.summary) }},add:{showingModels=true},refresh:{Task { await app.refreshServiceMenus() }},identifier:"mainChat.model")
+            #if os(iOS)
+            if !model.capabilities.supports("workAndChat") { ComputerMenuButton(cloud:app.cloudLogin) }
+            #else
             ComputerMenuButton(cloud:app.cloudLogin)
+            #endif
         } else { legacyModelSelection }
     }
     @ViewBuilder private var legacyModelSelection: some View {

@@ -2,6 +2,7 @@ import SwiftUI
 import WeftMateCore
 
 struct PhoneApprovalCard: View {
+    @Environment(\.phoneWorkApp) private var app
     @ObservedObject var model: TaskInteractionModel
     var approval: SessionApproval
     var events: [TimelineEvent]
@@ -9,6 +10,10 @@ struct PhoneApprovalCard: View {
     private var key: String { "approval:"+approval.id }
     private var hasCategory: Bool { approval.offersAlwaysAllow || !(approval.riskCategories ?? []).isEmpty }
     var body: some View {
+        if approval.isWorkSwitch, let app, app.mainChat.capabilities.supports("workAndChat") { PhoneWorkSwitchCard(app:app,model:model,approval:approval) }
+        else { ordinaryCard }
+    }
+    private var ordinaryCard: some View {
         VStack(alignment:.leading,spacing:AppleTokens.Space.p12) {
             WeftLabel(model.approvalHeadline(approval),icon:"approval").font(AppleTokens.Fonts.headline).fixedSize(horizontal:false,vertical:true)
             if let risk=approval.readableRisk { Text(risk).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted) }
@@ -100,7 +105,12 @@ struct PhonePendingDecision: View {
         else if let approval=model.approvals.first(where:{receipt($0) != nil}),let summary=receipt(approval) { WeftLabel(summary,icon:"approval").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("approvalSummary."+approval.id) }
     }
     private func receipt(_ row: SessionApproval) -> String? {
-        PhoneDecisionReceiptPolicy.approval(status:row.status,summary:row.decisionSummary,registered:model.isRegistered("approval:"+row.id),savedOutcome:model.savedApprovalOutcome(row))
+        if row.isWorkSwitch {
+            let outcome = row.decisionOutcome?.rawValue ?? (model.isRegistered("approval:"+row.id) ? model.savedApprovalOutcome(row)?.rawValue : nil)
+            if outcome == "allowed-once" { return "已切换到工作，电脑操作仍按原来的权限询问。" }
+            if outcome == "rejected" { return "继续对话，这次不操作电脑。" }
+        }
+        return PhoneDecisionReceiptPolicy.approval(status:row.status,summary:row.decisionSummary,registered:model.isRegistered("approval:"+row.id),savedOutcome:model.savedApprovalOutcome(row))
     }
 }
 struct PhonePendingDecisionNotice: View {

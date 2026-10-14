@@ -10,6 +10,7 @@ public actor CloudAccountClient {
     private let key: CloudDeviceKey
     private var jwks: [[String: String]] = []
     private var generation: UInt64 = 0
+    private var offlineTasksSupported=false
     private var busy = false
     private var rotating = false
     private var rotationWaiters: [CheckedContinuation<Void, Never>] = []
@@ -40,6 +41,7 @@ public actor CloudAccountClient {
     }
     public func cancel() { generation &+= 1 }
     public func forget() throws {
+        offlineTasksSupported=false
         generation &+= 1; flow = nil; cookies = []; interaction = [:]; saved = nil; control = nil; hostToken = nil; hostExpiry = 0
         try store.delete(key: storageKey)
     }
@@ -173,7 +175,38 @@ public actor CloudAccountClient {
     }
     public func offlineStatus(hostID: String) async throws -> OfflineAuthorization {
         let response = try await appJSON("/hosts/offline/status", body: ["hostId": hostID], authorized: true)
-        return try JSONDecoder().decode(OfflineAuthorization.self, from: response.body)
+        let authorization=try JSONDecoder().decode(OfflineAuthorization.self, from: response.body)
+        offlineTasksSupported=authorization.supportsTasks
+        return authorization
+    }
+    public func submitOfflineWork(_ task: OfflineWorkTask, authorization: OfflineAuthorization) async throws -> OfflineTaskReceipt {
+        guard authorization.supportsTasks, authorization.authorized, authorization.hostId == task.hostId,
+              authorization.generation == task.generation else { throw OfflineFailure.authorization }
+        offlineTasksSupported=true
+        let envelope=try object(JSONEncoder().encode(task.envelope))
+        let response=try await appJSON("/hosts/offline/tasks/submit", body:["hostId":task.hostId,"id":task.id,"generation":task.generation,"envelope":envelope],authorized:true)
+        let receipt=try JSONDecoder().decode(OfflineTaskReceipt.self,from:response.body)
+        guard receipt.id == task.id,receipt.hostId == task.hostId else { throw OfflineFailure.identity }
+        return receipt
+    }
+    public func listOfflineWork(hostID: String, authorization: OfflineAuthorization) async throws -> [OfflineTaskReceipt] {
+        guard authorization.supportsTasks,authorization.authorized,authorization.hostId == hostID else { throw OfflineFailure.authorization }
+        struct Reply: Decodable { let items: [OfflineTaskReceipt] }
+        let response=try await appJSON("/hosts/offline/tasks/list",body:["hostId":hostID],authorized:true)
+        let reply=try JSONDecoder().decode(Reply.self,from:response.body)
+        guard reply.items.allSatisfy({ $0.hostId == hostID }) else { throw OfflineFailure.identity }
+        return reply.items
+    }
+    public func cancelOfflineWork(_ task: OfflineWorkTask, authorization: OfflineAuthorization) async throws -> OfflineTaskReceipt {
+        guard authorization.supportsTasks,authorization.authorized,authorization.hostId == task.hostId else { throw OfflineFailure.authorization }
+        let response: HTTPResponse
+        do { response=try await appJSON("/hosts/offline/tasks/cancel",body:["hostId":task.hostId,"id":task.id],authorized:true) }
+        catch let error as AppAccountError where error.status == 404 && error.code == "NOT_FOUND" {
+            return .init(id:task.id,hostId:task.hostId,state:"canceled")
+        }
+        let receipt=try JSONDecoder().decode(OfflineTaskReceipt.self,from:response.body)
+        guard receipt.id == task.id,receipt.hostId == task.hostId else { throw OfflineFailure.identity }
+        return receipt
     }
     public func directory() async throws -> CloudDirectory {
         try JSONDecoder().decode(CloudDirectory.self, from: await appJSON("/devices", body: nil, authorized: true).body)
@@ -218,6 +251,7 @@ public actor CloudAccountClient {
         _ = try await appJSON("/auth/account/delete", body: ["password": password], authorized: true)
     }
     public func logout() async throws {
+        if offlineTasksSupported { _ = try await appJSON("/hosts/offline/tasks/clear",body:[:],authorized:true) }
         defer { try? forget() }
         _ = try await appJSON("/auth/logout", body: [:], authorized: true)
     }
@@ -227,7 +261,7 @@ public actor CloudAccountClient {
         var request = URLRequest(url: url); request.httpMethod = body == nil ? "GET" : "POST"
         request.setValue(configuration.server.originString, forHTTPHeaderField: "Origin")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        if let body { request.httpBody = try JSONSerialization.data(withJSONObject: body); request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
+        if let body { request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys]); request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         if authorized {
             if control == nil || controlExpiry <= Date().timeIntervalSince1970 + 30 {
                 control = try await refresh(resource: configuration.audience, hostID: nil, epoch: epoch)

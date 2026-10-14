@@ -240,6 +240,9 @@ extension AppleAppModel {
     }
 
     func canSend(_ conversation: ConversationSummary) -> Bool {
+        #if os(iOS)
+        if mainChat.capabilities.supports("workAndChat"), WorkAndChat.mode(conversation) == .work, conversation.projectId == nil { return false }
+        #endif
         let key = Self.draftKey(for: conversation)
         guard !cloudLogin.selectedComputerUnavailable,!conversation.archived, canEditDraft(for: conversation), commandStore != nil, session?.verification == .verified,
               selectedConversation?.id == conversation.id,
@@ -770,12 +773,14 @@ final class AppleAppModel: ObservableObject {
         guard let session, let directory = timelineStateDirectory else { return }
         #if os(iOS)
         let phoneFirst=true
+        let supportsWork=mainChat.capabilities.supports("workAndChat")
         #else
         let phoneFirst=false
+        let supportsWork=false
         #endif
         await offline.poll(session: session, client: client, directory: directory.appendingPathComponent("Offline"),
             store: KeychainCredentialStore(service: cloudNamespace + ".offline"),
-            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, multipleComputers:cloudLogin.multiHost, control: offlineAuthorization)
+            allowLoopback: permitsSyntheticLoopback, phoneFirst:phoneFirst, multipleComputers:cloudLogin.multiHost, workAndChat:supportsWork, control: offlineAuthorization)
         #if os(iOS)
         await phoneChat.synchronize(app:self)
         if offline.hostOffline { _ = await watchSnapshotBytes() }
@@ -908,6 +913,8 @@ final class AppleAppModel: ObservableObject {
     }
     @Published var collapsedProjects = Set<String>()
     @Published var projectEditor: AppleProjectEditor?
+    @Published var phoneNewConversationDraft = ""
+    @Published var phoneCreatingWork = false
     @Published var projectConversation: Project?
     @Published var projectModelID = ""
     @Published var projectModels: [SharedHostModel] = []
@@ -1117,7 +1124,7 @@ final class AppleAppModel: ObservableObject {
             if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
                 let old = conversations[index]
                 conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
-                    running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable, hostId: old.hostId, updatedAt: old.updatedAt, chatId: old.chatId, chatKind: old.chatKind, chatContentRevision: old.chatContentRevision, temporaryState: old.temporaryState)
+                    running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable, hostId: old.hostId, updatedAt: old.updatedAt, chatId: old.chatId, chatKind: old.chatKind, chatContentRevision: old.chatContentRevision, temporaryState: old.temporaryState, mode: old.mode, workHostId: old.workHostId, workDirectory: old.workDirectory, logicalHistory: old.logicalHistory)
             }
             if selectedConversation?.id == conversation.id { selectedConversation = conversations.first { $0.id == conversation.id } }
             if archived { archiveUndo = conversation }
@@ -1535,6 +1542,15 @@ final class AppleAppModel: ObservableObject {
         let fixtureArguments = ProcessInfo.processInfo.arguments
         if fixtureArguments.contains("--ui-testing") && fixtureArguments.contains("--apple-contract-fixture") {
             await authenticate(username: "tester", password: "synthetic-only", displayName: nil, register: false)
+            #if os(iOS)
+            try? cloudLogin.seedMode2IDirectory()
+            if fixtureArguments.contains("--mode2i-offline") {
+                cloudLogin.seedMode2IOfflineAccount();_ = try? await cloudLogin.offlineAuthorization(hostID:"host-fixture")
+                try? offline.seedMode2IOfflineFixture(disconnected:false)
+                await phoneChat.synchronize(app:self)
+                try? offline.seedMode2IOfflineFixture()
+            }
+            #endif
             return
         }
         if permitsSyntheticLoopback && (fixtureArguments.contains("--a3-local-server") || fixtureArguments.contains("--a4a-local-server") || fixtureArguments.contains("--a4b-local-server")) {
@@ -1917,7 +1933,7 @@ final class AppleAppModel: ObservableObject {
         let old = conversations[index], running = last.type.hasSuffix("started")
         guard old.running != running else { return }
         conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
-            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: old.archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, contextUsage: old.contextUsage, processing: running ? old.processing : nil, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable, hostId: old.hostId, updatedAt: old.updatedAt, chatId: old.chatId, chatKind: old.chatKind, temporaryState: old.temporaryState)
+            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: old.archived, pinned: old.pinned, unread: old.unread, groupId: old.groupId, contextUsage: old.contextUsage, processing: running ? old.processing : nil, projectId: old.projectId, projectName: old.projectName, projectNotice: old.projectNotice, taskAvailable: old.taskAvailable, hostId: old.hostId, updatedAt: old.updatedAt, chatId: old.chatId, chatKind: old.chatKind, temporaryState: old.temporaryState, mode: old.mode, workHostId: old.workHostId, workDirectory: old.workDirectory, logicalHistory: old.logicalHistory)
     }
     private func persistTimeline(_ conversation: ConversationSummary) async {
         guard historyCacheAllowed, conversation.temporaryState.cacheAllowed, historyCachedAt == nil, !timeline.events.isEmpty, let timelineCache, let account = draftAccount, let session,
@@ -2016,6 +2032,10 @@ final class AppleAppModel: ObservableObject {
     }
 
     func confirmCreatedChat(_ row: ConversationSummary, profileID: String) { confirmedModels[Self.draftKey(for: row)] = profileID }
+    func retainLogicalAttachments(_ files: [ConversationAttachmentDraft], for row: ConversationSummary, accountEpoch: UUID) {
+        guard accountEpoch == epoch else { return }
+        attachmentDrafts[Self.draftKey(for:row)]=files
+    }
     func transferComposer(from source: ConversationSummary?, to target: ConversationSummary, text: String, files: [ConversationAttachmentDraft], epoch token: UUID) -> Bool {
         guard token == epoch, selectedConversation?.id == target.id else { return false }
         let existing = draftText(for: target, accountEpoch: token)
@@ -2260,6 +2280,7 @@ final class AppleAppModel: ObservableObject {
     }
 
     private func clearVisibleAccount(preserveComputerReplicas: Bool = false) {
+        phoneNewConversationDraft=""
         mainChat.clear(); sourceMessageTarget = nil
         if preserveComputerReplicas { offline.suspend() } else { offline.erase() }
         if !preserveComputerReplicas,let directory = timelineStateDirectory {

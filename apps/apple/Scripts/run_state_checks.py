@@ -16,6 +16,7 @@ CHECKS = {
     "PhoneStandaloneModelChecks": [],
     "PhoneReminderModelChecks": [],
     "PhoneMemoryModelChecks": [],
+    "Mode2IFixStateChecks": APP_MODEL,
     "A16ChatStateChecks": APP_MODEL,
     "AppleUX23StateChecks": APP_MODEL,
     "AppleSettingsSummaryChecks": APP_MODEL,
@@ -62,6 +63,8 @@ def main():
         if models == APP_MODEL:
             sources.append(ROOT / "Tests/TaskProgressUIFixture.swift")
             sources.append(ROOT / "Tests/AppleContractUIFixture.swift")
+        if name == "Mode2IFixStateChecks":
+            sources.append(ROOT / "Packages/WeftMateCore/Tests/WeftMateCoreTests/Mode2IFixture.swift")
         if name == "AppleUX23StateChecks":
             sources.append(ROOT / "UI/AccountUsageModel.swift")
         if name == "AppleSettingsSummaryChecks":
