@@ -147,6 +147,7 @@ class BusinessRouteUnitTest {
     @Test fun approvalModeUsesOnlyTheAccountDefaultAndExactConversationRoutes() {
         assertTrue(validBusinessPath("/personal/v1/settings/approvals"))
         assertTrue(validBusinessPath("/personal/v1/sessions/session-one/approval-mode"))
+        assertTrue("Approval mode can be saved before the first native session exists", validBusinessPath("/personal/v1/chats/chat-one"))
         for (path in listOf("/personal/v1/settings/approvals/secret", "/personal/v1/settings/approvals?mode=ask",
             "/personal/v1/sessions/session-one/approval-mode?mode=ask", "/personal/v1/sessions/../approval-mode",
             "/personal/v1/sessions/session%2fone/approval-mode", "/personal/v1/sessions/session-one/events"))

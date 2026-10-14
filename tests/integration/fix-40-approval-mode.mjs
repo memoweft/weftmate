@@ -15,8 +15,9 @@ const out = resolve(process.env.FIX40_EVIDENCE || 'D:/AIProjects/WeftMate/Runtim
 const locks = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/locks';
 mkdirSync(out, { recursive: true });
 const android = process.argv.includes('--android'), pkg = 'com.memoweft.weftmate.mobile.fix40qa';
+const theme = process.env.FIX40_THEME || 'light';
 let heavy, mumu, h, browser, serial, reversed, installed;
-const report = { realElectron: true, realDsh: true, model: 'scripted HTTP provider', scenarios: [], relay: 'not exercised; local Linux relay prerequisite unavailable, see relay-environment.log' };
+const report = { realElectron: true, realDsh: true, theme, model: 'scripted HTTP provider', scenarios: [], relay: 'not exercised; local Linux relay prerequisite unavailable, see relay-environment.log' };
 const outputs = new Map(), counts = new Map();
 const execute = promisify(execFile);
 async function lock(file, label) { const handle = await open(file, 'wx'); await handle.writeFile(`FIX-40 ${new Date().toISOString()} ${label}`); await handle.close(); return file; }
@@ -55,7 +56,7 @@ try {
     // The scripted model is served by this Node process. Keep its event loop
     // available while the real Android instrumentation waits for model tools.
     const instrumented = await execute(adbExecutable, ['-s', serial, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'class', 'com.memoweft.weftmate.mobile.Fix40ApprovalInstrumentedTest',
-      '-e', 'origin', h.origin, '-e', 'username', credentials.username, '-e', 'password', credentials.password, `${pkg}.test/androidx.test.runner.AndroidJUnitRunner`], { windowsHide: true, timeout: 240000, maxBuffer: 8 * 1024 * 1024 });
+      '-e', 'theme', theme, '-e', 'origin', h.origin, '-e', 'username', credentials.username, '-e', 'password', credentials.password, `${pkg}.test/androidx.test.runner.AndroidJUnitRunner`], { windowsHide: true, timeout: 240000, maxBuffer: 8 * 1024 * 1024 });
     const log = instrumented.stdout + instrumented.stderr;
     writeFileSync(join(out, 'android-instrumentation.log'), log.replaceAll(credentials.password, '<synthetic-password>'));
     const external = `/sdcard/Android/data/${pkg}/files`;
@@ -111,5 +112,6 @@ finally {
   finally {
     if (mumu) await unlink(mumu); if (heavy) await unlink(heavy);
     writeFileSync(join(out, android ? 'android-acceptance.json' : 'electron-web-acceptance.json'), JSON.stringify(report, null, 2));
+    if (android) writeFileSync(join(out, `android-${theme}-acceptance.json`), JSON.stringify(report, null, 2));
   }
 }

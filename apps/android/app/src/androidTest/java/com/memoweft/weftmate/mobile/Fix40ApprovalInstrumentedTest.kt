@@ -16,6 +16,7 @@ class Fix40ApprovalInstrumentedTest {
     @get:Rule val compose = createEmptyComposeRule()
     private val i = InstrumentationRegistry.getInstrumentation()
     private val args = InstrumentationRegistry.getArguments()
+    private val theme get() = args.getString("theme", "light")!!
     private lateinit var activity: NativeActivity
     private fun main(action: () -> Unit) = i.runOnMainSync(action)
     private fun waitFor(label: String, condition: () -> Boolean) {
@@ -26,7 +27,7 @@ class Fix40ApprovalInstrumentedTest {
     private fun shot(name: String) {
         val image = i.uiAutomation.takeScreenshot()
         try {
-            File(i.targetContext.getExternalFilesDir(null), "fix40-$name.png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            File(i.targetContext.getExternalFilesDir(null), "fix40-$theme-$name.png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
         } finally { image.recycle() }
     }
     @Test fun askBeforeFirstMessageThenApproveAndReject() {
@@ -39,6 +40,13 @@ class Fix40ApprovalInstrumentedTest {
                 .put("password", args.getString("password")).put("deviceName", "FIX-40 synthetic phone")
             main { activity.embeddedWeb.evaluateJavascript("call('auth.login',$credentials).then(()=>location.reload())", null) }
             waitFor("native main chat") { activity.model.loggedIn && !activity.model.loading && activity.model.chatId.isNotBlank() && !activity.model.approvalModeBusy }
+            var themeSaved = false
+            main { activity.model.launch {
+                activity.model.call("settings.appearance", JSONObject().put("value", theme))
+                activity.model.dark = theme == "dark"; themeSaved = true
+            } }
+            waitFor("saved test appearance") { themeSaved }
+            compose.waitForIdle()
             assertEquals("first choice precedes native session creation", "", activity.model.sessionId)
             val editor = compose.onNodeWithContentDescription("消息输入")
             editor.performTextInput("FIX40_ANDROID_ALLOW")
