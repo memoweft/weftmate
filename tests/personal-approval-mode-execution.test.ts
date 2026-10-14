@@ -7,10 +7,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import test from 'node:test'
-import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 import { stagePersonalPlugins } from './support/personal-plugins.ts'
 import { waitForCommand } from './helpers/wait-for-command.mjs'
 
+// Load the host after the POSIX folder-selection fixture has installed its hook.
+// Static imports are linked before that fixture's module body executes.
+const { createPersonalAccessService } = await import('../src/personal-access/index.mjs')
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai', name, 'lib/index.js')).href
 const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 async function until(check: () => Promise<any>) {
