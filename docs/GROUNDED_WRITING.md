@@ -20,4 +20,4 @@ DSH 原生压缩检查点须保留关键证据的短原文、条件、数字、U
 
 这是基于提示、原生工具与可见证据的事实核对流程，不能保证任意模型逐项执行或所有技术断言都正确。宿主不在生成后替模型改写答案。评测分别报告事实错误、判据缺失、出处完整性和核对执行情况，不能把「文件已保存」当作事实正确。
 
-固定主题与判据在 `tests/fixtures/fact-1/topics.json`；真实运行器为 `node tests/integration/fact-1.mjs --phase before|after --model mimo|lan --repeat 2`。改前通过测试专用加载钩子重放固定基线提交的提示与网页返回代码，改后使用当前代码。LAN（局域网）运行仅用 `local-quality`，原子取得 `lan.lock`，批次结束释放；锁占用时退出，由执行者五分钟后重试。凭据只读环境变量，证据不含密钥或私有地址。六主题各两次 MiMo，LAN 抽题可用 `--only node24,node-dep0190 --repeat 1`。证据存 `tests/evidence/fact-1/`。
+固定主题与判据在 `tests/fixtures/fact-1/topics.json`；真实运行器为 `node tests/integration/fact-1.mjs --phase before|after --model mimo|lan --repeat 2`。改前通过测试专用加载钩子重放固定基线提交的提示与网页返回代码，改后使用当前代码。LAN（局域网）运行仅用 `local-quality`，原子取得 `lan.lock`，批次结束释放；锁占用时退出，由执行者五分钟后重试。凭据只读环境变量，证据不含密钥或私有地址。六主题各两次 MiMo，LAN 抽题可用 `--only node24,node-dep0190 --repeat 1`。证据存任务书指定的仓库外 Runtime（运行数据）证据目录；生成脚本使用 `WEFTMATE_EVIDENCE_DIR`，未设置时使用被忽略的 `.local/evidence/`。

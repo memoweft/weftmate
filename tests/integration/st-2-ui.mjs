@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
@@ -7,7 +8,7 @@ import {mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
-const out=resolve('tests/evidence/st-2');mkdirSync(out,{recursive:true});
+const out=evidencePath('st-2');mkdirSync(out,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 let f,app,browser,profile;const checks=[],errors=[];
 async function settings(page,category){await page.evaluate(category=>WeftSettingsNavigation.open(category),category);}

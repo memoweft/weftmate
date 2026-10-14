@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -8,7 +9,7 @@ import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import {join,resolve} from 'node:path';
 import {startFixture} from './ux-4-fixture.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
-const repository=resolve(import.meta.dirname,'../..'), evidence=join(repository,'tests/evidence/ux-9');mkdirSync(evidence,{recursive:true});
+const repository=resolve(import.meta.dirname,'../..'), evidence=evidencePath('ux-9');mkdirSync(evidence,{recursive:true});
 mkdirSync('C:/Temp',{recursive:true});process.env.TMP=process.env.TEMP='C:/Temp';
 const fixture=await startFixture(),root=mkdtempSync('C:/Temp/weftmate-ux-9-'),folder=join(root,'SyntheticWorkspace');mkdirSync(folder);writeFileSync(join(folder,'notes.txt'),'Synthetic source.');
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];

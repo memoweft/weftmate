@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Installer,[string]$Out='tests/evidence/inst-1/silent-directory-results.json')
+param([Parameter(Mandatory=$true)][string]$Installer,[string]$Out=(Join-Path $(if ($env:WEFTMATE_EVIDENCE_DIR) { $env:WEFTMATE_EVIDENCE_DIR } else { '.local/evidence' }) 'inst-1/silent-directory-results.json'))
 $ErrorActionPreference='Stop'
 $started=Get-Date
 $workspace=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path

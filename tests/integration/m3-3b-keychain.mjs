@@ -1,3 +1,5 @@
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Real safeStorage across ad-hoc rebuilds, confined to disposable OS keychains. */
 import { _electron } from 'playwright';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -6,6 +8,8 @@ import { tmpdir, uptime } from 'node:os';
 import { join, resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
+prepareEvidenceDirectory(evidencePath('m3-3b'), { recursive: true });
+
 const root=await realpath(await mkdtemp(join(tmpdir(),'weftmate-m3-3b-keychain-'))), profile=join(root,'profile');
 await mkdir(profile);await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const bundle=resolve(process.env.M3_3B_APP || '../trial/WeftMate.app'), rebuilt=join(root,'WeftMate.app');
@@ -50,4 +54,4 @@ try{
  report.refill=await vault('refill');requireCheck(report.refill.readable,'Explicit key refill did not recover');
  report.checks=['real Keychain-backed encrypt/decrypt and ciphertext','same-build restart','changed ad-hoc CDHash rebuild','lost-key startup preserves old vault and returns missing credential','explicit form submission refill recovers'];report.completed=true;
 }catch(error){report.failure=String(error.message).replaceAll(root,'<temp>').replace(/\/Users\/[^/\s]+/g,'/Users/<user>');process.exitCode=1}
-finally{await app?.close();report.osOperations={successfulReads:(log.match(/M3_3B_KEYCHAIN (?:find|copy) 0/g)||[]).length,successfulAdds:(log.match(/M3_3B_KEYCHAIN (?:legacy-add|add) 0/g)||[]).length,interactionDenied:(log.match(/M3_3B_KEYCHAIN (?:find|copy) -25308/g)||[]).length};await writeFile('tests/evidence/m3-3b/keychain.json',JSON.stringify(report,null,2)+'\n');await rm(root,{recursive:true,force:true});console.log(JSON.stringify({completed:report.completed,launches:report.launches,rebuildReadable:report.rebuilt?.readable}));}
+finally{await app?.close();report.osOperations={successfulReads:(log.match(/M3_3B_KEYCHAIN (?:find|copy) 0/g)||[]).length,successfulAdds:(log.match(/M3_3B_KEYCHAIN (?:legacy-add|add) 0/g)||[]).length,interactionDenied:(log.match(/M3_3B_KEYCHAIN (?:find|copy) -25308/g)||[]).length};await writeFile(evidencePath('m3-3b/keychain.json'),JSON.stringify(report,null,2)+'\n');await rm(root,{recursive:true,force:true});console.log(JSON.stringify({completed:report.completed,launches:report.launches,rebuildReadable:report.rebuilt?.readable}));}

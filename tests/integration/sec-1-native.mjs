@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Real production Electron + pinned DSH; all accounts, model replies and files synthetic. */
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
@@ -15,7 +16,7 @@ import {fixture as cloudFixture} from '../helpers/auth-1-https-cloud.mjs';
 import {registration,appDevice,control,refresh,proof} from '../../services/cloud/test/app-helpers.mjs';
 import {sec1SystemBars} from './sec-1-system-bars.mjs';
 
-const polish=process.argv.includes('--polish'),before=process.argv.includes('--before');const repo=resolve('.'),out=resolve(polish?before?'tests/evidence/polish-1/sec-native/before':'tests/evidence/polish-1/sec-native/after':'tests/evidence/sec-1');mkdirSync(out,{recursive:true});
+const polish=process.argv.includes('--polish'),before=process.argv.includes('--before');const repo=resolve('.'),out=evidencePath(polish ? before ? 'polish-1/sec-native/before' : 'polish-1/sec-native/after' : 'sec-1');mkdirSync(out,{recursive:true});
 const root=managedMkdtempSync(join(managedTempRoot(),'weftmate-sec1-native-')),profile=join(root,'profile');mkdirSync(profile);
 writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const projectRoot=join(root,'project');mkdirSync(projectRoot);const victim=join(projectRoot,'notes.txt'),source=join(projectRoot,'source.txt');writeFileSync(victim,'original synthetic content');

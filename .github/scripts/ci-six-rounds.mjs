@@ -1,3 +1,4 @@
+import { evidencePath } from '../../tests/helpers/evidence-path.mjs';
 // Explicit acceptance driver: seven existing workflows, one immutable SHA,
 // six sequential rounds. No automatic workflow/job reruns or test exceptions.
 import {execFile} from 'node:child_process';
@@ -7,7 +8,7 @@ import {resolve,join} from 'node:path';
 import {setTimeout as pause} from 'node:timers/promises';
 import {redactEvidenceText} from '../../tests/helpers/process-evidence.mjs';
 const execute=promisify(execFile),gh=async args=>(await execute('gh',args,{encoding:'utf8',windowsHide:true,maxBuffer:128*1024*1024})).stdout;
-const branch=process.argv[2]||'wp/ci-3-steady-checks',destination='tests/evidence/ci-3/cloud',cache='.local/ci-3/cloud';
+const branch=process.argv[2]||'wp/ci-3-steady-checks',destination=evidencePath('ci-3/cloud'),cache='.local/ci-3/cloud';
 const workflows=['ci.yml','review-gallery.yml','windows-package.yml','s1c-web.yml','relay.yml','host-certs.yml','vendor-tests.yml'];
 mkdirSync(destination,{recursive:true});mkdirSync(cache,{recursive:true});
 // A repeated controller already cancelled real acceptance runs through workflow

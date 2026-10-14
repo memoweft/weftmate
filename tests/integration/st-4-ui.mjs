@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -9,7 +10,7 @@ import { mkdir, writeFile, readFile, rm, utimes } from 'node:fs/promises';
 import { join,resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const out=resolve('tests/evidence/st-4');await mkdir(out,{recursive:true});
+const out=evidencePath('st-4');await mkdir(out,{recursive:true});
 const f=await startTimelineCandidate({interactive:true,composer:true,historyCount:0}),profile=await mkdtemp(join(tmpdir(),'weftmate-st4-ui-'));
 const owner=Object.keys(JSON.parse(await readFile(join(f.root,'store.json'),'utf8')).accounts)[0];
 for(const category of ['cache','logs','temporary','offline']){const dir=join(f.root,'accounts',owner,category);await mkdir(dir,{recursive:true});const file=join(dir,'synthetic');await writeFile(file,Buffer.alloc(65536,0x53));await utimes(file,new Date('2026-01-01'),new Date('2026-01-01'));}

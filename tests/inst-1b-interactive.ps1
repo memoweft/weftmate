@@ -1,4 +1,4 @@
-﻿param([Parameter(Mandatory=$true)][string]$Installer,[Parameter(Mandatory=$true)][string]$UpgradeInstaller,[string]$Out='tests/evidence/inst-1',[ValidateSet('both','default','custom')][string]$Mode='both',[switch]$Watchdog)
+﻿param([Parameter(Mandatory=$true)][string]$Installer,[Parameter(Mandatory=$true)][string]$UpgradeInstaller,[string]$Out=(Join-Path $(if ($env:WEFTMATE_EVIDENCE_DIR) { $env:WEFTMATE_EVIDENCE_DIR } else { '.local/evidence' }) 'inst-1'),[ValidateSet('both','default','custom')][string]$Mode='both',[switch]$Watchdog)
 $ErrorActionPreference='Stop'
 $started=Get-Date
 $workspace=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path

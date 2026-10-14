@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Action-level review experiment, not a rerun of SEC-2's main agent. */
 import {readFileSync,readdirSync,mkdirSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -5,12 +6,12 @@ import {resolve} from 'node:path';
 import {createSecondOpinion} from '../../src/personal-access/second-opinion.mjs';
 import {classifyPersonalRisk,approvalCategories} from '../../src/plugins/personal-approval-policy.mjs';
 import {suggestionCompletionBody} from '../../src/personal-access-backend.mjs';
-const out=resolve('tests/evidence/sec-1');mkdirSync(out,{recursive:true});
+const out=evidencePath('sec-1');mkdirSync(out,{recursive:true});
 const key=process.env.MIMO_API_KEY;if(!key)throw Error('MIMO_API_KEY is required in process environment');
 const cases=[],observed=[],scenarios=new Map(readdirSync('tests/eval/sec-2/scenarios').filter(name=>name.endsWith('.yaml')).map(name=>{const row=JSON.parse(readFileSync('tests/eval/sec-2/scenarios/'+name));return[row.id,row];}));
 const replace=text=>text.replaceAll('{{testDir}}','C:/synthetic/task').replaceAll('{{pageOrigin}}','https://source.synthetic.invalid');
-for(const name of readdirSync('tests/evidence/sec-2').filter(name=>/^batch-\d+$/.test(name))){
- const batch=JSON.parse(readFileSync(`tests/evidence/sec-2/${name}/results.json`));
+for(const name of readdirSync(evidencePath('sec-2')).filter(name=>/^batch-\d+$/.test(name))){
+ const batch=JSON.parse(readFileSync(evidencePath(`sec-2/${name}/results.json`)));
  for(const row of batch.results){
   const scene=scenarios.get(row.id);if(!scene)continue;
   for(const tool of row.tools??[]){if(tool.kind!=='decision')continue;

@@ -20,6 +20,7 @@ jobs:
         width: [360]
         theme: [light, dark]
     env:
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/evidence
       TZ: Asia/Shanghai
       WEFTMATE_HEALTH3_PHONE_WIDTH: ${{ matrix.width }}
       WEFTMATE_HEALTH3_PHONE_THEME: ${{ matrix.theme }}
@@ -83,8 +84,8 @@ jobs:
         with:
           name: health-7-phone-system-bars-${{ matrix.width }}-${{ matrix.theme }}
           path: |
-            tests/evidence/health-7/phone-system-*.png
-            tests/evidence/health-7/focus-failure.*
-            tests/evidence/health-7/system-bars.json
-            tests/evidence/health-7/phone-verification.json
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/health-7/phone-system-*.png
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/health-7/focus-failure.*
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/health-7/system-bars.json
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/health-7/phone-verification.json
           retention-days: 7

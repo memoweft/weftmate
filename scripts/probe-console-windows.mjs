@@ -1,7 +1,8 @@
+import { evidencePath } from '../tests/helpers/evidence-path.mjs';
 /** Real GUI Electron + real DSH + synthetic HTTP model + one pwsh command.
  * The GUI monitor has no console and does not focus or control the desktop.
  * Ordinary source acceptance:
- *   node scripts/probe-console-windows.mjs --out tests/evidence/ux-2/console-after.json
+ *   node scripts/probe-console-windows.mjs --out .local/evidence/ux-2/console-after.json
  * Official release acceptance (metadata-only isolated test identity):
  *   node scripts/probe-console-windows.mjs --release <win-unpacked> --positive-control --command-timeout --out <evidence.json>
  * Add --updated to overlay this worktree's source and pinned runtime; add
@@ -26,7 +27,7 @@ import { prepareConsoleRelease } from './prepare-console-release.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 if (process.platform !== 'win32') throw Error('This probe requires Windows.');
 const outputIndex=process.argv.indexOf('--out');
-const output=resolve(outputIndex<0?'tests/evidence/ux-2/console-after.json':process.argv[outputIndex+1]);
+const output=resolve(outputIndex<0?evidencePath('ux-2/console-after.json'):process.argv[outputIndex+1]);
 const argument=name=>{const index=process.argv.indexOf(name);return index<0?undefined:resolve(process.argv[index+1]);};
 const releaseSource=argument('--release');
 const commandTimeout=process.argv.includes('--command-timeout');

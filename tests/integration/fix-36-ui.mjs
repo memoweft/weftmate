@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import {execFileSync,execFile} from 'node:child_process';
 import {promisify} from 'node:util';
@@ -7,9 +8,9 @@ import {resolve,join} from 'node:path';
 import {createRequire} from 'node:module';
 import {_electron} from 'playwright';
 import {readMuMuInfo,adbExecutable} from '../../scripts/nightly/mumu.mjs';
-import {startProgressFixture} from '../evidence/fix-36/fixture.mjs';
+import {startProgressFixture} from '../fixtures/fix-36/fixture.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
-const execute=promisify(execFile),repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/fix-36');
+const execute=promisify(execFile),repo=resolve(import.meta.dirname,'../..'),out=evidencePath('fix-36');
 const locks='D:/AIProjects/WeftMate/Runtime/Orchestrator',pkg='com.memoweft.weftmate.mobile.fix36qa';
 const desktopOnly=process.argv.includes('--desktop-only');
 let heavy,mumu,serial,fixture,port,installed=false,app,profile;
