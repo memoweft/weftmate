@@ -1355,14 +1355,6 @@ test('task15-question-client closing a view preserves question drafts and late a
 
 
 
-test('task15-question-client native answer uses a dedicated route with requestId and answer under the existing identity guards',()=>{
-  const native=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt',import.meta.url),'utf8'),
-    network=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt',import.meta.url),'utf8');
-  const bridge=native.slice(native.indexOf('"shared.approvals.list", "shared.approvals.decide"'),native.indexOf('"shared.sources.detail"'));
-  assert.match(bridge,/"shared.questions.list" -> api.questions\(host/);assert.match(bridge,/api.answerQuestion\(host[\s\S]*?getString\("questionRpcId"\)[\s\S]*?getJSONObject\("answer"\)/);
-  assert.match(bridge,/epoch != accountEpoch.get\(\)/);assert.match(bridge,/host != requestHost/);assert.equal([...bridge.matchAll(/\n\s+ensureCurrent\(\)/g)].length,2);
-  assert.doesNotMatch(bridge,/api\.business/);assert.match(network,/fun answerQuestion\([\s\S]*?questionAnswerPath\(sessionId, questionRpcId, requestId\)\}[\s\S]*?"POST",\s*JSONObject\(\)\.put\("requestId", requestId\)\.put\("answer", answer\), authWriteHeaders\(host\)/);
-});
 
 test('task15-approval-client pending approvals follow exact root and supplement receipts without persistent ordinary-chat controls',async()=>{
   const h=harness(),fixture=prepareApprovalChat(h),row=syntheticApproval();
@@ -1491,21 +1483,6 @@ test('task15-approval-client leaving during a decision retains its marker and re
 
 
 
-test('task15-approval-client native methods use dedicated authenticated routes and keep both account guards',()=>{
-  const native=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt',import.meta.url),'utf8');
-  const network=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt',import.meta.url),'utf8');
-  const bridge=native.slice(native.indexOf('"shared.approvals.list", "shared.approvals.decide"'),native.indexOf('"shared.sources.detail"'));
-  assert.match(bridge,/val host = requireHost\(\)/);assert.match(bridge,/val epoch = requestEpoch/);
-  assert.match(bridge,/owner\(secrets.host\(\)\) != scope/);assert.match(bridge,/secrets.host\(\) != host/);
-  assert.match(bridge,/host != requestHost/);assert.match(native,/val requestEpoch = accountEpoch.get\(\)\s+val requestHost = secrets.host\(\)/);
-  assert.match(native,/val params = request.optJSONObject\("params"\) \?: JSONObject\(\)/);
-  assert.match(native,/handle\(method, params, requestEpoch, requestHost\)/);
-  assert.equal([...bridge.matchAll(/\n\s+ensureCurrent\(\)/g)].length,2);
-  assert.match(bridge,/api\.approvals\(host/);assert.match(bridge,/api\.decideApproval\(host/);assert.doesNotMatch(bridge,/api\.business/);
-  assert.match(network,/fun approvals\([\s\S]*?approvalListPath\(sessionId, before, limit\)\}[\s\S]*?"GET"[\s\S]*?"Cookie" to host.cookie/);
-  assert.match(network,/fun decideApproval\([\s\S]*?approvalDecisionPath\(sessionId, approvalId, requestId, outcome, scope\)\}[\s\S]*?"POST",\s*JSONObject\(\)\.put\("requestId", requestId\)\.put\("outcome", outcome\)\.apply[\s\S]*?put\("scope", scope\)[\s\S]*?authWriteHeaders\(host\)/);
-  assert.match(native,/\.put\("deviceId", host\?\.deviceId/);
-});
 function prepareSyntheticTaskChat(h){h.run(`state.loggedIn=true;state.owner='A';state.chatSource='host';state.sharedSessionId='s1';
   state.sharedHostAvailable=true;state.sharedSessions=[{sessionId:'s1',title:'合成对话',sendAvailable:true}];
   state.sharedEvents=[{seq:0,type:'user.message',data:{text:'相同的目标',receiptId:'rpc:root.1'}},

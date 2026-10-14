@@ -983,11 +983,9 @@ class PersonalApi(transport: JsonTransport = JsonHttp()) {
             headers = mapOf("Cookie" to host.cookie)).body
 
     fun decideApproval(host: HostIdentity, sessionId: String, approvalId: String,
-        requestId: String, outcome: String, scope: String? = null): JSONObject = http.request(
+        requestId: String, outcome: String, scope: String? = null, workProjectId: String? = null): JSONObject = http.request(
         "${host.origin}${approvalDecisionPath(sessionId, approvalId, requestId, outcome, scope)}", "POST",
-        JSONObject().put("requestId", requestId).put("outcome", outcome).apply {
-            if (scope != null) put("scope", scope)
-        }, authWriteHeaders(host)).body
+        nativeApprovalBody(requestId, outcome, scope, workProjectId), authWriteHeaders(host)).body
 
     fun questions(host: HostIdentity, sessionId: String, before: String? = null, limit: Int = 50): JSONObject =
         http.request("${host.origin}${questionListPath(sessionId, before, limit)}", "GET",
