@@ -134,11 +134,11 @@ Windows程序、远程网页、手机网页与安卓界面包共用同一策略�
 
 `GET /status` 的 `personalCapabilities.workAndChat:1` 表示电脑支持模式与原生工具暂停。缺失或未知版本沿旧项目接口，不发送下面的新答复字段，也不能向用户宣称旧电脑已有对话工具保护。
 
-`GET /sessions`、`GET /chats` 与单聊天读取增加可选 `mode:"chat"|"work"`。旧主对话、未归项目的普通对话归 `chat`；已有项目及浏览器工作对话归 `work`；手机只读历史始终归 `chat`。工作增加 `workHostId` 与 `workDirectory:{projectId,name,pathHint}|null`，绝对目录仍只在电脑保存。项目移除后保留工作归属，目录为 `null`，先重新选择项目才能操作电脑。已有 `kind/projectId/projectRevision/sessionId/chatId` 不改义；命令 `mode:queue|steer` 与审批模式 `auto|ask|...` 也不改义。
+`GET /sessions`、`GET /chats` 与单聊天读取增加可选 `mode:"chat"|"work"`。旧主对话、未归项目的普通对话归 `chat`；已有项目及浏览器工作对话归 `work`；手机只读历史始终归 `chat`。原主对话增加可选 `displayTitle`（普通列表标题，小纬或已有标题），旧 `title/kind` 保留。工作增加 `workHostId` 与 `workDirectory:{projectId,name,pathHint}|null`，绝对目录仍只在电脑保存。项目移除后保留工作归属，目录为 `null`，先重新选择项目才能操作电脑。已有 `kind/projectId/projectRevision/sessionId/chatId` 不改义；命令 `mode:queue|steer` 与审批模式 `auto|ask|...` 也不改义。
 
 新建工作复用 `POST /projects/{id}/sessions`，所选电脑即原命令的 `targetDeviceId`；新建纯对话不自动使用上次的项目。普通项目移动仍用 `PATCH /sessions/{id}/metadata`，只能在空闲时更换文件夹。没有新增业务路由。
 
-模型实际调用电脑工具时，DSH（助手运行时）原生审批暂停该调用。既有 `GET /sessions/{id}/approvals` 的该项增加 `intent:"work-switch"`，卡片标题为“这件事需要在电脑上做。要切换到工作吗？”。只读账户记忆、健康查询与纯时间工具照常；文件读取也需要工作，命令、应用、浏览器与写入连接器同理。`run_code` 编排内的实际调用逐一检查，不按用户消息关键词判断。
+模型实际调用电脑工具时，DSH（助手运行时）原生审批暂停该调用。既有 `GET /sessions/{id}/approvals` 的该项增加 `intent:"work-switch"`，卡片标题为“这件事需要在电脑上做。要切换到工作吗？”。只读账户记忆、健康查询、纯时间及公开资料 `web_search/web_fetch` 照常，不要求项目或模式切换；文件读取需要工作，命令、应用、交互浏览器／点击／登录／下载与写入连接器同理。`run_code` 编排内的实际调用逐一检查，不按用户消息关键词判断。
 
 同意转换仍调用 `POST /sessions/{sessionId}/approvals/{approvalId}`，原 `requestId/outcome/scope` 保留，增加 `workProjectId`：
 
@@ -148,11 +148,11 @@ Windows程序、远程网页、手机网页与安卓界面包共用同一策略�
 
 该卡片仅支持本次答复；项目不存在或已撤回拒绝，缺项目返回 409 `PROJECT_NOT_SELECTED`，不能因旧端普通“允许”而执行电脑操作。拒绝沿原 `{requestId,outcome:"rejected"}`，同回合不再换工具询问，下一条真人请求可以再问。普通审批不接受 `workProjectId`，仍执行原权限、风险分类与审批，转换本身不批准覆盖、删除或命令。
 
-转换在同一次持久更新中记会话模式、电脑、项目和原回合的内部执行上下文；不改原命令正文、摘要、来源与幂等编号。原调用随后继续，重新按所选文件夹解析相对路径。`chatId/sessionId`、历史与记忆来源保留。原主对话转换时原逻辑聊天成为工作，新的空主入口保留“小纬”；原聊天可选 `logicalHistory:true`，新版客户端继续用原 `/chats/{chatId}/events|changes|dates|search` 读取全部历史段，列表只投影一个当前入口。
+转换在同一次持久更新中记会话模式、电脑、项目和原回合的内部执行上下文；不改原命令正文、摘要、来源与幂等编号。原调用随后继续，重新按所选文件夹解析相对路径。`chatId/sessionId`、历史与记忆来源保留。原主对话转换时原逻辑聊天成为工作，不生成空“小纬”，原 `mainChatId/kind:main` 与 `/chats/main` 保留兼容读取／后台投递；界面将原历史显示为普通列表项。原聊天可选 `logicalHistory:true`，新版客户端继续用原 `/chats/{chatId}/events|changes|dates|search` 读取全部历史段，列表只投影一个当前入口。
 
 本轮既有聊天转换沿用回答它的电脑，其他电脑需新建工作；跨电脑搬运原段与记忆不在本轮。新建工作可通过既有多电脑内容通道选择在线电脑。无在线电脑卡片接 S7（离线任务）明确入口，不自动执行或排队；无电脑账号给出现有添加电脑说明。手机独立网页模型的 `computer_work` 只生成设备内卡片，元数据不随 `/offline/turns` 上传，不新增电脑授权；旧原生手机不发送这个工具定义。
 
-安卓精确业务白名单路径无需增加，本包添加现有项目、会话与逻辑历史路径的允许 / 拒绝用例，并核对已有审批专用路径构造器；审批继续走 `shared.approvals.list/decide`，不放宽 `host.business`。安卓原生与 iPhone 后续接模式字段、两个区、顶部选择条、卡片答复和副标题，并移除输入区电脑按钮；当前已发布项目会话、普通审批与历史接口形状兼容。
+安卓精确业务白名单路径无需增加，本包添加现有项目、会话与逻辑历史路径的允许 / 拒绝用例，并核对已有审批专用路径构造器；审批继续走 `shared.approvals.list/decide`，不放宽 `host.business`。安卓原生与 iPhone 后续接模式字段、两格切换与同一列表、输入区选择行、卡片答复和副标题，并移除输入区电脑按钮；当前已发布项目会话、普通审批与历史接口形状兼容。
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|

@@ -104,7 +104,9 @@ export function createSessionMetadata(context) {
     },
     messageBranches: createMessageBranches(context),
     async metadata(ownerId, sessionId, patch) {
-      protectMainSession(context.accountState(ownerId), sessionId);
+      const modeWorkFolder = context.accountState(ownerId).sessions[sessionId]?.mode === 'work' &&
+        plainObject(patch) && Object.keys(patch).length === 1 && Object.hasOwn(patch, 'projectId');
+      if (!modeWorkFolder) protectMainSession(context.accountState(ownerId), sessionId);
       if (!plainObject(patch) || !Object.keys(patch).length || Object.keys(patch).some(key => !['pinned', 'unread', 'title', 'groupId', 'projectId', 'memoryMode', 'recallEnabled', 'autoDeleteDays'].includes(key)) ||
           ['pinned', 'unread'].some(key => patch[key] !== undefined && typeof patch[key] !== 'boolean') ||
           patch.groupId !== undefined && patch.groupId !== null && !validId(patch.groupId) ||

@@ -56,7 +56,8 @@
         // action opens this page, so pending approvals and settings stay usable.
         section.hidden = !(view && showHistory);
         document.body.classList?.toggle?.('offline-history-open',!section.hidden);
-        notice.textContent = error; notice.hidden = !error || showHistory || !!core.connectionView && core.connectionView().kind !== 'online';
+        const idleCloudSetup = error === WeftOfflineView.syncFailure({code:'OFFLINE_CLOUD_REQUIRED'}).message && !view?.turns.length && !view?.tasks?.length;
+        notice.textContent = error; notice.hidden = !error || idleCloudSetup || showHistory || !!core.connectionView && core.connectionView().kind !== 'online';
         title.textContent = offline ? '离线模式' : '离线对话';
         mode.textContent = offline ? view?.taskReady?(view.chatReady?explanation:'电脑离线，可以先记下要做的事，等电脑上线后去做。'):'电脑离线，可以继续聊天和使用记忆。' : view?.turns.length ? '电脑已上线，正在同步离线对话' : '已同步';
         label.firstChild.textContent = offline ? taskMode?'要交代什么？':'继续聊聊' : '电脑已上线，可返回原对话查看进展';

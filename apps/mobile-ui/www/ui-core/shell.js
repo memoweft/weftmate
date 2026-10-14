@@ -268,6 +268,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         effects.updateAvailability();
     }
     async function refreshStatus() {
+        const statusIdentity = core.state.identityGeneration, statusOwner = core.state.ownerId;
         let payload;
         try {
             payload = await core.accessApi('/status');
@@ -275,8 +276,14 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         catch (error) {
             throw error;
         }
+        if (statusIdentity !== core.state.identityGeneration) return false;
         if (typeof payload.ownerId !== 'string' || typeof payload.hostId !== 'string')
             throw { code: 'REQUEST_FAILED' };
+        // A verified current status can restore reads after a credential renewal.
+        // An old computer/account response must never publish that authority.
+        if (historyAuthorizationIdentity === statusIdentity && payload.ownerId === statusOwner && payload.presence?.authorization === 'active') {
+            historyAuthorizationIdentity = null; historyRetryAt = 0; historyBackoff.reset();
+        }
         core.state.hostStatusSnapshot = {payload,at:Date.now(),identity:core.state.identityGeneration};
         if (core.state.ownerId !== payload.ownerId) {
             core.state.ownerId = payload.ownerId;

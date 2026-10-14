@@ -85,6 +85,7 @@ export async function phoneRuntime(root, logs, options = {}) {
       if (['register_approval', 'read_approval', 'resolve_approval'].includes(request.action)) return host.trackToolApproval(request);
       if (['authorize_execution', 'finish_execution', 'observe_execution_job'].includes(request.action)) return host.trackToolExecution(request);
       if (request.action === 'register_file') return host.registerNativeFile(request);
+      if (request.action === 'browse') return host.browse(request);
       throw new Error('Unexpected native action: ' + request.action);
     },
     personalConversationContextHandler: request => host.getConversationContext(request),

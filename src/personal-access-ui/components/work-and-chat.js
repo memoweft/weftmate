@@ -1,15 +1,22 @@
 globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
-  let toolbar, subtitle, computer, folder, error;
+  let toolbar, subtitle, computer, folder, error, modes;
   const node = ui.element;
   const project = () => core.currentFolderProject?.();
   function selectLabel(control, label, icon) {if(control.dataset.label===label)return;control.dataset.label=label;
     control.replaceChildren(WeftIcons.create(icon,18),node('span','work-select-label',label),WeftIcons.create('chevron',16));control.title=label;}
-  const button = (label, icon, action) => { const b = node('button', 'button secondary work-select', label); b.type = 'button';
+  const button = (label, icon, action) => { const b = node('button', 'folder-pill work-select', label); b.type = 'button';
     b.setAttribute('aria-haspopup','menu');selectLabel(b,label,icon);b.onclick = () => Promise.resolve(action(b)).catch(cause => ui.toast(core.failureMessage(cause))); return b; };
   function computerName(id) { const row = core.workComputers().find(row => row.hostId === id); return row?.displayName || row?.name || core.state.hostName || '这台电脑'; }
   function paintWorkMode() {
     if (!toolbar) return;
     const enabled = core.supportsWorkModes(), working = core.currentConversationMode() === 'work';
+    modes.hidden = !enabled;
+    const newLabel = ui.byId('new-session').querySelector('.rail-new-label'); if (newLabel) newLabel.textContent = enabled ? '新建' : '新对话';
+    for (const b of modes.children) { const selected = b.dataset.mode === core.sidebarConversationMode(); b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1; }
+    ui.byId('new-session').setAttribute('aria-label', enabled ? core.sidebarConversationMode() === 'work' ? '新建工作' : '新建对话' : '新对话');
+    const form = ui.byId('message-form'), phoneLayout = globalThis.WeftPhoneUnify?.isPhone() === true;
+    if (phoneLayout && toolbar.nextSibling !== form) form.before(toolbar);
+    else if (!phoneLayout && toolbar.previousSibling !== form) form.after(toolbar);
     const fresh = core.state.newConversation, selected = project(), id = (fresh ? core.state.workDraftHostId : null) || core.currentExecutionComputer?.() || core.state.hostId;
     toolbar.hidden = !enabled || !working || core.state.activeChatSource === 'phone';
     if (!toolbar.hidden) {
@@ -84,12 +91,21 @@ globalThis.WeftUiComponents.factories.workAndChat = (core, ui) => {
     card.append(status, actions); target.replaceChildren(card); return card;
   }
   function mountWorkMode() {
+    modes = node('div', 'rail-mode-switch'); modes.setAttribute('role', 'tablist'); modes.setAttribute('aria-label', '对话模式');
+    for (const [mode, name, icon] of [['chat','对话','chat'], ['work','工作','folder']]) {
+      const b = node('button', '', name); b.type = 'button'; b.dataset.mode = mode; b.setAttribute('role','tab'); b.setAttribute('aria-label',name);
+      b.setAttribute('aria-controls','session-list'); b.prepend(WeftIcons.create(icon,18)); b.onclick = () => core.chooseSidebarMode(mode); modes.append(b);
+    }
+    modes.onkeydown = event => { if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return; event.preventDefault();
+      const index = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - [...modes.children].indexOf(document.activeElement);
+      modes.children[index]?.focus(); modes.children[index]?.click(); };
+    ui.byId('session-rail').prepend(modes);
     toolbar = node('div', 'work-mode-toolbar'); toolbar.setAttribute('aria-label', '工作电脑与文件夹'); toolbar.hidden = true;
     computer = button('电脑', 'desktop', trigger => WeftPopover.openMenu(trigger, core.workComputers().map(row => ({ name: row.displayName || row.name, icon: 'desktop',
       checked: row.hostId === core.state.workDraftHostId, description: row.online ? '在线' : '不在线', disabled: !row.online,
       action: () => core.chooseWorkComputer(row.hostId) })), { label: '选择电脑' }));
     folder = button('选择项目或文件夹', 'folder', chooseFolder); error = node('p', 'work-mode-hint'); error.setAttribute('role', 'status');
-    toolbar.append(computer, folder, error); ui.byId('chat-scroll').before(toolbar);
+    toolbar.append(computer, folder, error); ui.byId('message-form').after(toolbar);
     subtitle = node('p', 'conversation-mode-subtitle'); subtitle.setAttribute('role', 'status'); ui.byId('assistant-title').after(subtitle);
     const update = ui.updateAvailability; ui.updateAvailability = (...args) => { const result = update(...args); paintWorkMode(); return result; };
     const paint = ui.paintSelectedSession; ui.paintSelectedSession = (...args) => { const result = paint(...args); paintWorkMode(); return result; };

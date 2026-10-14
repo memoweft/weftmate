@@ -61,7 +61,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
             effects.renderTurnStatus();
         effects.updateAvailability();
     }
-    function sessionList(archived = false) { return core.state.sessions.filter(item => item.kind !== 'main' && (item.archived === true) === archived).sort((a,b) => Number(b.pinned) - Number(a.pinned)); }
+    function sessionList(archived = false) { return core.state.sessions.filter(item => (item.kind !== 'main' || core.supportsWorkModes?.()) && (item.archived === true) === archived).sort((a,b) => Number(b.pinned) - Number(a.pinned)); }
     async function refreshSessionProjects() {
         const identity = core.state.identityGeneration;
         try {
@@ -184,7 +184,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         const identity = core.state.identityGeneration;
         const operation=folderMutationScope();core.state.folderChanging=operation;effects.updateAvailability();
         try {
-            if (core.isMainChat?.() || core.inMainChat?.()) {
+            if ((core.isMainChat?.() || core.inMainChat?.()) && !(core.supportsWorkModes?.() && core.currentConversationMode() === 'work')) {
                 if (project) await core.openSideChat({entry:'composer',parent:{kind:'project',id:project.projectId}});
             } else if (core.state.newConversation) {
                 core.state.newConversationProjectId = project?.projectId || null;

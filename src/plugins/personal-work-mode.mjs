@@ -2,7 +2,7 @@
 import { existsSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 export const WORK_SWITCH_REASON = '[weftmate:work-switch] 这件事需要在电脑上做。要切换到工作吗？';
-const dataTools = new Set(['load_tools', 'health_query', 'memory_query', 'memory_search', 'memory_recall',
+const dataTools = new Set(['load_tools', 'web_fetch', 'web_search', 'health_query', 'memory_query', 'memory_search', 'memory_recall',
   'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'exit_plan_mode', 'todo_write',
   'current_time', 'get_current_time', 'sleep', 'wait', 'run_code', 'schedule_list', 'schedule_delete']);
 
@@ -17,7 +17,7 @@ export function toolNeedsComputer(name, args = {}, connector = null) {
 }
 
 export const chatModePrompt = mode => mode === 'chat'
-  ? '当前是对话模式，可以聊天、查记忆和健康数据。需要读写电脑文件、运行命令、打开应用或浏览器时，实际调用所需工具，系统会暂停并询问是否切换到工作。不要自行执行，不要只回答做不了，不要用文字假称卡片已经出现。用户选择先不用后，本轮停止这件事，用一句话说明它需要进入工作；下一轮可以再询问。'
+  ? '当前是对话模式，可以聊天、查记忆和健康数据，也可以用 web_search/web_fetch 查询公开资料，不需要项目。需要读写电脑文件、运行命令、打开应用、交互操作浏览器或下载到电脑时，实际调用所需工具，系统会暂停并询问是否切换到工作。不要自行执行，不要只回答做不了，不要用文字假称卡片已经出现。用户选择先不用后，本轮停止这件事，用一句话说明它需要进入工作；下一轮可以再询问。'
   : '当前是工作模式，在已选择的电脑与项目文件夹里工作，继续遵守原有工具权限与审批。';
 
 // A model may have expanded a new relative file against the old chat directory.

@@ -1,0 +1,1034 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    "desktop: chat history, actual tool card, same session, approval and real file",
+    "desktop: decline remains chat",
+    "desktop: new work chooses second computer and its project; only second computer writes",
+    "phone: chat history, actual tool card, same session, approval and real file",
+    "phone: decline remains chat",
+    "phone: new work chooses second computer and its project; only second computer writes",
+    "desktop: original logical history remains readable in work; no replacement main is created"
+  ],
+  "screenshots": [
+    "desktop-1200-light-sidebar-chat.png",
+    "desktop-480-light-sidebar-chat.png",
+    "desktop-1200-dark-sidebar-chat.png",
+    "desktop-480-dark-sidebar-chat.png",
+    "desktop-1200-light-sidebar-work.png",
+    "desktop-480-light-sidebar-work.png",
+    "desktop-1200-dark-sidebar-work.png",
+    "desktop-480-dark-sidebar-work.png",
+    "desktop-1200-light-original-history.png",
+    "desktop-480-light-original-history.png",
+    "desktop-1200-dark-original-history.png",
+    "desktop-480-dark-original-history.png",
+    "desktop-1200-light-switch-card.png",
+    "desktop-480-light-switch-card.png",
+    "desktop-1200-dark-switch-card.png",
+    "desktop-480-dark-switch-card.png",
+    "desktop-1200-light-working.png",
+    "desktop-480-light-working.png",
+    "desktop-1200-dark-working.png",
+    "desktop-480-dark-working.png",
+    "desktop-1200-light-sidebar-work.png",
+    "desktop-480-light-sidebar-work.png",
+    "desktop-1200-dark-sidebar-work.png",
+    "desktop-480-dark-sidebar-work.png",
+    "desktop-1200-light-computer-menu.png",
+    "desktop-480-light-computer-menu.png",
+    "desktop-1200-dark-computer-menu.png",
+    "desktop-480-dark-computer-menu.png",
+    "desktop-1200-light-new-work.png",
+    "desktop-480-light-new-work.png",
+    "desktop-1200-dark-new-work.png",
+    "desktop-480-dark-new-work.png",
+    "desktop-1200-light-second-computer-work.png",
+    "desktop-480-light-second-computer-work.png",
+    "desktop-1200-dark-second-computer-work.png",
+    "desktop-480-dark-second-computer-work.png",
+    "desktop-1200-light-offline-card.png",
+    "desktop-480-light-offline-card.png",
+    "desktop-1200-dark-offline-card.png",
+    "desktop-480-dark-offline-card.png",
+    "phone-390-light-sidebar-chat.png",
+    "phone-360-light-sidebar-chat.png",
+    "phone-390-dark-sidebar-chat.png",
+    "phone-360-dark-sidebar-chat.png",
+    "phone-390-light-sidebar-work.png",
+    "phone-360-light-sidebar-work.png",
+    "phone-390-dark-sidebar-work.png",
+    "phone-360-dark-sidebar-work.png",
+    "phone-390-light-original-history.png",
+    "phone-360-light-original-history.png",
+    "phone-390-dark-original-history.png",
+    "phone-360-dark-original-history.png",
+    "phone-390-light-switch-card.png",
+    "phone-360-light-switch-card.png",
+    "phone-390-dark-switch-card.png",
+    "phone-360-dark-switch-card.png",
+    "phone-390-light-working.png",
+    "phone-360-light-working.png",
+    "phone-390-dark-working.png",
+    "phone-360-dark-working.png",
+    "phone-390-light-sidebar-work.png",
+    "phone-360-light-sidebar-work.png",
+    "phone-390-dark-sidebar-work.png",
+    "phone-360-dark-sidebar-work.png",
+    "phone-390-light-computer-menu.png",
+    "phone-360-light-computer-menu.png",
+    "phone-390-dark-computer-menu.png",
+    "phone-360-dark-computer-menu.png",
+    "phone-390-light-new-work.png",
+    "phone-360-light-new-work.png",
+    "phone-390-dark-new-work.png",
+    "phone-360-dark-new-work.png",
+    "phone-390-light-second-computer-work.png",
+    "phone-360-light-second-computer-work.png",
+    "phone-390-dark-second-computer-work.png",
+    "phone-360-dark-second-computer-work.png",
+    "phone-390-light-offline-card.png",
+    "phone-360-light-offline-card.png",
+    "phone-390-dark-offline-card.png",
+    "phone-360-dark-offline-card.png",
+    "desktop-1200-light-main-to-work.png",
+    "desktop-480-light-main-to-work.png",
+    "desktop-1200-dark-main-to-work.png",
+    "desktop-480-dark-main-to-work.png"
+  ],
+  "errors": [],
+  "systemBarsVerified": false,
+  "syntheticComputers": 2,
+  "contentTransport": "isolated authenticated HTTP proxy; cloud-directory and channel-credential exchange are synthetic",
+  "nativeFocusTaken": false,
+  "occlusionDisabledForSyntheticWindow": true,
+  "authorizationFailures": [
+    {
+      "kind": "desktop",
+      "path": "/personal/v1/status",
+      "status": 401,
+      "code": "UNAUTHORIZED"
+    }
+  ],
+  "proxy": [
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/cloud/devices/pending",
+      "method": "GET",
+      "status": 404,
+      "error": "NOT_FOUND"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/status",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/system",
+      "method": "GET",
+      "status": 503,
+      "error": "CAPABILITY_UNAVAILABLE"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/model-services",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/settings/approvals",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands",
+      "method": "POST",
+      "status": 202,
+      "state": "pending"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands/by-request/0d3bd4a6-2d78-4893-90ec-9b864a63684e",
+      "method": "GET",
+      "status": 200,
+      "state": "dispatching"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands/by-request/0d3bd4a6-2d78-4893-90ec-9b864a63684e",
+      "method": "GET",
+      "status": 200,
+      "state": "accepted_by_dsh"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/metadata",
+      "method": "PATCH",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/chat",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/chat-f312b9c4-b30a-450f-904d-154fc30f40f0",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/metadata",
+      "method": "PATCH",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approval-mode",
+      "method": "PATCH",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approval-mode",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands",
+      "method": "POST",
+      "status": 202,
+      "state": "pending"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/tasks/cmd-1a17fa26-9efe-42e4-a6de-4ff1975d0157",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands/by-request/df1e6e78-d305-40eb-987f-60c271f6cda7",
+      "method": "GET",
+      "status": 200,
+      "state": "pending"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/chat-f312b9c4-b30a-450f-904d-154fc30f40f0/events?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands/by-request/df1e6e78-d305-40eb-987f-60c271f6cda7",
+      "method": "GET",
+      "status": 200,
+      "state": "pending"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/chat-f312b9c4-b30a-450f-904d-154fc30f40f0/changes?cursor=[redacted]&limit=[redacted]&accountRevision=[redacted]&waitMs=[redacted]&liveRevision=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands/by-request/df1e6e78-d305-40eb-987f-60c271f6cda7",
+      "method": "GET",
+      "status": 200,
+      "state": "pending"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/chat-f312b9c4-b30a-450f-904d-154fc30f40f0/changes?cursor=[redacted]&limit=[redacted]&accountRevision=[redacted]&waitMs=[redacted]&liveRevision=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands/by-request/df1e6e78-d305-40eb-987f-60c271f6cda7",
+      "method": "GET",
+      "status": 200,
+      "state": "pending"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/chat-f312b9c4-b30a-450f-904d-154fc30f40f0/changes?cursor=[redacted]&limit=[redacted]&accountRevision=[redacted]&waitMs=[redacted]&liveRevision=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands/by-request/df1e6e78-d305-40eb-987f-60c271f6cda7",
+      "method": "GET",
+      "status": 200,
+      "state": "pending"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/chat-f312b9c4-b30a-450f-904d-154fc30f40f0/changes?cursor=[redacted]&limit=[redacted]&accountRevision=[redacted]&waitMs=[redacted]&liveRevision=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands/by-request/df1e6e78-d305-40eb-987f-60c271f6cda7",
+      "method": "GET",
+      "status": 200,
+      "state": "accepted_by_dsh"
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/settings/usage",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/message-branches",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/tasks/cmd-1a17fa26-9efe-42e4-a6de-4ff1975d0157",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/tasks/cmd-1a17fa26-9efe-42e4-a6de-4ff1975d0157",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/main",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events/41/detail",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "A",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/tasks/cmd-1a17fa26-9efe-42e4-a6de-4ff1975d0157",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/activity/unread",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/commands?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/library/artifact-76206c3a-c791-4ef1-8833-383c546266ee",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/suggestions",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/tasks/cmd-1a17fa26-9efe-42e4-a6de-4ff1975d0157",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/usage?timeZone=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/chat-f312b9c4-b30a-450f-904d-154fc30f40f0/changes?cursor=[redacted]&limit=[redacted]&accountRevision=[redacted]&waitMs=[redacted]&liveRevision=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/approvals?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/events?afterSeq=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions/session-6039b877-05bb-44e0-bdf8-8adbd22bfe53/questions?limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats/chat-f312b9c4-b30a-450f-904d-154fc30f40f0/changes?cursor=[redacted]&limit=[redacted]&accountRevision=[redacted]&waitMs=[redacted]&liveRevision=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/sessions?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/chats?archived=[redacted]&limit=[redacted]",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/projects",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "host": "B",
+      "path": "/personal/v1/cloud/devices/pending",
+      "method": "GET",
+      "status": 404,
+      "error": "NOT_FOUND"
+    }
+  ],
+  "closeFailures": [],
+  "cleaned": 0,
+  "logs": [
+    "[dsh:stderr] [weftmate] gateway GET failed: session-not-found DshAdapterError"
+  ]
+}

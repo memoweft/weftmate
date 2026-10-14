@@ -195,7 +195,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
             if (!core.state.modelProfileId || core.state.capabilities?.chat?.available !== true)
                 return;
             ui.closeRail();
-            core.startNewConversation();
+            (core.startSidebarConversation || core.startNewConversation)();
         });
         ui.byId('message-form').addEventListener('submit', async (event) => {
             event.preventDefault();

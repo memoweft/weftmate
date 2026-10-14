@@ -50,7 +50,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
     function installMain(chat) {
         core.state.mainChat = chat;
         core.state.sessions = core.state.sessions.filter(row => row.kind !== 'main');
-        if (chat.activeSessionId) core.state.sessions.push({ ...chat, kind: 'main', sessionId: chat.activeSessionId, title: 'WeftMate', taskAvailable: true });
+        if (chat.activeSessionId) core.state.sessions.push({ ...chat, kind: 'main', sessionId: chat.activeSessionId,
+            title: core.supportsWorkModes?.() ? chat.displayTitle || '小纬' : 'WeftMate', pinned: !core.supportsWorkModes?.(), taskAvailable: true });
         if (inHome()) core.state.selectedSessionId = chat.activeSessionId;
     }
     let readingLatest = false;
@@ -72,7 +73,10 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
         if (identity !== core.state.identityGeneration) return;
         installMain(main.chat);
         // Readable/input-ready main tail is independent of the complete sidebar.
-        if (!core.state.selectedChatId && !core.state.selectedSessionId && !core.state.newConversation && main.chat.chatId !== unavailableChatId) await selectMainChat();
+        if (!core.state.selectedChatId && !core.state.selectedSessionId && !core.state.newConversation && main.chat.chatId !== unavailableChatId) {
+            if (core.supportsWorkModes?.()) await core.startSidebarConversation(true);
+            else await selectMainChat();
+        }
         const listGeneration = core.state.sessionListGeneration || 0;
         const params = new URLSearchParams({archived:'all',limit:100,...(core.state.sessionListQuery ? {q:core.state.sessionListQuery} : {})});
         const sessionParams = new URLSearchParams(params), chatParams = new URLSearchParams(params);

@@ -2,6 +2,17 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { personalWebFetchProvider } from '../src/plugins/personal-web-fetch.mjs'
 
+test('MODE-1 chat fetch queries public material without requiring a project or directing the model to computer files', async () => {
+  const frames: any[] = [];
+  const provider = personalWebFetchProvider({request: async (frame: any) => { frames.push(frame); return {
+    text: '合成公开资料', url: 'https://example.org/reference', sourcePath: '/synthetic/capture/page.txt', snapshotId: 'synthetic-page',
+    segmentCount: 2, httpStatus: 200, outline: 'Topic A\nTopic B' }; }}, () => ({}), () => ({sessionId:'synthetic-chat'}), async () => ({conversationMode:'chat',project:null}));
+  const result = await provider.fetch({url:'https://example.org/reference'});
+  assert.match(result.body.content,/合成公开资料/); assert.match(result.body.content,/web_fetch/);
+  assert.equal(result.body.content.includes('/synthetic/capture'),false); assert.equal(result.body.content.includes('Use grep/read'),false);
+  assert.equal(frames.length,1); assert.equal(frames[0].action,'browse'); assert.equal(frames[0].browserAction,'open');
+});
+
 test('native web fetch returns the first segment and a continuation without eagerly reading unrelated sections', async () => {
   const exec = { agent: { session: { header: { agentPreset: 'personal-remote' } } } }
   const signal = new AbortController().signal
