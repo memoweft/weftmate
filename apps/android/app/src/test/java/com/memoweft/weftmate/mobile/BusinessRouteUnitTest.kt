@@ -14,6 +14,10 @@ class BusinessRouteUnitTest {
         assertEquals("/personal/v1/sessions/session-mode/approvals/$approvalId", approvalDecisionPath("session-mode", approvalId, "mode-request", "allowed-once"))
         for (route in listOf("/personal/v1/work-mode", "/personal/v1/sessions/session-mode/approvals/approval-mode/raw", "/personal/v1/sessions/../approvals", "/personal/v1/projects?ownerId=other")) assertFalse(route, validBusinessPath(route))
     }
+    @Test fun nativeWorkSelectionAndMetadataStayOnExistingRoutes() {
+        for(route in listOf("/personal/v1/projects/project-mode/sessions","/personal/v1/sessions/session-mode/metadata","/personal/v1/chats/chat-mode","/personal/v1/chats?limit=200"))assertTrue(route,validBusinessPath(route))
+        for(route in listOf("/personal/v1/projects/project-mode/sessions/raw","/personal/v1/projects/../sessions","/personal/v1/sessions/session-mode/metadata?hostId=other"))assertFalse(route,validBusinessPath(route))
+    }
     @Test fun modelServicesUseOnlyExactServiceDirectoryAndSelectionRoutes() {
         val service = "/personal/v1/model-services/model-service-00000000-0000-4000-8000-000000000001"
         for (route in listOf("/personal/v1/model-services", "/personal/v1/model-services/check", service, "$service/refresh", "$service/select")) assertTrue(route, validBusinessPath(route))
