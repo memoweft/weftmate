@@ -133,7 +133,7 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             effects.focusMainEvent?.(anchor);
         } else { effects.scrollToLatest(); void markLatestChatRead(); }
         await core.refreshConversationTasks();
-        if (core.state.selectedSessionId) void core.refreshApprovalMode(core.state.selectedSessionId);
+        void core.refreshApprovalMode(core.state.selectedSessionId);
     }
     async function selectSession(id, {empty = false, creating = false} = {}) {
         if (core.state.mainChat?.activeSessionId === id) return selectMainChat();

@@ -446,6 +446,7 @@
     }
   ],
   "files": [
+    "tests/personal-approval-mode-execution.test.ts",
     "tests/personal-command-encoding-vendor.test.ts",
     "tests/bl-29-timing-config.test.ts",
     "tests/vendor-hidden-subprocesses.test.ts",
