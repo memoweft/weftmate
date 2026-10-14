@@ -6,6 +6,8 @@ import renderAssets from './render-assets.json' with {type: 'json'};
 
 const files = new Map([
   ['/personal/v1/ui/components/computers.js', ['components/computers.js','text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/components/work-and-chat.js', ['components/work-and-chat.js','text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/work-and-chat.css', ['work-and-chat.css','text/css; charset=utf-8']],
   ['/personal/v1/ui/computer-channel.html', ['computer-channel.html','text/html; charset=utf-8']],
   ['/personal/v1/ui/computer-channel.js', ['computer-channel.js','text/javascript; charset=utf-8']],
   ...['history-import-view.js','history-import.css'].map(name => [`/personal/v1/ui/${name}`, [name, name.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8']]),

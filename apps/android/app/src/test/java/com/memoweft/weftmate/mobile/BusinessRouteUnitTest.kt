@@ -7,6 +7,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun workModeUsesExistingExactSessionProjectAndApprovalRoutes() {
+        for (route in listOf("/personal/v1/sessions?archived=all", "/personal/v1/projects", "/personal/v1/projects/project-mode/sessions", "/personal/v1/chats/chat-mode/events?limit=200")) assertTrue(route, validBusinessPath(route))
+        assertEquals("/personal/v1/sessions/session-mode/approvals?limit=50", approvalListPath("session-mode"))
+        val approvalId = "00000000-0000-4000-8000-000000000001"
+        assertEquals("/personal/v1/sessions/session-mode/approvals/$approvalId", approvalDecisionPath("session-mode", approvalId, "mode-request", "allowed-once"))
+        for (route in listOf("/personal/v1/work-mode", "/personal/v1/sessions/session-mode/approvals/approval-mode/raw", "/personal/v1/sessions/../approvals", "/personal/v1/projects?ownerId=other")) assertFalse(route, validBusinessPath(route))
+    }
     @Test fun modelServicesUseOnlyExactServiceDirectoryAndSelectionRoutes() {
         val service = "/personal/v1/model-services/model-service-00000000-0000-4000-8000-000000000001"
         for (route in listOf("/personal/v1/model-services", "/personal/v1/model-services/check", service, "$service/refresh", "$service/select")) assertTrue(route, validBusinessPath(route))

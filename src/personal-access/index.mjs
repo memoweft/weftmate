@@ -1,4 +1,5 @@
 import { migratePermissionRules } from '../plugins/personal-permission-rules.mjs';
+import { conversationMode } from './work-and-chat.mjs';
 import { createConnectors } from '../personal-connectors/index.mjs';
 import { connectorExecution } from '../personal-connectors/access.mjs';
 import { createLibrary } from './library.mjs';
@@ -981,6 +982,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         deepThinking: (chatForSession(account,sessionId)?.deepThinking ?? session.deepThinking) === true,
         personalization: accountPersonalization(account),
 
+        conversationMode: conversationMode(session), workHostId: session.workHostId ?? account.hostId,
         mode,
         allowedCategories: mode === 'ask' ? [] : session.allowedApprovalCategories ?? [],
         permissionRules: rules(account.permissionRules),

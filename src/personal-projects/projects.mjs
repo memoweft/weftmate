@@ -60,7 +60,7 @@ export function createProjectOperations(context) {
       const found = next.projects[projectId];
       Object.assign(found, patch, { revision: found.revision + 1, updatedAt: new Date(context.timestamp()).toISOString() });
       for (const session of Object.values(next.sessions)) if (session.projectId === projectId) {
-        if (method === 'DELETE') { delete session.projectId; delete session.projectRevision; session.projectNotice = '项目已移除登记，文件夹里的文件仍保留。下个回合使用本对话的独立工作目录。'; }
+        if (method === 'DELETE') { session.mode = 'work'; session.workHostId = next.hostId; delete session.projectId; delete session.projectRevision; session.projectNotice = '项目已移除登记，文件仍保留。先选择一个项目或文件夹，再继续工作。'; }
         else session.projectRevision = found.revision;
       }
       // Keep the tombstone for old source snapshots, commands and idempotent requests.

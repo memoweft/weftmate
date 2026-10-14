@@ -443,6 +443,14 @@
     {
       "file": "tests/personal-approval-bridge.test.ts",
       "name": "native approvals still work after 256 tool calls in the same personal turn"
+    },
+    {
+      "file": "tests/personal-approval-bridge.test.ts",
+      "name": "MODE-1 a native run_code nested call pauses before any effect even in allow-all, then continues after choosing work"
+    },
+    {
+      "file": "tests/personal-approval-bridge.test.ts",
+      "name": "MODE-1 chat risk review does not read a computer script before the user chooses work"
     }
   ],
   "files": [
@@ -457,6 +465,7 @@
     "tests/personal-connectors-native.test.ts",
     "tests/st-7b-native.test.ts",
     "tests/personal-cloud-backup-snapshot-vendor.test.ts",
+    "tests/work-and-chat-runtime.test.ts",
     "tests/fix-36-title-vendor.test.ts"
   ]
 }

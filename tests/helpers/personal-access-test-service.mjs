@@ -1,4 +1,5 @@
 // Expose the existing observer disposer to narrowly scoped deterministic fixtures.
+import './posix-project-fixture.mjs';
 // Production source is loaded unchanged apart from this test-only hook.
 import { readFileSync } from 'node:fs';
 const url = new URL('../../src/personal-access/index.mjs', import.meta.url);
