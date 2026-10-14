@@ -19,6 +19,8 @@ import WeftMateCore
     private var retainedReplicas: [String:OfflineReplica]=[:]
     private var replica: OfflineReplica?
     private var identity: OfflineIdentity?
+    @Published private(set) var workTasks: [OfflineWorkTask] = []
+    var workSnapshot: OfflineSnapshot? { ready ? replica?.state.snapshot : nil }
     @Published private(set) var polling = false
     func authorizeMemory(control: (String) async throws -> OfflineAuthorization) async throws {
         guard let replica,ready else { throw OfflineFailure.notReady }
@@ -41,7 +43,7 @@ import WeftMateCore
     }
     func suspend() {
         if let replica,let identity { retainedReplicas[identity.hostId]=replica }
-        replica=nil;identity=nil;draft="";turns=[];synced=[];recent=[];ready=false;showHistory=false;hostOffline=false;conversationID=UUID().uuidString.lowercased()
+        replica=nil;identity=nil;workTasks=[];draft="";turns=[];synced=[];recent=[];ready=false;showHistory=false;hostOffline=false;conversationID=UUID().uuidString.lowercased()
     }
     func removeComputer(_ host: String) {
         if identity?.hostId == host { do { try replica?.clear() } catch { notice="电脑副本暂时没能清除，请重试。" };suspend() }
@@ -52,15 +54,16 @@ import WeftMateCore
         do { try replica?.clear();for engine in retainedReplicas.values { try engine.clear() };retainedReplicas=[:]; notice = nil }
         catch { notice = "本机钥匙或副本清理失败，请检查设备存储后重试。" }
         replica = nil; identity = nil; draft = ""; turns = []; synced = []; recent = []; ready = false
-        showHistory = false; hostOffline = false; conversationID = UUID().uuidString.lowercased()
+        workTasks=[];showHistory = false; hostOffline = false; conversationID = UUID().uuidString.lowercased()
     }
     private func publish(_ engine: OfflineReplica) {
+        workTasks = engine.state.workTasks ?? []
         ready = engine.state.snapshot != nil; turns = engine.state.turns; synced = engine.state.synced
         recent = engine.state.snapshot?.recent ?? []; truncated = engine.state.snapshot?.truncated ?? false
         if !ready { draft = ""; recentID = nil }
     }
     func poll(session: AccountSession, client: PersonalClient, directory: URL, store: any CredentialStore,
-              allowLoopback: Bool, phoneFirst: Bool = false, multipleComputers: Bool = false, control: (String) async throws -> OfflineAuthorization) async {
+              allowLoopback: Bool, phoneFirst: Bool = false, multipleComputers: Bool = false, workAndChat: Bool = false, control: (String) async throws -> OfflineAuthorization) async {
         guard !polling, !busy else { return }; polling = true; defer { polling = false }
         do {
             let next = OfflineIdentity(ownerId: session.account.ownerId, hostId: session.hostId, deviceId: session.device.id)
@@ -70,6 +73,7 @@ import WeftMateCore
                 identity = next
             }
             guard let engine = replica else { return }
+            engine.workAndChat=workAndChat
             // A cached replica is never rendered after process launch until cloud authorization succeeds.
             if engine.state.snapshot != nil {
                 do {
@@ -109,6 +113,26 @@ import WeftMateCore
             }
         } catch { notice = (error as? LocalizedError)?.errorDescription ?? "离线副本无法读取。" }
     }
+    #if DEBUG
+    func seedMode2IOfflineFixture(disconnected: Bool = true) throws {
+        let args=ProcessInfo.processInfo.arguments
+        guard args.contains("--ui-testing"),args.contains("--mode2i-offline") else { return }
+        let identity=OfflineIdentity(ownerId:"owner-fixture",hostId:"host-fixture",deviceId:"device-fixture")
+        let keys=Mode2IOfflineFixtureKeys(),directory=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let vault=try OfflineVault(identity:identity,directory:directory,store:keys)
+        let data: [String:Any] = ["generation":3,"reset":false,"items":[],"remove":[],"hashes":[:],"truncated":false,"recent":[],"control":["accountId":"cloud-fixture","hostId":"host-fixture","generation":3],"taskRecipient":try vault.publicJwk(),"taskReferences":[["id":"session-work","title":"合成工作","projectId":"project-a"]]]
+        var state=OfflineState();state.snapshot=try JSONDecoder().decode(OfflineSnapshot.self,from:JSONSerialization.data(withJSONObject:data))
+        try vault.save(state);let engine=try OfflineReplica(vault:vault);replica=engine;self.identity=identity;hostOffline=disconnected;publish(engine)
+    }
+    #endif
+    func retainWorkTask(_ task: OfflineWorkTask) throws {
+        guard let replica,ready else { throw OfflineFailure.notReady }
+        try replica.retainWorkTask(task);publish(replica)
+    }
+    func acknowledgeWorkTask(_ receipt: OfflineTaskReceipt) throws {
+        guard let replica,ready else { throw OfflineFailure.notReady }
+        try replica.acknowledgeWorkTask(receipt);publish(replica)
+    }
     func send(control: (String) async throws -> OfflineAuthorization, fallbackModel: PhoneModelConfiguration? = nil) async {
         guard let engine = replica, hostOffline, ready, !busy, !polling else { return }
         busy = true; notice = nil; let text = draft; draft = ""
@@ -126,3 +150,12 @@ import WeftMateCore
         guard replica === engine else { return }; publish(engine)
     }
 }
+
+#if DEBUG
+private final class Mode2IOfflineFixtureKeys: CredentialStore,@unchecked Sendable {
+    private let lock=NSLock();private var values:[String:Data]=[:]
+    func load(key:String)->Data?{lock.withLock{values[key]}}
+    func save(_ value:Data,key:String){lock.withLock{values[key]=value}}
+    func delete(key:String){lock.withLock{values[key]=nil}}
+}
+#endif

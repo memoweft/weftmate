@@ -392,6 +392,9 @@ struct ConversationView: View {
         }
         }
         .background(Weave.surface)
+        #if os(iOS)
+        .environment(\.phoneWorkApp,model)
+        #endif
         .navigationTitle(conversation.temporaryState.notice().isEmpty ? (conversation.title.isEmpty ? "对话" : conversation.title) : "临时对话")
         #if os(iOS)
         .toolbar(.hidden, for: .navigationBar)
@@ -612,7 +615,8 @@ struct ConversationView: View {
                     if composerExpanded {
                     if model.modelServicesSupported == true {
                         ServiceModelMenuButton(services:model.modelServices,current:model.sendTargets[key]?.modelProfileID,label:model.sendTargets[key]?.modelName ?? "当前模型",usesImages:(model.attachmentDrafts[key] ?? []).contains(where: {$0.original.isImage}) || model.messages.contains(where: {!$0.images.isEmpty || $0.originalAttachments.contains(where: \.isImage)}),thinkingSupported:model.modelServices.flatMap(\.models).first(where: {$0.matches(model.sendTargets[key]?.modelProfileID)})?.deepThinking?.supported == true,thinking:Binding(get:{model.thinking.confirmed?.enabled == true},set:{value in Task { await model.refreshThinking(conversation,enabled:value) }}),select:{service,item in Task { await model.chooseServiceModel(service,item,conversation:conversation) }},add:{showingModels=true},refresh:{Task { await model.refreshServiceMenus() }},identifier:"composerModel")
-                        ComputerMenuButton(cloud:model.cloudLogin)
+                        if !model.mainChat.capabilities.supports("workAndChat") { ComputerMenuButton(cloud:model.cloudLogin) }
+
                     } else {
                     Menu {
                         Label(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型",systemImage:"checkmark")
@@ -776,6 +780,9 @@ struct ConversationView: View {
                 #endif
             }
             else { Text(ProjectPresentation.restrictedNotice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("restrictedSessionNotice") }
+            #if os(iOS)
+            if model.mainChat.capabilities.supports("workAndChat"), WorkAndChat.mode(conversation) == .work { PhoneWorkDirectoryLine(app: model, row: conversation) }
+            #endif
             if let notice = conversation.projectNotice ?? model.sessionProjectNotices[conversation.id] ?? conversation.projectName.map({ "项目：" + $0 }) {
                 Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("projectNotice")
             }
