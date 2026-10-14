@@ -6,9 +6,11 @@ import { mkdtemp, mkdir, readdir, lstat, unlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 import { phoneRuntime } from '../services/cloud/test/relay-phone-runtime.mjs';
-import { createPersonalAccessService } from '../src/personal-access/index.mjs';
 import { handlePersonalMemoryTool } from '../src/personal-access/memory-runtime.mjs';
 import { REPEAT_TOOL_LIMIT, REPEAT_TOOL_MESSAGE } from '../src/plugins/weftmate-personal-tool-loop.mjs';
+
+// Load after the Linux folder-selection fixture installs its real POSIX reader.
+const { createPersonalAccessService } = await import('../src/personal-access/index.mjs');
 
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED = '1';
