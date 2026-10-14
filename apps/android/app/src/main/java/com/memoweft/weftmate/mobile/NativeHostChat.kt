@@ -2,6 +2,13 @@ package com.memoweft.weftmate.mobile
 
 import org.json.JSONObject
 
+internal fun checkedNativeDecisionRequest(checkCurrent: () -> Unit, request: () -> JSONObject): JSONObject {
+    checkCurrent()
+    val result = request()
+    checkCurrent()
+    return result
+}
+
 internal fun hostChatTitle(chat: JSONObject): String =
     chat.stringOrEmpty("displayTitle").ifEmpty { if (chat.optString("kind") == "main") "WeftMate" else chat.stringOrEmpty("title").ifEmpty { "新对话" } }
 

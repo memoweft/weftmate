@@ -135,7 +135,7 @@ class Mode2aInstrumentedTest {
                 assertEquals(args.getString("secondHostId"),a.model.hostId);report.put("secondComputer",true)
             }
             report.put("newWork",true).put("sameChatAndSession",true).put("singleUserMessage",true).put("publicLookupNoSwitch",true).put("rejection",true)
-        } catch(e:Throwable){shot("failure");report.put("failure",e.javaClass.simpleName);throw e}
+        } catch(e:Throwable){shot("failure");main{report.put("failure",e.javaClass.simpleName).put("choicesBusy",a.model.workChoicesBusy).put("projectCount",a.model.projects.size).put("computerCount",a.model.computers.size).put("connected",a.model.connected).put("error",a.model.error).put("choiceError",a.model.workChoicesError)};throw e}
         finally {File(i.targetContext.getExternalFilesDir(null),"mode2a-report.json").writeText(report.toString());main{a.finish()}}
     }
 }

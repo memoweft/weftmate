@@ -56,14 +56,14 @@ import org.json.JSONObject
             Box(Modifier.weight(1f)) {
                 val label=m.workProject?.stringOrEmpty("name")?.ifEmpty{null} ?: "选择项目或文件夹"
                 FeedControlButton(label,icon=R.drawable.wm_folder,trailingIcon=R.drawable.wm_down,choice=true,
-                    contentDescription="项目或文件夹：$label",enabled=m.connected && !m.running && !m.workChoicesBusy){projectMenu=true;m.launch{m.refreshWorkChoices()}}
+                    contentDescription="项目或文件夹：$label",enabled=m.connected && !m.running && !m.workChoicesBusy){projectMenu=true;m.launch{m.refreshWorkChoices(false)}}
                 NativeFileMenu(projectMenu,{projectMenu=false}) {
                     m.projects.forEach { project ->
                         NativeFileMenuAction(project.stringOrEmpty("name") + if(project.stringOrEmpty("projectId")==m.workProject?.stringOrEmpty("projectId"))" · 当前" else "",R.drawable.wm_folder,!m.workChoicesBusy){projectMenu=false;m.chooseWorkProject(project)}
                     }
                     if(m.projects.isEmpty())NativeFileMenuAction(if(m.workChoicesBusy)"正在读取项目…" else "还没有项目或文件夹",R.drawable.wm_folder,false){}
                     NativeFileMenuAction("新文件夹请在电脑上添加",R.drawable.wm_pc,false){}
-                    NativeFileMenuAction("重新读取项目",R.drawable.wm_sync,!m.workChoicesBusy){m.launch{m.refreshWorkChoices()}}
+                    NativeFileMenuAction("重新读取项目",R.drawable.wm_sync,!m.workChoicesBusy){m.launch{m.refreshWorkChoices(false)}}
                 }
             }
         }
@@ -74,7 +74,7 @@ import org.json.JSONObject
 
 @Composable internal fun NativeWorkSwitch(m: NativeChatModel, row: JSONObject) {
     val approvalId=row.getString("approvalId")
-    LaunchedEffect(approvalId){m.refreshWorkChoices()}
+    LaunchedEffect(approvalId){m.refreshWorkChoices(false)}
     var selected by remember(approvalId) { mutableStateOf("") }
     LaunchedEffect(m.projects.toString()) { if(m.projects.none{it.stringOrEmpty("projectId")==selected})selected=m.projects.firstOrNull()?.stringOrEmpty("projectId").orEmpty() }
     val pending=row.optJSONObject("nativeDecision")
@@ -102,7 +102,7 @@ import org.json.JSONObject
                 }
             }
             if(m.projects.isEmpty())Text(if(m.workChoicesBusy)"正在读取项目…" else m.workChoicesError.ifEmpty{"先在这台电脑上添加项目或文件夹。"},fontSize=DesignTokens.font13.sp)
-            if(m.workChoicesError.isNotEmpty())FeedControlButton("重新读取项目",icon=R.drawable.wm_sync){m.launch{m.refreshWorkChoices()}}
+            if(m.workChoicesError.isNotEmpty())FeedControlButton("重新读取项目",icon=R.drawable.wm_sync){m.launch{m.refreshWorkChoices(false)}}
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(DesignTokens.space8.dp,Alignment.End)) {
                 FeedControlButton("先不用",secondary=true){m.decide(row,"rejected")}
                 FeedControlButton("切换到工作",primary=true,enabled=m.connected && !m.workChoicesBusy && selected.isNotEmpty()){m.decide(row,"allowed-once","once",selected)}

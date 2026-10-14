@@ -7,6 +7,67 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NativeWorkChatTest {
+    @Test fun personalApiSendsDedicatedAuthenticatedApprovalRequestsAndOriginalDecisionFields() {
+        val host=HostIdentity("https://computer.example.test","synthetic","owner-one","computer-one","phone-one","synthetic-cookie","synthetic-csrf")
+        val approvalId="00000000-0000-4000-8000-000000000001"
+        var calls=0
+        val transport=object:JsonTransport {
+            override fun request(url:String,method:String,body:JSONObject?,headers:Map<String,String>,active:java.util.concurrent.atomic.AtomicReference<java.net.HttpURLConnection?>?,readTimeoutMs:Int):HttpReply {
+                calls++;assertEquals(host.cookie,headers["Cookie"])
+                if(method=="GET") {
+                    assertEquals("${host.origin}/personal/v1/sessions/session-one/approvals?limit=50",url);assertNull(body)
+                } else {
+                    assertEquals("POST",method);assertEquals("${host.origin}/personal/v1/sessions/session-one/approvals/$approvalId",url)
+                    assertEquals(host.origin,headers["Origin"]);assertEquals(host.csrf,headers["X-WeftMate-CSRF"])
+                    assertEquals("original-$calls",body!!.getString("requestId"))
+                    if(calls==2){assertEquals("allowed-once",body.getString("outcome"));assertEquals("conversation-category",body.getString("scope"));assertFalse(body.has("workProjectId"))}
+                    if(calls==3){assertEquals("allowed-once",body.getString("outcome"));assertEquals("once",body.getString("scope"));assertEquals("project-selected",body.getString("workProjectId"))}
+                    if(calls==4){assertEquals("rejected",body.getString("outcome"));assertFalse(body.has("scope"));assertFalse(body.has("workProjectId"))}
+                }
+                return HttpReply(200,JSONObject().put("received",true))
+            }
+        }
+        val api=PersonalApi(transport)
+        assertTrue(api.approvals(host,"session-one").getBoolean("received"))
+        api.decideApproval(host,"session-one",approvalId,"original-2","allowed-once","conversation-category")
+        api.decideApproval(host,"session-one",approvalId,"original-3","allowed-once","once","project-selected")
+        api.decideApproval(host,"session-one",approvalId,"original-4","rejected")
+        assertEquals(4,calls)
+        assertThrows(IllegalArgumentException::class.java){api.decideApproval(host,"../other",approvalId,"invalid","allowed-once")}
+        assertEquals(4,calls)
+    }
+    @Test fun nativeDecisionChecksTheCapturedAccountBeforeAndAfterTheRequest() {
+        var current="account-one";val expected=current;var requests=0;var checks=0
+        fun checkCurrent(){checks++;if(current!=expected)throw ApiFailure(403,"ACCOUNT_SWITCHED")}
+        current="account-two"
+        assertThrows(ApiFailure::class.java){checkedNativeDecisionRequest(::checkCurrent){requests++;JSONObject()}}
+        assertEquals(0,requests)
+        current=expected;checks=0
+        assertThrows(ApiFailure::class.java){checkedNativeDecisionRequest(::checkCurrent){requests++;current="account-two";JSONObject().put("privateResult",true)}}
+        assertEquals(1,requests);assertEquals(2,checks)
+        current=expected;checks=0
+        assertTrue(checkedNativeDecisionRequest(::checkCurrent){requests++;JSONObject().put("accepted",true)}.getBoolean("accepted"))
+        assertEquals(2,checks)
+    }
+    @Test fun personalApiQuestionsKeepTheirDedicatedAuthenticatedRoutesAndExactAnswer() {
+        val host=HostIdentity("https://computer.example.test","synthetic","owner-one","computer-one","phone-one","synthetic-cookie","synthetic-csrf")
+        val rpc="00000000-0000-4000-8000-000000000001"
+        val answer=JSONObject().put("answers",JSONArray().put(JSONObject().put("id","question-one").put("selected",JSONArray().put("继续"))))
+        var calls=0
+        val api=PersonalApi(object:JsonTransport {
+            override fun request(url:String,method:String,body:JSONObject?,headers:Map<String,String>,active:java.util.concurrent.atomic.AtomicReference<java.net.HttpURLConnection?>?,readTimeoutMs:Int):HttpReply {
+                calls++;assertEquals(host.cookie,headers["Cookie"])
+                if(calls==1){assertEquals("GET",method);assertEquals("${host.origin}/personal/v1/sessions/session-one/questions?limit=50",url);assertNull(body)}
+                else {assertEquals("POST",method);assertEquals("${host.origin}/personal/v1/sessions/session-one/questions/$rpc",url)
+                    assertEquals(host.origin,headers["Origin"]);assertEquals(host.csrf,headers["X-WeftMate-CSRF"])
+                    assertEquals("original-answer",body!!.getString("requestId"));assertEquals(answer.toString(),body.getJSONObject("answer").toString())}
+                return HttpReply(200,JSONObject().put("received",true))
+            }
+        })
+        assertTrue(api.questions(host,"session-one").getBoolean("received"))
+        assertTrue(api.answerQuestion(host,"session-one",rpc,"original-answer",answer).getBoolean("received"))
+        assertEquals(2,calls)
+    }
     @Test fun onlyTheComputersOwnVersionOneDeclarationEnablesProductModes() {
         for (status in listOf(JSONObject(),JSONObject().put("capabilities",JSONObject().put("workAndChat",1)),
             JSONObject().put("personalCapabilities",JSONObject().put("workAndChat","1")),
