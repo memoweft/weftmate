@@ -20,6 +20,7 @@ import {
   PROFILE_PATCH_TEMPLATE_R12,
   PROFILE_PATCH_TEMPLATE_R13,
   PROFILE_PATCH_TEMPLATE_R16,
+  PROFILE_PATCH_TEMPLATE_R17,
   PROFILE_PATCH_TEMPLATE,
   parseWebUrlLine,
   writeWebProfile,
@@ -34,6 +35,10 @@ test('the previous managed personal profile upgrades to the tool-loop compositio
   await writeWebProfile(root);
   const patch = join(root, 'profiles', 'weftmate', 'cordis.patch.yml');
   await writeFile(patch, PROFILE_PATCH_TEMPLATE_R16);
+  assert.equal(await writeWebProfile(root), 'repaired');
+  assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE);
+  assert.equal(await writeWebProfile(root), 'unchanged');
+  await writeFile(patch, PROFILE_PATCH_TEMPLATE_R17);
   assert.equal(await writeWebProfile(root), 'repaired');
   assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE);
   assert.equal(await writeWebProfile(root), 'unchanged');

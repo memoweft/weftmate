@@ -43,5 +43,5 @@ export function stagePersonalPlugins(root: string, packageResolver = (name: stri
   }
   const plugin = stage(join(repository, 'src/plugins/weftmate-personal-desktop.mjs'))
   const preset = stage(join(repository, 'src/plugins/weftmate-personal-desktop-preset.mjs'))
-  return { plugin: pathToFileURL(plugin).href, preset: pathToFileURL(preset).href, files }
+  return { plugin: pathToFileURL(plugin).href, preset: pathToFileURL(preset).href, files, stageFile: stage }
 }
