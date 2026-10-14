@@ -49,6 +49,13 @@
       "passed": 9,
       "failed": 0,
       "skipped": 0
+    },
+    {
+      "file": "folder-fixture-final.log",
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
     }
   ],
   "focusedRepeats": {
@@ -73,5 +80,6 @@
     "No local complete required/vendor suite",
     "No production host,18186,real model requests or vendor edits",
     "Historical approval geometry and 6s list readiness lack unique timing evidence"
-  ]
+  ],
+  "additionalFixture": "folder-choice native inspector permits both existing supported platforms; Apple product unchanged"
 }
