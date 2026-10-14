@@ -973,16 +973,21 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       if (!match) throw failure('SESSION_UNAVAILABLE', 404);
       const account = accountState(match.ownerId), session = account.sessions[sessionId];
       const project = account.projects?.[session.projectId];
+      const mode = chatForSession(account, sessionId)?.approvalMode ?? session.approvalMode ?? account.defaultApprovalMode ?? 'auto';
+      // An explicit per-conversation ask must win over earlier automatic grants.
+      // Keep deny rules and stored preferences intact for the other modes.
+      const rules = value => mode === 'ask' ? Object.fromEntries(Object.entries(value ?? {}).map(([type, decision]) =>
+        [type, decision === 'allow' ? 'ask' : decision])) : value ?? {};
       return { conversationWorkspace: sessionWorkspace(path.join(path.dirname(root), 'conversations'), match.ownerId, session.workspaceChatId ?? sessionId),
         deepThinking: (chatForSession(account,sessionId)?.deepThinking ?? session.deepThinking) === true,
         personalization: accountPersonalization(account),
 
         conversationMode: conversationMode(session), workHostId: session.workHostId ?? account.hostId,
-        mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
-        allowedCategories: session.allowedApprovalCategories ?? [],
-        permissionRules: account.permissionRules ?? {},
+        mode,
+        allowedCategories: mode === 'ask' ? [] : session.allowedApprovalCategories ?? [],
+        permissionRules: rules(account.permissionRules),
         connectorTools: connectors?.catalog(match.ownerId) ?? [],
-        projectPermissionRules: project && !project.revoked ? project.permissionRules ?? {} : {},
+        projectPermissionRules: project && !project.revoked ? rules(project.permissionRules) : {},
         ...(project && !project.revoked ? { project: { projectId: project.projectId,
           rootPath: project.rootPath, revision: project.revision, instructions: project.instructions ?? '',
           name: project.name, permission: project.permission ?? 'read-only' } } : {}),
