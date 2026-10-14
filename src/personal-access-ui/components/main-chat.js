@@ -86,13 +86,17 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 row.setAttribute('aria-label',`助手消息：${Array.from(spec.event.data.text).slice(0,80).join('')}`);
                 row.dataset.seq = String(spec.event.sourceRef?.seq ?? spec.event.seq);
                 const body = row.querySelector('.message-text,.markdown');
-                if (spec.event.data.truncated && core.completeMessageEvent) {
+                if (spec.event.data.truncated && !spec.event.data.fullTextReadFailed && core.completeMessageEvent) {
                     globalThis.WeftReplyMotion?.indicator(body,false);
                     const identity=core.state.identityGeneration,owner=core.state.ownerId;
                     void core.completeMessageEvent(spec.event.sourceRef?.sessionId || core.state.selectedSessionId,spec.event).then(full=>{
                         if(body.isConnected && identity===core.state.identityGeneration && owner===core.state.ownerId)WeftContent.update(body,full.data.text,{streaming:false});
-                    }).catch(()=>{});
-                } else WeftContent.update(body, spec.event.data.text, { streaming: spec.event.data.streaming === true });
+                    }).catch(()=>{
+                        if(body.isConnected && identity===core.state.identityGeneration && owner===core.state.ownerId)
+                            WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId, true);
+                    });
+                } else if (!spec.event.data.truncated) WeftContent.update(body, spec.event.data.text, { streaming: spec.event.data.streaming === true });
+                WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId);
                 if (!spec.event.data.live) { if(core.supportsChat('sideChats'))row.weftOpenSideChat=()=>showSidePanel(spec.event); (ui.bindMainMessage || ui.messageActions?.bind)?.(row,spec.event); globalThis.WeftModelThinking?.(core,row,spec.event); ui.appendReplyMemory?.(row,spec.event); }
                 if(core.state.chatWindow.search.query.trim())highlight(row);
                 return;
@@ -100,6 +104,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             row.tabIndex=0;row.setAttribute('role','group');row.setAttribute('aria-label',`${spec.event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(spec.event.data?.text||'附件').slice(0,80).join('')}`);
             const temporary = ui.element('ol'); ui.paintHistoryMessages([spec.event], temporary); const message = temporary.firstElementChild;
             row.replaceChildren(); if (message) { row.className += ' ' + message.className; row.append(...message.childNodes); }
+            WeftContent.messageCompletionNotice(row, core, spec.event, spec.event.sourceRef?.sessionId || core.state.selectedSessionId);
             if (Number.isSafeInteger(spec.event.data?.streamSeq)) row.dataset.streamSeq = String(spec.event.data.streamSeq);
             row.dataset.streamSearch=core.state.chatWindow.search.query;
             row.dataset.memorySession=spec.event.sourceRef?.sessionId||'';
