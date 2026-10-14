@@ -81,8 +81,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             const actual = body.closest('.message');
             if (actual) { appendMessageFiles(actual, full.data.text); actual.querySelector('.truncated')?.remove(); }
         }).catch(() => {
-            if (identity === core.state.identityGeneration && owner === core.state.ownerId && generation === core.state.historyGeneration)
-                historyNotice('完整回复暂时无法读取，请稍后重试。', 'read-failure');
+            if (body?.isConnected && identity === core.state.identityGeneration && owner === core.state.ownerId && generation === core.state.historyGeneration)
+                WeftContent.messageCompletionNotice(body.closest('.message') || row, core, event, sessionId, true);
         });
     }
     function paintHistoryMessages(events, targetList = null) {
@@ -100,8 +100,9 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (prior) {
                 prior.dataset.seq = String(event.seq);
                 prior.dataset.liveMessage = String(event.data.live===true);
-                if (event.data.truncated && core.completeMessageEvent) completeMessageBody(prior, event, sessionId);
-                else WeftContent.update(prior.querySelector('.message-text'), event.data.text, { streaming: event.data.streaming === true });
+                if (event.data.truncated && !event.data.fullTextReadFailed && core.completeMessageEvent) completeMessageBody(prior, event, sessionId);
+                else if (!event.data.truncated) WeftContent.update(prior.querySelector('.message-text'), event.data.text, { streaming: event.data.streaming === true });
+                WeftContent.messageCompletionNotice(prior, core, event, sessionId);
                 if (!event.data.live) { ui.messageActions?.bind(prior,event,sessionId); ui.appendReplyMemory(prior,event); globalThis.WeftModelThinking?.(core,prior,event); }
                 continue;
             }
@@ -171,7 +172,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             }
             const taskLabel = core.messageTaskLabel(event);
             if (event.type === 'user.message' && taskLabel) row.append(ui.element('small', 'message-task-label', taskLabel));
-            if (event.data.truncated === true)
+            if (event.data.truncated === true && !event.data.fullTextReadFailed)
                 row.append(ui.element('span', 'truncated', '正在读取完整回复…'));
             const next = [...list.children].find(n => Number(n.dataset.seq) > event.seq);
             if (next)
@@ -179,9 +180,10 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             else
                 list.append(row);
             row.dataset.memorySession=event.sourceRef?.sessionId||sessionId;
-            if(event.data.truncated && core.completeMessageEvent) {
+            if(event.data.truncated && !event.data.fullTextReadFailed && core.completeMessageEvent) {
                 completeMessageBody(row, event, sessionId);
             }
+            WeftContent.messageCompletionNotice(row, core, event, sessionId);
             if(event.data?.phoneSource&&(event.eventId||event.data.phoneEventId))row.weftOpenSideChat=()=>ui.openPhoneHistorySideChat({...event,eventId:event.eventId||event.data.phoneEventId});
             if (!event.data?.live) ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);
             if (incremental && events.length <= 20 && event.type === 'assistant.message') {
