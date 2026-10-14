@@ -1,5 +1,29 @@
 /* Shared messages state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
+    async function completeHistoryEvents(events, previous = core.state.historyEvents, sessionId = core.state.selectedSessionId) {
+        const merged = events.map(event => {
+            const prior = previous.get(event.eventId ?? event.seq);
+            return globalThis.WeftUiCore.mergeHistoryMessage(prior, event);
+        });
+        const results = await Promise.allSettled(merged.map(event =>
+            core.completeMessageEvent(event.sourceRef?.sessionId || event.sessionId || sessionId, event)));
+        return results.map((result, index) => result.status === 'fulfilled' ? result.value :
+            { ...merged[index], data: { ...merged[index].data, fullTextReadFailed: true } });
+    }
+    async function retryHistoryMessage(event, sessionId = core.state.selectedSessionId) {
+        const identity = core.state.identityGeneration, owner = core.state.ownerId, generation = core.state.historyGeneration;
+        const full = await core.completeMessageEvent(event.sourceRef?.sessionId || event.sessionId || sessionId, event);
+        if (identity !== core.state.identityGeneration || owner !== core.state.ownerId || generation !== core.state.historyGeneration) return null;
+        if (core.state.historyEvents.get(event.seq)?.data === event.data) {
+            core.state.historyEvents.set(event.seq, full);
+            if (environment.mobileState) environment.mobileState.sharedEvents = [...core.state.historyEvents.values()].sort((a, b) => a.seq - b.seq);
+        }
+        if (core.state.chatWindow?.events.get(event.eventId)?.data === event.data) {
+            core.state.chatWindow.events.set(event.eventId, full);
+            effects.renderMainChat?.();
+        }
+        return full;
+    }
     function normalizedOriginalAttachment(item) {
         if (!item || typeof item.attachmentId !== 'string' || !core.syncIdPattern.test(item.attachmentId)
             || typeof item.name !== 'string' || item.name !== item.name.trim() || !item.name ||
@@ -47,12 +71,13 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
             core.state.liveMessageSeq = liveSeq ?? core.state.liveMessageSeq;
             for (const [seq, event] of core.state.historyEvents) if (event.data?.live) core.state.historyEvents.delete(seq);
         }
-        for (const event of events) {
+        for (let event of events) {
             if (!Number.isSafeInteger(event?.seq) || core.state.seenSeq.has(event.seq))
                 continue;
             if (typeof event.sessionId === 'string' && event.sessionId !== sessionId)
                 continue;
             core.state.seenSeq.add(event.seq);
+            event = globalThis.WeftUiCore.mergeHistoryMessage(core.state.historyEvents.get(event.seq) || previousLive.get(event.data?.streamSeq), event);
             if (Number.isSafeInteger(event.data?.streamSeq)) core.state.historyEvents.delete(event.data.streamSeq);
             core.state.historyEvents.set(event.seq, event);
             accepted.push(event);
@@ -124,7 +149,10 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                         core.state.hasOlder = page.hasOlder === true;
                         effects.renderOlderControl();
                     }
-                    changed = core.appendHistory(page.events, page.liveEvents, page.liveSeq) || changed;
+                    const events = page.events.some(event => event.data?.truncated)
+                        ? await core.completeHistoryEvents(page.events) : page.events;
+                    if (!stillCurrent()) return core.historyReadResult('cancelled');
+                    changed = core.appendHistory(events, page.liveEvents, page.liveSeq) || changed;
                     core.state.afterSeq = page.nextSeq;
                     if (!page.hasMore) {
                         effects.renderTurnStatus();
@@ -170,6 +198,9 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         effects.renderOlderControl();
         try {
             const page = await core.accessApi(`/sessions/${encodeURIComponent(context.sessionId)}/events?beforeSeq=${core.state.nextBeforeSeq}&limit=100`);
+            if (!core.conversationTaskCurrent(context) || generation !== core.state.historyGeneration) return;
+            if (page.events.some(event => event.data?.truncated))
+                page.events = await core.completeHistoryEvents(page.events, core.state.historyEvents, context.sessionId);
             if (!core.conversationTaskCurrent(context) || generation !== core.state.historyGeneration)
                 return;
             core.state.nextBeforeSeq = page.nextBeforeSeq;
@@ -254,5 +285,5 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         }
         return { isRunning, message };
     }
-    return { normalizedOriginalAttachment, normalizedOriginalFile, originalFileSize, unpreviewedOriginalImages, appendHistory, refreshHistory, loadOlderHistory, turnStatusViewModel };
+    return { normalizedOriginalAttachment, normalizedOriginalFile, originalFileSize, unpreviewedOriginalImages, completeHistoryEvents, retryHistoryMessage, appendHistory, refreshHistory, loadOlderHistory, turnStatusViewModel };
 };
