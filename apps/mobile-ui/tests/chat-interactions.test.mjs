@@ -1747,6 +1747,20 @@ test('M1-0 mobile execution is collapsed by default, groups calls once, and ends
   const counts=h.node('chat-content').children.length;h.run('renderTimeline()');assert.equal(h.node('chat-content').children.length,counts);
 })
 
+test('FIX-36 completed summary moves below reply and remains there after historical redraw',()=>{
+  const h=harness();prepareSyntheticTaskChat(h);
+  h.run(`state.sharedEvents=[
+    {seq:1,type:'turn.started',data:{turn:1}},
+    {seq:2,type:'step.completed',data:{taskId:'turn-1',stepId:'one',toolName:'health_query',state:'completed'}},
+    {seq:3,type:'assistant.message',data:{text:'合成最终回复'}},
+    {seq:4,type:'turn.ended',data:{turn:1,reason:'completed'}}];renderSharedConversation()`);
+  const order=()=>h.node('chat-content').children.filter(node=>node.dataset.seq).map(node=>Number(node.dataset.seq));
+  assert.deepEqual(order(),[3,3.01]);
+  h.run('renderSharedConversation();renderTimeline()');assert.deepEqual(order(),[3,3.01]);
+  const details=h.node('chat-content').querySelector('.execution-block');assert.equal(details.open,false);
+  details.open=true;h.run('renderTimeline()');assert.equal(h.node('chat-content').querySelector('.execution-block').open,true);
+});
+
 test('M0-3 mobile requests the tail first, prepends older events, and preserves the forward cursor',async()=>{
   const h=harness();prepareSyntheticTaskChat(h);h.run('state.sharedEvents=[];state.sharedNextSeq=-1;state.sharedLoading=false');
   const first=h.run('loadSharedHistory()');let i=h.bridge.findLastIndex(r=>r.method==='shared.sessions.events');

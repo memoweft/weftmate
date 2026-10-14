@@ -9,6 +9,7 @@ test('FIX-36 twelve tool steps become one row below the completed reply',()=>{
   assert.equal(rows.at(-1).type,'native.progress');assert.equal(rows.at(-2).type,'assistant.message');
   assert.match(progress[0].data.summary,/查了健康数据.*查了日历/);assert.doesNotMatch(progress[0].data.summary,/准备可用工具|调用扩展服务/);
   assert.ok(progress[0].data.steps.every(step=>!step.summary.includes('调用扩展服务')));
+  assert.ok(core.projectTimeline(progressEvents()).groups.flatMap(group=>group.steps).every(step=>!step.summary.includes('调用扩展服务')));
 });
 test('FIX-36 running summary shows only the changing current step',()=>{
   const events=progressEvents('running');let row=core.nativeTimelineRows(events).find(row=>row.type==='native.progress');
@@ -24,9 +25,16 @@ test('FIX-36 failed and pending approval steps remain visible and approval card 
   assert.equal(rows.find(row=>row.type==='native.progress').data.steps.filter(step=>step.attention).length,1);
 });
 test('FIX-36 same turn number in two source sessions never combines replies',()=>{
-  const rows=core.nativeTimelineRows([...progressEvents('completed','a'),...progressEvents('completed','b')]);
+  const events=[...progressEvents('completed','a'),...progressEvents('completed','b')].map(({sessionId,...event})=>event);
+  const rows=core.nativeTimelineRows(events);
   assert.equal(rows.filter(row=>row.type==='native.progress').length,2);
   assert.equal(rows.at(-1).sourceRef.sessionId,'b');
+});
+test('FIX-36 a resolved approval snapshot clears pending attention in a logical source session',()=>{
+  const approval={approvalId:'synthetic-approval',callId:'step-11',sessionId:'synthetic-session',taskId:'command-one',turn:1,status:'resolved',outcome:'allowed-once'};
+  const progress=core.nativeTimelineRows(progressEvents('approval'),[approval]).find(row=>row.type==='native.progress');
+  assert.equal(progress.data.steps.at(-1).approvalStatus,'resolved');assert.equal(progress.data.steps.at(-1).attention,false);
+  assert.equal(progress.data.steps.at(-1).approvalText,'已批准');
 });
 test('FIX-36 final summary never crosses the next turn or moves running work',()=>{
   const first=progressEvents(),second=progressEvents('running','synthetic-session',2).map((event,index)=>({...event,seq:first.length+index+1}));
