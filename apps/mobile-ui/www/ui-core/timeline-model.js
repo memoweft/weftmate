@@ -94,7 +94,7 @@
         }
         if (/(subagent|spawn_agent|delegate|task)/i.test(name))
             return `交给子任务${args.description || args.prompt || args.task || args.message ? `：${short(args.description || args.prompt || args.task || args.message)}` : ''}`;
-        return '调用扩展服务';
+        return '使用扩展工具';
     }
     function toolActivity(name) {
         name = toolName(name);
@@ -224,6 +224,55 @@
     function approvalProgress(row) {
         return ({ 'allowed-once': '已批准', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[row?.outcome || row?.decisionOutcome] || (row?.status === 'pending' ? '等待批准' : '');
     }
+    // Source sequence numbers stay intact; only the terminal presentation moves.
+    function progressPosition(events, block) {
+        if (!turnOutcome(events, block.taskId).terminal) return block.seq;
+        const session = block.steps[0]?.sessionId;
+        const end = events.filter(event => ['turn.ended','task.ended'].includes(event.type) && turnOutcome([event],block.taskId).terminal).at(-1);
+        const next = events.find(event => event.seq > block.seq && event.type === 'turn.started' &&
+            (!session || (event.sessionId || event.sourceRef?.sessionId) === session));
+        const reply = events.filter(event => event.type === 'assistant.message' && event.data?.streaming !== true && event.seq > block.seq &&
+            (!session || (event.sessionId || event.sourceRef?.sessionId) === session) &&
+            (!next || event.seq < next.seq) && (!end || event.seq <= end.seq) &&
+            (!event.data?.taskId || event.data.taskId === block.taskId)).at(-1);
+        return reply ? reply.seq + 0.01 : block.seq;
+    }
+    // Native uses the web projection and wording through its embedded UI engine.
+    // Kotlin never maintains a second tool-name mapping.
+    function nativeTimelineRows(events, approvals = [], questions = []) {
+        const normalized = events.map((event, index) => ({...event, seq:index, sourceSeq:event.seq,
+            data:{...event.data, ...(event.type.startsWith('tool.') ? {
+                stepId:event.data?.stepId || event.data?.callId || `tool-${index}`,
+                taskId:event.data?.taskId || `turn-${event.data?.turn || 0}`,
+                state:event.data?.state || (event.type.endsWith('started')?'running':event.type.endsWith('failed')?'failed':'completed')
+            }: {})}, type:event.type.replace(/^tool\./,'step.')}));
+        for (const event of normalized) {
+            const session = event.sessionId || event.sourceRef?.sessionId || '';
+            for (const data of [event.data,event.data?.completedStep].filter(Boolean))
+                if (session && data.taskId?.startsWith('turn-')) data.taskId = `${session}:${data.taskId}`;
+        }
+        const projected = projectTimeline(normalized, approvals), tasks = new Map();
+        for (const group of projected.groups) {
+            const key = group.taskId || `progress-${group.seq}`;
+            if (!tasks.has(key)) tasks.set(key,{...group,steps:[]});
+            tasks.get(key).steps.push(...group.steps);
+        }
+        const rows = normalized.filter(event => ['user.message','assistant.message','assistant.delta','artifact.created','approval.requested','question.requested'].includes(event.type))
+            .map(event => ({...event, data:{...event.data,completedStep:undefined}, presentationSeq:event.seq}));
+        for (const block of tasks.values()) {
+            const outcome = turnOutcome(normalized,block.taskId), view = progressText(block.steps,outcome);
+            const steps = block.steps.map(step => ({...stepPresentation(step,outcome),summary:toolSummary(step.toolName,step.arguments),
+                attention:executionState(step)==='failed' || step.approvalStatus==='pending'}));
+            rows.push({eventId:`progress:${block.taskId || block.seq}`,type:'native.progress',at:normalized[block.seq]?.at,
+                sourceRef:normalized[block.seq]?.sourceRef,presentationSeq:progressPosition(normalized,block),
+                data:{taskId:block.taskId,summary:view.text || '回复已结束',running:view.running,failed:!!view.failed,steps}});
+        }
+        for (const [decisions,family,id] of [[approvals,'approval','approvalId'],[questions,'question','questionRpcId']])
+            for (const decision of decisions) if (!rows.some(row=>row.data?.[id]===decision[id]))
+                rows.push({eventId:`${family}:${decision[id]}`,type:`${family}.requested`,at:decision.createdAt,data:decision,presentationSeq:normalized.length});
+        return rows.sort((a,b)=>a.presentationSeq-b.presentationSeq);
+    }
+    Object.assign(globalThis.WeftUiCore, {progressPosition,nativeTimelineRows});
     function executionDetailText(text) {
         try {
             const data = JSON.parse(text), args = toolArguments(data);

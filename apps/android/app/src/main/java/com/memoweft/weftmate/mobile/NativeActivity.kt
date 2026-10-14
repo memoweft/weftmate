@@ -31,6 +31,15 @@ class NativeActivity : HybridActivity() {
     internal var overlayBack: (() -> Unit)? = null
     private var webRoute="login"
     private var webEmbedded=false
+    internal suspend fun timelinePresentation(events: List<JSONObject>, approvals: List<JSONObject>, questions: List<JSONObject>): List<JSONObject> =
+        suspendCancellableCoroutine { continuation ->
+            val script = "JSON.stringify(WeftUiCore.nativeTimelineRows(${org.json.JSONArray(events)},${org.json.JSONArray(approvals)},${org.json.JSONArray(questions)}))"
+            embeddedWeb.evaluateJavascript(script) { value ->
+                if (continuation.isActive) continuation.resumeWith(runCatching {
+                    org.json.JSONArray(org.json.JSONArray("[$value]").getString(0)).objects()
+                })
+            }
+        }
     internal suspend fun phonePresentation(action: String, params: JSONObject = JSONObject()): JSONObject {
         val token = java.util.UUID.randomUUID().toString()
         val key = JSONObject.quote(token)
