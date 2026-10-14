@@ -8,6 +8,7 @@ final class CloudLoginModel: ObservableObject {
     @Published private(set) var emailResendAt = Date.distantPast
     @Published var deviceName = ""
     @Published private(set) var subject: String?
+    @Published private(set) var identityRestored=false
     @Published private(set) var email = ""
     @Published private(set) var devices: [CloudDirectoryDevice] = []
     @Published private(set) var multiHost=false
@@ -84,11 +85,20 @@ final class CloudLoginModel: ObservableObject {
         let account = CloudAccountClient(configuration: configuration, key: deviceKey, store: store)
         key = deviceKey; client = account; return account
     }
+    /// Only reads local credentials; host connectivity cannot decide the notification account.
+    func restoreLocalIdentity() async {
+        guard !identityRestored else { return }
+        do {
+            let saved=try await accountClient().savedSubject()
+            guard !identityRestored else { return }
+            subject=saved;identityRestored=true
+        } catch { /* An unavailable local credential leaves the account unresolved. */ }
+    }
     func restore() async {
         do {
             let account = try accountClient()
             guard try await account.savedSubject() != nil else { return }
-            subject = try await account.savedSubject()
+            subject = try await account.savedSubject();identityRestored=true
             #if os(iOS)
             if let app { app.phoneChat.activate(app:app) }
             #endif
@@ -155,7 +165,7 @@ final class CloudLoginModel: ObservableObject {
         try await account.finishAppLogin(resumeURL: resume)
         guard id == operation else { return }
         email = form.email; form.reset(to: .login)
-        subject = try await account.savedSubject()
+        subject = try await account.savedSubject();identityRestored=true
         #if os(iOS)
         if let app { app.phoneChat.activate(app:app) }
         #endif
@@ -445,7 +455,7 @@ final class CloudLoginModel: ObservableObject {
             let config = CloudConfiguration(server: try ServerConfiguration(input: cloud, allowLoopbackHTTP: allowLoopback))
             try store.delete(key: CloudAccountClient.credentialKey(configuration: config))
         }
-        subject = nil; waiting = false;multiHost=false;computerConversations=[];computerClients=[:];computerLists=[:];requestedComputerID=nil
+        subject = nil; identityRestored=true; waiting = false;multiHost=false;computerConversations=[];computerClients=[:];computerLists=[:];requestedComputerID=nil
         client = nil; key = nil; cloudSignedIn = false; authenticated = false; devices = []; hosts = []; email = ""; emailChangeChallenge = nil; selectedHost = nil; form.reset(to: .login)
         hostID = nil; newDeviceNotice = nil; directoryLoaded = false; seenDeviceIDs = []
         try store.delete(key: "trusted-host")

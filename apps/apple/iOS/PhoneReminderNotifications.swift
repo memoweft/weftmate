@@ -13,10 +13,13 @@ import WeftMateCore
     }
     func otherPendingCount() async -> Int { await center.pendingNotificationRequests().filter { !$0.identifier.hasPrefix(ReminderNotification.prefix) }.count }
     func remove(_ identifiers: [String]) { center.removePendingNotificationRequests(withIdentifiers:identifiers) }
-    func removeDeliveredExcept(_ identifiers: Set<String>) async {
-        let old=await center.deliveredNotifications().map(\.request.identifier).filter { $0.hasPrefix(ReminderNotification.prefix) && !identifiers.contains($0) }
-        center.removeDeliveredNotifications(withIdentifiers:old)
+    func deliveredNotifications() async -> [ReminderNotification] {
+        await center.deliveredNotifications().compactMap { item in
+            guard item.request.identifier.hasPrefix(ReminderNotification.prefix),let data=item.request.content.userInfo["reminder"] as? Data else { return nil }
+            return try? JSONDecoder().decode(ReminderNotification.self,from:data)
+        }
     }
+    func removeDelivered(_ identifiers: [String]) { center.removeDeliveredNotifications(withIdentifiers:identifiers) }
     func add(_ notification: ReminderNotification) async throws {
         let content=UNMutableNotificationContent();content.title="提醒";content.body=notification.text;content.sound = .default
         content.userInfo=["reminder":try JSONEncoder().encode(notification)]
@@ -65,10 +68,12 @@ private final class ReminderNotificationDelegate: NSObject, UNUserNotificationCe
     }
     func reconcile() async {
         guard let app else { return }
+        if app.phoneReminderAccountIdentity == nil, !app.restoring { await app.cloudLogin.restoreLocalIdentity() }
+        guard let identity=app.phoneReminderAccountIdentity else { return }
         app.phoneChat.activate(app:app)
-        let identity=app.phoneAccountIdentity
+        guard app.phoneChat.reminderSnapshotAccount == identity else { return }
         let settings=await adapter.center.notificationSettings()
-        guard identity == app.phoneAccountIdentity else { await reconcile();return }
+        guard identity == app.phoneReminderAccountIdentity else { await reconcile();return }
         denied=settings.authorizationStatus == .denied
         let authorized=[UNAuthorizationStatus.authorized,.provisional,.ephemeral].contains(settings.authorizationStatus)
         notificationsEnabled=authorized
@@ -76,7 +81,12 @@ private final class ReminderNotificationDelegate: NSObject, UNUserNotificationCe
         if active,settings.authorizationStatus == .notDetermined,rows.contains(where:{!$0.completed && $0.fireAt > Date()}),!promptShown {
             promptShown=true;needsPermission=true
         }
-        do { try await scheduler.reconcile(account:identity,reminders:rows,authorized:authorized);deliveryNotice=nil }
+        let cancellations=app.phoneChat.reminderCancellations
+        do {
+            try await scheduler.reconcile(account:identity,reminders:rows,authorized:authorized,cancellations:cancellations+app.phoneChat.pausedReminderCancellations)
+            if identity == app.phoneReminderAccountIdentity { try app.phoneChat.acknowledgeReminderCancellations(Set(cancellations.map(\.id))) }
+            deliveryNotice=nil
+        }
         catch { deliveryNotice="提醒已保存，通知暂时没排好；打开 App 后会重试。" }
         scheduleRefresh()
         if let route=awaitingRoute { awaitingRoute=nil;await open(route) }
@@ -89,12 +99,14 @@ private final class ReminderNotificationDelegate: NSObject, UNUserNotificationCe
     }
     func readComputer() async {
         guard let app,let session=app.session,session.verification == .verified else { return }
-        let epoch=app.accountEpoch,identity=app.phoneAccountIdentity,host=session.hostId
+        guard let identity=app.phoneReminderAccountIdentity else { return }
+        app.phoneChat.activate(app:app)
+        guard app.phoneChat.reminderSnapshotAccount == identity else { return }
+        let epoch=app.accountEpoch,host=session.hostId,read=app.phoneChat.beginReminderRead(hostID:session.hostId)
         do {
             let reply=try await app.assistantClient.settingsSchedules()
             guard epoch == app.accountEpoch,identity == app.phoneAccountIdentity,host == app.session?.hostId,!Task.isCancelled else { return }
-            try app.phoneChat.receiveReminders(reply.items,hostID:host)
-            await reconcile()
+            if try app.phoneChat.receiveReminders(reply.items,hostID:host,read:read) { await reconcile() }
         } catch { /* Keep the last authenticated snapshot while offline. */ }
     }
     func foregroundLoop() async {
@@ -105,7 +117,7 @@ private final class ReminderNotificationDelegate: NSObject, UNUserNotificationCe
     }
     func open(_ route: ReminderRoute) async {
         guard let app else { awaitingRoute=route;return }
-        if app.restoring { awaitingRoute=route;return }
+        if app.restoring || app.phoneReminderAccountIdentity == nil { awaitingRoute=route;return }
         guard route.account == ReminderRoute.accountKey(app.phoneAccountIdentity) else { return }
         app.phoneChat.activate(app:app)
         opensConversation=false
@@ -118,7 +130,7 @@ private final class ReminderNotificationDelegate: NSObject, UNUserNotificationCe
     }
 
     func scheduleRefresh() {
-        guard let app else { return }
+        guard let app,let identity=app.phoneReminderAccountIdentity,app.phoneChat.reminderSnapshotAccount == identity else { return }
         let dates=app.phoneChat.allReminders.filter { !$0.completed && $0.fireAt > Date() }.map(\.fireAt).sorted()
         guard let first=dates.first else { BGTaskScheduler.shared.cancel(taskRequestWithIdentifier:Self.refreshID);return }
         let request=BGAppRefreshTaskRequest(identifier:Self.refreshID);request.earliestBeginDate=first.addingTimeInterval(1)
@@ -137,12 +149,13 @@ struct PhoneReminderLifecycle: ViewModifier {
     @Environment(\.scenePhase) private var phase
     func body(content: Content) -> some View {
         content
-            .task(id:app.phoneAccountIdentity) { notifications.attach(app);await notifications.reconcile() }
+            .task(id:app.phoneReminderAccountIdentity) { notifications.attach(app);await notifications.reconcile() }
             .task(id:"reminders-\(phase)-\(app.accountEpoch)") {
                 notifications.setActive(phase == .active)
                 if phase == .active { await notifications.foregroundLoop() }
             }
             .onChange(of:phone.allReminders) { _,_ in Task { await notifications.reconcile() } }
+            .onChange(of:phone.reminderCancellations) { _,_ in Task { await notifications.reconcile() } }
             .alert("允许到点提醒你吗？",isPresented:$notifications.needsPermission) {
                 Button("允许通知") { Task { await notifications.requestPermission() } }
                 Button("以后再说",role:.cancel) {}

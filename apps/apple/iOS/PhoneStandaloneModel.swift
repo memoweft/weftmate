@@ -94,12 +94,13 @@ import WeftMateCore
     }
     func clearLocalData() {
         cancelExtraction();stop()
-        do { guard let store else { return };try store.clear();self.store=nil;app?.offline.erase();state = .init();library = .init();models=[];modelID="";draft="";self.store=store;notice=nil;handoffCount=0;handoffBytes=0 }
+        do { guard let store else { return };try store.clear();self.store=nil;app?.offline.erase();state = .init();library = .init();models=[];modelID="";draft="";self.store=store;state.cancelReminder(.account);try persist();notice=nil;handoffCount=0;handoffBytes=0 }
         catch { notice="手机上的内容没能清除，请重试。" }
     }
     /// Called only after a successful authenticated account directory read, never on a network failure.
     func computerDirectoryChanged(hostIDs: Set<String>) {
-        state.computerReminders=state.computerReminders?.filter { hostIDs.contains($0.key) };try? persist()
+        for host in Set((state.computerReminders ?? [:]).keys).union((state.reminderReads ?? [:]).keys) where !hostIDs.contains(host) { state.removeComputerReminders(hostID:host) }
+        try? persist()
         guard let host=memory.computerHost,!hostIDs.contains(host) else { return }
         cancelExtraction();state.memory?.computerRemoved();handoffApproved=false;handoffCount=0;handoffBytes=0
         try? persist()
@@ -358,18 +359,28 @@ import WeftMateCore
     }
     func finishReminder(_ id: String, delete: Bool) throws {
         var next=state
+        next.cancelReminder(.reminder(id:id,hostID:nil))
         if delete { next.reminders?.removeAll { $0.id == id } }
         else if let index=next.reminders?.firstIndex(where: { $0.id == id }) { next.reminders?[index].completed=true }
         try save(next)
     }
-    func receiveReminders(_ rows: [ManagedSchedule], hostID: String) throws {
-        var next=state;if next.computerReminders == nil { next.computerReminders=[:] }
-        let reminders=LocalReminder.schedules(rows,hostID:hostID)
-        guard next.computerReminders?[hostID] != reminders else { return }
-        next.computerReminders?[hostID]=reminders;try save(next)
+    var reminderSnapshotAccount: String? { store == nil ? nil : account }
+    var reminderCancellations: [ReminderCancellation] { state.reminderCancellations ?? [] }
+    var pausedReminderCancellations: [ReminderCancellation] {
+        (state.pausedReminderIDs ?? [:]).flatMap { host,ids in ids.map { ReminderCancellation(.reminder(id:$0,hostID:host)) } }
     }
-    func withdrawComputerReminder(_ row: ManagedSchedule, hostID: String) throws {
-        var next=state;next.computerReminders?[hostID]?.removeAll { $0.id == row.identity };try save(next)
+    func acknowledgeReminderCancellations(_ ids: Set<UUID>) throws {
+        guard !ids.isEmpty else { return };var next=state;next.acknowledgeReminderCancellations(ids);try save(next)
+    }
+    func beginReminderRead(hostID: String) -> ReminderReadToken { state.beginReminderRead(hostID:hostID) }
+    @discardableResult func receiveReminders(_ rows: [ManagedSchedule], hostID: String, read: ReminderReadToken) throws -> Bool {
+        var next=state
+        guard next.receiveReminders(rows,hostID:hostID,read:read) else { return false }
+        if next.computerReminders != state.computerReminders || next.reminderCancellations != state.reminderCancellations || next.pausedReminderIDs != state.pausedReminderIDs { try save(next) }
+        return true
+    }
+    func withdrawComputerReminder(_ row: ManagedSchedule, hostID: String, action: ScheduleAction = .delete) throws {
+        var next=state;next.withdrawComputerReminder(row,hostID:hostID,action:action);try save(next)
     }
     @discardableResult func sendReminderCommand(_ text: String) -> Bool {
         guard let command=PhoneReminderCommand.parse(text) else { return false }

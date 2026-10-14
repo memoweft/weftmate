@@ -31,12 +31,17 @@ import WeftMateCore
                 let reply = try await app.assistantClient.nativeUpdateStatus()
                 if self.current { self.hostUpdates = reply }
             case "schedules":
+                #if os(iOS)
+                guard let host=app.session?.hostId else { return }
+                app.phoneChat.activate(app:app)
+                let identity=app.phoneAccountIdentity,read=app.phoneChat.beginReminderRead(hostID:host)
+                #endif
                 let reply = try await app.assistantClient.settingsSchedules()
                 if self.current {
-                    self.schedules = reply.items
                     #if os(iOS)
-                    app.phoneChat.activate(app:app)
-                    if let host=app.session?.hostId { try app.phoneChat.receiveReminders(reply.items,hostID:host) }
+                    if host == app.session?.hostId,identity == app.phoneAccountIdentity,try app.phoneChat.receiveReminders(reply.items,hostID:host,read:read) { self.schedules=reply.items }
+                    #else
+                    self.schedules=reply.items
                     #endif
                 }
             case "backups":
@@ -78,7 +83,7 @@ import WeftMateCore
         let succeeded = await perform {
             try await self.app?.assistantClient.manageSchedule(sessionID: item.sessionId, id: item.id, action: action)
             #if os(iOS)
-            if self.current,action != .resume,let app=self.app,let host=app.session?.hostId { try app.phoneChat.withdrawComputerReminder(item,hostID:host) }
+            if self.current,let app=self.app,let host=app.session?.hostId { try app.phoneChat.withdrawComputerReminder(item,hostID:host,action:action) }
             #endif
         }
         if succeeded, current { await refresh("schedules") }

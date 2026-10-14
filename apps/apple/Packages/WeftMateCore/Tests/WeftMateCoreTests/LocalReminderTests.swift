@@ -5,6 +5,7 @@ import Testing
 @MainActor private final class RecordingReminderCenter: ReminderNotificationCenter {
     var requests: [String:ReminderNotification]=[:]
     var additions: [ReminderNotification]=[]
+    var issued: [String:ReminderNotification]=[:]
     var removed: [String]=[]
     var delivered=Set<String>()
     var other=0
@@ -14,11 +15,12 @@ import Testing
     func pending() async -> [ReminderNotification] { Array(requests.values) }
     func otherPendingCount() async -> Int { other }
     func remove(_ identifiers: [String]) { removed += identifiers;for id in identifiers { requests[id]=nil } }
-    func removeDeliveredExcept(_ identifiers: Set<String>) async { delivered.formIntersection(identifiers) }
+    func deliveredNotifications() async -> [ReminderNotification] { delivered.compactMap { issued[$0] } }
+    func removeDelivered(_ identifiers: [String]) { delivered.subtract(identifiers) }
     func add(_ notification: ReminderNotification) async throws {
         if suspendNext { suspendNext=false;await withCheckedContinuation { suspended=$0 } }
         if failNext { failNext=false;throw NSError(domain:"synthetic-add-failure",code:1) }
-        additions.append(notification);requests[notification.identifier]=notification
+        additions.append(notification);requests[notification.identifier]=notification;issued[notification.identifier]=notification
     }
 }
 struct LocalReminderTests {
@@ -108,6 +110,110 @@ struct LocalReminderTests {
         """
         let rows=LocalReminder.schedules(try JSONDecoder().decode(ScheduleList.self,from:Data(json.utf8)).items,hostID:"host")
         #expect(rows.count == 2);#expect(rows[0].id == "goal-chat/goal-time");#expect(rows[0].sessionID == "goal-chat")
+    }
+    @Test @MainActor func unresolvedOfflineStartupPreservesPendingAndDeliveredAccountReminders() async throws {
+        let center=RecordingReminderCenter(),scheduler=LocalReminderScheduler(center:center,now:{now})
+        let identity="https://cloud.example.com|saved-account"
+        let rows=[LocalReminder(id:"future",text:"合成将来提醒",fireAt:now.addingTimeInterval(120)),LocalReminder(id:"delivered",text:"合成已送达提醒",fireAt:now.addingTimeInterval(60))]
+        try await scheduler.reconcile(account:identity,reminders:rows)
+        let delivered=ReminderNotification(account:identity,reminder:rows[1]).identifier
+        center.delivered=[delivered];center.requests[delivered]=nil
+        let before=center.requests
+        // Host restore has failed; the local cloud subject has not yet been read.
+        if let unresolved=ReminderAccountIdentity.resolve(subject:nil,issuer:"https://cloud.example.com",restored:false) {
+            try await scheduler.reconcile(account:unresolved,reminders:[])
+        }
+        #expect(center.requests == before)
+        #expect(center.delivered == [delivered])
+        // Local credential restoration and the encrypted snapshot work without any host request.
+        let restored=try #require(ReminderAccountIdentity.resolve(subject:"saved-account",issuer:"https://cloud.example.com",restored:true))
+        try await scheduler.reconcile(account:restored,reminders:rows)
+        #expect(center.requests.values.contains { $0.route.reminderID == "future" })
+        #expect(center.delivered == [delivered])
+    }
+    @Test(arguments:[ScheduleAction.delete, .pause]) func staleScheduleReadCannotUndoLocalWithdrawal(action: ScheduleAction) throws {
+        var state=PhoneChatState()
+        let rows=try reviewScheduleRows(state:"scheduled")
+        let initial=state.beginReminderRead(hostID:"host")
+        let seeded=state.receiveReminders(rows,hostID:"host",read:initial);#expect(seeded)
+        let stale=state.beginReminderRead(hostID:"host")
+        state.withdrawComputerReminder(rows[0],hostID:"host",action:action)
+        let acceptedBeforeRefresh=state.receiveReminders(rows,hostID:"host",read:stale);#expect(!acceptedBeforeRefresh)
+        #expect(state.computerReminders?["host"]?.isEmpty == true)
+        let fresh=state.beginReminderRead(hostID:"host")
+        let refreshed=state.receiveReminders([],hostID:"host",read:fresh);#expect(refreshed)
+        let acceptedAfterRefresh=state.receiveReminders(rows,hostID:"host",read:stale);#expect(!acceptedAfterRefresh)
+        #expect(state.computerReminders?["host"]?.isEmpty == true)
+    }
+    @Test @MainActor func normalServerCompletionKeepsUnreadDeliveredNotificationAcrossRestart() async throws {
+        let center=RecordingReminderCenter(),scheduler=LocalReminderScheduler(center:center,now:{now})
+        let rows=try reviewScheduleRows(state:"scheduled")
+        var state=PhoneChatState();let initial=state.beginReminderRead(hostID:"host")
+        _=state.receiveReminders(rows,hostID:"host",read:initial)
+        try await scheduler.reconcile(account:"account",reminders:state.computerReminders?["host"] ?? [])
+        let delivered=Set(center.requests.keys);center.delivered=delivered;center.requests=[:]
+        let completed=try reviewScheduleRows(state:"completed"),read=state.beginReminderRead(hostID:"host")
+        let accepted=state.receiveReminders(completed,hostID:"host",read:read);#expect(accepted)
+        #expect((state.reminderCancellations ?? []).isEmpty)
+        try await scheduler.reconcile(account:"account",reminders:state.computerReminders?["host"] ?? [],cancellations:state.reminderCancellations ?? [])
+        #expect(center.requests.isEmpty)
+        #expect(center.delivered == delivered)
+        let restored=try JSONDecoder().decode(PhoneChatState.self,from:JSONEncoder().encode(state))
+        let restarted=LocalReminderScheduler(center:center,now:{now})
+        try await restarted.reconcile(account:"account",reminders:restored.computerReminders?["host"] ?? [],cancellations:restored.reminderCancellations ?? [])
+        #expect(center.delivered == delivered)
+    }
+    @Test(arguments:[ScheduleAction.delete, .pause]) @MainActor func explicitWithdrawalSurvivesRestartAndRemovesDelivered(action: ScheduleAction) async throws {
+        let center=RecordingReminderCenter(),scheduler=LocalReminderScheduler(center:center,now:{now})
+        var state=PhoneChatState();let rows=try reviewScheduleRows(state:"scheduled")
+        let read=state.beginReminderRead(hostID:"host")
+        _=state.receiveReminders(rows,hostID:"host",read:read)
+        try await scheduler.reconcile(account:"account",reminders:state.computerReminders?["host"] ?? [])
+        center.delivered=Set(center.requests.keys);center.requests=[:]
+        state.withdrawComputerReminder(rows[0],hostID:"host",action:action)
+        let directory=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at:directory) }
+        let store=try PhoneChatStore(account:"account",directory:directory,credentials:MemoryStore())
+        try store.save(state);let restored=try store.load()
+        #expect(restored.reminderCancellations == state.reminderCancellations)
+        let restarted=LocalReminderScheduler(center:center,now:{now})
+        try await restarted.reconcile(account:"account",reminders:restored.computerReminders?["host"] ?? [],cancellations:restored.reminderCancellations ?? [])
+        #expect(center.delivered.isEmpty);#expect(center.requests.isEmpty)
+    }
+    @Test func laterReadAndResumeInvalidateEarlierResponses() throws {
+        var state=PhoneChatState();let rows=try reviewScheduleRows(state:"scheduled")
+        let old=state.beginReminderRead(hostID:"host"),new=state.beginReminderRead(hostID:"host")
+        let applied=state.receiveReminders(rows,hostID:"host",read:new);#expect(applied)
+        let rejected=state.receiveReminders([],hostID:"host",read:old);#expect(!rejected)
+        #expect(state.computerReminders?["host"]?.count == 1)
+        let beforeResume=state.beginReminderRead(hostID:"host")
+        state.withdrawComputerReminder(rows[0],hostID:"host",action:.resume)
+        let stale=state.receiveReminders([],hostID:"host",read:beforeResume);#expect(!stale)
+        #expect(state.computerReminders?["host"]?.count == 1)
+    }
+    @Test func acknowledgingOldCancellationDoesNotDiscardNewUserAction() {
+        var state=PhoneChatState()
+        state.cancelReminder(.reminder(id:"same",hostID:"host"))
+        let old=Set(state.reminderCancellations!.map(\.id))
+        state.cancelReminder(.reminder(id:"same",hostID:"host"))
+        state.acknowledgeReminderCancellations(old)
+        #expect(state.reminderCancellations?.count == 1)
+        #expect(!old.contains(state.reminderCancellations![0].id))
+        #expect(ReminderAccountIdentity.resolve(subject:nil,issuer:"https://cloud.example.com",restored:true) == "device-local")
+    }
+    @Test func repeatedPausedSnapshotDoesNotWithdrawLaterDeliveriesAgain() throws {
+        var state=PhoneChatState();let rows=try reviewScheduleRows(state:"paused")
+        let first=state.beginReminderRead(hostID:"host")
+        _=state.receiveReminders(rows,hostID:"host",read:first)
+        #expect(state.reminderCancellations?.count == 1)
+        state.acknowledgeReminderCancellations(Set(state.reminderCancellations!.map(\.id)))
+        let next=state.beginReminderRead(hostID:"host")
+        _=state.receiveReminders(rows,hostID:"host",read:next)
+        #expect(state.reminderCancellations?.isEmpty == true)
+    }
+    private func reviewScheduleRows(state: String) throws -> [ManagedSchedule] {
+        let row:[String:Any]=["id":"review-reminder","sessionId":"review-chat","text":"合成提醒","kind":"reminder","state":state,"timeZone":"UTC","nextRunAt":state == "scheduled" ? ISO8601DateFormatter().string(from:now.addingTimeInterval(120)) as Any : NSNull()]
+        return try JSONDecoder().decode(ScheduleList.self,from:JSONSerialization.data(withJSONObject:["items":[row]])).items
     }
     @Test func naturalLanguageRelativeTomorrowAndInvalidTimes() throws {
         var calendar=Calendar(identifier:.gregorian);calendar.timeZone=TimeZone(identifier:"Asia/Shanghai")!
