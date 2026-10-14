@@ -99,24 +99,25 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
     function setPreset(p){preset=p;choose.textContent=p.name;name.value=p.name;baseUrl.value=p.baseUrl;apiKey.value='';manual.value='';help.textContent=p.help;link.href=p.url;link.hidden=!p.url;reset();}
     function reset(){catalog=null;checking++;diagnostic.textContent='';manual.parentNode.hidden=true;next.disabled=!baseUrl.value.trim();}
     async function query(){const generation=++checking,snapshot=fingerprint();diagnostic.textContent='正在读取模型…';try{
-      const result=await core.checkModelService(draft());if(!current(token)||generation!==checking||snapshot!==fingerprint())return;
+      const result=await core.checkModelService(draft());if(!current(token)||generation!==checking||snapshot!==fingerprint())return false;
       catalog=result.catalog||result;diagnostic.textContent=catalog.message;manual.parentNode.hidden=catalog.status==='available'&&catalog.models?.length>0;
       next.disabled=catalog.status==='authentication_failed';
-    }catch{if(current(token)&&generation===checking){diagnostic.textContent='暂时连不上这个服务，可以检查地址后重试，或填写模型名称。';manual.parentNode.hidden=false;}}
+      return true;
+    }catch(error){if(current(token)&&generation===checking&&snapshot===fingerprint()){diagnostic.textContent=core.modelServiceFailureMessage(error);}return false;}
     }
     const check=button('重新查询模型',()=>void query());content.append(check);
     for(const input of [baseUrl,apiKey]){input.addEventListener('input',reset);input.addEventListener('blur',()=>{if(baseUrl.value&&apiKey.value)void query();});}
     proceedModel=async()=>{
       if(!draft().baseUrl){say('请填写模型服务地址。');return;}
       next.disabled=back.disabled=skip.disabled=true;say('正在保存模型服务…');
-      try{if(!catalog)await query();if(!current(token))return;
+      try{if(!catalog&&!await query()){if(current(token))say(diagnostic.textContent);return;}if(!current(token))return;
         if(catalog?.status==='authentication_failed'){say(catalog.message);return;}
         if((!catalog?.models?.length)&&!manual.value.trim()){manual.parentNode.hidden=false;say('这个服务没有提供可用清单，请填写一个模型名称。');return;}
         const result=await core.writeModelService(null,{...draft(),...(manual.value.trim()?{modelId:manual.value.trim()}:{})});
-        if(!current(token))return;apiKey.value='';const selected=result.service?.models?.find(m=>m.modelId===result.service.selectedModelId)||result.service?.models?.[0];
+        if(!current(token))return;apiKey.value='';const selected=result.service?.models?.find(m=>m.recommended&&m.enabled!==false)||result.service?.models?.find(m=>m.enabled!==false);
         if(selected)await core.selectServiceModel({serviceId:result.service.serviceId,modelId:selected.modelId});
         if(current(token))await move(3);
-      }catch{if(current(token))say('模型服务没保存成功，请检查地址和密钥后重试。');}
+      }catch(error){if(current(token))say(core.modelServiceFailureMessage(error));}
       finally{if(current(token))next.disabled=back.disabled=skip.disabled=false;}
     };
     setPreset(preset);
