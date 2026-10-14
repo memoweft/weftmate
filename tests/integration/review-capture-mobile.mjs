@@ -128,7 +128,19 @@ try {
         if (body.method === 'settings.appearance') return route.fulfill({ json: { result: { value: theme } } });
         await route.continue();
       });
-      await shot('rendering',async()=>{const rendered=renderingFixture=await startRenderingCandidate();{await navigate(questionPage, rendered.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.evaluate(()=>listSharedSessions());await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();await questionPage.getByRole('button',{name:'渲染样张',exact:true}).click();await questionPage.getByRole('heading',{name:'公式与图表',exact:true}).scrollIntoViewIfNeeded();await questionPage.locator('.render-diagram img').waitFor();}},questionPage);
+      await shot('rendering',async()=>{
+        let phase='fixture-create';
+        try {
+          const rendered=renderingFixture=await startRenderingCandidate();
+          phase='navigate';await navigate(questionPage,rendered.mobileUrl);
+          phase='login-ready';await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);
+          phase='session-list';await questionPage.evaluate(()=>listSharedSessions());
+          phase='drawer-open';await questionPage.getByRole('button',{name:'打开导航',exact:true}).click();
+          phase='session-select';await questionPage.getByRole('button',{name:'渲染样张',exact:true}).click();
+          phase='heading-scroll';await questionPage.getByRole('heading',{name:'公式与图表',exact:true}).scrollIntoViewIfNeeded();
+          phase='diagram-ready';await questionPage.locator('.render-diagram img').waitFor();
+        } catch(error) {error.scenePhase=phase;throw error;}
+      },questionPage);
       await shot('library', async () => { await navigate(questionPage, candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^成果库(?:，|$)/}).click();await questionPage.getByRole('button',{name:'预览 项目进度报告.md',exact:true}).waitFor(); },questionPage);
       await shot('goals', async () => {
         await navigate(questionPage, candidate.mobileUrl);await questionPage.waitForFunction(()=>state.booted&&state.loggedIn);await questionPage.getByRole('tab',{name:/^目标(?:，|$)/}).click();await questionPage.getByRole('heading',{name:'目标',exact:true}).waitFor();await questionPage.getByRole('article',{name:'提交合成报告',exact:true}).waitFor();

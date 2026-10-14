@@ -111,6 +111,26 @@
       "files": [
         "tests/bl-29-rework.test.ts (BL-29b M1 leaf only)"
       ]
+    },
+    {
+      "file": "n3-safe-diagnostics.log",
+      "files": [
+        "tests/bl-29-account-changes.test.ts (N3 cancellation leaf only)"
+      ],
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "file": "gallery-evidence-diagnostics.log",
+      "files": [
+        "tests/integration/review-capture-evidence.mjs"
+      ],
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
     }
   ],
   "focusedRepeats": {
@@ -134,7 +154,9 @@
       "N4 + approval targeted leaves",
       "remaining BL-29 rework file",
       "desktop errors targeted leaf",
-      "rendering scene light + dark"
+      "rendering scene light + dark",
+      "post-main mobile full sequence diagnostic",
+      "gallery evidence privacy regression"
     ]
   },
   "limits": [
@@ -161,5 +183,17 @@
     "passed": 5,
     "failed": 0,
     "limit": "Narrow temporary diagnostic copy; failing cloud listener ownership remains unknown"
+  },
+  "fullMobileSequence": {
+    "file": "tests/integration/review-capture-mobile.mjs",
+    "diagnosticCopy": true,
+    "records": 42,
+    "passed": 42,
+    "failed": 0,
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "reason": "Post-main cloud rendering failure repeats; full sequence needed after narrow scene failed to reproduce"
   }
 }
