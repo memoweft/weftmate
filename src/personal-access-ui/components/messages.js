@@ -71,6 +71,20 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
         for (const node of list.querySelectorAll('[data-optimistic]')) if (!node.dataset.motionSent) {node.dataset.motionSent='true';globalThis.WeftReplyMotion?.reveal(node,'send');}
         ui.byId('chat-intro').hidden = rows.length > 0 || list.children.length > 0;
     }
+    function completeMessageBody(row, event, sessionId) {
+        const body = row.querySelector('.message-text');
+        const identity = core.state.identityGeneration, owner = core.state.ownerId, generation = core.state.historyGeneration;
+        void core.completeMessageEvent(sessionId, event).then(full => {
+            if (!body?.isConnected || identity !== core.state.identityGeneration || owner !== core.state.ownerId ||
+                generation !== core.state.historyGeneration || row.dataset.seq !== String(event.seq)) return;
+            WeftContent.update(body, full.data.text, { streaming: false });
+            const actual = body.closest('.message');
+            if (actual) { appendMessageFiles(actual, full.data.text); actual.querySelector('.truncated')?.remove(); }
+        }).catch(() => {
+            if (identity === core.state.identityGeneration && owner === core.state.ownerId && generation === core.state.historyGeneration)
+                historyNotice('完整回复暂时无法读取，请稍后重试。', 'read-failure');
+        });
+    }
     function paintHistoryMessages(events, targetList = null) {
         const list = targetList || ui.byId('transcript'), sessionId = events[0]?.sourceRef?.sessionId || core.state.selectedSessionId;
         if (!targetList) {
@@ -86,7 +100,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             if (prior) {
                 prior.dataset.seq = String(event.seq);
                 prior.dataset.liveMessage = String(event.data.live===true);
-                WeftContent.update(prior.querySelector('.message-text'), event.data.text, { streaming: event.data.streaming === true });
+                if (event.data.truncated && core.completeMessageEvent) completeMessageBody(prior, event, sessionId);
+                else WeftContent.update(prior.querySelector('.message-text'), event.data.text, { streaming: event.data.streaming === true });
                 if (!event.data.live) { ui.messageActions?.bind(prior,event,sessionId); ui.appendReplyMemory(prior,event); globalThis.WeftModelThinking?.(core,prior,event); }
                 continue;
             }
@@ -157,7 +172,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
             const taskLabel = core.messageTaskLabel(event);
             if (event.type === 'user.message' && taskLabel) row.append(ui.element('small', 'message-task-label', taskLabel));
             if (event.data.truncated === true)
-                row.append(ui.element('span', 'truncated', '这条记录已截断，可在电脑查看完整来源。'));
+                row.append(ui.element('span', 'truncated', '正在读取完整回复…'));
             const next = [...list.children].find(n => Number(n.dataset.seq) > event.seq);
             if (next)
                 list.insertBefore(row, next);
@@ -165,12 +180,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 list.append(row);
             row.dataset.memorySession=event.sourceRef?.sessionId||sessionId;
             if(event.data.truncated && core.completeMessageEvent) {
-                const identity=core.state.identityGeneration,owner=core.state.ownerId;
-                const body=row.querySelector('.message-text');
-                void core.completeMessageEvent(sessionId,event).then(full=>{
-                    if(!body?.isConnected||identity!==core.state.identityGeneration||owner!==core.state.ownerId)return;
-                    WeftContent.update(body,full.data.text);const actual=body.closest('.message');if(actual){appendMessageFiles(actual,full.data.text);actual.querySelector('.truncated')?.remove();}
-                }).catch(()=>{});
+                completeMessageBody(row, event, sessionId);
             }
             if(event.data?.phoneSource&&(event.eventId||event.data.phoneEventId))row.weftOpenSideChat=()=>ui.openPhoneHistorySideChat({...event,eventId:event.eventId||event.data.phoneEventId});
             if (!event.data?.live) ui.messageActions?.bind(row, event, event.sourceRef?.sessionId || sessionId);

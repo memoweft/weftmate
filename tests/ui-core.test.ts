@@ -29,6 +29,70 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 const deferred = () => { let resolve!: (value: any) => void; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 
+test('FIX-44 native history keeps a complete streamed reply when its terminal summary is truncated', () => {
+  const f = fixture(), text = '完整中文回复'.repeat(1200) + '全文终点';
+  f.core.appendHistory([], [{seq: 10, sessionId:'session-test', data:{text, streaming:false}}], 10);
+  f.core.appendHistory([{seq:11, sessionId:'session-test', type:'assistant.message', data:{text:text.slice(0,4000),truncated:true,streamSeq:10}}], [], 11);
+  assert.equal(f.core.state.historyEvents.get(11).data.text, text);
+});
+
+test('FIX-44 native history loads full text before painting a truncated summary after reopening', async () => {
+  const text = '重开后的完整回复'.repeat(900) + '全文终点';
+  const f = fixture(path => path.endsWith('/detail') ? response({type:'assistant.message',text,truncated:false}) :
+    response({events:[{seq:11,sessionId:'session-test',type:'assistant.message',data:{text:text.slice(0,4000),truncated:true}}],nextSeq:11,hasMore:false}));
+  await f.core.refreshHistory(true,true);
+  assert.equal(f.core.state.historyEvents.get(11).data.text,text);
+  assert.equal(f.requests.filter(row=>row.path.endsWith('/11/detail')).length,1);
+  assert.equal(f.paints.filter(row=>row.name==='paintHistoryMessages').at(-1).args[0][0].data.truncated,false);
+});
+
+test('FIX-44 logical history preserves full text on repeated summaries of the same revision', () => {
+  const f=fixture(), window=f.api.ChatWindow.create(), text='完整正文'.repeat(1800)+'全文终点';
+  const event={eventId:'reply',revision:1,seq:11,orderKey:'01',type:'assistant.message',sourceRef:{sessionId:'session-test',seq:11},data:{text,truncated:false}};
+  window.merge({items:[event]});
+  window.merge({upserts:[{...event,data:{text:text.slice(0,4000),truncated:true}}]},'changes');
+  assert.equal(window.ordered()[0].data.text,text);
+  assert.equal(window.ordered()[0].data.truncated,false);
+});
+
+test('FIX-44 full-text read finishing after a session switch cannot paint into the new conversation', async () => {
+  const detail=deferred(); const f=fixture(path=>path.endsWith('/detail')?detail.promise:
+    response({events:[{seq:11,sessionId:'session-test',type:'assistant.message',data:{text:'摘要',truncated:true}}],nextSeq:11,hasMore:false}));
+  const reading=f.core.refreshHistory(true,true);
+  await new Promise(resolve=>setTimeout(resolve,0));
+  f.core.state.selectedSessionId='other'; f.core.state.historyGeneration++;
+  detail.resolve(response({type:'assistant.message',text:'全文',truncated:false}));
+  await reading;
+  assert.equal(f.core.state.historyEvents.size,0);
+  assert.equal(f.paints.filter(row=>row.name==='paintHistoryMessages').length,0);
+});
+
+test('FIX-44 main-chat tail and changes hydrate summaries into state and reuse complete bodies', async () => {
+  const text='主对话完整回复'.repeat(1000)+'全文终点', f=fixture(path=>path.endsWith('/11/detail')?
+    response({type:'assistant.message',text,truncated:false}):response({}));
+  Object.assign(f.core.state,{personalCapabilities:{chatTimeline:1},selectedChatId:'main',mainChat:{chatId:'main',activeSessionId:'session-test'}});
+  const event={eventId:'reply',revision:1,seq:11,orderKey:'01',at:new Date().toISOString(),type:'assistant.message',
+    sourceRef:{sessionId:'session-test',seq:11},data:{text:text.slice(0,4000),truncated:true}};
+  f.core.readChatEvents=async()=>({items:[event],syncCursor:'one',contentRevision:1});
+  f.core.readChatDates=async()=>({days:[],contentRevision:1});
+  f.core.readChatChanges=async()=>({upserts:[event],nextCursor:'two',contentRevision:1});
+  f.core.readMainChat=async()=>({chat:f.core.state.mainChat});
+  await f.core.refreshLogicalHistory(true);
+  assert.equal(f.core.state.chatWindow.events.get('reply').data.text,text);
+  await f.core.refreshLogicalHistory();
+  assert.equal(f.core.state.chatWindow.events.get('reply').data.text,text);
+  assert.equal(f.requests.filter(row=>row.path.endsWith('/11/detail')).length,1,'the existing complete body avoids another detail read');
+});
+
+test('FIX-44 a failed full-text read retries without accepting the terminal summary', async () => {
+  let available=false;const text='恢复连接后的全文'.repeat(1000)+'全文终点';
+  const f=fixture(path=>path.endsWith('/detail')?(available?response({type:'assistant.message',text}):response({error:{code:'NETWORK'}},503)):
+    response({events:[{seq:11,sessionId:'session-test',type:'assistant.message',data:{text:text.slice(0,4000),truncated:true}}],nextSeq:11,hasMore:false}));
+  await f.core.refreshHistory(true,true);assert.equal(f.core.state.historyEvents.size,0);assert.equal(f.core.state.afterSeq,-1);
+  available=true;f.core.state.online=true;await f.core.refreshHistory(true,true);
+  assert.equal(f.core.state.historyEvents.get(11).data.text,text);
+});
+
 test('MODE-1 a late computer status cannot replace the account or computer selected while it was in flight', async () => {
   const pending = deferred(), f = fixture(() => pending.promise);
   const before = f.core.state.identityGeneration, reading = f.core.refreshStatus();
