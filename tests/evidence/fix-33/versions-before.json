@@ -1,0 +1,2670 @@
+{
+  "synthetic": true,
+  "model": "synthetic backend with durable user/assistant events",
+  "baseline": true,
+  "scenarios": [
+    {
+      "version": "old",
+      "config": {
+        "fields": [
+          "issuer",
+          "hostId",
+          "clientId",
+          "status",
+          "cookie"
+        ]
+      },
+      "status": {
+        "fields": [
+          "state",
+          "origin",
+          "hostId",
+          "relay",
+          "ownerId",
+          "deviceCount",
+          "hostName",
+          "presence",
+          "personalCapabilities",
+          "executionAccount",
+          "executionAccountName",
+          "sync",
+          "downloads",
+          "backend",
+          "memory",
+          "updates",
+          "nativeMinimumVersions",
+          "status",
+          "cookie"
+        ],
+        "personalCapabilities": {
+          "replyWait": 0,
+          "replyStreaming": 1,
+          "sessionStatus": 1,
+          "nextSuggestions": 0,
+          "library": 1,
+          "libraryPreview": 1,
+          "libraryDesktopActions": 0,
+          "taskOverview": 1,
+          "scheduleEditing": 0,
+          "goals": 0,
+          "activity": 1,
+          "activityChanges": 1,
+          "activityRead": 1,
+          "activityNotification": 1,
+          "notificationSettings": 1,
+          "pushRegistration": 1,
+          "temporaryChats": 1,
+          "chats": 1,
+          "chatTimeline": 1,
+          "chatSearch": 1,
+          "sideChats": 1,
+          "creationReceipt": 1,
+          "chatSend": 1,
+          "chatLifecycle": 1,
+          "chatResources": 1
+        }
+      },
+      "messages": [
+        {
+          "kind": "main",
+          "index": 1,
+          "status": 202,
+          "state": "accepted_by_dsh",
+          "commandFields": [
+            "commandId",
+            "requestId",
+            "kind",
+            "targetDeviceId",
+            "state",
+            "createdAt",
+            "updatedAt",
+            "sessionId",
+            "chatId",
+            "intent",
+            "taskLabel",
+            "receiptId"
+          ],
+          "toModelStartMs": 41
+        },
+        {
+          "kind": "main",
+          "index": 2,
+          "status": 202,
+          "state": "accepted_by_dsh",
+          "commandFields": [
+            "commandId",
+            "requestId",
+            "kind",
+            "targetDeviceId",
+            "state",
+            "createdAt",
+            "updatedAt",
+            "sessionId",
+            "chatId",
+            "intent",
+            "taskLabel",
+            "receiptId"
+          ],
+          "toModelStartMs": 23
+        },
+        {
+          "kind": "main",
+          "index": 3,
+          "status": 202,
+          "state": "accepted_by_dsh",
+          "commandFields": [
+            "commandId",
+            "requestId",
+            "kind",
+            "targetDeviceId",
+            "state",
+            "createdAt",
+            "updatedAt",
+            "sessionId",
+            "chatId",
+            "intent",
+            "taskLabel",
+            "receiptId"
+          ],
+          "toModelStartMs": 22
+        },
+        {
+          "kind": "main",
+          "index": 4,
+          "status": 202,
+          "state": "accepted_by_dsh",
+          "commandFields": [
+            "commandId",
+            "requestId",
+            "kind",
+            "targetDeviceId",
+            "state",
+            "createdAt",
+            "updatedAt",
+            "sessionId",
+            "chatId",
+            "intent",
+            "taskLabel",
+            "receiptId"
+          ],
+          "toModelStartMs": 23
+        },
+        {
+          "kind": "side",
+          "index": 1,
+          "status": 404,
+          "error": "CHAT_UNAVAILABLE",
+          "commandFields": [],
+          "toModelStartMs": null
+        },
+        {
+          "kind": "side",
+          "index": 2,
+          "status": 404,
+          "error": "CHAT_UNAVAILABLE",
+          "commandFields": [],
+          "toModelStartMs": null
+        },
+        {
+          "kind": "side",
+          "index": 3,
+          "status": 404,
+          "error": "CHAT_UNAVAILABLE",
+          "commandFields": [],
+          "toModelStartMs": null
+        },
+        {
+          "kind": "side",
+          "index": 4,
+          "status": 404,
+          "error": "CHAT_UNAVAILABLE",
+          "commandFields": [],
+          "toModelStartMs": null
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "config": {
+        "fields": [
+          "issuer",
+          "hostId",
+          "clientId",
+          "capabilities",
+          "status",
+          "cookie"
+        ],
+        "capabilities": {
+          "cloudChannel": 1,
+          "offlinePhoneFirst": 1
+        }
+      },
+      "status": {
+        "fields": [
+          "state",
+          "origin",
+          "hostId",
+          "relay",
+          "ownerId",
+          "deviceCount",
+          "hostName",
+          "presence",
+          "personalCapabilities",
+          "executionAccount",
+          "executionAccountName",
+          "sync",
+          "downloads",
+          "backend",
+          "memory",
+          "updates",
+          "nativeMinimumVersions",
+          "status",
+          "cookie"
+        ],
+        "personalCapabilities": {
+          "replyWait": 0,
+          "replyStreaming": 1,
+          "sessionStatus": 1,
+          "nextSuggestions": 0,
+          "library": 1,
+          "libraryPreview": 1,
+          "libraryDesktopActions": 0,
+          "taskOverview": 1,
+          "scheduleEditing": 0,
+          "goals": 0,
+          "activity": 1,
+          "activityChanges": 1,
+          "activityRead": 1,
+          "activityNotification": 1,
+          "notificationSettings": 1,
+          "pushRegistration": 1,
+          "temporaryChats": 1,
+          "chats": 1,
+          "chatTimeline": 1,
+          "chatSearch": 1,
+          "sideChats": 1,
+          "creationReceipt": 1,
+          "chatSend": 1,
+          "chatLifecycle": 1,
+          "chatResources": 1
+        }
+      },
+      "messages": [
+        {
+          "kind": "main",
+          "index": 1,
+          "status": 202,
+          "state": "accepted_by_dsh",
+          "commandFields": [
+            "commandId",
+            "requestId",
+            "kind",
+            "targetDeviceId",
+            "state",
+            "createdAt",
+            "updatedAt",
+            "sessionId",
+            "chatId",
+            "intent",
+            "taskLabel",
+            "receiptId"
+          ],
+          "toModelStartMs": 39
+        },
+        {
+          "kind": "main",
+          "index": 2,
+          "status": 202,
+          "state": "accepted_by_dsh",
+          "commandFields": [
+            "commandId",
+            "requestId",
+            "kind",
+            "targetDeviceId",
+            "state",
+            "createdAt",
+            "updatedAt",
+            "sessionId",
+            "chatId",
+            "intent",
+            "taskLabel",
+            "receiptId"
+          ],
+          "toModelStartMs": 20
+        },
+        {
+          "kind": "main",
+          "index": 3,
+          "status": 202,
+          "state": "accepted_by_dsh",
+          "commandFields": [
+            "commandId",
+            "requestId",
+            "kind",
+            "targetDeviceId",
+            "state",
+            "createdAt",
+            "updatedAt",
+            "sessionId",
+            "chatId",
+            "intent",
+            "taskLabel",
+            "receiptId"
+          ],
+          "toModelStartMs": 19
+        },
+        {
+          "kind": "main",
+          "index": 4,
+          "status": 202,
+          "state": "accepted_by_dsh",
+          "commandFields": [
+            "commandId",
+            "requestId",
+            "kind",
+            "targetDeviceId",
+            "state",
+            "createdAt",
+            "updatedAt",
+            "sessionId",
+            "chatId",
+            "intent",
+            "taskLabel",
+            "receiptId"
+          ],
+          "toModelStartMs": 22
+        },
+        {
+          "kind": "side",
+          "index": 1,
+          "status": 404,
+          "error": "CHAT_UNAVAILABLE",
+          "commandFields": [],
+          "toModelStartMs": null
+        },
+        {
+          "kind": "side",
+          "index": 2,
+          "status": 404,
+          "error": "CHAT_UNAVAILABLE",
+          "commandFields": [],
+          "toModelStartMs": null
+        },
+        {
+          "kind": "side",
+          "index": 3,
+          "status": 404,
+          "error": "CHAT_UNAVAILABLE",
+          "commandFields": [],
+          "toModelStartMs": null
+        },
+        {
+          "kind": "side",
+          "index": 4,
+          "status": 404,
+          "error": "CHAT_UNAVAILABLE",
+          "commandFields": [],
+          "toModelStartMs": null
+        }
+      ]
+    }
+  ],
+  "trace": [
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/registration/request",
+      "status": 200,
+      "requestFields": [
+        "email"
+      ],
+      "responseFields": [
+        "challengeId",
+        "expiresIn"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/registration/verify",
+      "status": 200,
+      "requestFields": [
+        "challengeId",
+        "code"
+      ],
+      "responseFields": [
+        "passwordTicket",
+        "expiresIn"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/registration/complete",
+      "status": 200,
+      "requestFields": [
+        "passwordTicket",
+        "password"
+      ],
+      "responseFields": [
+        "account",
+        "verified"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "GET",
+      "path": "/personal/v1/cloud/oidc/auth",
+      "status": 303,
+      "requestFields": [],
+      "responseFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "GET",
+      "path": "/personal/v1/cloud/interactions/cuGB3ycvRGJ6CwLB5d5Jmi0T6Za3coah66YDGzqxf7f",
+      "status": 200,
+      "requestFields": [],
+      "responseFields": [
+        "interactionUid",
+        "csrfToken",
+        "clientId",
+        "appLogin",
+        "deviceId"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/authorization",
+      "status": 200,
+      "requestFields": [
+        "clientId",
+        "redirectUri",
+        "deviceId",
+        "publicJwk",
+        "codeChallenge",
+        "state",
+        "nonce"
+      ],
+      "responseFields": [
+        "interactionUid",
+        "csrfToken",
+        "clientId",
+        "appLogin",
+        "deviceId"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 202,
+      "requestFields": [
+        "interactionUid",
+        "csrfToken",
+        "email",
+        "password",
+        "deviceId",
+        "publicJwk",
+        "deviceName",
+        "deviceType"
+      ],
+      "responseFields": [
+        "confirmationRequired",
+        "challengeId",
+        "expiresIn"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/device/confirm",
+      "status": 200,
+      "requestFields": [
+        "interactionUid",
+        "csrfToken",
+        "challengeId",
+        "code"
+      ],
+      "responseFields": [
+        "account",
+        "resumeUrl"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "GET",
+      "path": "/personal/v1/cloud/oidc/auth/cuGB3ycvRGJ6CwLB5d5Jmi0T6Za3coah66YDGzqxf7f",
+      "status": 303,
+      "requestFields": [],
+      "responseFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/authorization/resume",
+      "status": 200,
+      "requestFields": [
+        "resumeUrl"
+      ],
+      "responseFields": [
+        "callbackUrl"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200,
+      "requestFields": [
+        "grant_type",
+        "client_id",
+        "redirect_uri",
+        "code",
+        "code_verifier"
+      ],
+      "responseFields": [
+        "access_token",
+        "expires_in",
+        "id_token",
+        "refresh_token",
+        "scope",
+        "token_type"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "GET",
+      "path": "/personal/v1/cloud/oidc/auth",
+      "status": 303,
+      "requestFields": [],
+      "responseFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "GET",
+      "path": "/personal/v1/cloud/interactions/QNwBQorGDf4EBQJ-n_BPMEPGMrIXtPFSj134dksxVoR",
+      "status": 200,
+      "requestFields": [],
+      "responseFields": [
+        "interactionUid",
+        "csrfToken",
+        "clientId",
+        "appLogin",
+        "deviceId"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/authorization",
+      "status": 200,
+      "requestFields": [
+        "clientId",
+        "redirectUri",
+        "deviceId",
+        "publicJwk",
+        "codeChallenge",
+        "state",
+        "nonce"
+      ],
+      "responseFields": [
+        "interactionUid",
+        "csrfToken",
+        "clientId",
+        "appLogin",
+        "deviceId"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 202,
+      "requestFields": [
+        "interactionUid",
+        "csrfToken",
+        "email",
+        "password",
+        "deviceId",
+        "publicJwk",
+        "deviceName",
+        "deviceType"
+      ],
+      "responseFields": [
+        "confirmationRequired",
+        "challengeId",
+        "expiresIn"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/device/confirm",
+      "status": 200,
+      "requestFields": [
+        "interactionUid",
+        "csrfToken",
+        "challengeId",
+        "code"
+      ],
+      "responseFields": [
+        "account",
+        "resumeUrl"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "GET",
+      "path": "/personal/v1/cloud/oidc/auth/QNwBQorGDf4EBQJ-n_BPMEPGMrIXtPFSj134dksxVoR",
+      "status": 303,
+      "requestFields": [],
+      "responseFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/auth/authorization/resume",
+      "status": 200,
+      "requestFields": [
+        "resumeUrl"
+      ],
+      "responseFields": [
+        "callbackUrl"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200,
+      "requestFields": [
+        "grant_type",
+        "client_id",
+        "redirect_uri",
+        "code",
+        "code_verifier"
+      ],
+      "responseFields": [
+        "access_token",
+        "expires_in",
+        "id_token",
+        "refresh_token",
+        "scope",
+        "token_type"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "GET",
+      "path": "/personal/v1/cloud/oidc/jwks",
+      "status": 200,
+      "requestFields": [],
+      "responseFields": [
+        "keys"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/auth/desktop",
+      "status": 200,
+      "ms": 219,
+      "requestFields": [
+        "deviceName"
+      ],
+      "responseFields": [
+        "account",
+        "device",
+        "local",
+        "csrfToken",
+        "accounts",
+        "selectedOwnerId"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/auth/cloud-nonce",
+      "status": 200,
+      "ms": 7,
+      "requestFields": [],
+      "responseFields": [
+        "nonce",
+        "expiresIn"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/claims",
+      "status": 200,
+      "requestFields": [
+        "claimId",
+        "hostId",
+        "publicJwk",
+        "tlsSpki"
+      ],
+      "responseFields": [
+        "claimId",
+        "challenge",
+        "status"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/claims/confirm",
+      "status": 200,
+      "requestFields": [
+        "claimId",
+        "proof"
+      ],
+      "responseFields": [
+        "confirmed",
+        "hostId",
+        "sub"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/auth/cloud-desktop",
+      "status": 200,
+      "ms": 37,
+      "requestFields": [
+        "accessToken",
+        "deviceName"
+      ],
+      "responseFields": [
+        "account",
+        "device",
+        "local",
+        "csrfToken",
+        "hostTrust",
+        "cloudAuthenticated"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/devices/status",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "updated"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/status",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "updated"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/status",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "updated"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200,
+      "requestFields": [
+        "grant_type",
+        "client_id",
+        "refresh_token",
+        "resource"
+      ],
+      "responseFields": [
+        "access_token",
+        "expires_in",
+        "id_token",
+        "refresh_token",
+        "scope",
+        "token_type"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 200,
+      "requestFields": [
+        "hostId"
+      ],
+      "responseFields": [
+        "hostId",
+        "status",
+        "baseUrl",
+        "resource",
+        "approval",
+        "pairingRequired"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200,
+      "requestFields": [
+        "grant_type",
+        "client_id",
+        "refresh_token",
+        "resource"
+      ],
+      "responseFields": [
+        "access_token",
+        "expires_in",
+        "id_token",
+        "refresh_token",
+        "scope",
+        "token_type"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/auth/cloud-nonce",
+      "status": 200,
+      "ms": 6,
+      "requestFields": [],
+      "responseFields": [
+        "nonce",
+        "expiresIn"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/auth/cloud-session",
+      "status": 200,
+      "ms": 29,
+      "requestFields": [
+        "accessToken",
+        "deviceName"
+      ],
+      "responseFields": [
+        "account",
+        "device",
+        "csrfToken",
+        "hostTrust"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/cloud/config",
+      "status": 200,
+      "ms": 3,
+      "requestFields": [],
+      "responseFields": [
+        "issuer",
+        "hostId",
+        "clientId"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/status",
+      "status": 200,
+      "ms": 4,
+      "requestFields": [],
+      "responseFields": [
+        "state",
+        "origin",
+        "hostId",
+        "relay",
+        "ownerId",
+        "deviceCount",
+        "hostName",
+        "presence",
+        "personalCapabilities",
+        "executionAccount",
+        "executionAccountName",
+        "sync",
+        "downloads",
+        "backend",
+        "memory",
+        "updates",
+        "nativeMinimumVersions"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/devices/status",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "updated"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "ms": 24,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "modelProfileId"
+      ],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/11f621fa-e71b-4c18-965d-52da4db28fea",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/status",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "updated"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/11f621fa-e71b-4c18-965d-52da4db28fea",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/11f621fa-e71b-4c18-965d-52da4db28fea",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/chats/main",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "chat"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/sessions/session-d497ed17-caf0-4716-aa44-2759d6afeebb/chat",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "chatId",
+        "segmentId",
+        "kind",
+        "archived"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-715b77ef-1b3b-4f48-984d-dfa6dec565eb",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "ms": 11,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-715b77ef-1b3b-4f48-984d-dfa6dec565eb",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-715b77ef-1b3b-4f48-984d-dfa6dec565eb",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId",
+        "chatId",
+        "intent",
+        "taskLabel"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-715b77ef-1b3b-4f48-984d-dfa6dec565eb",
+      "status": 200,
+      "ms": 2,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId",
+        "chatId",
+        "intent",
+        "taskLabel",
+        "receiptId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-fc9c4162-c187-4200-b7ae-4edb53807c55",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "ms": 10,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-fc9c4162-c187-4200-b7ae-4edb53807c55",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-fc9c4162-c187-4200-b7ae-4edb53807c55",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId",
+        "chatId",
+        "intent",
+        "taskLabel",
+        "receiptId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-b7d7d432-2b8c-47cd-a124-1ca487167ac6",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "ms": 8,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-b7d7d432-2b8c-47cd-a124-1ca487167ac6",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-b7d7d432-2b8c-47cd-a124-1ca487167ac6",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId",
+        "chatId",
+        "intent",
+        "taskLabel",
+        "receiptId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-174f2f5c-f78f-4e4a-b98c-f7b9a43cdbf3",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "ms": 9,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-174f2f5c-f78f-4e4a-b98c-f7b9a43cdbf3",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-174f2f5c-f78f-4e4a-b98c-f7b9a43cdbf3",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId",
+        "chatId",
+        "intent",
+        "taskLabel",
+        "receiptId"
+      ]
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-8667bb5a-3132-43bc-a2f6-63fc30182243",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/commands",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "CHAT_UNAVAILABLE"
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-d9e363fc-ef76-42dd-92d7-99a279adf070",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/commands",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "CHAT_UNAVAILABLE"
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-9772bc70-7f66-4f74-8dbb-642f5acddf15",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/commands",
+      "status": 404,
+      "ms": 3,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "CHAT_UNAVAILABLE"
+    },
+    {
+      "host": "old",
+      "method": "GET",
+      "path": "/commands/by-request/native-a422857b-ce3a-489a-8966-b08596d6b4d8",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "old",
+      "method": "POST",
+      "path": "/commands",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "CHAT_UNAVAILABLE"
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "GET",
+      "path": "/personal/v1/cloud/oidc/jwks",
+      "status": 200,
+      "requestFields": [],
+      "responseFields": [
+        "keys"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/auth/desktop",
+      "status": 200,
+      "ms": 226,
+      "requestFields": [
+        "deviceName"
+      ],
+      "responseFields": [
+        "account",
+        "device",
+        "local",
+        "csrfToken",
+        "accounts",
+        "selectedOwnerId"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200,
+      "requestFields": [
+        "grant_type",
+        "client_id",
+        "refresh_token",
+        "resource"
+      ],
+      "responseFields": [
+        "access_token",
+        "expires_in",
+        "id_token",
+        "refresh_token",
+        "scope",
+        "token_type"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/auth/cloud-nonce",
+      "status": 200,
+      "ms": 7,
+      "requestFields": [],
+      "responseFields": [
+        "nonce",
+        "expiresIn"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/claims",
+      "status": 200,
+      "requestFields": [
+        "claimId",
+        "hostId",
+        "publicJwk",
+        "tlsSpki"
+      ],
+      "responseFields": [
+        "claimId",
+        "challenge",
+        "status"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/claims/confirm",
+      "status": 200,
+      "requestFields": [
+        "claimId",
+        "proof"
+      ],
+      "responseFields": [
+        "confirmed",
+        "hostId",
+        "sub"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/auth/cloud-desktop",
+      "status": 200,
+      "ms": 31,
+      "requestFields": [
+        "accessToken",
+        "deviceName"
+      ],
+      "responseFields": [
+        "account",
+        "device",
+        "local",
+        "csrfToken",
+        "hostTrust",
+        "cloudAuthenticated"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/devices/status",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "updated"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/status",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "updated"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/status",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "updated"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200,
+      "requestFields": [
+        "grant_type",
+        "client_id",
+        "refresh_token",
+        "resource"
+      ],
+      "responseFields": [
+        "access_token",
+        "expires_in",
+        "id_token",
+        "refresh_token",
+        "scope",
+        "token_type"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 200,
+      "requestFields": [
+        "hostId"
+      ],
+      "responseFields": [
+        "hostId",
+        "status",
+        "baseUrl",
+        "resource",
+        "approval",
+        "pairingRequired"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200,
+      "requestFields": [
+        "grant_type",
+        "client_id",
+        "refresh_token",
+        "resource"
+      ],
+      "responseFields": [
+        "access_token",
+        "expires_in",
+        "id_token",
+        "refresh_token",
+        "scope",
+        "token_type"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/auth/cloud-nonce",
+      "status": 200,
+      "ms": 5,
+      "requestFields": [],
+      "responseFields": [
+        "nonce",
+        "expiresIn"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/auth/cloud-session",
+      "status": 200,
+      "ms": 27,
+      "requestFields": [
+        "accessToken",
+        "deviceName"
+      ],
+      "responseFields": [
+        "account",
+        "device",
+        "csrfToken",
+        "hostTrust"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/cloud/config",
+      "status": 200,
+      "ms": 4,
+      "requestFields": [],
+      "responseFields": [
+        "issuer",
+        "hostId",
+        "clientId",
+        "capabilities"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/status",
+      "status": 200,
+      "ms": 2,
+      "requestFields": [],
+      "responseFields": [
+        "state",
+        "origin",
+        "hostId",
+        "relay",
+        "ownerId",
+        "deviceCount",
+        "hostName",
+        "presence",
+        "personalCapabilities",
+        "executionAccount",
+        "executionAccountName",
+        "sync",
+        "downloads",
+        "backend",
+        "memory",
+        "updates",
+        "nativeMinimumVersions"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "ms": 10,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "modelProfileId"
+      ],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/58484830-6039-4ffb-9764-4f7cec5f87a9",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/devices/status",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "updated"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/status",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "updated"
+      ]
+    },
+    {
+      "host": "cloud",
+      "method": "POST",
+      "path": "/personal/v1/cloud/hosts/revocations",
+      "status": 200,
+      "requestFields": [
+        "hostId",
+        "proof"
+      ],
+      "responseFields": [
+        "eventToken"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/58484830-6039-4ffb-9764-4f7cec5f87a9",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/58484830-6039-4ffb-9764-4f7cec5f87a9",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/chats/main",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "chat"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/sessions/session-d6965f43-20c9-4c02-95aa-40f9a78c3fda/chat",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "chatId",
+        "segmentId",
+        "kind",
+        "archived"
+      ],
+      "commandFields": []
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-bbb914d2-368e-4a4c-9ff2-68002445e274",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "ms": 9,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-bbb914d2-368e-4a4c-9ff2-68002445e274",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-bbb914d2-368e-4a4c-9ff2-68002445e274",
+      "status": 200,
+      "ms": 2,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId",
+        "chatId",
+        "intent",
+        "taskLabel"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-bbb914d2-368e-4a4c-9ff2-68002445e274",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId",
+        "chatId",
+        "intent",
+        "taskLabel",
+        "receiptId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-d4143590-d2e6-47cd-9e31-a5c26d164d78",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "ms": 9,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-d4143590-d2e6-47cd-9e31-a5c26d164d78",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-d4143590-d2e6-47cd-9e31-a5c26d164d78",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId",
+        "chatId",
+        "intent",
+        "taskLabel",
+        "receiptId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-ea342ffb-da59-4d09-9992-90aa6e3352d2",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "ms": 8,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-ea342ffb-da59-4d09-9992-90aa6e3352d2",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-ea342ffb-da59-4d09-9992-90aa6e3352d2",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId",
+        "chatId",
+        "intent",
+        "taskLabel",
+        "receiptId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-9212fa80-172b-4e81-a946-d73763034500",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/commands",
+      "status": 202,
+      "ms": 9,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-9212fa80-172b-4e81-a946-d73763034500",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "chatId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-9212fa80-172b-4e81-a946-d73763034500",
+      "status": 200,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "command"
+      ],
+      "commandFields": [
+        "commandId",
+        "requestId",
+        "kind",
+        "targetDeviceId",
+        "state",
+        "createdAt",
+        "updatedAt",
+        "sessionId",
+        "chatId",
+        "intent",
+        "taskLabel",
+        "receiptId"
+      ]
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-8394ddee-54df-4bc7-a974-401e07087d6a",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/commands",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "CHAT_UNAVAILABLE"
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-e48d201a-daa1-49d6-9d3c-14ac3799a62b",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/commands",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "CHAT_UNAVAILABLE"
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-f66ae1b0-6c61-4a9e-b6e4-6fbd541e5dc2",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/commands",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "CHAT_UNAVAILABLE"
+    },
+    {
+      "host": "current",
+      "method": "GET",
+      "path": "/commands/by-request/native-328b323e-84f5-4ea2-9ff7-a8fec7372032",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "NOT_FOUND"
+    },
+    {
+      "host": "current",
+      "method": "POST",
+      "path": "/commands",
+      "status": 404,
+      "ms": 1,
+      "requestFields": [
+        "requestId",
+        "targetDeviceId",
+        "kind",
+        "chatId",
+        "modelProfileId",
+        "text",
+        "mode"
+      ],
+      "responseFields": [
+        "error"
+      ],
+      "commandFields": [],
+      "code": "CHAT_UNAVAILABLE"
+    }
+  ]
+}

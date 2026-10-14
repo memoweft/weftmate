@@ -224,8 +224,9 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 .phone-handoff span { flex-basis: 100%; line-height: var(--wm-line-height-1_5); }
 .phone-handoff label { display: flex; align-items: center; gap: var(--wm-space-8); }
 .phone-handoff select { min-height: 34px; max-width: min(260px, 55vw); border: 1px solid var(--line); border-radius: var(--wm-radius-9); background: var(--surface); color: var(--ink); }
-.phone-handoff button { min-height: 34px; padding: var(--wm-space-6) var(--wm-space-12); border: 1px solid var(--accent); border-radius: var(--wm-radius-9); background: var(--accent); color: var(--wm-color-white); cursor: pointer; }
-.phone-handoff button.secondary { border-color: var(--line); background: var(--surface); color: var(--ink); }
+.phone-handoff > button { min-height: 34px; padding: var(--wm-space-6) var(--wm-space-12); border: 1px solid var(--accent); border-radius: var(--wm-radius-9); background: var(--accent); color: var(--wm-color-white); cursor: pointer; }
+.phone-handoff > button.secondary { border-color: var(--line); background: var(--surface); color: var(--ink); }
+.phone-handoff .settings-select span { flex-basis: auto; }
 .phone-handoff button:disabled { opacity: .55; cursor: not-allowed; }
 .phone-handoff :is(button,select):focus-visible { outline: 2px solid var(--accent); outline-offset: var(--wm-space-2); }
 .phone-handoff-divider { align-self: stretch; padding: var(--wm-space-4) 0; border-bottom: 1px solid var(--line); color: var(--ink-muted); font-size: var(--wm-font-size-11); }

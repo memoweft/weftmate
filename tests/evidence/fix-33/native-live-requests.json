@@ -1,0 +1,1808 @@
+[
+  {
+    "method": "GET",
+    "path": "/personal/v1/status",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "state",
+      "origin",
+      "hostId",
+      "relay",
+      "ownerId",
+      "deviceCount",
+      "hostName",
+      "presence",
+      "personalCapabilities",
+      "executionAccount",
+      "executionAccountName",
+      "sync",
+      "downloads",
+      "backend",
+      "memory",
+      "updates",
+      "nativeMinimumVersions"
+    ],
+    "ms": 400
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity",
+    "queryFields": [
+      "filter",
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "items",
+      "timeZone",
+      "nextCursor",
+      "hasMore",
+      "snapshotCursor",
+      "syncCursor",
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 736
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/auth/me",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "account",
+      "device",
+      "csrfToken"
+    ],
+    "ms": 369
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/status",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "state",
+      "origin",
+      "hostId",
+      "relay",
+      "ownerId",
+      "deviceCount",
+      "hostName",
+      "presence",
+      "personalCapabilities",
+      "executionAccount",
+      "executionAccountName",
+      "sync",
+      "downloads",
+      "backend",
+      "memory",
+      "updates",
+      "nativeMinimumVersions"
+    ],
+    "ms": 376
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/sync/capabilities",
+    "queryFields": [],
+    "requestFields": [
+      "sharedConversations",
+      "nativeVersionCode"
+    ],
+    "status": 200,
+    "responseFields": [
+      "deviceId",
+      "sharedConversations",
+      "nativeVersionCode"
+    ],
+    "ms": 368
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/tasks",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "items",
+      "recent",
+      "timeZone"
+    ],
+    "ms": 568
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/settings/personalization",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "settings",
+      "updatedAt",
+      "synced"
+    ],
+    "ms": 407
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sync/events",
+    "queryFields": [
+      "afterSeq",
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "events",
+      "nextSeq",
+      "hasMore",
+      "presence",
+      "activity"
+    ],
+    "ms": 367
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity",
+    "queryFields": [
+      "filter",
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "items",
+      "timeZone",
+      "nextCursor",
+      "hasMore",
+      "snapshotCursor",
+      "syncCursor",
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 737
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/schedules",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "items"
+    ],
+    "ms": 402
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/changes",
+    "queryFields": [
+      "limit",
+      "cursor"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "snapshotCursor",
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 640
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "items",
+      "nextCursor",
+      "hasMore",
+      "statusSummary",
+      "groups",
+      "indexState"
+    ],
+    "ms": 426
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/goals",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "items"
+    ],
+    "ms": 382
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "sessions",
+      "groups",
+      "snapshotAt",
+      "statusSummary",
+      "hasMore",
+      "nextCursor"
+    ],
+    "ms": 384
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/main",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 673
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/cloud/devices/pending",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "devices"
+    ],
+    "ms": 361
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/auth/me",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "account",
+      "device",
+      "csrfToken"
+    ],
+    "ms": 366
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 365
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/cloud/devices/pending",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "devices"
+    ],
+    "ms": 367
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approval-mode",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "mode",
+      "allowedCategories"
+    ],
+    "ms": 360
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/status",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "state",
+      "origin",
+      "hostId",
+      "relay",
+      "ownerId",
+      "deviceCount",
+      "hostName",
+      "presence",
+      "personalCapabilities",
+      "executionAccount",
+      "executionAccountName",
+      "sync",
+      "downloads",
+      "backend",
+      "memory",
+      "updates",
+      "nativeMinimumVersions"
+    ],
+    "ms": 382
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/events",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "items",
+      "liveEvents",
+      "liveRevision",
+      "olderCursor",
+      "newerCursor",
+      "hasOlder",
+      "hasNewer",
+      "syncCursor",
+      "deletedAnchor",
+      "contentRevision",
+      "chatRevision",
+      "unread",
+      "indexState",
+      "timeZone",
+      "accountChanges"
+    ],
+    "ms": 577
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/offline/sync",
+    "queryFields": [],
+    "requestFields": [
+      "publicJwk",
+      "generation",
+      "hashes"
+    ],
+    "status": 200,
+    "responseFields": [
+      "version",
+      "algorithm",
+      "aad",
+      "wrappedKey",
+      "iv",
+      "ciphertext"
+    ],
+    "ms": 655
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/changes",
+    "queryFields": [
+      "limit",
+      "cursor"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "snapshotCursor",
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 623
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/settings/personalization",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "settings",
+      "updatedAt",
+      "synced"
+    ],
+    "ms": 361
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/status",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "state",
+      "origin",
+      "hostId",
+      "relay",
+      "ownerId",
+      "deviceCount",
+      "hostName",
+      "presence",
+      "personalCapabilities",
+      "executionAccount",
+      "executionAccountName",
+      "sync",
+      "downloads",
+      "backend",
+      "memory",
+      "updates",
+      "nativeMinimumVersions"
+    ],
+    "ms": 375
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/unread",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 486
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 362
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/system",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "host",
+      "memory",
+      "model",
+      "relay",
+      "runRecord",
+      "queue",
+      "components",
+      "metrics",
+      "diagnosticPreview",
+      "backgroundModelFallback",
+      "canRestart"
+    ],
+    "ms": 571
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/main",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 581
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approvals",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "approvals",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 367
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/offline/sync",
+    "queryFields": [],
+    "requestFields": [
+      "publicJwk",
+      "generation",
+      "hashes"
+    ],
+    "status": 200,
+    "responseFields": [
+      "version",
+      "algorithm",
+      "aad",
+      "wrappedKey",
+      "iv",
+      "ciphertext"
+    ],
+    "ms": 656
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approval-mode",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "mode",
+      "allowedCategories"
+    ],
+    "ms": 366
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/questions",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "questions",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 370
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approvals",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "approvals",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 363
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/questions",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "questions",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 370
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/changes",
+    "queryFields": [
+      "cursor",
+      "limit",
+      "waitMs",
+      "liveRevision"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "liveEvents",
+      "liveRevision",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "contentRevision",
+      "chatRevision",
+      "unread",
+      "indexState",
+      "timeZone",
+      "accountChanges",
+      "waitOutcome"
+    ],
+    "ms": 2378
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/status",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "state",
+      "origin",
+      "hostId",
+      "relay",
+      "ownerId",
+      "deviceCount",
+      "hostName",
+      "presence",
+      "personalCapabilities",
+      "executionAccount",
+      "executionAccountName",
+      "sync",
+      "downloads",
+      "backend",
+      "memory",
+      "updates",
+      "nativeMinimumVersions"
+    ],
+    "ms": 397
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approval-mode",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "mode",
+      "allowedCategories"
+    ],
+    "ms": 366
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions",
+    "queryFields": [
+      "archived",
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "sessions",
+      "groups",
+      "snapshotAt",
+      "statusSummary",
+      "hasMore",
+      "nextCursor"
+    ],
+    "ms": 402
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats",
+    "queryFields": [
+      "archived",
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "items",
+      "nextCursor",
+      "hasMore",
+      "statusSummary",
+      "groups",
+      "indexState"
+    ],
+    "ms": 414
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/commands",
+    "queryFields": [],
+    "requestFields": [
+      "requestId",
+      "kind",
+      "targetDeviceId",
+      "modelProfileId"
+    ],
+    "status": 202,
+    "responseFields": [
+      "command"
+    ],
+    "ms": 378
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/changes",
+    "queryFields": [
+      "limit",
+      "cursor"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "snapshotCursor",
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 751
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/status",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "state",
+      "origin",
+      "hostId",
+      "relay",
+      "ownerId",
+      "deviceCount",
+      "hostName",
+      "presence",
+      "personalCapabilities",
+      "executionAccount",
+      "executionAccountName",
+      "sync",
+      "downloads",
+      "backend",
+      "memory",
+      "updates",
+      "nativeMinimumVersions"
+    ],
+    "ms": 392
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/projects",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "projects",
+      "canManage"
+    ],
+    "ms": 360
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 371
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/status",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "state",
+      "origin",
+      "hostId",
+      "relay",
+      "ownerId",
+      "deviceCount",
+      "hostName",
+      "presence",
+      "personalCapabilities",
+      "executionAccount",
+      "executionAccountName",
+      "sync",
+      "downloads",
+      "backend",
+      "memory",
+      "updates",
+      "nativeMinimumVersions"
+    ],
+    "ms": 376
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands/by-request/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "command"
+    ],
+    "ms": 366
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/unread",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 463
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approvals",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "approvals",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 367
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/chat",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chatId",
+      "segmentId",
+      "kind",
+      "archived"
+    ],
+    "ms": 361
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/questions",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "questions",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 363
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 362
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/changes",
+    "queryFields": [
+      "cursor",
+      "limit",
+      "waitMs",
+      "liveRevision"
+    ],
+    "requestFields": [],
+    "status": null,
+    "responseFields": null,
+    "ms": 203
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 362
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/commands",
+    "queryFields": [],
+    "requestFields": [
+      "requestId",
+      "kind",
+      "targetDeviceId",
+      "sessionId",
+      "text",
+      "mode",
+      "intent"
+    ],
+    "status": 202,
+    "responseFields": [
+      "command"
+    ],
+    "ms": 403
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approval-mode",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "mode",
+      "allowedCategories"
+    ],
+    "ms": 361
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 396
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/events",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "items",
+      "liveEvents",
+      "liveRevision",
+      "olderCursor",
+      "newerCursor",
+      "hasOlder",
+      "hasNewer",
+      "syncCursor",
+      "deletedAnchor",
+      "contentRevision",
+      "chatRevision",
+      "unread",
+      "indexState",
+      "timeZone",
+      "accountChanges"
+    ],
+    "ms": 373
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 365
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approvals",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "approvals",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 360
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/status",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "state",
+      "origin",
+      "hostId",
+      "relay",
+      "ownerId",
+      "deviceCount",
+      "hostName",
+      "presence",
+      "personalCapabilities",
+      "executionAccount",
+      "executionAccountName",
+      "sync",
+      "downloads",
+      "backend",
+      "memory",
+      "updates",
+      "nativeMinimumVersions"
+    ],
+    "ms": 415
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/questions",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "questions",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 367
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/unread",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 1030
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands/by-request/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "command"
+    ],
+    "ms": 364
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/changes",
+    "queryFields": [
+      "limit",
+      "cursor"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "snapshotCursor",
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 1502
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/changes",
+    "queryFields": [
+      "cursor",
+      "limit",
+      "waitMs",
+      "liveRevision"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "liveEvents",
+      "liveRevision",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "contentRevision",
+      "chatRevision",
+      "unread",
+      "indexState",
+      "timeZone",
+      "accountChanges",
+      "waitOutcome"
+    ],
+    "ms": 365
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 362
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/commands",
+    "queryFields": [],
+    "requestFields": [
+      "requestId",
+      "kind",
+      "targetDeviceId",
+      "sessionId",
+      "text",
+      "mode",
+      "intent"
+    ],
+    "status": 202,
+    "responseFields": [
+      "command"
+    ],
+    "ms": 407
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approvals",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "approvals",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 360
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 388
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/commands",
+    "queryFields": [],
+    "requestFields": [
+      "requestId",
+      "kind",
+      "targetDeviceId",
+      "sessionId",
+      "text",
+      "mode",
+      "intent"
+    ],
+    "status": 202,
+    "responseFields": [
+      "command"
+    ],
+    "ms": 374
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/questions",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "questions",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 395
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 363
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/offline/sync",
+    "queryFields": [],
+    "requestFields": [
+      "publicJwk",
+      "generation",
+      "hashes"
+    ],
+    "status": 200,
+    "responseFields": [
+      "version",
+      "algorithm",
+      "aad",
+      "wrappedKey",
+      "iv",
+      "ciphertext"
+    ],
+    "ms": 641
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/commands",
+    "queryFields": [],
+    "requestFields": [
+      "requestId",
+      "kind",
+      "targetDeviceId",
+      "sessionId",
+      "text",
+      "mode",
+      "intent"
+    ],
+    "status": 202,
+    "responseFields": [
+      "command"
+    ],
+    "ms": 380
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands/by-request/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "command"
+    ],
+    "ms": 360
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 390
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands/by-request/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "command"
+    ],
+    "ms": 362
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands/by-request/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "command"
+    ],
+    "ms": 360
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/changes",
+    "queryFields": [
+      "cursor",
+      "limit",
+      "waitMs",
+      "liveRevision"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "liveEvents",
+      "liveRevision",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "contentRevision",
+      "chatRevision",
+      "unread",
+      "indexState",
+      "timeZone",
+      "accountChanges",
+      "waitOutcome"
+    ],
+    "ms": 371
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 363
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/status",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "state",
+      "origin",
+      "hostId",
+      "relay",
+      "ownerId",
+      "deviceCount",
+      "hostName",
+      "presence",
+      "personalCapabilities",
+      "executionAccount",
+      "executionAccountName",
+      "sync",
+      "downloads",
+      "backend",
+      "memory",
+      "updates",
+      "nativeMinimumVersions"
+    ],
+    "ms": 410
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approvals",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "approvals",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 361
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/unread",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 894
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/changes",
+    "queryFields": [
+      "limit",
+      "cursor"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "snapshotCursor",
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 732
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/questions",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "questions",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 367
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/changes",
+    "queryFields": [
+      "cursor",
+      "limit",
+      "waitMs",
+      "liveRevision"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "liveEvents",
+      "liveRevision",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "contentRevision",
+      "chatRevision",
+      "unread",
+      "indexState",
+      "timeZone",
+      "accountChanges",
+      "waitOutcome"
+    ],
+    "ms": 812
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 363
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approvals",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "approvals",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 361
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/questions",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "questions",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 365
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/changes",
+    "queryFields": [
+      "cursor",
+      "limit",
+      "waitMs",
+      "liveRevision"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "liveEvents",
+      "liveRevision",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "contentRevision",
+      "chatRevision",
+      "unread",
+      "indexState",
+      "timeZone",
+      "accountChanges",
+      "waitOutcome"
+    ],
+    "ms": 371
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 363
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approvals",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "approvals",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 360
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/questions",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "questions",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 366
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/changes",
+    "queryFields": [
+      "cursor",
+      "limit",
+      "waitMs",
+      "liveRevision"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "liveEvents",
+      "liveRevision",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "contentRevision",
+      "chatRevision",
+      "unread",
+      "indexState",
+      "timeZone",
+      "accountChanges",
+      "waitOutcome"
+    ],
+    "ms": 384
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 362
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/status",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "state",
+      "origin",
+      "hostId",
+      "relay",
+      "ownerId",
+      "deviceCount",
+      "hostName",
+      "presence",
+      "personalCapabilities",
+      "executionAccount",
+      "executionAccountName",
+      "sync",
+      "downloads",
+      "backend",
+      "memory",
+      "updates",
+      "nativeMinimumVersions"
+    ],
+    "ms": 542
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approvals",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "approvals",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 365
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/unread",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 680
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/activity/changes",
+    "queryFields": [
+      "limit",
+      "cursor"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "snapshotCursor",
+      "unreadCount",
+      "actionableCount"
+    ],
+    "ms": 680
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/questions",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "questions",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 363
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/changes",
+    "queryFields": [
+      "cursor",
+      "limit",
+      "waitMs",
+      "liveRevision"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "liveEvents",
+      "liveRevision",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "contentRevision",
+      "chatRevision",
+      "unread",
+      "indexState",
+      "timeZone",
+      "accountChanges",
+      "waitOutcome"
+    ],
+    "ms": 365
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "chat"
+    ],
+    "ms": 362
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/approvals",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "approvals",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 360
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/<id>/questions",
+    "queryFields": [
+      "limit"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "questions",
+      "nextBefore",
+      "hasMore"
+    ],
+    "ms": 363
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>/changes",
+    "queryFields": [
+      "cursor",
+      "limit",
+      "waitMs",
+      "liveRevision"
+    ],
+    "requestFields": [],
+    "status": 200,
+    "responseFields": [
+      "upserts",
+      "liveEvents",
+      "liveRevision",
+      "removals",
+      "nextCursor",
+      "hasMore",
+      "contentRevision",
+      "chatRevision",
+      "unread",
+      "indexState",
+      "timeZone",
+      "accountChanges",
+      "waitOutcome"
+    ],
+    "ms": 365
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/chats/<id>",
+    "queryFields": [],
+    "requestFields": [],
+    "status": null,
+    "responseFields": null,
+    "ms": 139
+  }
+]

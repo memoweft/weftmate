@@ -54,6 +54,9 @@ async function fixture(t) {
   const created = await command({ requestId: 'general-session', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'local' })
   const source = await command({ requestId: 'general-source', kind: 'session.message', targetDeviceId: hostId,
     sessionId: created.sessionId, text: fixtureSourceText })
+  // Join the initial digest refresh before comparing whole-store snapshots.
+  // Its asynchronous session-title write is unrelated to rejected execution.
+  assert.equal((await request('daily-summaries')).status, 200)
   await service.__reviewContext.activity.close()
   return { root, backend, source, auth, request,
     input: { sessionId: created.sessionId, turn: 1, callId: 'general-call', rootCallId: 'general-call',
