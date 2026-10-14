@@ -4,6 +4,7 @@ import { digest, failure } from './common.mjs';
 import { chatForSession } from './chat-identity.mjs';
 import { hasPrivateContent } from './temporary-chats.mjs';
 import { activityNotificationContent } from './notification-content.mjs';
+import { completionActivitySummary } from './activity-copy.mjs';
 
 export const ACTIVITY_TYPES = ['reminder.triggered','task.started','task.completed','task.failed','task.stopped','approval.pending','question.pending','memory.paused','memory.submission.completed','memory.report','system.update.available','system.reconnected','system.device.signed_in','system.dnd.summary','system.notification.test','system.data.operation','companion.greeting'];
 const short = value => Array.from(String(value ?? '').replace(/\s+/g, ' ').trim()).slice(0,160).join('');
@@ -40,7 +41,7 @@ export function putActivity(account, key, input) {
   if(state.suppressed?.[id] || input.source?.taskId&&state.suppressed?.[`task:${input.source.taskId}`])return null;
   if(input.source?.sessionId&&state.erasedBefore?.[input.source.sessionId]&&input.at<=state.erasedBefore[input.source.sessionId])return null;
   const privateSource=input.source?.sessionId && hasPrivateContent(account.sessions[input.source.sessionId]);
-  const row={ id, at:previous?.at ?? input.at, type:input.type, title:short(input.title), summary:short(input.summary), source:input.source ?? {},
+  const row={ id, at:previous?.at ?? input.at, type:input.type, title:short(input.title), summary:input.type==='task.completed'?completionActivitySummary(input.summary):short(input.summary), source:input.source ?? {},
     actions:input.actions ?? [], state:input.state ?? 'completed', ...(input.memoryDigest?{memoryDigest:input.memoryDigest}:{}), ...(input.weeklyInsight?{weeklyInsight:input.weeklyInsight}:{}), notification:{level:input.level ?? 'normal',type:input.type,initiatedBy:input.initiatedBy ?? previous?.notification.initiatedBy ?? (['memory','system','companion'].includes(input.type.split('.')[0])?'assistant':'user'),...(input.test?{test:true}:{})},
     ...(privateSource ? {temporary:true}: {}) };
   if (privateSource) { row.title=input.type.startsWith('task.') ? '临时对话中的任务' : input.type==='approval.pending' ? '临时对话需要审批' : input.type==='question.pending' ? '临时对话需要回答' : '临时对话动态';
