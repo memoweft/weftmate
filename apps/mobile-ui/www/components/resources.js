@@ -39,7 +39,8 @@ function appendTimelineArtifact(parent,artifact,context=conversationTaskContext(
   save.addEventListener('click',async()=>{try{const result=await call('shared.artifacts.save',{artifactId:artifact.artifactId});if(conversationTaskCurrent(context)){state.artifactSaveRequest=result.requestId;toast('请选择保存位置')}}catch(e){toast(safeError(e),true)}});
   wrap.append(open,el('small','',`${artifact.contentType||'文件'} · ${attachmentSize(artifact.size||0)}`),save);parent.append(wrap)}
 
-function closeResourcePage({restoreFocus=true}={}){const view=state.resourceView;state.resourceView=null;
+function closeResourcePage({restoreFocus=true}={}){const view=state.resourceView;
+  if(restoreFocus && view?.context?.kind==='library' && window.weftNativeLibraryEntry){void call('native.library.close');return;}state.resourceView=null;
   WeftPopover.closeMenu();clear($('resource-content'));
   if($('mobile-bottom-tabs'))$('mobile-bottom-tabs').inert=false;
   if(!$('resource-page').hidden) { if(globalThis.WeftMobileMotion) WeftMobileMotion.hide($('resource-page'),true); else $('resource-page').hidden=true; }$('chat-page').removeAttribute?.('inert');
