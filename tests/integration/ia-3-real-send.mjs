@@ -1,9 +1,10 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Real fixed DSH + MiMo through the production desktop composer. */
 import assert from 'node:assert/strict';
 import { writeFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { harness, until } from './ia-2b-harness.mjs';
-const evidence=resolve(import.meta.dirname,'../evidence/ia-3');
+const evidence=evidencePath('ia-3');
 const h=await harness('ia3-ui',{memory:false,mainChat:true});
 const report={realElectron:true,fixedDsh:true,model:'mimo-v2.6-flash',checks:[]};
 try {

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -42,7 +43,7 @@ const eightOnly = process.argv.includes('--eight-only');
 assert.ok(provider === null || ['mimo', 'lan'].includes(provider), '--model mimo|lan');
 const coreSource = resolve(option('--memory-core-source', 'D:/AIProjects/MemoWeft/Core/py/src'));
 const python = option('--python', 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe');
-const evidence = resolve(option('--out', join(repository, 'tests/evidence/m2-exit')));
+const evidence = resolve(option('--out', evidencePath('m2-exit')));
 const lockPath = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';
 const lockToken = `${option('--lock-owner', 'EX-2')} ${randomUUID()}`;
 let bridge, lockTimer, ownsLock = false;

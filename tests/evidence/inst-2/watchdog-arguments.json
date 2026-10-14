@@ -1,5 +1,0 @@
-{
-  "before": "<test-argv-probe> --updated /S /currentuser \"/D=C:\\synthetic 中文 path\\WeftMate\"",
-  "after": "\"<test-argv-probe>\" --updated /S /currentuser /D=C:\\synthetic 中文 path\\WeftMate",
-  "nsisTailPreserved": true
-}

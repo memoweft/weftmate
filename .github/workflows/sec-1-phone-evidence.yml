@@ -20,6 +20,7 @@ jobs:
       max-parallel: 4
       matrix: ${{ fromJSON(inputs.matrix || '{"width":[360,390],"theme":["light","dark"],"scenario":["agree","warning","timeout","unavailable"]}') }}
     env:
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/evidence
       WEFTMATE_SEC1_PHONE_WIDTH: ${{ matrix.width }}
       WEFTMATE_SEC1_PHONE_THEME: ${{ matrix.theme }}
       WEFTMATE_SEC1_PHONE_CASE: ${{ matrix.scenario }}
@@ -67,6 +68,6 @@ jobs:
         with:
           name: sec-1-phone-system-bars-${{ matrix.width }}-${{ matrix.theme }}-${{ matrix.scenario }}
           path: |
-            tests/evidence/sec-1/phone-system-*.png
-            tests/evidence/sec-1/system-bar-checks.json
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/sec-1/phone-system-*.png
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/sec-1/system-bar-checks.json
           retention-days: 7

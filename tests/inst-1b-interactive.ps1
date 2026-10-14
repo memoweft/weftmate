@@ -1,10 +1,10 @@
-﻿param([Parameter(Mandatory=$true)][string]$Installer,[Parameter(Mandatory=$true)][string]$UpgradeInstaller,[string]$Out='tests/evidence/inst-1',[ValidateSet('both','default','custom')][string]$Mode='both',[switch]$Watchdog)
+﻿param([Parameter(Mandatory=$true)][string]$Installer,[Parameter(Mandatory=$true)][string]$UpgradeInstaller,[string]$Out=(Join-Path $(if ($env:WEFTMATE_EVIDENCE_DIR) { $env:WEFTMATE_EVIDENCE_DIR } else { '.local/evidence' }) 'inst-1'),[ValidateSet('both','default','custom')][string]$Mode='both',[switch]$Watchdog)
 $ErrorActionPreference='Stop'
 $started=Get-Date
 $workspace=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $Installer=(Resolve-Path -LiteralPath $Installer).Path
 $UpgradeInstaller=(Resolve-Path -LiteralPath $UpgradeInstaller).Path
-$Out=[IO.Path]::GetFullPath((Join-Path $workspace $Out))
+$Out=[IO.Path]::GetFullPath($(if ([IO.Path]::IsPathRooted($Out)) { $Out } else { Join-Path $workspace $Out }))
 [IO.Directory]::CreateDirectory($Out)|Out-Null
 Add-Type -Path (Join-Path $PSScriptRoot 'helpers/installer-window.cs') -ReferencedAssemblies System.Drawing
 # NSIS stages the old tree under TEMP/…/old-install. Keep this synthetic base

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -24,6 +25,6 @@ try{
   const created=(await request(`/projects/${project.projectId}/sessions`,{requestId:randomUUID(),modelProfileId:'m'})).body.command;
   for(let i=0;i<100;i++){const command=(await request('/commands/'+created.commandId)).body.command;if(command.state==='accepted_by_dsh')break;await new Promise(done=>setTimeout(done,20));}
   assert.equal((await request(`/sessions/${created.sessionId}/metadata`,{title:'借阅说明总结'},'PATCH')).status,200);
-  await verifyMobileProjects({origin,credentials,project,sessionId:created.sessionId,api:request,evidence:resolve(import.meta.dirname,'../evidence/pj-1')});
+  await verifyMobileProjects({origin,credentials,project,sessionId:created.sessionId,api:request,evidence:evidencePath('pj-1')});
   console.log('PJ-1 mobile bundle geometry, project creation and move menu passed (synthetic DSH backend)');
 }finally{await service.close();await rm(root,{recursive:true,force:true});}

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Shipped mobile assets and production Electron shell, synthetic data only. */
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ import {execFileSync} from 'node:child_process';
 import {digestAuthFixture} from '../helpers/memory-digest-auth-fixture.mjs';
 
 const baselineCommit=process.env.WEFTMATE_MOB2_BASELINE||'9d5dc5d69d97bd5f5aaa7096e55af648ed61db92';
-const before=process.argv.includes('--before'), out=resolve('tests/evidence/mob-2',before?'before':'after');
+const before=process.argv.includes('--before'), out=evidencePath('mob-2', before?'before':'after');
 const desktopOnly=process.argv.includes('--desktop-only');
 await mkdir(out,{recursive:true});
 const authentication=await digestAuthFixture();

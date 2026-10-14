@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -9,7 +10,7 @@ import {digestAuthFixture} from '../helpers/memory-digest-auth-fixture.mjs';
 import {readMuMuInfo} from '../../scripts/nightly/mumu.mjs';
 const baselineCommit=process.env.WEFTMATE_MOB2_BASELINE||'9d5dc5d69d97bd5f5aaa7096e55af648ed61db92';
 const diagnostic=process.argv.includes('--diagnose-navigation');
-const cloud=!!process.env.WEFTMATE_MOB2_ANDROID_SERIAL,adb=process.env.WEFTMATE_MOB2_ADB??'D:/Software/MuMuPlayer/nx_main/adb.exe',pkg=process.env.WEFTMATE_MOB2_ANDROID_PACKAGE??'com.memoweft.weftmate.mobile.st4qa',out=resolve('tests/evidence/mob-2',process.argv.includes('--before')?'before':'after'),lock=cloud?resolve('.local/st2-phone.lock'):'D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock';
+const cloud=!!process.env.WEFTMATE_MOB2_ANDROID_SERIAL,adb=process.env.WEFTMATE_MOB2_ADB??'D:/Software/MuMuPlayer/nx_main/adb.exe',pkg=process.env.WEFTMATE_MOB2_ANDROID_PACKAGE??'com.memoweft.weftmate.mobile.st4qa',out=evidencePath('mob-2', process.argv.includes('--before')?'before':'after'),lock=cloud?resolve('.local/st2-phone.lock'):'D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock';
 await mkdir(out,{recursive:true});const ownsLease=process.env.WEFTMATE_MOB2_MUMU_LEASE!=='parent';if(ownsLease){const lease=await open(lock,'wx');await lease.writeFile(`MOB-2 ${new Date().toISOString()} remote browser system bars`);await lease.close();}else assert.match(await readFile(lock,'utf8'),/^MOB-2 fresh-navigation/);
 let authentication;let f,proxy,browserOrigin,socket,forward,serial,originalNight,originalSize,originalDensity,resized=false,installed=false;const checks=[];
 function run(...args){return execFileSync(adb,['-s',serial,...args],{windowsHide:true,maxBuffer:16*1024*1024});}

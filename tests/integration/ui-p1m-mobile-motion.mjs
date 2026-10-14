@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { execFileSync, spawn } from 'node:child_process';
@@ -8,7 +9,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { startFe1bFixture } from './fe-1b-fixture.mjs';
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
 const repository=resolve(import.meta.dirname,'../..'), assets=join(repository,'apps/mobile-ui/www');
-const evidence=join(repository,'tests/evidence/ui-p1m'), baseline='b99044dbf1ef920c5e1667f6f216f5aabf29bdc9';
+const evidence=evidencePath('ui-p1m'), baseline='b99044dbf1ef920c5e1667f6f216f5aabf29bdc9';
 const device=process.argv.includes('--device'), capture=!process.argv.includes('--verify-only');
 const surface=device?'android':'chromium', packageName='com.memoweft.weftmate.mobile.uip1mqa';
 const adb='D:/Software/MuMuPlayer/nx_main/adb.exe', serial='127.0.0.1:7555';

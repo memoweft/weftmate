@@ -1,6 +1,0 @@
-{
-  "realNative": true,
-  "realFixedDsh": true,
-  "transport": "trusted direct loopback + ADB reverse; owned content transport gate",
-  "checks": []
-}

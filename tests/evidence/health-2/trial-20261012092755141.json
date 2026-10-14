@@ -1,7 +1,0 @@
-{
-  "startedAt": "2026-10-12T09:27:55.141Z",
-  "completed": false,
-  "mimoRequests": 2,
-  "healthBackgroundRequests": 1,
-  "failure": "Health-2 timed out: real background MiMo insight"
-}

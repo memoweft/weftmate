@@ -17,6 +17,7 @@ jobs:
         width: [360, 390]
         theme: [light, dark]
     env:
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/evidence
       WEFTMATE_ST2_PHONE_WIDTH: ${{ matrix.width }}
       WEFTMATE_ST2_PHONE_THEME: ${{ matrix.theme }}
     steps:
@@ -55,6 +56,6 @@ jobs:
         with:
           name: st-2-phone-system-bars-${{ matrix.width }}-${{ matrix.theme }}
           path: |
-            tests/evidence/st-2/phone-system-*.png
-            tests/evidence/st-2/system-bar-checks.json
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/st-2/phone-system-*.png
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/st-2/system-bar-checks.json
           retention-days: 7

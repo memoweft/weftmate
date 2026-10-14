@@ -1,9 +1,10 @@
+import { evidencePath } from '../../helpers/evidence-path.mjs';
 /** Repeated review probes, one process at a time; no production accounts/models. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-const dir = resolve(process.env.BL29_EVIDENCE_DIR || 'tests/evidence/bl-29/rework/after');
+const dir = resolve(process.env.BL29_EVIDENCE_DIR || evidencePath('bl-29/rework/after'));
 mkdirSync(dir,{recursive:true});
 const selected = process.argv.slice(2);
 const names = selected.length ? selected : ['probe-race','probe-http-race','probe-server','probe-gateway','probe-browser','probe-desktop-errors','probe-latency','probe-exit','probe-events','probe-auth','probe-compat'];

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
@@ -10,7 +11,7 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { cleanupOwnedProcesses, redactEvidenceText, systemCommitMemory } from '../helpers/process-evidence.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/st-7a'),root=await mkdtemp(join(tmpdir(),'weftmate-st7a-electron-')),profile=join(root,'profile'),startedAt=Date.now();
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('st-7a'),root=await mkdtemp(join(tmpdir(),'weftmate-st7a-electron-')),profile=join(root,'profile'),startedAt=Date.now();
 await mkdir(out,{recursive:true});await mkdir(profile);await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const key=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"],{encoding:'utf8',windowsHide:true}).trim();assert.ok(key,'Machine model key required');
 const credentials={username:`st7a-${randomUUID()}`,password:`synthetic-${randomUUID()}`};

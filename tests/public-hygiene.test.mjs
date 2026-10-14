@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -32,7 +32,7 @@ test('CLI rejects a fake identity by file name without echoing the identity and 
     rmSync(join(root, 'wide.txt'));
     writeFileSync(join(root, 'public.txt'), ['C:', 'Users', '<user>', 'report.txt'].join('\\'));
     writeFileSync(join(root, 'image.bin'), Buffer.concat([Buffer.from([0]), Buffer.from(fakePath('\\'))]));
-    result = run(); assert.equal(result.status, 0); assert.match(result.stdout, /0 files with local identities/);
+    result = run(); assert.equal(result.status, 0); assert.match(result.stdout, /0 repository violations/);
   } finally { rmSync(root, {recursive:true, force:true}); }
 });
 test('one-time cleaner reads runtime identity, preserves JSON and source escaping, and is idempotent', () => {
@@ -49,5 +49,30 @@ test('one-time cleaner reads runtime identity, preserves JSON and source escapin
     execFileSync(process.execPath, ['--check', join(root, 'runner.mjs')]);
     assert.equal(readFileSync(join(root, 'wide.txt'))[0], 0xff);
     assert.equal(run().changed, 0);
+  } finally { rmSync(root, {recursive:true, force:true}); }
+});
+
+test('CLI rejects tracked evidence even when ignored or absent, and oversized STATE; recovery passes', () => {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-governance-'));
+  try {
+    execFileSync('git', ['init', '-q', root]);
+    const run = () => spawnSync(process.execPath, [resolve('.github/scripts/public-hygiene.mjs')], {cwd:root, encoding:'utf8'});
+    mkdirSync(join(root, 'tests/evidence'), {recursive:true});
+    mkdirSync(join(root, 'docs'));
+    writeFileSync(join(root, '.gitignore'), 'tests/evidence/\n.local/\n');
+    const evidence = join(root, 'tests/evidence/capture.png');
+    writeFileSync(evidence, Buffer.from([0, 1]));
+    assert.equal(run().status, 0, 'ignored untracked output is allowed');
+    execFileSync('git', ['add', '-f', 'tests/evidence/capture.png'], {cwd:root});
+    let result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /git rm -r tests\/evidence/);
+    rmSync(evidence);
+    assert.equal(run().status, 1, 'missing working file is still tracked');
+    execFileSync('git', ['rm', '--cached', '-f', 'tests/evidence/capture.png'], {cwd:root});
+    writeFileSync(join(root, 'docs/STATE.md'), '现'.repeat(6667));
+    result = run(); assert.equal(result.status, 1); assert.match(result.stderr, /STATE.md exceeds 20 KB/);
+    writeFileSync(join(root, 'docs/STATE.md'), 'a'.repeat(20_000));
+    assert.equal(run().status, 0, 'exact byte limit is allowed');
+    writeFileSync(join(root, 'docs/STATE.md'), '# Current capabilities\n');
+    assert.equal(run().status, 0, 'both violations recover without changing checks');
   } finally { rmSync(root, {recursive:true, force:true}); }
 });

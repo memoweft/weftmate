@@ -53,3 +53,6 @@ Thumbs.db
 /test-output.txt
 /.impeccable/review/
 /test-data/memory-ui-*/
+
+# Generated acceptance evidence (use WEFTMATE_EVIDENCE_DIR or .local/evidence/)
+/tests/evidence/

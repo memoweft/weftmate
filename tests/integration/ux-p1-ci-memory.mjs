@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** UX-P1b: all/type/all filters through the shipped mobile browser UI. */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
@@ -5,7 +6,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 
-const out = resolve(import.meta.dirname, '../evidence/ux-p1b');
+const out = evidencePath('ux-p1b');
 await mkdir(out, { recursive: true });
 let fixture, browser;
 const checks = [], errors = [];

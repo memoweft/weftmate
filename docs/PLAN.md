@@ -91,8 +91,8 @@ Windows 只有一个执行会话，所以凡是与平台无关、不改 `src/` �
 
 - 两个执行者并行；契约先行（M0-5），UI 不等后端完成。
 - **文件归属**：Windows 侧改 `src/`、`apps/android/`、`apps/mobile-ui/`、`scripts/`（除 `scripts/eval*`）；Mac 侧改 `apps/apple/`、`docs/CLIENT_API.md`、`eval/`、`scripts/eval*`。需要改对方的文件时，在 PR 里说明并请对方先合入自己的在途分支。
-- 契约变更流程：改接口的一方同时改 `CLIENT_API.md` 并在 `STATE.md`「契约变更」一栏记一行；A-UI / W-UI 下次开工先读这一栏。
-- 交接：Codex 完成工作包后推送分支并开 PR 到 `main`，PR 描述写做了什么 / 怎么验证 / 遗留；同时更新 `STATE.md`。本人把 PR 链接交 Claude 审查，通过后合并。
+- 契约变更流程：改接口的一方同时改 `CLIENT_API.md` 并在交付结果与 PR（拉取请求）中说明；客户端执行者下次开工先读 `CLIENT_API.md`。
+- 交接：Codex 完成工作包后推送分支并开 PR 到 `main`，PR 描述写做了什么 / 怎么验证 / 遗留；交付结果写到任务书指定的仓库外包目录，`STATE.md` 由总代理维护。本人把 PR 链接交 Claude 审查，通过后合并。
 - **Git 与 GitHub**：`memoweft/weftmate`（私有）是唯一主仓，五端代码都在里面（Apple 在 `apps/apple`）。Windows 与 Mac 各自 clone，按工作包开分支 `wp/<编号>-<短名>`，经 PR 合入 `main`；开工前先 `git pull` 拿最新 `main`。不再在本地复制目录或手工搬运代码。
 
 ## 5. 里程碑总览
@@ -151,7 +151,7 @@ M0-1b 会拆分 `personal-access/index.mjs`，M0-5 以拆分前的行为为准�
 ### M0-5 客户端契约文档 · Codex Mac（Windows 侧审阅）
 - 从现有 `/personal/v1`（`src/personal-access/index.mjs`、`src/personal-access-backend.mjs`）整理出 `docs/CLIENT_API.md`：认证/设备、会话列表、历史分页（按 M0-3 新语义）、发送消息、事件流、停止、审批、任务进度、成果下载、记忆、模型选择、版本更新。
 - 每个接口：路径、请求、响应示例、错误码、哪些端已使用。
-- 同时对照现有 Apple 客户端标出不一致与缺口，写进 `STATE.md` 契约栏。
+- 同时对照现有 Apple 客户端标出不一致与缺口，写进交付结果与 `CLIENT_API.md`。
 - 完成：三条轨道都只引用这一份文档。
 
 ### M0-6 本地 Qwen 服务稳定 · W-Core
@@ -166,7 +166,7 @@ M0-1b 会拆分 `personal-access/index.mjs`，M0-5 以拆分前的行为为准�
   - 记忆 4：告诉偏好→新对话里被采用；纠正一条理解→后续按纠正走；换模型后仍记得；提到某人→之后提到时能联系上。
   - 跨端 2：电脑发起、手机查看进度并审批；手机发起、电脑执行、手机看结果。
 - `scripts/eval.mjs`：通过个人 API 驱动、隔离测试账号与数据目录、输出 Markdown 结果表；`--model qwen|mimo` 切换。
-- 完成：Qwen 与 MiMo 各跑一次基线写入 `STATE.md`（预计 M0 时很多不过，这正是基线）。
+- 完成：Qwen 与 MiMo 各跑一次基线写入仓库外的交付结果（预计 M0 时很多不过，这正是基线）。
 
 ### A0 / A1 Apple 轨道 · Codex Mac
 - A0：在新 clone 中建 `wp/apple-sync`，迁入旧工作副本 `~/Desktop/WeftMate/AppleWork-844429c/WeftMate` 尚未进 `main` 的提交（含 `278bc6c`）与未提交改动，PR 合入。之后只在新 clone 工作。

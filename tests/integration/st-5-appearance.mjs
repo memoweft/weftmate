@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Production Electron shell and both phone web presentations, synthetic host only.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
@@ -8,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const out = resolve('tests/evidence/st-5'); await mkdir(out,{recursive:true});
+const out = evidencePath('st-5'); await mkdir(out,{recursive:true});
 const f = await startTimelineCandidate({interactive:true,composer:true,historyCount:0});
 const profile = await mkdtemp(join(tmpdir(),'weftmate-st5-electron-'));
 const env = {...process.env}; for(const key of Object.keys(env)) if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE') delete env[key];

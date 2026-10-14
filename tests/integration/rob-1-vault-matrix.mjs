@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -5,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { createProcessEvidence } from '../helpers/process-evidence.mjs';
 const repo=resolve(import.meta.dirname,'../..'), electron=createRequire(import.meta.url)('electron');
 const root=mkdtempSync('C:/weftmate-rob1-'), startedAt=Date.now();
-const phase=process.argv[2] || 'before-fix', report=[], output=resolve(process.env.WEFTMATE_ROB1_MATRIX_OUTPUT || join(repo,'tests/evidence/rob-1'));
+const phase=process.argv[2] || 'before-fix', report=[], output=resolve(process.env.WEFTMATE_ROB1_MATRIX_OUTPUT || evidencePath('rob-1'));
 mkdirSync(output,{recursive:true});
 const moduleFile=resolve(process.argv[3] || 'src/config-store.ts');
 let cleaned=0, safeToRemove=true;
