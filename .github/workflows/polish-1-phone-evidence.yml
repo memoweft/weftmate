@@ -22,6 +22,7 @@ jobs:
         width: ${{ fromJson(inputs.widths || '[360,390]') }}
         theme: [light, dark]
     env:
+      WEFTMATE_EVIDENCE_DIR: ${{ github.workspace }}/.local/evidence
       TZ: Asia/Shanghai
       WEFTMATE_POLISH1_PHONE_WIDTH: ${{ matrix.width }}
       WEFTMATE_POLISH1_PHONE_THEME: ${{ matrix.theme }}
@@ -94,8 +95,8 @@ jobs:
         with:
           name: polish-1-phone-system-bars-${{ matrix.width }}-${{ matrix.theme }}
           path: |
-            tests/evidence/polish-1/phone-system-*.png
-            tests/evidence/polish-1/focus-failure.*
-            tests/evidence/polish-1/system-bars-*.json
-            tests/evidence/polish-1/phone-verification-*.json
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/polish-1/phone-system-*.png
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/polish-1/focus-failure.*
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/polish-1/system-bars-*.json
+            ${{ env.WEFTMATE_EVIDENCE_DIR }}/polish-1/phone-verification-*.json
           retention-days: 7

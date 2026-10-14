@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
 import {execFile,execFileSync,spawn} from 'node:child_process';
@@ -9,7 +10,7 @@ import {chromium} from 'playwright';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {generateHealthSequence} from '../helpers/health-sequence.mjs';
 import {assertSystemBars} from '../../scripts/nightly/system-bars.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/health-2'),lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg='com.memoweft.weftmate.mobile.health2qa',adb='D:/Software/MuMuPlayer/nx_main/adb.exe',execute=promisify(execFile);
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('health-2'),lock='D:/AIProjects/WeftMate/Runtime/Orchestrator/mumu.lock',pkg='com.memoweft.weftmate.mobile.health2qa',adb='D:/Software/MuMuPlayer/nx_main/adb.exe',execute=promisify(execFile);
 let serial,fixture,browser,forward,probe,installed=false,held=false,reversed=false,probeLog='';const report={synthetic:true,realNativeBusinessBridge:true,modelRequests:0,checks:[],screenshots:[],settingsChanged:false};
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,label){const end=Date.now()+45000;while(Date.now()<end){try{const v=await fn();if(v)return v;}catch{}await pause(150);}throw Error('Health native timeout: '+label);}

@@ -1,3 +1,4 @@
+import os
 """Summarize original device captures without inventing a system navigation bar."""
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -5,7 +6,7 @@ from collections import Counter
 import json, re
 
 repo = Path(__file__).resolve().parents[2]
-root = repo / 'tests/evidence/and-7'
+root = (repo / os.environ.get('WEFTMATE_EVIDENCE_DIR', '.local/evidence')) / 'and-7'
 records = []
 for path in sorted(root.glob('and7-*.png')):
     match = re.match(r'and7-(360|390)-(light|dark)-(.+)\.png', path.name)

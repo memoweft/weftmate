@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Presentation verification only. Real Core/model acceptance is acceptance.json. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -6,7 +7,7 @@ import {resolve,join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {_electron,chromium} from 'playwright';
 import {createRequire} from 'node:module';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/mem-7'),root=await mkdtemp(join(tmpdir(),'weftmate-mem7-ui-'));
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('mem-7'),root=await mkdtemp(join(tmpdir(),'weftmate-mem7-ui-'));
 const styles=[...(await readFile(join(repo,'src/personal-access-ui/index.html'),'utf8')).matchAll(/<link rel="stylesheet"[^>]+>/g)].map(m=>m[0].replace('/personal/v1/ui/ui-core/','/core/').replace('/personal/v1/ui/','/desktop/')).join('');
 const html=`<!doctype html><html lang="zh-CN" class="weftmate-desktop" data-native-platform="win32"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${styles}<script>globalThis.WeftUiComponents={factories:{}}</script><script src="/desktop/icons.js"></script><script src="/desktop/popovers.js"></script><script src="/desktop/components/main-chat.js"></script><script src="/desktop/history-import-view.js"></script><body><main class="settings-body" id="view"></main></body></html>`;
 const server=createServer(async(req,res)=>{const p=new URL(req.url,'http://synthetic.invalid').pathname;try{if(p==='/'){res.setHeader('content-type','text/html');res.end(html);return;}const [kind,...parts]=p.slice(1).split('/');assert.ok(['desktop','core','phone'].includes(kind)&&!parts.includes('..'));const file=join(repo,kind==='desktop'?'src/personal-access-ui':kind==='core'?'src/ui-core':'apps/mobile-ui/www',...parts);res.setHeader('content-type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':'text/html');res.end(await readFile(file));}catch{res.writeHead(503,{'content-type':'application/json'});res.end('{"error":{"code":"SYNTHETIC_VISUAL_ONLY"}}');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));

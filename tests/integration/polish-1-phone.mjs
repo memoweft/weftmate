@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Full Android browser screens from synthetic mobile assets, before and after. */
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import {mkdir,writeFile,rm} from 'node:fs/promises';
@@ -5,7 +6,7 @@ import {resolve,join} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {capturePolishPhone} from '../helpers/polish-1-phone.mjs';
 import {statisticalInsight} from '../../src/personal-access/daily-digest.mjs';
-const out=resolve('tests/evidence/polish-1');await mkdir(out,{recursive:true});
+const out=evidencePath('polish-1');await mkdir(out,{recursive:true});
 const days=Array.from({length:7},(_,i)=>({day:`2026-10-${String(5+i).padStart(2,'0')}`,tasks:{completed:1,items:[]},outputs:{count:0,items:[]},usage:{hourlyTurns:[0,1,0,0,0,0]},conversations:{items:[]}}));
 for(const phase of ['before','after']){
  const fixture=await startTimelineCandidate({interactive:true,historyCount:0,composer:true,inlineProgress:true});fixture.progress.text('报告已完成，相关测试通过。');fixture.progress.finish();

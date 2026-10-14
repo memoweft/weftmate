@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import test from 'node:test';
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
@@ -8,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 
 const root=fileURLToPath(new URL('../../apps/mobile-ui/www/',import.meta.url));
-const evidence=fileURLToPath(new URL('../evidence/ds-1/',import.meta.url));
+const evidence=evidencePath('ds-1/');
 const phase=process.argv.includes('--before')?'before':'after';
 
 test('UI-2 mobile home, themes, progressive detail, full-screen sources, drafts and history',async()=>{

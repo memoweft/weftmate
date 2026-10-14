@@ -1,10 +1,11 @@
+const { evidencePath } = require('../helpers/evidence-path.cjs');
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** Electron helper invoked by ds-1-compare.mjs. */
 const {app,nativeImage}=require('electron');
 const fs=require('node:fs'),path=require('node:path');
 app.whenReady().then(()=>{
-const dir=path.resolve('tests/evidence/ds-1'),results=[];
+const dir=evidencePath('ds-1'),results=[];
 for(const name of fs.readdirSync(dir).filter(n=>n.startsWith('before-')&&n.endsWith('.png'))){const other=name.replace('before-','after-');if(!fs.existsSync(path.join(dir,other)))throw Error('Missing '+other);
 const a=nativeImage.createFromPath(path.join(dir,name)),b=nativeImage.createFromPath(path.join(dir,other));const {width,height}=a.getSize();if(JSON.stringify(a.getSize())!==JSON.stringify(b.getSize()))throw Error(name+' size differs');
 const ab=a.toBitmap(),bb=b.toBitmap(),diff=Buffer.alloc(ab.length);let changed=0,maxDelta=0;let box=[width,height,0,0];

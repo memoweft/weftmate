@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -10,7 +11,7 @@ import { join,resolve } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const mimo=process.argv.includes('--mimo'),long=process.argv.includes('--long'),out=resolve('tests/evidence/stream-1',process.argv.includes('--privacy')?'privacy':process.argv.includes('--motion')?'mimo-motion':long?(mimo?(process.argv.includes('--text-only')?'mimo-long-final':process.argv.includes('--after')?'mimo-long-after':'mimo-long'):'synthetic-long'):mimo?'mimo':'synthetic');mkdirSync(out,{recursive:true});
+const mimo=process.argv.includes('--mimo'),long=process.argv.includes('--long'),out=evidencePath('stream-1', process.argv.includes('--privacy')?'privacy':process.argv.includes('--motion')?'mimo-motion':long?(mimo?(process.argv.includes('--text-only')?'mimo-long-final':process.argv.includes('--after')?'mimo-long-after':'mimo-long'):'synthetic-long'):mimo?'mimo':'synthetic');mkdirSync(out,{recursive:true});
 const root=mkdtempSync(join(tmpdir(),'weftmate-stream1-live-')),profile=join(root,'profile'),wire=join(root,'wire.jsonl');mkdirSync(profile);
 writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const credentials={username:'stream1-'+randomUUID(),password:'synthetic-'+randomUUID(),deviceName:'synthetic-host'};

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Synthetic POLISH-1 before/after captures: production Electron and mobile assets. */
 import assert from 'node:assert/strict';
 import {chromium,_electron} from 'playwright';
@@ -12,7 +13,7 @@ import {readFileSync} from 'node:fs';
 import {statisticalInsight} from '../../src/personal-access/daily-digest.mjs';
 import {existsSync} from 'node:fs';
 const summaries=Array.from({length:7},(_,i)=>({day:`2026-10-${String(5+i).padStart(2,'0')}`,tasks:{completed:1,items:[]},outputs:{count:0,items:[]},usage:{hourlyTurns:[0,1,0,0,0,0]},conversations:{items:[]}}));
-const before=process.argv.includes('--before'),out=resolve('tests/evidence/polish-1',before?'before':'after');
+const before=process.argv.includes('--before'),out=evidencePath('polish-1', before?'before':'after');
 await mkdir(out,{recursive:true});
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 const f=await startTimelineCandidate({historyCount:0,interactive:true,composer:true,inlineProgress:true,sidebar:true});

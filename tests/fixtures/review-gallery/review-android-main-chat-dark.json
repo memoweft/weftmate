@@ -1,0 +1,10 @@
+{
+  "platform": "android",
+  "scene": "main-chat",
+  "theme": "dark",
+  "commit": "c2637a99519eef7c6993ac65198b72590cac26ef",
+  "generatedAt": "2026-10-10T11:34:52+08:00",
+  "synthetic": true,
+  "source": "tests/evidence/ux-p2/after-14-android-native-dark.png",
+  "timeBasis": "证据提交时间（历史图未记录拍摄时间）"
+}

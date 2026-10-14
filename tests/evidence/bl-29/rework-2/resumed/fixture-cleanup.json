@@ -1,9 +1,0 @@
-{
-  "at": "2026-10-11T15:46:26.6219584+08:00",
-  "directoriesRemoved": [
-    "weftmate-dsh-runtime-lifecycle-60xfaG",
-    "weftmate-dsh-runtime-lifecycle-V9PbVV"
-  ],
-  "stuckOwnedTestProcessesCleaned": 2,
-  "note": "Creation times, Node executable and owned lifecycle-test commands verified; calculated forced cleanup rejected by automatic approval, explicit literal non-forced cleanup completed"
-}

@@ -10,9 +10,10 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
 import { phoneRuntime } from '../../services/cloud/test/relay-phone-runtime.mjs';
 import { redactEvidenceText, cleanupOwnedProcesses } from '../helpers/process-evidence.mjs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 
 const repository = resolve(import.meta.dirname, '../..'), startedAt = Date.now();
-const root = await mkdtemp(join(tmpdir(), 'weftmate-mode1-')), out = join(repository, 'tests/evidence/mode-1-fix');
+const root = await mkdtemp(join(tmpdir(), 'weftmate-mode1-')), out = evidencePath('mode-1-fix');
 await mkdir(out, { recursive: true });
 const logs = [], report = { realElectron: true, realDsh: true, syntheticModel: true, checks: [], screenshots: [], errors: [], systemBarsVerified: false };
 let host, runtime, secondHost, secondRuntime, app, browser, heavyLock, heavyLease, activePage, stage = 'start';

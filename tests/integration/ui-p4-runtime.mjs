@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -15,7 +16,7 @@ import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/ho
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 const root=mkdtempSync(join(tmpdir(),'weftmate-p4-runtime-')),profile=join(root,'profile');mkdirSync(profile);
 writeFileSync(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
-const evidence=resolve('tests/evidence/ui-p4'), credentials={username:'ComposerFixture',password:`synthetic-${randomUUID()}-password`,deviceName:'UI-P4 Runtime'};
+const evidence=evidencePath('ui-p4'), credentials={username:'ComposerFixture',password:`synthetic-${randomUUID()}-password`,deviceName:'UI-P4 Runtime'};
 const backend=Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(method=>[method,async()=>method==='listModels'?[]:{}]));
 const preparation=await createPersonalAccessService({root:join(profile,'personal-access'),port:0,backend});
 const prepared=await preparation.start(),grant=await preparation.issueSetupGrant();

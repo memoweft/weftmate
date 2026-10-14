@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {execFileSync} from 'node:child_process';
@@ -9,7 +10,7 @@ import {disposeHealthFixture} from '../helpers/health-5-temp.mjs';
 import {cleanupOwnedProcesses,redactEvidenceText} from '../helpers/process-evidence.mjs';
 import {createPersonalAccessService} from '../../src/personal-access/index.mjs';
 import {computerUsageInterval,mergeComputerBuckets} from '../../src/personal-access/computer-usage.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/data-2'),root=await mkdtemp(join(tmpdir(),'weftmate-data2-pipe-')),profile=join(root,'profile'),directory=join(profile,'pipe-test'),startedAt=Date.now(),electron=createRequire(import.meta.url)('electron');
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('data-2'),root=await mkdtemp(join(tmpdir(),'weftmate-data2-pipe-')),profile=join(root,'profile'),directory=join(profile,'pipe-test'),startedAt=Date.now(),electron=createRequire(import.meta.url)('electron');
 await mkdir(directory,{recursive:true});await mkdir(out,{recursive:true});await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_|DSH_)/.test(key)||/API_KEY|API_TOKEN|MODEL_SWITCH_UNIFIED_KEY/.test(key))delete env[key];env.WEFTMATE_TEST_HOST_NAME='synthetic-host';env.WEFTMATE_BASELINE_TRACE=join(root,'requests.jsonl');
 const report={realElectron:true,parentExitedBeforeWarnings:true,warningEvents:[],errorDialogs:null,cleanedProcesses:0};let pid;

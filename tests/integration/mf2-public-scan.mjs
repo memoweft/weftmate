@@ -1,8 +1,9 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-const root = resolve('tests/evidence/mf-2');
+const root = evidencePath('mf-2');
 const env = (name, scope) => execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
   `[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','${scope}'))`], { encoding: 'utf8', windowsHide: true }).trim();
 const lan = env('WEFTMATE_LAN_MODEL_BASE_URL', 'User');

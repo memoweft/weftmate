@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -9,7 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { startFixture } from './ux-4-fixture.mjs';
 import { feedbackUiSession } from '../helpers/feedback-ui-session.mjs';
-const evidence=resolve('tests/evidence/ux-p2/interaction');mkdirSync(evidence,{recursive:true});
+const evidence=evidencePath('ux-p2/interaction');mkdirSync(evidence,{recursive:true});
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];
 env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const checks=[],errors=[];

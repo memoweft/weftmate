@@ -43,7 +43,7 @@ node scripts/run-personal-host.mjs --user-data-dir C:\WeftMate-Test\profile --ac
 
 旧 DSH 页面只在 `npm start -- --dsh-window` 中显式打开，供运行时设置、模型路由诊断及旧精灵管理使用；它不再是默认界面。桌面精灵仍由托盘唤醒/休息。安装包、快捷方式与开机后的完整安装形态验收属于 W-2。
 
-真实程序验证：在 Windows、依赖与固定 DSH vendor（运行时依赖）就绪后执行 `node tests/integration/personal-desktop-electron.mjs`。它用 Playwright Electron support（Electron 自动化支持）启动程序，使用临时标记目录、合成账号和本机合成模型；截图位于 `tests/evidence/w1/`，通过操作系统窗口捕获包含原生标题栏。测试拦截开机设置注册表写入，避免覆盖本人日用启动项。
+真实程序验证：在 Windows、依赖与固定 DSH vendor（运行时依赖）就绪后执行 `node tests/integration/personal-desktop-electron.mjs`。它用 Playwright Electron support（Electron 自动化支持）启动程序，使用临时标记目录、合成账号和本机合成模型；截图写到 `WEFTMATE_EVIDENCE_DIR` 指定目录下的 `w1/`；未设置时位于被忽略的 `.local/evidence/w1/`，通过操作系统窗口捕获包含原生标题栏。测试拦截开机设置注册表写入，避免覆盖本人日用启动项。
 
 ## 各端
 

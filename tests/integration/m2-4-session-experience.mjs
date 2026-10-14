@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 /** M2-4: real Electron + personal/v1 + native DSH, keys only in memory. */
@@ -84,7 +85,7 @@ try {
   const selected = (await api('/models')).body.models.find(model => model.name === modelName); assert.ok(selected?.configured);
   assert.equal((await api('/settings/models', { backgroundModelProfileId: selected.id }, 'PATCH')).status, 200);
 
-  const evidence = join(repository, 'tests/evidence/m2-4'); mkdirSync(evidence,{recursive:true});
+  const evidence = evidencePath('m2-4'); mkdirSync(evidence,{recursive:true});
   async function session(title) {
     const response=await api('/commands',{requestId:randomUUID(),kind:'session.create',targetDeviceId:(await api('/status')).body.hostId,modelProfileId:selected.id});
     assert.equal(response.status,202,JSON.stringify(response.body));

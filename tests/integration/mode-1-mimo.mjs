@@ -7,10 +7,11 @@ import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { phoneRuntime } from '../../services/cloud/test/relay-phone-runtime.mjs';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 
 const key = execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', "[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"], { encoding: 'utf8', windowsHide: true }).trim();
 assert.ok(key, 'Machine MiMo key required');
-const root = await mkdtemp(join(tmpdir(), 'weftmate-mode1-mimo-')), out = resolve('tests/evidence/mode-1'); await mkdir(out, { recursive: true });
+const root = await mkdtemp(join(tmpdir(), 'weftmate-mode1-mimo-')), out = evidencePath('mode-1'); await mkdir(out, { recursive: true });
 const report = { model: 'mimo-v2.6-flash', realDsh: true, syntheticAccount: true, actualTool: null, workCard: false, executed: false };
 let host, runtime;
 async function removeLinks(directory) { for (const row of await readdir(directory, { withFileTypes: true })) { const file = join(directory, row.name);
