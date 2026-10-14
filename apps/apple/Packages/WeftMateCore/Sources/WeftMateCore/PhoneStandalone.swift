@@ -70,7 +70,8 @@ extension PhoneModelConfiguration {
         guard line.hasPrefix("data:"),let object=try JSONSerialization.jsonObject(with:Data(line.dropFirst(5).utf8)) as? [String:Any] else { return nil }
         if object["type"] as? String == "error" { throw OfflineFailure.model }
         let delta=object["delta"] as? [String:Any]
-        return delta?["type"] as? String == "text_delta" ? delta?["text"] as? String : nil
+        guard delta?["type"] as? String == "text_delta", let text=delta?["text"] as? String, !text.isEmpty else { return nil }
+        return text
     }
 }
 
@@ -155,10 +156,19 @@ public enum PhoneStreamDelta {
         let payload=line.dropFirst(5).trimmingCharacters(in:.whitespaces)
         if payload == "[DONE]" { return nil }
         let object=try JSONSerialization.jsonObject(with:Data(payload.utf8)) as? [String:Any]
-        if object?["error"] != nil { throw OfflineFailure.model }
+        if hasValue(object?["error"]) { throw OfflineFailure.model }
         guard let choices=object?["choices"] as? [[String:Any]], let delta=choices.first?["delta"] as? [String:Any] else { return nil }
-        if delta["tool_calls"] != nil || delta["function_call"] != nil { throw OfflineFailure.model }
-        return delta["content"] as? String
+        if hasValue(delta["tool_calls"]) || hasValue(delta["function_call"]) { throw OfflineFailure.model }
+        guard let content=delta["content"] as? String, !content.isEmpty else { return nil }
+        return content
+    }
+    private static func hasValue(_ value: Any?) -> Bool {
+        // JSON null is NSNull, and compatible providers also send empty placeholders.
+        guard let value, !(value is NSNull) else { return false }
+        if let array=value as? [Any] { return !array.isEmpty }
+        if let object=value as? [String:Any] { return !object.isEmpty }
+        if let text=value as? String { return !text.isEmpty }
+        return true
     }
 }
 public enum PhoneHealthText {
