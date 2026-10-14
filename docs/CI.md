@@ -10,7 +10,7 @@
 
 云端 required 单文件期限为 10 分钟，依据既有最长文件约 8 分 12 秒的取证确定。超期结束本文件拥有的进程树，打印阶段、输出尾段、提交内存与退出码，判失败后继续下一文件。Windows 回收仍同时核对创建时间、可执行文件和隔离目录；每次尝试都有独立临时目录。矩阵 job（作业）期限为 25 分钟；完整报告在各分片步骤摘要与汇总步骤都可见。Chromium（浏览器引擎）和 Electron 二进制缓存按系统、架构及 `package-lock.json` 隔离；Windows 的 Media Foundation（媒体基础组件）仍用 Playwright 顺序安装。DSH（宿主运行时）缓存与版本不变。
 
-只读取 GitHub 的取证命令：`node .github/scripts/ci-failure-survey.mjs` 获取最近 80 次主流程；`survey({workflow:'windows-package.yml', ...})` 另取打包流程。原日志留在 `.local/ci-1/`，公开表格和诊断摘要在 `tests/evidence/ci-1/`。`node .github/scripts/ci-run-evidence.mjs <运行ID> <标签>` 下载各片报告、记录用时与重跑恢复；`round-1` 至 `round-6` 自动生成完整结果表。
+只读取 GitHub 的取证命令：`node .github/scripts/ci-failure-survey.mjs` 获取最近 80 次主流程；`survey({workflow:'windows-package.yml', ...})` 另取打包流程。原日志留在 `.local/ci-1/`，诊断摘要写到 `WEFTMATE_EVIDENCE_DIR` 下的 `ci-1/`，未设置时使用被忽略的 `.local/evidence/ci-1/`。`node .github/scripts/ci-run-evidence.mjs <运行ID> <标签>` 下载各片报告、记录用时与重跑恢复；`round-1` 至 `round-6` 自动生成完整结果表。
 
 旧检查名 `test (windows-latest)` / `test (ubuntu-latest)` 分别替换为 `test (windows-latest, shard 1/3)` 至 `3/3`、`test (ubuntu-latest, shard 1/3)` 至 `3/3`，新增阻断汇总 `Required unit tests (summary)`。原 `test (macos-latest)` 按原触发条件显示为 `test (macos-latest, shard 1/1)`。其他产品平台、云端服务与手机系统栏取证流程保留。
 

@@ -125,7 +125,9 @@ export function createMainChat(context) {
             const defaultThinking = context.accountState(ownerId).personalization?.defaultDeepThinking === true &&
               (await context.callBackend(() => context.backend.listModels({ ownerId }))).find(model => model.id === relay.modelProfileId)?.deepThinking?.supported === true;
             await context.callBackend(() => context.backend.createSession({ ownerId, sessionId: relay.sessionId,
-              modelProfileId: relay.modelProfileId, workspaceChatId: request.chatId, title: 'WeftMate' }));
+              modelProfileId: relay.modelProfileId, workspaceChatId: request.chatId, title: 'WeftMate',
+              ...(relay.sourceSessionId && context.accountState(ownerId).sessions[relay.sourceSessionId]?.projectId ? {
+                project: context.accountState(ownerId).projects[context.accountState(ownerId).sessions[relay.sourceSessionId].projectId] } : {}) }));
             if (relay.handoff) await context.callBackend(() => context.backend.installChatHandoff({ ownerId, sessionId: relay.sessionId, handoff: relay.handoff }));
             await context.serial(() => context.mutate(ownerId, next => {
               const row = next.chatIdentity.chats[request.chatId];
@@ -135,6 +137,8 @@ export function createMainChat(context) {
               next.sessions[relay.sessionId] = { ownerId, origin: 'personal-remote', attachedAt: now, modelProfileId: relay.modelProfileId,
                 approvalMode: previous ? next.sessions[previous.sessionId].approvalMode : next.defaultApprovalMode ?? 'auto', workspaceChatId: request.chatId,
                 deepThinking: previous ? next.sessions[previous.sessionId].deepThinking === true : defaultThinking,
+                ...(previous && next.sessions[previous.sessionId].mode === 'work' ? { mode:'work',workHostId:next.hostId,
+                  ...(next.sessions[previous.sessionId].projectId ? {projectId:next.sessions[previous.sessionId].projectId,projectRevision:next.sessions[previous.sessionId].projectRevision}: {}) } : {}),
                 ...(previous && next.sessions[previous.sessionId].allowedApprovalCategories ? { allowedApprovalCategories: structuredClone(next.sessions[previous.sessionId].allowedApprovalCategories) } : {}) };
               next.chatIdentity.segments[relay.segmentId] = { segmentId: relay.segmentId, chatId: request.chatId, sessionId: relay.sessionId,
                 hostId: next.hostId, ordinal: previous ? previous.ordinal + 1 : 0, state: 'active', startedAt: now,
@@ -148,7 +152,9 @@ export function createMainChat(context) {
         }
         if (!segment) throw failure('SESSION_UNAVAILABLE', 503);
         const { chatId, modelProfileId, ...raw } = request;
+        const binding = context.accountState(ownerId).sessions[segment.sessionId];
         let payload = canonicalCommand({ ...raw, kind: 'session.message', sessionId: segment.sessionId, chatId,
+          ...(binding.projectId ? {projectId:binding.projectId,projectRevision:binding.projectRevision} : {}),
           ...(request.attachments || request.originalAttachments ? { attachmentSessionId: request.attachmentSessionId ?? chat(ownerId).attachmentSessionId } : {}),
           chatRequestHash: command.payloadHash }, context.accountState(ownerId).hostId, true);
         if (payload.attachments || payload.originalAttachments) {

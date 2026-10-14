@@ -56,7 +56,8 @@
         // action opens this page, so pending approvals and settings stay usable.
         section.hidden = !(view && showHistory);
         document.body.classList?.toggle?.('offline-history-open',!section.hidden);
-        notice.textContent = error; notice.hidden = !error || showHistory || !!core.connectionView && core.connectionView().kind !== 'online';
+        const idleCloudSetup = error === WeftOfflineView.syncFailure({code:'OFFLINE_CLOUD_REQUIRED'}).message && !view?.turns.length && !view?.tasks?.length;
+        notice.textContent = error; notice.hidden = !error || idleCloudSetup || showHistory || !!core.connectionView && core.connectionView().kind !== 'online';
         title.textContent = offline ? '离线模式' : '离线对话';
         mode.textContent = offline ? view?.taskReady?(view.chatReady?explanation:'电脑离线，可以先记下要做的事，等电脑上线后去做。'):'电脑离线，可以继续聊天和使用记忆。' : view?.turns.length ? '电脑已上线，正在同步离线对话' : '已同步';
         label.firstChild.textContent = offline ? taskMode?'要交代什么？':'继续聊聊' : '电脑已上线，可返回原对话查看进展';
@@ -101,6 +102,16 @@
           if(task.state==='sending'){const retry=element('button','重试');retry.type='button';retry.disabled=view?.taskSending;retry.onclick=async()=>{retry.disabled=true;try{await engine.retryTask(task.id);}catch{error='还没确认记下，请稍后重试。';paint();}finally{retry.disabled=false;}};row.append(retry);}
           messages.append(row);
         }
+        for (const turn of conversation?.turns || []) if (turn.workRequest?.status === 'pending') {
+          const card = element('section', '', 'work-switch-card'); card.setAttribute('aria-label', '切换到工作');
+          card.append(element('h3', '这件事需要在电脑上做。要切换到工作吗？'), element('p', '需要一台在线的电脑', 'muted'));
+          const actions = element('div', '', 'work-switch-actions');
+          const later = element('button', '先不用', 'button secondary'); later.type = 'button'; later.onclick = () => engine.declineWork(turn.id);
+          actions.append(later);
+          if (view.taskReady) { const queue = element('button', '交给电脑，上线后做', 'button primary'); queue.type = 'button';
+            queue.onclick = () => { taskMode = true; input.value = turn.workRequest.text; paint(); input.focus(); }; actions.append(queue); }
+          card.append(actions); messages.append(card);
+        }
         messages.scrollTop=atBottom?messages.scrollHeight:scrollTop;
       }
       async function start(current) {
@@ -110,7 +121,7 @@
         scope = next; identity = current;
         offline = false; showHistory = false; error = '';
         const vault = nativeCall ? WeftOffline.nativeVault(nativeCall) : await WeftOffline.browserVault(scope);
-        engine = await WeftOffline.create({ vault, identity, host, control: hostId => core.cloudOfflineStatus(hostId),
+        engine = await WeftOffline.create({ vault, identity, host, workRequests: !nativeCall, control: hostId => core.cloudOfflineStatus(hostId),
           tasks:core.cloudOfflineTasks,taskDevice:core.cloudOfflineTaskDevice,notify:()=>{paint();goalsCore.offlineTasksChanged?.();} });
         targetHostId=engine.view().tasks.at(-1)?.hostId||current.hostId;
         if(engine.view().taskReady&&!engine.view().chatReady)taskMode=true;
@@ -171,6 +182,8 @@
       const open = () => { if(typeof CustomEvent==='function')document.dispatchEvent?.(new CustomEvent('weftmate:fixed-page',{detail:'chat'}));openConversation(); showHistory = true; paint(); section.scrollIntoView?.({ block: 'start' }); input.focus(); };
       launcher.addEventListener('click', open);
       core.openOfflineMode = open;
+      core.offlineWorkReady = () => engine?.view().taskReady === true;
+      core.openOfflineWorkMode = text => { if (!core.offlineWorkReady()) return;taskMode=true;input.value=text;open();paint(); };
       core.offlineConnectionRestored = tick;
       const unsubscribe = core.observeConnection?.(value => {if(value.kind==='online'&&offline)showHistory=false;paint();if(value.kind==='online')void tick().catch(()=>{});});
       for(const name of ['selectSession','selectMainChat'])if(core[name]){const original=core[name];core[name]=(...args)=>{showHistory=false;paint();return original(...args);};}

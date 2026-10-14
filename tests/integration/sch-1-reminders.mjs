@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -19,7 +20,7 @@ import { pipeline } from 'node:stream/promises';
 
 assert.ok(process.env.MIMO_API_KEY, 'MIMO_API_KEY must be supplied in process memory');
 const key = process.env.MIMO_API_KEY;
-const repo = resolve(import.meta.dirname, '../..'), evidence = join(repo, 'tests/evidence/sch-1');
+const repo = resolve(import.meta.dirname, '../..'), evidence = evidencePath('sch-1');
 const root = await mkdtemp(join(tmpdir(), 'weft-sch-1-')), profileDir = join(root, 'profile');
 await mkdir(profileDir); await mkdir(evidence, { recursive: true });
 await writeFile(join(profileDir, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));

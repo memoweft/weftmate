@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -9,7 +10,7 @@ import { mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { join,resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/tb-1');await mkdir(out,{recursive:true});
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('tb-1');await mkdir(out,{recursive:true});
 let erasedEvidence=0;
 const memoryManager={enabled:true,peek:()=> 'ready',status:async()=>({state:'ready',capabilities:{deleteEvidence:true}}),
   query:async(_owner,operation)=>operation==='query_jobs'?{jobs:[]}:operation==='preview_forget'?{world_revision:1,evidence_ids:['synthetic-tb1-evidence']}:{world_revision:1},

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import {chromium,_electron} from 'playwright';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
@@ -6,7 +7,7 @@ import {resolve,join} from 'node:path';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 import {managedMkdtemp,managedTempRoot,disposeManagedTemp} from '../helpers/managed-temp.mjs';
-const out=resolve('tests/evidence/fix-32');await mkdir(out,{recursive:true});
+const out=evidencePath('fix-32');await mkdir(out,{recursive:true});
 const f=await startTimelineCandidate({daily:true,sidebar:true,interactive:true,composer:true,historyCount:0});
 const browser=await chromium.launch({headless:true});let app,profile;
 const report={synthetic:true,modelRequests:0,browserSystemBars:false,engine:'Chromium emulated touch viewport; production Electron desktop',screenshots:[],gestures:[],errors:[]};

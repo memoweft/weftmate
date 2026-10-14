@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import {execFileSync} from 'node:child_process';
 import {readFile,writeFile,mkdir,rm,mkdtemp} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -6,7 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {createHostRelay} from '../../src/personal-relay/index.mjs';
 import {createBackgroundRouteRecorder} from '../../src/background-model-selection.mjs';
 import {createHostDiagnostics} from '../../src/host-diagnostics.mjs';
-const out=resolve('tests/evidence/fix-24');await mkdir(out,{recursive:true});
+const out=evidencePath('fix-24');await mkdir(out,{recursive:true});
 const original=execFileSync('git',['show','5e1766ca700e90217f16a5142f81cdfed1b68595:src/personal-relay/index.mjs'],{encoding:'utf8',windowsHide:true});
 const source=original.replace(/from '([^']+)'/g,(m,p)=>p.startsWith('.')?`from '${new URL(p,pathToFileURL(resolve('src/personal-relay/index.mjs'))).href}'`:m);
 const {createHostRelay:beforeFactory}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));

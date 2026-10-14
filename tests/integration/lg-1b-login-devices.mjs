@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -16,7 +17,7 @@ import { _electron, chromium } from 'playwright';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 
 const repository = resolve(import.meta.dirname, '../..');
-const evidence = join(repository, 'tests/evidence/lg-1b');
+const evidence = evidencePath('lg-1b');
 const run = randomUUID();
 const email = `lg1b-${run}@example.com`, changedEmail = `lg1b-changed-${run}@example.com`;
 const password = randomBytes(24).toString('base64url');
@@ -378,4 +379,4 @@ try {
   await rm(profile,{recursive:true,force:true});
   if(cloudRoot&&process.platform==='win32'){assert.match(cloudRoot,/^\/tmp\/weftmate-lg-1b-[a-zA-Z0-9]+$/);execFileSync('wsl.exe',['-d',process.env.WEFTMATE_LG1_WSL_DISTRO||'Ubuntu','--exec','rm','-rf','--',cloudRoot],{windowsHide:true});}else if(cloudRoot)await rm(cloudRoot,{recursive:true,force:true});
 }
-console.log(JSON.stringify({passed:report.passed,steps:report.steps,evidence:'tests/evidence/lg-1b'}));
+console.log(JSON.stringify({passed:report.passed,steps:report.steps,evidence:evidencePath('lg-1b')}));

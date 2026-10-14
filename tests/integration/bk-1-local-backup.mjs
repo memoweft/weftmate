@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 import assert from 'node:assert/strict';
@@ -13,7 +14,7 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { verify } from '../../src/personal-backup/archive.mjs';
 const repository = resolve(import.meta.dirname, '../..'), base = join('C:/Temp', `weftmate-bk-1-${randomUUID()}`), profile = join(base, 'profile');
-const evidence = join(repository, 'tests/evidence/bk-1'); await mkdir(evidence, { recursive: true }); await mkdir(profile, { recursive: true });
+const evidence = evidencePath('bk-1'); await mkdir(evidence, { recursive: true }); await mkdir(profile, { recursive: true });
 const { stdout } = await promisify(execFile)('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', "[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"], { windowsHide: true });
 const key = stdout.trim(); assert.ok(key, 'MiMo credential absent');
 const username = `bk-${randomUUID()}`, password = `test-${randomUUID()}-password`, memoryConfig = join(base, 'memory-config.json');

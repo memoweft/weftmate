@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -9,7 +10,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {startRenderingCandidate} from './ux-5-fixture.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
-const out=resolve('tests/evidence/ux-5');await mkdir(out,{recursive:true});
+const out=evidencePath('ux-5');await mkdir(out,{recursive:true});
 const report={checks:[],errors:[],performance:[]};
 for(const surface of ['desktop','mobile-web','android-ui']){
   const fixture=await startRenderingCandidate(),profile=await mkdtemp(join(tmpdir(),'weftmate-ux5-ui-'));

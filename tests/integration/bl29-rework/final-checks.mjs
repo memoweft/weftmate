@@ -1,7 +1,8 @@
+import { evidencePath } from '../../helpers/evidence-path.mjs';
 import {spawn} from 'node:child_process';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve} from 'node:path';
-const dir=resolve('tests/evidence/bl-29/rework');mkdirSync(dir,{recursive:true});
+const dir=evidencePath('bl-29/rework');mkdirSync(dir,{recursive:true});
 const scrub=s=>s.replaceAll(process.env.USERPROFILE||'no-profile','C:\\Users\\<user>').replaceAll(process.env.COMPUTERNAME||'no-host','<host>');
 const jobs=[
  ['rework-final',['--test','--test-concurrency=1','tests/bl-29-rework.test.ts','tests/bl-29-wait.test.ts','tests/m3-1-presence.test.ts','tests/stream-live.test.ts']],

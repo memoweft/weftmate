@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { rm, writeFile } from 'node:fs/promises';
@@ -5,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { exposeUx7Desktop, mockUx7Requests } from './ux-7-scenes.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const out=resolve(import.meta.dirname,'../evidence/ux-7'),f=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await f.complete();
+const out=evidencePath('ux-7'),f=await startTimelineCandidate({historyCount:0,interactive:true,composer:true});await f.complete();
 const browser=await chromium.launch({channel:'chrome',headless:true}),checks=[];
 try{for(const width of [390,360])for(const surface of ['mobile-web','android-bundle'])for(const theme of ['light','dark']){
  const page=await browser.newPage({viewport:{width,height:width===390?844:780},isMobile:true,hasTouch:true});page.setDefaultTimeout(15000);

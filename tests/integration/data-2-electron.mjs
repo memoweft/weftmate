@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import {_electron} from 'playwright';
 import {createRequire} from 'node:module';
@@ -11,7 +12,7 @@ import {PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT} from '../../src/host-
 import {disposeHealthFixture} from '../helpers/health-5-temp.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 import {redactEvidenceText,systemCommitMemory,describeExit,cleanupOwnedProcesses} from '../helpers/process-evidence.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/data-2'),root=await mkdtemp(join(tmpdir(),'weftmate-data2-')),profile=join(root,'profile'),startedAt=Date.now(),electron=createRequire(import.meta.url)('electron');
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('data-2'),root=await mkdtemp(join(tmpdir(),'weftmate-data2-')),profile=join(root,'profile'),startedAt=Date.now(),electron=createRequire(import.meta.url)('electron');
 await mkdir(out,{recursive:true});await mkdir(profile);await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const key=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"],{encoding:'utf8',windowsHide:true}).trim();assert.ok(key);
 const credentials={username:'data2-synthetic',password:'synthetic-'+randomUUID(),deviceName:'Synthetic usage test'};

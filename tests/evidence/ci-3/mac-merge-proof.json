@@ -1,6 +1,0 @@
-{
-  "matchesMainMacReaderImplementation": true,
-  "macDeadlineMs": 15000,
-  "windowsInitializationMs": 30000,
-  "windowsOperationMs": 15000
-}
