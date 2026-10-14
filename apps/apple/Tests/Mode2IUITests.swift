@@ -12,6 +12,24 @@ final class Mode2IUITests: XCTestCase {
                                "--ui-testing-namespace", "mode2i-" + UUID().uuidString, "--a5-theme", theme]
         app.launch(); return app
     }
+    @MainActor func testWorkSelectionNormalStateScreenshots() throws {
+        for theme in ["light","dark"] {
+            let app=connected(theme)
+            XCTAssertTrue(app.buttons["phone.sidebar"].waitForExistence(timeout:30))
+            app.buttons["phone.sidebar"].tap();app.buttons["phone.mode.work"].tap();app.buttons["phone.sidebar.new"].tap()
+            XCTAssertTrue(app.buttons["phone.work.project"].waitForExistence(timeout:5))
+            let mode=app.buttons["defaultApprovalMode"]
+            XCTAssertEqual(mode.value as? String,"每次询问")
+            XCTAssertFalse(app.staticTexts["审批模式未能核对，请重新连接后读取。"].exists)
+            app.buttons["phone.work.project"].tap();app.buttons["phone.work.project.project-b"].tap()
+            capture(theme+"-work-selection")
+            app.buttons["phone.work.computer"].tap()
+            XCTAssertTrue(app.buttons["随身电脑"].exists)
+            XCTAssertFalse(app.buttons["备用电脑 · 不在线"].isEnabled)
+            capture(theme+"-computer-choice")
+            app.terminate()
+        }
+    }
     @MainActor func testModesCreationSwitchAndStandaloneScreens() throws {
         for theme in ["light", "dark"] {
             let app = connected(theme)

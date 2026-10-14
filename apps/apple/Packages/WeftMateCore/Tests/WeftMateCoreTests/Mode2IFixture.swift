@@ -104,6 +104,7 @@ actor Mode2ITransport: HTTPTransport {
             decision = body; converted = body["outcome"] as? String == "allowed-once"
             return try json(["approval": approval(), "requestId": body["requestId"]!])
         }
+        if path == "/settings/approvals" || path.hasSuffix("/approval-mode") { return try json(["mode":"ask", "allowedCategories":[]]) }
         if path.hasSuffix("/approvals") { return try json(["approvals": [], "hasMore": false]) }
         if path.hasSuffix("/questions") { return try json(["questions": [], "hasMore": false]) }
         if path.hasPrefix("/commands/by-request/") {
@@ -125,7 +126,6 @@ actor Mode2ITransport: HTTPTransport {
             }
             return try json(["command": command], status: 202)
         }
-        if path == "/settings/approvals" || path.hasSuffix("/approval-mode") { return try json(["mode":"ask", "allowedCategories":[]]) }
         if path == "/models" { return try json(["models": [["id": "fixture", "name": "合成模型", "model": "fixture", "configured": true]]]) }
         if path == "/model-services" { return try json(["error": ["code": "NOT_FOUND"]], status: 404) }
         if path == "/sync/capabilities" { return try json(["deviceId": "device-fixture", "platform": body["platform"] ?? "ios", "sharedConversations": 1]) }
