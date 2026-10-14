@@ -122,6 +122,11 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             return@NativeTheme
         }
       CompositionLocalProvider(LocalNativeFrost provides if(selectedTab in listOf("chat","library","activity","goals","health"))frost else null,LocalReadingSize provides m.textSize,LocalCodeSize provides m.codeSize) {
+        if(selectedTab=="library-web") {
+            AndroidView(factory={activity.originalLibraryPage()},onRelease={activity.parkWeb()},
+                modifier=Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).windowInsetsPadding(WindowInsets.systemBars))
+            return@CompositionLocalProvider
+        }
         val focus=LocalFocusManager.current
         var drawer by remember { mutableStateOf(false) }
         androidx.activity.compose.BackHandler(showOverflow) { overflow=false }

@@ -118,6 +118,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
     }
     /** Native presentation shares the existing owner/epoch guarded business executor. */
     internal var nativeObserver: ((String, JSONObject) -> Unit)? = null
+    private var webPdfFile:Pair<String,NativeFile>?=null
     private var nativeHasDraft = false
     internal val embeddedWeb: WebView get() = web
     @Volatile protected var coveredHostHistory = false
@@ -401,7 +402,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
                     }
                 }
                 if(intent.getBooleanExtra("openLibraryPage",false))view.evaluateJavascript("""
-                    (()=>{async function open(){if(typeof page!=='function' || typeof state==='undefined' || !state.booted){setTimeout(open,100);return;}page('library');const id=${JSONObject.quote(intent.getStringExtra("openLibraryFileId").orEmpty())};if(id){try{await libraryPage(document.getElementById('page-content'));const detail=await uiCore.accessApi('/library/'+encodeURIComponent(id));await libraryView.preview(detail.item,document.activeElement);}catch{}}}open();})()
+                    (()=>{async function open(){if(typeof openNativeLibraryFile!=='function'){setTimeout(open,100);return;}try{await openNativeLibraryFile(${JSONObject.quote(intent.getStringExtra("openLibraryFileId").orEmpty())});}catch(e){toast('文件暂时没能打开，请在成果库重新点开。',true);}}open();})()
                 """.trimIndent(),null)
                 val expected = pageGeneration
                 web.postDelayed({
@@ -916,30 +917,7 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             .put("deviceId", identity.deviceId)
             .put("connectionVerified", false)
     }
-    private fun publicBusiness(value: Any?, depth: Int = 0): Any {
-        if (depth > 8) throw ApiFailure(502, "BUSINESS_RESPONSE_INVALID")
-        return when (value) {
-            is JSONObject -> {
-                val result = JSONObject()
-                val forbidden = setOf("token", "password", "secret", "credential", "cookie", "csrftoken", "apikey",
-                    "authorization", "salt", "hash")
-                for (key in value.keys()) {
-                    if (key.lowercase() in forbidden) continue
-                    result.put(key, publicBusiness(value.get(key), depth + 1))
-                }
-                result
-            }
-            is JSONArray -> {
-                if (value.length() > 1000) throw ApiFailure(502, "BUSINESS_RESPONSE_INVALID")
-                val result = JSONArray()
-                for (index in 0 until value.length()) result.put(publicBusiness(value.get(index), depth + 1))
-                result
-            }
-            is String -> value.take(16_384)
-            is Number, is Boolean -> value
-            else -> JSONObject.NULL
-        }
-    }
+
     private fun readAvatar(uri: Uri): JSONObject {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         val probe = contentResolver.openInputStream(uri) ?: throw ApiFailure(400, "AVATAR_INVALID")
@@ -1925,6 +1903,22 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             requireHost()
             JSONObject().put("backgroundSync", SyncJobService.status(this))
         }
+        "native.pdf.page" -> {
+            val id=params.getString("libraryId");val host=requireHost()
+            val cached=webPdfFile?.takeIf { it.first==id && nativeFileCurrent(it.second) }?.second
+            val file=cached ?: NativeFileAccess(this,api,attachments,store).load(host,JSONObject().put("libraryId",id)) {
+                !closed.get() && requestEpoch==accountEpoch.get() && host==secrets.host() && !accountTransition.get()
+            }.copy(epoch=requestEpoch).also { webPdfFile=id to it }
+            if(file.kind!=NativeFileKind.PDF || file.file==null)throw ApiFailure(400,"FILE_NOT_PDF")
+            val (image,count)=nativePdfBitmap(file.file,params.optInt("page",0))
+            try {
+                val bytes=java.io.ByteArrayOutputStream();image.compress(android.graphics.Bitmap.CompressFormat.PNG,100,bytes)
+                if(!nativeFileCurrent(file))throw ApiFailure(409,"ACCOUNT_SWITCHED")
+                JSONObject().put("data",android.util.Base64.encodeToString(bytes.toByteArray(),android.util.Base64.NO_WRAP))
+                    .put("width",image.width).put("height",image.height).put("pageCount",count)
+            }finally{image.recycle()}
+        }
+        "native.library.close" -> { webPdfFile=null;runOnUiThread { if(this is NativeActivity)closeOriginalLibrary() else if(intent.getBooleanExtra("openLibraryPage",false))finish() };JSONObject() }
         "host.status" -> { val host = requireHost(); if (host.authSource == "phone") throw ApiFailure(503, "HOST_UNAVAILABLE"); api.status(host) }
         "host.business" -> {
             if (params.getString("path").substringBefore('?').endsWith("/resources"))
@@ -1933,8 +1927,8 @@ open class HybridActivity : androidx.activity.ComponentActivity() {
             if (host.authSource == "phone") throw ApiFailure(503, "HOST_UNAVAILABLE")
             val result = api.business(host, params.getString("path"), params.optString("method", "GET"),
                 params.optJSONObject("body"), readActive)
-            require(result.toString().length <= if (params.getString("path").startsWith("/personal/v1/offline/")) 4 * 1024 * 1024 else 256 * 1024)
-            publicBusiness(result) as JSONObject
+            require(result.toString().length <= nativeBusinessResponseLimit(params.getString("path")))
+            nativePublicBusiness(result, preview=params.getString("path").substringBefore('?').matches(Regex("/personal/v1/library/[A-Za-z0-9_-]{1,128}/preview"))) as JSONObject
         }
         "updates.status" -> uiState(bundles.state())
         "updates.preference" -> {
