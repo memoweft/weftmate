@@ -132,7 +132,8 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                         core.state.hasOlder = page.hasOlder === true;
                         effects.renderOlderControl();
                     }
-                    const events = await core.completeHistoryEvents(page.events);
+                    const events = page.events.some(event => event.data?.truncated)
+                        ? await core.completeHistoryEvents(page.events) : page.events;
                     if (!stillCurrent()) return core.historyReadResult('cancelled');
                     changed = core.appendHistory(events, page.liveEvents, page.liveSeq) || changed;
                     core.state.afterSeq = page.nextSeq;
@@ -181,7 +182,8 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         try {
             const page = await core.accessApi(`/sessions/${encodeURIComponent(context.sessionId)}/events?beforeSeq=${core.state.nextBeforeSeq}&limit=100`);
             if (!core.conversationTaskCurrent(context) || generation !== core.state.historyGeneration) return;
-            page.events = await core.completeHistoryEvents(page.events, core.state.historyEvents, context.sessionId);
+            if (page.events.some(event => event.data?.truncated))
+                page.events = await core.completeHistoryEvents(page.events, core.state.historyEvents, context.sessionId);
             if (!core.conversationTaskCurrent(context) || generation !== core.state.historyGeneration)
                 return;
             core.state.nextBeforeSeq = page.nextBeforeSeq;
