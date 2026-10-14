@@ -23,6 +23,12 @@ test('smooth follow never replays its old origin after a layout clamp reaches th
  const positions=Array.from({length:30},()=>{f.scroll.changed();return f.tick()});
  assert.ok(positions.every(top=>Math.abs(top-1080)<=1),JSON.stringify(positions));
 });
+test('continuous growth advances each frame rather than restarting follow at zero progress',()=>{
+ const f=fixture(true);f.scroll.latest();const positions=[];
+ for(let i=0;i<20;i++){f.box.scrollHeight+=20;f.scroll.changed();positions.push(f.tick());}
+ assert.ok(positions.at(-1)!>positions[0]+200,JSON.stringify(positions));
+ for(let i=0;i<30;i++)f.tick();assert.equal(f.box.scrollTop,f.box.scrollHeight-f.box.clientHeight);
+});
 test('an upward gesture near bottom cancels animation immediately, even within the bottom tolerance',()=>{
  for(const input of ['wheel','touch','scrollbar']){
  const f=fixture(true);f.scroll.latest();f.box.scrollHeight+=20;f.scroll.changed();f.tick();

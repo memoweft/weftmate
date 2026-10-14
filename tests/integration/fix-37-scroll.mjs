@@ -10,7 +10,7 @@ import { startFixture } from './ux-4-fixture.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
 const phase = process.argv.includes('--before') ? 'before' : 'after';
-const baselineScroll=phase==='before'?execFileSync('git',['show','HEAD:src/personal-access-ui/conversation-scroll.js'],{encoding:'utf8'}):null;
+const baselineScroll=phase==='before'?execFileSync('git',['show','c3b341aa5:src/personal-access-ui/conversation-scroll.js'],{encoding:'utf8'}):null;
 const evidence = resolve('tests/evidence/fix-37'); mkdirSync(evidence, {recursive:true});
 const f = await startFixture(), profile = managedMkdtempSync(join(managedTempRoot(),'weftmate-fix37-'));
 let app, browser; const report = {phase, synthetic:true, surfaces:[], errors:[]};
@@ -39,6 +39,7 @@ try {
  try {await page.waitForFunction(()=>globalThis.__core?.inMainChat()&&document.querySelector('.main-chat-row.message'));}catch(error){console.log(await page.locator('body').innerText());console.log(await page.evaluate(()=>({core:!!globalThis.__core,main:globalThis.__core?.state.mainChat})));throw error;}
  async function measure(page, name) {
   page.on('pageerror',error=>report.errors.push(error.message));
+  await page.waitForTimeout(250); // Let initial logical history hydration settle.
   await page.evaluate(()=>{
    const core=globalThis.__core || uiCore;
    core.nextSuggestionsView=()=>({enabled:true,suggestions:['点击确定按钮','点击取消按钮','再弹出一个窗口'],inlineCompletionEnabled:false,completion:''});
@@ -74,7 +75,17 @@ try {
   await page.evaluate(()=>(globalThis.__ui?.conversationScroll || ensureConversationScroll()).latest());
   await page.waitForTimeout(200);
   for(const theme of ['light','dark']){await page.evaluate(theme=>document.documentElement.dataset.theme=theme,theme);await page.screenshot({path:join(evidence,`${phase}-${name}-${theme}.png`)});}
+  const continuous=await page.evaluate(async()=>{
+   const body=[...document.querySelectorAll('.message.assistant .message-text,.message.assistant .markdown')].at(-1),box=document.querySelector('#chat-scroll'),follow=globalThis.__ui?.conversationScroll || ensureConversationScroll();
+   const nodes=[],values=[];follow.latest();const start=box.scrollTop;
+   for(let i=0;i<20;i++){const node=document.createElement('p');node.textContent='连续到达的合成中文输出。';nodes.push(node);body.append(node);follow.changed();await new Promise(requestAnimationFrame);values.push(box.scrollTop);}
+   for(let i=0;i<30;i++)await new Promise(requestAnimationFrame);
+   const end=box.scrollTop,gap=box.scrollHeight-box.clientHeight-end;nodes.forEach(node=>node.remove());follow.latest();return {start,values,end,gap};
+  });
+  report.surfaces.at(-1).continuous=continuous;
+  await page.waitForTimeout(250);
   if(phase==='after') {assert.ok(Math.max(...stable.slice(30).map(v=>v.top))-Math.min(...stable.slice(30).map(v=>v.top))<=1,`${name} stable viewport`);assert.ok(Math.max(...clamping.values)-Math.min(...clamping.values)<=1,`${name} no replay after layout clamp`);assert.ok(held.every(v=>Math.abs(v.top-up)<=1),`${name} preserves upward reading`);}
+  if(phase==='after') {assert.ok(continuous.values.at(-1)>continuous.start+200,`${name} live continuous following`);assert.ok(Math.abs(continuous.gap)<=1,`${name} finishes at bottom`);}
  }
  for(const width of [1200,480]){await app.evaluate(({BrowserWindow},width)=>BrowserWindow.getAllWindows()[0].setContentSize(width,800),width);await measure(page,`electron-${width}`);}
  browser=await chromium.launch({channel:'chrome',headless:true});
