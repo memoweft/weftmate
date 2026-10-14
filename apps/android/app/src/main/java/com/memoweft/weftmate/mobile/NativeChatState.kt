@@ -44,6 +44,17 @@ internal class NativeTimeline {
     }
 }
 
+/** Expansion belongs to presentation, never to persistent tool records. */
+internal class NativeProgressState {
+    private val expanded = mutableSetOf<String>()
+    fun isExpanded(key: String) = key in expanded
+    fun toggle(key: String) { if (!expanded.add(key)) expanded.remove(key) }
+    fun visibleSteps(row: JSONObject): List<JSONObject> {
+        val steps = row.optJSONObject("data")?.optJSONArray("steps")?.objects().orEmpty()
+        return if (isExpanded(row.optString("eventId"))) steps else steps.filter { it.optBoolean("attention") }
+    }
+}
+
 internal fun decisionReceipt(row: JSONObject, question: Boolean = false): String? = when (row.optString("status")) {
     "answered" -> if (question) "已提交 · 等待确认" else if (row.optString("decisionOutcome") == "rejected") "已拒绝 · 等待确认" else "已批准 · 等待确认"
     "resolved" -> if (question) "已回答" else if (row.optString("outcome", row.optString("decisionOutcome")) == "rejected") "已拒绝" else "已批准"

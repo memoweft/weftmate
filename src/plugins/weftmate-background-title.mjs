@@ -3,9 +3,17 @@ import { runWithModelSlot } from '../model-scheduler-client.mjs';
 export { Config };
 export const name = 'session-title-first-prompt-llm';
 export const inject = ['sessionTitle', 'llm', 'sessions'];
+export function titleLanguageInstruction(messages) {
+  const framed = messages.flatMap(message => message.content || []).filter(block => block.type === 'text').map(block => block.text).join('\n');
+  let source = framed;
+  try { source = JSON.parse(framed.slice(framed.indexOf('['))).map(message => message.text || '').join('\n'); } catch { /* The first prompt remains the language source. */ }
+  const language = /[\u3040-\u30ff]/u.test(source) ? 'Japanese' : /[\uac00-\ud7af]/u.test(source) ? 'Korean' : /\p{Script=Han}/u.test(source) ? 'Chinese' : '';
+  return language ? `The human conversation is in ${language}. Write the title in ${language}, even when it mentions English tool names, filenames or code. Do not translate the conversation into an English title.`
+    : 'Write the title in the language of the human conversation, ignoring filenames, code and tool names when choosing its language.';
+}
 export function apply(ctx, config) {
   const title = new Proxy(ctx.sessionTitle, { get(target, method) {
-    if (method === 'registerProvider') return provider => target.registerProvider({ ...provider,
+    if (method === 'register' || method === 'registerProvider') return provider => target[method]({ ...provider,
       generate: async request => {
         const scheduler = process.env.WEFTMATE_MODEL_SCHEDULER_URL;
         if (scheduler && request.route) {
@@ -21,8 +29,14 @@ export function apply(ctx, config) {
     const value = Reflect.get(target, method);
     return typeof value === 'function' ? value.bind(target) : value;
   } });
+  const llm = new Proxy(ctx.llm, { get(target, method) {
+    if (method === 'stream') return options => target.stream(options.purpose === 'session-title'
+      ? { ...options, system: `${options.system}\n${titleLanguageInstruction(options.messages)}` } : options);
+    const value = Reflect.get(target, method);
+    return typeof value === 'function' ? value.bind(target) : value;
+  } });
   applyTitle(new Proxy(ctx, { get(target, property) {
-    return property === 'sessionTitle' ? title : Reflect.get(target, property);
+    return property === 'sessionTitle' ? title : property === 'llm' ? llm : Reflect.get(target, property);
   } }), config);
 }
 export default { Config, name, inject, apply };
