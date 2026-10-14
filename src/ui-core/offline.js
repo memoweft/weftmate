@@ -420,8 +420,14 @@
       if(value.phoneMemory){memoryEpoch++;memoryAbort?.abort();value.phoneMemory.items=value.phoneMemory.items.filter(i=>i.conversationId!==id);value.phoneMemory.processed=value.phoneMemory.processed.filter(t=>!c.turns.some(turn=>turn.id===t));}
       await persist();
     }
-    async function declineWork(turnId) { const turn = value.turns.find(row => row.id === turnId); if (!turn?.workRequest) return;
-      turn.workRequest.status = 'declined'; turn.messages.push({ role: 'assistant', text: '这件事需要进入工作才能做，我们先继续聊。' }); await persist(); }
+    async function declineWork(turnId) {
+      const turns = new Set([...value.turns, ...value.conversations.flatMap(conversation => conversation.turns)].filter(turn => turn.id === turnId));
+      let changed = false;
+      for (const turn of turns) if (turn.workRequest?.status === 'pending') {
+        turn.workRequest.status = 'declined'; turn.messages.push({ role: 'assistant', text: '这件事需要进入工作才能做，我们先继续聊。' }); changed = true;
+      }
+      if (changed) await persist();
+    }
     return { view, sync, send, regenerate, check, clear, extractMemory,memoryChange,removeConversation,submitTask, retryTask, cancelTask, refreshTasks, clearTasks, declineWork, saveComposer: async (conversationId, draft) => { value.nativeDrafts ??= {}; value.nativeDrafts[conversationId || 'new'] = draft; value.nativeComposer = { conversationId, draft }; await persist(); }, stop: () => abort?.abort(), close: () => { version++;memoryEpoch++;memoryAbort?.abort();abort?.abort(); vault.close(); } };
   }
   globalThis.WeftOffline = { create, browserVault, nativeVault, recall, requestBody, readCompletion, encode, decode };

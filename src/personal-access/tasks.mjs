@@ -234,7 +234,7 @@ export function createTaskOperations(context) {
     const sources = [...Object.values(account.projectSources ?? {}), ...Object.values(account.browserSources ?? {})]
       .filter((item) => item.taskId === taskId)
       .map((item) => ({ ...publicSource(item), cited: citedIds.has(item.snapshotId) }));
-    const projectRecord = source.payload.projectId ? account.projects?.[source.payload.projectId] : null;
+    const projectRecord = account.projects?.[executionProject(source).projectId];
     const steps = Object.values(account.commands).filter((item) =>
       item.kind === 'desktop.open_app' && item.toolSource &&
       (item.taskId === taskId || messageIds.has(item.toolSource.sourceCommandId))).map(publicCommand);
