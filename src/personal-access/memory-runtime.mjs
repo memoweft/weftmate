@@ -3,7 +3,7 @@ import { handlePersonalMemoryHttp } from '../personal-memory/http.mjs';
 const failure = code => Object.assign(new Error(code), { code });
 
 /** The parent resolves owner and model permissions before dispatching model output. */
-export async function handlePersonalMemoryTool(manager, ownerId, tool, { sessionId, modelTier } = {}) {
+export async function handlePersonalMemoryTool(manager, ownerId, tool, { sessionId, modelTier, memoryPolicy } = {}) {
   const args = tool?.arguments;
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw failure('MEMORY_REQUEST_INVALID');
   if (tool.name === 'memory_cleanup') {
@@ -18,6 +18,8 @@ export async function handlePersonalMemoryTool(manager, ownerId, tool, { session
   if (tool.name === 'memory_query') {
     if (Object.keys(args).some(key => key !== 'query') || typeof args.query !== 'string' ||
         !args.query.trim() || args.query.length > 500) throw failure('MEMORY_REQUEST_INVALID');
+    if (memoryPolicy?.recall !== true) return { state: 'withheld', reasonCode: 'RECALL_DISABLED',
+      message: '这段对话没开记忆。' };
     const recalled = await manager.recall(ownerId, { query: args.query, sessionId, modelTier });
     return { state: recalled.state, reasonCode: recalled.reasonCode, worldRevision: recalled.worldRevision,
       items: [...(recalled.memories ?? []), ...(recalled.recentEvidence ?? []).map(item => ({

@@ -8,6 +8,8 @@ import { join, resolve, sep } from 'node:path';
 import { phoneRuntime } from '../services/cloud/test/relay-phone-runtime.mjs';
 import { handlePersonalMemoryTool } from '../src/personal-access/memory-runtime.mjs';
 import { REPEAT_TOOL_LIMIT, REPEAT_TOOL_MESSAGE } from '../src/plugins/weftmate-personal-tool-loop.mjs';
+import { stagePersonalPlugins } from './support/personal-plugins.ts';
+import { pathToFileURL } from 'node:url';
 
 // Load after the Linux folder-selection fixture installs its real POSIX reader.
 const { createPersonalAccessService } = await import('../src/personal-access/index.mjs');
@@ -31,15 +33,20 @@ async function removeLinks(directory: string) {
 /** Real HTTP host, managed DSH process, native tools and model requests. Only inference and Core replies are scripted. */
 async function fixture(t: any, { pendingCleanup = false } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-fix45-'));
-  const calls: any[] = [], commands: any[] = [], revisions = new Map<string, number>(), facts = new Map<string, string>();
+  const calls: any[] = [], commands: any[] = [], recallCalls: any[] = [], revisions = new Map<string, number>(), facts = new Map<string, string>();
+  let progress = 0;
   let host: any, ownerId: string, releaseRepeat: () => void = () => {}, repeatedStarted: () => void = () => {};
   const repeatGate = new Promise<void>(r => { releaseRepeat = r; });
   const repeatReady = new Promise<void>(r => { repeatedStarted = r; });
   const manager: any = {
     status: async () => ({ state: 'ready', capabilities: { correct: true, deleteWorldItem: true, deleteEvidence: true } }),
-    recall: async (owner: string) => ({ state: 'ready', worldRevision: revisions.get(owner) ?? 1,
+    recall: async (owner: string, input: any = {}) => {
+      recallCalls.push(input);
+      if (input.query === '进度') return { state: 'ready', worldRevision: 1, memories: [], contextText: `进度 ${++progress}` };
+      return { state: 'ready', worldRevision: revisions.get(owner) ?? 1,
       contextText: facts.has(owner) ? `记忆：用户喜欢喝${facts.get(owner)}。` : '',
-      memories: facts.has(owner) ? [{ kind: 'cognition', id: 'tea-fact', summary: `用户喜欢喝${facts.get(owner)}。` }] : [] }),
+      memories: facts.has(owner) ? [{ kind: 'cognition', id: 'tea-fact', summary: `用户喜欢喝${facts.get(owner)}。` }] : [] };
+    },
     query: async (owner: string, method: string, args: any) => {
       assert.equal(owner, ownerId); assert.equal(method, 'query_world'); assert.equal(args.item_id, 'tea-fact');
       return { world_revision: revisions.get(owner) ?? 1, item: { object_kind: 'cognition', item_id: 'tea-fact', value: { content: facts.get(owner) } } };
@@ -63,12 +70,34 @@ async function fixture(t: any, { pendingCleanup = false } = {}) {
   const tool = (name: string, args: any, count: number) => ({ content: '', tool_calls: [{ id: `fix45-${count}`, type: 'function', function: { name, arguments: JSON.stringify(args) } }] });
   const runtime = await phoneRuntime(root, [], {
     respond(body: any) {
-      if (!body.tools?.length) return { content: '合成对话' };
       const index = body.messages.findLastIndex((m: any) => m.role === 'user' && textOf(m).startsWith('FIX45_'));
       const input = index < 0 ? '' : textOf(body.messages[index]);
+      if (index < 0) return { content: '合成对话' };
       const prior = body.messages.slice(index + 1).flatMap((m: any) => m.tool_calls ?? []);
       const step = prior.length;
       if (input.startsWith('FIX45_FOLLOWUP')) return { content: '排队的更正已处理。' };
+      if (input.startsWith('FIX45_PRIVATE_QUERY')) {
+        if (step === 0) return tool('load_tools', { names: ['memory_query'] }, step);
+        if (step === 1) return tool('memory_query', { query: '茶' }, step);
+        return { content: '已处理查询回执。' };
+      }
+      if (input.startsWith('FIX45_PRIVATE_WRITE')) {
+        const action = input.includes('纠正') ? 'memory_correct' : 'memory_forget';
+        if (step === 0) return tool('load_tools', { names: [action] }, step);
+        if (step === 1) return tool(action, { kind: 'cognition', id: 'tea-fact', expectedWorldRevision: revisions.get(ownerId) ?? 1,
+          ...(action === 'memory_correct' ? { text: '红茶' } : {}) }, step);
+        return { content: '写入回执已处理。' };
+      }
+      if (input.startsWith('FIX45_PROGRESS')) {
+        if (step === 0) return tool('load_tools', { names: ['memory_query'] }, step);
+        if (step <= 12) return tool('memory_query', { query: '进度' }, step);
+        return { content: `最后一次结果：${textOf(body.messages.findLast((m: any) => m.role === 'tool'))}` };
+      }
+      if (input.startsWith('FIX45_FINISH_REPEAT')) {
+        if (step === 0) return tool('load_tools', { names: ['memory_query'] }, step);
+        if (step <= REPEAT_TOOL_LIMIT) return tool('memory_query', { query: '茶的偏好' }, step);
+        return { content: `${REPEAT_TOOL_MESSAGE} 最后一次结果：${textOf(body.messages.findLast((m: any) => m.role === 'tool'))}` };
+      }
       if (input.startsWith('FIX45_REPEAT_FILES')) {
         if (step === 0) return tool('load_tools', { names: ['glob'] }, step);
         if (step >= REPEAT_TOOL_LIMIT + 2) throw Error('file repeat limit was bypassed');
@@ -95,14 +124,16 @@ async function fixture(t: any, { pendingCleanup = false } = {}) {
     },
     memoryRequestHandler: async (request: any) => {
       const binding = host.ownerForSession(request.sessionId); assert.ok(binding); assert.equal(binding.ownerId, ownerId);
+      const memoryPolicy = await host.memoryTurnPolicy(binding.ownerId, request.sessionId, request.turn);
       if (request.action === 'ingest') return { state: 'accepted' };
-      if (request.action === 'recall') return manager.recall(binding.ownerId);
+      if (request.action === 'recall') return memoryPolicy.recall ? manager.recall(binding.ownerId)
+        : { state: 'withheld', reasonCode: 'RECALL_DISABLED', memoryPolicy };
       calls.push(request.tool);
       if (request.tool.name === 'memory_query' && request.tool.arguments.query === '茶' &&
           calls.filter(c => c.name === 'memory_query' && c.arguments.query === '茶').length === 2) {
         repeatedStarted(); await repeatGate;
       }
-      return handlePersonalMemoryTool(manager, binding.ownerId, request.tool, { sessionId: request.sessionId, modelTier: 'cloud' });
+      return handlePersonalMemoryTool(manager, binding.ownerId, request.tool, { sessionId: request.sessionId, modelTier: 'cloud', memoryPolicy });
     },
   });
   host = await createPersonalAccessService({ root: join(root, 'account'), port: 0, backend: runtime.backend }); runtime.setHost(host);
@@ -118,13 +149,13 @@ async function fixture(t: any, { pendingCleanup = false } = {}) {
     const value = await res.json(); assert.ok(res.ok, JSON.stringify({ path, status: res.status, value })); return value;
   };
   const accepted = async (result: any) => until(async () => { const c = (await api('/commands/' + result.command.commandId)).command; return c.state === 'accepted_by_dsh' && c; });
-  const create = async (work = false) => {
+  const create = async (work = false, memoryOptions = {}) => {
     if (work) {
       const rootPath = join(root, randomUUID()); await mkdir(rootPath);
       const project = (await api('/projects', { requestId: randomUUID(), name: '合成项目', rootPath, permission: 'write' })).project;
       return (await accepted(await api(`/projects/${project.projectId}/sessions`, { requestId: randomUUID(), modelProfileId: 'synthetic' }))).sessionId;
     }
-    return (await accepted(await api('/commands', { requestId: randomUUID(), kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'synthetic' }))).sessionId;
+    return (await accepted(await api('/commands', { requestId: randomUUID(), kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'synthetic', ...memoryOptions }))).sessionId;
   };
   const send = async (sessionId: string, text: string, intent = 'queue') => accepted(await api('/commands', { requestId: randomUUID(), kind: 'session.message', targetDeviceId: hostId, sessionId, text, intent }));
   const complete = async (command: any) => {
@@ -136,8 +167,82 @@ async function fixture(t: any, { pendingCleanup = false } = {}) {
     catch { const task = await api(`/tasks/${command.commandId}`); const history = await api(`/sessions/${command.sessionId}/events`);
       throw Error(JSON.stringify({ evidence: task.replyEvidence, calls: calls.map(c => c.name), history: history.events?.slice(-5), taskKeys: Object.keys(task) })); }
   };
-  return { create, send, complete, api, facts, ownerId: () => ownerId, calls, commands, runtime, repeatReady, releaseRepeat };
+  return { create, send, complete, api, facts, ownerId: () => ownerId, calls, commands, recallCalls, runtime, repeatReady, releaseRepeat };
 }
+
+test('recall-disabled conversations do not read or send memory through tools, while writes remain available', { timeout: 60000 }, async t => {
+  const f = await fixture(t), session = await f.create(false, { temporary: true, recallEnabled: false });
+  await f.complete(await f.send(session, 'FIX45_PRIVATE_QUERY 查询历史偏好'));
+  assert.equal(f.recallCalls.length, 0, 'neither automatic recall nor memory_query may read Core');
+  assert.doesNotMatch(JSON.stringify(f.runtime.requests), /乌龙茶/, 'memory content must not enter model requests');
+  const results = f.runtime.requests.flatMap((r: any) => r.messages.filter((m: any) => m.role === 'tool').map(textOf));
+  assert.ok(results.some((r: string) => r.includes('RECALL_DISABLED') && r.includes('这段对话没开记忆')));
+  await f.complete(await f.send(session, 'FIX45_PRIVATE_WRITE 纠正为红茶'));
+  assert.equal(f.facts.get(f.ownerId()), '红茶');
+  await f.complete(await f.send(session, 'FIX45_PRIVATE_WRITE 忘掉茶偏好'));
+  assert.equal(f.facts.has(f.ownerId()), false);
+  assert.deepEqual(f.commands.map(c => c.operation), ['correct_world_item', 'delete_world_item']);
+});
+
+test('changing results reset repetition and the model consumes the completed result', { timeout: 60000 }, async t => {
+  const f = await fixture(t), session = await f.create();
+  const completed = await f.complete(await f.send(session, 'FIX45_PROGRESS 连续查询更新的进度'));
+  assert.equal(completed.terminal.data.reason, 'completed');
+  assert.equal(f.calls.filter(c => c.name === 'memory_query').length, 12);
+  assert.doesNotMatch(JSON.stringify(f.runtime.requests), /You are repeating the exact same tool call/,
+    'the arguments-only reminder must not urge the model to stop changing results');
+  const events = (await f.api(`/sessions/${session}/events`)).events;
+  assert.match(events.filter((e: any) => e.type === 'assistant.message').at(-1).data.text, /最后一次结果.*进度 12/);
+});
+
+test('when an unchanged loop stops, its last result still reaches a final model response', { timeout: 60000 }, async t => {
+  const f = await fixture(t), session = await f.create();
+  const completed = await f.complete(await f.send(session, 'FIX45_FINISH_REPEAT 重复查询后说明最后一次结果'));
+  assert.equal(completed.terminal.data.reason, 'completed');
+  assert.equal(f.calls.filter(c => c.name === 'memory_query').length, REPEAT_TOOL_LIMIT);
+  const finalRequest = f.runtime.requests.findLast((r: any) => r.messages.some((m: any) => textOf(m).startsWith('FIX45_FINISH_REPEAT')));
+  assert.deepEqual(finalRequest.tools ?? [], [], 'the final result is summarized without exposing more tools');
+  const events = (await f.api(`/sessions/${session}/events`)).events;
+  assert.match(events.filter((e: any) => e.type === 'assistant.message').at(-1).data.text, /最后一次结果.*乌龙茶/);
+});
+
+test('native job_output waits are never stopped by counts, including constant progress and completion on the eighth wait', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-fix45-wait-'));
+  const stage = stagePersonalPlugins(root);
+  const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai', name, 'lib/index.js')).href;
+  const [{ Context }, prompt, sessions, tools, { createScope }, repeat, loop] = await Promise.all([
+    import(vendor('cordis')), import(vendor('dsh-system-prompt')), import(vendor('dsh-session')),
+    import(vendor('dsh-tools')), import(vendor('dsh-scope')), import(vendor('dsh-repeat-tool-reminder')),
+    import(pathToFileURL(stage.stageFile(join(process.cwd(), 'src/plugins/weftmate-personal-tool-loop.mjs'))).href),
+  ]);
+  const ctx = new Context();
+  t.after(async () => { await ctx.fiber.dispose(); assert.ok(resolve(root).startsWith(resolve(tmpdir()) + sep)); await removeLinks(root); await rm(root, { recursive: true, force: true }); });
+  await ctx.plugin(prompt.default, { includeHarnessIdentity: false, includeRuntimeContext: false, persona: '' });
+  await ctx.plugin(sessions.default); await ctx.plugin(tools.default, { mode: 'native', maxParallelSubCalls: 1 });
+  // Exercise the current deployment's original reminder alongside its wrapper.
+  await ctx.plugin(repeat, { thresholds: [3, 5, 8], include: [], exclude: [], argumentsPreviewChars: 500 });
+  await ctx.plugin(loop.default);
+  for (const variant of ['constant', 'changing', 'complete-at-eight']) {
+    let count = 0;
+    const session = ctx.sessions.create(`wait-${variant}`, { meta: { agentPreset: 'personal-remote' } });
+    const agent: any = { id: session.id, session, ctx: null, options: {}, status: 'running', inbox: { hasPending: false }, wakeDriver() {} };
+    agent.ctx = createScope(ctx, agent).ctx;
+    session.append('turn/start', { turn: 1 });
+    agent.ctx.get('tools').register(tools.defineTool({ name: 'job_output', description: 'Wait for a synthetic owned job.',
+      parameters: { job_id: { type: 'string', required: true }, wait: { type: 'boolean', required: true } },
+      output: { schema: { type: 'json' }, render: (_args: any, value: any) => [{ type: 'text', text: JSON.stringify(value) }] },
+      execute: () => { count++; return { state: variant === 'complete-at-eight' && count >= 8 ? 'completed' : 'running',
+        output: variant === 'changing' ? `进度 ${count}` : '同样的进度' }; } }));
+    for (let i = 0; i < 12; i++) {
+      const result = await ctx.get('tools').execute({ name: 'job_output', arguments: { job_id: 'owned-job', wait: true }, agent,
+        callId: `${variant}-${i}`, signal: new AbortController().signal });
+      assert.equal(result.isError, false, `normal wait ${i + 1} must execute`);
+      if (variant === 'complete-at-eight' && i >= 7) assert.equal(result.value.state, 'completed');
+      if (variant === 'changing') assert.equal(result.value.output, `进度 ${i + 1}`);
+    }
+    assert.equal(count, 12);
+  }
+});
 
 for (const work of [false, true]) test(`forget uses Core commands and no file tools in ${work ? 'work' : 'chat'} mode`, { timeout: 60000 }, async t => {
   const f = await fixture(t), session = await f.create(work);
