@@ -105,6 +105,8 @@ struct PhoneGoalsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment:.leading,spacing:AppleTokens.Space.p16) {
+                PhoneLocalRemindersSection(app:app,phone:app.phoneChat)
+                if app.session != nil {
                 Text("进行中").font(AppleTokens.Fonts.title2)
                 PhonePageState(loading:model.loading,error:model.errors["tasks"],empty:model.tasks.isEmpty,title:"现在没有进行中的任务",message:"在对话里交代一件事，这里会显示真实进展。") { reload() }
                 ForEach(model.tasks) { row in task(row) }
@@ -133,9 +135,10 @@ struct PhoneGoalsView: View {
                     }.phoneCard()
                 }
                 if !model.recent.isEmpty { Text("最近执行").font(AppleTokens.Fonts.title2); ForEach(model.recent.prefix(5)) { row in task(row) } }
+                }
             }.padding(AppleTokens.Space.p16)
         }.background(Weave.canvas).navigationTitle("目标").toolbar { PhoneAccountMenu(model:app) }
-            .task(id:app.accountEpoch) { model.prepare(app); deleting=nil; archiving=nil; scheduleDetail=nil; await model.read("goals",app:app) }
+            .task(id:app.accountEpoch) { app.phoneChat.activate(app:app);model.prepare(app); deleting=nil; archiving=nil; scheduleDetail=nil; await model.read("goals",app:app) }
             .refreshable { await model.read("goals",app:app) }
             .alert("删除这项定时任务？",isPresented:Binding(get:{deleting != nil},set:{if !$0 { deleting=nil }})) {
                 Button("取消",role:.cancel) { deleting=nil }
@@ -157,7 +160,15 @@ struct PhoneGoalsView: View {
             }
     }
     private func reload() { Task { await model.read("goals",app:app) } }
-    private func manage(_ row: ManagedSchedule,_ action: ScheduleAction) { Task { await model.write(row.identity,page:"goals",app:app) { id in try await app.assistantClient.phoneManageSchedule(row,action:action,requestID:id) } } }
+    private func manage(_ row: ManagedSchedule,_ action: ScheduleAction) {
+        let epoch=app.accountEpoch,identity=app.phoneAccountIdentity,host=app.session?.hostId
+        Task {
+            await model.write(row.identity,page:"goals",app:app) { id in
+                try await app.assistantClient.phoneManageSchedule(row,action:action,requestID:id)
+                if epoch == app.accountEpoch,identity == app.phoneAccountIdentity,let host,host == app.session?.hostId { try app.phoneChat.withdrawComputerReminder(row,hostID:host,action:action) }
+            }
+        }
+    }
     private func goal(_ row: PhoneGoal,_ action: PhoneGoalAction) { Task { await model.write(row.id,page:"goals",app:app) { id in try await app.assistantClient.phoneManageGoal(row,action:action,requestID:id) } } }
     private func task(_ row: PhoneTask) -> some View {
         Button { Task { await model.open(row.source,app:app) } } label: {
