@@ -43,3 +43,20 @@ import CryptoKit
     #expect(!changed.supportsTasks)
     #expect(throws: OfflineFailure.authorization) { try OfflineWorkTask.prepare(text:"合成交代",reference:reference,snapshot:snapshot,authorization:changed,deviceID:"physical-device") }
 }
+
+@MainActor @Test func mode2iFix1MemoryRemovalPreservesWorkCiphertextAcrossRestart() throws {
+    let directory=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString),keys=Mode2IKeys()
+    defer { try? FileManager.default.removeItem(at:directory) }
+    let vault=try OfflineVault(identity:.init(ownerId:"owner",hostId:"host",deviceId:"device"),directory:directory,store:keys)
+    let before=try JSONDecoder().decode(OfflineSnapshot.self,from:Data("{\"generation\":3,\"reset\":false,\"items\":[{\"id\":\"memory-old\",\"kind\":\"cognition\",\"text\":\"合成记忆\",\"sources\":[],\"currentState\":\"current\"}],\"remove\":[],\"hashes\":{\"memory-old\":\"hash\"},\"truncated\":false,\"recent\":[],\"control\":{\"accountId\":\"owner\",\"hostId\":\"host\",\"generation\":3}}".utf8))
+    let task=try JSONDecoder().decode(OfflineWorkTask.self,from:Data("{\"id\":\"unconfirmed-work\",\"hostId\":\"host\",\"generation\":3,\"state\":\"sending\",\"envelope\":{\"version\":1,\"algorithm\":\"RSA-OAEP-256+A256GCM\",\"aad\":\"synthetic-aad\",\"wrappedKey\":\"synthetic-key\",\"iv\":\"synthetic-iv\",\"ciphertext\":\"only-original-ciphertext\"}}".utf8))
+    let engine=try OfflineReplica(vault:vault);try engine.merge(before);try engine.retainWorkTask(task)
+    var wire=try JSONSerialization.jsonObject(with:JSONEncoder().encode(before)) as! [String:Any]
+    wire["items"] = [];wire["remove"] = ["memory-old"];wire["hashes"] = [String:String]()
+    let delta=try JSONDecoder().decode(OfflineSnapshot.self,from:JSONSerialization.data(withJSONObject:wire))
+    try engine.merge(delta);try vault.save(engine.state)
+    let restarted=try OfflineReplica(vault:vault)
+    #expect(restarted.state.workTasks?.first?.id == task.id)
+    #expect(restarted.state.workTasks?.first?.envelope.ciphertext == task.envelope.ciphertext)
+    #expect(restarted.state.workTasks?.first?.state == "sending")
+}

@@ -16,6 +16,9 @@ final class Mode2IKeys: CredentialStore, @unchecked Sendable {
 actor Mode2ITransport: HTTPTransport {
     private let version: Int?
     private let host: String
+    private var loseCreationBeforeAccept = false
+    private var loseCreationAfterAccept = false
+    func loseNextCreation(beforeAccept: Bool) { loseCreationBeforeAccept=beforeAccept;loseCreationAfterAccept = !beforeAccept }
     private var converted = false
     private var decision: [String: Any]?
     private var commands: [String: [String: Any]] = [:]
@@ -114,6 +117,7 @@ actor Mode2ITransport: HTTPTransport {
         if method == "POST", path == "/commands" || path.hasSuffix("/sessions") {
             let target = body["targetDeviceId"] as? String
             guard let requestID = body["requestId"] as? String, (path.hasPrefix("/projects/") || target == host) else { throw APIFailure.identityMismatch }
+            if loseCreationBeforeAccept { loseCreationBeforeAccept=false;throw APIFailure.transport(.timeout) }
             let kind = body["kind"] as? String ?? "session.create"
             let id = "created-" + String(created.count)
             let sessionID = body["sessionId"] as? String ?? "session-" + id
@@ -124,8 +128,10 @@ actor Mode2ITransport: HTTPTransport {
                 let projectID = body["projectId"] as? String ?? path.split(separator: "/").dropFirst().first.map(String.init)
                 created.append(chat(id, work: kind == "session.create", projectID: projectID ?? "project-a"))
             }
+            if loseCreationAfterAccept { loseCreationAfterAccept=false;throw APIFailure.transport(.timeout) }
             return try json(["command": command], status: 202)
         }
+        if path == "/health/overview" { return try json(["day":"2026-10-14","connected":true,"vitals":[],"insight":["headline":"合成健康解读","text":"合成健康追问内容","suggestions":[]]]) }
         if path == "/models" { return try json(["models": [["id": "fixture", "name": "合成模型", "model": "fixture", "configured": true]]]) }
         if path == "/model-services" { return try json(["error": ["code": "NOT_FOUND"]], status: 404) }
         if path == "/sync/capabilities" { return try json(["deviceId": "device-fixture", "platform": body["platform"] ?? "ios", "sharedConversations": 1]) }

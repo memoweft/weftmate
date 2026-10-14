@@ -27,7 +27,17 @@ import WeftMateCore
     @Published var thinking: SessionThinking?
     @Published var thinkingBusy = false
     @Published var models: [SharedHostModel] = []
-    @Published var attachments: [ConversationAttachmentDraft] = []
+    @Published private var unboundAttachments: [ConversationAttachmentDraft] = []
+    var attachments: [ConversationAttachmentDraft] {
+        get {
+            guard let app,let chat,epoch == app.accountEpoch else { return unboundAttachments }
+            return app.attachmentDrafts[AppleAppModel.draftKey(for:chat.summary)] ?? []
+        }
+        set {
+            guard let app,let chat,epoch == app.accountEpoch else { unboundAttachments=newValue;return }
+            app.retainLogicalAttachments(newValue,for:chat.summary,accountEpoch:epoch)
+        }
+    }
     @Published var command: LogicalCommand?
     @Published var pending: JSONValue?
     @Published var sending = false
@@ -40,6 +50,7 @@ import WeftMateCore
     private var resourceGeneration = UUID()
     private var pendingTemporary = false
     private var pendingEntry = ""
+    private var pendingFreshCreation=false
     private struct Asset: Codable { let metadata: OriginalAttachment; let file: URL; let original: Bool }
     private var assets: [Asset] = []
     private var transferSource: ConversationSummary?
@@ -261,10 +272,10 @@ import WeftMateCore
               let account = try? LocalAccountScope(server: session.server, ownerId: session.account.ownerId) else { return nil }
         return dir.appendingPathComponent("LogicalCommands").appendingPathComponent(account.cacheKey + (requestedChatID.map { "-" + $0 } ?? "") + ".json")
     }
-    private func retain(_ body: JSONValue, temporary: Bool, entry: String) throws {
+    private func retain(_ body: JSONValue, temporary: Bool, entry: String, fresh: Bool = false) throws {
         guard let journal else { throw APIFailure.credentialStorage }
         let record: [String: JSONValue] = ["body": body, "temporary": .bool(temporary), "entry": .string(entry),
-            "hostID": .string(app?.session?.hostId ?? ""),
+            "hostID": .string(app?.session?.hostId ?? ""), "fresh": .bool(fresh),
             "transferSourceID": transferSource.map { .string($0.id) } ?? .null,
             "transferDraft": temporary ? .null : transferDraft.map(JSONValue.string) ?? .null,
             "transfersComposer": .bool(transferDraft != nil),
@@ -272,11 +283,12 @@ import WeftMateCore
         try FileManager.default.createDirectory(at: journal.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         try JSONEncoder().encode(record).write(to: journal, options: .atomic)
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: journal.path)
-        pending = body; pendingTemporary = temporary; pendingEntry = entry
+        pending = body; pendingTemporary = temporary; pendingEntry = entry; pendingFreshCreation=fresh
     }
     func restoreRequest() {
         guard pending == nil, let journal, let data = try? Data(contentsOf: journal), let row = try? JSONDecoder().decode([String: JSONValue].self, from: data), let body = row["body"], row["hostID"]?.string == app?.session?.hostId else { return }
         pending = body; pendingTemporary = row["temporary"]?.bool ?? false; pendingEntry = row["entry"]?.string ?? ""
+        pendingFreshCreation=row["fresh"]?.bool ?? (pendingEntry == "side" && row["transfersComposer"]?.bool == false && body["originChatId"] == nil && !pendingTemporary)
         if let value = row["assets"], let bytes = try? JSONEncoder().encode(value) { assets = (try? JSONDecoder().decode([Asset].self, from: bytes)) ?? [] }
         if pendingEntry == "side", row["transfersComposer"]?.bool == true {
             transferSource = app?.conversations.first { $0.id == row["transferSourceID"]?.string }
@@ -339,7 +351,12 @@ import WeftMateCore
     }
     func createSide(event: ChatEvent? = nil, temporary: Bool = false, sourceConversation: ConversationSummary? = nil, fresh: Bool = false) async {
         guard app?.beginServerOperation() == true else { return }
-        guard let app, pending == nil, !sending, let chat, !modelID.isEmpty else { return }
+        guard let app,!sending else { return }
+        if fresh,pending != nil,pendingFreshCreation {
+            await reconcile()
+            guard pending == nil,app.openedSessionID == nil else { return }
+        }
+        guard pending == nil,let chat,!modelID.isEmpty else { return }
         if temporary && !capabilities.supports("temporaryChats") { return }
         if !temporary && !capabilities.supports("sideChats") { return }
         let origin = sourceConversation ?? event.flatMap { event in app.conversations.first { $0.chatId == event.chatId } }
@@ -372,7 +389,7 @@ import WeftMateCore
                     try FileManager.default.copyItem(at: file.file, to: copy); assets.append(.init(metadata: file.original, file: copy, original: true))
                 }
             }
-            try retain(.object(body), temporary: temporary, entry: "side"); await reconcile(submit: true)
+            try retain(.object(body), temporary: temporary, entry: "side", fresh:fresh); await reconcile(submit: true)
         }
         catch { self.error = "原请求尚未保存，请重试。" }
     }
@@ -396,7 +413,14 @@ import WeftMateCore
                 receipt = try await app.assistantClient.logicalCommand(request: body, temporary: pendingTemporary)
                 guard app.accountEpoch == token else { return }; command = receipt
             }
-            guard let receipt else { error = "尚未找到原请求。可继续同一请求。"; return }
+            guard let receipt else {
+                if pendingFreshCreation && !submit {
+                    // Only an authoritative missing lookup releases a new-conversation request.
+                    if let journal { try FileManager.default.removeItem(at:journal) }
+                    pending=nil;command=nil;pendingFreshCreation=false
+                } else { error = "尚未找到原请求。可继续同一请求。" }
+                return
+            }
             guard receipt.state == "accepted_by_dsh" else { error = receipt.state == "rejected" ? "请求未受理，草稿保留。" : "请求已排队，等待受理。"; return }
             if pendingEntry == "side" {
                 await app.refresh()

@@ -103,7 +103,7 @@ import Foundation
         let reset = delta.reset || (state.snapshot != nil && state.snapshot?.generation != delta.generation)
         if reset || !delta.remove.isEmpty {
             // Delete the old file/key before applying any replacement. History can inherit erased facts.
-            try vault.clear(); state.turns = []; state.synced = []; state.contexts = [:]; state.workTasks = nil
+            try vault.clear(); state.turns = []; state.synced = []; state.contexts = [:]
             if reset { state.snapshot = nil }
         }
         var items = Dictionary(uniqueKeysWithValues: (state.snapshot?.items ?? []).map { ($0.id, $0) })
@@ -124,7 +124,9 @@ import Foundation
     }
     public func acknowledgeWorkTask(_ receipt: OfflineTaskReceipt) throws {
         guard let index=state.workTasks?.firstIndex(where: { $0.id == receipt.id && $0.hostId == receipt.hostId }) else { throw OfflineFailure.identity }
-        state.workTasks?[index].state=receipt.state; try vault.save(state)
+        if receipt.state == "canceled" || receipt.state == "completed" { state.workTasks?.remove(at:index) }
+        else { state.workTasks?[index].state=receipt.state }
+        try vault.save(state)
     }
     /// Independent phone messages and any later computer-memory references; never computer tools.
     public func enqueuePhoneTurns(_ turns: [OfflineTurn], generation: Int) throws {

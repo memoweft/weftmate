@@ -94,6 +94,7 @@ private actor NativeAccountTransport: HTTPTransport {
         if path.contains("/hosts/offline/tasks/") {
             #expect(taskSupport == 1)
             let body=try JSONSerialization.jsonObject(with:request.httpBody!) as! [String:Any]
+            if fault == "task-not-found",path.hasSuffix("cancel") { return try reply(["error":["code":"NOT_FOUND"]],status:404) }
             if path.hasSuffix("clear") { return try reply(["deleted":true]) }
             if path.hasSuffix("list") { return try reply(["items":[["id":"task-offline","hostId":"host-one","state":"waiting"]]]) }
             return try reply(["id":body["id"]!,"hostId":body["hostId"]!,"state":path.hasSuffix("cancel") ? "canceled" : "waiting"])
@@ -142,6 +143,25 @@ private actor NativeAccountTransport: HTTPTransport {
         let payload = try JSONSerialization.jsonObject(with: OfflineVault.decode(String(proof[1]))) as! [String: Any]
         #expect(payload["htu"] as? String == config.audience + "/hosts/offline/status")
         #expect(payload["htm"] as? String == "POST"); #expect(payload["ath"] as? String != nil)
+    }
+    @MainActor @Test func mode2iFix6CloudMissingCancellationRemovesLocalSendingTask() async throws {
+        let config=CloudConfiguration(server:try ServerConfiguration(input:"https://cloud.example.com")),key=try CloudDeviceKey(softwareStore:MemoryStore())
+        let fixture=try NativeAccountTransport(configuration:config,thumbprint:key.thumbprint,fault:"task-not-found",taskSupport:1)
+        let client=CloudAccountClient(configuration:config,key:key,store:MemoryStore(),transport:fixture)
+        try await client.beginAppLogin();let login=try await client.appLogin(email:"synthetic@example.com",password:UUID().uuidString,name:"Synthetic",type:"ios")
+        try await client.finishAppLogin(resumeURL:login.resumeUrl!)
+        let auth=try await client.offlineStatus(hostID:"host-one")
+        let task=try JSONDecoder().decode(OfflineWorkTask.self,from:Data("{\"id\":\"never-submitted\",\"hostId\":\"host-one\",\"generation\":3,\"state\":\"sending\",\"envelope\":{\"version\":1,\"algorithm\":\"RSA-OAEP-256+A256GCM\",\"aad\":\"synthetic\",\"wrappedKey\":\"synthetic\",\"iv\":\"synthetic\",\"ciphertext\":\"synthetic\"}}".utf8))
+        let directory=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at:directory) }
+        let vault=try OfflineVault(identity:.init(ownerId:"owner",hostId:"host-one",deviceId:"device"),directory:directory,store:MemoryStore())
+        let snapshot=try JSONDecoder().decode(OfflineSnapshot.self,from:Data("{\"generation\":3,\"reset\":false,\"items\":[],\"remove\":[],\"hashes\":{},\"truncated\":false,\"recent\":[],\"control\":{\"accountId\":\"synthetic-sub\",\"hostId\":\"host-one\",\"generation\":3}}".utf8))
+        let engine=try OfflineReplica(vault:vault);try engine.merge(snapshot);try engine.retainWorkTask(task)
+        let receipt=try await client.cancelOfflineWork(task,authorization:auth)
+        #expect(receipt.state == "canceled")
+        try engine.acknowledgeWorkTask(receipt)
+        #expect(engine.state.workTasks?.contains { $0.id == task.id } != true)
+        #expect(try OfflineReplica(vault:vault).state.workTasks?.contains { $0.state == "sending" } != true)
     }
     @Test func mode2iOfflineCloudOnlyUsesDeclaredTaskRoutesAndDPoP() async throws {
         for capability in [nil,1] as [Int?] {

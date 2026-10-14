@@ -199,7 +199,11 @@ public actor CloudAccountClient {
     }
     public func cancelOfflineWork(_ task: OfflineWorkTask, authorization: OfflineAuthorization) async throws -> OfflineTaskReceipt {
         guard authorization.supportsTasks,authorization.authorized,authorization.hostId == task.hostId else { throw OfflineFailure.authorization }
-        let response=try await appJSON("/hosts/offline/tasks/cancel",body:["hostId":task.hostId,"id":task.id],authorized:true)
+        let response: HTTPResponse
+        do { response=try await appJSON("/hosts/offline/tasks/cancel",body:["hostId":task.hostId,"id":task.id],authorized:true) }
+        catch let error as AppAccountError where error.status == 404 && error.code == "NOT_FOUND" {
+            return .init(id:task.id,hostId:task.hostId,state:"canceled")
+        }
         let receipt=try JSONDecoder().decode(OfflineTaskReceipt.self,from:response.body)
         guard receipt.id == task.id,receipt.hostId == task.hostId else { throw OfflineFailure.identity }
         return receipt
