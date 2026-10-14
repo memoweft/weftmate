@@ -9,6 +9,23 @@ import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+internal suspend fun readNativeApprovalMode(fallback: String, read: suspend () -> String): String {
+    val modes = listOf("auto", "ask", "accept-edits", "plan", "allow-all")
+    return try {
+        val selected = read()
+        check(selected in modes) { "APPROVAL_RECEIPT_INVALID" }
+        selected
+    } catch (e: CancellationException) { throw e
+    } catch (_: Exception) { fallback.takeIf { it in modes } ?: "ask" }
+}
+
+internal suspend fun saveNativeApprovalMode(selected: String, local: Boolean, save: suspend () -> String): String {
+    if (local) return selected
+    val saved = save()
+    check(saved == selected) { "APPROVAL_RECEIPT_INVALID" }
+    return saved
+}
+
 /** Presentation only: account, model, local conversations, attachments and commands stay in the existing native layer. */
 @Stable
 internal class NativeChatModel(private val activity: NativeActivity, val scope: CoroutineScope) {
@@ -32,6 +49,10 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     var modelLabel by mutableStateOf("选择模型")
     var modelId by mutableStateOf("")
     var mode by mutableStateOf("auto")
+    var approvalModeBusy by mutableStateOf(false)
+    private var approvalModeReady = false
+    private var pendingApprovalMode: String? = null
+    private var approvalModeRevision = 0
     var chatId by mutableStateOf("")
     var chatKind = ""
         private set
@@ -62,7 +83,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     private var poll: Job? = null
     private var sending by mutableStateOf(false)
     private var creatingChat by mutableStateOf(false)
-    val submitting get() = sending
+    val submitting get() = sending || approvalModeBusy
     private var refreshing = false
     private var refreshGeneration = -1
     internal var refreshPhase = "idle"
@@ -186,13 +207,17 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                 .put("title", c.optJSONArray("turns")?.optJSONObject(0)?.optJSONArray("messages")?.optJSONObject(0)?.optString("text")?.take(40) ?: "新对话") }
         }
     }
-    suspend fun select(chat: JSONObject) {
+    suspend fun select(chat: JSONObject, requestedApprovalMode: String? = null) {
         val startingDraft = if(chatId.isBlank())draft else ""
         saveDraft(); generation++; sending=false; poll?.cancel(); timeline.reset(); cursor = ""; liveRevision = 0; seq = -1
         val g = generation
+        approvalModeReady = false
+        approvalModeRevision++
+        pendingApprovalMode = requestedApprovalMode
         phoneArchive = chat.optBoolean("nativePhone")
         phoneHistory = chat.optBoolean("phoneHistory")
         phone = hostChatUsesPhoneStorage(chat)
+        approvalModeBusy = !phoneArchive && !phone
         chatId = if (phone) chat.getString("id") else chat.optString("chatId")
         chatKind = chat.optString("kind")
         sessionId = chat.optString("activeSessionId").takeUnless { it == "null" } ?: ""
@@ -204,6 +229,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         draft = prefs.getString("draft:$owner:$chatId", startingDraft) ?: startingDraft
         rows = emptyList(); approvals = emptyList(); questions = emptyList(); uncertain = emptyList(); phoneLive = ""; focused = false
         canRegenerate = false
+        var approvalSelectionRevision = approvalModeRevision
+        try {
         call("native.conversation", JSONObject().put("id", chatId))
         if (g != generation) return
         if (phoneArchive) {
@@ -223,7 +250,22 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         if (g != generation) return
         call("native.draft",JSONObject().put("hasDraft",draft.isNotEmpty() || attachments.isNotEmpty()))
         if (g != generation) return
-        if (sessionId.isNotBlank()) mode = runCatching { business("/sessions/$sessionId/approval-mode").optString("mode", "auto") }.getOrDefault("auto")
+        val modeRevision = ++approvalModeRevision
+        approvalSelectionRevision = modeRevision
+        approvalModeBusy = true
+        try {
+            val selected = if (requestedApprovalMode != null) writeApprovalMode(requestedApprovalMode, sessionId, chatId)
+                else readNativeApprovalMode(chat.optString("approvalMode", mode)) {
+                    if (phone) prefs.getString("approval:$owner:$chatId", "auto") ?: "auto"
+                    else if (sessionId.isNotBlank()) business("/sessions/$sessionId/approval-mode").getString("mode")
+                    else chat.optString("approvalMode", "auto")
+                }
+            check(selected in listOf("auto", "ask", "accept-edits", "plan", "allow-all")) { "APPROVAL_RECEIPT_INVALID" }
+            if (g == generation && modeRevision == approvalModeRevision) { mode = selected; pendingApprovalMode = null; approvalModeReady = true }
+        } catch (e: CancellationException) { throw e
+        } catch (_: Exception) {
+            if (g == generation && modeRevision == approvalModeRevision) error = "审批方式未保存，请重试。"
+        } finally { if (g == generation && modeRevision == approvalModeRevision) approvalModeBusy = false }
         if (g != generation) return
         refresh()
         if (g != generation) return
@@ -233,6 +275,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             else { delay(if (running) 250 else 2500); if (tab == "chat" && activity.nativeForeground) refresh() }
             if (!connected) delay(1500)
         } }
+        } finally { if (g == generation && approvalSelectionRevision == approvalModeRevision) approvalModeBusy = false }
     }
     fun saveDraft() {
         if (phoneArchive) {
@@ -313,6 +356,11 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                 if (!older) { cursor = p.optString("nextCursor", p.optString("syncCursor", cursor)); liveRevision = p.optLong("liveRevision", liveRevision) }
                 refreshPhase = "chat-status"
                 val current = business("/chats/$chatId").getJSONObject("chat"); if (g != generation) return
+                if (!approvalModeBusy && pendingApprovalMode == null && current.has("approvalMode")) {
+                    val saved = current.getString("approvalMode")
+                    check(saved in listOf("auto", "ask", "accept-edits", "plan", "allow-all")) { "APPROVAL_RECEIPT_INVALID" }
+                    mode = saved; approvalModeReady = true
+                }
                 title = hostChatTitle(current)
                 chats = chats.map { if (it.optString("chatId") == chatId) JSONObject(it.toString()).put("title", current.opt("title")) else it }
                 sessionId = current.optString("activeSessionId").takeUnless { it == "null" } ?: ""
@@ -352,7 +400,21 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         } finally { if (refreshGeneration == g) { refreshing = false; refreshPhase = "idle" } }
     }
     fun send() = launch {
-        if (sending || !sendAvailable || uncertain.any { it.optString("state") == "uncertain" } || draft.isBlank() && attachments.isEmpty()) return@launch
+        if (sending || approvalModeBusy || !sendAvailable || uncertain.any { it.optString("state") == "uncertain" } || draft.isBlank() && attachments.isEmpty()) return@launch
+        if (!phone && pendingApprovalMode != null) {
+            val selected = pendingApprovalMode!!; val retryGeneration = generation; val revision = approvalModeRevision
+            approvalModeBusy = true
+            try {
+                val saved = writeApprovalMode(selected, sessionId, chatId)
+                if (retryGeneration != generation || revision != approvalModeRevision) return@launch
+                mode = saved; pendingApprovalMode = null; approvalModeReady = true
+            } catch (e: CancellationException) { throw e
+            } catch (_: Exception) {
+                if (retryGeneration == generation && revision == approvalModeRevision) error = "审批方式未保存，请重试。"
+                return@launch
+            } finally { if (retryGeneration == generation && revision == approvalModeRevision) approvalModeBusy = false }
+        }
+        if (!phone && !approvalModeReady) return@launch
         if(standalone && running)return@launch
         scrollVersion++
         sending = true
@@ -390,6 +452,32 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     fun regenerate() = launch { if (canRegenerate) { scrollVersion++;activity.phonePresentation("regenerate", phoneParams()); refresh() } }
     fun copyReply(text:String) = launch { call("clipboard.copy",JSONObject().put("text",text));copyVersion++ }
     fun checkDelivery() = launch { call("shared.outbox.reconcile"); refresh() }
+    private suspend fun writeApprovalMode(selected: String, session: String, chat: String): String {
+        val local = phone
+        val saved = saveNativeApprovalMode(selected, local) {
+          if (session.isNotBlank()) business("/sessions/$session/approval-mode", "PATCH", JSONObject().put("mode", selected)).getString("mode")
+            else business("/chats/$chat", "PATCH", JSONObject().put("approvalMode", selected)).getJSONObject("chat").getString("approvalMode")
+        }
+        if (local) prefs.edit().putString("approval:$owner:$chat", saved).apply()
+        return saved
+    }
+    fun setApprovalMode(selected: String) {
+        if (approvalModeBusy) return
+        approvalModeRevision++
+        pendingApprovalMode = selected
+        if (sessionId.isBlank() && chatId.isBlank()) { mode = selected; return }
+        val g = generation; val revision = approvalModeRevision; val session = sessionId; val chat = chatId
+        approvalModeBusy = true
+        launch {
+            try {
+                val saved = writeApprovalMode(selected, session, chat)
+                if (g == generation && revision == approvalModeRevision) { mode = saved; pendingApprovalMode = null; approvalModeReady = true }
+            } catch (e: CancellationException) { throw e
+            } catch (_: Exception) {
+                if (g == generation && revision == approvalModeRevision) error = "审批方式未保存，请重新选择后再发送。"
+            } finally { if (g == generation && revision == approvalModeRevision) approvalModeBusy = false }
+        }
+    }
     fun newChat() = launch {
         if(creatingChat)return@launch
         val usePhone=standalone || !connected
@@ -397,6 +485,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         poll?.cancel(); timeline.reset(); cursor=""; liveRevision=0
         if(chatId.isNotBlank())draft=""
         chatId="";sessionId="";title="新对话";rows=emptyList();approvals=emptyList();questions=emptyList();uncertain=emptyList();attachments=emptyList()
+        pendingApprovalMode=null;approvalModeRevision++;approvalModeBusy=false;mode="auto"
         running=false;sending=false;sendAvailable=false;loading=false;error="";tab="chat";creatingChat=true
         try {
             val conversation=if(usePhone) {
@@ -416,7 +505,7 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
             }
             if(creatingGeneration!=generation)return@launch
             creatingChat=false
-            select(conversation)
+            select(conversation, pendingApprovalMode)
         } catch(e:CancellationException){throw e}
         catch(e:Exception){if(creatingGeneration==generation)error="电脑还没能创建对话，请重新点新对话。草稿已保留。"}
         finally{creatingChat=false}

@@ -29,7 +29,7 @@ export async function nativeOwnerSession(page) {
   assert.ok(me.account?.ownerId);
   return me;
 }
-export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir(), processEvidence } = {}) {
+export async function migrationHost({ nativeSession = false, executable, source = resolve(process.env.FX21_SOURCE || '.'), old = false, tempRoot = tmpdir(), processEvidence, cloudIdentity } = {}) {
   const root = realpathSync.native(mkdtempSync(join(tempRoot, 'weftmate-fx21-'))), profile = join(root, 'profile');
   mkdirSync(profile); writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
   const h = { root, profile, app: null, requests: [], source, executable, old };
@@ -62,6 +62,7 @@ export async function migrationHost({ nativeSession = false, executable, source 
     for (const key of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_|MIMO_API_KEY|MODEL_SWITCH_UNIFIED_KEY|ELECTRON_RUN_AS_NODE)/.test(key)) delete env[key];
     env.WEFTMATE_MEMOWEFT_ENABLED = '0';
     env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
+    if(cloudIdentity){env.WEFTMATE_CLOUD_ISSUER=cloudIdentity.issuer;env.WEFTMATE_CLOUD_ALLOW_INSECURE_LOOPBACK=String(cloudIdentity.allowInsecureLoopback===true);}
     const passwordStore = process.platform === 'linux' ? ['--password-store=gnome-libsecret'] : [];
     h.app = await _electron.launch({executablePath:h.executable || createRequire(import.meta.url)('electron'),args:h.executable?[...passwordStore,`--desktop-config=${config}`]:[h.source,...passwordStore,`--user-data-dir=${profile}`,'--personal-host','--access-port=0'],cwd:h.source,env,timeout:90000});
     evidence?.track(h.app.process(), { executable: h.executable || createRequire(import.meta.url)('electron'), label: 'installed-electron' });
