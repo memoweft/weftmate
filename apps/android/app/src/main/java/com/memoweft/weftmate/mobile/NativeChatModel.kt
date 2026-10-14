@@ -33,7 +33,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     var modelId by mutableStateOf("")
     var mode by mutableStateOf("auto")
     var chatId by mutableStateOf("")
-    private var chatKind = ""
+    var chatKind = ""
+        private set
     private var messageIntent = "queue"
     var sessionId by mutableStateOf("")
     var phone by mutableStateOf(false)
