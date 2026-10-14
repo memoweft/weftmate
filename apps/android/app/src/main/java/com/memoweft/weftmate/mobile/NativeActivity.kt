@@ -35,14 +35,15 @@ class NativeActivity : HybridActivity() {
     internal suspend fun timelinePresentation(events: List<JSONObject>, approvals: List<JSONObject>, questions: List<JSONObject>): List<JSONObject> {
         // A shell upgrade may reopen the previous downloaded UI bundle. Load
         // the same shipped shared mapper when that bundle predates this view.
-        if(!timelineMapperInstalled) suspendCancellableCoroutine<Unit> { continuation ->
+        while(!timelineMapperInstalled) {
             val shared=assets.open("ui-core/timeline-model.js").bufferedReader().use { it.readText() }
-            embeddedWeb.evaluateJavascript("if(typeof WeftUiCore.nativeTimelineRows!=='function'){$shared}Boolean(WeftUiCore.nativeTimelineRows)") { value ->
-                if(continuation.isActive) {
-                    timelineMapperInstalled=value=="true"
-                    continuation.resumeWith(if(timelineMapperInstalled)Result.success(Unit) else Result.failure(IllegalStateException("TIMELINE_PRESENTATION_UNAVAILABLE")))
+            val ready = suspendCancellableCoroutine<Boolean> { continuation ->
+                embeddedWeb.evaluateJavascript("(()=>{if(typeof WeftUiCore==='undefined')return false;if(typeof WeftUiCore.nativeTimelineRows!=='function'){$shared}return typeof WeftUiCore.nativeTimelineRows==='function';})()") { value ->
+                    if(continuation.isActive) continuation.resumeWith(Result.success(value=="true"))
                 }
             }
+            timelineMapperInstalled=ready
+            if(!ready) delay(50) // The Compose timeline may mount before the embedded core boots.
         }
         return suspendCancellableCoroutine { continuation ->
             val script = "JSON.stringify(WeftUiCore.nativeTimelineRows(${org.json.JSONArray(events)},${org.json.JSONArray(approvals)},${org.json.JSONArray(questions)}))"
@@ -120,33 +121,21 @@ class NativeActivity : HybridActivity() {
         // Keep the shared phone engine attached, but stop painting the covered web UI.
         // evaluateJavascript/native events still drive the existing account/vault engine.
         web.visibility = android.view.View.INVISIBLE
-        web.evaluateJavascript("window.weftNativeChatActive=true;if(typeof stopSharedPoll==='function')stopSharedPoll();if(typeof uiCore!=='undefined')uiCore.connectionVisibility(true)", null)
+        web.evaluateJavascript("window.weftNativeRoute=null;window.weftNativeChatActive=true;if(typeof stopSharedPoll==='function')stopSharedPoll();if(typeof uiCore!=='undefined')uiCore.connectionVisibility(true)", null)
         presentationContainer.addView(web, 0, ViewGroup.LayoutParams(-1, -1))
     }
     private fun applyWebFrame() {
         val web=embeddedWeb
         val name=webRoute
         val embedded=webEmbedded
-        val phoneId=if(::model.isInitialized && model.phoneArchive) model.chatId.takeUnless{it=="phone-new"} else null
-        val hostSession=if(::model.isInitialized && !model.phoneArchive) model.sessionId else ""
-        web.evaluateJavascript("""
-            (() => {
-              const route=${JSONObject.quote(name)};window.weftNativeRoute=route;
-              function apply(){
-              if(window.weftNativeRoute!==route)return;
-              // The page permits style attributes, while its CSP blocks inline style elements.
-              document.querySelectorAll('.topbar,#mobile-bottom-tabs').forEach(el=>el.style.setProperty('display',${JSONObject.quote(if(embedded)"none" else "")},'important'));
-              const app=document.getElementById('app');if(app)app.style.setProperty('padding',${JSONObject.quote(if(embedded)"0" else "")},'important');
-              for(const edge of ['top','bottom','left','right'])document.documentElement.style.setProperty('--safe-'+edge,${JSONObject.quote(if(embedded)"0px" else "")},'important');
-              if(typeof page==='function' && state.booted && route!=='login') {
-                if(route==='chat' && globalThis.WeftPhone?.hasData && ${if(::model.isInitialized && model.phoneArchive)"true" else "false"}) {state.conversationId=${phoneId?.let(JSONObject::quote) ?: "null"};state.chatSource='phone';}
-                if(route==='chat' && ${JSONObject.quote(hostSession)} && globalThis.uiCore?.selectLogicalSession) void uiCore.selectLogicalSession(${JSONObject.quote(hostSession)});
-                page(route);
-              }
-              else if(route!=='login')setTimeout(apply,100);
-              }apply();
-            })()
-        """.trimIndent(), null)
+        val entry = JSONObject().put("name", name).put("embedded", embedded)
+            .put("phone", ::model.isInitialized && model.phone)
+            .put("kind", if (::model.isInitialized && !model.phone) model.chatKind else "")
+            .put("phoneId", if (::model.isInitialized && model.phone) model.chatId.takeUnless { it == "phone-new" } ?: JSONObject.NULL else JSONObject.NULL)
+            .put("sessionId", if (::model.isInitialized && !model.phone) model.sessionId else "")
+            .put("chatId", if (::model.isInitialized && !model.phone) model.chatId else "")
+        val route = assets.open("native-chat-route.js").bufferedReader().use { it.readText() }
+        web.evaluateJavascript("$route\nvoid WeftNativeChatRoute($entry);", null)
     }
     internal fun showLogin() { if (::model.isInitialized) model.loggedIn = false }
     internal fun hideKeyboard() { (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(presentationContainer.windowToken, 0) }

@@ -2,6 +2,13 @@ package com.memoweft.weftmate.mobile
 
 import org.json.JSONObject
 
+internal fun hostChatTitle(chat: JSONObject): String =
+    if (chat.optString("kind") == "main") "WeftMate" else chat.optString("title").takeIf { it.isNotBlank() && it != "null" } ?: "新对话"
+
+internal suspend fun nativeMessageDetail(sessionId: String, seq: Long,
+    request: suspend (String, JSONObject) -> JSONObject): JSONObject =
+    request("shared.sessions.eventDetail", JSONObject().put("sessionId", sessionId).put("seq", seq))
+
 internal fun hostModelServicesDeclared(status: JSONObject?): Boolean =
     status?.optJSONObject("personalCapabilities")?.opt("modelServices") == 1
 
