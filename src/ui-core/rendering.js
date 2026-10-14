@@ -282,7 +282,25 @@
       return await WeftFormat.toCanvas(host,{pixelRatio:1,cacheBust:false,style:{position:'static',left:'auto',top:'auto'}});
     } finally {host.remove();}
   }
-  globalThis.WeftContent={create,update,enhance,lineCount,collapsed,tableCopy,openGallery,fileCard,artifactSummary,preview,exportCanvas,isGalleryOpen:()=>!!gallery?.open,closeGallery:(restoreFocus=true)=>{if(gallery){gallery._restoreFocus=restoreFocus;gallery.close();return true;}return false;}};
+  function messageCompletionNotice(row, core, event, sessionId, failed = event.data?.fullTextReadFailed) {
+    row.querySelector('.message-fulltext-notice')?.remove();
+    if (!failed) return;
+    const notice = node('span', 'truncated message-fulltext-notice'), label = node('span', '', '还有内容没显示。');
+    const retry = node('button', 'button quiet small wm-btn wm-btn--quiet', '重试'); retry.type = 'button'; retry.setAttribute('aria-label', '重试读取完整回复');
+    retry.onclick = async () => {
+      retry.disabled = true; retry.textContent = '正在读取…';
+      try {
+        const full = await core.retryHistoryMessage(event, sessionId);
+        if (!full || !notice.isConnected) return;
+        const body = row.querySelector('.message-text,.markdown');
+        if (body) update(body, full.data.text, { streaming: false });
+        notice.remove();
+      } catch { if (notice.isConnected) label.textContent = '还有内容没显示，请稍后重试。'; }
+      finally { retry.disabled = false; retry.textContent = '重试'; }
+    };
+    notice.append(label, retry); row.append(notice);
+  }
+  globalThis.WeftContent={create,update,enhance,lineCount,collapsed,tableCopy,openGallery,fileCard,artifactSummary,preview,exportCanvas,messageCompletionNotice,isGalleryOpen:()=>!!gallery?.open,closeGallery:(restoreFocus=true)=>{if(gallery){gallery._restoreFocus=restoreFocus;gallery.close();return true;}return false;}};
   if(globalThis.document&&typeof MutationObserver==='function')new MutationObserver(()=>{for(const view of diagramViews)if(!view.isConnected){URL.revokeObjectURL(view._url);diagramViews.delete(view);}for(const [block,observer]of pendingDiagrams)if(!block.isConnected){observer.disconnect();pendingDiagrams.delete(block);}if(gallery?._trigger&&!gallery._trigger.isConnected){gallery._restoreFocus=false;gallery.close();}}).observe(document.body||document.documentElement,{childList:true,subtree:true});
   if(globalThis.document&&typeof MutationObserver==='function')new MutationObserver(()=>{for(const block of document.querySelectorAll('.render-mermaid'))block._theme?.();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-accent']});
 })();
