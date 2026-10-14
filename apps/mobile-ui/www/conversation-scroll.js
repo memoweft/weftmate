@@ -18,7 +18,7 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
             followingTop = Math.max(0, box.scrollHeight - box.clientHeight);
             if (!smooth || reduced() || (globalThis.WeftReplyMotion?.paused ?? document.hidden)) { stop(); if (Math.abs(box.scrollTop-followingTop)>1) box.scrollTop = followingTop; }
             else if (Math.abs(box.scrollTop-followingTop)>1) {
-                if (!moving) { const css=getComputedStyle(document.documentElement); const curve=css.getPropertyValue('--wm-easing-desktop').match(/[\d.]+/g)?.map(Number); moving={from:box.scrollTop, to:followingTop, started:performance.now(), duration:globalThis.WeftReplyMotion?.milliseconds('replyScroll') || 160, curve}; }
+                if (!moving) { const css=getComputedStyle(document.documentElement); const curve=css.getPropertyValue('--wm-easing-desktop').match(/[\d.]+/g)?.map(Number); const started=performance.now(); moving={from:box.scrollTop, to:followingTop, started, lastTime:started, duration:globalThis.WeftReplyMotion?.milliseconds('replyScroll') || 160, curve}; }
                 if (frame === null) {
                     const tick = time => {
                         frame = null; if (!pinned || !moving) return;
@@ -28,12 +28,15 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
                         if (Math.abs(box.scrollTop-followingTop)<=1) { stop(); followingTop=null; return; }
                         if (moving.to !== followingTop) {
                             moving.from=box.scrollTop;moving.to=followingTop;
-                            moving.duration=Math.max(1,moving.duration-(time-moving.started));moving.started=time;
+                            // Rebase at the previous frame, so a new target every
+                            // frame still advances and keeps the original deadline.
+                            moving.duration=Math.max(1,moving.duration-(moving.lastTime-moving.started));moving.started=moving.lastTime;
                         }
                         const fraction = Math.min(1, (time-moving.started)/moving.duration);
                         const bezier=(t,a,b)=>3*(1-t)*(1-t)*t*a+3*(1-t)*t*t*b+t*t*t;
                         let eased=fraction; if(moving.curve?.length===4){let low=0,high=1;for(let index=0;index<12;index++){const mid=(low+high)/2;if(bezier(mid,moving.curve[0],moving.curve[2])<fraction)low=mid;else high=mid;}eased=bezier((low+high)/2,moving.curve[1],moving.curve[3]);}
                         box.scrollTop = moving.from + (followingTop-moving.from)*eased;
+                        moving.lastTime=time;
                         if (fraction < 1) frame=requestAnimationFrame(tick); else stop();
                     };
                     frame=requestAnimationFrame(tick);
