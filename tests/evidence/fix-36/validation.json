@@ -1,0 +1,23 @@
+{
+  "synthetic": true,
+  "package": "com.memoweft.weftmate.mobile.fix36qa",
+  "modelRequests": 0,
+  "checks": [
+    "native-light-fold-expand-collapse",
+    "native-dark-fold-expand-collapse-process-restart",
+    "electron-light-reply-before-progress",
+    "electron-dark-reply-before-progress"
+  ],
+  "cleanup": [
+    {
+      "package": "com.memoweft.weftmate.mobile.fix36qa.test",
+      "result": "Success"
+    },
+    {
+      "package": "com.memoweft.weftmate.mobile.fix36qa",
+      "result": "Success"
+    }
+  ],
+  "systemVersion": "15",
+  "systemDark": "Night mode: yes"
+}
