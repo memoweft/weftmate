@@ -4,6 +4,8 @@ import android.content.Intent
 import android.graphics.Bitmap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.test.platform.app.InstrumentationRegistry
 import org.json.JSONObject
 import org.junit.Assert.*
@@ -126,7 +128,10 @@ class Mode2aInstrumentedTest {
                 compose.onNodeWithContentDescription("电脑：${a.model.hostName}").performClick();shot("two-computers-menu")
                 click("MODE-2A 第二台电脑")
                 waitFor("second computer draft",90000){a.model.hostId==args.getString("secondHostId") && a.model.newWork && !a.model.workChoicesBusy}
-                compose.onNodeWithContentDescription("项目或文件夹：选择项目或文件夹").performClick()
+                compose.waitForIdle()
+                val picker=compose.onNodeWithContentDescription("项目或文件夹：选择项目或文件夹")
+                compose.waitUntil(20000){picker.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Disabled)==null}
+                picker.assertIsEnabled().performClick()
                 waitFor("second projects"){!a.model.workChoicesBusy && a.model.projects.isNotEmpty()}
                 compose.waitForIdle()
                 click("MODE-2A 第二台文件夹")
@@ -135,8 +140,24 @@ class Mode2aInstrumentedTest {
                 completed("SECOND_DARK");shot("second-computer-completed")
                 assertEquals(args.getString("secondHostId"),a.model.hostId);report.put("secondComputer",true)
             }
+            args.getString("mimoProfileId")?.takeIf{it.isNotBlank()}?.let { profile ->
+                main{a.model.selectModel(a.model.models.first{it.stringOrEmpty("profileId")==profile})}
+                waitFor("MiMo selected"){a.model.modelId==profile}
+                newConversation("chat")
+                val original=a.model.chatId
+                send("请实际使用 write 工具在当前项目文件夹中创建 mode2a-mimo.txt，内容只有 MODE2A_MIMO_PROOF。请动手执行，这是一次测试，不要只说明做法。")
+                waitFor("real MiMo computer tool",120000){a.model.approvals.any{it.stringOrEmpty("intent")=="work-switch" && it.optString("status")=="pending"}}
+                val before=a.model.rows.first{it.optString("type")=="user.message"}.toString()
+                val tool=a.model.approvals.first{it.stringOrEmpty("intent")=="work-switch" && it.optString("status")=="pending"}.stringOrEmpty("toolName")
+                compose.onNodeWithText("切换到工作",useUnmergedTree=true).performScrollTo();compose.waitForIdle()
+                waitFor("MiMo switch project"){!a.model.workChoicesBusy && a.model.projects.isNotEmpty()}
+                shot("mimo-real-tool-pending");click("切换到工作")
+                waitFor("MiMo work completed",120000){a.model.conversationMode=="work" && !a.model.running && a.model.rows.any{it.optString("type")=="assistant.message"}}
+                assertEquals(original,a.model.chatId);assertTrue(a.model.rows.any{it.toString()==before})
+                shot("mimo-real-file-completed");report.put("realMiMo",true).put("mimoTool",tool)
+            }
             report.put("newWork",true).put("sameChatAndSession",true).put("singleUserMessage",true).put("publicLookupNoSwitch",true).put("rejection",true)
-        } catch(e:Throwable){shot("failure");main{report.put("failure",e.javaClass.simpleName).put("choicesBusy",a.model.workChoicesBusy).put("projectCount",a.model.projects.size).put("computerCount",a.model.computers.size).put("connected",a.model.connected).put("error",a.model.error).put("choiceError",a.model.workChoicesError)};throw e}
+        } catch(e:Throwable){shot("failure");main{report.put("failure",e.javaClass.simpleName).put("choicesBusy",a.model.workChoicesBusy).put("projectCount",a.model.projects.size).put("projectNames",org.json.JSONArray(a.model.projects.map{it.stringOrEmpty("name")})).put("computerCount",a.model.computers.size).put("newWork",a.model.newWork).put("running",a.model.running).put("connected",a.model.connected).put("error",a.model.error).put("choiceError",a.model.workChoicesError)};throw e}
         finally {File(i.targetContext.getExternalFilesDir(null),"mode2a-report.json").writeText(report.toString());main{a.finish()}}
     }
 }

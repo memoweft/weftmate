@@ -48,7 +48,7 @@ import org.json.JSONObject
                     enabled=m.newWork && !m.workChoicesBusy,contentDescription="电脑：${m.hostName}"){computerMenu=true}
                 NativeFileMenu(computerMenu,{computerMenu=false}) { m.computers.forEach { computer ->
                     val label=computer.stringOrEmpty("displayName").ifEmpty{computer.stringOrEmpty("name")}
-                    NativeFileMenuAction(if(computer.optBoolean("online"))label else "$label · 不在线",R.drawable.wm_pc,computer.optBoolean("online")) {
+                    FeedControlMenuItem(if(computer.optBoolean("online"))label else "$label · 不在线",enabled=computer.optBoolean("online"),checked=computer.stringOrEmpty("hostId")==m.hostId) {
                         computerMenu=false;m.chooseWorkComputer(computer.getString("hostId"))
                     }
                 } }
@@ -59,7 +59,7 @@ import org.json.JSONObject
                     contentDescription="项目或文件夹：$label",enabled=m.connected && !m.running && !m.workChoicesBusy){projectMenu=true;m.launch{m.refreshWorkChoices(false)}}
                 NativeFileMenu(projectMenu,{projectMenu=false}) {
                     m.projects.forEach { project ->
-                        NativeFileMenuAction(project.stringOrEmpty("name") + if(project.stringOrEmpty("projectId")==m.workProject?.stringOrEmpty("projectId"))" · 当前" else "",R.drawable.wm_folder,!m.workChoicesBusy){projectMenu=false;m.chooseWorkProject(project)}
+                        FeedControlMenuItem(project.stringOrEmpty("name"),enabled=!m.workChoicesBusy,checked=project.stringOrEmpty("projectId")==m.workProject?.stringOrEmpty("projectId")){projectMenu=false;m.chooseWorkProject(project)}
                     }
                     if(m.projects.isEmpty())NativeFileMenuAction(if(m.workChoicesBusy)"正在读取项目…" else "还没有项目或文件夹",R.drawable.wm_folder,false){}
                     NativeFileMenuAction("新文件夹请在电脑上添加",R.drawable.wm_pc,false){}
