@@ -242,19 +242,17 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
     }
 }
 
-private fun displayRows(m: NativeChatModel): List<JSONObject> {
-    val result=m.rows.filter{it.optString("type") in listOf("user.message","assistant.message","assistant.delta","artifact.created","tool.started","tool.completed","tool.failed","step.started","step.completed","step.failed","approval.requested","question.requested","turn.ended")}.toMutableList()
-    for(a in m.approvals) if(result.none{it.optJSONObject("data")?.optString("approvalId")==a.optString("approvalId")})result.add(JSONObject().put("eventId","approval:${a.optString("approvalId")}").put("type","approval.requested").put("at",a.optString("createdAt")).put("data",a))
-    for(q in m.questions) if(result.none{it.optJSONObject("data")?.optString("questionRpcId")==q.optString("questionRpcId")})result.add(JSONObject().put("eventId","question:${q.optString("questionRpcId")}").put("type","question.requested").put("at",q.optString("createdAt")).put("data",q))
-    return result
-}
 @OptIn(ExperimentalFoundationApi::class)
 @Composable private fun NativeConversation(m: NativeChatModel, modifier: Modifier, bottom:()->androidx.compose.ui.unit.Dp, onPreview:(JSONObject)->Unit) {
     val list=rememberLazyListState();val scope=rememberCoroutineScope()
     val frost=LocalNativeFrost.current
     LaunchedEffect(list.isScrollInProgress) { frost?.paused=list.isScrollInProgress }
     DisposableEffect(frost) { onDispose { frost?.paused=false } }
-    val rows=displayRows(m)
+    val activityForTimeline=LocalContext.current as NativeActivity
+    val rows by produceState(emptyList<JSONObject>(),m.chatId,m.rows,m.approvals,m.questions) {
+        value=activityForTimeline.timelinePresentation(m.rows,m.approvals,m.questions)
+    }
+    val progressState=remember(m.chatId) { NativeProgressState() }
     val feed=(LocalContext.current as? NativeActivity)?.feed
     val pending=rows.indexOfFirst{r->val d=r.optJSONObject("data");m.approvals.any{it.optString("approvalId")==d?.optString("approvalId")&&it.optString("status")=="pending"} || m.questions.any{it.optString("questionRpcId")==d?.optString("questionRpcId")&&it.optString("status")=="pending"}}
     val visible by remember { derivedStateOf { list.layoutInfo.visibleItemsInfo.map{it.index} } }
@@ -313,10 +311,7 @@ private fun displayRows(m: NativeChatModel): List<JSONObject> {
                     "artifact.created" -> NativeArtifactFiles(e,m,onPreview)
                     "approval.requested" -> m.approvals.find{it.optString("approvalId")==d.optString("approvalId")}?.let{ NativeApproval(it){outcome,decisionScope->m.decide(it,outcome,decisionScope)} }
                     "question.requested" -> m.questions.find{it.optString("questionRpcId")==d.optString("questionRpcId")}?.let{ NativeQuestion(it){answers->m.answer(it,answers)} }
-                    else -> { var expanded by remember(e.optString("eventId")){mutableStateOf(false)}
-                        Column { Row(Modifier.fillMaxWidth().clip(card).clickable{expanded=!expanded}.padding(vertical=gap),verticalAlignment=Alignment.CenterVertically){Icon(painterResource(if(type.endsWith("failed"))R.drawable.wm_warning else R.drawable.wm_check),null,Modifier.size(DesignTokens.space16.dp));Text(d.optString("summary").ifBlank{if(type=="turn.ended")"回复已结束" else "正在处理…"},Modifier.weight(1f).padding(start=gap),fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant);Icon(painterResource(R.drawable.wm_right),"查看详情",Modifier.size(DesignTokens.space16.dp))}
-                            if(expanded) SelectionContainer{Text(d.optString("summary",d.toString()),fontSize=DesignTokens.font13.sp)} }
-                    }
+                    "native.progress" -> NativeProgress(e,progressState)
                 }
             }
             items(m.uncertain){row->Column { Text(row.optString("text"),fontSize=DesignTokens.font18.sp);Text(hostDeliveryMessage(row),color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=DesignTokens.font12.sp);if(row.optString("state")=="uncertain") NativeSecondary(onClick={m.checkDelivery()}){Text("核对消息")} } }
@@ -325,6 +320,34 @@ private fun displayRows(m: NativeChatModel): List<JSONObject> {
         }
         if(pending>=0 && pending+1 !in visible) FilledTonalButton(onClick={scope.launch{list.animateScrollToItem(pending+1)}},modifier=Modifier.align(Alignment.BottomCenter).padding(bottom=bottom()+gap,start=gap,end=gap)){Text("有一项等你决定")}
         else if(!atEnd) NativeIconButton(R.drawable.wm_down,"回到底部",Modifier.align(Alignment.BottomEnd).padding(bottom=bottom()+gap,start=gap,end=gap).background(MaterialTheme.colorScheme.surfaceVariant,CircleShape)){follow=true;scope.launch{list.animateScrollToItem(list.layoutInfo.totalItemsCount-1)}}
+    }
+}
+@Composable private fun NativeProgress(row: JSONObject, state: NativeProgressState) {
+    val data=row.getJSONObject("data");val key=row.getString("eventId")
+    var expanded by remember(key) { mutableStateOf(state.isExpanded(key)) }
+    val color=if(data.optBoolean("failed")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().clip(card).clickable(role=Role.Button) { state.toggle(key);expanded=state.isExpanded(key) }
+            .heightIn(min=DesignTokens.space44.dp).padding(vertical=gap)
+            .semantics { contentDescription=if(expanded) "收起回复进展" else "展开回复进展";stateDescription=if(expanded)"已展开" else "已收起" },verticalAlignment=Alignment.CenterVertically) {
+            if(data.optBoolean("running")) CircularProgressIndicator(Modifier.size(DesignTokens.space16.dp),color=color,strokeWidth=1.dp)
+            Text(data.optString("summary"),Modifier.weight(1f).padding(end=gap),maxLines=1,overflow=TextOverflow.Ellipsis,fontSize=DesignTokens.font13.sp,color=color)
+            Icon(painterResource(if(expanded)R.drawable.wm_down else R.drawable.wm_right),null,Modifier.size(DesignTokens.space16.dp),tint=color)
+        }
+        val steps=state.visibleSteps(row)
+        if(steps.isNotEmpty()) Column(Modifier.fillMaxWidth().clip(card).border(1.dp,MaterialTheme.colorScheme.outline,card).padding(pad),verticalArrangement=Arrangement.spacedBy(gap)) {
+            steps.forEach { step ->
+                var detail by remember(key,step.optString("stepId")) { mutableStateOf(step.optBoolean("attention")) }
+                Column {
+                    Row(Modifier.fillMaxWidth().clip(card).clickable(role=Role.Button){detail=!detail}.heightIn(min=DesignTokens.space44.dp),verticalAlignment=Alignment.CenterVertically) {
+                        Icon(painterResource(if(step.optBoolean("attention"))R.drawable.wm_warning else R.drawable.wm_check),null,Modifier.size(DesignTokens.space16.dp),tint=if(step.optBoolean("attention"))MaterialTheme.colorScheme.error else color)
+                        Text(listOf(step.optString("summary"),step.optString("statusText"),step.optString("approvalText")).filter{it.isNotBlank()}.joinToString(" · "),Modifier.weight(1f).padding(horizontal=gap),fontSize=DesignTokens.font13.sp,color=color)
+                        Icon(painterResource(if(detail)R.drawable.wm_down else R.drawable.wm_right),if(detail)"收起步骤详情" else "展开步骤详情",Modifier.size(DesignTokens.space16.dp),tint=color)
+                    }
+                    if(detail) SelectionContainer { Text(step.optString("toolName")+step.opt("arguments")?.let{"\n$it"}.orEmpty(),fontSize=DesignTokens.font13.sp,color=color) }
+                }
+            }
+        }
     }
 }
 @Composable private fun NativeMessage(m: NativeChatModel,e: JSONObject,bubbleMaxWidth:androidx.compose.ui.unit.Dp,onPreview:(JSONObject)->Unit) {

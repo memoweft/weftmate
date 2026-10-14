@@ -11,9 +11,11 @@
     const put = (key, seq, build) => {
       seen.add(key); let row = existing.get(key)
       if (!row) { row = node(options.tag || 'li', 'timeline-entry'); row.dataset.timeline = key; existing.set(key, row) }
+      const previousSeq = row.dataset.seq
       row.dataset.seq = String(seq); build(row)
       const before = [...list.children].find(n => n !== row && Number(n.dataset.seq) > seq)
-      if (before) list.insertBefore(row, before); else if (!row.parentNode) list.append(row)
+      if (before) { if (row.nextElementSibling !== before) list.insertBefore(row, before) }
+      else if (!row.parentNode || previousSeq !== String(seq)) list.append(row)
       return row
     }
     const started = ordered.filter(event => event.type === 'turn.started').at(-1)
@@ -24,7 +26,7 @@
       let text=row.querySelector('.inline-progress-text');if(!text){text=node('span','inline-progress-text is-running');row.replaceChildren(text)}
       if(globalThis.WeftReplyMotion)WeftReplyMotion.status(text,options.waiting,true);else text.textContent=options.waiting
     })
-    for (const block of groups) put(`steps-${block.seq}`, block.seq, row => {
+    for (const block of groups) put(`steps-${block.seq}`, WeftUiCore.progressPosition(ordered, block), row => {
       block.steps = block.steps.map(step=>globalThis.WeftUiCore.executionPresentation(step,options.executions))
       const expandedForObjects = row.querySelector('details')?.open === true
       const currentForObjects = block.steps.filter(step => step.state === 'running').at(-1)

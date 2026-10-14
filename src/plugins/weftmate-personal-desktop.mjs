@@ -16,6 +16,7 @@ import { personalWebFetchProvider } from './personal-web-fetch.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
 import PlanModeController, { foldPlanMode } from '@deepseek-ai/dsh-plan-mode';
 import { approvalRequired, approvalPrompt, classifyPersonalRisk, RISK_LABELS } from './personal-approval-policy.mjs';
+import { installCommandEncoding } from './personal-command-encoding.mjs';
 import { reviewSourceLocations } from './personal-review-sources.mjs';
 import { toolNeedsComputer, chatModePrompt, applyWorkDirectoryChoice, WORK_SWITCH_REASON } from './personal-work-mode.mjs';
 
@@ -701,6 +702,9 @@ export async function requestPersonalWorkMode(ctx, exec, { policy, policyFor, ap
 
 export function apply(ctx) {
   const bridge = new PersonalDesktopBridge();
+  ctx.inject(['subprocess'], subprocessCtx => {
+    subprocessCtx.effect(() => installCommandEncoding(subprocessCtx.subprocess), 'personal Windows command encoding');
+  });
   const disposeProjectSandbox = installProjectSandbox(ctx.get('sandboxPolicy'));
   ctx.plugin(PlanModeController, { section: 'You are planning. Present a complete Markdown plan with exit_plan_mode before executing tools. Ask for missing information if needed. Execute only after the user approves the plan.' });
   const policyFor = (agent) => bridge.request({ action: 'approval_policy', sessionId: agent.session.id,
