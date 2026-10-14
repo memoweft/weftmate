@@ -2,6 +2,7 @@ package com.memoweft.weftmate.mobile
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.view.WindowInsetsController
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.platform.ComposeView
@@ -38,7 +39,11 @@ class Fix46ApprovalCopyInstrumentedTest {
         } finally { connection.disconnect() }
     }
     private fun shot(name: String) {
-        compose.waitForIdle(); Thread.sleep(300)
+        compose.waitForIdle()
+        main { activity.window.insetsController?.setSystemBarsAppearance(
+            if(args.getString("theme") == "dark") 0 else WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+            WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS) }
+        Thread.sleep(300)
         val bitmap = i.uiAutomation.takeScreenshot()
         try { File(activity.getExternalFilesDir(null), "fix46-${args.getString("theme") }-$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) } }
         finally { bitmap.recycle() }
