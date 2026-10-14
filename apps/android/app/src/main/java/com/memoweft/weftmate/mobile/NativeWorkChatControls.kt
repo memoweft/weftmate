@@ -107,7 +107,7 @@ import org.json.JSONObject
                 FeedControlButton("先不用",secondary=true){m.decide(row,"rejected")}
                 FeedControlButton("切换到工作",primary=true,enabled=m.connected && !m.workChoicesBusy && selected.isNotEmpty()){m.decide(row,"allowed-once","once",selected)}
             }
-            if(!m.connected && m.offlineWorkReady)FeedControlButton("交给电脑，上线后做"){m.openOfflineWork()}
+            if(!m.connected && m.offlineWorkReady)FeedControlButton("交给电脑，上线后做"){m.openOfflineWork(row)}
         }
     }
 }

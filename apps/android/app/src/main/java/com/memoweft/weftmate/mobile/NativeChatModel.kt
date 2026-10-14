@@ -645,11 +645,12 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
     fun chooseWorkComputer(id: String) = launch {
         if (!newWork || workChoicesBusy) return@launch
         val text = draft
+        val selectedApprovalMode = pendingApprovalMode ?: mode
         workChoicesBusy = true
         try {
             connectComputer(id)
             if (!workAndChat) { error="这台电脑需要更新 WeftMate 后才能使用对话和工作。"; return@launch }
-            newChat("work").join(); edit(text)
+            newChat("work").join(); setApprovalMode(selectedApprovalMode); edit(text)
         } finally { workChoicesBusy = false }
     }
     fun chooseWorkProject(project: JSONObject) = launch {
@@ -662,8 +663,8 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
                 if (workCreateRequest.isEmpty() || workCreateProject != project.getString("projectId")) {
                     workCreateRequest = "native-work-${UUID.randomUUID()}"; workCreateProject = project.getString("projectId")
                 }
-                var command = nativeCreateWork(hostId, project.getString("projectId"), workCreateRequest, modelId) { target, path, body ->
-                    check(target == hostId) { "TARGET_UNAVAILABLE" }; business(path,"POST",body)
+                var command = nativeCreateWork(hostId, project.getString("projectId"), workCreateRequest, modelId) { _, path, body ->
+                    business(path,"POST",body)
                 }.getJSONObject("command")
                 val deadline = android.os.SystemClock.elapsedRealtime() + 15000
                 while (command.optString("state") in setOf("pending","preflight","dispatching") && android.os.SystemClock.elapsedRealtime() < deadline) {
@@ -684,8 +685,9 @@ internal class NativeChatModel(private val activity: NativeActivity, val scope: 
         } catch (_: Exception) { error="文件夹未选好，请重试。草稿已保留。" }
         finally { workChoicesBusy = false }
     }
-    fun openOfflineWork() = launch {
-        activity.goals.presentation("const core=globalThis.WeftMobileCloud?.core;if(!core?.offlineWorkReady?.())throw {code:'COMPUTER_OFFLINE'};core.openOfflineWorkMode(${JSONObject.quote(draft)});return {};")
+    fun openOfflineWork(row: JSONObject) = launch {
+        val text = nativeWorkSwitchText(row, rows, draft)
+        activity.goals.presentation("const core=globalThis.WeftMobileCloud?.core;if(!core?.offlineWorkReady?.())throw {code:'COMPUTER_OFFLINE'};core.openOfflineWorkMode(${JSONObject.quote(text)});return {};")
         tab="web-chat"
     }
     fun answer(row: JSONObject, answers: JSONArray) = launch {
