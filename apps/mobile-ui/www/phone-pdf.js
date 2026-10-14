@@ -10,11 +10,20 @@
     const node=(tag,cls,text)=>{const n=document.createElement(tag);n.className=cls||'';if(text)n.textContent=text;return n;};
     const viewer=node('section','phone-pdf-view'),toolbar=node('div','phone-pdf-toolbar'),pages=node('div','phone-pdf-pages'),status=node('p','render-status','正在读取文档…');
     viewer.setAttribute('aria-label',name);viewer.dataset.pdfState='loading';status.setAttribute('role','status');
-    const controls=[];let zoom=1,pdf,task,epoch=0,observer;
+    const controls=[];let zoom=1,pdf,task,epoch=0,observer,nativePages;
     for(const [label,icon,action]of [['缩小文档','minus',()=>zoom=Math.max(.5,zoom-.25)],['适应页面','expand',()=>zoom=1],['放大文档','plus',()=>zoom=Math.min(4,zoom+.25)]]){const button=node('button','render-action');button.type='button';button.setAttribute('aria-label',label);button.append(WeftIcons.create(icon,20));button.onclick=()=>{action();void paint().catch(showError);};toolbar.append(button);controls.push(button);}
     viewer.append(toolbar,status,pages);content.append(viewer);
     const rows=[];
     async function draw(row,generation){if(generation!==epoch||!viewer.isConnected||row.painted===zoom)return;const ticket=row.drawTicket={};const previous=row.render;previous?.cancel();if(previous)try{await previous.promise;}catch(error){if(error?.name!=='RenderingCancelledException')throw error;}
+      if(nativePages){
+        const data=row.nativePage??=row.number===1?nativePages.first:await WeftNativePdf.page({libraryId:nativePages.id,page:row.number-1});
+        const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src='data:image/png;base64,'+data.data;});
+        if(generation!==epoch||row.drawTicket!==ticket||!viewer.isConnected)return;
+        const canvas=row.canvas,width=Math.max(1,pages.clientWidth||content.clientWidth),scale=width/data.width*zoom;
+        canvas.width=data.width;canvas.height=data.height;canvas.style.width=data.width*scale+'px';canvas.style.height=data.height*scale+'px';
+        canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`${name}，第 ${row.number} 页`);canvas.getContext('2d').drawImage(image,0,0);
+        row.painted=zoom;row.box.dataset.pdfRendered='true';return;
+      }
       const page=await pdf.getPage(row.number);if(generation!==epoch||row.drawTicket!==ticket||!viewer.isConnected)return;
       const plain=page.getViewport({scale:1}),width=Math.max(1,pages.clientWidth||content.clientWidth),scale=width/plain.width*zoom,viewport=page.getViewport({scale}),ratio=window.devicePixelRatio||1;
       const canvas=row.canvas;canvas.width=Math.ceil(viewport.width*ratio);canvas.height=Math.ceil(viewport.height*ratio);canvas.style.width=viewport.width+'px';canvas.style.height=viewport.height+'px';canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`${name}，第 ${row.number} 页`);
@@ -26,9 +35,14 @@
       observer?.disconnect();observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting)void draw(entry.target.pdfRow,generation).catch(showError);},{root:content,rootMargin:'100px'});for(const row of rows)observer.observe(row.box);
     }
     function showError(error){if(!viewer.isConnected||error?.name==='RenderingCancelledException')return;viewer.dataset.pdfState='error';status.hidden=false;status.textContent='这份文档暂时无法读取，请关闭后重试。';}
-    void(async()=>{try{const {module,BinaryDataFactory}=await pdfLibrary(),bytes=data.blob?new Uint8Array(await data.blob.arrayBuffer()):Uint8Array.from(atob(data.data),char=>char.charCodeAt(0));
-      if(!viewer.isConnected)return;task=module.getDocument({data:bytes,BinaryDataFactory,useWorkerFetch:false,useWasm:false,cMapUrl:base.href,cMapPacked:true,standardFontDataUrl:base.href,wasmUrl:base.href,disableFontFace:true});pdf=await task.promise;
-      if(!viewer.isConnected){await task.destroy();return;}for(let number=1;number<=pdf.numPages;number++){const box=node('div','phone-pdf-page'),canvas=node('canvas');box.append(canvas);const row={number,box,canvas};box.pdfRow=row;rows.push(row);pages.append(box);}await paint();
+    void(async()=>{try{
+      if(globalThis.weftNative&&data.item?.id&&globalThis.WeftNativePdf){
+        const first=await WeftNativePdf.page({libraryId:data.item.id,page:0});nativePages={id:data.item.id,first};pdf={numPages:first.pageCount};
+      }else{
+        const {module,BinaryDataFactory}=await pdfLibrary(),bytes=data.blob?new Uint8Array(await data.blob.arrayBuffer()):Uint8Array.from(atob(data.data),char=>char.charCodeAt(0));
+        if(!viewer.isConnected)return;task=module.getDocument({data:bytes,BinaryDataFactory,useWorkerFetch:false,useWasm:false,cMapUrl:base.href,cMapPacked:true,standardFontDataUrl:base.href,wasmUrl:base.href,disableFontFace:true});pdf=await task.promise;
+      }
+      if(!viewer.isConnected){await task?.destroy();return;}for(let number=1;number<=pdf.numPages;number++){const box=node('div','phone-pdf-page'),canvas=node('canvas');box.append(canvas);const row={number,box,canvas};box.pdfRow=row;rows.push(row);pages.append(box);}await paint();
     }catch(error){showError(error);}})();
     const cleanup=new MutationObserver(()=>{if(!viewer.isConnected){epoch++;observer?.disconnect();for(const row of rows)row.render?.cancel();void task?.destroy();cleanup.disconnect();}});cleanup.observe(document.body,{subtree:true,childList:true});
     return viewer;

@@ -1848,3 +1848,13 @@ test('FIX-32 standalone send explains missing model, model test and running repl
  h.run('state.modelSwitching=false;fix32Running=true;state.busy=true;updateComposer()');assert.equal(h.node('send-button').dataset.action,'stop');
  await h.run('WeftPhone.send()');assert.match(h.node('toast').textContent,/回复.*进行/);assert.equal(h.run('fix32Sends'),0);assert.equal(h.node('draft').value,'保留我的消息');
 });
+
+
+test('FIX-35 shared receipt preserves a next draft typed while the first request is pending',async()=>{
+  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="pc1";state.sharedHostAvailable=true;state.sharedSessions=[{sessionId:"pc1",title:"合成电脑",sendAvailable:true,running:true,source:"host"}];state.sharedRunning=true;loadSharedHistory=async()=>{}');
+  h.node('draft').value='第一条';const sending=h.run('send()');
+  const request=h.bridge.find(item=>item.method==='shared.send');assert.ok(request);
+  h.node('draft').value='第二条🙂';
+  h.reply(h.bridge.indexOf(request),{source:'host',sessionId:'pc1',requestId:request.params.requestId,kind:'session.message',state:'accepted'});
+  await sending;assert.equal(h.node('draft').value,'第二条🙂');
+});
