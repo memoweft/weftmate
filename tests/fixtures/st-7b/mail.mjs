@@ -1,23 +1,20 @@
 import hoodiecrow from 'hoodiecrow-imap';
 import { SMTPServer } from 'smtp-server';
 import nodemailer from 'nodemailer';
-import { mkdtemp, readFile, chmod, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { promisify } from 'node:util';
-import { execFile } from 'node:child_process';
+import { readFile, chmod } from 'node:fs/promises';
 import { getCACertificates, setDefaultCACertificates } from 'node:tls';
-import { randomUUID } from 'node:crypto';
+import { calendarTlsFixture } from './calendar-server.mjs';
 
 export const MAIL_EMAIL = 'owner@synthetic.invalid';
 export const MAIL_PASSWORD = 'synthetic-mail-app-password';
-const exec = promisify(execFile);
 
 /** Real, in-memory IMAP and SMTP servers. Only random loopback ports and a
  * freshly generated certificate are used. Product TLS validation stays on. */
 export async function mailFixture(t, options = {}) {
-  const root = await mkdtemp(join(tmpdir(), 'wm-st7b-mail-'));
-  const keyPath = join(root, 'mail-test-key.pem'), caPath = join(root, 'mail-test-ca.pem');
+  // Use the existing in-process certificate fixture: spawning OpenSSL and
+  // generating RSA keys was preparation with an unrelated 15s process limit.
+  const tls = await calendarTlsFixture();
+  const root = tls.directory, keyPath = tls.keyPath, caPath = tls.certificatePath;
   const received = [], requests = [];
   const sockets = new Set();
   let imap, smtp, closed = false, trusted = false, certificatePem;
@@ -28,17 +25,10 @@ export async function mailFixture(t, options = {}) {
     if (imap) await new Promise(resolve => imap.close(resolve));
     if (smtp) await new Promise(resolve => smtp.close(resolve));
     if (trusted) setDefaultCACertificates(getCACertificates('default').filter(cert => cert !== certificatePem));
-    await rm(root, { recursive: true, force: true });
+    await tls.close();
   }
   t?.after(close);
   try {
-    await exec('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-sha256', '-days', '1',
-      // Distinct issuers prevent older macOS OpenSSL/LibreSSL from choosing
-      // another simultaneous fixture's self-signed CA with the same subject.
-      '-keyout', keyPath, '-out', caPath, '-subj', '/CN=synthetic-mail-' + randomUUID(),
-      '-addext', 'subjectAltName=IP:127.0.0.1,DNS:localhost',
-      '-addext', 'basicConstraints=critical,CA:TRUE', '-addext', 'extendedKeyUsage=serverAuth'],
-    { windowsHide: true, timeout: 15000 });
     await chmod(keyPath, 0o600); await chmod(caPath, 0o600);
     const credentials = { key: await readFile(keyPath), cert: await readFile(caPath) }; certificatePem = credentials.cert.toString();
     const date = options.date ?? new Date();

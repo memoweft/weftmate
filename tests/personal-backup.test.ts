@@ -18,6 +18,7 @@ import { once } from 'node:events';
 import { enterProfileWrite } from '../src/personal-backup/write-barrier.mjs';
 import { durableWrite } from '../src/personal-access/store.mjs';
 import { rehomeSessions } from '../src/personal-backup/rehome.mjs';
+import { managedMkdtemp, disposeManagedTemp } from './helpers/managed-temp.mjs';
 
 const storageAttachments = ['weftmate-storage-key.json','weftmate-storage-key.json.previous-synthetic',
   'weftmate-model.enc.unreadable-synthetic','weftmate-model.enc.recovery.json',
@@ -48,12 +49,15 @@ test('ROB-1b restoring a valid old archive hashes but never installs its encrypt
 });
 
 async function fixture(t) {
-  const base = await mkdtemp(path.join(tmpdir(), 'weftmate-backup-')), root = path.join(base, 'profile'), directory = path.join(base, 'Backups');
+  const base = await managedMkdtemp('weftmate-backup-'), root = path.join(base, 'profile'), directory = path.join(base, 'Backups');
   await mkdir(path.join(root, 'personal-access'), { recursive: true }); await mkdir(directory);
-  t.after(() => rm(base, { recursive: true, force: true }));
+  const closers = [];
+  // Test after hooks run in registration order. Close all writers before
+  // removing their profile, and end the managed lease with the directory.
+  t.after(async () => { try { for (const close of closers) await close(); } finally { disposeManagedTemp(base); } });
   const store = { version: 3, hostId: 'fixture-host', legacyOwnerId: 'fixture-owner', accounts: { 'fixture-owner': { devices: { secret: { token: 'device-secret' } }, setupGrant: null, sessions: {}, commands: {}, setting: 'before' } } };
   await writeFile(path.join(root, 'personal-access/store.json'), JSON.stringify(store));
-  return { base, root, directory, control: path.join(root, 'personal-backup'), store };
+  return { base, root, directory, control: path.join(root, 'personal-backup'), store, cleanup: close => closers.push(close) };
 }
 test('BK-1 online SQLite snapshot remains consistent while another connection writes WAL', async t => {
   const f = await fixture(t), file = path.join(f.root, 'memory.sqlite3'), out = path.join(f.base, 'online.sqlite3');
@@ -147,7 +151,7 @@ test('BK-1 HTTP uses host-owner authorization and CSRF, and fences writes once b
   const backend = Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(name => [name, async () => ({})]));
   const service = await createPersonalAccessService({ root: path.join(f.root, 'personal-access'), port: 0, backend,
     backupManager: { isPending: () => pending, view: async () => ({ backups: [] }), request: async () => { pending = true; requests++; return { state: 'pending' }; } } });
-  t.after(() => service.close()); const { origin } = await service.start();
+  f.cleanup(() => service.close()); const { origin } = await service.start();
   async function api(method, route, body, auth = {}) {
     const response = await fetch(`${origin}/personal/v1${route}`, { method, headers: { origin, 'content-type': 'application/json', ...auth }, body: body ? JSON.stringify(body) : undefined });
     return { status: response.status, body: await response.json(), cookie: response.headers.get('set-cookie')?.split(';')[0] };
@@ -188,7 +192,7 @@ test('BK-1 portable restore keeps valid command receipts under the new installat
     preflight: async () => ({ ok: true }), createSession: async ({ sessionId }) => ({ sessionId }), sendMessage: async () => ({}), cancelSession: async () => ({}),
     readEvents: async ({ afterSeq }) => ({ events: [], nextSeq: afterSeq, hasMore: false }), describeSession: async id => ({ sessionId: id, running: false }) };
   const source = await createPersonalAccessService({ root: path.join(f.root, 'personal-access'), port: 0, backend });
-  t.after(() => source.close()); const started = await source.start();
+  f.cleanup(() => source.close()); const started = await source.start();
   const setup = await fetch(`${started.origin}/personal/v1/auth/setup`, { method: 'POST', headers: { origin: started.origin, 'content-type': 'application/json' },
     body: JSON.stringify({ grant: (await source.issueSetupGrant()).grant, username: 'portable-owner', password: 'synthetic portable password', deviceName: 'source' }) });
   const auth = await setup.json(), headers = { origin: started.origin, 'content-type': 'application/json', cookie: setup.headers.get('set-cookie').split(';')[0], 'x-weftmate-csrf': auth.csrfToken };
@@ -203,7 +207,7 @@ test('BK-1 portable restore keeps valid command receipts under the new installat
   const control = path.join(targetRoot, 'personal-backup'); await mkdir(control);
   await beginRestore({ root: targetRoot, control, file: path.join(f.directory, row.id), validate: async stage => validateStore(JSON.parse(await readFile(path.join(stage, 'personal-access/store.json'), 'utf8'))) });
   await commitRestore({ root: targetRoot, control });
-  const reopened = await createPersonalAccessService({ root: path.join(targetRoot, 'personal-access'), port: 0, backend }); t.after(() => reopened.close()); const current = await reopened.start();
+  const reopened = await createPersonalAccessService({ root: path.join(targetRoot, 'personal-access'), port: 0, backend }); f.cleanup(() => reopened.close()); const current = await reopened.start();
   const login = await fetch(`${current.origin}/personal/v1/auth/login`, { method: 'POST', headers: { origin: current.origin, 'content-type': 'application/json' }, body: JSON.stringify({ username: 'portable-owner', password: 'synthetic portable password', deviceName: 'target' }) });
   assert.equal(login.status, 200); const found = await (await fetch(`${current.origin}/personal/v1/commands/${command.commandId}`, { headers: { cookie: login.headers.get('set-cookie').split(';')[0] } })).json();
   assert.equal(found.command.targetDeviceId, targetHost); assert.equal(found.command.state, 'accepted_by_dsh');

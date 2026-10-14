@@ -103,7 +103,11 @@ export class MemoWeftRpc {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         if (!this.pending.delete(requestId)) return;
-        reject(failed('MEMORY_TIMEOUT'));
+        reject(Object.assign(failed('MEMORY_TIMEOUT'), {
+          message: `MEMORY_TIMEOUT (method=${method}, phase=awaiting-worker-response)`,
+          requestMethod: method,
+          requestPhase: 'awaiting-worker-response',
+        }));
       }, timeoutMs);
       this.pending.set(requestId, { resolve, reject, timer });
       try { this.child.stdin.write(data, 'utf8'); }
