@@ -6,56 +6,88 @@
       "tests": 25,
       "passed": 25,
       "failed": 0,
-      "skipped": 0
+      "skipped": 0,
+      "files": [
+        "tests/personal-backup.test.ts"
+      ]
     },
     {
       "file": "tls-geometry.log",
       "tests": 16,
       "passed": 16,
       "failed": 0,
-      "skipped": 0
+      "skipped": 0,
+      "files": [
+        "tests/st-7b-mail.test.ts",
+        "tests/st-7b-calendar.test.ts",
+        "tests/ci-recurring-reds.test.ts"
+      ]
     },
     {
       "file": "related-final.log",
       "tests": 38,
       "passed": 38,
       "failed": 0,
-      "skipped": 0
+      "skipped": 0,
+      "files": [
+        "tests/personal-activity.test.ts",
+        "tests/dsh-web-runtime-lifecycle.test.ts",
+        "tests/personal-general-execution.test.ts",
+        "tests/personal-memory-processing-route.test.ts"
+      ]
     },
     {
       "file": "final-general-memory.log",
       "tests": 20,
       "passed": 20,
       "failed": 0,
-      "skipped": 0
+      "skipped": 0,
+      "files": [
+        "tests/personal-general-execution.test.ts",
+        "tests/personal-memory-processing-route.test.ts"
+      ]
     },
     {
       "file": "policy-final.log",
       "tests": 14,
       "passed": 14,
       "failed": 0,
-      "skipped": 0
+      "skipped": 0,
+      "files": [
+        "tests/ci-test-policy.test.ts",
+        "tests/ci-recurring-reds.test.ts"
+      ]
     },
     {
       "file": "electron-related.log",
       "tests": 2,
       "passed": 2,
       "failed": 0,
-      "skipped": 0
+      "skipped": 0,
+      "files": [
+        "tests/bl-29-timing-config.test.ts",
+        "tests/bl-29-timing-approval.test.ts"
+      ]
     },
     {
       "file": "bl29-file-final.log",
       "tests": 9,
       "passed": 9,
       "failed": 0,
-      "skipped": 0
+      "skipped": 0,
+      "files": [
+        "tests/bl-29-rework.test.ts"
+      ]
     },
     {
       "file": "folder-fixture-final.log",
       "tests": 10,
       "passed": 10,
       "failed": 0,
-      "skipped": 0
+      "skipped": 0,
+      "files": [
+        "tests/folder-choice.test.ts"
+      ]
     },
     {
       "file": "shutdown-related.log",
@@ -71,11 +103,14 @@
       "skipped": 0
     },
     {
-      "file": "desktop-error-final.log",
+      "file": "desktop-errors-fixed.log",
       "tests": 1,
       "passed": 1,
       "failed": 0,
-      "skipped": 0
+      "skipped": 0,
+      "files": [
+        "tests/bl-29-rework.test.ts (BL-29b M1 leaf only)"
+      ]
     }
   ],
   "focusedRepeats": {
@@ -94,12 +129,37 @@
     "lock": "heavy slot acquired and released",
     "passed": 2,
     "exitCode": 0,
-    "signal": null
+    "signal": null,
+    "heavyBatches": [
+      "N4 + approval targeted leaves",
+      "remaining BL-29 rework file",
+      "desktop errors targeted leaf",
+      "rendering scene light + dark"
+    ]
   },
   "limits": [
     "No local complete required/vendor suite",
     "No production host,18186,real model requests or vendor edits",
     "Historical approval geometry and 6s list readiness lack unique timing evidence"
   ],
-  "additionalFixture": "folder-choice native inspector permits both existing supported platforms; Apple product unchanged"
+  "additionalFixture": "folder-choice native inspector permits both existing supported platforms; Apple product unchanged",
+  "galleryScenes": {
+    "file": ".local/ci-4/rendering-local.log",
+    "scene": "rendering",
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "passed": 2,
+    "failed": 0,
+    "limit": "Only this scene, not the full gallery sequence"
+  },
+  "additionalCatalogCancellation": {
+    "file": "tests/bl-29-account-changes.test.ts",
+    "leaf": "BL-29c N3 cancellation during shared catalog read removes each HTTP request listener",
+    "diagnosticRuns": 5,
+    "passed": 5,
+    "failed": 0,
+    "limit": "Narrow temporary diagnostic copy; failing cloud listener ownership remains unknown"
+  }
 }
