@@ -35,6 +35,13 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
             default: return '模型服务操作未完成，请稍后重试。';
         }
     }
+    function preferredServiceModel(service) {
+        const models = (service?.models || []).filter(model => model.enabled !== false);
+        const defaultProfileId = core.state.modelSettings?.defaultModelProfileId;
+        return models.find(model => model.modelId === service?.selectedModelId)
+            || (defaultProfileId && models.find(model => model.profileId === defaultProfileId || model.profileIds?.includes(defaultProfileId)))
+            || models[0];
+    }
     function modelServicesView() {
         let recent = []; try { recent = JSON.parse(environment.storage.getItem(recentKey()) || '[]'); } catch {}
         const services = core.state.modelServices || [];
@@ -107,5 +114,5 @@ globalThis.WeftUiCore.factories.modelServices = (core, effects, environment) => 
         if (generation !== core.state.identityGeneration) throw {code:'ABORTED'};
         return core.accessApi('/model-services/check', {method:'POST',protectedWrite:true,body:{baseUrl,interfaceType,...(apiKey?{apiKey}:{}),...(serviceId?{serviceId}:{})},timeoutMs:20000});
     }
-    return { modelServicesView, refreshModelServices, selectServiceModel, writeModelService, checkModelService, modelServiceFailureMessage };
+    return { modelServicesView, refreshModelServices, selectServiceModel, writeModelService, checkModelService, modelServiceFailureMessage, preferredServiceModel };
 };
