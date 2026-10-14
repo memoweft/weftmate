@@ -186,8 +186,10 @@ export const PROFILE_PATCH_TEMPLATE_R14 = PROFILE_PATCH_TEMPLATE_R13.replace('�
  * CLI roster discards. */
 export const PROFILE_PATCH_TEMPLATE_R15 = PROFILE_PATCH_TEMPLATE_R14
   .replace('    - id: weftmate-personal-memory', "    - id: weftmate-personal-task-control\n      name: ./plugins/weftmate-personal-task-control.mjs\n    - id: weftmate-personal-memory")
-export const PROFILE_PATCH_TEMPLATE = PROFILE_PATCH_TEMPLATE_R15
+export const PROFILE_PATCH_TEMPLATE_R16 = PROFILE_PATCH_TEMPLATE_R15
   .replace('    - id: weftmate-personal-task-control', "    - id: weftmate-personal-schedules\n      name: ./plugins/weftmate-personal-schedules.mjs\n    - id: weftmate-personal-conversation-context\n      name: ./plugins/weftmate-personal-conversation-context.mjs\n    - id: weftmate-personal-task-control")
+export const PROFILE_PATCH_TEMPLATE = PROFILE_PATCH_TEMPLATE_R16
+  .replace('    - id: weftmate-personal-memory', "    - id: weftmate-personal-tool-loop\n      name: ./plugins/weftmate-personal-tool-loop.mjs\n    - id: weftmate-personal-memory")
 
 export const PROFILE_PATCH_TEMPLATE_R3_PICKER = `# WeftMate 补丁层（R3）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
 # 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行）。
@@ -348,7 +350,7 @@ async function writeProfilePatch(patchPath: string): Promise<boolean> {
     return true
   }
   if (existing === PROFILE_PATCH_TEMPLATE) return false // 已是新模板
-  if (existing === PROFILE_PATCH_TEMPLATE_LEGACY || existing === PROFILE_PATCH_TEMPLATE_R3
+  if (existing === PROFILE_PATCH_TEMPLATE_R16 || existing === PROFILE_PATCH_TEMPLATE_LEGACY || existing === PROFILE_PATCH_TEMPLATE_R3
     || existing === PROFILE_PATCH_TEMPLATE_R3_PICKER || existing === PROFILE_PATCH_TEMPLATE_R7
     || existing === PROFILE_PATCH_TEMPLATE_R8 || existing === PROFILE_PATCH_TEMPLATE_R9 || existing === PROFILE_PATCH_TEMPLATE_R10 || existing === PROFILE_PATCH_TEMPLATE_R11 || existing === PROFILE_PATCH_TEMPLATE_R12 || existing === PROFILE_PATCH_TEMPLATE_R13 || existing === PROFILE_PATCH_TEMPLATE_R14 || existing === PROFILE_PATCH_TEMPLATE_R15) {
     await writeFile(patchPath, PROFILE_PATCH_TEMPLATE, 'utf8')
@@ -412,6 +414,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'personal-project-context.mjs'), join(dir, 'plugins', 'personal-project-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-memory.mjs'), join(dir, 'plugins', 'weftmate-personal-memory.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-tool-loop.mjs'), join(dir, 'plugins', 'weftmate-personal-tool-loop.mjs')],
     [join(PLUGINS_DIR, 'personal-prompt.mjs'), join(dir, 'plugins', 'personal-prompt.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-conversation-context.mjs'), join(dir, 'plugins', 'weftmate-personal-conversation-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-task-control.mjs'), join(dir, 'plugins', 'weftmate-personal-task-control.mjs')],
@@ -816,9 +819,9 @@ export interface DshWebRuntimeOptions {
   /** Invoked synchronously at the exact child's lifetime fence; the parent owns this UUID. */
   personalApprovalRuntimeClosedHandler?: (runtime: Readonly<{ runtimeId: string }>) => unknown
   /** Account memory requests carry only real DSH session identity, never caller-owned ownerId. */
-  personalMemoryRequestHandler?: (request: Readonly<{ id: string, action: 'recall' | 'ingest',
+  personalMemoryRequestHandler?: (request: Readonly<{ id: string, action: 'recall' | 'ingest' | 'tool',
     sessionId: string, turn: number, query?: string, userMessageId?: string | null,
-    boundary?: Record<string, unknown> }>) => Promise<unknown>
+    boundary?: Record<string, unknown>, tool?: Record<string, unknown> }>) => Promise<unknown>
   /** First-turn, owner-bound phone conversation context from this managed child only. */
   personalScheduleHandler?: (request: Readonly<{ action: string, sessionId: string, text?: string, deliveryId?: string, sourceReceiptId?: string }>) => Promise<unknown>
   personalConversationContextHandler?: (request: Readonly<{ id: string, sessionId: string,
@@ -2204,7 +2207,7 @@ export class DshWebRuntime {
     if (row.protocol !== 'weftmate.personal-memory.v1') return
     const action = row.action
     if (typeof row.id !== 'string' || !/^memory-[0-9a-f-]{36}$/.test(row.id) ||
-        !['recall', 'ingest'].includes(String(action)) ||
+        !['recall', 'ingest', 'tool'].includes(String(action)) ||
         typeof row.sessionId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) ||
         !Number.isSafeInteger(row.turn) || (row.turn as number) < 0 ||
         (action === 'recall'
@@ -2212,6 +2215,9 @@ export class DshWebRuntime {
             (row.userMessageId !== null && row.userMessageId !== undefined &&
               (typeof row.userMessageId !== 'string' || row.userMessageId.length > 160)) ||
             Object.keys(row).some((key) => !['protocol', 'id', 'action', 'sessionId', 'turn', 'query', 'userMessageId'].includes(key))
+          : action === 'tool'
+            ? !row.tool || typeof row.tool !== 'object' || Array.isArray(row.tool) ||
+              Object.keys(row).some(key => !['protocol', 'id', 'action', 'sessionId', 'turn', 'tool'].includes(key))
           : !row.boundary || typeof row.boundary !== 'object' || Array.isArray(row.boundary) ||
             Object.keys(row).some((key) => !['protocol', 'id', 'action', 'sessionId', 'turn', 'boundary'].includes(key)))) return
     try { if (Buffer.byteLength(JSON.stringify(row), 'utf8') > 256 * 1024) return } catch { return }
@@ -2238,10 +2244,11 @@ export class DshWebRuntime {
     }
     entry.timer = setTimeout(() => settle({ ok: false, error: 'MEMORY_TIMEOUT' }), action === 'recall' ? 365_000 : 20_000)
     entry.timer.unref?.()
-    const request = Object.freeze({ id: row.id, action: action as 'recall' | 'ingest',
+    const request = Object.freeze({ id: row.id, action: action as 'recall' | 'ingest' | 'tool',
       sessionId: row.sessionId, turn: row.turn as number,
       ...(action === 'recall' ? { query: row.query as string,
         userMessageId: row.userMessageId as string | null | undefined }
+        : action === 'tool' ? { tool: row.tool as Record<string, unknown> }
         : { boundary: row.boundary as Record<string, unknown> }) })
     void Promise.resolve().then(() => this.opts.personalMemoryRequestHandler?.(request)).then(
       (result: unknown) => {

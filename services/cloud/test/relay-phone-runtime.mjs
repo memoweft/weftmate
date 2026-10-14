@@ -79,6 +79,7 @@ export async function phoneRuntime(root, logs, options = {}) {
   const runtime = new DshWebRuntime({ homeDir: home, workspaceDir: project,
     ...(process.env.WEFTMATE_DSH_CHECKOUT ? { checkoutPath: process.env.WEFTMATE_DSH_CHECKOUT } : { runtimePath: join(process.cwd(), 'vendor/dsh-runtime') }),
     personalHostApiProxy: true, patchFiles: [patch],
+    personalMemoryRequestHandler: options.memoryRequestHandler,
     credentialRequestHandler: async ({ operation }) => operation === 'resolve' ? { value: options.apiKey || 'synthetic-only-key' } : { configured: true, writable: true },
     personalDesktopRequestHandler: async request => {
       if (request.action === 'approval_policy') return host.getApprovalPolicy(request);
