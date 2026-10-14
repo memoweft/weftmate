@@ -114,7 +114,7 @@ globalThis.WeftUiComponents.factories.onboarding = (core, ui) => {
         if(catalog?.status==='authentication_failed'){say(catalog.message);return;}
         if((!catalog?.models?.length)&&!manual.value.trim()){manual.parentNode.hidden=false;say('这个服务没有提供可用清单，请填写一个模型名称。');return;}
         const result=await core.writeModelService(null,{...draft(),...(manual.value.trim()?{modelId:manual.value.trim()}:{})});
-        if(!current(token))return;apiKey.value='';const selected=result.service?.models?.find(m=>m.recommended&&m.enabled!==false)||result.service?.models?.find(m=>m.enabled!==false);
+        if(!current(token))return;apiKey.value='';const selected=core.preferredServiceModel(result.service);
         if(selected)await core.selectServiceModel({serviceId:result.service.serviceId,modelId:selected.modelId});
         if(current(token))await move(3);
       }catch(error){if(current(token))say(core.modelServiceFailureMessage(error));}
