@@ -167,9 +167,9 @@ try {
       const mainPage=android?.page || await context.newPage();
       await shot('main-chat',async()=>{
         mainFixture=await startMainChatCandidate(300,{logicalMobile:true});await navigate(mainPage, mainFixture.mobileUrl);
-        await mainPage.getByRole('button',{name:'搜索主对话',exact:true}).waitFor();await mainPage.waitForFunction(()=>document.querySelector('.main-chat-row'));
+        await mainPage.getByRole('button',{name:'搜索对话',exact:true}).waitFor();await mainPage.waitForFunction(()=>document.querySelector('.main-chat-row'));
         await mainPage.evaluate(theme=>applyTheme(theme),theme);
-        await mainPage.getByRole('button',{name:'搜索主对话',exact:true}).click();await mainPage.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成');await mainPage.getByRole('searchbox',{name:'主对话搜索关键词'}).press('Enter');await mainPage.locator('mark').first().waitFor();
+        await mainPage.getByRole('button',{name:'搜索对话',exact:true}).click();await mainPage.getByRole('searchbox',{name:'对话搜索关键词'}).fill('合成');await mainPage.getByRole('searchbox',{name:'对话搜索关键词'}).press('Enter');await mainPage.locator('mark').first().waitFor();
       },mainPage);
       if (errors.length) themeErrors.push({theme,errors:errors.map(error => redactEvidenceText(error))});
       console.log(`Mobile ${theme}: scene outcomes recorded.`);
