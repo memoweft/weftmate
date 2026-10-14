@@ -714,7 +714,7 @@ export function apply(ctx) {
   const fileProvenance = createNativeFileProvenance(personalExecutionIdentity);
   const disposeFetch = ctx.web.registerFetchProvider(personalWebFetchProvider(bridge,
     () => webExecution.getStore(), exec => personalExecutionIdentity(
-      delegatedExecutions.get(exec.agent) ?? exec)));
+      delegatedExecutions.get(exec.agent) ?? exec), exec => policyFor(delegatedExecutions.get(exec.agent)?.agent ?? exec.agent)));
   const initializeFilePolicy = agent => initializePersonalFilePolicy(agent, ctx.get('sandboxPolicy'));
   // Presets can be selected after agent/created, before the first native step.
   ctx.on('agent/pre-step', async (step, next) => {
@@ -776,8 +776,7 @@ export function apply(ctx) {
     return await projectToolDecision(exec) ?? next();
   }, { prepend: true });
   ctx.on('tools/pre-execute', async (exec, next) => {
-    const decision = await next();
-    if (exec.agent?.session?.header?.agentPreset !== 'personal-remote' || decision.kind === 'deny') return decision;
+    if (exec.agent?.session?.header?.agentPreset !== 'personal-remote') return next();
     const unavailable = personalToolAvailability(ctx.tools, exec);
     if (unavailable) return unavailable;
     const delegated = delegatedExecutions.get(exec.agent);
@@ -786,6 +785,8 @@ export function apply(ctx) {
     const connector = connectorToolFor(exec.agent, exec.name);
     const workMode = await requestPersonalWorkMode(ctx, exec, { policy, policyFor, approvals, declinedWork, delegated, connector });
     policy = workMode.policy; if (workMode.decision) return workMode.decision;
+    const decision = await next();
+    if (decision.kind === 'deny') return decision;
     if (NATIVE_SESSION_TOOLS.has(exec.name) || exec.name === 'exit_plan_mode' || exec.name === 'todo_write' || exec.name === 'run_code') return decision;
     const cwd = resolve(executionDirectory(exec.agent.session), exec.arguments?.workdir ?? '.');
     const operationTypes = new Set();

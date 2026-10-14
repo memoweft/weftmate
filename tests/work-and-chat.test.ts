@@ -7,6 +7,26 @@ import { reconcileChatIdentity, validateChatIdentity } from '../src/personal-acc
 (globalThis as any).WeftUiCore ??= { factories: {} };
 await import('../src/ui-core/work-and-chat.js');
 
+test('MODE-1 sidebar selection is account scoped, new follows it and opening a notified session selects its actual mode', async () => {
+  const saved = new Map<string,string>(), storage = {getItem:(key:string)=>saved.get(key),setItem:(key:string,value:string)=>saved.set(key,value)};
+  const make = (ownerId: string) => {
+    const state: any = {ownerId,personalCapabilities:{workAndChat:1},hostId:'computer-a',sessions:[{sessionId:'chat-a',mode:'chat'},{sessionId:'work-a',mode:'work',projectId:'project-a'}]};
+    const core: any = {state, composerState:()=>({}),clearSession(){},sendDraft(){},currentExecutionComputer:()=>state.hostId,
+      startNewConversation:async()=>{state.newConversation=true;state.selectedSessionId=null;},
+      selectSession:async(id:string)=>{state.selectedSessionId=id;state.newConversation=false;}};
+    Object.assign(core,(globalThis as any).WeftUiCore.factories.workAndChat(core,{updateAvailability(){},renderSessions(){}},{storage}));return core;
+  };
+  const first = make('owner-a'); first.chooseSidebarMode('work'); await first.startSidebarConversation();
+  assert.equal(first.currentConversationMode(),'work'); assert.equal(make('owner-a').sidebarConversationMode(),'work');
+  assert.equal(make('owner-b').sidebarConversationMode(),'chat');
+  await first.selectSession('chat-a'); assert.equal(first.sidebarConversationMode(),'chat');
+  await first.selectSession('work-a'); assert.equal(first.sidebarConversationMode(),'work');
+  first.chooseSidebarMode('chat'); await first.startSidebarConversation(); assert.equal(first.currentConversationMode(),'chat');
+  const computerA = make('local-owner-a'); computerA.state.cloudAuth={sub:'same-cloud-account'}; computerA.chooseSidebarMode('work');
+  const computerB = make('local-owner-b'); computerB.state.cloudAuth={sub:'same-cloud-account'};
+  assert.equal(computerB.sidebarConversationMode(),'work','the same cloud account keeps its selected view when changing computers');
+});
+
 test('MODE-1 new work blocks before directory selection, rejects offline computers and retains legacy capability behavior', async () => {
   let project: any = null, selected = 'computer-a', sends = 0;
   const state: any = { personalCapabilities: { workAndChat: 1 }, hostId: 'computer-a', online: true, sessions: [],
@@ -33,9 +53,9 @@ test('MODE-1 existing main and side chats stay chat, project and browser session
 });
 
 test('MODE-1 every actual computer tool gates, while account data and code orchestration retain their data semantics', () => {
-  for (const name of ['read', 'write', 'edit', 'glob', 'grep', 'pwsh', 'bash', 'shell', 'browser', 'web_fetch', 'web_search',
+  for (const name of ['read', 'write', 'edit', 'glob', 'grep', 'pwsh', 'bash', 'shell', 'browser',
     'subagent', 'job_output', 'weftmod_script', 'new_valid_execution_tool']) assert.equal(toolNeedsComputer(name), true, name);
-  for (const name of ['load_tools', 'health_query', 'memory_query', 'current_time', 'sleep', 'todo_write', 'ask_user_question',
+  for (const name of ['load_tools', 'web_fetch', 'web_search', 'health_query', 'memory_query', 'current_time', 'sleep', 'todo_write', 'ask_user_question',
     'get_goal', 'create_goal', 'update_goal', 'run_code']) assert.equal(toolNeedsComputer(name), false, name);
   assert.equal(toolNeedsComputer('mcp__c_test', {}, { category: 'read' }), false);
   for (const category of ['write', 'delete', 'external', 'unknown']) assert.equal(toolNeedsComputer('mcp__c_test', {}, { category }), true);
@@ -46,7 +66,7 @@ test('MODE-1 every actual computer tool gates, while account data and code orche
   assert.equal(toolNeedsComputer('schedule_manage', { action: 'run' }), true);
 });
 
-test('MODE-1 conversion retains native identity, all main segments and the immutable command, with a fresh main entry', () => {
+test('MODE-1 conversion retains native identity, all main segments and the immutable command without a replacement main', () => {
   const at = '2026-10-14T00:00:00Z';
   const account: any = { hostId: 'synthetic-host', sessions: { 'session-1': { origin: 'personal-remote' }, 'session-2': { origin: 'personal-remote' } },
     commands: { 'cmd-1': { sessionId: 'session-2', payload: { text: '合成请求' }, payloadHash: 'original-hash' } },
@@ -57,8 +77,9 @@ test('MODE-1 conversion retains native identity, all main segments and the immut
   identity.chats[oldMain].activeSegmentId = identity.sessionSegments['session-2'];
   const original = JSON.stringify(account.commands['cmd-1'].payload), history = JSON.stringify(identity.segments);
   bindConversationWork(account, 'session-2', 'project-1', { at, commandId: 'cmd-1' });
-  assert.notEqual(identity.mainChatId, oldMain); assert.equal(identity.chats[oldMain].kind, 'side');
-  assert.equal(identity.chats[oldMain].wasMain, true); assert.equal(JSON.stringify(identity.segments), history);
+  assert.equal(identity.mainChatId, oldMain); assert.equal(identity.chats[oldMain].kind, 'main');
+  assert.equal(identity.chats[oldMain].wasMain, undefined); assert.equal(JSON.stringify(identity.segments), history);
+  assert.equal(Object.values(identity.chats).filter((chat: any) => chat.kind === 'main').length, 1);
   assert.equal(JSON.stringify(account.commands['cmd-1'].payload), original); assert.equal(account.commands['cmd-1'].payloadHash, 'original-hash');
   assert.equal(account.sessions['session-2'].projectId, 'project-1'); assert.equal(account.sessions['session-1'].mode, 'work');
   assert.equal(account.sessions['session-1'].projectId,'project-1');

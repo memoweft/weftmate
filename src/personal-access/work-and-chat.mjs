@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { failure } from './common.mjs';
 import { chatForSession } from './chat-identity.mjs';
 
@@ -21,11 +20,9 @@ export function bindConversationWork(account, sessionId, projectId, { at, comman
   if (session.workHostId && session.workHostId !== account.hostId) throw failure('TARGET_UNAVAILABLE', 409);
   const chat = chatForSession(account, sessionId);
   if (chat?.kind === 'main') {
-    chat.kind = 'side'; chat.wasMain = true; chat.revision++;
-    const mainChatId = `chat-${randomUUID()}`;
-    account.chatIdentity.mainChatId = mainChatId;
-    account.chatIdentity.chats[mainChatId] = { chatId: mainChatId, kind: 'main', revision: 1, contentRevision: 1,
-      createdAt: at, unread: false, activeSegmentId: null };
+    // Keep the legacy route for background delivery and old clients. The UI
+    // presents this history as an ordinary item and never creates a replacement.
+    chat.revision++;
     for (const segment of Object.values(account.chatIdentity.segments)) if (segment.chatId === chat.chatId) {
       Object.assign(account.sessions[segment.sessionId], { mode: 'work', workHostId: account.hostId,
         projectId, projectRevision: project.revision, groupId: null });

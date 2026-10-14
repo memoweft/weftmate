@@ -12,10 +12,10 @@ import { phoneRuntime } from '../../services/cloud/test/relay-phone-runtime.mjs'
 import { redactEvidenceText, cleanupOwnedProcesses } from '../helpers/process-evidence.mjs';
 
 const repository = resolve(import.meta.dirname, '../..'), startedAt = Date.now();
-const root = await mkdtemp(join(tmpdir(), 'weftmate-mode1-')), out = join(repository, 'tests/evidence/mode-1');
+const root = await mkdtemp(join(tmpdir(), 'weftmate-mode1-')), out = join(repository, 'tests/evidence/mode-1-fix');
 await mkdir(out, { recursive: true });
 const logs = [], report = { realElectron: true, realDsh: true, syntheticModel: true, checks: [], screenshots: [], errors: [], systemBarsVerified: false };
-let host, runtime, secondHost, secondRuntime, app, browser, heavyLock, activePage, stage = 'start';
+let host, runtime, secondHost, secondRuntime, app, browser, heavyLock, heavyLease, activePage, stage = 'start';
 const textOf = m => typeof m.content === 'string' ? m.content : (m.content || []).filter(p => p.type === 'text').map(p => p.text).join('');
 function respond(body) {
   const index = body.messages.findLastIndex(m => m.role === 'user' && textOf(m).startsWith('MODE1_'));
@@ -53,7 +53,9 @@ async function capture(page, kind, state, open = null) {
     await page.evaluate(theme => { document.documentElement.dataset.theme = theme; }, theme);
     await page.waitForTimeout(200);
     let openedRail = false;
-    if (state === 'sidebar' && viewport.width < 720) { await page.locator('#rail-open').click(); openedRail = true; }
+    if (state.startsWith('sidebar') || state === 'original-history') {
+      await page.evaluate(()=>WeftDesktop.toggleRail(false)); openedRail = viewport.width < 720;
+    }
     if (open) await open(page);
     const file = `${kind}-${viewport.width}-${theme}-${state}.png`;
     if (kind === 'desktop') {
@@ -75,7 +77,7 @@ async function capture(page, kind, state, open = null) {
 }
 try {
   for (const id of [1, 2, 3]) { const lock = `D:/AIProjects/WeftMate/Runtime/Orchestrator/heavy-${id}.lock`;
-    try { const handle = await open(lock, 'wx'); await handle.writeFile(`MODE-1 ${new Date().toISOString()} real Electron and phone`); await handle.close(); heavyLock = lock; break; }
+    try { const handle = await open(lock, 'wx'); heavyLease=`MODE-1 ${new Date().toISOString()} real Electron and phone`;await handle.writeFile(heavyLease); await handle.close(); heavyLock = lock; break; }
     catch (error) { if (error.code !== 'EEXIST') throw error; } }
   if (!heavyLock) throw Error('All heavy slots occupied; retry after independent work');
   runtime = await phoneRuntime(root, logs, { respond });
@@ -106,12 +108,17 @@ try {
   const env = { ...process.env, REVIEW_PROFILE: join(root, 'desktop-profile'), REVIEW_ORIGIN: started.origin,
     REVIEW_LIBRARY_TOKEN: host.libraryDesktopToken, REVIEW_THEME: 'light', WEFTMATE_TEST_HOST_NAME: 'synthetic-host' };
   delete env.ELECTRON_RUN_AS_NODE;
-  app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: repository, args: ['scripts/review-gallery/electron.mjs'], env });
+  app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: repository,
+    args: ['scripts/review-gallery/electron.mjs','--disable-backgrounding-occluded-windows','--disable-features=CalculateNativeWinOcclusion'], env });
   const desktop = await app.firstWindow(); await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setFocusable(false));
+  report.nativeFocusTaken = false;
+  report.occlusionDisabledForSyntheticWindow = true;
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   for (const [kind, page] of [['desktop', desktop], ['phone', phone]]) {
     activePage = page;
     page.on('pageerror', error => report.errors.push(redactEvidenceText(error.message, [root])));
+    page.on('response',async response=>{if([401,403].includes(response.status())){const url=new URL(response.url());const body=await response.json().catch(()=>null);
+      (report.authorizationFailures??=[]).push({kind,path:url.pathname,status:response.status(),code:body?.error?.code});}});
     await page.addInitScript(() => { let mod; Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true, get: () => mod, set: value => {
       mod = value; const create = value.create; value.create = (...args) => { globalThis.mode1Effects=args[0].effects;const core = create(...args); globalThis.mode1Core = core; return core; }; } }); });
     await page.route('**/mode1-proxy/**',async route=>{const incoming=route.request(),url=new URL(incoming.url()),parts=url.pathname.split('/'),hostId=parts[2],path='/'+parts.slice(3).join('/')+url.search;
@@ -131,7 +138,15 @@ try {
     await until(() => page.evaluate(() => [...mode1Core.state.historyEvents.values()].filter(e => e.type === 'user.message').length >= 2), 'two chat messages');
     const before = await page.evaluate(() => ({ id: mode1Core.state.selectedSessionId, chat: mode1Core.state.selectedChatId }));
     await api(`/sessions/${before.id}/approval-mode`, { mode: 'ask' }, 'PATCH');
-    await capture(page, kind, 'sidebar');
+    await capture(page, kind, 'sidebar-chat', p=>p.getByRole('tab',{name:'对话',exact:true}).click());
+    await capture(page, kind, 'sidebar-work', p=>p.getByRole('tab',{name:'工作',exact:true}).click());
+    await page.evaluate(()=>mode1Core.chooseSidebarMode('chat'));
+    assert.equal(await page.locator('.rail-main-chat:not([hidden])').count(),0);
+    await page.evaluate(()=>mode1Core.selectMainChat());
+    await page.locator('#message-text').fill('MODE1_ORIGINAL_HISTORY_'+kind+'_'+randomUUID());await page.locator('#send-message').click();
+    await until(()=>page.locator('#transcript').innerText().then(text=>text.includes('合成回复')),'original history readable');
+    await capture(page,kind,'original-history');
+    await page.evaluate(id=>mode1Core.selectSession(id),before.id);
     await page.locator('#message-text').fill(`MODE1_WRITE_${kind.toUpperCase()}_${randomUUID()}`); await page.locator('#send-message').click();
     await page.getByRole('region', { name: '切换到工作', exact: true }).waitFor();
     if(kind==='desktop'){await app.evaluate(({dialog},folder)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[folder]});},work);
@@ -148,6 +163,8 @@ try {
     await until(() => readFile(join(work, filename), 'utf8').catch(() => null), 'file exists');
     assert.equal(await readFile(join(work, filename), 'utf8'), 'MODE1_SYNTHETIC_FILE\n');
     assert.ok((await page.locator('#transcript').innerText()).includes('MODE1_HELLO')); await capture(page, kind, 'working');
+    assert.equal(await page.evaluate(()=>mode1Core.sidebarConversationMode()),'work');
+    await capture(page,kind,'sidebar-work');
     report.checks.push(kind + ': chat history, actual tool card, same session, approval and real file');
     stage = kind + '-decline'; await page.evaluate(() => mode1Core.startNewConversation());
     await page.locator('#message-text').fill('MODE1_WRITE_DECLINE_' + randomUUID()); await page.locator('#send-message').click();
@@ -162,7 +179,10 @@ try {
       fx.openComputerChannel=async connection=>({close(){},request:async(path,options={})=>{const res=await fetch('/mode1-proxy/'+connection.hostId+path,options);const data=await res.json();if(!res.ok)throw {code:data.error?.code,status:res.status};return data;}});
       core.cloudDirectory=async()=>{};core.updateComputerDirectory({capabilities:{multiHost:1},hosts:[{hostId:a.hostId,name:'合成电脑一',displayName:'合成电脑一',online:true},{hostId:b.hostId,name:'合成电脑二',displayName:'合成电脑二',online:true}]});
     },{a:started,b:second,authA:auth,authB:secondAuth});
-    await page.evaluate(() => mode1Core.startNewWork());
+    await page.evaluate(() => mode1Core.chooseSidebarMode('work'));
+    if (!await page.locator('#new-session').isVisible()) await page.locator('#rail-open').click();
+    await page.locator('#new-session').click();
+    await until(()=>page.evaluate(()=>mode1Core.currentConversationMode()==='work'),'new button follows work tab');
     assert.equal(await page.locator('#send-message').isDisabled(), true);
     await capture(page,kind,'computer-menu',p=>p.getByRole('button',{name:/^电脑：/}).click());
     await page.getByRole('button',{name:/^电脑：/}).click();await page.getByRole('menuitemradio',{name:/合成电脑二/}).click();
@@ -173,8 +193,12 @@ try {
     await until(()=>readFile(join(secondWork,`new-work-${kind}.txt`),'utf8').catch(()=>null),'second computer file');
     await assert.rejects(readFile(join(work,`new-work-${kind}.txt`)));report.checks.push(kind + ': new work chooses second computer and its project; only second computer writes');
     await capture(page,kind,'second-computer-work');
-    const offlineCard=await page.evaluate(async id=>{await mode1Core.selectExecutionComputer(id);await mode1Core.startNewConversation();return mode1Core.state.selectedSessionId;},started.hostId);
-    await page.locator('#message-text').fill('MODE1_WRITE_OFFLINE_'+randomUUID());await page.locator('#send-message').click();await page.getByRole('region',{name:'切换到工作',exact:true}).waitFor();
+    await page.evaluate(async id=>{await mode1Core.selectExecutionComputer(id);await mode1Core.startNewConversation();},started.hostId);
+    await page.locator('#message-text').fill('MODE1_WRITE_OFFLINE_'+randomUUID());await page.locator('#send-message').click();
+    const offlineCard=await until(()=>page.evaluate(()=>mode1Core.state.selectedSessionId),'offline card session accepted');
+    const offlineApproval=await until(async()=> (await api(`/sessions/${offlineCard}/approvals`)).approvals.find(row=>row.status==='pending'),'offline native approval');
+    assert.equal(offlineApproval.intent,'work-switch','native mode decision must precede any ordinary risk approval');
+    await page.getByRole('region',{name:'切换到工作',exact:true}).waitFor();
     await page.evaluate(()=>{for(const host of mode1Core.state.computers)host.online=false;const bar=document.getElementById('approval-bar');delete bar.dataset.workSignature;for(const child of bar.children)delete child.dataset.signature;mode1Effects.renderConversationApprovals();});
     await capture(page,kind,'offline-card');assert.ok((await page.getByRole('region',{name:'切换到工作',exact:true}).innerText()).includes('需要一台在线的电脑'));
     await api('/commands',{requestId:randomUUID(),kind:'session.cancel',targetDeviceId:started.hostId,sessionId:offlineCard});
@@ -188,7 +212,8 @@ try {
   await desktop.getByRole('region',{name:'切换到工作',exact:true}).waitFor();await desktop.getByRole('button',{name:'切换到工作',exact:true}).click();
   await until(()=>desktop.evaluate(()=>mode1Core.currentConversationMode()==='work'),'main moves to work');
   assert.equal(await desktop.evaluate(()=>mode1Core.state.selectedChatId),oldMain.chatId);assert.equal(await desktop.evaluate(()=>mode1Core.state.selectedSessionId),oldMain.sessionId);
-  assert.ok((await desktop.locator('#transcript').innerText()).includes('MODE1_MAIN_HELLO'));report.checks.push('desktop: original logical main remains readable in work; new 小纬 entry is separate');
+  assert.ok((await desktop.locator('#transcript').innerText()).includes('MODE1_MAIN_HELLO'));
+  assert.equal((await api('/chats/main')).chat.chatId,oldMain.chatId);report.checks.push('desktop: original logical history remains readable in work; no replacement main is created');
   await capture(desktop,'desktop','main-to-work');
   await api('/commands',{requestId:randomUUID(),kind:'session.cancel',targetDeviceId:started.hostId,sessionId:oldMain.sessionId});
   assert.deepEqual(report.errors, []);
@@ -196,10 +221,15 @@ try {
   report.failure = { stage, message: redactEvidenceText(error.stack || error.message, [root]) };
   if (activePage) report.failure.ui = JSON.parse(redactEvidenceText(JSON.stringify(await activePage.evaluate(() => {
     const core = globalThis.mode1Core; return { selectedSessionId: core?.state.selectedSessionId, selectedChatId: core?.state.selectedChatId,
-      newConversation: core?.state.newConversation, modelProfileId: core?.state.modelProfileId, models: core?.state.models,
+      newConversation: core?.state.newConversation, newConversationMode:core?.state.newConversationMode,sidebarMode:core?.sidebarConversationMode?.(),capabilities:core?.state.capabilities,
+      modelProfileId: core?.state.modelProfileId, models: core?.state.models,
       composer: core?.composerState?.(document.getElementById('message-text').value), transcript: document.getElementById('transcript').textContent,
-      operation: document.getElementById('operation-status').textContent, sessions: core?.state.sessions };
+      operation: document.getElementById('operation-status').textContent, sessions: core?.state.sessions,
+      approvalContext:core?.approvalContext(), approvalRows:[...core.conversationApprovals.entries.values()], approvalHtml:document.getElementById('approval-bar').outerHTML,
+      visibility:document.visibilityState,background:core?.state.background,currentView:core?.state.currentView,online:core?.state.online,historyAllowed:core?.historyReadAllowed(),
+      refreshTimer:!!core?.state.refreshTimer,liveTimer:!!core?.state.liveRefreshTimer,waitInFlight:!!core?.mainChatRefreshPromise,readResult:core?.state.historyReadResult };
   }).catch(() => ({}))), [root]));
+  if(activePage)report.failure.observedApprovals=await activePage.evaluate(async()=>{const core=globalThis.mode1Core;return core.state.selectedSessionId?await core.accessApi(`/sessions/${core.state.selectedSessionId}/approvals`):null;}).catch(error=>({error:error.code}));
   report.modelRequests = runtime?.requests.map(body => ({ tools: body.tools?.map(tool => tool.function?.name), messages: body.messages.map(m => ({ role: m.role, text: textOf(m).slice(0, 100), calls: m.tool_calls?.map(call => call.function.name) })) }));
   const secondStore=await readFile(join(root,'computer-b','account','store.json'),'utf8').then(JSON.parse).catch(()=>null);
   if(secondStore)report.failure.targetCommands=Object.values(secondStore.accounts).flatMap(account=>Object.values(account.commands).map(command=>({kind:command.kind,state:command.state,errorCode:command.errorCode,sessionId:command.sessionId,projectId:command.payload.projectId,targetDeviceId:command.targetDeviceId})));
@@ -207,10 +237,12 @@ try {
   throw error;
 }
 finally {
-  await browser?.close(); await app?.close(); await secondRuntime?.close();await secondHost?.close();await runtime?.close(); await host?.close();
+  const closing=await Promise.allSettled([browser?.close(),app?.close(),secondRuntime?.close(),runtime?.close()]);
+  const hostsClosed=await Promise.allSettled([secondHost?.close(),host?.close()]);
+  report.closeFailures=[...closing,...hostsClosed].filter(row=>row.status==='rejected').map(row=>String(row.reason?.message||row.reason));
   const cleaned = cleanupOwnedProcesses({ startedAt, executables: [process.execPath, createRequire(import.meta.url)('electron'), chromium.executablePath()], commandRoots: [root] }); report.cleaned = cleaned.cleaned;
   report.logs = logs.map(line => redactEvidenceText(line, [root])).filter(line => /error|fail/i.test(line)).slice(-10);
-  await writeFile(join(out, 'electron-report.json'), JSON.stringify(cleanEvidence(report),null,2));
-  if (heavyLock) await unlink(heavyLock);
+  try {await writeFile(join(out, 'electron-report.json'), JSON.stringify(cleanEvidence(report),null,2));}
+  finally {if (heavyLock && await readFile(heavyLock,'utf8').catch(()=>null) === heavyLease) await unlink(heavyLock);}
   assert.ok(resolve(root).startsWith(resolve(tmpdir()))); await unlinkTreeLinks(root); await rm(root, { recursive: true, force: true });
 }
