@@ -40,7 +40,6 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         const chatId = core.state.selectedChatId;
         core.state.approvalModeLoading = true;
         effects.setApprovalModeBusy(true);
-        effects.updateAvailability();
         effects.closeApprovalMenu();
         try {
             const value = sessionId ? await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/approval-mode`)
@@ -52,7 +51,6 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             effects.renderApprovalMode();
             core.state.approvalModeLoading = false;
             effects.setApprovalModeBusy(false);
-            effects.updateAvailability();
         }
         catch {
             if (core.state.selectedSessionId === sessionId)
