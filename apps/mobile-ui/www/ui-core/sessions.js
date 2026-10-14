@@ -188,6 +188,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
                 if (project) await core.openSideChat({entry:'composer',parent:{kind:'project',id:project.projectId}});
             } else if (core.state.newConversation) {
                 core.state.newConversationProjectId = project?.projectId || null;
+                if (project && core.supportsWorkModes?.()) { core.state.newConversationMode = 'work'; core.chooseSidebarMode('work'); }
             } else if (core.state.selectedSessionId) {
                 await core.updateSession(core.state.selectedSessionId, {projectId:project?.projectId || null});
             }

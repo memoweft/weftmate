@@ -37,6 +37,13 @@ test('MODE-1 a late computer status cannot replace the account or computer selec
   assert.equal(await reading,false);assert.equal(f.core.state.ownerId,'owner-next');assert.equal(f.core.state.hostId,'host-next');
 });
 
+test('MODE-1 explicitly choosing a folder in a fresh draft selects work and keeps that folder before the first send', async () => {
+  const f=fixture();Object.assign(f.core.state,{personalCapabilities:{workAndChat:1},newConversation:true,selectedSessionId:null,newConversationMode:'chat'});
+  const project={projectId:'project-synthetic',name:'Synthetic folder'};await f.core.chooseFolderProject(project);
+  assert.equal(f.core.state.newConversationProjectId,project.projectId);assert.equal(f.core.currentConversationMode(),'work');assert.equal(f.core.sidebarConversationMode(),'work');
+  assert.equal(f.requests.length,0,'the explicit choice changes only the unsent draft');
+});
+
 test('MODE-1 history authorization resumes only after the current owner status verifies active authority', async () => {
   let active = false; const f=fixture(()=>response({ownerId:'owner-test',hostId:'host-test',presence:{authorization:active?'active':'pending'}}));
   f.core.historyReadResult('failed',{terminal:true,error:{code:'UNAUTHORIZED'}});assert.equal(f.core.historyReadAllowed(),false);
