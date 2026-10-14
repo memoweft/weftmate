@@ -78,6 +78,7 @@ try {
   const patched=await h.api('/projects/'+registered.projectId,{expectedRevision:registered.revision,permission:'write'},'PATCH');assert.equal(patched.status,200);
   const creation=await h.api(`/projects/${registered.projectId}/sessions`,{requestId:randomUUID(),modelProfileId:h.modelId});const session=await h.receipt(creation.body.command);
   await h.page.reload();await h.page.locator('#assistant-view').waitFor({state:'visible'});
+  await h.page.getByRole('tab',{name:'工作',exact:true}).click();
   await h.page.locator(`.session-row[data-session-id="${session.sessionId}"] > button`).first().click();
   // Clicking starts an asynchronous history selection. The synthetic provider
   // must not emit its approval into a page still loading another conversation.

@@ -7,6 +7,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import test from 'node:test'
+import fs from 'node:fs'
+import { syncBuiltinESMExports } from 'node:module'
 import { DshWebRuntime } from '../src/dsh-web-runtime.ts'
 
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai', name, 'lib/index.js')).href
@@ -26,7 +28,7 @@ async function until(check: () => unknown) {
 async function nativeFixture({ toolName = 'fixture_action', askedName = toolName, stage = 'gate',
   initialStatus = 'answered', decision = 'allowed-once', holdResolution = false, failResolution = false,
   failUncertainObservation = false, failFinish = false, cancelledStatus = 'resolved', policy = 'ask', allowAll = false,
-  toolArguments = {} } = {}) {
+  toolArguments = {}, toolsMode = 'native', workPolicy = null as any } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'personal-native-approval-'))
   const staged = stagePersonalPlugins(root).plugin
   const [plugin, { Context, Service }, { default: SystemPrompt }, { default: Sessions }, tools,
@@ -41,7 +43,8 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   }
   await ctx.plugin(SystemPrompt, { includeHarnessIdentity: false, includeRuntimeContext: false, persona: '' })
   await ctx.plugin(Sessions)
-  await ctx.plugin(tools.default, { mode: 'native', maxParallelSubCalls: 4 })
+  if(toolsMode!=='native')await ctx.plugin((await import(vendor('dsh-code-runtime-worker-thread'))).default,{computeMs:5000,maxWallMs:15000,maxOutputBytes:1024*1024,maxOldGenerationSizeMb:128})
+  await ctx.plugin(tools.default, { mode: toolsMode, maxParallelSubCalls: 4 })
   await ctx.plugin(ApprovalService, { policy })
   await ctx.plugin(FixtureAgents)
   const session = ctx.sessions.create('approval-' + randomUUID().slice(0, 8), { meta: { agentPreset: 'personal-remote' } })
@@ -84,10 +87,14 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
     return { executionId: 'exec-' + 'a'.repeat(48), state: frame.state ?? 'running' }
   } }
   const approvals = plugin.installPersonalApprovalBridge(ctx, bridge, { pollDelayMs: 2,
-    ...(allowAll ? { policyFor: async () => ({ mode: 'allow-all' }) } : {}) })
+    ...(workPolicy ? {policyFor:async()=>workPolicy}:allowAll ? { policyFor: async () => ({ mode: 'allow-all' }) } : {}) })
   ctx.on('tools/execute', (exec: any, next: any) => plugin.trackPersonalExecution(bridge, exec, next, null, approvals))
   ctx.on('tools/pre-execute', (exec: any, next: any) => plugin.personalToolAvailability(ctx.get('tools'), exec) ??
     (stage === 'gate' && exec.name === toolName ? { kind: 'ask', reason: 'Allow exactly this fixture action' } : next()))
+  if(workPolicy){const declinedWork=new WeakMap();ctx.on('tools/pre-execute',async(exec:any,next:any)=>{
+    const decision=await next();if(decision.kind==='deny')return decision;
+    const result=await plugin.requestPersonalWorkMode(ctx,exec,{policy:workPolicy,policyFor:async()=>workPolicy,approvals,declinedWork});return result.decision??decision;
+  });}
   ctx.get('tools').register(tools.defineTool({ name: toolName, description: 'Isolated approval fixture', parameters: { command: { type: 'string' } },
     output: { schema: { type: 'json' }, render: (_args: any, value: any) => [{ type: 'text', text: JSON.stringify(value) }] },
     execute: async (_args: any, exec: any) => {
@@ -104,11 +111,40 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
     content: [{ type: 'text', text: 'same fixture goal' }] }, { surfaceOp: 'append' })
   session.append('tool/call', { turn: 1, step: 1, callId: 'fixture-call', name: toolName, arguments: JSON.stringify(toolArguments) })
   const execute = (callId = 'fixture-call') => ctx.get('tools').execute({ name: toolName, arguments: toolArguments, agent, callId, signal: controller.signal })
-  return { ctx, plugin, agent, agents, session, frames, states, controller, transport, approvals, execute, resolution, dispatched,
+  return { root, ctx, plugin, agent, agents, session, frames, states, controller, transport, approvals, execute, resolution, dispatched,
     get effects() { return effects }, get committedCompletion() { return committedCompletion },
     close: async () => { approvals.close(); assert.equal(transport.listenerCount('disconnect'), 0);
       await ctx.fiber.dispose(); rmSync(root, { recursive: true, force: true }) } }
 }
+
+test('MODE-1 a native run_code nested call pauses before any effect even in allow-all, then continues after choosing work',async()=>{
+  const policy:any={mode:'allow-all',allowedCategories:[],conversationMode:'chat'};
+  const f=await nativeFixture({stage:'automatic',initialStatus:'pending',toolsMode:'both',workPolicy:policy});
+  try{
+    f.session.append('tool/call',{turn:1,step:2,callId:'mode-code',name:'run_code',arguments:JSON.stringify({code:"return await tools.fixture_action({command:'synthetic action'});",description:'合成嵌套工作'})});
+    const executing=f.ctx.get('tools').execute({name:'run_code',arguments:{code:"return await tools.fixture_action({command:'synthetic action'});",description:'合成嵌套工作'},agent:f.agent,callId:'mode-code',signal:f.controller.signal});
+    await Promise.race([until(()=>f.frames.some(frame=>frame.action==='register_approval')),executing.then((result:any)=>{if(result.isError)throw Error(JSON.stringify(result.content));})]);
+    const card=f.frames.find(frame=>frame.action==='register_approval');assert.match(card.reason,/work-switch/);assert.equal(card.toolName,'fixture_action');assert.equal(card.rootCallId,'mode-code');assert.equal(f.effects,0);
+    policy.conversationMode='work';policy.project={rootPath:f.root,name:'合成工作',permission:'write'};
+    f.states.set(card.approvalId,{approvalId:card.approvalId,status:'answered',decisionOutcome:'allowed-once'});
+    assert.equal((await executing).isError,false);assert.equal(f.effects,1);assert.equal(f.frames.filter(frame=>frame.action==='register_approval').length,1);
+  }finally{await f.close();}
+});
+
+test('MODE-1 chat risk review does not read a computer script before the user chooses work',async()=>{
+  const policy:any={mode:'allow-all',allowedCategories:[],conversationMode:'chat'};
+  const f=await nativeFixture({toolName:'pwsh',stage:'automatic',initialStatus:'pending',workPolicy:policy});
+  const file=join(f.root,'mode-script.ps1');fs.writeFileSync(file,"Write-Output 'synthetic'");const read=fs.readFileSync;let scriptReads=0;
+  fs.readFileSync=((path:any,...args:any[])=>{if(String(path)===file)scriptReads++;return (read as any)(path,...args);}) as typeof fs.readFileSync;syncBuiltinESMExports();
+  try{
+    f.session.append('tool/call',{turn:1,step:2,callId:'mode-script',name:'pwsh',arguments:JSON.stringify({command:`pwsh -File '${file}'`})});
+    const executing=f.ctx.get('tools').execute({name:'pwsh',arguments:{command:`pwsh -File '${file}'`},agent:f.agent,callId:'mode-script',signal:f.controller.signal});
+    await until(()=>f.frames.some(frame=>frame.action==='register_approval'));assert.equal(scriptReads,0);assert.equal(f.effects,0);
+    policy.conversationMode='work';policy.project={rootPath:f.root,name:'合成工作',permission:'write'};const card=f.frames.find(frame=>frame.action==='register_approval');
+    f.states.set(card.approvalId,{approvalId:card.approvalId,status:'answered',decisionOutcome:'allowed-once'});
+    assert.equal((await executing).isError,false);assert.ok(scriptReads>0);assert.equal(f.effects,1);
+  }finally{fs.readFileSync=read;syncBuiltinESMExports();await f.close();}
+});
 
 async function checkUnknownNameBeforeApproval() {
   const f = await nativeFixture({ toolName: 'pwsh' })

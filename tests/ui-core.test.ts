@@ -29,6 +29,28 @@ function fixture(read: (path: string, options: any) => any = () => response({}))
 const plain = (value: any) => JSON.parse(JSON.stringify(value))
 const deferred = () => { let resolve!: (value: any) => void; const promise = new Promise(done => { resolve = done }); return { promise, resolve } }
 
+test('MODE-1 a late computer status cannot replace the account or computer selected while it was in flight', async () => {
+  const pending = deferred(), f = fixture(() => pending.promise);
+  const before = f.core.state.identityGeneration, reading = f.core.refreshStatus();
+  Object.assign(f.core.state,{identityGeneration:before+1,ownerId:'owner-next',hostId:'host-next'});
+  pending.resolve(response({ownerId:'owner-test',hostId:'host-test',presence:{authorization:'active'}}));
+  assert.equal(await reading,false);assert.equal(f.core.state.ownerId,'owner-next');assert.equal(f.core.state.hostId,'host-next');
+});
+
+test('MODE-1 explicitly choosing a folder in a fresh draft selects work and keeps that folder before the first send', async () => {
+  const f=fixture();Object.assign(f.core.state,{personalCapabilities:{workAndChat:1},newConversation:true,selectedSessionId:null,newConversationMode:'chat'});
+  const project={projectId:'project-synthetic',name:'Synthetic folder'};await f.core.chooseFolderProject(project);
+  assert.equal(f.core.state.newConversationProjectId,project.projectId);assert.equal(f.core.currentConversationMode(),'work');assert.equal(f.core.sidebarConversationMode(),'work');
+  assert.equal(f.requests.length,0,'the explicit choice changes only the unsent draft');
+});
+
+test('MODE-1 history authorization resumes only after the current owner status verifies active authority', async () => {
+  let active = false; const f=fixture(()=>response({ownerId:'owner-test',hostId:'host-test',presence:{authorization:active?'active':'pending'}}));
+  f.core.historyReadResult('failed',{terminal:true,error:{code:'UNAUTHORIZED'}});assert.equal(f.core.historyReadAllowed(),false);
+  await f.core.refreshStatus();assert.equal(f.core.historyReadAllowed(),false);
+  active=true;await f.core.refreshStatus();assert.equal(f.core.historyReadAllowed(),true);
+});
+
 test('MODEL-1 combined service read supplies models and default/background settings without legacy requests',async()=>{
   const f=fixture(path=>{
     assert.equal(path,'/personal/v1/model-services');

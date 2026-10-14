@@ -12,6 +12,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
     function clearHistoryView() {
         globalThis.WeftContent?.closeGallery(false);
         ui.byId('transcript').replaceChildren();
+        historyNotice('');
+        ui.renderTurnStatus?.();
     }
     function historyNotice(message, kind = 'ordinary') {
         // Only read failures merge into connection state; preserve all other notices.

@@ -204,7 +204,7 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         }
     }
     function turnStatusViewModel(now = Date.now()) {
-        if (core.state.activeChatSource === 'phone')
+        if (core.state.activeChatSource === 'phone' || core.state.newConversation)
             return null;
         const started = [...core.state.historyEvents.values()].filter(event => event.type === 'turn.started')
             .sort((a, b) => a.seq - b.seq).at(-1);
