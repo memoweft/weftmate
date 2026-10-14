@@ -68,7 +68,7 @@ internal class SettingsConfirmation(val title:String,val message:String,val labe
         mutation=chat.scope.launch { try { action();if(owner==chat.owner&&success.isNotEmpty())toast(success) } catch(e:CancellationException){throw e} catch(e:Exception){if(owner==chat.owner)error=if(e is ApiFailure&&e.safeCode=="COMPUTER_UPDATE_REQUIRED")"这台电脑的 WeftMate 需要更新，才能管理模型服务。" else e.message?.takeUnless{it.matches(Regex("[A-Z_]+"))} ?: "暂时没能完成，请重试。"} finally{if(owner==chat.owner)busy=false} }
     }
     fun refresh() { read?.cancel();val owner=chat.owner;loading=true;error="";read=chat.scope.launch {
-        try { val value=bridge.call("home",JSONObject().put("includeUsage",page.isEmpty()));if(owner!=chat.owner)return@launch;home=value
+        try { val value=bridge.call("home",JSONObject().put("includeUsage",page.isEmpty()));if(owner!=chat.owner)return@launch;home=nativeAccountProjection(value)
             if(page=="devices") { val d=bridge.call("directory");if(owner!=chat.owner)return@launch;directory=d }
             if(page=="models")loadServices()
         }catch(e:CancellationException){throw e}catch(e:Exception){if(owner==chat.owner)error=e.message?.takeUnless{it.matches(Regex("[A-Z_]+"))} ?: "暂时无法读取，请重试。"}finally{if(owner==chat.owner)loading=false}

@@ -141,6 +141,7 @@ const conversationTasks=uiCore.mobileDecisions.tasks;
 const toolApprovals=uiCore.mobileDecisions.approvals;
 const toolQuestions=uiCore.mobileDecisions.questions;
 let libraryView=null;
+globalThis.WeftNativePdf={page:params=>call('native.pdf.page',params)};
 let searchView=null;
 let helpView=null,releaseNotice=null;
 function mobileHelpPage(kind,target){
@@ -197,6 +198,21 @@ async function openMobileLibrarySource(source){
   if(Number.isSafeInteger(source.seq)){
     while(state.sharedHasOlder&&!state.sharedEvents.some(event=>event.seq===source.seq))await uiCore.loadMobileOlderHistory();
     const row=document.querySelector(`[data-seq="${source.seq}"]`);row?.scrollIntoView({block:'center'});if(row){row.tabIndex=-1;row.focus();}
+  }
+}
+async function openNativeLibraryFile(id){
+  const deadline=Date.now()+20000;
+  while(!state.booted||!state.loggedIn||state.restorePending||state.authBusy){
+    if(Date.now()>=deadline)throw Error('LIBRARY_RESTORE_TIMEOUT');
+    await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  page('library');
+  await libraryPage($('page-content'));
+  window.weftNativeLibraryEntry=true;
+  if(id){
+    const item=uiCore.library.items.find(row=>row.id===id)|| (await uiCore.accessApi('/library/'+encodeURIComponent(id)+'/preview')).item;
+    if(!item||item.id!==id)throw Error('FILE_UNAVAILABLE');
+    await libraryView.preview(item,document.activeElement);
   }
 }
 async function libraryPage(target){
@@ -788,7 +804,7 @@ const approvalRequestPattern=/^[A-Za-z0-9_.:-]{1,128}$/;
 
 
 
-function handleBack(){if(globalThis.WeftPhoneFiles?.isOpen()){WeftPhoneFiles.close();return;}if(uiCore.search?.open){uiCore.closeSearch();return;}if(globalThis.WeftContent?.isGalleryOpen()){closeImagePreview();return;}if(document.querySelector('.session-menu[role=menu]')){WeftPopover.closeMenu();return;}if(mobileMessageActions?.dismiss())return;if(!$('resource-page').hidden){closeResourcePage();return}
+function handleBack(){if(window.weftNativeLibraryEntry){void call('native.library.close');return;}if(globalThis.WeftPhoneFiles?.isOpen()){WeftPhoneFiles.close();return;}if(uiCore.search?.open){uiCore.closeSearch();return;}if(globalThis.WeftContent?.isGalleryOpen()){closeImagePreview();return;}if(document.querySelector('.session-menu[role=menu]')){WeftPopover.closeMenu();return;}if(mobileMessageActions?.dismiss())return;if(!$('resource-page').hidden){closeResourcePage();return}
   if(!$('image-preview').hidden){closeImagePreview();return}
   if(approvalModeState.confirmation){closeApprovalRisk();return}if(approvalModeState.menu){closeApprovalModeMenu({restoreFocus:true});return}
   if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}if(state.attachmentPick){cancelAttachmentPick({announce:true});return}if(state.menu){closeModelMenu();$('model-button').focus();return}
