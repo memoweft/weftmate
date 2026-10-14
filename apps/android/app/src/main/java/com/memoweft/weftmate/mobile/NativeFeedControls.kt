@@ -108,7 +108,7 @@ private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
     }
 }
 
-@Composable private fun FeedControlSurface(
+@Composable internal fun FeedControlSurface(
     enabled: Boolean,
     modifier: Modifier,
     shape: RoundedCornerShape,
@@ -118,6 +118,7 @@ private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
     action: () -> Unit,
     borderColor: Color? = null,
     frosted: Boolean = false,
+    role: Role = Role.Button,
     content: @Composable BoxScope.(Boolean) -> Unit
 ) {
     val interactions = remember { MutableInteractionSource() }
@@ -148,7 +149,7 @@ private val controlShape = RoundedCornerShape(DesignTokens.radius999.dp)
         // opaque generated-token fallback. Keep the focus ring outside its clip.
         .then(if (frosted) Modifier.nativeFrost(shape) else Modifier)
         .background(if (active) feedbackColor else baseColor, shape)
-        .clickable(interactionSource = interactions, indication = null, enabled = enabled, role = Role.Button, onClick = action),
+        .clickable(interactionSource = interactions, indication = null, enabled = enabled, role = role, onClick = action),
         contentAlignment = Alignment.Center) { content(active) }
 }
 

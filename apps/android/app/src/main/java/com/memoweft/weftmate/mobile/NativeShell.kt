@@ -162,7 +162,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 NativeIconButton(if(selectedTab in listOf("settings","models")) R.drawable.wm_back else R.drawable.wm_panel,if(selectedTab in listOf("settings","models"))"返回聊天" else "打开侧栏",Modifier.nativeFrost(CircleShape)) { if(selectedTab in listOf("settings","models"))m.returnToChat() else { focus.clearFocus();activity.hideKeyboard();m.focused=false;drawer=true;m.launch { m.refreshChats() } } }
                 Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally) {
                     Text(if(selectedTab=="chat" || selectedTab=="web-chat")m.title else if(selectedTab=="models")"模型" else if(selectedTab=="web-home")"对话" else if(selectedTab=="help")"帮助" else tabs.find{it.first==selectedTab}?.second?.first ?: "设置",fontSize=DesignTokens.font17.sp,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
-                    if(selectedTab=="chat") Text(if(m.phoneHistory)"来自手机 · 只读" else if(m.standalone || m.phone)"手机自己答的" else if(m.connected)"已连接" else "正在重连",fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    if(selectedTab=="chat") Text(m.subtitle,fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=1,overflow=TextOverflow.Ellipsis)
                 }
                 Box {
                     NativeIconButton(R.drawable.wm_more,"更多",Modifier.nativeFrost(CircleShape)){overflow=true}
@@ -170,7 +170,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                         if(m.running && selectedTab!="library") NativeMenuItem(text={Text("停止回复")},onClick={overflow=false;m.stop()},leadingIcon={Icon(painterResource(R.drawable.wm_stop),null)})
                         NativeMenuItem(text={Text("设置")},onClick={overflow=false;focus.clearFocus();settings.open()},leadingIcon={Icon(painterResource(R.drawable.wm_settings),null)})
                         if(selectedTab=="library")NativeMenuItem(text={Text("打开原网页成果库")},onClick={overflow=false;activity.originalLibrary()},leadingIcon={Icon(painterResource(R.drawable.wm_layers),null)})
-                        if(selectedTab!="library")NativeMenuItem(text={Text("新对话")},onClick={overflow=false;focus.clearFocus();activity.hideKeyboard();m.focused=false;m.newChat()},leadingIcon={Icon(painterResource(R.drawable.wm_plus),null)})
+                        if(selectedTab!="library")NativeMenuItem(text={Text(if(m.workAndChat && m.sidebarMode=="work")"新建工作" else "新建对话")},onClick={overflow=false;focus.clearFocus();activity.hideKeyboard();m.focused=false;m.newChat()},leadingIcon={Icon(painterResource(R.drawable.wm_plus),null)})
                         if(selectedTab!="library")NativeMenuItem(text={Text("完整对话功能")},onClick={overflow=false;m.tab="web-chat"},leadingIcon={Icon(painterResource(R.drawable.wm_chat),null)})
                     }
                 }
@@ -197,7 +197,10 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 key(selectedTab) { AndroidView(factory={ activity.webPage(if(selectedTab=="web-chat")"chat" else if(selectedTab=="web-home")"home" else selectedTab) },onRelease={activity.parkWeb()},modifier=Modifier.weight(1f).fillMaxWidth().alpha(paneAlpha.value)) }
             }
             Column(Modifier.onSizeChanged{dockHeight.intValue=it.height}) {
-            if(selectedTab=="chat")NativeComposer(m,settings,onPreview={preview=it})
+            if(selectedTab=="chat") {
+                if(m.workAndChat && m.conversationMode=="work")NativeWorkSelection(m)
+                NativeComposer(m,settings,onPreview={preview=it})
+            }
             if(selectedTab !in listOf("settings","models")) {
                 Row(Modifier.fillMaxWidth().keyboardNavigation().padding(start=DesignTokens.space12.dp,end=DesignTokens.space12.dp,top=DesignTokens.space4.dp,bottom=DesignTokens.space12.dp).nativeFrost(pill).padding(horizontal=DesignTokens.space12.dp,vertical=DesignTokens.space4.dp),horizontalArrangement=Arrangement.SpaceEvenly) {
                     tabs.forEach{(id,v)->Box(Modifier.weight(1f),contentAlignment=Alignment.Center){
@@ -218,9 +221,16 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
             Row(Modifier.fillMaxSize().semantics { paneTitle="对话";isTraversalGroup=true }) {
             Column(Modifier.fillMaxHeight().fillMaxWidth(0.88f).nativeFrost(RoundedCornerShape(DesignTokens.radius16.dp),floating=true).systemBarsPadding()) {
             Row(Modifier.fillMaxWidth().padding(pad),verticalAlignment=Alignment.CenterVertically) { Text("对话",Modifier.weight(1f),fontWeight=FontWeight.SemiBold,fontSize=DesignTokens.font18.sp);NativeIconButton(R.drawable.wm_close,"关闭侧栏"){drawer=false} }
+            if(m.workAndChat)NativeConversationModes(m)
+            FeedControlButton(if(m.workAndChat && m.sidebarMode=="work")"新建工作" else "新建对话",icon=R.drawable.wm_plus,modifier=Modifier.padding(horizontal=DesignTokens.space20.dp)){drawer=false;m.newChat()}
             LazyColumn(Modifier.fillMaxWidth().weight(1f),contentPadding=PaddingValues(horizontal=DesignTokens.space20.dp,vertical=gap),verticalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)) {
-                if(!m.standalone) item { NativeSidebarRow("小纬",selected=m.chats.none{it.optString("id",it.optString("chatId"))==m.chatId},icon=R.drawable.wm_chat){drawer=false;m.launch { m.select(m.business("/chats/main").getJSONObject("chat"));m.tab="chat" }} }
-                items(m.chats){row->NativeSidebarRow(row.optString("title","新对话"),selected=row.optString("id",row.optString("chatId"))==m.chatId){drawer=false;m.launch{m.select(row);m.tab="chat"}}}
+                if(!m.workAndChat && !m.standalone) item { NativeSidebarRow("小纬",selected=m.chats.none{it.optString("id",it.optString("chatId"))==m.chatId},icon=R.drawable.wm_chat){drawer=false;m.launch { m.select(m.business("/chats/main").getJSONObject("chat"));m.tab="chat" }} }
+                val groups=if(m.workAndChat && m.sidebarMode=="work")m.visibleChats.groupBy{it.optJSONObject("workDirectory")?.stringOrEmpty("name")?.ifEmpty{null} ?: m.projects.find{p->p.stringOrEmpty("projectId")==it.stringOrEmpty("projectId")}?.stringOrEmpty("name")?.ifEmpty{null} ?: "选择项目或文件夹"} else linkedMapOf("" to m.visibleChats)
+                for((group,entries) in groups) {
+                    if(group.isNotEmpty())item{Text(group,Modifier.padding(top=DesignTokens.space12.dp,bottom=DesignTokens.space4.dp),fontSize=DesignTokens.font12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)}
+                    items(entries){row->NativeSidebarRow(hostChatTitle(row),selected=row.optString("id",row.optString("chatId"))==m.chatId,subtitle=if(row.optBoolean("computerOffline"))"电脑不在线" else null){drawer=false;m.launch{m.select(row);m.tab="chat"}}}
+                }
+                if(m.visibleChats.isEmpty())item{Text(if(m.sidebarMode=="work")"还没有工作，选好文件夹就能开始。" else "从新对话开始聊聊。",fontSize=DesignTokens.font13.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)}
                 item { Spacer(Modifier.height(pad)) }
                 item { NativeSidebarRow("完整对话列表",subtitle="搜索、项目与归档",icon=R.drawable.wm_chat){drawer=false;m.tab="web-home"} }
                 item { NativeSidebarRow("设置",icon=R.drawable.wm_settings){drawer=false;settings.open()} }
@@ -309,7 +319,7 @@ private val tabs = listOf("chat" to ("聊天" to R.drawable.wm_chat), "activity"
                 when(type) {
                     "user.message","assistant.message","assistant.delta" -> NativeMessage(m,e,bubbleMaxWidth,onPreview)
                     "artifact.created" -> NativeArtifactFiles(e,m,onPreview)
-                    "approval.requested" -> m.approvals.find{it.optString("approvalId")==d.optString("approvalId")}?.let{ NativeApproval(it){outcome,decisionScope->m.decide(it,outcome,decisionScope)} }
+                    "approval.requested" -> m.approvals.find{it.optString("approvalId")==d.optString("approvalId")}?.let{ if(m.workAndChat && it.stringOrEmpty("intent")=="work-switch")NativeWorkSwitch(m,it) else NativeApproval(it){outcome,decisionScope->m.decide(it,outcome,decisionScope)} }
                     "question.requested" -> m.questions.find{it.optString("questionRpcId")==d.optString("questionRpcId")}?.let{ NativeQuestion(it){answers->m.answer(it,answers)} }
                     "native.progress" -> NativeProgress(e,progressState)
                 }
@@ -470,7 +480,7 @@ private fun inlineMarkdown(text:String):AnnotatedString=buildAnnotatedString {
         val input:@Composable ()->Unit={BasicTextField(m.draft,onValueChange=m::edit,modifier=Modifier.fillMaxWidth().heightIn(min=if(expanded)DesignTokens.space64.dp else touch,max=DesignTokens.space150.dp).focusRequester(inputFocus).onFocusChanged{editorFocused=it.isFocused;m.focused=it.isFocused}.padding(if(expanded)gap else DesignTokens.space4.dp).semantics{contentDescription="消息输入"},textStyle=TextStyle(color=MaterialTheme.colorScheme.onSurface,fontSize=LocalReadingSize.current.sp,lineHeight=(LocalReadingSize.current * 1.5f).sp),cursorBrush=SolidColor(MaterialTheme.colorScheme.primary),maxLines=5,decorationBox={inner->Box{if(m.draft.isEmpty())Text(if(m.running)"可以继续补充…" else "说说你的目标…",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=LocalReadingSize.current.sp);inner()}})}
         NativeComposerLayout(expanded,input,leading={
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)) {
-            Box{NativeIconButton(R.drawable.wm_plus,"添加附件",enabled=!m.standalone && !m.phoneArchive){plus=true};NativeMenu(plus,keepEditorFocus=true,onDismissRequest={plus=false}){listOf("image" to "照片","camera" to "拍照","file" to "文件").forEach{(kind,label)->NativeMenuItem(text={Text(label)},leadingIcon={Icon(painterResource(when(kind){"image"->R.drawable.wm_image;"camera"->R.drawable.wm_camera;else->R.drawable.wm_file}),null,Modifier.size(DesignTokens.iconTouch.dp))},onClick={plus=false;m.pick(kind)})}}}
+            Box{NativeIconButton(R.drawable.wm_plus,"添加附件",enabled=!m.standalone && !m.phoneArchive && !m.newWork){plus=true};NativeMenu(plus,keepEditorFocus=true,onDismissRequest={plus=false}){listOf("image" to "照片","camera" to "拍照","file" to "文件").forEach{(kind,label)->NativeMenuItem(text={Text(label)},leadingIcon={Icon(painterResource(when(kind){"image"->R.drawable.wm_image;"camera"->R.drawable.wm_camera;else->R.drawable.wm_file}),null,Modifier.size(DesignTokens.iconTouch.dp))},onClick={plus=false;m.pick(kind)})}}}
             if(expanded) {
                 Box{NativeIconButton(R.drawable.wm_approval,"审批方式：${modeName(m.mode)}",enabled=!m.standalone && !m.phoneArchive && !m.approvalModeBusy){modeMenu=true};NativeMenu(modeMenu || allowRisk,keepEditorFocus=true,onDismissRequest={modeMenu=false;allowRisk=false}){if(allowRisk){Text("删除、覆盖、系统修改、安装、发送和付款可能直接执行，且无法撤销。",Modifier.widthIn(max=DesignTokens.space150.dp*2).padding(pad));NativeMenuItem(text={Text("全部允许")},onClick={allowRisk=false;m.setApprovalMode("allow-all")});NativeMenuItem(text={Text("取消")},onClick={allowRisk=false})}else listOf("auto","ask","accept-edits","plan","allow-all").forEach{id->NativeMenuItem(text={Text(modeName(id))},trailingIcon={if(m.mode==id)Icon(painterResource(R.drawable.wm_check),"当前模式",Modifier.size(DesignTokens.iconTouch.dp))},onClick={modeMenu=false;if(id=="allow-all")allowRisk=true else m.setApprovalMode(id)})}}}
                 NativeIconButton(R.drawable.wm_model,"模型：${m.modelLabel}"){settings.menuVisible=true;settings.menuOpened()}
@@ -480,7 +490,7 @@ private fun inlineMarkdown(text:String):AnnotatedString=buildAnnotatedString {
         Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(DesignTokens.space4.dp)) {
             val action=m.composer.action
             if(expanded && action==ComposerAction.Send) NativeIconButton(R.drawable.wm_mic,"语音补充草稿",enabled=!m.running){voice()}
-            NativeIconButton(when(action){ComposerAction.Voice->R.drawable.wm_mic;ComposerAction.Send->R.drawable.wm_arrow;ComposerAction.Stop->R.drawable.wm_stop},when(action){ComposerAction.Voice->"语音输入";ComposerAction.Send->"发送消息";ComposerAction.Stop->"停止回复"},solid=true,enabled=if(action==ComposerAction.Voice)!m.running && !m.loading else action==ComposerAction.Stop || m.sendAvailable && !m.submitting){when(action){ComposerAction.Send->m.send();ComposerAction.Stop->m.stop();ComposerAction.Voice->voice()}}
+            NativeIconButton(when(action){ComposerAction.Voice->R.drawable.wm_mic;ComposerAction.Send->R.drawable.wm_arrow;ComposerAction.Stop->R.drawable.wm_stop},when(action){ComposerAction.Voice->"语音输入";ComposerAction.Send->"发送消息";ComposerAction.Stop->"停止回复"},solid=true,enabled=if(action==ComposerAction.Voice)!m.running && !m.loading else action==ComposerAction.Stop || m.canSend && !m.submitting && !m.workChoicesBusy){when(action){ComposerAction.Send->m.send();ComposerAction.Stop->m.stop();ComposerAction.Voice->voice()}}
         }
         })
     }
