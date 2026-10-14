@@ -1,3 +1,5 @@
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -8,6 +10,8 @@ import { join,resolve } from 'node:path';
 
 import { saveDesktopConfig } from '../../src/desktop-config.mjs';
 import { PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
+prepareEvidenceDirectory(evidencePath('r0-1'), { recursive: true });
+
 const root=await mkdtemp(join(tmpdir(),'weftmate-r01-login-')),profile=join(root,'profile');
 const control=join(process.env.APPDATA,'WeftMate r01qa'),configFile=join(control,'WeftMate/desktop-config.json');
 const executable=resolve(process.argv[2]);let application;
@@ -27,7 +31,7 @@ try{
   {windowsHide:true,env:{...process.env,PSModulePath:process.env.SystemRoot+'\\System32\\WindowsPowerShell\\v1.0\\Modules'}},(error,out)=>error?reject(error):resolve(out))));
  assert.ok(command.includes('--start-in-tray'),command);assert.ok(command.includes('desktop-config='),command);
  const off=await page.evaluate(()=>weftmateDesktop.setAutoStart(false));assert.equal(off.autoStart,false);
- await writeFile(resolve('tests/evidence/r0-1/login-item-report.json'),JSON.stringify({passed:true,realWindowsRegistry:true,isolatedName:'WeftMate r01qa',enabledReadback:true,disabledReadback:true,startInTray:true,configurationPathContainsSpaces:true},null,2));
+ await writeFile(evidencePath('r0-1/login-item-report.json'),JSON.stringify({passed:true,realWindowsRegistry:true,isolatedName:'WeftMate r01qa',enabledReadback:true,disabledReadback:true,startInTray:true,configurationPathContainsSpaces:true},null,2));
  console.log('Real named Windows login-item enable/read/disable passed');
 }finally{
  if(application){await application.evaluate(({app})=>app.setLoginItemSettings({openAtLogin:false,name:'WeftMate r01qa',path:process.execPath})).catch(()=>{});await application.close().catch(()=>{});}

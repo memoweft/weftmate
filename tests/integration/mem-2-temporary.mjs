@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -16,7 +17,7 @@ import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/ho
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { snapshot, verify } from '../../src/personal-backup/archive.mjs';
 
-const evidence=resolve(process.env.MEM2_EVIDENCE || 'tests/evidence/mem-2'), root=mkdtempSync(join(tmpdir(),'weftmate-mem2-real-')), profile=join(root,'profile');
+const evidence=resolve(process.env.MEM2_EVIDENCE || evidencePath('mem-2')), root=mkdtempSync(join(tmpdir(),'weftmate-mem2-real-')), profile=join(root,'profile');
 mkdirSync(evidence,{recursive:true}); mkdirSync(profile);
 const save=(name,value)=>writeFileSync(join(evidence,name),JSON.stringify(value,null,2)+'\n');
 save('run.json',{root,startedAt:new Date().toISOString()});

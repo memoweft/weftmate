@@ -1,9 +1,10 @@
+import os
 """Compare the captured real-program baseline and current UI without masking any pixels."""
 import json
 from pathlib import Path
 from PIL import Image, ImageChops
 
-evidence = Path(__file__).resolve().parents[2] / 'tests' / 'evidence' / 'fe-1a'
+evidence = (Path(__file__).resolve().parents[2] / os.environ.get('WEFTMATE_EVIDENCE_DIR', '.local/evidence')) / 'fe-1a'
 pairs = []
 for before in sorted(evidence.glob('before-*.png')):
     after = before.with_name(before.name.replace('before-', 'after-', 1))

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Actual Electron rendering when native history beats the send acknowledgement. */
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
@@ -12,7 +13,7 @@ import {managedMkdtemp,managedTempRoot} from '../helpers/managed-temp.mjs';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 const old={WeftUiCore:{factories:{}}};
 runInNewContext(execFileSync('git',['show','814031a7:src/ui-core/composer.js'],{encoding:'utf8'}),old);
-const oldFactory=old.WeftUiCore.factories.composer.toString(),out=resolve('tests/evidence/polish-1/race');await mkdir(out,{recursive:true});
+const oldFactory=old.WeftUiCore.factories.composer.toString(),out=evidencePath('polish-1/race');await mkdir(out,{recursive:true});
 const report={synthetic:true,realModelRequests:0,checks:[]};
 for(const before of [true,false])for(const width of [1200,480])for(const theme of ['light','dark']){
  const f=await startTimelineCandidate({interactive:true,historyCount:0,inlineProgress:true});f.progress.finish();

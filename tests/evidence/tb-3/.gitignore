@@ -1,5 +1,0 @@
-# Local diagnostics and extra stock scenes are retained; only final library evidence is published.
-failure.json
-source-debug.png
-gallery/*
-!gallery/*library*

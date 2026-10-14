@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { execFileSync, spawn } from 'node:child_process';
@@ -7,7 +8,7 @@ export const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',serial='127.0.0.1:7555
 export const shell=(...args)=>execFileSync(adb,['-s',serial,...args],{encoding:'utf8',windowsHide:true,maxBuffer:12*1024*1024});
 export const pause=ms=>new Promise(r=>setTimeout(r,ms));
 export async function wait(check,label,timeout=60000){const end=Date.now()+timeout;while(Date.now()<end){const result=await check();if(result)return result;await pause(300);}throw Error('S3a timeout: '+label);}
-export function shot(name){const out=resolve('tests/evidence/s3a');mkdirSync(out,{recursive:true});writeFileSync(join(out,name+'.png'),execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:12*1024*1024}));}
+export function shot(name){const out=evidencePath('s3a');mkdirSync(out,{recursive:true});writeFileSync(join(out,name+'.png'),execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:12*1024*1024}));}
 export function notifications(){try{return JSON.parse(shell('shell','run-as',pkg,'cat','files/s3a-notifications.json'));}catch{return [];}}
 export async function phone(origin,credentials){
   const port=new URL(origin).port;shell('reverse',`tcp:${port}`,`tcp:${port}`);

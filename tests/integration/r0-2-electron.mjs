@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Real Electron + mobile browser, synthetic random-port component providers only. */
 import assert from 'node:assert/strict';
 import { _electron, chromium } from 'playwright';
@@ -8,7 +9,7 @@ import { inflateRawSync } from 'node:zlib';
 import { managedMkdtempSync, managedTempRoot } from '../helpers/managed-temp.mjs';
 import { createProcessEvidence } from '../helpers/process-evidence.mjs';
 
-const repository=resolve(import.meta.dirname,'../..'),output=join(repository,'tests/evidence/r0-2');mkdirSync(output,{recursive:true});
+const repository=resolve(import.meta.dirname,'../..'),output=evidencePath('r0-2');mkdirSync(output,{recursive:true});
 const mobileOnly=process.argv.includes('--mobile-only');
 const root=managedMkdtempSync(join(managedTempRoot(),'weftmate-r0-2-'));
 const executable=createRequire(import.meta.url)('electron'),startedAt=Date.now();

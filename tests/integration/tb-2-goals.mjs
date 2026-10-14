@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Real Electron + pinned DSH, synthetic concurrent model, isolated account and random ports. */
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -5,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { harness, until } from './ia-2b-harness.mjs';
-const out=resolve(import.meta.dirname,'../evidence/tb-2');await mkdir(out,{recursive:true});
+const out=evidencePath('tb-2');await mkdir(out,{recursive:true});
 const held=new Set();let hold=true;
 const model=createServer(async(req,res)=>{
   if(req.method==='GET'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({data:[{id:'tb2-synthetic',object:'model'}]}));return;}

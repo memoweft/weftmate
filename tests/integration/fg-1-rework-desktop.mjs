@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -21,7 +22,7 @@ const repository = resolve(import.meta.dirname, '../..');
 const core = 'D:/AIProjects/MemoWeft/Worktrees/fg-1-forget/py/src';
 const python = 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe';
 const root = mkdtempSync(join(tmpdir(), 'weftmate-fg1-rework-'));
-const profile = join(root, 'profile'), evidence = join(repository, 'tests/evidence/fg-1/rework');
+const profile = join(root, 'profile'), evidence = evidencePath('fg-1/rework');
 mkdirSync(profile); mkdirSync(evidence, { recursive: true });
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const username = `fg1-${randomUUID()}`, password = `synthetic-${randomUUID()}-password`;

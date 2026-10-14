@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** One visible-name flow for 390x844 Chromium and the actual Android WebView. */
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
@@ -13,7 +14,7 @@ const device = process.argv.includes('--device');
 const relocated = process.argv.includes('--relocated');
 const mode = device ? 'mumu' : 'chromium';
 const resultPrefix = relocated ? `relocated-${mode}` : `${phase}-${mode}`;
-const evidence = join(repository, 'tests/evidence/fe-1b');
+const evidence = evidencePath('fe-1b');
 const apk = process.argv.includes('--apk') ? process.argv[process.argv.indexOf('--apk') + 1] : null;
 const probeApk = process.argv.includes('--probe-apk') ? process.argv[process.argv.indexOf('--probe-apk') + 1] : null;
 const adb = process.env.FE1B_ADB || 'D:/Software/MuMuPlayer/nx_main/adb.exe';

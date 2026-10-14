@@ -1,3 +1,4 @@
+import { evidencePath } from '../tests/helpers/evidence-path.mjs';
 /** Synthetic API-layer budget probe. Native recovery and UI frame/memory budgets
  * are explicitly separate; no user's profile, network model or fixed port. */
 import { performance } from 'node:perf_hooks';
@@ -34,6 +35,6 @@ const report = { checkedAt: new Date().toISOString(), environment: { platform: p
   exclusions: ['DSH cold log inspection/recovery is not simulated by this probe; native integration records that separately.',
     'No renderer is modified in IA-2a. First readable/input, 60-second scroll/frame and renderer memory budgets are IA-3/IA-4/IA-5 acceptance.',
     'Synthetic backend reports projected bytes/rows, not physical disk I/O.'] };
-await mkdir('tests/evidence/ia-2a', { recursive: true });
-await writeFile('tests/evidence/ia-2a/history-performance.json', JSON.stringify(report, null, 2) + '\n');
+await mkdir(evidencePath('ia-2a'), { recursive: true });
+await writeFile(evidencePath('ia-2a/history-performance.json'), JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));

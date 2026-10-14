@@ -1,8 +1,9 @@
+import { evidencePath } from '../../helpers/evidence-path.mjs';
 /** Sanitize retained calibration/gate evidence, including embedded base64 paths. */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { hostname } from 'node:os';
-const evidence = resolve(import.meta.dirname, '../../evidence/sec-2');
+const evidence = evidencePath('sec-2');
 const plain = text => String(text).replaceAll(hostname(), '<host>')
   .replace(/(?:[A-Z]:[\\/]+Users[\\/]+[^\\/]+[\\/]+AppData[\\/]+Local[\\/]+Temp|[A-Z]:[\\/]+Temp)[\\/]+weftmate-synthetic-stop-stage11-sec2-[a-z0-9-]+/gi, '%TEMP%/sec2')
   .replace(/[A-Z]:[\\/]+weftmate-ci-[a-z0-9_-]+/gi, '%TEMP%/ci')

@@ -1,9 +1,10 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Real fixed DSH reminder, actual provider usage and native desktop notification. */
 import assert from 'node:assert/strict';
 import { mkdir,writeFile,rm } from 'node:fs/promises';
 import { join,resolve } from 'node:path';
 import { harness,until } from './ia-2b-harness.mjs';
-const evidence=resolve(import.meta.dirname,'../evidence/tb-1');await mkdir(evidence,{recursive:true});
+const evidence=evidencePath('tb-1');await mkdir(evidence,{recursive:true});
 const h=await harness('tb1-reminder',{memory:false,mainChat:true});
 const report={realElectron:true,fixedDsh:true,model:'mimo-v2.6-flash',checks:[]};
 try{

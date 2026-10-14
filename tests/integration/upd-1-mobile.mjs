@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -16,7 +17,7 @@ import { keyId } from '../../src/personal-update/manifest.mjs';
 import { UpdateStore } from '../../src/personal-update/store.mjs';
 const run = promisify(execFile);
 const repository = resolve(import.meta.dirname, '../..');
-const evidence = join(repository, 'tests/evidence/upd-1'); await mkdir(evidence, { recursive: true });
+const evidence = evidencePath('upd-1'); await mkdir(evidence, { recursive: true });
 const root = await mkdtemp(join(tmpdir(), 'weftmate-upd-1-mobile-'));
 const sourceDir = join(root, 'source'); await cp(join(repository, 'apps/mobile-ui/www'), sourceDir, { recursive: true });
 const privateKey = generateKeyPairSync('ed25519').privateKey.export({ type: 'pkcs8', format: 'pem' });
