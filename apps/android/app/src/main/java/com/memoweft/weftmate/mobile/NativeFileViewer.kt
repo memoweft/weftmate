@@ -119,6 +119,15 @@ import java.io.File
         Image(bitmap.asImageBitmap(),label,Modifier.fillMaxSize().graphicsLayer{scaleX=zoom;scaleY=zoom;translationX=offset.x;translationY=offset.y},contentScale=androidx.compose.ui.layout.ContentScale.Fit)
     }
 }
+/** One renderer for the native viewer and the embedded web file page. */
+internal fun nativePdfBitmap(file:File,page:Int):Pair<Bitmap,Int> = ParcelFileDescriptor.open(file,ParcelFileDescriptor.MODE_READ_ONLY).use { fd -> PdfRenderer(fd).use { pdf ->
+                pdf.openPage(page.coerceIn(0,pdf.pageCount-1)).use { p ->
+                    val scale=minOf(2.0,2048.0/p.width,2048.0/p.height)
+                    val width=(p.width*scale).toInt().coerceAtLeast(1);val height=(p.height*scale).toInt().coerceAtLeast(1)
+                    val image=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);image.eraseColor(android.graphics.Color.WHITE)
+                    p.render(image,null,null,PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);image to pdf.pageCount
+                }
+            } }
 @Composable private fun NativePdfFile(file:File,modifier:Modifier) {
     var page by remember(file){mutableIntStateOf(0)}
     var count by remember(file){mutableIntStateOf(0)}
@@ -128,14 +137,7 @@ import java.io.File
     LaunchedEffect(file,page,retry) {
         bitmap=null;error=""
         try {
-            val rendered=withContext(Dispatchers.IO){ParcelFileDescriptor.open(file,ParcelFileDescriptor.MODE_READ_ONLY).use { fd -> PdfRenderer(fd).use { pdf ->
-                pdf.openPage(page.coerceIn(0,pdf.pageCount-1)).use { p ->
-                    val scale=minOf(2.0,2048.0/p.width,2048.0/p.height)
-                    val width=(p.width*scale).toInt().coerceAtLeast(1);val height=(p.height*scale).toInt().coerceAtLeast(1)
-                    val image=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);image.eraseColor(android.graphics.Color.WHITE)
-                    p.render(image,null,null,PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);image to pdf.pageCount
-                }
-            } } }
+            val rendered=withContext(Dispatchers.IO){nativePdfBitmap(file,page)}
             bitmap=rendered.first;count=rendered.second
         }catch(e:CancellationException){throw e}catch(_:Exception){error="这份 PDF 无法显示，可以用其它应用打开。"}
     }
