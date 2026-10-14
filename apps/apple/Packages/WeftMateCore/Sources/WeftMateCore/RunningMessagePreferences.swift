@@ -21,9 +21,6 @@ public struct RunningMessagePreferences {
 
 extension SessionApproval {
     public var actionHeadline: String {
-        if let range = reason.range(of: "\n{") {
-            return "要" + ToolProgressSummary.readable(tool: toolName, raw: String(reason[reason.index(before: range.upperBound)...]))
-        }
-        return readableSummary
+        "要" + ToolProgressSummary.approval(tool: toolName, raw: reason)
     }
 }

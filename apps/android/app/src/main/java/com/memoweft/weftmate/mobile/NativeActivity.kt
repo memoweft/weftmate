@@ -38,7 +38,7 @@ class NativeActivity : HybridActivity() {
         while(!timelineMapperInstalled) {
             val shared=assets.open("ui-core/timeline-model.js").bufferedReader().use { it.readText() }
             val ready = suspendCancellableCoroutine<Boolean> { continuation ->
-                embeddedWeb.evaluateJavascript("(()=>{if(typeof WeftUiCore==='undefined')return false;if(typeof WeftUiCore.nativeTimelineRows!=='function'){$shared}return typeof WeftUiCore.nativeTimelineRows==='function';})()") { value ->
+                embeddedWeb.evaluateJavascript("(()=>{if(typeof WeftUiCore==='undefined')return false;if(typeof WeftUiCore.approvalCopy!=='function'){$shared}return typeof WeftUiCore.nativeTimelineRows==='function';})()") { value ->
                     if(continuation.isActive) continuation.resumeWith(Result.success(value=="true"))
                 }
             }

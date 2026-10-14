@@ -63,7 +63,7 @@ struct ConversationApprovalBar: View {
                 if model.pendingApprovals.count > 1 { Text("还有 \(model.pendingApprovals.count - 1) 个待批准").foregroundStyle(Weave.muted) }
                 if model.pendingQuestionCount > 0 { Text("处理审批后还有 \(model.pendingQuestionCount) 个问题").foregroundStyle(Weave.muted) }
                 if expanded {
-                    Text(ToolStepDetail(raw: model.approvalDetails[approval.id] ?? approval.reason).readableText).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
+                    Text(model.approvalDetails[approval.id] ?? approval.reason).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
                     if let risk = approval.readableRisk { Text(risk).foregroundStyle(Weave.muted) }
                     Text(approval.reversalNotice).foregroundStyle(Weave.muted)
                     if !(approval.riskCategories ?? []).isEmpty {
