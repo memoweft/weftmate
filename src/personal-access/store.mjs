@@ -249,6 +249,8 @@ export function validateSingleStore(store) {
     }
   }
   for (const [sessionId, session] of Object.entries(store.sessions)) {
+    if (session?.mode !== undefined && !['chat', 'work'].includes(session.mode) ||
+        session?.workHostId !== undefined && !validId(session.workHostId)) throw failure('STORE_CORRUPT', 500);
     if (!validId(sessionId) || !plainObject(session) || session.ownerId !== store.ownerId ||
         (session.archived !== undefined && typeof session.archived !== 'boolean') ||
         (session.deleting !== undefined && typeof session.deleting !== 'boolean') ||
@@ -447,6 +449,9 @@ export function validateSingleStore(store) {
   }
   const requestIds = new Set();
   for (const [commandId, command] of Object.entries(store.commands)) {
+    if (command?.workContext !== undefined && (!plainObject(command.workContext) ||
+        !validId(command.workContext.projectId) || !validId(command.workContext.hostId) ||
+        !Number.isSafeInteger(command.workContext.projectRevision) || command.workContext.projectRevision < 1 || !validTime(command.workContext.at))) throw failure('STORE_CORRUPT', 500);
     if (!validId(commandId) || !plainObject(command) || command.commandId !== commandId ||
         command.ownerId !== store.ownerId || !REQUEST_ID.test(command.requestId ?? '') ||
         !/^[a-f0-9]{64}$/.test(command.payloadHash ?? '') ||

@@ -1,5 +1,6 @@
 import { PERMISSION_TYPES, riskPermissionType } from '../plugins/personal-permission-rules.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
+import { bindConversationWork, isWorkSwitch } from './work-and-chat.mjs';
 import { readSourceEvents } from './source-history.mjs';
 import { exactKeys, failure, validId, withDeadline } from './common.mjs';
 import { sourceMessageHash } from './command-policy.mjs';
@@ -151,13 +152,16 @@ export function createApprovalOperations(context) {
   }
 
   async function answerToolApproval(request, ownerId, deviceId, sessionId, approvalId, body) {
-    exactKeys(body, ['requestId', 'outcome', 'scope'], ['requestId', 'outcome']);
+    exactKeys(body, ['requestId', 'outcome', 'scope', 'workProjectId'], ['requestId', 'outcome']);
     if (body.scope !== undefined && (!['once', 'conversation-category', 'global-category'].includes(body.scope) || body.outcome !== 'allowed-once')) throw failure('INVALID_REQUEST');
     if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId) || !APPROVAL_DECISIONS.has(body.outcome)) throw failure('INVALID_REQUEST');
     const account = context.accountState(ownerId);
     if (!account.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
     const prior = toolApprovals(account).find(row => row.sessionId === sessionId && row.approvalId === approvalId);
     if (!prior) throw failure('NOT_FOUND', 404);
+    if (body.workProjectId !== undefined && (!validId(body.workProjectId) || !isWorkSwitch(prior) || body.outcome !== 'allowed-once') ||
+        isWorkSwitch(prior) && body.scope && body.scope !== 'once') throw failure('INVALID_REQUEST');
+    if (isWorkSwitch(prior) && body.outcome === 'allowed-once' && !body.workProjectId) throw failure('PROJECT_NOT_SELECTED', 409);
     if (prior.toolName.startsWith('mcp__c_') && body.scope && body.scope !== 'once') throw failure('INVALID_REQUEST');
     const replay = prior.decisionRequestId === body.requestId;
     if (!replay) await refreshToolApprovals(ownerId, sessionId, true);
@@ -170,11 +174,15 @@ export function createApprovalOperations(context) {
       const row = toolApprovals(next).find(item => item.sessionId === sessionId && item.approvalId === approvalId);
       if (!row) throw failure('NOT_FOUND', 404);
       if (row.decisionRequestId === body.requestId) {
-        if (row.decisionOutcome !== body.outcome || (row.decisionScope ?? 'once') !== (body.scope ?? 'once')) throw failure('REQUEST_CONFLICT', 409);
+        if (row.decisionOutcome !== body.outcome || (row.decisionScope ?? 'once') !== (body.scope ?? 'once') || row.workProjectId !== body.workProjectId) throw failure('REQUEST_CONFLICT', 409);
         return approvalDecisionReceipt(row);
       }
       if (context.requestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
       if (row.status !== 'pending' || approvalUnavailableReason(next, row)) throw failure('APPROVAL_NOT_PENDING', 409);
+      if (isWorkSwitch(row) && body.outcome === 'allowed-once') {
+        bindConversationWork(next, sessionId, body.workProjectId, { at: new Date(context.timestamp()).toISOString(), commandId: row.sourceCommandId });
+        row.workProjectId = body.workProjectId;
+      }
       row.status = 'answered'; row.decisionOutcome = body.outcome; row.decisionRequestId = body.requestId;
       row.decisionScope = body.scope ?? 'once';
       if (row.decisionScope === 'conversation-category') {
@@ -275,7 +283,7 @@ export function createApprovalOperations(context) {
       if (!live) {
         throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       }
-      const review = await secondOpinion(ownerId, input, source, root);
+      const review = isWorkSwitch(input) ? null : await secondOpinion(ownerId, input, source, root);
       const saved = await context.serial(() => context.mutate(ownerId, next => {
         requireToolRuntime(runtimeId);
         const checked = personalExecutionSource(next, input, true);
@@ -296,6 +304,7 @@ export function createApprovalOperations(context) {
           sourceCommandId: checked.source.commandId, sourceReceiptId: receiptId, turn, callId, rootCallId,
           toolName: input.toolName, messageHash: input.messageHash, argumentsHash: input.argumentsHash,
           reason: input.reason, riskCategories: approvalCategories(input.reason), status: 'pending', createdAt: new Date(context.timestamp()).toISOString() };
+        if (isWorkSwitch(input)) row.intent = 'work-switch';
         row.operationCategories = [...new Set(row.riskCategories.map(riskPermissionType))];
         row.canAlwaysAllow = !input.toolName.startsWith('mcp__c_') && row.operationCategories.length > 0 && row.operationCategories.every(type => PERMISSION_TYPES.some(item => item.id === type && !item.restricted));
         if (review) row.secondOpinion = review;

@@ -46,7 +46,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         const folderItem=item(native ? '选择文件夹' : '选择电脑上的文件夹', 'folder', () => {closeComposerMenu(true);native ? folderChoice.pick() : folderChoice.open(ui.byId('attachment-add'));});
         folderItem.disabled=core.state.online===false||core.folderChoiceBusy?.();
         if(core.state.online===false)folderItem.title='电脑离线，连接后再选择文件夹';
-        if (core.supportsChat('sideChats')) item('开旁聊', 'compose', () => { closeComposerMenu(true); void core.openSideChat({ entry: 'composer' }).catch(error => ui.toast(core.failureMessage(error))); });
+        if (core.supportsChat('sideChats')) item('新建对话', 'compose', () => { closeComposerMenu(true); void core.openSideChat({ entry: 'composer' }).catch(error => ui.toast(core.failureMessage(error))); });
         if (native?.captureRegion) item('截图', 'camera', () => nativeImage(() => native.captureRegion()));
         if (native?.clipboardImage) item('粘贴剪贴板图片', 'image', () => nativeImage(() => native.clipboardImage()));
         else if (!phone && navigator.clipboard?.read) item('粘贴剪贴板图片', 'image', async () => {
@@ -119,6 +119,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
             ui.byId('message-text').focus();
         };
         ui.paintFolderChoice=folderChoice.paint;
+        ui.folderChoice=folderChoice;
         ui.nextSuggestions = globalThis.WeftNextSuggestionsView?.mount(core, {
             field:ui.byId('message-text'), area:ui.byId('message-form').parentElement,
             card:ui.byId('message-form'), repaint:() => ui.updateAvailability() });

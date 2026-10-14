@@ -94,7 +94,20 @@
     const content = $('chat-content'); clear(content);
     const conversation = data()?.conversations.find(c => c.id === state.conversationId);
     if (!conversation?.turns.length) { showWelcome(); return; }
-    for (const turn of conversation.turns) for (const message of turn.messages) content.append(messageNode(message.role, message.text));
+    for (const turn of conversation.turns) {
+      for (const message of turn.messages) content.append(messageNode(message.role, message.text));
+      if (turn.workRequest?.status === 'pending') {
+        const card = document.createElement('section'); card.className = 'work-switch-card'; card.setAttribute('aria-label', '切换到工作');
+        const title = document.createElement('h3'); title.textContent = '这件事需要在电脑上做。要切换到工作吗？';
+        const hint = document.createElement('p'); hint.textContent = '需要一台在线的电脑。在电脑上安装 WeftMate，用同一账号登录，就能在电脑上做事。';
+        const later = document.createElement('button'); later.type = 'button'; later.className = 'button secondary'; later.textContent = '先不用'; later.onclick = () => engine.declineWork(turn.id);
+        const actions = document.createElement('div'); actions.className = 'work-switch-actions'; actions.append(later);
+        const work = globalThis.WeftMobileCloud?.core;
+        if (work?.offlineWorkReady?.()) { const queue = document.createElement('button'); queue.type = 'button'; queue.className = 'button primary'; queue.textContent = '交给电脑，上线后做';
+          queue.onclick = () => work.openOfflineWorkMode(turn.workRequest.text); actions.append(queue); }
+        card.append(title, hint, actions); content.append(card);
+      }
+    }
     const last = conversation.turns.at(-1);
     if(conversation.computerSessionId)content.append(el('p','muted','已在电脑上 · 原手机对话仍保留'));
     const more=action('对话操作',()=>WeftPopover.menu(more,[{name:'删除对话',icon:'trash',danger:true,action:()=>{
@@ -149,11 +162,13 @@
         if(native||snapshot.model.interfaceType!=='anthropic')return complete(body,snapshot,signal,onProgress);
         const system=body.messages.filter(row=>row.role==='system').map(row=>row.content).join('\n\n');
         const response=await fetch(snapshot.model.baseUrl+'/messages',{method:'POST',redirect:'error',signal,headers:{'content-type':'application/json','x-api-key':snapshot.model.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify({model:body.model,system,messages:body.messages.filter(row=>row.role!=='system'),max_tokens:Math.max(body.max_tokens||4096,body.thinking?.budget_tokens?body.thinking.budget_tokens+1024:0),stream:false,...(body.thinking?{thinking:body.thinking}:{})})});
-        if(!response.ok)throw Error('MODEL_UNAVAILABLE');const reply=await response.json();if(reply.stop_reason&&!['end_turn','stop_sequence'].includes(reply.stop_reason))throw Error('MODEL_STREAM_INCOMPLETE');const text=reply.content?.filter(row=>row.type==='text').map(row=>row.text).join('');
-        if(!text)throw Error('MODEL_UNAVAILABLE');onProgress?.(text);return {choices:[{message:{content:text}}]};
+          body:JSON.stringify({model:body.model,system,messages:body.messages.filter(row=>row.role!=='system'),max_tokens:Math.max(body.max_tokens||4096,body.thinking?.budget_tokens?body.thinking.budget_tokens+1024:0),stream:false,...(body.thinking?{thinking:body.thinking}:{}),
+            ...(body.tools?.length?{tools:body.tools.map(row=>({name:row.function.name,description:row.function.description,input_schema:row.function.parameters}))}:{})})});
+        if(!response.ok)throw Error('MODEL_UNAVAILABLE');const reply=await response.json();if(reply.stop_reason&&!['end_turn','stop_sequence','tool_use'].includes(reply.stop_reason))throw Error('MODEL_STREAM_INCOMPLETE');const text=reply.content?.filter(row=>row.type==='text').map(row=>row.text).join('')||'';
+        const tools=reply.content?.filter(row=>row.type==='tool_use').map(row=>({id:row.id,type:'function',function:{name:row.name,arguments:JSON.stringify(row.input)}}))||[];
+        if(!text&&!tools.length)throw Error('MODEL_UNAVAILABLE');if(text)onProgress?.(text);return {choices:[{message:{content:text,...(tools.length?{tool_calls:tools}:{})}}]};
       };
-      engine = await WeftOffline.create({ vault, identity: info, phoneModel: currentModel,
+      engine = await WeftOffline.create({ vault, identity: info, phoneModel: currentModel, workRequests: !native,
         accountCheck: async () => {
           const directory = await client.authorized('/devices');
           if (!directory.devices.some(d => d.isCurrent && !d.revoked)) { await engine.clear(); throw Error('DEVICE_NOT_TRUSTED'); }

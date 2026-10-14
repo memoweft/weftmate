@@ -5,6 +5,20 @@ import { IDBFactory } from 'fake-indexeddb';
 import '../src/ui-core/offline.js';
 const W = (globalThis as any).WeftOffline;
 
+test('MODE-1 phone work is a real tool call that persists a card and never executes or queues a computer operation', async () => {
+  let saved: any = { snapshot: null, turns: [], conversations: [], tasks: [] }, requests = 0;
+  const engine = await W.create({ workRequests: true, crypto: webcrypto, identity: {}, phoneModel: () => ({ modelId: 'synthetic' }),
+    accountCheck: async () => ({}), host: () => assert.fail('no computer operation'),
+    vault: { load: async () => saved, save: async (value: any) => { saved = value; }, close() {},
+      complete: async (body: any) => { requests++; assert.equal(body.tools[0].function.name, 'computer_work');
+        return { choices: [{ message: { content: '', tool_calls: [{ function: { name: 'computer_work', arguments: JSON.stringify({ description: '合成文件工作' }) } }] } }] }; } } });
+  const first = await engine.send('合成请求'); assert.equal(first.workRequest.status, 'pending'); assert.equal(engine.view().tasks.length, 0);
+  const turn = engine.view().turns[0]; await engine.declineWork(turn.id); assert.equal(turn.workRequest.status, 'declined');
+  assert.match(turn.messages.at(-1).text, /需要进入工作/);
+  await engine.send('下一条合成请求', first.conversationId); assert.equal(requests, 2); assert.equal(engine.view().turns.at(-1).workRequest.status, 'pending');
+  engine.close();
+});
+
 test('MOB-4 starts without a computer or replica, streams, stops, regenerates, and persists encrypted account conversations', async () => {
   const db = new IDBFactory(); let model: any = null, requests = 0, authorized = true;
   const vault = await W.browserVault('phone:synthetic-a', { indexedDB: db, crypto: webcrypto });

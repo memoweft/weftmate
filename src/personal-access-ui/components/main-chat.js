@@ -6,7 +6,8 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     const box = () => ui.byId('chat-scroll'), list = () => ui.byId('transcript');
     const listStart = () => list().getBoundingClientRect().top - box().getBoundingClientRect().top + box().scrollTop;
     const fixedTitle = () => document.body.classList.contains('health-open') ? '健康' : document.body.classList.contains('help-open') ? document.querySelector('.help-surface')?.dataset.title || '帮助与小技巧' : document.body.classList.contains('library-open') ? '成果库' : document.body.classList.contains('goals-open') ? '目标' : document.body.classList.contains('activity-open') ? '动态' : 'WeftMate';
-    const main = () => core.inMainChat?.() === true;
+    const main = () => (core.inLogicalTimeline?.() ?? core.inMainChat?.()) === true;
+    const timelineChat = () => core.currentTimelineChat?.() || core.state.mainChat;
     const button = (text, name, action, className = 'button quiet small') => {
         const node = ui.element('button', className, text); node.type = 'button'; node.setAttribute('aria-label', name || text);
         node.addEventListener('click', () => Promise.resolve(action()).catch(error => ui.toast(core.failureMessage(error)))); return node;
@@ -103,12 +104,12 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             row.dataset.streamSearch=core.state.chatWindow.search.query;
             row.dataset.memorySession=spec.event.sourceRef?.sessionId||'';
             if (!spec.event.data?.live) ui.bindMainMessage?.(row, spec.event);
-            const complete = Number.isSafeInteger(spec.event.data?.streamSeq) ? spec.event.data.streaming !== true : !core.state.mainChat.running || spec.event.sourceRef?.sessionId !== core.state.mainChat.activeSessionId || spec.event.type === 'user.message' || spec.event.eventId !== rows.filter(item => item.kind === 'message').at(-1)?.key;
+            const complete = Number.isSafeInteger(spec.event.data?.streamSeq) ? spec.event.data.streaming !== true : !timelineChat().running || spec.event.sourceRef?.sessionId !== timelineChat().activeSessionId || spec.event.type === 'user.message' || spec.event.eventId !== rows.filter(item => item.kind === 'message').at(-1)?.key;
             if (complete && core.supportsChat('sideChats')) {
                 row.weftOpenSideChat = () => showSidePanel(spec.event);
                 if (!row.querySelector('.message-actions')) {
                 const menu = ui.element('details', 'chat-message-menu'), summary = ui.element('summary'); summary.setAttribute('aria-label', '消息菜单'); summary.append(WeftIcons.create('more', 16));
-                menu.append(summary, button('从这里开旁聊', '从这里开旁聊', () => showSidePanel(spec.event))); (row.querySelector('.message-actions') || row).append(menu);
+                menu.append(summary, button('从这里开对话', '从这里开对话', () => showSidePanel(spec.event))); (row.querySelector('.message-actions') || row).append(menu);
                 }
             }
             globalThis.WeftReplyMotion?.indicator(row.querySelector('.message-text,.markdown'),!complete && spec.event.type==='assistant.message');
@@ -117,9 +118,9 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         } else if (spec.kind === 'result') {
             const result = spec.event.data, summary = globalThis.WeftUiCore.sideResultText(result);
             row.classList.add('side-result'); row.replaceChildren();
-            if (result.deleted) row.append(ui.element('span', 'muted', '旁聊已删除'));
+            if (result.deleted) row.append(ui.element('span', 'muted', '对话已删除'));
             else {
-                const open = button(summary, `打开旁聊结果：${summary}`, async () => {
+                const open = button(summary, `打开对话结果：${summary}`, async () => {
                 const chat = (await core.readChat(result.sourceChatId || spec.event.sourceRef.sourceChatId)).chat; await core.selectSession(chat.activeSessionId);
                 }, 'side-result-link');
                 const arrow = WeftIcons.create('chevron',16); arrow.classList.add('side-result-arrow'); open.append(arrow); row.append(open);
@@ -179,12 +180,12 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 if (attention) { tab.setAttribute('aria-description',attention === 'approval' ? '等你批准' : '等你回答'); const dot = ui.element('span','chat-attention-dot'); dot.setAttribute('role','img'); dot.setAttribute('aria-label',attention === 'approval' ? '等你批准' : '等你回答'); tab.append(dot); }
             }
         }
-        sidebar.classList.toggle('is-current', main()); sidebar.setAttribute('aria-current', main() ? 'page' : 'false');
+        sidebar.classList.toggle('is-current', core.inMainChat?.()); sidebar.setAttribute('aria-current', core.inMainChat?.() ? 'page' : 'false');
         if (!main()) return;
         tools.querySelectorAll('button')[0].disabled = !core.supportsChat('chatSearch');
         tools.querySelectorAll('button')[1].disabled = !core.supportsChat('chatTimeline');
         list().classList.add('is-main-chat');
-        ui.byId('assistant-title').textContent = fixedTitle(); ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？'; origin.hidden = true;
+        ui.byId('assistant-title').textContent = core.state.workTimeline ? timelineChat().title || '工作' : fixedTitle(); ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？'; origin.hidden = true;
         const saved = ui.conversationScroll?.pinned ? null : rememberAnchor();
         rows = [];
         for (const group of core.mainChatDays()) {
@@ -204,9 +205,9 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             for (const event of projected.cards.filter(event => /^(artifact.|question.)/.test(event.type))) specs.push({ kind: 'progress', key: `output:${event.eventId || event.seq}`, seq: event.seq, events: [{...event,data:{...event.data,completedStep:undefined}},...mapped.filter(end=>['task.ended','turn.ended'].includes(end.type)&&WeftUiCore.turnOutcome([end],event.data.taskId).terminal)], estimate: 70 });
             rows.push(...specs.sort((a, b) => a.seq - b.seq));
         }
-        const activeEvents = core.mainChatDays().flatMap(group=>group.events).filter(event => event.sourceRef?.sessionId === core.state.mainChat.activeSessionId).sort((a,b)=>a.orderKey.localeCompare(b.orderKey));
+        const activeEvents = core.mainChatDays().flatMap(group=>group.events).filter(event => event.sourceRef?.sessionId === timelineChat().activeSessionId).sort((a,b)=>a.orderKey.localeCompare(b.orderKey));
         const lastVisible = activeEvents.filter(event => /^(user.message|assistant.message|step.)/.test(event.type)).at(-1);
-        if (core.state.mainChat.running && (!lastVisible || lastVisible.type === 'user.message' || lastVisible.type === 'step.completed')) rows.push({kind:'waiting',key:'main-waiting',text:core.processingStageLabel(core.state.mainChat.processing),estimate:40});
+        if (timelineChat().running && (!lastVisible || lastVisible.type === 'user.message' || lastVisible.type === 'step.completed')) rows.push({kind:'waiting',key:'main-waiting',text:core.processingStageLabel(timelineChat().processing),estimate:40});
         for (const event of core.optimisticMessages()) rows.push({ kind: 'optimistic', key: event.requestId, event, estimate: 90 });
         if (!top?.isConnected) { top = ui.element('li', 'chat-spacer'); bottom = ui.element('li', 'chat-spacer'); top.setAttribute('aria-hidden', 'true'); bottom.setAttribute('aria-hidden', 'true'); list().replaceChildren(top, bottom); list().setAttribute('aria-live','off'); mounted.clear(); }
         measureOffsets(); restoreAnchor(saved); renderVisible();
@@ -226,7 +227,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     }
     function resetMainChatView() { generation++; rows = []; offsets = []; heights.clear(); expanded.clear(); mounted.clear(); top = bottom = null; observer?.disconnect(); list().classList.remove('is-main-chat'); list().setAttribute('aria-live','polite'); if (searchPanel) { searchPanel.querySelector('input').value = ''; searchPanel.querySelector('[role=status]').textContent = ''; } }
     function renderChatOrigin(chat) {
-        origin.replaceChildren(); origin.hidden = !chat?.contextTransfer && !chat?.originRefs?.length; if (origin.hidden) return;
+        origin.replaceChildren(); origin.hidden = !chat?.contextTransfer?.sourceDeleted && !chat?.contextTransfer?.sourceRefs?.length && !chat?.originRefs?.length; if (origin.hidden) return;
         const transfer = chat.contextTransfer, ref = chat.originRefs?.[0] || transfer?.sourceRefs?.[0];
         if (transfer?.sourceDeleted) origin.append(ui.element('span', 'muted', '原消息已删除'));
         else if (ref) {const mainSource=ref.chatId===core.state.mainChat?.chatId;origin.append(button(mainSource?'来自主对话 · 查看原消息':'来自原对话 · 查看原消息',mainSource?'回到主对话原消息':'查看原对话消息',async()=>{if(mainSource)return core.selectMainChat(ref.eventId);const source=(await core.readChat(ref.chatId)).chat;return core.selectSession(source.activeSessionId);}));}
@@ -234,15 +235,15 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     }
     function showSidePanel(event,originChatId=core.state.mainChat.chatId,modelProfileId=core.state.modelProfileId) {
         const identity = core.state.identityGeneration;
-        const dialog = ui.element('dialog', 'dialog model-editor-dialog side-chat-dialog'); dialog.setAttribute('aria-label', '开旁聊');
+        const dialog = ui.element('dialog', 'dialog model-editor-dialog side-chat-dialog'); dialog.setAttribute('aria-label', '开对话');
         const head=ui.element('header','dialog-head'),body=ui.element('div','dialog-body model-editor-body'),footer=ui.element('footer','dialog-footer');
-        const title = ui.element('input'); title.setAttribute('aria-label', '旁聊名称'); title.value = Array.from(event.data.text || '新旁聊').slice(0, 30).join('');
-        const first = ui.element('textarea'); first.setAttribute('aria-label', '旁聊第一句话'); first.value = ui.readMessageDraft();
-        const field=ui.element('label','project-field field','旁聊第一句话');field.append(first);
-        const nameField=ui.element('label','project-field field','旁聊名称');nameField.append(title);
-        head.append(ui.element('h2', '', '从这里开旁聊'),iconButton('deny','关闭',()=>dialog.close()));
+        const title = ui.element('input'); title.setAttribute('aria-label', '对话名称'); title.value = Array.from(event.data.text || '新对话').slice(0, 30).join('');
+        const first = ui.element('textarea'); first.setAttribute('aria-label', '对话第一句话'); first.value = ui.readMessageDraft();
+        const field=ui.element('label','project-field field','对话第一句话');field.append(first);
+        const nameField=ui.element('label','project-field field','对话名称');nameField.append(title);
+        head.append(ui.element('h2', '', '从这里开对话'),iconButton('deny','关闭',()=>dialog.close()));
         body.append(nameField,ui.element('p', 'side-source', Array.from(event.data.text || '').slice(0, 160).join('')),ui.element('p', 'muted', '相关上下文尚未带入'),field);
-        footer.append(button('取消', '取消', () => { dialog.close(); dialog.remove(); }), button('开旁聊', '确认开旁聊', async () => {
+        footer.append(button('取消', '取消', () => { dialog.close(); dialog.remove(); }), button('开对话', '确认开对话', async () => {
                 const draft = first.value; await core.openSideChat({ entry: 'message', title: title.value, originChatId, originEventId: event.eventId,modelProfileId });
                 if(identity!==core.state.identityGeneration){dialog.close();dialog.remove();return;}
                 ui.restoreMainChatDraft(draft); dialog.close(); dialog.remove(); ui.byId('message-text').focus();
@@ -250,11 +251,11 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         dialog.append(head,body,footer);document.body.append(dialog); dialog.addEventListener('close', () => dialog.remove()); dialog.showModal(); title.focus();
     }
     function mountMainChat() {
-        sidebar = button('WeftMate', 'WeftMate 主对话', () => core.selectMainChat(), 'rail-main-chat');
+        sidebar = button('小纬', '小纬主对话', () => core.selectMainChat(), 'rail-main-chat');
         const avatar = ui.element('span', 'wm-brand chat-avatar'); avatar.setAttribute('aria-hidden', 'true'); sidebar.prepend(avatar); sidebar.hidden = true;
         if (ui.mobile) ui.byId('drawer').querySelector('.drawer-new-group').before(sidebar);
         else ui.byId('session-rail').querySelector('.rail-top').before(sidebar);
-        const heading = ui.element('div', 'rail-side-heading', '旁聊'); ui.byId('session-list').before(heading);
+        const heading = ui.element('div', 'rail-side-heading', '对话'); sidebar.before(heading);
         // TB-4 owns the future fixed pages; retain the explicit extension point hidden.
         const future = ui.element('nav'); fixedNavigation = future; future.hidden = true; future.setAttribute('aria-label', '动态、健康、目标与成果库');
         if (ui.mobile) { future.id = 'mobile-bottom-tabs'; future.setAttribute('aria-label','聊天、动态、目标、成果库'); ui.byId('chat-page').append(future); }
@@ -277,7 +278,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         searchPanel.append(input, submit, iconButton('chevron', '上一条搜索结果', () => core.moveSearchHit(-1)), iconButton('chevron', '下一条搜索结果', () => core.moveSearchHit(1)), status, more,
             iconButton('deny', '关闭主对话搜索', async () => { clearTimeout(searchTimer); searchPanel.open = false; searchPanel.hidden = true; await core.searchMainChat(''); tools.querySelector('button').focus(); }));
         origin = ui.element('div', 'chat-origin'); origin.hidden = true; box().before(searchPanel, origin);
-        if (ui.mobile) { const side = button('开旁聊', '开旁聊', () => core.openSideChat({ entry: 'composer' })); side.id = 'open-side-chat'; side.prepend(WeftIcons.create('compose', 20)); side.setAttribute('role','menuitem'); side.addEventListener('click',ui.closeAttachmentMenu); ui.byId('attachment-popover').append(side); }
+        if (ui.mobile) { const side = button('开对话', '开对话', () => core.openSideChat({ entry: 'composer' })); side.id = 'open-side-chat'; side.prepend(WeftIcons.create('compose', 20)); side.setAttribute('role','menuitem'); side.addEventListener('click',ui.closeAttachmentMenu); ui.byId('attachment-popover').append(side); }
         observer = new ResizeObserver(entries => {
             if (!main()) return; const saved = ui.conversationScroll?.pinned ? null : rememberAnchor(); let changed = false;
             for (const entry of entries) { const height = entry.target.getBoundingClientRect().height; if (height && Math.abs((heights.get(entry.target.dataset.eventId) || 0) - height) > 1) { heights.set(entry.target.dataset.eventId, height); changed = true; } }
@@ -299,7 +300,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         async openPhoneHistorySideChat(event){const settings=await core.accessApi('/settings/models');showSidePanel(event,core.state.selectedChatId,settings.defaultModelProfileId||settings.backgroundModelProfileId);},
         mainChatAnchor: () => {const saved=rememberAnchor();const index=rows.findIndex(row=>row.key===saved?.key);const row=rows.slice(Math.max(0,index)).find(row=>row.event?.eventId||row.events?.length);return row?.event?.eventId||row?.events?.[0]?.eventId||null;},
         restoreMainChatDraft: text => { ui.byId('message-text').value = text; ui.updateAvailability(); },
-        renderSessions: () => { original.renderSessions(); if (sidebar) { sidebar.hidden = !core.state.mainChat; const label = ui.byId('new-session'); label.childNodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.textContent = core.state.mainChat ? '新旁聊' : '新对话'; }); } renderMainChat(); },
+        renderSessions: () => { original.renderSessions(); if (sidebar) { sidebar.hidden = !core.state.mainChat; const label = ui.byId('new-session'); label.childNodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.textContent = '新对话'; }); } renderMainChat(); },
         paintSelectedSession: id => { original.paintSelectedSession(id); if (main()) ui.byId('assistant-title').textContent = fixedTitle(); else ui.byId('chat-intro').querySelector('h1').textContent = '今天想做什么？'; },
         renderOlderControl: () => { if (!main()) return original.renderOlderControl(); const button = ui.byId('load-older'); button.hidden = !core.state.chatWindow.hasOlder; button.disabled = core.state.olderLoading; },
         renderOptimisticMessages: () => main() ? renderMainChat() : original.renderOptimisticMessages(),
