@@ -50,7 +50,7 @@ globalThis.WeftConversationScroll = (box, content, button, onPinned = () => {}) 
     };
     const scrolled = () => {
         const top = box.scrollTop;
-        if(scrollbarDrag&&top<lastTop-1&&gap()>48){stop();pinned=false;followingTop=null;}
+        if(scrollbarDrag&&top<lastTop-1){stop();pinned=false;followingTop=null;}
         if (followingTop !== null && Math.abs(top - followingTop) <= 1) { if (!moving) followingTop = null; }
         else if (gap() <= (pinned ? 48 : 1)) { pinned = true; newContent = false; }
         // Layout clamping (keyboard, composer/approval resize, virtual rows) can

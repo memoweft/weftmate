@@ -24,9 +24,14 @@ test('smooth follow never replays its old origin after a layout clamp reaches th
  assert.ok(positions.every(top=>Math.abs(top-1080)<=1),JSON.stringify(positions));
 });
 test('an upward gesture near bottom cancels animation immediately, even within the bottom tolerance',()=>{
- const f=fixture(true);f.scroll.latest();f.box.scrollHeight+=20;f.scroll.changed();f.tick();f.fire('wheel',{deltaY:-10});
+ for(const input of ['wheel','touch','scrollbar']){
+ const f=fixture(true);f.scroll.latest();f.box.scrollHeight+=20;f.scroll.changed();f.tick();
+ if(input==='wheel')f.fire('wheel',{deltaY:-10});
+ if(input==='touch'){f.fire('touchstart',{touches:[{clientY:100}]});f.fire('touchmove',{touches:[{clientY:110}]});}
+ if(input==='scrollbar')f.fire('pointerdown',{pointerType:'mouse',clientX:305});
  f.box.scrollTop-=10;const top=f.box.scrollTop;f.fire('scroll');f.scroll.changed();
  assert.equal(f.scroll.pinned,false);assert.ok(Array.from({length:20},()=>f.tick()).every(value=>value===top));
+ }
 });
 test('conversation follows streaming growth, keyboard closure and approval layout clamping',()=>{
  const f=fixture();f.scroll.latest();
