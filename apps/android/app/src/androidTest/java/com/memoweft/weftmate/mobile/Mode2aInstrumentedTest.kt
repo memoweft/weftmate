@@ -128,6 +128,7 @@ class Mode2aInstrumentedTest {
                 waitFor("second computer draft",90000){a.model.hostId==args.getString("secondHostId") && a.model.newWork && !a.model.workChoicesBusy}
                 compose.onNodeWithContentDescription("项目或文件夹：选择项目或文件夹").performClick()
                 waitFor("second projects"){!a.model.workChoicesBusy && a.model.projects.isNotEmpty()}
+                compose.waitForIdle()
                 click("MODE-2A 第二台文件夹")
                 waitFor("second work bound"){!a.model.newWork && a.model.canSend && !a.model.submitting}
                 send("MODE2A_SECOND_DARK 请在第二台电脑选好的文件夹中建文件。")
