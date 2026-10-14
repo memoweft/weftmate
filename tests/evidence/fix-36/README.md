@@ -4,7 +4,7 @@
 
 一次回复包含 12 个工具步骤（其中四个准备工具），原生默认只有一个折叠入口。进行中采用共用层的当前步骤文案；失败／待批准步骤保持露出，审批卡仍独立。完成后顺序统一为 **正文 → 回复操作区 → 折叠进展总结**。点开逐步记录，再点收起；杀进程重开仍默认折叠。展开状态只属于本次界面，不写入工具事实。
 
-原生通过 `WeftUiCore.nativeTimelineRows` 使用同一个 `projectTimeline`、`progressText`、`toolSummary`。此前下载的界面包缺少新入口时，读取 APK（安卓安装包）内同一份共用源码；浅色仪器用例实际删除新入口后验收，覆盖这个升级路径。标题沿 DSH（助手运行框架）的正式提供者生成／保存，在项目适配层加强跟随消息语言的提示；实际 DSH 提供者单测确认中文输入得到中文标题，英文文件名不会决定标题语言。没有批量修改旧标题，没有调整正文回答语言。
+原生通过 `WeftUiCore.nativeTimelineRows` 使用同一个 `projectTimeline`、`progressText`、`toolSummary`。此前下载的界面包缺少新入口时，读取 APK（安卓安装包）内同一份共用源码；浅色仪器用例实际删除新入口后验收，覆盖这个升级路径。标题沿 DSH（助手运行框架）的正式提供者生成／保存，在项目适配层加强跟随消息语言的提示；实际 DSH 提供者单测确认中文输入得到中文标题，英文文件名不会决定标题语言；模型仍返回原图纯英文标题时，直接用首条中文提问形成简短中文标题，不额外请求模型。没有批量修改旧标题，没有调整正文回答语言。
 
 ## 原始整屏与并排
 
@@ -24,9 +24,9 @@ MuMu（安卓模拟器）Android（安卓）15，720×1280 原始整屏，系统
 ## 验证与范围
 
 - JVM（Java 虚拟机）：`NativeProgressStateTest` 5／0、`NativeChatStateTest` 15／0。12 步收为一个入口、当前步骤、失败／审批露出、展开／收起、历史／重开默认折叠，以及共用人话文案。
-- 相关 Node（JavaScript 运行时）9 文件共 231／0，无跳过：`fix-36-timeline`、`fix-36-title-vendor`、`fix-34`、`ui-core`、`personal-timeline-native`、`quiet-background`、`r0-5-help`、`mobile-ui-core-assets` 和手机 `chat-interactions`。最后一个文件含实际网页历史重绘／展开状态保护，共 122 项。
+- 相关 Node（JavaScript 运行时）9 文件共 232／0，无跳过：`fix-36-timeline`、`fix-36-title-vendor`、`fix-34`、`ui-core`、`personal-timeline-native`、`quiet-background`、`r0-5-help`、`mobile-ui-core-assets` 和手机 `chat-interactions`。最后一个文件含实际网页历史重绘／展开状态保护，共 122 项。
 - 真实界面最终四项通过：[validation.json](validation.json)，浅／深仪器日志各 `OK (1 test)`；旧界面入口兼容、默认折叠、展开／收起、杀进程重开、同数据网页与电脑顺序。
-- 类型检查、公开卫生、改动差异检查通过。设计检测返回空数组。只跑相关本地测试，完整单测交云端。
+- 类型检查、公开卫生、改动差异检查通过。设计检测返回空数组。只跑相关本地测试，完整单测交云端。首轮云端的原动效用例暴露阅读锚点从689.875移到1309.875；修为仅展示位置改变才移动已有总结行，原 `ui-p1-desktop-motion.mjs --fixture --verify-only` 全部行为通过，锚点断言保留。
 - 所有模拟器／构建／Electron 使用重活名额；MuMu 另占模拟器锁。独立包卸载、随机端口映射撤销、ADB（安卓调试桥）断开，自有锁／进程残留 0。没有请求真实模型。
 
 唯一范围外的产品文件改动是 `HybridActivity.kt` 的调试启动来源名单增加本包隔离包名，供已有合成宿主入口使用；没有改发送实现。`NativeChatModel`、MODE-1 的侧栏／输入区、`vendor/`、版本号、权限和 `/personal/v1` 业务契约均未改。

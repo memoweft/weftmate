@@ -1759,6 +1759,8 @@ test('FIX-36 completed summary moves below reply and remains there after histori
   h.run('renderSharedConversation();renderTimeline()');assert.deepEqual(order(),[3,3.01]);
   const details=h.node('chat-content').querySelector('.execution-block');assert.equal(details.open,false);
   details.open=true;h.run('renderTimeline()');assert.equal(h.node('chat-content').querySelector('.execution-block').open,true);
+  h.run(`const retained=document.createElement('li');retained.id='fix36-reading-history';document.getElementById('chat-content').append(retained);renderTimeline()`);
+  assert.equal(h.node('chat-content').children.at(-1).id,'fix36-reading-history','unchanged progress must not move past retained reading history');
 });
 
 test('M0-3 mobile requests the tail first, prepends older events, and preserves the forward cursor',async()=>{
