@@ -186,7 +186,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (token !== scope() || generation !== historyWindow.state.generation) return {kind:'cancelled'};
             if (historyWindow.state.contentRevision !== null && historyWindow.state.contentRevision !== page.contentRevision)
                 return failedRead({code:'CURSOR_RESET_REQUIRED',status:409}, token);
-            page.items = await core.completeHistoryEvents(page.items || [], historyWindow.state.events);
+            if (page.items?.some(event => event.data?.truncated))
+                page.items = await core.completeHistoryEvents(page.items, historyWindow.state.events);
             if (token !== scope() || generation !== historyWindow.state.generation) return {kind:'cancelled'};
             core.acceptAccountChanges?.(page.accountChanges);
             historyWindow.merge(page, direction); core.observeOptimistic(page.items || []); notify();
@@ -308,7 +309,8 @@ globalThis.WeftUiCore.factories.mainChat = (core, effects, environment) => {
             if (historyWindow.state.contentRevision !== page.contentRevision)
                 return outcome = await failedRead({code:'CURSOR_RESET_REQUIRED',status:409}, token);
             historyWindow.state.anchorId = effects.mainChatAnchor?.() || null;
-            page.upserts = await core.completeHistoryEvents(page.upserts || [], historyWindow.state.events);
+            if (page.upserts?.some(event => event.data?.truncated))
+                page.upserts = await core.completeHistoryEvents(page.upserts, historyWindow.state.events);
             if (token !== scope() || generation !== historyWindow.state.generation) return outcome = core.historyReadResult('cancelled');
             const before = JSON.stringify(historyWindow.ordered());
             historyWindow.merge(page, 'changes'); core.observeOptimistic(page.upserts || []);
