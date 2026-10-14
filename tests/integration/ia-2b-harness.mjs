@@ -26,7 +26,7 @@ export async function until(check, timeout = 180000) {
   while (Date.now() < deadline) { const value = await check(); if (value) return value; await pause(200); }
   throw new Error('IA-2b isolated test timeout');
 }
-export async function harness(label, { memory = true, mainChat = false, provider = null } = {}) {
+export async function harness(label, { memory = true, mainChat = false, provider = null, modelTrace = false } = {}) {
   const base = await mkdtemp(join(tmpdir(), `weftmate-ia-2b-${label}-`)), profile = join(base, 'profile');
   await mkdir(profile); await mkdir(evidence, { recursive: true });
   await writeFile(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
@@ -49,11 +49,12 @@ export async function harness(label, { memory = true, mainChat = false, provider
   for (const name of Object.keys(env)) if (/^(WEFTMATE_|MEMOWEFT_)/.test(name) || ['ELECTRON_RUN_AS_NODE','MIMO_API_KEY','MODEL_SWITCH_UNIFIED_KEY'].includes(name)) delete env[name];
   env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
   env.WEFTMATE_BASELINE_TRACE = join(base, 'requests.jsonl');
+  if (modelTrace) env.WEFTMATE_BASELINE_MEMORY_TRACE = join(base, 'model-messages.jsonl');
   let app, page, launches = 0;
   async function api(path, body, method = body === undefined ? 'GET' : 'POST') {
     return page.evaluate(async ({ path, body, method }) => {
       const me = await (await fetch('/personal/v1/auth/me')).json();
-      const response = await fetch(`/personal/v1${path}`, { method, headers: { 'content-type': 'application/json', 'x-weftmate-csrf': me.csrfToken }, body: body === undefined ? undefined : JSON.stringify(body) });
+      const response = await fetch(`/personal/v1${path}`, { method, headers: { origin: location.origin, 'content-type': 'application/json', 'x-weftmate-csrf': me.csrfToken }, body: body === undefined ? undefined : JSON.stringify(body) });
       return { status: response.status, body: await response.json() };
     }, { path, body, method });
   }
@@ -66,6 +67,13 @@ export async function harness(label, { memory = true, mainChat = false, provider
     launches++;
     try { page = await app.firstWindow({ timeout: 90000 }); await page.waitForURL('**/personal/v1/ui'); }
     catch (error) { await writeFile(join(base, 'launch-error.log'), errors); console.error(errors.replaceAll(key, '[redacted]').slice(-8000)); throw error; }
+    if (modelTrace) await page.addInitScript(() => {
+      let module;
+      Object.defineProperty(globalThis, 'WeftUiCore', { configurable: true, get: () => module, set: value => {
+        module = value; const create = value.create;
+        value.create = (...args) => { const core = create(...args); globalThis.fix45Core = core; return core; };
+      } });
+    });
     await localUiSession(page, { username, password }, 'IA-2b test', {mainChat});
     await app.evaluate(async (_, apiKey) => globalThis.m2ExitSeedCredentials({ 'ia2b-mimo': apiKey }), key);
     assert.equal((await api('/backups/settings', { enabled: false, directory: join(base, 'Backups') }, 'PATCH')).status, 200);

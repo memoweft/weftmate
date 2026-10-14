@@ -19,12 +19,25 @@ import {
   PROFILE_PATCH_TEMPLATE_LEGACY,
   PROFILE_PATCH_TEMPLATE_R12,
   PROFILE_PATCH_TEMPLATE_R13,
+  PROFILE_PATCH_TEMPLATE_R16,
+  PROFILE_PATCH_TEMPLATE,
   parseWebUrlLine,
   writeWebProfile,
   writeContextAwareMinimalPreset,
 } from '../src/dsh-web-runtime.ts'
 
 let dir: string
+
+test('the previous managed personal profile upgrades to the tool-loop composition', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-memory-profile-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeWebProfile(root);
+  const patch = join(root, 'profiles', 'weftmate', 'cordis.patch.yml');
+  await writeFile(patch, PROFILE_PATCH_TEMPLATE_R16);
+  assert.equal(await writeWebProfile(root), 'repaired');
+  assert.equal(await readFile(patch, 'utf8'), PROFILE_PATCH_TEMPLATE);
+  assert.equal(await writeWebProfile(root), 'unchanged');
+});
 
 test('minimal preset keeps its pinned tools and gets one isolated compactor without changing vendor', async t => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-context-preset-'))
