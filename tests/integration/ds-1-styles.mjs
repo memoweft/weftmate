@@ -1,8 +1,12 @@
+import { mkdirSync as prepareEvidenceDirectory } from 'node:fs';
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Compare every authored declaration with the pre-DS-1 source, including hidden states. */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+prepareEvidenceDirectory(evidencePath('ds-1'), { recursive: true });
+
 
 const root = resolve(import.meta.dirname, '../..');
 const baseline = '31a71a4e542a82acf31b3a0114680749a7fea9ce';
@@ -21,7 +25,7 @@ for (const file of ['src/personal-access-ui/styles.css', 'src/personal-access-ui
   assert.deepEqual(declarations(current), declarations(original), file);
   results.push({ file, declarations: declarations(original).length, changedValues: 0 });
 }
-writeFileSync(resolve(root, 'tests/evidence/ds-1/stylesheet-comparison.json'), JSON.stringify({ baseline, results,
+writeFileSync(evidencePath('ds-1/stylesheet-comparison.json'), JSON.stringify({ baseline, results,
   normalization: ['whitespace', 'negative pixel spacing expressed as calc(-1 * token)'],
 }, null, 2) + '\n');
 console.log('All 4,016 authored declarations retain their original values, including hidden states.');

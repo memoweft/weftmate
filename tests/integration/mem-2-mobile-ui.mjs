@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -5,7 +6,7 @@ import { resolve, join } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 
-const evidence=resolve('tests/evidence/mem-2/mobile');mkdirSync(evidence,{recursive:true});
+const evidence=evidencePath('mem-2/mobile');mkdirSync(evidence,{recursive:true});
 const fixture=await startTimelineCandidate({daily:true,inlineProgress:true,interactive:true,historyCount:0});
 let browser;
 try {

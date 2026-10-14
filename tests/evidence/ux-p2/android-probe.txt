@@ -1,8 +1,0 @@
-
-com.memoweft.weftmate.mobile.UxP2WebViewProbeTest:.
-
-Time: 26.452
-
-OK (1 test)
-
-

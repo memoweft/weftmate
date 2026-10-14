@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -12,7 +13,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
-const before=process.argv.includes('--before'),out=resolve('tests/evidence/mob-p1',before?'before':'after');
+const before=process.argv.includes('--before'),out=evidencePath('mob-p1', before?'before':'after');
 await mkdir(out,{recursive:true});
 const baseline=new Map();if(before)for(const dir of ['apps/mobile-ui/www','src/personal-access-ui'])for(const name of readdirSync(dir,{recursive:true})){if(/\.(js|css|html)$/.test(name))baseline.set(resolve(dir,name),readFileSync(resolve(dir,name)));}
 if(before)for(const name of execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim().split('\n')){if(baseline.has(resolve(name)))baseline.set(resolve(name),execFileSync('git',['show',`HEAD:${name}`]));}

@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 /** Real Android NotificationManager/shade, synthetic DSH host, isolated QA APK. */
 import assert from 'node:assert/strict';
@@ -7,7 +8,7 @@ import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 
-const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/ux-p3');mkdirSync(out,{recursive:true});
+const root=resolve(import.meta.dirname,'../..'),out=evidencePath('ux-p3');mkdirSync(out,{recursive:true});
 const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',cli='D:/Software/MuMuPlayer/nx_main/mumu-cli.exe',pkg='com.memoweft.weftmate.mobile.uxp3qa';
 let serial='127.0.0.1:7555';
 const run=(file,args,options={})=>execFileSync(file,args,{encoding:'utf8',windowsHide:true,maxBuffer:12*1024*1024,...options});
@@ -17,7 +18,7 @@ async function until(check,label,timeout=60000){const end=Date.now()+timeout;whi
 async function command(file,args,options={}){const child=spawn(file,args,{windowsHide:true,...options});let output='';child.stdout?.on('data',value=>{output+=value;});child.stderr?.on('data',value=>{output+=value;});const code=await new Promise(resolve=>child.on('exit',resolve));assert.equal(code,0,output.slice(-6000));return output;}
 const temp=mkdtempSync(join(tmpdir(),'weftmate-ux-p3-notifications-'));
 let ownEmulator=false,installed=false,testInstalled=false,fixture,instrument,reversePort,priorNight,log='';
-const report={realAndroid:true,packageName:pkg,syntheticAccount:true,randomHostPorts:true,beforeReference:'tests/evidence/s3a/background-notifications-dark.png',checks:[],records:[],cleanup:{}};
+const report={realAndroid:true,packageName:pkg,syntheticAccount:true,randomHostPorts:true,beforeReference:evidencePath('s3a/background-notifications-dark.png'),checks:[],records:[],cleanup:{}};
 const probe=`package com.memoweft.weftmate.mobile
 import android.app.Notification
 import android.app.NotificationManager

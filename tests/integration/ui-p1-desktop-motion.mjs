@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtempSync as mkdtempSync, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -13,7 +14,7 @@ import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 
-const repository = resolve(import.meta.dirname, '../..'), evidence = join(repository, 'tests/evidence/ui-p1');
+const repository = resolve(import.meta.dirname, '../..'), evidence = evidencePath('ui-p1');
 const baseline = '014924a51e04e679b631dde354dfbb9fef194dbd';
 const capture = !process.argv.includes('--verify-only'), fixture = process.argv.includes('--fixture');
 const root = mkdtempSync(join(tmpdir(), 'weftmate-ui-p1-'));

@@ -1,7 +1,8 @@
+import { evidencePath } from '../../helpers/evidence-path.mjs';
 import {spawn} from 'node:child_process';
 import {mkdirSync, readFileSync, writeFileSync, existsSync} from 'node:fs';
 import {resolve} from 'node:path';
-const dir = resolve(process.env.BL29_VALIDATION_DIR || 'tests/evidence/bl-29/rework-2');mkdirSync(dir,{recursive:true});
+const dir = resolve(process.env.BL29_VALIDATION_DIR || evidencePath('bl-29/rework-2'));mkdirSync(dir,{recursive:true});
 const mobile = ['--test','--test-concurrency=1','tests/personal-cloud-web.test.ts','apps/mobile-ui/tests/cloud-login.test.mjs','apps/mobile-ui/tests/chat-interactions.test.mjs','apps/mobile-ui/tests/visual-interactions.test.mjs','apps/mobile-ui/tests/approval-interactions.test.mjs'];
 const jobs = [['required',['.github/scripts/ci-unit-tests.mjs','required','--report',`${dir}/required.json`]]];
 for(let i=1;i<=3;i++)jobs.push([`vendor-${i}`,['.github/scripts/ci-unit-tests.mjs','vendor','--report',`${dir}/vendor-${i}.json`]]);

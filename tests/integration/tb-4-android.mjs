@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Real HybridActivity, isolated APK and account; no simulated bridge calls. */
 import assert from 'node:assert/strict';
 import {execFileSync,spawn} from 'node:child_process';
@@ -7,7 +8,7 @@ import {resolve,join} from 'node:path';
 import {chromium} from 'playwright';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {harness} from './ia-2b-harness.mjs';
-const root=resolve(import.meta.dirname,'../..'),out=join(root,'tests/evidence/tb-4');await mkdir(out,{recursive:true});
+const root=resolve(import.meta.dirname,'../..'),out=evidencePath('tb-4');await mkdir(out,{recursive:true});
 const adb='D:/Software/MuMuPlayer/nx_main/adb.exe',serial='127.0.0.1:7555',pkg='com.memoweft.weftmate.mobile.tb4qa';
 const run=(...args)=>execFileSync(adb,['-s',serial,...args],{encoding:'utf8',windowsHide:true});
 const delay=ms=>new Promise(r=>setTimeout(r,ms));

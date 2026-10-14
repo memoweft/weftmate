@@ -1,7 +1,8 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve, join } from 'node:path';
-const root=resolve('tests/evidence/fact-1');
+const root=evidencePath('fact-1');
 const env=(name,scope)=>execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',`[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','${scope}'))`],{encoding:'utf8',windowsHide:true}).trim();
 const privateUrl=env('WEFTMATE_LAN_MODEL_BASE_URL','User');
 const secrets=[env('MIMO_API_KEY','Machine'),env('WEFTMATE_LAN_MODEL_KEY','User'),privateUrl,privateUrl&&new URL(privateUrl).host,privateUrl&&new URL(privateUrl).hostname].filter(Boolean);

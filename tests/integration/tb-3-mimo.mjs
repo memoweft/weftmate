@@ -1,9 +1,10 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** Production Electron + the fixed DSH, one actual cloud document request. */
 import assert from 'node:assert/strict';
 import { mkdir,writeFile,readFile,rm } from 'node:fs/promises';
 import { join,resolve } from 'node:path';
 import { harness,until } from './ia-2b-harness.mjs';
-const out=resolve(import.meta.dirname,'../evidence/tb-3');await mkdir(out,{recursive:true});
+const out=evidencePath('tb-3');await mkdir(out,{recursive:true});
 const previous=await readFile(join(out,'real-mimo.json'),'utf8').then(JSON.parse).catch(()=>null);
 const h=await harness('tb3-library',{memory:false,mainChat:true});
 const report={realElectron:true,fixedDsh:true,model:'mimo-v2.6-flash',checks:[]};
