@@ -1,3 +1,4 @@
+import { evidencePath } from '../tests/helpers/evidence-path.mjs';
 import { chromium } from 'playwright';
 import { mkdir, writeFile, readFile, rm, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -6,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { buildSite, repo, dist } from './build-site.mjs';
 import { serveSite } from './preview-site.mjs';
 const assets=process.argv.includes('--assets'),quick=process.argv.includes('--quick'),states=process.argv.includes('--states');
-const out=join(repo,'tests/evidence/web-1');await mkdir(out,{recursive:true});await buildSite({preview:true});
+const out=evidencePath('web-1');await mkdir(out,{recursive:true});await buildSite({preview:true});
 const host=await serveSite({prefix:'/preview-web-1/'}),browser=await chromium.launch({headless:true});
 const checks={requests:[],errors:[],overflows:[],controls:[],screenshots:[],context:'Headless Chromium website captures. Illustrated screens contain fictional everyday content, not operating-system evidence.'};
 const forbidden=/合成|_WAIT|\b(?:A5|A8|AB)\b|\*\*[^*]+\*\*/i;

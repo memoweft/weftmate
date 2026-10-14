@@ -1,9 +1,0 @@
-{
-  "syntheticModel": true,
-  "realElectronAndDsh": true,
-  "allowAllStillRequiresExplicitApproval": true,
-  "outsideFileAbsentBeforeApproval": true,
-  "oneShotNativeFileUpgradeSucceeded": true,
-  "projectFolderHiddenInApproval": true,
-  "relativeApprovalTargetPreserved": true
-}

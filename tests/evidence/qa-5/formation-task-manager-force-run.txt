@@ -1,3 +1,0 @@
-formation task-manager-force 1 true
-formation task-manager-force 2 true
-formation task-manager-force 3 true

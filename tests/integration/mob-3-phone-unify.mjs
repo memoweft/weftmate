@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /* Synthetic MOB-3 layout/interaction evidence. No model calls or installed desktop profile. */
 import assert from 'node:assert/strict';
 import {chromium,_electron} from 'playwright';
@@ -7,7 +8,7 @@ import {resolve,join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {startTimelineCandidate} from './timeline-ui-candidate.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
-const out=resolve('tests/evidence/mob-3');await mkdir(out,{recursive:true});
+const out=evidencePath('mob-3');await mkdir(out,{recursive:true});
 const f=await startTimelineCandidate({daily:true,sidebar:true,interactive:true,composer:true,historyCount:16,baseTime:Date.now()-5000});
 const browser=await chromium.launch({headless:true});let app,profile;
 const report={synthetic:true,modelRequests:0,engine:'Chromium',browserSystemBars:false,keyboard:'visualViewport simulation; native IME separately reported',screenshots:[],errors:[],geometry:[]};

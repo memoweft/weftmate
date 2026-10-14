@@ -1,10 +1,11 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {writeFile,mkdir,rm} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {chromium} from 'playwright';
 import {startMainChatCandidate} from './main-chat-candidate.mjs';
-const out=resolve(import.meta.dirname,'../evidence/ia-4');await mkdir(out,{recursive:true});const samples=[];
+const out=evidencePath('ia-4');await mkdir(out,{recursive:true});const samples=[];
 for(const count of [1000,10000]){
   const f=await startMainChatCandidate(count,{logicalMobile:true});let browser;
   try{

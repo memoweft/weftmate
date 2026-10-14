@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import {_electron} from 'playwright';
 import {createRequire} from 'node:module';
@@ -12,7 +13,7 @@ import {execFileSync} from 'node:child_process';
 import {exposeUx7Desktop} from './ux-7-scenes.mjs';
 import {localUiSession} from '../helpers/local-ui-session.mjs';
 import {createProcessEvidence,redactEvidenceText} from '../helpers/process-evidence.mjs';
-const repository=resolve(import.meta.dirname,'../..'),out=join(repository,'tests/evidence/fix-24');await mkdir(out,{recursive:true});
+const repository=resolve(import.meta.dirname,'../..'),out=evidencePath('fix-24');await mkdir(out,{recursive:true});
 const root=await mkdtemp(join(tmpdir(),'weftmate-fix24-')),profile=join(root,'profile');await mkdir(profile);await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const credentials={username:'quiet-synthetic',password:'synthetic-'+randomUUID(),deviceName:'synthetic-host'};
 const backend=Object.fromEntries(['getStatus','listModels','preflight','createSession','sendMessage','cancelSession','readEvents','describeSession'].map(n=>[n,async()=>({})]));

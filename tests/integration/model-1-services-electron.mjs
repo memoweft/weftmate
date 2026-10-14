@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** MODEL-1 acceptance: encrypted legacy routes, real Electron/DSH, isolated ports. */
 import assert from 'node:assert/strict';
 import {_electron,chromium} from 'playwright';
@@ -11,7 +12,7 @@ import {createPersonalAccessService} from '../../src/personal-access/index.mjs';
 import {PERSONAL_HOST_MARKER,PERSONAL_HOST_MARKER_CONTENT} from '../../src/host-mode.mjs';
 import {redactEvidenceText,systemCommitMemory} from '../helpers/process-evidence.mjs';
 
-const repository=resolve(import.meta.dirname,'../..'),root=await mkdtemp(join(tmpdir(),'weftmate-model1-')),profile=join(root,'profile'),evidence=join(repository,'tests/evidence/model-1');
+const repository=resolve(import.meta.dirname,'../..'),root=await mkdtemp(join(tmpdir(),'weftmate-model1-')),profile=join(root,'profile'),evidence=evidencePath('model-1');
 await mkdir(profile);await mkdir(evidence,{recursive:true});await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const password=randomBytes(24).toString('hex'),secret=randomBytes(32).toString('hex'),liveKey=process.env.MIMO_API_KEY;
 const used=[],liveUsed=[],errors=[],report={synthetic:true,realElectron:true,realDsh:true,migration:null,switch:null,restart:null,liveMiMo:null,screenshots:[],failure:null};

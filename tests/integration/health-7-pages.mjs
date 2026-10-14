@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 /** HEALTH-7 visual evidence. Production Electron and shared phone UI, synthetic records only. */
 process.env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 import assert from 'node:assert/strict';
@@ -13,7 +14,7 @@ import {generateHealthSequence} from '../helpers/health-sequence.mjs';
 import {healthOverview,healthMetrics} from '../../src/personal-health/analysis.mjs';
 import {HEALTH_DEFAULTS} from '../../src/personal-health/records-schema.mjs';
 const mode=process.argv.includes('--before')?'before':process.argv.includes('--recovery')?'recovery':process.argv.includes('--cards')?'cards':'after';
-const out=resolve('tests/evidence/health-7',mode==='cards'?'after':mode);await mkdir(out,{recursive:true});
+const out=evidencePath('health-7', mode==='cards'?'after':mode);await mkdir(out,{recursive:true});
 const report={realElectron:true,syntheticOnly:true,realModelRequests:0,mode,stillCapture:'System reduced motion enabled only during each still capture; displayed numerals checked against their source. Normal count-up is covered separately.',screenshots:[],checks:[],errors:[]};
 const env={...process.env};for(const key of Object.keys(env))if(/^(WEFTMATE_|MEMOWEFT_)/.test(key)||key==='ELECTRON_RUN_AS_NODE')delete env[key];env.WEFTMATE_TEST_HOST_NAME='synthetic-host';
 const names=[['recovery','恢复'],['sleep','睡眠'],['load','负荷'],['stress','压力'],['energy','电能'],['fitnessAge','体能年龄']];

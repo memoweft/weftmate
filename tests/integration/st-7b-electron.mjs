@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
@@ -13,7 +14,7 @@ import { cleanupOwnedProcesses, redactEvidenceText, systemCommitMemory } from '.
 import { mailFixture, MAIL_EMAIL, MAIL_PASSWORD } from '../fixtures/st-7b/mail.mjs';
 import { calendarTlsFixture, createCalendarFixture } from '../fixtures/st-7b/calendar-server.mjs';
 import { simpleParser } from 'mailparser';
-const repo=resolve(import.meta.dirname,'../..'),out=join(repo,'tests/evidence/st-7b'),root=await mkdtemp(join(tmpdir(),'weftmate-st7b-electron-')),profile=join(root,'profile'),startedAt=Date.now();
+const repo=resolve(import.meta.dirname,'../..'),out=evidencePath('st-7b'),root=await mkdtemp(join(tmpdir(),'weftmate-st7b-electron-')),profile=join(root,'profile'),startedAt=Date.now();
 await mkdir(out,{recursive:true});await mkdir(profile);await writeFile(join(profile,PERSONAL_HOST_MARKER),JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const key=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"[Console]::Out.Write([Environment]::GetEnvironmentVariable('MIMO_API_KEY','Machine'))"],{encoding:'utf8',windowsHide:true}).trim();assert.ok(key,'Machine model key required');
 const mail=await mailFixture(),tls=await calendarTlsFixture(),calendar=await createCalendarFixture({tls});

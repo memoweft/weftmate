@@ -1,3 +1,4 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { managedMkdtemp as mkdtemp, managedTempRoot as tmpdir } from '../helpers/managed-temp.mjs';
 // Synthetic acceptance must never publish the local computer identity.
 process.env.WEFTMATE_TEST_HOST_NAME = 'synthetic-host';
@@ -10,7 +11,7 @@ import { deflateSync } from 'node:zlib';
 import { join,resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
-const repo=resolve(import.meta.dirname,'../..'),out=resolve(process.env.WEFTMATE_LIBRARY_EVIDENCE_DIR||join(repo,'tests/evidence/tb-3/polish'));await mkdir(out,{recursive:true});for(const [source,dest]of [['desktop-light-list.png','before-desktop-light-list.png'],['desktop-dark-markdown.png','before-desktop-dark-markdown.png']])await copyFile(join(repo,'tests/evidence/tb-3',source),join(out,dest));
+const repo=resolve(import.meta.dirname,'../..'),out=resolve(process.env.WEFTMATE_LIBRARY_EVIDENCE_DIR||evidencePath('tb-3/polish'));await mkdir(out,{recursive:true});for(const [source,dest]of [['desktop-light-list.png','before-desktop-light-list.png'],['desktop-dark-markdown.png','before-desktop-dark-markdown.png']])await copyFile(join(repo,'tests/fixtures/tb-3',source),join(out,dest));
 let forgotten=0;
 const memoryManager={enabled:true,peek:()=> 'ready',status:async()=>({state:'ready',capabilities:{deleteEvidence:true}}),
   query:async(_owner,operation)=>operation==='query_jobs'?{jobs:[]}:operation==='preview_forget'?{world_revision:1,evidence_ids:['synthetic-tb3-evidence']}:{world_revision:1},

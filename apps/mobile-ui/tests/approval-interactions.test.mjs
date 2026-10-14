@@ -1,3 +1,4 @@
+import { evidencePath } from '../../../tests/helpers/evidence-path.mjs';
 import {PERMISSION_TYPES} from '../../../src/plugins/personal-permission-rules.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -8,8 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 
 const root=fileURLToPath(new URL('../www/',import.meta.url));
-const evidence=fileURLToPath(new URL(process.env.WEFTMATE_APPROVAL_EVIDENCE==='1'?
-  '../../../tests/evidence/ui-2a/':'../../../.local/ui-2a/',import.meta.url));
+const evidence=evidencePath('ui-2a/');
 const approval={approvalId:'12345678-1234-4234-8234-123456789abc',sessionId:'s1',taskId:'cmd-demo',
   sourceCommandId:'cmd-demo',sourceReceiptId:'rpc:demo.1',turn:1,callId:'call:demo.1',rootCallId:'root:demo.1',
   toolName:'weftmod_script',reason:'运行整理脚本，删除临时目录中的三个合成文件。',riskCategories:['execute','delete'],operationCategories:['command','delete'],canAlwaysAllow:false,

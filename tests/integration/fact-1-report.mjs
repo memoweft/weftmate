@@ -1,8 +1,9 @@
+import { evidencePath } from '../helpers/evidence-path.mjs';
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { nativeFactAudit } from './fact-1-scoring.mjs';
-const root=resolve('tests/evidence/fact-1');
+const root=evidencePath('fact-1');
 const read=path=>JSON.parse(readFileSync(path,'utf8'));
 const median=values=>{const sorted=[...values].sort((a,b)=>a-b),n=sorted.length;return n?(sorted[Math.floor(n/2)]+sorted[Math.floor((n-1)/2)])/2:null;};
 const files=directory=>readdirSync(directory,{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(join(directory,e.name)):[join(directory,e.name)]);
