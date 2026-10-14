@@ -41,15 +41,20 @@ public struct LogicalChat: Codable, Identifiable, Equatable, Sendable {
     public let autoDeleteDays: Int?
     public let expiresAt: String?
     public let hasTemporaryContent: Bool?
+    public var mode: ConversationMode? = nil
+    public var displayTitle: String? = nil
+    public var workHostId: String? = nil
+    public var workDirectory: WorkDirectory? = nil
+    public var logicalHistory: Bool? = nil
     public var id: String { chatId }
     public var isMain: Bool { kind == "main" }
     public var summary: ConversationSummary { summary(hostID: nil, updatedAt: nil) }
     public func summary(hostID: String?, updatedAt: String?) -> ConversationSummary {
-        .init(id: chatId, title: title, conversationId: conversationId, sessionId: activeSessionId,
+        .init(id: chatId, title: displayTitle ?? title, conversationId: conversationId, sessionId: activeSessionId,
               running: running, sendAvailable: sendAvailable, originalModelLabel: modelProfileId, archived: archived,
               pinned: pinned, unread: unread, groupId: groupId, contextUsage: contextUsage, processing: processing,
               projectId: projectId, projectName: projectName, taskAvailable: taskAvailable, hostId: hostID, updatedAt: updatedAt,
-              chatId: chatId, chatKind: kind, chatContentRevision: contentRevision, temporaryState: temporaryState)
+              chatId: chatId, chatKind: kind, chatContentRevision: contentRevision, temporaryState: temporaryState, mode: mode, workHostId: workHostId, workDirectory: workDirectory, logicalHistory: logicalHistory)
     }
     public var temporaryState: TemporaryChatState {
         .init(temporary: temporary ?? false, memoryMode: memoryMode ?? "on", recallEnabled: recallEnabled ?? true,

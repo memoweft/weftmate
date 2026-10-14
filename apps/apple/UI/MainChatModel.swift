@@ -45,7 +45,8 @@ import WeftMateCore
     private var transferSource: ConversationSummary?
     private var transferDraft: String?
     private var transferFiles: [ConversationAttachmentDraft] = []
-    init(app: AppleAppModel) { self.app = app }
+    private let requestedChatID: String?
+    init(app: AppleAppModel, chatID: String? = nil) { self.app = app; requestedChatID = chatID }
     var conversationUsesImages: Bool {
         if attachments.contains(where: {$0.original.isImage}) { return true }
         for event in window.events where event.type == "user.message" {
@@ -92,7 +93,7 @@ import WeftMateCore
             let caps = try await app.assistantClient.chatCapabilities()
             guard app.accountEpoch == token else { return }; capabilities = caps
             guard caps.timeline else { chat = nil; return }
-            let value = try await app.assistantClient.logicalChat()
+            let value = try await app.assistantClient.logicalChat(id: requestedChatID)
             guard app.accountEpoch == token else { return }
             if chat?.contentRevision != nil, chat?.contentRevision != value.contentRevision { invalidate() }
             chat = value
@@ -168,7 +169,7 @@ import WeftMateCore
         let token = epoch, generation = window.generation
         do {
             let page = try await app.assistantClient.chatChanges(id: chat.id, cursor: cursor)
-            let latest = try await app.assistantClient.logicalChat()
+            let latest = try await app.assistantClient.logicalChat(id: requestedChatID)
             guard current(token, generation) else { return }
             try window.requireRevision(latest.contentRevision)
             window.anchor = visibleAnchor; try window.apply(page); self.chat = latest; error = nil
@@ -258,7 +259,7 @@ import WeftMateCore
     private var journal: URL? {
         guard let app, let session = app.session, let dir = app.assistantStateDirectory,
               let account = try? LocalAccountScope(server: session.server, ownerId: session.account.ownerId) else { return nil }
-        return dir.appendingPathComponent("LogicalCommands").appendingPathComponent(account.cacheKey + ".json")
+        return dir.appendingPathComponent("LogicalCommands").appendingPathComponent(account.cacheKey + (requestedChatID.map { "-" + $0 } ?? "") + ".json")
     }
     private func retain(_ body: JSONValue, temporary: Bool, entry: String) throws {
         guard let journal else { throw APIFailure.credentialStorage }
@@ -288,6 +289,9 @@ import WeftMateCore
         guard app?.cloudLogin.selectedComputerUnavailable != true else { error="所选电脑不在线，请打开这台电脑后再试。";return }
         guard app?.beginServerOperation() == true else { return }
         guard let app, let chat, pending == nil, !sending, capabilities.supports("chatSend") else { return }
+        if capabilities.supports("workAndChat"), chat.mode == .work, chat.taskAvailable == false { error=ProjectPresentation.restrictedNotice;return }
+        if capabilities.supports("workAndChat"), chat.mode == .work, let host=chat.workHostId, host != app.session?.hostId { error="请连接这段工作所属的电脑。";return }
+        if capabilities.supports("workAndChat"), chat.mode == .work, chat.projectId == nil { error = "先选择项目或文件夹，再继续工作。"; return }
         var body: [String: JSONValue] = ["requestId": .string("apple-chat-" + UUID().uuidString.lowercased()), "kind": .string("chat.message"), "targetDeviceId": .string(app.session?.hostId ?? ""), "chatId": .string(chat.id), "text": .string(draft), "mode": .string(app.runningMessageMode.rawValue)]
         if chat.activeSessionId == nil { body["modelProfileId"] = .string(modelID) }
         let originals = attachments.map(\.original)
@@ -333,7 +337,7 @@ import WeftMateCore
             assets = []; pending = nil; command = nil; error = nil
         } catch { self.error = "原草稿未能恢复，请核对附件后重试。" }
     }
-    func createSide(event: ChatEvent? = nil, temporary: Bool = false, sourceConversation: ConversationSummary? = nil) async {
+    func createSide(event: ChatEvent? = nil, temporary: Bool = false, sourceConversation: ConversationSummary? = nil, fresh: Bool = false) async {
         guard app?.beginServerOperation() == true else { return }
         guard let app, pending == nil, !sending, let chat, !modelID.isEmpty else { return }
         if temporary && !capabilities.supports("temporaryChats") { return }
@@ -344,13 +348,17 @@ import WeftMateCore
         if !temporary {
             body["kind"] = .string("session.side.create"); body["targetDeviceId"] = .string(app.session?.hostId ?? "")
             let source = sourceConversation ?? event.flatMap { event in app.conversations.first { $0.chatId == event.chatId } }
-            if let project = source?.projectId { body["parent"] = .object(["kind": .string("project"), "id": .string(project)]) }
-            else { body["parent"] = .object(["kind": .string("main"), "id": .string(chat.id)]) }
+            if !fresh, let project = source?.projectId { body["parent"] = .object(["kind": .string("project"), "id": .string(project)]) }
+            else {
+                let main = fresh ? (try? await app.assistantClient.logicalChat()) : chat
+                guard let main else { return }
+                body["parent"] = .object(["kind": .string("main"), "id": .string(main.id)])
+            }
             body["entry"] = .string(event == nil ? "composer" : "message")
             if let event { body["originChatId"] = .string(event.chatId); body["originEventId"] = .string(event.id) }
         }
         transferSource = nil; transferDraft = nil; transferFiles = []; assets = []
-        if event == nil {
+        if event == nil && !fresh {
             transferSource = sourceConversation ?? app.conversations.first { $0.isMainChat }
             transferDraft = sourceConversation.map { app.draftText(for: $0, accountEpoch: epoch) } ?? draft
             transferFiles = sourceConversation.map { app.attachmentDrafts[AppleAppModel.draftKey(for: $0)] ?? [] } ?? attachments

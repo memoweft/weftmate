@@ -24,15 +24,41 @@ struct ComputerMenuButton: View {
 struct ComputerConversationList: View {
     @ObservedObject var cloud: CloudLoginModel
     var query=""
+    var mode: ConversationMode? = nil
+    var archived: Bool? = nil
+    var groups: [SessionGroup] = []
+    private var sections: [ComputerConversationSection] {
+        let rows=cloud.computerConversations.filter { (mode == nil || WorkAndChat.mode($0.conversation) == mode) && (archived == nil || $0.conversation.archived == archived) && (query.isEmpty || $0.conversation.title.localizedCaseInsensitiveContains(query)) }
+        if mode == .chat {
+            return WorkAndChat.sections(rows:rows.map(\.conversation),groups:groups,mode:.chat,query:query,archived:archived ?? false).map { section in
+                .init(id:section.id,title:section.title,rows:section.rows.flatMap { item in rows.filter { $0.conversation.id == item.id } })
+            }
+        }
+        guard mode == .work else { return [.init(id:"conversations",title:nil,rows:rows)] }
+        let groups=Dictionary(grouping:rows) { $0.hostId+"|"+($0.conversation.projectId ?? "removed") }
+        return groups.keys.sorted().map { key in
+            let rows=groups[key]!
+            return .init(id:key,title:rows.first.map { $0.name+" · "+($0.conversation.workDirectory?.name ?? $0.conversation.projectName ?? "需要选择文件夹") },rows:rows)
+        }
+    }
     var close: () -> Void = {}
     var body: some View {
         VStack(alignment:.leading,spacing:AppleTokens.Space.p4) {
-            ForEach(cloud.computerConversations.filter { query.isEmpty || $0.conversation.title.localizedCaseInsensitiveContains(query) }) { row in
+            ForEach(sections) { section in
+                if let title=section.title { Text(title).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).padding(.top,AppleTokens.Space.p12) }
+                ForEach(section.rows) { row in
                 Button { Task { await cloud.openComputerConversation(row);if row.online { close() } } } label: {
                     HStack(spacing:AppleTokens.Space.p12) { WeftIcon("chat");VStack(alignment:.leading,spacing:AppleTokens.Space.p3) { Text(row.conversation.title.isEmpty ? "新对话" : row.conversation.title).lineLimit(2);Text(row.name+(row.online ? "" : " · 不在线")).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) };Spacer() }.frame(minHeight:AppleTokens.Space.p44).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityIdentifier("computer.conversation."+row.id)
             }
+            }
             if let error=cloud.error { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
         }.task { await cloud.refreshComputerConversations(force:true) }
     }
+}
+
+private struct ComputerConversationSection: Identifiable {
+    let id: String
+    let title: String?
+    let rows: [ComputerConversation]
 }

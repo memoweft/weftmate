@@ -41,6 +41,8 @@ public struct OfflineControl: Codable, Sendable {
     public let generation: Int
 }
 public struct OfflineAuthorization: Codable, Sendable {
+    public var capabilities: [String: JSONValue]? = nil
+    public var supportsTasks: Bool { capabilities?["offlineTasks"] == .number(1) }
     public let hostId, accountId: String
     public let generation: Int
     public let authorized: Bool
@@ -60,12 +62,15 @@ public struct OfflineSnapshot: Codable, Sendable {
     public let recent: [OfflineRecent]
     public let model: OfflineModelConfiguration?
     public let control: OfflineControl
+    public var taskRecipient: [String: String]? = nil
+    public var taskReferences: [OfflineTaskReference]? = nil
 }
 public struct OfflineSyncRequest: Encodable, Sendable {
     public let publicJwk: [String: String]
     public let generation: Int
     public let hashes: [String: String]
     public var phoneFirst: Bool? = nil
+    public var taskSupport: Int? = nil
 }
 public struct OfflineSubmission: Encodable, Sendable {
     public let generation: Int
@@ -81,6 +86,7 @@ public struct OfflineState: Codable, Sendable {
     public var turns: [OfflineTurn] = []
     public var synced: Set<String> = []
     public var contexts: [String: [OfflineMessage]] = [:]
+    public var workTasks: [OfflineWorkTask]? = nil
     public init() {}
 }
 public enum OfflineFailure: Error, LocalizedError {
