@@ -47,8 +47,64 @@ struct PhoneStandaloneTests {
         #expect(try PhoneStreamDelta.text("data: {\"choices\":[{\"delta\":{\"content\":\"你好🌿\"}}]}") == "你好🌿")
         #expect(try PhoneStreamDelta.text("data: [DONE]") == nil)
         #expect(try PhoneStreamDelta.text(":keepalive") == nil)
-        #expect(throws:(any Error).self) { try PhoneStreamDelta.text("data: {\"choices\":[{\"delta\":{\"tool_calls\":[]}}]}") }
+        #expect(throws:(any Error).self) { try PhoneStreamDelta.text("data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"name\":\"run\"}}]}}]}") }
         #expect(throws:(any Error).self) { try PhoneStreamDelta.text("data: {\"error\":{\"code\":\"failed\"}}") }
+    }
+    @Test func mimoCapturedNullFirstChunkThenContent() throws {
+        // BASE-A stream-probe.json: the exact first SSE line, with no credential data.
+        let first = #"data: {"id":"92739613-ea4f-4fd7-880b-9cb01c25a7cf_be29a647856b42239634a8ad1f4d4f73","choices":[{"delta":{"content":"","role":"assistant","tool_calls":null,"reasoning_content":null},"finish_reason":null,"index":0}],"created":1791984146,"model":"mimo-v2.6-flash","object":"chat.completion.chunk"}"#
+        #expect(try PhoneStreamDelta.text(first) == nil)
+        let lines = [first,
+                     #"data: {"choices":[{"delta":{"content":"BASE-A","tool_calls":null,"reasoning_content":null}}]}"#,
+                     #"data: {"choices":[{"delta":{"content":"聊天成功","tool_calls":null}}]}"#,
+                     #"data: {"choices":[],"usage":{"completion_tokens":4}}"#,
+                     "data: [DONE]"]
+        #expect(try lines.compactMap { try PhoneStreamDelta.text($0) }.joined() == "BASE-A聊天成功")
+    }
+    @Test func contentOnlyStreamThroughModelConfiguration() throws {
+        let config = PhoneModelConfiguration(name:"synthetic",baseURL:"https://model.example.com/v1",model:"test",apiKey:"synthetic-key")
+        let lines = [#"data: {"choices":[{"delta":{"content":"你"}}]}"#,
+                     #"data: {"choices":[{"delta":{"content":"好🌿"}}]}"#,
+                     "data: [DONE]"]
+        #expect(try lines.compactMap { try config.streamText($0) }.joined() == "你好🌿")
+    }
+    @Test func reasoningStreamKeepsOnlyBody() throws {
+        let lines = [#"data: {"choices":[{"delta":{"reasoning_content":"内部推理","content":null}}]}"#,
+                     #"data: {"choices":[{"delta":{"reasoning_content":"","content":"正文"}}]}"#,
+                     #"data: {"choices":[{"delta":{"reasoning_content":null,"content":" 继续"}}]}"#]
+        #expect(try PhoneStreamDelta.text(lines[0]) == nil)
+        #expect(try lines.compactMap { try PhoneStreamDelta.text($0) }.joined() == "正文 继续")
+    }
+    @Test func finishReasonOnlyEndsWithoutText() throws {
+        let lines = [#"data: {"choices":[{"delta":{"content":"完整回复"}}]}"#,
+                     #"data: {"choices":[{"finish_reason":"stop","index":0}]}"#]
+        #expect(try PhoneStreamDelta.text(lines[1]) == nil)
+        #expect(try PhoneStreamDelta.text(#"data: {"choices":[{"delta":{},"finish_reason":"stop"}]}"#) == nil)
+        #expect(try lines.compactMap { try PhoneStreamDelta.text($0) }.joined() == "完整回复")
+    }
+    @Test func emptyOptionalFieldsAreAbsent() throws {
+        let deltas = [#"{"content":null,"tool_calls":null,"function_call":null,"reasoning_content":null}"#,
+                      #"{"content":"","tool_calls":[],"function_call":{},"reasoning_content":""}"#,
+                      #"{"content":"","tool_calls":"","function_call":""}"#]
+        for delta in deltas {
+            #expect(try PhoneStreamDelta.text("data: {\"choices\":[{\"delta\":" + delta + "}]}") == nil)
+        }
+        #expect(try PhoneStreamDelta.text(#"data: {"choices":[{"delta":{"content":" ","tool_calls":[],"function_call":{}}}]}"#) == " ")
+    }
+    @Test func emptyErrorsAndAnthropicTextAreAbsent() throws {
+        #expect(try PhoneStreamDelta.text(#"data: {"error":null,"choices":[{"delta":{"content":"正文"}}]}"#) == "正文")
+        #expect(try PhoneStreamDelta.text(#"data: {"error":{},"choices":[{"delta":{"content":"正文"}}]}"#) == "正文")
+        var config = PhoneModelConfiguration(name:"synthetic",baseURL:"https://model.example.com/v1",model:"test",apiKey:"synthetic-key")
+        config.interfaceType = "anthropic"
+        #expect(try config.streamText(#"data: {"type":"content_block_delta","delta":{"type":"text_delta","text":""}}"#) == nil)
+        #expect(try config.streamText(#"data: {"type":"content_block_delta","delta":{"type":"text_delta","text":null}}"#) == nil)
+        #expect(try config.streamText(#"data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"正文"}}"#) == "正文")
+        #expect(throws:(any Error).self) { try config.streamText(#"data: {"type":"error","error":{"type":"overloaded_error"}}"#) }
+    }
+    @Test func actualFunctionCallsStillFail() throws {
+        #expect(throws:(any Error).self) {
+            try PhoneStreamDelta.text(#"data: {"choices":[{"delta":{"function_call":{"name":"run","arguments":"{}"}}}]}"#)
+        }
     }
     @Test func requestAndDisplayPolicy() throws {
         var config=PhoneModelConfiguration(name:"synthetic",baseURL:"https://model.example.com/v1",model:"test",apiKey:"synthetic-key")
