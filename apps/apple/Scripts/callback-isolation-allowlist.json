@@ -537,5 +537,12 @@
     "api": "register",
     "sha256": "43613e8af4de66674ad5a7956675cdd35a7195818bdaa6f2ec50186e8e9c9c2c",
     "reason": "MainActor startup registration runs once per process and installs only the reviewed nonisolated Sendable launch factory."
+  },
+  {
+    "file": "apps/apple/macOS/MacStandaloneWorkspace.swift",
+    "line": 85,
+    "api": "fileImporter",
+    "sha256": "9c78a0e055ac1b7a4aee99fd068775345cb8b20d6b4b47f66cad634d3f341bc8",
+    "reason": "Mac file importer uses a named nonisolated factory returning @Sendable, then explicitly hops to MainActor and verifies the captured account and conversation before UI access."
   }
 ]

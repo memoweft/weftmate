@@ -262,7 +262,7 @@ private struct AccountEntry: View {
             #endif
             #else
             if cloud.authenticated && !cloud.useLocalWorkspace { CloudAccountHome(app: app, cloud: cloud) }
-            else { LocalAccountWorkspace(app: app, cloud: cloud) }
+            else { MacStandaloneWorkspace(app: app, cloud: cloud) }
             #endif
         }.task {
             while !Task.isCancelled {
